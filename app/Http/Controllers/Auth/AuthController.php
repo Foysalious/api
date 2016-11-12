@@ -19,7 +19,6 @@ use Session;
 class AuthController extends Controller {
     use AuthenticatesAndRegistersUsers, ThrottlesLogins;
 
-
     private $fbKit;
     private $customer;
 
@@ -68,7 +67,7 @@ class AuthController extends Controller {
             // attempt to verify the credentials and create a token for the user
             if (!$token = JWTAuth::attempt($credentials))
             {
-                return response()->json(['error' => 'invalid_credentials'], 401);
+                return response()->json(['msg' => 'invalid_credentials', 'code' => '401'], 401);
             }
         }
         catch (JWTException $e)
@@ -76,9 +75,12 @@ class AuthController extends Controller {
             // something went wrong whilst attempting to encode the token
             return response()->json(['error' => 'could_not_create_token'], 500);
         }
-
+        //get the customer & assign a remember me token
+        $customer = Customer::where('email', $request->input('email'))->first();
+        $customer->remember_token = str_random(60);
+        $customer->update();
         // all good so return the token
-        return response()->json(compact('token'));
+        return response()->json(['msg' => 'Login successful', 'code' => '200', 'token' => $token, 'remember_token' => $customer->remember_token]);
     }
 
     /**
@@ -99,7 +101,7 @@ class AuthController extends Controller {
         //generate token based on customer
         $token = JWTAuth::fromUser($customer);
         // return success with token
-        return response()->json(['message' => 'successful', 'code' => '200', 'token' => $token, 'remember_token' => $customer->remember_token]);
+        return response()->json(['msg' => 'successful', 'code' => '200', 'token' => $token, 'remember_token' => $customer->remember_token]);
     }
 
 
@@ -109,11 +111,10 @@ class AuthController extends Controller {
      */
     public function registerWithEmail(Request $request)
     {
-        header('Access-Control-Allow-Headers: true');
         //return error if customer already exists
         if ($this->customer->ifExist($request->input('email'), 'email'))
         {
-            return response()->json(['message' => 'email already exists', 'code' => '409']);
+            return response()->json(['msg' => 'email already exists', 'code' => '409']);
         }
         $customer = $this->customer->registerEmailPassword($request->input('email'), $request->input('password'));
 
@@ -121,18 +122,30 @@ class AuthController extends Controller {
         //generate token based on customer
         $token = JWTAuth::fromUser($customer);
         // return success with token
-        return response()->json(['message' => 'successful', 'code' => '200', 'token' => $token, 'remember_token' => $customer->remember_token]);
+        return response()->json(['msg' => 'Register with email successful', 'code' => '200', 'token' => $token, 'remember_token' => $customer->remember_token]);
     }
 
 
     public function loginWithKit(Request $request)
     {
-        $login = $this->fbKit->authenticateKit($request->input('code'));
-        if ($login['success'])
+        $code_data = $this->fbKit->authenticateKit($request->input('code'));
+        //login the customer if corresponding mobile exists
+        if ($customer = $this->customer->ifExist($code_data['mobile'], 'mobile'))
         {
-            return redirect()->to(getDomain() . '/dashboard');
+            //generate remember_token for customer
+            $remember_token = str_random(60);
+            $customer->remember_token = $remember_token;
+            $customer->update();
+            //generate token based on customer
+            $token = JWTAuth::fromUser($customer);
+            // return success with token
+            return response()->json(['msg' => 'Login with mobile successful', 'code' => '200', 'token' => $token, 'remember_token' => $customer->remember_token]);
         }
-        return redirect()->back()->with('msg', $login['msg'])->with('account', $login['partner']);
+        else
+        {
+            return response()->json(['msg' => 'mobile doesn\'t exist', 'code' => '404']);
+        }
+
     }
 
 

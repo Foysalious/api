@@ -4,21 +4,21 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "6a20ea37038c45d603e44dba238e4687",
-    "content-hash": "4db3b8bc1244721f6a704d6671d634c5",
+    "hash": "0ccf1ae40afde22e09fe60b184574135",
+    "content-hash": "117fec6d7a6200ca89d47a7a15c47793",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
-            "version": "3.19.23",
+            "version": "3.19.24",
             "source": {
                 "type": "git",
                 "url": "https://github.com/aws/aws-sdk-php.git",
-                "reference": "fbfb87734e5d298b40354ac7fb3f95d0f72ad16e"
+                "reference": "fa18e76a05fca7866044b8d4564c8a5d0b161805"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/fbfb87734e5d298b40354ac7fb3f95d0f72ad16e",
-                "reference": "fbfb87734e5d298b40354ac7fb3f95d0f72ad16e",
+                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/fa18e76a05fca7866044b8d4564c8a5d0b161805",
+                "reference": "fa18e76a05fca7866044b8d4564c8a5d0b161805",
                 "shasum": ""
             },
             "require": {
@@ -85,60 +85,7 @@
                 "s3",
                 "sdk"
             ],
-            "time": "2016-11-03 20:28:28"
-        },
-        {
-            "name": "barryvdh/laravel-cors",
-            "version": "v0.8.2",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/barryvdh/laravel-cors.git",
-                "reference": "bc7f40a71221b46d24971da7f0230ed4a75a18c6"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/barryvdh/laravel-cors/zipball/bc7f40a71221b46d24971da7f0230ed4a75a18c6",
-                "reference": "bc7f40a71221b46d24971da7f0230ed4a75a18c6",
-                "shasum": ""
-            },
-            "require": {
-                "illuminate/support": "5.1.x|5.2.x|5.3.x",
-                "php": ">=5.5.9",
-                "symfony/http-foundation": "~2.7|~3.0",
-                "symfony/http-kernel": "~2.7|~3.0"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "^4.8|^5.2"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "0.8-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Barryvdh\\Cors\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Barry vd. Heuvel",
-                    "email": "barryvdh@gmail.com"
-                }
-            ],
-            "description": "Adds CORS (Cross-Origin Resource Sharing) headers support in your Laravel application",
-            "keywords": [
-                "api",
-                "cors",
-                "crossdomain",
-                "laravel"
-            ],
-            "time": "2016-08-11 08:46:01"
+            "time": "2016-11-10 22:35:46"
         },
         {
             "name": "classpreloader/classpreloader",
@@ -994,6 +941,60 @@
             "time": "2016-08-26 11:44:52"
         },
         {
+            "name": "laravel/socialite",
+            "version": "v2.0.20",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/laravel/socialite.git",
+                "reference": "aca8de9a93a28a119714e289c8bc599bd81aa88d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/laravel/socialite/zipball/aca8de9a93a28a119714e289c8bc599bd81aa88d",
+                "reference": "aca8de9a93a28a119714e289c8bc599bd81aa88d",
+                "shasum": ""
+            },
+            "require": {
+                "guzzlehttp/guzzle": "~5.0|~6.0",
+                "illuminate/contracts": "~5.0",
+                "illuminate/http": "~5.0",
+                "illuminate/support": "~5.0",
+                "league/oauth1-client": "~1.0",
+                "php": ">=5.4.0"
+            },
+            "require-dev": {
+                "mockery/mockery": "~0.9",
+                "phpunit/phpunit": "~4.0|~5.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "3.0-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Laravel\\Socialite\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Taylor Otwell",
+                    "email": "taylorotwell@gmail.com"
+                }
+            ],
+            "description": "Laravel wrapper around OAuth 1 & OAuth 2 libraries.",
+            "keywords": [
+                "laravel",
+                "oauth"
+            ],
+            "time": "2016-11-01 18:49:10"
+        },
+        {
             "name": "league/flysystem",
             "version": "1.0.32",
             "source": {
@@ -1185,6 +1186,69 @@
                 "rest"
             ],
             "time": "2016-07-21 09:56:14"
+        },
+        {
+            "name": "league/oauth1-client",
+            "version": "1.7.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/thephpleague/oauth1-client.git",
+                "reference": "fca5f160650cb74d23fc11aa570dd61f86dcf647"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/thephpleague/oauth1-client/zipball/fca5f160650cb74d23fc11aa570dd61f86dcf647",
+                "reference": "fca5f160650cb74d23fc11aa570dd61f86dcf647",
+                "shasum": ""
+            },
+            "require": {
+                "guzzlehttp/guzzle": "^6.0",
+                "php": ">=5.5.0"
+            },
+            "require-dev": {
+                "mockery/mockery": "^0.9",
+                "phpunit/phpunit": "^4.0",
+                "squizlabs/php_codesniffer": "^2.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "League\\OAuth1\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Ben Corlett",
+                    "email": "bencorlett@me.com",
+                    "homepage": "http://www.webcomm.com.au",
+                    "role": "Developer"
+                }
+            ],
+            "description": "OAuth 1.0 Client Library",
+            "keywords": [
+                "Authentication",
+                "SSO",
+                "authorization",
+                "bitbucket",
+                "identity",
+                "idp",
+                "oauth",
+                "oauth1",
+                "single sign on",
+                "trello",
+                "tumblr",
+                "twitter"
+            ],
+            "time": "2016-08-17 00:36:58"
         },
         {
             "name": "monolog/monolog",

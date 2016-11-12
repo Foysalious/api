@@ -24,15 +24,16 @@ class CustomerController extends Controller {
      */
     public function emailVerification(Customer $customer, $code)
     {
-        $code = Cache::get("$customer->id");
+        $code = Cache::get('$customer->id'.'-verification-email');
         if (empty($code))
         {
-            Cache::forget("$customer->id");
+            Cache::forget('$customer->id'.'-verification-email');
             return "Code has expired";
         }
         else
         {
             $message = $this->customer->emailVerified($customer);
+            Cache::forget('$customer->id'.'-verification-email');
             return $message;
         }
     }

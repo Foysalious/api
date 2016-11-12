@@ -17,9 +17,9 @@ class CustomerRepository {
      */
     public function ifExist($data, $queryColumn)
     {
-        if (Customer::where("$queryColumn", $data)->first())
+        if ($customer = Customer::where("$queryColumn", $data)->first())
         {
-            return true;
+            return $customer;
         }
         return false;
     }
@@ -34,8 +34,7 @@ class CustomerRepository {
     {
         return Customer::create([
             'mobile' => $mobile,
-            "remember_token" => str_random(60),
-            'mobile_verifired' => 1
+            'mobile_verified' => 1
         ]);
     }
 
@@ -49,7 +48,6 @@ class CustomerRepository {
     {
         return Customer::create([
             "email" => $email,
-            "remember_token" => str_random(60),
             "password" => bcrypt($password)
         ]);
     }
@@ -62,14 +60,27 @@ class CustomerRepository {
     public function sendVerificationMail($customer)
     {
         $verfication_code = str_random(60);
-        Mail::send('emails.verification', ['customer' => $customer, 'code' => $verfication_code], function ($m) use ($customer)
+        Mail::send('emails.email-verification', ['customer' => $customer, 'code' => $verfication_code], function ($m) use ($customer)
         {
             $m->from('yourEmail@domain.com', 'Sheba.xyz');
             $m->to($customer->email)->subject('Email Verification');
 
         });
         $expired_at = Carbon::now()->addMinutes(30);
-        Cache::put("$customer->id", $verfication_code, $expired_at);
+        Cache::put('$customer->id' . '-verification-email', $verfication_code, $expired_at);
+    }
+
+    public function sendResetPasswordEmail($customer)
+    {
+        $verfication_code = str_random(60);
+        Mail::send('emails.reset-password', ['customer' => $customer, 'code' => $verfication_code], function ($m) use ($customer)
+        {
+            $m->from('yourEmail@domain.com', 'Sheba.xyz');
+            $m->to($customer->email)->subject('Reset Password');
+
+        });
+        $expired_at = Carbon::now()->addMinutes(30);
+        Cache::put('$customer->id' . '-reset-password', $verfication_code, $expired_at);
     }
 
     /**
