@@ -1,5 +1,5 @@
 <?php
-
+header('Access-Control-Allow-Credentials: true');
 Route::get('/', function ()
 {
     return ['code' => 200, 'msg' => 'Success. This project will hold the api\'s'];
@@ -26,6 +26,10 @@ $api->version('v1', function ($api)
     $api->post('login-with-kit', 'App\Http\Controllers\Auth\AuthController@loginWithKit');
     $api->post('register-mobile', 'App\Http\Controllers\Auth\AuthController@registerWithMobile');
     $api->post('register-email', 'App\Http\Controllers\Auth\AuthController@registerWithEmail');
+    $api->group(['middlware' => 'cors'], function ($api)
+    {
+
+    });
 
     //Routes that require authentication
     $api->group(['middleware' => 'api.auth'], function ($api)

@@ -109,6 +109,7 @@ class AuthController extends Controller {
      */
     public function registerWithEmail(Request $request)
     {
+        header('Access-Control-Allow-Headers: true');
         //return error if customer already exists
         if ($this->customer->ifExist($request->input('email'), 'email'))
         {

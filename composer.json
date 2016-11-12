@@ -12,7 +12,8 @@
     "laravel/framework": "5.2.*",
     "league/flysystem-aws-s3-v3": "~1.0",
     "dingo/api": "1.0.*@dev",
-    "tymon/jwt-auth": "0.5.*"
+    "tymon/jwt-auth": "0.5.*",
+    "barryvdh/laravel-cors": "^0.8.2"
   },
   "require-dev": {
     "fzaninotto/faker": "~1.4",
