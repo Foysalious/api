@@ -1,10 +1,12 @@
 <?php
 namespace App\Repositories;
 
-use App\Customer;
+use App\Models\Customer;
 use Cache;
 use Mail;
 use Carbon\Carbon;
+use Hash;
+use JWTAuth;
 
 class CustomerRepository {
 
@@ -34,7 +36,8 @@ class CustomerRepository {
     {
         return Customer::create([
             'mobile' => $mobile,
-            'mobile_verified' => 1
+            'mobile_verified' => 1,
+            "remember_token" => str_random(60)
         ]);
     }
 
@@ -48,7 +51,8 @@ class CustomerRepository {
     {
         return Customer::create([
             "email" => $email,
-            "password" => bcrypt($password)
+            "password" => bcrypt($password),
+            "remember_token" => str_random(60)
         ]);
     }
 
@@ -98,5 +102,19 @@ class CustomerRepository {
         return "something went wrong";
     }
 
+    public function attemptByMobile($credentials)
+    {
+        $customer = Customer::where('mobile', $credentials['email'])->first();
+        if ($customer)
+        {
+            //verified
+            if (Hash::check($credentials['password'], $customer->password))
+            {
+                return JWTAuth::fromUser($customer);
+            }
+            return false;
+        }
+        return false;
+    }
 
 }
