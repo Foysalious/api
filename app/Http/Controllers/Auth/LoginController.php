@@ -91,6 +91,11 @@ class LoginController extends Controller {
     }
 
 
+    /**
+     * Customer login with facebook kit
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function loginWithKit(Request $request)
     {
         $code_data = $this->fbKit->authenticateKit($request->input('code'));

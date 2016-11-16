@@ -27,9 +27,19 @@ $api->version('v1', function ($api)
     $api->post('register-email', 'App\Http\Controllers\Auth\RegistrationController@registerWithEmail');
     $api->post('forget-password', 'App\Http\Controllers\Auth\PasswordController@sendResetPasswordEmail');
 
-    $api->get('category', 'App\Http\Controllers\CategoryController@index');
-    $api->get('category/{category}/children', 'App\Http\Controllers\CategoryController@getChildren');
-    $api->get('category/{category}/parent', 'App\Http\Controllers\CategoryController@getParent');
-
-    $api->get('service/{service}/{name}', 'App\Http\Controllers\ServiceController@show');
+    $api->group(['prefix' => 'category/'], function ($api)
+    {
+        $api->get('', 'App\Http\Controllers\CategoryController@index');
+        $api->get('{category}/children', 'App\Http\Controllers\CategoryController@getChildren');
+        $api->get('{category}/parent', 'App\Http\Controllers\CategoryController@getParent');
+    });
+    $api->group(['prefix' => 'service/'], function ($api)
+    {
+        $api->get('{service}/partners', 'App\Http\Controllers\ServiceController@getPartners');
+        $api->post('{service}/change-partner', 'App\Http\Controllers\ServiceController@changePartner');
+    });
+    $api->group(['prefix' => 'partner/'], function ($api)
+    {
+        $api->get('{partner}/services', 'App\Http\Controllers\PartnerController@getPartnerServices');
+    });
 });

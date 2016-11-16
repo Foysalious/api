@@ -74,6 +74,10 @@ class CustomerRepository {
         Cache::put('$customer->id' . '-verification-email', $verfication_code, $expired_at);
     }
 
+    /**
+     * Send password reset link to a customer's email
+     * @param $customer
+     */
     public function sendResetPasswordEmail($customer)
     {
         $verfication_code = str_random(60);
@@ -102,6 +106,11 @@ class CustomerRepository {
         return "something went wrong";
     }
 
+    /**
+     * Match customer with their mobile & password
+     * @param $credentials
+     * @return bool
+     */
     public function attemptByMobile($credentials)
     {
         $customer = Customer::where('mobile', $credentials['email'])->first();
