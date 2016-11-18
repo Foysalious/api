@@ -1,6 +1,9 @@
 <?php
 Route::get('/', function ()
 {
+    $service = \App\Models\Service::find(6);
+    return $service->has('partners')->get();
+    return $service_partners = $service->has('partners')->get();
     return ['code' => 200, 'msg' => 'Success. This project will hold the api\'s'];
 });
 
@@ -35,8 +38,8 @@ $api->version('v1', function ($api)
     });
     $api->group(['prefix' => 'service/'], function ($api)
     {
-        $api->get('{service}/partners', 'App\Http\Controllers\ServiceController@getPartners');
-        $api->post('{service}/change-partner', 'App\Http\Controllers\ServiceController@changePartner');
+        $api->get('{service}/location/{location}/partners', 'App\Http\Controllers\ServiceController@getPartners');
+        $api->post('{service}/location/{location}/change-partner', 'App\Http\Controllers\ServiceController@changePartner');
     });
     $api->group(['prefix' => 'partner/'], function ($api)
     {

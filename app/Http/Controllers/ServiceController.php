@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Location;
+use App\Models\PartnerService;
 use App\Models\Service;
 use App\Repositories\ServiceRepository;
 use Illuminate\Http\Request;
@@ -14,11 +16,12 @@ class ServiceController extends Controller {
         $this->serviceRepository = new ServiceRepository();
     }
 
-    public function getPartners($service)
+    public function getPartners($service, $location)
     {
         $service = Service::where('id', $service)
             ->select('id', 'name', 'category_id', 'description', 'thumb', 'banner', 'faqs', 'variable_type', 'variables')
             ->first();
+        //Add first options in service for render purpose
         if ($service->variable_type == 'Options')
         {
             $variables = json_decode($service->variables);
@@ -28,30 +31,36 @@ class ServiceController extends Controller {
         }
         array_add($service, 'review', 100);
         array_add($service, 'rating', 3.5);
-        if ($service != null)
+
+        $service_partners = $this->serviceRepository->partners($service, $location);
+        $service->variables = json_decode($service->variables);
+//        dd($service_partners);
+        if (count($service_partners) != 0)
         {
-            $service_partners = $this->serviceRepository->partners($service);
             return response()->json(['service' => $service, 'service_partners' => $service_partners, 'msg' => 'successful', 'code' => 200]);
         }
-        return response()->json(['msg' => 'no result found', 'code' => 404]);
+        return response()->json(['service' => $service, 'service_partners' => $service_partners, 'msg' => 'no partner found in this location', 'code' => 404]);
     }
 
-    public function changePartner($service, Request $request)
+    /**
+     * Change partner according to the selected options
+     * @param Service $service
+     * @param $location
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function changePartner(Service $service, $location, Request $request)
     {
-        $resultPartner = [];
-        $partners = $request->input('partners');
-        $options = implode(',', $request->input('options'));
-        for ($i = 0; $i < count($partners); $i++)
+        //get the selected options
+        $option = implode(',', $request->input('options'));
+        //check if any partner provide service in the location
+        $service_partners = $this->serviceRepository->partnerWithSelectedOption($service, $option, $location);
+        if (!empty($service_partners))
         {
-            $price_options = $partners[$i]['price_option'];
-            //check if selected option exist in price_options list
-            if (array_has($price_options, $options))
-            {
-                array_push($resultPartner, $partners[$i]);
-            }
-
+            return response()->json(['service_partners' => $service_partners, 'msg' => 'successful', 'code' => 200]);
         }
-        return response($resultPartner);
+        else
+            return response()->json(['msg' => 'no partner found', 'code' => 404]);
     }
 
 }

@@ -36,6 +36,6 @@ class Service extends Model {
 
     public function partners()
     {
-        return $this->belongsToMany('App\Models\Partner');
+        return $this->belongsToMany(Partner::class);
     }
 }
