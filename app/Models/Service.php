@@ -38,4 +38,9 @@ class Service extends Model {
     {
         return $this->belongsToMany(Partner::class);
     }
+
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
 }

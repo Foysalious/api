@@ -38,7 +38,10 @@ class RegistrationController extends Controller {
         //generate token based on customer
         $token = JWTAuth::fromUser($customer);
         // return success with token
-        return response()->json(['msg' => 'successful', 'code' => 200, 'token' => $token, 'remember_token' => $customer->remember_token]);
+        return response()->json([
+            'msg' => 'successful', 'code' => 200, 'token' => $token,
+            'remember_token' => $customer->remember_token, 'customer' => $customer->id
+        ]);
     }
 
 
@@ -59,7 +62,10 @@ class RegistrationController extends Controller {
         //generate token based on customer
         $token = JWTAuth::fromUser($customer);
         // return success with token
-        return response()->json(['msg' => 'Register with email successful', 'code' => 200, 'token' => $token, 'remember_token' => $customer->remember_token]);
+        return response()->json([
+            'msg' => 'Register with email successful', 'code' => 200, 'token' => $token,
+            'remember_token' => $customer->remember_token, 'customer' => $customer->id
+        ]);
     }
 
 }

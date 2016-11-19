@@ -11,10 +11,13 @@ use App\Http\Requests;
 class PartnerController extends Controller {
     public function getPartnerServices($partner)
     {
-        $partner = Partner::select('id', 'name', 'sub_domain', 'description', 'xp', 'logo', 'rating')
+        $partner = Partner::select('id', 'name', 'sub_domain', 'description', 'xp', 'logo')
             ->where('id', $partner)
             ->first();
-        array_add($partner, 'review', 100);
+        $review = $partner->reviews()->where('review', '<>', '')->count('review');
+        $rating = $partner->reviews()->avg('rating');
+        array_add($partner, 'review', $review);
+        array_add($partner, 'rating', $rating);
         $partner_services = $partner->services()
             ->select('services.id', 'services.thumb', 'services.category_id', 'name')
             ->get();
@@ -22,8 +25,14 @@ class PartnerController extends Controller {
         {
             array_forget($service, 'pivot');
             array_add($service, 'slug_service', str_slug($service->name, '-'));
-            array_add($service, 'review', 100);
-            array_add($service, 'rating', 3.5);
+            $review = $service->reviews()->where([
+                ['review', '<>', ''],
+                ['partner_id', $partner->id]
+            ])->count('review');
+            //avg rating of the partner for this service
+            $rating = $service->reviews()->where('partner_id', $partner->id)->avg('rating');
+            array_add($service, 'review', $review);
+            array_add($service, 'rating', $rating);
         }
         $partner_categories = $partner->categories()->select('categories.id', 'name')->get();
         foreach ($partner_categories as $category)

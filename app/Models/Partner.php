@@ -74,4 +74,9 @@ class Partner extends Model
     {
         return $this->locations->lists('name')->toArray();
     }
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
+
 }

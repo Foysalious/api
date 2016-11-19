@@ -12,16 +12,10 @@ class ServiceRepository {
      */
     public function partners($service, $location)
     {
-        $service_partners = $this->partnerSelect($service);
-        $final_partners=[];
+        $service_partners = $this->partnerSelectByLocation($service, $location);
+        $final_partners = [];
         foreach ($service_partners as $key => $partner)
         {
-            // If partner doesn't  provide service in this location then remove the partner from service_partner list
-            if (!$this->partnerLocationExist($partner, $location))
-            {
-                array_forget($service_partners, $key);
-                continue;
-            }
             $prices = json_decode($partner->prices);
             array_forget($partner, 'pivot');
 
@@ -47,29 +41,37 @@ class ServiceRepository {
                     continue;
                 }
             }
-            array_add($partner, 'review', 100);
-            array_add($partner, 'rating', 3.5);
-            array_push($final_partners,$partner);
+            // review count of this partner for this service
+            $review = $partner->reviews()->where([
+                ['review', '<>', ''],
+                ['service_id', $service->id]
+            ])->count('review');
+            //avg rating of the partner for this service
+            $rating = $partner->reviews()->where('service_id', $service->id)->avg('rating');
+            array_add($partner, 'review', $review);
+            array_add($partner, 'rating', $rating);
+            array_push($final_partners, $partner);
         }
-        dd($final_partners);
         return $final_partners;
 
     }
 
+    /**
+     * Get partner of a service for a selected option in
+     * @param $service
+     * @param $option
+     * @param $location
+     * @return array
+     */
     public function partnerWithSelectedOption($service, $option, $location)
     {
         //Get all partners of the service
-        $service_partners = $this->partnerSelect($service);
+        $service_partners = $this->partnerSelectByLocation($service, $location);
+        $final_partners = [];
         foreach ($service_partners as $key => $partner)
         {
-            //If the person doesn't provide service in that location remove partner from service_partner list
-            if (!$this->partnerLocationExist($partner, $location))
-            {
-                array_forget($service_partners, $key);
-                continue;
-            }
             $options = (array)json_decode($partner->prices);
-            //check if the selected option exist in partenr option list otherwise remove the partner from partner list
+            //if the selected option exist in partenr option list add the partner to final list
             if (array_has($options, $option))
             {
                 //price of the selected option
@@ -78,44 +80,26 @@ class ServiceRepository {
                 array_add($partner, 'review', 100);
                 array_add($partner, 'rating', 3.5);
                 array_forget($partner, 'pivot');
+                array_push($final_partners, $partner);
             }
-            else
-            {
-                //remove the partner from partner list
-                array_forget($service_partners, $key);
-            }
-
         }
-
-        return $service_partners;
-    }
-
-
-    /**
-     * Check if this partner provides service in that location or not
-     * @param $partner
-     * @param $location
-     * @return bool
-     */
-    public function partnerLocationExist($partner, $location)
-    {
-        $location = $partner->locations()->where('location_id', $location)->first();
-        if (empty($location))
-        {
-            return false;
-        }
-        return true;
+        return $final_partners;
     }
 
     /**
-     * Select columns for partner
+     * Select partners for a service for a location
      * @param $service
+     * @param $location
      * @return mixed
      */
-    public function partnerSelect($service)
+    public function partnerSelectByLocation($service, $location)
     {
         return $service->partners()
             ->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'prices')
+            ->whereHas('locations', function ($query) use ($location)
+            {
+                $query->where('id', $location);
+            })
             ->get();
     }
 

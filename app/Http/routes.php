@@ -1,9 +1,6 @@
 <?php
 Route::get('/', function ()
 {
-    $service = \App\Models\Service::find(6);
-    return $service->has('partners')->get();
-    return $service_partners = $service->has('partners')->get();
     return ['code' => 200, 'msg' => 'Success. This project will hold the api\'s'];
 });
 

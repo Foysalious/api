@@ -32,10 +32,10 @@ class PasswordController extends Controller {
 
     public function getResetPasswordForm(Customer $customer, $code)
     {
-        $code = Cache::get('$customer->id' . '-reset-password');
+        $code = Cache::get($customer->id . '-reset-password');
         if (empty($code))
         {
-            Cache::forget('$customer->id' . '-reset-password');
+            Cache::forget($customer->id . '-reset-password');
             return view('reset-password-form', ['show' => false]);
         }
         else
@@ -56,7 +56,7 @@ class PasswordController extends Controller {
         {
             $customer->password = bcrypt($request->input('new_password'));
             $customer->update();
-            Cache::forget('$customer->id' . '-reset-password');
+            Cache::forget($customer->id . '-reset-password');
             return redirect('http://localhost:8080/login');
         }
         else

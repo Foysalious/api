@@ -71,7 +71,7 @@ class CustomerRepository {
 
         });
         $expired_at = Carbon::now()->addMinutes(30);
-        Cache::put('$customer->id' . '-verification-email', $verfication_code, $expired_at);
+        Cache::put($customer->id . '-verification-email', $verfication_code, $expired_at);
     }
 
     /**

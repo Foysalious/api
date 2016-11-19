@@ -87,7 +87,10 @@ class LoginController extends Controller {
             $token = $mobileToken;
         }
         // all good so return the token
-        return response()->json(['msg' => 'Login successful', 'code' => 200, 'token' => $token, 'remember_token' => $customer->remember_token]);
+        return response()->json([
+            'msg' => 'Login successful', 'code' => 200, 'token' => $token,
+            'remember_token' => $customer->remember_token, 'customer' => $customer->id
+        ]);
     }
 
 
@@ -109,7 +112,10 @@ class LoginController extends Controller {
             //generate token based on customer
             $token = JWTAuth::fromUser($customer);
             // return success with token
-            return response()->json(['msg' => 'Login with mobile successful', 'code' => 200, 'token' => $token, 'remember_token' => $customer->remember_token]);
+            return response()->json([
+                'msg' => 'Login with mobile successful', 'code' => 200, 'token' => $token,
+                'remember_token' => $customer->remember_token, 'customer' => $customer->id
+            ]);
         }
         else
         {
