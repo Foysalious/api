@@ -36,8 +36,12 @@ class CategoryRepository {
                     array_add($service, 'price', $min);
                 }
                 array_add($service, 'slug_service', str_slug($service->name, '-'));
-                array_add($service, 'review', 100);
-                array_add($service, 'rating', 3.5);
+                // review count of this partner for this service
+                $review = $service->reviews()->where('review', '<>', '')->count('review');
+                //avg rating of the partner for this service
+                $rating = $service->reviews()->where('service_id', $service->id)->avg('rating');
+                array_add($service, 'review', $review);
+                array_add($service, 'rating', $rating);
                 array_forget($service, 'variables');
             }
         }

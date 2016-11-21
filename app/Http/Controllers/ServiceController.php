@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Location;
 use App\Models\PartnerService;
 use App\Models\Service;
@@ -23,7 +24,6 @@ class ServiceController extends Controller {
         $service = Service::where('id', $service)
             ->select('id', 'name', 'category_id', 'description', 'thumb', 'banner', 'faqs', 'variable_type', 'variables')
             ->first();
-
         //Add first options in service for render purpose
         if ($service->variable_type == 'Options')
         {
@@ -39,9 +39,19 @@ class ServiceController extends Controller {
         array_add($service, 'review', $review);
         array_add($service, 'rating', $rating);
 
+        //get the category & parent of the service
+        $category = Category::with(['parent' => function ($query)
+        {
+            $query->select('id', 'name');
+
+        }])->where('id', $service->category_id)->select('id', 'name', 'parent_id')->first();
+        array_add($service, 'category_name', $category->name);
+        array_add($service, 'parent_id', $category->parent->id);
+        array_add($service, 'parent_name', $category->parent->name);
         //get partners of the service
         $service_partners = $this->serviceRepository->partners($service, $location);
         $service->variables = json_decode($service->variables);
+
         //If service has partner
         if (count($service_partners) != 0)
         {

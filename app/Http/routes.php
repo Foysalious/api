@@ -1,6 +1,7 @@
 <?php
 Route::get('/', function ()
 {
+    return redirect('http://localhost:8080/service/6/jhfjf');
     return ['code' => 200, 'msg' => 'Success. This project will hold the api\'s'];
 });
 
@@ -41,5 +42,12 @@ $api->version('v1', function ($api)
     $api->group(['prefix' => 'partner/'], function ($api)
     {
         $api->get('{partner}/services', 'App\Http\Controllers\PartnerController@getPartnerServices');
+    });
+
+    $api->group(['prefix' => 'checkout/'], function ($api)
+    {
+        $api->post('place-order', 'App\Http\Controllers\CheckoutController@placeOrder');
+        $api->post('place-order-with-online-payment', 'App\Http\Controllers\CheckoutController@placeOrderWithPayment');
+        $api->get('place-order-final', 'App\Http\Controllers\CheckoutController@placeOrderFinal');
     });
 });

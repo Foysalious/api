@@ -25,6 +25,7 @@ class PartnerController extends Controller {
         {
             array_forget($service, 'pivot');
             array_add($service, 'slug_service', str_slug($service->name, '-'));
+            //review count of partner of this service
             $review = $service->reviews()->where([
                 ['review', '<>', ''],
                 ['partner_id', $partner->id]

@@ -21,7 +21,7 @@ class ServiceRepository {
 
             if ($service->variable_type == 'Fixed' || $service->variable_type == 'Custom')
             {
-                array_set($partner, 'prices', $prices);
+                array_set($partner, 'prices', 100);
             }
             elseif ($service->variable_type == 'Options')
             {

@@ -12,7 +12,7 @@
                     This link will be valid for only 30 minutes.
                 </p>
 
-                <p style="color: red">N.B: If the link is not clickable please copy paste the link to browser window and hit click. </p>
+                <p style="color: red">If the above link is not clickable, try copying and pasting it into the address bar of your web browser.</p>
             </div>
         </div>
     </div>

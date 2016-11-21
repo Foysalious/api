@@ -12,7 +12,10 @@ class Category extends Model {
 
     public function scopeParents($query)
     {
-        $query->where('parent_id', null);
+        $query->where([
+            ['parent_id', null],
+            ['publication_status', 1]
+        ]);
     }
 
     public function scopeChild($query)
