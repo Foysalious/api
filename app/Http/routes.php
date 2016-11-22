@@ -1,7 +1,8 @@
 <?php
+use App\library\Sms;
+
 Route::get('/', function ()
 {
-    return redirect('http://localhost:8080/service/6/jhfjf');
     return ['code' => 200, 'msg' => 'Success. This project will hold the api\'s'];
 });
 
