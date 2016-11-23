@@ -31,14 +31,16 @@ class CheckoutController extends Controller {
 
     public function placeOrder(Request $request)
     {
+        //Logged in customer chechkout
         if ($request->has('remember_token'))
         {
             //check for valid customer
             $customer = $this->authRepository->checkValidCustomer($request->input('remember_token'), $request->input('access_token'));
-            //If customer is valid place the order
+            //If a customer is found
             if ($customer)
             {
                 array_add($request, 'customer_id', $customer->id);
+                //store order details for customer
                 $order = $this->checkoutRepository->storeDataInDB($request->all(), 'cash-on-delivery');
                 if (!empty($order))
                 {
