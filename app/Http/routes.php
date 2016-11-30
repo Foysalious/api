@@ -1,5 +1,4 @@
 <?php
-use App\library\Sms;
 
 Route::get('/', function ()
 {
@@ -23,10 +22,15 @@ $api = app('Dingo\Api\Routing\Router');
 */
 $api->version('v1', function ($api)
 {
+    $api->get('/arnab', function ()
+    {
+            return response()->json(['msg'=>'khela hobe']);
+    });
     $api->post('login', 'App\Http\Controllers\Auth\LoginController@login');
     $api->post('login-with-kit', 'App\Http\Controllers\Auth\LoginController@loginWithKit');
     $api->post('register-mobile', 'App\Http\Controllers\Auth\RegistrationController@registerWithMobile');
     $api->post('register-email', 'App\Http\Controllers\Auth\RegistrationController@registerWithEmail');
+    $api->post('register-with-facebook','App\Http\Controllers\Auth\RegistrationController@registerWithFacebook');
     $api->post('forget-password', 'App\Http\Controllers\Auth\PasswordController@sendResetPasswordEmail');
 
     $api->group(['prefix' => 'category/'], function ($api)

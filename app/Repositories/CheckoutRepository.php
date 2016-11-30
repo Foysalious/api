@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\library\PortWallet;
 use App\library\Sms;
+use App\Models\CustomerDeliveryAddress;
 use App\Models\Job;
 use App\Models\Order;
 use DB;
@@ -56,6 +57,10 @@ class CheckoutRepository {
         $order->delivery_address = $order_info['address'];
         if ($order->save())
         {
+            $deliveryAddress = new CustomerDeliveryAddress();
+            $deliveryAddress->customer_id = $order->customer_id;
+            $deliveryAddress->address = $order->address;
+            $deliveryAddress->save();
             foreach ($cart->items as $cart_item)
             {
                 $job = new Job();
