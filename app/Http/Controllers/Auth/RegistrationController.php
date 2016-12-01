@@ -39,7 +39,7 @@ class RegistrationController extends Controller {
                 'remember_token' => $customer->remember_token, 'customer' => $customer->id
             ]);
         }
-        array_add($request,'mobile',$code_data['mobile']);
+        array_add($request, 'mobile', $code_data['mobile']);
         //register the customer with verified mobile
         $customer = $this->customer->registerMobile($request->all());
         //generate token based on customer
@@ -113,7 +113,7 @@ class RegistrationController extends Controller {
         //fb_id exist so logged in the user
         else
         {
-            $this->customer->updateCustomerInfo($customer, $request->all());
+            $customer = $this->customer->updateCustomerInfo($customer, $request->all());
             $token = JWTAuth::fromUser($customer);
             // return success with token
             return response()->json([

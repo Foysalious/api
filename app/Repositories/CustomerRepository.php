@@ -2,6 +2,7 @@
 namespace App\Repositories;
 
 use App\Models\Customer;
+use App\Models\CustomerMobile;
 use Cache;
 use Mail;
 use Carbon\Carbon;
@@ -185,10 +186,28 @@ class CustomerRepository {
 
     public function updateCustomerInfo($customer, $info)
     {
+        if (isset($info['id']))
+        {
+            $customer->fb_id = $info['id'];
+        }
         $customer->name = $info['name'];
         $customer->email = $info['email'];
         $customer->pro_pic = $info['picture']['data']['url'];
         $customer->update();
+        return $customer;
+    }
+
+    public function checkSecondaryMobile($mobile)
+    {
+        if ($customer = Customer::where('mobile', $mobile)->first())
+        {
+            return false;
+        }
+        if ($customer_mobile = CustomerMobile::where('mobile', $mobile)->first())
+        {
+            return false;
+        }
+        return true;
     }
 
 }

@@ -10,9 +10,16 @@ class ServiceRepository {
      * @param $location
      * @return mixed
      */
-    public function partners($service, $location)
+    public function partners($service, $location = null)
     {
-        $service_partners = $this->partnerSelectByLocation($service, $location);
+        if ($location != null)
+        {
+            $service_partners = $this->partnerSelectByLocation($service, $location);
+        }
+        else
+        {
+            $service_partners = $this->partnerSelect($service);
+        }
         $final_partners = [];
         foreach ($service_partners as $key => $partner)
         {
@@ -100,6 +107,17 @@ class ServiceRepository {
             {
                 $query->where('id', $location);
             })
+            ->get();
+    }
+
+    public function partnerSelect($service)
+    {
+        return $service->partners()
+            ->with(['locations' => function ($query)
+            {
+                $query->select('id', 'name');
+            }])
+            ->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'prices')
             ->get();
     }
 

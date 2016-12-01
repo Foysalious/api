@@ -19,7 +19,7 @@ class ServiceController extends Controller {
         $this->serviceRepository = new ServiceRepository();
     }
 
-    public function getPartners($service, $location)
+    public function getPartners($service, $location = null)
     {
         $service = Service::where('id', $service)
             ->select('id', 'name', 'category_id', 'description', 'thumb', 'banner', 'faqs', 'variable_type', 'variables')

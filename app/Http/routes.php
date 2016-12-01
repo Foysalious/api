@@ -24,13 +24,13 @@ $api->version('v1', function ($api)
 {
     $api->get('/arnab', function ()
     {
-            return response()->json(['msg'=>'khela hobe']);
+        return response()->json(['msg' => 'khela hobe']);
     });
     $api->post('login', 'App\Http\Controllers\Auth\LoginController@login');
     $api->post('login-with-kit', 'App\Http\Controllers\Auth\LoginController@loginWithKit');
     $api->post('register-mobile', 'App\Http\Controllers\Auth\RegistrationController@registerWithMobile');
     $api->post('register-email', 'App\Http\Controllers\Auth\RegistrationController@registerWithEmail');
-    $api->post('register-with-facebook','App\Http\Controllers\Auth\RegistrationController@registerWithFacebook');
+    $api->post('register-with-facebook', 'App\Http\Controllers\Auth\RegistrationController@registerWithFacebook');
     $api->post('forget-password', 'App\Http\Controllers\Auth\PasswordController@sendResetPasswordEmail');
 
     $api->group(['prefix' => 'category/'], function ($api)
@@ -41,6 +41,7 @@ $api->version('v1', function ($api)
     });
     $api->group(['prefix' => 'service/'], function ($api)
     {
+        $api->get('{service}/partners', 'App\Http\Controllers\ServiceController@getPartners');
         $api->get('{service}/location/{location}/partners', 'App\Http\Controllers\ServiceController@getPartners');
         $api->post('{service}/location/{location}/change-partner', 'App\Http\Controllers\ServiceController@changePartner');
     });
@@ -54,5 +55,14 @@ $api->version('v1', function ($api)
         $api->post('place-order', 'App\Http\Controllers\CheckoutController@placeOrder');
         $api->post('place-order-with-online-payment', 'App\Http\Controllers\CheckoutController@placeOrderWithPayment');
         $api->get('place-order-final', 'App\Http\Controllers\CheckoutController@placeOrderFinal');
+    });
+
+    $api->group(['prefix' => 'customer/', 'middleware' => 'customer.auth'], function ($api)
+    {
+        $api->get('{customer}', 'App\Http\Controllers\CustomerController@getCustomerInfo');
+        $api->post('{customer}/fb-integration', 'App\Http\Controllers\CustomerController@facebookIntegration');
+        $api->post('{customer}/change-address', 'App\Http\Controllers\CustomerController@changeAddress');
+        $api->post('{customer}/add-delivery-address', 'App\Http\Controllers\CustomerController@addDeliveryAddress');
+        $api->post('{customer}/add-secondary-mobile', 'App\Http\Controllers\CustomerController@addSecondaryMobile');
     });
 });
