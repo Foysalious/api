@@ -41,7 +41,6 @@ class CustomerRepository {
             //if reference_code is valid then register with referrer_id
             if ($customer = $this->ifExist($info['reference_code'], 'reference_code'))
             {
-                dd($customer);
                 return Customer::create([
                     'mobile' => $info['mobile'],
                     'mobile_verified' => 1,
@@ -197,7 +196,7 @@ class CustomerRepository {
         return $customer;
     }
 
-    public function checkSecondaryMobile($mobile)
+    public function mobileValid($mobile)
     {
         if ($customer = Customer::where('mobile', $mobile)->first())
         {

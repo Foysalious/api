@@ -4,9 +4,11 @@ namespace App\Repositories;
 
 use App\library\PortWallet;
 use App\library\Sms;
+use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\Job;
 use App\Models\Order;
+use App\Models\PartnerOrder;
 use DB;
 use Illuminate\Http\Request;
 use Mail;
@@ -49,26 +51,50 @@ class CheckoutRepository {
 
     public function storeDataInDB($order_info, $payment_method)
     {
-        $order = new Order();
         $cart = json_decode($order_info['cart']);
+        //group cart_info by partners
+        $cart_partner = collect($cart->items)->groupBy('partner.id');
+        //Get all the unique partner id's
+        $unique_partners = collect($cart->items)->unique('partner.id')->pluck('partner.id');
+        $partner_price = [];
+        //calculate total prices for each partner
+        foreach ($cart_partner as $partners)
+        {
+            $price = 0;
+            foreach ($partners as $partner)
+            {
+                $price += $partner->partner->prices;
+            }
+            $partner_price[$partner->partner->id] = $price;
+        }
+        $order = new Order();
         $order->customer_id = $order_info['customer_id'];
-        $order->delivery_name = isset($order_info['name']) ? $order_info['name'] : '';
+        $order->delivery_name = $order_info['name'];
         $order->delivery_mobile = $order_info['phone'];
         $order->delivery_address = $order_info['address'];
         if ($order->save())
         {
-            $deliveryAddress = new CustomerDeliveryAddress();
-            $deliveryAddress->customer_id = $order->customer_id;
-            $deliveryAddress->address = $order->address;
-            $deliveryAddress->save();
-            foreach ($cart->items as $cart_item)
+            foreach ($unique_partners as $partner)
             {
-                $job = new Job();
-                $job->service_id = $cart_item->service->id;
-                $job->service_name = $cart_item->service->name;
-                $job->partner_id = $cart_item->partner->id;
-                $job->payment_method = $payment_method;
-                $order->jobs()->save($job);
+                $partner_order = new PartnerOrder();
+                $partner_order->order_id = $order->id;
+                $partner_order->partner_id = $partner;
+                $partner_order->total_amount = $partner_price[$partner];
+                $partner_order->payment_method = $payment_method;
+                if ($partner_order->save())
+                {
+                    $partner_services = $cart_partner[$partner];
+                    foreach ($partner_services as $service)
+                    {
+                        $job = new Job();
+                        $job->partner_order_id = $partner_order->id;
+                        $job->service_id = $service->service->id;
+                        $job->service_name = $service->service->name;
+                        $job->service_option = json_encode($service->serviceOptions);
+                        $job->status = 'Open';
+                        $job->save();
+                    }
+                }
             }
         }
         //send order info to customer  by mail
@@ -87,7 +113,7 @@ class CheckoutRepository {
 
     public function sendOrderConfirmationMail($order, $customer)
     {
-        Mail::send('orders.order-verfication', ['customer' => $customer, 'order' => $order, 'jobs' => $order->jobs], function ($m) use ($customer)
+        Mail::send('orders.order-verfication', ['customer' => $customer, 'order' => $order], function ($m) use ($customer)
         {
             $m->from('yourEmail@domain.com', 'Sheba.xyz');
             $m->to($customer->email)->subject('Order Verification');

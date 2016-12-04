@@ -67,12 +67,26 @@ class ServiceController extends Controller {
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function changePartner(Service $service, $location, Request $request)
+    public function changePartner(Service $service, $location = null, Request $request)
     {
         //get the selected options
         $option = implode(',', $request->input('options'));
         //check if any partner provide service in the location
         $service_partners = $this->serviceRepository->partnerWithSelectedOption($service, $option, $location);
+        if (!empty($service_partners))
+        {
+            return response()->json(['service_partners' => $service_partners, 'msg' => 'successful', 'code' => 200]);
+        }
+        else
+            return response()->json(['msg' => 'no partner found', 'code' => 404]);
+    }
+
+    public function changePartnerWithoutLocation(Service $service, Request $request)
+    {
+        //get the selected options
+        $option = implode(',', $request->input('options'));
+        //check if any partner provide service in the location
+        $service_partners = $this->serviceRepository->partnerWithSelectedOption($service, $option, $location = null);
         if (!empty($service_partners))
         {
             return response()->json(['service_partners' => $service_partners, 'msg' => 'successful', 'code' => 200]);

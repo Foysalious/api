@@ -43,7 +43,8 @@ $api->version('v1', function ($api)
     {
         $api->get('{service}/partners', 'App\Http\Controllers\ServiceController@getPartners');
         $api->get('{service}/location/{location}/partners', 'App\Http\Controllers\ServiceController@getPartners');
-        $api->post('{service}/location/{location}/change-partner', 'App\Http\Controllers\ServiceController@changePartner');
+        $api->post('{service}/change-partner', 'App\Http\Controllers\ServiceController@changePartnerWithoutLocation');
+        $api->post('{service}/{location?}/change-partner', 'App\Http\Controllers\ServiceController@changePartner');
     });
     $api->group(['prefix' => 'partner/'], function ($api)
     {
@@ -63,6 +64,12 @@ $api->version('v1', function ($api)
         $api->post('{customer}/fb-integration', 'App\Http\Controllers\CustomerController@facebookIntegration');
         $api->post('{customer}/change-address', 'App\Http\Controllers\CustomerController@changeAddress');
         $api->post('{customer}/add-delivery-address', 'App\Http\Controllers\CustomerController@addDeliveryAddress');
+        $api->post('{customer}/mobile', 'App\Http\Controllers\CustomerController@modifyMobile');
         $api->post('{customer}/add-secondary-mobile', 'App\Http\Controllers\CustomerController@addSecondaryMobile');
+        $api->post('{customer}/remove-secondary-mobile', 'App\Http\Controllers\CustomerController@removeSecondaryMobile');
+        $api->post('{customer}/set-primary-mobile', 'App\Http\Controllers\CustomerController@setPrimaryMobile');
+        $api->post('{customer}/email', 'App\Http\Controllers\CustomerController@modifyEmail');
+        $api->post('{customer}/general-info', 'App\Http\Controllers\CustomerController@modifyGeneralInfo');
+        $api->post('{customer}/send-verification-link', 'App\Http\Controllers\CustomerController@sendVerificationLink');
     });
 });

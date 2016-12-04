@@ -72,8 +72,14 @@ class ServiceRepository {
      */
     public function partnerWithSelectedOption($service, $option, $location)
     {
-        //Get all partners of the service
-        $service_partners = $this->partnerSelectByLocation($service, $location);
+        if ($location != null)
+        {
+            $service_partners = $this->partnerSelectByLocation($service, $location);
+        }
+        else
+        {
+            $service_partners = $this->partnerSelect($service);
+        }
         $final_partners = [];
         foreach ($service_partners as $key => $partner)
         {

@@ -14,5 +14,14 @@ class Customer extends Authenticatable {
         'password', 'remember_token',
     ];
 
+    public function mobiles()
+    {
+        return $this->hasMany(CustomerMobile::class);
+    }
+
+    public function addresses()
+    {
+        return $this->hasMany(CustomerDeliveryAddress::class);
+    }
 
 }

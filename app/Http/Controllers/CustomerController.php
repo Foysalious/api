@@ -8,13 +8,16 @@ use App\Models\CustomerMobile;
 use App\Repositories\CustomerRepository;
 use Illuminate\Http\Request;
 use Cache;
+use App\Http\Controllers\FacebookAccountKit;
 
 class CustomerController extends Controller {
-    protected $customer;
+    private $customer;
+    private $fbKit;
 
     public function __construct()
     {
         $this->customer = new CustomerRepository();
+        $this->fbKit = new FacebookAccountKit();
     }
 
     /**
@@ -49,9 +52,14 @@ class CustomerController extends Controller {
      */
     public function getCustomerInfo($customer)
     {
-        $customer = Customer::select('name', 'mobile', 'email', 'address', 'office_address', 'gender', 'dob', 'pro_pic', 'xp', 'rating', 'reference_code')
+        $cus = Customer::find($customer);
+        $customer = Customer::select('name', 'mobile', 'email', 'address', 'office_address', 'gender', 'dob', 'pro_pic', 'xp', 'rating', 'reference_code', 'email_verified')
             ->find($customer);
-        return response()->json(['msg' => 'successful', 'code' => 200, 'customer' => $customer]);
+        return response()->json([
+            'msg' => 'successful', 'code' => 200, 'customer' => $customer, 'mobiles' => $cus->mobiles()
+                ->select('mobile')
+                ->get(), 'addresses' => $cus->addresses()->select('id', 'address')->get()
+        ]);
     }
 
     public function facebookIntegration(Request $request, $customer)
@@ -73,21 +81,43 @@ class CustomerController extends Controller {
 
     }
 
+    public function modifyMobile(Request $request, $customer)
+    {
+        $code_data = $this->fbKit->authenticateKit($request->input('code'));
+        $customer = Customer::find($customer);
+        if ($this->customer->mobileValid($code_data['mobile']))
+        {
+            $customer->mobile = $code_data['mobile'];
+            $customer->mobile_verified = 1;
+            if ($customer->update())
+            {
+                return response()->json(['msg' => 'successful', 'code' => 200]);
+            }
+        }
+        else
+        {
+            return response()->json(['msg' => 'already exists', 'code' => 409]);
+        }
+    }
+
     public function addSecondaryMobile(Request $request, $customer)
     {
+        $code_data = $this->fbKit->authenticateKit($request->input('code'));
         $customer = Customer::find($customer);
-        if ($this->customer->checkSecondaryMobile($request->input('secondary_mobile')))
+        if ($this->customer->mobileValid($code_data['mobile']))
         {
             $customer_mobile = new CustomerMobile();
-            $customer_mobile->mobile = $request->input('secondary_mobile');
+            $customer_mobile->mobile = $code_data['mobile'];
             $customer_mobile->customer_id = $customer->id;
             if ($customer_mobile->save())
             {
                 return response()->json(['msg' => 'successful', 'code' => 200]);
             }
         }
-        return response()->json(['msg' => 'already exists', 'code' => 409]);
-
+        else
+        {
+            return response()->json(['msg' => 'already exists', 'code' => 409]);
+        }
     }
 
     public function addDeliveryAddress(Request $request, $customer)
@@ -98,5 +128,75 @@ class CustomerController extends Controller {
         $delivery_address->customer_id = $customer->id;
         $delivery_address->save();
         return response()->json(['msg' => 'successful', 'code' => 200]);
+    }
+
+    public function modifyEmail(Request $request, $customer)
+    {
+        $customer = Customer::find($customer);
+        if ($email = $this->customer->ifExist($request->get('email'), 'email'))
+        {
+            return response()->json(['msg' => 'email already exists', 'code' => 409]);
+        }
+        else
+        {
+            $customer->email = $request->get('email');
+            $customer->email_verified = 0;
+            $customer->update();
+            $this->customer->sendVerificationMail($customer);
+            return response()->json(['msg' => 'successful', 'code' => 200]);
+        }
+    }
+
+    public function sendVerificationLink($customer)
+    {
+        $customer = Customer::find($customer);
+        $this->customer->sendVerificationMail($customer);
+        return response()->json(['msg' => 'successful', 'code' => 200]);
+    }
+
+    public function removeSecondaryMobile($customer, Request $request)
+    {
+        $customer_mobile = CustomerMobile::where([
+            ['mobile', $request->input('mobile')],
+            ['customer_id', $customer]
+        ])->first();
+        if ($customer_mobile->delete())
+        {
+            return response()->json(['msg' => 'successful', 'code' => 200]);
+        }
+    }
+
+    public function setPrimaryMobile($customer, Request $request)
+    {
+        $customer = Customer::find($customer);
+        $customer_mobile = CustomerMobile::where('mobile', $request->input('mobile'))->first();
+        $customer_mobile->mobile = $customer->mobile;
+        $customer_mobile->update();
+        $customer->mobile = $request->get('mobile');
+        if ($customer->update())
+        {
+            return response()->json(['msg' => 'successful', 'code' => 200]);
+        }
+    }
+
+    public function modifyGeneralInfo($customer, Request $request)
+    {
+        $customer = Customer::find($customer);
+        if ($request->has('name'))
+        {
+            $customer->name = $request->get('name');
+        }
+        if ($request->has('dob'))
+        {
+            $customer->dob = $request->get('dob');
+        }
+        if ($request->has('gender'))
+        {
+            $customer->gender = $request->get('gender');
+        }
+        if ($customer->update())
+        {
+            return response()->json(['msg' => 'successful', 'code' => 200]);
+        }
     }
 }
