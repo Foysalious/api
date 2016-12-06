@@ -120,7 +120,7 @@ class CheckoutRepository {
         });
     }
 
-    public function connectWithPortWallet(Request $request, $customer)
+    public function checkoutWithPortWallet($request, $customer)
     {
         $cart = json_decode($request->input('cart'));
         $service_names = '';
@@ -131,13 +131,21 @@ class CheckoutRepository {
         }
         // remove comma from the end of service name
         $service_names = rtrim($service_names, ",");
+        return $this->sendDataToPortwallet($cart->price, $service_names, $customer, $request, "/checkout/place-order-final");
+    }
 
-        $portwallet = new PortWallet($this->appKey, $this->appSecret);
-        $portwallet->setMode($this->appPaymentMode);
+    public function spPaymentWithPortWallet($request, $customer)
+    {
+        $service_name = '';
+        return $this->sendDataToPortwallet($request->price, $service_name, $customer, $request, "/checkout/sp-payment-final");
+    }
+
+    public function sendDataToPortwallet($amount, $product_name, $customer, $request, $redirect_url)
+    {
         $data = array();
-        $data['amount'] = $cart->price;
+        $data['amount'] = $amount;
         $data['currency'] = "BDT";
-        $data['product_name'] = $service_names;
+        $data['product_name'] = $product_name;
         $data['product_description'] = "N/A";
         $data['name'] = !empty($customer->name) ? $customer->name : 'N/A';
         $data['email'] = isset($customer->email) ? $customer->email : 'N/A';
@@ -147,11 +155,11 @@ class CheckoutRepository {
         $data['state'] = "N/A";
         $data['zipcode'] = "N/A";
         $data['country'] = "BD";
-        $data['redirect_url'] = $this->appBaseUrl . "/checkout/place-order-final";
+        $data['redirect_url'] = $this->appBaseUrl . $redirect_url;
         $data['ipn_url'] = $this->appBaseUrl . "ipn.php"; //IPN URL must be public URL which can be access remotely by portwallet system.
-
+        $portwallet = $this->getPortWalletObject();
+        $portwallet->setMode($this->appPaymentMode);
         $portwallet_response = $portwallet->generateInvoice($data);
-        //successfull connection established
         if ($portwallet_response->status == 200)
         {
             array_add($request, 'customer_id', $customer->id);

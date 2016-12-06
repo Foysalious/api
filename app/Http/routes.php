@@ -56,6 +56,7 @@ $api->version('v1', function ($api)
         $api->post('place-order', 'App\Http\Controllers\CheckoutController@placeOrder');
         $api->post('place-order-with-online-payment', 'App\Http\Controllers\CheckoutController@placeOrderWithPayment');
         $api->get('place-order-final', 'App\Http\Controllers\CheckoutController@placeOrderFinal');
+        $api->get('sp-payment-final', 'App\Http\Controllers\CheckoutController@spPaymentFinal');
     });
 
     $api->group(['prefix' => 'customer/', 'middleware' => 'customer.auth'], function ($api)
@@ -72,5 +73,6 @@ $api->version('v1', function ($api)
         $api->post('{customer}/general-info', 'App\Http\Controllers\CustomerController@modifyGeneralInfo');
         $api->post('{customer}/send-verification-link', 'App\Http\Controllers\CustomerController@sendVerificationLink');
         $api->post('{customer}/order-list', 'App\Http\Controllers\OrderController@getNotClosedOrderInfo');
+        $api->post('{customer}/sp-payment', 'App\Http\Controllers\CheckoutController@spPayment');
     });
 });

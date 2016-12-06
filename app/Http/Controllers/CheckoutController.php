@@ -81,7 +81,7 @@ class CheckoutController extends Controller {
             //If customer is valid place the order
             if ($customer)
             {
-                $connectionResponse = $this->checkoutRepository->connectWithPortWallet($request, $customer);
+                $connectionResponse = $this->checkoutRepository->checkoutWithPortWallet($request, $customer);
                 return response()->json($connectionResponse);
             }
             //customer credentials failed
@@ -102,7 +102,7 @@ class CheckoutController extends Controller {
             //register the customer with verified mobile
             $customer = $this->customer->registerMobile($code_data['mobile']);
 
-            $connectionResponse = $this->checkoutRepository->connectWithPortWallet($request, $customer);
+            $connectionResponse = $this->checkoutRepository->checkoutWithPortWallet($request, $customer);
             return response()->json($connectionResponse);
         }
     }
@@ -139,5 +139,12 @@ class CheckoutController extends Controller {
         {
             return;
         }
+    }
+
+    public function spPayment(Request $request, $customer)
+    {
+        $customer = Customer::find($customer);
+        $connectionResponse = $this->checkoutRepository->spPaymentWithPortWallet($request, $customer);
+        return response()->json($connectionResponse);
     }
 }
