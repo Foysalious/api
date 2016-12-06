@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\FacebookAccountKit;
 use App\Models\Customer;
+use App\Models\CustomerMobile;
 use App\Repositories\CustomerRepository;
 use Illuminate\Http\Request;
 use JWTAuth;
@@ -29,8 +30,8 @@ class RegistrationController extends Controller {
     {
         //Authenticate the code with facebook kit
         $code_data = $this->fbKit->authenticateKit($request->input('code'));
-        //return error if customer already exists
-        if ($customer = $this->customer->ifExist($code_data['mobile'], 'mobile'))
+        //login if customer already exists
+        if ($customer = Customer::where('mobile', $code_data['mobile'])->first())
         {
             $token = JWTAuth::fromUser($customer);
             // return success with token
@@ -39,9 +40,15 @@ class RegistrationController extends Controller {
                 'remember_token' => $customer->remember_token, 'customer' => $customer->id
             ]);
         }
+        //return error if mobile already exists as secondary
+        elseif ($customer_mobile = CustomerMobile::where('mobile', $code_data['mobile'])->first())
+        {
+            return response()->json(['msg' => 'uses as secondary number', 'code' => 409]);
+        }
         array_add($request, 'mobile', $code_data['mobile']);
         //register the customer with verified mobile
         $customer = $this->customer->registerMobile($request->all());
+        $this->customer->addCustomerMobile($customer);
         //generate token based on customer
         $token = JWTAuth::fromUser($customer);
         // return success with token

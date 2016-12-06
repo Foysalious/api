@@ -209,4 +209,12 @@ class CustomerRepository {
         return true;
     }
 
+    public function addCustomerMobile($customer)
+    {
+        $customer_mobile = new CustomerMobile();
+        $customer_mobile->mobile = $customer->mobile;
+        $customer_mobile->customer_id = $customer->id;
+        $customer_mobile->save();
+    }
+
 }
