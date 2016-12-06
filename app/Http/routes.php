@@ -71,5 +71,6 @@ $api->version('v1', function ($api)
         $api->post('{customer}/email', 'App\Http\Controllers\CustomerController@modifyEmail');
         $api->post('{customer}/general-info', 'App\Http\Controllers\CustomerController@modifyGeneralInfo');
         $api->post('{customer}/send-verification-link', 'App\Http\Controllers\CustomerController@sendVerificationLink');
+        $api->post('{customer}/order-list', 'App\Http\Controllers\OrderController@getNotClosedOrderInfo');
     });
 });

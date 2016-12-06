@@ -2,8 +2,7 @@
 
 use Illuminate\Database\Eloquent\Model;
 
-class Partner extends Model
-{
+class Partner extends Model {
     protected $guarded = [
         'id',
     ];
@@ -74,9 +73,25 @@ class Partner extends Model
     {
         return $this->locations->lists('name')->toArray();
     }
+
     public function reviews()
     {
         return $this->hasMany(Review::class);
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(PartnerOrder::class);
+    }
+
+    public function jobs()
+    {
+        return $this->hasManyThrough(Job::class, PartnerOrder::class);
+    }
+
+    public function partner_orders()
+    {
+        return $this->hasMany(PartnerOrder::class);
     }
 
 }

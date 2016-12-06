@@ -2,8 +2,7 @@
 
 use Illuminate\Database\Eloquent\Model;
 
-class Job extends Model
-{
+class Job extends Model {
     public function order()
     {
         return $this->belongsTo(Order::class);
@@ -14,9 +13,9 @@ class Job extends Model
         return $this->belongsTo(Service::class);
     }
 
-    public function partner()
+    public function partner_order()
     {
-        return $this->belongsTo(Partner::class);
+        return $this->belongsTo(PartnerOrder::class);
     }
 
     public function resource()
