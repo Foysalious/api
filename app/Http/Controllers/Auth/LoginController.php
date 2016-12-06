@@ -75,15 +75,11 @@ class LoginController extends Controller {
         if ($token)
         {
             $customer = Customer::where('email', $request->input('email'))->first();
-            $customer->remember_token = str_random(60);
-            $customer->update();
         }
         // when mobile is provided for login
         else
         {
             $customer = Customer::where('mobile', $request->input('email'))->first();
-            $customer->remember_token = str_random(60);
-            $customer->update();
             $token = $mobileToken;
         }
         // all good so return the token
@@ -105,10 +101,6 @@ class LoginController extends Controller {
         //login the customer if corresponding mobile exists
         if ($customer = $this->customer->ifExist($code_data['mobile'], 'mobile'))
         {
-            //generate remember_token for customer
-            $remember_token = str_random(60);
-            $customer->remember_token = $remember_token;
-            $customer->update();
             //generate token based on customer
             $token = JWTAuth::fromUser($customer);
             // return success with token

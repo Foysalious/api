@@ -56,16 +56,16 @@ class CustomerController extends Controller {
         $customer = Customer::select('name', 'mobile', 'email', 'address', 'office_address', 'gender', 'dob', 'pro_pic', 'xp', 'rating', 'reference_code', 'email_verified')
             ->find($customer);
         return response()->json([
-            'msg' => 'successful', 'code' => 200, 'customer' => $customer, 'mobiles' => $cus->mobiles()
-                ->select('mobile')
-                ->get(), 'addresses' => $cus->addresses()->select('id', 'address')->get()
+            'msg' => 'successful', 'code' => 200, 'customer' => $customer,
+            'mobiles' => $cus->mobiles()->select('mobile')->get(),
+            'addresses' => $cus->addresses()->select('id', 'address')->get()
         ]);
     }
 
     public function facebookIntegration(Request $request, $customer)
     {
         $customer = Customer::find($customer);
-        $customer = $this->customer->updateCustomerInfo($customer, $request->all());
+        $this->customer->updateCustomerInfo($customer, $request->all());
         return response()->json(['msg' => 'successful', 'code' => 200]);
     }
 
