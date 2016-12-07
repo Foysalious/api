@@ -75,4 +75,8 @@ $api->version('v1', function ($api)
         $api->post('{customer}/order-list', 'App\Http\Controllers\OrderController@getNotClosedOrderInfo');
         $api->post('{customer}/sp-payment', 'App\Http\Controllers\CheckoutController@spPayment');
     });
+
+    $api->group(['middleware' => 'admin.auth'], function ($api)
+    {
+    });
 });

@@ -9,6 +9,7 @@ use App\Models\CustomerDeliveryAddress;
 use App\Models\Job;
 use App\Models\Order;
 use App\Models\PartnerOrder;
+use App\Models\PartnerOrderPayment;
 use DB;
 use Illuminate\Http\Request;
 use Mail;
@@ -80,9 +81,29 @@ class CheckoutRepository {
                 $partner_order->order_id = $order->id;
                 $partner_order->partner_id = $partner;
                 $partner_order->total_amount = $partner_price[$partner];
+                if ($payment_method == 'cash-on-delivery')
+                {
+                    $partner_order->due = $partner_price[$partner];
+                    $partner_order->paid = 0;
+                }
+                elseif ($payment_method == 'online')
+                {
+                    $partner_order->paid = $partner_price[$partner];
+                    $partner_order->due = 0;
+                }
                 $partner_order->payment_method = $payment_method;
                 if ($partner_order->save())
                 {
+                    if ($payment_method == 'online')
+                    {
+                        $partner_order_payment = new PartnerOrderPayment();
+                        $partner_order_payment->partner_order_id = $partner_order->id;
+                        $partner_order_payment->amount = $partner_order->paid;
+                        $partner_order_payment->transaction_type = 'Credit';
+                        $partner_order_payment->method = 'online';
+                        $partner_order_payment->log = 'advanced payment';
+                        $partner_order_payment->save();
+                    }
                     $partner_services = $cart_partner[$partner];
                     foreach ($partner_services as $service)
                     {
@@ -111,6 +132,39 @@ class CheckoutRepository {
         return $order;
     }
 
+    public function clearSpPayment($payment_info)
+    {
+        $partner_order_id = $payment_info['partner_order_id'];
+        $partner = [];
+        for ($i = 0; $i < count($partner_order_id); $i++)
+        {
+            $partner_order = PartnerOrder::find($partner_order_id[$i]);
+            array_push($partner, array("partner_order_id" => $partner_order->id, "due" => $partner_order->due));
+            $partner_order_payment = new PartnerOrderPayment();
+            $partner_order_payment->partner_order_id = $partner_order->id;
+            $partner_order_payment->amount = $partner_order->due;
+            $partner_order_payment->transaction_type = 'Credit';
+            $partner_order_payment->method = 'online';
+            $partner_order_payment->log = 'Due paid';
+            $partner_order_payment->save();
+            $partner_order->paid = $partner_order->due;
+            $partner_order->due = 0;
+            $partner_order->payment_method = 'online';
+            $partner_order->update();
+        }
+        $this->sendSpPaymentClearMail($partner);
+    }
+
+    public function sendSpPaymentClearMail($partner)
+    {
+
+//        Mail::send('orders.order-verfication', ['customer' => $customer, 'order' => $order], function ($m) use ($customer)
+//        {
+//            $m->from('yourEmail@domain.com', 'Sheba.xyz');
+//            $m->to($customer->email)->subject('Order Verification');
+//        });
+    }
+
     public function sendOrderConfirmationMail($order, $customer)
     {
         Mail::send('orders.order-verfication', ['customer' => $customer, 'order' => $order], function ($m) use ($customer)
@@ -136,8 +190,17 @@ class CheckoutRepository {
 
     public function spPaymentWithPortWallet($request, $customer)
     {
-        $service_name = '';
-        return $this->sendDataToPortwallet($request->price, $service_name, $customer, $request, "/checkout/sp-payment-final");
+        $service_name = $request->get('service_name');
+        $partner_order_id = $request->get('partner_order_id');
+        $product_name = '';
+        for ($i = 0; $i < count($service_name); $i++)
+        {
+            $product_name .= $service_name[$i] . ',';
+        }
+        $product_name = rtrim($product_name, ",");
+        $partner_order = PartnerOrder::find($partner_order_id[0]);
+        array_add($request, 'address', $partner_order->order->delivery_address);
+        return $this->sendDataToPortwallet($request->get('price'), $product_name, $customer, $request, "/checkout/sp-payment-final");
     }
 
     public function sendDataToPortwallet($amount, $product_name, $customer, $request, $redirect_url)
@@ -156,14 +219,14 @@ class CheckoutRepository {
         $data['zipcode'] = "N/A";
         $data['country'] = "BD";
         $data['redirect_url'] = $this->appBaseUrl . $redirect_url;
-        $data['ipn_url'] = $this->appBaseUrl . "ipn.php"; //IPN URL must be public URL which can be access remotely by portwallet system.
+        $data['ipn_url'] = $this->appBaseUrl . "/ipn.php"; //IPN URL must be public URL which can be access remotely by portwallet system.
         $portwallet = $this->getPortWalletObject();
         $portwallet->setMode($this->appPaymentMode);
         $portwallet_response = $portwallet->generateInvoice($data);
         if ($portwallet_response->status == 200)
         {
             array_add($request, 'customer_id', $customer->id);
-            Cache::put('cart-with-payment-' . $portwallet_response->data->invoice_id, $request->all(), 30);
+            Cache::put('portwallet-payment-' . $portwallet_response->data->invoice_id, $request->all(), 30);
             Cache::put('invoice-' . $portwallet_response->data->invoice_id, $portwallet_response->data->invoice_id, 30);
             $url = $this->appPaymentUrl . $portwallet_response->data->invoice_id;
             return (['code' => 200, 'gateway_url' => $url]);

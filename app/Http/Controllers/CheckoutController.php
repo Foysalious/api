@@ -115,7 +115,7 @@ class CheckoutController extends Controller {
     public function placeOrderFinal(Request $request)
     {
         $portwallet = $this->checkoutRepository->getPortWalletObject();
-        $order_info = Cache::get('cart-with-payment-' . $request->get('invoice'));
+        $order_info = Cache::get('portwallet-payment-' . $request->get('invoice'));
         $cart = json_decode($order_info['cart']);
         $data = array();
         $data["amount"] = $cart->price;
@@ -131,7 +131,7 @@ class CheckoutController extends Controller {
             if (!empty($order))
             {
                 Cache::forget('invoice-' . $request->get('invoice'));
-                Cache::forget('cart-with-payment-' . $request->get('invoice'));
+                Cache::forget('portwallet-payment-' . $request->get('invoice'));
                 return redirect('http://localhost:8080');
             }
         }
@@ -146,5 +146,28 @@ class CheckoutController extends Controller {
         $customer = Customer::find($customer);
         $connectionResponse = $this->checkoutRepository->spPaymentWithPortWallet($request, $customer);
         return response()->json($connectionResponse);
+    }
+
+    public function spPaymentFinal(Request $request)
+    {
+        $portwallet = $this->checkoutRepository->getPortWalletObject();
+        $payment_info = Cache::get('portwallet-payment-' . $request->get('invoice'));
+        $data = array();
+        $data["amount"] = $payment_info['price'];
+        $data["invoice"] = Cache::get('invoice-' . $request->get('invoice'));
+        $data['currency'] = "BDT";
+        $portwallet_response = $portwallet->ipnValidate($data);
+        //check payment validity
+        if ($portwallet_response->status == 200 && $portwallet_response->data->status == "ACCEPTED")
+        {
+            $this->checkoutRepository->clearSpPayment($payment_info);
+            Cache::forget('invoice-' . $request->get('invoice'));
+            Cache::forget('portwallet-payment-' . $request->get('invoice'));
+            return redirect('http://localhost:8080');
+        }
+        else
+        {
+            return;
+        }
     }
 }

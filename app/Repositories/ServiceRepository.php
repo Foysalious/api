@@ -90,8 +90,15 @@ class ServiceRepository {
                 //price of the selected option
                 $price = array_pull($options, $option);
                 array_set($partner, 'prices', $price);
-                array_add($partner, 'review', 100);
-                array_add($partner, 'rating', 3.5);
+                // review count of this partner for this service
+                $review = $partner->reviews()->where([
+                    ['review', '<>', ''],
+                    ['service_id', $service->id]
+                ])->count('review');
+                //avg rating of the partner for this service
+                $rating = $partner->reviews()->where('service_id', $service->id)->avg('rating');
+                array_add($partner, 'review', $review);
+                array_add($partner, 'rating', $rating);
                 array_forget($partner, 'pivot');
                 array_push($final_partners, $partner);
             }

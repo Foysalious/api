@@ -48,9 +48,10 @@ class CustomerController extends Controller {
 
     /**
      * @param $customer
+     * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getCustomerInfo($customer)
+    public function getCustomerInfo($customer, Request $request)
     {
         $cus = Customer::find($customer);
         $customer = Customer::select('name', 'mobile', 'email', 'address', 'office_address', 'gender', 'dob', 'pro_pic', 'xp', 'rating', 'reference_code', 'email_verified')
@@ -60,6 +61,7 @@ class CustomerController extends Controller {
             'mobiles' => $cus->mobiles()->select('mobile')->get(),
             'addresses' => $cus->addresses()->select('id', 'address')->get()
         ]);
+
     }
 
     public function facebookIntegration(Request $request, $customer)
