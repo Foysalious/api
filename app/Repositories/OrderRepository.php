@@ -13,7 +13,7 @@ class OrderRepository {
      */
     public function getOrderInfo($customer, $compareOperator, $status)
     {
-        $orders = $customer->orders()
+        return $customer->orders()
             ->with(['partner_orders' => function ($query)
             {
                 $query->select('id', 'partner_id', 'total_amount', 'paid', 'due', 'order_id')
@@ -34,12 +34,6 @@ class OrderRepository {
                 $query->where('jobs.status', $compareOperator, $status);
             })->select('id', 'created_at')->get();
 
-        foreach ($orders as $order)
-        {
-            array_add($order, 'total_amount', $order->partner_orders->sum('total_amount'));
-            array_add($order, 'total_due', $order->partner_orders->sum('due'));
-        }
-        return $orders;
     }
 
 }

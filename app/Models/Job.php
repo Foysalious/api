@@ -30,6 +30,6 @@ class Job extends Model {
 
     public function materials()
     {
-        return $this->hasMany(JobMaterial::class);
+        return $this->belongsToMany(Material::class);
     }
 }

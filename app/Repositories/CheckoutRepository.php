@@ -75,6 +75,8 @@ class CheckoutRepository {
         $order->delivery_address = $order_info['address'];
         if ($order->save())
         {
+            $order->order_code = sprintf('%06d', $order->id);
+            $order->update();
             foreach ($unique_partners as $partner)
             {
                 $partner_order = new PartnerOrder();
@@ -113,7 +115,11 @@ class CheckoutRepository {
                         $job->service_name = $service->service->name;
                         $job->service_option = json_encode($service->serviceOptions);
                         $job->status = 'Open';
+                        $job->service_cost = $job->total_cost = $service->partner->prices;
                         $job->save();
+                        $job->job_full_code = 'D-' . $order->order_code . '-' . sprintf('%06d', $partner) . '-' . sprintf('%08d', $job->id);
+                        $job->job_code = sprintf('%08d', $job->id);
+                        $job->update();
                     }
                 }
             }
