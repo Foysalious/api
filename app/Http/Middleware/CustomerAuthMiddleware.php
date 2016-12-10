@@ -4,7 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Customer;
 use Closure;
-
+use JWTAuth;
 class CustomerAuthMiddleware {
     /**
      * Handle an incoming request.

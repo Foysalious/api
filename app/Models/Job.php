@@ -32,4 +32,9 @@ class Job extends Model {
     {
         return $this->belongsToMany(Material::class);
     }
+
+    public function review()
+    {
+        return $this->hasOne(Review::class);
+    }
 }

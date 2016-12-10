@@ -44,6 +44,7 @@ class OrderController extends Controller {
                             }]);
                     }]);
             }])->select('id', 'created_at')->get();
+
         $final_orders = [];
         foreach ($orders as $order)
         {

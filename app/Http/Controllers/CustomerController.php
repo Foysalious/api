@@ -48,10 +48,9 @@ class CustomerController extends Controller {
 
     /**
      * @param $customer
-     * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getCustomerInfo($customer, Request $request)
+    public function getCustomerInfo($customer)
     {
         $cus = Customer::find($customer);
         $customer = Customer::select('name', 'mobile', 'email', 'address', 'office_address', 'gender', 'dob', 'pro_pic', 'xp', 'rating', 'reference_code', 'email_verified')
@@ -59,7 +58,7 @@ class CustomerController extends Controller {
         return response()->json([
             'msg' => 'successful', 'code' => 200, 'customer' => $customer,
             'mobiles' => $cus->mobiles()->select('mobile')->get(),
-            'addresses' => $cus->addresses()->select('id', 'address')->get()
+            'addresses' => $cus->delivery_addresses()->select('id', 'address')->get()
         ]);
 
     }
@@ -129,6 +128,19 @@ class CustomerController extends Controller {
         $delivery_address->address = $request->input('delivery_address');
         $delivery_address->customer_id = $customer->id;
         $delivery_address->save();
+        return response()->json(['msg' => 'successful', 'code' => 200]);
+    }
+
+    public function getDeliveryAddress($customer)
+    {
+        $customer = Customer::find($customer);
+        return response()->json(['msg' => 'successful', 'addresses' => $customer->delivery_addresses, 'code' => 200]);
+    }
+
+    public function removeDeliveryAddress($customer, Request $request)
+    {
+        $address = CustomerDeliveryAddress::find($request->get('address_id'));
+        $address->delete();
         return response()->json(['msg' => 'successful', 'code' => 200]);
     }
 

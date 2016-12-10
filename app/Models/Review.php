@@ -15,4 +15,9 @@ class Review extends Model {
         return $this->belongsTo(Partner::class);
     }
 
+    public function job()
+    {
+        return $this->belongsTo(Job::class);
+    }
+
 }

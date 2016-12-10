@@ -19,7 +19,7 @@ class Customer extends Authenticatable {
         return $this->hasMany(CustomerMobile::class);
     }
 
-    public function addresses()
+    public function delivery_addresses()
     {
         return $this->hasMany(CustomerDeliveryAddress::class);
     }

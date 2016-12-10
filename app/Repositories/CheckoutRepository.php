@@ -69,12 +69,25 @@ class CheckoutRepository {
             $partner_price[$partner->partner->id] = $price;
         }
         $order = new Order();
+        dd($order_info);
         $order->customer_id = $order_info['customer_id'];
         $order->delivery_name = $order_info['name'];
         $order->delivery_mobile = $order_info['phone'];
-        $order->delivery_address = $order_info['address'];
         if ($order->save())
         {
+            if ($order_info['address'] != '')
+            {
+                $deliver_adddress = new CustomerDeliveryAddress();
+                $deliver_adddress->address = $order_info['address'];
+                $deliver_adddress->customer_id = $order_info['customer_id'];
+                $deliver_adddress->save();
+                $order->address = $order_info['address'];
+            }
+            elseif ($order_info['address_id'] != '')
+            {
+                $deliver_adddress = CustomerDeliveryAddress::find($order_info['address_id']);
+                $order->delivery_address = $deliver_adddress->address;
+            }
             $order->order_code = sprintf('%06d', $order->id);
             $order->update();
             foreach ($unique_partners as $partner)
@@ -123,17 +136,6 @@ class CheckoutRepository {
                     }
                 }
             }
-        }
-        //send order info to customer  by mail
-        $customer = Customer::find($order->customer_id);
-        if ($customer->email != '')
-        {
-            $this->sendOrderConfirmationMail($order, $customer);
-        }
-        if ($customer->mobile != '')
-        {
-            $message = "Thanks for placing order at www.sheba.xyz. Order ID No : " . $order->id;
-            Sms::send_single_message($customer->mobile, $message);
         }
         return $order;
     }
