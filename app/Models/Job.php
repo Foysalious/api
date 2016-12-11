@@ -3,10 +3,6 @@
 use Illuminate\Database\Eloquent\Model;
 
 class Job extends Model {
-    public function order()
-    {
-        return $this->belongsTo(Order::class);
-    }
 
     public function service()
     {

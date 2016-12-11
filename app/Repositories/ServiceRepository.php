@@ -3,6 +3,8 @@
 namespace App\Repositories;
 
 
+use App\Models\Service;
+
 class ServiceRepository {
 
     /**
@@ -132,6 +134,22 @@ class ServiceRepository {
             }])
             ->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'prices')
             ->get();
+    }
+
+    public function getMaxMinPrice($service)
+    {
+        $service = Service::find($service->id);
+        $max_price = [];
+        $min_price = [];
+        foreach ($service->partners as $partner)
+        {
+            $prices = (array)json_decode($partner->pivot->prices);
+            $max = max($prices);
+            $min = min($prices);
+            array_push($max_price, $max);
+            array_push($min_price, $min);
+        }
+        return array(max($max_price), min($min_price));
     }
 
 }

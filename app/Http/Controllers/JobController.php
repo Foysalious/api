@@ -17,9 +17,12 @@ class JobController extends Controller {
     {
         $job = Job::with(['partner_order' => function ($query)
         {
-            $query->select('id', 'partner_id')->with(['partner' => function ($query)
+            $query->select('id', 'partner_id', 'order_id')->with(['partner' => function ($query)
             {
                 $query->select('id', 'name');
+            }])->with(['order' => function ($query)
+            {
+                $query->select('id', 'order_code');
             }]);
         }])->with(['materials' => function ($query)
         {

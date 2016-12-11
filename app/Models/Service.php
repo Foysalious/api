@@ -36,7 +36,7 @@ class Service extends Model {
 
     public function partners()
     {
-        return $this->belongsToMany(Partner::class);
+        return $this->belongsToMany(Partner::class)->withPivot($this->servicePivotColumns);
     }
 
     public function reviews()
