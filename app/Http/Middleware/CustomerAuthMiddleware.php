@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Models\Customer;
 use Closure;
 use JWTAuth;
+
 class CustomerAuthMiddleware {
     /**
      * Handle an incoming request.
@@ -17,7 +18,7 @@ class CustomerAuthMiddleware {
     {
         If ($request->has('remember_token'))
         {
-            $customer = Customer::where('remember_token', $request->get('remember_token'))->first();
+            $customer = Customer::where('remember_token', $request->input('remember_token'))->first();
             //remember_token is valid for a customer
             if ($customer)
             {
@@ -33,9 +34,14 @@ class CustomerAuthMiddleware {
         }
         try
         {
+//            dd(JWTAuth::getToken());
             if (!$user = JWTAuth::parseToken()->authenticate())
             {
                 return response()->json(['user_not_found'], 404);
+            }
+            if ($user->id != $request->customer)
+            {
+                return response()->json(['msg' => 'unauthorized', 'code' => 409]);
             }
         }
         catch (Tymon\JWTAuth\Exceptions\TokenExpiredException $e)

@@ -23,10 +23,10 @@ class OrderRepository {
                     }])
                     ->with(['jobs' => function ($query)
                     {
-                        $query->select('id', 'service_id', 'service_cost', 'status', 'partner_order_id')
+                        $query->select('id', 'service_id', 'service_cost', 'total_cost', 'status', 'partner_order_id')
                             ->with(['service' => function ($query)
                             {
-                                $query->select('id', 'name', 'thumb');
+                                $query->select('id', 'name', 'banner');
                             }]);
                     }]);
             }])->wherehas('jobs', function ($query) use ($status, $compareOperator)

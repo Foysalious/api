@@ -24,6 +24,8 @@ class ServiceController extends Controller {
         $service = Service::where('id', $service)
             ->select('id', 'name', 'category_id', 'description', 'thumb', 'banner', 'faqs', 'variable_type', 'variables')
             ->first();
+        if ($service == null)
+            return response()->json(['code' => 500, 'msg' => 'no service found']);
         //Add first options in service for render purpose
         if ($service->variable_type == 'Options')
         {

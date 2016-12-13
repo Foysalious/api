@@ -10,6 +10,7 @@ use App\Models\Job;
 use App\Models\Order;
 use App\Models\PartnerOrder;
 use App\Models\PartnerOrderPayment;
+use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
 use Mail;
@@ -69,7 +70,6 @@ class CheckoutRepository {
             $partner_price[$partner->partner->id] = $price;
         }
         $order = new Order();
-        dd($order_info);
         $order->customer_id = $order_info['customer_id'];
         $order->delivery_name = $order_info['name'];
         $order->delivery_mobile = $order_info['phone'];
@@ -128,6 +128,8 @@ class CheckoutRepository {
                         $job->service_name = $service->service->name;
                         $job->service_option = json_encode($service->serviceOptions);
                         $job->status = 'Open';
+                        $job->schedule_date=Carbon::parse($service->date)->format('Y-m-d');
+                        $job->preferred_time=$service->time;
                         $job->service_cost = $job->total_cost = $service->partner->prices;
                         $job->save();
                         $job->job_full_code = 'D-' . $order->order_code . '-' . sprintf('%06d', $partner) . '-' . sprintf('%08d', $job->id);

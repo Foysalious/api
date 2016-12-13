@@ -31,7 +31,7 @@ class Service extends Model {
 
     public function subCategory()
     {
-        return $this->category()->with('parent');
+        return $this->category();
     }
 
     public function partners()

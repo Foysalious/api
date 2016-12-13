@@ -13,30 +13,38 @@ class JobController extends Controller {
         $this->job_statuses_show = config('constants.JOB_STATUSES_SHOW');
     }
 
-    public function getInfo($job)
+    public function getInfo($customer,$job)
     {
-        $job = Job::with(['partner_order' => function ($query)
+        $job=Job::find($job);
+        if($job->partner_order->order->customer_id==$customer)
         {
-            $query->select('id', 'partner_id', 'order_id')->with(['partner' => function ($query)
+            $job = Job::with(['partner_order' => function ($query)
             {
-                $query->select('id', 'name');
-            }])->with(['order' => function ($query)
+                $query->select('id', 'due', 'partner_id', 'order_id')->with(['partner' => function ($query)
+                {
+                    $query->select('id', 'name');
+                }])->with(['order' => function ($query)
+                {
+                    $query->select('id', 'order_code');
+                }]);
+            }])->with(['materials' => function ($query)
             {
-                $query->select('id', 'order_code');
-            }]);
-        }])->with(['materials' => function ($query)
-        {
-            $query->select('material_name', 'material_price');
-        }])->with(['service' => function ($query)
-        {
-            $query->select('id', 'name', 'variable_type', 'variables');
-        }])->with(['review' => function ($query)
-        {
-            $query->select('job_id', 'review_title', 'review', 'rating');
-        }])->where('id', $job)
-            ->select('id', 'job_code', 'service_id', 'service_name', 'service_option', 'status', 'service_cost', 'material_cost', 'total_cost', 'created_at', 'partner_order_id')
-            ->first();
-        array_add($job, 'status_show', $this->job_statuses_show[$job->status]);
-        return response()->json(['job' => $job, 'msg' => 'successful', 'code' => 200]);
+                $query->select('material_name', 'material_price');
+            }])->with(['service' => function ($query)
+            {
+                $query->select('id', 'name', 'variable_type', 'variables');
+            }])->with(['review' => function ($query)
+            {
+                $query->select('job_id', 'review_title', 'review', 'rating');
+            }])->where('id', $job->id)
+                ->select('id', 'job_code', 'service_id', 'service_name', 'service_option', 'status', 'service_cost', 'material_cost', 'total_cost', 'created_at', 'partner_order_id')
+                ->first();
+            array_add($job, 'status_show', $this->job_statuses_show[$job->status]);
+            return response()->json(['job' => $job, 'msg' => 'successful', 'code' => 200]);
+        }
+        else{
+            return response()->json(['msg' => 'unauthorized', 'code' => 409]);
+        }
+
     }
 }

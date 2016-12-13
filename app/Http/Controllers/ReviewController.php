@@ -23,35 +23,35 @@ class ReviewController extends Controller {
         //There is already a review or rating for this job
         if ($review != null)
         {
-            if ($request->has('rating'))
+            if ($request->get('rating')!='')
             {
                 $review->rating = $request->get('rating');
             }
-            if ($request->has('review_title'))
+            if ($request->get('review_title')!='')
             {
                 $review->review_title = $request->get('review_title');
             }
-            if ($request->has('review'))
+            if ($request->get('review')!='')
             {
                 $review->review = $request->get('review');
             }
             $review->update();
-            return response()->json(['msg' => 'successful', 'code' => 500]);
+            return response()->json(['msg' => 'successful', 'code' => 200]);
         }
         else
         {
             if ($this->reviewRepository->customerCanGiveReview($customer, $request->get('job_id')))
             {
                 $review = new Review();
-                if ($request->has('rating'))
+                if ($request->get('rating')!='')
                 {
                     $review->rating = $request->get('rating');
                 }
-                if ($request->has('review_title'))
+                if ($request->get('review_title')!='')
                 {
                     $review->review_title = $request->get('review_title');
                 }
-                if ($request->has('review'))
+                if ($request->get('review')!='')
                 {
                     $review->review = $request->get('review');
                 }
@@ -60,7 +60,7 @@ class ReviewController extends Controller {
                 $review->service_id = $request->get('service_id');
                 $review->customer_id = $customer;
                 $review->save();
-                return response()->json(['msg' => 'successful', 'code' => 500]);
+                return response()->json(['msg' => 'successful', 'code' => 200]);
             }
             else
                 return response()->json(['msg' => 'unauthorized', 'code' => 409]);

@@ -21,6 +21,11 @@ class OrderController extends Controller {
     {
         $customer = Customer::find($customer);
         $orders = $this->orderRepository->getOrderInfo($customer, '<>', 'Closed');
+        foreach ($orders as $order)
+        {
+            $toal = $order->partner_orders->sum('total_amount');
+            array_add($order, 'total_cost', $toal);
+        }
         return response()->json(['orders' => $orders, 'code' => 200, 'msg' => 'successful']);
     }
 
@@ -37,7 +42,7 @@ class OrderController extends Controller {
                     }])
                     ->with(['jobs' => function ($query)
                     {
-                        $query->select('id', 'service_id', 'service_cost', 'status', 'partner_order_id')
+                        $query->select('id', 'job_code', 'service_id', 'service_cost', 'total_cost', 'status', 'partner_order_id')
                             ->with(['service' => function ($query)
                             {
                                 $query->select('id', 'name', 'thumb');

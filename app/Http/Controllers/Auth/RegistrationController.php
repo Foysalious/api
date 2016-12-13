@@ -65,14 +65,12 @@ class RegistrationController extends Controller {
      */
     public function registerWithEmail(Request $request)
     {
-        //return error if customer already exists
+        //return customer if customer already exists
         if ($customer = $this->customer->ifExist($request->input('email'), 'email'))
         {
-            $token = JWTAuth::fromUser($customer);
-            // return success with token
+            // return error
             return response()->json([
-                'msg' => 'successful', 'code' => 200, 'token' => $token,
-                'remember_token' => $customer->remember_token, 'customer' => $customer->id
+                'msg' => 'account already exists for this email', 'code' => 409
             ]);
         }
         $customer = $this->customer->registerEmailPassword($request->all());

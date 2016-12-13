@@ -4,7 +4,12 @@ namespace App\Repositories;
 
 
 class CategoryRepository {
+    private $serviceRepository;
 
+    public function __construct()
+    {
+        $this->serviceRepository = new ServiceRepository();
+    }
 
     /**
      * Send children with services for a category
@@ -34,6 +39,13 @@ class CategoryRepository {
                     $prices = (array)(json_decode($service->variables)->prices);
                     $min = (min($prices));
                     array_add($service, 'price', $min);
+                }
+                //Get start & end price for services. Custom services don't have price so ommitted
+                if ($service->variable_type != 'Custom')
+                {
+                    $maxMin = $this->serviceRepository->getMaxMinPrice($service);
+                    array_add($service, 'start_price', $maxMin[1]);
+                    array_add($service, 'end_price', $maxMin[0]);
                 }
                 array_add($service, 'slug_service', str_slug($service->name, '-'));
                 // review count of this partner for this service

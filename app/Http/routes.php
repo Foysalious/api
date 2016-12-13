@@ -30,7 +30,6 @@ $api->version('v1', function ($api)
     $api->post('register-with-facebook', 'App\Http\Controllers\Auth\RegistrationController@registerWithFacebook');
     $api->post('login', 'App\Http\Controllers\Auth\LoginController@login');
     $api->post('login-with-kit', 'App\Http\Controllers\Auth\LoginController@loginWithKit');
-
     $api->post('forget-password', 'App\Http\Controllers\Auth\PasswordController@sendResetPasswordEmail');
 
     $api->get('locations', 'App\Http\Controllers\LocationController@getAllLocations');
@@ -38,7 +37,7 @@ $api->version('v1', function ($api)
 
     $api->group(['prefix' => 'category'], function ($api)
     {
-        $api->get('', 'App\Http\Controllers\CategoryController@index');
+        $api->get('/', 'App\Http\Controllers\CategoryController@index');
         $api->get('{category}/children', 'App\Http\Controllers\CategoryController@getChildren');
         $api->get('{category}/parent', 'App\Http\Controllers\CategoryController@getParent');
     });
@@ -46,8 +45,9 @@ $api->version('v1', function ($api)
     {
         $api->get('{service}/partners', 'App\Http\Controllers\ServiceController@getPartners');
         $api->get('{service}/location/{location}/partners', 'App\Http\Controllers\ServiceController@getPartners');
+        $api->post('{service}/{location}/change-partner', 'App\Http\Controllers\ServiceController@changePartner');
+        //For Back-end
         $api->post('{service}/change-partner', 'App\Http\Controllers\ServiceController@changePartnerWithoutLocation');
-        $api->post('{service}/{location?}/change-partner', 'App\Http\Controllers\ServiceController@changePartner');
     });
     $api->group(['prefix' => 'partner'], function ($api)
     {
@@ -68,7 +68,7 @@ $api->version('v1', function ($api)
         $api->post('{customer}/fb-integration', 'App\Http\Controllers\CustomerController@facebookIntegration');
         $api->post('{customer}/change-address', 'App\Http\Controllers\CustomerController@changeAddress');
         $api->post('{customer}/add-delivery-address', 'App\Http\Controllers\CustomerController@addDeliveryAddress');
-        $api->get('{customer}/get-delivery-address', 'App\Http\Controllers\CustomerController@getDeliveryAddress');
+        $api->get('{customer}/get-delivery-info', 'App\Http\Controllers\CustomerController@getDeliveryInfo');
         $api->post('{customer}/remove-address', 'App\Http\Controllers\CustomerController@removeDeliveryAddress');
         $api->post('{customer}/mobile', 'App\Http\Controllers\CustomerController@modifyMobile');
         $api->post('{customer}/add-secondary-mobile', 'App\Http\Controllers\CustomerController@addSecondaryMobile');
@@ -81,10 +81,7 @@ $api->version('v1', function ($api)
         $api->post('{customer}/order-history', 'App\Http\Controllers\OrderController@getClosedOrderInfo');
         $api->post('{customer}/sp-payment', 'App\Http\Controllers\CheckoutController@spPayment');
         $api->post('{customer}/modify-review', 'App\Http\Controllers\ReviewController@modifyReview');
+        $api->get('{customer}/job/{job}', 'App\Http\Controllers\JobController@getInfo');
     });
 
-    $api->group(['prefix' => 'job'], function ($api)
-    {
-        $api->get('{job}', 'App\Http\Controllers\JobController@getInfo');
-    });
 });

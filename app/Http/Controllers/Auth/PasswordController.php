@@ -22,11 +22,11 @@ class PasswordController extends Controller {
         if ($customer = $this->customer->ifExist($request->input('email'), 'email'))
         {
             $this->customer->sendResetPasswordEmail($customer);
-            return response()->json(['msg' => 'Reset Password link send to email!', 'code' => '200']);
+            return response()->json(['msg' => 'Reset Password link send to email!', 'code' => 200]);
         }
         else
         {
-            return response()->json(['msg' => 'This email doesn\'t exist', 'code' => '404']);
+            return response()->json(['msg' => 'This email doesn\'t exist', 'code' => 404]);
         }
     }
 
