@@ -56,13 +56,11 @@ $api->version('v1', function ($api)
 
     $api->group(['prefix' => 'checkout'], function ($api)
     {
-        $api->post('place-order', 'App\Http\Controllers\CheckoutController@placeOrder');
-        $api->post('place-order-with-online-payment', 'App\Http\Controllers\CheckoutController@placeOrderWithPayment');
         $api->get('place-order-final', 'App\Http\Controllers\CheckoutController@placeOrderFinal');
         $api->get('sp-payment-final', 'App\Http\Controllers\CheckoutController@spPaymentFinal');
     });
 
-    $api->group(['prefix' => 'customer', 'middleware' => 'customer.auth'], function ($api)
+    $api->group(['prefix' => 'customer', 'middleware' => ['customer.auth']], function ($api)
     {
         $api->get('{customer}', 'App\Http\Controllers\CustomerController@getCustomerInfo');
         $api->post('{customer}/fb-integration', 'App\Http\Controllers\CustomerController@facebookIntegration');
@@ -82,6 +80,9 @@ $api->version('v1', function ($api)
         $api->post('{customer}/sp-payment', 'App\Http\Controllers\CheckoutController@spPayment');
         $api->post('{customer}/modify-review', 'App\Http\Controllers\ReviewController@modifyReview');
         $api->get('{customer}/job/{job}', 'App\Http\Controllers\JobController@getInfo');
+
+        $api->post('{customer}/checkout/place-order', 'App\Http\Controllers\CheckoutController@placeOrder');
+        $api->post('{customer}/checkout/place-order-with-online-payment', 'App\Http\Controllers\CheckoutController@placeOrderWithPayment');
     });
 
 });

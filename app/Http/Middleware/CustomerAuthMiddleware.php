@@ -34,7 +34,6 @@ class CustomerAuthMiddleware {
         }
         try
         {
-//            dd(JWTAuth::getToken());
             if (!$user = JWTAuth::parseToken()->authenticate())
             {
                 return response()->json(['user_not_found'], 404);

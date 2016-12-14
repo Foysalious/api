@@ -81,7 +81,7 @@ class CheckoutRepository {
                 $deliver_adddress->address = $order_info['address'];
                 $deliver_adddress->customer_id = $order_info['customer_id'];
                 $deliver_adddress->save();
-                $order->address = $order_info['address'];
+                $order->delivery_address = $order_info['address'];
             }
             elseif ($order_info['address_id'] != '')
             {
@@ -200,8 +200,8 @@ class CheckoutRepository {
 
     public function spPaymentWithPortWallet($request, $customer)
     {
-        $service_name = $request->get('service_name');
-        $partner_order_id = $request->get('partner_order_id');
+        $service_name = $request->input('service_name');
+        $partner_order_id = $request->input('partner_order_id');
         $product_name = '';
         for ($i = 0; $i < count($service_name); $i++)
         {
@@ -210,7 +210,7 @@ class CheckoutRepository {
         $product_name = rtrim($product_name, ",");
         $partner_order = PartnerOrder::find($partner_order_id[0]);
         array_add($request, 'address', $partner_order->order->delivery_address);
-        return $this->sendDataToPortwallet($request->get('price'), $product_name, $customer, $request, "/checkout/sp-payment-final");
+        return $this->sendDataToPortwallet($request->input('price'), $product_name, $customer, $request, "/checkout/sp-payment-final");
     }
 
     public function sendDataToPortwallet($amount, $product_name, $customer, $request, $redirect_url)
@@ -223,7 +223,7 @@ class CheckoutRepository {
         $data['name'] = !empty($customer->name) ? $customer->name : 'N/A';
         $data['email'] = isset($customer->email) ? $customer->email : 'N/A';
         $data['phone'] = isset($customer->mobile) ? $customer->mobile : 'N/A';
-        $data['address'] = $request->get('address');
+        $data['address'] = $request->input('address');
         $data['city'] = "N/A";
         $data['state'] = "N/A";
         $data['zipcode'] = "N/A";

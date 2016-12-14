@@ -29,82 +29,39 @@ class CheckoutController extends Controller {
         $this->customer = new CustomerRepository();
     }
 
-    public function placeOrder(Request $request)
+    public function placeOrder(Request $request, $customer)
     {
-        //Logged in customer chechkout
-        if ($request->has('remember_token'))
+        array_add($request, 'customer_id', $customer);
+        //store order details for customer
+        $order = $this->checkoutRepository->storeDataInDB($request->all(), 'cash-on-delivery');
+        if (!empty($order))
         {
-            //check for valid customer
-            $customer = $this->authRepository->checkValidCustomer($request->input('remember_token'), $request->input('access_token'));
-            //If a customer is found
-            if ($customer)
+            //send order info to customer  by mail
+            $customer = Customer::find($customer);
+            if ($customer->email != '')
             {
-                array_add($request, 'customer_id', $customer->id);
-                //store order details for customer
-                $order = $this->checkoutRepository->storeDataInDB($request->all(), 'cash-on-delivery');
-                if (!empty($order))
-                {
-                    //send order info to customer  by mail
-                    $customer = Customer::find($order->customer_id);
-                    if ($customer->email != '')
-                    {
-                        $this->checkoutRepository->sendOrderConfirmationMail($order, $customer);
-                    }
-                    if ($customer->mobile != '')
-                    {
-                        $message = "Thanks for placing order at www.sheba.xyz. Order ID No : " . $order->id;
-                        Sms::send_single_message($customer->mobile, $message);
-                    }
-                    return response()->json(['code' => 200, 'msg' => 'Order placed successfully!']);
-                }
+                $this->checkoutRepository->sendOrderConfirmationMail($order, $customer);
             }
-            //customer credentials failed
-            else
+            if ($customer->mobile != '')
             {
-                return response()->json(['code' => 404, 'msg' => 'Access denied!']);
+                $message = "Thanks for placing order at www.sheba.xyz. Order ID No : " . $order->id;
+                Sms::send_single_message($customer->mobile, $message);
             }
+            return response()->json(['code' => 200, 'msg' => 'Order placed successfully!']);
         }
     }
 
     /**
      * Place with order with payment
      * @param Request $request
+     * @param $customer
      * @return \Illuminate\Http\JsonResponse
      */
-    public function placeOrderWithPayment(Request $request)
+    public function placeOrderWithPayment(Request $request, $customer)
     {
-        //Logged in user checkout
-        if ($request->has('remember_token'))
-        {
-            //check for valid customer
-            $customer = $this->authRepository->checkValidCustomer($request->input('remember_token'), $request->input('access_token'));
-            //If customer is valid place the order
-            if ($customer)
-            {
-                $connectionResponse = $this->checkoutRepository->checkoutWithPortWallet($request, $customer);
-                return response()->json($connectionResponse);
-            }
-            //customer credentials failed
-            else
-            {
-                return response()->json(['code' => 404, 'msg' => 'Access denied!']);
-            }
-        }
-        elseif ($request->has('code'))
-        {
-            //Authenticate the code with facebook kit
-            $code_data = $this->fbKit->authenticateKit($request->input('code'));
-            //return error if customer already exists
-            if ($this->customer->ifExist($code_data['mobile'], 'mobile'))
-            {
-                return response()->json(['message' => 'number already exists', 'code' => 409]);
-            }
-            //register the customer with verified mobile
-            $customer = $this->customer->registerMobile($code_data['mobile']);
-
-            $connectionResponse = $this->checkoutRepository->checkoutWithPortWallet($request, $customer);
-            return response()->json($connectionResponse);
-        }
+        $customer = Customer::find($customer);
+        $connectionResponse = $this->checkoutRepository->checkoutWithPortWallet($request, $customer);
+        return response()->json($connectionResponse);
     }
 
 
@@ -115,11 +72,11 @@ class CheckoutController extends Controller {
     public function placeOrderFinal(Request $request)
     {
         $portwallet = $this->checkoutRepository->getPortWalletObject();
-        $order_info = Cache::get('portwallet-payment-' . $request->get('invoice'));
+        $order_info = Cache::get('portwallet-payment-' . $request->input('invoice'));
         $cart = json_decode($order_info['cart']);
         $data = array();
         $data["amount"] = $cart->price;
-        $data["invoice"] = Cache::get('invoice-' . $request->get('invoice'));
+        $data["invoice"] = Cache::get('invoice-' . $request->input('invoice'));
         $data['currency'] = "BDT";
 
         $portwallet_response = $portwallet->ipnValidate($data);
@@ -130,8 +87,8 @@ class CheckoutController extends Controller {
             $order = $this->checkoutRepository->storeDataInDB($order_info, 'online');
             if (!empty($order))
             {
-                Cache::forget('invoice-' . $request->get('invoice'));
-                Cache::forget('portwallet-payment-' . $request->get('invoice'));
+                Cache::forget('invoice-' . $request->input('invoice'));
+                Cache::forget('portwallet-payment-' . $request->input('invoice'));
                 return redirect('http://localhost:8080');
             }
         }
@@ -151,18 +108,18 @@ class CheckoutController extends Controller {
     public function spPaymentFinal(Request $request)
     {
         $portwallet = $this->checkoutRepository->getPortWalletObject();
-        $payment_info = Cache::get('portwallet-payment-' . $request->get('invoice'));
+        $payment_info = Cache::get('portwallet-payment-' . $request->input('invoice'));
         $data = array();
         $data["amount"] = $payment_info['price'];
-        $data["invoice"] = Cache::get('invoice-' . $request->get('invoice'));
+        $data["invoice"] = Cache::get('invoice-' . $request->input('invoice'));
         $data['currency'] = "BDT";
         $portwallet_response = $portwallet->ipnValidate($data);
         //check payment validity
         if ($portwallet_response->status == 200 && $portwallet_response->data->status == "ACCEPTED")
         {
             $this->checkoutRepository->clearSpPayment($payment_info);
-            Cache::forget('invoice-' . $request->get('invoice'));
-            Cache::forget('portwallet-payment-' . $request->get('invoice'));
+            Cache::forget('invoice-' . $request->input('invoice'));
+            Cache::forget('portwallet-payment-' . $request->input('invoice'));
             return redirect('http://localhost:8080');
         }
         else

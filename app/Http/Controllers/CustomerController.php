@@ -127,8 +127,14 @@ class CustomerController extends Controller {
         $delivery_address = new CustomerDeliveryAddress();
         $delivery_address->address = $request->input('delivery_address');
         $delivery_address->customer_id = $customer->id;
-        $delivery_address->save();
-        return response()->json(['msg' => 'successful', 'code' => 200]);
+        if ($delivery_address->save())
+        {
+            return response()->json(['msg' => 'successful', 'code' => 200]);
+        }
+        else
+        {
+            return response()->json(['msg' => 'error', 'code' => 500]);
+        }
     }
 
     public function getDeliveryInfo($customer)
@@ -139,21 +145,30 @@ class CustomerController extends Controller {
 
     public function removeDeliveryAddress($customer, Request $request)
     {
-        $address = CustomerDeliveryAddress::find($request->get('address_id'));
-        $address->delete();
-        return response()->json(['msg' => 'successful', 'code' => 200]);
+        $customer = Customer::find($customer);
+        $delivery_address_id = $customer->delivery_addresses()->pluck('id');
+        if ($delivery_address_id->contains($request->input('address_id')))
+        {
+            $address = CustomerDeliveryAddress::find($request->input('address_id'));
+            if ($address->delete())
+                return response()->json(['msg' => 'successful', 'code' => 200]);
+            else
+                return response()->json(['msg' => 'error', 'code' => 500]);
+        }
+        else
+            return response()->json(['msg' => 'unauthorized', 'code' => 409]);
     }
 
     public function modifyEmail(Request $request, $customer)
     {
         $customer = Customer::find($customer);
-        if ($email = $this->customer->ifExist($request->get('email'), 'email'))
+        if ($email = $this->customer->ifExist($request->input('email'), 'email'))
         {
             return response()->json(['msg' => 'email already exists', 'code' => 409]);
         }
         else
         {
-            $customer->email = $request->get('email');
+            $customer->email = $request->input('email');
             $customer->email_verified = 0;
             $customer->update();
             $this->customer->sendVerificationMail($customer);
@@ -186,7 +201,7 @@ class CustomerController extends Controller {
         $customer_mobile = CustomerMobile::where('mobile', $request->input('mobile'))->first();
         $customer_mobile->mobile = $customer->mobile;
         $customer_mobile->update();
-        $customer->mobile = $request->get('mobile');
+        $customer->mobile = $request->input('mobile');
         if ($customer->update())
         {
             return response()->json(['msg' => 'successful', 'code' => 200]);
@@ -198,15 +213,15 @@ class CustomerController extends Controller {
         $customer = Customer::find($customer);
         if ($request->has('name'))
         {
-            $customer->name = $request->get('name');
+            $customer->name = $request->input('name');
         }
         if ($request->has('dob'))
         {
-            $customer->dob = $request->get('dob');
+            $customer->dob = $request->input('dob');
         }
         if ($request->has('gender'))
         {
-            $customer->gender = $request->get('gender');
+            $customer->gender = $request->input('gender');
         }
         if ($customer->update())
         {

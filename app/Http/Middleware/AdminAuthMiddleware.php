@@ -17,7 +17,7 @@ class AdminAuthMiddleware {
     {
         If ($request->has('remember_token'))
         {
-            $user = User::where('remember_token', $request->get('remember_token'))->first();
+            $user = User::where('remember_token', $request->input('remember_token'))->first();
             //remember_token is valid for a customer
             if ($user)
             {

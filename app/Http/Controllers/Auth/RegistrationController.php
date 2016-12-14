@@ -87,12 +87,12 @@ class RegistrationController extends Controller {
 
     public function registerWithFacebook(Request $request)
     {
-        $customer = $this->customer->ifExist($request->get('id'), 'fb_id');
+        $customer = $this->customer->ifExist($request->input('id'), 'fb_id');
         //fb_id doesn't exist
         if (!$customer)
         {
             //email already exist for this facebook user now logged in the user
-            if ($customer = $this->customer->ifExist($request->get('email'), 'email'))
+            if ($customer = $this->customer->ifExist($request->input('email'), 'email'))
             {
                 $token = JWTAuth::fromUser($customer);
                 $customer->reference_code = str_random(30);

@@ -20,13 +20,13 @@ class SearchController extends Controller {
 
     public function getService(Request $request)
     {
-        if ($request->get('s') != '')
+        if ($request->input('s') != '')
         {
-            $query = Service::where('name', 'like', "%" . $request->get('s') . "%");
+            $query = Service::where('name', 'like', "%" . $request->input('s') . "%");
             //if has parent category id
             if ($request->has('p_c'))
             {
-                $category = Category::find($request->get('p_c'));
+                $category = Category::find($request->input('p_c'));
                 $children_categories = $category->children()->pluck('id');
                 $query = $query->whereIn('category_id', $children_categories);
             }
