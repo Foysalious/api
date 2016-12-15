@@ -17,7 +17,7 @@ use Mail;
 class CheckoutController extends Controller {
     private $authRepository;
     private $checkoutRepository;
-
+    private $sheba_front_end_url;
     private $fbKit;
     private $customer;
 
@@ -27,6 +27,7 @@ class CheckoutController extends Controller {
         $this->checkoutRepository = new CheckoutRepository();
         $this->fbKit = new FacebookAccountKit();
         $this->customer = new CustomerRepository();
+        $this->sheba_front_end_url = env('SHEBA_FRONT_END_URL');
     }
 
     public function placeOrder(Request $request, $customer)
@@ -89,7 +90,7 @@ class CheckoutController extends Controller {
             {
                 Cache::forget('invoice-' . $request->input('invoice'));
                 Cache::forget('portwallet-payment-' . $request->input('invoice'));
-                return redirect('http://localhost:8080');
+                return redirect($this->sheba_front_end_url);
             }
         }
         else
@@ -120,7 +121,7 @@ class CheckoutController extends Controller {
             $this->checkoutRepository->clearSpPayment($payment_info);
             Cache::forget('invoice-' . $request->input('invoice'));
             Cache::forget('portwallet-payment-' . $request->input('invoice'));
-            return redirect('http://localhost:8080');
+            return redirect('http://dev-sheba.xyz/');
         }
         else
         {

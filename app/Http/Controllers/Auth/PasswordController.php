@@ -11,10 +11,12 @@ use Illuminate\Support\Facades\Hash;
 
 class PasswordController extends Controller {
     private $customer;
+    private $sheba_front_end_url;
 
     public function __construct()
     {
         $this->customer = new CustomerRepository();
+        $this->sheba_front_end_url = env('SHEBA_FRONT_END_URL');
     }
 
     public function sendResetPasswordEmail(Request $request)
@@ -57,7 +59,7 @@ class PasswordController extends Controller {
             $customer->password = bcrypt($request->input('new_password'));
             $customer->update();
             Cache::forget($customer->id . '-reset-password');
-            return redirect('http://localhost:8080/login');
+            return redirect($this->sheba_front_end_url . '/login');
         }
         else
         {
