@@ -53,6 +53,7 @@ class CheckoutRepository {
 
     public function storeDataInDB($order_info, $payment_method)
     {
+//        dd($order_info);
         $cart = json_decode($order_info['cart']);
         //group cart_info by partners
         $cart_partner = collect($cart->items)->groupBy('partner.id');
@@ -71,8 +72,11 @@ class CheckoutRepository {
         }
         $order = new Order();
         $order->customer_id = $order_info['customer_id'];
+        $order->location_id = $order_info['location_id'];
         $order->delivery_name = $order_info['name'];
         $order->delivery_mobile = $order_info['phone'];
+        $order->status = 'Open';
+        $order->sales_channel = 'Web';
         if ($order->save())
         {
             if ($order_info['address'] != '')
@@ -95,16 +99,16 @@ class CheckoutRepository {
                 $partner_order = new PartnerOrder();
                 $partner_order->order_id = $order->id;
                 $partner_order->partner_id = $partner;
-                $partner_order->total_amount = $partner_price[$partner];
-                if ($payment_method == 'cash-on-delivery')
+//                $partner_order->total_amount = $partner_price[$partner];
+//                if ($payment_method == 'cash-on-delivery')
+//                {
+//                    $partner_order->due = $partner_price[$partner];
+//                    $partner_order->paid = 0;
+//                }
+                if ($payment_method == 'online')
                 {
-                    $partner_order->due = $partner_price[$partner];
-                    $partner_order->paid = 0;
-                }
-                elseif ($payment_method == 'online')
-                {
-                    $partner_order->paid = $partner_price[$partner];
-                    $partner_order->due = 0;
+                    $partner_order->sheba_collection = $partner_price[$partner];
+//                    $partner_order->due = 0;
                 }
                 $partner_order->payment_method = $payment_method;
                 if ($partner_order->save())
@@ -113,7 +117,7 @@ class CheckoutRepository {
                     {
                         $partner_order_payment = new PartnerOrderPayment();
                         $partner_order_payment->partner_order_id = $partner_order->id;
-                        $partner_order_payment->amount = $partner_order->paid;
+                        $partner_order_payment->amount = $partner_order->sheba_collection;
                         $partner_order_payment->transaction_type = 'Credit';
                         $partner_order_payment->method = 'online';
                         $partner_order_payment->log = 'advanced payment';
@@ -128,9 +132,9 @@ class CheckoutRepository {
                         $job->service_name = $service->service->name;
                         $job->service_option = json_encode($service->serviceOptions);
                         $job->status = 'Open';
-                        $job->schedule_date=Carbon::parse($service->date)->format('Y-m-d');
-                        $job->preferred_time=$service->time;
-                        $job->service_cost = $job->total_cost = $service->partner->prices;
+                        $job->schedule_date = Carbon::parse($service->date)->format('Y-m-d');
+                        $job->preferred_time = $service->time;
+                        $job->service_cost = $service->partner->prices;
                         $job->save();
                         $job->job_full_code = 'D-' . $order->order_code . '-' . sprintf('%06d', $partner) . '-' . sprintf('%08d', $job->id);
                         $job->job_code = sprintf('%08d', $job->id);
@@ -144,22 +148,28 @@ class CheckoutRepository {
 
     public function clearSpPayment($payment_info)
     {
-        $partner_order_id = $payment_info['partner_order_id'];
+        $partner_order_id = array_unique($payment_info['partner_order_id']);
         $partner = [];
         for ($i = 0; $i < count($partner_order_id); $i++)
         {
             $partner_order = PartnerOrder::find($partner_order_id[$i]);
+            //t o send data in email
             array_push($partner, array("partner_order_id" => $partner_order->id, "due" => $partner_order->due));
             $partner_order_payment = new PartnerOrderPayment();
             $partner_order_payment->partner_order_id = $partner_order->id;
-            $partner_order_payment->amount = $partner_order->due;
+            $grossCost = 0;
+            foreach ($partner_order->jobs as $job)
+            {
+                $grossCost += $job->grossCost();
+            }
+            $due = $grossCost - ($partner_order->sheba_collection + $partner_order->partner_collection);
+            $partner_order_payment->amount = $due;
             $partner_order_payment->transaction_type = 'Credit';
             $partner_order_payment->method = 'online';
             $partner_order_payment->log = 'Due paid';
             $partner_order_payment->save();
-            $partner_order->paid = $partner_order->due;
-            $partner_order->due = 0;
             $partner_order->payment_method = 'online';
+            $partner_order->sheba_collection = $due;
             $partner_order->update();
         }
         $this->sendSpPaymentClearMail($partner);
@@ -210,6 +220,7 @@ class CheckoutRepository {
         $product_name = rtrim($product_name, ",");
         $partner_order = PartnerOrder::find($partner_order_id[0]);
         array_add($request, 'address', $partner_order->order->delivery_address);
+        array_add($request, 'phone', $partner_order->order->delivery_mobile);
         return $this->sendDataToPortwallet($request->input('price'), $product_name, $customer, $request, "/checkout/sp-payment-final");
     }
 
@@ -222,11 +233,19 @@ class CheckoutRepository {
         $data['product_description'] = "N/A";
         $data['name'] = !empty($customer->name) ? $customer->name : 'N/A';
         $data['email'] = isset($customer->email) ? $customer->email : 'N/A';
-        $data['phone'] = isset($customer->mobile) ? $customer->mobile : 'N/A';
-        $data['address'] = $request->input('address');
-        $data['city'] = "N/A";
-        $data['state'] = "N/A";
-        $data['zipcode'] = "N/A";
+        $data['phone'] = $request->input('phone');
+        if ($request->input('address') != '')
+        {
+            $data['address'] = $request->input('address');
+        }
+        else
+        {
+            $customer_address = CustomerDeliveryAddress::find($request->input('address_id'));
+            $data['address'] = $customer_address->address;
+        }
+        $data['city'] = "city";
+        $data['state'] = "state";
+        $data['zipcode'] = "zipcode";
         $data['country'] = "BD";
         $data['redirect_url'] = $this->appBaseUrl . $redirect_url;
         $data['ipn_url'] = $this->appBaseUrl . "/ipn.php"; //IPN URL must be public URL which can be access remotely by portwallet system.

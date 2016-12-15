@@ -13,14 +13,14 @@ class JobController extends Controller {
         $this->job_statuses_show = config('constants.JOB_STATUSES_SHOW');
     }
 
-    public function getInfo($customer,$job)
+    public function getInfo($customer, $job)
     {
-        $job=Job::find($job);
-        if($job->partner_order->order->customer_id==$customer)
+        $job = Job::find($job);
+        if ($job->partner_order->order->customer_id == $customer)
         {
             $job = Job::with(['partner_order' => function ($query)
             {
-                $query->select('id', 'due', 'partner_id', 'order_id')->with(['partner' => function ($query)
+                $query->select('id', 'partner_id', 'order_id')->with(['partner' => function ($query)
                 {
                     $query->select('id', 'name');
                 }])->with(['order' => function ($query)
@@ -37,12 +37,18 @@ class JobController extends Controller {
             {
                 $query->select('job_id', 'review_title', 'review', 'rating');
             }])->where('id', $job->id)
-                ->select('id', 'job_code', 'service_id', 'service_name', 'service_option', 'status', 'service_cost', 'material_cost', 'total_cost', 'created_at', 'partner_order_id')
+                ->select('id', 'job_code', 'service_id', 'service_name', 'service_option', 'discount', 'status', 'service_cost', 'created_at', 'partner_order_id')
                 ->first();
             array_add($job, 'status_show', $this->job_statuses_show[$job->status]);
+
+            $job_model = Job::find($job->id);
+            array_add($job, 'material_cost', $job_model->materialCost());
+            array_add($job, 'total_cost', $job_model->grossCost());
+
             return response()->json(['job' => $job, 'msg' => 'successful', 'code' => 200]);
         }
-        else{
+        else
+        {
             return response()->json(['msg' => 'unauthorized', 'code' => 409]);
         }
 

@@ -33,4 +33,24 @@ class Job extends Model {
     {
         return $this->hasOne(Review::class);
     }
+
+    public function usedMaterials()
+    {
+        return $this->hasMany(JobMaterial::class);
+    }
+
+    public function materialCost()
+    {
+        return $this->usedMaterials()->sum('material_price');
+    }
+
+    public function totalCost()
+    {
+        return $this->service_cost + $this->materialCost();
+    }
+
+    public function grossCost()
+    {
+        return $this->totalCost() - $this->discount;
+    }
 }

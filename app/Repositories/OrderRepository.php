@@ -16,14 +16,14 @@ class OrderRepository {
         return $customer->orders()
             ->with(['partner_orders' => function ($query)
             {
-                $query->select('id', 'partner_id', 'total_amount', 'paid', 'due', 'order_id')
+                $query->select('id', 'partner_id', 'sheba_collection', 'partner_collection', 'order_id')
                     ->with(['partner' => function ($query)
                     {
                         $query->select('id', 'name');
                     }])
                     ->with(['jobs' => function ($query)
                     {
-                        $query->select('id', 'service_id', 'service_cost', 'total_cost', 'status', 'partner_order_id')
+                        $query->select('id', 'service_id', 'status', 'partner_order_id')
                             ->with(['service' => function ($query)
                             {
                                 $query->select('id', 'name', 'banner');
