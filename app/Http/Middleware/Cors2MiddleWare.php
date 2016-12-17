@@ -19,12 +19,12 @@ class Cors2MiddleWare {
             "http://localhost:8080",
             "http://dev-sheba.xyz",
             "http://admin.dev-sheba.xyz",
-            "http://sheba.dev",
+            //"http://sheba.dev",
         ];
         if(in_array($request->server('HTTP_ORIGIN'), $domains)) {
             $headers['Access-Control-Allow-Origin'] = $request->server('HTTP_ORIGIN');
         } else {
-            return response()->json(['Unauthorized', 401]);
+            return response()->json(['message' => 'Unauthorized', 'code' => 401]);
         }
 
         // ALLOW OPTIONS METHOD
