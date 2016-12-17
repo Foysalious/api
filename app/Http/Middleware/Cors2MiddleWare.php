@@ -21,9 +21,9 @@ class Cors2MiddleWare {
             "http://admin.dev-sheba.xyz",
         ];
         if(in_array($request->server('HTTP_ORIGIN'), $domains)) {
-            return Response::json($domains);
+            return response()->json($domains);
         } else {
-            return Response::json(['Unauthorized', 401]);
+            return response()->json(['Unauthorized', 401]);
         }
     }
 }
