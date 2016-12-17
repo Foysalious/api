@@ -26,15 +26,12 @@ class Cors2MiddleWare {
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Methods'] = 'POST, GET, PUT, DELETE';
         $headers['Access-Control-Allow-Headers'] = 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With';
-        
-        if(in_array($request->server('HTTP_ORIGIN'), $domains)) {
-            $headers['Access-Control-Allow-Origin'] = $request->server('HTTP_ORIGIN');
-        } else {
+        $headers['Access-Control-Allow-Origin'] = $request->server('HTTP_ORIGIN');
+
+        if(!in_array($request->server('HTTP_ORIGIN'), $domains)) {
             return response()
                 ->json(['message' => 'Unauthorized', 'code' => 401])
-                ->header('Access-Control-Allow-Methods', 'POST, GET, PUT, DELETE')
-                ->header('Access-Control-Allow-Headers', 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With')
-                ->header('Access-Control-Allow-Origin', $request->server('HTTP_ORIGIN'));
+                ->withHeader($headers);
         }
 
         // ALLOW OPTIONS METHOD
