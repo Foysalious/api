@@ -14,13 +14,22 @@ class CorsMiddleWare {
      */
     public function handle($request, Closure $next)
     {
-        header("Access-Control-Allow-Origin: *");
+        $headers = [];
+        $domains = [
+            "http://localhost:8080",
+            "http://dev-sheba.xyz",
+            "http://admin.dev-sheba.xyz",
+        ];
+        if(in_array($request->server('HTTP_ORIGIN'), $domains)) {
+            $headers['Access-Control-Allow-Origin'] = $request->server('HTTP_ORIGIN');
+        } else {
+            return Response::make('Unauthorized', 401, $headers);
+        }
 
         // ALLOW OPTIONS METHOD
-        $headers = [
-            'Access-Control-Allow-Methods' => 'POST, GET, OPTIONS, PUT, DELETE',
-            'Access-Control-Allow-Headers' => 'Content-Type, X-Auth-Token, Origin, Authorization'
-        ];
+        $headers['Access-Control-Allow-Methods'] = 'POST, GET, OPTIONS, PUT, DELETE';
+        $headers['Access-Control-Allow-Headers'] = 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With';
+
         if ($request->getMethod() == "OPTIONS")
         {
             // The client-side application can set only headers allowed in Access-Control-Allow-Headers

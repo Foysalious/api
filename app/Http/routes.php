@@ -22,10 +22,11 @@ $api = app('Dingo\Api\Routing\Router');
 */
 $api->version('v1', function ($api)
 {
-//    $api->group(['middleware'=>'cors'], function($api){
+    $api->group(['middleware'=>'cors'], function($api){
         /*
          * Login & Register routes
         */
+
         $api->post('register-mobile', 'App\Http\Controllers\Auth\RegistrationController@registerWithMobile');
         $api->post('register-email', 'App\Http\Controllers\Auth\RegistrationController@registerWithEmail');
         $api->post('register-with-facebook', 'App\Http\Controllers\Auth\RegistrationController@registerWithFacebook');
@@ -85,5 +86,5 @@ $api->version('v1', function ($api)
             $api->post('{customer}/checkout/place-order', 'App\Http\Controllers\CheckoutController@placeOrder');
             $api->post('{customer}/checkout/place-order-with-online-payment', 'App\Http\Controllers\CheckoutController@placeOrderWithPayment');
         });
-//    });
+    });
 });

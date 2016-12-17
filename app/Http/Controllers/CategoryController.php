@@ -21,7 +21,7 @@ class CategoryController extends Controller {
      * Get all categories
      * @return \Illuminate\Http\JsonResponse
      */
-    public function index()
+    public function index(Request $request)
     {
         $categories = Category::parents()
             ->select('id', 'name', 'thumb', 'banner')
@@ -29,17 +29,21 @@ class CategoryController extends Controller {
         foreach ($categories as $category)
         {
             array_add($category, 'slug_category', str_slug($category->name, '-'));
-            $total_service=0;
+            $total_service = 0;
             foreach ($category->children as $child)
             {
                 $total_service += $child->services()->count();
             }
             array_add($category, 'total_service', $total_service);
-            array_forget($category,'children');
+            array_forget($category, 'children');
         }
-//        dd($categories);
+
+        //dd($request->input('callback'). "(" . json_encode($categories) . ")");
+
         if (!$categories->isEmpty())
-            return response()->json(['categories' => $categories, 'msg' => 'successful', 'code' => 200]);
+            return $request->input('callback'). "(" . json_encode($categories) . ")";
+            return response()
+                ->json(['categories' => $categories, 'msg' => 'successful', 'code' => 200]);
         return response()->json(['msg' => 'nothing found', 'code' => 404]);
     }
 
