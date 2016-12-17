@@ -31,7 +31,7 @@ class Cors2MiddleWare {
         if(!in_array($request->server('HTTP_ORIGIN'), $domains)) {
             return response()
                 ->json(['message' => 'Unauthorized', 'code' => 401])
-                ->withHeader($headers);
+                ->withHeaders($headers);
         }
 
         // ALLOW OPTIONS METHOD
