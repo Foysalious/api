@@ -22,7 +22,7 @@ $api = app('Dingo\Api\Routing\Router');
 */
 $api->version('v1', function ($api)
 {
-    $api->group(['middleware'=>'cors'], function($api){
+    $api->group(['middleware'=>'cors2'], function($api){
         /*
          * Login & Register routes
         */
