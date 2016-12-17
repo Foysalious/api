@@ -21,9 +21,10 @@ class CorsMiddleWare {
             "http://admin.dev-sheba.xyz",
         ];
         if(in_array($request->server('HTTP_ORIGIN'), $domains)) {
+            return Response::json($domains);
             $headers['Access-Control-Allow-Origin'] = $request->server('HTTP_ORIGIN');
         } else {
-            return Response::make('Unauthorized', 401, $headers);
+            return Response::json(['Unauthorized', 401]);
         }
 
         // ALLOW OPTIONS METHOD
