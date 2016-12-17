@@ -37,6 +37,7 @@ class CategoryController extends Controller {
             array_add($category, 'total_service', $total_service);
             array_forget($category,'children');
         }
+//        dd($categories);
         if (!$categories->isEmpty())
             return response()->json(['categories' => $categories, 'msg' => 'successful', 'code' => 200]);
         return response()->json(['msg' => 'nothing found', 'code' => 404]);
