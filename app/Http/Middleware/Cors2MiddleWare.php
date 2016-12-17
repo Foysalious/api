@@ -21,10 +21,20 @@ class Cors2MiddleWare {
             "http://admin.dev-sheba.xyz",
             //"http://sheba.dev",
         ];
+
+
+        // ALLOW OPTIONS METHOD
+        $headers['Access-Control-Allow-Methods'] = 'POST, GET, PUT, DELETE';
+        $headers['Access-Control-Allow-Headers'] = 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With';
+        
         if(in_array($request->server('HTTP_ORIGIN'), $domains)) {
             $headers['Access-Control-Allow-Origin'] = $request->server('HTTP_ORIGIN');
         } else {
-            return response()->json(['message' => 'Unauthorized', 'code' => 401]);
+            return response()
+                ->json(['message' => 'Unauthorized', 'code' => 401])
+                ->header('Access-Control-Allow-Methods', 'POST, GET, PUT, DELETE')
+                ->header('Access-Control-Allow-Headers', 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With')
+                ->header('Access-Control-Allow-Origin', $request->server('HTTP_ORIGIN'));
         }
 
         // ALLOW OPTIONS METHOD
