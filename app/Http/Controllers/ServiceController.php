@@ -14,9 +14,9 @@ use Illuminate\Http\Request;
 class ServiceController extends Controller {
     private $serviceRepository;
 
-    public function __construct()
+    public function __construct(ServiceRepository $srp)
     {
-        $this->serviceRepository = new ServiceRepository();
+        $this->serviceRepository = $srp;
     }
 
     public function getPartners($service, $location = null)

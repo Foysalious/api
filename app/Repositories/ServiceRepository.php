@@ -167,7 +167,7 @@ class ServiceRepository {
         $service = Service::find($service->id);
         $max_price = [];
         $min_price = [];
-        if (($service->partners)->isEmpty())
+        if ($service->partners->isEmpty())
         {
             return array(0, 0);
         }
