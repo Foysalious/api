@@ -43,9 +43,12 @@ class CategoryRepository {
                 //Get start & end price for services. Custom services don't have price so ommitted
                 if ($service->variable_type != 'Custom')
                 {
-                    $maxMin = $this->serviceRepository->getMaxMinPrice($service);
-                    array_add($service, 'start_price', $maxMin[1]);
-                    array_add($service, 'end_price', $maxMin[0]);
+//                    $prices = (array)(json_decode($service->variables)->min_prices);
+//                    $min = (min($prices));
+//                    $prices = (array)(json_decode($service->variables)->max_prices);
+//                    $max = (max($prices));
+                    array_add($service, 'start_price', 0);
+                    array_add($service, 'end_price', 0);
                 }
                 array_add($service, 'slug_service', str_slug($service->name, '-'));
                 // review count of this partner for this service

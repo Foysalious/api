@@ -141,6 +141,10 @@ class ServiceRepository {
         $service = Service::find($service->id);
         $max_price = [];
         $min_price = [];
+        if (($service->partners)->isEmpty())
+        {
+            return array(0, 0);
+        }
         foreach ($service->partners as $partner)
         {
             $prices = (array)json_decode($partner->pivot->prices);
