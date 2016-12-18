@@ -22,7 +22,6 @@ $api = app('Dingo\Api\Routing\Router');
 */
 $api->version('v1', function ($api)
 {
-    $api->group(['middleware'=>'cors2'], function($api){
         /*
          * Login & Register routes
         */
@@ -86,5 +85,4 @@ $api->version('v1', function ($api)
             $api->post('{customer}/checkout/place-order', 'App\Http\Controllers\CheckoutController@placeOrder');
             $api->post('{customer}/checkout/place-order-with-online-payment', 'App\Http\Controllers\CheckoutController@placeOrderWithPayment');
         });
-    });
 });

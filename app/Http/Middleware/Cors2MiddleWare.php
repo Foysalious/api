@@ -17,18 +17,20 @@ class Cors2MiddleWare {
     {
         $domains = [
             "http://localhost:8080",
+            "http://192.168.1.109:8080",
             "http://dev-sheba.xyz",
             "http://admin.dev-sheba.xyz",
-            //"http://sheba.dev",
+            "http://sheba.dev",
+            null
         ];
-
-
         // ALLOW OPTIONS METHOD
+        $headers['Access-Control-Allow-Credentials'] = 'true';
         $headers['Access-Control-Allow-Methods'] = 'POST, GET, PUT, DELETE';
         $headers['Access-Control-Allow-Headers'] = 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With';
         $headers['Access-Control-Allow-Origin'] = $request->server('HTTP_ORIGIN');
 
-        if(!in_array($request->server('HTTP_ORIGIN'), $domains)) {
+        if (!in_array($request->server('HTTP_ORIGIN'), $domains))
+        {
             return response()
                 ->json(['message' => 'Unauthorized', 'code' => 401])
                 ->withHeaders($headers);
@@ -39,7 +41,8 @@ class Cors2MiddleWare {
         $headers['Access-Control-Allow-Headers'] = 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With';
 
         $response = $next($request);
-        foreach ($headers as $key => $value) {
+        foreach ($headers as $key => $value)
+        {
             $response->header($key, $value);
         }
         return $response;

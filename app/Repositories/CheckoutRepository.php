@@ -3,8 +3,6 @@
 namespace App\Repositories;
 
 use App\library\PortWallet;
-use App\library\Sms;
-use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\Job;
 use App\Models\Order;
@@ -12,7 +10,6 @@ use App\Models\PartnerOrder;
 use App\Models\PartnerOrderPayment;
 use Carbon\Carbon;
 use DB;
-use Illuminate\Http\Request;
 use Mail;
 use Cache;
 

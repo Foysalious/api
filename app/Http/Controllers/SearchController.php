@@ -30,7 +30,9 @@ class SearchController extends Controller {
                 $children_categories = $category->children()->pluck('id');
                 $query = $query->whereIn('category_id', $children_categories);
             }
-            $services = $query->select('id', 'name', 'thumb', 'banner', 'variable_type')->get();
+            $services = $query->where('publication_status', 1)
+                ->select('id', 'name', 'thumb', 'banner', 'variable_type')
+                ->get();
 
             if ($services->isEmpty())
                 return response()->json(['msg' => 'nothing found', 'code' => 404]);
@@ -38,6 +40,13 @@ class SearchController extends Controller {
             {
                 foreach ($services as $service)
                 {
+                    //if service has no partners
+                    if (($service->partners)->isEmpty())
+                    {
+                        array_add($service, 'review', 0);
+                        array_add($service, 'rating', 0);
+                        continue;
+                    }
                     if ($service->variable_type != 'Custom')
                     {
                         $maxMinPrice = $this->serviceRepository->getMaxMinPrice($service);
