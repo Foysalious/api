@@ -38,7 +38,16 @@ class ServiceRepository {
                 // Get the first option of service
                 $first_option = key($variables->prices);
                 //check for first option exists in prices
-                if (array_has($prices, $first_option))
+                $count = 0;
+                foreach ($prices as $key => $price)
+                {
+                    if ($key == $first_option)
+                    {
+                        $count++;
+                        break;
+                    }
+                }
+                if ($count > 0)
                 {
                     $price = reset($prices);// first value of array key
                     array_set($partner, 'prices', $price);
@@ -86,8 +95,17 @@ class ServiceRepository {
         foreach ($service_partners as $key => $partner)
         {
             $options = (array)json_decode($partner->prices);
+            $count = 0;
+            foreach ($options as $key => $price)
+            {
+                if ($key == $option)
+                {
+                    $count++;
+                    break;
+                }
+            }
             //if the selected option exist in partenr option list add the partner to final list
-            if (array_has($options, $option))
+            if ($count > 0)
             {
                 //price of the selected option
                 $price = array_pull($options, $option);
@@ -116,6 +134,14 @@ class ServiceRepository {
      */
     public function partnerSelectByLocation($service, $location)
     {
+//        $q=($service->partners()
+//            ->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'prices')
+//            ->whereHas('locations', function ($query) use ($location)
+//            {
+//                $query->where('id', $location);
+//            })
+//            ->get());
+//        dd($q);
         return $service->partners()
             ->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'prices')
             ->whereHas('locations', function ($query) use ($location)
