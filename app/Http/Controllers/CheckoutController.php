@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\library\Sms;
+use App\Library\Sms;
 use App\Models\Customer;
 use App\Repositories\AuthRepository;
 use App\Repositories\CheckoutRepository;
