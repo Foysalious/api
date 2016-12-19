@@ -2,7 +2,10 @@
 
 namespace App\Repositories;
 
+use App\Jobs\SendConfirmationEmail;
+use App\Jobs\SendConfirmationSms;
 use App\library\PortWallet;
+use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\Job;
 use App\Models\Order;
@@ -10,10 +13,13 @@ use App\Models\PartnerOrder;
 use App\Models\PartnerOrderPayment;
 use Carbon\Carbon;
 use DB;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Mail;
 use Cache;
 
-class CheckoutRepository {
+class CheckoutRepository
+{
+    use DispatchesJobs;
     /**
      * Portwallet app key
      * @var mixed
@@ -57,11 +63,9 @@ class CheckoutRepository {
         $unique_partners = collect($cart->items)->unique('partner.id')->pluck('partner.id');
         $partner_price = [];
         //calculate total prices for each partner
-        foreach ($cart_partner as $partners)
-        {
+        foreach ($cart_partner as $partners) {
             $price = 0;
-            foreach ($partners as $partner)
-            {
+            foreach ($partners as $partner) {
                 $price += $partner->partner->prices;
             }
             $partner_price[$partner->partner->id] = $price;
@@ -73,25 +77,20 @@ class CheckoutRepository {
         $order->delivery_mobile = $order_info['phone'];
         $order->status = 'Open';
         $order->sales_channel = 'Web';
-        if ($order->save())
-        {
-            if ($order_info['address'] != '')
-            {
+        if ($order->save()) {
+            if ($order_info['address'] != '') {
                 $deliver_adddress = new CustomerDeliveryAddress();
                 $deliver_adddress->address = $order_info['address'];
                 $deliver_adddress->customer_id = $order_info['customer_id'];
                 $deliver_adddress->save();
                 $order->delivery_address = $order_info['address'];
-            }
-            elseif ($order_info['address_id'] != '')
-            {
+            } elseif ($order_info['address_id'] != '') {
                 $deliver_adddress = CustomerDeliveryAddress::find($order_info['address_id']);
                 $order->delivery_address = $deliver_adddress->address;
             }
             $order->order_code = sprintf('%06d', $order->id);
             $order->update();
-            foreach ($unique_partners as $partner)
-            {
+            foreach ($unique_partners as $partner) {
                 $partner_order = new PartnerOrder();
                 $partner_order->order_id = $order->id;
                 $partner_order->partner_id = $partner;
@@ -101,15 +100,12 @@ class CheckoutRepository {
 //                    $partner_order->due = $partner_price[$partner];
 //                    $partner_order->paid = 0;
 //                }
-                if ($payment_method == 'online')
-                {
+                if ($payment_method == 'online') {
                     $partner_order->sheba_collection = $partner_price[$partner];
                 }
                 $partner_order->payment_method = $payment_method;
-                if ($partner_order->save())
-                {
-                    if ($payment_method == 'online')
-                    {
+                if ($partner_order->save()) {
+                    if ($payment_method == 'online') {
                         $partner_order_payment = new PartnerOrderPayment();
                         $partner_order_payment->partner_order_id = $partner_order->id;
                         $partner_order_payment->amount = $partner_order->sheba_collection;
@@ -119,8 +115,7 @@ class CheckoutRepository {
                         $partner_order_payment->save();
                     }
                     $partner_services = $cart_partner[$partner];
-                    foreach ($partner_services as $service)
-                    {
+                    foreach ($partner_services as $service) {
                         $job = new Job();
                         $job->partner_order_id = $partner_order->id;
                         $job->service_id = $service->service->id;
@@ -145,16 +140,14 @@ class CheckoutRepository {
     {
         $partner_order_id = array_unique($payment_info['partner_order_id']);
         $partner = [];
-        for ($i = 0; $i < count($partner_order_id); $i++)
-        {
+        for ($i = 0; $i < count($partner_order_id); $i++) {
             $partner_order = PartnerOrder::find($partner_order_id[$i]);
             //t o send data in email
             array_push($partner, array("partner_order_id" => $partner_order->id, "due" => $partner_order->due));
             $partner_order_payment = new PartnerOrderPayment();
             $partner_order_payment->partner_order_id = $partner_order->id;
             $grossCost = 0;
-            foreach ($partner_order->jobs as $job)
-            {
+            foreach ($partner_order->jobs as $job) {
                 $grossCost += $job->grossCost();
             }
             $due = $grossCost - ($partner_order->sheba_collection + $partner_order->partner_collection);
@@ -182,8 +175,7 @@ class CheckoutRepository {
 
     public function sendOrderConfirmationMail($order, $customer)
     {
-        Mail::send('orders.order-verfication', ['customer' => $customer, 'order' => $order], function ($m) use ($customer)
-        {
+        Mail::send('orders.order-verfication', ['customer' => $customer, 'order' => $order], function ($m) use ($customer) {
             $m->from('yourEmail@domain.com', 'Sheba.xyz');
             $m->to($customer->email)->subject('Order Verification');
         });
@@ -194,8 +186,7 @@ class CheckoutRepository {
         $cart = json_decode($request->input('cart'));
         $service_names = '';
         //get the service names
-        foreach ($cart->items as $cart_item)
-        {
+        foreach ($cart->items as $cart_item) {
             $service_names .= $cart_item->service->name . ',';
         }
         // remove comma from the end of service name
@@ -208,8 +199,7 @@ class CheckoutRepository {
         $service_name = $request->input('service_name');
         $partner_order_id = $request->input('partner_order_id');
         $product_name = '';
-        for ($i = 0; $i < count($service_name); $i++)
-        {
+        for ($i = 0; $i < count($service_name); $i++) {
             $product_name .= $service_name[$i] . ',';
         }
         $product_name = rtrim($product_name, ",");
@@ -229,12 +219,9 @@ class CheckoutRepository {
         $data['name'] = !empty($customer->name) ? $customer->name : 'N/A';
         $data['email'] = isset($customer->email) ? $customer->email : 'N/A';
         $data['phone'] = $request->input('phone');
-        if ($request->input('address') != '')
-        {
+        if ($request->input('address') != '') {
             $data['address'] = $request->input('address');
-        }
-        else
-        {
+        } else {
             $customer_address = CustomerDeliveryAddress::find($request->input('address_id'));
             $data['address'] = $customer_address->address;
         }
@@ -247,16 +234,13 @@ class CheckoutRepository {
         $portwallet = $this->getPortWalletObject();
         $portwallet->setMode($this->appPaymentMode);
         $portwallet_response = $portwallet->generateInvoice($data);
-        if ($portwallet_response->status == 200)
-        {
+        if ($portwallet_response->status == 200) {
             array_add($request, 'customer_id', $customer->id);
             Cache::put('portwallet-payment-' . $portwallet_response->data->invoice_id, $request->all(), 30);
             Cache::put('invoice-' . $portwallet_response->data->invoice_id, $portwallet_response->data->invoice_id, 30);
             $url = $this->appPaymentUrl . $portwallet_response->data->invoice_id;
             return (['code' => 200, 'gateway_url' => $url]);
-        }
-        else
-        {
+        } else {
             return (['code' => 500, 'msg' => 'Payment Gateway connection failed']);
         }
     }
@@ -266,4 +250,15 @@ class CheckoutRepository {
         return new PortWallet($this->appKey, $this->appSecret);
     }
 
+    public function sendConfirmation($customer, $order)
+    {
+        //send order info to customer  by mail
+        $customer = Customer::find($customer);
+        if ($customer->email != '') {
+            $this->dispatch(new SendConfirmationEmail($customer, $order));
+        }
+        if ($customer->mobile != '') {
+            $this->dispatch(new SendConfirmationSms($customer, $order));
+        }
+    }
 }

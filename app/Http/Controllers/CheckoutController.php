@@ -2,9 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\SendConfirmationEmail;
-use App\Jobs\SendConfirmationSms;
-use App\Library\Sms;
 use App\Models\Customer;
 use App\Repositories\AuthRepository;
 use App\Repositories\CheckoutRepository;
@@ -15,7 +12,8 @@ use Cache;
 use DB;
 use Mail;
 
-class CheckoutController extends Controller {
+class CheckoutController extends Controller
+{
     private $authRepository;
     private $checkoutRepository;
     private $sheba_front_end_url;
@@ -36,18 +34,8 @@ class CheckoutController extends Controller {
         array_add($request, 'customer_id', $customer);
         //store order details for customer
         $order = $this->checkoutRepository->storeDataInDB($request->all(), 'cash-on-delivery');
-        if (!empty($order))
-        {
-            //send order info to customer  by mail
-            $customer = Customer::find($customer);
-            if ($customer->email != '')
-            {
-                $this->dispatch(new SendConfirmationEmail($customer, $order));
-            }
-            if ($customer->mobile != '')
-            {
-                $this->dispatch(new SendConfirmationSms($customer, $order));
-            }
+        if (!empty($order)) {
+            $this->checkoutRepository->sendConfirmation($customer, $order);
             return response()->json(['code' => 200, 'msg' => 'Order placed successfully!']);
         }
     }
@@ -83,18 +71,15 @@ class CheckoutController extends Controller {
         $portwallet_response = $portwallet->ipnValidate($data);
 
         //check payment validity
-        if ($portwallet_response->status == 200 && $portwallet_response->data->status == "ACCEPTED")
-        {
+        if ($portwallet_response->status == 200 && $portwallet_response->data->status == "ACCEPTED") {
             $order = $this->checkoutRepository->storeDataInDB($order_info, 'online');
-            if (!empty($order))
-            {
+            if (!empty($order)) {
+                $this->checkoutRepository->sendConfirmation($order_info['customer_id'], $order);
                 Cache::forget('invoice-' . $request->input('invoice'));
                 Cache::forget('portwallet-payment-' . $request->input('invoice'));
                 return redirect($this->sheba_front_end_url);
             }
-        }
-        else
-        {
+        } else {
             return;
         }
     }
@@ -116,15 +101,12 @@ class CheckoutController extends Controller {
         $data['currency'] = "BDT";
         $portwallet_response = $portwallet->ipnValidate($data);
         //check payment validity
-        if ($portwallet_response->status == 200 && $portwallet_response->data->status == "ACCEPTED")
-        {
+        if ($portwallet_response->status == 200 && $portwallet_response->data->status == "ACCEPTED") {
             $this->checkoutRepository->clearSpPayment($payment_info);
             Cache::forget('invoice-' . $request->input('invoice'));
             Cache::forget('portwallet-payment-' . $request->input('invoice'));
             return redirect('http://dev-sheba.xyz/');
-        }
-        else
-        {
+        } else {
             return;
         }
     }
