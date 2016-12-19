@@ -5,7 +5,8 @@ namespace App\Repositories;
 
 use App\Models\Service;
 
-class ServiceRepository {
+class ServiceRepository
+{
 
     /**
      * @param $service
@@ -14,46 +15,34 @@ class ServiceRepository {
      */
     public function partners($service, $location = null)
     {
-        if ($location != null)
-        {
+        if ($location != null) {
             $service_partners = $this->partnerSelectByLocation($service, $location);
-        }
-        else
-        {
+        } else {
             $service_partners = $this->partnerSelect($service);
         }
         $final_partners = [];
-        foreach ($service_partners as $key => $partner)
-        {
+        foreach ($service_partners as $key => $partner) {
             $prices = json_decode($partner->prices);
             array_forget($partner, 'pivot');
 
-            if ($service->variable_type == 'Fixed' || $service->variable_type == 'Custom')
-            {
+            if ($service->variable_type == 'Fixed' || $service->variable_type == 'Custom') {
                 array_set($partner, 'prices', 100);
-            }
-            elseif ($service->variable_type == 'Options')
-            {
+            } elseif ($service->variable_type == 'Options') {
                 $variables = json_decode($service->variables);
                 // Get the first option of service
                 $first_option = key($variables->prices);
                 //check for first option exists in prices
                 $count = 0;
-                foreach ($prices as $key => $price)
-                {
-                    if ($key == $first_option)
-                    {
+                foreach ($prices as $key => $price) {
+                    if ($key == $first_option) {
                         $count++;
                         break;
                     }
                 }
-                if ($count > 0)
-                {
+                if ($count > 0) {
                     $price = reset($prices);// first value of array key
                     array_set($partner, 'prices', $price);
-                }
-                else
-                {
+                } else {
                     //remove the partner from service_partner list
                     array_forget($service_partners, $key);
                     continue;
@@ -83,30 +72,23 @@ class ServiceRepository {
      */
     public function partnerWithSelectedOption($service, $option, $location)
     {
-        if ($location != null)
-        {
+        if ($location != null) {
             $service_partners = $this->partnerSelectByLocation($service, $location);
-        }
-        else
-        {
+        } else {
             $service_partners = $this->partnerSelect($service);
         }
         $final_partners = [];
-        foreach ($service_partners as $key => $partner)
-        {
+        foreach ($service_partners as $key => $partner) {
             $options = (array)json_decode($partner->prices);
             $count = 0;
-            foreach ($options as $key => $price)
-            {
-                if ($key == $option)
-                {
+            foreach ($options as $key => $price) {
+                if ($key == $option) {
                     $count++;
                     break;
                 }
             }
-            //if the selected option exist in partenr option list add the partner to final list
-            if ($count > 0)
-            {
+            //if the selected option exist in partner option list add the partner to final list
+            if ($count > 0) {
                 //price of the selected option
                 $price = array_pull($options, $option);
                 array_set($partner, 'prices', $price);
@@ -134,18 +116,9 @@ class ServiceRepository {
      */
     public function partnerSelectByLocation($service, $location)
     {
-//        $q=($service->partners()
-//            ->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'prices')
-//            ->whereHas('locations', function ($query) use ($location)
-//            {
-//                $query->where('id', $location);
-//            })
-//            ->get());
-//        dd($q);
         return $service->partners()
             ->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'prices')
-            ->whereHas('locations', function ($query) use ($location)
-            {
+            ->whereHas('locations', function ($query) use ($location) {
                 $query->where('id', $location);
             })
             ->get();
@@ -154,8 +127,7 @@ class ServiceRepository {
     public function partnerSelect($service)
     {
         return $service->partners()
-            ->with(['locations' => function ($query)
-            {
+            ->with(['locations' => function ($query) {
                 $query->select('id', 'name');
             }])
             ->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'prices')
@@ -167,12 +139,10 @@ class ServiceRepository {
         $service = Service::find($service->id);
         $max_price = [];
         $min_price = [];
-        if (($service->partners)->isEmpty())
-        {
+        if ($service->partners->isEmpty()) {
             return array(0, 0);
         }
-        foreach ($service->partners as $partner)
-        {
+        foreach ($service->partners as $partner) {
             $prices = (array)json_decode($partner->pivot->prices);
             $max = max($prices);
             $min = min($prices);

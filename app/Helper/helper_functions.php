@@ -47,3 +47,16 @@ if(!function_exists('constants')) {
         return config('constants.' . $key);
     }
 }
+
+if(!function_exists('formatTaka')) {
+    /**
+     * Format integer amount of taka into decimal.
+     *
+     * @param  $amount
+     * @return number
+     */
+    function formatTaka($amount)
+    {
+        return number_format($amount, 2, '.', '');
+    }
+}

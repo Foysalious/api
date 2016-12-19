@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendConfirmationEmail;
 use App\library\Sms;
 use App\Models\Customer;
 use App\Repositories\AuthRepository;
@@ -40,7 +41,8 @@ class CheckoutController extends Controller {
             $customer = Customer::find($customer);
             if ($customer->email != '')
             {
-                $this->checkoutRepository->sendOrderConfirmationMail($order, $customer);
+//                $this->checkoutRepository->sendOrderConfirmationMail($order, $customer);
+                $this->dispatch(new SendConfirmationEmail($customer, $order));
             }
             if ($customer->mobile != '')
             {

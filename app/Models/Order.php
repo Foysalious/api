@@ -18,4 +18,13 @@ class Order extends Model {
     {
         return $this->hasMany(PartnerOrder::class);
     }
+
+    public function calculate()
+    {
+        foreach($this->partnerOrders as $partnerOrder) {
+            $partnerOrder->calculate();
+        }
+        return $this;
+    }
+
 }

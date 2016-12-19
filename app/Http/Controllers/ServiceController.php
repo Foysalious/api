@@ -11,7 +11,8 @@ use App\Repositories\ReviewRatingRepository;
 use App\Repositories\ServiceRepository;
 use Illuminate\Http\Request;
 
-class ServiceController extends Controller {
+class ServiceController extends Controller
+{
     private $serviceRepository;
 
     public function __construct()
@@ -25,10 +26,9 @@ class ServiceController extends Controller {
             ->select('id', 'name', 'category_id', 'description', 'thumb', 'banner', 'faqs', 'variable_type', 'variables')
             ->first();
         if ($service == null)
-            return response()->json(['code' => 500, 'msg' => 'no service found']);
+            return response()->json(['code' => 404, 'msg' => 'no service found']);
         //Add first options in service for render purpose
-        if ($service->variable_type == 'Options')
-        {
+        if ($service->variable_type == 'Options') {
             $variables = json_decode($service->variables);
             $first_option = key($variables->prices);
             $first_option = array_map('intval', explode(',', $first_option));
@@ -42,8 +42,7 @@ class ServiceController extends Controller {
         array_add($service, 'rating', $rating);
 
         //get the category & parent of the service
-        $category = Category::with(['parent' => function ($query)
-        {
+        $category = Category::with(['parent' => function ($query) {
             $query->select('id', 'name');
 
         }])->where('id', $service->category_id)->select('id', 'name', 'parent_id')->first();
@@ -55,8 +54,7 @@ class ServiceController extends Controller {
         $service->variables = json_decode($service->variables);
 
         //If service has partner
-        if (count($service_partners) != 0)
-        {
+        if (count($service_partners) != 0) {
             return response()->json(['service' => $service, 'service_partners' => $service_partners, 'msg' => 'successful', 'code' => 200]);
         }
         return response()->json(['service' => $service, 'service_partners' => $service_partners, 'msg' => 'no partner found in selected location', 'code' => 404]);
@@ -75,11 +73,9 @@ class ServiceController extends Controller {
         $option = implode(',', $request->input('options'));
         //check if any partner provide service in the location
         $service_partners = $this->serviceRepository->partnerWithSelectedOption($service, $option, $location);
-        if (!empty($service_partners))
-        {
+        if (!empty($service_partners)) {
             return response()->json(['service_partners' => $service_partners, 'msg' => 'successful', 'code' => 200]);
-        }
-        else
+        } else
             return response()->json(['msg' => 'no partner found', 'code' => 404]);
     }
 
@@ -89,11 +85,9 @@ class ServiceController extends Controller {
         $option = implode(',', $request->input('options'));
         //check if any partner provide service in the location
         $service_partners = $this->serviceRepository->partnerWithSelectedOption($service, $option, $location = null);
-        if (!empty($service_partners))
-        {
+        if (!empty($service_partners)) {
             return response()->json(['service_partners' => $service_partners, 'msg' => 'successful', 'code' => 200]);
-        }
-        else
+        } else
             return response()->json(['msg' => 'no partner found', 'code' => 404]);
     }
 

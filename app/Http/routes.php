@@ -1,13 +1,12 @@
 <?php
 
-Route::get('/', function ()
-{
+Route::get('/', function () {
     return ['code' => 200, 'msg' => 'Success. This project will hold the api\'s'];
 });
 
 Route::get('email-verification/{customer}/{code}', 'CustomerController@emailVerification');
-Route::get('reset-password/{customer}/{code}', 'PasswordController@getResetPasswordForm');
-Route::post('reset-password/{customer}/{code}', 'PasswordController@resetPassword');
+//Route::get('reset-password/{customer}/{code}', 'PasswordController@getResetPasswordForm');
+//Route::post('reset-password/{customer}/{code}', 'PasswordController@resetPassword');
 $api = app('Dingo\Api\Routing\Router');
 
 /*
@@ -20,12 +19,7 @@ $api = app('Dingo\Api\Routing\Router');
 |
 |
 */
-$api->version('v1', function ($api)
-{
-    /*
-     * Login & Register routes
-    */
-
+$api->version('v1', function ($api) {
     $api->post('register-mobile', 'App\Http\Controllers\Auth\RegistrationController@registerWithMobile');
     $api->post('register-email', 'App\Http\Controllers\Auth\RegistrationController@registerWithEmail');
     $api->post('register-with-facebook', 'App\Http\Controllers\Auth\RegistrationController@registerWithFacebook');
@@ -35,34 +29,30 @@ $api->version('v1', function ($api)
 
     $api->get('locations', 'App\Http\Controllers\LocationController@getAllLocations');
     $api->get('search', 'App\Http\Controllers\SearchController@getService');
+    $api->get('category-service', 'App\Http\Controllers\CategoryServiceController@getCategoryServices');
 
-    $api->group(['prefix' => 'category'], function ($api)
-    {
+    $api->group(['prefix' => 'category'], function ($api) {
         $api->get('/', 'App\Http\Controllers\CategoryController@index');
         $api->get('{category}/children', 'App\Http\Controllers\CategoryController@getChildren');
         $api->get('{category}/parent', 'App\Http\Controllers\CategoryController@getParent');
     });
-    $api->group(['prefix' => 'service'], function ($api)
-    {
+    $api->group(['prefix' => 'service'], function ($api) {
         $api->get('{service}/partners', 'App\Http\Controllers\ServiceController@getPartners');
         $api->get('{service}/location/{location}/partners', 'App\Http\Controllers\ServiceController@getPartners');
         $api->post('{service}/{location}/change-partner', 'App\Http\Controllers\ServiceController@changePartner');
         //For Back-end
         $api->post('{service}/change-partner', 'App\Http\Controllers\ServiceController@changePartnerWithoutLocation');
     });
-    $api->group(['prefix' => 'partner'], function ($api)
-    {
+    $api->group(['prefix' => 'partner'], function ($api) {
         $api->get('{partner}/services', 'App\Http\Controllers\PartnerController@getPartnerServices');
     });
 
-    $api->group(['prefix' => 'checkout'], function ($api)
-    {
+    $api->group(['prefix' => 'checkout'], function ($api) {
         $api->get('place-order-final', 'App\Http\Controllers\CheckoutController@placeOrderFinal');
         $api->get('sp-payment-final', 'App\Http\Controllers\CheckoutController@spPaymentFinal');
     });
 
-    $api->group(['prefix' => 'customer', 'middleware' => ['customer.auth']], function ($api)
-    {
+    $api->group(['prefix' => 'customer', 'middleware' => ['customer.auth']], function ($api) {
         $api->get('{customer}', 'App\Http\Controllers\CustomerController@getCustomerInfo');
         $api->post('{customer}/fb-integration', 'App\Http\Controllers\CustomerController@facebookIntegration');
         $api->post('{customer}/change-address', 'App\Http\Controllers\CustomerController@changeAddress');

@@ -50,7 +50,6 @@ class CheckoutRepository {
 
     public function storeDataInDB($order_info, $payment_method)
     {
-//        dd($order_info);
         $cart = json_decode($order_info['cart']);
         //group cart_info by partners
         $cart_partner = collect($cart->items)->groupBy('partner.id');
@@ -105,7 +104,6 @@ class CheckoutRepository {
                 if ($payment_method == 'online')
                 {
                     $partner_order->sheba_collection = $partner_price[$partner];
-//                    $partner_order->due = 0;
                 }
                 $partner_order->payment_method = $payment_method;
                 if ($partner_order->save())
@@ -131,7 +129,7 @@ class CheckoutRepository {
                         $job->status = 'Open';
                         $job->schedule_date = Carbon::parse($service->date)->format('Y-m-d');
                         $job->preferred_time = $service->time;
-                        $job->service_cost = $service->partner->prices;
+                        $job->service_price = $service->partner->prices;
                         $job->save();
                         $job->job_full_code = 'D-' . $order->order_code . '-' . sprintf('%06d', $partner) . '-' . sprintf('%08d', $job->id);
                         $job->job_code = sprintf('%08d', $job->id);

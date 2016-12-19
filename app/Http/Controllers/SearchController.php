@@ -10,7 +10,8 @@ use Illuminate\Http\Request;
 use App\Http\Requests;
 use Illuminate\Support\Facades\Input;
 
-class SearchController extends Controller {
+class SearchController extends Controller
+{
     private $serviceRepository;
 
     public function __construct()
@@ -20,12 +21,10 @@ class SearchController extends Controller {
 
     public function getService(Request $request)
     {
-        if ($request->input('s') != '')
-        {
+        if ($request->input('s') != '') {
             $query = Service::where('name', 'like', "%" . $request->input('s') . "%");
             //if has parent category id
-            if ($request->has('p_c'))
-            {
+            if ($request->has('p_c')) {
                 $category = Category::find($request->input('p_c'));
                 $children_categories = $category->children()->pluck('id');
                 $query = $query->whereIn('category_id', $children_categories);
@@ -36,19 +35,15 @@ class SearchController extends Controller {
 
             if ($services->isEmpty())
                 return response()->json(['msg' => 'nothing found', 'code' => 404]);
-            else
-            {
-                foreach ($services as $service)
-                {
+            else {
+                foreach ($services as $service) {
                     //if service has no partners
-                    if (($service->partners)->isEmpty())
-                    {
+                    if (($service->partners)->isEmpty()) {
                         array_add($service, 'review', 0);
                         array_add($service, 'rating', 0);
                         continue;
                     }
-                    if ($service->variable_type != 'Custom')
-                    {
+                    if ($service->variable_type != 'Custom') {
                         $maxMinPrice = $this->serviceRepository->getMaxMinPrice($service);
                         array_add($service, 'start_price', $maxMinPrice[1]);
                         array_add($service, 'end_price', $maxMinPrice[0]);
@@ -62,9 +57,8 @@ class SearchController extends Controller {
                 }
             }
             return response()->json(['msg' => 'successful', 'code' => 200, 'services' => $services]);
-        }
-        else
-            return response()->json(['msg' => 'nothing found', 'code' => 405]);
+        } else
+            return response()->json(['msg' => 'nothing found', 'code' => 404]);
 
     }
 }

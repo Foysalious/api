@@ -2,16 +2,20 @@
 
 use Illuminate\Database\Eloquent\Model;
 
-class Job extends Model {
+class Job extends Model
+{
+    protected $materialPivotColumns = ['id', 'material_name', 'material_price', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
+    protected $guarded = ['id'];
+
+    public $materialPrice;
+    public $materialCost;
+    public $grossCost;
+    public $totalPrice;
+    public $grossPrice;
 
     public function service()
     {
         return $this->belongsTo(Service::class);
-    }
-
-    public function partner_order()
-    {
-        return $this->belongsTo(PartnerOrder::class);
     }
 
     public function resource()
@@ -19,19 +23,9 @@ class Job extends Model {
         return $this->belongsTo(Resource::class);
     }
 
-    public function paymentLogs()
-    {
-        return $this->hasMany(JobPaymentLog::class);
-    }
-
     public function materials()
     {
-        return $this->belongsToMany(Material::class);
-    }
-
-    public function review()
-    {
-        return $this->hasOne(Review::class);
+        return $this->belongsToMany(Material::class)->withPivot($this->materialPivotColumns);
     }
 
     public function usedMaterials()
@@ -39,18 +33,28 @@ class Job extends Model {
         return $this->hasMany(JobMaterial::class);
     }
 
-    public function materialCost()
+    public function complains()
     {
-        return $this->usedMaterials()->sum('material_price');
+        return $this->hasMany(Complain::class);
     }
 
-    public function totalCost()
+    public function comments()
     {
-        return $this->service_cost + $this->materialCost();
+        return $this->morphMany(Comment::class, 'commentable');
     }
 
-    public function grossCost()
+    public function partner_order()
     {
-        return $this->totalCost() - $this->discount;
+        return $this->belongsTo(PartnerOrder::class);
+    }
+
+    public function calculate()
+    {
+        $this->materialPrice = formatTaka($this->usedMaterials()->sum('material_price'));
+        $this->materialCost = formatTaka($this->materialPrice);
+        $this->grossCost = formatTaka($this->service_cost + $this->materialCost);
+        $this->totalPrice = formatTaka($this->service_price + $this->materialPrice);
+        $this->grossPrice = formatTaka($this->totalPrice - $this->discount);
+        return $this;
     }
 }
