@@ -142,22 +142,18 @@ class CheckoutRepository
         $partner = [];
         for ($i = 0; $i < count($partner_order_id); $i++) {
             $partner_order = PartnerOrder::find($partner_order_id[$i]);
-            //t o send data in email
+            $partner_order->calculate();
+            //to send data in email
             array_push($partner, array("partner_order_id" => $partner_order->id, "due" => $partner_order->due));
             $partner_order_payment = new PartnerOrderPayment();
             $partner_order_payment->partner_order_id = $partner_order->id;
-            $grossCost = 0;
-            foreach ($partner_order->jobs as $job) {
-                $grossCost += $job->grossCost();
-            }
-            $due = $grossCost - ($partner_order->sheba_collection + $partner_order->partner_collection);
-            $partner_order_payment->amount = $due;
+            $partner_order_payment->amount = $partner_order->due;
             $partner_order_payment->transaction_type = 'Credit';
             $partner_order_payment->method = 'online';
             $partner_order_payment->log = 'Due paid';
             $partner_order_payment->save();
             $partner_order->payment_method = 'online';
-            $partner_order->sheba_collection = $due;
+            $partner_order->sheba_collection = $partner_order->due;
             $partner_order->update();
         }
         $this->sendSpPaymentClearMail($partner);

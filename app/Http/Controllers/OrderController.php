@@ -38,6 +38,7 @@ class OrderController extends Controller
                 array_forget($partner_order, 'rounding_cut_off');
             }
             array_add($order, 'total_cost', $order->totalPrice);
+            array_add($order, 'due_amount', $order->due);
         }
         return response()->json(['orders' => $orders, 'code' => 200, 'msg' => 'successful']);
     }

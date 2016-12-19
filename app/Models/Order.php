@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 class Order extends Model
 {
     public $totalPrice;
+    public $due;
 
     public function jobs()
     {
@@ -25,9 +26,11 @@ class Order extends Model
     public function calculate()
     {
         $this->totalPrice = 0;
+        $this->due = 0;
         foreach ($this->partner_orders as $partnerOrder) {
             $partnerOrder->calculate();
             $this->totalPrice += $partnerOrder->totalPrice;
+            $this->due += $partnerOrder->due;
         }
         return $this;
     }
