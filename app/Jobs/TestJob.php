@@ -33,6 +33,6 @@ class TestJob extends Job implements ShouldQueue
             $m->from('hello@app.com', 'Your Application');
             $m->to('arnabrahman@hotmail.com', 'Arnab')->subject('Server!');
         });*/
-        Sms::send_single_message('+8801678242960', 'Test job from queue with supervisor.');
+        Sms::send_single_message('+8801678242960', 'Test job from queue with supervisor at ' . \Carbon\Carbon::now()->toDateTimeString());
     }
 }
