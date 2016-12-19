@@ -7,6 +7,7 @@ use App\Library\Sms;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Mail;
 
 class TestJob extends Job implements ShouldQueue
 {
@@ -29,6 +30,11 @@ class TestJob extends Job implements ShouldQueue
      */
     public function handle()
     {
+        Mail::raw('Text to e-mail', function ($m) {
+            $m->from('hello@app.com', 'Your Application');
+
+            $m->to('arnabrahman@hotmail.com', 'Arnab')->subject('Server!');
+        });
         Sms::send_single_message('+8801678242969', 'kjaj');
     }
 }
