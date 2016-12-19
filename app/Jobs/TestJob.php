@@ -16,7 +16,6 @@ class TestJob extends Job implements ShouldQueue
     /**
      * Create a new job instance.
      *
-     * @return void
      */
     public function __construct()
     {
@@ -30,11 +29,10 @@ class TestJob extends Job implements ShouldQueue
      */
     public function handle()
     {
-        Mail::raw('Text to e-mail', function ($m) {
+        /*Mail::raw('Text to e-mail', function ($m) {
             $m->from('hello@app.com', 'Your Application');
-
             $m->to('arnabrahman@hotmail.com', 'Arnab')->subject('Server!');
-        });
-        Sms::send_single_message('+8801678242969', 'kjaj');
+        });*/
+        Sms::send_single_message('+8801678242960', 'Test job from queue with supervisor.');
     }
 }
