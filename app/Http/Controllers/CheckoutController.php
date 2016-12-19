@@ -105,7 +105,7 @@ class CheckoutController extends Controller
             $this->checkoutRepository->clearSpPayment($payment_info);
             Cache::forget('invoice-' . $request->input('invoice'));
             Cache::forget('portwallet-payment-' . $request->input('invoice'));
-            return redirect('http://dev-sheba.xyz/');
+            return redirect(env('SHEBA_FRONT_END_URL'));
         } else {
             return;
         }
