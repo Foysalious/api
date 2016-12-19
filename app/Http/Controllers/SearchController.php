@@ -38,7 +38,7 @@ class SearchController extends Controller
             else {
                 foreach ($services as $service) {
                     //if service has no partners
-                    if (($service->partners)->isEmpty()) {
+                    if ($service->partners->isEmpty()) {
                         array_add($service, 'review', 0);
                         array_add($service, 'rating', 0);
                         continue;
