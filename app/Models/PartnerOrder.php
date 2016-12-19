@@ -63,7 +63,6 @@ class PartnerOrder extends Model
         $this->totalCost = 0;
         foreach($this->jobs as $job) {
             $job = $job->calculate();
-
             $this->totalServiceCost += $job->service_cost;
             $this->totalMaterialPrice += $job->materialPrice;
             $this->totalMaterialCost += $job->materialCost;

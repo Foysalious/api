@@ -3,7 +3,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Order extends Model {
+class Order extends Model
+{
+    public $totalPrice;
+
     public function jobs()
     {
         return $this->hasManyThrough(Job::class, PartnerOrder::class);
@@ -21,8 +24,10 @@ class Order extends Model {
 
     public function calculate()
     {
-        foreach($this->partnerOrders as $partnerOrder) {
+        $this->totalPrice = 0;
+        foreach ($this->partner_orders as $partnerOrder) {
             $partnerOrder->calculate();
+            $this->totalPrice += $partnerOrder->totalPrice;
         }
         return $this;
     }

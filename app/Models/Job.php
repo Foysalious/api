@@ -48,6 +48,11 @@ class Job extends Model
         return $this->belongsTo(PartnerOrder::class);
     }
 
+    public function review()
+    {
+        return $this->hasOne(Review::class);
+    }
+
     public function calculate()
     {
         $this->materialPrice = formatTaka($this->usedMaterials()->sum('material_price'));

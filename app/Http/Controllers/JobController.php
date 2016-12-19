@@ -37,13 +37,14 @@ class JobController extends Controller {
             {
                 $query->select('job_id', 'review_title', 'review', 'rating');
             }])->where('id', $job->id)
-                ->select('id', 'job_code', 'service_id', 'service_name', 'service_option', 'discount', 'status', 'service_cost', 'created_at', 'partner_order_id')
+                ->select('id', 'job_code', 'service_id', 'service_name', 'service_option', 'discount', 'status', 'service_price', 'created_at', 'partner_order_id')
                 ->first();
             array_add($job, 'status_show', $this->job_statuses_show[$job->status]);
 
             $job_model = Job::find($job->id);
-            array_add($job, 'material_cost', $job_model->materialCost());
-            array_add($job, 'total_cost', $job_model->grossCost());
+            $job_model->calculate();
+            array_add($job, 'material_cost', $job_model->materialCost);
+            array_add($job, 'total_cost', $job_model->grossPrice);
 
             return response()->json(['job' => $job, 'msg' => 'successful', 'code' => 200]);
         }

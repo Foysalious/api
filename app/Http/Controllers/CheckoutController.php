@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\SendConfirmationEmail;
-use App\library\Sms;
+use App\Jobs\SendConfirmationSms;
+use App\Library\Sms;
 use App\Models\Customer;
 use App\Repositories\AuthRepository;
 use App\Repositories\CheckoutRepository;
@@ -41,13 +42,11 @@ class CheckoutController extends Controller {
             $customer = Customer::find($customer);
             if ($customer->email != '')
             {
-//                $this->checkoutRepository->sendOrderConfirmationMail($order, $customer);
                 $this->dispatch(new SendConfirmationEmail($customer, $order));
             }
             if ($customer->mobile != '')
             {
-                $message = "Thanks for placing order at www.sheba.xyz. Order ID No : " . $order->id;
-                Sms::send_single_message($customer->mobile, $message);
+                $this->dispatch(new SendConfirmationSms($customer, $order));
             }
             return response()->json(['code' => 200, 'msg' => 'Order placed successfully!']);
         }
