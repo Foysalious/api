@@ -10,7 +10,8 @@ use Illuminate\Http\Request;
 use Cache;
 use App\Http\Controllers\FacebookAccountKit;
 
-class CustomerController extends Controller {
+class CustomerController extends Controller
+{
     private $customer;
     private $fbKit;
 
@@ -29,19 +30,14 @@ class CustomerController extends Controller {
     public function emailVerification(Customer $customer, $code)
     {
         $verification_code = Cache::get($customer->id . '-verification-email');
-        if (empty($verification_code))
-        {
+        if (empty($verification_code)) {
             Cache::forget($customer->id . '-verification-email');
             return "Code has expired";
-        }
-        elseif ($verification_code == $code)
-        {
+        } elseif ($verification_code == $code) {
             $message = $this->customer->emailVerified($customer);
             Cache::forget($customer->id . '-verification-email');
             return $message;
-        }
-        else
-        {
+        } else {
             return "Verification code doesn't match!";
         }
     }
@@ -86,17 +82,13 @@ class CustomerController extends Controller {
     {
         $code_data = $this->fbKit->authenticateKit($request->input('code'));
         $customer = Customer::find($customer);
-        if ($this->customer->mobileValid($code_data['mobile']))
-        {
+        if ($this->customer->mobileValid($code_data['mobile'])) {
             $customer->mobile = $code_data['mobile'];
             $customer->mobile_verified = 1;
-            if ($customer->update())
-            {
+            if ($customer->update()) {
                 return response()->json(['msg' => 'successful', 'code' => 200]);
             }
-        }
-        else
-        {
+        } else {
             return response()->json(['msg' => 'already exists', 'code' => 409]);
         }
     }
@@ -105,18 +97,14 @@ class CustomerController extends Controller {
     {
         $code_data = $this->fbKit->authenticateKit($request->input('code'));
         $customer = Customer::find($customer);
-        if ($this->customer->mobileValid($code_data['mobile']))
-        {
+        if ($this->customer->mobileValid($code_data['mobile'])) {
             $customer_mobile = new CustomerMobile();
             $customer_mobile->mobile = $code_data['mobile'];
             $customer_mobile->customer_id = $customer->id;
-            if ($customer_mobile->save())
-            {
-                return response()->json(['msg' => 'successful', 'code' => 200]);
+            if ($customer_mobile->save()) {
+                return response()->json(['msg' => 'successful', 'mobile_id' => $customer_mobile->id, 'code' => 200]);
             }
-        }
-        else
-        {
+        } else {
             return response()->json(['msg' => 'already exists', 'code' => 409]);
         }
     }
@@ -127,12 +115,9 @@ class CustomerController extends Controller {
         $delivery_address = new CustomerDeliveryAddress();
         $delivery_address->address = $request->input('delivery_address');
         $delivery_address->customer_id = $customer->id;
-        if ($delivery_address->save())
-        {
-            return response()->json(['msg' => 'successful', 'code' => 200]);
-        }
-        else
-        {
+        if ($delivery_address->save()) {
+            return response()->json(['msg' => 'successful', 'address_id' => $delivery_address->id, 'code' => 200]);
+        } else {
             return response()->json(['msg' => 'error', 'code' => 500]);
         }
     }
@@ -147,27 +132,22 @@ class CustomerController extends Controller {
     {
         $customer = Customer::find($customer);
         $delivery_address_id = $customer->delivery_addresses()->pluck('id');
-        if ($delivery_address_id->contains($request->input('address_id')))
-        {
+        if ($delivery_address_id->contains($request->input('address_id'))) {
             $address = CustomerDeliveryAddress::find($request->input('address_id'));
             if ($address->delete())
                 return response()->json(['msg' => 'successful', 'code' => 200]);
             else
                 return response()->json(['msg' => 'error', 'code' => 500]);
-        }
-        else
+        } else
             return response()->json(['msg' => 'unauthorized', 'code' => 409]);
     }
 
     public function modifyEmail(Request $request, $customer)
     {
         $customer = Customer::find($customer);
-        if ($email = $this->customer->ifExist($request->input('email'), 'email'))
-        {
+        if ($email = $this->customer->ifExist($request->input('email'), 'email')) {
             return response()->json(['msg' => 'email already exists', 'code' => 409]);
-        }
-        else
-        {
+        } else {
             $customer->email = $request->input('email');
             $customer->email_verified = 0;
             $customer->update();
@@ -189,8 +169,7 @@ class CustomerController extends Controller {
             ['mobile', $request->input('mobile')],
             ['customer_id', $customer]
         ])->first();
-        if ($customer_mobile->delete())
-        {
+        if ($customer_mobile->delete()) {
             return response()->json(['msg' => 'successful', 'code' => 200]);
         }
     }
@@ -202,8 +181,7 @@ class CustomerController extends Controller {
         $customer_mobile->mobile = $customer->mobile;
         $customer_mobile->update();
         $customer->mobile = $request->input('mobile');
-        if ($customer->update())
-        {
+        if ($customer->update()) {
             return response()->json(['msg' => 'successful', 'code' => 200]);
         }
     }
@@ -211,20 +189,16 @@ class CustomerController extends Controller {
     public function modifyGeneralInfo($customer, Request $request)
     {
         $customer = Customer::find($customer);
-        if ($request->has('name'))
-        {
+        if ($request->has('name')) {
             $customer->name = $request->input('name');
         }
-        if ($request->has('dob'))
-        {
+        if ($request->has('dob')) {
             $customer->dob = $request->input('dob');
         }
-        if ($request->has('gender'))
-        {
+        if ($request->has('gender')) {
             $customer->gender = $request->input('gender');
         }
-        if ($customer->update())
-        {
+        if ($customer->update()) {
             return response()->json(['msg' => 'successful', 'code' => 200]);
         }
     }
