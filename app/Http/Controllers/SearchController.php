@@ -7,9 +7,6 @@ use App\Models\Service;
 use App\Repositories\ServiceRepository;
 use Illuminate\Http\Request;
 
-use App\Http\Requests;
-use Illuminate\Support\Facades\Input;
-
 class SearchController extends Controller
 {
     private $serviceRepository;

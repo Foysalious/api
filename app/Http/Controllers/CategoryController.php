@@ -8,7 +8,8 @@ use Illuminate\Http\Request;
 
 use App\Http\Requests;
 
-class CategoryController extends Controller {
+class CategoryController extends Controller
+{
 
     private $categoryRepository;
 
@@ -26,12 +27,10 @@ class CategoryController extends Controller {
         $categories = Category::parents()
             ->select('id', 'name', 'thumb', 'banner')
             ->get();
-        foreach ($categories as $category)
-        {
+        foreach ($categories as $category) {
             array_add($category, 'slug_category', str_slug($category->name, '-'));
             $total_service = 0;
-            foreach ($category->children as $child)
-            {
+            foreach ($category->children as $child) {
                 $total_service += $child->services()->count();
             }
             array_add($category, 'total_service', $total_service);
@@ -51,9 +50,9 @@ class CategoryController extends Controller {
     public function getChildren(Category $category)
     {
         $children = $this->categoryRepository->childrenWithServices($category);
-
+        $cat = collect($category)->only(['name', 'banner']);
         if (!$children->isEmpty())
-            return response()->json(['children' => $children, 'msg' => 'successful', 'code' => 200]);
+            return response()->json(['category' => $cat, 'children' => $children, 'msg' => 'successful', 'code' => 200]);
         return response()->json(['msg' => 'no children found', 'code' => 404]);
     }
 

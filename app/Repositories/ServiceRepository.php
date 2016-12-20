@@ -79,29 +79,33 @@ class ServiceRepository
         }
         $final_partners = [];
         foreach ($service_partners as $key => $partner) {
-            $options = (array)json_decode($partner->prices);
-            $count = 0;
-            foreach ($options as $key => $price) {
-                if ($key == $option) {
-                    $count++;
-                    break;
+            // review count of this partner for this service
+            $review = $partner->reviews()->where([
+                ['review', '<>', ''],
+                ['service_id', $service->id]
+            ])->count('review');
+            //avg rating of the partner for this service
+            $rating = $partner->reviews()->where('service_id', $service->id)->avg('rating');
+            array_add($partner, 'review', $review);
+            array_add($partner, 'rating', $rating);
+            array_forget($partner, 'pivot');
+            if ($service->variable_type != 'Fixed') {
+                $options = (array)json_decode($partner->prices);
+                $count = 0;
+                foreach ($options as $key => $price) {
+                    if ($key == $option) {
+                        $count++;
+                        break;
+                    }
                 }
-            }
-            //if the selected option exist in partner option list add the partner to final list
-            if ($count > 0) {
-                //price of the selected option
-                $price = array_pull($options, $option);
-                array_set($partner, 'prices', $price);
-                // review count of this partner for this service
-                $review = $partner->reviews()->where([
-                    ['review', '<>', ''],
-                    ['service_id', $service->id]
-                ])->count('review');
-                //avg rating of the partner for this service
-                $rating = $partner->reviews()->where('service_id', $service->id)->avg('rating');
-                array_add($partner, 'review', $review);
-                array_add($partner, 'rating', $rating);
-                array_forget($partner, 'pivot');
+                //if the selected option exist in partner option list add the partner to final list
+                if ($count > 0) {
+                    //price of the selected option
+                    $price = array_pull($options, $option);
+                    array_set($partner, 'prices', $price);
+                    array_push($final_partners, $partner);
+                }
+            } else {
                 array_push($final_partners, $partner);
             }
         }
@@ -120,18 +124,14 @@ class ServiceRepository
             ->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'prices')
             ->whereHas('locations', function ($query) use ($location) {
                 $query->where('id', $location);
-            })
-            ->get();
+            })->get();
     }
 
     public function partnerSelect($service)
     {
-        return $service->partners()
-            ->with(['locations' => function ($query) {
-                $query->select('id', 'name');
-            }])
-            ->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'prices')
-            ->get();
+        return $service->partners()->with(['locations' => function ($query) {
+            $query->select('id', 'name');
+        }])->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'prices')->get();
     }
 
     public function getMaxMinPrice($service)

@@ -69,8 +69,11 @@ class ServiceController extends Controller
      */
     public function changePartner(Service $service, $location = null, Request $request)
     {
+        $option = null;
         //get the selected options
-        $option = implode(',', $request->input('options'));
+        if ($request->has('option')) {
+            $option = implode(',', $request->input('options'));
+        }
         //check if any partner provide service in the location
         $service_partners = $this->serviceRepository->partnerWithSelectedOption($service, $option, $location);
         if (!empty($service_partners)) {
