@@ -12,7 +12,8 @@ use JWTFactory;
 use App\Models\Customer;
 use Session;
 
-class LoginController extends Controller {
+class LoginController extends Controller
+{
     private $fbKit;
     private $customer;
 
@@ -33,12 +34,10 @@ class LoginController extends Controller {
         /*
         * Remember me
         */
-        If ($request->has('remember_token'))
-        {
+        If ($request->has('remember_token')) {
             $customer = Customer::where('remember_token', $request->input('remember_token'))->first();
             //remember_token is valid for a customer
-            if ($customer)
-            {
+            if ($customer) {
                 //create token for that user
                 $token = JWTAuth::fromUser($customer);
                 // all good so return the token
@@ -52,40 +51,32 @@ class LoginController extends Controller {
          *
          */
         $credentials = $request->only('email', 'password');
-        try
-        {
+        try {
             // verify email credentials and create a token for the user
-            if (!$token = JWTAuth::attempt($credentials))
-            {
+            if (!$token = JWTAuth::attempt($credentials)) {
                 //email verification failed. Now check for mobile verification
-                if (!$mobileToken = $this->customer->attemptByMobile($credentials))
-                {
+                if (!$mobileToken = $this->customer->attemptByMobile($credentials)) {
                     return response()->json(['msg' => 'invalid_credentials', 'code' => 404], 401);
                 }
             }
-        }
-        catch (JWTException $e)
-        {
+        } catch (JWTException $e) {
             // something went wrong whilst attempting to encode the token
             return response()->json(['error' => 'could_not_create_token'], 500);
         }
-        //get the customer & assign a remember token
+        //get the customer
 
         // when email is provided for login
-        if ($token)
-        {
+        if ($token) {
             $customer = Customer::where('email', $request->input('email'))->first();
-        }
-        // when mobile is provided for login
-        else
-        {
+        } // when mobile is provided for login
+        else {
             $customer = Customer::where('mobile', $request->input('email'))->first();
             $token = $mobileToken;
         }
         // all good so return the token
         return response()->json([
-            'msg' => 'Login successful', 'code' => 200, 'token' => $token,
-            'remember_token' => $customer->remember_token, 'customer' => $customer->id
+            'msg' => 'Login successful', 'code' => 200, 'token' => $token, 'remember_token' => $customer->remember_token,
+            'customer' => $customer->id, 'customer_img' => $customer->pro_pic
         ]);
     }
 
@@ -99,18 +90,15 @@ class LoginController extends Controller {
     {
         $code_data = $this->fbKit->authenticateKit($request->input('code'));
         //login the customer if corresponding mobile exists
-        if ($customer = $this->customer->ifExist($code_data['mobile'], 'mobile'))
-        {
+        if ($customer = $this->customer->ifExist($code_data['mobile'], 'mobile')) {
             //generate token based on customer
             $token = JWTAuth::fromUser($customer);
             // return success with token
             return response()->json([
                 'msg' => 'Login with mobile successful', 'code' => 200, 'token' => $token,
-                'remember_token' => $customer->remember_token, 'customer' => $customer->id
+                'remember_token' => $customer->remember_token, 'customer' => $customer->id, 'customer_img' => $customer->pro_pic
             ]);
-        }
-        else
-        {
+        } else {
             return response()->json(['msg' => 'mobile doesn\'t exist', 'code' => 404]);
         }
 

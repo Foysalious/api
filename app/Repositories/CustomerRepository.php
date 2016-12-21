@@ -9,7 +9,8 @@ use Carbon\Carbon;
 use Hash;
 use JWTAuth;
 
-class CustomerRepository {
+class CustomerRepository
+{
 
 
     /**
@@ -20,8 +21,7 @@ class CustomerRepository {
      */
     public function ifExist($data, $queryColumn)
     {
-        if ($customer = Customer::where("$queryColumn", $data)->first())
-        {
+        if ($customer = Customer::where("$queryColumn", $data)->first()) {
             return $customer;
         }
         return false;
@@ -36,11 +36,9 @@ class CustomerRepository {
     public function registerMobile($info)
     {
         //reference_code is send through request
-        if (isset($info['reference_code']))
-        {
+        if (isset($info['reference_code'])) {
             //if reference_code is valid then register with referrer_id
-            if ($customer = $this->ifExist($info['reference_code'], 'reference_code'))
-            {
+            if ($customer = $this->ifExist($info['reference_code'], 'reference_code')) {
                 return Customer::create([
                     'mobile' => $info['mobile'],
                     'mobile_verified' => 1,
@@ -67,11 +65,9 @@ class CustomerRepository {
     public function registerEmailPassword($info)
     {
         //reference_code is send through request
-        if (isset($info['reference_code']))
-        {
+        if (isset($info['reference_code'])) {
             //if reference_code is valid then register with referrer_id
-            if ($customer = $this->ifExist($info['reference_code'], 'reference_code'))
-            {
+            if ($customer = $this->ifExist($info['reference_code'], 'reference_code')) {
                 return Customer::create([
                     "email" => $info['email'],
                     "password" => bcrypt($info['password']),
@@ -97,8 +93,7 @@ class CustomerRepository {
     public function sendVerificationMail($customer)
     {
         $verfication_code = str_random(60);
-        Mail::send('emails.email-verification', ['customer' => $customer, 'code' => $verfication_code], function ($m) use ($customer)
-        {
+        Mail::send('emails.email-verification', ['customer' => $customer, 'code' => $verfication_code], function ($m) use ($customer) {
             $m->from('yourEmail@domain.com', 'Sheba.xyz');
             $m->to($customer->email)->subject('Email Verification');
 
@@ -114,8 +109,7 @@ class CustomerRepository {
     public function sendResetPasswordEmail($customer)
     {
         $verfication_code = str_random(60);
-        Mail::send('emails.reset-password', ['customer' => $customer, 'code' => $verfication_code], function ($m) use ($customer)
-        {
+        Mail::send('emails.reset-password', ['customer' => $customer, 'code' => $verfication_code], function ($m) use ($customer) {
             $m->from('yourEmail@domain.com', 'Sheba.xyz');
             $m->to($customer->email)->subject('Reset Password');
 
@@ -132,8 +126,7 @@ class CustomerRepository {
     public function emailVerified($customer)
     {
         $customer->email_verified = 1;
-        if ($customer->save())
-        {
+        if ($customer->save()) {
             return "$customer->email is now verified";
         }
         return "something went wrong";
@@ -147,11 +140,9 @@ class CustomerRepository {
     public function attemptByMobile($credentials)
     {
         $customer = Customer::where('mobile', $credentials['email'])->first();
-        if ($customer)
-        {
+        if ($customer) {
             //verified
-            if (Hash::check($credentials['password'], $customer->password))
-            {
+            if (Hash::check($credentials['password'], $customer->password)) {
                 return JWTAuth::fromUser($customer);
             }
             return false;
@@ -171,11 +162,9 @@ class CustomerRepository {
         $customer->reference_code = str_random(30);
         $customer->remember_token = str_random(60);
         //reference_code is send through request
-        if (isset($info['reference_code']))
-        {
+        if (isset($info['reference_code'])) {
             //if reference_code is valid then register with referrer_id
-            if ($referredCustomer = $this->ifExist($info['reference_code'], 'reference_code'))
-            {
+            if ($referredCustomer = $this->ifExist($info['reference_code'], 'reference_code')) {
                 $customer->referrer_id = $referredCustomer->id;
             }
         }
@@ -185,12 +174,13 @@ class CustomerRepository {
 
     public function updateCustomerInfo($customer, $info)
     {
-        if (isset($info['id']))
-        {
+        if (isset($info['id'])) {
             $customer->fb_id = $info['id'];
         }
         $customer->name = $info['name'];
         $customer->email = $info['email'];
+        $customer->email_verified = 1;
+        $customer->gender=$info['gender'];
         $customer->pro_pic = $info['picture']['data']['url'];
         $customer->update();
         return $customer;
@@ -198,12 +188,10 @@ class CustomerRepository {
 
     public function mobileValid($mobile)
     {
-        if ($customer = Customer::where('mobile', $mobile)->first())
-        {
+        if ($customer = Customer::where('mobile', $mobile)->first()) {
             return false;
         }
-        if ($customer_mobile = CustomerMobile::where('mobile', $mobile)->first())
-        {
+        if ($customer_mobile = CustomerMobile::where('mobile', $mobile)->first()) {
             return false;
         }
         return true;

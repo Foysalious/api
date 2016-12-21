@@ -12,7 +12,8 @@ use JWTAuth;
 use JWTFactory;
 use Session;
 
-class RegistrationController extends Controller {
+class RegistrationController extends Controller
+{
     private $fbKit;
     private $customer;
 
@@ -31,18 +32,15 @@ class RegistrationController extends Controller {
         //Authenticate the code with facebook kit
         $code_data = $this->fbKit->authenticateKit($request->input('code'));
         //login if customer already exists
-        if ($customer = Customer::where('mobile', $code_data['mobile'])->first())
-        {
+        if ($customer = Customer::where('mobile', $code_data['mobile'])->first()) {
             $token = JWTAuth::fromUser($customer);
             // return success with token
             return response()->json([
                 'msg' => 'successful', 'code' => 200, 'token' => $token,
                 'remember_token' => $customer->remember_token, 'customer' => $customer->id
             ]);
-        }
-        //return error if mobile already exists as secondary
-        elseif ($customer_mobile = CustomerMobile::where('mobile', $code_data['mobile'])->first())
-        {
+        } //return error if mobile already exists as secondary
+        elseif ($customer_mobile = CustomerMobile::where('mobile', $code_data['mobile'])->first()) {
             return response()->json(['msg' => 'uses as secondary number', 'code' => 409]);
         }
         array_add($request, 'mobile', $code_data['mobile']);
@@ -66,8 +64,7 @@ class RegistrationController extends Controller {
     public function registerWithEmail(Request $request)
     {
         //return customer if customer already exists
-        if ($customer = $this->customer->ifExist($request->input('email'), 'email'))
-        {
+        if ($customer = $this->customer->ifExist($request->input('email'), 'email')) {
             // return error
             return response()->json([
                 'msg' => 'account already exists for this email', 'code' => 409
@@ -89,43 +86,25 @@ class RegistrationController extends Controller {
     {
         $customer = $this->customer->ifExist($request->input('id'), 'fb_id');
         //fb_id doesn't exist
-        if (!$customer)
-        {
-            //email already exist for this facebook user now logged in the user
-            if ($customer = $this->customer->ifExist($request->input('email'), 'email'))
-            {
+        if (!$customer) {
+            //email already exist for this facebook user so logged in the user
+            if ($customer = $this->customer->ifExist($request->input('email'), 'email')) {
+                $customer = $this->customer->updateCustomerInfo($customer, $request->all());
                 $token = JWTAuth::fromUser($customer);
-                $customer->reference_code = str_random(30);
-                $customer->remember_token = str_random(60);
-                $customer->update();
-                // return success with token
-                return response()->json([
-                    'msg' => 'successful', 'code' => 200, 'token' => $token,
-                    'remember_token' => $customer->remember_token, 'customer' => $customer->id
-                ]);
-            }
-            else
-            {
+            } else {
                 $customer = $this->customer->registerFacebook($request->all());
                 $token = JWTAuth::fromUser($customer);
-                // return success with token
-                return response()->json([
-                    'msg' => 'successful', 'code' => 200, 'token' => $token,
-                    'remember_token' => $customer->remember_token, 'customer' => $customer->id
-                ]);
             }
-        }
-        //fb_id exist so logged in the user
-        else
-        {
+        } //fb_id exist so logged in the user
+        else {
             $customer = $this->customer->updateCustomerInfo($customer, $request->all());
             $token = JWTAuth::fromUser($customer);
-            // return success with token
-            return response()->json([
-                'msg' => 'successful', 'code' => 200, 'token' => $token,
-                'remember_token' => $customer->remember_token, 'customer' => $customer->id
-            ]);
         }
+        // return success with token
+        return response()->json([
+            'msg' => 'successful', 'code' => 200, 'token' => $token, 'remember_token' => $customer->remember_token,
+            'customer' => $customer->id, 'customer_img' => $customer->pro_pic
+        ]);
     }
 
 }
