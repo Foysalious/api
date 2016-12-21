@@ -37,7 +37,7 @@ class RegistrationController extends Controller
             // return success with token
             return response()->json([
                 'msg' => 'successful', 'code' => 200, 'token' => $token,
-                'remember_token' => $customer->remember_token, 'customer' => $customer->id
+                'remember_token' => $customer->remember_token, 'customer' => $customer->id, 'customer_img' => $customer->pro_pic
             ]);
         } //return error if mobile already exists as secondary
         elseif ($customer_mobile = CustomerMobile::where('mobile', $code_data['mobile'])->first()) {
@@ -49,10 +49,11 @@ class RegistrationController extends Controller
         $this->customer->addCustomerMobile($customer);
         //generate token based on customer
         $token = JWTAuth::fromUser($customer);
+        $customer = Customer::find($customer->id);
         // return success with token
         return response()->json([
             'msg' => 'successful', 'code' => 200, 'token' => $token,
-            'remember_token' => $customer->remember_token, 'customer' => $customer->id
+            'remember_token' => $customer->remember_token, 'customer' => $customer->id, 'customer_img' => $customer->pro_pic
         ]);
     }
 
@@ -78,7 +79,7 @@ class RegistrationController extends Controller
         // return success with token
         return response()->json([
             'msg' => 'Register with email successful', 'code' => 200, 'token' => $token,
-            'remember_token' => $customer->remember_token, 'customer' => $customer->id
+            'remember_token' => $customer->remember_token, 'customer' => $customer->id, 'customer_img' => $customer->pro_pic
         ]);
     }
 
