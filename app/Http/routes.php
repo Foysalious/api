@@ -1,7 +1,7 @@
 <?php
 
 Route::get('/', function () {
-    dispatch(new \App\Jobs\TestJob());
+    dispatch(new \App\Jobs\TestJob(),Re);
 //    return ['code' => 200, 'msg' => 'Success. This project will hold the api\'s'];
 });
 

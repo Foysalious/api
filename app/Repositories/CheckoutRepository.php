@@ -75,7 +75,6 @@ class CheckoutRepository
         $order->location_id = $order_info['location_id'];
         $order->delivery_name = $order_info['name'];
         $order->delivery_mobile = $order_info['phone'];
-        $order->status = 'Open';
         $order->sales_channel = 'Web';
         if ($order->save()) {
             if ($order_info['address'] != '') {
@@ -88,8 +87,8 @@ class CheckoutRepository
                 $deliver_adddress = CustomerDeliveryAddress::find($order_info['address_id']);
                 $order->delivery_address = $deliver_adddress->address;
             }
-            $order->order_code = sprintf('%06d', $order->id);
-            $order->update();
+//            $order->order_code = sprintf('%06d', $order->id);
+//            $order->update();
             foreach ($unique_partners as $partner) {
                 $partner_order = new PartnerOrder();
                 $partner_order->order_id = $order->id;
@@ -121,14 +120,13 @@ class CheckoutRepository
                         $job->service_id = $service->service->id;
                         $job->service_name = $service->service->name;
                         $job->service_option = json_encode($service->serviceOptions);
-                        $job->status = 'Open';
                         $job->schedule_date = Carbon::parse($service->date)->format('Y-m-d');
                         $job->preferred_time = $service->time;
                         $job->service_price = $service->partner->prices;
                         $job->save();
-                        $job->job_full_code = 'D-' . $order->order_code . '-' . sprintf('%06d', $partner) . '-' . sprintf('%08d', $job->id);
-                        $job->job_code = sprintf('%08d', $job->id);
-                        $job->update();
+//                        $job->job_full_code = 'D-' . $order->order_code . '-' . sprintf('%06d', $partner) . '-' . sprintf('%08d', $job->id);
+//                        $job->job_code = sprintf('%08d', $job->id);
+//                        $job->update();
                     }
                 }
             }

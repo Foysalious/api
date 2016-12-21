@@ -23,6 +23,9 @@ class OrderController extends Controller
     {
         $customer = Customer::find($customer);
         $orders = $this->orderRepository->getOrderInfo($customer, '<>', 'Closed');
+
+//        return $orders;
+
         foreach ($orders as $order) {
             $order->calculate();
             foreach ($order->partner_orders as $partner_order) {
@@ -36,9 +39,11 @@ class OrderController extends Controller
                 array_forget($partner_order, 'partner_collection');
                 array_forget($partner_order, 'sheba_collection');
                 array_forget($partner_order, 'rounding_cut_off');
+                array_forget($partner_order->partner, 'categories');
             }
             array_add($order, 'total_cost', $order->totalPrice);
             array_add($order, 'due_amount', $order->due);
+            array_add($order, 'order_code', $order->code());
         }
         return response()->json(['orders' => $orders, 'code' => 200, 'msg' => 'successful']);
     }

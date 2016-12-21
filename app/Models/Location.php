@@ -2,7 +2,8 @@
 
 use Illuminate\Database\Eloquent\Model;
 
-class Location extends Model {
+class Location extends Model
+{
     protected $fillable = [
         'name',
         'city_id',
@@ -12,6 +13,11 @@ class Location extends Model {
     public function partners()
     {
         return $this->belongsToMany(Partner::class);
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
     }
 
 }

@@ -25,7 +25,7 @@ class JobController extends Controller {
                     $query->select('id', 'name');
                 }])->with(['order' => function ($query)
                 {
-                    $query->select('id', 'order_code');
+                    $query->select('id');
                 }]);
             }])->with(['materials' => function ($query)
             {
@@ -37,7 +37,7 @@ class JobController extends Controller {
             {
                 $query->select('job_id', 'review_title', 'review', 'rating');
             }])->where('id', $job->id)
-                ->select('id', 'job_code', 'service_id', 'service_name', 'service_option', 'discount', 'status', 'service_price', 'created_at', 'partner_order_id')
+                ->select('id', 'service_id', 'service_name', 'service_option', 'discount', 'status', 'service_price', 'created_at', 'partner_order_id')
                 ->first();
             array_add($job, 'status_show', $this->job_statuses_show[$job->status]);
 
