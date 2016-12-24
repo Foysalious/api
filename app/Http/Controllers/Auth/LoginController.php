@@ -56,7 +56,7 @@ class LoginController extends Controller
             if (!$token = JWTAuth::attempt($credentials)) {
                 //email verification failed. Now check for mobile verification
                 if (!$mobileToken = $this->customer->attemptByMobile($credentials)) {
-                    return response()->json(['msg' => 'invalid_credentials', 'code' => 404], 401);
+                    return response()->json(['msg' => 'invalid_credentials', 'code' => 404]);
                 }
             }
         } catch (JWTException $e) {

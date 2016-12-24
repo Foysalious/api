@@ -42,19 +42,20 @@ class RegistrationController extends Controller
         } //return error if mobile already exists as secondary
         elseif ($customer_mobile = CustomerMobile::where('mobile', $code_data['mobile'])->first()) {
             return response()->json(['msg' => 'uses as secondary number', 'code' => 409]);
+        } else {
+            array_add($request, 'mobile', $code_data['mobile']);
+            //register the customer with verified mobile
+            $customer = $this->customer->registerMobile($request->all());
+            $this->customer->addCustomerMobile($customer);
+            //generate token based on customer
+            $token = JWTAuth::fromUser($customer);
+            $customer = Customer::find($customer->id);
+            // return success with token
+            return response()->json([
+                'msg' => 'successful', 'code' => 200, 'token' => $token,
+                'remember_token' => $customer->remember_token, 'customer' => $customer->id, 'customer_img' => $customer->pro_pic
+            ]);
         }
-        array_add($request, 'mobile', $code_data['mobile']);
-        //register the customer with verified mobile
-        $customer = $this->customer->registerMobile($request->all());
-        $this->customer->addCustomerMobile($customer);
-        //generate token based on customer
-        $token = JWTAuth::fromUser($customer);
-        $customer = Customer::find($customer->id);
-        // return success with token
-        return response()->json([
-            'msg' => 'successful', 'code' => 200, 'token' => $token,
-            'remember_token' => $customer->remember_token, 'customer' => $customer->id, 'customer_img' => $customer->pro_pic
-        ]);
     }
 
 
