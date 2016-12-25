@@ -72,7 +72,7 @@ class ServiceController extends Controller
     {
         $option = null;
         //get the selected options
-        if ($request->has('option')) {
+        if ($request->has('options')) {
             $option = implode(',', $request->input('options'));
         }
         //check if any partner provide service in the location

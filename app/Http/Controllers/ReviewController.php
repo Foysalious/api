@@ -6,7 +6,8 @@ use App\Models\Review;
 use App\Repositories\ReviewRepository;
 use Illuminate\Http\Request;
 
-class ReviewController extends Controller {
+class ReviewController extends Controller
+{
     private $reviewRepository;
 
     public function __construct()
@@ -21,38 +22,28 @@ class ReviewController extends Controller {
             ['customer_id', $customer],
         ])->first();
         //There is already a review or rating for this job
-        if ($review != null)
-        {
-            if ($request->input('rating')!='')
-            {
+        if ($review != null) {
+            if ($request->input('rating') != '') {
                 $review->rating = $request->input('rating');
             }
-            if ($request->input('review_title')!='')
-            {
+            if ($request->input('review_title') != '') {
                 $review->review_title = $request->input('review_title');
             }
-            if ($request->input('review')!='')
-            {
+            if ($request->input('review') != '') {
                 $review->review = $request->input('review');
             }
             $review->update();
             return response()->json(['msg' => 'successful', 'code' => 200]);
-        }
-        else
-        {
-            if ($this->reviewRepository->customerCanGiveReview($customer, $request->input('job_id')))
-            {
+        } else {
+            if ($this->reviewRepository->customerCanGiveReview($customer, $request->input('job_id'))) {
                 $review = new Review();
-                if ($request->input('rating')!='')
-                {
+                if ($request->input('rating') != '') {
                     $review->rating = $request->input('rating');
                 }
-                if ($request->input('review_title')!='')
-                {
+                if ($request->input('review_title') != '') {
                     $review->review_title = $request->input('review_title');
                 }
-                if ($request->input('review')!='')
-                {
+                if ($request->input('review') != '') {
                     $review->review = $request->input('review');
                 }
                 $review->job_id = $request->input('job_id');
@@ -61,9 +52,13 @@ class ReviewController extends Controller {
                 $review->customer_id = $customer;
                 $review->save();
                 return response()->json(['msg' => 'successful', 'code' => 200]);
-            }
-            else
+            } else
                 return response()->json(['msg' => 'unauthorized', 'code' => 409]);
         }
+    }
+
+    public function giveRatingFromEmail(Request $request)
+    {
+
     }
 }
