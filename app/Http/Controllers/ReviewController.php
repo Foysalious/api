@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
+use App\Models\Job;
 use App\Models\Review;
 use App\Repositories\ReviewRepository;
 use Illuminate\Http\Request;
+use Gate;
 
 class ReviewController extends Controller
 {
@@ -59,6 +62,46 @@ class ReviewController extends Controller
 
     public function giveRatingFromEmail(Request $request)
     {
+        $this->validate($request, [
+            'rating' => 'required|numeric|between:1,5',
+            'j' => 'required|numeric',
+            'c' => 'required|numeric',
+            'token' => 'required|string',
+        ]);
+        if ($request->input('rating') > 5 || $request->input('rating') < 1) {
+            return response()->json(['msg' => 'I see what you did there ;)', 'code' => 409]);
+        }
+        $customer = Customer::where('remember_token', $request->input('token'))->first();
 
+        //customer is valid
+        if ($customer && $customer->id == $request->input('c')) {
+            $job = Job::find($request->input('j'));
+            //customer can give review to this job
+            if ($this->reviewRepository->customerCanGiveReview($customer->id, $request->input('j'))) {
+                //if review isn't given yet
+                if ($job->review == null) {
+                    $review = new Review();
+                    $review->rating = $request->input('rating');
+                    $review->job_id = $request->input('j');
+                    $review->partner_id = $job->partner_order->partner_id;
+                    $review->service_id = $job->service_id;
+//                    $review->resource_id = $job->resource_id;
+                    $review->customer_id = $customer->id;
+                    if ($review->save()) {
+                        return response()->json(['msg' => 'successful', 'code' => 200]);
+                    } else {
+                        return response()->json(['msg' => 'error', 'code' => 500]);
+                    }
+                } //update the review
+                else {
+                    $review = $job->review;
+                    $review->rating = $request->input('rating');
+                    if ($review->update()) {
+                        return response()->json(['msg' => 'successful', 'code' => 200]);
+                    }
+                }
+            }
+        }
+        return response()->json(['msg' => 'unauthorized', 'code' => 409]);
     }
 }

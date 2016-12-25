@@ -5,19 +5,21 @@ namespace App\Repositories;
 
 use App\Models\Job;
 
-class ReviewRepository {
+class ReviewRepository
+{
 
     public function customerCanGiveReview($customer, $job)
     {
         $job = Job::where([
             ['id', $job],
-            ['status', 'Closed']
+            ['status', 'Served']
         ])->first();
-        if ($job->partner_order->order->customer_id == $customer)
-        {
-            return true;
+        if ($job == null) {
+            return false;
         }
-        else
+        if ($job->partner_order->order->customer_id == $customer) {
+            return true;
+        } else
             return false;
     }
 }

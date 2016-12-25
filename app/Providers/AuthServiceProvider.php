@@ -3,10 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Job;
-use App\Models\Review;
-use App\Policies\GiveReviewPolicy;
 use App\Policies\JobPolicy;
-use App\Policies\ReviewPolicyForCustomer;
 use Illuminate\Contracts\Auth\Access\Gate as GateContract;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
@@ -18,7 +15,6 @@ class AuthServiceProvider extends ServiceProvider
      * @var array
      */
     protected $policies = [
-        Job::class => JobPolicy::class
     ];
 
     /**

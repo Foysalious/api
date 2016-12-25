@@ -72,9 +72,10 @@ $api->version('v1', function ($api) {
         $api->post('{customer}/sp-payment', 'App\Http\Controllers\CheckoutController@spPayment');
         $api->post('{customer}/modify-review', 'App\Http\Controllers\ReviewController@modifyReview');
         $api->get('{customer}/job/{job}', 'App\Http\Controllers\JobController@getInfo');
-        $api->post('{customer}/rating', 'App\Http\Controllers\ReviewController@giveRatingFromEmail');
 
         $api->post('{customer}/checkout/place-order', 'App\Http\Controllers\CheckoutController@placeOrder');
         $api->post('{customer}/checkout/place-order-with-online-payment', 'App\Http\Controllers\CheckoutController@placeOrderWithPayment');
     });
+
+    $api->post('rating', 'App\Http\Controllers\ReviewController@giveRatingFromEmail');
 });

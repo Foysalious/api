@@ -25,7 +25,7 @@ class JobController extends Controller {
                     $query->select('id', 'name');
                 }])->with(['order' => function ($query)
                 {
-                    $query->select('id');
+                    $query->select('id' );
                 }]);
             }])->with(['materials' => function ($query)
             {
