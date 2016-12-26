@@ -28,6 +28,7 @@ class SearchController extends Controller
             }
             $services = $query->where('publication_status', 1)
                 ->select('id', 'name', 'thumb', 'banner', 'variable_type')
+                ->take(10)
                 ->get();
 
             if ($services->isEmpty())

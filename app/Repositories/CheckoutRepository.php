@@ -124,6 +124,7 @@ class CheckoutRepository
                         $job->job_additional_info = $service->additional_info;
                         $job->service_quantity = $service->quantity;
                         $job->service_price = $service->partner->prices * $service->quantity;
+                        $job->job_name = isset($service->job_name) ? $service->job_name : '';
 //                        $job->job_additional_info = $order_info['additional_info'];
                         $job->save();
 //                        $job->job_full_code = 'D-' . $order->order_code . '-' . sprintf('%06d', $partner) . '-' . sprintf('%08d', $job->id);
