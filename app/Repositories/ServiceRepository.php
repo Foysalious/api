@@ -100,8 +100,6 @@ class ServiceRepository
                 }
                 //if the selected option exist in partner option list add the partner to final list
                 if ($count > 0) {
-                    //price of the selected option
-                    $price = array_pull($options, $option);
                     array_set($partner, 'prices', $price);
                     array_push($final_partners, $partner);
                 }
