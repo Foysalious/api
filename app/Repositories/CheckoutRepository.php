@@ -121,7 +121,9 @@ class CheckoutRepository
                         $job->service_option = json_encode($service->serviceOptions);
                         $job->schedule_date = Carbon::parse($service->date)->format('Y-m-d');
                         $job->preferred_time = $service->time;
-                        $job->service_price = $service->partner->prices;
+                        $job->job_additional_info = $service->additional_info;
+                        $job->service_quantity = $service->quantity;
+                        $job->service_price = $service->partner->prices * $service->quantity;
 //                        $job->job_additional_info = $order_info['additional_info'];
                         $job->save();
 //                        $job->job_full_code = 'D-' . $order->order_code . '-' . sprintf('%06d', $partner) . '-' . sprintf('%08d', $job->id);

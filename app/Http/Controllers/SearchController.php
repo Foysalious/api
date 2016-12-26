@@ -34,6 +34,7 @@ class SearchController extends Controller
                 return response()->json(['msg' => 'nothing found', 'code' => 404]);
             else {
                 foreach ($services as $service) {
+                    array_add($service, 'slug_service', str_slug($service->name));
                     //if service has no partners
                     if ($service->partners->isEmpty()) {
                         array_add($service, 'review', 0);
