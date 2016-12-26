@@ -75,7 +75,7 @@ class CheckoutRepository
         $order->location_id = $order_info['location_id'];
         $order->delivery_name = $order_info['name'];
         $order->delivery_mobile = $order_info['phone'];
-        $order->sales_channel = 'Web';
+        $order->sales_channel = isset($order_info['sales_channel']) ? $order_info['sales_channel'] : 'Web';
         if ($order->save()) {
             if ($order_info['address'] != '') {
                 $deliver_adddress = new CustomerDeliveryAddress();
