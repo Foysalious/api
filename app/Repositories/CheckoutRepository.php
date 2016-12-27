@@ -11,6 +11,7 @@ use App\Models\Job;
 use App\Models\Order;
 use App\Models\PartnerOrder;
 use App\Models\PartnerOrderPayment;
+use App\Models\User;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -56,6 +57,9 @@ class CheckoutRepository
 
     public function storeDataInDB($order_info, $payment_method)
     {
+        if (isset($order_info['created_by'])) {
+            $user = User::select('id', 'name')->where('id', $order_info['created_by'])->first();
+        }
         $cart = json_decode($order_info['cart']);
         //group cart_info by partners
         $cart_partner = collect($cart->items)->groupBy('partner.id');
@@ -76,11 +80,19 @@ class CheckoutRepository
         $order->delivery_name = $order_info['name'];
         $order->delivery_mobile = $order_info['phone'];
         $order->sales_channel = isset($order_info['sales_channel']) ? $order_info['sales_channel'] : 'Web';
+        if (isset($order_info['created_by'])) {
+            $order->created_by = $user->id;
+            $order->created_by_name = $user->name;
+        }
         if ($order->save()) {
             if ($order_info['address'] != '') {
                 $deliver_adddress = new CustomerDeliveryAddress();
                 $deliver_adddress->address = $order_info['address'];
                 $deliver_adddress->customer_id = $order_info['customer_id'];
+                if (isset($order_info['created_by'])) {
+                    $deliver_adddress->created_by = $user->id;
+                    $deliver_adddress->created_by_name = $user->name;
+                }
                 $deliver_adddress->save();
                 $order->delivery_address = $order_info['address'];
             } elseif ($order_info['address_id'] != '') {
@@ -92,12 +104,10 @@ class CheckoutRepository
                 $partner_order = new PartnerOrder();
                 $partner_order->order_id = $order->id;
                 $partner_order->partner_id = $partner;
-//                $partner_order->total_amount = $partner_price[$partner];
-//                if ($payment_method == 'cash-on-delivery')
-//                {
-//                    $partner_order->due = $partner_price[$partner];
-//                    $partner_order->paid = 0;
-//                }
+                if (isset($order_info['created_by'])) {
+                    $partner_order->created_by = $user->id;
+                    $partner_order->created_by_name = $user->name;
+                }
                 if ($payment_method == 'online') {
                     $partner_order->sheba_collection = $partner_price[$partner];
                 }
@@ -125,7 +135,10 @@ class CheckoutRepository
                         $job->service_quantity = $service->quantity;
                         $job->service_price = $service->partner->prices * $service->quantity;
                         $job->job_name = isset($service->job_name) ? $service->job_name : '';
-//                        $job->job_additional_info = $order_info['additional_info'];
+                        if (isset($order_info['created_by'])) {
+                            $job->created_by = $user->id;
+                            $job->created_by_name = $user->name;
+                        }
                         $job->save();
 //                        $job->job_full_code = 'D-' . $order->order_code . '-' . sprintf('%06d', $partner) . '-' . sprintf('%08d', $job->id);
 //                        $job->job_code = sprintf('%08d', $job->id);
