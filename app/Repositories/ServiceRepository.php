@@ -24,10 +24,7 @@ class ServiceRepository
         foreach ($service_partners as $key => $partner) {
             $prices = json_decode($partner->prices);
             array_forget($partner, 'pivot');
-
-            if ($service->variable_type == 'Fixed' || $service->variable_type == 'Custom') {
-                array_set($partner, 'prices', 100);
-            } elseif ($service->variable_type == 'Options') {
+            if ($service->variable_type == 'Options') {
                 $variables = json_decode($service->variables);
                 // Get the first option of service
                 $first_option = key($variables->prices);
