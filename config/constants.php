@@ -11,8 +11,8 @@ return [
         'Pending' => 'Pending',
         'Accepted' => 'Accepted',
         'Declined' => 'Declined',
-        'Not Responded' => 'Not Responded',
-        'Schedule Due' => 'Schedule Due',
+        'Not_Responded' => 'Not Responded',
+        'Schedule_Due' => 'Schedule Due',
         'Process' => 'Process',
         'Served' => 'Served',
         'Cancelled' => 'Cancelled'
@@ -21,8 +21,8 @@ return [
         'Pending' => ['sheba'=> 'Pending', 'partner' => 'Pending', 'customer' => 'Pending'],
         'Accepted' => ['sheba'=> 'Accepted', 'partner' => 'Accepted', 'customer' => 'Accepted'],
         'Declined' => ['sheba'=> 'Declined', 'partner' => 'Declined', 'customer' => 'Declined'],
-        'Not Responded' => ['sheba'=> 'Not Responded', 'partner' => 'Not Responded', 'customer' => 'Not Responded'],
-        'Schedule Due' => ['sheba'=> 'Schedule Due', 'partner' => 'Schedule Due', 'customer' => 'Schedule Due'],
+        'Not_Responded' => ['sheba'=> 'Not Responded', 'partner' => 'Not Responded', 'customer' => 'Not Responded'],
+        'Schedule_Due' => ['sheba'=> 'Schedule Due', 'partner' => 'Schedule Due', 'customer' => 'Schedule Due'],
         'Process' => ['sheba'=> 'Process', 'partner' => 'Process', 'customer' => 'Process'],
         'Served' => ['sheba'=> 'Served', 'partner' => 'Served', 'customer' => 'Served'],
         'Cancelled' => ['sheba'=> 'Cancelled', 'partner' => 'Cancelled', 'customer' => 'Cancelled']
@@ -58,10 +58,23 @@ return [
         'Solved' => 'Solved'
     ],
     'PRIORITY_LEVELS' => ['Green' => 'Green', 'Amber' => 'Amber', 'Red' => 'Red'],
+    'ALT_PRIORITY_LEVELS' => ['Low' => 'Low', 'Medium' => 'Medium', 'High' => 'High'],
     'JOB_PREFERRED_TIMES' => [
         '10.00 A.M. - 01.00 P.M.' => '10.00 A.M. - 01.00 P.M.',
         '01.00 P.M. - 05.00 P.M.' => '01.00 P.M. - 05.00 P.M.',
         '05.00 P.M. - 09.00 P.M.' => '05.00 P.M. - 09.00 P.M.',
         'Anytime' => 'Anytime',
+    ],
+
+    'JOB_CI_LEVELS' => ['High', 'Medium', 'Low'],
+    'JOB_SATISFACTION_LEVELS' => ['High', 'Medium', 'Low'],
+
+    'JOB_CANCEL_REASONS' => [
+        'Customer Dependency'   => 'Customer Dependency',
+        'Customer Management'   => 'Customer Management',
+        'Push Sales Attempt'    => 'Push Sales Attempt',
+        'Insufficient Partner'  => 'Insufficient Partner',
+        'Price Shock'           => 'Price Shock',
+        'Service Limitation'    => 'Service Limitation',
     ],
 ];

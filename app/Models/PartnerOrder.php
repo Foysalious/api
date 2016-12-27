@@ -75,8 +75,8 @@ class PartnerOrder extends Model
             $job_statuses['Pending'] => 0,
             $job_statuses['Accepted'] => 0,
             $job_statuses['Declined'] => 0,
-            $job_statuses['Not Responded'] => 0,
-            $job_statuses['Schedule Due'] => 0,
+            $job_statuses['Not_Responded'] => 0,
+            $job_statuses['Schedule_Due'] => 0,
             $job_statuses['Process'] => 0,
             $job_statuses['Served'] => 0,
             $job_statuses['Cancelled'] => 0

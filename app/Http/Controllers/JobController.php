@@ -5,36 +5,32 @@ namespace App\Http\Controllers;
 use App\Models\Job;
 use Illuminate\Http\Request;
 
-class JobController extends Controller {
+class JobController extends Controller
+{
     private $job_statuses_show;
+    private $job_preferred_times;
 
     public function __construct()
     {
         $this->job_statuses_show = config('constants.JOB_STATUSES_SHOW');
+        $this->job_preferred_times = config('constants.JOB_PREFERRED_TIMES');
     }
 
     public function getInfo($customer, $job)
     {
         $job = Job::find($job);
-        if ($job->partner_order->order->customer_id == $customer)
-        {
-            $job = Job::with(['partner_order' => function ($query)
-            {
-                $query->select('id', 'partner_id', 'order_id')->with(['partner' => function ($query)
-                {
+        if ($job->partner_order->order->customer_id == $customer) {
+            $job = Job::with(['partner_order' => function ($query) {
+                $query->select('id', 'partner_id', 'order_id')->with(['partner' => function ($query) {
                     $query->select('id', 'name');
-                }])->with(['order' => function ($query)
-                {
-                    $query->select('id' );
+                }])->with(['order' => function ($query) {
+                    $query->select('id');
                 }]);
-            }])->with(['materials' => function ($query)
-            {
+            }])->with(['materials' => function ($query) {
                 $query->select('material_name', 'material_price');
-            }])->with(['service' => function ($query)
-            {
+            }])->with(['service' => function ($query) {
                 $query->select('id', 'name', 'variable_type', 'variables');
-            }])->with(['review' => function ($query)
-            {
+            }])->with(['review' => function ($query) {
                 $query->select('job_id', 'review_title', 'review', 'rating');
             }])->where('id', $job->id)
                 ->select('id', 'service_id', 'service_name', 'service_option', 'discount', 'status', 'service_price', 'created_at', 'partner_order_id')
@@ -47,11 +43,14 @@ class JobController extends Controller {
             array_add($job, 'total_cost', $job_model->grossPrice);
 
             return response()->json(['job' => $job, 'msg' => 'successful', 'code' => 200]);
-        }
-        else
-        {
+        } else {
             return response()->json(['msg' => 'unauthorized', 'code' => 409]);
         }
 
+    }
+
+    public function getPreferredTimes()
+    {
+        return response()->json(['times' => $this->job_preferred_times, 'code' => 200]);
     }
 }

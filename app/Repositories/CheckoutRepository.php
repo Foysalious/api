@@ -133,6 +133,8 @@ class CheckoutRepository
                         $job->preferred_time = $service->time;
                         $job->job_additional_info = $service->additional_info;
                         $job->service_quantity = $service->quantity;
+                        $job->crm_id = isset($service->crm_id) ? $service->crm_id : '';
+                        $job->department_id = isset($service->department_id) ? $service->department_id : '';
                         $job->service_price = $service->partner->prices * $service->quantity;
                         $job->job_name = isset($service->job_name) ? $service->job_name : '';
                         if (isset($order_info['created_by'])) {
