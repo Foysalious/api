@@ -40,7 +40,6 @@ class OrderController extends Controller
                 array_add($partner_order, 'due_amount', $partner_order->due);
                 array_forget($partner_order, 'partner_collection');
                 array_forget($partner_order, 'sheba_collection');
-                array_forget($partner_order, 'rounding_cut_off');
                 array_forget($partner_order->partner, 'categories');
             }
             array_add($order, 'total_cost', $order->totalPrice);
@@ -69,6 +68,7 @@ class OrderController extends Controller
                 array_add($partner_order, 'total_amount', $partner_order->totalPrice);
                 array_add($partner_order, 'paid_amount', $partner_order->paid);
                 array_add($partner_order, 'due_amount', $partner_order->due);
+                array_add($partner_order, 'rounding_cut_off', $partner_order->roundingCutOff);
                 array_forget($partner_order, 'partner_collection');
                 array_forget($partner_order, 'sheba_collection');
                 array_forget($partner_order->partner, 'categories');
