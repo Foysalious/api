@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\Customer;
+use App\Models\Job;
 use App\Models\Location;
+use App\Models\Partner;
 use App\Models\PartnerService;
 use App\Models\Service;
 use App\Repositories\RatingReviewRepository;
@@ -54,7 +57,7 @@ class ServiceController extends Controller
 
         //If service has partner
         if (count($service_partners) != 0) {
-            return response()->json(['service' => $service, 'service_partners' => $service_partners, 'msg' => 'successful', 'code' => 200]);
+            return response()->json(['service' => $service, 'service_partners' => $service_partners, 'times' => config('constants.JOB_PREFERRED_TIMES'), 'msg' => 'successful', 'code' => 200]);
         }
         return response()->json(['service' => $service, 'service_partners' => $service_partners, 'msg' => 'no partner found in selected location', 'code' => 404]);
     }
@@ -91,6 +94,15 @@ class ServiceController extends Controller
             return response()->json(['service_partners' => $service_partners, 'msg' => 'successful', 'code' => 200]);
         } else
             return response()->json(['msg' => 'no partner found', 'code' => 404]);
+    }
+
+    public function getInfo()
+    {
+        $customer_count = Customer::all()->count();
+        $partner_count = Partner::all()->count();
+        $job_count = Job::all()->count();
+        $service_count = Service::all()->count();
+        return response()->json(['customer' => $customer_count, 'partner' => $partner_count, 'service' => $service_count, 'job' => $job_count, 'msg' => 'successful', 'code' => 200]);
     }
 
 }

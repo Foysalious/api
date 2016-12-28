@@ -1,5 +1,5 @@
 <?php
-namespace App\library;
+namespace App\Library;
 
 class PortWallet
 {

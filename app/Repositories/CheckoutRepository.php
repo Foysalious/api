@@ -4,7 +4,7 @@ namespace App\Repositories;
 
 use App\Jobs\SendConfirmationEmail;
 use App\Jobs\SendConfirmationSms;
-use App\library\PortWallet;
+use App\Library\PortWallet;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\Job;
@@ -129,7 +129,11 @@ class CheckoutRepository
                         $job->service_id = $service->service->id;
                         $job->service_name = $service->service->name;
                         $job->service_option = json_encode($service->serviceOptions);
-                        $job->schedule_date = Carbon::parse($service->date)->format('Y-m-d');
+                        if (is_object($service->date)) {
+                            $job->schedule_date = Carbon::parse($service->date->time)->format('Y-m-d');
+                        } else {
+                            $job->schedule_date = Carbon::parse($service->date)->format('Y-m-d');
+                        }
                         $job->preferred_time = $service->time;
                         $job->job_additional_info = $service->additional_info;
                         $job->service_quantity = $service->quantity;

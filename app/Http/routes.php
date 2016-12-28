@@ -32,6 +32,7 @@ $api->version('v1', function ($api) {
     $api->get('search', 'App\Http\Controllers\SearchController@getService');
     $api->get('category-service', 'App\Http\Controllers\CategoryServiceController@getCategoryServices');
     $api->get('job-times', 'App\Http\Controllers\JobController@getPreferredTimes');
+    $api->get('info', 'App\Http\Controllers\ServiceController@getInfo');
 
     $api->group(['prefix' => 'category'], function ($api) {
         $api->get('/', 'App\Http\Controllers\CategoryController@index');

@@ -13,7 +13,6 @@ class JobController extends Controller
     public function __construct()
     {
         $this->job_statuses_show = config('constants.JOB_STATUSES_SHOW');
-        $this->job_preferred_times = config('constants.JOB_PREFERRED_TIMES');
     }
 
     public function getInfo($customer, $job)
@@ -51,6 +50,6 @@ class JobController extends Controller
 
     public function getPreferredTimes()
     {
-        return response()->json(['times' => $this->job_preferred_times, 'code' => 200]);
+        return response()->json(['times' => config('constants.JOB_PREFERRED_TIMES'), 'code' => 200]);
     }
 }

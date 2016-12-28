@@ -23,15 +23,17 @@ class OrderController extends Controller
     {
         $customer = Customer::find($customer);
         $orders = $this->orderRepository->getOrderInfo($customer, '<>', 'Closed');
-
-//        return $orders;
-
-        foreach ($orders as $order) {
+        foreach ($orders as $key => $order) {
             $order->calculate();
+            if ($order->status == 'Closed') {
+                unset($orders[$key]);
+                continue;
+            }
             foreach ($order->partner_orders as $partner_order) {
                 foreach ($partner_order->jobs as $job) {
                     array_add($job, 'customer_charge', $job->grossPrice);
                     array_add($job, 'material_price', $job->materialPrice);
+                    array_forget($job, 'partner_order');
                 }
                 array_add($partner_order, 'total_amount', $partner_order->totalPrice);
                 array_add($partner_order, 'paid_amount', $partner_order->paid);
@@ -51,34 +53,63 @@ class OrderController extends Controller
     public function getClosedOrderInfo($customer)
     {
         $customer = Customer::find($customer);
-        $orders = $customer->orders()
-            ->with(['partner_orders' => function ($query) {
-                $query->select('id', 'partner_id', 'total_amount', 'paid', 'due', 'order_id')
-                    ->with(['partner' => function ($query) {
-                        $query->select('id', 'name');
-                    }])
-                    ->with(['jobs' => function ($query) {
-                        $query->select('id', 'job_code', 'service_id', 'service_cost', 'total_cost', 'status', 'partner_order_id')
-                            ->with(['service' => function ($query) {
-                                $query->select('id', 'name', 'thumb');
-                            }]);
-                    }]);
-            }])->select('id', 'created_at')->get();
-
-        $final_orders = [];
-        foreach ($orders as $order) {
-            $count = 0;
+        $orders = $this->orderRepository->getOrderInfo($customer, '=', 'Served');
+        foreach ($orders as $key => $order) {
+            $order->calculate();
+            if ($order->status != 'Closed') {
+                unset($orders[$key]);
+                continue;
+            }
             foreach ($order->partner_orders as $partner_order) {
                 foreach ($partner_order->jobs as $job) {
-                    if ($job->status == "Open") {
-                        $count++;
-                    }
+                    array_add($job, 'customer_charge', $job->grossPrice);
+                    array_add($job, 'material_price', $job->materialPrice);
+                    array_forget($job, 'partner_order');
                 }
+                array_add($partner_order, 'total_amount', $partner_order->totalPrice);
+                array_add($partner_order, 'paid_amount', $partner_order->paid);
+                array_add($partner_order, 'due_amount', $partner_order->due);
+                array_forget($partner_order, 'partner_collection');
+                array_forget($partner_order, 'sheba_collection');
+                array_forget($partner_order->partner, 'categories');
             }
-            if ($count == 0) {
-                array_push($final_orders, $order);
-            }
+            array_add($order, 'total_cost', $order->totalPrice);
+            array_add($order, 'due_amount', $order->due);
+            array_add($order, 'order_code', $order->code());
         }
-        return response()->json(['orders' => $final_orders, 'code' => 200, 'msg' => 'successful']);
+        return response()->json(['orders' => $orders, 'code' => 200, 'msg' => 'successful']);
     }
+//    public function getClosedOrderInfo($customer)
+//    {
+//        $customer = Customer::find($customer);
+//        $orders = $customer->orders()
+//            ->with(['partner_orders' => function ($query) {
+//                $query->select('id', 'partner_id', 'total_amount', 'paid', 'due', 'order_id')
+//                    ->with(['partner' => function ($query) {
+//                        $query->select('id', 'name');
+//                    }])
+//                    ->with(['jobs' => function ($query) {
+//                        $query->select('id', 'job_code', 'service_id', 'service_cost', 'total_cost', 'status', 'partner_order_id')
+//                            ->with(['service' => function ($query) {
+//                                $query->select('id', 'name', 'thumb');
+//                            }]);
+//                    }]);
+//            }])->select('id', 'created_at')->get();
+//
+//        $final_orders = [];
+//        foreach ($orders as $order) {
+//            $count = 0;
+//            foreach ($order->partner_orders as $partner_order) {
+//                foreach ($partner_order->jobs as $job) {
+//                    if ($job->status == "Open") {
+//                        $count++;
+//                    }
+//                }
+//            }
+//            if ($count == 0) {
+//                array_push($final_orders, $order);
+//            }
+//        }
+//        return response()->json(['orders' => $final_orders, 'code' => 200, 'msg' => 'successful']);
+//    }
 }

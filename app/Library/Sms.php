@@ -1,6 +1,6 @@
 <?php
 
-namespace App\library;
+namespace App\Library;
 
 class Sms {
 

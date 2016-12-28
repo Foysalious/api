@@ -16,7 +16,7 @@ class OrderRepository
     {
         return $customer->orders()
             ->with(['partner_orders' => function ($query) {
-                $query->select('id', 'partner_id', 'discount', 'sheba_collection', 'partner_collection', 'order_id')
+                $query->select('id', 'partner_id', 'discount', 'sheba_collection', 'invoice', 'partner_collection', 'order_id')
                     ->with(['partner' => function ($query) {
                         $query->select('id', 'name')->with(['categories' => function ($query) {
                             $query->select('category_id');
@@ -32,9 +32,11 @@ class OrderRepository
                     }]);
             }])->with(['location' => function ($query) {
                 $query->select('id', 'name');
-            }])->wherehas('jobs', function ($query) use ($status, $compareOperator) {
-                $query->where('jobs.status', $compareOperator, $status);
-            })->select('id', 'delivery_mobile', 'location_id', 'created_at')->orderBy('created_at', 'desc')->get();
+            }])->select('id', 'delivery_mobile', 'location_id', 'created_at')->orderBy('created_at', 'desc')->get();
+
+//        ->wherehas('jobs', function ($query) use ($status, $compareOperator) {
+//        $query->where('jobs.status', $compareOperator, $status);
+//    })
 
     }
 
