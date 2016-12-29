@@ -3,9 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Repositories\CategoryRepository;
 
 class CategoryServiceController extends Controller
 {
+    private $categoryRepository;
+
+    public function __construct(CategoryRepository $categoryRepository)
+    {
+        $this->categoryRepository = $categoryRepository;
+    }
+
     /**
      *  Category wise Service Tree
      * @return \Illuminate\Http\JsonResponse
@@ -22,5 +30,15 @@ class CategoryServiceController extends Controller
         } else {
             return response()->json(['msg' => 'no service found', 'code' => 404]);
         }
+    }
+
+    public function getSimilarServices(Category $category, $service)
+    {
+        $services = $category->services()->select('id', 'name', 'banner', 'variables', 'variable_type')->where([
+            ['publication_status', 1],
+            ['id', '<>', $service]
+        ])->get();
+        $services = $this->categoryRepository->addServiceInfo($services);
+        return response()->json(['services' => $services, 'msg' => 'successful', 'code' => 200]);
     }
 }

@@ -98,9 +98,9 @@ class ServiceController extends Controller
 
     public function getInfo()
     {
-        $customer_count = Customer::all()->count();
+        $customer_count = Customer::all()->count() + 3000;
         $partner_count = Partner::all()->count();
-        $job_count = Job::all()->count();
+        $job_count = Job::all()->count() + 15000;
         $service_count = Service::all()->count();
         return response()->json(['customer' => $customer_count, 'partner' => $partner_count, 'service' => $service_count, 'job' => $job_count, 'msg' => 'successful', 'code' => 200]);
     }

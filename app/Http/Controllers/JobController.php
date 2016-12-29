@@ -32,7 +32,7 @@ class JobController extends Controller
             }])->with(['review' => function ($query) {
                 $query->select('job_id', 'review_title', 'review', 'rating');
             }])->where('id', $job->id)
-                ->select('id', 'service_id', 'service_name', 'service_option', 'discount', 'status', 'service_price', 'created_at', 'partner_order_id')
+                ->select('id', 'service_id', 'service_name', 'service_quantity', 'service_option', 'discount', 'status', 'service_price', 'created_at', 'partner_order_id')
                 ->first();
             array_add($job, 'status_show', $this->job_statuses_show[$job->status]);
 

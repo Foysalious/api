@@ -31,6 +31,7 @@ $api->version('v1', function ($api) {
     $api->get('locations', 'App\Http\Controllers\LocationController@getAllLocations');
     $api->get('search', 'App\Http\Controllers\SearchController@getService');
     $api->get('category-service', 'App\Http\Controllers\CategoryServiceController@getCategoryServices');
+    $api->get('similar-services/{category}/{service}', 'App\Http\Controllers\CategoryServiceController@getSimilarServices');
     $api->get('job-times', 'App\Http\Controllers\JobController@getPreferredTimes');
     $api->get('info', 'App\Http\Controllers\ServiceController@getInfo');
 

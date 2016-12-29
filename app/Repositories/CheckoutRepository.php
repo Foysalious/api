@@ -72,7 +72,7 @@ class CheckoutRepository
             foreach ($partners as $partner) {
                 $price += $partner->partner->prices;
             }
-            $partner_price[$partner->partner->id] = $price;
+            $partner_price[$partner->partner->id] = $price * $partner->quantity;
         }
         $order = new Order();
         $order->customer_id = $order_info['customer_id'];
@@ -83,6 +83,8 @@ class CheckoutRepository
         if (isset($order_info['created_by'])) {
             $order->created_by = $user->id;
             $order->created_by_name = $user->name;
+        } else {
+            $order->created_by_name = 'Customer';
         }
         if ($order->save()) {
             if ($order_info['address'] != '') {
@@ -92,6 +94,8 @@ class CheckoutRepository
                 if (isset($order_info['created_by'])) {
                     $deliver_adddress->created_by = $user->id;
                     $deliver_adddress->created_by_name = $user->name;
+                } else {
+                    $deliver_adddress->created_by_name = 'Customer';
                 }
                 $deliver_adddress->save();
                 $order->delivery_address = $order_info['address'];
@@ -107,6 +111,8 @@ class CheckoutRepository
                 if (isset($order_info['created_by'])) {
                     $partner_order->created_by = $user->id;
                     $partner_order->created_by_name = $user->name;
+                } else {
+                    $partner_order->created_by_name = 'Customer';
                 }
                 if ($payment_method == 'online') {
                     $partner_order->sheba_collection = $partner_price[$partner];
@@ -120,6 +126,12 @@ class CheckoutRepository
                         $partner_order_payment->transaction_type = 'Credit';
                         $partner_order_payment->method = 'online';
                         $partner_order_payment->log = 'advanced payment';
+                        if (isset($order_info['created_by'])) {
+                            $partner_order_payment->created_by = $user->id;
+                            $partner_order_payment->created_by_name = $user->name;
+                        } else {
+                            $partner_order_payment->created_by_name = 'Customer';
+                        }
                         $partner_order_payment->save();
                     }
                     $partner_services = $cart_partner[$partner];
@@ -144,6 +156,8 @@ class CheckoutRepository
                         if (isset($order_info['created_by'])) {
                             $job->created_by = $user->id;
                             $job->created_by_name = $user->name;
+                        } else {
+                            $job->created_by_name = 'Customer';
                         }
                         $job->save();
 //                        $job->job_full_code = 'D-' . $order->order_code . '-' . sprintf('%06d', $partner) . '-' . sprintf('%08d', $job->id);
