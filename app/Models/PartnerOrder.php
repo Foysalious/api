@@ -66,7 +66,6 @@ class PartnerOrder extends Model
 
     private function _calculateThisJobs()
     {
-
         $job_statuses = constants('JOB_STATUSES');
         $po_statuses = constants('PARTNER_ORDER_STATUSES');
 
@@ -90,11 +89,13 @@ class PartnerOrder extends Model
         foreach($this->jobs as $job) {
             $job = $job->calculate();
 
-            $this->totalServiceCost += $job->serviceCost;
-            $this->totalMaterialPrice += $job->materialPrice;
-            $this->totalMaterialCost += $job->materialCost;
-            $this->totalPrice += $job->grossPrice;
-            $this->totalCost += $job->grossCost;
+            if($job->status != $job_statuses['Cancelled']) {
+                $this->totalServiceCost += $job->serviceCost;
+                $this->totalMaterialPrice += $job->materialPrice;
+                $this->totalMaterialCost += $job->materialCost;
+                $this->totalPrice += $job->grossPrice;
+                $this->totalCost += $job->grossCost;
+            }
 
             $job_status_counter[$job->status]++;
             $total_jobs++;
@@ -144,10 +145,5 @@ class PartnerOrder extends Model
     public function code()
     {
         return $this->order->code() . "-" . str_pad($this->partner_id, 4,'0',STR_PAD_LEFT);
-    }
-
-    public function allJobsDelivered()
-    {
-        return false;
     }
 }
