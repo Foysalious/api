@@ -51,8 +51,8 @@ class PartnerOrder extends Model
         $this->paid = $this->sheba_collection + $this->partner_collection;
         $this->due = $this->grossAmount - $this->paid;
         $this->profit = $this->grossAmount - $this->totalCost;
-        $this->margin = ( ($this->totalPrice - $this->totalCost) * 100 ) / $this->totalPrice;
-        $this->marginAfterDiscount = ( ($this->grossAmount - $this->totalCost) * 100 ) / $this->grossAmount;
+        $this->margin = $this->totalPrice ? ( ($this->totalPrice - $this->totalCost) * 100 ) / $this->totalPrice : 0;
+        $this->marginAfterDiscount = $this->grossAmount ? ( ($this->grossAmount - $this->totalCost) * 100 ) / $this->grossAmount : 0;
         $this->spPayable = ($this->partner_collection < $this->totalCost) ? ($this->totalCost - $this->partner_collection) : 0;
         $this->shebaReceivable = ($this->partner_collection > $this->totalCost) ? ($this->partner_collection - $this->totalCost) : 0;
 
