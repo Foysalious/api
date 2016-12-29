@@ -32,7 +32,7 @@ class JobController extends Controller
             }])->with(['review' => function ($query) {
                 $query->select('job_id', 'review_title', 'review', 'rating');
             }])->where('id', $job->id)
-                ->select('id', 'service_id', 'service_name', 'service_quantity', 'service_option', 'discount', 'status', 'service_price', 'created_at', 'partner_order_id')
+                ->select('id', 'service_id', 'service_name', 'service_quantity', 'service_option', 'discount', 'status', 'service_unit_price', 'created_at', 'partner_order_id')
                 ->first();
             array_add($job, 'status_show', $this->job_statuses_show[$job->status]);
 
@@ -40,6 +40,7 @@ class JobController extends Controller
             $job_model->calculate();
             array_add($job, 'material_cost', $job_model->materialCost);
             array_add($job, 'total_cost', $job_model->grossPrice);
+            array_add($job, 'service_price', $job_model->servicePrice);
 
             return response()->json(['job' => $job, 'msg' => 'successful', 'code' => 200]);
         } else {

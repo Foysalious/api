@@ -151,7 +151,7 @@ class CheckoutRepository
                         $job->service_quantity = $service->quantity;
                         $job->crm_id = isset($service->crm_id) ? $service->crm_id : '';
                         $job->department_id = isset($service->department_id) ? $service->department_id : '';
-                        $job->service_price = (float)$service->partner->prices;
+                        $job->service_unit_price = (float)$service->partner->prices;
                         $job->job_name = isset($service->job_name) ? $service->job_name : '';
                         if (isset($order_info['created_by'])) {
                             $job->created_by = $user->id;

@@ -7,6 +7,7 @@ class Job extends Model
     protected $materialPivotColumns = ['id', 'material_name', 'material_price', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
     protected $guarded = ['id'];
 
+    public $servicePrice;
     public $commissionRate;
     public $serviceCost;
     public $materialPrice;
@@ -57,14 +58,17 @@ class Job extends Model
 
     public function calculate()
     {
-        $this->commissionRate = $this->partner_order->partner->categories()->find($this->service->category->id)->pivot->commission;
+        $this->commissionRate = $this->partnerOrder->partner->categories()->find($this->service->category->id)->pivot->commission;
         $costRate = 1 - ($this->commissionRate / 100);
-        $this->serviceCost = formatTaka($this->service_price * $costRate);
+
+        $this->servicePrice = formatTaka($this->service_unit_price * $this->service_quantity);
+        $this->serviceCost = formatTaka($this->servicePrice * $costRate);
         $this->materialPrice = formatTaka($this->usedMaterials()->sum('material_price'));
         $this->materialCost = formatTaka($this->materialPrice * $costRate);
         $this->grossCost = formatTaka($this->serviceCost + $this->materialCost);
-        $this->totalPrice = formatTaka($this->service_price + $this->materialPrice);
+        $this->totalPrice = formatTaka($this->servicePrice + $this->materialPrice);
         $this->grossPrice = formatTaka($this->totalPrice - $this->discount);
+        $this->service_unit_price = formatTaka($this->service_unit_price);
         return $this;
     }
 
