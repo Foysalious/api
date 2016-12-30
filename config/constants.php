@@ -20,10 +20,10 @@ return [
     'JOB_STATUSES_SHOW' => [
         'Pending' => ['sheba'=> 'Pending', 'partner' => 'Pending', 'customer' => 'Pending'],
         'Accepted' => ['sheba'=> 'Accepted', 'partner' => 'Accepted', 'customer' => 'Accepted'],
-        'Declined' => ['sheba'=> 'Declined', 'partner' => 'Declined', 'customer' => 'Declined'],
-        'Not_Responded' => ['sheba'=> 'Not Responded', 'partner' => 'Not Responded', 'customer' => 'Not Responded'],
-        'Schedule_Due' => ['sheba'=> 'Schedule Due', 'partner' => 'Schedule Due', 'customer' => 'Schedule Due'],
-        'Process' => ['sheba'=> 'Process', 'partner' => 'Process', 'customer' => 'Process'],
+        'Declined' => ['sheba'=> 'Declined', 'partner' => 'Declined', 'customer' => 'Pending'],
+        'Not_Responded' => ['sheba'=> 'Not Responded', 'partner' => 'Not Responded', 'customer' => 'Response Delay'],
+        'Schedule_Due' => ['sheba'=> 'Schedule Due', 'partner' => 'Schedule Due', 'customer' => 'Behind Schedule'],
+        'Process' => ['sheba'=> 'Process', 'partner' => 'Process', 'customer' => 'On Going'],
         'Served' => ['sheba'=> 'Served', 'partner' => 'Served', 'customer' => 'Served'],
         'Cancelled' => ['sheba'=> 'Cancelled', 'partner' => 'Cancelled', 'customer' => 'Cancelled']
     ],
@@ -35,7 +35,7 @@ return [
     ],
     'PARTNER_ORDER_STATUSES_SHOW' => [
         'Open' => ['sheba'=> 'Open', 'partner' => 'Open', 'customer' => 'Open'],
-        'Process' => ['sheba'=> 'Process', 'partner' => 'Process', 'customer' => 'Process'],
+        'Process' => ['sheba'=> 'Process', 'partner' => 'Process', 'customer' => 'On Going'],
         'Closed' => ['sheba'=> 'Closed', 'partner' => 'Closed', 'customer' => 'Closed'],
         'Cancelled' => ['sheba'=> 'Cancelled', 'partner' => 'Cancelled', 'customer' => 'Cancelled']
     ],
@@ -47,7 +47,7 @@ return [
     ],
     'ORDER_STATUSES_SHOW' => [
         'Open' => ['sheba'=> 'Open', 'partner' => 'Open', 'customer' => 'Open'],
-        'Process' => ['sheba'=> 'Process', 'partner' => 'Process', 'customer' => 'Process'],
+        'Process' => ['sheba'=> 'Process', 'partner' => 'Process', 'customer' => 'On Going'],
         'Closed' => ['sheba'=> 'Closed', 'partner' => 'Closed', 'customer' => 'Closed'],
         'Cancelled' => ['sheba'=> 'Cancelled', 'partner' => 'Cancelled', 'customer' => 'Cancelled']
     ],
