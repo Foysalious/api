@@ -103,9 +103,13 @@ class PartnerOrder extends Model
 
         if($job_status_counter[$job_statuses['Pending']] == $total_jobs) {
             $this->status = $po_statuses['Open'];
+        } else if($job_status_counter[$job_statuses['Pending']] + $job_status_counter[$job_statuses['Cancelled']] == $total_jobs) {
+            $this->status = $po_statuses['Open'];
         } else if($job_status_counter[$job_statuses['Cancelled']] == $total_jobs) {
             $this->status = $po_statuses['Cancelled'];
         } else if($job_status_counter[$job_statuses['Served']] == $total_jobs) {
+            $this->status = $po_statuses['Closed'];
+        } else if($job_status_counter[$job_statuses['Served']] + $job_status_counter[$job_statuses['Cancelled']] == $total_jobs) {
             $this->status = $po_statuses['Closed'];
         } else {
             $this->status = $po_statuses['Process'];
