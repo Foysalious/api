@@ -16,7 +16,6 @@ class CheckoutController extends Controller
 {
     private $authRepository;
     private $checkoutRepository;
-    private $sheba_front_end_url;
     private $fbKit;
     private $customer;
 
@@ -26,7 +25,6 @@ class CheckoutController extends Controller
         $this->checkoutRepository = new CheckoutRepository();
         $this->fbKit = new FacebookAccountKit();
         $this->customer = new CustomerRepository();
-        $this->sheba_front_end_url = env('SHEBA_FRONT_END_URL');
     }
 
     public function placeOrder(Request $request, $customer)
@@ -63,13 +61,12 @@ class CheckoutController extends Controller
         $portwallet = $this->checkoutRepository->getPortWalletObject();
         $order_info = Cache::get('portwallet-payment-' . $request->input('invoice'));
         $cart = json_decode($order_info['cart']);
+
         $data = array();
         $data["amount"] = $cart->price;
         $data["invoice"] = Cache::get('invoice-' . $request->input('invoice'));
         $data['currency'] = "BDT";
-
         $portwallet_response = $portwallet->ipnValidate($data);
-
         //check payment validity
         if ($portwallet_response->status == 200 && $portwallet_response->data->status == "ACCEPTED") {
             $order = $this->checkoutRepository->storeDataInDB($order_info, 'online');
@@ -77,7 +74,7 @@ class CheckoutController extends Controller
                 $this->checkoutRepository->sendConfirmation($order_info['customer_id'], $order);
                 Cache::forget('invoice-' . $request->input('invoice'));
                 Cache::forget('portwallet-payment-' . $request->input('invoice'));
-                return redirect($this->sheba_front_end_url);
+                return redirect(env('SHEBA_FRONT_END_URL') . '/profile/order-list');
             }
         } else {
             return;
@@ -105,7 +102,7 @@ class CheckoutController extends Controller
             $this->checkoutRepository->clearSpPayment($payment_info);
             Cache::forget('invoice-' . $request->input('invoice'));
             Cache::forget('portwallet-payment-' . $request->input('invoice'));
-            return redirect(env('SHEBA_FRONT_END_URL'));
+            return redirect(env('SHEBA_FRONT_END_URL') . '/profile/order-list');
         } else {
             return;
         }
