@@ -23,10 +23,11 @@ class OrderController extends Controller
     {
         $customer = Customer::find($customer);
         $orders = $this->orderRepository->getOrderInfo($customer, '<>', 'Closed');
+        $final_orders=[];
         foreach ($orders as $key => $order) {
             $order->calculate();
             if ($order->status == 'Closed') {
-                unset($orders[$key]);
+//                unset($orders[$key]);
                 continue;
             }
             foreach ($order->partner_orders as $partner_order) {
@@ -45,18 +46,20 @@ class OrderController extends Controller
             array_add($order, 'total_cost', $order->totalPrice);
             array_add($order, 'due_amount', $order->due);
             array_add($order, 'order_code', $order->code());
+            array_push($final_orders,$order);
         }
-        return response()->json(['orders' => $orders, 'code' => 200, 'msg' => 'successful']);
+        return response()->json(['orders' => $final_orders, 'code' => 200, 'msg' => 'successful']);
     }
 
     public function getClosedOrderInfo($customer)
     {
         $customer = Customer::find($customer);
         $orders = $this->orderRepository->getOrderInfo($customer, '=', 'Served');
+        $final_orders=[];
         foreach ($orders as $key => $order) {
             $order->calculate();
             if ($order->status != 'Closed') {
-                unset($orders[$key]);
+//                unset($orders[$key]);
                 continue;
             }
             foreach ($order->partner_orders as $partner_order) {
@@ -76,8 +79,9 @@ class OrderController extends Controller
             array_add($order, 'total_cost', $order->totalPrice);
             array_add($order, 'due_amount', $order->due);
             array_add($order, 'order_code', $order->code());
+            array_push($final_orders,$order);
         }
-        return response()->json(['orders' => $orders, 'code' => 200, 'msg' => 'successful']);
+        return response()->json(['orders' => $final_orders, 'code' => 200, 'msg' => 'successful']);
     }
 //    public function getClosedOrderInfo($customer)
 //    {
