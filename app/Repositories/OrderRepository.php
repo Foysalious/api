@@ -32,7 +32,7 @@ class OrderRepository
                     }]);
             }])->with(['location' => function ($query) {
                 $query->select('id', 'name');
-            }])->select('id', 'delivery_mobile', 'location_id', 'created_at')->orderBy('created_at', 'desc')->get();
+            }])->select('id', 'delivery_mobile', 'sales_channel', 'location_id', 'created_at')->orderBy('created_at', 'desc')->get();
 
 //        ->wherehas('jobs', function ($query) use ($status, $compareOperator) {
 //        $query->where('jobs.status', $compareOperator, $status);
