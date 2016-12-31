@@ -65,7 +65,16 @@ class Order extends Model
 
     public function channelCode()
     {
-        return 'S';
+        if (in_array($this->sales_channel, ['Web', 'Call-Center', 'Facebook'])) {
+            $prefix = 'D';
+        } elseif ($this->sales_channel == 'B2B'){
+            $prefix = 'F';
+        } elseif ($this->sales_channel == 'Store'){
+            $prefix = 'S';
+        } else {
+            $prefix = 'A';
+        }
+        return $prefix;
     }
 
     public function code()
