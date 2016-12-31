@@ -11,7 +11,7 @@ use Session;
 use Cache;
 use DB;
 use Mail;
-
+use Redis;
 class CheckoutController extends Controller
 {
     private $authRepository;
@@ -74,7 +74,10 @@ class CheckoutController extends Controller
                 $this->checkoutRepository->sendConfirmation($order_info['customer_id'], $order);
                 Cache::forget('invoice-' . $request->input('invoice'));
                 Cache::forget('portwallet-payment-' . $request->input('invoice'));
-                return redirect(env('SHEBA_FRONT_END_URL') . '/profile/order-list');
+                $s_id=str_random(10);
+                Redis::set($s_id, 'online');
+                Redis::expire($s_id, 500);
+                return redirect(env('SHEBA_FRONT_END_URL') . '/profile/order-list?s_token='.$s_id);
             }
         } else {
             return;

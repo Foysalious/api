@@ -7,6 +7,7 @@ use App\Models\Job;
 use App\Repositories\OrderRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Redis;
 
 class OrderController extends Controller
 {
@@ -23,7 +24,7 @@ class OrderController extends Controller
     {
         $customer = Customer::find($customer);
         $orders = $this->orderRepository->getOrderInfo($customer, '<>', 'Closed');
-        $final_orders=[];
+        $final_orders = [];
         foreach ($orders as $key => $order) {
             $order->calculate();
             if ($order->status == 'Closed') {
@@ -46,7 +47,7 @@ class OrderController extends Controller
             array_add($order, 'total_cost', $order->totalPrice);
             array_add($order, 'due_amount', $order->due);
             array_add($order, 'order_code', $order->code());
-            array_push($final_orders,$order);
+            array_push($final_orders, $order);
         }
         return response()->json(['orders' => $final_orders, 'code' => 200, 'msg' => 'successful']);
     }
@@ -55,7 +56,7 @@ class OrderController extends Controller
     {
         $customer = Customer::find($customer);
         $orders = $this->orderRepository->getOrderInfo($customer, '=', 'Served');
-        $final_orders=[];
+        $final_orders = [];
         foreach ($orders as $key => $order) {
             $order->calculate();
             if ($order->status != 'Closed') {
@@ -79,9 +80,20 @@ class OrderController extends Controller
             array_add($order, 'total_cost', $order->totalPrice);
             array_add($order, 'due_amount', $order->due);
             array_add($order, 'order_code', $order->code());
-            array_push($final_orders,$order);
+            array_push($final_orders, $order);
         }
         return response()->json(['orders' => $final_orders, 'code' => 200, 'msg' => 'successful']);
+    }
+
+    public function checkOrderValidity(Request $request)
+    {
+        $key = Redis::get($request->input('s_token'));
+        if ($key != null) {
+            Redis::del($request->input('s_token'));
+            return response()->json(['msg' => 'successful', 'code' => 200]);
+        } else {
+            return response()->json(['msg' => 'not found', 'code' => 404]);
+        }
     }
 //    public function getClosedOrderInfo($customer)
 //    {

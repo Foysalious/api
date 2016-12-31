@@ -49,7 +49,7 @@ class CustomerController extends Controller
     public function getCustomerInfo($customer)
     {
         $cus = Customer::find($customer);
-        $customer = Customer::select('name', 'mobile', 'email', 'address', 'office_address', 'gender', 'dob', 'pro_pic', 'xp', 'rating', 'reference_code', 'email_verified')
+        $customer = Customer::select('name', 'mobile', 'email', 'address', 'office_address', 'gender', 'dob', 'fb_id', 'pro_pic', 'xp', 'rating', 'reference_code', 'email_verified')
             ->find($customer);
         return response()->json([
             'msg' => 'successful', 'code' => 200, 'customer' => $customer,
@@ -62,8 +62,8 @@ class CustomerController extends Controller
     public function facebookIntegration(Request $request, $customer)
     {
         $customer = Customer::find($customer);
-        $this->customer->updateCustomerInfo($customer, $request->all());
-        return response()->json(['msg' => 'successful', 'code' => 200]);
+        $customer = $this->customer->updateCustomerInfo($customer, $request->all());
+        return response()->json(['msg' => 'successful', 'code' => 200, 'fb' => $customer->fb_id]);
     }
 
     public function changeAddress(Request $request, $customer)

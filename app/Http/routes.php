@@ -73,6 +73,7 @@ $api->version('v1', function ($api) {
         $api->post('{customer}/order-list', 'App\Http\Controllers\OrderController@getNotClosedOrderInfo');
         $api->post('{customer}/order-history', 'App\Http\Controllers\OrderController@getClosedOrderInfo');
         $api->post('{customer}/sp-payment', 'App\Http\Controllers\CheckoutController@spPayment');
+        $api->post('{customer}/order-valid', 'App\Http\Controllers\OrderController@checkOrderValidity');
         $api->post('{customer}/modify-review', 'App\Http\Controllers\ReviewController@modifyReview');
         $api->get('{customer}/job/{job}', 'App\Http\Controllers\JobController@getInfo');
 
