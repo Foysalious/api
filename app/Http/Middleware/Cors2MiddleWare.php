@@ -23,6 +23,7 @@ class Cors2MiddleWare {
             "http://admin.dev-sheba.xyz",
             "http://sheba.dev",
             null,
+            "http://travelleroflifetime.com",
             "chrome-extension://fhbjgbiflinjbdggehcddcbncdddomop"
         ];
         // ALLOW OPTIONS METHOD
