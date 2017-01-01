@@ -40,6 +40,7 @@ class JobController extends Controller
             $job_model->calculate();
             array_add($job, 'material_cost', $job_model->materialCost);
             array_add($job, 'total_cost', $job_model->grossPrice);
+            array_add($job, 'job_code', $job_model->code());
             array_add($job, 'service_price', $job_model->servicePrice);
 
             return response()->json(['job' => $job, 'msg' => 'successful', 'code' => 200]);

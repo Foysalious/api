@@ -4,7 +4,6 @@ Route::get('/', function () {
     dispatch(new \App\Jobs\TestJob());
 //    return ['code' => 200, 'msg' => 'Success. This project will hold the api\'s'];
 });
-
 Route::get('email-verification/{customer}/{code}', 'CustomerController@emailVerification');
 //Route::get('reset-password/{customer}/{code}', 'PasswordController@getResetPasswordForm');
 //Route::post('reset-password/{customer}/{code}', 'PasswordController@resetPassword');

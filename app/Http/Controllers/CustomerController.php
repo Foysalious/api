@@ -53,7 +53,7 @@ class CustomerController extends Controller
             ->find($customer);
         return response()->json([
             'msg' => 'successful', 'code' => 200, 'customer' => $customer,
-            'mobiles' => $cus->mobiles()->select('mobile')->get(),
+            'secondary_mobiles' => $cus->mobiles()->select('mobile')->where('mobile', '<>', $customer->mobile)->get(),
             'addresses' => $cus->delivery_addresses()->select('id', 'address')->get()
         ]);
 

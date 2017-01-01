@@ -8,6 +8,7 @@ use App\Models\Job;
 use App\Models\Location;
 use App\Models\Partner;
 use App\Models\PartnerService;
+use App\Models\Resource;
 use App\Models\Service;
 use App\Repositories\RatingReviewRepository;
 use App\Repositories\ReviewRatingRepository;
@@ -100,9 +101,11 @@ class ServiceController extends Controller
     {
         $customer_count = Customer::all()->count() + 3000;
         $partner_count = Partner::all()->count();
-        $job_count = Job::all()->count() + 15000;
+        $job_count = Job::all()->count() + 16000;
         $service_count = Service::all()->count();
-        return response()->json(['customer' => $customer_count, 'partner' => $partner_count, 'service' => $service_count, 'job' => $job_count, 'msg' => 'successful', 'code' => 200]);
+        $resource_count = Resource::all()->count();
+        return response()->json(['customer' => $customer_count, 'partner' => $partner_count, 'service' => $service_count,
+            'job' => $job_count, 'resource' => $resource_count, 'msg' => 'successful', 'code' => 200]);
     }
 
 }

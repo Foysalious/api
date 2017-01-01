@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\Service;
 use App\Repositories\CategoryRepository;
 use Illuminate\Http\Request;
 
@@ -38,7 +39,7 @@ class CategoryController extends Controller
         }
         if (!$categories->isEmpty())
             return response()
-                ->json(['categories' => $categories, 'msg' => 'successful', 'code' => 200]);
+                ->json(['categories' => $categories, 'service_count' => Service::all()->count(), 'msg' => 'successful', 'code' => 200]);
         return response()->json(['msg' => 'nothing found', 'code' => 404]);
     }
 

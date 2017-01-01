@@ -35,7 +35,7 @@ class SendConfirmationSms extends Job implements ShouldQueue
      */
     public function handle()
     {
-        $message = "Thanks for placing order at www.sheba.xyz. Order ID No : " . $this->order->id;
+        $message = "Thanks for placing order at www.sheba.xyz. Order No : " . $this->order->code();
         Sms::send_single_message($this->customer->mobile, $message);
     }
 }

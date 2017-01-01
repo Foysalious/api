@@ -180,7 +180,7 @@ class CustomerRepository
         $customer->name = $info['name'];
         $customer->email = $info['email'];
         $customer->email_verified = 1;
-        $customer->gender=$info['gender'];
+        $customer->gender = $info['gender'];
         $customer->pro_pic = $info['picture']['data']['url'];
         $customer->update();
         return $customer;
@@ -188,9 +188,6 @@ class CustomerRepository
 
     public function mobileValid($mobile)
     {
-        if ($customer = Customer::where('mobile', $mobile)->first()) {
-            return false;
-        }
         if ($customer_mobile = CustomerMobile::where('mobile', $mobile)->first()) {
             return false;
         }
