@@ -5,7 +5,8 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Response;
 
-class Cors2MiddleWare {
+class Cors2MiddleWare
+{
     /**
      * Handle an incoming request.
      *
@@ -24,15 +25,16 @@ class Cors2MiddleWare {
             "http://sheba.dev",
             null,
             "http://travelleroflifetime.com",
-            "chrome-extension://fhbjgbiflinjbdggehcddcbncdddomop"
+            "chrome-extension://fhbjgbiflinjbdggehcddcbncdddomop",
+            "http://admin.sheba.dev",
+            "http://admin.travelleroflifetime.com"
         ];
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Credentials'] = 'true';
         $headers['Access-Control-Allow-Methods'] = 'POST, GET, PUT, DELETE';
         $headers['Access-Control-Allow-Headers'] = 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With';
         $headers['Access-Control-Allow-Origin'] = $request->server('HTTP_ORIGIN');
-        if (!in_array($request->server('HTTP_ORIGIN'), $domains))
-        {
+        if (!in_array($request->server('HTTP_ORIGIN'), $domains)) {
             return response()->json(['message' => 'Unauthorized', 'code' => 401])->withHeaders($headers);
         }
 
@@ -40,8 +42,7 @@ class Cors2MiddleWare {
         $headers['Access-Control-Allow-Methods'] = 'POST, GET, PUT, DELETE';
         $headers['Access-Control-Allow-Headers'] = 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With';
         $response = $next($request);
-        foreach ($headers as $key => $value)
-        {
+        foreach ($headers as $key => $value) {
             $response->header($key, $value);
         }
         return $response;
