@@ -79,7 +79,7 @@ class Order extends Model
 
     public function code()
     {
-        $startFrom = 0;
+        $startFrom = 8000;
         return $this->channelCode() . '-' . sprintf('%06d', $this->id + $startFrom);
     }
 

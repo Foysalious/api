@@ -8,6 +8,7 @@ class PartnerOrder extends Model
 
     public $status;
     public $paymentStatus;
+    public $totalServicePrice;
     public $totalServiceCost;
     public $totalMaterialPrice;
     public $totalMaterialCost;
@@ -81,6 +82,7 @@ class PartnerOrder extends Model
             $job_statuses['Cancelled'] => 0
         ];
 
+        $this->totalServicePrice = 0;
         $this->totalServiceCost = 0;
         $this->totalMaterialPrice = 0;
         $this->totalMaterialCost = 0;
@@ -90,6 +92,7 @@ class PartnerOrder extends Model
             $job = $job->calculate();
 
             if($job->status != $job_statuses['Cancelled']) {
+                $this->totalServicePrice += $job->servicePrice;
                 $this->totalServiceCost += $job->serviceCost;
                 $this->totalMaterialPrice += $job->materialPrice;
                 $this->totalMaterialCost += $job->materialCost;
