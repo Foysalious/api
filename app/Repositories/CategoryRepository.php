@@ -26,7 +26,8 @@ class CategoryRepository
             ->get();
         foreach ($children as $child) {
             array_add($child, 'slug_child_category', str_slug($child->name, '-'));
-            $child->services = $this->addServiceInfo($child->services);
+            array_add($child, 'children_services', $this->addServiceInfo($child->services->take(6)));
+            array_forget($child, 'services');
         }
         return $children;
     }

@@ -69,4 +69,14 @@ class CategoryController extends Controller
             return response()->json(['parent' => $parent, 'msg' => 'successful', 'code' => 200]);
         return response()->json(['msg' => 'no parent found', 'code' => 404]);
     }
+
+    public function getServices(Category $category)
+    {
+        $cat = collect($category)->only(['name', 'banner']);
+        $category = Category::with(['services' => function ($q) {
+            $q->select('id', 'category_id', 'name', 'thumb', 'banner', 'variable_type', 'variables');
+        }])->where('id', $category->id)->first();
+        $services = $this->categoryRepository->addServiceInfo($category->services);
+        return response()->json(['category' => $cat, 'services' => $services, 'msg' => 'successful', 'code' => 200]);
+    }
 }

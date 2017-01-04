@@ -36,6 +36,7 @@ $api->version('v1', function ($api) {
 
     $api->group(['prefix' => 'category'], function ($api) {
         $api->get('/', 'App\Http\Controllers\CategoryController@index');
+        $api->get('{category}/services', 'App\Http\Controllers\CategoryController@getServices');
         $api->get('{category}/children', 'App\Http\Controllers\CategoryController@getChildren');
         $api->get('{category}/parent', 'App\Http\Controllers\CategoryController@getParent');
     });
