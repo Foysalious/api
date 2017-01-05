@@ -24,10 +24,10 @@ class Cors2MiddleWare
             "http://admin.dev-sheba.xyz",
             "http://sheba.dev",
             null,
-            "http://travelleroflifetime.com",
             "chrome-extension://fhbjgbiflinjbdggehcddcbncdddomop",
             "http://admin.sheba.dev",
-            "http://admin.travelleroflifetime.com"
+            "http://sheba.xyz",
+            "http://admin.sheba.xyz",
         ];
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Credentials'] = 'true';
