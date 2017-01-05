@@ -13,6 +13,7 @@ class Job extends Model
     public $materialPrice;
     public $materialCost;
     public $grossCost;
+    public $totalPriceWithoutVat;
     public $totalPrice;
     public $grossPrice;
     public $totalPriceWithoutVat;
