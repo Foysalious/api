@@ -16,6 +16,7 @@ class Job extends Model
     public $totalPriceWithoutVat;
     public $totalPrice;
     public $grossPrice;
+
     public function service()
     {
         return $this->belongsTo(Service::class);
@@ -67,7 +68,8 @@ class Job extends Model
         $this->materialCost = formatTaka($this->materialPrice * $costRate);
         $this->grossCost = formatTaka($this->serviceCost + $this->materialCost);
         $this->totalPriceWithoutVat = formatTaka($this->servicePrice + $this->materialPrice);
-        $this->totalPrice = formatTaka($this->totalPriceWithoutVat + $this->vat);
+        //$this->totalPrice = formatTaka($this->totalPriceWithoutVat + $this->vat); // later
+        $this->totalPrice = formatTaka($this->totalPriceWithoutVat);
         $this->grossPrice = formatTaka($this->totalPrice - $this->discount);
         $this->service_unit_price = formatTaka($this->service_unit_price);
         return $this;
