@@ -16,7 +16,6 @@ class Job extends Model
     public $totalPriceWithoutVat;
     public $totalPrice;
     public $grossPrice;
-    public $totalPriceWithoutVat;
     public function service()
     {
         return $this->belongsTo(Service::class);
