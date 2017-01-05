@@ -11,6 +11,7 @@ use App\Models\Job;
 use App\Models\Order;
 use App\Models\PartnerOrder;
 use App\Models\PartnerOrderPayment;
+use App\Models\Service;
 use App\Models\User;
 use Carbon\Carbon;
 use DB;
@@ -160,6 +161,11 @@ class CheckoutRepository
                             $job->created_by_name = 'Customer';
                         }
                         $job->save();
+                        $partner = $job->partner_order->partner_id;
+                        $service = Service::find($job->service_id);
+                        $job->commission_rate = $service->commission($partner);
+                        $job->vat = 0;
+                        $job->update();
 //                        $job->job_full_code = 'D-' . $order->order_code . '-' . sprintf('%06d', $partner) . '-' . sprintf('%08d', $job->id);
 //                        $job->job_code = sprintf('%08d', $job->id);
 //                        $job->update();

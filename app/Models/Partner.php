@@ -94,4 +94,9 @@ class Partner extends Model {
         return $this->hasMany(PartnerOrder::class);
     }
 
+    public function commission($service_id)
+    {
+        $service_category = Service::find($service_id)->category->id;
+        return $this->categories()->find($service_category)->pivot->commission;
+    }
 }

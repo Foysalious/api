@@ -15,7 +15,7 @@ class Job extends Model
     public $grossCost;
     public $totalPrice;
     public $grossPrice;
-
+    public $totalPriceWithoutVat;
     public function service()
     {
         return $this->belongsTo(Service::class);
@@ -58,15 +58,16 @@ class Job extends Model
 
     public function calculate()
     {
-        $this->commissionRate = $this->partner_order->partner->categories()->find($this->service->category->id)->pivot->commission;
-        $costRate = 1 - ($this->commissionRate / 100);
+        //$this->commissionRate = $this->partnerOrder->partner->categories()->find($this->service->category->id)->pivot->commission;
+        $costRate = 1 - ($this->commission_rate / 100);
 
         $this->servicePrice = formatTaka($this->service_unit_price * $this->service_quantity);
         $this->serviceCost = formatTaka($this->servicePrice * $costRate);
         $this->materialPrice = formatTaka($this->usedMaterials()->sum('material_price'));
         $this->materialCost = formatTaka($this->materialPrice * $costRate);
         $this->grossCost = formatTaka($this->serviceCost + $this->materialCost);
-        $this->totalPrice = formatTaka($this->servicePrice + $this->materialPrice);
+        $this->totalPriceWithoutVat = formatTaka($this->servicePrice + $this->materialPrice);
+        $this->totalPrice = formatTaka($this->totalPriceWithoutVat + $this->vat);
         $this->grossPrice = formatTaka($this->totalPrice - $this->discount);
         $this->service_unit_price = formatTaka($this->service_unit_price);
         return $this;

@@ -126,7 +126,16 @@ class PartnerOrder extends Model
         $total = $this->totalPrice - $this->discount;
         $whole = floor($total);
         $fraction = $total - $whole;
-        $this->roundingCutOff = ( $whole % 5 ) + $fraction;
+
+        /*
+         * need to talk with finance.
+         *
+         * $this->roundingCutOff = ( $whole % 5 ) + $fraction;
+         * $this->roundingCutOff = $fraction;
+         */
+
+        // for now:
+        $this->roundingCutOff = 0;
         return $this;
     }
 
