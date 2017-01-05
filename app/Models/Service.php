@@ -48,4 +48,11 @@ class Service extends Model {
     {
         return $this->hasMany(Job::class);
     }
+
+    public function commission($partner_id)
+    {
+        $service_category = $this->category->id;
+        $partner = Partner::find($partner_id);
+        return $partner->categories()->find($service_category)->pivot->commission;
+    }
 }
