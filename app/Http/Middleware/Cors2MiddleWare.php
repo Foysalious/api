@@ -27,6 +27,7 @@ class Cors2MiddleWare
             "chrome-extension://fhbjgbiflinjbdggehcddcbncdddomop",
             "http://admin.sheba.dev",
             "http://sheba.xyz",
+            "http://www.sheba.xyz",
             "http://admin.sheba.xyz",
         ];
         // ALLOW OPTIONS METHOD
