@@ -8,7 +8,7 @@ class Resource extends Model
         'id'
     ];
 
-    public function resource() {
+    public function partners() {
         return $this->belongsToMany(Partner::class);
     }
 

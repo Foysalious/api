@@ -293,8 +293,6 @@ class CheckoutRepository
         if ($customer->email != '') {
             $this->dispatch(new SendConfirmationEmail($customer, $order));
         }
-        if ($customer->mobile != '') {
-            $this->dispatch(new SendConfirmationSms($customer, $order));
-        }
+        $this->dispatch(new SendConfirmationSms($customer, $order));
     }
 }

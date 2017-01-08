@@ -22,7 +22,7 @@ class SendConfirmationSms extends Job implements ShouldQueue
      * @param Customer $customer
      * @param Order $order
      */
-    public function __construct(Customer $customer, Order $order)
+    public function __construct($customer, $order)
     {
         $this->customer = $customer;
         $this->order = $order;
@@ -36,6 +36,6 @@ class SendConfirmationSms extends Job implements ShouldQueue
     public function handle()
     {
         $message = "Thanks for placing order at www.sheba.xyz. Order No : " . $this->order->code();
-        Sms::send_single_message($this->customer->mobile, $message);
+        Sms::send_single_message($this->order->delivery_mobile, $message);
     }
 }

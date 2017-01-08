@@ -9,7 +9,8 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class SendConfirmationEmail extends Job implements ShouldQueue {
+class SendConfirmationEmail extends Job implements ShouldQueue
+{
     use InteractsWithQueue, SerializesModels;
 
     private $customer;
@@ -21,7 +22,7 @@ class SendConfirmationEmail extends Job implements ShouldQueue {
      * @param Customer $customer
      * @param Order $order
      */
-    public function __construct(Customer $customer, Order $order)
+    public function __construct($customer, $order)
     {
         $this->customer = $customer;
         $this->order = $order;
@@ -35,8 +36,7 @@ class SendConfirmationEmail extends Job implements ShouldQueue {
      */
     public function handle(Mailer $mailer)
     {
-        $mailer->send('orders.order-verfication', ['customer' => $this->customer, 'order' => $this->order], function ($m)
-        {
+        $mailer->send('orders.order-verfication', ['customer' => $this->customer, 'order' => $this->order], function ($m) {
             $m->from('yourEmail@domain.com', 'Sheba.xyz');
             $m->to($this->customer->email)->subject('Order Verification');
         });

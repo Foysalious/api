@@ -2,7 +2,8 @@
 
 use Illuminate\Database\Eloquent\Model;
 
-class Partner extends Model {
+class Partner extends Model
+{
     protected $guarded = [
         'id',
     ];
@@ -44,9 +45,7 @@ class Partner extends Model {
 
     public function resources()
     {
-        return $this->belongsToMany(Resource::class)
-            ->where('resource_type', constants('RESOURCE_TYPES')['Handyman'])
-            ->withPivot($this->resourcePivotColumns);
+        return $this->belongsToMany(Resource::class)->withPivot($this->resourcePivotColumns);
     }
 
     public function categories()

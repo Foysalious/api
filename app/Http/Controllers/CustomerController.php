@@ -86,7 +86,11 @@ class CustomerController extends Controller
             $customer->mobile = $code_data['mobile'];
             $customer->mobile_verified = 1;
             if ($customer->update()) {
-                return response()->json(['msg' => 'successful', 'code' => 200]);
+                $cus_mobile = new CustomerMobile();
+                $cus_mobile->customer_id = $customer->id;
+                $cus_mobile->mobile = $customer->mobile;
+                $cus_mobile->save();
+                return response()->json(['msg' => 'successful', 'code' => 200, 'mobile' => $customer->mobile]);
             }
         } else {
             return response()->json(['msg' => 'already exists', 'code' => 409]);
@@ -102,7 +106,8 @@ class CustomerController extends Controller
             $customer_mobile->mobile = $code_data['mobile'];
             $customer_mobile->customer_id = $customer->id;
             if ($customer_mobile->save()) {
-                return response()->json(['msg' => 'successful', 'mobile' => $customer_mobile->mobile, 'mobile_id' => $customer_mobile->id, 'code' => 200]);
+                return response()->json(['msg' => 'successful', 'mobile' => $customer_mobile->mobile,
+                    'mobile_id' => $customer_mobile->id, 'code' => 200]);
             }
         } else {
             return response()->json(['msg' => 'already exists', 'code' => 409]);
