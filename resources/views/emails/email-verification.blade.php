@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>User Request</title>
+    <title>Email Verification</title>
     <link href="https://fonts.googleapis.com/css?family=Lato:100" rel="stylesheet" type="text/css">
 </head>
 <body>
     <div class="container">
         <div class="content">
             <div class="title">
-                <p>Please go to this link to verify your account: http://localhost/sheba_new_api/public/email-verification/{{$customer->id}}/{{$code}}
+                <p>Please go to this link to verify your account: {{env('SHEBA_FRONT_END_URL')}}/profile/my-account?e_token={{$code}}
                     This link will be valid for only 30 minutes.
                 </p>
 

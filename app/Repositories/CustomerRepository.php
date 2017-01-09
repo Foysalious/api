@@ -8,6 +8,7 @@ use Mail;
 use Carbon\Carbon;
 use Hash;
 use JWTAuth;
+use Redis;
 
 class CustomerRepository
 {
@@ -92,14 +93,16 @@ class CustomerRepository
      */
     public function sendVerificationMail($customer)
     {
-        $verfication_code = str_random(60);
+        $verfication_code = str_random(30);
+        Redis::set('email_verification-' . $customer->id, $verfication_code);
+        Redis::expire('email_verification-' . $customer->id, 30 * 60);
         Mail::send('emails.email-verification', ['customer' => $customer, 'code' => $verfication_code], function ($m) use ($customer) {
             $m->from('yourEmail@domain.com', 'Sheba.xyz');
             $m->to($customer->email)->subject('Email Verification');
 
         });
-        $expired_at = Carbon::now()->addMinutes(30);
-        Cache::put($customer->id . '-verification-email', $verfication_code, $expired_at);
+//        $expired_at = Carbon::now()->addMinutes(30);
+//        Cache::put($customer->id . '-verification-email', $verfication_code, $expired_at);
     }
 
     /**
@@ -178,8 +181,10 @@ class CustomerRepository
             $customer->fb_id = $info['id'];
         }
         $customer->name = $info['name'];
-        $customer->email = $info['email'];
-        $customer->email_verified = 1;
+        if (!isset($info['email'])) {
+            $customer->email = $info['email'];
+            $customer->email_verified = 1;
+        }
         $customer->gender = $info['gender'];
         $customer->pro_pic = $info['picture']['data']['url'];
         $customer->update();

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\FacebookAccountKit;
+use App\Jobs\SendEmailVerficationEmail;
 use App\Models\Customer;
 use App\Models\CustomerMobile;
 use App\Repositories\CustomerRepository;
@@ -74,9 +75,10 @@ class RegistrationController extends Controller
         }
         $customer = $this->customer->registerEmailPassword($request->all());
 
-        $this->customer->sendVerificationMail($customer);
+        $this->dispatch(new SendEmailVerficationEmail($customer));
         //generate token based on customer
         $token = JWTAuth::fromUser($customer);
+        $customer = Customer::find($customer->id);
         // return success with token
         return response()->json([
             'msg' => 'Register with email successful', 'code' => 200, 'token' => $token,

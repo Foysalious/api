@@ -2,17 +2,17 @@
 
 namespace App\Jobs;
 
+use App\Jobs\Job;
+use App\Library\Sms;
 use App\Models\Customer;
 use App\Models\Order;
-use Illuminate\Contracts\Mail\Mailer;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class SendConfirmationEmail extends Job implements ShouldQueue
+class SendOrderConfirmationSms extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
-
     private $customer;
     private $order;
 
@@ -31,14 +31,11 @@ class SendConfirmationEmail extends Job implements ShouldQueue
     /**
      * Execute the job.
      *
-     * @param Mailer $mailer
      * @return void
      */
-    public function handle(Mailer $mailer)
+    public function handle()
     {
-        $mailer->send('orders.order-verfication', ['customer' => $this->customer, 'order' => $this->order], function ($m) {
-            $m->from('yourEmail@domain.com', 'Sheba.xyz');
-            $m->to($this->customer->email)->subject('Order Verification');
-        });
+        $message = "Thanks for placing order at www.sheba.xyz. Order No : " . $this->order->code();
+        Sms::send_single_message($this->order->delivery_mobile, $message);
     }
 }

@@ -2,8 +2,8 @@
 
 namespace App\Repositories;
 
-use App\Jobs\SendConfirmationEmail;
-use App\Jobs\SendConfirmationSms;
+use App\Jobs\SendOrderConfirmationEmail;
+use App\Jobs\SendOrderConfirmationSms;
 use App\Library\PortWallet;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
@@ -14,10 +14,7 @@ use App\Models\PartnerOrderPayment;
 use App\Models\Service;
 use App\Models\User;
 use Carbon\Carbon;
-use DB;
 use Illuminate\Foundation\Bus\DispatchesJobs;
-use Mail;
-use Cache;
 
 class CheckoutRepository
 {
@@ -291,8 +288,8 @@ class CheckoutRepository
         //send order info to customer  by mail
         $customer = Customer::find($customer);
         if ($customer->email != '') {
-            $this->dispatch(new SendConfirmationEmail($customer, $order));
+            $this->dispatch(new SendOrderConfirmationEmail($customer, $order));
         }
-        $this->dispatch(new SendConfirmationSms($customer, $order));
+        $this->dispatch(new SendOrderConfirmationSms($customer, $order));
     }
 }

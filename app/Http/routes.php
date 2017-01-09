@@ -72,8 +72,9 @@ $api->version('v1', function ($api) {
         $api->post('{customer}/remove-secondary-mobile', 'App\Http\Controllers\CustomerController@removeSecondaryMobile');
         $api->post('{customer}/set-primary-mobile', 'App\Http\Controllers\CustomerController@setPrimaryMobile');
         $api->post('{customer}/email', 'App\Http\Controllers\CustomerController@modifyEmail');
-        $api->post('{customer}/general-info', 'App\Http\Controllers\CustomerController@modifyGeneralInfo');
+        $api->post('{customer}/email-verification', 'App\Http\Controllers\CustomerController@checkEmailVerification');
         $api->post('{customer}/send-verification-link', 'App\Http\Controllers\CustomerController@sendVerificationLink');
+        $api->post('{customer}/general-info', 'App\Http\Controllers\CustomerController@modifyGeneralInfo');
         $api->post('{customer}/order-list', 'App\Http\Controllers\OrderController@getNotClosedOrderInfo');
         $api->post('{customer}/order-history', 'App\Http\Controllers\OrderController@getClosedOrderInfo');
         $api->post('{customer}/sp-payment', 'App\Http\Controllers\CheckoutController@spPayment');

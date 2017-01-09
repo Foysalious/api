@@ -9,6 +9,7 @@ use App\Repositories\CustomerRepository;
 use Illuminate\Http\Request;
 use Cache;
 use App\Http\Controllers\FacebookAccountKit;
+use Redis;
 
 class CustomerController extends Controller
 {
@@ -63,7 +64,7 @@ class CustomerController extends Controller
     {
         $customer = Customer::find($customer);
         $customer = $this->customer->updateCustomerInfo($customer, $request->all());
-        return response()->json(['msg' => 'successful', 'code' => 200, 'fb' => $customer->fb_id]);
+        return response()->json(['msg' => 'successful', 'code' => 200, 'fb' => $customer->fb_id, 'img' => $customer->pro_pic]);
     }
 
     public function changeAddress(Request $request, $customer)
@@ -158,6 +159,21 @@ class CustomerController extends Controller
             $customer->update();
             $this->customer->sendVerificationMail($customer);
             return response()->json(['msg' => 'successful', 'code' => 200]);
+        }
+    }
+
+    public function checkEmailVerification(Request $request, $customer_id)
+    {
+        $key = Redis::get('email-verification-' . $customer_id);
+        if ($key != null && $key == $request->input('e_token')) {
+            Redis::del('email-verification-' . $customer_id);
+            $customer = Customer::find($customer_id);
+            $customer->email_verified = 1;
+            if ($customer->update()) {
+                return response()->json(['msg' => 'successful', 'code' => 200]);
+            }
+        } else {
+            return response()->json(['msg' => 'not found', 'code' => 404]);
         }
     }
 
