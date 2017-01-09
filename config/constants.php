@@ -66,8 +66,8 @@ return [
         'Anytime' => 'Anytime',
     ],
 
-    'JOB_CI_LEVELS' => ['High', 'Medium', 'Low'],
-    'JOB_SATISFACTION_LEVELS' => ['High', 'Medium', 'Low'],
+    'JOB_CI_LEVELS' => ['High' => 'High', 'Medium' => 'Medium', 'Low' => 'Low'],
+    'JOB_SATISFACTION_LEVELS' => ['High' => 'High', 'Medium' => 'Medium', 'Low' => 'Low'],
 
     'JOB_CANCEL_REASONS' => [
         'Customer Dependency'   => 'Customer Dependency',

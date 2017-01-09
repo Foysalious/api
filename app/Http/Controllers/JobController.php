@@ -9,10 +9,12 @@ class JobController extends Controller
 {
     private $job_statuses_show;
     private $job_preferred_times;
+    private $job_statuses;
 
     public function __construct()
     {
         $this->job_statuses_show = config('constants.JOB_STATUSES_SHOW');
+        $this->job_statuses = constants('JOB_STATUSES');
     }
 
     public function getInfo($customer, $job)
@@ -34,7 +36,7 @@ class JobController extends Controller
             }])->where('id', $job->id)
                 ->select('id', 'service_id', 'service_name', 'service_quantity', 'job_additional_info', 'service_option', 'discount', 'status', 'service_unit_price', 'created_at', 'partner_order_id')
                 ->first();
-            array_add($job, 'status_show', $this->job_statuses_show[$job->status]);
+            array_add($job, 'status_show', $this->job_statuses_show[array_search($job->status, $this->job_statuses)]);
 
             $job_model = Job::find($job->id);
             $job_model->calculate();
