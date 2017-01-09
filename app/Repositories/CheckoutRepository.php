@@ -15,7 +15,7 @@ use App\Models\Service;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Bus\DispatchesJobs;
-
+use Cache;
 class CheckoutRepository
 {
     use DispatchesJobs;

@@ -1,6 +1,7 @@
 <?php
 
 Route::get('/', function () {
+//    \App\Library\Sms::send_single_message('+8801768359152','hello');
     return ['code' => 200, 'msg' => 'Success. This project will hold the api\'s'];
 });
 

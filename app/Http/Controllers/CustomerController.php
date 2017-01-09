@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendEmailVerficationEmail;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\CustomerMobile;
@@ -180,7 +181,7 @@ class CustomerController extends Controller
     public function sendVerificationLink($customer)
     {
         $customer = Customer::find($customer);
-        $this->customer->sendVerificationMail($customer);
+        $this->dispatch(new SendEmailVerficationEmail($customer));
         return response()->json(['msg' => 'successful', 'code' => 200]);
     }
 

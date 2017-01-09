@@ -8,7 +8,7 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-12">
-                Thanks for ordering from Sheba. Your order no is {{$order->id}}
+                Thanks for ordering from Sheba.xyz Your order ID is {{$order->code()}}
             </div>
         </div>
     </div>
