@@ -158,7 +158,7 @@ class CustomerController extends Controller
             $customer->email = $request->input('email');
             $customer->email_verified = 0;
             $customer->update();
-            $this->customer->sendVerificationMail($customer);
+            $this->dispatch(new SendEmailVerficationEmail($customer));
             return response()->json(['msg' => 'successful', 'code' => 200]);
         }
     }
