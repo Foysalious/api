@@ -44,7 +44,7 @@ class CustomerRepository
                     'mobile' => $info['mobile'],
                     'mobile_verified' => 1,
                     "remember_token" => str_random(60),
-                    "reference_code" => str_random(30),
+                    "reference_code" => str_random(6),
                     "referrer_id" => $customer->id
                 ]);
             }
@@ -53,7 +53,7 @@ class CustomerRepository
             'mobile' => $info['mobile'],
             'mobile_verified' => 1,
             "remember_token" => str_random(60),
-            "reference_code" => str_random(30)
+            "reference_code" => str_random(6)
         ]);
     }
 
@@ -73,7 +73,7 @@ class CustomerRepository
                     "email" => $info['email'],
                     "password" => bcrypt($info['password']),
                     "remember_token" => str_random(60),
-                    "reference_code" => str_random(30),
+                    "reference_code" => str_random(6),
                     "referrer_id" => $customer->id
                 ]);
             }
@@ -82,7 +82,7 @@ class CustomerRepository
             "email" => $info['email'],
             "password" => bcrypt($info['password']),
             "remember_token" => str_random(60),
-            "reference_code" => str_random(30)
+            "reference_code" => str_random(6)
         ]);
     }
 
@@ -162,7 +162,7 @@ class CustomerRepository
         $customer->gender = isset($info['gender']) ? $info['gender'] : '';
         $customer->pro_pic = $info['picture']['data']['url'];
         $customer->email_verified = 1;
-        $customer->reference_code = str_random(30);
+        $customer->reference_code = str_random(6);
         $customer->remember_token = str_random(60);
         //reference_code is send through request
         if (isset($info['reference_code'])) {
