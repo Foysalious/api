@@ -16,6 +16,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Cache;
+
 class CheckoutRepository
 {
     use DispatchesJobs;
@@ -138,6 +139,8 @@ class CheckoutRepository
                         $job->partner_order_id = $partner_order->id;
                         $job->service_id = $service->service->id;
                         $job->service_name = $service->service->name;
+                        $job->service_variable_type = $service->service->variable_type;
+                        $job->service_variables = json_encode($service->service->variables);
                         $job->service_option = json_encode($service->serviceOptions);
                         if (is_object($service->date)) {
                             $job->schedule_date = Carbon::parse($service->date->time)->format('Y-m-d');

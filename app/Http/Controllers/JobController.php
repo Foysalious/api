@@ -30,11 +30,11 @@ class JobController extends Controller
             }])->with(['materials' => function ($query) {
                 $query->select('material_name', 'material_price');
             }])->with(['service' => function ($query) {
-                $query->select('id', 'name', 'variable_type', 'variables');
+                $query->select('id', 'name');
             }])->with(['review' => function ($query) {
                 $query->select('job_id', 'review_title', 'review', 'rating');
             }])->where('id', $job->id)
-                ->select('id', 'service_id', 'service_name', 'service_quantity', 'job_additional_info', 'service_option', 'discount', 'status', 'service_unit_price', 'created_at', 'partner_order_id')
+                ->select('id', 'service_id', 'service_name', 'service_quantity', 'service_variable_type', 'service_variables', 'job_additional_info', 'service_option', 'discount', 'status', 'service_unit_price', 'created_at', 'partner_order_id')
                 ->first();
             array_add($job, 'status_show', $this->job_statuses_show[array_search($job->status, $this->job_statuses)]);
 
