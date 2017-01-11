@@ -139,8 +139,17 @@ class CheckoutRepository
                         $job->partner_order_id = $partner_order->id;
                         $job->service_id = $service->service->id;
                         $job->service_name = $service->service->name;
-                        $job->service_variable_type = $service->service->variable_type;
-                        $job->service_variables = json_encode($service->service->variables);
+
+                        //shafiq
+                        if(empty($service->service->variable_type) || empty($service->service->variables)) {
+                            $service_details = Service::find($service->service->id);
+                            $job->service_variable_type = $service_details->variable_type;
+                            $job->service_variables = $service_details->variables;
+                        } else {
+                            $job->service_variable_type = $service->service->variable_type;
+                            $job->service_variables = json_encode($service->service->variables);
+                        }
+
                         $job->service_option = json_encode($service->serviceOptions);
                         if (is_object($service->date)) {
                             $job->schedule_date = Carbon::parse($service->date->time)->format('Y-m-d');
