@@ -82,6 +82,7 @@ $api->version('v1', function ($api) {
         $api->post('{customer}/order-valid', 'App\Http\Controllers\OrderController@checkOrderValidity');
         $api->post('{customer}/modify-review', 'App\Http\Controllers\ReviewController@modifyReview');
         $api->get('{customer}/job/{job}', 'App\Http\Controllers\JobController@getInfo');
+        $api->post('{customer}/cancel-job/{job}','App\Http\Controllers\JobController@cancelJob');
 
         $api->post('{customer}/checkout/place-order', 'App\Http\Controllers\CheckoutController@placeOrder');
         $api->post('{customer}/checkout/place-order-with-online-payment', 'App\Http\Controllers\CheckoutController@placeOrderWithPayment');

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Job;
+use App\Models\JobCancelLog;
 use Illuminate\Http\Request;
 
 class JobController extends Controller
@@ -55,5 +56,22 @@ class JobController extends Controller
     public function getPreferredTimes()
     {
         return response()->json(['times' => config('constants.JOB_PREFERRED_TIMES'), 'code' => 200]);
+    }
+
+    public function cancelJob($customer, Job $job)
+    {
+        $previous_status = $job->status;
+        $job->status = 'Cancelled';
+        if ($job->update()) {
+            $job_cancel = new JobCancelLog();
+            $job_cancel->job_id = $job->id;
+            $job_cancel->from_status = $previous_status;
+            $job_cancel->cancel_reason = 'Customer Dependency';
+            $job_cancel->cancel_reason_details = 'Job has been cancelled by customer from front-end';
+            $job_cancel->created_by_name = 'Customer';
+            if ($job_cancel->save()) {
+                return response()->json(['msg' => 'Job Cancelled Successfully!', 'code' => 200]);
+            }
+        }
     }
 }

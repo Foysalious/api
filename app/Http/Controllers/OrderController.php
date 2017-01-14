@@ -23,6 +23,7 @@ class OrderController extends Controller
     public function getNotClosedOrderInfo($customer)
     {
         $customer = Customer::find($customer);
+        //2nd & 3rd parameters are redundant
         $orders = $this->orderRepository->getOrderInfo($customer, '<>', 'Closed');
         $final_orders = [];
         foreach ($orders as $key => $order) {
