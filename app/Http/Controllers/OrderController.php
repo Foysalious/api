@@ -32,7 +32,7 @@ class OrderController extends Controller
 ////                unset($orders[$key]);
 //                continue;
 //            }
-            if ($order->status != 'Open') {
+            if (in_array($order->status, ['Closed', 'Cancelled'])) {
                 continue;
             }
             foreach ($order->partner_orders as $partner_order) {
@@ -63,7 +63,7 @@ class OrderController extends Controller
         $final_orders = [];
         foreach ($orders as $key => $order) {
             $order->calculate();
-            if ($order->status == 'Open') {
+            if (in_array($order->status, ['Open', 'Process'])) {
 //                unset($orders[$key]);
                 continue;
             }
