@@ -48,16 +48,16 @@ class PartnerOrder extends Model
     {
         $this->_calculateThisJobs();
         $this->_calculateRoundingCutOff();
-        $this->grossAmount = $this->totalPrice - $this->discount  - $this->roundingCutOff;
+        $this->grossAmount = $this->totalPrice - $this->discount - $this->roundingCutOff;
         $this->paid = $this->sheba_collection + $this->partner_collection;
         $this->due = $this->grossAmount - $this->paid;
         $this->profit = $this->grossAmount - $this->totalCost;
-        $this->margin = $this->totalPrice ? ( ($this->totalPrice - $this->totalCost) * 100 ) / $this->totalPrice : 0;
-        $this->marginAfterDiscount = $this->grossAmount ? ( ($this->grossAmount - $this->totalCost) * 100 ) / $this->grossAmount : 0;
+        $this->margin = $this->totalPrice ? (($this->totalPrice - $this->totalCost) * 100) / $this->totalPrice : 0;
+        $this->marginAfterDiscount = $this->grossAmount ? (($this->grossAmount - $this->totalCost) * 100) / $this->grossAmount : 0;
         $this->spPayable = ($this->partner_collection < $this->totalCost) ? ($this->totalCost - $this->partner_collection) : 0;
         $this->shebaReceivable = ($this->partner_collection > $this->totalCost) ? ($this->partner_collection - $this->totalCost) : 0;
 
-        if($this->due)
+        if ($this->due)
             $this->paymentStatus = "Due";
         else
             $this->paymentStatus = "Paid";
@@ -88,10 +88,10 @@ class PartnerOrder extends Model
         $this->totalMaterialCost = 0;
         $this->totalPrice = 0;
         $this->totalCost = 0;
-        foreach($this->jobs as $job) {
+        foreach ($this->jobs as $job) {
             $job = $job->calculate();
 
-            if($job->status != $job_statuses['Cancelled']) {
+            if ($job->status != $job_statuses['Cancelled']) {
                 $this->totalServicePrice += $job->servicePrice;
                 $this->totalServiceCost += $job->serviceCost;
                 $this->totalMaterialPrice += $job->materialPrice;
@@ -104,15 +104,15 @@ class PartnerOrder extends Model
             $total_jobs++;
         }
 
-        if($job_status_counter[$job_statuses['Pending']] == $total_jobs) {
+        if ($job_status_counter[$job_statuses['Pending']] == $total_jobs) {
             $this->status = $po_statuses['Open'];
-        } else if($job_status_counter[$job_statuses['Pending']] + $job_status_counter[$job_statuses['Cancelled']] == $total_jobs) {
-            $this->status = $po_statuses['Open'];
-        } else if($job_status_counter[$job_statuses['Cancelled']] == $total_jobs) {
+        } else if ($job_status_counter[$job_statuses['Cancelled']] == $total_jobs) {
             $this->status = $po_statuses['Cancelled'];
-        } else if($job_status_counter[$job_statuses['Served']] == $total_jobs) {
+        } else if ($job_status_counter[$job_statuses['Served']] == $total_jobs) {
             $this->status = $po_statuses['Closed'];
-        } else if($job_status_counter[$job_statuses['Served']] + $job_status_counter[$job_statuses['Cancelled']] == $total_jobs) {
+        } else if ($job_status_counter[$job_statuses['Pending']] + $job_status_counter[$job_statuses['Cancelled']] == $total_jobs) {
+            $this->status = $po_statuses['Open'];
+        } else if ($job_status_counter[$job_statuses['Served']] + $job_status_counter[$job_statuses['Cancelled']] == $total_jobs) {
             $this->status = $po_statuses['Closed'];
         } else {
             $this->status = $po_statuses['Process'];
@@ -160,6 +160,6 @@ class PartnerOrder extends Model
 
     public function code()
     {
-        return $this->order->code() . "-" . str_pad($this->partner_id, 4,'0',STR_PAD_LEFT);
+        return $this->order->code() . "-" . str_pad($this->partner_id, 4, '0', STR_PAD_LEFT);
     }
 }

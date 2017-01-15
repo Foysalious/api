@@ -28,8 +28,11 @@ class OrderController extends Controller
         $final_orders = [];
         foreach ($orders as $key => $order) {
             $order->calculate();
-            if ($order->status == 'Closed') {
-//                unset($orders[$key]);
+//            if ($order->status == 'Closed') {
+////                unset($orders[$key]);
+//                continue;
+//            }
+            if ($order->status != 'Open') {
                 continue;
             }
             foreach ($order->partner_orders as $partner_order) {
@@ -60,7 +63,7 @@ class OrderController extends Controller
         $final_orders = [];
         foreach ($orders as $key => $order) {
             $order->calculate();
-            if ($order->status != 'Closed') {
+            if ($order->status == 'Open') {
 //                unset($orders[$key]);
                 continue;
             }
