@@ -23,6 +23,9 @@ class PartnerOrder extends Model
     public $marginAfterDiscount;
     public $spPayable;
     public $shebaReceivable;
+    public $totalDiscount;
+    public $jobDiscounts;
+    public $jobPrices;
 
     public function order()
     {
@@ -56,6 +59,7 @@ class PartnerOrder extends Model
         $this->marginAfterDiscount = $this->grossAmount ? (($this->grossAmount - $this->totalCost) * 100) / $this->grossAmount : 0;
         $this->spPayable = ($this->partner_collection < $this->totalCost) ? ($this->totalCost - $this->partner_collection) : 0;
         $this->shebaReceivable = ($this->partner_collection > $this->totalCost) ? ($this->partner_collection - $this->totalCost) : 0;
+        $this->totalDiscount = $this->jobDiscounts + $this->discount;
 
         if ($this->due)
             $this->paymentStatus = "Due";
@@ -88,7 +92,9 @@ class PartnerOrder extends Model
         $this->totalMaterialCost = 0;
         $this->totalPrice = 0;
         $this->totalCost = 0;
-        foreach ($this->jobs as $job) {
+        $this->jobDiscounts = 0;
+        $this->jobPrices = 0;
+        foreach($this->jobs as $job) {
             $job = $job->calculate();
 
             if ($job->status != $job_statuses['Cancelled']) {
@@ -96,8 +102,10 @@ class PartnerOrder extends Model
                 $this->totalServiceCost += $job->serviceCost;
                 $this->totalMaterialPrice += $job->materialPrice;
                 $this->totalMaterialCost += $job->materialCost;
+                $this->jobPrices += $job->totalPrice;
                 $this->totalPrice += $job->grossPrice;
                 $this->totalCost += $job->grossCost;
+                $this->jobDiscounts += $job->discount;
             }
 
             $job_status_counter[$job->status]++;
@@ -155,6 +163,8 @@ class PartnerOrder extends Model
         $this->marginAfterDiscount = formatTaka($this->marginAfterDiscount);
         $this->spPayable = formatTaka($this->spPayable);
         $this->shebaReceivable = formatTaka($this->shebaReceivable);
+        $this->jobPrices = formatTaka($this->jobPrices);
+        $this->totalDiscount = formatTaka($this->totalDiscount);
         return $this;
     }
 
