@@ -85,4 +85,9 @@ class Job extends Model
     {
         return  $this->partner_order->code() . '-' . $this->code();
     }
+
+    public function cancelLog()
+    {
+        return $this->hasOne(JobCancelLog::class);
+    }
 }

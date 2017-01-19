@@ -23,12 +23,16 @@ class OrderController extends Controller
     public function getNotClosedOrderInfo($customer)
     {
         $customer = Customer::find($customer);
+        //2nd & 3rd parameters are redundant
         $orders = $this->orderRepository->getOrderInfo($customer, '<>', 'Closed');
         $final_orders = [];
         foreach ($orders as $key => $order) {
             $order->calculate();
-            if ($order->status == 'Closed') {
-//                unset($orders[$key]);
+//            if ($order->status == 'Closed') {
+////                unset($orders[$key]);
+//                continue;
+//            }
+            if (in_array($order->status, ['Closed', 'Cancelled'])) {
                 continue;
             }
             foreach ($order->partner_orders as $partner_order) {
@@ -59,7 +63,7 @@ class OrderController extends Controller
         $final_orders = [];
         foreach ($orders as $key => $order) {
             $order->calculate();
-            if ($order->status != 'Closed') {
+            if (in_array($order->status, ['Open', 'Process'])) {
 //                unset($orders[$key]);
                 continue;
             }
