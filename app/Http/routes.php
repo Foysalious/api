@@ -52,7 +52,8 @@ $api->version('v1', function ($api) {
         //For Back-end
         $api->post('{service}/change-partner', 'App\Http\Controllers\ServiceController@changePartnerWithoutLocation');
     });
-    $api->group(['prefix' => 'partner'], function ($api) {
+    $api->group(['prefix' => 'partner'], function ($api){
+        $api->get('/','App\Http\Controllers\PartnerController@index');
         $api->get('{partner}/services', 'App\Http\Controllers\PartnerController@getPartnerServices');
     });
 

@@ -8,7 +8,14 @@ use Illuminate\Http\Request;
 
 use App\Http\Requests;
 
-class PartnerController extends Controller {
+class PartnerController extends Controller
+{
+    public function index()
+    {
+        $partners = Partner::select('id', 'name', 'sub_domain', 'logo')->orderBy('name')->get();
+        return response()->json(['partners' => $partners, 'code' => 200, 'msg' => 'successful']);
+    }
+
     public function getPartnerServices($partner)
     {
         $partner = Partner::select('id', 'name', 'sub_domain', 'description', 'xp', 'logo')
@@ -19,10 +26,9 @@ class PartnerController extends Controller {
         array_add($partner, 'review', $review);
         array_add($partner, 'rating', $rating);
         $partner_services = $partner->services()
-            ->select('services.id', 'services.thumb', 'services.category_id', 'name')
+            ->select('services.id', 'services.banner', 'services.category_id', 'name')
             ->get();
-        foreach ($partner_services as $service)
-        {
+        foreach ($partner_services as $service) {
             array_forget($service, 'pivot');
             array_add($service, 'slug_service', str_slug($service->name, '-'));
             //review count of partner of this service
@@ -36,14 +42,12 @@ class PartnerController extends Controller {
             array_add($service, 'rating', $rating);
         }
         $partner_categories = $partner->categories()->select('categories.id', 'name')->get();
-        foreach ($partner_categories as $category)
-        {
+        foreach ($partner_categories as $category) {
             $service = $partner_services->where('category_id', $category->id);
             array_add($category, 'service', $service);
             array_forget($category, 'pivot');
         }
-        if (count($partner))
-        {
+        if (count($partner)) {
             return response()->json([
                 'partner' => $partner,
                 'partner_categories' => $partner_categories,

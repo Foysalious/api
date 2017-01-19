@@ -30,6 +30,7 @@ class Cors2MiddleWare
             "http://sheba.xyz",
             "http://www.sheba.xyz",
             "http://admin.sheba.xyz",
+            "http://admin.sheba.new"
         ];
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Credentials'] = 'true';
