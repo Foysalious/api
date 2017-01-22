@@ -25,6 +25,7 @@ $api = app('Dingo\Api\Routing\Router');
 |
 */
 $api->version('v1', function ($api) {
+//    $api->get('insert','App\Http\Controllers\PartnerController@insert');
     $api->post('register-mobile', 'App\Http\Controllers\Auth\RegistrationController@registerWithMobile');
     $api->post('register-email', 'App\Http\Controllers\Auth\RegistrationController@registerWithEmail');
     $api->post('register-with-facebook', 'App\Http\Controllers\Auth\RegistrationController@registerWithFacebook');

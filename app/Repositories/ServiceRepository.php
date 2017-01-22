@@ -117,6 +117,7 @@ class ServiceRepository
     {
         return $service->partners()
             ->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'prices')
+            ->where('is_verified',1)
             ->whereHas('locations', function ($query) use ($location) {
                 $query->where('id', $location);
             })->get();
@@ -126,7 +127,7 @@ class ServiceRepository
     {
         return $service->partners()->with(['locations' => function ($query) {
             $query->select('id', 'name');
-        }])->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'prices')->get();
+        }])->where('is_verified',1)->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'prices')->get();
     }
 
     public function getMaxMinPrice($service)

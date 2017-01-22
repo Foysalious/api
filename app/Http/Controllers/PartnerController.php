@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Partner;
+use App\Models\PartnerOrder;
 use Illuminate\Http\Request;
 
 use App\Http\Requests;
@@ -27,6 +28,7 @@ class PartnerController extends Controller
         array_add($partner, 'rating', $rating);
         $partner_services = $partner->services()
             ->select('services.id', 'services.banner', 'services.category_id', 'name')
+            ->where('is_verified', 1)
             ->get();
         foreach ($partner_services as $service) {
             array_forget($service, 'pivot');
@@ -54,6 +56,19 @@ class PartnerController extends Controller
                 'msg' => 'successful',
                 'code' => 200
             ]);
+        }
+    }
+
+    public function insert()
+    {
+        $partner_orders = PartnerOrder::where('closed_at', null)->get();
+        foreach ($partner_orders as $partner_order) {
+            $partner_order->calculate();
+            if ($partner_order->status == 'Closed') {
+                $dates=$partner_order->jobs()->select('delivered_date')->get();
+                $partner_order->closed_at=$dates->max()->delivered_date;
+                $partner_order->update();
+            }
         }
     }
 }
