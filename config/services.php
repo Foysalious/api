@@ -37,7 +37,7 @@ return [
     'facebook' => [
         'client_id' => '323841817978882',
         'client_secret' => '2e456b524617f8878dc4aeb7db93a128',
-        'redirect' => 'http://localhost/sheba_new_api/public/callback',
+        'redirect' => env('FB_APP_REDIRECT'),
     ],
 
 ];
