@@ -16,7 +16,7 @@ class PartnerController extends Controller
 
     public function __construct()
     {
-        $this->serviceRepository=new ServiceRepository();
+        $this->serviceRepository = new ServiceRepository();
     }
 
     public function index()
@@ -36,10 +36,12 @@ class PartnerController extends Controller
         array_add($partner, 'rating', $rating);
         $partner_services = $partner->services()
             ->select('services.id', 'services.banner', 'services.category_id', 'name', 'variable_type', 'variables')
-            ->where('is_verified', 1)
-            ->get();
+            ->where([
+                ['is_verified', 1],
+                ['is_published', 1]
+            ])->get();
         foreach ($partner_services as $service) {
-            $service=$this->serviceRepository->getStartEndPrice($service);
+            $service = $this->serviceRepository->getStartEndPrice($service);
             array_add($service, 'slug_service', str_slug($service->name, '-'));
             //review count of partner of this service
             $review = $service->reviews()->where([
