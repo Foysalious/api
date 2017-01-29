@@ -5,15 +5,23 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
+use App\Repositories\ServiceRepository;
 use Illuminate\Http\Request;
 
 use App\Http\Requests;
 
 class PartnerController extends Controller
 {
+    private $serviceRepository;
+
+    public function __construct()
+    {
+        $this->serviceRepository=new ServiceRepository();
+    }
+
     public function index()
     {
-        $partners = Partner::select('id', 'name', 'sub_domain', 'logo')->orderBy('name')->get();
+        $partners = Partner::select('id', 'name', 'sub_domain', 'logo')->where('status', 'Verified')->orderBy('name')->get();
         return response()->json(['partners' => $partners, 'code' => 200, 'msg' => 'successful']);
     }
 
@@ -27,11 +35,11 @@ class PartnerController extends Controller
         array_add($partner, 'review', $review);
         array_add($partner, 'rating', $rating);
         $partner_services = $partner->services()
-            ->select('services.id', 'services.banner', 'services.category_id', 'name')
+            ->select('services.id', 'services.banner', 'services.category_id', 'name', 'variable_type', 'variables')
             ->where('is_verified', 1)
             ->get();
         foreach ($partner_services as $service) {
-            array_forget($service, 'pivot');
+            $service=$this->serviceRepository->getStartEndPrice($service);
             array_add($service, 'slug_service', str_slug($service->name, '-'));
             //review count of partner of this service
             $review = $service->reviews()->where([
@@ -42,6 +50,7 @@ class PartnerController extends Controller
             $rating = $service->reviews()->where('partner_id', $partner->id)->avg('rating');
             array_add($service, 'review', $review);
             array_add($service, 'rating', $rating);
+            array_forget($service, 'pivot');
         }
         $partner_categories = $partner->categories()->select('categories.id', 'name')->get();
         foreach ($partner_categories as $category) {
@@ -65,8 +74,8 @@ class PartnerController extends Controller
         foreach ($partner_orders as $partner_order) {
             $partner_order->calculate();
             if ($partner_order->status == 'Closed') {
-                $dates=$partner_order->jobs()->select('delivered_date')->get();
-                $partner_order->closed_at=$dates->max()->delivered_date;
+                $dates = $partner_order->jobs()->select('delivered_date')->get();
+                $partner_order->closed_at = $dates->max()->delivered_date;
                 $partner_order->update();
             }
         }
