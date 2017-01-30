@@ -210,18 +210,20 @@ class CustomerRepository
     public function updateCustomerNameIfEmptyWhenPlacingOrder($order_info)
     {
         $customer = Customer::find($order_info['customer_id']);
-        $customer_update_data = [];
+        $update = false;
 
         if (empty($customer->name) || $customer->name == ""){
-            $customer_update_data['name'] = $order_info['name'];
+            $customer->name = $order_info['name'];
+            $update = true;
         }
 
         if (empty($customer->mobile)){
-            $customer_update_data['mobile'] = $order_info['phone'];
+            $customer->mobile = $order_info['phone'];
+            $update = true;
         }
 
-        if (!empty($customer_update_data)){
-            $customer->update($customer_update_data);
+        if ($update){
+            $customer->update();
         }
     }
 
