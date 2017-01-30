@@ -89,20 +89,20 @@ class CheckoutRepository
             (new CustomerRepository())->updateCustomerNameIfEmptyWhenPlacingOrder($order_info);
 
             if ($order_info['address'] != '') {
-                $deliver_adddress = new CustomerDeliveryAddress();
-                $deliver_adddress->address = $order_info['address'];
-                $deliver_adddress->customer_id = $order_info['customer_id'];
+                $deliver_address = new CustomerDeliveryAddress();
+                $deliver_address->address = $order_info['address'];
+                $deliver_address->customer_id = $order_info['customer_id'];
                 if (isset($order_info['created_by'])) {
-                    $deliver_adddress->created_by = $user->id;
-                    $deliver_adddress->created_by_name = $user->name;
+                    $deliver_address->created_by = $user->id;
+                    $deliver_address->created_by_name = $user->name;
                 } else {
-                    $deliver_adddress->created_by_name = 'Customer';
+                    $deliver_address->created_by_name = 'Customer';
                 }
-                $deliver_adddress->save();
+                $deliver_address->save();
                 $order->delivery_address = $order_info['address'];
             } elseif ($order_info['address_id'] != '') {
-                $deliver_adddress = CustomerDeliveryAddress::find($order_info['address_id']);
-                $order->delivery_address = $deliver_adddress->address;
+                $deliver_address = CustomerDeliveryAddress::find($order_info['address_id']);
+                $order->delivery_address = $deliver_address->address;
             }
             $order->update();
             foreach ($unique_partners as $partner) {
@@ -315,9 +315,9 @@ class CheckoutRepository
     {
         //send order info to customer  by mail
         $customer = Customer::find($customer);
+        $this->dispatch(new SendOrderConfirmationSms($customer, $order));
         if ($customer->email != '') {
             $this->dispatch(new SendOrderConfirmationEmail($customer, $order));
         }
-        $this->dispatch(new SendOrderConfirmationSms($customer, $order));
     }
 }

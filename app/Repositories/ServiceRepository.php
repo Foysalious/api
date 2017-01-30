@@ -149,4 +149,19 @@ class ServiceRepository
         return array(max($max_price), min($min_price));
     }
 
+    public function getStartEndPrice($service){
+        if ($service->variable_type == 'Options') {
+            $prices = (array)(json_decode($service->variables)->min_prices);
+            $min = (min($prices));
+            $prices = (array)(json_decode($service->variables)->max_prices);
+            $max = (max($prices));
+            array_add($service, 'start_price', $min);
+            array_add($service, 'end_price', $max);
+        } elseif ($service->variable_type == 'Fixed') {
+            array_add($service, 'start_price', json_decode($service->variables)->min_price);
+            array_add($service, 'end_price', json_decode($service->variables)->max_price);
+        }
+        return $service;
+    }
+
 }
