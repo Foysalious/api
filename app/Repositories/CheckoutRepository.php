@@ -86,6 +86,8 @@ class CheckoutRepository
             $order->created_by_name = 'Customer';
         }
         if ($order->save()) {
+            (new CustomerRepository())->updateCustomerNameIfEmptyWhenPlacingOrder($order_info);
+
             if ($order_info['address'] != '') {
                 $deliver_adddress = new CustomerDeliveryAddress();
                 $deliver_adddress->address = $order_info['address'];

@@ -207,4 +207,22 @@ class CustomerRepository
         $customer_mobile->save();
     }
 
+    public function updateCustomerNameIfEmptyWhenPlacingOrder($order_info)
+    {
+        $customer = Customer::find($order_info['customer_id']);
+        $customer_update_data = [];
+
+        if (empty($customer->name)){
+            $customer_update_data['name'] = $order_info['name'];
+        }
+
+        if (empty($customer->mobile)){
+            $customer_update_data['mobile'] = $order_info['phone'];
+        }
+
+        if (!empty($customer_update_data)){
+            $customer->update($customer_update_data);
+        }
+    }
+
 }
