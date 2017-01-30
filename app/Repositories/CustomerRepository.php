@@ -212,7 +212,7 @@ class CustomerRepository
         $customer = Customer::find($order_info['customer_id']);
         $customer_update_data = [];
 
-        if (empty($customer->name)){
+        if (empty($customer->name) || $customer->name == ""){
             $customer_update_data['name'] = $order_info['name'];
         }
 
