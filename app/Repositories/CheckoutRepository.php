@@ -14,8 +14,10 @@ use App\Models\PartnerOrderPayment;
 use App\Models\Service;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Cache;
+use Illuminate\Support\Facades\DB;
 
 class CheckoutRepository
 {
@@ -56,70 +58,73 @@ class CheckoutRepository
 
     public function storeDataInDB($order_info, $payment_method)
     {
-        if (isset($order_info['created_by'])) {
-            $user = User::select('id', 'name')->where('id', $order_info['created_by'])->first();
-        }
-        $cart = json_decode($order_info['cart']);
-        //group cart_info by partners
-        $cart_partner = collect($cart->items)->groupBy('partner.id');
-        //Get all the unique partner id's
-        $unique_partners = collect($cart->items)->unique('partner.id')->pluck('partner.id');
-        $partner_price = [];
-        //calculate total prices for each partner
-        foreach ($cart_partner as $partners) {
-            $price = 0;
-            foreach ($partners as $partner) {
-                $price += $partner->partner->prices;
-            }
-            $partner_price[$partner->partner->id] = $price * $partner->quantity;
-        }
         $order = new Order();
-        $order->customer_id = $order_info['customer_id'];
-        $order->location_id = $order_info['location_id'];
-        $order->delivery_name = $order_info['name'];
-        $order->delivery_mobile = $order_info['phone'];
-        $order->sales_channel = isset($order_info['sales_channel']) ? $order_info['sales_channel'] : 'Web';
-        if (isset($order_info['created_by'])) {
-            $order->created_by = $user->id;
-            $order->created_by_name = $user->name;
-        } else {
-            $order->created_by_name = 'Customer';
-        }
-        if ($order->save()) {
-            (new CustomerRepository())->updateCustomerNameIfEmptyWhenPlacingOrder($order_info);
+        try {
+            DB::transaction(function () use ($order_info, $payment_method, $order) {
+                if (isset($order_info['created_by'])) {
+                    $user = User::select('id', 'name')->where('id', $order_info['created_by'])->first();
+                }
+                $cart = json_decode($order_info['cart']);
+                //group cart_info by partners
+                $cart_partner = collect($cart->items)->groupBy('partner.id');
+                //Get all the unique partner id's
+                $unique_partners = collect($cart->items)->unique('partner.id')->pluck('partner.id');
+                $partner_price = [];
+                //calculate total prices for each partner
+                foreach ($cart_partner as $partners) {
+                    $price = 0;
+                    foreach ($partners as $partner) {
+                        $price += $partner->partner->prices;
+                    }
+                    $partner_price[$partner->partner->id] = $price * $partner->quantity;
+                }
 
-            if ($order_info['address'] != '') {
-                $deliver_address = new CustomerDeliveryAddress();
-                $deliver_address->address = $order_info['address'];
-                $deliver_address->customer_id = $order_info['customer_id'];
+                $order->customer_id = $order_info['customer_id'];
+                $order->location_id = $order_info['location_id'];
+                $order->delivery_name = $order_info['name'];
+                $order->delivery_mobile = $order_info['phone'];
+                $order->sales_channel = isset($order_info['sales_channel']) ? $order_info['sales_channel'] : 'Web';
                 if (isset($order_info['created_by'])) {
-                    $deliver_address->created_by = $user->id;
-                    $deliver_address->created_by_name = $user->name;
+                    $order->created_by = $user->id;
+                    $order->created_by_name = $user->name;
                 } else {
-                    $deliver_address->created_by_name = 'Customer';
+                    $order->created_by_name = 'Customer';
                 }
-                $deliver_address->save();
-                $order->delivery_address = $order_info['address'];
-            } elseif ($order_info['address_id'] != '') {
-                $deliver_address = CustomerDeliveryAddress::find($order_info['address_id']);
-                $order->delivery_address = $deliver_address->address;
-            }
-            $order->update();
-            foreach ($unique_partners as $partner) {
-                $partner_order = new PartnerOrder();
-                $partner_order->order_id = $order->id;
-                $partner_order->partner_id = $partner;
-                if (isset($order_info['created_by'])) {
-                    $partner_order->created_by = $user->id;
-                    $partner_order->created_by_name = $user->name;
-                } else {
-                    $partner_order->created_by_name = 'Customer';
+                $order->save();
+                (new CustomerRepository())->updateCustomerNameIfEmptyWhenPlacingOrder($order_info);
+
+                if ($order_info['address_id'] != '') {
+                    $deliver_address = CustomerDeliveryAddress::find($order_info['address_id']);
+                    $order->delivery_address = $deliver_address->address;
+                } elseif ($order_info['address'] != '') {
+                    $deliver_address = new CustomerDeliveryAddress();
+                    $deliver_address->address = $order_info['address'];
+                    $deliver_address->customer_id = $order_info['customer_id'];
+                    if (isset($order_info['created_by'])) {
+                        $deliver_address->created_by = $user->id;
+                        $deliver_address->created_by_name = $user->name;
+                    } else {
+                        $deliver_address->created_by_name = 'Customer';
+                    }
+                    $deliver_address->save();
+                    $order->delivery_address = $order_info['address'];
                 }
-                if ($payment_method == 'online') {
-                    $partner_order->sheba_collection = $partner_price[$partner];
-                }
-                $partner_order->payment_method = $payment_method;
-                if ($partner_order->save()) {
+                $order->update();
+                foreach ($unique_partners as $partner) {
+                    $partner_order = new PartnerOrder();
+                    $partner_order->order_id = $order->id;
+                    $partner_order->partner_id = $partner;
+                    if (isset($order_info['created_by'])) {
+                        $partner_order->created_by = $user->id;
+                        $partner_order->created_by_name = $user->name;
+                    } else {
+                        $partner_order->created_by_name = 'Customer';
+                    }
+                    if ($payment_method == 'online') {
+                        $partner_order->sheba_collection = $partner_price[$partner];
+                    }
+                    $partner_order->payment_method = $payment_method;
+                    $partner_order->save();
                     if ($payment_method == 'online') {
                         $partner_order_payment = new PartnerOrderPayment();
                         $partner_order_payment->partner_order_id = $partner_order->id;
@@ -144,7 +149,7 @@ class CheckoutRepository
                         $job->service_option = json_encode($service->serviceOptions);
 
                         //shafiq
-                        if(empty($service->service->variable_type) || empty($service->service->variables)) {
+                        if (empty($service->service->variable_type) || empty($service->service->variables)) {
                             $service_details = Service::find($service->service->id);
                             $job->service_variable_type = $service_variable_type = $service_details->variable_type;
                             $job->service_variables = $service_variables = $service_details->variables;
@@ -157,8 +162,8 @@ class CheckoutRepository
                         $service_option = $service->serviceOptions;
 
                         $job_options = [];
-                        if($service_variable_type == 'Options') {
-                            foreach($service_variables['options'] as $key => $option) {
+                        if ($service_variable_type == 'Options') {
+                            foreach ($service_variables['options'] as $key => $option) {
                                 array_push($job_options, [
                                     'question' => $option['question'],
                                     'answer' => explode(',', $option['answers'])[$service_option[$key]]
@@ -191,12 +196,11 @@ class CheckoutRepository
                         $job->commission_rate = $service->commission($partner);
                         $job->vat = 0;
                         $job->update();
-//                        $job->job_full_code = 'D-' . $order->order_code . '-' . sprintf('%06d', $partner) . '-' . sprintf('%08d', $job->id);
-//                        $job->job_code = sprintf('%08d', $job->id);
-//                        $job->update();
                     }
                 }
-            }
+            });
+        } catch (QueryException $e) {
+            return false;
         }
         return $order;
     }

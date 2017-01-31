@@ -32,9 +32,12 @@ class CheckoutController extends Controller
         array_add($request, 'customer_id', $customer);
         //store order details for customer
         $order = $this->checkoutRepository->storeDataInDB($request->all(), 'cash-on-delivery');
-        if (!empty($order)) {
+        if ($order) {
             $this->checkoutRepository->sendConfirmation($customer, $order);
             return response()->json(['code' => 200, 'msg' => 'Order placed successfully!']);
+        }
+        else{
+            return response()->json(['code' => 500, 'msg' => 'There is a problem while placing the order!']);
         }
     }
 
@@ -70,7 +73,7 @@ class CheckoutController extends Controller
         //check payment validity
         if ($portwallet_response->status == 200 && $portwallet_response->data->status == "ACCEPTED") {
             $order = $this->checkoutRepository->storeDataInDB($order_info, 'online');
-            if (!empty($order)) {
+            if ($order) {
                 $this->checkoutRepository->sendConfirmation($order_info['customer_id'], $order);
                 Cache::forget('invoice-' . $request->input('invoice'));
                 Cache::forget('portwallet-payment-' . $request->input('invoice'));
