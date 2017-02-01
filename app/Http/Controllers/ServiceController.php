@@ -100,14 +100,14 @@ class ServiceController extends Controller
     public function getInfo()
     {
         $customer_count = Customer::all()->count() + 3000;
-        $partner_count = Partner::all()->count();
+//        $partner_count = Partner::all()->count();
         $job_count = Job::all()->count() + 16000;
         $service_count = Service::all()->count();
-//        $resource_count = count(Resource::whereHas('partners', function ($query) {
-//            $query->where('is_verified', 1);
-//        })->get());
-        $resource_count = count(Resource::has('partners')->get());
-        return response()->json(['customer' => $customer_count, 'partner' => $partner_count, 'service' => $service_count,
+//        $resource_count = count(Resource::has('partners')->get());
+        $resource_count = count(Resource::whereHas('partners', function ($query) {
+            $query->where('resource_type', 'Handyman');
+        })->select('id')->get());
+        return response()->json(['customer' => $customer_count, 'service' => $service_count,
             'job' => $job_count, 'resource' => $resource_count, 'msg' => 'successful', 'code' => 200]);
     }
 

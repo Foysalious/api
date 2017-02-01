@@ -42,7 +42,7 @@ class CheckoutRepository
      */
     private $appBaseUrl;
     /**
-     * Portwallet payment url where to redirect after a successful connection reponse
+     * Portwallet payment url where to redirect after a successful connection response
      * @var mixed
      */
     private $appPaymentUrl;
