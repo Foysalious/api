@@ -111,4 +111,15 @@ class ServiceController extends Controller
             'job' => $job_count, 'resource' => $resource_count, 'msg' => 'successful', 'code' => 200]);
     }
 
+    public function validService($service)
+    {
+        $service = Service::find($service);
+        if (!empty($service)) {
+            if ($service->publication_status == 1) {
+                return response()->json(['msg' => 'ok', 'code' => 200]);
+            }
+        }
+        return response()->json(['msg' => 'not ok', 'code' => 409]);
+    }
+
 }
