@@ -22,4 +22,15 @@ class ReviewRepository
         } else
             return false;
     }
+
+    public function getReviewBreakdown($review)
+    {
+        $breakdown = array();
+        $ratings = $review->groupBy('rating');
+        foreach ($ratings as $key => $rating) {
+            $breakdown[$key] = $rating->count();
+        }
+//        dd($breakdown);
+        return $breakdown;
+    }
 }

@@ -51,11 +51,12 @@ $api->version('v1', function ($api) {
         $api->get('{service}/partners', 'App\Http\Controllers\ServiceController@getPartners');
         $api->get('{service}/location/{location}/partners', 'App\Http\Controllers\ServiceController@getPartners');
         $api->post('{service}/{location}/change-partner', 'App\Http\Controllers\ServiceController@changePartner');
+        $api->get('/{service}/reviews', 'App\Http\Controllers\ServiceController@getReviews');
         //For Back-end
         $api->post('{service}/change-partner', 'App\Http\Controllers\ServiceController@changePartnerWithoutLocation');
     });
-    $api->group(['prefix' => 'partner'], function ($api){
-        $api->get('/','App\Http\Controllers\PartnerController@index');
+    $api->group(['prefix' => 'partner'], function ($api) {
+        $api->get('/', 'App\Http\Controllers\PartnerController@index');
         $api->get('{partner}/services', 'App\Http\Controllers\PartnerController@getPartnerServices');
     });
 
@@ -85,7 +86,7 @@ $api->version('v1', function ($api) {
         $api->post('{customer}/order-valid', 'App\Http\Controllers\OrderController@checkOrderValidity');
         $api->post('{customer}/modify-review', 'App\Http\Controllers\ReviewController@modifyReview');
         $api->get('{customer}/job/{job}', 'App\Http\Controllers\JobController@getInfo');
-        $api->post('{customer}/cancel-job/{job}','App\Http\Controllers\JobController@cancelJob');
+        $api->post('{customer}/cancel-job/{job}', 'App\Http\Controllers\JobController@cancelJob');
 
         $api->post('{customer}/checkout/place-order', 'App\Http\Controllers\CheckoutController@placeOrder');
         $api->post('{customer}/checkout/place-order-with-online-payment', 'App\Http\Controllers\CheckoutController@placeOrderWithPayment');

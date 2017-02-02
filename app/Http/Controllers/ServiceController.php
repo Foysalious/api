@@ -5,23 +5,23 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Job;
-use App\Models\Location;
-use App\Models\Partner;
 use App\Models\PartnerService;
 use App\Models\Resource;
 use App\Models\Service;
-use App\Repositories\RatingReviewRepository;
 use App\Repositories\ReviewRatingRepository;
+use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
 use Illuminate\Http\Request;
 
 class ServiceController extends Controller
 {
     private $serviceRepository;
+    private $reviewRepository;
 
-    public function __construct(ServiceRepository $srp)
+    public function __construct(ServiceRepository $srp, ReviewRepository $reviewRepository)
     {
         $this->serviceRepository = $srp;
+        $this->reviewRepository = $reviewRepository;
     }
 
     public function getPartners($service, $location = null)
@@ -102,11 +102,10 @@ class ServiceController extends Controller
         $customer_count = Customer::all()->count() + 3000;
 //        $partner_count = Partner::all()->count();
         $job_count = Job::all()->count() + 16000;
-        $service_count = Service::all()->count();
-//        $resource_count = count(Resource::has('partners')->get());
-        $resource_count = count(Resource::whereHas('partners', function ($query) {
+        $service_count = Service::where('publication_status', 1)->get()->count();
+        $resource_count = Resource::whereHas('partners', function ($query) {
             $query->where('resource_type', 'Handyman');
-        })->select('id')->get());
+        })->get()->count();
         return response()->json(['customer' => $customer_count, 'service' => $service_count,
             'job' => $job_count, 'resource' => $resource_count, 'msg' => 'successful', 'code' => 200]);
     }
@@ -114,12 +113,31 @@ class ServiceController extends Controller
     public function validService($service)
     {
         $service = Service::find($service);
-        if (!empty($service)) {
-            if ($service->publication_status == 1) {
-                return response()->json(['msg' => 'ok', 'code' => 200]);
-            }
+        // Service exists and also published
+        if (!empty($service) && $service->publication_status == 1) {
+            return response()->json(['msg' => 'ok', 'code' => 200]);
         }
         return response()->json(['msg' => 'not ok', 'code' => 409]);
+    }
+
+    public function getReviews($service)
+    {
+        $service = Service::with(['reviews' => function ($q) {
+            $q->select('id', 'service_id', 'partner_id', 'customer_id', 'review_title', 'review', 'rating', 'updated_at')
+                ->with(['partner' => function ($q) {
+                    $q->select('id', 'name');
+                }])
+                ->with(['customer' => function ($q) {
+                    $q->select('id', 'name');
+                }])->orderBy('updated_at', 'desc');
+        }])->select('id')->where('id', $service)->first();
+        if (count($service->reviews) > 0) {
+            $service = $this->serviceRepository->getReviews($service);
+            $breakdown = $this->reviewRepository->getReviewBreakdown($service->reviews);
+            return response()->json(['msg' => 'ok', 'code' => 200, 'service' => $service, 'breakdown' => $breakdown]);
+        }
+        return response()->json(['msg' => 'not found', 'code' => 404]);
+
     }
 
 }
