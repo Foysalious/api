@@ -117,9 +117,11 @@ class ServiceRepository
     {
         return $service->partners()
             ->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'prices')
-            ->where('is_verified', 1)
-            ->where('is_published', 1)
-            ->whereHas('locations', function ($query) use ($location) {
+            ->where([
+                ['partners.status', 'Verified'],
+                ['is_verified', 1],
+                ['is_published', 1]
+            ])->whereHas('locations', function ($query) use ($location) {
                 $query->where('id', $location);
             })->get();
     }
@@ -128,7 +130,12 @@ class ServiceRepository
     {
         return $service->partners()->with(['locations' => function ($query) {
             $query->select('id', 'name');
-        }])->where('is_verified', 1)->where('is_published', 1)->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'prices')->get();
+        }])
+            ->where([
+                ['is_verified', 1],
+                ['is_published', 1],
+                ['partners.status', 'Verified']
+            ])->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'prices')->get();
     }
 
     public function getMaxMinPrice($service)
@@ -175,7 +182,7 @@ class ServiceRepository
         array_add($service, 'rating_count', $total_rating);
         //avg rating of this service
         $rating = $service->reviews()->avg('rating');
-        array_add($service, 'rating', round($rating,2));
+        array_add($service, 'rating', round($rating, 2));
         return $service;
     }
 }
