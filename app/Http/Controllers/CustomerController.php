@@ -53,9 +53,9 @@ class CustomerController extends Controller
         $cus = Customer::find($customer);
         $customer = Customer::select('name', 'mobile', 'email', 'address', 'office_address', 'gender', 'dob', 'fb_id', 'pro_pic', 'xp', 'rating', 'reference_code', 'email_verified')
             ->find($customer);
+//        'secondary_mobiles' => $cus->mobiles()->select('mobile')->where('mobile', '<>', $customer->mobile)->get(),
         return response()->json([
             'msg' => 'successful', 'code' => 200, 'customer' => $customer,
-            'secondary_mobiles' => $cus->mobiles()->select('mobile')->where('mobile', '<>', $customer->mobile)->get(),
             'addresses' => $cus->delivery_addresses()->select('id', 'address')->get()
         ]);
 

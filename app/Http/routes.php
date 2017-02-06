@@ -6,7 +6,7 @@ Route::get('/', function () {
 });
 
 Route::get('/test-job', function () {
-    dispatch(new \App\Jobs\TestJob());
+//    dispatch(new \App\Jobs\TestJob());
 //    return ['code' => 200, 'msg' => 'Success. This project will hold the api\'s'];
 });
 Route::get('email-verification/{customer}/{code}', 'CustomerController@emailVerification');
