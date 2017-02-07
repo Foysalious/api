@@ -56,6 +56,7 @@ class ServiceRepository
             array_add($partner, 'rating', $rating);
             array_push($final_partners, $partner);
         }
+//        dd($final_partners);
         return $final_partners;
 
     }
