@@ -16,9 +16,9 @@ class CareerController extends Controller
             $m->from($request->input('email'), $request->input('name'));
             $m->to('career@sheba.xyz');
             $m->subject($request->input('jobTitle'));
-            $m->attachData(file_get_contents($request->file('file')), 'RESUME_' . $slug . '.pdf');
-            $m->attachData(file_get_contents($request->file('cover')), 'COVER_' . $slug . '.pdf');
+            $m->attachData(file_get_contents($request->file('file')), 'resume_' . $slug . '.pdf');
+            $m->attachData(file_get_contents($request->file('cover')), 'cover_' . $slug . '.pdf');
         });
-        return response(['msg' => 'ok', 'code' => 200]);
+        return response()->json(['msg' => 'ok', 'code' => 200]);
     }
 }
