@@ -33,4 +33,23 @@ class ReviewRepository
 //        dd($breakdown);
         return $breakdown;
     }
+    /**
+     * return reviews for an object i.e. service,partner
+     * @param $object
+     * @return mixed
+     */
+    public function getReviews($object)
+    {
+        // review count of this
+        $review = $object->reviews()->where('review', '<>', '')->count('review');
+        array_add($object, 'review_count', $review);
+        //rating count of this
+        $total_rating = $object->reviews()->where('rating', '<>', '')->count('rating');
+        array_add($object, 'rating_count', $total_rating);
+        //avg rating of this
+        $rating = $object->reviews()->avg('rating');
+        array_add($object, 'rating', round($rating, 2));
+        return $object;
+    }
+
 }

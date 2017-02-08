@@ -40,6 +40,8 @@ $api->version('v1', function ($api) {
     $api->get('job-times', 'App\Http\Controllers\JobController@getPreferredTimes');
     $api->get('info', 'App\Http\Controllers\ServiceController@getInfo');
 
+    $api->post('career', 'App\Http\Controllers\CareerController@apply');
+
     $api->group(['prefix' => 'category'], function ($api) {
         $api->get('/', 'App\Http\Controllers\CategoryController@index');
         $api->get('{category}/services', 'App\Http\Controllers\CategoryController@getServices');
@@ -58,6 +60,7 @@ $api->version('v1', function ($api) {
     $api->group(['prefix' => 'partner'], function ($api) {
         $api->get('/', 'App\Http\Controllers\PartnerController@index');
         $api->get('{partner}/services', 'App\Http\Controllers\PartnerController@getPartnerServices');
+        $api->get('{partner}/reviews', 'App\Http\Controllers\PartnerController@getReviews');
     });
 
     $api->group(['prefix' => 'checkout'], function ($api) {

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
+use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
 use Illuminate\Http\Request;
 
@@ -13,10 +14,12 @@ use App\Http\Requests;
 class PartnerController extends Controller
 {
     private $serviceRepository;
+    private $reviewRepository;
 
     public function __construct()
     {
         $this->serviceRepository = new ServiceRepository();
+        $this->reviewRepository = new ReviewRepository();
     }
 
     public function index()
@@ -81,5 +84,24 @@ class PartnerController extends Controller
                 $partner_order->update();
             }
         }
+    }
+
+    public function getReviews($partner)
+    {
+        $partner = Partner::with(['reviews' => function ($q) {
+            $q->select('id', 'service_id', 'partner_id', 'customer_id', 'review_title', 'review', 'rating', 'updated_at')
+                ->with(['service' => function ($q) {
+                    $q->select('id', 'name');
+                }])
+                ->with(['customer' => function ($q) {
+                    $q->select('id', 'name');
+                }])->orderBy('updated_at', 'desc');
+        }])->select('id')->where('id', $partner)->first();
+        if (count($partner->reviews) > 0) {
+            $partner = $this->reviewRepository->getReviews($partner);
+            $breakdown = $this->reviewRepository->getReviewBreakdown($partner->reviews);
+            return response()->json(['msg' => 'ok', 'code' => 200, 'service' => $partner, 'breakdown' => $breakdown]);
+        }
+        return response()->json(['msg' => 'not found', 'code' => 404]);
     }
 }
