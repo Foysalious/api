@@ -53,14 +53,14 @@ class ServiceController extends Controller
         array_add($service, 'parent_name', $category->parent->name);
         //get partners of the service
         $service_partners = $this->serviceRepository->partners($service, $location);
-        $sorted_service_partners=collect($service_partners)->sortBy('prices')->values()->all();
+        $sorted_service_partners = collect($service_partners)->sortBy('prices')->values()->all();
         $service->variables = json_decode($service->variables);
 
         //If service has partner
         if (count($service_partners) != 0) {
             return response()->json(['service' => $service, 'service_partners' => $sorted_service_partners, 'times' => config('constants.JOB_PREFERRED_TIMES'), 'msg' => 'successful', 'code' => 200]);
         }
-        return response()->json(['service' => $service, 'service_partners' => $sorted_service_partners, 'msg' => 'no partner found in selected location', 'code' => 404]);
+        return response()->json(['service' => $service, 'service_partners' => $sorted_service_partners, 'times' => config('constants.JOB_PREFERRED_TIMES'), 'msg' => 'no partner found in selected location', 'code' => 404]);
     }
 
     /**
@@ -79,7 +79,7 @@ class ServiceController extends Controller
         }
         //check if any partner provide service in the location
         $service_partners = $this->serviceRepository->partnerWithSelectedOption($service, $option, $location);
-        $sorted_service_partners=collect($service_partners)->sortBy('prices')->values()->all();
+        $sorted_service_partners = collect($service_partners)->sortBy('prices')->values()->all();
         if (!empty($service_partners)) {
             return response()->json(['service_partners' => $sorted_service_partners, 'msg' => 'successful', 'code' => 200]);
         } else

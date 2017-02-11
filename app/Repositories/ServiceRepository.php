@@ -159,29 +159,31 @@ class ServiceRepository
     public function getStartEndPrice($service)
     {
         $partners = $service->partners;
-        if ($service->variable_type == 'Options') {
-            $price = array();
-            foreach ($partners as $partner) {
-                $min = min((array)json_decode($partner->pivot->prices));
-                array_push($price, (float)$min);
-            }
-            array_add($service, 'start_price', min($price));
+        if (count($partners) > 0) {
+            if ($service->variable_type == 'Options') {
+                $price = array();
+                foreach ($partners as $partner) {
+                    $min = min((array)json_decode($partner->pivot->prices));
+                    array_push($price, (float)$min);
+                }
+                array_add($service, 'start_price', min($price));
 //            $prices = (array)(json_decode($service->variables)->min_prices);
 //            $min = (min($prices));
 //            $prices = (array)(json_decode($service->variables)->max_prices);
 //            $max = (max($prices));
 //            array_add($service, 'end_price', $max);
-        } elseif ($service->variable_type == 'Fixed') {
-            $price = array();
-            foreach ($partners as $partner) {
-                array_push($price, (float)$partner->pivot->prices);
-            }
-            array_add($service, 'start_price', max($price));
+            } elseif ($service->variable_type == 'Fixed') {
+                $price = array();
+                foreach ($partners as $partner) {
+                    array_push($price, (float)$partner->pivot->prices);
+                }
+                array_add($service, 'start_price', max($price));
 //            array_add($service, 'start_price', json_decode($service->variables)->min_price);
 //            array_add($service, 'end_price', json_decode($service->variables)->max_price);
 //            array_add($service, 'end_price', json_decode($service->variables)->max_price);
+            }
+            array_forget($service, 'partners');
         }
-        array_forget($service, 'partners');
         return $service;
     }
 

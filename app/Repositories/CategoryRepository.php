@@ -21,7 +21,8 @@ class CategoryRepository
     {
         $children = $category->children()->select('id', 'name', 'thumb', 'banner')
             ->with(['services' => function ($query) {
-                $query->select('id', 'category_id', 'name', 'thumb', 'banner', 'variable_type', 'variables');
+                $query->select('id', 'category_id', 'name', 'thumb', 'banner', 'variable_type', 'variables')
+                    ->where('publication_status', 1);
             }])
             ->get();
         foreach ($children as $child) {
@@ -36,7 +37,7 @@ class CategoryRepository
     {
         foreach ($services as $service) {
             //Get start & end price for services. Custom services don't have price so ommitted
-          $service=$this->serviceRepository->getStartEndPrice($service);
+            $service = $this->serviceRepository->getStartEndPrice($service);
             array_add($service, 'slug_service', str_slug($service->name, '-'));
             // review count of this partner for this service
             $review = $service->reviews()->where('review', '<>', '')->count('review');
