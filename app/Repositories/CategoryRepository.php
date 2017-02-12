@@ -36,7 +36,7 @@ class CategoryRepository
     public function addServiceInfo($services)
     {
         foreach ($services as $service) {
-            //Get start & end price for services. Custom services don't have price so ommitted
+            //Get start & end price for services. Custom services don't have price so omitted
             $service = $this->serviceRepository->getStartEndPrice($service);
             array_add($service, 'slug_service', str_slug($service->name, '-'));
             // review count of this partner for this service

@@ -180,7 +180,7 @@ class ServiceRepository
                 foreach ($partners as $partner) {
                     array_push($price, (float)$partner->pivot->prices);
                 }
-                array_add($service, 'start_price', max($price));
+                array_add($service, 'start_price', min($price));
 //            array_add($service, 'start_price', json_decode($service->variables)->min_price);
 //            array_add($service, 'end_price', json_decode($service->variables)->max_price);
 //            array_add($service, 'end_price', json_decode($service->variables)->max_price);

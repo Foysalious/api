@@ -38,7 +38,7 @@ class PartnerController extends Controller
         array_add($partner, 'review', $review);
         array_add($partner, 'rating', $rating);
         $partner_services = $partner->services()
-            ->select('services.id', 'services.banner', 'services.category_id', 'name', 'variable_type', 'variables')
+            ->select('services.id', 'services.banner', 'services.category_id', 'name', 'variable_type')
             ->where([
                 ['is_verified', 1],
                 ['is_published', 1]
