@@ -158,7 +158,10 @@ class ServiceRepository
 
     public function getStartEndPrice($service)
     {
-        $partners = $service->partners;
+        $partners = $service->partners()->where([
+            ['is_published', 1],
+            ['is_verified', 1]
+        ])->get();
         if (count($partners) > 0) {
             if ($service->variable_type == 'Options') {
                 $price = array();
