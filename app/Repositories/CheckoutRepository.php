@@ -301,8 +301,8 @@ class CheckoutRepository
         $portwallet_response = $portwallet->generateInvoice($data);
         if ($portwallet_response->status == 200) {
             array_add($request, 'customer_id', $customer->id);
-            Cache::put('portwallet-payment-' . $portwallet_response->data->invoice_id, $request->all(), 30);
-            Cache::put('invoice-' . $portwallet_response->data->invoice_id, $portwallet_response->data->invoice_id, 30);
+            Cache::forever('portwallet-payment-' . $portwallet_response->data->invoice_id, $request->all());
+            Cache::forever('invoice-' . $portwallet_response->data->invoice_id, $portwallet_response->data->invoice_id);
             $url = $this->appPaymentUrl . $portwallet_response->data->invoice_id;
             return (['code' => 200, 'gateway_url' => $url]);
         } else {
