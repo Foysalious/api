@@ -297,7 +297,6 @@ class CheckoutRepository
         $data['redirect_url'] = $this->appBaseUrl . $redirect_url;
         $data['ipn_url'] = $this->appBaseUrl . "/ipn.php"; //IPN URL must be public URL which can be access remotely by portwallet system.
         $portwallet = $this->getPortWalletObject();
-        $portwallet->setMode($this->appPaymentMode);
         $portwallet_response = $portwallet->generateInvoice($data);
         if ($portwallet_response->status == 200) {
             array_add($request, 'customer_id', $customer->id);
@@ -312,7 +311,9 @@ class CheckoutRepository
 
     public function getPortWalletObject()
     {
-        return new PortWallet($this->appKey, $this->appSecret);
+        $portwallet = new PortWallet($this->appKey, $this->appSecret);
+        $portwallet->setMode($this->appPaymentMode);
+        return $portwallet;
     }
 
     public function sendConfirmation($customer, $order)

@@ -83,7 +83,7 @@ class CheckoutController extends Controller
                 return redirect(env('SHEBA_FRONT_END_URL') . '/profile/order-list?s_token='.$s_id);
             }
         } else {
-            return;
+            return "Something went wrong";
         }
     }
 
@@ -110,7 +110,7 @@ class CheckoutController extends Controller
             Cache::forget('portwallet-payment-' . $request->input('invoice'));
             return redirect(env('SHEBA_FRONT_END_URL') . '/profile/order-list');
         } else {
-            return;
+            return "Something went wrong";
         }
     }
 }
