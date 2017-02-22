@@ -7,8 +7,6 @@ use App\Models\Service;
 use App\Repositories\CategoryRepository;
 use Illuminate\Http\Request;
 
-use App\Http\Requests;
-
 class CategoryController extends Controller
 {
 
@@ -74,8 +72,11 @@ class CategoryController extends Controller
     {
         $cat = collect($category)->only(['name', 'banner']);
         $category = Category::with(['services' => function ($q) {
-            $q->select('id', 'category_id', 'name', 'thumb', 'banner', 'variable_type', 'variables');
-        }])->where('id', $category->id)->first();
+            $q->select('id', 'category_id', 'name', 'thumb', 'banner', 'variable_type', 'variables')->where('publication_status', 1);
+        }])->where([
+            ['id', $category->id],
+            ['publication_status', 1]
+        ])->first();
         $services = $this->categoryRepository->addServiceInfo($category->services);
         return response()->json(['category' => $cat, 'services' => $services, 'msg' => 'successful', 'code' => 200]);
     }
