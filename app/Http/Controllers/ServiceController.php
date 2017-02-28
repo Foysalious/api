@@ -102,10 +102,14 @@ class ServiceController extends Controller
     {
 //        $customer_count = Customer::all()->count() + 3000;
 //        $partner_count = Partner::all()->count();
-        $job_count = Job::all()->count() + 16000;
+//        $job_count = Job::all()->count() + 16000;
+        $job_count = Job::where('status', 'Served')->count()+16000;
         $service_count = Service::where('publication_status', 1)->get()->count();
         $resource_count = Resource::whereHas('partners', function ($query) {
-            $query->where('resource_type', 'Handyman');
+            $query->where([
+                ['resource_type', 'Handyman'],
+                ['is_verified', 1]
+            ]);
         })->get()->count();
         return response()->json(['service' => $service_count, 'job' => $job_count, 'resource' => $resource_count, 'msg' => 'successful', 'code' => 200]);
     }
