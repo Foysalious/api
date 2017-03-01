@@ -44,17 +44,7 @@ class SearchController extends Controller
                         array_add($service, 'end_price', 0);
                         continue;
                     }
-                    if ($service->variable_type == 'Options') {
-                        $prices = (array)(json_decode($service->variables)->min_prices);
-                        $min = (min($prices));
-                        $prices = (array)(json_decode($service->variables)->max_prices);
-                        $max = (max($prices));
-                        array_add($service, 'start_price', $min);
-                        array_add($service, 'end_price', $max);
-                    } elseif ($service->variable_type == 'Fixed') {
-                        array_add($service, 'start_price', json_decode($service->variables)->min_price);
-                        array_add($service, 'end_price', json_decode($service->variables)->max_price);
-                    }
+                    $service = $this->serviceRepository->getStartEndPrice($service);
                     // review count of this partner for this service
                     $review = $service->reviews()->where('review', '<>', '')->count('review');
                     //avg rating of the partner for this service
