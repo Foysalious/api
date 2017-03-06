@@ -2,6 +2,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\FacebookAccountKit;
+use App\Models\Resource;
 use App\Repositories\CustomerRepository;
 use Illuminate\Http\Request;
 use Tymon\JWTAuth\Exceptions\JWTException;
@@ -11,6 +12,7 @@ use JWTAuth;
 use JWTFactory;
 use App\Models\Customer;
 use Session;
+use Redis;
 
 class LoginController extends Controller
 {
@@ -102,6 +104,36 @@ class LoginController extends Controller
             return response()->json(['msg' => 'mobile doesn\'t exist', 'code' => 404]);
         }
 
+    }
+
+    public function checkForAuthentication(Request $request)
+    {
+        $key = Redis::get($request->input('access_token'));
+        //key exists
+        if ($key != null) {
+            $info = json_decode($key);
+            if ($info->avatar == 'customer') {
+                $customer = Customer::find($info->id);
+                $token = JWTAuth::fromUser($customer);
+                Redis::del($request->input('access_token'));
+                if ($customer->profile_id == $info->profile_id) {
+                    return response()->json([
+                        'msg' => 'successful', 'code' => 200, 'token' => $token,
+                        'remember_token' => $customer->remember_token, 'customer' => $customer->id, 'customer_img' => $customer->pro_pic
+                    ]);
+                }
+            } else if ($info->avatar == 'resource') {
+                $resource = Resource::find($info->id);
+                Redis::del($request->input('access_token'));
+                if ($resource->profile_id == $info->profile_id) {
+                    return response()->json([
+                        'msg' => 'successful', 'code' => 200, 'resource' => $resource->id
+                    ]);
+                }
+            }
+        } else {
+            return response()->json(['msg' => 'not found', 'code' => 404]);
+        }
     }
 
 }
