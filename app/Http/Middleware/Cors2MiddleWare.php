@@ -32,9 +32,9 @@ class Cors2MiddleWare
             "http://admin.sheba.dev",
             "http://partners.sheba.dev",
             "http://partners.sheba.new",
-            "http://sheba.xyz",
-            "http://www.sheba.xyz",
-            "http://admin.sheba.xyz",
+            "https://sheba.xyz",
+            "https://www.sheba.xyz",
+            "https://admin.sheba.xyz",
             "http://admin.sheba.new"
         ];
         // ALLOW OPTIONS METHOD
