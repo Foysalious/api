@@ -35,6 +35,9 @@ class PartnerController extends Controller
             ->first();
         $review = $partner->reviews()->where('review', '<>', '')->count('review');
         $rating = ceil($partner->reviews()->avg('rating'));
+        if ($rating == 0) {
+            $rating = 5;
+        }
         array_add($partner, 'review', $review);
         array_add($partner, 'rating', $rating);
         $partner_services = $partner->services()
