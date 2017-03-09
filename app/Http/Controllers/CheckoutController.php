@@ -80,7 +80,7 @@ class CheckoutController extends Controller
                 $s_id=str_random(10);
                 Redis::set($s_id, 'online');
                 Redis::expire($s_id, 500);
-                return redirect(env('SHEBA_FRONT_END_URL') . '/profile/order-list?s_token='.$s_id);
+                return redirect(env('SHEBA_FRONT_END_URL') . '/order-list?s_token='.$s_id);
             }
         } else {
             return "Something went wrong";
@@ -108,7 +108,7 @@ class CheckoutController extends Controller
             $this->checkoutRepository->clearSpPayment($payment_info);
             Cache::forget('invoice-' . $request->input('invoice'));
             Cache::forget('portwallet-payment-' . $request->input('invoice'));
-            return redirect(env('SHEBA_FRONT_END_URL') . '/profile/order-list');
+            return redirect(env('SHEBA_FRONT_END_URL') . '/order-list');
         } else {
             return "Something went wrong";
         }
