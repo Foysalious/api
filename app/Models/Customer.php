@@ -4,7 +4,8 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
-class Customer extends Authenticatable {
+class Customer extends Authenticatable
+{
 
     protected $fillable = [
         'mobile', 'remember_token', 'password', 'email', 'mobile_verified', 'reference_code', 'referrer_id'
@@ -29,8 +30,14 @@ class Customer extends Authenticatable {
         return $this->hasMany(Order::class);
     }
 
-    public function reviews(){
+    public function reviews()
+    {
         return $this->hasMany(Review::class);
+    }
+
+    public function profile()
+    {
+        return $this->belongsTo(Profile::class);
     }
 
 }

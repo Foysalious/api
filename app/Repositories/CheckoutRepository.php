@@ -19,6 +19,7 @@ use Illuminate\Foundation\Bus\DispatchesJobs;
 use Cache;
 use Illuminate\Support\Facades\DB;
 
+
 class CheckoutRepository
 {
     use DispatchesJobs;
@@ -320,7 +321,10 @@ class CheckoutRepository
     {
         //send order info to customer  by mail
         $customer = Customer::find($customer);
-        $this->dispatch(new SendOrderConfirmationSms($customer, $order));
+        (new SmsHandler('order-created'))->send($customer->mobile, [
+            'order_code' => $order->code()
+        ]);
+//        $this->dispatch(new SendOrderConfirmationSms($customer, $order));
         if ($customer->email != '') {
             $this->dispatch(new SendOrderConfirmationEmail($customer, $order));
         }

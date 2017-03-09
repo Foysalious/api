@@ -50,7 +50,7 @@ class CustomerController extends Controller
      */
     public function getCustomerInfo($customer)
     {
-//        $cus = Customer::find($customer);
+        $cus = Customer::find($customer);
         $customer = Customer::select('name','xp', 'rating', 'reference_code')
             ->find($customer);
 //        'secondary_mobiles' => $cus->mobiles()->select('mobile')->where('mobile', '<>', $customer->mobile)->get(),
@@ -66,6 +66,16 @@ class CustomerController extends Controller
 //            'addresses' => $cus->delivery_addresses()->select('id', 'address')->get()
 //        ]);
 
+    }
+
+    public function getCustomerGeneralInfo($customer)
+    {
+        $customer = Customer::find($customer);
+        $adresses = $customer->delivery_addresses()->select('id', 'address')->get();
+        $customer = $customer->profile()->select('name', 'address', 'gender', 'dob', 'email', 'mobile')->first();
+        return response()->json([
+            'msg' => 'successful', 'code' => 200, 'customer' => $customer, 'addresses' => $adresses
+        ]);
     }
 
     public function facebookIntegration(Request $request, $customer)

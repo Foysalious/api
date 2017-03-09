@@ -70,6 +70,7 @@ $api->version('v1', function ($api) {
 
     $api->group(['prefix' => 'customer', 'middleware' => ['customer.auth']], function ($api) {
         $api->get('{customer}', 'App\Http\Controllers\CustomerController@getCustomerInfo');
+        $api->get('{customer}/general-info', 'App\Http\Controllers\CustomerController@getCustomerGeneralInfo');
         $api->post('{customer}/fb-integration', 'App\Http\Controllers\CustomerController@facebookIntegration');
         $api->post('{customer}/change-address', 'App\Http\Controllers\CustomerController@changeAddress');
         $api->post('{customer}/add-delivery-address', 'App\Http\Controllers\CustomerController@addDeliveryAddress');
