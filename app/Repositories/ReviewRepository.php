@@ -48,7 +48,7 @@ class ReviewRepository
         array_add($object, 'rating_count', $total_rating);
         //avg rating of this
         $rating = $object->reviews()->avg('rating');
-        array_add($object, 'rating', round($rating, 2));
+        array_add($object, 'rating', round($rating, 1));
         return $object;
     }
 

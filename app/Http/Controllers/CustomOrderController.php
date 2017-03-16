@@ -64,8 +64,11 @@ class CustomOrderController extends Controller
         $orders = CustomOrder::with(['service' => function ($q) {
             $q->select('id', 'name');
         }])->with(['quotations' => function ($query) {
-            $query->select('id', 'custom_order_id')->where('is_sent', 1);
-        }])->select('id', 'service_id', 'status', 'service_variables', 'created_at', 'additional_info')->where('id', $custom_order)->get();
+            $query->select('id', 'custom_order_id', 'proposal', 'partner_id', 'attachment', 'proposed_price')->where('is_sent', 1)
+                ->with(['partner' => function ($q) {
+                    $q->select('id', 'name');
+                }]);
+        }])->select('id', 'service_id', 'status', 'service_variables', 'created_at', 'additional_info')->where('id', $custom_order)->first();
         if (count($orders) != 0) {
             return response()->json(['order' => $orders, 'code' => 200]);
         } else {

@@ -200,7 +200,7 @@ class ServiceRepository
         array_add($service, 'rating_count', $total_rating);
         //avg rating of this service
         $rating = $service->reviews()->avg('rating');
-        array_add($service, 'rating', round($rating, 2));
+        array_add($service, 'rating', round($rating, 1));
         return $service;
     }
 }

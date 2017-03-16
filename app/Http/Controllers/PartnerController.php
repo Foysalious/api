@@ -74,7 +74,6 @@ class PartnerController extends Controller
             array_add($service, 'rating', $rating);
             array_forget($service, 'pivot');
             array_push($final_service, $service);
-//            dump($final_service);
         }
 //        $partner_categories = $partner->categories()->select('categories.id', 'name')->get();
 //        foreach ($partner_categories as $category) {
@@ -83,13 +82,7 @@ class PartnerController extends Controller
 //            array_forget($category, 'pivot');
 //        }
 
-//        $reviews = Partner::with(['reviews' => function ($q) {
-//            $q->select('id', 'customer_id', 'review_title', 'review', 'rating', 'partner_id', 'created_at')->with(['customer' => function ($q) {
-//                $q->select('id', 'name');
-//            }]);
-//        }])->select('id')->where('id', $partner->id)->get();
-
-        if (count($partner)) {
+        if (count($partner) > 0) {
             return response()->json([
                 'partner' => $partner,
                 'services' => $final_service,
