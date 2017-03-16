@@ -36,6 +36,7 @@ class CustomOrderController extends Controller
         $custom_order->service_id = $service->id;
         $custom_order->service_variables = json_encode($custom_order_options);
         $custom_order->additional_info = $request->additional_info;
+        $custom_order->location_id = $request->location_id;
         $custom_order->sales_channel = isset($request->sales_channel) ? $request->sales_channel : 'Web';
         $custom_order->status = 'Open';
 
@@ -62,9 +63,11 @@ class CustomOrderController extends Controller
     {
         $orders = CustomOrder::with(['service' => function ($q) {
             $q->select('id', 'name');
-        }])->select('id', 'service_id', 'status', 'created_at')->where('id', $custom_order)->get();
+        }])->with(['quotations' => function ($query) {
+            $query->select('id', 'custom_order_id')->where('is_sent', 1);
+        }])->select('id', 'service_id', 'status', 'service_variables', 'created_at', 'additional_info')->where('id', $custom_order)->get();
         if (count($orders) != 0) {
-            return response()->json(['orders' => $orders, 'code' => 200]);
+            return response()->json(['order' => $orders, 'code' => 200]);
         } else {
             return response()->json(['code' => 404]);
         }

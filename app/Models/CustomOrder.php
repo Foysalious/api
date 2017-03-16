@@ -47,4 +47,10 @@ class CustomOrder extends Model
     {
         return $this->belongsTo(Service::class);
     }
+
+    public function location()
+    {
+        return $this->belongsTo(Location::class);
+    }
+
 }

@@ -20,4 +20,9 @@ class Location extends Model
         return $this->hasMany(Order::class);
     }
 
+    public function custom_orders()
+    {
+        return $this->hasMany(CustomOrder::class);
+    }
+
 }

@@ -54,10 +54,11 @@ class PartnerController extends Controller
                 ['is_published', 1],
                 ['services.publication_status', 1]
             ])->get();
-
-        array_add($partner, 'service_count', count($partner_services));
-
-        $partner_services = $partner_services->random(6);
+        $count_of_partner_services = count($partner_services);
+        array_add($partner, 'service_count', $count_of_partner_services);
+        if ($count_of_partner_services > 6) {
+            $partner_services = $partner_services->random(6);
+        }
         $final_service = [];
         foreach ($partner_services as $service) {
             $service = $this->serviceRepository->getStartEndPrice($service);
