@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\Job;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
 use App\Repositories\ReviewRepository;
@@ -30,16 +31,22 @@ class PartnerController extends Controller
 
     public function getPartnerServices($partner)
     {
-        $partner = Partner::select('id', 'name', 'sub_domain', 'description', 'xp', 'logo')
+        $partner = Partner::select('id', 'name', 'sub_domain', 'description', 'logo', 'type', 'level')
             ->where('id', $partner)
             ->first();
         $review = $partner->reviews()->where('review', '<>', '')->count('review');
-        $rating = ceil($partner->reviews()->avg('rating'));
+        $rating = round($partner->reviews()->avg('rating'), 1);
         if ($rating == 0) {
             $rating = 5;
         }
+        $served_job_count = $partner->jobs()->where('status', 'Served')->count();
+        $resource_count = $partner->resources()->where('resources.is_verified', 1)->count();
+
         array_add($partner, 'review', $review);
         array_add($partner, 'rating', $rating);
+        array_add($partner, 'job_count', $served_job_count);
+        array_add($partner, 'resource_count', $resource_count);
+
         $partner_services = $partner->services()
             ->select('services.id', 'services.banner', 'services.category_id', 'services.publication_status', 'name', 'variable_type')
             ->where([
@@ -47,6 +54,11 @@ class PartnerController extends Controller
                 ['is_published', 1],
                 ['services.publication_status', 1]
             ])->get();
+
+        array_add($partner, 'service_count', count($partner_services));
+
+        $partner_services = $partner_services->random(6);
+        $final_service = [];
         foreach ($partner_services as $service) {
             $service = $this->serviceRepository->getStartEndPrice($service);
             array_add($service, 'slug_service', str_slug($service->name, '-'));
@@ -60,17 +72,26 @@ class PartnerController extends Controller
             array_add($service, 'review', $review);
             array_add($service, 'rating', $rating);
             array_forget($service, 'pivot');
+            array_push($final_service, $service);
+//            dump($final_service);
         }
-        $partner_categories = $partner->categories()->select('categories.id', 'name')->get();
-        foreach ($partner_categories as $category) {
-            $service = $partner_services->where('category_id', $category->id);
-            array_add($category, 'service', $service);
-            array_forget($category, 'pivot');
-        }
+//        $partner_categories = $partner->categories()->select('categories.id', 'name')->get();
+//        foreach ($partner_categories as $category) {
+//            $service = $partner_services->where('category_id', $category->id);
+//            array_add($category, 'service', $service);
+//            array_forget($category, 'pivot');
+//        }
+
+//        $reviews = Partner::with(['reviews' => function ($q) {
+//            $q->select('id', 'customer_id', 'review_title', 'review', 'rating', 'partner_id', 'created_at')->with(['customer' => function ($q) {
+//                $q->select('id', 'name');
+//            }]);
+//        }])->select('id')->where('id', $partner->id)->get();
+
         if (count($partner)) {
             return response()->json([
                 'partner' => $partner,
-                'partner_categories' => $partner_categories,
+                'services' => $final_service,
                 'msg' => 'successful',
                 'code' => 200
             ]);
@@ -104,7 +125,7 @@ class PartnerController extends Controller
         if (count($partner->reviews) > 0) {
             $partner = $this->reviewRepository->getReviews($partner);
             $breakdown = $this->reviewRepository->getReviewBreakdown($partner->reviews);
-            return response()->json(['msg' => 'ok', 'code' => 200, 'service' => $partner, 'breakdown' => $breakdown]);
+            return response()->json(['msg' => 'ok', 'code' => 200, 'partner' => $partner, 'breakdown' => $breakdown]);
         }
         return response()->json(['msg' => 'not found', 'code' => 404]);
     }

@@ -2,7 +2,8 @@
 
 use Illuminate\Database\Eloquent\Model;
 
-class Service extends Model {
+class Service extends Model
+{
     protected $fillable = [
         'category_id',
         'name',
@@ -54,5 +55,10 @@ class Service extends Model {
         $service_category = $this->category->id;
         $partner = Partner::find($partner_id);
         return $partner->categories()->find($service_category)->pivot->commission;
+    }
+
+    public function custom_services()
+    {
+        return $this->hasMany(CustomOrder::class);
     }
 }

@@ -40,4 +40,9 @@ class Customer extends Authenticatable
         return $this->belongsTo(Profile::class);
     }
 
+    public function custom_orders()
+    {
+        return $this->hasMany(CustomOrder::class);
+    }
+
 }
