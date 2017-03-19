@@ -7,40 +7,25 @@ use App\Models\Customer;
 use App\Models\CustomOrder;
 use App\Models\CustomOrderDiscussion;
 use App\Models\Service;
+use App\Repositories\CustomOrderRepository;
 use Illuminate\Http\Request;
 
 
 class CustomOrderController extends Controller
 {
+
+    private $customOrderRepository;
+
+    public function __construct()
+    {
+        $this->customOrderRepository = new CustomOrderRepository();
+    }
+
     public function askForQuotation(Request $request, $customer)
     {
         $customer = Customer::find($customer);
         $service = Service::find($request->service_id);
-        $service_variables = json_decode($service->variables, 1);
-        $custom_order_service_options = $request->options;
-        $custom_order_options = [];
-        foreach ($service_variables['options'] as $key => $option) {
-            $question = $option['question'];
-            if ($option['answers'] != '') {
-                $answer = explode(',', $option['answers'])[$custom_order_service_options[$key]];
-            } else {
-                $answer = $custom_order_service_options[$key];
-            }
-            array_push($custom_order_options, [
-                'question' => $question,
-                'answer' => $answer
-            ]);
-        }
-        $custom_order = new CustomOrder();
-        $custom_order->customer_id = $customer->id;
-        $custom_order->service_id = $service->id;
-        $custom_order->service_variables = json_encode($custom_order_options);
-        $custom_order->additional_info = $request->additional_info;
-        $custom_order->location_id = $request->location_id;
-        $custom_order->sales_channel = isset($request->sales_channel) ? $request->sales_channel : 'Web';
-        $custom_order->status = 'Open';
-
-        if ($custom_order->save()) {
+        if ($this->customOrderRepository->save($customer, $service, $request)) {
             return response()->json(['msg' => 'yeah!', 'code' => 200]);
         } else {
             return response()->json(['msg' => 'failed', 'code' => 404]);
