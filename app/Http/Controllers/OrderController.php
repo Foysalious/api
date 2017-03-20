@@ -69,6 +69,11 @@ class OrderController extends Controller
             }
             foreach ($order->partner_orders as $partner_order) {
                 foreach ($partner_order->jobs as $job) {
+                    if ($job->status == "Cancelled") {
+                        if ($job->partnerChangeLog != null) {
+                            continue;
+                        }
+                    }
                     array_add($job, 'customer_charge', $job->grossPrice);
                     array_add($job, 'material_price', $job->materialPrice);
                     array_forget($job, 'partner_order');

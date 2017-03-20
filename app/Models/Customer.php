@@ -8,7 +8,7 @@ class Customer extends Authenticatable
 {
 
     protected $fillable = [
-        'mobile', 'remember_token', 'password', 'email', 'mobile_verified', 'reference_code', 'referrer_id'
+        'mobile', 'remember_token', 'password', 'email', 'mobile_verified', 'reference_code', 'referrer_id', 'profile_id'
     ];
 
     protected $hidden = [
@@ -44,5 +44,4 @@ class Customer extends Authenticatable
     {
         return $this->hasMany(CustomOrder::class);
     }
-
 }

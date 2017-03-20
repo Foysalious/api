@@ -8,6 +8,7 @@ use App\Models\CustomOrder;
 use App\Models\CustomOrderDiscussion;
 use App\Models\Service;
 use App\Repositories\CustomOrderRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 
@@ -21,6 +22,11 @@ class CustomOrderController extends Controller
         $this->customOrderRepository = new CustomOrderRepository();
     }
 
+    /**
+     * @param Request $request
+     * @param $customer
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function askForQuotation(Request $request, $customer)
     {
         $customer = Customer::find($customer);
@@ -66,17 +72,40 @@ class CustomOrderController extends Controller
         $discussion = new CustomOrderDiscussion();
         $discussion->custom_order_id = $custom_order;
         $discussion->comment = $request->comment;
-        $discussion->user_type = 'App\Models\CustomOrder';
+        $discussion->user_type = 'App\Models\Customer';
         $discussion->created_by = $customer;
         if ($discussion->save()) {
-            return response()->json(['code' => 200]);
+            $customer = Customer::find($customer);
+            return response()->json(['code' => 200, 'name' => $customer->name,
+                'updated_at' => $discussion->updated_at->format('Y-m-d h:i A')]);
+        } else {
+            return response()->json(['code' => 500]);
         }
     }
 
     public function getCommentForDiscussion($customer, $custom_order)
     {
-        $comments = CustomOrderDiscussion::where('custom_order_id', $custom_order)->select('comment')->get();
-        return response()->json(['comments' => $comments]);
+        $comments = CustomOrderDiscussion::with(['writer' => function ($q) {
+            $q->with(['profile' => function ($q) {
+                $q->select('id', 'name', 'pro_pic');
+            }]);
+        }])->where('custom_order_id', $custom_order)->select('id', 'user_type', 'created_by', 'comment', 'updated_at')->orderBy('created_at')->get();
+
+        if (count($comments) > 0) {
+            $final_comments = [];
+            foreach ($comments as $comment) {
+                $profile = $comment->writer->profile;
+                array_forget($comment, 'writer');
+                array_add($comment, 'profile', $profile);
+                $time= $comment->updated_at;
+                array_forget($comment, 'updated_at');
+                array_add($comment, 'time',$time->format('Y-m-d h:i A'));
+                array_push($final_comments, $comment);
+            }
+            return response()->json(['comments' => $final_comments, 'code' => 200]);
+        } else {
+            return response()->json(['code' => 404]);
+        }
     }
 
 }

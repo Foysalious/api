@@ -93,7 +93,7 @@ class RegistrationController extends Controller
         if (!$customer) {
             //email already exist for this facebook user so logged in the user
             if ($customer = $this->customer->ifExist($request->input('email'), 'email')) {
-                $customer = $this->customer->updateCustomerInfo($customer, $request->all());
+//                $customer = $this->customer->updateCustomerInfo($customer, $request->all());
                 $token = JWTAuth::fromUser($customer);
             } else {
                 $customer = $this->customer->registerFacebook($request->all());

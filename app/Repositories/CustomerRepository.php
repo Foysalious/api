@@ -3,6 +3,7 @@ namespace App\Repositories;
 
 use App\Models\Customer;
 use App\Models\CustomerMobile;
+use App\Models\Profile;
 use Cache;
 use Mail;
 use Carbon\Carbon;
@@ -49,9 +50,15 @@ class CustomerRepository
                 ]);
             }
         }
+        $profile = Profile::create([
+            'mobile' => $info['mobile'],
+            'mobile_verified' => 1,
+            "remember_token" => str_random(255)
+        ]);
         return Customer::create([
             'mobile' => $info['mobile'],
             'mobile_verified' => 1,
+            'profile_id' => $profile->id,
             "remember_token" => str_random(60),
             "reference_code" => str_random(6)
         ]);
@@ -81,7 +88,7 @@ class CustomerRepository
         return Customer::create([
             "email" => $info['email'],
             "password" => bcrypt($info['password']),
-            "remember_token" => str_random(60),
+            "remember_token" => str_random(255),
             "reference_code" => str_random(6)
         ]);
     }
@@ -155,6 +162,16 @@ class CustomerRepository
 
     public function registerFacebook($info)
     {
+        $profile = new Profile();
+        $profile->fb_id = $info['id'];
+        $profile->name = $info['name'];
+        $profile->email = $info['email'];
+        $profile->gender = isset($info['gender']) ? $info['gender'] : '';
+        $profile->pro_pic = $info['picture']['data']['url'];
+        $profile->email_verified = 1;
+        $profile->remember_token = str_random(255);
+        $profile->save();
+
         $customer = new Customer();
         $customer->fb_id = $info['id'];
         $customer->name = $info['name'];
@@ -162,8 +179,9 @@ class CustomerRepository
         $customer->gender = isset($info['gender']) ? $info['gender'] : '';
         $customer->pro_pic = $info['picture']['data']['url'];
         $customer->email_verified = 1;
+        $customer->profile_id = $profile->id;
         $customer->reference_code = str_random(6);
-        $customer->remember_token = str_random(60);
+        $customer->remember_token = str_random(255);
         //reference_code is send through request
         if (isset($info['reference_code'])) {
             //if reference_code is valid then register with referrer_id
@@ -212,17 +230,17 @@ class CustomerRepository
         $customer = Customer::find($order_info['customer_id']);
         $update = false;
 
-        if (empty($customer->name) || $customer->name == ""){
+        if (empty($customer->name) || $customer->name == "") {
             $customer->name = $order_info['name'];
             $update = true;
         }
 
-        if (empty($customer->mobile)){
+        if (empty($customer->mobile)) {
             $customer->mobile = $order_info['phone'];
             $update = true;
         }
 
-        if ($update){
+        if ($update) {
             $customer->update();
         }
     }
