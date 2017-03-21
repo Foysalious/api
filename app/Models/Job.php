@@ -90,4 +90,9 @@ class Job extends Model
     {
         return $this->hasOne(JobCancelLog::class);
     }
+
+    public function partnerChangeLog()
+    {
+        return $this->hasOne(JobPartnerChangeLog::class);
+    }
 }

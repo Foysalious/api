@@ -28,15 +28,28 @@ class OrderController extends Controller
         $final_orders = [];
         foreach ($orders as $key => $order) {
             $order->calculate();
-//            if ($order->status == 'Closed') {
-////                unset($orders[$key]);
-//                continue;
-//            }
             if (in_array($order->status, ['Closed', 'Cancelled'])) {
                 continue;
             }
             foreach ($order->partner_orders as $partner_order) {
+                if ($partner_order->status == 'Cancelled' && count($partner_order->jobs) == 1) {
+                    $job = $partner_order->jobs[0];
+                    if ($job->partnerChangeLog != null) {
+                        array_add($partner_order, 'show', false);
+                        continue;
+                    }
+                } else {
+                    array_add($partner_order, 'show', true);
+                }
                 foreach ($partner_order->jobs as $job) {
+                    if ($job->status == "Cancelled") {
+                        if ($job->partnerChangeLog != null) {
+                            array_add($job, 'show', false);
+                            continue;
+                        } else {
+                            array_add($job, 'show', true);
+                        }
+                    }
                     array_add($job, 'customer_charge', $job->grossPrice);
                     array_add($job, 'material_price', $job->materialPrice);
                     array_forget($job, 'partner_order');
@@ -64,24 +77,32 @@ class OrderController extends Controller
         foreach ($orders as $key => $order) {
             $order->calculate();
             if (in_array($order->status, ['Open', 'Process'])) {
-//                unset($orders[$key]);
                 continue;
             }
             foreach ($order->partner_orders as $partner_order) {
+                if ($partner_order->status == 'Cancelled' && count($partner_order->jobs) == 1) {
+                    $job = $partner_order->jobs[0];
+                    if ($job->partnerChangeLog != null) {
+                        array_add($partner_order, 'show', false);
+                    }
+                }
                 foreach ($partner_order->jobs as $job) {
                     if ($job->status == "Cancelled") {
                         if ($job->partnerChangeLog != null) {
-                            continue;
+                            array_add($job, 'show', false);
                         }
                     }
                     array_add($job, 'customer_charge', $job->grossPrice);
                     array_add($job, 'material_price', $job->materialPrice);
+                    array_add($job, 'show', true);
                     array_forget($job, 'partner_order');
                 }
                 array_add($partner_order, 'total_amount', $partner_order->totalPrice);
                 array_add($partner_order, 'paid_amount', $partner_order->paid);
                 array_add($partner_order, 'due_amount', $partner_order->due);
                 array_add($partner_order, 'rounding_cut_off', $partner_order->roundingCutOff);
+                array_add($partner_order, 'show', true);
+                dd($partner_order);
                 array_forget($partner_order, 'partner_collection');
                 array_forget($partner_order, 'sheba_collection');
                 array_forget($partner_order->partner, 'categories');

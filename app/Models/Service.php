@@ -57,8 +57,39 @@ class Service extends Model
         return $partner->categories()->find($service_category)->pivot->commission;
     }
 
+    public function partnerServices()
+    {
+        return $this->hasMany(PartnerService::class);
+    }
+
     public function custom_services()
     {
         return $this->hasMany(CustomOrder::class);
+    }
+
+    public function runningDiscounts()
+    {
+        $running_discounts = [];
+        foreach ($this->partnerServices as $partner_service) {
+            if ($discount = $partner_service->discount()) {
+                $running_discounts[] = $partner_service->discount();
+            }
+        }
+        return collect($running_discounts);
+    }
+
+    public function runningDiscountOf($partner)
+    {
+        return $this->partnerServices()->where('partner_id', $partner)->first()->discount();
+    }
+
+    public function hasDiscounts()
+    {
+        foreach ($this->partnerServices as $partner_service) {
+            if ($partner_service->discount()) {
+                return true;
+            }
+        }
+        return false;
     }
 }

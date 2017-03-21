@@ -22,7 +22,12 @@ class CategoryRepository
         $children = $category->children()->select('id', 'name', 'thumb', 'banner')
             ->with(['services' => function ($query) {
                 $query->select('id', 'category_id', 'name', 'thumb', 'banner', 'variable_type', 'variables')
-                    ->where('publication_status', 1);
+                    ->where('publication_status', 1)
+                    ->with(['partnerServices' => function ($q) {
+                        $q->select('id', 'partner_id', 'service_id')->with(['discounts' => function ($q) {
+                            $q->select('id', 'partner_service_id', 'start_date', 'end_date', 'amount');
+                        }]);
+                    }]);
             }])
             ->get();
         foreach ($children as $child) {
@@ -35,7 +40,8 @@ class CategoryRepository
 
     public function addServiceInfo($services)
     {
-        foreach ($services as $service) {
+        foreach ($services as $key => $service) {
+            array_add($service, 'discount', $service->hasDiscounts());
             //Get start & end price for services. Custom services don't have price so omitted
             $service = $this->serviceRepository->getStartEndPrice($service);
             array_add($service, 'slug_service', str_slug($service->name, '-'));
@@ -46,6 +52,7 @@ class CategoryRepository
             array_add($service, 'review', $review);
             array_add($service, 'rating', $rating);
             array_forget($service, 'variables');
+            array_forget($service, 'partnerServices');
         }
         return $services;
     }

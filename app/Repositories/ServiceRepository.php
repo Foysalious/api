@@ -22,8 +22,15 @@ class ServiceRepository
         }
         $final_partners = [];
         foreach ($service_partners as $key => $partner) {
+            //initially discount set to zero
+            array_add($partner, 'discount_price', 0);
+            array_add($partner, 'discounted_price', 0);
+
             $prices = json_decode($partner->prices);
             array_forget($partner, 'pivot');
+            /**
+             * For optioned services
+             */
             if ($service->variable_type == 'Options') {
                 $variables = json_decode($service->variables);
                 // Get the first option of service
@@ -43,6 +50,17 @@ class ServiceRepository
                     //remove the partner from service_partner list
                     array_forget($service_partners, $key);
                     continue;
+                }
+                if (($discount = $service->runningDiscountOf($partner->id)) != null) {
+                    $d_p = $discount->getAmount($first_option);
+                    $partner['discount_price'] = $d_p;
+                    $partner['discounted_price'] = $partner->prices - $d_p;
+                }
+            } elseif ($service->variable_type == 'Fixed') {
+                if (($discount = $service->runningDiscountOf($partner->id)) != null) {
+                    $d_p = $discount->getAmount();
+                    $partner['discount_price'] = $d_p;
+                    $partner['discounted_price'] = $partner->prices - $d_p;
                 }
             }
             // review count of this partner for this service
@@ -76,6 +94,8 @@ class ServiceRepository
         }
         $final_partners = [];
         foreach ($service_partners as $key => $partner) {
+            array_add($partner, 'discount_price', 0);
+            array_add($partner, 'discounted_price', 0);
             // review count of this partner for this service
             $review = $partner->reviews()->where([
                 ['review', '<>', ''],
@@ -86,7 +106,10 @@ class ServiceRepository
             array_add($partner, 'review', $review);
             array_add($partner, 'rating', $rating);
             array_forget($partner, 'pivot');
-            if ($service->variable_type != 'Fixed') {
+            /**
+             * For optioned services
+             */
+            if ($service->variable_type == 'Options') {
                 $options = (array)json_decode($partner->prices);
                 $count = 0;
                 foreach ($options as $key => $price) {
@@ -99,8 +122,24 @@ class ServiceRepository
                 if ($count > 0) {
                     array_set($partner, 'prices', $price);
                     array_push($final_partners, $partner);
+                    /**
+                     * if service has discount update the discount prices
+                     */
+                    if (($discount = $service->runningDiscountOf($partner->id)) != null) {
+                        $d_p = $discount->getAmount($option);
+                        $partner['discount_price'] = $d_p;
+                        $partner['discounted_price'] = $partner->prices - $d_p;
+                    }
                 }
-            } else {
+            } elseif ($service->variable_type == 'Fixed') {
+                /**
+                 * if service has discount update the discount prices
+                 */
+                if (($discount = $service->runningDiscountOf($partner->id)) != null) {
+                    $d_p = $discount->getAmount();
+                    $partner['discount_price'] = $d_p;
+                    $partner['discounted_price'] = $partner->prices - $d_p;
+                }
                 array_push($final_partners, $partner);
             }
         }

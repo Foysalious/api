@@ -2,6 +2,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\FacebookAccountKit;
+use App\Models\Profile;
 use App\Models\Resource;
 use App\Repositories\CustomerRepository;
 use Illuminate\Http\Request;
@@ -133,6 +134,27 @@ class LoginController extends Controller
             }
         } else {
             return response()->json(['msg' => 'not found', 'code' => 404]);
+        }
+    }
+
+    public function create()
+    {
+        $customers = Customer::where('profile_id', null)->get();
+        foreach ($customers as $customer) {
+            $profile = new Profile();
+            $profile->name = $customer->name;
+            $profile->mobile = $customer->mobile;
+            $profile->email = $customer->email;
+            $profile->remember_token = $customer->remember_token;
+            $profile->fb_id = $customer->fb_id;
+            $profile->pro_pic = $customer->pro_pic;
+            $profile->mobile_verified = $customer->mobile_verified;
+            $profile->email_verified = $customer->email_verified;
+            $profile->gender = $customer->gender;
+            $profile->address = $customer->address;
+            $profile->save();
+            $customer->profile_id=$profile->id;
+            $customer->update();
         }
     }
 

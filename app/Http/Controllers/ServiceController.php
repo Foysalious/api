@@ -31,6 +31,7 @@ class ServiceController extends Controller
             ->first();
         if ($service == null)
             return response()->json(['code' => 404, 'msg' => 'no service found']);
+        array_add($service, 'discount', $service->hasDiscounts());
         //Add first options in service for render purpose
         if ($service->variable_type == 'Options') {
             $variables = json_decode($service->variables);
@@ -103,7 +104,7 @@ class ServiceController extends Controller
 //        $customer_count = Customer::all()->count() + 3000;
 //        $partner_count = Partner::all()->count();
 //        $job_count = Job::all()->count() + 16000;
-        $job_count = Job::where('status', 'Served')->count()+16000;
+        $job_count = Job::where('status', 'Served')->count() + 16000;
         $service_count = Service::where('publication_status', 1)->get()->count();
         $resource_count = Resource::whereHas('partners', function ($query) {
             $query->where([
