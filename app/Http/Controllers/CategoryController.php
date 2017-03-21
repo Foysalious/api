@@ -44,11 +44,12 @@ class CategoryController extends Controller
     /**
      * Get children of a category with services
      * @param Category $category
+     * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getChildren(Category $category)
+    public function getChildren(Category $category,Request $request)
     {
-        $children = $this->categoryRepository->childrenWithServices($category);
+        $children = $this->categoryRepository->childrenWithServices($category,$request);
         $cat = collect($category)->only(['name', 'banner']);
         if (!$children->isEmpty())
             return response()->json(['category' => $cat, 'children' => $children, 'msg' => 'successful', 'code' => 200]);

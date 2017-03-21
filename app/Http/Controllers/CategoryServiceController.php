@@ -37,7 +37,7 @@ class CategoryServiceController extends Controller
         $services = $category->services()->select('id', 'name', 'banner', 'variables', 'variable_type')->where([
             ['publication_status', 1],
             ['id', '<>', $service]
-        ])->get();
+        ])->take(5)->get();
         $services = $this->categoryRepository->addServiceInfo($services);
         return response()->json(['services' => $services, 'msg' => 'successful', 'code' => 200]);
     }

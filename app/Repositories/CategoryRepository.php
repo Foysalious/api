@@ -17,22 +17,24 @@ class CategoryRepository
      * @param $category
      * @return mixed
      */
-    public function childrenWithServices($category)
+    public function childrenWithServices($category, $request)
     {
-        $children = $category->children()->select('id', 'name', 'thumb', 'banner')
-            ->with(['services' => function ($query) {
-                $query->select('id', 'category_id', 'name', 'thumb', 'banner', 'variable_type', 'variables')
-                    ->where('publication_status', 1)
-                    ->with(['partnerServices' => function ($q) {
-                        $q->select('id', 'partner_id', 'service_id')->with(['discounts' => function ($q) {
-                            $q->select('id', 'partner_service_id', 'start_date', 'end_date', 'amount');
-                        }]);
-                    }]);
-            }])
-            ->get();
+        $offset = 0;
+        if ($request->get('offset') != '') {
+            $offset = $request->get('offset');
+        }
+        $children = $category->children()->select('id', 'name', 'thumb', 'banner')->skip($offset)->take(2)->get();
+
         foreach ($children as $child) {
+            $services = $child->services()->select('id', 'category_id', 'name', 'thumb', 'banner', 'variable_type', 'variables')
+                ->where('publication_status', 1)->with(['partnerServices' => function ($q) {
+                    $q->select('id', 'partner_id', 'service_id')->with(['discounts' => function ($q) {
+                        $q->select('id', 'partner_service_id', 'start_date', 'end_date', 'amount');
+                    }]);
+                }])->take(4)->get();
+            array_add($child, 'services', $services);
             array_add($child, 'slug_child_category', str_slug($child->name, '-'));
-            array_add($child, 'children_services', $this->addServiceInfo($child->services->take(6)));
+            array_add($child, 'children_services', $this->addServiceInfo($services));
             array_forget($child, 'services');
         }
         return $children;
