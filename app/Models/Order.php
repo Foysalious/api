@@ -50,11 +50,15 @@ class Order extends Model
             $total_partner_orders++;
         }
 
-        if ($po_status_counter[$po_statuses['Open']] == $total_partner_orders) {
+        if($po_status_counter[$po_statuses['Open']] == $total_partner_orders) {
             $this->status = $o_statuses['Open'];
-        } else if ($po_status_counter[$po_statuses['Cancelled']] == $total_partner_orders) {
+        } else if($po_status_counter[$po_statuses['Cancelled']] == $total_partner_orders) {
             $this->status = $o_statuses['Cancelled'];
-        } else if ($po_status_counter[$po_statuses['Closed']] == $total_partner_orders) {
+        } else if($po_status_counter[$po_statuses['Closed']] == $total_partner_orders) {
+            $this->status = $o_statuses['Closed'];
+        } else if($po_status_counter[$po_statuses['Open']] + $po_status_counter[$po_statuses['Cancelled']] == $total_partner_orders) {
+            $this->status = $o_statuses['Open'];
+        } else if($po_status_counter[$po_statuses['Closed']] + $po_status_counter[$po_statuses['Cancelled']] == $total_partner_orders) {
             $this->status = $o_statuses['Closed'];
         } else {
             $this->status = $o_statuses['Process'];

@@ -17,8 +17,10 @@ class CategoryController extends Controller
         $this->categoryRepository = new CategoryRepository();
     }
 
+
     /**
      * Get all categories
+     * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function index(Request $request)
@@ -47,8 +49,9 @@ class CategoryController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getChildren(Category $category,Request $request)
+    public function getChildren($category,Request $request)
     {
+        $category=Category::find($category);
         $children = $this->categoryRepository->childrenWithServices($category,$request);
         $cat = collect($category)->only(['name', 'banner']);
         if (!$children->isEmpty())
@@ -61,16 +64,18 @@ class CategoryController extends Controller
      * @param Category $category
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getParent(Category $category)
+    public function getParent($category)
     {
+        $category=Category::find($category);
         $parent = $category->parent()->select('id', 'name', 'thumb', 'banner')->first();
         if ($parent)
             return response()->json(['parent' => $parent, 'msg' => 'successful', 'code' => 200]);
         return response()->json(['msg' => 'no parent found', 'code' => 404]);
     }
 
-    public function getServices(Category $category)
+    public function getServices($category)
     {
+        $category=Category::find($category);
         $cat = collect($category)->only(['name', 'banner']);
         $category = Category::with(['services' => function ($q) {
             $q->select('id', 'category_id', 'name', 'thumb', 'banner', 'variable_type', 'variables')->where('publication_status', 1);

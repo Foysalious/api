@@ -27,7 +27,7 @@ class CustomOrderRepository
         $custom_order->additional_info = $request->additional_info;
         $custom_order->location_id = $request->location_id;
         $custom_order->schedule_date = isset($request->schedule_date) ? $request->schedule_date : '';
-        $custom_order->preferred_time = $request->preferred_time;
+        $custom_order->preferred_time = isset($request->preferred_time) ? $request->preferred_time : '';
         if (isset($request->address_id)) {
             $custom_order->delivery_address = (CustomerDeliveryAddress::find($request->address_id))->address;
         } elseif (isset($request->address)) {
@@ -37,6 +37,7 @@ class CustomOrderRepository
             $custom_order->delivery_address = $request->address;
         }
         $custom_order->sales_channel = isset($request->sales_channel) ? $request->sales_channel : 'Web';
+        $custom_order->job_name = isset($request->job_name) ? $request->job_name : '';
         $custom_order->crm_id = isset($request->crm_id) ? $request->crm_id : '';
         $custom_order->created_by = isset($request->created_by) ? $request->created_by : '';
         $custom_order->status = 'Open';

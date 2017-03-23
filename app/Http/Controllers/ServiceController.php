@@ -27,7 +27,7 @@ class ServiceController extends Controller
     public function getPartners($service, $location = null)
     {
         $service = Service::where('id', $service)
-            ->select('id', 'name', 'category_id', 'description', 'thumb', 'banner', 'faqs', 'variable_type', 'variables')
+            ->select('id', 'name', 'unit', 'category_id', 'description', 'thumb', 'banner', 'faqs', 'variable_type', 'variables')
             ->first();
         if ($service == null)
             return response()->json(['code' => 404, 'msg' => 'no service found']);
@@ -64,15 +64,17 @@ class ServiceController extends Controller
         return response()->json(['service' => $service, 'service_partners' => $sorted_service_partners, 'times' => config('constants.JOB_PREFERRED_TIMES'), 'msg' => 'no partner found in selected location', 'code' => 404]);
     }
 
+
     /**
      * Change partner according to the selected options
-     * @param Service $service
-     * @param $location
+     * @param $service
+     * @param null $location
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function changePartner(Service $service, $location = null, Request $request)
+    public function changePartner($service, $location = null, Request $request)
     {
+        $service = Service::find($service);
         $option = null;
         //get the selected options
         if ($request->has('options')) {
