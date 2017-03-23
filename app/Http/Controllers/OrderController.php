@@ -102,7 +102,6 @@ class OrderController extends Controller
                 array_add($partner_order, 'due_amount', $partner_order->due);
                 array_add($partner_order, 'rounding_cut_off', $partner_order->roundingCutOff);
                 array_add($partner_order, 'show', true);
-                dd($partner_order);
                 array_forget($partner_order, 'partner_collection');
                 array_forget($partner_order, 'sheba_collection');
                 array_forget($partner_order->partner, 'categories');

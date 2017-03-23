@@ -139,23 +139,45 @@ class LoginController extends Controller
 
     public function create()
     {
-        $customers = Customer::where('profile_id', null)->get();
-        foreach ($customers as $customer) {
-            $profile = new Profile();
-            $profile->name = $customer->name;
-            $profile->mobile = $customer->mobile;
-            $profile->email = $customer->email;
-            $profile->remember_token = $customer->remember_token;
-            $profile->fb_id = $customer->fb_id;
-            $profile->pro_pic = $customer->pro_pic;
-            $profile->mobile_verified = $customer->mobile_verified;
-            $profile->email_verified = $customer->email_verified;
-            $profile->gender = $customer->gender;
-            $profile->address = $customer->address;
-            $profile->save();
-            $customer->profile_id=$profile->id;
-            $customer->update();
+        $resource = Resource::all();
+        $groupBy = $resource->groupBy('contact_no');
+        $groupBy = $groupBy->filter(function ($value, $key) {
+            return count($value) > 1;
+        })->all();
+        $final=[];
+        foreach ($groupBy as $g) {
+            foreach ($g as $resource) {
+                $weight = 0;
+                if ($resource->nid_no != '') {
+                    $weight++;
+                }
+                if ($resource->nid_image != '') {
+                    $weight++;
+                }
+                array_add($resource, 'weight', $weight);
+            }
+            $max_weight = $g->sortByDesc('weight')->first();
+            dd($g->filter(function ($value, $key) use ($max_weight) {
+                return $value->id != $max_weight->id;
+            })->pluck('id')->all());
         }
+//        $customers = Customer::where('profile_id', null)->get();
+//        foreach ($customers as $customer) {
+//            $profile = new Profile();
+//            $profile->name = $customer->name;
+//            $profile->mobile = $customer->mobile;
+//            $profile->email = $customer->email;
+//            $profile->remember_token = $customer->remember_token;
+//            $profile->fb_id = $customer->fb_id;
+//            $profile->pro_pic = $customer->pro_pic;
+//            $profile->mobile_verified = $customer->mobile_verified;
+//            $profile->email_verified = $customer->email_verified;
+//            $profile->gender = $customer->gender;
+//            $profile->address = $customer->address;
+//            $profile->save();
+//            $customer->profile_id=$profile->id;
+//            $customer->update();
+//        }
     }
 
 }

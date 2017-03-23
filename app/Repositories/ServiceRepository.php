@@ -3,10 +3,17 @@
 namespace App\Repositories;
 
 
+use App\Models\PartnerService;
 use App\Models\Service;
 
 class ServiceRepository
 {
+    private $discountRepository;
+
+    public function __construct()
+    {
+        $this->discountRepository = new DiscountRepository();
+    }
 
     /**
      * @param $service
@@ -22,12 +29,7 @@ class ServiceRepository
         }
         $final_partners = [];
         foreach ($service_partners as $key => $partner) {
-            //initially discount set to zero
-            array_add($partner, 'discount_price', 0);
-            array_add($partner, 'discounted_price', 0);
-
             $prices = json_decode($partner->prices);
-            array_forget($partner, 'pivot');
             /**
              * For optioned services
              */
@@ -51,18 +53,8 @@ class ServiceRepository
                     array_forget($service_partners, $key);
                     continue;
                 }
-                if (($discount = $service->runningDiscountOf($partner->id)) != null) {
-                    $d_p = $discount->getAmount($first_option);
-                    $partner['discount_price'] = $d_p;
-                    $partner['discounted_price'] = $partner->prices - $d_p;
-                }
-            } elseif ($service->variable_type == 'Fixed') {
-                if (($discount = $service->runningDiscountOf($partner->id)) != null) {
-                    $d_p = $discount->getAmount();
-                    $partner['discount_price'] = $d_p;
-                    $partner['discounted_price'] = $partner->prices - $d_p;
-                }
             }
+            $partner = $this->discountRepository->addDiscountToPartnerForService($partner);
             // review count of this partner for this service
             $review = $partner->reviews()->where([
                 ['review', '<>', ''],
@@ -72,6 +64,7 @@ class ServiceRepository
             $rating = $partner->reviews()->where('service_id', $service->id)->avg('rating');
             array_add($partner, 'review', $review);
             array_add($partner, 'rating', $rating);
+            array_forget($partner, 'pivot');
             array_push($final_partners, $partner);
         }
         return $final_partners;
@@ -105,7 +98,6 @@ class ServiceRepository
             $rating = $partner->reviews()->where('service_id', $service->id)->avg('rating');
             array_add($partner, 'review', $review);
             array_add($partner, 'rating', $rating);
-            array_forget($partner, 'pivot');
             /**
              * For optioned services
              */
@@ -121,25 +113,21 @@ class ServiceRepository
                 //if the selected option exist in partner option list add the partner to final list
                 if ($count > 0) {
                     array_set($partner, 'prices', $price);
+                    $partner = $this->discountRepository->addDiscountToPartnerForService($partner);
+                    array_forget($partner, 'pivot');
                     array_push($final_partners, $partner);
-                    /**
-                     * if service has discount update the discount prices
-                     */
-                    if (($discount = $service->runningDiscountOf($partner->id)) != null) {
-                        $d_p = $discount->getAmount($option);
-                        $partner['discount_price'] = $d_p;
-                        $partner['discounted_price'] = $partner->prices - $d_p;
-                    }
+//                    /**
+//                     * if service has discount update the discount prices
+//                     */
+//                    if (($discount = $service->runningDiscountOf($partner->id)) != null) {
+//                        $d_p = $discount->getAmount($option);
+//                        $partner['discount_price'] = $d_p;
+//                        $partner['discounted_price'] = $partner->prices - $d_p;
+//                    }
                 }
             } elseif ($service->variable_type == 'Fixed') {
-                /**
-                 * if service has discount update the discount prices
-                 */
-                if (($discount = $service->runningDiscountOf($partner->id)) != null) {
-                    $d_p = $discount->getAmount();
-                    $partner['discount_price'] = $d_p;
-                    $partner['discounted_price'] = $partner->prices - $d_p;
-                }
+                $partner = $this->discountRepository->addDiscountToPartnerForService($partner);
+                array_forget($partner, 'pivot');
                 array_push($final_partners, $partner);
             }
         }

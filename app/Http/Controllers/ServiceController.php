@@ -56,7 +56,7 @@ class ServiceController extends Controller
         $service_partners = $this->serviceRepository->partners($service, $location);
         $sorted_service_partners = collect($service_partners)->sortBy('prices')->values()->all();
         $service->variables = json_decode($service->variables);
-
+        array_forget($service, 'partnerServices');
         //If service has partner
         if (count($service_partners) != 0) {
             return response()->json(['service' => $service, 'service_partners' => $sorted_service_partners, 'times' => config('constants.JOB_PREFERRED_TIMES'), 'msg' => 'successful', 'code' => 200]);

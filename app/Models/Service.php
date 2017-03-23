@@ -57,14 +57,14 @@ class Service extends Model
         return $partner->categories()->find($service_category)->pivot->commission;
     }
 
-    public function partnerServices()
-    {
-        return $this->hasMany(PartnerService::class);
-    }
-
     public function custom_services()
     {
         return $this->hasMany(CustomOrder::class);
+    }
+
+    public function partnerServices()
+    {
+        return $this->hasMany(PartnerService::class);
     }
 
     public function runningDiscounts()
