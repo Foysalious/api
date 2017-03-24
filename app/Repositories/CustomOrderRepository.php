@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\CustomerDeliveryAddress;
 use App\Models\CustomOrder;
+use App\Models\User;
 
 class CustomOrderRepository
 {
@@ -33,6 +34,15 @@ class CustomOrderRepository
         } elseif (isset($request->address)) {
             $deliver_address = new CustomerDeliveryAddress();
             $deliver_address->address = $request->address;
+
+            $deliver_address->customer_id = $customer->id;
+            if (isset($request->created_by)) {
+                $deliver_address->created_by = $request->created_by;
+                $deliver_address->created_by_name = User::find($request->created_by)->name;
+            } else {
+                $deliver_address->created_by_name = 'Customer';
+            }
+
             $deliver_address->save();
             $custom_order->delivery_address = $request->address;
         }
