@@ -91,8 +91,8 @@ $api->version('v1', function ($api) {
         $api->post('{customer}/ask-quotation', 'App\Http\Controllers\CustomOrderController@askForQuotation');
         $api->get('{customer}/custom-order', 'App\Http\Controllers\CustomOrderController@getCustomOrders');
         $api->get('{customer}/custom-order/{custom_order}/quotation', 'App\Http\Controllers\CustomOrderController@getCustomOrderQuotation');
-        $api->post('{customer}/custom-order/{custom_order}/discussion', 'App\Http\Controllers\CustomOrderController@postCommentOnDiscussion');
         $api->get('{customer}/custom-order/{custom_order}/discussion', 'App\Http\Controllers\CustomOrderController@getCommentForDiscussion');
+        $api->post('{customer}/custom-order/{custom_order}/discussion', 'App\Http\Controllers\CustomOrderController@postCommentOnDiscussion');
 
         $api->post('{customer}/checkout/place-order', 'App\Http\Controllers\CheckoutController@placeOrder');
         $api->post('{customer}/checkout/place-order-with-online-payment', 'App\Http\Controllers\CheckoutController@placeOrderWithPayment');

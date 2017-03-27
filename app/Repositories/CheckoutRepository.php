@@ -12,6 +12,7 @@ use App\Models\Job;
 use App\Models\Order;
 use App\Models\PartnerOrder;
 use App\Models\PartnerOrderPayment;
+use App\Models\PartnerServiceDiscount;
 use App\Models\Service;
 use App\Models\User;
 use Carbon\Carbon;
@@ -197,7 +198,12 @@ class CheckoutRepository
                         $job->crm_id = isset($service->crm_id) ? $service->crm_id : '';
                         $job->department_id = isset($service->department_id) ? $service->department_id : '';
                         $job->service_unit_price = (float)$service->partner->prices;
-                        $job->discount = isset($service->partner->discout_price) ? (float)$service->partner->discout_price : 0;
+                        if (isset($service->partner->discount_id)) {
+                            $discount = PartnerServiceDiscount::find($service->partner->discount_id);
+                            $job->discount = $discount->amount;
+                            $job->sheba_contribution = $discount->sheba_contribution;
+                            $job->partner_contribution = $discount->partner_contribution;
+                        };
                         $job->job_name = isset($service->job_name) ? $service->job_name : '';
                         if (isset($order_info['created_by'])) {
                             $job->created_by = $user->id;
