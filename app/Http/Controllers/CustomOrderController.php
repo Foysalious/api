@@ -85,21 +85,25 @@ class CustomOrderController extends Controller
 
     public function getCommentForDiscussion($customer, $custom_order)
     {
-        $comments = CustomOrderDiscussion::with(['writer' => function ($q) {
-            $q->with(['profile' => function ($q) {
-                $q->select('id', 'name', 'pro_pic');
-            }]);
-        }])->where('custom_order_id', $custom_order)->select('id', 'user_type', 'created_by', 'comment', 'updated_at')->orderBy('created_at')->get();
+        $comments = CustomOrderDiscussion::with('writer')
+            ->where('custom_order_id', $custom_order)
+            ->select('id', 'user_type', 'created_by', 'comment', 'updated_at')->orderBy('created_at')->get();
 
         if (count($comments) > 0) {
             $final_comments = [];
             foreach ($comments as $comment) {
-                $profile = $comment->writer->profile;
+                $class_name = explode("\\", get_class($comment->writer));
+                if ($class_name[count($class_name) - 1] == 'User') {
+                    array_add($comment, 'name', $comment->writer->name);
+                    array_add($comment, 'pro_pic', $comment->writer->profile_pic);
+                } else {
+                    array_add($comment, 'name', $comment->writer->profile->name);
+                    array_add($comment, 'pro_pic', $comment->writer->profile->pro_pic);
+                }
                 array_forget($comment, 'writer');
-                array_add($comment, 'profile', $profile);
-                $time= $comment->updated_at;
+                $time = $comment->updated_at;
                 array_forget($comment, 'updated_at');
-                array_add($comment, 'time',$time->format('Y-m-d h:i A'));
+                array_add($comment, 'time', $time->format('Y-m-d h:i A'));
                 array_push($final_comments, $comment);
             }
             return response()->json(['comments' => $final_comments, 'code' => 200]);

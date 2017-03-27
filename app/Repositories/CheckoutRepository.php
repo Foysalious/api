@@ -158,6 +158,7 @@ class CheckoutRepository
                         //For custom order
                         if (isset($cart->custom_order_id)) {
                             $job->service_variables = json_encode($service->serviceOptions);
+                            $job->service_variable_type = 'Custom';
                         } else {
                             $job->service_option = json_encode($service->serviceOptions);
                             //shafiq
@@ -196,6 +197,7 @@ class CheckoutRepository
                         $job->crm_id = isset($service->crm_id) ? $service->crm_id : '';
                         $job->department_id = isset($service->department_id) ? $service->department_id : '';
                         $job->service_unit_price = (float)$service->partner->prices;
+                        $job->discount = isset($service->partner->discout_price) ? (float)$service->partner->discout_price : 0;
                         $job->job_name = isset($service->job_name) ? $service->job_name : '';
                         if (isset($order_info['created_by'])) {
                             $job->created_by = $user->id;
