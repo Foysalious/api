@@ -21,7 +21,7 @@ $api = app('Dingo\Api\Routing\Router');
 */
 $api->version('v1', function ($api) {
     $api->get('voucher',function (){
-        dd(voucher('2500')->check(105, 33, 5, 11, 100)->reveal());
+        dd(voucher('2500')->check(105, 33, 5, 11, 100, $timestamp = null)->reveal());
     });
     $api->get('authenticate', 'App\Http\Controllers\Auth\LoginController@checkForAuthentication');
     $api->get('create-profile', 'App\Http\Controllers\Auth\LoginController@create');
