@@ -20,6 +20,9 @@ $api = app('Dingo\Api\Routing\Router');
 |
 */
 $api->version('v1', function ($api) {
+    $api->get('voucher',function (){
+        dd(voucher('2500')->check(105, 33, 5, 11, 100)->reveal());
+    });
     $api->get('authenticate', 'App\Http\Controllers\Auth\LoginController@checkForAuthentication');
     $api->get('create-profile', 'App\Http\Controllers\Auth\LoginController@create');
     $api->post('register-mobile', 'App\Http\Controllers\Auth\RegistrationController@registerWithMobile');
@@ -96,6 +99,8 @@ $api->version('v1', function ($api) {
 
         $api->post('{customer}/checkout/place-order', 'App\Http\Controllers\CheckoutController@placeOrder');
         $api->post('{customer}/checkout/place-order-with-online-payment', 'App\Http\Controllers\CheckoutController@placeOrderWithPayment');
+
+        $api->post('{customer}/voucher-valid', 'App\Http\Controllers\CheckoutController@checkForValidity');
     });
 
     $api->post('rating', 'App\Http\Controllers\ReviewController@giveRatingFromEmail');

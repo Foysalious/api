@@ -6,16 +6,19 @@ use App\Models\Customer;
 use App\Repositories\AuthRepository;
 use App\Repositories\CheckoutRepository;
 use App\Repositories\CustomerRepository;
+use App\Repositories\VoucherRepository;
 use Illuminate\Http\Request;
 use Session;
 use Cache;
 use DB;
 use Mail;
 use Redis;
+
 class CheckoutController extends Controller
 {
     private $authRepository;
     private $checkoutRepository;
+    private $voucherRepository;
     private $fbKit;
     private $customer;
 
@@ -25,6 +28,7 @@ class CheckoutController extends Controller
         $this->checkoutRepository = new CheckoutRepository();
         $this->fbKit = new FacebookAccountKit();
         $this->customer = new CustomerRepository();
+        $this->voucherRepository = new VoucherRepository();
     }
 
     public function placeOrder(Request $request, $customer)
@@ -35,8 +39,7 @@ class CheckoutController extends Controller
         if ($order) {
             $this->checkoutRepository->sendConfirmation($customer, $order);
             return response()->json(['code' => 200, 'msg' => 'Order placed successfully!']);
-        }
-        else{
+        } else {
             return response()->json(['code' => 500, 'msg' => 'There is a problem while placing the order!']);
         }
     }
@@ -77,10 +80,10 @@ class CheckoutController extends Controller
                 $this->checkoutRepository->sendConfirmation($order_info['customer_id'], $order);
                 Cache::forget('invoice-' . $request->input('invoice'));
                 Cache::forget('portwallet-payment-' . $request->input('invoice'));
-                $s_id=str_random(10);
+                $s_id = str_random(10);
                 Redis::set($s_id, 'online');
                 Redis::expire($s_id, 500);
-                return redirect(env('SHEBA_FRONT_END_URL') . '/order-list?s_token='.$s_id);
+                return redirect(env('SHEBA_FRONT_END_URL') . '/order-list?s_token=' . $s_id);
             }
         } else {
             return "Something went wrong";
@@ -112,5 +115,24 @@ class CheckoutController extends Controller
         } else {
             return "Something went wrong";
         }
+    }
+
+    /**
+     * Check if voucher is valid
+     * @param Request $request
+     * @param $customer
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function checkForValidity(Request $request, $customer)
+    {
+        $cart = json_decode($request->cart);
+        foreach ($cart->items as $item) {
+            $result = $this->voucherRepository
+                ->isValid($request->voucher_code, $item->service->id, $item->partner->id, $request->location, $customer, $cart->price);
+            if ($result['is_valid']) {
+                return response()->json(['code' => 200, 'amount' => $result['amount']]);
+            }
+        }
+        return response()->json(['code' => 404]);
     }
 }

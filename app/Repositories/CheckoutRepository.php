@@ -50,6 +50,8 @@ class CheckoutRepository
      */
     private $appPaymentUrl;
 
+    private $voucherRepository;
+
     public function __construct()
     {
         $this->appKey = config('portwallet.app_key');
@@ -57,6 +59,7 @@ class CheckoutRepository
         $this->appPaymentMode = config('portwallet.app_payment_mode');
         $this->appBaseUrl = config('portwallet.app_base_url');
         $this->appPaymentUrl = config('portwallet.app_payment_url');
+        $this->voucherRepository = new VoucherRepository();
     }
 
     public function storeDataInDB($order_info, $payment_method)
@@ -203,6 +206,16 @@ class CheckoutRepository
                             $job->discount = $discount->amount;
                             $job->sheba_contribution = $discount->sheba_contribution;
                             $job->partner_contribution = $discount->partner_contribution;
+                        } elseif (isset($cart->voucher)) {
+                            $result = $this->voucherRepository
+                                ->isValid($cart->voucher, $service->service->id, $partner_order->partner_id, $order_info['location_id'], $order_info['customer_id'], $cart->price);
+                            if ($result['is_valid']) {
+                                $job->discount = $result['voucher']['amount'];
+                                $job->sheba_contribution = $result['voucher']['sheba_contribution'];
+                                $job->partner_contribution = $result['voucher']['partner_contribution'];
+                                $order->voucher_id = $result['id'];
+                                $order->update();
+                            }
                         };
                         $job->job_name = isset($service->job_name) ? $service->job_name : '';
                         if (isset($order_info['created_by'])) {
