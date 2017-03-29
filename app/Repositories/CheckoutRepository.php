@@ -3,7 +3,6 @@
 namespace App\Repositories;
 
 use App\Jobs\SendOrderConfirmationEmail;
-use App\Jobs\SendOrderConfirmationSms;
 use App\Library\PortWallet;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
@@ -123,6 +122,7 @@ class CheckoutRepository
                     $order->delivery_address = $order_info['address'];
                 }
                 $order->update();
+                $voucher = 0;
                 foreach ($unique_partners as $partner) {
                     $partner_order = new PartnerOrder();
                     $partner_order->order_id = $order->id;
@@ -206,10 +206,11 @@ class CheckoutRepository
                             $job->discount = $discount->amount;
                             $job->sheba_contribution = $discount->sheba_contribution;
                             $job->partner_contribution = $discount->partner_contribution;
-                        } elseif (isset($cart->voucher)) {
+                        } elseif (isset($cart->voucher) && $voucher == 0) {
                             $result = $this->voucherRepository
                                 ->isValid($cart->voucher, $service->service->id, $partner_order->partner_id, $order_info['location_id'], $order_info['customer_id'], $cart->price);
                             if ($result['is_valid']) {
+                                $voucher++;
                                 $job->discount = $result['voucher']['amount'];
                                 $job->sheba_contribution = $result['voucher']['sheba_contribution'];
                                 $job->partner_contribution = $result['voucher']['partner_contribution'];
