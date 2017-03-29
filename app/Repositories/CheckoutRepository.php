@@ -208,7 +208,7 @@ class CheckoutRepository
                             $job->partner_contribution = $discount->partner_contribution;
                         } elseif (isset($cart->voucher) && $voucher == 0) {
                             $result = $this->voucherRepository
-                                ->isValid($cart->voucher, $service->service->id, $partner_order->partner_id, $order_info['location_id'], $order_info['customer_id'], $cart->price);
+                                ->isValid($cart->voucher, $service->service->id, $partner_order->partner_id, $order_info['location_id'], $order_info['phone'], $cart->price);
                             if ($result['is_valid']) {
                                 $voucher++;
                                 $job->discount = $result['voucher']['amount'];
