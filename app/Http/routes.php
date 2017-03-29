@@ -38,6 +38,7 @@ $api->version('v1', function ($api) {
     $api->get('similar-services/{category}/{service}', 'App\Http\Controllers\CategoryServiceController@getSimilarServices');
     $api->get('job-times', 'App\Http\Controllers\JobController@getPreferredTimes');
     $api->get('info', 'App\Http\Controllers\ServiceController@getInfo');
+    $api->post('voucher-valid', 'App\Http\Controllers\CheckoutController@checkForValidity');
 
     $api->post('career', 'App\Http\Controllers\CareerController@apply');
 
@@ -100,7 +101,6 @@ $api->version('v1', function ($api) {
         $api->post('{customer}/checkout/place-order', 'App\Http\Controllers\CheckoutController@placeOrder');
         $api->post('{customer}/checkout/place-order-with-online-payment', 'App\Http\Controllers\CheckoutController@placeOrderWithPayment');
 
-        $api->post('{customer}/voucher-valid', 'App\Http\Controllers\CheckoutController@checkForValidity');
     });
 
     $api->post('rating', 'App\Http\Controllers\ReviewController@giveRatingFromEmail');

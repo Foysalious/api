@@ -120,15 +120,14 @@ class CheckoutController extends Controller
     /**
      * Check if voucher is valid
      * @param Request $request
-     * @param $customer
      * @return \Illuminate\Http\JsonResponse
      */
-    public function checkForValidity(Request $request, $customer)
+    public function checkForValidity(Request $request)
     {
         $cart = json_decode($request->cart);
         foreach ($cart->items as $item) {
             $result = $this->voucherRepository
-                ->isValid($request->voucher_code, $item->service->id, $item->partner->id, $request->location, $customer, $cart->price);
+                ->isValid($request->voucher_code, $item->service->id, $item->partner->id, $request->location, $request->mobile, $cart->price);
             if ($result['is_valid']) {
                 return response()->json(['code' => 200, 'amount' => $result['amount']]);
             }

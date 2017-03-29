@@ -8,7 +8,7 @@ class VoucherRepository
     public function isValid($voucher, $service, $partner, $location, $customer, $price)
     {
         return voucher($voucher)
-            ->check($service, $partner, intval($location), intval($customer), $price)
+            ->check($service, $partner, intval($location), $customer, $price)
             ->reveal();
     }
 }
