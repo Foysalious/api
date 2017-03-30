@@ -95,6 +95,17 @@ class VoucherRule
         return false;
     }
 
+    public function checkSalesChannel($sales_channel)
+    {
+        if(!$this->hasKey('sales_channels')) return true;
+
+        if(in_array($sales_channel, $this->rules->sales_channels)) return true;
+
+        $this->invalidMessage = $this->invalidMessages('sales_channels');
+        array_push($this->errors, 'sales_channels');
+        return false;
+    }
+
     public function invalidMessages($key)
     {
         $general_message = "This code is not valid. ";
@@ -103,7 +114,8 @@ class VoucherRule
             'partners' => $general_message . '(For selected partner)',
             'locations' => $general_message . '(For selected location)',
             'validity' => $general_message . '(Time Over)',
-            'customers' => $general_message . '(For you)'
+            'customers' => $general_message . '(For you)',
+            'sales_channels' => $general_message . '(For selected channel)',
         ];
         return (array_key_exists($key, $messages)) ? $messages[$key] : $general_message;
     }

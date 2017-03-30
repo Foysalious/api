@@ -124,10 +124,11 @@ class CheckoutController extends Controller
      */
     public function checkForValidity(Request $request)
     {
+        $sales_channel = ($request->has('sales_channel')) ? $request->sales_channel : "Web";
         $cart = json_decode($request->cart);
         foreach ($cart->items as $item) {
             $result = $this->voucherRepository
-                ->isValid($request->voucher_code, $item->service->id, $item->partner->id, $request->location, $request->mobile, $cart->price);
+                ->isValid($request->voucher_code, $item->service->id, $item->partner->id, $request->location, $request->mobile, $cart->price, $sales_channel);
             if ($result['is_valid']) {
                 return response()->json(['code' => 200, 'amount' => $result['amount']]);
             }

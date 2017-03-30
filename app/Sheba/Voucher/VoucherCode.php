@@ -43,7 +43,7 @@ class VoucherCode
             return [
                 'is_valid' => false,
                 'is_exist' => false,
-                'message' => "dsafasd"
+                'message' => "Voucher doesn't exist"
             ];
         }
 
@@ -61,7 +61,7 @@ class VoucherCode
         return $this->isValid;
     }
 
-    public function check($service, $partner, $location, $customer, $order_amount, $timestamp = null)
+    public function check($service, $partner, $location, $customer, $order_amount, $sales_channel, $timestamp = null)
     {
         $this->isChecked = true;
         if (!$this->isExist) {
@@ -72,6 +72,7 @@ class VoucherCode
             ->checkCustomer($customer)
             ->checkOrderAmount($order_amount)
             ->checkPartner($partner)
+            ->checkSalesChannel($sales_channel)
             ->checkValidity($timestamp);
     }
 
@@ -159,6 +160,13 @@ class VoucherCode
         $customer = ($customer instanceof Customer) ? $customer->id : $customer;
         $total_order = Order::where('customer_id', $customer)->count();
         $this->isValid = $this->rules->checkCustomerNthOrder($total_order + 1);
+        return $this;
+    }
+
+    private function checkSalesChannel($sales_channel)
+    {
+        if (!$this->isValid) return $this;
+        $this->isValid = $this->rules->checkSalesChannel($sales_channel);
         return $this;
     }
 
