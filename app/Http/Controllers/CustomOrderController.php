@@ -106,7 +106,7 @@ class CustomOrderController extends Controller
                 array_add($comment, 'time', $time->format('Y-m-d h:i A'));
                 array_push($final_comments, $comment);
             }
-            return response()->json(['comments' => $final_comments, 'code' => 200]);
+            return response()->json(['comments' => collect($final_comments)->sortBy('time'), 'code' => 200]);
         } else {
             return response()->json(['code' => 404]);
         }
