@@ -86,7 +86,7 @@ class Service extends Model
     public function hasDiscounts()
     {
         foreach ($this->partnerServices as $partner_service) {
-            if ($partner_service->discount()) {
+            if ($partner_service->is_verified == 1 && $partner_service->is_published == 1 && $partner_service->discount()) {
                 return true;
             }
         }
