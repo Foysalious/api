@@ -28,7 +28,8 @@
     ],
     "files": [
       "app/Helper/helper_functions.php",
-      "app/Sheba/Voucher/functions.php"
+      "app/Sheba/Voucher/functions.php",
+      "app/Sheba/Notification/functions.php"
     ],
     "psr-4": {
       "App\\": "app/",
