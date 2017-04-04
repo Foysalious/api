@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\User;
 use App\Repositories\AuthRepository;
 use App\Repositories\CheckoutRepository;
 use App\Repositories\CustomerRepository;
+use App\Repositories\NotificationRepository;
 use App\Repositories\VoucherRepository;
 use Illuminate\Http\Request;
 use Session;
@@ -37,6 +39,7 @@ class CheckoutController extends Controller
         //store order details for customer
         $order = $this->checkoutRepository->storeDataInDB($request->all(), 'cash-on-delivery');
         if ($order) {
+            new NotificationRepository($order);
             $this->checkoutRepository->sendConfirmation($customer, $order);
             return response()->json(['code' => 200, 'msg' => 'Order placed successfully!']);
         } else {
