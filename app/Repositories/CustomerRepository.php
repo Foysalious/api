@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Repositories;
 
 use App\Models\Customer;
@@ -23,10 +24,12 @@ class CustomerRepository
      */
     public function ifExist($data, $queryColumn)
     {
-        if ($customer = Customer::where("$queryColumn", $data)->first()) {
+        $customer = Customer::where($queryColumn, $data)->first();
+        if ($customer != null) {
             return $customer;
+        } else {
+            return false;
         }
-        return false;
     }
 
 
@@ -195,17 +198,19 @@ class CustomerRepository
 
     public function updateCustomerInfo($customer, $info)
     {
-        if (isset($info['id'])) {
-            $customer->fb_id = $info['id'];
+//        $customer->name = $info['name'];
+//        if (!isset($info['email'])) {
+//            $customer->email = $info['email'];
+//            $customer->email_verified = 1;
+//        }
+//        $customer->gender = $info['gender'];
+//        $customer->pro_pic = $info['picture']['data']['url'];
+        $customer->fb_id = $info['id'];
+        if ($customer->update()) {
+            $profile = $customer->profile;
+            $profile->fb_id = $info['id'];
+            $profile->update();
         }
-        $customer->name = $info['name'];
-        if (!isset($info['email'])) {
-            $customer->email = $info['email'];
-            $customer->email_verified = 1;
-        }
-        $customer->gender = $info['gender'];
-        $customer->pro_pic = $info['picture']['data']['url'];
-        $customer->update();
         return $customer;
     }
 
