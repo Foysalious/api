@@ -77,4 +77,10 @@ return [
         'Price Shock'           => 'Price Shock',
         'Service Limitation'    => 'Service Limitation',
     ],
+    'NOTIFICATION_TYPES' => [
+        'Info' => 'Info',
+        'Warning' => 'Warning',
+        'Danger' => 'Danger',
+        'Success' => 'Success'
+    ],
 ];
