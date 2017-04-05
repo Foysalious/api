@@ -61,15 +61,20 @@ class ShebaController extends Controller
             $q->where('start_date', '<=', $now);
             $q->where('end_date', '>=', $now);
         })->get();
-        foreach ($discounts as $discount) {
-            $discount->partnerService->service = $this->serviceRepository->getStartEndPrice($discount->partnerService->service);
-            $this->reviewRepository->getReviews($discount->partnerService->service);
-            array_add($discount->partnerService->service, 'discount', $discount->amount);
-            array_add($discount, 'service', $discount->partnerService->service);
-            array_forget($discount, 'partnerService');
-            array_forget($discount, 'amount');
-            array_forget($discount, 'partner_service_id');
+        if (count($discounts) > 0) {
+            foreach ($discounts as $discount) {
+                $discount->partnerService->service = $this->serviceRepository->getStartEndPrice($discount->partnerService->service);
+                $this->reviewRepository->getReviews($discount->partnerService->service);
+                array_add($discount->partnerService->service, 'discount', $discount->amount);
+                array_add($discount, 'service', $discount->partnerService->service);
+                array_forget($discount, 'partnerService');
+                array_forget($discount, 'amount');
+                array_forget($discount, 'partner_service_id');
+            }
+            return response()->json(['offers' => $discounts, 'code' => 200]);
+        } else {
+            return response()->json(['code' => 404]);
         }
-        return response()->json(['offers' => $discounts]);
+
     }
 }
