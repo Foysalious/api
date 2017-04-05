@@ -2,12 +2,13 @@
 
 use App\Events\Event;
 
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Support\Facades\Auth;
 
-class NotificationCreated extends Event implements ShouldBroadcast
+class NotificationCreated extends Event implements ShouldBroadcastNow
 {
+
     use SerializesModels;
 
     public $notificationData;

@@ -47,7 +47,7 @@ class NotificationRepository
     {
         notify()->departments([5, 7])->sender($this->sender_id, $this->sender_type)->send([
             'title' => 'New Order Placed From Front End',
-            "link" => env('SHEBA_BACKEND_URL') . '/order/' . $this->order->id,
+            'link' => env('SHEBA_BACKEND_URL') . '/order/' . $this->order->id,
             'type' => notificationType('Info')
         ]);
     }
