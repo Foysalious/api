@@ -15,7 +15,7 @@ class JobController extends Controller
     public function __construct()
     {
         $this->job_statuses_show = config('constants.JOB_STATUSES_SHOW');
-        $this->job_statuses = constants('JOB_STATUSES');
+        $this->job_statuses = config('constants.JOB_STATUSES');
     }
 
     public function getInfo($customer, $job)
@@ -58,8 +58,9 @@ class JobController extends Controller
         return response()->json(['times' => config('constants.JOB_PREFERRED_TIMES'), 'code' => 200]);
     }
 
-    public function cancelJob($customer, Job $job)
+    public function cancelJob($customer, $job)
     {
+        $job=Job::find($job);
         $previous_status = $job->status;
         $job->status = 'Cancelled';
         if ($job->update()) {
