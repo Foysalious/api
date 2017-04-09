@@ -54,7 +54,7 @@ class ServiceController extends Controller
         array_add($service, 'parent_name', $category->parent->name);
         //get partners of the service
         $service_partners = $this->serviceRepository->partners($service, $location);
-        $sorted_service_partners = collect($service_partners)->sortBy('prices')->values()->all();
+        $sorted_service_partners = collect($service_partners)->sortBy('discounted_price')->values()->all();
         $service->variables = json_decode($service->variables);
         array_forget($service, 'partnerServices');
         //If service has partner
@@ -74,7 +74,7 @@ class ServiceController extends Controller
      */
     public function changePartner($service, $location = null, Request $request)
     {
-        $service = Service::find($service);
+        $service=Service::find($service);
         $option = null;
         //get the selected options
         if ($request->has('options')) {
@@ -82,7 +82,7 @@ class ServiceController extends Controller
         }
         //check if any partner provide service in the location
         $service_partners = $this->serviceRepository->partnerWithSelectedOption($service, $option, $location);
-        $sorted_service_partners = collect($service_partners)->sortBy('prices')->values()->all();
+        $sorted_service_partners = collect($service_partners)->sortBy('discounted_price')->values()->all();
         if (!empty($service_partners)) {
             return response()->json(['service_partners' => $sorted_service_partners, 'msg' => 'successful', 'code' => 200]);
         } else
@@ -100,7 +100,6 @@ class ServiceController extends Controller
         } else
             return response()->json(['msg' => 'no partner found', 'code' => 404]);
     }
-
 
     public function validService($service)
     {
@@ -129,7 +128,6 @@ class ServiceController extends Controller
             return response()->json(['msg' => 'ok', 'code' => 200, 'service' => $service, 'breakdown' => $breakdown]);
         }
         return response()->json(['msg' => 'not found', 'code' => 404]);
-
     }
 
 }
