@@ -74,7 +74,7 @@ class ServiceController extends Controller
      */
     public function changePartner($service, $location = null, Request $request)
     {
-        $service=Service::find($service);
+        $service = Service::find($service);
         $option = null;
         //get the selected options
         if ($request->has('options')) {
@@ -116,14 +116,14 @@ class ServiceController extends Controller
         $service = Service::with(['reviews' => function ($q) {
             $q->select('id', 'service_id', 'partner_id', 'customer_id', 'review_title', 'review', 'rating', 'updated_at')
                 ->with(['partner' => function ($q) {
-                    $q->select('id', 'name');
+                    $q->select('id', 'name', 'status');
                 }])
                 ->with(['customer' => function ($q) {
                     $q->select('id', 'name');
                 }])->orderBy('updated_at', 'desc');
         }])->select('id')->where('id', $service)->first();
         if (count($service->reviews) > 0) {
-            $service = $this->serviceRepository->getReviews($service);
+            $service = $this->reviewRepository->getReviews($service);
             $breakdown = $this->reviewRepository->getReviewBreakdown($service->reviews);
             return response()->json(['msg' => 'ok', 'code' => 200, 'service' => $service, 'breakdown' => $breakdown]);
         }
