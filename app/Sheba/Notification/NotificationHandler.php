@@ -83,17 +83,19 @@ class NotificationHandler
      */
     public function sendToAll($data)
     {
-        if ($this->validateNotifiable()) {
+        if($this->validateNotifiable()) {
             //$this->removeDuplication();
-            $notification_data = [];
-            foreach ($this->notifiable_ids as $key => $id) {
-                if ($this->isSent($key) || $this->isAuthUser($key)) continue;
+            #$notification_data = [];
+            foreach($this->notifiable_ids as $key => $id) {
+                if($this->isSent($key) || $this->isAuthUser($key)) continue;
+                unset($data['id']);
                 $data['notifiable_id'] = $id;
                 $data['notifiable_type'] = $this->notifiable_types[$key];
-                $notification_data[] = $data;
-                if (config('sheba.socket_on')) event(new NotificationCreated($data, $this->senderId, $this->senderType));
+                #$notification_data[] = $data;
+                $data['id'] = Notification::insertGetId($data);
+                if(config('sheba.socket_on')) event(new NotificationCreated($data, $this->senderId, $this->senderType));
             }
-            Notification::insert($notification_data);
+            #Notification::insert($notification_data);
         }
         return $this;
     }
