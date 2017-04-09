@@ -14,14 +14,13 @@ class CareerController extends Controller
     {
         $cv = $request->file('file');
         $cover = $request->file('cover');
-        $slug = str_slug($request->input('name'), '_');
 
-        Mail::raw($request->input('description'), function ($m) use ($request, $slug, $cv, $cover) {
+        Mail::raw($request->input('description'), function ($m) use ($request, $cv, $cover) {
             $m->from($request->input('email'), $request->input('name'));
             $m->to('career@sheba.xyz');
             $m->subject($request->input('jobTitle'));
-            $m->attachData(file_get_contents($cv), 'resume_' . $slug . '.' . $cv->extension());
-            $m->attachData(file_get_contents($cover), 'cover_letter_' . $slug . '.' . $cover->extension());
+            $m->attachData(file_get_contents($cv), 'Resume - ' . $request->input('name') . '.' . $cv->extension());
+            $m->attachData(file_get_contents($cover), 'Cover letter - ' . $request->input('name') . '.' . $cover->extension());
         });
         return response()->json(['msg' => 'ok', 'code' => 200]);
     }
