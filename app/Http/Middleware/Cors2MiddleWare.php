@@ -20,8 +20,8 @@ class Cors2MiddleWare
             "http://localhost",
             "http://localhost:8080",
             "http://localhost:8100",
-            "http://192.168.0.106:8080",
-            "http://192.168.0.108:8080",
+            "http://192.168.1.109:8080",
+            "http://192.168.1.108:8080",
             "http://dev-sheba.xyz",
             "http://www.dev-sheba.xyz",
             "http://admin.dev-sheba.xyz",
@@ -34,7 +34,8 @@ class Cors2MiddleWare
             "http://partners.sheba.new",
             "https://www.sheba.xyz",
             "https://admin.sheba.xyz",
-            "http://admin.sheba.new"
+            "http://admin.sheba.new",
+            "http://accounts.sheba.dev"
         ];
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Credentials'] = 'true';

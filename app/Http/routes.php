@@ -23,7 +23,9 @@ $api->version('v1', function ($api) {
     $api->get('voucher',function (){
         dd(voucher('2500')->check(105, 33, 5, 11, 100, $timestamp = null)->reveal());
     });
-    $api->get('authenticate', 'App\Http\Controllers\Auth\LoginController@checkForAuthentication');
+    $api->get('authenticate', 'App\Http\Controllers\AccountController@checkForAuthentication');
+    $api->post('account', 'App\Http\Controllers\AccountController@encryptData');
+    $api->get('decrypt','App\Http\Controllers\AccountController@decryptData');
     $api->get('create-profile', 'App\Http\Controllers\Auth\LoginController@create');
     $api->post('register-mobile', 'App\Http\Controllers\Auth\RegistrationController@registerWithMobile');
     $api->post('register-email', 'App\Http\Controllers\Auth\RegistrationController@registerWithEmail');
