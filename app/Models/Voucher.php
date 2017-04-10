@@ -10,4 +10,9 @@ class Voucher extends Model
     {
         return $this->hasMany(Order::class);
     }
+
+    public function usage($customer)
+    {
+        return $this->orders->where('customer_id', $customer)->count();
+    }
 }

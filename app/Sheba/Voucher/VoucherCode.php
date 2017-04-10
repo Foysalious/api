@@ -175,7 +175,7 @@ class VoucherCode
         if (!$this->isValid) return $this;
         $customer = is_string($customer) ? Customer::where('mobile', $customer)->first() : $customer;
         $customer = ($customer instanceof Customer) ? $customer->id : $customer;
-        $this->isValid = ($this->voucher->orders->where('customer_id', $customer)->count() < $this->voucher->max_order);
+        $this->isValid = (!$this->voucher->max_order) ? true : (( $this->voucher->usage($customer) < $this->voucher->max_order));
         if (!$this->isValid) {
             $this->rules->invalidMessage = $this->rules->invalidMessages('customers');
             array_push($this->rules->errors, 'max_usage');
