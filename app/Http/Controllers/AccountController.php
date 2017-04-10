@@ -46,7 +46,7 @@ class AccountController extends Controller
     public function encryptData(Request $request)
     {
         try {
-            $encrypted = Crypt::encrypt(json_encode($request->all()));
+            $encrypted = Crypt::encrypt($request->all());
             return response()->json(['code' => 200, 'token' => $encrypted]);
         } catch (DecryptException $e) {
             return response()->json(['code' => 404]);
