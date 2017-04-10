@@ -25,6 +25,7 @@ class Cors2MiddleWare
             "http://dev-sheba.xyz",
             "http://www.dev-sheba.xyz",
             "http://admin.dev-sheba.xyz",
+            "http://partners.dev-sheba.xyz",
             "http://accounts.dev-sheba.xyz",
             "http://sheba.dev",
             null,
