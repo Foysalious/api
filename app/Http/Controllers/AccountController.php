@@ -46,7 +46,7 @@ class AccountController extends Controller
     public function encryptData(Request $request)
     {
         try {
-            $encrypted = Crypt::encryptString(json_encode($request->all()));
+            $encrypted = Crypt::encrypt(json_encode($request->all()));
             return response()->json(['code' => 200, 'token' => $encrypted]);
         } catch (DecryptException $e) {
             return response()->json(['code' => 404]);
@@ -56,7 +56,7 @@ class AccountController extends Controller
     public function decryptData(Request $request)
     {
         try {
-            $decrypted = Crypt::decryptString($request->token);
+            $decrypted = Crypt::decrypt($request->token);
             return response()->json(['code' => 200, 'info' => $decrypted]);
         } catch (DecryptException $e) {
             return response()->json(['code' => 404]);
