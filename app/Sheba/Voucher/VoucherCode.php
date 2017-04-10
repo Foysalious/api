@@ -52,7 +52,7 @@ class VoucherCode
             'id' => $this->voucher->id,
             'is_valid' => $this->isValid
         ];
-        $result += ($this->isValid) ? ["amount" => $this->voucher->amount, 'voucher' => $this->voucher] : ["message" => $this->rules->invalidMessage, 'errors' => $this->rules->errors];
+        $result += ($this->isValid) ? ["amount" => $this->voucher->amount, "is_percentage" => $this->voucher->is_amount_percentage, 'voucher' => $this->voucher] : ["message" => $this->rules->invalidMessage, 'errors' => $this->rules->errors];
         return $result;
     }
 
