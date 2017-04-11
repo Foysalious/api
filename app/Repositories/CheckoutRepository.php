@@ -203,7 +203,11 @@ class CheckoutRepository
                         $job->service_unit_price = (float)$service->partner->prices;
                         if (isset($service->partner->discount_id)) {
                             $discount = PartnerServiceDiscount::find($service->partner->discount_id);
-                            $job->discount = $discount->amount;
+                            if ($discount->is_amount_percentage) {
+                                $job->discount = ((float)$service->partner->prices *  $discount->amount) / 100;
+                            } else {
+                                $job->discount = $discount->amount;
+                            }
                             $job->sheba_contribution = $discount->sheba_contribution;
                             $job->partner_contribution = $discount->partner_contribution;
                         } elseif (isset($cart->voucher) && $voucher == 0) {

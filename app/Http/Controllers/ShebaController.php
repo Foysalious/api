@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Job;
+use App\Models\OfferShowcase;
 use App\Models\PartnerServiceDiscount;
 use App\Models\Resource;
 use App\Models\Service;
@@ -29,8 +30,8 @@ class ShebaController extends Controller
     {
 //        $customer_count = Customer::all()->count() + 3000;
 //        $partner_count = Partner::all()->count();
-//        $job_count = Job::all()->count() + 16000;
-        $job_count = Job::where('status', 'Served')->count() + 16000;
+        $job_count = Job::all()->count() + 16000;
+//        $job_count = Job::where('status', 'Served')->count() + 16000;
         $service_count = Service::where('publication_status', 1)->get()->count();
         $resource_count = Resource::whereHas('partners', function ($q) {
             $q->where([
@@ -51,27 +52,20 @@ class ShebaController extends Controller
 
     public function getOffers()
     {
-        $now = Carbon::now();
-        $discounts = PartnerServiceDiscount::with(['partnerService' => function ($q) {
-            $q->select('id', 'partner_id', 'service_id')
-                ->with(['service' => function ($q) {
-                    $q->select('id', 'name', 'banner', 'variable_type');
-                }]);
-        }])->select('id', 'partner_service_id', 'amount')->where(function ($q) use ($now) {
-            $q->where('start_date', '<=', $now);
-            $q->where('end_date', '>=', $now);
-        })->get();
-        if (count($discounts) > 0) {
-            foreach ($discounts as $discount) {
-                $discount->partnerService->service = $this->serviceRepository->getStartEndPrice($discount->partnerService->service);
-                $this->reviewRepository->getReviews($discount->partnerService->service);
-                array_add($discount->partnerService->service, 'discount', $discount->amount);
-                array_add($discount, 'service', $discount->partnerService->service);
-                array_forget($discount, 'partnerService');
-                array_forget($discount, 'amount');
-                array_forget($discount, 'partner_service_id');
-            }
-            return response()->json(['offers' => $discounts, 'code' => 200]);
+        $offers = OfferShowcase::select('id', 'thumb', 'title', 'short_description', 'target_link')
+            ->where('is_active', 1)->get();
+        return response()->json(['offers' => $offers, 'code' => 200]);
+    }
+
+    public function getOffer($offer)
+    {
+        $offer = OfferShowcase::select('id', 'thumb', 'title','banner', 'short_description', 'detail_description', 'target_link')
+            ->where([
+                ['id', $offer],
+                ['is_active', 1]
+            ])->first();
+        if (count($offer) > 0) {
+            return response()->json(['offer' => $offer, 'code' => 200]);
         } else {
             return response()->json(['code' => 404]);
         }

@@ -41,7 +41,10 @@ $api->version('v1', function ($api) {
     $api->get('job-times', 'App\Http\Controllers\JobController@getPreferredTimes');
     $api->get('info', 'App\Http\Controllers\ShebaController@getInfo');
     $api->get('images', 'App\Http\Controllers\ShebaController@getImages');
+
     $api->get('offers', 'App\Http\Controllers\ShebaController@getOffers');
+    $api->get('offer/{offer}', 'App\Http\Controllers\ShebaController@getOffer');
+
     $api->post('voucher-valid', 'App\Http\Controllers\CheckoutController@checkForValidity');
 
     $api->post('career', 'App\Http\Controllers\CareerController@apply');
