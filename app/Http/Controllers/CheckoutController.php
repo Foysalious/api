@@ -133,6 +133,9 @@ class CheckoutController extends Controller
             $result = $this->voucherRepository
                 ->isValid($request->voucher_code, $item->service->id, $item->partner->id, $request->location, $request->mobile, $cart->price, $sales_channel);
             if ($result['is_valid']) {
+                if ($result['is_percentage']) {
+                    $result['amount'] = ((float)$item->partner->prices * $result['amount']) / 100;
+                }
                 return response()->json(['code' => 200, 'amount' => $result['amount']]);
             }
         }

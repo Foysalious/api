@@ -211,7 +211,11 @@ class CheckoutRepository
                                 ->isValid($cart->voucher, $service->service->id, $partner_order->partner_id, $order_info['location_id'], $order_info['phone'], $cart->price, $order->sales_channel);
                             if ($result['is_valid']) {
                                 $voucher++;
-                                $job->discount = $result['voucher']['amount'];
+                                if ($result['is_percentage']) {
+                                    $job->discount = ((float)$service->partner->prices *  $result['voucher']['amount']) / 100;
+                                } else {
+                                    $job->discount = $result['voucher']['amount'];
+                                }
                                 $job->sheba_contribution = $result['voucher']['sheba_contribution'];
                                 $job->partner_contribution = $result['voucher']['partner_contribution'];
                                 $order->voucher_id = $result['id'];

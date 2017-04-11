@@ -52,7 +52,9 @@ class VoucherCode
             'id' => $this->voucher->id,
             'is_valid' => $this->isValid
         ];
-        $result += ($this->isValid) ? ["amount" => $this->voucher->amount, 'voucher' => $this->voucher] : ["message" => $this->rules->invalidMessage, 'errors' => $this->rules->errors];
+        $result += ($this->isValid) ?
+            ["amount" => $this->voucher->amount, "is_percentage" => $this->voucher->is_amount_percentage, 'voucher' => $this->voucher] :
+            ["message" => $this->rules->invalidMessage, 'errors' => $this->rules->errors];
         return $result;
     }
 
@@ -175,7 +177,7 @@ class VoucherCode
         if (!$this->isValid) return $this;
         $customer = is_string($customer) ? Customer::where('mobile', $customer)->first() : $customer;
         $customer = ($customer instanceof Customer) ? $customer->id : $customer;
-        $this->isValid = ($this->voucher->orders->where('customer_id', $customer)->count() < $this->voucher->max_order);
+        $this->isValid = (!$this->voucher->max_order) ? true : (( $this->voucher->usage($customer) < $this->voucher->max_order));
         if (!$this->isValid) {
             $this->rules->invalidMessage = $this->rules->invalidMessages('customers');
             array_push($this->rules->errors, 'max_usage');
