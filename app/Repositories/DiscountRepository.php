@@ -36,4 +36,20 @@ class DiscountRepository
         return $partner;
     }
 
+    /**
+     * get discount amount for service or voucher
+     * @param $hasPercentage
+     * @param $partnerPrice
+     * @param $discountValue
+     * @return float
+     */
+    public function getDiscountAmount($hasPercentage, $partnerPrice, $discountValue)
+    {
+        if ($hasPercentage) {
+            return ((float)$partnerPrice * $discountValue) / 100;
+        } else {
+            return $discountValue;
+        }
+    }
+
 }

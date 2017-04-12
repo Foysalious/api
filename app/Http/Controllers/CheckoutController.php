@@ -138,7 +138,7 @@ class CheckoutController extends Controller
                 }
                 return response()->json(['code' => 200, 'amount' => $result['amount']]);
             }
+            return response()->json(['code' => 404, 'result' => $result]);
         }
-        return response()->json(['code' => 404, 'msg' => 'invalid']);
     }
 }

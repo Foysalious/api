@@ -8,7 +8,23 @@ class Customer extends Authenticatable
 {
 
     protected $fillable = [
-        'mobile', 'remember_token', 'password', 'email', 'mobile_verified', 'reference_code', 'referrer_id', 'profile_id'
+        'name',
+        'mobile',
+        'email',
+        'password',
+        'fb_id',
+        'mobile_verified',
+        'email_verified',
+        'address',
+        'gender',
+        'dob',
+        'pro_pic',
+        'created_by',
+        'created_by_name',
+        'updated_by',
+        'updated_by_name',
+        'remember_token',
+        'reference_code', 'referrer_id', 'profile_id'
     ];
 
     protected $hidden = [

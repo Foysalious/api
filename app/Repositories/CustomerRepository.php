@@ -250,4 +250,26 @@ class CustomerRepository
         }
     }
 
+    public function createCustomerFromProfile($profile){
+        $customer = Customer::create([
+            'name' => $profile->name,
+            'mobile' => $profile->mobile,
+            'email' => $profile->email,
+            'password' => $profile->password,
+            'fb_id' => $profile->fb_id,
+            'mobile_verified' => $profile->mobile_verified,
+            'email_verified' => $profile->email_verified,
+            'address' => $profile->address,
+            'gender' => $profile->gender,
+            'dob' => $profile->dob,
+            'pro_pic' => $profile->pro_pic,
+            'reference_code' => str_random(6),
+            'remember_token' => str_random(255)
+        ]);
+        $customer = Customer::find($customer->id);
+        $customer->profile()->associate($profile);
+        $customer->update();
+        return $customer;
+    }
+
 }

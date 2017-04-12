@@ -50,6 +50,7 @@ class CheckoutRepository
     private $appPaymentUrl;
 
     private $voucherRepository;
+    private $discountRepository;
 
     public function __construct()
     {
@@ -59,6 +60,7 @@ class CheckoutRepository
         $this->appBaseUrl = config('portwallet.app_base_url');
         $this->appPaymentUrl = config('portwallet.app_payment_url');
         $this->voucherRepository = new VoucherRepository();
+        $this->discountRepository = new DiscountRepository();
     }
 
     public function storeDataInDB($order_info, $payment_method)
@@ -203,11 +205,7 @@ class CheckoutRepository
                         $job->service_unit_price = (float)$service->partner->prices;
                         if (isset($service->partner->discount_id)) {
                             $discount = PartnerServiceDiscount::find($service->partner->discount_id);
-                            if ($discount->is_amount_percentage) {
-                                $job->discount = ((float)$service->partner->prices *  $discount->amount) / 100;
-                            } else {
-                                $job->discount = $discount->amount;
-                            }
+                            $job->discount = $this->discountRepository->getDiscountAmount($discount->is_amount_percentage, $service->partner->prices, $discount->amount);
                             $job->sheba_contribution = $discount->sheba_contribution;
                             $job->partner_contribution = $discount->partner_contribution;
                         } elseif (isset($cart->voucher) && $voucher == 0) {
@@ -215,11 +213,7 @@ class CheckoutRepository
                                 ->isValid($cart->voucher, $service->service->id, $partner_order->partner_id, $order_info['location_id'], $order_info['phone'], $cart->price, $order->sales_channel);
                             if ($result['is_valid']) {
                                 $voucher++;
-                                if ($result['is_percentage']) {
-                                    $job->discount = ((float)$service->partner->prices *  $result['voucher']['amount']) / 100;
-                                } else {
-                                    $job->discount = $result['voucher']['amount'];
-                                }
+                                $job->discount = $this->discountRepository($result['is_percentage'], $service->partner->prices, $result['voucher']['amount']);
                                 $job->sheba_contribution = $result['voucher']['sheba_contribution'];
                                 $job->partner_contribution = $result['voucher']['partner_contribution'];
                                 $order->voucher_id = $result['id'];
