@@ -36,7 +36,7 @@ class SendOrderConfirmationEmail extends Job implements ShouldQueue
      */
     public function handle(Mailer $mailer)
     {
-        $mailer->send('orders.order-verfication', ['customer' => $this->customer, 'order' => $this->order], function ($m) {
+        $mailer->send('emails.order-verification', ['customer' => $this->customer, 'order' => $this->order], function ($m) {
             $m->from('yourEmail@domain.com', 'Sheba.xyz');
             $m->to($this->customer->email)->subject('Order Verification');
         });
