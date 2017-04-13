@@ -30,7 +30,6 @@ class ReviewRepository
         foreach ($ratings as $key => $rating) {
             $breakdown[$key] = $rating->count();
         }
-//        dd($breakdown);
         return $breakdown;
     }
     /**

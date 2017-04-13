@@ -26,12 +26,12 @@ class DiscountRepository
                 $amount = ((float)$partner->prices * $discount->amount) / 100;
                 $partner['discount_price'] = $amount;
                 $partner['discounted_price'] = $partner->prices - $amount;
-                $partner['discount_id'] = $discount->id;
             } else {
                 $partner['discount_price'] = $discount->amount;
                 $partner['discounted_price'] = $partner->prices - $discount->amount;
                 $partner['discount_id'] = $discount->id;
             }
+            $partner['discount_id'] = $discount->id;
         }
         return $partner;
     }

@@ -39,6 +39,10 @@ class CategoryServiceController extends Controller
             ['id', '<>', $service]
         ])->take(5)->get();
         $services = $this->categoryRepository->addServiceInfo($services);
-        return response()->json(['services' => $services, 'msg' => 'successful', 'code' => 200]);
+        if (count($services) > 3) {
+            return response()->json(['services' => $services, 'msg' => 'successful', 'code' => 200]);
+        } else {
+            return response()->json(['msg' => 'not found', 'code' => 404]);
+        }
     }
 }

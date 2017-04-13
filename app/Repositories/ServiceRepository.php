@@ -114,14 +114,6 @@ class ServiceRepository
                     $partner = $this->discountRepository->addDiscountToPartnerForService($partner);
                     array_forget($partner, 'pivot');
                     array_push($final_partners, $partner);
-//                    /**
-//                     * if service has discount update the discount prices
-//                     */
-//                    if (($discount = $service->runningDiscountOf($partner->id)) != null) {
-//                        $d_p = $discount->getAmount($option);
-//                        $partner['discount_price'] = $d_p;
-//                        $partner['discounted_price'] = $partner->prices - $d_p;
-//                    }
                 }
             } elseif ($service->variable_type == 'Fixed') {
                 $partner = $this->discountRepository->addDiscountToPartnerForService($partner);
@@ -195,37 +187,16 @@ class ServiceRepository
                     array_push($price, (float)$min);
                 }
                 array_add($service, 'start_price', min($price));
-//            $prices = (array)(json_decode($service->variables)->min_prices);
-//            $min = (min($prices));
-//            $prices = (array)(json_decode($service->variables)->max_prices);
-//            $max = (max($prices));
-//            array_add($service, 'end_price', $max);
             } elseif ($service->variable_type == 'Fixed') {
                 $price = array();
                 foreach ($partners as $partner) {
                     array_push($price, (float)$partner->pivot->prices);
                 }
                 array_add($service, 'start_price', min($price));
-//            array_add($service, 'start_price', json_decode($service->variables)->min_price);
-//            array_add($service, 'end_price', json_decode($service->variables)->max_price);
-//            array_add($service, 'end_price', json_decode($service->variables)->max_price);
             }
             array_forget($service, 'partners');
         }
         return $service;
     }
 
-    public function getReviews($service)
-    {
-        // review count of this service
-        $review = $service->reviews()->where('review', '<>', '')->count('review');
-        array_add($service, 'review_count', $review);
-        //rating count of this service
-        $total_rating = $service->reviews()->where('rating', '<>', '')->count('rating');
-        array_add($service, 'rating_count', $total_rating);
-        //avg rating of this service
-        $rating = $service->reviews()->avg('rating');
-        array_add($service, 'rating', round($rating, 1));
-        return $service;
-    }
 }
