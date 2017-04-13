@@ -31,6 +31,9 @@ class DiscountRepository
                 $partner['discounted_price'] = $partner->prices - $discount->amount;
                 $partner['discount_id'] = $discount->id;
             }
+            if ($partner['discounted_price'] < 0) {
+                $partner['discounted_price'] = 0;
+            }
             $partner['discount_id'] = $discount->id;
         }
         return $partner;
