@@ -87,8 +87,6 @@ class ServiceRepository
         }
         $final_partners = [];
         foreach ($service_partners as $key => $partner) {
-            array_add($partner, 'discount_price', 0);
-            array_add($partner, 'discounted_price', 0);
             // review count of this partner for this service
             $review = $partner->reviews()->where([
                 ['review', '<>', ''],
