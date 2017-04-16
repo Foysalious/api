@@ -28,8 +28,8 @@ class JobController extends Controller
                 }])->with(['order' => function ($query) {
                     $query->select('id');
                 }]);
-            }])->with(['materials' => function ($query) {
-                $query->select('material_name', 'material_price');
+            }])->with(['usedMaterials' => function ($query) {
+                $query->select('id', 'job_id', 'material_name', 'material_price');
             }])->with(['service' => function ($query) {
                 $query->select('id', 'name');
             }])->with(['review' => function ($query) {
@@ -41,7 +41,7 @@ class JobController extends Controller
 
             $job_model = Job::find($job->id);
             $job_model->calculate();
-            array_add($job, 'material_cost', $job_model->materialCost);
+            array_add($job, 'material_price', $job_model->materialPrice);
             array_add($job, 'total_cost', $job_model->grossPrice);
             array_add($job, 'job_code', $job_model->code());
             array_add($job, 'service_price', $job_model->servicePrice);
@@ -60,7 +60,7 @@ class JobController extends Controller
 
     public function cancelJob($customer, $job)
     {
-        $job=Job::find($job);
+        $job = Job::find($job);
         $previous_status = $job->status;
         $job->status = 'Cancelled';
         if ($job->update()) {
