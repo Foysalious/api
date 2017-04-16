@@ -12,7 +12,7 @@ class OrderRepository
      * @param $status
      * @return mixed
      */
-    public function getOrderInfo($customer, $compareOperator, $status)
+    public function getOrderInfo($customer)
     {
         return $customer->orders()
             ->with(['partner_orders' => function ($query) {

@@ -23,8 +23,7 @@ class OrderController extends Controller
     public function getNotClosedOrderInfo($customer)
     {
         $customer = Customer::find($customer);
-        //2nd & 3rd parameters are redundant
-        $orders = $this->orderRepository->getOrderInfo($customer, '<>', 'Closed');
+        $orders = $this->orderRepository->getOrderInfo($customer);
         $final_orders = [];
         foreach ($orders as $key => $order) {
             $order->calculate();
@@ -72,7 +71,7 @@ class OrderController extends Controller
     public function getClosedOrderInfo($customer)
     {
         $customer = Customer::find($customer);
-        $orders = $this->orderRepository->getOrderInfo($customer, '=', 'Served');
+        $orders = $this->orderRepository->getOrderInfo($customer);
         $final_orders = [];
         foreach ($orders as $key => $order) {
             $order->calculate();
@@ -80,28 +79,27 @@ class OrderController extends Controller
                 continue;
             }
             foreach ($order->partner_orders as $partner_order) {
-                if ($partner_order->status == 'Cancelled' && count($partner_order->jobs) == 1) {
-                    $job = $partner_order->jobs[0];
-                    if ($job->partnerChangeLog != null) {
-                        array_add($partner_order, 'show', false);
-                    }
-                }
-                foreach ($partner_order->jobs as $job) {
-                    if ($job->status == "Cancelled") {
-                        if ($job->partnerChangeLog != null) {
-                            array_add($job, 'show', false);
-                        }
-                    }
-                    array_add($job, 'customer_charge', $job->grossPrice);
-                    array_add($job, 'material_price', $job->materialPrice);
-                    array_add($job, 'show', true);
-                    array_forget($job, 'partner_order');
-                }
+                array_add($partner_order, 'show', true);
                 array_add($partner_order, 'total_amount', $partner_order->totalPrice);
                 array_add($partner_order, 'paid_amount', $partner_order->paid);
                 array_add($partner_order, 'due_amount', $partner_order->due);
                 array_add($partner_order, 'rounding_cut_off', $partner_order->roundingCutOff);
-                array_add($partner_order, 'show', true);
+                $job_partner_change = 0;
+                foreach ($partner_order->jobs as $job) {
+                    array_add($job, 'show', true);
+                    if ($job->status == "Cancelled") {
+                        if ($job->partnerChangeLog != null) {
+                            $job['show'] = false;
+                            $job_partner_change++;
+                        }
+                    }
+                    array_add($job, 'customer_charge', $job->grossPrice);
+                    array_add($job, 'material_price', $job->materialPrice);
+                    array_forget($job, 'partnerChangeLog');
+                }
+                if (count($partner_order->jobs) == $job_partner_change) {
+                    $partner_order['show'] = false;
+                }
                 array_forget($partner_order, 'partner_collection');
                 array_forget($partner_order, 'sheba_collection');
                 array_forget($partner_order->partner, 'categories');
@@ -124,37 +122,4 @@ class OrderController extends Controller
             return response()->json(['msg' => 'not found', 'code' => 404]);
         }
     }
-//    public function getClosedOrderInfo($customer)
-//    {
-//        $customer = Customer::find($customer);
-//        $orders = $customer->orders()
-//            ->with(['partner_orders' => function ($query) {
-//                $query->select('id', 'partner_id', 'total_amount', 'paid', 'due', 'order_id')
-//                    ->with(['partner' => function ($query) {
-//                        $query->select('id', 'name');
-//                    }])
-//                    ->with(['jobs' => function ($query) {
-//                        $query->select('id', 'job_code', 'service_id', 'service_cost', 'total_cost', 'status', 'partner_order_id')
-//                            ->with(['service' => function ($query) {
-//                                $query->select('id', 'name', 'thumb');
-//                            }]);
-//                    }]);
-//            }])->select('id', 'created_at')->get();
-//
-//        $final_orders = [];
-//        foreach ($orders as $order) {
-//            $count = 0;
-//            foreach ($order->partner_orders as $partner_order) {
-//                foreach ($partner_order->jobs as $job) {
-//                    if ($job->status == "Open") {
-//                        $count++;
-//                    }
-//                }
-//            }
-//            if ($count == 0) {
-//                array_push($final_orders, $order);
-//            }
-//        }
-//        return response()->json(['orders' => $final_orders, 'code' => 200, 'msg' => 'successful']);
-//    }
 }
