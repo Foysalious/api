@@ -76,15 +76,7 @@ class CheckoutRepository
                 $cart_partner = collect($cart->items)->groupBy('partner.id');
                 //Get all the unique partner id's
                 $unique_partners = collect($cart->items)->unique('partner.id')->pluck('partner.id');
-                $partner_price = [];
-                //calculate total prices for each partner
-                foreach ($cart_partner as $partners) {
-                    $price = 0;
-                    foreach ($partners as $partner) {
-                        $price += $partner->partner->prices;
-                    }
-                    $partner_price[$partner->partner->id] = $price * $partner->quantity;
-                }
+                $partner_order_price = $this->getPartnerOrderPrice($cart_partner);
 
                 $order->customer_id = $order_info['customer_id'];
                 $order->location_id = $order_info['location_id'];
@@ -136,7 +128,7 @@ class CheckoutRepository
                         $partner_order->created_by_name = 'Customer';
                     }
                     if ($payment_method == 'online') {
-                        $partner_order->sheba_collection = $partner_price[$partner];
+                        $partner_order->sheba_collection = $partner_order_price[$partner];
                     }
                     $partner_order->payment_method = $payment_method;
                     $partner_order->save();
@@ -240,6 +232,20 @@ class CheckoutRepository
             return false;
         }
         return $order;
+    }
+
+    private function getPartnerOrderPrice($cart_partner)
+    {
+        $partner_order_price = [];
+        //calculate total prices for each partner
+        foreach ($cart_partner as $partner_services) {
+            $price = 0;
+            foreach ($partner_services as $partner_service) {
+                $price += ($partner_service->partner->prices * $partner_service->quantity);
+            }
+            $partner_order_price[$partner_service->partner->id] = $price;
+        }
+        return $partner_order_price;
     }
 
     public function clearSpPayment($payment_info)

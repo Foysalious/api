@@ -32,8 +32,9 @@ class CategoryServiceController extends Controller
         }
     }
 
-    public function getSimilarServices(Category $category, $service)
+    public function getSimilarServices($category, $service)
     {
+        $category=Category::find($category);
         $services = $category->services()->select('id', 'name', 'banner', 'variables', 'variable_type')->where([
             ['publication_status', 1],
             ['id', '<>', $service]
