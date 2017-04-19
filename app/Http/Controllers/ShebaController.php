@@ -59,12 +59,26 @@ class ShebaController extends Controller
 
     public function getOffer($offer)
     {
-        $offer = OfferShowcase::select('id', 'thumb', 'title','banner', 'short_description', 'detail_description', 'target_link')
+        $offer = OfferShowcase::select('id', 'thumb', 'title', 'banner', 'short_description', 'detail_description', 'target_link')
             ->where([
                 ['id', $offer],
                 ['is_active', 1]
             ])->first();
         if (count($offer) > 0) {
+            return response()->json(['offer' => $offer, 'code' => 200]);
+        } else {
+            return response()->json(['code' => 404]);
+        }
+    }
+
+    public function getSimilarOffer($offer)
+    {
+        $offer = OfferShowcase::select('id', 'thumb', 'title', 'banner', 'short_description', 'detail_description', 'target_link')
+            ->where([
+                ['id', '<>', $offer],
+                ['is_active', 1]
+            ])->get();
+        if (count($offer) >= 3) {
             return response()->json(['offer' => $offer, 'code' => 200]);
         } else {
             return response()->json(['code' => 404]);

@@ -51,9 +51,13 @@ class CheckoutRepository
 
     private $voucherRepository;
     private $discountRepository;
+    private $created_by;
+    private $created_by_name;
 
     public function __construct()
     {
+        $this->created_by = 0;
+        $this->created_by_name = 'Customer';
         $this->appKey = config('portwallet.app_key');
         $this->appSecret = config('portwallet.app_secret');
         $this->appPaymentMode = config('portwallet.app_payment_mode');
@@ -68,84 +72,31 @@ class CheckoutRepository
         $order = new Order();
         try {
             DB::transaction(function () use ($order_info, $payment_method, $order) {
-                if (isset($order_info['created_by'])) {
-                    $user = User::select('id', 'name')->where('id', $order_info['created_by'])->first();
-                }
+                $this->calculateAuthor($order_info);
                 $cart = json_decode($order_info['cart']);
-                //group cart_info by partners
-                $cart_partner = collect($cart->items)->groupBy('partner.id');
-                //Get all the unique partner id's
-                $unique_partners = collect($cart->items)->unique('partner.id')->pluck('partner.id');
-                $partner_order_price = $this->getPartnerOrderPrice($cart_partner);
 
-                $order->customer_id = $order_info['customer_id'];
-                $order->location_id = $order_info['location_id'];
-                $order->delivery_name = $order_info['name'];
-                $order->delivery_mobile = $order_info['phone'];
-                $order->sales_channel = isset($order_info['sales_channel']) ? $order_info['sales_channel'] : 'Web';
-                if (isset($order_info['created_by'])) {
-                    $order->created_by = $user->id;
-                    $order->created_by_name = $user->name;
-                } else {
-                    $order->created_by_name = 'Customer';
-                }
-                $order->save();
+                $order = $this->createOrder($order, $order_info);
+                $order->delivery_address = $this->getDeliveryAddress($order_info);
+                $order->update();
+
                 //For custom order
                 if (isset($cart->custom_order_id)) {
-                    $custom_order = CustomOrder::find($cart->custom_order_id);
-                    $custom_order->order_id = $order->id;
-                    $custom_order->status = 'Converted To Order';
-                    $custom_order->update();
+                    $this->updateCustomOrder($order, $cart->custom_order_id);
                 }
                 (new CustomerRepository())->updateCustomerNameIfEmptyWhenPlacingOrder($order_info);
 
-                if ($order_info['address_id'] != '') {
-                    $deliver_address = CustomerDeliveryAddress::find($order_info['address_id']);
-                    $order->delivery_address = $deliver_address->address;
-                } elseif ($order_info['address'] != '') {
-                    $deliver_address = new CustomerDeliveryAddress();
-                    $deliver_address->address = $order_info['address'];
-                    $deliver_address->customer_id = $order_info['customer_id'];
-                    if (isset($order_info['created_by'])) {
-                        $deliver_address->created_by = $user->id;
-                        $deliver_address->created_by_name = $user->name;
-                    } else {
-                        $deliver_address->created_by_name = 'Customer';
-                    }
-                    $deliver_address->save();
-                    $order->delivery_address = $order_info['address'];
-                }
-                $order->update();
+                $cart_partner = collect($cart->items)->groupBy('partner.id');
+                //Get all the unique partner id's
+                $unique_partners = collect($cart->items)->unique('partner.id')->pluck('partner.id');
                 $voucher = 0;
+
                 foreach ($unique_partners as $partner) {
-                    $partner_order = new PartnerOrder();
-                    $partner_order->order_id = $order->id;
-                    $partner_order->partner_id = $partner;
-                    if (isset($order_info['created_by'])) {
-                        $partner_order->created_by = $user->id;
-                        $partner_order->created_by_name = $user->name;
-                    } else {
-                        $partner_order->created_by_name = 'Customer';
-                    }
+                    $partner_order = $this->createPartnerOrder($order, $partner, $payment_method);
                     if ($payment_method == 'online') {
+                        $partner_order_price = $this->calculatePartnerOrderPrice($cart_partner);
                         $partner_order->sheba_collection = $partner_order_price[$partner];
-                    }
-                    $partner_order->payment_method = $payment_method;
-                    $partner_order->save();
-                    if ($payment_method == 'online') {
-                        $partner_order_payment = new PartnerOrderPayment();
-                        $partner_order_payment->partner_order_id = $partner_order->id;
-                        $partner_order_payment->amount = $partner_order->sheba_collection;
-                        $partner_order_payment->transaction_type = 'Credit';
-                        $partner_order_payment->method = 'online';
-                        $partner_order_payment->log = 'advanced payment';
-                        if (isset($order_info['created_by'])) {
-                            $partner_order_payment->created_by = $user->id;
-                            $partner_order_payment->created_by_name = $user->name;
-                        } else {
-                            $partner_order_payment->created_by_name = 'Customer';
-                        }
-                        $partner_order_payment->save();
+                        $partner_order->update();
+                        $this->createPartnerOrderPayment($partner_order);
                     }
                     $partner_services = $cart_partner[$partner];
                     foreach ($partner_services as $service) {
@@ -153,6 +104,16 @@ class CheckoutRepository
                         $job->partner_order_id = $partner_order->id;
                         $job->service_id = $service->service->id;
                         $job->service_name = $service->service->name;
+                        $job->preferred_time = $service->time;
+                        $job->job_additional_info = $service->additional_info;
+                        $job->service_quantity = $service->quantity;
+                        $job->crm_id = isset($service->crm_id) ? $service->crm_id : '';
+                        $job->department_id = isset($service->department_id) ? $service->department_id : '';
+                        $job->service_unit_price = (float)$service->partner->prices;
+                        $job = $this->calculateDiscountOrVoucher($order, $partner_order, $job, $cart, $service);
+                        $job->job_name = isset($service->job_name) ? $service->job_name : '';
+                        $job = $this->getAuthor($job);
+                        $job->schedule_date = $this->calculateScheduleDate($service->date);
                         //For custom order
                         if (isset($cart->custom_order_id)) {
                             $job->service_variables = json_encode($service->serviceOptions);
@@ -162,8 +123,8 @@ class CheckoutRepository
                             //shafiq
                             if (empty($service->service->variable_type) || empty($service->service->variables)) {
                                 $service_details = Service::find($service->service->id);
-                                $job->service_variable_type = $service_variable_type = $service_details->variable_type;
                                 $job->service_variables = $service_variables = $service_details->variables;
+                                $job->service_variable_type = $service_variable_type = $service_details->variable_type;
                             } else {
                                 $job->service_variable_type = $service_variable_type = $service->service->variable_type;
                                 $job->service_variables = $service_variables = json_encode($service->service->variables);
@@ -183,44 +144,8 @@ class CheckoutRepository
                             }
                             $job->service_variables = json_encode($job_options);
                         }
-
-                        if (is_object($service->date)) {
-                            $job->schedule_date = Carbon::parse($service->date->time)->format('Y-m-d');
-                        } else {
-                            $job->schedule_date = Carbon::parse($service->date)->format('Y-m-d');
-                        }
-                        $job->preferred_time = $service->time;
-                        $job->job_additional_info = $service->additional_info;
-                        $job->service_quantity = $service->quantity;
-                        $job->crm_id = isset($service->crm_id) ? $service->crm_id : '';
-                        $job->department_id = isset($service->department_id) ? $service->department_id : '';
-                        $job->service_unit_price = (float)$service->partner->prices;
-                        if (isset($service->partner->discount_id)) {
-                            $discount = PartnerServiceDiscount::find($service->partner->discount_id);
-                            $job->discount = $this->discountRepository->getDiscountAmount($discount->is_amount_percentage, $service->partner->prices, $discount->amount);
-                            $job->sheba_contribution = $discount->sheba_contribution;
-                            $job->partner_contribution = $discount->partner_contribution;
-                        } elseif (isset($cart->voucher) && $voucher == 0) {
-                            $result = $this->voucherRepository
-                                ->isValid($cart->voucher, $service->service->id, $partner_order->partner_id, $order_info['location_id'], $order_info['phone'], $cart->price, $order->sales_channel);
-                            if ($result['is_valid']) {
-                                $voucher++;
-                                $job->discount = $this->discountRepository->getDiscountAmount($result['is_percentage'], $service->partner->prices, $result['voucher']['amount']);
-                                $job->sheba_contribution = $result['voucher']['sheba_contribution'];
-                                $job->partner_contribution = $result['voucher']['partner_contribution'];
-                                $order->voucher_id = $result['id'];
-                                $order->update();
-                            }
-                        };
-                        $job->job_name = isset($service->job_name) ? $service->job_name : '';
-                        if (isset($order_info['created_by'])) {
-                            $job->created_by = $user->id;
-                            $job->created_by_name = $user->name;
-                        } else {
-                            $job->created_by_name = 'Customer';
-                        }
                         $job->save();
-                        $partner = $job->partner_order->partner_id;
+                        $partner = $partner_order->partner_id;
                         $service = Service::find($job->service_id);
                         $job->commission_rate = $service->commission($partner);
                         $job->vat = 0;
@@ -234,7 +159,54 @@ class CheckoutRepository
         return $order;
     }
 
-    private function getPartnerOrderPrice($cart_partner)
+    private function calculateAuthor($order_info)
+    {
+        if (isset($order_info['created_by'])) {
+            $user = User::find($order_info['created_by']);
+            $this->created_by = $user->id;
+            $this->created_by_name = $user->name;
+        }
+    }
+
+    private function getAuthor($object)
+    {
+        $object->created_by = $this->created_by;
+        $object->created_by_name = $this->created_by_name;
+        return $object;
+    }
+
+    private function createOrder($order, $order_info)
+    {
+        $order->customer_id = $order_info['customer_id'];
+        $order->location_id = $order_info['location_id'];
+        $order->delivery_name = $order_info['name'];
+        $order->delivery_mobile = $order_info['phone'];
+        $order->sales_channel = isset($order_info['sales_channel']) ? $order_info['sales_channel'] : 'Web';
+        $order = $this->getAuthor($order);
+        $order->save();
+        return $order;
+    }
+
+    private function createPartnerOrder($order, $partner, $payment_method)
+    {
+        $partner_order = new PartnerOrder();
+        $partner_order->order_id = $order->id;
+        $partner_order->partner_id = $partner;
+        $partner_order = $this->getAuthor($partner_order);
+        $partner_order->payment_method = $payment_method;
+        $partner_order->save();
+        return $partner_order;
+    }
+
+    private function updateCustomOrder($order, $custom_order_id)
+    {
+        $custom_order = CustomOrder::find($custom_order_id);
+        $custom_order->order_id = $order->id;
+        $custom_order->status = 'Converted To Order';
+        $custom_order->update();
+    }
+
+    private function calculatePartnerOrderPrice($cart_partner)
     {
         $partner_order_price = [];
         //calculate total prices for each partner
@@ -246,6 +218,63 @@ class CheckoutRepository
             $partner_order_price[$partner_service->partner->id] = $price;
         }
         return $partner_order_price;
+    }
+
+    private function getDeliveryAddress($order_info)
+    {
+        if ($order_info['address_id'] != '') {
+            $deliver_address = CustomerDeliveryAddress::find($order_info['address_id']);
+            return $deliver_address->address;
+        } elseif ($order_info['address'] != '') {
+            $deliver_address = new CustomerDeliveryAddress();
+            $deliver_address->address = $order_info['address'];
+            $deliver_address->customer_id = $order_info['customer_id'];
+            $deliver_address = $this->getAuthor($deliver_address);
+            $deliver_address->save();
+            return $order_info['address'];
+        }
+    }
+
+    private function createPartnerOrderPayment($partner_order)
+    {
+        $partner_order_payment = new PartnerOrderPayment();
+        $partner_order_payment->partner_order_id = $partner_order->id;
+        $partner_order_payment->amount = $partner_order->sheba_collection;
+        $partner_order_payment->transaction_type = 'Credit';
+        $partner_order_payment->method = 'online';
+        $partner_order_payment->log = 'advanced payment';
+        $partner_order_payment = $this->getAuthor($partner_order_payment);
+        $partner_order_payment->save();
+    }
+
+    private function calculateDiscountOrVoucher($order, $partner_order, $job, $cart, $service)
+    {
+        if (isset($service->partner->discount_id)) {
+            $discount = PartnerServiceDiscount::find($service->partner->discount_id);
+            $job->discount = $this->discountRepository->getDiscountAmount($discount->is_amount_percentage, $service->partner->prices, $discount->amount);
+            $job->sheba_contribution = $discount->sheba_contribution;
+            $job->partner_contribution = $discount->partner_contribution;
+        } elseif (isset($cart->voucher) && $order->voucher_id == null) {
+            $result = $this->voucherRepository
+                ->isValid($cart->voucher, $service->service->id, $partner_order->partner_id, $order->location_id, $order->delivery_mobile, $cart->price, $order->sales_channel);
+            if ($result['is_valid']) {
+                $job->discount = $this->discountRepository->getDiscountAmount($result['is_percentage'], $service->partner->prices, $result['voucher']['amount']);
+                $job->sheba_contribution = $result['voucher']['sheba_contribution'];
+                $job->partner_contribution = $result['voucher']['partner_contribution'];
+                $order->voucher_id = $result['id'];
+                $order->update();
+            }
+        };
+        return $job;
+    }
+
+    private function calculateScheduleDate($date)
+    {
+        if (is_object($date)) {
+            return Carbon::parse($date->time)->format('Y-m-d');
+        } else {
+            return Carbon::parse($date)->format('Y-m-d');
+        }
     }
 
     public function clearSpPayment($payment_info)

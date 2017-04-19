@@ -44,6 +44,8 @@ $api->version('v1', function ($api) {
 
     $api->get('offers', 'App\Http\Controllers\ShebaController@getOffers');
     $api->get('offer/{offer}', 'App\Http\Controllers\ShebaController@getOffer');
+    $api->get('offer/{offer}', 'App\Http\Controllers\ShebaController@getOffer');
+    $api->get('offer/{offer}/similar-offer', 'App\Http\Controllers\ShebaController@getSimilarOffer');
 
     $api->post('voucher-valid', 'App\Http\Controllers\CheckoutController@checkForValidity');
 
