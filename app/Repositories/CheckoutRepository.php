@@ -251,14 +251,14 @@ class CheckoutRepository
     {
         if (isset($service->partner->discount_id)) {
             $discount = PartnerServiceDiscount::find($service->partner->discount_id);
-            $job->discount = $this->discountRepository->getDiscountAmount($discount->is_amount_percentage, $service->partner->prices, $discount->amount);
+            $job->discount = $this->discountRepository->getDiscountAmount($discount->is_amount_percentage, $service->partner->prices, $discount->amount) * $job->service_quantity;
             $job->sheba_contribution = $discount->sheba_contribution;
             $job->partner_contribution = $discount->partner_contribution;
         } elseif (isset($cart->voucher) && $order->voucher_id == null) {
             $result = $this->voucherRepository
                 ->isValid($cart->voucher, $service->service->id, $partner_order->partner_id, $order->location_id, $order->delivery_mobile, $cart->price, $order->sales_channel);
             if ($result['is_valid']) {
-                $job->discount = $this->discountRepository->getDiscountAmount($result['is_percentage'], $service->partner->prices, $result['voucher']['amount']);
+                $job->discount = $this->discountRepository->getDiscountAmount($result['is_percentage'], $service->partner->prices, $result['voucher']['amount']) * $job->service_quantity;
                 $job->sheba_contribution = $result['voucher']['sheba_contribution'];
                 $job->partner_contribution = $result['voucher']['partner_contribution'];
                 $order->voucher_id = $result['id'];
