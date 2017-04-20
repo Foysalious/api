@@ -70,7 +70,7 @@ class Job extends Model
         $this->totalPriceWithoutVat = formatTaka($this->servicePrice + $this->materialPrice);
         //$this->totalPrice = formatTaka($this->totalPriceWithoutVat + $this->vat); // later
         $this->totalPrice = formatTaka($this->totalPriceWithoutVat);
-        $this->grossPrice = formatTaka($this->totalPrice - $this->discount);
+        $this->grossPrice = (formatTaka($this->totalPrice - $this->discount) > 0) ? formatTaka($this->totalPrice - $this->discount) : 0;
         $this->service_unit_price = formatTaka($this->service_unit_price);
         return $this;
     }
@@ -83,7 +83,7 @@ class Job extends Model
 
     public function fullCode()
     {
-        return  $this->partner_order->code() . '-' . $this->code();
+        return $this->partner_order->code() . '-' . $this->code();
     }
 
     public function cancelLog()

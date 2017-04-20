@@ -130,4 +130,10 @@ class ServiceController extends Controller
         return response()->json(['msg' => 'not found', 'code' => 404]);
     }
 
+    public function getPrices($service)
+    {
+        $service = Service::find($service);
+        $prices = $this->serviceRepository->getMaxMinPrice($service);
+        return response()->json(['max' => $prices[0], 'min' => $prices[1], 'code' => 200]);
+    }
 }

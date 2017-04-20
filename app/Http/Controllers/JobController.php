@@ -44,13 +44,14 @@ class JobController extends Controller
             array_add($job, 'material_price', $job_model->materialPrice);
             array_add($job, 'total_cost', $job_model->grossPrice);
             array_add($job, 'job_code', $job_model->code());
+            array_add($job, 'time', $job->created_at->format('jS M, Y'));
+            array_forget($job, 'created_at');
             array_add($job, 'service_price', $job_model->servicePrice);
 
             return response()->json(['job' => $job, 'msg' => 'successful', 'code' => 200]);
         } else {
             return response()->json(['msg' => 'unauthorized', 'code' => 409]);
         }
-
     }
 
     public function getPreferredTimes()
