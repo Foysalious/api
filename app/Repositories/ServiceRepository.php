@@ -15,38 +15,18 @@ class ServiceRepository
         $this->discountRepository = new DiscountRepository();
     }
 
-    /**
-     * @param $service
-     * @param $location
-     * @return mixed
-     */
     public function partners($service, $location = null)
     {
-        if ($location != null) {
-            $service_partners = $this->partnerSelectByLocation($service, $location);
-        } else {
-            $service_partners = $this->partnerSelect($service);
-        }
-        $final_partners = [];
+        list($service_partners, $final_partners) = $this->getPartnerService($service, $location);
         foreach ($service_partners as $key => $partner) {
             $prices = json_decode($partner->prices);
-            /**
-             * For optioned services
-             */
             if ($service->variable_type == 'Options') {
                 $variables = json_decode($service->variables);
                 // Get the first option of service
-                $first_option = key($variables->prices);
+                $option = $first_option = key($variables->prices);
                 //check for first option exists in prices
-                $count = 0;
-                foreach ($prices as $key => $price) {
-                    if ($key == $first_option) {
-                        $count++;
-                        break;
-                    }
-                }
-                if ($count > 0) {
-                    $price = reset($prices);// first value of array key
+                $price = $this->partnerServesThisOption($prices, $option);
+                if ($price != null) {
                     array_set($partner, 'prices', $price);
                 } else {
                     //remove the partner from service_partner list
@@ -54,18 +34,8 @@ class ServiceRepository
                     continue;
                 }
             }
-            $partner = $this->discountRepository->addDiscountToPartnerForService($partner);
-            // review count of this partner for this service
-            $review = $partner->reviews()->where([
-                ['review', '<>', ''],
-                ['service_id', $service->id]
-            ])->count('review');
-            //avg rating of the partner for this service
-            $rating = $partner->reviews()->where('service_id', $service->id)->avg('rating');
-            array_add($partner, 'review', $review);
-            array_add($partner, 'rating', $rating);
-            array_forget($partner, 'pivot');
-            array_push($final_partners, $partner);
+            $partner = $this->getPartnerRatingReviewCount($service, $partner);
+            $final_partners = $this->addToFinalPartnerList($partner, $final_partners);
         }
         return $final_partners;
 
@@ -80,45 +50,19 @@ class ServiceRepository
      */
     public function partnerWithSelectedOption($service, $option, $location)
     {
-        if ($location != null) {
-            $service_partners = $this->partnerSelectByLocation($service, $location);
-        } else {
-            $service_partners = $this->partnerSelect($service);
-        }
-        $final_partners = [];
+        list($service_partners, $final_partners) = $this->getPartnerService($service, $location);
         foreach ($service_partners as $key => $partner) {
-            // review count of this partner for this service
-            $review = $partner->reviews()->where([
-                ['review', '<>', ''],
-                ['service_id', $service->id]
-            ])->count('review');
-            //avg rating of the partner for this service
-            $rating = $partner->reviews()->where('service_id', $service->id)->avg('rating');
-            array_add($partner, 'review', $review);
-            array_add($partner, 'rating', $rating);
-            /**
-             * For optioned services
-             */
+            $partner = $this->getPartnerRatingReviewCount($service, $partner);
             if ($service->variable_type == 'Options') {
-                $options = (array)json_decode($partner->prices);
-                $count = 0;
-                foreach ($options as $key => $price) {
-                    if ($key == $option) {
-                        $count++;
-                        break;
-                    }
-                }
-                //if the selected option exist in partner option list add the partner to final list
-                if ($count > 0) {
+                $prices = (array)json_decode($partner->prices);
+
+                $price = $this->partnerServesThisOption($prices, $option);
+                if ($price != null) {
                     array_set($partner, 'prices', $price);
-                    $partner = $this->discountRepository->addDiscountToPartnerForService($partner);
-                    array_forget($partner, 'pivot');
-                    array_push($final_partners, $partner);
+                    $final_partners = $this->addToFinalPartnerList($partner, $final_partners);
                 }
             } elseif ($service->variable_type == 'Fixed') {
-                $partner = $this->discountRepository->addDiscountToPartnerForService($partner);
-                array_forget($partner, 'pivot');
-                array_push($final_partners, $partner);
+                $final_partners = $this->addToFinalPartnerList($partner, $final_partners);
             }
         }
         return $final_partners;
@@ -130,7 +74,8 @@ class ServiceRepository
      * @param $location
      * @return mixed
      */
-    public function partnerSelectByLocation($service, $location)
+    public
+    function partnerSelectByLocation($service, $location)
     {
         return $service->partners()
             ->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'prices')
@@ -143,7 +88,8 @@ class ServiceRepository
             })->get();
     }
 
-    public function partnerSelect($service)
+    public
+    function partnerSelect($service)
     {
         return $service->partners()->with(['locations' => function ($query) {
             $query->select('id', 'name');
@@ -155,7 +101,8 @@ class ServiceRepository
             ])->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'prices')->get();
     }
 
-    public function getMaxMinPrice($service)
+    public
+    function getMaxMinPrice($service)
     {
         $service = Service::find($service->id);
         $max_price = [];
@@ -173,7 +120,8 @@ class ServiceRepository
         return array(max($max_price), min($min_price));
     }
 
-    public function getStartEndPrice($service)
+    public
+    function getStartEndPrice($service)
     {
         $partners = $service->partners()->where([
             ['is_published', 1],
@@ -197,6 +145,48 @@ class ServiceRepository
             array_forget($service, 'partners');
         }
         return $service;
+    }
+
+    /**
+     * @param $service
+     * @param $partner
+     * @return mixed
+     */
+    private
+    function getPartnerRatingReviewCount($service, $partner)
+    {
+        $review = $partner->reviews()->where([
+            ['review', '<>', ''],
+            ['service_id', $service->id]
+        ])->count('review');
+        $rating = $partner->reviews()->where('service_id', $service->id)->avg('rating');
+        array_add($partner, 'review', $review);
+        array_add($partner, 'rating', $rating);
+        return $partner;
+    }
+
+    private function getPartnerService($service, $location)
+    {
+        return array($service_partners = $location != null ? $this->partnerSelectByLocation($service, $location) : $this->partnerSelect($service), []);
+    }
+
+
+    private function partnerServesThisOption($prices, $option)
+    {
+        foreach ($prices as $key => $price) {
+            if ($key == $option) {
+                return $price;
+            }
+        }
+        return null;
+    }
+
+    private function addToFinalPartnerList($partner, $final_partners)
+    {
+        $partner = $this->discountRepository->addDiscountToPartnerForService($partner);
+        array_forget($partner, 'pivot');
+        array_push($final_partners, $partner);
+        return $final_partners;
     }
 
 }
