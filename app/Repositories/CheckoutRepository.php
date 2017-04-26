@@ -14,10 +14,10 @@ use App\Models\PartnerOrderPayment;
 use App\Models\PartnerServiceDiscount;
 use App\Models\Service;
 use App\Models\User;
+use Cache;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
-use Cache;
 use Illuminate\Support\Facades\DB;
 
 
@@ -112,7 +112,6 @@ class CheckoutRepository
                         $job->service_unit_price = (float)$service->partner->prices;
                         $job = $this->calculateDiscountOrVoucher($order, $partner_order, $job, $cart, $service);
                         $job->job_name = isset($service->job_name) ? $service->job_name : '';
-                        $job = $this->getAuthor($job);
                         $job->schedule_date = $this->calculateScheduleDate($service->date);
                         //For custom order
                         if (isset($cart->custom_order_id)) {
@@ -144,6 +143,7 @@ class CheckoutRepository
                             }
                             $job->service_variables = json_encode($job_options);
                         }
+                        $job = $this->getAuthor($job);
                         $job->save();
                         $partner = $partner_order->partner_id;
                         $service = Service::find($job->service_id);
@@ -192,8 +192,8 @@ class CheckoutRepository
         $partner_order = new PartnerOrder();
         $partner_order->order_id = $order->id;
         $partner_order->partner_id = $partner;
-        $partner_order = $this->getAuthor($partner_order);
         $partner_order->payment_method = $payment_method;
+        $partner_order = $this->getAuthor($partner_order);
         $partner_order->save();
         return $partner_order;
     }
@@ -237,11 +237,8 @@ class CheckoutRepository
 
     private function createPartnerOrderPayment($partner_order)
     {
-        $partner_order_payment = new PartnerOrderPayment();
-        $partner_order_payment->partner_order_id = $partner_order->id;
+        $partner_order_payment = $this->getPartnerOrderPayment($partner_order);
         $partner_order_payment->amount = $partner_order->sheba_collection;
-        $partner_order_payment->transaction_type = 'Credit';
-        $partner_order_payment->method = 'online';
         $partner_order_payment->log = 'advanced payment';
         $partner_order_payment = $this->getAuthor($partner_order_payment);
         $partner_order_payment->save();
@@ -286,11 +283,8 @@ class CheckoutRepository
             $partner_order->calculate();
             //to send data in email
             array_push($partner, array("partner_order_id" => $partner_order->id, "due" => $partner_order->due));
-            $partner_order_payment = new PartnerOrderPayment();
-            $partner_order_payment->partner_order_id = $partner_order->id;
+            $partner_order_payment = $this->getPartnerOrderPayment($partner_order);
             $partner_order_payment->amount = $partner_order->due;
-            $partner_order_payment->transaction_type = 'Credit';
-            $partner_order_payment->method = 'online';
             $partner_order_payment->log = 'Due paid';
             $partner_order_payment->save();
             $partner_order->payment_method = 'online';
@@ -388,6 +382,15 @@ class CheckoutRepository
         return $portwallet;
     }
 
+    private function getPartnerOrderPayment($partner_order)
+    {
+        $partner_order_payment = new PartnerOrderPayment();
+        $partner_order_payment->partner_order_id = $partner_order->id;
+        $partner_order_payment->transaction_type = 'Credit';
+        $partner_order_payment->method = 'online';
+        return $partner_order_payment;
+    }
+
     public function sendConfirmation($customer, $order)
     {
         //send order info to customer  by mail
@@ -395,7 +398,6 @@ class CheckoutRepository
         (new SmsHandler('order-created'))->send($customer->mobile, [
             'order_code' => $order->code()
         ]);
-//        $this->dispatch(new SendOrderConfirmationSms($customer, $order));
         if ($customer->email != '') {
             $this->dispatch(new SendOrderConfirmationEmail($customer, $order));
         }

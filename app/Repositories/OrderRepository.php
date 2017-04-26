@@ -25,14 +25,14 @@ class OrderRepository
                     ->with(['jobs' => function ($query) {
                         $query->select('id', 'service_id', 'service_unit_price', 'service_quantity', 'discount', 'status', 'partner_order_id')
                             ->with(['service' => function ($query) {
-                                $query->select('id', 'name', 'banner', 'category_id')->with(['category' => function ($query) {
+                                $query->select('id', 'name', 'category_id')->with(['category' => function ($query) {
                                     $query->select('categories.id');
                                 }]);
                             }]);
                     }]);
             }])->with(['location' => function ($query) {
                 $query->select('id', 'name');
-            }])->select('id', 'delivery_mobile', 'sales_channel', 'location_id', 'created_at')->orderBy('id', 'desc')->get();
+            }])->select('id', 'delivery_mobile', 'delivery_name', 'delivery_address', 'sales_channel', 'location_id', 'created_at')->orderBy('id', 'desc')->get();
 
 //        ->wherehas('jobs', function ($query) use ($status, $compareOperator) {
 //        $query->where('jobs.status', $compareOperator, $status);
