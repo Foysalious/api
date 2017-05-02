@@ -28,10 +28,7 @@ class ShebaController extends Controller
 
     public function getInfo()
     {
-//        $customer_count = Customer::all()->count() + 3000;
-//        $partner_count = Partner::all()->count();
         $job_count = Job::all()->count() + 16000;
-//        $job_count = Job::where('status', 'Served')->count() + 16000;
         $service_count = Service::where('publication_status', 1)->get()->count();
         $resource_count = Resource::whereHas('partners', function ($q) {
             $q->where([
@@ -64,11 +61,7 @@ class ShebaController extends Controller
                 ['id', $offer],
                 ['is_active', 1]
             ])->first();
-        if (count($offer) > 0) {
-            return response()->json(['offer' => $offer, 'code' => 200]);
-        } else {
-            return response()->json(['code' => 404]);
-        }
+        return count($offer) > 0 ? response()->json(['offer' => $offer, 'code' => 200]) : response()->json(['code' => 404]);
     }
 
     public function getSimilarOffer($offer)
@@ -78,10 +71,6 @@ class ShebaController extends Controller
                 ['id', '<>', $offer],
                 ['is_active', 1]
             ])->get();
-        if (count($offer) >= 3) {
-            return response()->json(['offer' => $offer, 'code' => 200]);
-        } else {
-            return response()->json(['code' => 404]);
-        }
+        return count($offer) >= 3 ? response()->json(['offer' => $offer, 'code' => 200]) : response()->json(['code' => 404]);
     }
 }
