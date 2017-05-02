@@ -19,7 +19,7 @@ class Cors2MiddleWare
         $domains = [
             "http://localhost",
             "http://localhost:8080",
-            "http://localhost:8100",
+            "http://localhost:8081",
             "http://192.168.1.109:8080",
             "http://192.168.1.108:8080",
             "http://dev-sheba.xyz",
