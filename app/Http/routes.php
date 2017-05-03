@@ -115,7 +115,13 @@ $api->version('v1', function ($api) {
 
     $api->post('rating', 'App\Http\Controllers\ReviewController@giveRatingFromEmail');
 
-    $api->group(['prefix' => 'business'], function () {
+    $api->group(['prefix' => 'business'], function ($api) {
+        $api->get('check-url', 'App\Http\Controllers\BusinessController@checkURL');
 
+        $api->group(['prefix' => 'member', 'middleware' => ['member.auth']], function ($api) {
+            $api->post('/{member}/create', 'App\Http\Controllers\BusinessController@create');
+            $api->get('/{member}/show', 'App\Http\Controllers\BusinessController@show');
+            $api->post('/{member}/business/{business}/change-logo', 'App\Http\Controllers\BusinessController@changeLogo');
+        });
     });
 });

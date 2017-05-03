@@ -15,7 +15,7 @@ class Member extends Model
 
     public function businesses()
     {
-        return $this->belongsToMany(Business::class);
+        return $this->belongsToMany(Business::class)->withTimestamps();
     }
 
     public function businessMembership()
