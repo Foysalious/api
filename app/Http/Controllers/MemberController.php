@@ -6,6 +6,7 @@ use App\Jobs\sendProfileCreationEmail;
 use App\Jobs\sendProfileCreationSMS;
 use App\Library\Sms;
 use App\Models\Member;
+use App\Models\MemberRequest;
 use App\Models\Profile;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -42,7 +43,16 @@ class MemberController extends Controller
 
     public function getRequests($member)
     {
-        $member = Member::find($member);
-        dd($member->requests->select);
+        $member = Member::with(['requests' => function ($q) {
+            $q->select('id', 'member_id', 'business_id', 'status')->with(['business' => function ($q) {
+                $q->select('id', 'name');
+            }]);
+        }])->select('id')->where('id', $member)->first();
+        if (count($member->requests) > 0) {
+            return response()->json(['code' => 200, 'requests' => $member->requests]);
+        }
+        else{
+            return response()->json(['code' => 404]);
+        }
     }
 }

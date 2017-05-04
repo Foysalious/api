@@ -20,7 +20,7 @@ class Member extends Model
 
     public function requests()
     {
-        return $this->hasMany(MemberRequest::class);
+        return $this->hasMany(MemberRequest::class, 'member_id');
     }
 
 }
