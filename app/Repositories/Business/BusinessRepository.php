@@ -72,8 +72,8 @@ class BusinessRepository
     public function getBusinesses($member)
     {
         return Member::with(['businesses' => function ($q) {
-            $q->get('name', 'logo');
-        }])->where('id', $member)->get();
+            $q->select('name', 'logo');
+        }])->select('id')->where('id', $member)->first();
     }
 
     public function uploadLogo($business, $logo)

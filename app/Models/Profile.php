@@ -35,4 +35,5 @@ class Profile extends Model
         return $this->hasOne(Member::class);
     }
 
+
 }

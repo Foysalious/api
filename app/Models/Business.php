@@ -8,16 +8,6 @@ class Business extends Model
 {
     protected $guarded = ['id'];
 
-    public function partnerOrder()
-    {
-        return $this->belongsTo(BusinessCategory::class);
-    }
-
-    public function associateMembers()
-    {
-        return $this->hasMany(BusinessMember::class);
-    }
-
     public function members()
     {
         return $this->belongsToMany(Member::class);
@@ -31,5 +21,10 @@ class Business extends Model
     public function bankInformations()
     {
         return $this->hasMany(BusinessBankInformations::class);
+    }
+
+    public function requests()
+    {
+        return $this->hasMany(MemberRequest::class)->where('requester_type', 'business');
     }
 }
