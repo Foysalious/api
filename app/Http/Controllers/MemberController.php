@@ -17,27 +17,27 @@ class MemberController extends Controller
 
     public function search($member, Request $request)
     {
-        $query = Profile::with(['member' => function ($q) {
+        $search = trim($request->search);
+        $profile = Profile::with(['member' => function ($q) {
             $q->select('id', 'profile_id');
-        }])->select('id', 'name', 'pro_pic');
+        }])->select('id', 'name', 'pro_pic')->where('email', $search)->first();
 
-        if ($request->has('email')) {
-            $profile = $query->where('email', $request->email)->first();
-        } elseif ($request->has('mobile')) {
-            $profile = $query->where('mobile', '+88' . $request->mobile)->first();
+        if (count($profile) == 0) {
+            $profile = Profile::with(['member' => function ($q) {
+                $q->select('id', 'profile_id');
+            }])->select('id', 'name', 'pro_pic')->where('mobile', $this->formatMobile($search))->first();
         }
-        if ($profile != null && $profile->member != null) {
-            if ($profile->member->id == $member) {
-                return response()->json(['msg' => "seriously??? can't send invitation to yourself", 'code' => 500]);
+        if ($profile != null) {
+            if ($profile->member != null) {
+                if ($profile->member->id == $member) {
+                    return response()->json(['msg' => "seriously??? can't send invitation to yourself", 'code' => 500]);
+                }
             }
             return response()->json(['result' => $profile, 'msg' => 'found', 'code' => 200]);
         } else {
-            if ($request->has('email')) {
-                $this->dispatch(new sendProfileCreationEmail($request->email));
-            } elseif ($request->has('mobile')) {
-                Sms::send_single_message('+88' . $request->mobile, "Please go to this link to create your profile:" . env('SHEBA_ACCOUNT_URL'));
-            }
-            return response()->json(['msg' => "we've send profile creation message", 'code' => 200]);
+            $this->dispatch(new sendProfileCreationEmail($search));
+//            Sms::send_single_message($this->formatMobile($search), "Please go to this link to create your profile:" . env('SHEBA_ACCOUNT_URL'));
+            return response()->json(['msg' => "we've send Member creation message", 'code' => 200]);
         }
     }
 
@@ -50,9 +50,23 @@ class MemberController extends Controller
         }])->select('id')->where('id', $member)->first();
         if (count($member->requests) > 0) {
             return response()->json(['code' => 200, 'requests' => $member->requests]);
-        }
-        else{
+        } else {
             return response()->json(['code' => 404]);
+        }
+    }
+
+    private function formatMobile($mobile)
+    {
+        // mobile starts with '+88'
+        if (preg_match("/^(\+88)/", $mobile)) {
+            ;
+            return $mobile;
+        } // when mobile starts with '88' replace it with '+880'
+        elseif (preg_match("/^(88)/", $mobile)) {
+            return preg_replace('/^88/', '+88', $mobile);
+        } // real mobile no add '+880' at the start
+        else {
+            return '+88' . $mobile;
         }
     }
 }

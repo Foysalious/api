@@ -117,15 +117,14 @@ $api->version('v1', function ($api) {
 
     $api->group(['prefix' => 'business'], function ($api) {
         $api->get('check-url', 'App\Http\Controllers\BusinessController@checkURL');
-
+        $api->get('type-category', 'App\Http\Controllers\BusinessController@getTypeAndCategories');
         $api->group(['prefix' => 'member', 'middleware' => ['member.auth']], function ($api) {
-
             $api->post('/{member}/create', 'App\Http\Controllers\BusinessController@create');
             $api->get('/{member}/show', 'App\Http\Controllers\BusinessController@show');
 
             $api->get('{member}/business/{business}', 'App\Http\Controllers\BusinessController@getBusiness');
-            $api->post('/{member}/business/{business}/change-logo', 'App\Http\Controllers\BusinessController@changeLogo');
             $api->post('/{member}/business/{business}/update', 'App\Http\Controllers\BusinessController@update');
+            $api->post('/{member}/business/{business}/change-logo', 'App\Http\Controllers\BusinessController@changeLogo');
 
             $api->get('/{member}/search', 'App\Http\Controllers\MemberController@search');
             $api->get('{member}/requests', 'App\Http\Controllers\MemberController@getRequests');

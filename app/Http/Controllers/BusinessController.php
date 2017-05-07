@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Jobs\SendBusinessRequestEmail;
 use App\Library\Sms;
 use App\Models\Business;
+use App\Models\BusinessCategory;
 use App\Models\Member;
 use App\Models\MemberRequest;
 use App\Repositories\Business\BusinessRepository;
@@ -88,11 +89,19 @@ class BusinessController extends Controller
     public function getBusiness($member, $business)
     {
         $member = Member::with(['businesses' => function ($q) use ($business) {
-            $q->select('businesses.id', 'name', 'sub_domain', 'email', 'phone', 'website', 'address', 'employee_size')->where('business_member.business_id', $business);
+            $q->select('businesses.id', 'name', 'logo', 'sub_domain', 'business_category_id', 'email', 'phone', 'businesses.type', 'address', 'employee_size')->where('business_member.business_id', $business);
         }])->select('id')->where('id', $member)->first();
         if (count($member) != 0) {
+            array_forget($member->businesses[0], 'pivot');
             return response()->json(['code' => 200, 'business' => $member->businesses[0]]);
         }
+    }
+
+    public function getTypeAndCategories()
+    {
+        $types = constants('BUSINESS_TYPES');
+        $categories = BusinessCategory::select('id', 'name')->where('publication_status', 1)->get();
+        return response()->json(['types' => $types, 'categories' => $categories]);
     }
 
 }

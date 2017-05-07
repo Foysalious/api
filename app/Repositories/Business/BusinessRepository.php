@@ -54,7 +54,8 @@ class BusinessRepository
         $business->sub_domain = $request->url;
         $business->phone = $request->phone;
         $business->email = $request->email;
-        $business->website = $request->website;
+        $business->type = $request->type;
+        $business->business_category_id = $request->category;
         $business->address = $request->address;
         $business->employee_size = $request->employee_size;
         return $business;

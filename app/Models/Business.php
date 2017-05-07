@@ -27,4 +27,9 @@ class Business extends Model
     {
         return $this->hasMany(MemberRequest::class)->where('requester_type', 'business');
     }
+
+    public function businessCategory()
+    {
+        return $this->belongsTo(BusinessCategory::class);
+    }
 }
