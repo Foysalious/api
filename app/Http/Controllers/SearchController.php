@@ -44,7 +44,7 @@ class SearchController extends Controller
                         array_add($service, 'end_price', 0);
                         continue;
                     }
-                    $service = $this->serviceRepository->getStartEndPrice($service);
+//                    $service = $this->serviceRepository->getStartEndPrice($service);
                     // review count of this partner for this service
                     $review = $service->reviews()->where('review', '<>', '')->count('review');
                     //avg rating of the partner for this service

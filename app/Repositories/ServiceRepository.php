@@ -120,8 +120,7 @@ class ServiceRepository
         return array(max($max_price), min($min_price));
     }
 
-    public
-    function getStartEndPrice($service)
+    public function getStartEndPrice($service)
     {
         $partners = $service->partners()->where([
             ['is_published', 1],
