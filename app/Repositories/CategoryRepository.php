@@ -45,7 +45,7 @@ class CategoryRepository
         foreach ($services as $key => $service) {
             array_add($service, 'discount', $service->hasDiscounts());
             //Get start & end price for services. Custom services don't have price so omitted
-//            $service = $this->serviceRepository->getStartEndPrice($service);
+            $service = $this->serviceRepository->getStartEndPrice($service);
             array_add($service, 'slug_service', str_slug($service->name, '-'));
             // review count of this partner for this service
             $review = $service->reviews()->where('review', '<>', '')->count('review');
