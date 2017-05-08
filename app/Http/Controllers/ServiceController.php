@@ -44,7 +44,7 @@ class ServiceController extends Controller
         //avg rating of this service
         $rating = $service->reviews()->avg('rating');
         array_add($service, 'review', $review);
-        array_add($service, 'rating', $rating);
+        $service['rating'] = empty($rating) ? 5 : floor($rating);
         //get the category & parent of the service
         $category = Category::with(['parent' => function ($query) {
             $query->select('id', 'name');

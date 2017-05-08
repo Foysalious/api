@@ -160,7 +160,7 @@ class ServiceRepository
         ])->count('review');
         $rating = $partner->reviews()->where('service_id', $service->id)->avg('rating');
         array_add($partner, 'review', $review);
-        array_add($partner, 'rating', $rating);
+        $partner['rating'] = empty($rating) ? 5 : floor($rating);
         return $partner;
     }
 
