@@ -18,6 +18,7 @@ class MemberController extends Controller
     public function search($member, Request $request)
     {
         $search = trim($request->search);
+
         $profile = Profile::with(['member' => function ($q) {
             $q->select('id', 'profile_id');
         }])->select('id', 'name', 'pro_pic')->where('email', $search)->first();
@@ -27,13 +28,15 @@ class MemberController extends Controller
                 $q->select('id', 'profile_id');
             }])->select('id', 'name', 'pro_pic')->where('mobile', $this->formatMobile($search))->first();
         }
-        if ($profile != null) {
+        if (count($profile) != 0) {
             if ($profile->member != null) {
                 if ($profile->member->id == $member) {
                     return response()->json(['msg' => "seriously??? can't send invitation to yourself", 'code' => 500]);
                 }
+            } else {
+                array_forget($profile,'member');
+                return response()->json(['profile' => $profile, 'code' => 200]);
             }
-            return response()->json(['result' => $profile, 'msg' => 'found', 'code' => 200]);
         } else {
             $this->dispatch(new sendProfileCreationEmail($search));
 //            Sms::send_single_message($this->formatMobile($search), "Please go to this link to create your profile:" . env('SHEBA_ACCOUNT_URL'));

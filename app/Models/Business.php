@@ -23,9 +23,9 @@ class Business extends Model
         return $this->hasMany(BusinessBankInformations::class);
     }
 
-    public function requests()
+    public function joinRequests()
     {
-        return $this->hasMany(MemberRequest::class)->where('requester_type', 'business');
+        return $this->morphMany(JoinRequest::class, 'organization');
     }
 
     public function businessCategory()

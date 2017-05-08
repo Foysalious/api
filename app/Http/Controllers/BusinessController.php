@@ -6,8 +6,10 @@ use App\Jobs\SendBusinessRequestEmail;
 use App\Library\Sms;
 use App\Models\Business;
 use App\Models\BusinessCategory;
+use App\Models\JoinRequest;
 use App\Models\Member;
 use App\Models\MemberRequest;
+use App\Models\Profile;
 use App\Repositories\Business\BusinessRepository;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
@@ -63,23 +65,23 @@ class BusinessController extends Controller
     public function sendInvitationToMember($member, Request $request)
     {
         $member = Member::find($member);
-        $business = $member->businesses()->where('businesses.id', $request->business_id)->first();
+        $business = $member->businesses()->where('businesses.id', $request->business)->first();
         if ($business != null) {
-            $sendMember = Member::find($request->send_member_id);
-            $sendRequest = new MemberRequest();
-            $sendRequest->member_id = $request->send_member_id;
-            $sendRequest->business_id = $business->id;
-            $sendRequest->member_mobile = $sendMember->profile->mobile;
-            $sendRequest->member_email = $sendMember->profile->email;
-            $sendRequest->requester_type = $request->type;
-            $sendRequest->save();
-            if ($sendRequest->member_email != '') {
-                $this->dispatch(new SendBusinessRequestEmail($sendRequest->member_email));
-                $sendRequest->mail_sent = 1;
-                $sendRequest->update();
+            $profile = Profile::find($request->profile);
+            $joinRequest = new JoinRequest();
+            $joinRequest->profile_id = $profile->id;
+            $joinRequest->profile_email = $profile->email;
+            $joinRequest->profile_mobile = $profile->mobile;
+            $joinRequest->organization_id = $request->business;
+            $joinRequest->organization_type = $joinRequest->requester_type = "App\Models\Business";
+            $joinRequest->save();
+            if ($joinRequest->profile_email != '') {
+                $this->dispatch(new SendBusinessRequestEmail($joinRequest->profile_email));
+                $joinRequest->mail_sent = 1;
+                $joinRequest->update();
             }
-            if ($sendRequest->member_mobile != '') {
-                Sms::send_single_message($sendRequest->member_mobile, "Please go to this link to see the invitation: " . env('SHEBA_ACCOUNT_URL'));
+            if ($joinRequest->profile_mobile != '') {
+                Sms::send_single_message($joinRequest->profile_mobile, "Please go to this link to see the invitation: " . env('SHEBA_ACCOUNT_URL'));
             }
             return response()->json(['code' => 200]);
         }

@@ -16,15 +16,14 @@ class MemberAuthMiddleware
      */
     public function handle($request, Closure $next)
     {
-        If ($request->has('remember_token') && !empty($request->remember_token) ) {
+        If ($request->has('remember_token') && !empty($request->remember_token)) {
             $member = Member::where('remember_token', $request->remember_token)->first();
-            if ($member) {
+            if (count($member) != 0) {
                 if ($member->id == $request->member) {
                     return $next($request);
                 }
             }
-        } else {
-            return response()->json(['msg' => 'unauthorized', 'code' => 409]);
         }
+        return response()->json(['msg' => 'unauthorized', 'code' => 409]);
     }
 }

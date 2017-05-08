@@ -35,5 +35,8 @@ class Profile extends Model
         return $this->hasOne(Member::class);
     }
 
-
+    public function joinRequests()
+    {
+        return $this->hasMany(JoinRequest::class);
+    }
 }
