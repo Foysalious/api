@@ -37,9 +37,10 @@ class BusinessController extends Controller
 
     public function create($member, Request $request)
     {
-        if ($this->businessRepository->isValidURL($request->url) == false) {
-            return response()->json(['code' => 409, 'msg' => 'url already taken!']);
-        }
+        $this->validate($request, [
+            'email' => 'unique:businesses',
+            'phone' => 'unique:businesses',
+        ]);
         return $this->businessRepository->create($member, $request) ? response()->json(['code' => 200, 'msg' => 'ok']) : response()->json(['code' => 500, 'msg' => 'try again!']);
     }
 

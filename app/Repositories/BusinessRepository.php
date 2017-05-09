@@ -30,7 +30,7 @@ class BusinessRepository
                 $business = new Business();
                 $business = $this->addBusinessInfo($business, $request);
                 $business->save();
-                if($request->has('logo')){
+                if ($request->file('logo') != null) {
                     $business->logo = $this->uploadLogo($business, $request->file('logo'));
                     $business->logo_original = $business->logo;
                 }

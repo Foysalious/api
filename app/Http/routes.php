@@ -119,7 +119,7 @@ $api->version('v1', function ($api) {
         $api->get('check-url', 'App\Http\Controllers\BusinessController@checkURL');
         $api->get('type-category', 'App\Http\Controllers\BusinessController@getTypeAndCategories');
         $api->group(['prefix' => 'member', 'middleware' => ['member.auth']], function ($api) {
-            $api->post('/{member}/create', 'App\Http\Controllers\BusinessController@create');
+            $api->post('/{member}/create-business', 'App\Http\Controllers\BusinessController@create');
             $api->get('/{member}/show', 'App\Http\Controllers\BusinessController@show');
 
             $api->get('{member}/business/{business}', 'App\Http\Controllers\BusinessController@getBusiness');
