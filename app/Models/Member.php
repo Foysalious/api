@@ -18,9 +18,5 @@ class Member extends Model
         return $this->belongsToMany(Business::class)->withTimestamps();
     }
 
-    public function requests()
-    {
-        return $this->hasMany(MemberRequest::class, 'member_id');
-    }
 
 }

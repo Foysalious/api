@@ -23,6 +23,7 @@ class Cors2MiddleWare
             "http://192.168.1.109:8080",
             "http://192.168.1.108:8080",
             "http://dev-sheba.xyz",
+            "http://business.dev-sheba.xyz",
             "http://www.dev-sheba.xyz",
             "http://admin.dev-sheba.xyz",
             "http://partners.dev-sheba.xyz",
