@@ -46,13 +46,19 @@ class MemberController extends Controller
 
     public function getRequests($member)
     {
-        $member = Member::with(['requests' => function ($q) {
-            $q->select('id', 'member_id', 'business_id', 'status')->with(['business' => function ($q) {
-                $q->select('id', 'name');
+        $member = Member::with(['profile' => function ($q) {
+            $q->select('id')->with(['joinRequests' => function ($q) {
+                $q->select('id', 'profile_id', 'organization_type', 'organization_id');
             }]);
-        }])->select('id')->where('id', $member)->first();
-        if (count($member->requests) > 0) {
-            return response()->json(['code' => 200, 'requests' => $member->requests]);
+        }])->select('id', 'profile_id')->where('id', $member)->first();
+        foreach ($member->profile->joinRequests as $request) {
+            array_add($request, 'business', $request->organization->select('id', 'name', 'sub_domain', 'logo')->first());
+            array_forget($request, 'organization');
+            array_forget($request, 'organization_type');
+            array_forget($request, 'organization_id');
+        }
+        if (count($member->profile->joinRequests) > 0) {
+            return response()->json(['code' => 200, 'requests' => $member->profile->joinRequests]);
         } else {
             return response()->json(['code' => 404]);
         }
@@ -60,15 +66,15 @@ class MemberController extends Controller
 
     private function formatMobile($mobile)
     {
-        // mobile starts with '+88'
+        // mobile starts with ' + 88'
         if (preg_match("/^(\+88)/", $mobile)) {
             return $mobile;
-        } // when mobile starts with '88' replace it with '+880'
+        } // when mobile starts with '88' replace it with ' + 880'
         elseif (preg_match("/^(88)/", $mobile)) {
-            return preg_replace('/^88/', '+88', $mobile);
-        } // real mobile no add '+880' at the start
+            return preg_replace(' /^88 / ', ' + 88', $mobile);
+        } // real mobile no add ' + 880' at the start
         else {
-            return '+88' . $mobile;
+            return ' + 88' . $mobile;
         }
     }
 
