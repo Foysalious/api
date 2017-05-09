@@ -1,14 +1,20 @@
 <?php
 
-namespace App\Repositories\Business;
+namespace App\Repositories;
 
+use App\Jobs\SendBusinessRequestEmail;
+use App\Library\Sms;
 use App\Models\Business;
+use App\Models\JoinRequest;
 use App\Models\Member;
+use App\Models\Profile;
 use DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 
 class BusinessRepository
 {
+    use DispatchesJobs;
     private $logo_folder;
 
     public function __construct()
@@ -24,8 +30,10 @@ class BusinessRepository
                 $business = new Business();
                 $business = $this->addBusinessInfo($business, $request);
                 $business->save();
-                $business->logo = $this->uploadLogo($business, $request->file('logo'));
-                $business->logo_original = $business->logo;
+                if($request->has('logo')){
+                    $business->logo = $this->uploadLogo($business, $request->file('logo'));
+                    $business->logo_original = $business->logo;
+                }
                 $business->update();
                 $member->businesses()->attach($business);
             });
@@ -73,7 +81,7 @@ class BusinessRepository
     public function getBusinesses($member)
     {
         return Member::with(['businesses' => function ($q) {
-            $q->select('name', 'logo');
+            $q->select('businesses.id', 'name', 'logo');
         }])->select('id')->where('id', $member)->first();
     }
 
@@ -83,5 +91,25 @@ class BusinessRepository
         $s3 = Storage::disk('s3');
         $s3->put($this->logo_folder . $filename, file_get_contents($logo), 'public');
         return env('S3_URL') . $this->logo_folder . $filename;
+    }
+
+    public function sendInvitation($request)
+    {
+        $profile = Profile::find($request->profile);
+        $joinRequest = new JoinRequest();
+        $joinRequest->profile_id = $profile->id;
+        $joinRequest->profile_email = $profile->email;
+        $joinRequest->profile_mobile = $profile->mobile;
+        $joinRequest->organization_id = $request->business;
+        $joinRequest->organization_type = $joinRequest->requester_type = "App\Models\Business";
+        $joinRequest->save();
+        if ($joinRequest->profile_email != '') {
+            $this->dispatch(new SendBusinessRequestEmail($joinRequest->profile_email));
+            $joinRequest->mail_sent = 1;
+            $joinRequest->update();
+        }
+        if ($joinRequest->profile_mobile != '') {
+            Sms::send_single_message($joinRequest->profile_mobile, "Please go to this link to see the invitation: " . env('SHEBA_ACCOUNT_URL'));
+        }
     }
 }

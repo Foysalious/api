@@ -130,6 +130,7 @@ $api->version('v1', function ($api) {
             $api->get('{member}/requests', 'App\Http\Controllers\MemberController@getRequests');
 
             $api->post('{member}/send-invitation', 'App\Http\Controllers\BusinessController@sendInvitationToMember');
+            $api->post('{member}/manage-invitation', 'App\Http\Controllers\MemberController@manageInvitation');
         });
     });
 });

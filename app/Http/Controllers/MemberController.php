@@ -8,35 +8,35 @@ use App\Library\Sms;
 use App\Models\Member;
 use App\Models\MemberRequest;
 use App\Models\Profile;
+use App\Repositories\InvitationRepository;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 
 class MemberController extends Controller
 {
     use DispatchesJobs;
+    private $invitationRepository;
+
+    public function __construct()
+    {
+        $this->invitationRepository = new InvitationRepository();
+    }
 
     public function search($member, Request $request)
     {
         $search = trim($request->search);
-
-        $profile = Profile::with(['member' => function ($q) {
-            $q->select('id', 'profile_id');
-        }])->select('id', 'name', 'pro_pic')->where('email', $search)->first();
-
+        $profile = $this->getProfile('email', $search);
         if (count($profile) == 0) {
-            $profile = Profile::with(['member' => function ($q) {
-                $q->select('id', 'profile_id');
-            }])->select('id', 'name', 'pro_pic')->where('mobile', $this->formatMobile($search))->first();
+            $profile = $this->getProfile('mobile', $this->formatMobile($search));
         }
         if (count($profile) != 0) {
             if ($profile->member != null) {
                 if ($profile->member->id == $member) {
                     return response()->json(['msg' => "seriously??? can't send invitation to yourself", 'code' => 500]);
                 }
-            } else {
-                array_forget($profile,'member');
-                return response()->json(['profile' => $profile, 'code' => 200]);
             }
+            array_forget($profile, 'member');
+            return response()->json(['profile' => $profile, 'code' => 200]);
         } else {
             $this->dispatch(new sendProfileCreationEmail($search));
 //            Sms::send_single_message($this->formatMobile($search), "Please go to this link to create your profile:" . env('SHEBA_ACCOUNT_URL'));
@@ -62,7 +62,6 @@ class MemberController extends Controller
     {
         // mobile starts with '+88'
         if (preg_match("/^(\+88)/", $mobile)) {
-            ;
             return $mobile;
         } // when mobile starts with '88' replace it with '+880'
         elseif (preg_match("/^(88)/", $mobile)) {
@@ -70,6 +69,24 @@ class MemberController extends Controller
         } // real mobile no add '+880' at the start
         else {
             return '+88' . $mobile;
+        }
+    }
+
+    private function getProfile($field, $search)
+    {
+        return Profile::with(['member' => function ($q) {
+            $q->select('id', 'profile_id');
+        }])->select('id', 'name', 'pro_pic')->where($field, $search)->first();
+
+    }
+
+    public function manageInvitation($member, Request $request)
+    {
+        $join_request = Member::find($member)->profile->joinRequests()->where('id', $request->invitation)->first();
+        if (count($join_request) != 0) {
+            return $this->invitationRepository->manage($join_request, $request->status) ? response()->json(['code' => 200]) : response()->json(['code' => 500]);
+        } else {
+            return response()->json(['code' => 409]);
         }
     }
 }

@@ -10,7 +10,7 @@ use App\Models\JoinRequest;
 use App\Models\Member;
 use App\Models\MemberRequest;
 use App\Models\Profile;
-use App\Repositories\Business\BusinessRepository;
+use App\Repositories\BusinessRepository;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
 
@@ -62,32 +62,6 @@ class BusinessController extends Controller
         }
     }
 
-    public function sendInvitationToMember($member, Request $request)
-    {
-        $member = Member::find($member);
-        $business = $member->businesses()->where('businesses.id', $request->business)->first();
-        if ($business != null) {
-            $profile = Profile::find($request->profile);
-            $joinRequest = new JoinRequest();
-            $joinRequest->profile_id = $profile->id;
-            $joinRequest->profile_email = $profile->email;
-            $joinRequest->profile_mobile = $profile->mobile;
-            $joinRequest->organization_id = $request->business;
-            $joinRequest->organization_type = $joinRequest->requester_type = "App\Models\Business";
-            $joinRequest->save();
-            if ($joinRequest->profile_email != '') {
-                $this->dispatch(new SendBusinessRequestEmail($joinRequest->profile_email));
-                $joinRequest->mail_sent = 1;
-                $joinRequest->update();
-            }
-            if ($joinRequest->profile_mobile != '') {
-                Sms::send_single_message($joinRequest->profile_mobile, "Please go to this link to see the invitation: " . env('SHEBA_ACCOUNT_URL'));
-            }
-            return response()->json(['code' => 200]);
-        }
-        return response()->json(['code' => 409]);
-    }
-
     public function getBusiness($member, $business)
     {
         $member = Member::with(['businesses' => function ($q) use ($business) {
@@ -104,6 +78,17 @@ class BusinessController extends Controller
         $types = constants('BUSINESS_TYPES');
         $categories = BusinessCategory::select('id', 'name')->where('publication_status', 1)->get();
         return response()->json(['types' => $types, 'categories' => $categories]);
+    }
+
+    public function sendInvitationToMember($member, Request $request)
+    {
+        $member = Member::find($member);
+        $business = $member->businesses()->where('businesses.id', $request->business)->first();
+        if ($business != null) {
+            $this->businessRepository->sendInvitation($request);
+            return response()->json(['code' => 200]);
+        }
+        return response()->json(['code' => 409, 'msg' => "this business doesn't belong to you"]);
     }
 
 }
