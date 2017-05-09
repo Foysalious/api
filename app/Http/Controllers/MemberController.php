@@ -22,12 +22,12 @@ class MemberController extends Controller
         $this->invitationRepository = new InvitationRepository();
     }
 
-    public function search($member, Request $request)
+    public function search($member, $business, Request $request)
     {
         $search = trim($request->search);
-        $profile = $this->getProfile('email', $search);
+        $profile = $this->getProfile('email', $search, $business);
         if (count($profile) == 0) {
-            $profile = $this->getProfile('mobile', $this->formatMobile($search));
+            $profile = $this->getProfile('mobile', $this->formatMobile($search), $business);
         }
         if (count($profile) != 0) {
             if ($profile->member != null) {
@@ -42,6 +42,19 @@ class MemberController extends Controller
 //            Sms::send_single_message($this->formatMobile($search), "Please go to this link to create your profile:" . env('SHEBA_ACCOUNT_URL'));
             return response()->json(['msg' => "we've send Member creation message", 'code' => 200]);
         }
+    }
+
+    private function getProfile($field, $search, $business)
+    {
+        return Profile::with(['member' => function ($q) {
+            $q->select('id', 'profile_id');
+        }])->with(['joinRequests' => function ($q) use ($business) {
+            $q->select('id', 'profile_id', 'status')->where([
+                ['requester_type', "App\Models\Business"],
+                ['organization_id', $business]
+            ]);
+        }])->select('id', 'name', 'pro_pic')->where($field, $search)->first();
+
     }
 
     public function getRequests($member)
@@ -69,22 +82,15 @@ class MemberController extends Controller
         // mobile starts with ' + 88'
         if (preg_match("/^(\+88)/", $mobile)) {
             return $mobile;
-        } // when mobile starts with '88' replace it with ' + 880'
+        } // when mobile starts with '88' replace it with '+880'
         elseif (preg_match("/^(88)/", $mobile)) {
-            return preg_replace(' /^88 / ', ' + 88', $mobile);
-        } // real mobile no add ' + 880' at the start
+            return preg_replace('/^88/', '+88', $mobile);
+        } // real mobile no add '+880' at the start
         else {
-            return ' + 88' . $mobile;
+            return '+88' . $mobile;
         }
     }
 
-    private function getProfile($field, $search)
-    {
-        return Profile::with(['member' => function ($q) {
-            $q->select('id', 'profile_id');
-        }])->select('id', 'name', 'pro_pic')->where($field, $search)->first();
-
-    }
 
     public function manageInvitation($member, Request $request)
     {
