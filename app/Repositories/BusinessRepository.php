@@ -25,9 +25,9 @@ class BusinessRepository
     public function create($member, $request)
     {
         $member = Member::find($member);
+        $business = new Business();
         try {
-            DB::transaction(function () use ($member, $request) {
-                $business = new Business();
+            DB::transaction(function () use ($member, $request,$business) {
                 $business = $this->addBusinessInfo($business, $request);
                 $business->save();
                 if ($request->file('logo') != null) {
@@ -40,7 +40,7 @@ class BusinessRepository
         } catch (QueryException $e) {
             return false;
         }
-        return true;
+        return $business;
     }
 
     public function update($business, $request)

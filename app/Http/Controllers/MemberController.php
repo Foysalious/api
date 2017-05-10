@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Jobs\sendProfileCreationEmail;
 use App\Jobs\sendProfileCreationSMS;
 use App\Library\Sms;
+use App\Models\Business;
 use App\Models\Member;
 use App\Models\MemberRequest;
 use App\Models\Profile;
@@ -22,23 +23,35 @@ class MemberController extends Controller
         $this->invitationRepository = new InvitationRepository();
     }
 
-    public function search($member, $business, Request $request)
+    public function search($member, Request $request)
     {
         $search = trim($request->search);
-        $profile = $this->getProfile('email', $search, $business);
-        if (count($profile) == 0) {
-            $profile = $this->getProfile('mobile', $this->formatMobile($search), $business);
-        }
-        if (count($profile) != 0) {
-            if ($profile->member != null) {
-                if ($profile->member->id == $member) {
-                    return response()->json(['msg' => "seriously??? can't send invitation to yourself", 'code' => 500]);
-                }
+        if ($request->type == 'business') {
+            $profile = $this->getProfile('email', $search, $request->business);
+            if (count($profile) == 0) {
+                $profile = $this->getProfile('mobile', $this->formatMobile($search), $request->business);
             }
-            array_forget($profile, 'member');
-            return response()->json(['profile' => $profile, 'code' => 200]);
-        } else {
-            return response()->json(['msg' => 'search person not found', 'code' => 404]);
+            if (count($profile) != 0) {
+                if ($profile->member != null) {
+                    if ($profile->member->id == $member) {
+                        return response()->json(['msg' => "seriously??? can't send invitation to yourself", 'code' => 500]);
+                    }
+                }
+                array_forget($profile, 'member');
+                return response()->json(['profile' => $profile, 'code' => 200]);
+            } else {
+                return response()->json(['msg' => 'search person not found', 'code' => 404]);
+            }
+        } elseif ($request->type == 'member') {
+            $business = Business::where('email', $search)->select('id', 'name', 'logo')->first();
+            if ($business == null) {
+                $business = Business::where('phone', $this->formatMobile($search))->select('id', 'name', 'logo')->first();
+            }
+            if ($business != null) {
+                return response()->json(['msg' => 'ok', 'code' => 200, 'business' => $business]);
+            } else {
+                return response()->json(['msg' => 'not ok', 'code' => 200]);
+            }
         }
     }
 

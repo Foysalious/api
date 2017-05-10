@@ -41,7 +41,8 @@ class BusinessController extends Controller
             'email' => 'unique:businesses',
             'phone' => 'unique:businesses',
         ]);
-        return $this->businessRepository->create($member, $request) ? response()->json(['code' => 200, 'msg' => 'ok']) : response()->json(['code' => 500, 'msg' => 'try again!']);
+        $business = $this->businessRepository->create($member, $request);
+        return $business != false ? response()->json(['code' => 200, 'business' => $business->id, 'msg' => 'ok']) : response()->json(['code' => 500, 'msg' => 'try again!']);
     }
 
     public function update($member, $business, Request $request)
@@ -84,7 +85,7 @@ class BusinessController extends Controller
     public function sendInvitationToMember($member, Request $request)
     {
         $member = Member::find($member);
-        $business = $member->businesses()->where('businesses.id', $request->business)->first();
+        $business = $this->businessExistsForMember($member, $request->business);
         if ($business != null) {
             if ($this->businessRepository->sendInvitation($request)) {
                 return response()->json(['msg' => 'ok', 'code' => 200]);
@@ -93,6 +94,22 @@ class BusinessController extends Controller
             }
         }
         return response()->json(['code' => 409, 'msg' => "this business doesn't belong to you"]);
+    }
+
+    private function businessExistsForMember($member, $id)
+    {
+        return $member->businesses()->where('businesses.id', $id)->first();
+    }
+
+    public function checkBusiness($member, Request $request)
+    {
+        $member = Member::find($member);
+        $business = $this->businessExistsForMember($member, $request->business);
+        if ($business != null) {
+            return response(['code' => 200]);
+        } else {
+            return response(['code' => 404]);
+        }
     }
 
 }
