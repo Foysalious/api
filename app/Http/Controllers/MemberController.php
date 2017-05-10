@@ -38,9 +38,7 @@ class MemberController extends Controller
             array_forget($profile, 'member');
             return response()->json(['profile' => $profile, 'code' => 200]);
         } else {
-            $this->dispatch(new sendProfileCreationEmail($search));
-//            Sms::send_single_message($this->formatMobile($search), "Please go to this link to create your profile:" . env('SHEBA_ACCOUNT_URL'));
-            return response()->json(['msg' => "we've send Member creation message", 'code' => 200]);
+            return response()->json(['msg' => 'search person not found', 'code' => 404]);
         }
     }
 
@@ -79,7 +77,7 @@ class MemberController extends Controller
 
     private function formatMobile($mobile)
     {
-        // mobile starts with ' + 88'
+        // mobile starts with '+88'
         if (preg_match("/^(\+88)/", $mobile)) {
             return $mobile;
         } // when mobile starts with '88' replace it with '+880'

@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\SendBusinessRequestEmail;
+use App\Jobs\SendProfileCreationEmail;
 use App\Library\Sms;
 use App\Models\Business;
 use App\Models\BusinessCategory;
 use App\Models\JoinRequest;
 use App\Models\Member;
-use App\Models\MemberRequest;
 use App\Models\Profile;
 use App\Repositories\BusinessRepository;
 use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -86,8 +86,11 @@ class BusinessController extends Controller
         $member = Member::find($member);
         $business = $member->businesses()->where('businesses.id', $request->business)->first();
         if ($business != null) {
-            $this->businessRepository->sendInvitation($request);
-            return response()->json(['code' => 200]);
+            if ($this->businessRepository->sendInvitation($request)) {
+                return response()->json(['msg' => 'ok', 'code' => 200]);
+            } else {
+                return response()->json(['msg' => 'not ok!', 'code' => 500]);
+            }
         }
         return response()->json(['code' => 409, 'msg' => "this business doesn't belong to you"]);
     }

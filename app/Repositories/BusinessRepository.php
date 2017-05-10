@@ -95,11 +95,17 @@ class BusinessRepository
 
     public function sendInvitation($request)
     {
-        $profile = Profile::find($request->profile);
         $joinRequest = new JoinRequest();
-        $joinRequest->profile_id = $profile->id;
-        $joinRequest->profile_email = $profile->email;
-        $joinRequest->profile_mobile = $profile->mobile;
+        if ($request->profile != '') {
+            $profile = Profile::find($request->profile);
+            $joinRequest->profile_id = $profile->id;
+            $joinRequest->profile_email = $profile->email;
+            $joinRequest->profile_mobile = $profile->mobile;
+        } elseif ($request->search != '' && filter_var($request->search, FILTER_VALIDATE_EMAIL)) {
+            $joinRequest->profile_email = $request->search;
+        } else {
+            return false;
+        }
         $joinRequest->organization_id = $request->business;
         $joinRequest->organization_type = $joinRequest->requester_type = "App\Models\Business";
         $joinRequest->save();
@@ -108,8 +114,6 @@ class BusinessRepository
             $joinRequest->mail_sent = 1;
             $joinRequest->update();
         }
-        if ($joinRequest->profile_mobile != '') {
-            Sms::send_single_message($joinRequest->profile_mobile, "Please go to this link to see the invitation: " . env('SHEBA_ACCOUNT_URL'));
-        }
+        return true;
     }
 }

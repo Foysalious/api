@@ -123,13 +123,14 @@ $api->version('v1', function ($api) {
             $api->get('/{member}/show', 'App\Http\Controllers\BusinessController@show');
 
             $api->get('{member}/business/{business}', 'App\Http\Controllers\BusinessController@getBusiness');
-            $api->post('/{member}/business/{business}/update', 'App\Http\Controllers\BusinessController@update');
-            $api->post('/{member}/business/{business}/change-logo', 'App\Http\Controllers\BusinessController@changeLogo');
+            $api->post('{member}/business/{business}/update', 'App\Http\Controllers\BusinessController@update');
+            $api->post('{member}/business/{business}/change-logo', 'App\Http\Controllers\BusinessController@changeLogo');
 
-            $api->get('/{member}/business/{business}/search', 'App\Http\Controllers\MemberController@search');
+            $api->get('{member}/business/{business}/search', 'App\Http\Controllers\MemberController@search');
             $api->get('{member}/requests', 'App\Http\Controllers\MemberController@getRequests');
 
             $api->post('{member}/send-invitation', 'App\Http\Controllers\BusinessController@sendInvitationToMember');
+//            $api->post('{member}/send-profile-creation-invitation', 'App\Http\Controllers\BusinessController@sendProfileCreationInvitation');
             $api->post('{member}/manage-invitation', 'App\Http\Controllers\MemberController@manageInvitation');
         });
     });
