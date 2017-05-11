@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\SendBusinessRequestEmail;
+use App\Jobs\SendProfileCreationEmail;
 use App\Library\Sms;
 use App\Models\Business;
 use App\Models\BusinessCategory;
 use App\Models\JoinRequest;
 use App\Models\Member;
-use App\Models\MemberRequest;
 use App\Models\Profile;
 use App\Repositories\BusinessRepository;
 use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -41,7 +41,8 @@ class BusinessController extends Controller
             'email' => 'unique:businesses',
             'phone' => 'unique:businesses',
         ]);
-        return $this->businessRepository->create($member, $request) ? response()->json(['code' => 200, 'msg' => 'ok']) : response()->json(['code' => 500, 'msg' => 'try again!']);
+        $business = $this->businessRepository->create($member, $request);
+        return $business != false ? response()->json(['code' => 200, 'business' => $business->id, 'msg' => 'ok']) : response()->json(['code' => 500, 'msg' => 'try again!']);
     }
 
     public function update($member, $business, Request $request)
@@ -66,7 +67,10 @@ class BusinessController extends Controller
     public function getBusiness($member, $business)
     {
         $member = Member::with(['businesses' => function ($q) use ($business) {
-            $q->select('businesses.id', 'name', 'logo', 'sub_domain', 'business_category_id', 'email', 'phone', 'businesses.type', 'address', 'employee_size')->where('business_member.business_id', $business);
+            $q->select('businesses.id', 'name', 'logo', 'sub_domain', 'business_category_id', 'email', 'phone', 'description',
+                'businesses.type', 'address', 'employee_size')->where('business_member.business_id', $business)->with(['businessCategory' => function ($q) {
+                $q->select('id', 'name');
+            }]);
         }])->select('id')->where('id', $member)->first();
         if (count($member) != 0) {
             array_forget($member->businesses[0], 'pivot');
@@ -81,15 +85,15 @@ class BusinessController extends Controller
         return response()->json(['types' => $types, 'categories' => $categories]);
     }
 
-    public function sendInvitationToMember($member, Request $request)
+    public function checkBusiness($member, Request $request)
     {
         $member = Member::find($member);
-        $business = $member->businesses()->where('businesses.id', $request->business)->first();
+        $business = $this->businessRepository->businessExistsForMember($member, $request->business);
         if ($business != null) {
-            $this->businessRepository->sendInvitation($request);
-            return response()->json(['code' => 200]);
+            return response(['code' => 200]);
+        } else {
+            return response(['code' => 404]);
         }
-        return response()->json(['code' => 409, 'msg' => "this business doesn't belong to you"]);
     }
 
 }

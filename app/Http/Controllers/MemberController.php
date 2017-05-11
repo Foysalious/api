@@ -2,59 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\sendProfileCreationEmail;
-use App\Jobs\sendProfileCreationSMS;
-use App\Library\Sms;
 use App\Models\Member;
-use App\Models\MemberRequest;
-use App\Models\Profile;
 use App\Repositories\InvitationRepository;
 use Illuminate\Http\Request;
-use Illuminate\Foundation\Bus\DispatchesJobs;
 
 class MemberController extends Controller
 {
-    use DispatchesJobs;
     private $invitationRepository;
 
     public function __construct()
     {
         $this->invitationRepository = new InvitationRepository();
-    }
-
-    public function search($member, $business, Request $request)
-    {
-        $search = trim($request->search);
-        $profile = $this->getProfile('email', $search, $business);
-        if (count($profile) == 0) {
-            $profile = $this->getProfile('mobile', $this->formatMobile($search), $business);
-        }
-        if (count($profile) != 0) {
-            if ($profile->member != null) {
-                if ($profile->member->id == $member) {
-                    return response()->json(['msg' => "seriously??? can't send invitation to yourself", 'code' => 500]);
-                }
-            }
-            array_forget($profile, 'member');
-            return response()->json(['profile' => $profile, 'code' => 200]);
-        } else {
-            $this->dispatch(new sendProfileCreationEmail($search));
-//            Sms::send_single_message($this->formatMobile($search), "Please go to this link to create your profile:" . env('SHEBA_ACCOUNT_URL'));
-            return response()->json(['msg' => "we've send Member creation message", 'code' => 200]);
-        }
-    }
-
-    private function getProfile($field, $search, $business)
-    {
-        return Profile::with(['member' => function ($q) {
-            $q->select('id', 'profile_id');
-        }])->with(['joinRequests' => function ($q) use ($business) {
-            $q->select('id', 'profile_id', 'status')->where([
-                ['requester_type', "App\Models\Business"],
-                ['organization_id', $business]
-            ]);
-        }])->select('id', 'name', 'pro_pic')->where($field, $search)->first();
-
     }
 
     public function getRequests($member)
@@ -76,21 +34,6 @@ class MemberController extends Controller
             return response()->json(['code' => 404]);
         }
     }
-
-    private function formatMobile($mobile)
-    {
-        // mobile starts with ' + 88'
-        if (preg_match("/^(\+88)/", $mobile)) {
-            return $mobile;
-        } // when mobile starts with '88' replace it with '+880'
-        elseif (preg_match("/^(88)/", $mobile)) {
-            return preg_replace('/^88/', '+88', $mobile);
-        } // real mobile no add '+880' at the start
-        else {
-            return '+88' . $mobile;
-        }
-    }
-
 
     public function manageInvitation($member, Request $request)
     {
