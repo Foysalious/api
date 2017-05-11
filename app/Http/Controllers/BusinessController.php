@@ -67,7 +67,10 @@ class BusinessController extends Controller
     public function getBusiness($member, $business)
     {
         $member = Member::with(['businesses' => function ($q) use ($business) {
-            $q->select('businesses.id', 'name', 'logo', 'sub_domain', 'business_category_id', 'email', 'phone', 'businesses.type', 'address', 'employee_size')->where('business_member.business_id', $business);
+            $q->select('businesses.id', 'name', 'logo', 'sub_domain', 'business_category_id', 'email', 'phone', 'description',
+                'businesses.type', 'address', 'employee_size')->where('business_member.business_id', $business)->with(['businessCategory' => function ($q) {
+                $q->select('id', 'name');
+            }]);
         }])->select('id')->where('id', $member)->first();
         if (count($member) != 0) {
             array_forget($member->businesses[0], 'pivot');
@@ -85,7 +88,7 @@ class BusinessController extends Controller
     public function checkBusiness($member, Request $request)
     {
         $member = Member::find($member);
-        $business = $this->businessExistsForMember($member, $request->business);
+        $business = $this->businessRepository->businessExistsForMember($member, $request->business);
         if ($business != null) {
             return response(['code' => 200]);
         } else {
