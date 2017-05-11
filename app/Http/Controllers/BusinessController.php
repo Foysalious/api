@@ -96,4 +96,44 @@ class BusinessController extends Controller
         }
     }
 
+    public function getMembers($member, $business, Request $request)
+    {
+        $member = Member::find($member);
+        $business = $this->businessRepository->businessExistsForMember($member, $business);
+        if ($business != null) {
+            $business = Business::with(['members' => function ($q) {
+                $q->select('members.id', 'members.profile_id')->with(['profile' => function ($q) {
+                    $q->select('profiles.id', 'profiles.name');
+                }]);
+            }])->where('id', $business->id)->select('id')->first();
+            foreach ($business->members as $member) {
+                $member['join_date'] = $member->pivot->join_date;
+                $member['type'] = $member->pivot->type;
+                array_forget($member, 'pivot');
+                array_forget($member, 'profile_id');
+            }
+            return response(['code' => 200, 'members' => $business->members]);
+        } else {
+            return response(['code' => 404]);
+        }
+    }
+
+    public function getRequests($member, $business, Request $request)
+    {
+        $member = Member::find($member);
+        $business = $this->businessRepository->businessExistsForMember($member, $business);
+        if ($business != null) {
+            $business = Business::with(['joinRequests' => function ($q) {
+                $q->select('id', 'profile_id', 'profile_email', 'organization_id')->where('status', 'Pending')->with(['profile' => function ($q) {
+                    $q->select('id', 'name', 'email', 'mobile');
+                }]);
+            }])->where('id', $business->id)->first();
+            if (count($business->joinRequests) > 0) {
+                return response()->json(['code' => 200, 'requests' => $business->joinRequests]);
+            } else {
+                return response()->json(['code' => 404]);
+            }
+        }
+
+    }
 }
