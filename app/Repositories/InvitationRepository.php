@@ -20,7 +20,7 @@ class InvitationRepository
         try {
             if ($status == 'accept') {
                 $join_request->status = 'Accepted';
-                $join_request->requestor()->members()->attach(Profile::find($join_request->profile_id)->member->id, ['type' => 'Employee']);
+                $join_request->requestor()->members()->attach(Profile::find($join_request->profile_id)->member->id, ['type' => 'Employee', 'join_date' => date('Y-m-d')]);
             } elseif ($status == 'reject') {
                 $join_request->status = 'Rejected';
             }
