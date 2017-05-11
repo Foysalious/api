@@ -19,11 +19,11 @@ class MemberController extends Controller
     {
         $member = Member::with(['profile' => function ($q) {
             $q->select('id')->with(['joinRequests' => function ($q) {
-                $q->select('id', 'profile_id', 'organization_type', 'organization_id');
+                $q->select('id', 'profile_id', 'organization_type', 'organization_id')->where('status', 'Pending');
             }]);
         }])->select('id', 'profile_id')->where('id', $member)->first();
         foreach ($member->profile->joinRequests as $request) {
-            array_add($request, 'business', $request->organization->select('id', 'name', 'sub_domain', 'logo')->first());
+            array_add($request, 'business', $request->organization->select('id', 'name', 'sub_domain', 'logo', 'address')->first());
             array_forget($request, 'organization');
             array_forget($request, 'organization_type');
             array_forget($request, 'organization_id');

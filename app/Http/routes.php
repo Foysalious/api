@@ -127,6 +127,8 @@ $api->version('v1', function ($api) {
             $api->get('{member}/business/{business}', 'App\Http\Controllers\BusinessController@getBusiness');
             $api->post('{member}/business/{business}/update', 'App\Http\Controllers\BusinessController@update');
             $api->post('{member}/business/{business}/change-logo', 'App\Http\Controllers\BusinessController@changeLogo');
+            $api->get('{member}/business/{business}/members', 'App\Http\Controllers\BusinessController@getMembers');
+            $api->get('{member}/business/{business}/requests', 'App\Http\Controllers\BusinessController@getRequests');
 
             $api->post('{member}/search', 'App\Http\Controllers\SearchController@searchBusinessOrMember');
             $api->get('{member}/requests', 'App\Http\Controllers\MemberController@getRequests');
