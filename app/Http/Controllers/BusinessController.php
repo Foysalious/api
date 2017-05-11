@@ -82,25 +82,6 @@ class BusinessController extends Controller
         return response()->json(['types' => $types, 'categories' => $categories]);
     }
 
-    public function sendInvitationToMember($member, Request $request)
-    {
-        $member = Member::find($member);
-        $business = $this->businessExistsForMember($member, $request->business);
-        if ($business != null) {
-            if ($this->businessRepository->sendInvitation($request)) {
-                return response()->json(['msg' => 'ok', 'code' => 200]);
-            } else {
-                return response()->json(['msg' => 'not ok!', 'code' => 500]);
-            }
-        }
-        return response()->json(['code' => 409, 'msg' => "this business doesn't belong to you"]);
-    }
-
-    private function businessExistsForMember($member, $id)
-    {
-        return $member->businesses()->where('businesses.id', $id)->first();
-    }
-
     public function checkBusiness($member, Request $request)
     {
         $member = Member::find($member);

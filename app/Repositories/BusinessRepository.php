@@ -116,4 +116,9 @@ class BusinessRepository
         }
         return true;
     }
+
+    public function businessExistsForMember($member, $id)
+    {
+        return $member->businesses()->where('businesses.id', $id)->first();
+    }
 }
