@@ -21,6 +21,9 @@ class BusinessMemberRepository
         array_forget($member, 'created_at');
         array_forget($member, 'updated_at');
         array_forget($member, 'remember_token');
+        array_add($member, 'name', $member->profile->name);
+        array_add($member, 'pro_pic', $member->profile->pro_pic);
+        array_forget($member, 'profile');
         return $member;
     }
 }
