@@ -20,7 +20,7 @@ class InvitationRepository
         try {
             if ($status == 'accept') {
                 $join_request->status = 'Accepted';
-                $join_request->requestor()->members()->attach(Profile::find($join_request->profile_id)->member->id, ['type' => 'Employee']);
+                $join_request->requestor()->members()->attach(Profile::find($join_request->profile_id)->member->id, ['type' => 'Employee', 'join_date' => date('Y-m-d')]);
             } elseif ($status == 'reject') {
                 $join_request->status = 'Rejected';
             }
@@ -47,6 +47,7 @@ class InvitationRepository
             }
             $joinRequest->organization_id = $request->business;
             $joinRequest->organization_type = $joinRequest->requester_type = "App\Models\Business";
+            $joinRequest->status = 'Pending';
             $joinRequest->save();
             if ($joinRequest->profile_email != '') {
                 $this->dispatch(new SendBusinessRequestEmail($joinRequest->profile_email));
@@ -64,6 +65,7 @@ class InvitationRepository
         $joinRequest->organization_id = $request->business;
         $joinRequest->organization_type = "App\Models\Business";
         $joinRequest->requester_type = "App\Models\Profile";
+        $joinRequest->status = 'Pending';
         $joinRequest->save();
         return true;
     }

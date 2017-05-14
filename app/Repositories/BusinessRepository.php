@@ -27,7 +27,7 @@ class BusinessRepository
         $member = Member::find($member);
         $business = new Business();
         try {
-            DB::transaction(function () use ($member, $request,$business) {
+            DB::transaction(function () use ($member, $request, $business) {
                 $business = $this->addBusinessInfo($business, $request);
                 $business->save();
                 if ($request->file('logo') != null) {
@@ -35,7 +35,7 @@ class BusinessRepository
                     $business->logo_original = $business->logo;
                 }
                 $business->update();
-                $member->businesses()->attach($business);
+                $member->businesses()->attach($business, ['type' => 'Admin', 'join_date' => date('Y-m-d')]);
             });
         } catch (QueryException $e) {
             return false;
@@ -108,6 +108,7 @@ class BusinessRepository
         }
         $joinRequest->organization_id = $request->business;
         $joinRequest->organization_type = $joinRequest->requester_type = "App\Models\Business";
+        $joinRequest->status = 'Pending';
         $joinRequest->save();
         if ($joinRequest->profile_email != '') {
             $this->dispatch(new SendBusinessRequestEmail($joinRequest->profile_email));
