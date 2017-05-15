@@ -2,14 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\SendBusinessRequestEmail;
-use App\Jobs\SendProfileCreationEmail;
-use App\Library\Sms;
 use App\Models\Business;
 use App\Models\BusinessCategory;
-use App\Models\JoinRequest;
 use App\Models\Member;
-use App\Models\Profile;
 use App\Repositories\BusinessRepository;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
@@ -89,11 +84,7 @@ class BusinessController extends Controller
     {
         $member = Member::find($member);
         $business = $this->businessRepository->businessExistsForMember($member, $request->business);
-        if ($business != null) {
-            return response(['code' => 200]);
-        } else {
-            return response(['code' => 404]);
-        }
+        return $business != null ? response(['code' => 200]) : response(['code' => 404]);
     }
 
     public function getMembers($member, $business, Request $request)

@@ -120,6 +120,9 @@ $api->version('v1', function ($api) {
         $api->get('type-category', 'App\Http\Controllers\BusinessController@getTypeAndCategories');
 
         $api->group(['prefix' => 'member', 'middleware' => ['member.auth']], function ($api) {
+            $api->get('/{member}/get-info', 'App\Http\Controllers\MemberController@getInfo');
+            $api->post('/{member}/update', 'App\Http\Controllers\MemberController@update');
+            $api->post('/{member}/change-NID', 'App\Http\Controllers\MemberController@changeNID');
             $api->post('/{member}/create-business', 'App\Http\Controllers\BusinessController@create');
             $api->post('{member}/check-business', 'App\Http\Controllers\BusinessController@checkBusiness');
             $api->get('/{member}/show', 'App\Http\Controllers\BusinessController@show');
