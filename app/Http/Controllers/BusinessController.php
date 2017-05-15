@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Business;
 use App\Models\BusinessCategory;
 use App\Models\Member;
+use App\Repositories\BusinessMemberRepository;
 use App\Repositories\BusinessRepository;
+use App\Repositories\InvitationRepository;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
 
@@ -13,10 +15,14 @@ class BusinessController extends Controller
 {
     use DispatchesJobs;
     private $businessRepository;
+    private $businessMemberRepository;
+    private $invitationRepository;
 
     public function __construct()
     {
         $this->businessRepository = new BusinessRepository();
+        $this->businessMemberRepository = new BusinessMemberRepository();
+        $this->invitationRepository = new InvitationRepository();
     }
 
     public function checkURL(Request $request)
@@ -123,6 +129,20 @@ class BusinessController extends Controller
                 return response()->json(['code' => 200, 'requests' => $business->joinRequests]);
             } else {
                 return response()->json(['code' => 404]);
+            }
+        }
+    }
+
+    public function manageInvitation($member, $business, Request $request)
+    {
+        $member = Member::find($member);
+        if ($this->businessMemberRepository->isMemberAdmin($business, $member) != null) {
+            $business = Business::find($business);
+            $join_request = $business->joinRequests()->where('id', $request->invitation)->first();
+            if (count($join_request) != 0) {
+                return $this->invitationRepository->manage($join_request, $request->status) ? response()->json(['code' => 200]) : response()->json(['code' => 500]);
+            } else {
+                return response()->json(['code' => 409]);
             }
         }
 
