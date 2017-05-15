@@ -74,6 +74,8 @@ class SearchController extends Controller
                 if ($profile->member != null) {
                     if ($profile->member->id == $member) {
                         return response()->json(['msg' => "seriously??? can't send invitation to yourself", 'code' => 500]);
+                    } elseif (count($profile->member->businesses) > 0) {
+                        return response()->json(['msg' => "already a member!", 'code' => 409]);
                     }
                 }
                 array_forget($profile, 'member');
@@ -86,6 +88,7 @@ class SearchController extends Controller
             if (count($business) == 0) {
                 $business = $this->getBusiness('phone', $this->formatMobile($search), $member);
             }
+
             if (count($business->members) != 0) {
                 return response()->json(['msg' => 'already a member', 'code' => 409]);
             }
@@ -97,10 +100,13 @@ class SearchController extends Controller
         }
     }
 
-    private function getProfile($field, $search, $business)
+    private
+    function getProfile($field, $search, $business)
     {
-        return Profile::with(['member' => function ($q) {
-            $q->select('id', 'profile_id');
+        return Profile::with(['member' => function ($q) use ($business) {
+            $q->select('id', 'profile_id')->with(['businesses' => function ($q) use ($business) {
+                $q->select('businesses.id')->where('businesses.id', $business);
+            }]);
         }])->with(['joinRequests' => function ($q) use ($business) {
             $q->select('id', 'profile_id', 'status')->where([
                 ['requester_type', "App\Models\Business"],
@@ -110,7 +116,19 @@ class SearchController extends Controller
 
     }
 
-    private function formatMobile($mobile)
+    private
+    function getBusiness($field, $search, $member)
+    {
+        return Business::with(['joinRequests' => function ($q) {
+            $q->select('*');
+        }])->with(['members' => function ($q) use ($member) {
+            $q->select('members.id')->where('members.id', $member);
+        }])->where($field, $search)->select('id', 'name', 'logo', 'email', 'phone')->first();
+    }
+
+
+    private
+    function formatMobile($mobile)
     {
         // mobile starts with '+88'
         if (preg_match("/^(\+88)/", $mobile)) {
@@ -122,14 +140,5 @@ class SearchController extends Controller
         else {
             return '+88' . $mobile;
         }
-    }
-
-    private function getBusiness($field, $search, $member)
-    {
-        return Business::with(['joinRequests' => function ($q) {
-            $q->select('*');
-        }])->with(['members' => function ($q) use ($member) {
-            $q->select('members.id')->where('members.id', $member);
-        }])->where($field, $search)->select('id', 'name', 'logo', 'email', 'phone')->first();
     }
 }
