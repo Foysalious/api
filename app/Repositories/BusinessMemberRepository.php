@@ -23,4 +23,12 @@ class BusinessMemberRepository
         return true;
     }
 
+    public function isMemberAdmin($business, $member)
+    {
+        return $member->businesses()->where([
+            ['businesses.id', $business],
+            ['business_member.type', 'Admin']
+        ])->first();
+    }
+
 }

@@ -135,8 +135,10 @@ $api->version('v1', function ($api) {
             $api->post('{member}/business/{business}/change-logo', 'App\Http\Controllers\BusinessController@changeLogo');
             $api->get('{member}/business/{business}/members', 'App\Http\Controllers\BusinessController@getMembers');
             $api->get('{member}/business/{business}/requests', 'App\Http\Controllers\BusinessController@getRequests');
+            $api->post('{member}/business/{business}/manage-invitation', 'App\Http\Controllers\BusinessController@manageInvitation');
             $api->get('{member}/business/{business}/get-member', 'App\Http\Controllers\BusinessMemberController@getMember');
             $api->post('{member}/business/{business}/change-member-type', 'App\Http\Controllers\BusinessMemberController@changeMemberType');
+
 
             $api->post('{member}/search', 'App\Http\Controllers\SearchController@searchBusinessOrMember');
             $api->get('{member}/requests', 'App\Http\Controllers\MemberController@getRequests');
