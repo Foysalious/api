@@ -36,4 +36,24 @@ class BusinessMemberController extends Controller
             return response()->json(['code' => 409, 'msg' => 'conflict']);
         }
     }
+
+    public function changeMemberType($member, $business, Request $request)
+    {
+        $member = Member::find($member);
+        $business = $this->businessRepository->businessExistsForMember($member, $business);
+        if ($business != null) {
+            $member = $this->businessMemberRepository->isBusinessMember($business, $request->business_member_id);
+            if ($member != null && $member->pivot->type == 'Admin') {
+                if ($this->businessMemberRepository->changeType($business, $member, $request->type)) {
+                    return response()->json(['code' => 200]);
+                } else {
+                    return response()->json(['code' => 500, 'msg' => 'try again']);
+                }
+            } else {
+                return response()->json(['code' => 409, 'msg' => 'conflict']);
+            }
+        } else {
+            return response()->json(['code' => 409, 'msg' => 'conflict']);
+        }
+    }
 }

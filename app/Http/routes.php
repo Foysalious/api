@@ -121,8 +121,11 @@ $api->version('v1', function ($api) {
 
         $api->group(['prefix' => 'member', 'middleware' => ['member.auth']], function ($api) {
             $api->get('/{member}/get-info', 'App\Http\Controllers\MemberController@getInfo');
-            $api->post('/{member}/update', 'App\Http\Controllers\MemberController@update');
+            $api->get('/{member}/get-profile-info', 'App\Http\Controllers\MemberController@getProfileInfo');
+            $api->post('/{member}/update-personal-info', 'App\Http\Controllers\MemberController@updatePersonalInfo');
+            $api->post('/{member}/update-professional-info', 'App\Http\Controllers\MemberController@updateProfessionalInfo');
             $api->post('/{member}/change-NID', 'App\Http\Controllers\MemberController@changeNID');
+
             $api->post('/{member}/create-business', 'App\Http\Controllers\BusinessController@create');
             $api->post('{member}/check-business', 'App\Http\Controllers\BusinessController@checkBusiness');
             $api->get('/{member}/show', 'App\Http\Controllers\BusinessController@show');
@@ -133,6 +136,7 @@ $api->version('v1', function ($api) {
             $api->get('{member}/business/{business}/members', 'App\Http\Controllers\BusinessController@getMembers');
             $api->get('{member}/business/{business}/requests', 'App\Http\Controllers\BusinessController@getRequests');
             $api->get('{member}/business/{business}/get-member', 'App\Http\Controllers\BusinessMemberController@getMember');
+            $api->post('{member}/business/{business}/change-member-type', 'App\Http\Controllers\BusinessMemberController@changeMemberType');
 
             $api->post('{member}/search', 'App\Http\Controllers\SearchController@searchBusinessOrMember');
             $api->get('{member}/requests', 'App\Http\Controllers\MemberController@getRequests');

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Business;
 use App\Models\Category;
+use App\Models\Member;
 use App\Models\Profile;
 use App\Models\Service;
 use App\Repositories\ServiceRepository;
@@ -81,9 +82,12 @@ class SearchController extends Controller
                 return response()->json(['msg' => 'search person not found', 'code' => 404]);
             }
         } elseif ($request->searchBy == 'member') {
-            $business = $this->getBusiness('email', $search);
+            $business = $this->getBusiness('email', $search, $member);
             if (count($business) == 0) {
-                $business = $this->getBusiness('phone', $this->formatMobile($search));
+                $business = $this->getBusiness('phone', $this->formatMobile($search), $member);
+            }
+            if (count($business->members) != 0) {
+                return response()->json(['msg' => 'already a member', 'code' => 409]);
             }
             if ($business != null) {
                 return response()->json(['msg' => 'found', 'code' => 200, 'result' => $business]);
@@ -120,10 +124,12 @@ class SearchController extends Controller
         }
     }
 
-    private function getBusiness($field, $search)
+    private function getBusiness($field, $search, $member)
     {
         return Business::with(['joinRequests' => function ($q) {
             $q->select('*');
-        }])->where($field, $search)->select('id', 'name', 'logo')->first();
+        }])->with(['members' => function ($q) use ($member) {
+            $q->select('members.id')->where('members.id', $member);
+        }])->where($field, $search)->select('id', 'name', 'logo', 'email', 'phone')->first();
     }
 }
