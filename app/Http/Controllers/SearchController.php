@@ -130,6 +130,6 @@ class SearchController extends Controller
             $q->select('*');
         }])->with(['members' => function ($q) use ($member) {
             $q->select('members.id')->where('members.id', $member);
-        }])->where($field, $search)->select('id', 'name', 'logo')->first();
+        }])->where($field, $search)->select('id', 'name', 'logo', 'email', 'phone')->first();
     }
 }
