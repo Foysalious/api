@@ -55,12 +55,20 @@ class MemberController extends Controller
         return response()->json(['member' => $this->memberRepository->getInfo($member), 'code' => 200]);
     }
 
-    public function update($member, Request $request)
+    public function updatePersonalInfo($member, Request $request)
     {
         $member = Member::find($member);
-        $member = $this->memberRepository->updateInfo($member, $request);
+        $member = $this->memberRepository->updatePersonalInfo($member, $request);
         return $member ? response()->json(['member' => $member, 'code' => 200]) : response()->json(['code' => 404]);
     }
+
+    public function updateProfessionalInfo($member, Request $request)
+    {
+        $member = Member::find($member);
+        $member = $this->memberRepository->updateProfessionalInfo($member, $request);
+        return $member ? response()->json(['member' => $member, 'code' => 200]) : response()->json(['code' => 404]);
+    }
+
 
     public function changeNID($member, Request $request)
     {
@@ -71,4 +79,5 @@ class MemberController extends Controller
         $member->nid_image = $this->memberRepository->uploadImage($member, $request->file('nid_image'));
         return $member->update() ? response()->json(['code' => 200]) : response()->json(['code' => 404]);
     }
+
 }

@@ -58,7 +58,47 @@ class MemberRepository
         return $member;
     }
 
-    public function uploadImage($member, $image)
+    public function updatePersonalInfo($member, $request)
+    {
+        try {
+            DB::transaction(function () use ($member, $request) {
+                $member->father_name = $request->father_name;
+                $member->spouse_name = $request->spouse_name;
+                $member->mother_name = $request->mother_name;
+                $member->alternate_contact = $request->alternate_contact;
+                $member->bank_account = $request->bank_account;
+                $member->mfs_account = $request->mfs_account;
+                $member->update();
+            });
+        } catch (QueryException $e) {
+            return false;
+        }
+        return $member;
+    }
+
+    public function updateProfessionalInfo($member, $request)
+    {
+        try {
+            DB::transaction(function () use ($member, $request) {
+                $member->nid_no = $request->nid_no;
+                if ($member->nid_image != '') {
+                    $this->deleteFileFromCDN($member->nid_image);
+                }
+                $member->nid_image = $this->uploadNIDImage($member, $request->file('nid_image'));
+                $member->education = $request->education;
+                $member->profession = $request->profession;
+                $member->other_expertise = $request->other_expertise;
+                $member->experience = $request->experience;
+                $member->present_income = $request->present_income;
+                $member->update();
+            });
+        } catch (QueryException $e) {
+            return false;
+        }
+        return $member;
+    }
+
+    private function uploadNIDImage($member, $image)
     {
         $filename = 'member_nid_image' . $member->id . '.' . $image->extension();
         Storage::disk('s3')->put($this->nid_image . $filename, file_get_contents($image), 'public');
