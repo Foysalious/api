@@ -121,6 +121,7 @@ $api->version('v1', function ($api) {
 
         $api->group(['prefix' => 'member', 'middleware' => ['member.auth']], function ($api) {
             $api->get('/{member}/get-info', 'App\Http\Controllers\MemberController@getInfo');
+            $api->get('/{member}/get-profile-info', 'App\Http\Controllers\MemberController@getProfileInfo');
             $api->post('/{member}/update-personal-info', 'App\Http\Controllers\MemberController@updatePersonalInfo');
             $api->post('/{member}/update-professional-info', 'App\Http\Controllers\MemberController@updateProfessionalInfo');
             $api->post('/{member}/change-NID', 'App\Http\Controllers\MemberController@changeNID');

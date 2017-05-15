@@ -80,4 +80,11 @@ class MemberController extends Controller
         return $member->update() ? response()->json(['code' => 200]) : response()->json(['code' => 404]);
     }
 
+    public function getProfileInfo($member)
+    {
+        $member = Member::find($member);
+        $member = $member->profile()->select('name', 'address', 'gender', 'dob', 'email', 'mobile')->first();
+        return response()->json(['code' => 200, 'member' => $member]);
+    }
+
 }
