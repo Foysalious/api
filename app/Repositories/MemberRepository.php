@@ -73,7 +73,7 @@ class MemberRepository
         } catch (QueryException $e) {
             return false;
         }
-        return $member;
+        return true;
     }
 
     public function updateProfessionalInfo($member, $request)
@@ -97,7 +97,7 @@ class MemberRepository
         } catch (QueryException $e) {
             return false;
         }
-        return $member;
+        return true;
     }
 
     private function uploadNIDImage($member, $image)
