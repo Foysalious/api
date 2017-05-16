@@ -13,3 +13,16 @@ if(!function_exists('voucher')) {
         return $voucher;
     }
 }
+
+if(!function_exists('suggestedVoucherFor')) {
+    /**
+     * VoucherSuggester wrapper.
+     *
+     * @param $customer
+     * @return \App\Models\Voucher
+     */
+    function suggestedVoucherFor($customer)
+    {
+        return (new \Sheba\Voucher\VoucherSuggester($customer))->suggest();
+    }
+}

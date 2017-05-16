@@ -60,3 +60,39 @@ if(!function_exists('formatTaka')) {
         return number_format($amount, 2, '.', '');
     }
 }
+
+if(!function_exists('formatTaka')) {
+    /**
+     * Format integer amount of taka into decimal.
+     *
+     * @param  $amount
+     * @return number
+     */
+    function formatTaka($amount)
+    {
+        return number_format($amount, 2, '.', '');
+    }
+}
+
+if (!function_exists('randomString')) {
+    function randomString($len, $num = 0, $alpha = 0, $spec_char = 0)
+    {
+        $alphabets = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        $numbers = "0123456789";
+        $special_characters = "!@#$%^&*()_-+=}{][|:;.,/?";
+        $characters = "";
+        if ($num)
+            $characters .= $numbers;
+        if ($alpha)
+            $characters .= $alphabets;
+        if ($spec_char)
+            $characters .= $special_characters;
+        if (!$num && !$alpha && !$spec_char)
+            $characters .= $numbers . $alphabets . $special_characters;
+        $rand_string = '';
+        for ($i = 0; $i < $len; $i++) {
+            $rand_string .= $characters[mt_rand(0, strlen($characters) - 1)];
+        }
+        return $rand_string;
+    }
+}
