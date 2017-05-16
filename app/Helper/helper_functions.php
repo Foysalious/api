@@ -60,3 +60,16 @@ if(!function_exists('formatTaka')) {
         return number_format($amount, 2, '.', '');
     }
 }
+
+if(!function_exists('formatTaka')) {
+    /**
+     * Format integer amount of taka into decimal.
+     *
+     * @param  $amount
+     * @return number
+     */
+    function formatTaka($amount)
+    {
+        return number_format($amount, 2, '.', '');
+    }
+}

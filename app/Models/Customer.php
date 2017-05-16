@@ -60,4 +60,14 @@ class Customer extends Authenticatable
     {
         return $this->hasMany(CustomOrder::class);
     }
+
+    public function promotions()
+    {
+        return $this->hasMany(Promotion::class);
+    }
+
+    public function suggestedPromotion()
+    {
+        return suggestedVoucherFor($this);
+    }
 }

@@ -19,6 +19,8 @@ class VoucherCode
     private $isValid;
     private $isExist;
 
+    private $customerId;
+
     public function __construct($code)
     {
         $this->isExist = true;
@@ -52,7 +54,9 @@ class VoucherCode
             'id' => $this->voucher->id,
             'is_valid' => $this->isValid
         ];
-        $result += ($this->isValid) ? ["amount" => $this->voucher->amount, "is_percentage" => $this->voucher->is_amount_percentage, 'voucher' => $this->voucher] : ["message" => $this->rules->invalidMessage, 'errors' => $this->rules->errors];
+        $result += ($this->isValid) ?
+            ["amount" => $this->voucher->amount, "is_percentage" => $this->voucher->is_amount_percentage, 'voucher' => $this->voucher] :
+            ["message" => $this->rules->invalidMessage, 'errors' => $this->rules->errors];
         return $result;
     }
 
@@ -67,6 +71,9 @@ class VoucherCode
         if (!$this->isExist) {
             return $this;
         }
+
+        $this->setCustomerId($customer);
+
         return $this->checkService($partner, $service)
             ->checkLocation($location)
             ->checkCustomer($customer)
@@ -80,12 +87,28 @@ class VoucherCode
     {
         if (!$this->isValid) return $this;
         if (!$timestamp) $timestamp = Carbon::now();
-        $this->isValid = ($this->voucher->start_date <= $timestamp && $timestamp <= $this->voucher->end_date);
+        list($start_date, $end_date) = $this->validityTimeLine();
+        $this->isValid = ($start_date <= $timestamp && $timestamp <= $end_date);
         if (!$this->isValid) {
             $this->rules->invalidMessage = $this->rules->invalidMessages('validity');
             array_push($this->rules->errors, 'validity');
         }
         return $this;
+    }
+
+    private function validityTimeLine()
+    {
+        if(!$this->voucher->is_referral) {
+            return [$this->voucher->start_date, $this->voucher->end_date];
+        }
+
+        return [$this->voucher->start_date, $this->voucher->end_date];
+    }
+
+    private function setCustomerId($customer)
+    {
+        $customer = is_string($customer) ? Customer::where('mobile', $customer)->first() : $customer;
+        $this->customerId = ($customer instanceof Customer) ? $customer->id : $customer;
     }
 
     private function checkService($partner, $service)
@@ -142,7 +165,7 @@ class VoucherCode
         $customer = is_int($customer) ? Customer::find($customer) : $customer;
         $customer = ($customer instanceof Customer) ? $customer->mobile : $customer;
         $this->isValid = $this->rules->checkCustomerMobile($customer);
-        $this->checkNthOrder($customer)->checkUsageLimit($customer);
+        $this->checkNthOrder()->checkUsageLimit();
         return $this;
     }
 
@@ -153,12 +176,10 @@ class VoucherCode
         return $this;
     }
 
-    private function checkNthOrder($customer)
+    private function checkNthOrder()
     {
         if (!$this->isValid) return $this;
-        $customer = is_string($customer) ? Customer::where('mobile', $customer)->first() : $customer;
-        $customer = ($customer instanceof Customer) ? $customer->id : $customer;
-        $total_order = Order::where('customer_id', $customer)->count();
+        $total_order = Order::where('customer_id', $this->customerId)->count();
         $this->isValid = $this->rules->checkCustomerNthOrder($total_order + 1);
         return $this;
     }
@@ -170,12 +191,10 @@ class VoucherCode
         return $this;
     }
 
-    private function checkUsageLimit($customer)
+    private function checkUsageLimit()
     {
         if (!$this->isValid) return $this;
-        $customer = is_string($customer) ? Customer::where('mobile', $customer)->first() : $customer;
-        $customer = ($customer instanceof Customer) ? $customer->id : $customer;
-        $this->isValid = (!$this->voucher->max_order) ? true : (( $this->voucher->usage($customer) < $this->voucher->max_order));
+        $this->isValid = (!$this->voucher->max_order) ? true : (( $this->voucher->usage($this->customerId) < $this->voucher->max_order));
         if (!$this->isValid) {
             $this->rules->invalidMessage = $this->rules->invalidMessages('customers');
             array_push($this->rules->errors, 'max_usage');
