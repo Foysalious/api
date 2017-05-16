@@ -66,7 +66,7 @@ class MemberController extends Controller
     {
         $member = Member::find($member);
         $member = $this->memberRepository->updateProfessionalInfo($member, $request);
-        return $member ? response()->json(['member' => $member, 'code' => 200]) : response()->json(['code' => 404]);
+        return $member ? response()->json(['code' => 200]) : response()->json(['code' => 404]);
     }
 
 
