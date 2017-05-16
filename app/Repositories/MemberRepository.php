@@ -81,10 +81,12 @@ class MemberRepository
         try {
             DB::transaction(function () use ($member, $request) {
                 $member->nid_no = $request->nid_no;
-                if ($member->nid_image != '') {
-                    $this->deleteFileFromCDN($member->nid_image);
+                if ($request->file('nid_image') != null) {
+                    if ($member->nid_image != '') {
+                        $this->deleteFileFromCDN($member->nid_image);
+                    }
+                    $member->nid_image = $this->uploadNIDImage($member, $request->file('nid_image'));
                 }
-                $member->nid_image = $this->uploadNIDImage($member, $request->file('nid_image'));
                 $member->education = $request->education;
                 $member->profession = $request->profession;
                 $member->other_expertise = $request->other_expertise;
