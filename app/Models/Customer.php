@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Sheba\Voucher\VoucherCodeGenerator;
 
 class Customer extends Authenticatable
 {
@@ -69,5 +70,21 @@ class Customer extends Authenticatable
     public function suggestedPromotion()
     {
         return suggestedVoucherFor($this);
+    }
+
+    public function generateReferral()
+    {
+        return VoucherCodeGenerator::byName($this->name);
+    }
+
+    public function vouchers()
+    {
+        return $this->morphMany(Voucher::class, 'owner');
+    }
+
+    public function getReferralAttribute()
+    {
+        $vouchers = $this->vouchers;
+        return $vouchers ? $vouchers->first() : null;
     }
 }
