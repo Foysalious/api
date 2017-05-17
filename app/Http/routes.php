@@ -20,12 +20,12 @@ $api = app('Dingo\Api\Routing\Router');
 |
 */
 $api->version('v1', function ($api) {
-    $api->get('voucher',function (){
-        dd(voucher('ZOBAYER92TT')->check(105, 33, 5, 11, 100, 'Web',$timestamp = null)->reveal());
+    $api->get('voucher', function () {
+        dd(voucher('ZOBAYER92TT')->check(105, 33, 5, 11, 100, 'Web', $timestamp = null)->reveal());
     });
     $api->get('authenticate', 'App\Http\Controllers\AccountController@checkForAuthentication');
     $api->post('account', 'App\Http\Controllers\AccountController@encryptData');
-    $api->get('decrypt','App\Http\Controllers\AccountController@decryptData');
+    $api->get('decrypt', 'App\Http\Controllers\AccountController@decryptData');
     $api->get('create-profile', 'App\Http\Controllers\Auth\LoginController@create');
     $api->post('register-mobile', 'App\Http\Controllers\Auth\RegistrationController@registerWithMobile');
     $api->post('register-email', 'App\Http\Controllers\Auth\RegistrationController@registerWithEmail');
@@ -47,7 +47,6 @@ $api->version('v1', function ($api) {
     $api->get('offer/{offer}', 'App\Http\Controllers\ShebaController@getOffer');
     $api->get('offer/{offer}/similar-offer', 'App\Http\Controllers\ShebaController@getSimilarOffer');
 
-    $api->post('voucher-valid', 'App\Http\Controllers\CheckoutController@checkForValidity');
 
     $api->post('career', 'App\Http\Controllers\CareerController@apply');
 
@@ -80,6 +79,8 @@ $api->version('v1', function ($api) {
 
     $api->group(['prefix' => 'customer', 'middleware' => ['customer.auth']], function ($api) {
         $api->get('{customer}', 'App\Http\Controllers\CustomerController@getCustomerInfo');
+        $api->get('{customer}/get-referral', 'App\Http\Controllers\CustomerController@getReferral');
+        $api->post('{customer}/voucher-valid', 'App\Http\Controllers\CheckoutController@checkForValidity');
         $api->get('{customer}/general-info', 'App\Http\Controllers\CustomerController@getCustomerGeneralInfo');
         $api->post('{customer}/fb-integration', 'App\Http\Controllers\CustomerController@facebookIntegration');
         $api->post('{customer}/change-address', 'App\Http\Controllers\CustomerController@changeAddress');
