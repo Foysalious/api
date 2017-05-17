@@ -11,8 +11,8 @@ class PromotionController extends Controller
 {
     public function addPromo($customer, Request $request)
     {
-        $promotions = PromotionList::add($customer, $request->promo);
-        return $promotions != false ? response()->json(['code' => 200, 'promotions' => $promotions]) : response()->json(['code' => 404]);
+        $promotion = PromotionList::add($customer, $request->promo);
+        return $promotion != false ? response()->json(['code' => 200, 'promotion' => $promotion]) : response()->json(['code' => 404]);
     }
 
     public function getPromo($customer)

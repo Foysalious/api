@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\User;
+use App\Models\Voucher;
 use App\Repositories\AuthRepository;
 use App\Repositories\CheckoutRepository;
 use App\Repositories\CustomerRepository;
@@ -15,6 +16,8 @@ use Cache;
 use DB;
 use Mail;
 use Redis;
+use Sheba\Voucher\PromotionList;
+use Sheba\Voucher\ReferralCreator;
 
 class CheckoutController extends Controller
 {
@@ -39,6 +42,10 @@ class CheckoutController extends Controller
         //store order details for customer
         $order = $this->checkoutRepository->storeDataInDB($request->all(), 'cash-on-delivery');
         if ($order) {
+            if ($order->voucher_id != '' && $order->voucher->is_referral == 1) {
+                $voucher = (new  ReferralCreator)->create(Customer::find($order->customer_id), $order->voucher_id);
+                (new PromotionList())->create($voucher->owner_id, $voucher->id);
+            }
             new NotificationRepository($order);
             $this->checkoutRepository->sendConfirmation($customer, $order);
             return response()->json(['code' => 200, 'msg' => 'Order placed successfully!']);
@@ -125,13 +132,13 @@ class CheckoutController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function checkForValidity(Request $request)
+    public function checkForValidity($customer, Request $request)
     {
         $sales_channel = ($request->has('sales_channel')) ? $request->sales_channel : "Web";
         $cart = json_decode($request->cart);
         foreach ($cart->items as $item) {
             $result = $this->voucherRepository
-                ->isValid($request->voucher_code, $item->service->id, $item->partner->id, $request->location, $request->mobile, $cart->price, $sales_channel);
+                ->isValid($request->voucher_code, $item->service->id, $item->partner->id, $request->location, (int)$customer, $cart->price, $sales_channel);
             if ($result['is_valid']) {
                 if ($result['is_percentage']) {
                     $result['amount'] = ((float)$item->partner->prices * $result['amount']) / 100;

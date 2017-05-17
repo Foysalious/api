@@ -14,9 +14,8 @@ class PromotionList
         $promoList = new PromotionList();
         $voucher = $promoList->isValid($promo);
         if ($voucher != false) {
-            $customer = Customer::find($customer);
             if (!$promoList->isAlreadyAdded($voucher, $customer)) {
-                return $promoList->create($customer, $voucher);
+                return $promoList->create($customer, $voucher->id);
             }
         } else {
             return false;
@@ -38,6 +37,7 @@ class PromotionList
 
     private function isAlreadyAdded($voucher, $customer)
     {
+        $customer = Customer::find($customer);
         foreach ($customer->promotions as $promotion) {
             if ($voucher->is_referral == 1) {
                 if (count($customer->orders) > 0 || $promotion->voucher->is_referral == 1) {
@@ -52,14 +52,21 @@ class PromotionList
         return false;
     }
 
-    private function create($customer, $voucher)
+    public function create($customer, $voucher)
     {
+        $customer = Customer::find($customer);
+        $voucher = Voucher::find($voucher);
         $promo = new Promotion();
         $promo->customer_id = $customer->id;
         $promo->voucher_id = $voucher->id;
         $promo->is_valid = 1;
         $date = Carbon::now()->addDays(90);
         $promo->valid_till = $date->toDateString() . " 23:59:59";
-        return $promo->save() ? $promo : false;
+        if ($promo->save()) {
+            return Promotion::with(['voucher' => function ($q) {
+                $q->select('id', 'code', 'amount');
+            }])->select('id', 'voucher_id', 'customer_id', 'valid_till')->where('id', $promo->id)->first();
+        }
+        return false;
     }
 }

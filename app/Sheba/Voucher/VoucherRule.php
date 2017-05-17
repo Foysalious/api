@@ -62,11 +62,27 @@ class VoucherRule
         return false;
     }
 
+    public function checkCustomer($customer)
+    {
+        return $this->checkCustomerMobile($customer->mobile) && $this->checkCustomerId($customer->id);
+    }
+
     public function checkCustomerMobile($mobile)
     {
         if(!$this->hasKey('customers')) return true;
 
         if(in_array($mobile, $this->rules->customers)) return true;
+
+        $this->invalidMessage = $this->invalidMessages('customers');
+        array_push($this->errors, 'customers');
+        return false;
+    }
+
+    public function checkCustomerId($id)
+    {
+        if(!$this->hasKey('customer_ids')) return true;
+
+        if(in_array($id, $this->rules->customer_ids)) return true;
 
         $this->invalidMessage = $this->invalidMessages('customers');
         array_push($this->errors, 'customers');
