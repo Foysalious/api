@@ -98,8 +98,13 @@ class VoucherCode
 
     private function validityTimeLine()
     {
-        if(!$this->voucher->is_referral) {
-            return [$this->voucher->start_date, $this->voucher->end_date];
+        if ($this->voucher->is_referral) {
+            $promotion = $this->isPromoApplied();
+            if (!$promotion) {
+                return [Carbon::today(), Carbon::tomorrow()];
+            } else {
+                return [$promotion->created_at, $promotion->valid_till];
+            }
         }
 
         return [$this->voucher->start_date, $this->voucher->end_date];
@@ -109,6 +114,12 @@ class VoucherCode
     {
         $customer = is_string($customer) ? Customer::where('mobile', $customer)->first() : $customer;
         $this->customerId = ($customer instanceof Customer) ? $customer->id : $customer;
+    }
+
+    private function isPromoApplied()
+    {
+        $promotion = Customer::find($this->customerId)->promotions()->where('voucher_id', $this->voucher->id)->get();
+        return $promotion == null ? false : $promotion->first();
     }
 
     private function checkService($partner, $service)
@@ -194,7 +205,7 @@ class VoucherCode
     private function checkUsageLimit()
     {
         if (!$this->isValid) return $this;
-        $this->isValid = (!$this->voucher->max_order) ? true : (( $this->voucher->usage($this->customerId) < $this->voucher->max_order));
+        $this->isValid = (!$this->voucher->max_order) ? true : (($this->voucher->usage($this->customerId) < $this->voucher->max_order));
         if (!$this->isValid) {
             $this->rules->invalidMessage = $this->rules->invalidMessages('customers');
             array_push($this->rules->errors, 'max_usage');

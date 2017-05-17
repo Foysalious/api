@@ -21,7 +21,7 @@ $api = app('Dingo\Api\Routing\Router');
 */
 $api->version('v1', function ($api) {
     $api->get('voucher',function (){
-        dd(voucher('2500')->check(105, 33, 5, 11, 100, $timestamp = null)->reveal());
+        dd(voucher('ZOBAYER92TT')->check(105, 33, 5, 11, 100, 'Web',$timestamp = null)->reveal());
     });
     $api->get('authenticate', 'App\Http\Controllers\AccountController@checkForAuthentication');
     $api->post('account', 'App\Http\Controllers\AccountController@encryptData');
@@ -93,6 +93,9 @@ $api->version('v1', function ($api) {
         $api->post('{customer}/email', 'App\Http\Controllers\CustomerController@modifyEmail');
         $api->post('{customer}/email-verification', 'App\Http\Controllers\CustomerController@checkEmailVerification');
         $api->post('{customer}/send-verification-link', 'App\Http\Controllers\CustomerController@sendVerificationLink');
+        $api->get('{customer}/get-promo', 'App\Http\Controllers\PromotionController@getPromo');
+        $api->post('{customer}/add-promo', 'App\Http\Controllers\PromotionController@addPromo');
+
         $api->post('{customer}/general-info', 'App\Http\Controllers\CustomerController@modifyGeneralInfo');
         $api->post('{customer}/order-list', 'App\Http\Controllers\OrderController@getNotClosedOrderInfo');
         $api->post('{customer}/order-history', 'App\Http\Controllers\OrderController@getClosedOrderInfo');

@@ -65,7 +65,6 @@ class CustomerController extends Controller
 //            'msg' => 'successful', 'code' => 200, 'customer' => $customer,
 //            'addresses' => $cus->delivery_addresses()->select('id', 'address')->get()
 //        ]);
-
     }
 
     public function getCustomerGeneralInfo($customer)
