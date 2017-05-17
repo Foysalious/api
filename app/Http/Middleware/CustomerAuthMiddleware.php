@@ -56,7 +56,6 @@ class CustomerAuthMiddleware {
         {
             return response()->json(['token_absent'], $e->getStatusCode());
         }
-        return $next($request);
     }
 }
 
