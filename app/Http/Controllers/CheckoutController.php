@@ -45,7 +45,7 @@ class CheckoutController extends Controller
         if ($order) {
             if ($order->voucher_id != '' && $order->voucher->is_referral == 1) {
                 $voucher = (new  ReferralCreator)->create(Customer::find($order->customer_id), $order->voucher_id);
-                (new PromotionList())->create($voucher->owner_id, $voucher->id);
+                (new PromotionList())->create($order->voucher->owner_id, $voucher->id);
             }
             new NotificationRepository($order);
             $this->checkoutRepository->sendConfirmation($customer, $order);
