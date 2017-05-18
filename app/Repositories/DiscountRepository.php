@@ -49,10 +49,15 @@ class DiscountRepository
     public function getDiscountAmount($hasPercentage, $partnerPrice, $discountValue)
     {
         if ($hasPercentage) {
-            return ((float)$partnerPrice * $discountValue) / 100;
+            return $this->validateDiscountValue($partnerPrice, ((float)$partnerPrice * $discountValue) / 100);
         } else {
-            return $discountValue;
+            return $this->validateDiscountValue($partnerPrice, $discountValue);
         }
+    }
+
+    public function validateDiscountValue($partnerPrice, $discountValue)
+    {
+        return $partnerPrice < $discountValue ? $partnerPrice : $discountValue;
     }
 
 }

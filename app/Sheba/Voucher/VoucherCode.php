@@ -20,6 +20,7 @@ class VoucherCode
     private $isExist;
 
     private $customerId;
+    private $customer;
 
     public function __construct($code)
     {
@@ -73,10 +74,11 @@ class VoucherCode
         }
 
         $this->setCustomerId($customer);
+        $this->setCustomer($customer);
 
         return $this->checkService($partner, $service)
             ->checkLocation($location)
-            ->checkCustomer($customer)
+            ->checkCustomer()
             ->checkOrderAmount($order_amount)
             ->checkPartner($partner)
             ->checkSalesChannel($sales_channel)
@@ -98,10 +100,12 @@ class VoucherCode
 
     private function validityTimeLine()
     {
-        if(!$this->voucher->is_referral) {
-            return [$this->voucher->start_date, $this->voucher->end_date];
+        if ($this->voucher->is_referral) {
+            $promotion = $this->isPromoApplied();
+            if (!$promotion)
+                return [Carbon::today(), Carbon::tomorrow()];
+            return [$promotion->created_at, $promotion->valid_till];
         }
-
         return [$this->voucher->start_date, $this->voucher->end_date];
     }
 
@@ -109,6 +113,17 @@ class VoucherCode
     {
         $customer = is_string($customer) ? Customer::where('mobile', $customer)->first() : $customer;
         $this->customerId = ($customer instanceof Customer) ? $customer->id : $customer;
+    }
+
+    private function setCustomer($customer)
+    {
+        $this->customer = is_int($customer) ? Customer::find($customer) : ( is_string($customer) ? Customer::where('mobile', $customer)->first() : $customer );
+    }
+
+    private function isPromoApplied()
+    {
+        $promotion = Customer::find($this->customerId)->promotions()->where('voucher_id', $this->voucher->id)->get();
+        return $promotion == null ? false : $promotion->first();
     }
 
     private function checkService($partner, $service)
@@ -159,14 +174,11 @@ class VoucherCode
         return $this;
     }
 
-    private function checkCustomer($customer)
+    private function checkCustomer()
     {
         if (!$this->isValid) return $this;
-        $customer = is_int($customer) ? Customer::find($customer) : $customer;
-        $customer = ($customer instanceof Customer) ? $customer->mobile : $customer;
-        $this->isValid = $this->rules->checkCustomerMobile($customer);
-        $this->checkNthOrder()->checkUsageLimit();
-        return $this;
+        $this->isValid = $this->rules->checkCustomer($this->customer);
+        return $this->checkNthOrder()->checkUsageLimit();
     }
 
     private function checkOrderAmount($amount)
@@ -194,7 +206,7 @@ class VoucherCode
     private function checkUsageLimit()
     {
         if (!$this->isValid) return $this;
-        $this->isValid = (!$this->voucher->max_order) ? true : (( $this->voucher->usage($this->customerId) < $this->voucher->max_order));
+        $this->isValid = (!$this->voucher->max_order) ? true : (($this->voucher->usage($this->customerId) < $this->voucher->max_order));
         if (!$this->isValid) {
             $this->rules->invalidMessage = $this->rules->invalidMessages('customers');
             array_push($this->rules->errors, 'max_usage');

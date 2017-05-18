@@ -21,7 +21,7 @@ $api = app('Dingo\Api\Routing\Router');
 */
 $api->version('v1', function ($api) {
     $api->get('voucher', function () {
-        dd(voucher('2500')->check(105, 33, 5, 11, 100, $timestamp = null)->reveal());
+        dd(voucher('ZOBAYER92TT')->check(105, 33, 5, 11, 100, 'Web', $timestamp = null)->reveal());
     });
     $api->get('authenticate', 'App\Http\Controllers\AccountController@checkForAuthentication');
     $api->post('account', 'App\Http\Controllers\AccountController@encryptData');
@@ -41,13 +41,13 @@ $api->version('v1', function ($api) {
     $api->get('job-times', 'App\Http\Controllers\JobController@getPreferredTimes');
     $api->get('info', 'App\Http\Controllers\ShebaController@getInfo');
     $api->get('images', 'App\Http\Controllers\ShebaController@getImages');
+    $api->post('voucher-valid', 'App\Http\Controllers\CheckoutController@checkForValidity');
 
     $api->get('offers', 'App\Http\Controllers\ShebaController@getOffers');
     $api->get('offer/{offer}', 'App\Http\Controllers\ShebaController@getOffer');
     $api->get('offer/{offer}', 'App\Http\Controllers\ShebaController@getOffer');
     $api->get('offer/{offer}/similar-offer', 'App\Http\Controllers\ShebaController@getSimilarOffer');
 
-    $api->post('voucher-valid', 'App\Http\Controllers\CheckoutController@checkForValidity');
 
     $api->post('career', 'App\Http\Controllers\CareerController@apply');
 
@@ -80,6 +80,7 @@ $api->version('v1', function ($api) {
 
     $api->group(['prefix' => 'customer', 'middleware' => ['customer.auth']], function ($api) {
         $api->get('{customer}', 'App\Http\Controllers\CustomerController@getCustomerInfo');
+        $api->get('{customer}/get-referral', 'App\Http\Controllers\CustomerController@getReferral');
         $api->get('{customer}/general-info', 'App\Http\Controllers\CustomerController@getCustomerGeneralInfo');
         $api->post('{customer}/fb-integration', 'App\Http\Controllers\CustomerController@facebookIntegration');
         $api->post('{customer}/change-address', 'App\Http\Controllers\CustomerController@changeAddress');
@@ -93,6 +94,10 @@ $api->version('v1', function ($api) {
         $api->post('{customer}/email', 'App\Http\Controllers\CustomerController@modifyEmail');
         $api->post('{customer}/email-verification', 'App\Http\Controllers\CustomerController@checkEmailVerification');
         $api->post('{customer}/send-verification-link', 'App\Http\Controllers\CustomerController@sendVerificationLink');
+        $api->get('{customer}/get-promo', 'App\Http\Controllers\PromotionController@getPromo');
+        $api->post('{customer}/add-promo', 'App\Http\Controllers\PromotionController@addPromo');
+        $api->post('{customer}/apply-promo', 'App\Http\Controllers\PromotionController@applyPromo');
+
         $api->post('{customer}/general-info', 'App\Http\Controllers\CustomerController@modifyGeneralInfo');
         $api->post('{customer}/order-list', 'App\Http\Controllers\OrderController@getNotClosedOrderInfo');
         $api->post('{customer}/order-history', 'App\Http\Controllers\OrderController@getClosedOrderInfo');

@@ -393,8 +393,8 @@ class CheckoutRepository
 
     public function sendConfirmation($customer, $order)
     {
+        $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
         //send order info to customer  by mail
-        $customer = Customer::find($customer);
         (new SmsHandler('order-created'))->send($customer->mobile, [
             'order_code' => $order->code()
         ]);

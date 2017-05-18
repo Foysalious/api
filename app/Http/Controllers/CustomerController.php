@@ -51,7 +51,7 @@ class CustomerController extends Controller
     public function getCustomerInfo($customer)
     {
         $cus = Customer::find($customer);
-        $customer = Customer::select('name','xp', 'rating', 'reference_code')
+        $customer = Customer::select('name', 'xp', 'rating')
             ->find($customer);
 //        'secondary_mobiles' => $cus->mobiles()->select('mobile')->where('mobile', '<>', $customer->mobile)->get(),
         return response()->json([
@@ -65,7 +65,6 @@ class CustomerController extends Controller
 //            'msg' => 'successful', 'code' => 200, 'customer' => $customer,
 //            'addresses' => $cus->delivery_addresses()->select('id', 'address')->get()
 //        ]);
-
     }
 
     public function getCustomerGeneralInfo($customer)
@@ -240,5 +239,11 @@ class CustomerController extends Controller
         if ($customer->update()) {
             return response()->json(['msg' => 'successful', 'code' => 200]);
         }
+    }
+
+    public function getReferral($customer)
+    {
+        $customer = Customer::find($customer);
+        return response()->json(['referral_code' => $customer->referral->code, 'code' => 200]);
     }
 }

@@ -121,7 +121,7 @@ class BusinessController extends Controller
         $business = $this->businessRepository->businessExistsForMember($member, $business);
         if ($business != null) {
             $business = Business::with(['joinRequests' => function ($q) {
-                $q->select('id', 'profile_id', 'profile_email', 'organization_id')->where('status', 'Pending')->with(['profile' => function ($q) {
+                $q->select('id', 'profile_id', 'profile_email', 'organization_id', 'requester_type')->where('status', 'Pending')->with(['profile' => function ($q) {
                     $q->select('id', 'name', 'email', 'mobile');
                 }]);
             }])->where('id', $business->id)->first();
