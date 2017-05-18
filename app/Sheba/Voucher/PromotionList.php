@@ -14,7 +14,7 @@ class PromotionList
         $promoList = new PromotionList();
         $voucher = $promoList->isValid($promo);
         if ($voucher != false) {
-            if (!$promoList->isAlreadyAdded($voucher, $customer)) {
+            if ($promoList->isAlreadyAdded($voucher, $customer) == false) {
                 return $promoList->create($customer, $voucher->id);
             }
         } else {
@@ -39,12 +39,13 @@ class PromotionList
     {
         $customer = Customer::find($customer);
         foreach ($customer->promotions as $promotion) {
+            if ($promotion->voucher->id == $voucher->id) {
+                return true;
+            }
             if ($voucher->is_referral == 1) {
-                if (count($customer->orders) > 0 || $promotion->voucher->is_referral == 1) {
+                if ($customer->referrer_id != '') {
                     return true;
-                }
-            } else {
-                if ($promotion->voucher->id == $voucher->id) {
+                } elseif (count($customer->orders) > 0 || $promotion->voucher->is_referral == 1) {
                     return true;
                 }
             }

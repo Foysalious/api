@@ -41,6 +41,7 @@ $api->version('v1', function ($api) {
     $api->get('job-times', 'App\Http\Controllers\JobController@getPreferredTimes');
     $api->get('info', 'App\Http\Controllers\ShebaController@getInfo');
     $api->get('images', 'App\Http\Controllers\ShebaController@getImages');
+    $api->post('voucher-valid', 'App\Http\Controllers\CheckoutController@checkForValidity');
 
     $api->get('offers', 'App\Http\Controllers\ShebaController@getOffers');
     $api->get('offer/{offer}', 'App\Http\Controllers\ShebaController@getOffer');
@@ -80,7 +81,6 @@ $api->version('v1', function ($api) {
     $api->group(['prefix' => 'customer', 'middleware' => ['customer.auth']], function ($api) {
         $api->get('{customer}', 'App\Http\Controllers\CustomerController@getCustomerInfo');
         $api->get('{customer}/get-referral', 'App\Http\Controllers\CustomerController@getReferral');
-        $api->post('{customer}/voucher-valid', 'App\Http\Controllers\CheckoutController@checkForValidity');
         $api->get('{customer}/general-info', 'App\Http\Controllers\CustomerController@getCustomerGeneralInfo');
         $api->post('{customer}/fb-integration', 'App\Http\Controllers\CustomerController@facebookIntegration');
         $api->post('{customer}/change-address', 'App\Http\Controllers\CustomerController@changeAddress');
