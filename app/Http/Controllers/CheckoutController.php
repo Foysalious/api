@@ -45,7 +45,7 @@ class CheckoutController extends Controller
         $order = $this->checkoutRepository->storeDataInDB($request->all(), 'cash-on-delivery');
         if ($order) {
             $customer = Customer::find($order->customer_id);
-            if ($order->voucher_id != '') {
+            if ($order->voucher_id != null) {
                 $customer->promotions()->where('voucher_id', $order->voucher_id)->delete();
             }
             if ($this->isOriginalReferral($order)) {
@@ -162,7 +162,7 @@ class CheckoutController extends Controller
      */
     private function isOriginalReferral($order): bool
     {
-        return $order->voucher_id != '' && $order->voucher->is_referral == 1 && $order->voucher->referred_from == null;
+        return $order->voucher_id != null && $order->voucher->is_referral == 1 && $order->voucher->referred_from == null;
     }
 
     /**

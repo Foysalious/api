@@ -53,6 +53,8 @@ class CheckoutRepository
     private $discountRepository;
     private $created_by;
     private $created_by_name;
+    private $voucherApplied = false;
+    private $discountApplied = false;
 
     public function __construct()
     {
@@ -69,9 +71,22 @@ class CheckoutRepository
 
     public function storeDataInDB($order_info, $payment_method)
     {
+        $cart = json_decode($order_info['cart']);
+
+        if (isset($cart->voucher)) {
+            $cart_partner = collect($cart->items)->groupBy('partner.id');
+            //Get all the unique partner id's
+            $unique_partners = collect($cart->items)->unique('partner.id')->pluck('partner.id');
+            foreach ($unique_partners as $partner) {
+                $partner_services = $cart_partner[$partner];
+                foreach ($partner_services as $service) {
+                    $job_discount = $this->calculateDiscountOrVoucher($cart, $service, $order_info);
+                }
+            }
+        }
         $order = new Order();
         try {
-            DB::transaction(function () use ($order_info, $payment_method, $order) {
+            DB::transaction(function () use ($order_info, $payment_method, $order, $job_discount) {
                 $this->calculateAuthor($order_info);
                 $cart = json_decode($order_info['cart']);
 
@@ -110,7 +125,16 @@ class CheckoutRepository
                         $job->crm_id = isset($service->crm_id) ? $service->crm_id : '';
                         $job->department_id = isset($service->department_id) ? $service->department_id : '';
                         $job->service_unit_price = (float)$service->partner->prices;
-                        $job = $this->calculateDiscountOrVoucher($order, $partner_order, $job, $cart, $service);
+                        if ($this->voucherApplied || $this->discountApplied) {
+                            $job->discount = $job_discount['discount'];
+                            $job->sheba_contribution = $job_discount['sheba_contribution'];
+                            $job->partner_contribution = $job_discount['partner_contribution'];
+                        }
+                        if ($this->voucherApplied) {
+                            $order->voucher_id = $job_discount['voucher_id'];
+                            $order->update();
+                        }
+//                        $job = $this->calculateDiscountOrVoucher($order, $partner_order, $job, $cart, $service);
                         $job->job_name = isset($service->job_name) ? $service->job_name : '';
                         $job->schedule_date = $this->calculateScheduleDate($service->date);
                         //For custom order
@@ -159,7 +183,8 @@ class CheckoutRepository
         return $order;
     }
 
-    private function calculateAuthor($order_info)
+    private
+    function calculateAuthor($order_info)
     {
         if (isset($order_info['created_by'])) {
             $user = User::find($order_info['created_by']);
@@ -168,14 +193,16 @@ class CheckoutRepository
         }
     }
 
-    private function getAuthor($object)
+    private
+    function getAuthor($object)
     {
         $object->created_by = $this->created_by;
         $object->created_by_name = $this->created_by_name;
         return $object;
     }
 
-    private function createOrder($order, $order_info)
+    private
+    function createOrder($order, $order_info)
     {
         $order->customer_id = $order_info['customer_id'];
         $order->location_id = $order_info['location_id'];
@@ -187,7 +214,8 @@ class CheckoutRepository
         return $order;
     }
 
-    private function createPartnerOrder($order, $partner, $payment_method)
+    private
+    function createPartnerOrder($order, $partner, $payment_method)
     {
         $partner_order = new PartnerOrder();
         $partner_order->order_id = $order->id;
@@ -198,7 +226,8 @@ class CheckoutRepository
         return $partner_order;
     }
 
-    private function updateCustomOrder($order, $custom_order_id)
+    private
+    function updateCustomOrder($order, $custom_order_id)
     {
         $custom_order = CustomOrder::find($custom_order_id);
         $custom_order->order_id = $order->id;
@@ -206,7 +235,8 @@ class CheckoutRepository
         $custom_order->update();
     }
 
-    private function calculatePartnerOrderPrice($cart_partner)
+    private
+    function calculatePartnerOrderPrice($cart_partner)
     {
         $partner_order_price = [];
         //calculate total prices for each partner
@@ -220,7 +250,8 @@ class CheckoutRepository
         return $partner_order_price;
     }
 
-    private function getDeliveryAddress($order_info)
+    private
+    function getDeliveryAddress($order_info)
     {
         if ($order_info['address_id'] != '') {
             $deliver_address = CustomerDeliveryAddress::find($order_info['address_id']);
@@ -235,7 +266,8 @@ class CheckoutRepository
         }
     }
 
-    private function createPartnerOrderPayment($partner_order)
+    private
+    function createPartnerOrderPayment($partner_order)
     {
         $partner_order_payment = $this->getPartnerOrderPayment($partner_order);
         $partner_order_payment->amount = $partner_order->sheba_collection;
@@ -244,28 +276,32 @@ class CheckoutRepository
         $partner_order_payment->save();
     }
 
-    private function calculateDiscountOrVoucher($order, $partner_order, $job, $cart, $service)
+    private function calculateDiscountOrVoucher($cart, $service, $order_info)
     {
+        $job = [];
         if (isset($service->partner->discount_id)) {
             $discount = PartnerServiceDiscount::find($service->partner->discount_id);
-            $job->discount = $this->discountRepository->getDiscountAmount($discount->is_amount_percentage, $service->partner->prices, $discount->amount) * $job->service_quantity;
-            $job->sheba_contribution = $discount->sheba_contribution;
-            $job->partner_contribution = $discount->partner_contribution;
-        } elseif (isset($cart->voucher) && $order->voucher_id == null) {
+            $job['discount'] = $this->discountRepository
+                    ->getDiscountAmount($discount->is_amount_percentage, $service->partner->prices, $discount->amount) * $service->quantity;
+            $job['sheba_contribution'] = $discount->sheba_contribution;
+            $job['partner_contribution'] = $discount->partner_contribution;
+            $this->discountApplied = true;
+        } elseif (isset($cart->voucher) && $this->voucherApplied == false) {
             $result = $this->voucherRepository
-                ->isValid($cart->voucher, $service->service->id, $partner_order->partner_id, $order->location_id, $order->delivery_mobile, $cart->price, $order->sales_channel);
+                ->isValid($cart->voucher, $service->service->id, $service->partner->id, $order_info['location_id'], $order_info['phone'], $cart->price, isset($order_info['sales_channel']) ? $order_info['sales_channel'] : 'Web');
             if ($result['is_valid']) {
-                $job->discount = $this->discountRepository->getDiscountAmount($result['is_percentage'], $service->partner->prices, $result['voucher']['amount']) * $job->service_quantity;
-                $job->sheba_contribution = $result['voucher']['sheba_contribution'];
-                $job->partner_contribution = $result['voucher']['partner_contribution'];
-                $order->voucher_id = $result['id'];
-                $order->update();
+                $job['discount'] = $this->discountRepository->getDiscountAmount($result['is_percentage'], $service->partner->prices, $result['voucher']['amount']) * $service->quantity;
+                $job['sheba_contribution'] = $result['voucher']['sheba_contribution'];
+                $job['partner_contribution'] = $result['voucher']['partner_contribution'];
+                $job['voucher_id'] = $result['id'];
+                $this->voucherApplied = true;
             }
         };
         return $job;
     }
 
-    private function calculateScheduleDate($date)
+    private
+    function calculateScheduleDate($date)
     {
         if (is_object($date)) {
             return Carbon::parse($date->time)->format('Y-m-d');
@@ -274,7 +310,8 @@ class CheckoutRepository
         }
     }
 
-    public function clearSpPayment($payment_info)
+    public
+    function clearSpPayment($payment_info)
     {
         $partner_order_id = array_unique($payment_info['partner_order_id']);
         $partner = [];
@@ -294,7 +331,8 @@ class CheckoutRepository
         $this->sendSpPaymentClearMail($partner);
     }
 
-    public function sendSpPaymentClearMail($partner)
+    public
+    function sendSpPaymentClearMail($partner)
     {
 
 //        Mail::send('orders.order-verfication', ['customer' => $customer, 'order' => $order], function ($m) use ($customer)
@@ -304,7 +342,8 @@ class CheckoutRepository
 //        });
     }
 
-    public function sendOrderConfirmationMail($order, $customer)
+    public
+    function sendOrderConfirmationMail($order, $customer)
     {
         Mail::send('orders.order-verfication', ['customer' => $customer, 'order' => $order], function ($m) use ($customer) {
             $m->from('yourEmail@domain.com', 'Sheba.xyz');
@@ -312,7 +351,8 @@ class CheckoutRepository
         });
     }
 
-    public function checkoutWithPortWallet($request, $customer)
+    public
+    function checkoutWithPortWallet($request, $customer)
     {
         $cart = json_decode($request->input('cart'));
         $service_names = '';
@@ -325,7 +365,8 @@ class CheckoutRepository
         return $this->sendDataToPortwallet($cart->price, $service_names, $customer, $request, "/checkout/place-order-final");
     }
 
-    public function spPaymentWithPortWallet($request, $customer)
+    public
+    function spPaymentWithPortWallet($request, $customer)
     {
         $service_name = $request->input('service_name');
         $partner_order_id = $request->input('partner_order_id');
@@ -340,7 +381,8 @@ class CheckoutRepository
         return $this->sendDataToPortwallet($request->input('price'), $product_name, $customer, $request, "/checkout/sp-payment-final");
     }
 
-    public function sendDataToPortwallet($amount, $product_name, $customer, $request, $redirect_url)
+    public
+    function sendDataToPortwallet($amount, $product_name, $customer, $request, $redirect_url)
     {
         $data = array();
         $data['amount'] = $amount;
@@ -375,14 +417,16 @@ class CheckoutRepository
         }
     }
 
-    public function getPortWalletObject()
+    public
+    function getPortWalletObject()
     {
         $portwallet = new PortWallet($this->appKey, $this->appSecret);
         $portwallet->setMode($this->appPaymentMode);
         return $portwallet;
     }
 
-    private function getPartnerOrderPayment($partner_order)
+    private
+    function getPartnerOrderPayment($partner_order)
     {
         $partner_order_payment = new PartnerOrderPayment();
         $partner_order_payment->partner_order_id = $partner_order->id;
@@ -391,7 +435,8 @@ class CheckoutRepository
         return $partner_order_payment;
     }
 
-    public function sendConfirmation($customer, $order)
+    public
+    function sendConfirmation($customer, $order)
     {
         $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
         //send order info to customer  by mail
