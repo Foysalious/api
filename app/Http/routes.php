@@ -96,6 +96,7 @@ $api->version('v1', function ($api) {
         $api->post('{customer}/send-verification-link', 'App\Http\Controllers\CustomerController@sendVerificationLink');
         $api->get('{customer}/get-promo', 'App\Http\Controllers\PromotionController@getPromo');
         $api->post('{customer}/add-promo', 'App\Http\Controllers\PromotionController@addPromo');
+        $api->post('{customer}/apply-promo', 'App\Http\Controllers\PromotionController@applyPromo');
 
         $api->post('{customer}/general-info', 'App\Http\Controllers\CustomerController@modifyGeneralInfo');
         $api->post('{customer}/order-list', 'App\Http\Controllers\OrderController@getNotClosedOrderInfo');
