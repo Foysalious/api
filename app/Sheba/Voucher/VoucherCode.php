@@ -89,24 +89,13 @@ class VoucherCode
     {
         if (!$this->isValid) return $this;
         if (!$timestamp) $timestamp = Carbon::now();
-        list($start_date, $end_date) = $this->validityTimeLine();
+        list($start_date, $end_date) = $this->voucher->validityTimeLine($this->customer->id);
         $this->isValid = ($start_date <= $timestamp && $timestamp <= $end_date);
         if (!$this->isValid) {
             $this->rules->invalidMessage = $this->rules->invalidMessages('validity');
             array_push($this->rules->errors, 'validity');
         }
         return $this;
-    }
-
-    private function validityTimeLine()
-    {
-        if ($this->voucher->is_referral) {
-            $promotion = $this->isPromoApplied();
-            if (!$promotion)
-                return [Carbon::today(), Carbon::tomorrow()];
-            return [$promotion->created_at, $promotion->valid_till];
-        }
-        return [$this->voucher->start_date, $this->voucher->end_date];
     }
 
     private function setCustomerId($customer)
@@ -118,12 +107,6 @@ class VoucherCode
     private function setCustomer($customer)
     {
         $this->customer = is_int($customer) ? Customer::find($customer) : ( is_string($customer) ? Customer::where('mobile', $customer)->first() : $customer );
-    }
-
-    private function isPromoApplied()
-    {
-        $promotion = Customer::find($this->customerId)->promotions()->where('voucher_id', $this->voucher->id)->get();
-        return $promotion == null ? false : $promotion->first();
     }
 
     private function checkService($partner, $service)

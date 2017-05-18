@@ -29,7 +29,12 @@ class PromotionController extends Controller
     public function applyPromo($customer, Request $request)
     {
         $customer = Customer::find($customer);
-        $voucher_suggest = new VoucherSuggester($customer);
-        dd($voucher_suggest->suggest());
+        $voucher_suggest = new VoucherSuggester($customer, $request->cart, $request->location);
+        $promo = $voucher_suggest->suggest();
+        if ($promo != null) {
+            return response()->json(['code' => 200, 'amount' => $promo['amount']]);
+        } else {
+            return response()->json(['code' => 404]);
+        }
     }
 }

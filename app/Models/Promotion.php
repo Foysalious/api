@@ -5,6 +5,7 @@ use Illuminate\Database\Eloquent\Model;
 class Promotion extends Model
 {
     protected $guarded = ['id'];
+    protected $dates = ['valid_till'];
 
     public function customer()
     {

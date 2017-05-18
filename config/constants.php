@@ -83,4 +83,5 @@ return [
         'Danger' => 'Danger',
         'Success' => 'Success'
     ],
+    'REFERRAL_VALID_DAYS' => 90
 ];
