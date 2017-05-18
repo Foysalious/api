@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class Voucher extends Model
@@ -20,5 +21,26 @@ class Voucher extends Model
     public function promotions()
     {
         return $this->hasMany(Promotion::class);
+    }
+
+    /**
+     * @param $customer_id
+     * @return array
+     */
+    public function validityTimeLine($customer_id)
+    {
+        if ($this->is_referral) {
+            $promotion = $this->activatedPromo($customer_id);
+            if (!$promotion)
+                return [Carbon::today(), Carbon::tomorrow()];
+            return [$promotion->created_at, $promotion->valid_till];
+        }
+        return [$this->start_date, $this->end_date];
+    }
+
+    private function activatedPromo($customer_id)
+    {
+        $promotion = Customer::find($customer_id)->promotions()->where('voucher_id', $this->id)->get();
+        return $promotion == null ? false : $promotion->first();
     }
 }
