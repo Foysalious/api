@@ -32,7 +32,7 @@ class PromotionController extends Controller
         $voucher_suggest = new VoucherSuggester($customer, $request->cart, $request->location);
         $promo = $voucher_suggest->suggest();
         if ($promo != null) {
-            return response()->json(['code' => 200, 'amount' => $promo['amount']]);
+            return response()->json(['code' => 200, 'amount' => $promo['amount'], 'voucher_code' => $promo['voucher']->code]);
         } else {
             return response()->json(['code' => 404]);
         }
