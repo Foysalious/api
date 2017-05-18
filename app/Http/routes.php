@@ -119,4 +119,37 @@ $api->version('v1', function ($api) {
     });
 
     $api->post('rating', 'App\Http\Controllers\ReviewController@giveRatingFromEmail');
+
+    $api->group(['prefix' => 'business'], function ($api) {
+        $api->get('check-url', 'App\Http\Controllers\BusinessController@checkURL');
+        $api->get('type-category', 'App\Http\Controllers\BusinessController@getTypeAndCategories');
+
+        $api->group(['prefix' => 'member', 'middleware' => ['member.auth']], function ($api) {
+            $api->get('/{member}/get-info', 'App\Http\Controllers\MemberController@getInfo');
+            $api->get('/{member}/get-profile-info', 'App\Http\Controllers\MemberController@getProfileInfo');
+            $api->post('/{member}/update-personal-info', 'App\Http\Controllers\MemberController@updatePersonalInfo');
+            $api->post('/{member}/update-professional-info', 'App\Http\Controllers\MemberController@updateProfessionalInfo');
+            $api->post('/{member}/change-NID', 'App\Http\Controllers\MemberController@changeNID');
+
+            $api->post('/{member}/create-business', 'App\Http\Controllers\BusinessController@create');
+            $api->post('{member}/check-business', 'App\Http\Controllers\BusinessController@checkBusiness');
+            $api->get('/{member}/show', 'App\Http\Controllers\BusinessController@show');
+
+            $api->get('{member}/business/{business}', 'App\Http\Controllers\BusinessController@getBusiness');
+            $api->post('{member}/business/{business}/update', 'App\Http\Controllers\BusinessController@update');
+            $api->post('{member}/business/{business}/change-logo', 'App\Http\Controllers\BusinessController@changeLogo');
+            $api->get('{member}/business/{business}/members', 'App\Http\Controllers\BusinessController@getMembers');
+            $api->get('{member}/business/{business}/requests', 'App\Http\Controllers\BusinessController@getRequests');
+            $api->post('{member}/business/{business}/manage-invitation', 'App\Http\Controllers\BusinessController@manageInvitation');
+            $api->get('{member}/business/{business}/get-member', 'App\Http\Controllers\BusinessMemberController@getMember');
+            $api->post('{member}/business/{business}/change-member-type', 'App\Http\Controllers\BusinessMemberController@changeMemberType');
+
+
+            $api->post('{member}/search', 'App\Http\Controllers\SearchController@searchBusinessOrMember');
+            $api->get('{member}/requests', 'App\Http\Controllers\MemberController@getRequests');
+
+            $api->post('{member}/send-invitation', 'App\Http\Controllers\InvitationController@sendInvitation');
+            $api->post('{member}/manage-invitation', 'App\Http\Controllers\MemberController@manageInvitation');
+        });
+    });
 });
