@@ -8,7 +8,7 @@ class VoucherSuggester
 
     public function __construct($customer)
     {
-
+        $this->customer = $customer;
     }
 
     public function suggest()

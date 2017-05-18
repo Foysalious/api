@@ -12,6 +12,7 @@ use App\Repositories\DiscountRepository;
 use App\Repositories\NotificationRepository;
 use App\Repositories\VoucherRepository;
 use Illuminate\Http\Request;
+use function PHPSTORM_META\type;
 use Session;
 use Cache;
 use DB;
@@ -43,12 +44,12 @@ class CheckoutController extends Controller
         //store order details for customer
         $order = $this->checkoutRepository->storeDataInDB($request->all(), 'cash-on-delivery');
         if ($order) {
-            if ($order->voucher_id != '' && $order->voucher->is_referral == 1) {
-                $voucher = (new  ReferralCreator)->create(Customer::find($order->customer_id), $order->voucher_id);
-                (new PromotionList())->create($order->voucher->owner_id, $voucher->id);
+            $customer = Customer::find($order->customer_id);
+            if ($this->isOriginalReferral($order)) {
+                $this->createVoucherNPromotionForReferrer($customer, $order);
             }
             new NotificationRepository($order);
-            $this->checkoutRepository->sendConfirmation($customer, $order);
+            $this->checkoutRepository->sendConfirmation($customer->id, $order);
             return response()->json(['code' => 200, 'msg' => 'Order placed successfully!']);
         } else {
             return response()->json(['code' => 500, 'msg' => 'There is a problem while placing the order!']);
@@ -133,13 +134,14 @@ class CheckoutController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function checkForValidity($customer, Request $request)
+    public function checkForValidity(Request $request)
     {
-        $sales_channel = ($request->has('sales_channel')) ? $request->sales_channel : "Web";
-        $cart = json_decode($request->cart);
+        $data = json_decode($request->data);
+        $sales_channel = property_exists($data, 'sales_channel') ? $data->sales_channel : "Web";
+        $cart = $data->cart;
         foreach ($cart->items as $item) {
             $result = $this->voucherRepository
-                ->isValid($request->voucher_code, $item->service->id, $item->partner->id, $request->location, (int)$customer, $cart->price, $sales_channel);
+                ->isValid($data->voucher_code, $item->service->id, $item->partner->id, $data->location, $data->customer, $cart->price, $sales_channel);
             if ($result['is_valid']) {
                 if ($result['is_percentage']) {
                     $result['amount'] = ((float)$item->partner->prices * $result['amount']) / 100;
@@ -149,5 +151,27 @@ class CheckoutController extends Controller
             }
         }
         return response()->json(['code' => 404, 'result' => $result]);
+    }
+
+    /**
+     * @param $order
+     * @return bool
+     */
+    private function isOriginalReferral($order): bool
+    {
+        return $order->voucher_id != '' && $order->voucher->is_referral == 1 && $order->voucher->referred_from == null;
+    }
+
+    /**
+     * @param $customer
+     * @param $order
+     */
+    private function createVoucherNPromotionForReferrer($customer, $order): void
+    {
+        $order_voucher = $order->voucher;
+        $customer->referrer_id = $order_voucher->owner_id;
+        $customer->update();
+        $voucher = (new  ReferralCreator)->create($customer, $order->voucher_id);
+        (new PromotionList())->create($order_voucher->owner_id, $voucher->id);
     }
 }
