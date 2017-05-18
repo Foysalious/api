@@ -26,12 +26,13 @@ class PromotionList
     {
         $timestamp = Carbon::now();
         $voucher = Voucher::where('code', $promo)
-            ->where('owner_id', '<>', $customer)
-            ->where(function ($query) use ($timestamp) {
-                $query->where([
+            ->where(function ($q) use ($customer) {
+                $q->where('owner_id', '<>', $customer)->orWhere('owner_id', null);
+            })->where(function ($query) use ($timestamp) {
+                $query->where('is_referral', 1)->orWhere([
                     ['start_date', '<=', $timestamp],
                     ['end_date', '>=', $timestamp]
-                ])->orWhere('is_referral', 1);
+                ]);
             })->first();
         return $voucher != null ? $voucher : false;
     }

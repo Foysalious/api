@@ -45,6 +45,9 @@ class CheckoutController extends Controller
         $order = $this->checkoutRepository->storeDataInDB($request->all(), 'cash-on-delivery');
         if ($order) {
             $customer = Customer::find($order->customer_id);
+            if ($order->voucher_id != '') {
+                $customer->promotions()->where('voucher_id', $order->voucher_id)->delete();
+            }
             if ($this->isOriginalReferral($order)) {
                 $this->createVoucherNPromotionForReferrer($customer, $order);
             }
