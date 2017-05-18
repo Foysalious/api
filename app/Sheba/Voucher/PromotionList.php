@@ -12,7 +12,7 @@ class PromotionList
     public static function add($customer, $promo)
     {
         $promoList = new PromotionList();
-        $voucher = $promoList->isValid($promo);
+        $voucher = $promoList->isValid($promo, $customer);
         if ($voucher != false) {
             if ($promoList->isAlreadyAdded($voucher, $customer) == false) {
                 return $promoList->create($customer, $voucher->id);
@@ -22,10 +22,11 @@ class PromotionList
         }
     }
 
-    private function isValid($promo)
+    private function isValid($promo, $customer)
     {
         $timestamp = Carbon::now();
         $voucher = Voucher::where('code', $promo)
+            ->where('owner_id', '<>', $customer)
             ->where(function ($query) use ($timestamp) {
                 $query->where([
                     ['start_date', '<=', $timestamp],
