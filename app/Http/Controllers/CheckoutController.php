@@ -8,6 +8,7 @@ use App\Models\Voucher;
 use App\Repositories\AuthRepository;
 use App\Repositories\CheckoutRepository;
 use App\Repositories\CustomerRepository;
+use App\Repositories\DiscountRepository;
 use App\Repositories\NotificationRepository;
 use App\Repositories\VoucherRepository;
 use Illuminate\Http\Request;
@@ -142,8 +143,9 @@ class CheckoutController extends Controller
             if ($result['is_valid']) {
                 if ($result['is_percentage']) {
                     $result['amount'] = ((float)$item->partner->prices * $result['amount']) / 100;
+                    $result['amount'] = (new DiscountRepository())->validateDiscountValue($item->partner->prices, $result['amount']);
                 }
-                return response()->json(['code' => 200, 'amount' => $result['amount']]);
+                return response()->json(['code' => 200, 'amount' => (new DiscountRepository())->validateDiscountValue($item->partner->prices, $result['amount'])]);
             }
         }
         return response()->json(['code' => 404, 'result' => $result]);
