@@ -169,7 +169,7 @@ class CheckoutController extends Controller
      * @param $customer
      * @param $order
      */
-    private function createVoucherNPromotionForReferrer($customer, $order): void
+    private function createVoucherNPromotionForReferrer($customer, $order)
     {
         $order_voucher = $order->voucher;
         $customer->referrer_id = $order_voucher->owner_id;
