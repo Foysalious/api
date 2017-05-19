@@ -58,6 +58,19 @@ class BusinessController extends Controller
 
     public function update($member, $business, Request $request)
     {
+        $msg = '';
+        $exists = false;
+        if ($this->businessRepository->ifExist('email', $request->email)) {
+            $msg = 'email';
+            $exists = true;
+        }
+        if ($this->businessRepository->ifExist('phone', $request->phone)) {
+            $msg = $msg . ' & phone';
+            $exists = true;
+        }
+        if ($exists) {
+            return response()->json(['code' => 409, 'msg' => $msg . ' already taken!']);
+        }
         if ($this->businessRepository->isValidURL($request->url, $business) == false) {
             return response()->json(['code' => 409, 'msg' => 'url already taken!']);
         }
