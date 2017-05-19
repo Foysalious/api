@@ -67,7 +67,7 @@ class PromotionList
         $promo->valid_till = $voucher->is_referral ? $date->toDateString() . " 23:59:59" : $voucher->end_date;
         if ($promo->save()) {
             return Promotion::with(['voucher' => function ($q) {
-                $q->select('id', 'code', 'amount');
+                $q->select('id', 'code', 'amount', 'title');
             }])->select('id', 'voucher_id', 'customer_id', 'valid_till')->where('id', $promo->id)->first();
         }
         return false;
