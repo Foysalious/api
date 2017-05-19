@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\Member;
 use App\Models\Resource;
 use function GuzzleHttp\Promise\all;
 use Illuminate\Contracts\Encryption\DecryptException;
@@ -35,6 +36,15 @@ class AccountController extends Controller
                 if ($resource->profile_id == $info->profile_id) {
                     return response()->json([
                         'msg' => 'successful', 'code' => 200, 'resource' => $resource->id
+                    ]);
+                }
+            } else if ($info->avatar == 'member') {
+                $member = Member::find($info->id);
+                Redis::del($request->input('access_token'));
+                if ($member->profile_id == $info->profile_id) {
+                    return response()->json([
+                        'msg' => 'successful', 'code' => 200, 'remember_token' => $member->remember_token,
+                        'member' => $member->id, 'member_img' => $member->profile->pro_pic
                     ]);
                 }
             }

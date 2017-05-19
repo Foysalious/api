@@ -30,4 +30,13 @@ class Profile extends Model
         return $this->hasOne(Resource::class);
     }
 
+    public function member()
+    {
+        return $this->hasOne(Member::class);
+    }
+
+    public function joinRequests()
+    {
+        return $this->hasMany(JoinRequest::class);
+    }
 }
