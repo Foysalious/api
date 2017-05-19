@@ -81,13 +81,15 @@ class InvitationRepository
             $join_request = JoinRequest::where([
                 ['requester_type', 'App\Models\Business'],
                 ['organization_id', $business_id],
-                ['profile_id', $profile_id]
+                ['profile_id', $profile_id],
+                ['status', 'Pending'],
             ])->first();
         } elseif ($sender == 'business') {
             $join_request = JoinRequest::where([
                 ['requester_type', 'App\Models\Profile'],
                 ['organization_id', $business_id],
-                ['profile_id', $profile_id]
+                ['profile_id', $profile_id],
+                ['status', 'Pending'],
             ])->first();
         }
         return $join_request != null ? true : false;
