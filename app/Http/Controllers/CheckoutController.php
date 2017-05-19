@@ -183,7 +183,8 @@ class CheckoutController extends Controller
         $order_voucher = $order->voucher;
         $customer->referrer_id = $order_voucher->owner_id;
         $customer->update();
-        $voucher = (new  ReferralCreator)->create($customer, $order->voucher_id);
+        $referral_creator = new ReferralCreator($customer);
+        $voucher = $referral_creator->create($order->voucher_id);
         (new PromotionList())->create($order_voucher->owner_id, $voucher->id);
     }
 

@@ -155,6 +155,7 @@ class BusinessController extends Controller
                 return response()->json(['code' => 409]);
             }
         }
+        return response()->json(['msg' => 'You have no authorization', 'code' => 404]);
 
     }
 }
