@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\PartnerTransaction;
 use App\Models\User;
 use App\Models\Voucher;
 use App\Repositories\AuthRepository;
@@ -11,6 +12,7 @@ use App\Repositories\CustomerRepository;
 use App\Repositories\DiscountRepository;
 use App\Repositories\NotificationRepository;
 use App\Repositories\VoucherRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use function PHPSTORM_META\type;
 use Session;
@@ -28,6 +30,7 @@ class CheckoutController extends Controller
     private $voucherRepository;
     private $fbKit;
     private $customer;
+    const AMOUNT = 200;
 
     public function __construct()
     {
@@ -52,7 +55,7 @@ class CheckoutController extends Controller
                     if ($voucher->owner_type == 'App\Models\Customer') {
                         $this->createVoucherNPromotionForReferrer($customer, $order);
                     } elseif ($voucher->owner_type == 'App\Models\Partner') {
-
+                        $this->addAmountToPartnerWallet($voucher, $customer);
                     }
                 }
             }
@@ -184,8 +187,22 @@ class CheckoutController extends Controller
         (new PromotionList())->create($order_voucher->owner_id, $voucher->id);
     }
 
-    private function addAmountToPartnerWallet()
+    private function addAmountToPartnerWallet($voucher, $customer)
     {
+        $partner = $voucher->owner;
+        $partner->wallet += self::AMOUNT;
+        $partner->update();
+        $this->addPartnerTransactionLog($partner, $customer);
+    }
 
+    private function addPartnerTransactionLog($partner, $customer)
+    {
+        $transaction = new PartnerTransaction();
+        $transaction->partner_id = $partner->id;
+        $transaction->type = 'Debit';
+        $transaction->amount = self::AMOUNT;
+        $transaction->log = $customer->name . " has gifted you " . self::AMOUNT . "tk &#128526;";
+        $transaction->created_at = Carbon::now();
+        $transaction->save();
     }
 }
