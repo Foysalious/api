@@ -73,17 +73,16 @@ class CheckoutRepository
     {
         $cart = json_decode($order_info['cart']);
 
-        if (isset($cart->voucher)) {
-            $cart_partner = collect($cart->items)->groupBy('partner.id');
-            //Get all the unique partner id's
-            $unique_partners = collect($cart->items)->unique('partner.id')->pluck('partner.id');
-            foreach ($unique_partners as $partner) {
-                $partner_services = $cart_partner[$partner];
-                foreach ($partner_services as $service) {
-                    $job_discount = $this->calculateDiscountOrVoucher($cart, $service, $order_info);
-                }
+        $cart_partner = collect($cart->items)->groupBy('partner.id');
+        //Get all the unique partner id's
+        $unique_partners = collect($cart->items)->unique('partner.id')->pluck('partner.id');
+        foreach ($unique_partners as $partner) {
+            $partner_services = $cart_partner[$partner];
+            foreach ($partner_services as $service) {
+                $job_discount = $this->calculateDiscountOrVoucher($cart, $service, $order_info);
             }
         }
+
         $order = new Order();
         try {
             DB::transaction(function () use ($order_info, $payment_method, $order, $job_discount) {
