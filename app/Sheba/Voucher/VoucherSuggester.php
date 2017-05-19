@@ -56,9 +56,6 @@ class VoucherSuggester
          */
 
         foreach ($this->customer->promotions as $promotion) {
-            if (!$promotion->is_valid) {
-                continue;
-            }
             $max_discount = 0;
             foreach ($this->cart->items as $item) {
                 $result = voucher($promotion->voucher->code)
@@ -71,7 +68,6 @@ class VoucherSuggester
                     }
                     if (!$this->validPromos->pluck('voucher.id')->contains($result['voucher']->id)) {
                         $this->validPromos->push($result);
-
                     }
                     if ($max_discount < $result['amount']) {
                         $this->validPromos = $this->validPromos->map(function ($item) use (&$max_discount, $result) {
