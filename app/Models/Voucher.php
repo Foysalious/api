@@ -23,6 +23,11 @@ class Voucher extends Model
         return $this->hasMany(Promotion::class);
     }
 
+    public function owner()
+    {
+        return $this->morphTo();
+    }
+
     /**
      * @param $customer_id
      * @return array
