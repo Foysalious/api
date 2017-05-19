@@ -56,9 +56,6 @@ class VoucherSuggester
          */
 
         foreach ($this->customer->promotions as $promotion) {
-            if (!$promotion->is_valid) {
-                continue;
-            }
             $max_discount = 0;
             foreach ($this->cart->items as $item) {
                 $result = voucher($promotion->voucher->code)
