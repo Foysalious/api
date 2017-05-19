@@ -23,7 +23,10 @@ class MemberController extends Controller
     {
         $member = Member::with(['profile' => function ($q) {
             $q->select('id')->with(['joinRequests' => function ($q) {
-                $q->select('id', 'profile_id', 'organization_type', 'organization_id')->where('status', 'Pending');
+                $q->select('id', 'profile_id', 'organization_type', 'organization_id')->where([
+                    ['status', 'Pending'],
+                    ['requester_type', 'App\Models\Business']
+                ]);
             }]);
         }])->select('id', 'profile_id')->where('id', $member)->first();
         foreach ($member->profile->joinRequests as $request) {

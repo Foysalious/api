@@ -7,16 +7,19 @@ use App\Models\Category;
 use App\Models\Member;
 use App\Models\Profile;
 use App\Models\Service;
+use App\Repositories\InvitationRepository;
 use App\Repositories\ServiceRepository;
 use Illuminate\Http\Request;
 
 class SearchController extends Controller
 {
     private $serviceRepository;
+    private $inviteRepository;
 
     public function __construct()
     {
         $this->serviceRepository = new ServiceRepository();
+        $this->inviteRepository = new InvitationRepository();
     }
 
     public function getService(Request $request)
@@ -79,7 +82,10 @@ class SearchController extends Controller
                     }
                 }
                 array_forget($profile, 'member');
-                return response()->json(['result' => $profile, 'code' => 200]);
+                if (!$this->inviteRepository->alreadySent($profile->id, $request->business, 'business'))
+                    return response()->json(['result' => $profile, 'code' => 200]);
+                else
+                    return response()->json(['msg' => 'Member already sent you request!', 'code' => 409]);
             } else {
                 return response()->json(['msg' => 'search person not found', 'code' => 404]);
             }
@@ -88,12 +94,15 @@ class SearchController extends Controller
             if (count($business) == 0) {
                 $business = $this->getBusiness('phone', $this->formatMobile($search), $member);
             }
-
             if (count($business->members) != 0) {
                 return response()->json(['msg' => 'already a member', 'code' => 409]);
             }
             if ($business != null) {
-                return response()->json(['msg' => 'found', 'code' => 200, 'result' => $business]);
+                $member = Member::find($member);
+                if (!$this->inviteRepository->alreadySent($member->profile_id, $business->id, 'member'))
+                    return response()->json(['msg' => 'found', 'code' => 200, 'result' => $business]);
+                else
+                    return response()->json(['msg' => 'business already sent you request!', 'code' => 409]);
             } else {
                 return response()->json(['msg' => 'business not found!', 'code' => 409]);
             }
@@ -120,15 +129,14 @@ class SearchController extends Controller
     function getBusiness($field, $search, $member)
     {
         return Business::with(['joinRequests' => function ($q) {
-            $q->select('*');
+            $q->select('*')->where('requester_type', 'App\Models\Profile');
         }])->with(['members' => function ($q) use ($member) {
             $q->select('members.id')->where('members.id', $member);
         }])->where($field, $search)->select('id', 'name', 'logo', 'email', 'phone')->first();
     }
 
 
-    private
-    function formatMobile($mobile)
+    private function formatMobile($mobile)
     {
         // mobile starts with '+88'
         if (preg_match("/^(\+88)/", $mobile)) {

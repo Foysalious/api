@@ -67,8 +67,8 @@ class VoucherSuggester
                 if ($result['is_valid']) {
                     if ($result['is_percentage']) {
                         $result['amount'] = ((float)$item->partner->prices * $result['amount']) / 100;
-                        $result['amount'] = (new DiscountRepository())->validateDiscountValue($item->partner->prices, $result['amount']);
                     }
+                    $result['amount'] = (new DiscountRepository())->validateDiscountValue($item->partner->prices, $result['amount']);
                     if (!$this->validPromos->pluck('voucher.id')->contains($result['voucher']->id)) {
                         $this->validPromos->push($result);
 
