@@ -10,7 +10,7 @@ class Business extends Model
 
     public function members()
     {
-        return $this->belongsToMany(Member::class)->withPivot('type', 'join_date');
+        return $this->belongsToMany(Member::class)->withTimestamps()->withPivot('type', 'join_date');
     }
 
     public function deliveryAddresses()

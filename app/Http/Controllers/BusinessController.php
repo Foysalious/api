@@ -25,6 +25,7 @@ class BusinessController extends Controller
         $this->invitationRepository = new InvitationRepository();
     }
 
+
     public function checkURL(Request $request)
     {
         return $this->businessRepository->isValidURL($request->url, $request->business) ? response()->json(['code' => 200, 'msg' => 'good to go']) : response()->json(['code' => 409, 'msg' => 'already exists']);
@@ -38,10 +39,19 @@ class BusinessController extends Controller
 
     public function create($member, Request $request)
     {
-        $this->validate($request, [
-            'email' => 'unique:businesses',
-            'phone' => 'unique:businesses',
-        ]);
+        $msg = '';
+        $exists = false;
+        if ($this->businessRepository->ifExist('email', $request->email)) {
+            $msg = 'email';
+            $exists = true;
+        }
+        if ($this->businessRepository->ifExist('phone', $request->phone)) {
+            $msg = $msg . ' & phone';
+            $exists = true;
+        }
+        if ($exists) {
+            return response()->json(['code' => 409, 'msg' => $msg . ' already taken!']);
+        }
         $business = $this->businessRepository->create($member, $request);
         return $business != false ? response()->json(['code' => 200, 'business' => $business->id, 'msg' => 'ok']) : response()->json(['code' => 500, 'msg' => 'try again!']);
     }
