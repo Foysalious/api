@@ -72,7 +72,7 @@ class CheckoutRepository
     public function storeDataInDB($order_info, $payment_method)
     {
         $cart = json_decode($order_info['cart']);
-
+        $job_discount = 0;
         $cart_partner = collect($cart->items)->groupBy('partner.id');
         //Get all the unique partner id's
         $unique_partners = collect($cart->items)->unique('partner.id')->pluck('partner.id');
@@ -82,7 +82,6 @@ class CheckoutRepository
                 $job_discount = $this->calculateDiscountOrVoucher($cart, $service, $order_info);
             }
         }
-
         $order = new Order();
         try {
             DB::transaction(function () use ($order_info, $payment_method, $order, $job_discount) {
