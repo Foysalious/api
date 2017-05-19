@@ -244,6 +244,6 @@ class CustomerController extends Controller
     public function getReferral($customer)
     {
         $customer = Customer::find($customer);
-        return response()->json(['referral_code' => $customer->referral->code, 'code' => 200]);
+        return response()->json(['referral_code' => $customer->referral->code, 'name' => $customer->name, 'code' => 200]);
     }
 }
