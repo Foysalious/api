@@ -50,7 +50,7 @@ class CheckoutController extends Controller
             $customer = Customer::find($order->customer_id);
             if ($order->voucher_id != null) {
                 $voucher = $order->voucher;
-                $customer->promotions()->where('voucher_id', $order->voucher_id)->delete();
+                $customer->promotions()->where('voucher_id', $order->voucher_id)->update(['is_valid' => 0]);
                 if ($this->isOriginalReferral($order, $voucher)) {
                     if ($voucher->owner_type == 'App\Models\Customer') {
                         $this->createVoucherNPromotionForReferrer($customer, $order);
