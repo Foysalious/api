@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Sheba\Voucher\PromotionList;
 use Sheba\Voucher\VoucherSuggester;
@@ -19,7 +20,7 @@ class PromotionController extends Controller
     public function getPromo($customer)
     {
         $customer = Customer::with(['promotions' => function ($q) {
-            $q->select('id', 'voucher_id', 'customer_id', 'valid_till')->with(['voucher' => function ($q) {
+            $q->select('id', 'voucher_id', 'customer_id', 'valid_till')->where('valid_till', '>=', Carbon::now())->with(['voucher' => function ($q) {
                 $q->select('id', 'code', 'amount');
             }]);
         }])->select('id')->where('id', $customer)->first();

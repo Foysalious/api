@@ -72,7 +72,7 @@ class CheckoutRepository
     public function storeDataInDB($order_info, $payment_method)
     {
         $cart = json_decode($order_info['cart']);
-
+        $job_discount = 0;
         $cart_partner = collect($cart->items)->groupBy('partner.id');
         //Get all the unique partner id's
         $unique_partners = collect($cart->items)->unique('partner.id')->pluck('partner.id');
@@ -82,7 +82,6 @@ class CheckoutRepository
                 $job_discount = $this->calculateDiscountOrVoucher($cart, $service, $order_info);
             }
         }
-
         $order = new Order();
         try {
             DB::transaction(function () use ($order_info, $payment_method, $order, $job_discount) {
@@ -287,7 +286,7 @@ class CheckoutRepository
             $this->discountApplied = true;
         } elseif (isset($cart->voucher) && $this->voucherApplied == false) {
             $result = $this->voucherRepository
-                ->isValid($cart->voucher, $service->service->id, $service->partner->id, $order_info['location_id'], $order_info['phone'], $cart->price, isset($order_info['sales_channel']) ? $order_info['sales_channel'] : 'Web');
+                ->isValid($cart->voucher, $service->service->id, $service->partner->id, $order_info['location_id'], (int)$order_info['customer_id'], $cart->price, isset($order_info['sales_channel']) ? $order_info['sales_channel'] : 'Web');
             if ($result['is_valid']) {
                 $job['discount'] = $this->discountRepository->getDiscountAmount($result['is_percentage'], $service->partner->prices, $result['voucher']['amount']) * $service->quantity;
                 $job['sheba_contribution'] = $result['voucher']['sheba_contribution'];

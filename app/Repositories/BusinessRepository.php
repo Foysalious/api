@@ -22,6 +22,11 @@ class BusinessRepository
         $this->logo_folder = 'images/companies/';
     }
 
+    public function ifExist($field, $value)
+    {
+        return Business::where($field, $value)->first() == null ? false : true;
+    }
+
     public function create($member, $request)
     {
         $member = Member::find($member);

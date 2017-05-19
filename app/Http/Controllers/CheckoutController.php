@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\PartnerTransaction;
 use App\Models\User;
 use App\Models\Voucher;
 use App\Repositories\AuthRepository;
@@ -11,6 +12,7 @@ use App\Repositories\CustomerRepository;
 use App\Repositories\DiscountRepository;
 use App\Repositories\NotificationRepository;
 use App\Repositories\VoucherRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use function PHPSTORM_META\type;
 use Session;
@@ -28,6 +30,7 @@ class CheckoutController extends Controller
     private $voucherRepository;
     private $fbKit;
     private $customer;
+    const AMOUNT = 200;
 
     public function __construct()
     {
@@ -46,10 +49,15 @@ class CheckoutController extends Controller
         if ($order) {
             $customer = Customer::find($order->customer_id);
             if ($order->voucher_id != null) {
-                $customer->promotions()->where('voucher_id', $order->voucher_id)->delete();
-            }
-            if ($this->isOriginalReferral($order)) {
-                $this->createVoucherNPromotionForReferrer($customer, $order);
+                $voucher = $order->voucher;
+                $customer->promotions()->where('voucher_id', $order->voucher_id)->update(['is_valid' => 0]);
+                if ($this->isOriginalReferral($order, $voucher)) {
+                    if ($voucher->owner_type == 'App\Models\Customer') {
+                        $this->createVoucherNPromotionForReferrer($customer, $order);
+                    } elseif ($voucher->owner_type == 'App\Models\Partner') {
+                        $this->addAmountToPartnerWallet($voucher, $customer);
+                    }
+                }
             }
             new NotificationRepository($order);
             $this->checkoutRepository->sendConfirmation($customer->id, $order);
@@ -158,11 +166,12 @@ class CheckoutController extends Controller
 
     /**
      * @param $order
+     * @param $voucher
      * @return bool
      */
-    private function isOriginalReferral($order): bool
+    private function isOriginalReferral($order, $voucher)
     {
-        return $order->voucher_id != null && $order->voucher->is_referral == 1 && $order->voucher->referred_from == null;
+        return $order->voucher_id != null && $voucher->is_referral == 1 && $voucher->referred_from == null;
     }
 
     /**
@@ -176,5 +185,24 @@ class CheckoutController extends Controller
         $customer->update();
         $voucher = (new  ReferralCreator)->create($customer, $order->voucher_id);
         (new PromotionList())->create($order_voucher->owner_id, $voucher->id);
+    }
+
+    private function addAmountToPartnerWallet($voucher, $customer)
+    {
+        $partner = $voucher->owner;
+        $partner->wallet += self::AMOUNT;
+        $partner->update();
+        $this->addPartnerTransactionLog($partner, $customer);
+    }
+
+    private function addPartnerTransactionLog($partner, $customer)
+    {
+        $transaction = new PartnerTransaction();
+        $transaction->partner_id = $partner->id;
+        $transaction->type = 'Debit';
+        $transaction->amount = self::AMOUNT;
+        $transaction->log = $customer->name . " has gifted you " . self::AMOUNT . "tk &#128526;";
+        $transaction->created_at = Carbon::now();
+        $transaction->save();
     }
 }
