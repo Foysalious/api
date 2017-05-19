@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Jobs\SendBusinessRequestEmail;
+use App\Models\Business;
 use App\Models\JoinRequest;
 use App\Models\Member;
 use App\Models\Profile;
@@ -74,5 +75,24 @@ class InvitationRepository
         return true;
     }
 
+    public function alreadySent($profile_id, $business_id, $sender)
+    {
+        if ($sender == 'member') {
+            $join_request = JoinRequest::where([
+                ['requester_type', 'App\Models\Business'],
+                ['organization_id', $business_id],
+                ['profile_id', $profile_id],
+                ['status', 'Pending'],
+            ])->first();
+        } elseif ($sender == 'business') {
+            $join_request = JoinRequest::where([
+                ['requester_type', 'App\Models\Profile'],
+                ['organization_id', $business_id],
+                ['profile_id', $profile_id],
+                ['status', 'Pending'],
+            ])->first();
+        }
+        return $join_request != null ? true : false;
+    }
 
 }
