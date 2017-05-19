@@ -64,7 +64,7 @@ class PromotionList
         $promo->voucher_id = $voucher->id;
         $promo->is_valid = 1;
         $date = Carbon::now()->addDays(90);
-        $promo->valid_till = $date->toDateString() . " 23:59:59";
+        $promo->valid_till = $voucher->is_referral ? $date->toDateString() . " 23:59:59" : $voucher->end_date;
         if ($promo->save()) {
             return Promotion::with(['voucher' => function ($q) {
                 $q->select('id', 'code', 'amount');
