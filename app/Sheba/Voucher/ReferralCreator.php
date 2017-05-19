@@ -18,6 +18,7 @@ class ReferralCreator
         $voucher->code = $customer->generateReferral();
         if ($referred_voucher_id != null) {
             $voucher->referred_from = $referred_voucher_id;
+            array_forget($this->rules, 'nth_orders');
             $this->rules += ['customer_ids' => [Voucher::find($referred_voucher_id)->owner_id]];
         }
         return $this->saveVoucher($customer, $voucher);
