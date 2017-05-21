@@ -66,11 +66,11 @@ class VoucherSuggester
                     ->reveal();
                 if ($result['is_valid']) {
                     if ($result['is_percentage']) {
-                        $result['amount'] = ((float)$item->partner->prices * $result['amount']) / 100;
+                        $result['amount'] = (((float)$item->partner->prices * $item->quantity) * $result['amount']) / 100;
                     }
-                    $result['amount'] = (new DiscountRepository())->validateDiscountValue($item->partner->prices, $result['amount']);
+                    $result['amount'] = (new DiscountRepository())->validateDiscountValue((float)$item->partner->prices * $item->quantity, $result['amount']);
 
-                    if( in_array('nth_orders', array_keys( json_decode($result['voucher']->rules, true) )) )
+                    if (in_array('nth_orders', array_keys(json_decode($result['voucher']->rules, true))))
                         return $result;
 
                     if (!$this->validPromos->pluck('voucher.id')->contains($result['voucher']->id)) {
