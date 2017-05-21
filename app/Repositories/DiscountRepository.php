@@ -43,21 +43,22 @@ class DiscountRepository
      * get discount amount for service or voucher
      * @param $hasPercentage
      * @param $partnerPrice
+     * @param $quantity
      * @param $discountValue
      * @return float
      */
-    public function getDiscountAmount($hasPercentage, $partnerPrice, $discountValue)
+    public function getDiscountAmount($hasPercentage, $partnerPrice, $quantity, $discountValue)
     {
         if ($hasPercentage) {
-            return $this->validateDiscountValue($partnerPrice, ((float)$partnerPrice * $discountValue) / 100);
+            return ((float)$partnerPrice * $quantity) * ($discountValue / 100);
         } else {
-            return $this->validateDiscountValue($partnerPrice, $discountValue);
+            return $this->validateDiscountValue($partnerPrice * $quantity, $discountValue);
         }
     }
 
-    public function validateDiscountValue($partnerPrice, $discountValue)
+    public function validateDiscountValue($service_price, $discountValue)
     {
-        return $partnerPrice < $discountValue ? $partnerPrice : $discountValue;
+        return $service_price < $discountValue ? $service_price : $discountValue;
     }
 
 }

@@ -72,14 +72,15 @@ class CheckoutRepository
     public function storeDataInDB($order_info, $payment_method)
     {
         $cart = json_decode($order_info['cart']);
-        $job_discount = 0;
+        $job_discount = [];
+        $job_discount['discount'] = 0;
         $cart_partner = collect($cart->items)->groupBy('partner.id');
         //Get all the unique partner id's
         $unique_partners = collect($cart->items)->unique('partner.id')->pluck('partner.id');
         foreach ($unique_partners as $partner) {
             $partner_services = $cart_partner[$partner];
             foreach ($partner_services as $service) {
-                $job_discount = $this->calculateDiscountOrVoucher($cart, $service, $order_info);
+                $job_discount = $this->calculateVoucher($cart, $service, $order_info, $job_discount);
             }
         }
         $order = new Order();
@@ -123,16 +124,25 @@ class CheckoutRepository
                         $job->crm_id = isset($service->crm_id) ? $service->crm_id : '';
                         $job->department_id = isset($service->department_id) ? $service->department_id : '';
                         $job->service_unit_price = (float)$service->partner->prices;
-                        if ($this->voucherApplied || $this->discountApplied) {
-                            $job->discount = $job_discount['discount'];
-                            $job->sheba_contribution = $job_discount['sheba_contribution'];
-                            $job->partner_contribution = $job_discount['partner_contribution'];
+                        if (isset($service->partner->discount_id)) {
+                            $discount = PartnerServiceDiscount::find($service->partner->discount_id);
+                            $job->discount = $this->discountRepository
+                                ->getDiscountAmount($discount->is_amount_percentage, $service->partner->prices, $service->quantity, $discount->amount);
+                            $job->sheba_contribution = $discount->sheba_contribution;
+                            $job->partner_contribution = $discount->partner_contribution;
+                            $this->discountApplied = true;
+                        } elseif ($this->voucherApplied) {
+                            if (($job->service_quantity * $job->service_unit_price >= $job_discount['discount'])) {
+                                $job->discount = $job_discount['discount'];
+                                $job->sheba_contribution = $job_discount['sheba_contribution'];
+                                $job->partner_contribution = $job_discount['partner_contribution'];
+                                $this->voucherApplied = false;
+                                $order->voucher_id = $job_discount['voucher_id'];
+                                $order->update();
+                            }
                         }
-                        if ($this->voucherApplied) {
-                            $order->voucher_id = $job_discount['voucher_id'];
-                            $order->update();
-                        }
-//                        $job = $this->calculateDiscountOrVoucher($order, $partner_order, $job, $cart, $service);
+
+//                        $job = $this->calculateVoucher($order, $partner_order, $job, $cart, $service);
                         $job->job_name = isset($service->job_name) ? $service->job_name : '';
                         $job->schedule_date = $this->calculateScheduleDate($service->date);
                         //For custom order
@@ -274,21 +284,15 @@ class CheckoutRepository
         $partner_order_payment->save();
     }
 
-    private function calculateDiscountOrVoucher($cart, $service, $order_info)
+    private function calculateVoucher($cart, $service, $order_info, $job)
     {
-        $job = [];
-        if (isset($service->partner->discount_id)) {
-            $discount = PartnerServiceDiscount::find($service->partner->discount_id);
-            $job['discount'] = $this->discountRepository
-                    ->getDiscountAmount($discount->is_amount_percentage, $service->partner->prices, $discount->amount) * $service->quantity;
-            $job['sheba_contribution'] = $discount->sheba_contribution;
-            $job['partner_contribution'] = $discount->partner_contribution;
-            $this->discountApplied = true;
-        } elseif (isset($cart->voucher) && $this->voucherApplied == false) {
+//        $job = [];
+        if (isset($cart->voucher)) {
             $result = $this->voucherRepository
                 ->isValid($cart->voucher, $service->service->id, $service->partner->id, $order_info['location_id'], (int)$order_info['customer_id'], $cart->price, isset($order_info['sales_channel']) ? $order_info['sales_channel'] : 'Web');
             if ($result['is_valid']) {
-                $job['discount'] = $this->discountRepository->getDiscountAmount($result['is_percentage'], $service->partner->prices, $result['voucher']['amount']) * $service->quantity;
+                $job['discount'] = max($this->discountRepository
+                    ->getDiscountAmount($result['is_percentage'], $service->partner->prices, $service->quantity, $result['voucher']['amount']), $job['discount']);
                 $job['sheba_contribution'] = $result['voucher']['sheba_contribution'];
                 $job['partner_contribution'] = $result['voucher']['partner_contribution'];
                 $job['voucher_id'] = $result['id'];
@@ -296,6 +300,18 @@ class CheckoutRepository
             }
         };
         return $job;
+    }
+
+    private function calculateDiscount($cart, $service, $order_info, $job)
+    {
+        if (isset($service->partner->discount_id)) {
+            $discount = PartnerServiceDiscount::find($service->partner->discount_id);
+            $job['discount'] = $this->discountRepository
+                ->getDiscountAmount($discount->is_amount_percentage, $service->partner->prices, $service->quantity, $discount->amount);
+            $job['sheba_contribution'] = $discount->sheba_contribution;
+            $job['partner_contribution'] = $discount->partner_contribution;
+            $this->discountApplied = true;
+        }
     }
 
     private
