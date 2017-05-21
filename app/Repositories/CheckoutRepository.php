@@ -72,14 +72,14 @@ class CheckoutRepository
     public function storeDataInDB($order_info, $payment_method)
     {
         $cart = json_decode($order_info['cart']);
-        $job_discount = 0;
+        $job_discount = [];
         $cart_partner = collect($cart->items)->groupBy('partner.id');
         //Get all the unique partner id's
         $unique_partners = collect($cart->items)->unique('partner.id')->pluck('partner.id');
         foreach ($unique_partners as $partner) {
             $partner_services = $cart_partner[$partner];
             foreach ($partner_services as $service) {
-                $job_discount = $this->calculateDiscountOrVoucher($cart, $service, $order_info);
+                $job_discount = $this->calculateDiscountOrVoucher($cart, $service, $order_info, $job_discount);
             }
         }
         $order = new Order();
@@ -274,9 +274,9 @@ class CheckoutRepository
         $partner_order_payment->save();
     }
 
-    private function calculateDiscountOrVoucher($cart, $service, $order_info)
+    private function calculateDiscountOrVoucher($cart, $service, $order_info, $job)
     {
-        $job = [];
+//        $job = [];
         if (isset($service->partner->discount_id)) {
             $discount = PartnerServiceDiscount::find($service->partner->discount_id);
             $job['discount'] = $this->discountRepository
