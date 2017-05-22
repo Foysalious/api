@@ -55,6 +55,9 @@ class VoucherSuggester
          *  Return voucher with maximum S. If equal, return the voucher with max s_val, further max s_dis, further just first one.
          */
         foreach ($this->customer->promotions as $promotion) {
+            if (!$promotion->is_valid) {
+                continue;
+            }
             $max_discount = 0;
             foreach ($this->cart->items as $item) {
                 $result = voucher($promotion->voucher->code)
