@@ -154,4 +154,9 @@ $api->version('v1', function ($api) {
             $api->post('{member}/manage-invitation', 'App\Http\Controllers\MemberController@manageInvitation');
         });
     });
+
+    $api->group(['prefix' => 'app'], function ($api) {
+        $api->post('continue-with-kit', 'App\Http\Controllers\FacebookController@continueWithKit');
+        $api->post('continue-with-facebook', 'App\Http\Controllers\FacebookController@continueWithFacebook');
+    });
 });
