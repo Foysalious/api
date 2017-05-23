@@ -9,55 +9,79 @@ use Carbon\Carbon;
 
 class PromotionList
 {
-    public static function add($customer, $promo)
+    private $customer;
+
+    public function __construct($customer)
     {
-        $promoList = new PromotionList();
-        $voucher = $promoList->isValid($promo, $customer);
+        $this->customer = ($customer) instanceof Customer ? $customer : Customer::find($customer);
+    }
+
+    public function add($promo)
+    {
+        $voucher = $this->isValid($promo, $this->customer);
         if ($voucher != false) {
-            if ($promoList->isAlreadyAdded($voucher, $customer) == false) {
-                return $promoList->create($customer, $voucher->id);
+            if ($this->isAlreadyAdded($voucher, $this->customer) == false) {
+                return $this->create($this->customer, $voucher->id);
             }
         } else {
             return false;
         }
     }
 
-    private function isValid($promo, $customer)
+    /**
+     * voucher code exists, code isn't your own promo, check validity of code or check is_referral(because referral validity won't match)
+     * @param $promo
+     * @param $customer
+     * @return bool
+     */
+    private function isValid($promo, Customer $customer)
     {
         $timestamp = Carbon::now();
         $voucher = Voucher::where('code', $promo)
             ->where(function ($q) use ($customer) {
-                $q->where('owner_id', '<>', $customer)->orWhere('owner_id', null);
-            })->where(function ($query) use ($timestamp) {
-                $query->where('is_referral', 1)->orWhere([
-                    ['start_date', '<=', $timestamp],
-                    ['end_date', '>=', $timestamp]
-                ]);
+                $q->where('owner_id', '<>', $customer->id)->orWhere('owner_id', null);
+            })
+            ->where(function ($query) use ($timestamp) {
+                $query->where('is_referral', 1)
+                    ->orWhere([
+                        ['start_date', '<=', $timestamp],
+                        ['end_date', '>=', $timestamp]
+                    ]);
             })->first();
         return $voucher != null ? $voucher : false;
     }
 
-    private function isAlreadyAdded($voucher, $customer)
+    /**
+     * @param Voucher $voucher
+     * @param Customer $customer
+     * @return bool
+     */
+    private function isAlreadyAdded(Voucher $voucher, Customer $customer)
     {
-        $customer = Customer::find($customer);
-        foreach ($customer->promotions as $promotion) {
+        $promotions = $customer->promotions;
+        foreach ($promotions as $promotion) {
             if ($promotion->voucher->id == $voucher->id) {
                 return true;
-            }
-            if ($voucher->is_referral == 1) {
-                if ($customer->referrer_id != '') {
-                    return true;
-                } elseif (count($customer->orders) > 0 || $promotion->voucher->is_referral == 1) {
-                    return true;
-                }
             }
         }
         return false;
     }
 
-    public function create($customer, $voucher)
+    private function isVoucherAddable(Voucher $voucher, Customer $customer)
     {
-        $customer = Customer::find($customer);
+        //If voucher is referral
+        if ($voucher->is_referral == 1) {
+            if ($customer->referrer_id != '') {
+                return true;
+            } elseif (count($customer->orders) > 0 || $promotion->voucher->is_referral == 1) {
+                return true;
+            }
+        }
+    }
+
+
+    public function create(Customer $customer, $voucher)
+    {
         $voucher = Voucher::find($voucher);
         $promo = new Promotion();
         $promo->customer_id = $customer->id;
