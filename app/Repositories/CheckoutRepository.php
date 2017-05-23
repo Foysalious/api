@@ -109,8 +109,6 @@ class CheckoutRepository
                     if ($payment_method == 'online') {
                         $partner_order_price = $this->calculatePartnerOrderPrice($cart_partner);
                         $partner_order->sheba_collection = $partner_order_price[$partner];
-                        $partner_order->update();
-                        $this->createPartnerOrderPayment($partner_order);
                     }
                     $partner_services = $cart_partner[$partner];
                     foreach ($partner_services as $service) {
@@ -182,6 +180,13 @@ class CheckoutRepository
                         $job->commission_rate = $service->commission($partner);
                         $job->vat = 0;
                         $job->update();
+                        if ($payment_method == 'online' && isset($job->discount)) {
+                            $partner_order->sheba_collection = $partner_order->sheba_collection - $job->discount;
+                        }
+                    }
+                    if ($payment_method == 'online') {
+                        $partner_order->update();
+                        $this->createPartnerOrderPayment($partner_order);
                     }
                 }
             });

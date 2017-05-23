@@ -24,9 +24,30 @@ class FacebookController extends Controller
         //Authenticate the code with account kit
         $code_data = $this->fbKit->authenticateKit($request->input('code'));
         //check if user already exists or not
-        $user = $this->profileRepository->ifExist($code_data['mobile'], 'mobile');
+        $profile = $this->profileRepository->ifExist($code_data['mobile'], 'mobile');
         //user doesn't exist
-        return response()->json(['code' => 200]);
+        if ($profile != false) {
+            if ($request->from == env('SHEBA_RESOURCE_APP')) {
+                $resource = $profile->resource;
+                if ($resource != null) {
+                    $info = array(
+                        'id' => $resource->id,
+                        'token' => $resource->remember_token
+                    );
+                    return response()->json(['code' => 200, 'info' => $info]);
+                }
+            } elseif ($request->from == env('SHEBA_CUSTOMER_APP')) {
+                $customer = $profile->customer;
+                if ($customer != null) {
+                    $info = array(
+                        'id' => $customer->id,
+                        'token' => $customer->remember_token
+                    );
+                    return response()->json(['code' => 200, 'info' => $info]);
+                }
+            }
+        }
+        return response()->json(['code' => 404, 'msg' => 'Not found!']);
     }
 
     public function continueWithFacebook(Request $request)
