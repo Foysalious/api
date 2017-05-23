@@ -50,7 +50,9 @@ class CheckoutController extends Controller
             $customer = Customer::find($order->customer_id);
             if ($order->voucher_id != null) {
                 $voucher = $order->voucher;
-                $customer->promotions()->where('voucher_id', $order->voucher_id)->update(['is_valid' => 0]);
+                $promotion = $customer->promotions()->where('voucher_id', $order->voucher_id)->first();
+                $promotion->is_valid = 0;
+                $promotion->update();
                 if ($this->isOriginalReferral($order, $voucher)) {
                     if ($voucher->owner_type == 'App\Models\Customer') {
                         $this->createVoucherNPromotionForReferrer($customer, $order);
@@ -185,7 +187,8 @@ class CheckoutController extends Controller
         $customer->update();
         $referral_creator = new ReferralCreator($customer);
         $voucher = $referral_creator->create($order->voucher_id);
-        (new PromotionList())->create($order_voucher->owner_id, $voucher->id);
+        $promo_list = new PromotionList($customer);
+        $promo_list->create(Customer::find($order_voucher->owner_id), $voucher->id);
     }
 
     private function addAmountToPartnerWallet($voucher, $customer)
