@@ -72,10 +72,9 @@ class PromotionList
         $rules = json_decode($voucher->rules);
         if (array_key_exists('nth_orders', $rules)) {
             $order_count = $customer->orders->count();
-            foreach ($rules->nth_orders as $nth_order) {
-                if ($order_count + 1 > $nth_order) {
-                    return false;
-                }
+            $nth_orders = $rules->nth_orders;
+            if ($order_count + 1 > $nth_orders[count($nth_orders) - 1]) {
+                return false;
             }
         }
         return true;
