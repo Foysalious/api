@@ -243,8 +243,7 @@ class CheckoutRepository
         $custom_order->update();
     }
 
-    private
-    function calculatePartnerOrderPrice($cart_partner)
+    private function calculatePartnerOrderPrice($cart_partner)
     {
         $partner_order_price = [];
         //calculate total prices for each partner
@@ -376,7 +375,7 @@ class CheckoutRepository
         }
         // remove comma from the end of service name
         $service_names = rtrim($service_names, ",");
-        return $this->sendDataToPortwallet($cart->price, $service_names, $customer, $request, "/checkout/place-order-final");
+        return $this->sendDataToPortwallet($this->getTotalCartAmount($cart), $service_names, $customer, $request, "/checkout/place-order-final");
     }
 
     public
@@ -459,6 +458,15 @@ class CheckoutRepository
         ]);
         if ($customer->email != '') {
             $this->dispatch(new SendOrderConfirmationEmail($customer, $order));
+        }
+    }
+
+    public function getTotalCartAmount($cart)
+    {
+        if (isset($cart->voucher_amount)) {
+            return $cart->price - $cart->voucher_amount;
+        } else {
+            return $cart->price;
         }
     }
 }

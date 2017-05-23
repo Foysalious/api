@@ -92,7 +92,7 @@ class CheckoutController extends Controller
         $cart = json_decode($order_info['cart']);
 
         $data = array();
-        $data["amount"] = $cart->price;
+        $data["amount"] = $this->checkoutRepository->getTotalCartAmount($cart);
         $data["invoice"] = Cache::get('invoice-' . $request->input('invoice'));
         $data['currency'] = "BDT";
         $portwallet_response = $portwallet->ipnValidate($data);
