@@ -20,7 +20,7 @@ class PromotionList
     {
         $voucher = $this->isValid($promo, $this->customer);
         if ($voucher != false) {
-            if ($this->isAlreadyAdded($voucher, $this->customer) == false) {
+            if ($this->canAdd($voucher, $this->customer)) {
                 return $this->create($this->customer, $voucher->id);
             }
         } else {
@@ -56,31 +56,29 @@ class PromotionList
      * @param Customer $customer
      * @return bool
      */
-    private function isAlreadyAdded(Voucher $voucher, Customer $customer)
+    private function canAdd(Voucher $voucher, Customer $customer)
     {
         $promotions = $customer->promotions;
         foreach ($promotions as $promotion) {
             if ($promotion->voucher->id == $voucher->id) {
-                return true;
+                return false;
             }
             if ($voucher->is_referral == 1) {
-                if ($customer->referrer_id != '') {
-                    return true;
-                } elseif (count($customer->orders) > 0 || $promotion->voucher->is_referral == 1) {
-                    return true;
+                if ($customer->referrer_id != '' || count($customer->orders) > 0 || $promotion->voucher->is_referral == 1) {
+                    return false;
                 }
             }
         }
         $rules = json_decode($voucher->rules);
         if (array_key_exists('nth_orders', $rules)) {
             $order_count = $customer->orders->count();
-            foreach ($rules->nth_orders as $order) {
-                if ($order_count + 1 == $order) {
-                    return true;
+            foreach ($rules->nth_orders as $nth_order) {
+                if ($order_count + 1 > $nth_order) {
+                    return false;
                 }
             }
         }
-        return false;
+        return true;
     }
 
     public function create(Customer $customer, $voucher)
