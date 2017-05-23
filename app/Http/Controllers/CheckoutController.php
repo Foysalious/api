@@ -51,8 +51,10 @@ class CheckoutController extends Controller
             if ($order->voucher_id != null) {
                 $voucher = $order->voucher;
                 $promotion = $customer->promotions()->where('voucher_id', $order->voucher_id)->first();
-                $promotion->is_valid = 0;
-                $promotion->update();
+                if ($promotion != null) {
+                    $promotion->is_valid = 0;
+                    $promotion->update();
+                }
                 if ($this->isOriginalReferral($order, $voucher)) {
                     if ($voucher->owner_type == 'App\Models\Customer') {
                         $this->createVoucherNPromotionForReferrer($customer, $order);
