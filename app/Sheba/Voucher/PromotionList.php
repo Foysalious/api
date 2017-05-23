@@ -63,22 +63,25 @@ class PromotionList
             if ($promotion->voucher->id == $voucher->id) {
                 return true;
             }
+            if ($voucher->is_referral == 1) {
+                if ($customer->referrer_id != '') {
+                    return true;
+                } elseif (count($customer->orders) > 0 || $promotion->voucher->is_referral == 1) {
+                    return true;
+                }
+            }
+        }
+        $rules = json_decode($voucher->rules);
+        if (array_key_exists('nth_orders', $rules)) {
+            $order_count = $customer->orders->count();
+            foreach ($rules->nth_orders as $order) {
+                if ($order_count + 1 == $order) {
+                    return true;
+                }
+            }
         }
         return false;
     }
-
-    private function isVoucherAddable(Voucher $voucher, Customer $customer)
-    {
-        //If voucher is referral
-        if ($voucher->is_referral == 1) {
-            if ($customer->referrer_id != '') {
-                return true;
-            } elseif (count($customer->orders) > 0 || $promotion->voucher->is_referral == 1) {
-                return true;
-            }
-        }
-    }
-
 
     public function create(Customer $customer, $voucher)
     {
