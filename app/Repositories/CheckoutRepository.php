@@ -139,7 +139,9 @@ class CheckoutRepository
                                 $order->update();
                             }
                         }
-
+                        if ($payment_method == 'online' && isset($job->discount)) {
+                            $partner_order->sheba_collection = $partner_order->sheba_collection - $job->discount;
+                        }
 //                        $job = $this->calculateVoucher($order, $partner_order, $job, $cart, $service);
                         $job->job_name = isset($service->job_name) ? $service->job_name : '';
                         $job->schedule_date = $this->calculateScheduleDate($service->date);
@@ -180,9 +182,6 @@ class CheckoutRepository
                         $job->commission_rate = $service->commission($partner);
                         $job->vat = 0;
                         $job->update();
-                        if ($payment_method == 'online' && isset($job->discount)) {
-                            $partner_order->sheba_collection = $partner_order->sheba_collection - $job->discount;
-                        }
                     }
                     if ($payment_method == 'online') {
                         $partner_order->update();
