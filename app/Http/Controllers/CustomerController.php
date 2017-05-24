@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\SendEmailVerficationEmail;
+use App\Jobs\SendReferralRequestEmail;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\CustomerMobile;
+use App\Models\Voucher;
 use App\Repositories\CustomerRepository;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
 use Cache;
 use App\Http\Controllers\FacebookAccountKit;
@@ -14,6 +17,7 @@ use Redis;
 
 class CustomerController extends Controller
 {
+    use DispatchesJobs;
     private $customer;
     private $fbKit;
 
@@ -245,5 +249,17 @@ class CustomerController extends Controller
     {
         $customer = Customer::find($customer);
         return response()->json(['referral_code' => $customer->referral->code, 'name' => $customer->name, 'code' => 200]);
+    }
+
+    public function sendReferralRequestEmail($customer, Request $request)
+    {
+        $customer = Customer::find($customer);
+        $voucher = Voucher::where('code', $request->code)->first();
+        if ($voucher == null) {
+            return response()->json(['msg' => 'Invalid Referral Code', 'code' => 404]);
+        } else {
+            $this->dispatch(new SendReferralRequestEmail($customer, $request->email, $voucher));
+            return response()->json(['code' => 200]);
+        }
     }
 }

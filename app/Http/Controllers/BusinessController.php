@@ -60,11 +60,11 @@ class BusinessController extends Controller
     {
         $msg = '';
         $exists = false;
-        if ($this->businessRepository->ifExist('email', $request->email)) {
+        if ($this->businessRepository->ifExist('email', $request->email,$business)) {
             $msg = 'email';
             $exists = true;
         }
-        if ($this->businessRepository->ifExist('phone', $request->phone)) {
+        if ($this->businessRepository->ifExist('phone', $request->phone,$business)) {
             $msg = $msg . ' & phone';
             $exists = true;
         }

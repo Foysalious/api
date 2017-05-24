@@ -94,9 +94,11 @@ $api->version('v1', function ($api) {
         $api->post('{customer}/email', 'App\Http\Controllers\CustomerController@modifyEmail');
         $api->post('{customer}/email-verification', 'App\Http\Controllers\CustomerController@checkEmailVerification');
         $api->post('{customer}/send-verification-link', 'App\Http\Controllers\CustomerController@sendVerificationLink');
+
         $api->get('{customer}/get-promo', 'App\Http\Controllers\PromotionController@getPromo');
         $api->post('{customer}/add-promo', 'App\Http\Controllers\PromotionController@addPromo');
         $api->post('{customer}/apply-promo', 'App\Http\Controllers\PromotionController@applyPromo');
+        $api->post('{customer}/send-referral-request-email', 'App\Http\Controllers\CustomerController@sendReferralRequestEmail');
 
         $api->post('{customer}/general-info', 'App\Http\Controllers\CustomerController@modifyGeneralInfo');
         $api->post('{customer}/order-list', 'App\Http\Controllers\OrderController@getNotClosedOrderInfo');
@@ -151,5 +153,10 @@ $api->version('v1', function ($api) {
             $api->post('{member}/send-invitation', 'App\Http\Controllers\InvitationController@sendInvitation');
             $api->post('{member}/manage-invitation', 'App\Http\Controllers\MemberController@manageInvitation');
         });
+    });
+
+    $api->group(['prefix' => 'app'], function ($api) {
+        $api->post('continue-with-kit', 'App\Http\Controllers\FacebookController@continueWithKit');
+        $api->post('continue-with-facebook', 'App\Http\Controllers\FacebookController@continueWithFacebook');
     });
 });

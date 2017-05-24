@@ -22,9 +22,13 @@ class BusinessRepository
         $this->logo_folder = 'images/companies/';
     }
 
-    public function ifExist($field, $value)
+    public function ifExist($field, $value, $business_id = null)
     {
-        return Business::where($field, $value)->first() == null ? false : true;
+        $q = Business::where($field, $value);
+        if ($business_id != null) {
+            $q = $q->where('id', '<>', $business_id);
+        }
+        return $q->first() == null ? false : true;
     }
 
     public function create($member, $request)

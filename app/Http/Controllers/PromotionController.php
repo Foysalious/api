@@ -13,14 +13,18 @@ class PromotionController extends Controller
 {
     public function addPromo($customer, Request $request)
     {
-        $promotion = PromotionList::add($customer, $request->promo);
+        $promotion = new PromotionList($customer);
+        $promotion = $promotion->add($request->promo);
         return $promotion != false ? response()->json(['code' => 200, 'promotion' => $promotion]) : response()->json(['code' => 404]);
     }
 
     public function getPromo($customer)
     {
         $customer = Customer::with(['promotions' => function ($q) {
-            $q->select('id', 'voucher_id', 'customer_id', 'valid_till')->where('valid_till', '>=', Carbon::now())->with(['voucher' => function ($q) {
+            $q->select('id', 'voucher_id', 'customer_id', 'valid_till')->where([
+                ['valid_till', '>=', Carbon::now()],
+                ['is_valid', 1]
+            ])->with(['voucher' => function ($q) {
                 $q->select('id', 'code', 'amount', 'title');
             }]);
         }])->select('id')->where('id', $customer)->first();
