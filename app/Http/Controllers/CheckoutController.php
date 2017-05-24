@@ -225,7 +225,7 @@ class CheckoutController extends Controller
             $customer->promotions()->where('voucher_id', $order->voucher_id)->update(['is_valid' => 0]);
             return;
         }
-        $rules = json_decode($voucher->rules, true);
+        $rules = json_decode($voucher->rules);
         if (array_key_exists('nth_orders', $rules)) {
             $nth_orders = $rules->nth_orders;
             //customer next order count will cross max nth order value
