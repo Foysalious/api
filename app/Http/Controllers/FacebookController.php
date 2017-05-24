@@ -52,6 +52,7 @@ class FacebookController extends Controller
 
     public function continueWithFacebook(Request $request)
     {
+        return response()->json(['code' => $request->fb_id]);
         $profile = $this->profileRepository->ifExist($request->input('fb_id'), 'fb_id');
         if ($profile != false) {
             if ($request->from == env('SHEBA_RESOURCE_APP')) {

@@ -158,5 +158,8 @@ $api->version('v1', function ($api) {
     $api->group(['prefix' => 'app'], function ($api) {
         $api->post('continue-with-kit', 'App\Http\Controllers\FacebookController@continueWithKit');
         $api->post('continue-with-facebook', 'App\Http\Controllers\FacebookController@continueWithFacebook');
+        $api->get('yes', function () {
+            return response()->json(['msg' => 'ok']);
+        });
     });
 });
