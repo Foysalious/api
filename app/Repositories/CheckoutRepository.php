@@ -80,6 +80,7 @@ class CheckoutRepository
 
         $i = 0;
         $j = 0;
+        $loop_id=[];
         foreach ($unique_partners as $partner) {
             $i++;
             $partner_services = $cart_partner[$partner];
