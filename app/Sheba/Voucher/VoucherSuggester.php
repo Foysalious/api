@@ -88,10 +88,9 @@ class VoucherSuggester
             $rules = json_decode($validPromo['voucher']->rules);
             if (array_key_exists('nth_orders', $rules)) {
                 $order_count = $this->customer->orders->count();
-                foreach ($rules->nth_orders as $order) {
-                    if ($order_count + 1 == $order) {
-                        return $validPromo;
-                    }
+                $nth_order_max = max($rules->nth_orders);
+                if ($order_count + 1 <= $nth_order_max) {
+                    return $validPromo;
                 }
             }
             $vaild_time = $validPromo['voucher']->validityTimeLine($this->customer->id);

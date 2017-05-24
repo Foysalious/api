@@ -77,15 +77,27 @@ class CheckoutRepository
         $cart_partner = collect($cart->items)->groupBy('partner.id');
         //Get all the unique partner id's
         $unique_partners = collect($cart->items)->unique('partner.id')->pluck('partner.id');
+
+        $i = 0;
+        $j = 0;
         foreach ($unique_partners as $partner) {
+            $i++;
             $partner_services = $cart_partner[$partner];
             foreach ($partner_services as $service) {
+                $j++;
                 $job_discount = $this->calculateVoucher($cart, $service, $order_info, $job_discount);
+                if ($this->voucherApplied) {
+                    $loop_id = array(
+                        'i' => $i,
+                        'j' => $j
+                    );
+//                    break 2;
+                }
             }
         }
         $order = new Order();
         try {
-            DB::transaction(function () use ($order_info, $payment_method, $order, $job_discount) {
+            DB::transaction(function () use ($order_info, $payment_method, $order, $job_discount, $loop_id) {
                 $this->calculateAuthor($order_info);
                 $cart = json_decode($order_info['cart']);
 
@@ -104,7 +116,10 @@ class CheckoutRepository
                 $unique_partners = collect($cart->items)->unique('partner.id')->pluck('partner.id');
                 $voucher = 0;
 
+                $i = 0;
+                $j = 0;
                 foreach ($unique_partners as $partner) {
+                    $i++;
                     $partner_order = $this->createPartnerOrder($order, $partner, $payment_method);
                     if ($payment_method == 'online') {
                         $partner_order_price = $this->calculatePartnerOrderPrice($cart_partner);
@@ -112,6 +127,7 @@ class CheckoutRepository
                     }
                     $partner_services = $cart_partner[$partner];
                     foreach ($partner_services as $service) {
+                        $j++;
                         $job = new Job();
                         $job->partner_order_id = $partner_order->id;
                         $job->service_id = $service->service->id;
@@ -129,20 +145,17 @@ class CheckoutRepository
                             $job->sheba_contribution = $discount->sheba_contribution;
                             $job->partner_contribution = $discount->partner_contribution;
                             $this->discountApplied = true;
-                        } elseif ($this->voucherApplied) {
-                            if (($job->service_quantity * $job->service_unit_price >= $job_discount['discount'])) {
-                                $job->discount = $job_discount['discount'];
-                                $job->sheba_contribution = $job_discount['sheba_contribution'];
-                                $job->partner_contribution = $job_discount['partner_contribution'];
-                                $this->voucherApplied = false;
-                                $order->voucher_id = $job_discount['voucher_id'];
-                                $order->update();
-                            }
+                        } elseif ($this->voucherApplied && $loop_id['i'] == $i && $loop_id['j'] == $j) {
+                            $job->discount = $job_discount['discount'];
+                            $job->sheba_contribution = $job_discount['sheba_contribution'];
+                            $job->partner_contribution = $job_discount['partner_contribution'];
+                            $this->voucherApplied = false;
+                            $order->voucher_id = $job_discount['voucher_id'];
+                            $order->update();
                         }
                         if ($payment_method == 'online' && isset($job->discount)) {
                             $partner_order->sheba_collection = $partner_order->sheba_collection - $job->discount;
                         }
-//                        $job = $this->calculateVoucher($order, $partner_order, $job, $cart, $service);
                         $job->job_name = isset($service->job_name) ? $service->job_name : '';
                         $job->schedule_date = $this->calculateScheduleDate($service->date);
                         //For custom order

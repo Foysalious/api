@@ -50,11 +50,7 @@ class CheckoutController extends Controller
             $customer = Customer::find($order->customer_id);
             if ($order->voucher_id != null) {
                 $voucher = $order->voucher;
-                $promotion = $customer->promotions()->where('voucher_id', $order->voucher_id)->first();
-                if ($promotion != null) {
-                    $promotion->is_valid = 0;
-                    $promotion->update();
-                }
+                $this->updateVoucherInPromoList($customer, $voucher, $order);
                 if ($this->isOriginalReferral($order, $voucher)) {
                     if ($voucher->owner_type == 'App\Models\Customer') {
                         $this->createVoucherNPromotionForReferrer($customer, $order);
@@ -154,16 +150,22 @@ class CheckoutController extends Controller
         $data = json_decode($request->data);
         $sales_channel = property_exists($data, 'sales_channel') ? $data->sales_channel : "Web";
         $cart = $data->cart;
+        $amount = [];
+        $applied = false;
         foreach ($cart->items as $item) {
             $result = $this->voucherRepository
                 ->isValid($data->voucher_code, $item->service->id, $item->partner->id, $data->location, $data->customer, $cart->price, $sales_channel);
             if ($result['is_valid']) {
+                $applied = true;
                 if ($result['is_percentage']) {
                     $result['amount'] = ((float)$item->partner->prices * $result['amount']) / 100;
-                    $result['amount'] = (new DiscountRepository())->validateDiscountValue($item->partner->prices, $result['amount']);
+//                    $result['amount'] = (new DiscountRepository())->validateDiscountValue($item->partner->prices * $item->quantity, $result['amount']);
                 }
-                return response()->json(['code' => 200, 'amount' => (new DiscountRepository())->validateDiscountValue($item->partner->prices, $result['amount'])]);
+                $amount[] = (new DiscountRepository())->validateDiscountValue($item->partner->prices * $item->quantity, $result['amount']);
             }
+        }
+        if ($applied) {
+            return response()->json(['code' => 200, 'amount' => max($amount)]);
         }
         return response()->json(['code' => 404, 'result' => $result]);
     }
@@ -210,5 +212,31 @@ class CheckoutController extends Controller
         $transaction->log = $customer->name . " has gifted you " . self::AMOUNT . "tk &#128526;";
         $transaction->created_at = Carbon::now();
         $transaction->save();
+    }
+
+    /**
+     * @param $customer
+     * @param $voucher
+     * @param $order
+     */
+    private function updateVoucherInPromoList(Customer $customer, $voucher, $order)
+    {
+        if ($voucher->is_referral) {
+            $customer->promotions()->where('voucher_id', $order->voucher_id)->update(['is_valid' => 0]);
+            return;
+        }
+        $rules = json_decode($voucher->rules, true);
+        if (array_key_exists('nth_orders', $rules)) {
+            $nth_orders = $rules->nth_orders;
+            //customer next order count will cross max nth order value
+            if ($customer->orders->count() >= max($nth_orders)) {
+                $customer->promotions()->where('voucher_id', $order->voucher_id)->update(['is_valid' => 0]);
+                return;
+            }
+        }
+        if ($voucher->usage($customer->id) >= $voucher->max_order) {
+            $customer->promotions()->where('voucher_id', $order->voucher_id)->update(['is_valid' => 0]);
+            return;
+        }
     }
 }

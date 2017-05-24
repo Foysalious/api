@@ -27,24 +27,9 @@ class FacebookController extends Controller
         $profile = $this->profileRepository->ifExist($code_data['mobile'], 'mobile');
         //user doesn't exist
         if ($profile != false) {
-            if ($request->from == env('SHEBA_RESOURCE_APP')) {
-                $resource = $profile->resource;
-                if ($resource != null) {
-                    $info = array(
-                        'id' => $resource->id,
-                        'token' => $resource->remember_token
-                    );
-                    return response()->json(['code' => 200, 'info' => $info]);
-                }
-            } elseif ($request->from == env('SHEBA_CUSTOMER_APP')) {
-                $customer = $profile->customer;
-                if ($customer != null) {
-                    $info = array(
-                        'id' => $customer->id,
-                        'token' => $customer->remember_token
-                    );
-                    return response()->json(['code' => 200, 'info' => $info]);
-                }
+            $info = $this->profileRepository->getProfileInfo($request->from, $profile);
+            if ($info != false) {
+                return response()->json(['code' => 200, 'info' => $info]);
             }
         }
         return response()->json(['code' => 404, 'msg' => 'Not found!']);
@@ -54,24 +39,9 @@ class FacebookController extends Controller
     {
         $profile = $this->profileRepository->ifExist($request->input('fb_id'), 'fb_id');
         if ($profile != false) {
-            if ($request->from == env('SHEBA_RESOURCE_APP')) {
-                $resource = $profile->resource;
-                if ($resource != null) {
-                    $info = array(
-                        'id' => $resource->id,
-                        'token' => $resource->remember_token
-                    );
-                    return response()->json(['code' => 200, 'info' => $info]);
-                }
-            } elseif ($request->from == env('SHEBA_CUSTOMER_APP')) {
-                $customer = $profile->customer;
-                if ($customer != null) {
-                    $info = array(
-                        'id' => $customer->id,
-                        'token' => $customer->remember_token
-                    );
-                    return response()->json(['code' => 200, 'info' => $info]);
-                }
+            $info = $this->profileRepository->getProfileInfo($request->from, $profile);
+            if ($info != false) {
+                return response()->json(['code' => 200, 'info' => $info]);
             }
         }
         return response()->json(['code' => 404, 'msg' => 'Not found!']);
