@@ -58,25 +58,23 @@ class PromotionList
      */
     private function canAdd(Voucher $voucher, Customer $customer)
     {
+        $customer_order_count = $customer->orders->count();
         $promotions = $customer->promotions;
         foreach ($promotions as $promotion) {
+            //voucher already added
             if ($promotion->voucher->id == $voucher->id) {
                 return false;
             }
             if ($voucher->is_referral == 1) {
-                if ($customer->referrer_id != '' || count($customer->orders) > 0 || $promotion->voucher->is_referral == 1) {
+                //customer referred id exist, already given first order & already a referral code of someone exists
+                if ($customer->referrer_id != '' || $customer_order_count > 0 || ($promotion->voucher->is_referral == 1 && $promotion->voucher->referred_from == null)) {
                     return false;
                 }
             }
         }
         $rules = json_decode($voucher->rules);
-        if (array_key_exists('nth_orders', $rules)) {
-            $order_count = $customer->orders->count();
-            foreach ($rules->nth_orders as $nth_order) {
-                if ($order_count + 1 > $nth_order) {
-                    return false;
-                }
-            }
+        if (count($rules) > 0 && $this->voucherRuleMatches($rules, $customer, $customer_order_count)) {
+            return true;
         }
         return true;
     }
@@ -96,5 +94,51 @@ class PromotionList
             }])->select('id', 'voucher_id', 'customer_id', 'valid_till')->where('id', $promo->id)->first();
         }
         return false;
+    }
+
+    /**
+     * @param $rules
+     * @param Customer $customer
+     * @param $customer_order_count
+     * @return bool
+     * @internal param Voucher $voucher
+     * @internal param $order_count
+     */
+    private function voucherRuleMatches($rules, Customer $customer, $customer_order_count)
+    {
+        if (array_key_exists('nth_orders', $rules)) {
+            $nth_orders = $rules->nth_orders;
+            //customer next order count will cross max nth order value
+            if ($customer_order_count + 1 > $nth_orders[count($nth_orders) - 1]) {
+                return false;
+            }
+        }
+        if (array_key_exists('customers', $rules)) {
+            $for_you = false;
+            $mobiles = $rules->customers;
+            foreach ($mobiles as $mobile) {
+                if ($mobile == $customer->mobile) {
+                    $for_you = true;
+                }
+            }
+            //voucher is not for you
+            if ($for_you == false) {
+                return false;
+            }
+        }
+        if (array_key_exists('customer_ids', $rules)) {
+            $for_you = false;
+            $customer_ids = $rules->customer_ids;
+            foreach ($customer_ids as $customer_id) {
+                if ($customer_id == $customer->id) {
+                    $for_you = true;
+                }
+            }
+            //voucher is not for you
+            if ($for_you == false) {
+                return false;
+            }
+        }
+        return true;
     }
 }
