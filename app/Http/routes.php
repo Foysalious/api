@@ -20,29 +20,31 @@ $api = app('Dingo\Api\Routing\Router');
 |
 */
 $api->version('v1', function ($api) {
-    $api->get('voucher', function () {
-        dd(voucher('ZOBAYER92TT')->check(105, 33, 5, 11, 100, 'Web', $timestamp = null)->reveal());
-    });
+    $api->post('continue-with-kit', 'App\Http\Controllers\FacebookController@continueWithKit');
+    $api->post('continue-with-facebook', 'App\Http\Controllers\FacebookController@continueWithFacebook');
+    $api->post('login', 'App\Http\Controllers\Auth\LoginController@login');
+
     $api->get('authenticate', 'App\Http\Controllers\AccountController@checkForAuthentication');
+
     $api->post('account', 'App\Http\Controllers\AccountController@encryptData');
     $api->get('decrypt', 'App\Http\Controllers\AccountController@decryptData');
+
     $api->post('register-mobile', 'App\Http\Controllers\Auth\RegistrationController@registerWithMobile');
     $api->post('register-email', 'App\Http\Controllers\Auth\RegistrationController@registerWithEmail');
     $api->post('register-with-facebook', 'App\Http\Controllers\Auth\RegistrationController@registerWithFacebook');
     $api->post('login-with-kit', 'App\Http\Controllers\Auth\LoginController@loginWithKit');
     $api->post('forget-password', 'App\Http\Controllers\Auth\PasswordController@sendResetPasswordEmail');
 
+    $api->get('info', 'App\Http\Controllers\ShebaController@getInfo');
     $api->get('locations', 'App\Http\Controllers\LocationController@getAllLocations');
     $api->get('search', 'App\Http\Controllers\SearchController@getService');
     $api->get('category-service', 'App\Http\Controllers\CategoryServiceController@getCategoryServices');
     $api->get('{service}/similar-services', 'App\Http\Controllers\CategoryServiceController@getSimilarServices');
     $api->get('job-times', 'App\Http\Controllers\JobController@getPreferredTimes');
-    $api->get('info', 'App\Http\Controllers\ShebaController@getInfo');
     $api->get('images', 'App\Http\Controllers\ShebaController@getImages');
     $api->post('voucher-valid', 'App\Http\Controllers\CheckoutController@checkForValidity');
 
     $api->get('offers', 'App\Http\Controllers\ShebaController@getOffers');
-    $api->get('offer/{offer}', 'App\Http\Controllers\ShebaController@getOffer');
     $api->get('offer/{offer}', 'App\Http\Controllers\ShebaController@getOffer');
     $api->get('offer/{offer}/similar-offer', 'App\Http\Controllers\ShebaController@getSimilarOffer');
 
@@ -153,7 +155,4 @@ $api->version('v1', function ($api) {
         });
     });
 
-    $api->post('continue-with-kit', 'App\Http\Controllers\FacebookController@continueWithKit');
-    $api->post('continue-with-facebook', 'App\Http\Controllers\FacebookController@continueWithFacebook');
-    $api->post('login', 'App\Http\Controllers\Auth\LoginController@login');
 });
