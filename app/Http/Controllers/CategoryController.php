@@ -30,12 +30,12 @@ class CategoryController extends Controller
             ->get();
         foreach ($categories as $category) {
             array_add($category, 'slug_category', str_slug($category->name, '-'));
-            $total_service = 0;
-            foreach ($category->children as $child) {
-                $total_service += $child->services()->count();
-            }
-            array_add($category, 'total_service', $total_service);
-            array_forget($category, 'children');
+//            $total_service = 0;
+//            foreach ($category->children as $child) {
+//                $total_service += $child->services()->count();
+//            }
+//            array_add($category, 'total_service', $total_service);
+//            array_forget($category, 'children');
         }
         if (!$categories->isEmpty())
             return response()

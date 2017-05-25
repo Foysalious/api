@@ -26,11 +26,9 @@ $api->version('v1', function ($api) {
     $api->get('authenticate', 'App\Http\Controllers\AccountController@checkForAuthentication');
     $api->post('account', 'App\Http\Controllers\AccountController@encryptData');
     $api->get('decrypt', 'App\Http\Controllers\AccountController@decryptData');
-    $api->get('create-profile', 'App\Http\Controllers\Auth\LoginController@create');
     $api->post('register-mobile', 'App\Http\Controllers\Auth\RegistrationController@registerWithMobile');
     $api->post('register-email', 'App\Http\Controllers\Auth\RegistrationController@registerWithEmail');
     $api->post('register-with-facebook', 'App\Http\Controllers\Auth\RegistrationController@registerWithFacebook');
-    $api->post('login', 'App\Http\Controllers\Auth\LoginController@login');
     $api->post('login-with-kit', 'App\Http\Controllers\Auth\LoginController@loginWithKit');
     $api->post('forget-password', 'App\Http\Controllers\Auth\PasswordController@sendResetPasswordEmail');
 
@@ -155,11 +153,7 @@ $api->version('v1', function ($api) {
         });
     });
 
-    $api->group(['prefix' => 'app'], function ($api) {
-        $api->post('continue-with-kit', 'App\Http\Controllers\FacebookController@continueWithKit');
-        $api->post('continue-with-facebook', 'App\Http\Controllers\FacebookController@continueWithFacebook');
-        $api->get('yes', function () {
-            return response()->json(['msg' => 'ok']);
-        });
-    });
+    $api->post('continue-with-kit', 'App\Http\Controllers\FacebookController@continueWithKit');
+    $api->post('continue-with-facebook', 'App\Http\Controllers\FacebookController@continueWithFacebook');
+    $api->post('login', 'App\Http\Controllers\Auth\LoginController@login');
 });

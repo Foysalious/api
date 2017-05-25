@@ -65,16 +65,19 @@ class PromotionList
             if ($promotion->voucher->id == $voucher->id) {
                 return false;
             }
-            if ($voucher->is_referral == 1) {
+            if ($voucher->is_referral) {
                 //customer referred id exist, already given first order & already a referral code of someone exists
-                if ($customer->referrer_id != '' || $customer_order_count > 0 || ($promotion->voucher->is_referral == 1 && $promotion->voucher->referred_from == null)) {
+                if ($customer->referrer_id != '' || $customer_order_count > 0 || ($promotion->voucher->is_referral && $promotion->voucher->referred_from == null)) {
                     return false;
                 }
             }
         }
+        if ($voucher->usage($customer->id) >= $voucher->max_order) {
+            return false;
+        }
         $rules = json_decode($voucher->rules);
-        if (count($rules) > 0 && $this->voucherRuleMatches($rules, $customer, $customer_order_count)) {
-            return true;
+        if (count($rules) > 0) {
+            return $this->voucherRuleMatches($rules, $customer, $customer_order_count);
         }
         return true;
     }
@@ -108,8 +111,8 @@ class PromotionList
     {
         if (array_key_exists('nth_orders', $rules)) {
             $nth_orders = $rules->nth_orders;
-            //customer next order count will cross max nth order value
-            if ($customer_order_count + 1 > $nth_orders[count($nth_orders) - 1]) {
+            //customer order is less than max nth order value
+            if ($customer_order_count >= max($nth_orders)) {
                 return false;
             }
         }

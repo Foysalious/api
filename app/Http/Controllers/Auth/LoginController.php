@@ -1,10 +1,12 @@
 <?php
+
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\FacebookAccountKit;
 use App\Models\Profile;
 use App\Models\Resource;
 use App\Repositories\CustomerRepository;
+use App\Repositories\ProfileRepository;
 use Illuminate\Http\Request;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Validator;
@@ -14,16 +16,19 @@ use JWTFactory;
 use App\Models\Customer;
 use Session;
 use Redis;
+use Hash;
 
 class LoginController extends Controller
 {
     private $fbKit;
     private $customer;
+    private $profileRepository;
 
     public function __construct()
     {
         $this->fbKit = new FacebookAccountKit();
         $this->customer = new CustomerRepository();
+        $this->profileRepository = new ProfileRepository();
     }
 
     /**
@@ -32,57 +37,87 @@ class LoginController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
+//    public function login(Request $request)
+//    {
+//        /*
+//        * Remember me
+//        */
+//        If ($request->has('remember_token')) {
+//            $customer = Customer::where('remember_token', $request->input('remember_token'))->first();
+//            //remember_token is valid for a customer
+//            if ($customer) {
+//                //create token for that user
+//                $token = JWTAuth::fromUser($customer);
+//                // all good so return the token
+//                return response()->json(compact('token'));
+//            }
+//        }
+//
+//        /*
+//         *
+//         * Normal login for customer
+//         *
+//         */
+//        $credentials = $request->only('email', 'password');
+//        try {
+//            // verify email credentials and create a token for the user
+//            if (!$token = JWTAuth::attempt($credentials)) {
+//                //email verification failed. Now check for mobile verification
+//                if (!$mobileToken = $this->customer->attemptByMobile($credentials)) {
+//                    return response()->json(['msg' => 'invalid_credentials', 'code' => 404]);
+//                }
+//            }
+//        } catch (JWTException $e) {
+//            // something went wrong whilst attempting to encode the token
+//            return response()->json(['error' => 'could_not_create_token'], 500);
+//        }
+//        //get the customer
+//
+//        // when email is provided for login
+//        if ($token) {
+//            $customer = Customer::where('email', $request->input('email'))->first();
+//        } // when mobile is provided for login
+//        else {
+//            $customer = Customer::where('mobile', $request->input('email'))->first();
+//            $token = $mobileToken;
+//        }
+//        // all good so return the token
+//        return response()->json([
+//            'msg' => 'Login successful', 'code' => 200, 'token' => $token, 'remember_token' => $customer->remember_token,
+//            'customer' => $customer->id, 'customer_img' => $customer->pro_pic
+//        ]);
+//    }
+
     public function login(Request $request)
     {
-        /*
-        * Remember me
-        */
-        If ($request->has('remember_token')) {
-            $customer = Customer::where('remember_token', $request->input('remember_token'))->first();
-            //remember_token is valid for a customer
-            if ($customer) {
-                //create token for that user
-                $token = JWTAuth::fromUser($customer);
-                // all good so return the token
-                return response()->json(compact('token'));
-            }
+        $profile = $this->profileRepository->ifExist($request->email, 'email');
+        if ($profile == false) {
+            $profile = $this->profileRepository->ifExist($this->formatMobile($request->email), 'mobile');
         }
-
-        /*
-         *
-         * Normal login for customer
-         *
-         */
-        $credentials = $request->only('email', 'password');
-        try {
-            // verify email credentials and create a token for the user
-            if (!$token = JWTAuth::attempt($credentials)) {
-                //email verification failed. Now check for mobile verification
-                if (!$mobileToken = $this->customer->attemptByMobile($credentials)) {
-                    return response()->json(['msg' => 'invalid_credentials', 'code' => 404]);
+        if ($profile != false) {
+            if (Hash::check($request->input('password'), $profile->password)) {
+                $info = $this->profileRepository->getProfileInfo($request->from, $profile);
+                if ($info != false) {
+                    return response()->json(['code' => 200, 'info' => $info]);
                 }
             }
-        } catch (JWTException $e) {
-            // something went wrong whilst attempting to encode the token
-            return response()->json(['error' => 'could_not_create_token'], 500);
         }
-        //get the customer
-
-        // when email is provided for login
-        if ($token) {
-            $customer = Customer::where('email', $request->input('email'))->first();
-        } // when mobile is provided for login
-        else {
-            $customer = Customer::where('mobile', $request->input('email'))->first();
-            $token = $mobileToken;
-        }
-        // all good so return the token
-        return response()->json([
-            'msg' => 'Login successful', 'code' => 200, 'token' => $token, 'remember_token' => $customer->remember_token,
-            'customer' => $customer->id, 'customer_img' => $customer->pro_pic
-        ]);
+        return response()->json(['code' => 404, 'msg' => 'Not found!']);
     }
 
+    private function formatMobile($mobile)
+    {
+        // mobile starts with '+88'
+        if (preg_match("/^(\+88)/", $mobile)) {
+            return $mobile;
+        } // when mobile starts with '88' replace it with '+880'
+        elseif (preg_match("/^(88)/", $mobile)) {
+            return preg_replace('/^88/', '+88', $mobile);
+        } // real mobile no add '+880' at the start
+        else {
+            return '+88' . $mobile;
+        }
+    }
 
     /**
      * Customer login with facebook kit
@@ -135,49 +170,6 @@ class LoginController extends Controller
         } else {
             return response()->json(['msg' => 'not found', 'code' => 404]);
         }
-    }
-
-    public function create()
-    {
-        $resource = Resource::all();
-        $groupBy = $resource->groupBy('contact_no');
-        $groupBy = $groupBy->filter(function ($value, $key) {
-            return count($value) > 1;
-        })->all();
-        $final=[];
-        foreach ($groupBy as $g) {
-            foreach ($g as $resource) {
-                $weight = 0;
-                if ($resource->nid_no != '') {
-                    $weight++;
-                }
-                if ($resource->nid_image != '') {
-                    $weight++;
-                }
-                array_add($resource, 'weight', $weight);
-            }
-            $max_weight = $g->sortByDesc('weight')->first();
-            dd($g->filter(function ($value, $key) use ($max_weight) {
-                return $value->id != $max_weight->id;
-            })->pluck('id')->all());
-        }
-//        $customers = Customer::where('profile_id', null)->get();
-//        foreach ($customers as $customer) {
-//            $profile = new Profile();
-//            $profile->name = $customer->name;
-//            $profile->mobile = $customer->mobile;
-//            $profile->email = $customer->email;
-//            $profile->remember_token = $customer->remember_token;
-//            $profile->fb_id = $customer->fb_id;
-//            $profile->pro_pic = $customer->pro_pic;
-//            $profile->mobile_verified = $customer->mobile_verified;
-//            $profile->email_verified = $customer->email_verified;
-//            $profile->gender = $customer->gender;
-//            $profile->address = $customer->address;
-//            $profile->save();
-//            $customer->profile_id=$profile->id;
-//            $customer->update();
-//        }
     }
 
 }

@@ -8,7 +8,6 @@ use Illuminate\Http\Request;
 use Sheba\Voucher\PromotionList;
 use Sheba\Voucher\VoucherSuggester;
 
-
 class PromotionController extends Controller
 {
     public function addPromo($customer, Request $request)

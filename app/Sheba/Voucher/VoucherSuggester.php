@@ -54,6 +54,7 @@ class VoucherSuggester
          *
          *  Return voucher with maximum S. If equal, return the voucher with max s_val, further max s_dis, further just first one.
          */
+
         foreach ($this->customer->promotions as $promotion) {
             if (!$promotion->is_valid) {
                 continue;
@@ -65,9 +66,12 @@ class VoucherSuggester
                     ->reveal();
                 if ($result['is_valid']) {
                     if ($result['is_percentage']) {
-                        $result['amount'] = (((float)$item->partner->prices * $item->quantity) * $result['amount']) / 100;
+                        $result['amount'] = ((float)$item->partner->prices * $result['amount']) / 100;
                     }
-                    $result['amount'] = (new DiscountRepository())->validateDiscountValue((float)$item->partner->prices * $item->quantity, $result['amount']);
+                    $result['amount'] = (new DiscountRepository())->validateDiscountValue($item->partner->prices, $result['amount']);
+
+                    if( in_array('nth_orders', array_keys( json_decode($result['voucher']->rules, true) )) )
+                        return $result;
 
                     if (!$this->validPromos->pluck('voucher.id')->contains($result['voucher']->id)) {
                         $this->validPromos->push($result);
@@ -85,15 +89,6 @@ class VoucherSuggester
         }
         $discount_sum = $this->validPromos->sum('amount');
         foreach ($this->validPromos as $validPromo) {
-            $rules = json_decode($validPromo['voucher']->rules);
-            if (array_key_exists('nth_orders', $rules)) {
-                $order_count = $this->customer->orders->count();
-                foreach ($rules->nth_orders as $order) {
-                    if ($order_count + 1 == $order) {
-                        return $validPromo;
-                    }
-                }
-            }
             $vaild_time = $validPromo['voucher']->validityTimeLine($this->customer->id);
             $s_val = 1 - ($vaild_time[1]->diffInDays(Carbon::now()) / constants('REFERRAL_VALID_DAYS'));
             $s_dis = $validPromo['amount'] / $discount_sum;
