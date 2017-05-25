@@ -6,56 +6,56 @@
 
     <style>
 
-        body{
-            font-family: 'Trebuchet MS','Lucida Grande','Lucida Sans Unicode','Lucida Sans',Tahoma,sans-serif;
+        body {
+            font-family: 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', Tahoma, sans-serif;
             font-size: 18px;
         }
 
-        .wrapper{
+        .wrapper {
             width: 70%;
             margin: 0 auto;
         }
 
-        .main-container{
-            width:100%;
-            padding:20px;
-            background-color:#eee;
+        .main-container {
+            width: 100%;
+            padding: 20px;
+            background-color: #eee;
         }
 
-        .sub-container{
-            padding:40px;
-            background-color:#fff;
+        .sub-container {
+            padding: 40px;
+            background-color: #fff;
             margin: 0 auto;
             text-align: center;
         }
 
-        .logo-container{
+        .logo-container {
             text-align: center;
         }
 
-        .logo{
+        .logo {
             width: 300px;
             height: auto;
             margin: 0 0 20px 0;
         }
 
-        .text-container{
+        .text-container {
             padding: 0 40px;
         }
 
-        .main-text{
+        .main-text {
             font-weight: normal;
-            margin-bottom: 0 0 40px 0;
+            margin-bottom: 0;
             line-height: 1.8em;
             text-align: center;
         }
 
-        .highlight{
+        .highlight {
             color: #1b4280;
             font-weight: bold;
         }
 
-        .button{
+        .button {
             font-size: 18px;
             padding: 14px 28px;
             background-color: #13b4d5;
@@ -64,33 +64,33 @@
             border-radius: 4px;
         }
 
-        footer{
+        footer {
             padding: 40px 0;
             text-align: center;
             margin: 0 auto;
             color: #444;
         }
 
-        footer ul{
+        footer ul {
             padding: 0;
             margin: 20px 0;
             list-style: none;
             display: inline-block;
         }
 
-        footer ul li{
+        footer ul li {
             height: 40px;
             width: 40px;
             float: left;
             padding: 0 10px;
         }
 
-        footer ul li a img{
+        footer ul li a img {
             width: 100%;
             height: auto;
         }
 
-        .footer-copyright{
+        .footer-copyright {
             font-size: 14px;
             color: #777777;
         }
@@ -108,13 +108,19 @@
             <div class="text-container">
                 <p class="main-text">
                     Howdy, <br>
-                    Omuk has sent you a gift! Please go to this link to register with Sheba & get <span class="highlight">BDT 200</span> on your first order.
+                    {{$customer->identity}} has sent you a gift! Please go to this link to register with Sheba & get <span
+                            class="highlight">BDT 200</span> off on your first order.
                 </p>
                 <br>
-                <a href="{{env('SHEBA_ACCOUNT_URL')}}/register?redirect_url={{env('SHEBA_FRONT_END_URL')}}&referral_code={{$voucher->code}}" class="button">
+                <a href="{{env('SHEBA_ACCOUNT_URL')}}/register?redirect_url={{env('SHEBA_FRONT_END_URL')}}&referral_code={{$voucher->code}}"
+                   class="button">
                     Register Now
                 </a>
                 <br>
+                <br>
+                <p style="color: red; font-size: 12px;">If the register button is not clickable, try copying and pasting this
+                    {{env('SHEBA_ACCOUNT_URL')}}/register?redirect_url={{env('SHEBA_FRONT_END_URL')}}&referral_code={{$voucher->code}} into the address bar of
+                    your web browser.</p>
             </div>
         </div>
 
@@ -137,7 +143,7 @@
                     </a>
                 </li>
             </ul>
-            <p class="footer-copyright">© Sheba.xyz -  House-1218, Road-50, Avenue-11, Mirpur DOHS, Dhaka-1216.</p>
+            <p class="footer-copyright">© Sheba.xyz - House-1218, Road-50, Avenue-11, Mirpur DOHS, Dhaka-1216.</p>
         </footer>
     </div>
 </div>
