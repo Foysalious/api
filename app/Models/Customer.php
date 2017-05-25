@@ -87,4 +87,14 @@ class Customer extends Authenticatable
         $vouchers = $this->vouchers;
         return $vouchers ? $vouchers->first() : null;
     }
+
+    public function getIdentityAttribute()
+    {
+        if ($this->name != '') {
+            return $this->name;
+        } elseif ($this->mobile) {
+            return $this->mobile;
+        }
+        return $this->email;
+    }
 }
