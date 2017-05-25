@@ -72,7 +72,7 @@ class BusinessRepository
         $business->phone = $request->phone;
         $business->email = $request->email;
         $business->type = $request->type;
-        $business->business_category_id = $request->business_category_id;
+        $business->business_category_id = $request->category;
         $business->website = $request->website;
         $business->description = $request->description;
         $business->address = $request->address;
