@@ -60,11 +60,11 @@ class BusinessController extends Controller
     {
         $msg = '';
         $exists = false;
-        if ($this->businessRepository->ifExist('email', $request->email,$business)) {
+        if ($this->businessRepository->ifExist('email', $request->email, $business)) {
             $msg = 'email';
             $exists = true;
         }
-        if ($this->businessRepository->ifExist('phone', $request->phone,$business)) {
+        if ($this->businessRepository->ifExist('phone', $request->phone, $business)) {
             $msg = $msg . ' & phone';
             $exists = true;
         }
@@ -91,7 +91,7 @@ class BusinessController extends Controller
     public function getBusiness($member, $business)
     {
         $member = Member::with(['businesses' => function ($q) use ($business) {
-            $q->select('businesses.id', 'name', 'logo', 'sub_domain', 'business_category_id', 'email', 'phone', 'description',
+            $q->select('businesses.id', 'name', 'logo', 'website', 'sub_domain', 'business_category_id', 'email', 'phone', 'description',
                 'businesses.type', 'address', 'employee_size')->where('business_member.business_id', $business)->with(['businessCategory' => function ($q) {
                 $q->select('id', 'name');
             }]);
