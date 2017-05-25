@@ -15,7 +15,13 @@ class Job extends Model
     public $grossCost;
     public $totalPriceWithoutVat;
     public $totalPrice;
+    public $totalCost;
+    public $totalCostWithoutDiscount;
     public $grossPrice;
+    public $discountContributionSheba;
+    public $discountContributionPartner;
+    public $profit;
+    public $margin;
 
     public function service()
     {
@@ -37,16 +43,6 @@ class Job extends Model
         return $this->hasMany(JobMaterial::class);
     }
 
-    public function complains()
-    {
-        return $this->hasMany(Complain::class);
-    }
-
-    public function comments()
-    {
-        return $this->morphMany(Comment::class, 'commentable');
-    }
-
     public function partner_order()
     {
         return $this->belongsTo(PartnerOrder::class);
@@ -64,15 +60,34 @@ class Job extends Model
 
         $this->servicePrice = formatTaka($this->service_unit_price * $this->service_quantity);
         $this->serviceCost = formatTaka($this->servicePrice * $costRate);
-        $this->materialPrice = formatTaka($this->usedMaterials()->sum('material_price'));
+        $this->materialPrice = formatTaka($this->calculateMaterialPrice());
         $this->materialCost = formatTaka($this->materialPrice * $costRate);
-        $this->grossCost = formatTaka($this->serviceCost + $this->materialCost);
+        $this->totalCostWithoutDiscount = formatTaka($this->serviceCost + $this->materialCost);
         $this->totalPriceWithoutVat = formatTaka($this->servicePrice + $this->materialPrice);
         //$this->totalPrice = formatTaka($this->totalPriceWithoutVat + $this->vat); // later
         $this->totalPrice = formatTaka($this->totalPriceWithoutVat);
-        $this->grossPrice = (formatTaka($this->totalPrice - $this->discount) > 0) ? formatTaka($this->totalPrice - $this->discount) : 0;
+        $this->grossPrice = formatTaka($this->totalPrice - $this->discount);
         $this->service_unit_price = formatTaka($this->service_unit_price);
+        $this->discountContributionSheba = formatTaka( ($this->discount * $this->sheba_contribution) / 100);
+        $this->discountContributionPartner = formatTaka( ($this->discount * $this->partner_contribution) / 100);
+        $this->totalCost = $this->totalCostWithoutDiscount - $this->discountContributionPartner;
+        $this->grossCost = formatTaka($this->totalCost);
+        $this->profit = formatTaka($this->grossPrice - $this->totalCost);
+        $this->margin = ($this->totalPrice != 0) ? (($this->grossPrice - $this->totalCost) * 100) / $this->totalPrice : 0;
+        $this->margin = formatTaka($this->margin);
         return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    private function calculateMaterialPrice()
+    {
+        $total_material_price = 0;
+        foreach ($this->usedMaterials as $used_material) {
+            $total_material_price += $used_material->material_price;
+        }
+        return $total_material_price;
     }
 
     public function code()
