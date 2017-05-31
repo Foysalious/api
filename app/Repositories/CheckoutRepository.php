@@ -80,9 +80,9 @@ class CheckoutRepository
 
         $i = 0;
         $j = 0;
-        $loop_id=[];
-        $loop_id['i']=null;
-        $loop_id['j']=null;
+        $loop_id = [];
+        $loop_id['i'] = null;
+        $loop_id['j'] = null;
         foreach ($unique_partners as $partner) {
             $i++;
             $partner_services = $cart_partner[$partner];
@@ -144,7 +144,7 @@ class CheckoutRepository
                         if (isset($service->partner->discount_id)) {
                             $discount = PartnerServiceDiscount::find($service->partner->discount_id);
                             $job->discount = $this->discountRepository
-                                ->getDiscountAmount($discount->is_amount_percentage, $service->partner->prices, $service->quantity, $discount->amount);
+                                ->getServiceDiscountAmount($discount->is_amount_percentage, $service->partner->prices, $service->quantity, $discount->amount);
                             $job->sheba_contribution = $discount->sheba_contribution;
                             $job->partner_contribution = $discount->partner_contribution;
                             $this->discountApplied = true;

@@ -61,4 +61,13 @@ class DiscountRepository
         return $service_price < $discountValue ? $service_price : $discountValue;
     }
 
+    public function getServiceDiscountAmount($hasPercentage, $partnerPrice, $quantity, $discountValue)
+    {
+        if ($hasPercentage) {
+            return ((float)$partnerPrice * $quantity * $discountValue) / 100;
+        } else {
+            return $discountValue * $quantity;
+        }
+    }
+
 }
