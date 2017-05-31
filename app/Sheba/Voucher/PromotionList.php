@@ -21,7 +21,7 @@ class PromotionList
         $voucher = $this->isValid($promo, $this->customer);
         if ($voucher != false) {
             if ($this->canAdd($voucher, $this->customer)) {
-                return $this->create($this->customer, $voucher->id);
+                return $this->create($voucher->id);
             }
         } else {
             return false;
@@ -82,11 +82,11 @@ class PromotionList
         return true;
     }
 
-    public function create(Customer $customer, $voucher)
+    public function create($voucher)
     {
         $voucher = Voucher::find($voucher);
         $promo = new Promotion();
-        $promo->customer_id = $customer->id;
+        $promo->customer_id = $this->customer->id;
         $promo->voucher_id = $voucher->id;
         $promo->is_valid = 1;
         $date = Carbon::now()->addDays(90);

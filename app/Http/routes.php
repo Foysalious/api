@@ -53,8 +53,8 @@ $api->version('v1', function ($api) {
 
     $api->group(['prefix' => 'category'], function ($api) {
         $api->get('/', 'App\Http\Controllers\CategoryController@index');
+        $api->get('{category}/secondary-categories', 'App\Http\Controllers\CategoryController@getChildren');
         $api->get('{category}/services', 'App\Http\Controllers\CategoryController@getServices');
-        $api->get('{category}/children', 'App\Http\Controllers\CategoryController@getChildren');
         $api->get('{category}/parent', 'App\Http\Controllers\CategoryController@getParent');
     });
     $api->group(['prefix' => 'service'], function ($api) {
@@ -101,8 +101,8 @@ $api->version('v1', function ($api) {
         $api->post('{customer}/send-referral-request-email', 'App\Http\Controllers\CustomerController@sendReferralRequestEmail');
 
         $api->post('{customer}/general-info', 'App\Http\Controllers\CustomerController@modifyGeneralInfo');
-        $api->post('{customer}/order-list', 'App\Http\Controllers\OrderController@getNotClosedOrderInfo');
-        $api->post('{customer}/order-history', 'App\Http\Controllers\OrderController@getClosedOrderInfo');
+        $api->get('{customer}/order-list', 'App\Http\Controllers\OrderController@getNotClosedOrderInfo');
+        $api->get('{customer}/order-history', 'App\Http\Controllers\OrderController@getClosedOrderInfo');
         $api->post('{customer}/sp-payment', 'App\Http\Controllers\CheckoutController@spPayment');
         $api->post('{customer}/order-valid', 'App\Http\Controllers\OrderController@checkOrderValidity');
         $api->post('{customer}/modify-review', 'App\Http\Controllers\ReviewController@modifyReview');

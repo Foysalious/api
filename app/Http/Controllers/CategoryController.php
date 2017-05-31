@@ -29,7 +29,7 @@ class CategoryController extends Controller
             ->select('id', 'name', 'thumb', 'banner')
             ->get();
         foreach ($categories as $category) {
-            array_add($category, 'slug_category', str_slug($category->name, '-'));
+            array_add($category, 'slug', str_slug($category->name, '-'));
 //            $total_service = 0;
 //            foreach ($category->children as $child) {
 //                $total_service += $child->services()->count();
@@ -37,10 +37,8 @@ class CategoryController extends Controller
 //            array_add($category, 'total_service', $total_service);
 //            array_forget($category, 'children');
         }
-        if (!$categories->isEmpty())
-            return response()
-                ->json(['categories' => $categories, 'service_count' => Service::all()->count(), 'msg' => 'successful', 'code' => 200]);
-        return response()->json(['msg' => 'nothing found', 'code' => 404]);
+        return count($categories) > 0 ? response()
+            ->json(['categories' => $categories, 'msg' => 'successful', 'code' => 200]) : response()->json(['msg' => 'nothing found', 'code' => 404]);
     }
 
     /**
@@ -52,12 +50,18 @@ class CategoryController extends Controller
     public function getChildren($category, Request $request)
     {
         $category = Category::find($category);
-        $children = $this->categoryRepository->childrenWithServices($category, $request);
-        $cat = collect($category)->only(['name', 'banner']);
-        if (!$children->isEmpty())
-            return response()->json(['category' => $cat, 'children' => $children, 'msg' => 'successful', 'code' => 200]);
-        return response()->json(['msg' => 'no children found', 'code' => 404]);
+        if ($category != null) {
+            $children = $this->categoryRepository->childrenWithServices($category, $request);
+            $cat = collect($category)->only(['name', 'banner']);
+            if (count($children) > 0)
+                return response()->json(['category' => $cat, 'secondary_categories' => $children, 'msg' => 'successful', 'code' => 200]);
+            else
+                return response()->json(['msg' => 'no secondary categories found!', 'code' => 404]);
+        } else {
+            return response()->json(['msg' => 'category not found', 'code' => 404]);
+        }
     }
+
 
     /**
      * Get parent of a category
@@ -76,15 +80,19 @@ class CategoryController extends Controller
     public function getServices($category)
     {
         $category = Category::find($category);
-        $cat = collect($category)->only(['name', 'banner']);
-        array_add($cat, 'parent',collect($category->parent)->only(['id', 'name']));
-        $category = Category::with(['services' => function ($q) {
-            $q->select('id', 'category_id', 'name', 'thumb', 'banner', 'variable_type', 'variables')->where('publication_status', 1);
-        }])->where([
-            ['id', $category->id],
-            ['publication_status', 1]
-        ])->first();
-        $services = $this->categoryRepository->addServiceInfo($category->services);
-        return response()->json(['category' => $cat, 'services' => $services, 'msg' => 'successful', 'code' => 200]);
+        if ($category != null) {
+            $cat = collect($category)->only(['name', 'banner']);
+            array_add($cat, 'parent', collect($category->parent)->only(['id', 'name']));
+            $category = Category::with(['services' => function ($q) {
+                $q->select('id', 'category_id', 'name', 'thumb', 'banner', 'variable_type', 'variables')->where('publication_status', 1);
+            }])->where([
+                ['id', $category->id],
+                ['publication_status', 1]
+            ])->first();
+            $services = $this->categoryRepository->addServiceInfo($category->services);
+            return response()->json(['category' => $cat, 'services' => $services, 'msg' => 'successful', 'code' => 200]);
+        } else {
+            return response()->json(['msg' => 'category not found', 'code' => 404]);
+        }
     }
 }
