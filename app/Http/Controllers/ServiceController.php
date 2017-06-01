@@ -43,7 +43,7 @@ class ServiceController extends Controller
         $review = $service->reviews()->where('review', '<>', '')->count('review');
         //avg rating of this service
         $rating = $service->reviews()->avg('rating');
-        array_add($service, 'review', $review);
+        array_add($service, 'review_count', $review);
         $service['rating'] = empty($rating) ? 5 : floor($rating);
         //get the category & parent of the service
         $category = Category::with(['parent' => function ($query) {
@@ -59,6 +59,14 @@ class ServiceController extends Controller
         array_forget($service, 'partnerServices');
         //If service has partner
         if (count($service_partners) != 0) {
+            unset($service->variables->max_prices);
+            unset($service->variables->min_prices);
+            unset($service->variables->prices);
+            if ($service->variable_type == 'Fixed') {
+                unset($service->variables->max_price);
+                unset($service->variables->min_price);
+                unset($service->variables->price);
+            }
             return response()->json(['service' => $service, 'service_partners' => $sorted_service_partners, 'times' => config('constants.JOB_PREFERRED_TIMES'), 'msg' => 'successful', 'code' => 200]);
         }
         return response()->json(['service' => $service, 'service_partners' => $sorted_service_partners, 'times' => config('constants.JOB_PREFERRED_TIMES'), 'msg' => 'no partner found in selected location', 'code' => 404]);

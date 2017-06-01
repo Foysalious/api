@@ -191,8 +191,8 @@ class CheckoutController extends Controller
         $customer->update();
         $referral_creator = new ReferralCreator($customer);
         $voucher = $referral_creator->create($order->voucher_id);
-        $promo_list = new PromotionList($customer);
-        $promo_list->create(Customer::find($order_voucher->owner_id), $voucher->id);
+        $promo_list = new PromotionList($order_voucher->owner_id);
+        $promo_list->create($voucher->id);
     }
 
     private function addAmountToPartnerWallet($voucher, $customer)

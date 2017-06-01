@@ -20,8 +20,8 @@ class CategoryRepository
     public function childrenWithServices($category, $request)
     {
         $offset = 0;
-        if ($request->get('offset') != '') {
-            $offset = $request->get('offset');
+        if ($request->get('skip') != '') {
+            $offset = $request->get('skip');
         }
         $children = $category->children()->select('id', 'name', 'thumb', 'banner')->skip($offset)->take(2)->get();
 
@@ -32,10 +32,11 @@ class CategoryRepository
                         $q->select('id', 'partner_service_id', 'start_date', 'end_date', 'amount');
                     }]);
                 }])->take(4)->get();
-            array_add($child, 'services', $services);
-            array_add($child, 'slug_child_category', str_slug($child->name, '-'));
-            array_add($child, 'children_services', $this->addServiceInfo($services));
-            array_forget($child, 'services');
+//            array_add($child, 'services', $services);
+            array_add($child, 'slug', str_slug($child->name, '-'));
+//            array_add($child, 'children_services', $this->addServiceInfo($services));
+            $child['services']=$this->addServiceInfo($services);
+//            array_forget($child, 'services');
         }
         return $children;
     }
@@ -46,13 +47,17 @@ class CategoryRepository
             array_add($service, 'discount', $service->hasDiscounts());
             //Get start & end price for services. Custom services don't have price so omitted
             $service = $this->serviceRepository->getStartPrice($service);
-            array_add($service, 'slug_service', str_slug($service->name, '-'));
+            array_add($service, 'slug', str_slug($service->name, '-'));
             // review count of this partner for this service
             $review = $service->reviews()->where('review', '<>', '')->count('review');
             //avg rating of the partner for this service
             $rating = $service->reviews()->where('service_id', $service->id)->avg('rating');
             array_add($service, 'review', $review);
-            array_add($service, 'rating', $rating);
+            if ($rating == null) {
+                $service['rating'] = 5;
+            } else {
+                $service['rating'] = $rating;
+            }
             array_forget($service, 'variables');
             array_forget($service, 'partnerServices');
         }

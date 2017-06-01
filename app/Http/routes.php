@@ -53,8 +53,8 @@ $api->version('v1', function ($api) {
 
     $api->group(['prefix' => 'category'], function ($api) {
         $api->get('/', 'App\Http\Controllers\CategoryController@index');
+        $api->get('{category}/secondary-categories', 'App\Http\Controllers\CategoryController@getChildren');
         $api->get('{category}/services', 'App\Http\Controllers\CategoryController@getServices');
-        $api->get('{category}/children', 'App\Http\Controllers\CategoryController@getChildren');
         $api->get('{category}/parent', 'App\Http\Controllers\CategoryController@getParent');
     });
     $api->group(['prefix' => 'service'], function ($api) {
@@ -80,29 +80,15 @@ $api->version('v1', function ($api) {
 
     $api->group(['prefix' => 'customer', 'middleware' => ['customer.auth']], function ($api) {
         $api->get('{customer}', 'App\Http\Controllers\CustomerController@getCustomerInfo');
-        $api->get('{customer}/get-referral', 'App\Http\Controllers\CustomerController@getReferral');
         $api->get('{customer}/general-info', 'App\Http\Controllers\CustomerController@getCustomerGeneralInfo');
-        $api->post('{customer}/fb-integration', 'App\Http\Controllers\CustomerController@facebookIntegration');
-        $api->post('{customer}/change-address', 'App\Http\Controllers\CustomerController@changeAddress');
-        $api->post('{customer}/add-delivery-address', 'App\Http\Controllers\CustomerController@addDeliveryAddress');
-        $api->get('{customer}/get-delivery-info', 'App\Http\Controllers\CustomerController@getDeliveryInfo');
-        $api->post('{customer}/remove-address', 'App\Http\Controllers\CustomerController@removeDeliveryAddress');
-        $api->post('{customer}/mobile', 'App\Http\Controllers\CustomerController@modifyMobile');
-        $api->post('{customer}/add-secondary-mobile', 'App\Http\Controllers\CustomerController@addSecondaryMobile');
-        $api->post('{customer}/remove-secondary-mobile', 'App\Http\Controllers\CustomerController@removeSecondaryMobile');
-        $api->post('{customer}/set-primary-mobile', 'App\Http\Controllers\CustomerController@setPrimaryMobile');
-        $api->post('{customer}/email', 'App\Http\Controllers\CustomerController@modifyEmail');
-        $api->post('{customer}/email-verification', 'App\Http\Controllers\CustomerController@checkEmailVerification');
-        $api->post('{customer}/send-verification-link', 'App\Http\Controllers\CustomerController@sendVerificationLink');
-
+        $api->get('{customer}/order-list', 'App\Http\Controllers\OrderController@getNotClosedOrderInfo');
+        $api->get('{customer}/order-history', 'App\Http\Controllers\OrderController@getClosedOrderInfo');
+        $api->get('{customer}/get-referral', 'App\Http\Controllers\CustomerController@getReferral');
+        $api->post('{customer}/send-referral-request-email', 'App\Http\Controllers\CustomerController@sendReferralRequestEmail');
         $api->get('{customer}/get-promo', 'App\Http\Controllers\PromotionController@getPromo');
         $api->post('{customer}/add-promo', 'App\Http\Controllers\PromotionController@addPromo');
-        $api->post('{customer}/apply-promo', 'App\Http\Controllers\PromotionController@applyPromo');
-        $api->post('{customer}/send-referral-request-email', 'App\Http\Controllers\CustomerController@sendReferralRequestEmail');
+        $api->post('{customer}/suggest-promo', 'App\Http\Controllers\PromotionController@suggestPromo');
 
-        $api->post('{customer}/general-info', 'App\Http\Controllers\CustomerController@modifyGeneralInfo');
-        $api->post('{customer}/order-list', 'App\Http\Controllers\OrderController@getNotClosedOrderInfo');
-        $api->post('{customer}/order-history', 'App\Http\Controllers\OrderController@getClosedOrderInfo');
         $api->post('{customer}/sp-payment', 'App\Http\Controllers\CheckoutController@spPayment');
         $api->post('{customer}/order-valid', 'App\Http\Controllers\OrderController@checkOrderValidity');
         $api->post('{customer}/modify-review', 'App\Http\Controllers\ReviewController@modifyReview');
@@ -117,6 +103,19 @@ $api->version('v1', function ($api) {
 
         $api->post('{customer}/checkout/place-order', 'App\Http\Controllers\CheckoutController@placeOrder');
         $api->post('{customer}/checkout/place-order-with-online-payment', 'App\Http\Controllers\CheckoutController@placeOrderWithPayment');
+
+        $api->post('{customer}/fb-integration', 'App\Http\Controllers\CustomerController@facebookIntegration');
+        $api->post('{customer}/change-address', 'App\Http\Controllers\CustomerController@changeAddress');
+        $api->post('{customer}/add-delivery-address', 'App\Http\Controllers\CustomerController@addDeliveryAddress');
+        $api->get('{customer}/get-delivery-info', 'App\Http\Controllers\CustomerController@getDeliveryInfo');
+        $api->post('{customer}/remove-address', 'App\Http\Controllers\CustomerController@removeDeliveryAddress');
+        $api->post('{customer}/mobile', 'App\Http\Controllers\CustomerController@modifyMobile');
+        $api->post('{customer}/add-secondary-mobile', 'App\Http\Controllers\CustomerController@addSecondaryMobile');
+        $api->post('{customer}/remove-secondary-mobile', 'App\Http\Controllers\CustomerController@removeSecondaryMobile');
+        $api->post('{customer}/set-primary-mobile', 'App\Http\Controllers\CustomerController@setPrimaryMobile');
+        $api->post('{customer}/email', 'App\Http\Controllers\CustomerController@modifyEmail');
+        $api->post('{customer}/email-verification', 'App\Http\Controllers\CustomerController@checkEmailVerification');
+        $api->post('{customer}/send-verification-link', 'App\Http\Controllers\CustomerController@sendVerificationLink');
 
     });
 
