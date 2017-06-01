@@ -211,8 +211,7 @@ class CheckoutRepository
         return $order;
     }
 
-    private
-    function calculateAuthor($order_info)
+    private function calculateAuthor($order_info)
     {
         if (isset($order_info['created_by'])) {
             $user = User::find($order_info['created_by']);
@@ -221,16 +220,14 @@ class CheckoutRepository
         }
     }
 
-    private
-    function getAuthor($object)
+    private function getAuthor($object)
     {
         $object->created_by = $this->created_by;
         $object->created_by_name = $this->created_by_name;
         return $object;
     }
 
-    private
-    function createOrder($order, $order_info)
+    private function createOrder($order, $order_info)
     {
         $order->customer_id = $order_info['customer_id'];
         $order->location_id = $order_info['location_id'];
@@ -242,8 +239,7 @@ class CheckoutRepository
         return $order;
     }
 
-    private
-    function createPartnerOrder($order, $partner, $payment_method)
+    private function createPartnerOrder($order, $partner, $payment_method)
     {
         $partner_order = new PartnerOrder();
         $partner_order->order_id = $order->id;
@@ -254,8 +250,7 @@ class CheckoutRepository
         return $partner_order;
     }
 
-    private
-    function updateCustomOrder($order, $custom_order_id)
+    private function updateCustomOrder($order, $custom_order_id)
     {
         $custom_order = CustomOrder::find($custom_order_id);
         $custom_order->order_id = $order->id;
@@ -293,19 +288,18 @@ class CheckoutRepository
         }
     }
 
-    private
-    function createPartnerOrderPayment($partner_order)
+    private function createPartnerOrderPayment($partner_order)
     {
         $partner_order_payment = $this->getPartnerOrderPayment($partner_order);
         $partner_order_payment->amount = $partner_order->sheba_collection;
         $partner_order_payment->log = 'advanced payment';
+        $partner_order_payment->collected_by = 'Sheba';
         $partner_order_payment = $this->getAuthor($partner_order_payment);
         $partner_order_payment->save();
     }
 
     private function calculateVoucher($cart, $service, $order_info, $job)
     {
-//        $job = [];
         if (isset($cart->voucher)) {
             $result = $this->voucherRepository
                 ->isValid($cart->voucher, $service->service->id, $service->partner->id, $order_info['location_id'], (int)$order_info['customer_id'], $cart->price, isset($order_info['sales_channel']) ? $order_info['sales_channel'] : 'Web');
@@ -384,8 +378,7 @@ class CheckoutRepository
         });
     }
 
-    public
-    function checkoutWithPortWallet($request, $customer)
+    public function checkoutWithPortWallet($request, $customer)
     {
         $cart = json_decode($request->input('cart'));
         $service_names = '';
@@ -483,7 +476,7 @@ class CheckoutRepository
 
     public function getTotalCartAmount($cart)
     {
-        if (isset($cart->voucher_amount)) {
+        if (isset($cart->voucher_amount) && !empty($cart->voucher_amount)) {
             return $cart->price - $cart->voucher_amount;
         } else {
             return $cart->price;

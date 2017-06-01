@@ -30,7 +30,7 @@ class PromotionController extends Controller
         return $customer != null ? response()->json(['code' => 200, 'promotions' => $customer->promotions]) : response()->json(['code' => 404]);
     }
 
-    public function applyPromo($customer, Request $request)
+    public function suggestPromo($customer, Request $request)
     {
         $customer = Customer::find($customer);
         $voucher_suggest = new VoucherSuggester($customer, $request->cart, $request->location);
