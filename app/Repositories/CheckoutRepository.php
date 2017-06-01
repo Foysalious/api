@@ -83,16 +83,18 @@ class CheckoutRepository
         $loop_id = [];
         $loop_id['i'] = null;
         $loop_id['j'] = null;
+        $loop_id['discount'] = 0;
         foreach ($unique_partners as $partner) {
             $i++;
             $partner_services = $cart_partner[$partner];
             foreach ($partner_services as $service) {
                 $j++;
                 $job_discount = $this->calculateVoucher($cart, $service, $order_info, $job_discount);
-                if ($this->voucherApplied) {
+                if ($this->voucherApplied && $loop_id['discount'] < $job_discount['discount']) {
                     $loop_id = array(
                         'i' => $i,
-                        'j' => $j
+                        'j' => $j,
+                        'discount' => $job_discount['discount'],
                     );
 //                    break 2;
                 }
@@ -149,7 +151,7 @@ class CheckoutRepository
                             $job->partner_contribution = $discount->partner_contribution;
                             $this->discountApplied = true;
                         } elseif ($this->voucherApplied && $loop_id['i'] == $i && $loop_id['j'] == $j) {
-                            $job->discount = $job_discount['discount'];
+                            $job->discount = $loop_id['discount'];
                             $job->sheba_contribution = $job_discount['sheba_contribution'];
                             $job->partner_contribution = $job_discount['partner_contribution'];
                             $this->voucherApplied = false;
@@ -304,8 +306,10 @@ class CheckoutRepository
             $result = $this->voucherRepository
                 ->isValid($cart->voucher, $service->service->id, $service->partner->id, $order_info['location_id'], (int)$order_info['customer_id'], $cart->price, isset($order_info['sales_channel']) ? $order_info['sales_channel'] : 'Web');
             if ($result['is_valid']) {
-                $job['discount'] = max($this->discountRepository
-                    ->getDiscountAmount($result['is_percentage'], $service->partner->prices, $service->quantity, $result['voucher']['amount']), $job['discount']);
+//                $job['discount'] = max($this->discountRepository
+//                    ->getDiscountAmount($result['is_percentage'], $service->partner->prices, $service->quantity, $result['voucher']['amount']), $job['discount']);
+                $job['discount'] = $this->discountRepository
+                    ->getDiscountAmount($result['is_percentage'], $service->partner->prices, $service->quantity, $result['voucher']['amount']);
                 $job['sheba_contribution'] = $result['voucher']['sheba_contribution'];
                 $job['partner_contribution'] = $result['voucher']['partner_contribution'];
                 $job['voucher_id'] = $result['id'];
