@@ -251,7 +251,8 @@ class CustomerController extends Controller
         $customer = Customer::find($customer);
         if ($customer->referral == '') {
             $referral_creator = new ReferralCreator($customer);
-            $referral_creator->create();
+            $voucher = $referral_creator->create();
+            return response()->json(['referral_code' => $voucher->code, 'name' => $customer->name, 'code' => 200]);
         }
         return response()->json(['referral_code' => $customer->referral->code, 'name' => $customer->name, 'code' => 200]);
     }
