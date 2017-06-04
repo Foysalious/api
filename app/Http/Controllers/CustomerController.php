@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Cache;
 use App\Http\Controllers\FacebookAccountKit;
 use Redis;
+use Sheba\Voucher\ReferralCreator;
 
 class CustomerController extends Controller
 {
@@ -248,6 +249,10 @@ class CustomerController extends Controller
     public function getReferral($customer)
     {
         $customer = Customer::find($customer);
+        if ($customer->referral == '') {
+            $referral_creator = new ReferralCreator($customer);
+            $referral_creator->create();
+        }
         return response()->json(['referral_code' => $customer->referral->code, 'name' => $customer->name, 'code' => 200]);
     }
 
