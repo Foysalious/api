@@ -11,7 +11,8 @@ class VoucherCodeGenerator
             $name = 'TMWNN';
         }
         $voucher = new VoucherCodeGenerator();
-        return $voucher->generate(BanglaToEnglish::convert($name));
+        $name_format=(new NameFormatter(BanglaToEnglish::convert($name)))->format();
+        return $voucher->generate($name_format);
     }
 
     private function formatName($name)
@@ -46,7 +47,7 @@ class VoucherCodeGenerator
         if (Voucher::where('code', $code)->first() == null) {
             return $code;
         } else {
-            $this->generateUniqueVoucher($name);
+            return $this->generateUniqueVoucher($name);
         }
     }
 }
