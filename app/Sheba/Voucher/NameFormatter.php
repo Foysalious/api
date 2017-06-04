@@ -12,7 +12,7 @@ class NameFormatter
         $this->name = $name;
     }
 
-    public function format()
+    public function removeUnicodeCharactersAndFormatName()
     {
         $format_name = '';
         for ($i = 0; $i < strlen($this->name); $i++) {
@@ -21,6 +21,14 @@ class NameFormatter
             }
             $format_name .= $this->name[$i];
         }
-        return $format_name;
+        return $this->formatName($format_name);
+    }
+
+    private function formatName($name)
+    {
+        if (preg_match("/^(Md.|Md|Mr.|Mr|Mrs.|Mrs|engr.|eng)/i", $name)) {
+            return trim(preg_replace('/^(Md.|Md|Mr.|Mr|Mrs.|Mrs|engr.|eng)/i', '', $name));
+        }
+        return $name;
     }
 }

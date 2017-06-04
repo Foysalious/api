@@ -7,25 +7,17 @@ class VoucherCodeGenerator
 {
     public static function byName($name)
     {
-        if ($name == '') {
-            $name = 'TMWNN';
-        }
         $voucher = new VoucherCodeGenerator();
-        $name_format=(new NameFormatter(BanglaToEnglish::convert($name)))->format();
-        return $voucher->generate($name_format);
+        if ($name == '') {
+            return $voucher->generate('TMWNN');
+        }
+        $name_format = new NameFormatter(BanglaToEnglish::convert($name));
+        return $voucher->generate($name_format->removeUnicodeCharactersAndFormatName());
     }
 
-    private function formatName($name)
-    {
-        if (preg_match("/^(Md.|Md|Mr.|Mr|Mrs.|Mrs|engr.|eng)/i", $name)) {
-            return trim(preg_replace('/^(Md.|Md|Mr.|Mr|Mrs.|Mrs|engr.|eng)/i', '', $name));
-        }
-        return $name;
-    }
 
     private function generate($name)
     {
-        $name = $this->formatName($name);
         $words = explode(' ', $name);
         foreach ($words as $word) {
             if (strlen($word) < 3) {
