@@ -66,6 +66,9 @@ class VoucherSuggester
                 if ($result['is_valid']) {
                     if ($result['is_percentage']) {
                         $result['amount'] = (((float)$item->partner->prices * $item->quantity) * $result['amount']) / 100;
+                        if ($result['amount'] > $result['voucher']->cap) {
+                            $result['amount'] = $result['voucher']->cap;
+                        }
                     }
                     $result['amount'] = (new DiscountRepository())->validateDiscountValue((float)$item->partner->prices * $item->quantity, $result['amount']);
 

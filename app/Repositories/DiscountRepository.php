@@ -24,6 +24,9 @@ class DiscountRepository
              */
             if ($discount->is_amount_percentage) {
                 $amount = ((float)$partner->prices * $discount->amount) / 100;
+                if ($amount > $discount->cap) {
+                    $amount = $discount->cap;
+                }
                 $partner['discount_price'] = $amount;
                 $partner['discounted_price'] = $partner->prices - $amount;
             } else {
