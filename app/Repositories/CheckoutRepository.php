@@ -146,7 +146,7 @@ class CheckoutRepository
                         if (isset($service->partner->discount_id)) {
                             $discount = PartnerServiceDiscount::find($service->partner->discount_id);
                             $job->discount = $this->discountRepository
-                                ->getServiceDiscountAmount($discount->is_amount_percentage, $service->partner->prices, $service->quantity, $discount->amount);
+                                ->getServiceDiscountAmount($discount, $service->partner->prices, $service->quantity);
                             $job->sheba_contribution = $discount->sheba_contribution;
                             $job->partner_contribution = $discount->partner_contribution;
                             $this->discountApplied = true;
@@ -309,7 +309,7 @@ class CheckoutRepository
 //                $job['discount'] = max($this->discountRepository
 //                    ->getDiscountAmount($result['is_percentage'], $service->partner->prices, $service->quantity, $result['voucher']['amount']), $job['discount']);
                 $job['discount'] = $this->discountRepository
-                    ->getDiscountAmount($result['is_percentage'], $service->partner->prices, $service->quantity, $result['voucher']['amount']);
+                    ->getDiscountAmount($result, $service->partner->prices, $service->quantity);
                 $job['sheba_contribution'] = $result['voucher']['sheba_contribution'];
                 $job['partner_contribution'] = $result['voucher']['partner_contribution'];
                 $job['voucher_id'] = $result['id'];
