@@ -72,8 +72,11 @@ class PromotionList
                 }
             }
         }
-        if ($voucher->usage($customer->id) >= $voucher->max_order) {
-            return false;
+        // if voucher max order is zero that means infinity times one can avail the voucher
+        if ($voucher->max_order != 0) {
+            if ($voucher->usage($customer->id) >= $voucher->max_order) {
+                return false;
+            }
         }
         $rules = json_decode($voucher->rules);
         if (count($rules) > 0) {

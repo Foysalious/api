@@ -90,7 +90,12 @@ class VoucherSuggester
                 return $validPromo;
             }
             $vaild_time = $validPromo['voucher']->validityTimeLine($this->customer->id);
-            $s_val = 1 - ($vaild_time[1]->diffInDays(Carbon::now()) / constants('REFERRAL_VALID_DAYS'));
+            if ($validPromo['voucher']->is_referral == 0) {
+                $dMax = $validPromo['voucher']->end_date->diffInDays($validPromo['voucher']->start_date);
+            } else {
+                $dMax = constants('REFERRAL_VALID_DAYS');
+            }
+            $s_val = 1 - ($vaild_time[1]->diffInDays(Carbon::now()) / $dMax);
             $s_dis = $validPromo['amount'] / $discount_sum;
             $s = ($s_val * $this->wVal + $s_dis * $this->wDis) / 2;
             if ($this->result['s'] < $s) {
