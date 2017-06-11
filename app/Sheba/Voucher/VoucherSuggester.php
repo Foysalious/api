@@ -66,7 +66,7 @@ class VoucherSuggester
                 if ($result['is_valid']) {
                     if ($result['is_percentage']) {
                         $result['amount'] = (((float)$item->partner->prices * $item->quantity) * $result['amount']) / 100;
-                        if ($result['amount'] > $result['voucher']->cap) {
+                        if ($result['voucher']->cap != 0 && $result['amount'] > $result['voucher']->cap) {
                             $result['amount'] = $result['voucher']->cap;
                         }
                     }
