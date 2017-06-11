@@ -24,7 +24,7 @@ class DiscountRepository
              */
             if ($discount->is_amount_percentage) {
                 $amount = ((float)$partner->prices * $discount->amount) / 100;
-                if ($amount > $discount->cap) {
+                if ($discount->cap != 0 && $amount > (float)$discount->cap) {
                     $amount = $discount->cap;
                 }
                 $partner['discount_price'] = $amount;
@@ -55,7 +55,7 @@ class DiscountRepository
     {
         if ($discount['is_percentage']) {
             $amount = ((float)$partnerPrice * $quantity) * ($discount['voucher']['amount'] / 100);
-            if ($amount > $discount['voucher']->cap) {
+            if ($discount['voucher']->cap != 0 && $amount > $discount['voucher']->cap) {
                 $amount = $discount['voucher']->cap;
             }
             return $amount;
@@ -73,7 +73,7 @@ class DiscountRepository
     {
         if ($discount->is_amount_percentage) {
             $amount = ((float)$partnerPrice * $quantity * $discount->amount) / 100;
-            if ($amount > $discount->cap) {
+            if ($discount->cap != 0 && $amount > $discount->cap) {
                 $amount = $discount->cap;
             }
             return $amount;

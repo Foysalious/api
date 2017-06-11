@@ -55,6 +55,9 @@ class ServiceController extends Controller
         //get partners of the service
         $service_partners = $this->serviceRepository->partners($service, $location);
         $sorted_service_partners = collect($service_partners)->sortBy('discounted_price')->values()->all();
+//        $sorted_service_partners = collect($service_partners)->sortBy(function ($service_partner) {
+//            return sprintf('%-12s%s', $service_partner->discounted_price, $service_partner->rating);
+//        })->values()->all();
         $service->variables = json_decode($service->variables);
         array_forget($service, 'partnerServices');
         //If service has partner
@@ -91,6 +94,9 @@ class ServiceController extends Controller
         //check if any partner provide service in the location
         $service_partners = $this->serviceRepository->partnerWithSelectedOption($service, $option, $location);
         $sorted_service_partners = collect($service_partners)->sortBy('discounted_price')->values()->all();
+//        $sorted_service_partners = collect($service_partners)->sortBy(function ($service_partner) {
+//            return sprintf('%-12s%s', $service_partner->discounted_price, $service_partner->rating);
+//        })->values()->all();
         if (!empty($service_partners)) {
             return response()->json(['service_partners' => $sorted_service_partners, 'msg' => 'successful', 'code' => 200]);
         } else

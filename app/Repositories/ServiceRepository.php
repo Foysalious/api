@@ -35,7 +35,7 @@ class ServiceRepository
                 }
             }
             $partner = $this->getPartnerRatingReviewCount($service, $partner);
-            $final_partners = $this->addToFinalPartnerList($partner, $final_partners);
+            $final_partners = $this->addToFinalPartnerListWithDiscount($partner, $final_partners);
         }
         return $final_partners;
 
@@ -59,10 +59,10 @@ class ServiceRepository
                 $price = $this->partnerServesThisOption($prices, $option);
                 if ($price != null) {
                     array_set($partner, 'prices', $price);
-                    $final_partners = $this->addToFinalPartnerList($partner, $final_partners);
+                    $final_partners = $this->addToFinalPartnerListWithDiscount($partner, $final_partners);
                 }
             } elseif ($service->variable_type == 'Fixed') {
-                $final_partners = $this->addToFinalPartnerList($partner, $final_partners);
+                $final_partners = $this->addToFinalPartnerListWithDiscount($partner, $final_partners);
             }
         }
         return $final_partners;
@@ -155,7 +155,7 @@ class ServiceRepository
     function getPartnerRatingReviewCount($service, $partner)
     {
         $review = $partner->reviews()->where([
-            ['review', '<>', ''],
+//            ['review', '<>', ''],
             ['service_id', $service->id]
         ])->count('review');
         $rating = $partner->reviews()->where('service_id', $service->id)->avg('rating');
@@ -180,7 +180,7 @@ class ServiceRepository
         return null;
     }
 
-    private function addToFinalPartnerList($partner, $final_partners)
+    private function addToFinalPartnerListWithDiscount($partner, $final_partners)
     {
         $partner = $this->discountRepository->addDiscountToPartnerForService($partner);
         array_forget($partner, 'pivot');
