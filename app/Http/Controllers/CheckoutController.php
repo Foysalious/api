@@ -159,6 +159,9 @@ class CheckoutController extends Controller
                 $applied = true;
                 if ($result['is_percentage']) {
                     $result['amount'] = ((float)$item->partner->prices * $result['amount']) / 100;
+                    if ($result['voucher']->cap != 0 && $result['amount'] > $result['voucher']->cap) {
+                        $result['amount'] = $result['voucher']->cap;
+                    }
 //                    $result['amount'] = (new DiscountRepository())->validateDiscountValue($item->partner->prices * $item->quantity, $result['amount']);
                 }
                 $amount[] = (new DiscountRepository())->validateDiscountValue($item->partner->prices * $item->quantity, $result['amount']);

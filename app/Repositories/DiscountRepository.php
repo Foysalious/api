@@ -24,6 +24,10 @@ class DiscountRepository
              */
             if ($discount->is_amount_percentage) {
                 $amount = ((float)$partner->prices * $discount->amount) / 100;
+                if ($discount->cap != 0 && $amount > (float)$discount->cap) {
+                    $amount = $discount->cap;
+                }
+                $partner['cap'] = $discount->cap;
                 $partner['discount_price'] = $amount;
                 $partner['discounted_price'] = $partner->prices - $amount;
             } else {
@@ -41,18 +45,23 @@ class DiscountRepository
 
     /**
      * get discount amount for service or voucher
-     * @param $hasPercentage
+     * @param $discount
      * @param $partnerPrice
      * @param $quantity
-     * @param $discountValue
      * @return float
+     * @internal param $hasPercentage
+     * @internal param $discountValue
      */
-    public function getDiscountAmount($hasPercentage, $partnerPrice, $quantity, $discountValue)
+    public function getDiscountAmount($discount, $partnerPrice, $quantity)
     {
-        if ($hasPercentage) {
-            return ((float)$partnerPrice * $quantity) * ($discountValue / 100);
+        if ($discount['is_percentage']) {
+            $amount = ((float)$partnerPrice * $quantity) * ($discount['voucher']['amount'] / 100);
+            if ($discount['voucher']->cap != 0 && $amount > $discount['voucher']->cap) {
+                $amount = $discount['voucher']->cap;
+            }
+            return $amount;
         } else {
-            return $this->validateDiscountValue($partnerPrice * $quantity, $discountValue);
+            return $this->validateDiscountValue($partnerPrice * $quantity, $discount['voucher']['amount']);
         }
     }
 
@@ -61,12 +70,16 @@ class DiscountRepository
         return $service_price < $discountValue ? $service_price : $discountValue;
     }
 
-    public function getServiceDiscountAmount($hasPercentage, $partnerPrice, $quantity, $discountValue)
+    public function getServiceDiscountAmount($discount, $partnerPrice, $quantity)
     {
-        if ($hasPercentage) {
-            return ((float)$partnerPrice * $quantity * $discountValue) / 100;
+        if ($discount->is_amount_percentage) {
+            $amount = ((float)$partnerPrice * $quantity * $discount->amount) / 100;
+            if ($discount->cap != 0 && $amount > $discount->cap) {
+                $amount = $discount->cap;
+            }
+            return $amount;
         } else {
-            return $discountValue * $quantity;
+            return $discount->amount * $quantity;
         }
     }
 

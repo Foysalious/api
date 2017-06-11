@@ -66,6 +66,9 @@ class VoucherSuggester
                 if ($result['is_valid']) {
                     if ($result['is_percentage']) {
                         $result['amount'] = (((float)$item->partner->prices * $item->quantity) * $result['amount']) / 100;
+                        if ($result['voucher']->cap != 0 && $result['amount'] > $result['voucher']->cap) {
+                            $result['amount'] = $result['voucher']->cap;
+                        }
                     }
                     $result['amount'] = (new DiscountRepository())->validateDiscountValue((float)$item->partner->prices * $item->quantity, $result['amount']);
 
@@ -90,7 +93,12 @@ class VoucherSuggester
                 return $validPromo;
             }
             $vaild_time = $validPromo['voucher']->validityTimeLine($this->customer->id);
-            $s_val = 1 - ($vaild_time[1]->diffInDays(Carbon::now()) / constants('REFERRAL_VALID_DAYS'));
+            if ($validPromo['voucher']->is_referral == 0) {
+                $dMax = $validPromo['voucher']->end_date->diffInDays($validPromo['voucher']->start_date);
+            } else {
+                $dMax = constants('REFERRAL_VALID_DAYS');
+            }
+            $s_val = 1 - ($vaild_time[1]->diffInDays(Carbon::now()) / $dMax);
             $s_dis = $validPromo['amount'] / $discount_sum;
             $s = ($s_val * $this->wVal + $s_dis * $this->wDis) / 2;
             if ($this->result['s'] < $s) {

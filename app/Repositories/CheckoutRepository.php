@@ -146,7 +146,7 @@ class CheckoutRepository
                         if (isset($service->partner->discount_id)) {
                             $discount = PartnerServiceDiscount::find($service->partner->discount_id);
                             $job->discount = $this->discountRepository
-                                ->getServiceDiscountAmount($discount->is_amount_percentage, $service->partner->prices, $service->quantity, $discount->amount);
+                                ->getServiceDiscountAmount($discount, $service->partner->prices, $service->quantity);
                             $job->sheba_contribution = $discount->sheba_contribution;
                             $job->partner_contribution = $discount->partner_contribution;
                             $this->discountApplied = true;
@@ -274,8 +274,7 @@ class CheckoutRepository
         return $partner_order_price;
     }
 
-    private
-    function getDeliveryAddress($order_info)
+    private function getDeliveryAddress($order_info)
     {
         if ($order_info['address_id'] != '') {
             $deliver_address = CustomerDeliveryAddress::find($order_info['address_id']);
@@ -306,10 +305,8 @@ class CheckoutRepository
             $result = $this->voucherRepository
                 ->isValid($cart->voucher, $service->service->id, $service->partner->id, $order_info['location_id'], (int)$order_info['customer_id'], $cart->price, isset($order_info['sales_channel']) ? $order_info['sales_channel'] : 'Web');
             if ($result['is_valid']) {
-//                $job['discount'] = max($this->discountRepository
-//                    ->getDiscountAmount($result['is_percentage'], $service->partner->prices, $service->quantity, $result['voucher']['amount']), $job['discount']);
                 $job['discount'] = $this->discountRepository
-                    ->getDiscountAmount($result['is_percentage'], $service->partner->prices, $service->quantity, $result['voucher']['amount']);
+                    ->getDiscountAmount($result, $service->partner->prices, $service->quantity);
                 $job['sheba_contribution'] = $result['voucher']['sheba_contribution'];
                 $job['partner_contribution'] = $result['voucher']['partner_contribution'];
                 $job['voucher_id'] = $result['id'];
@@ -319,20 +316,7 @@ class CheckoutRepository
         return $job;
     }
 
-    private function calculateDiscount($cart, $service, $order_info, $job)
-    {
-        if (isset($service->partner->discount_id)) {
-            $discount = PartnerServiceDiscount::find($service->partner->discount_id);
-            $job['discount'] = $this->discountRepository
-                ->getDiscountAmount($discount->is_amount_percentage, $service->partner->prices, $service->quantity, $discount->amount);
-            $job['sheba_contribution'] = $discount->sheba_contribution;
-            $job['partner_contribution'] = $discount->partner_contribution;
-            $this->discountApplied = true;
-        }
-    }
-
-    private
-    function calculateScheduleDate($date)
+    private function calculateScheduleDate($date)
     {
         if (is_object($date)) {
             return Carbon::parse($date->time)->format('Y-m-d');
@@ -341,8 +325,7 @@ class CheckoutRepository
         }
     }
 
-    public
-    function clearSpPayment($payment_info)
+    public function clearSpPayment($payment_info)
     {
         $partner_order_id = array_unique($payment_info['partner_order_id']);
         $partner = [];
@@ -362,8 +345,7 @@ class CheckoutRepository
         $this->sendSpPaymentClearMail($partner);
     }
 
-    public
-    function sendSpPaymentClearMail($partner)
+    public function sendSpPaymentClearMail($partner)
     {
 
 //        Mail::send('orders.order-verfication', ['customer' => $customer, 'order' => $order], function ($m) use ($customer)
@@ -373,8 +355,7 @@ class CheckoutRepository
 //        });
     }
 
-    public
-    function sendOrderConfirmationMail($order, $customer)
+    public function sendOrderConfirmationMail($order, $customer)
     {
         Mail::send('orders.order-verfication', ['customer' => $customer, 'order' => $order], function ($m) use ($customer) {
             $m->from('yourEmail@domain.com', 'Sheba.xyz');
@@ -395,8 +376,7 @@ class CheckoutRepository
         return $this->sendDataToPortwallet($this->getTotalCartAmount($cart), $service_names, $customer, $request, "/checkout/place-order-final");
     }
 
-    public
-    function spPaymentWithPortWallet($request, $customer)
+    public function spPaymentWithPortWallet($request, $customer)
     {
         $service_name = $request->input('service_name');
         $partner_order_id = $request->input('partner_order_id');
@@ -411,8 +391,7 @@ class CheckoutRepository
         return $this->sendDataToPortwallet($request->input('price'), $product_name, $customer, $request, "/checkout/sp-payment-final");
     }
 
-    public
-    function sendDataToPortwallet($amount, $product_name, $customer, $request, $redirect_url)
+    public function sendDataToPortwallet($amount, $product_name, $customer, $request, $redirect_url)
     {
         $data = array();
         $data['amount'] = $amount;
@@ -447,16 +426,14 @@ class CheckoutRepository
         }
     }
 
-    public
-    function getPortWalletObject()
+    public function getPortWalletObject()
     {
         $portwallet = new PortWallet($this->appKey, $this->appSecret);
         $portwallet->setMode($this->appPaymentMode);
         return $portwallet;
     }
 
-    private
-    function getPartnerOrderPayment($partner_order)
+    private function getPartnerOrderPayment($partner_order)
     {
         $partner_order_payment = new PartnerOrderPayment();
         $partner_order_payment->partner_order_id = $partner_order->id;
@@ -465,8 +442,7 @@ class CheckoutRepository
         return $partner_order_payment;
     }
 
-    public
-    function sendConfirmation($customer, $order)
+    public function sendConfirmation($customer, $order)
     {
         $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
         //send order info to customer  by mail
