@@ -27,6 +27,7 @@ class DiscountRepository
                 if ($discount->cap != 0 && $amount > (float)$discount->cap) {
                     $amount = $discount->cap;
                 }
+                $partner['cap'] = $discount->cap;
                 $partner['discount_price'] = $amount;
                 $partner['discounted_price'] = $partner->prices - $amount;
             } else {
