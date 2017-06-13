@@ -3,6 +3,8 @@
 namespace App\Repositories;
 
 
+use App\Models\Service;
+
 class CategoryRepository
 {
     private $serviceRepository;
@@ -35,7 +37,7 @@ class CategoryRepository
 //            array_add($child, 'services', $services);
             array_add($child, 'slug', str_slug($child->name, '-'));
 //            array_add($child, 'children_services', $this->addServiceInfo($services));
-            $child['services']=$this->addServiceInfo($services);
+            $child['services'] = $this->addServiceInfo($services);
 //            array_forget($child, 'services');
         }
         return $children;
@@ -44,7 +46,7 @@ class CategoryRepository
     public function addServiceInfo($services)
     {
         foreach ($services as $key => $service) {
-            array_add($service, 'discount', $service->hasDiscounts());
+            array_add($service, 'discount', Service::find($service->id)->hasDiscounts());
             //Get start & end price for services. Custom services don't have price so omitted
             $service = $this->serviceRepository->getStartPrice($service);
             array_add($service, 'slug', str_slug($service->name, '-'));
