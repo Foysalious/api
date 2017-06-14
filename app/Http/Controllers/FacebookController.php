@@ -2,21 +2,25 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
+use App\Models\Service;
 use App\Repositories\ProfileRepository;
+use App\Repositories\ServiceRepository;
 use Illuminate\Http\Request;
-
-use App\Http\Requests;
+use Excel;
+use Illuminate\Support\Facades\Storage;
 
 class FacebookController extends Controller
 {
     private $fbKit;
     private $profileRepository;
-    private $redirectRepository;
+    private $serviceRepository;
 
     public function __construct()
     {
         $this->fbKit = new FacebookAccountKit();
         $this->profileRepository = new ProfileRepository();
+        $this->serviceRepository = new ServiceRepository();
     }
 
     public function continueWithKit(Request $request)
@@ -46,5 +50,24 @@ class FacebookController extends Controller
         }
         return response()->json(['code' => 404, 'msg' => 'Not found!']);
 
+    }
+
+    public function uploadProducts(Request $request)
+    {
+        $services = Service::where('publication_status', 1)->get();
+        foreach ($services as $service) {
+            $this->serviceRepository->getStartPrice($service);
+        }
+        $filename = 'yes';
+        $a = Excel::create($filename, function ($excel) use ($services, $filename) {
+            $excel->setTitle($filename);
+            $excel->setCreator('Sheba')->setCompany('Sheba');
+            $excel->sheet('Order', function ($sheet) use ($services) {
+                $sheet->loadView('excel')->with('services', $services);
+            });
+        })->string('csv');
+        $filename = 'products.csv';
+        $s3 = Storage::disk('s3');
+        $s3->put('uploads/product_feeds' . $filename, $a, 'public');
     }
 }
