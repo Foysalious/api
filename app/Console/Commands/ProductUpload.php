@@ -49,7 +49,7 @@ class ProductUpload extends Command
             $excel->setTitle($filename);
             $excel->setCreator('Sheba')->setCompany('Sheba');
             $excel->sheet('Order', function ($sheet) use ($services) {
-                $sheet->loadView('excel')->with('services', $services);
+                $sheet->loadView('excels.products')->with('services', $services);
             });
         })->string('csv');
         $filename = 'products.csv';
