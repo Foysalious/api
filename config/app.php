@@ -158,8 +158,8 @@ return [
 
         Dingo\Api\Provider\LaravelServiceProvider::class,
         Tymon\JWTAuth\Providers\JWTAuthServiceProvider::class,
-        Sentry\SentryLaravel\SentryLaravelServiceProvider::class
-
+        Sentry\SentryLaravel\SentryLaravelServiceProvider::class,
+        Maatwebsite\Excel\ExcelServiceProvider::class,
 
 
     ],
@@ -210,6 +210,7 @@ return [
         'JWTAuth' => Tymon\JWTAuth\Facades\JWTAuth::class,
         'JWTFactory' => Tymon\JWTAuth\Facades\JWTFactory::class,
         'Sentry' => Sentry\SentryLaravel\SentryFacade::class,
+        'Excel' => Maatwebsite\Excel\Facades\Excel::class
     ],
 
 ];
