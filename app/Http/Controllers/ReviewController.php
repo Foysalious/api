@@ -50,7 +50,9 @@ class ReviewController extends Controller
                 if ($request->input('review') != '') {
                     $review->review = $request->input('review');
                 }
+                $job = Job::find($request->job_id);
                 $review->job_id = $request->input('job_id');
+                $review->resource_id = $job->resource_id;
                 $review->partner_id = $request->input('partner_id');
                 $review->service_id = $request->input('service_id');
                 $review->customer_id = $customer;
@@ -83,10 +85,10 @@ class ReviewController extends Controller
                 if ($job->review == null) {
                     $review = new Review();
                     $review->rating = $request->input('rating');
-                    $review->job_id = $request->input('j');
+                    $review->job_id = $job->id;
+                    $review->resource_id = $job->resource_id;
                     $review->partner_id = $job->partner_order->partner_id;
                     $review->service_id = $job->service_id;
-//                    $review->resource_id = $job->resource_id;
                     $review->customer_id = $customer->id;
                     if ($review->save()) {
                         return response()->json(['msg' => 'successful', 'code' => 200]);
