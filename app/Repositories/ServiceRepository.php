@@ -128,25 +128,32 @@ class ServiceRepository
         $calculated_service = Service::with(['partners' => function ($q) use ($location) {
             $q->where([
                 ['is_published', 1],
-                ['is_verified', 1]
+                ['is_verified', 1],
+                ['partners.status', 'Verified']
             ])->whereHas('locations', function ($query) use ($location) {
                 $query->where('id', $location);
             });
         }])->where('id', $service->id)->first();
-
         $partners = $calculated_service->partners;
         if (count($partners) > 0) {
             if ($service->variable_type == 'Options') {
                 $price = array();
                 foreach ($partners as $partner) {
                     $min = min((array)json_decode($partner->pivot->prices));
-                    array_push($price, (float)$min);
+                    $partner['prices'] = $min;
+                    $calculate_partner = $this->discountRepository->addDiscountToPartnerForService($partner);
+                    array_push($price, $calculate_partner['discounted_price']);
+//                    array_push($price, (float)$min);
                 }
                 array_add($service, 'start_price', min($price));
             } elseif ($service->variable_type == 'Fixed') {
                 $price = array();
                 foreach ($partners as $partner) {
-                    array_push($price, (float)$partner->pivot->prices);
+                    $partner['prices'] = (float)$partner->pivot->prices;
+                    $calculate_partner = $this->discountRepository->addDiscountToPartnerForService($partner);
+                    array_push($price, $calculate_partner['discounted_price']);
+//                    array_push($price, (float)$partner->pivot->prices);
+//                    array_push($price, (float)$min);
                 }
                 array_add($service, 'start_price', min($price));
             }
