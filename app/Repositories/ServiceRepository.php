@@ -74,8 +74,7 @@ class ServiceRepository
      * @param $location
      * @return mixed
      */
-    public
-    function partnerSelectByLocation($service, $location)
+    public function partnerSelectByLocation($service, $location)
     {
         return $service->partners()
             ->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'prices')
@@ -88,21 +87,18 @@ class ServiceRepository
             })->get();
     }
 
-    public
-    function partnerSelect($service)
+    public function partnerSelect($service)
     {
         return $service->partners()->with(['locations' => function ($query) {
             $query->select('id', 'name');
-        }])
-            ->where([
-                ['is_verified', 1],
-                ['is_published', 1],
-                ['partners.status', 'Verified']
-            ])->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'prices')->get();
+        }])->where([
+            ['is_verified', 1],
+            ['is_published', 1],
+            ['partners.status', 'Verified']
+        ])->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'prices')->get();
     }
 
-    public
-    function getMaxMinPrice($service)
+    public function getMaxMinPrice($service)
     {
         $service = Service::find($service->id);
         $max_price = [];
@@ -120,12 +116,25 @@ class ServiceRepository
         return array(max($max_price), min($min_price));
     }
 
-    public function getStartPrice($service)
+    /**
+     * Get Start price based on location
+     * @param $service
+     * @param $request
+     * @return mixed
+     */
+    public function getStartPrice($service, $request)
     {
-        $partners = $service->partners()->where([
-            ['is_published', 1],
-            ['is_verified', 1]
-        ])->get();
+        $location = $request->location;
+        $calculated_service = Service::with(['partners' => function ($q) use ($location) {
+            $q->where([
+                ['is_published', 1],
+                ['is_verified', 1]
+            ])->whereHas('locations', function ($query) use ($location) {
+                $query->where('id', $location);
+            });
+        }])->where('id', $service->id)->first();
+
+        $partners = $calculated_service->partners;
         if (count($partners) > 0) {
             if ($service->variable_type == 'Options') {
                 $price = array();
@@ -144,6 +153,32 @@ class ServiceRepository
             array_forget($service, 'partners');
         }
         return $service;
+//        $partners = $service->partners()->where([
+//            ['is_published', 1],
+//            ['is_verified', 1]
+//        ])->get();
+//        if (count($partners) > 0) {
+//            if ($service->variable_type == 'Options') {
+//                $price = array();
+//                foreach ($partners as $partner) {
+//                    $min = min((array)json_decode($partner->pivot->prices));
+//                    array_push($price, (float)$min);
+//                }
+//                array_add($service, 'start_price', min($price));
+//            } elseif ($service->variable_type == 'Fixed') {
+//                $price = array();
+//                foreach ($partners as $partner) {
+//                    array_push($price, (float)$partner->pivot->prices);
+//                }
+//                array_add($service, 'start_price', min($price));
+//            }
+//            array_forget($service, 'partners');
+//        }
+//        return $service;
+//        $partners = $service->partners()->where([
+//            ['is_published', 1],
+//            ['is_verified', 1]
+//        ])->get();
     }
 
     /**

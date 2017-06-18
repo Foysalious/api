@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Service;
 use App\Repositories\CategoryRepository;
+use Illuminate\Http\Request;
 
 class CategoryServiceController extends Controller
 {
@@ -33,7 +34,7 @@ class CategoryServiceController extends Controller
         }
     }
 
-    public function getSimilarServices($service)
+    public function getSimilarServices($service, Request $request)
     {
         $service = Service::find($service);
         $category = Category::find($service->category_id);
@@ -41,7 +42,7 @@ class CategoryServiceController extends Controller
             ['publication_status', 1],
             ['id', '<>', $service->id]
         ])->take(5)->get();
-        $services = $this->categoryRepository->addServiceInfo($services);
+        $services = $this->categoryRepository->addServiceInfo($services, $request);
         if (count($services) > 3) {
             return response()->json(['services' => $services, 'msg' => 'successful', 'code' => 200]);
         } else {

@@ -29,7 +29,7 @@ class PartnerController extends Controller
         return response()->json(['partners' => $partners, 'code' => 200, 'msg' => 'successful']);
     }
 
-    public function getPartnerServices($partner)
+    public function getPartnerServices($partner, Request $request)
     {
         $partner = Partner::select('id', 'name', 'sub_domain', 'description', 'logo', 'type', 'level')
             ->where('id', $partner)
@@ -61,7 +61,7 @@ class PartnerController extends Controller
         }
         $final_service = [];
         foreach ($partner_services as $service) {
-            $service = $this->serviceRepository->getStartPrice($service);
+            $service = $this->serviceRepository->getStartPrice($service, $request);
             array_add($service, 'slug_service', str_slug($service->name, '-'));
             //review count of partner of this service
             $review = $service->reviews()->where([
