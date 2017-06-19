@@ -96,7 +96,6 @@ class CheckoutRepository
                         'j' => $j,
                         'discount' => $job_discount['discount'],
                     );
-//                    break 2;
                 }
             }
         }

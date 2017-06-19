@@ -73,7 +73,51 @@ class OrderController extends Controller
         $final_orders = [];
         foreach ($orders as $key => $order) {
             $order->calculate();
-            if (in_array($order->status, ['Open', 'Process']) || ($order->status == 'Closed' && $order->due != 0)) {
+            if (in_array($order->status, ['Open', 'Process', 'Cancelled']) || ($order->status == 'Closed' && $order->due != 0)) {
+                continue;
+            }
+            foreach ($order->partner_orders as $partner_order) {
+                array_add($partner_order, 'show', true);
+                array_add($partner_order, 'total_amount', $partner_order->totalPrice);
+                array_add($partner_order, 'paid_amount', $partner_order->paid);
+                array_add($partner_order, 'due_amount', $partner_order->due);
+                array_add($partner_order, 'rounding_cut_off', $partner_order->roundingCutOff);
+                $job_partner_change = 0;
+                foreach ($partner_order->jobs as $job) {
+                    array_add($job, 'show', true);
+                    if ($job->status == "Cancelled") {
+                        if ($job->partnerChangeLog != null) {
+                            $job['show'] = false;
+                            $job_partner_change++;
+                        }
+                    }
+                    array_add($job, 'customer_charge', $job->grossPrice);
+                    array_add($job, 'material_price', $job->materialPrice);
+                    array_forget($job, 'partnerChangeLog');
+                }
+                if (count($partner_order->jobs) == $job_partner_change) {
+                    $partner_order['show'] = false;
+                }
+                array_forget($partner_order, 'partner_collection');
+                array_forget($partner_order, 'sheba_collection');
+                array_forget($partner_order->partner, 'categories');
+            }
+            array_add($order, 'total_cost', $order->totalPrice);
+            array_add($order, 'due_amount', $order->due);
+            array_add($order, 'order_code', $order->code());
+            array_push($final_orders, $order);
+        }
+        return response()->json(['orders' => $final_orders, 'code' => 200, 'msg' => 'successful']);
+    }
+
+    public function getCancelledOrders($customer)
+    {
+        $customer = Customer::find($customer);
+        $orders = $this->orderRepository->getOrderInfo($customer);
+        $final_orders = [];
+        foreach ($orders as $key => $order) {
+            $order->calculate();
+            if (in_array($order->status, ['Open', 'Process', 'Closed'])) {
                 continue;
             }
             foreach ($order->partner_orders as $partner_order) {
