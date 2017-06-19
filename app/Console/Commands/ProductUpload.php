@@ -5,18 +5,15 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 
 use App\Models\Service;
-use App\Repositories\ServiceRepository;
 use Excel;
 use Illuminate\Support\Facades\Storage;
 
 class ProductUpload extends Command
 {
-    private $serviceRepository;
 
     public function __construct()
     {
         parent::__construct();
-        $this->serviceRepository = new ServiceRepository();
     }
 
     /**
@@ -42,9 +39,35 @@ class ProductUpload extends Command
     {
         $services = Service::where('publication_status', 1)->get();
         foreach ($services as $service) {
-            $this->serviceRepository->getStartPrice($service);
+            $calculated_service = Service::with(['partners' => function ($q) {
+                $q->where([
+                    ['is_published', 1],
+                    ['is_verified', 1]
+                ])->whereHas('locations', function ($query) {
+                    $query->where('id', 4);
+                });
+            }])->where('id', $service->id)->first();
+
+            $partners = $calculated_service->partners;
+            if (count($partners) > 0) {
+                if ($service->variable_type == 'Options') {
+                    $price = array();
+                    foreach ($partners as $partner) {
+                        $min = min((array)json_decode($partner->pivot->prices));
+                        array_push($price, (float)$min);
+                    }
+                    array_add($service, 'start_price', min($price));
+                } elseif ($service->variable_type == 'Fixed') {
+                    $price = array();
+                    foreach ($partners as $partner) {
+                        array_push($price, (float)$partner->pivot->prices);
+                    }
+                    array_add($service, 'start_price', min($price));
+                }
+                array_forget($service, 'partners');
+            }
         }
-        $filename = 'yes';
+        $filename = 'products.csv';
         $a = Excel::create($filename, function ($excel) use ($services, $filename) {
             $excel->setTitle($filename);
             $excel->setCreator('Sheba')->setCompany('Sheba');
@@ -52,7 +75,6 @@ class ProductUpload extends Command
                 $sheet->loadView('excels.products')->with('services', $services);
             });
         })->string('csv');
-        $filename = 'products.csv';
         $s3 = Storage::disk('s3');
         $s3->put('uploads/product_feeds/' . $filename, $a, 'public');
     }

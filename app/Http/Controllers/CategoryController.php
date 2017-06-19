@@ -77,7 +77,7 @@ class CategoryController extends Controller
         return response()->json(['msg' => 'no parent found', 'code' => 404]);
     }
 
-    public function getServices($category)
+    public function getServices($category, Request $request)
     {
         $category = Category::find($category);
         if ($category != null) {
@@ -89,7 +89,7 @@ class CategoryController extends Controller
                 ['id', $category->id],
                 ['publication_status', 1]
             ])->first();
-            $services = $this->categoryRepository->addServiceInfo($category->services);
+            $services = $this->categoryRepository->addServiceInfo($category->services, $request);
             return response()->json(['category' => $cat, 'services' => $services, 'msg' => 'successful', 'code' => 200]);
         } else {
             return response()->json(['msg' => 'category not found', 'code' => 404]);

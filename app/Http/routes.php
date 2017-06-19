@@ -83,6 +83,7 @@ $api->version('v1', function ($api) {
         $api->get('{customer}/general-info', 'App\Http\Controllers\CustomerController@getCustomerGeneralInfo');
         $api->get('{customer}/order-list', 'App\Http\Controllers\OrderController@getNotClosedOrderInfo');
         $api->get('{customer}/order-history', 'App\Http\Controllers\OrderController@getClosedOrderInfo');
+        $api->get('{customer}/cancel-order-list', 'App\Http\Controllers\OrderController@getCancelledOrders');
         $api->get('{customer}/get-referral', 'App\Http\Controllers\CustomerController@getReferral');
         $api->post('{customer}/send-referral-request-email', 'App\Http\Controllers\CustomerController@sendReferralRequestEmail');
         $api->get('{customer}/get-promo', 'App\Http\Controllers\PromotionController@getPromo');
