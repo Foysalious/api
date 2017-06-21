@@ -31,6 +31,7 @@ class DiscountRepository
                 $partner['discount_price'] = $amount;
                 $partner['discounted_price'] = $partner->prices - $amount;
             } else {
+                $partner['cap'] = null;
                 $partner['discount_price'] = $discount->amount;
                 $partner['discounted_price'] = $partner->prices - $discount->amount;
                 $partner['discount_id'] = $discount->id;
@@ -79,7 +80,7 @@ class DiscountRepository
             }
             return $amount;
         } else {
-            return $discount->amount * $quantity;
+            return $this->validateDiscountValue($partnerPrice * $quantity, $discount->amount * $quantity);
         }
     }
 
