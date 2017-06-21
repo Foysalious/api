@@ -18,14 +18,14 @@ return [
         'Cancelled' => 'Cancelled'
     ],
     'JOB_STATUSES_SHOW' => [
-        'Pending' => ['sheba'=> 'Pending', 'partner' => 'Pending', 'customer' => 'Pending'],
-        'Accepted' => ['sheba'=> 'Accepted', 'partner' => 'Accepted', 'customer' => 'Accepted'],
-        'Declined' => ['sheba'=> 'Declined', 'partner' => 'Declined', 'customer' => 'Pending'],
-        'Not_Responded' => ['sheba'=> 'Not Responded', 'partner' => 'Not Responded', 'customer' => 'Response Delay'],
-        'Schedule_Due' => ['sheba'=> 'Schedule Due', 'partner' => 'Schedule Due', 'customer' => 'Behind Schedule'],
-        'Process' => ['sheba'=> 'Process', 'partner' => 'Process', 'customer' => 'On Going'],
-        'Served' => ['sheba'=> 'Served', 'partner' => 'Served', 'customer' => 'Served'],
-        'Cancelled' => ['sheba'=> 'Cancelled', 'partner' => 'Cancelled', 'customer' => 'Cancelled']
+        'Pending' => ['sheba' => 'Pending', 'partner' => 'Pending', 'customer' => 'Pending'],
+        'Accepted' => ['sheba' => 'Accepted', 'partner' => 'Accepted', 'customer' => 'Accepted'],
+        'Declined' => ['sheba' => 'Declined', 'partner' => 'Declined', 'customer' => 'Pending'],
+        'Not_Responded' => ['sheba' => 'Not Responded', 'partner' => 'Not Responded', 'customer' => 'Response Delay'],
+        'Schedule_Due' => ['sheba' => 'Schedule Due', 'partner' => 'Schedule Due', 'customer' => 'Behind Schedule'],
+        'Process' => ['sheba' => 'Process', 'partner' => 'Process', 'customer' => 'On Going'],
+        'Served' => ['sheba' => 'Served', 'partner' => 'Served', 'customer' => 'Served'],
+        'Cancelled' => ['sheba' => 'Cancelled', 'partner' => 'Cancelled', 'customer' => 'Cancelled']
     ],
     'PARTNER_ORDER_STATUSES' => [
         'Open' => 'Open',
@@ -34,10 +34,10 @@ return [
         'Cancelled' => 'Cancelled'
     ],
     'PARTNER_ORDER_STATUSES_SHOW' => [
-        'Open' => ['sheba'=> 'Open', 'partner' => 'Open', 'customer' => 'Open'],
-        'Process' => ['sheba'=> 'Process', 'partner' => 'Process', 'customer' => 'On Going'],
-        'Closed' => ['sheba'=> 'Closed', 'partner' => 'Closed', 'customer' => 'Closed'],
-        'Cancelled' => ['sheba'=> 'Cancelled', 'partner' => 'Cancelled', 'customer' => 'Cancelled']
+        'Open' => ['sheba' => 'Open', 'partner' => 'Open', 'customer' => 'Open'],
+        'Process' => ['sheba' => 'Process', 'partner' => 'Process', 'customer' => 'On Going'],
+        'Closed' => ['sheba' => 'Closed', 'partner' => 'Closed', 'customer' => 'Closed'],
+        'Cancelled' => ['sheba' => 'Cancelled', 'partner' => 'Cancelled', 'customer' => 'Cancelled']
     ],
     'ORDER_STATUSES' => [
         'Open' => 'Open',
@@ -46,45 +46,45 @@ return [
         'Cancelled' => 'Cancelled'
     ],
     'ORDER_STATUSES_SHOW' => [
-        'Open' => ['sheba'=> 'Open', 'partner' => 'Open', 'customer' => 'Open'],
-        'Process' => ['sheba'=> 'Process', 'partner' => 'Process', 'customer' => 'On Going'],
-        'Closed' => ['sheba'=> 'Closed', 'partner' => 'Closed', 'customer' => 'Closed'],
-        'Cancelled' => ['sheba'=> 'Cancelled', 'partner' => 'Cancelled', 'customer' => 'Cancelled']
+        'Open' => ['sheba' => 'Open', 'partner' => 'Open', 'customer' => 'Open'],
+        'Process' => ['sheba' => 'Process', 'partner' => 'Process', 'customer' => 'On Going'],
+        'Closed' => ['sheba' => 'Closed', 'partner' => 'Closed', 'customer' => 'Closed'],
+        'Cancelled' => ['sheba' => 'Cancelled', 'partner' => 'Cancelled', 'customer' => 'Cancelled']
     ],
     'FLAG_STATUSES' => [
-        'Open'          => 'Open',
-        'Acknowledged'  => 'Acknowledged',
-        'In_Process'    => 'In Process',
-        'Completed'     => 'Completed',
-        'Closed'        => 'Closed',
-        'Declined'      => 'Declined',
-        'Halt'          => 'Halt'
+        'Open' => 'Open',
+        'Acknowledged' => 'Acknowledged',
+        'In_Process' => 'In Process',
+        'Completed' => 'Completed',
+        'Closed' => 'Closed',
+        'Declined' => 'Declined',
+        'Halt' => 'Halt'
     ],
     'FLAG_TYPE' => [
-        'Idea'          => 'Idea',
-        'Assignment'    => 'Assignment',
-        'Improvement'   => 'Improvement',
-        'Risk'          => 'Risk',
-        'Issue'         => 'Issue'
+        'Idea' => 'Idea',
+        'Assignment' => 'Assignment',
+        'Improvement' => 'Improvement',
+        'Risk' => 'Risk',
+        'Issue' => 'Issue'
     ],
     'FLAG_TYPE_TOOLTIP' => [
-        'Idea'          => 'Features to make life easier',
-        'Assignment'    => 'Analysis or research task',
-        'Improvement'   => 'Improvement of existing feature ',
-        'Risk'          => 'Business is having serious impact',
-        'Issue'         => 'Business can be effected today or tomorrow'
+        'Idea' => 'Features to make life easier',
+        'Assignment' => 'Analysis or research task',
+        'Improvement' => 'Improvement of existing feature ',
+        'Risk' => 'Business is having serious impact',
+        'Issue' => 'Business can be effected today or tomorrow'
     ],
     'FLAG_SEVERITY_LEVELS' => [
-        'Critical'  => 'Critical',
-        'Major'     => 'Major',
-        'Minor'     => 'Minor',
-        'Not_Define'=> 'Moderate'
+        'Critical' => 'Critical',
+        'Major' => 'Major',
+        'Minor' => 'Minor',
+        'Not_Define' => 'Moderate'
     ],
     'FLAG_SEVERITY_LEVEL_TOOLTIP' => [
-        'Critical'  => 'Need to be completed within 4 hours',
-        'Major'     => 'Need to be completed within 24 hours',
-        'Minor'     => 'Need to be completed within 3 Days',
-        'Moderate'  => 'Need to be completed within 7 Days'
+        'Critical' => 'Need to be completed within 4 hours',
+        'Major' => 'Need to be completed within 24 hours',
+        'Minor' => 'Need to be completed within 3 Days',
+        'Moderate' => 'Need to be completed within 7 Days'
     ],
     'PRIORITY_LEVELS' => ['Green' => 'Green', 'Amber' => 'Amber', 'Red' => 'Red'],
     'ALT_PRIORITY_LEVELS' => ['Low' => 'Low', 'Medium' => 'Medium', 'High' => 'High'],
@@ -99,16 +99,23 @@ return [
     'JOB_SATISFACTION_LEVELS' => ['High' => 'High', 'Medium' => 'Medium', 'Low' => 'Low'],
 
     'JOB_CANCEL_REASONS' => [
-        'Customer Dependency'               => 'Customer Dependency',
-        'Customer Management'               => 'Customer Management',
-        'Push Sales Attempt'                => 'Push Sales Attempt',
-        'Insufficient Partner'              => 'Insufficient Partner',
-        'Price Shock'                       => 'Price Shock',
-        'Service Limitation'                => 'Service Limitation',
-        'Wrongly Create Order/ Test Order'  => 'Wrongly Create Order/ Test Order',
-        'Service Change'                    => 'Service Change'
+        'Customer Dependency' => 'Customer Dependency',
+        'Customer Management' => 'Customer Management',
+        'Push Sales Attempt' => 'Push Sales Attempt',
+        'Insufficient Partner' => 'Insufficient Partner',
+        'Price Shock' => 'Price Shock',
+        'Service Limitation' => 'Service Limitation',
+        'Wrongly Create Order/ Test Order' => 'Wrongly Create Order/ Test Order',
+        'Service Change' => 'Service Change'
     ],
-
+    'JOB_CANCEL_REASONS_FROM_CUSTOMER' => [
+        'Will take the service later' => 'Will take the service later',
+        'Price seems high' => 'Price seems high',
+        "Don't like the process" => "Don't like the process",
+        'Wrong service ordered' => 'Wrong service ordered',
+        'Want to change service partner' => 'Want to change service partner',
+        'Other' => 'Other'
+    ],
     'COMPLAIN_GROUPS' => [
         'Service Partner' => 'Service Partner',
         'Communication' => 'Communication',
@@ -128,22 +135,22 @@ return [
         'Cancelled' => 'Cancelled'
     ],
     'CUSTOM_ORDER_STATUSES_SHOW' => [
-        'Open' => ['sheba'=> 'Open', 'partner' => 'Open', 'customer' => 'Open'],
-        'Process' => ['sheba'=> 'Process', 'partner' => 'Process', 'customer' => 'Process'],
-        'OnInspection' => ['sheba'=> 'On Inspection', 'partner' => 'On Inspection', 'customer' => 'On Inspection'],
-        'QuotationSent' => ['sheba'=> 'Quotation Sent', 'partner' => 'Quotation Sent', 'customer' => 'Quotation Sent'],
-        'ConvertedToOrder' => ['sheba'=> 'Converted To Order', 'partner' => 'Converted To Order', 'customer' => 'Converted To Order'],
-        'Cancelled' => ['sheba'=> 'Cancelled', 'partner' => 'Cancelled', 'customer' => 'Cancelled']
+        'Open' => ['sheba' => 'Open', 'partner' => 'Open', 'customer' => 'Open'],
+        'Process' => ['sheba' => 'Process', 'partner' => 'Process', 'customer' => 'Process'],
+        'OnInspection' => ['sheba' => 'On Inspection', 'partner' => 'On Inspection', 'customer' => 'On Inspection'],
+        'QuotationSent' => ['sheba' => 'Quotation Sent', 'partner' => 'Quotation Sent', 'customer' => 'Quotation Sent'],
+        'ConvertedToOrder' => ['sheba' => 'Converted To Order', 'partner' => 'Converted To Order', 'customer' => 'Converted To Order'],
+        'Cancelled' => ['sheba' => 'Cancelled', 'partner' => 'Cancelled', 'customer' => 'Cancelled']
     ],
     'CUSTOM_ORDER_CANCEL_REASONS' => [
-        'CustomerDependency'           => 'Customer Dependency',
-        'CustomerManagement'           => 'Customer Management',
-        'PushSalesAttempt'             => 'Push Sales Attempt',
-        'InsufficientPartner'          => 'Insufficient Partner',
-        'PriceShock'                   => 'Price Shock',
-        'ServiceLimitation'            => 'Service Limitation',
-        'WronglyCreateOrderTestOrder'  => 'Wrongly Create Order/ Test Order',
-        'ServiceChange'                => 'Service Change'
+        'CustomerDependency' => 'Customer Dependency',
+        'CustomerManagement' => 'Customer Management',
+        'PushSalesAttempt' => 'Push Sales Attempt',
+        'InsufficientPartner' => 'Insufficient Partner',
+        'PriceShock' => 'Price Shock',
+        'ServiceLimitation' => 'Service Limitation',
+        'WronglyCreateOrderTestOrder' => 'Wrongly Create Order/ Test Order',
+        'ServiceChange' => 'Service Change'
     ],
     'NOTIFICATION_TYPES' => [
         'Info' => 'Info',
@@ -197,17 +204,17 @@ return [
     ],
     'SERVICE_UNITS' => ['ft', 'sft', 'hour', 'kg', 'meal', 'person', 'piece', 'rft', 'seat', 'strip', 'km'],
     'FEEDBACK_STATUSES' => [
-        'Open'          => 'Open',
-        'Acknowledged'  => 'Acknowledged',
-        'In_Process'    => 'In Process',
-        'Closed'        => 'Closed',
-        'Declined'      => 'Declined',
-        'Halt'          => 'Halt'
+        'Open' => 'Open',
+        'Acknowledged' => 'Acknowledged',
+        'In_Process' => 'In Process',
+        'Closed' => 'Closed',
+        'Declined' => 'Declined',
+        'Halt' => 'Halt'
     ],
     'FEEDBACK_TYPES' => [
-        'Issue'         => 'Issue',
-        'Idea'          => 'Idea',
-        'Improvement'   => 'Improvement'
+        'Issue' => 'Issue',
+        'Idea' => 'Idea',
+        'Improvement' => 'Improvement'
     ],
     'BUSINESS_TYPES' => [
         'Company' => 'Company',
@@ -221,21 +228,21 @@ return [
         'Employee' => 'Employee'
     ],
     'JOIN_REQUEST_STATUSES' => [
-        'Open'      => 'Open',
-        'Pending'   => 'Pending',
-        'Process'   => 'Process',
-        'Accepted'  => 'Accepted',
-        'Rejected'  => 'Rejected'
+        'Open' => 'Open',
+        'Pending' => 'Pending',
+        'Process' => 'Process',
+        'Accepted' => 'Accepted',
+        'Rejected' => 'Rejected'
     ],
     'COMPLAIN_SOURCE' => [
-        'Direct'    => 'Direct',
-        'QA'        => 'QA',
-        'FB'        => 'FB',
+        'Direct' => 'Direct',
+        'QA' => 'QA',
+        'FB' => 'FB',
     ],
     'COMPLAIN_SEVERITY_LEVELS' => [
-        'Low'       => 'Low',
-        'Medium'    => 'Medium',
-        'High'      => 'High',
+        'Low' => 'Low',
+        'Medium' => 'Medium',
+        'High' => 'High',
     ],
     'REFERRAL_VALID_DAYS' => 90
 ];

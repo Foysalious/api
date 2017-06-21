@@ -59,21 +59,31 @@ class JobController extends Controller
         return response()->json(['times' => config('constants.JOB_PREFERRED_TIMES'), 'code' => 200]);
     }
 
-    public function cancelJob($customer, $job)
+    public function cancelJobReasons()
+    {
+        return response()->json(['reasons' => config('constants.JOB_CANCEL_REASONS_FROM_CUSTOMER'), 'code' => 200]);
+    }
+
+    public function cancelJob($customer, $job, Request $request)
     {
         $job = Job::find($job);
         $previous_status = $job->status;
-        $job->status = 'Cancelled';
-        if ($job->update()) {
-            $job_cancel = new JobCancelLog();
-            $job_cancel->job_id = $job->id;
-            $job_cancel->from_status = $previous_status;
-            $job_cancel->cancel_reason = 'Customer Dependency';
-            $job_cancel->cancel_reason_details = 'Job has been cancelled by customer from front-end';
-            $job_cancel->created_by_name = 'Customer';
-            if ($job_cancel->save()) {
-                return response()->json(['msg' => 'Job Cancelled Successfully!', 'code' => 200]);
+        if ($previous_status == config("constants.JOB_STATUSES_SHOW")['Pending']['customer']) {
+            $job->status = 'Cancelled';
+            if ($job->update()) {
+                $job_cancel = new JobCancelLog();
+                $job_cancel->job_id = $job->id;
+                $job_cancel->from_status = $previous_status;
+                $job_cancel->cancel_reason = 'Customer Dependency';
+                $job_cancel->log = 'Job has been cancelled by customer from front-end';
+                $job_cancel->cancel_reason_details = $request->reason;
+                $job_cancel->created_by_name = 'Customer';
+                if ($job_cancel->save()) {
+                    return response()->json(['msg' => 'Job Cancelled Successfully!', 'code' => 200]);
+                }
             }
+        } else {
+            return response()->json(['code' => 404]);
         }
     }
 }

@@ -41,6 +41,7 @@ $api->version('v1', function ($api) {
     $api->get('category-service', 'App\Http\Controllers\CategoryServiceController@getCategoryServices');
     $api->get('{service}/similar-services', 'App\Http\Controllers\CategoryServiceController@getSimilarServices');
     $api->get('job-times', 'App\Http\Controllers\JobController@getPreferredTimes');
+    $api->get('cancel-job-reasons', 'App\Http\Controllers\JobController@cancelJobReasons');
     $api->get('images', 'App\Http\Controllers\ShebaController@getImages');
     $api->post('voucher-valid', 'App\Http\Controllers\CheckoutController@checkForValidity');
 
@@ -94,7 +95,7 @@ $api->version('v1', function ($api) {
         $api->post('{customer}/order-valid', 'App\Http\Controllers\OrderController@checkOrderValidity');
         $api->post('{customer}/modify-review', 'App\Http\Controllers\ReviewController@modifyReview');
         $api->get('{customer}/job/{job}', 'App\Http\Controllers\JobController@getInfo');
-        $api->post('{customer}/cancel-job/{job}', 'App\Http\Controllers\JobController@cancelJob');
+        $api->post('{customer}/{job}/cancel-job', 'App\Http\Controllers\JobController@cancelJob');
 
         $api->post('{customer}/ask-quotation', 'App\Http\Controllers\CustomOrderController@askForQuotation');
         $api->get('{customer}/custom-order', 'App\Http\Controllers\CustomOrderController@getCustomOrders');
