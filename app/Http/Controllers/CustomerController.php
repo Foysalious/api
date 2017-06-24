@@ -82,6 +82,17 @@ class CustomerController extends Controller
         ]);
     }
 
+    public function getIntercomInfo($customer)
+    {
+        $customer = Customer::select('id', 'name', 'mobile', 'email', 'created_at')->where('id', $customer)->first();
+        array_add($customer, 'signed_up_at', $customer->created_at->timestamp);
+        if (count($customer) != 0) {
+            return response()->json(['msg' => 'successful', 'code' => 200, 'customer' => $customer]);
+        } else {
+            return response()->json(['msg' => 'not ok', 'code' => 404]);
+        }
+    }
+
     public function facebookIntegration(Request $request, $customer)
     {
         $customer = Customer::find($customer);
