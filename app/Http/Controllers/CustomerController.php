@@ -85,7 +85,13 @@ class CustomerController extends Controller
     public function getIntercomInfo($customer)
     {
         $customer = Customer::select('id', 'name', 'mobile', 'email', 'created_at')->where('id', $customer)->first();
+        $user_hash = hash_hmac(
+            'sha256', // hash function
+            $customer->id, // user's email address
+            env('INTERCOM_SECRET_KEY')// secret key (keep safe!)
+        );
         array_add($customer, 'signed_up_at', $customer->created_at->timestamp);
+        array_add($customer, 'user_hash', $user_hash);
         if (count($customer) != 0) {
             return response()->json(['msg' => 'successful', 'code' => 200, 'customer' => $customer]);
         } else {
