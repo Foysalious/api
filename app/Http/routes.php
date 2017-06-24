@@ -82,6 +82,7 @@ $api->version('v1', function ($api) {
     $api->group(['prefix' => 'customer', 'middleware' => ['customer.auth']], function ($api) {
         $api->get('{customer}', 'App\Http\Controllers\CustomerController@getCustomerInfo');
         $api->get('{customer}/general-info', 'App\Http\Controllers\CustomerController@getCustomerGeneralInfo');
+        $api->get('{customer}/intercom-info', 'App\Http\Controllers\CustomerController@getIntercomInfo');
         $api->get('{customer}/order-list', 'App\Http\Controllers\OrderController@getNotClosedOrderInfo');
         $api->get('{customer}/order-history', 'App\Http\Controllers\OrderController@getClosedOrderInfo');
         $api->get('{customer}/cancel-order-list', 'App\Http\Controllers\OrderController@getCancelledOrders');
