@@ -7,7 +7,6 @@ use Sheba\Voucher\VoucherCodeGenerator;
 
 class Customer extends Authenticatable
 {
-
     protected $fillable = [
         'name',
         'mobile',
