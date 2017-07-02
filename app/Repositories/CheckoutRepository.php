@@ -74,8 +74,7 @@ class CheckoutRepository
     public function storeDataInDB($order_info, $payment_method)
     {
         $cart = json_decode($order_info['cart']);
-        $this->cartRepository->checkValidation($cart, $order_info['location_id']);
-        dd('ada');
+        $cart->items = $this->cartRepository->checkValidation($cart, $order_info['location_id']);
         $job_discount = [];
         $job_discount['discount'] = 0;
         $cart_partner = collect($cart->items)->groupBy('partner.id');
@@ -105,9 +104,9 @@ class CheckoutRepository
         }
         $order = new Order();
         try {
-            DB::transaction(function () use ($order_info, $payment_method, $order, $job_discount, $loop_id) {
+            DB::transaction(function () use ($order_info, $cart, $payment_method, $order, $job_discount, $loop_id) {
                 $this->calculateAuthor($order_info);
-                $cart = json_decode($order_info['cart']);
+//                $cart = json_decode($order_info['cart']);
 
                 $order = $this->createOrder($order, $order_info);
                 $order->delivery_address = $this->getDeliveryAddress($order_info);
@@ -137,6 +136,7 @@ class CheckoutRepository
                     foreach ($partner_services as $service) {
                         $j++;
                         $job = new Job();
+//                        dd($service);
                         $job->partner_order_id = $partner_order->id;
                         $job->service_id = $service->service->id;
                         $job->service_name = $service->service->name;
@@ -183,6 +183,7 @@ class CheckoutRepository
                             }
 
                             $service_variables = json_decode($service_variables, 1);
+                            dd($service_variables);
                             $service_option = $service->serviceOptions;
 
                             $job_options = [];

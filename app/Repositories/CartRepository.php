@@ -14,6 +14,9 @@ class CartRepository
             if (!$this->_validTime($item->time)) {
                 return false;
             }
+            if (!$this->_validDate($item->date->time)) {
+                return false;
+            }
             $partner_service = PartnerService::with('partner', 'service')->where([
                 ['service_id', $item->service->id],
                 ['partner_id', $item->partner->id],
@@ -21,21 +24,28 @@ class CartRepository
             if ($partner_service == null) {
                 return false;
             }
-            if (!$this->_validLocation($location, $partner_service->partner)) {
+            unset($item->service);
+            $item->service = $partner_service->service;
+//            dd($item->service);
+            if (!$this->_validPartnerLocation($location, $partner_service->partner)) {
+                dd('loc');
                 return false;
             }
             if (count($item->serviceOptions) > 0) {
                 if (!$this->_validOption($item->serviceOptions, $partner_service)) {
+                    dd('op');
                     return false;
                 }
             } else {
-                if (!$this->_validPrice($item->partner, $partner_service->partner)) {
+                if (!$this->_validPrice($item->partner, $partner_service)) {
+                    dd($item->partner, $partner_service->partner, 'pr');
                     return false;
                 }
             }
 
 //            dd($partner_service, $item->serviceOptions);
         }
+        return $items;
     }
 
     private function _validTime($time)
@@ -44,13 +54,23 @@ class CartRepository
         return array_has($times, $time) ? true : false;
     }
 
+    private function _validDate($date)
+    {
+        $today = date('Y-m-d');
+        return $date >= $today ? true : false;
+    }
+
+    private function _validService($service)
+    {
+    }
+
     /**
      * check partner gives service in the location
      * @param $location
      * @param $partner
      * @return bool
      */
-    private function _validLocation($location, $partner)
+    private function _validPartnerLocation($location, $partner)
     {
         $locations = $partner->locations->pluck('id')->toArray();
         return in_array($location, $locations) ? true : false;
@@ -68,9 +88,9 @@ class CartRepository
         return false;
     }
 
-    private function _validPrice($cart_partner, $partner)
+    private function _validPrice($cart_partner, $partner_service)
     {
-        return $cart_partner->prices == $partner->prices ? true : false;
+        return $cart_partner->prices == $partner_service->prices ? true : false;
     }
 
 }
