@@ -12,31 +12,30 @@ class CartRepository
         $items = $cart->items;
         foreach ($items as $item) {
             if (!$this->_validTime($item->time)) {
-                return false;
+                return array(false, 'Time is not valid');
             }
             if (!$this->_validDate($item->date->time)) {
-                return false;
+                return array(false, 'Date is not valid');
             }
-            $partner_service = PartnerService::with('partner', 'service')->where([
+            $partner_service = PartnerService::with('partner', 'service', 'discounts')->where([
                 ['service_id', $item->service->id],
                 ['partner_id', $item->partner->id],
             ])->first();
             if ($partner_service == null) {
-                return false;
+                return array(false, 'Partner Service not valid');
             }
             unset($item->service);
             $item->service = $partner_service->service;
             if (!$this->_validPartnerLocation($location, $partner_service->partner)) {
-                return false;
+                return array(false, 'Partner Location not valid');
             }
             if (count($item->serviceOptions) > 0) {
                 if (!$this->_validOption($item->serviceOptions, $partner_service)) {
-                    return false;
+                    return array(false, 'Service Option not valid');
                 }
             } else {
                 if (!$this->_validPrice($item->partner, $partner_service)) {
-                    dd($item->partner, $partner_service->partner, 'pr');
-                    return false;
+                    return array(false, 'Price Not Valid');
                 }
             }
         }
@@ -53,10 +52,6 @@ class CartRepository
     {
         $today = date('Y-m-d');
         return $date >= $today ? true : false;
-    }
-
-    private function _validService($service)
-    {
     }
 
     /**

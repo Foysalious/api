@@ -75,6 +75,9 @@ class CheckoutRepository
     {
         $cart = json_decode($order_info['cart']);
         $cart->items = $this->cartRepository->checkValidation($cart, $order_info['location_id']);
+        if (count($cart->items) == 2) {
+            return $cart->items;
+        }
         $job_discount = [];
         $job_discount['discount'] = 0;
         $cart_partner = collect($cart->items)->groupBy('partner.id');
@@ -350,7 +353,6 @@ class CheckoutRepository
 
     public function sendSpPaymentClearMail($partner)
     {
-
 //        Mail::send('orders.order-verfication', ['customer' => $customer, 'order' => $order], function ($m) use ($customer)
 //        {
 //            $m->from('yourEmail@domain.com', 'Sheba.xyz');

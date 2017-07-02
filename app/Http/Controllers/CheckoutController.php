@@ -46,7 +46,7 @@ class CheckoutController extends Controller
         array_add($request, 'customer_id', $customer);
         //store order details for customer
         $order = $this->checkoutRepository->storeDataInDB($request->all(), 'cash-on-delivery');
-        if ($order) {
+        if (gettype($order) == 'object') {
             $customer = Customer::find($order->customer_id);
             if ($order->voucher_id != null) {
                 $voucher = $order->voucher;
@@ -62,6 +62,8 @@ class CheckoutController extends Controller
             new NotificationRepository($order);
             $this->checkoutRepository->sendConfirmation($customer->id, $order);
             return response()->json(['code' => 200, 'msg' => 'Order placed successfully!']);
+        } elseif (gettype($order) == 'array') {
+            return response()->json(['code' => 409, 'msg' => $order[1]]);
         } else {
             return response()->json(['code' => 500, 'msg' => 'There is a problem while placing the order!']);
         }
