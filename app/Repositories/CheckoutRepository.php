@@ -136,7 +136,6 @@ class CheckoutRepository
                     foreach ($partner_services as $service) {
                         $j++;
                         $job = new Job();
-//                        dd($service);
                         $job->partner_order_id = $partner_order->id;
                         $job->service_id = $service->service->id;
                         $job->service_name = $service->service->name;
@@ -179,11 +178,11 @@ class CheckoutRepository
                                 $job->service_variable_type = $service_variable_type = $service_details->variable_type;
                             } else {
                                 $job->service_variable_type = $service_variable_type = $service->service->variable_type;
-                                $job->service_variables = $service_variables = json_encode($service->service->variables);
+//                                $job->service_variables = $service_variables = json_encode($service->service->variables);
+                                $job->service_variables = $service_variables = $service->service->variables;
                             }
 
                             $service_variables = json_decode($service_variables, 1);
-                            dd($service_variables);
                             $service_option = $service->serviceOptions;
 
                             $job_options = [];

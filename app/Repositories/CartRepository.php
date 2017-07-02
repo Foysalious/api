@@ -26,14 +26,11 @@ class CartRepository
             }
             unset($item->service);
             $item->service = $partner_service->service;
-//            dd($item->service);
             if (!$this->_validPartnerLocation($location, $partner_service->partner)) {
-                dd('loc');
                 return false;
             }
             if (count($item->serviceOptions) > 0) {
                 if (!$this->_validOption($item->serviceOptions, $partner_service)) {
-                    dd('op');
                     return false;
                 }
             } else {
@@ -42,8 +39,6 @@ class CartRepository
                     return false;
                 }
             }
-
-//            dd($partner_service, $item->serviceOptions);
         }
         return $items;
     }
