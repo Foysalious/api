@@ -51,6 +51,7 @@ class CheckoutRepository
 
     private $voucherRepository;
     private $discountRepository;
+    private $cartRepository;
     private $created_by;
     private $created_by_name;
     private $voucherApplied = false;
@@ -67,6 +68,7 @@ class CheckoutRepository
         $this->appPaymentUrl = config('portwallet.app_payment_url');
         $this->voucherRepository = new VoucherRepository();
         $this->discountRepository = new DiscountRepository();
+        $this->cartRepository=new CartRepository();
     }
 
     public function storeDataInDB($order_info, $payment_method)
