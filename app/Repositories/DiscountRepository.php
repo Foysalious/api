@@ -6,15 +6,15 @@ use App\Models\PartnerService;
 
 class DiscountRepository
 {
-    public function addDiscountToPartnerForService($partner)
+    public function addDiscountToPartnerForService($partner, $discount)
     {
         /**
          * partner service has no discount
          */
-        if (($discount = PartnerService::find($partner->pivot->id)->discount()) == null) {
+        if ($discount == null) {
             //initially discount set to zero
-            array_add($partner, 'discount_price', 0);
-            array_add($partner, 'discounted_price', $partner->prices);
+            $partner['discount_price'] = 0;
+            $partner['discounted_price'] = $partner->prices;
         } /**
          * partner service has discount
          */

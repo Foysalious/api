@@ -7,6 +7,13 @@ use App\Models\PartnerService;
 
 class CartRepository
 {
+    private $discountRepository;
+
+    public function __construct()
+    {
+        $this->discountRepository = new DiscountRepository();
+    }
+
     public function checkValidation($cart, $location)
     {
         $items = $cart->items;
@@ -17,16 +24,7 @@ class CartRepository
             if (!$this->_validDate($item->date->time)) {
                 return array(false, 'Date is not valid');
             }
-            $partner_service = PartnerService::with(['partner' => function ($q) {
-                $q->select('*')->where('prm_verified', 1);
-            }])->with(['service' => function ($q) {
-                $q->select('*')->where('publication_status', 1);
-            }])->with('discounts')->where([
-                ['service_id', $item->service->id],
-                ['partner_id', $item->partner->id],
-                ['is_published', 1]
-            ])->first();
-            if ($partner_service == null) {
+            if (($partner_service = $this->_validPartnerService($item)) == null) {
                 return array(false, 'Partner Service not valid');
             }
             unset($item->service);
@@ -34,15 +32,15 @@ class CartRepository
             if (!$this->_validPartnerLocation($location, $partner_service->partner)) {
                 return array(false, 'Partner Location not valid');
             }
+            $price = $partner_service->prices;
             if (count($item->serviceOptions) > 0) {
-                if (!$this->_validOption($item->serviceOptions, $partner_service)) {
+                $price = $this->_validOption($item->serviceOptions, $partner_service);
+                if (!$price) {
                     return array(false, 'Service Option not valid');
                 }
-            } else {
-                if (!$this->_validPrice($item->partner, $partner_service)) {
-                    return array(false, 'Price Not Valid');
-                }
             }
+            unset($item->partner);
+            $item->partner = $this->_validatePartnerPrice($price, $partner_service);
         }
         return $items;
     }
@@ -83,9 +81,31 @@ class CartRepository
         return false;
     }
 
-    private function _validPrice($cart_partner, $partner_service)
+    private function _validPrice($cart_partner, $partner_service_price)
     {
-        return $cart_partner->prices == $partner_service->prices ? true : false;
+        return $cart_partner->prices == $partner_service_price ? true : false;
+    }
+
+    private function _validatePartnerPrice($price, $partner_service)
+    {
+        $partner = $partner_service->partner;
+        $partner['prices'] = $price;
+        $partner['discount'] = $partner_service->discount();
+        return $this->discountRepository->addDiscountToPartnerForService($partner, $partner_service->discount());
+    }
+
+    private function _validPartnerService($item)
+    {
+        return PartnerService::with(['partner' => function ($q) {
+            $q->select('*')->where('prm_verified', 1);
+        }])->with(['service' => function ($q) {
+            $q->select('*')->where('publication_status', 1);
+        }])->with('discounts')->where([
+            ['service_id', $item->service->id],
+            ['partner_id', $item->partner->id],
+            ['is_published', 1]
+        ])->first();
+
     }
 
 }

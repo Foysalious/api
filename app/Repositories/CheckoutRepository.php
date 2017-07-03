@@ -75,7 +75,7 @@ class CheckoutRepository
     {
         $cart = json_decode($order_info['cart']);
         $cart->items = $this->cartRepository->checkValidation($cart, $order_info['location_id']);
-        if (count($cart->items) == 2) {
+        if ($cart->items[0] == false) {
             return $cart->items;
         }
         $job_discount = [];
@@ -149,7 +149,8 @@ class CheckoutRepository
                         $job->department_id = isset($service->department_id) ? $service->department_id : '';
                         $job->service_unit_price = (float)$service->partner->prices;
                         if (isset($service->partner->discount_id)) {
-                            $discount = PartnerServiceDiscount::find($service->partner->discount_id);
+//                            $discount = PartnerServiceDiscount::find($service->partner->discount_id);
+                            $discount = $service->partner->discount;
                             $job->discount = $this->discountRepository
                                 ->getServiceDiscountAmount($discount, $service->partner->prices, $service->quantity);
                             $job->sheba_contribution = $discount->sheba_contribution;
