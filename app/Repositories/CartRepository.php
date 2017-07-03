@@ -17,9 +17,14 @@ class CartRepository
             if (!$this->_validDate($item->date->time)) {
                 return array(false, 'Date is not valid');
             }
-            $partner_service = PartnerService::with('partner', 'service', 'discounts')->where([
+            $partner_service = PartnerService::with(['partner' => function ($q) {
+                $q->select('*')->where('prm_verified', 1);
+            }])->with(['service' => function ($q) {
+                $q->select('*')->where('publication_status', 1);
+            }])->with('discounts')->where([
                 ['service_id', $item->service->id],
                 ['partner_id', $item->partner->id],
+                ['is_published', 1]
             ])->first();
             if ($partner_service == null) {
                 return array(false, 'Partner Service not valid');
