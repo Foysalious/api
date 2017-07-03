@@ -7,6 +7,7 @@ use App\Models\PartnerTransaction;
 use App\Models\User;
 use App\Models\Voucher;
 use App\Repositories\AuthRepository;
+use App\Repositories\CartRepository;
 use App\Repositories\CheckoutRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\DiscountRepository;
@@ -28,6 +29,7 @@ class CheckoutController extends Controller
     private $authRepository;
     private $checkoutRepository;
     private $voucherRepository;
+    private $cartRepository;
     private $fbKit;
     private $customer;
     const AMOUNT = 200;
@@ -39,14 +41,21 @@ class CheckoutController extends Controller
         $this->fbKit = new FacebookAccountKit();
         $this->customer = new CustomerRepository();
         $this->voucherRepository = new VoucherRepository();
+        $this->cartRepository = new CartRepository();
     }
 
     public function placeOrder(Request $request, $customer)
     {
         array_add($request, 'customer_id', $customer);
+        $cart = json_decode($request->cart);
+        $cart->items = $this->cartRepository->checkValidation($cart, $request->location_id);
+        if ($cart->items[0] == false) {
+            return response()->json(['code' => 409, 'msg' => $cart->items[1]]);
+        }
+        $request->merge(array('cart' => json_encode($cart)));
         //store order details for customer
         $order = $this->checkoutRepository->storeDataInDB($request->all(), 'cash-on-delivery');
-        if (gettype($order) == 'object') {
+        if ($order) {
             $customer = Customer::find($order->customer_id);
             if ($order->voucher_id != null) {
                 $voucher = $order->voucher;
@@ -62,8 +71,6 @@ class CheckoutController extends Controller
             new NotificationRepository($order);
             $this->checkoutRepository->sendConfirmation($customer->id, $order);
             return response()->json(['code' => 200, 'msg' => 'Order placed successfully!']);
-        } elseif (gettype($order) == 'array') {
-            return response()->json(['code' => 409, 'msg' => $order[1]]);
         } else {
             return response()->json(['code' => 500, 'msg' => 'There is a problem while placing the order!']);
         }

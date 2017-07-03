@@ -51,7 +51,6 @@ class CheckoutRepository
 
     private $voucherRepository;
     private $discountRepository;
-    private $cartRepository;
     private $created_by;
     private $created_by_name;
     private $voucherApplied = false;
@@ -68,16 +67,11 @@ class CheckoutRepository
         $this->appPaymentUrl = config('portwallet.app_payment_url');
         $this->voucherRepository = new VoucherRepository();
         $this->discountRepository = new DiscountRepository();
-        $this->cartRepository = new CartRepository();
     }
 
     public function storeDataInDB($order_info, $payment_method)
     {
         $cart = json_decode($order_info['cart']);
-        $cart->items = $this->cartRepository->checkValidation($cart, $order_info['location_id']);
-        if ($cart->items[0] == false) {
-            return $cart->items;
-        }
         $job_discount = [];
         $job_discount['discount'] = 0;
         $cart_partner = collect($cart->items)->groupBy('partner.id');
@@ -371,8 +365,12 @@ class CheckoutRepository
 
     public function checkoutWithPortWallet($request, $customer)
     {
-        $cart = json_decode($request->input('cart'));
+        $cart = json_decode($request->cart);
         $cart->items = $this->cartRepository->checkValidation($cart, $request->location_id);
+        if ($cart->items[0] == false) {
+            return (['code' => 409, 'msg' => $cart->items[1]]);
+        }
+        $request->merge(array('cart' => json_encode($cart)));
         $service_names = '';
         //get the service names
         foreach ($cart->items as $cart_item) {
