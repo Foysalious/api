@@ -372,6 +372,7 @@ class CheckoutRepository
     public function checkoutWithPortWallet($request, $customer)
     {
         $cart = json_decode($request->input('cart'));
+        $cart->items = $this->cartRepository->checkValidation($cart, $request->location_id);
         $service_names = '';
         //get the service names
         foreach ($cart->items as $cart_item) {

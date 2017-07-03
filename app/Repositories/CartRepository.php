@@ -21,7 +21,7 @@ class CartRepository
             if (!$this->_validTime($item->time)) {
                 return array(false, 'Time is not valid');
             }
-            if (!$this->_validDate($item->date->time)) {
+            if (!$this->_validDate($item->date)) {
                 return array(false, 'Date is not valid');
             }
             if (($partner_service = $this->_validPartnerService($item)) == null) {
@@ -33,7 +33,7 @@ class CartRepository
                 return array(false, 'Partner Location not valid');
             }
             $price = $partner_service->prices;
-            if (count($item->serviceOptions) > 0) {
+            if ($partner_service->service->variable_type == 'Options') {
                 $price = $this->_validOption($item->serviceOptions, $partner_service);
                 if (!$price) {
                     return array(false, 'Service Option not valid');
@@ -53,6 +53,11 @@ class CartRepository
 
     private function _validDate($date)
     {
+        if ($date == '')
+            return true;
+        if (is_object($date)) {
+            $date = $date->time;
+        }
         $today = date('Y-m-d');
         return $date >= $today ? true : false;
     }
@@ -80,12 +85,6 @@ class CartRepository
         }
         return false;
     }
-
-    private function _validPrice($cart_partner, $partner_service_price)
-    {
-        return $cart_partner->prices == $partner_service_price ? true : false;
-    }
-
     private function _validatePartnerPrice($price, $partner_service)
     {
         $partner = $partner_service->partner;
@@ -97,7 +96,7 @@ class CartRepository
     private function _validPartnerService($item)
     {
         return PartnerService::with(['partner' => function ($q) {
-            $q->select('*')->where('prm_verified', 1);
+            $q->select('*')->where('status', 'Verified');
         }])->with(['service' => function ($q) {
             $q->select('*')->where('publication_status', 1);
         }])->with('discounts')->where([
