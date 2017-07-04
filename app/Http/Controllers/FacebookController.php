@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\Service;
+use App\Repositories\FacebookRepository;
 use App\Repositories\ProfileRepository;
 use App\Repositories\ServiceRepository;
 use Illuminate\Http\Request;
@@ -15,12 +16,14 @@ class FacebookController extends Controller
     private $fbKit;
     private $profileRepository;
     private $serviceRepository;
+    private $facebookRepository;
 
     public function __construct()
     {
         $this->fbKit = new FacebookAccountKit();
         $this->profileRepository = new ProfileRepository();
         $this->serviceRepository = new ServiceRepository();
+        $this->facebookRepository = new FacebookRepository();
     }
 
     public function continueWithKit(Request $request)
@@ -29,45 +32,41 @@ class FacebookController extends Controller
         $code_data = $this->fbKit->authenticateKit($request->input('code'));
         //check if user already exists or not
         $profile = $this->profileRepository->ifExist($code_data['mobile'], 'mobile');
-        //user doesn't exist
-        if ($profile != false) {
-            $info = $this->profileRepository->getProfileInfo($request->from, $profile);
-            if ($info != false) {
-                return response()->json(['code' => 200, 'info' => $info]);
+        //if profile doesn't exist with this facebook id create profile
+        if ($profile == false) {
+            array_add($request, 'mobile', $code_data['mobile']);
+            //register the user with verified mobile
+            $profile = $this->profileRepository->registerMobile($request->all());
+            if ($request->from == env('SHEBA_CUSTOMER_APP')) {
+                $this->profileRepository->registerAvatarByKit('customer', $request, $profile);
             }
+        }
+        $info = $this->profileRepository->getProfileInfo($request->from, $profile);
+        if ($info != false) {
+            return response()->json(['code' => 200, 'info' => $info]);
         }
         return response()->json(['code' => 404, 'msg' => 'Not found!']);
     }
 
     public function continueWithFacebook(Request $request)
     {
-        $profile = $this->profileRepository->ifExist($request->input('fb_id'), 'fb_id');
-        if ($profile != false) {
+        //validate access token
+        if ($this->facebookRepository->verifyAccessToken($request->access_token, $request->fb_id)) {
+            $profile = $this->profileRepository->ifExist($request->input('fb_id'), 'fb_id');
+            //if profile doesn't exist with this facebook id create profile
+            if ($profile == false) {
+                $profile = $this->profileRepository->registerFacebook($request->all());
+                $profile->pro_pic = $this->profileRepository->uploadImage($profile, $request->fb_picture, 'images/profiles/');
+                $profile->update();
+                if ($request->from == env('SHEBA_CUSTOMER_APP')) {
+                    $this->profileRepository->registerAvatarByFacebook('customer', $request, $profile);
+                }
+            }
             $info = $this->profileRepository->getProfileInfo($request->from, $profile);
             if ($info != false) {
                 return response()->json(['code' => 200, 'info' => $info]);
             }
         }
         return response()->json(['code' => 404, 'msg' => 'Not found!']);
-
-    }
-
-    public function uploadProducts(Request $request)
-    {
-        $services = Service::where('publication_status', 1)->get();
-        foreach ($services as $service) {
-            $this->serviceRepository->getStartPrice($service);
-        }
-        $filename = 'yes';
-        $a = Excel::create($filename, function ($excel) use ($services, $filename) {
-            $excel->setTitle($filename);
-            $excel->setCreator('Sheba')->setCompany('Sheba');
-            $excel->sheet('Order', function ($sheet) use ($services) {
-                $sheet->loadView('excel')->with('services', $services);
-            });
-        })->string('csv');
-        $filename = 'products.csv';
-        $s3 = Storage::disk('s3');
-        $s3->put('uploads/product_feeds' . $filename, $a, 'public');
     }
 }
