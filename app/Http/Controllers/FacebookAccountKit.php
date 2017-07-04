@@ -23,10 +23,10 @@ class FacebookAccountKit
      */
     public function __construct()
     {
-        $this->client           = new \GuzzleHttp\Client();
-        $this->appId            = config('accountkit.app_id');
-        $this->appSecret        = config('accountkit.app_secret');
-        $this->endPointUrl      = config('accountkit.end_point');
+        $this->client = new \GuzzleHttp\Client();
+        $this->appId = config('accountkit.app_id');
+        $this->appSecret = config('accountkit.app_secret');
+        $this->endPointUrl = config('accountkit.end_point');
         $this->tokenExchangeUrl = config('accountkit.tokenExchangeUrl');
     }
 
@@ -47,10 +47,10 @@ class FacebookAccountKit
         $credentials['email_or_mobile'] = null;
 
         $userId = $data->id;
-        if(isset($data->phone)) {
+        if (isset($data->phone)) {
             $credentials['email_or_mobile'] = $data->phone->number;
             $credentials['mobile'] = $data->phone->number;
-        } else if(isset($data->email)) {
+        } else if (isset($data->email)) {
             $credentials['email_or_mobile'] = $data->email->address;
             $credentials['email'] = $data->email->address;
         }
@@ -60,7 +60,6 @@ class FacebookAccountKit
 
     /**
      * Extract the access token for a specific authentication code
-     *
      * @param $code
      * @return string
      */

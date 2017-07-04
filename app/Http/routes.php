@@ -23,6 +23,7 @@ $api->version('v1', function ($api) {
     $api->post('continue-with-kit', 'App\Http\Controllers\FacebookController@continueWithKit');
     $api->post('continue-with-facebook', 'App\Http\Controllers\FacebookController@continueWithFacebook');
     $api->post('login', 'App\Http\Controllers\Auth\LoginController@login');
+    $api->post('register', 'App\Http\Controllers\Auth\RegistrationController@register');
 
     $api->get('authenticate', 'App\Http\Controllers\AccountController@checkForAuthentication');
 
@@ -36,6 +37,7 @@ $api->version('v1', function ($api) {
     $api->post('forget-password', 'App\Http\Controllers\Auth\PasswordController@sendResetPasswordEmail');
 
     $api->get('info', 'App\Http\Controllers\ShebaController@getInfo');
+    $api->get('images', 'App\Http\Controllers\ShebaController@getImages');
     $api->get('locations', 'App\Http\Controllers\LocationController@getAllLocations');
     $api->get('search', 'App\Http\Controllers\SearchController@getService');
     $api->get('category-service', 'App\Http\Controllers\CategoryServiceController@getCategoryServices');

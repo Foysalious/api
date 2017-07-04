@@ -195,4 +195,43 @@ class ProfileRepository
             return $resource;
         }
     }
+
+    /**
+     * Avatar registration By Email
+     * @param $avatar
+     * @param $request
+     * @param $user
+     * @return mixed
+     */
+    public function registerAvatarByEmail($avatar, $request, $user)
+    {
+        if ($avatar == 'customer') {
+            $customer = Customer::create([
+                'email' => $user->email,
+                'password' => $user->password,
+                'remember_token' => str_random(255),
+                'profile_id' => $user->id
+            ]);
+            $customer = Customer::find($customer->id);
+            $referral_creator = new ReferralCreator($customer);
+            $referral_creator->create();
+            if ($request->has('referral_code')) {
+                $this->updateCustomerOwnVoucherNReferral($customer, $request->referral_code);
+            }
+        } elseif ($avatar == 'resource') {
+            $resource = new Resource();
+            $resource->email = $user->email;
+            $resource->password = $user->password;
+            $resource->profile_id = $user->id;
+            $resource->remember_token = str_random(255);
+            $resource->save();
+        } elseif ($avatar == 'member') {
+            $member = new Member();
+            $member->remember_token = str_random(255);
+            $member->profile_id = $user->id;
+            $member->save();
+            return $member;
+        }
+    }
+
 }
