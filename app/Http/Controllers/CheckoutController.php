@@ -6,7 +6,6 @@ use App\Models\Customer;
 use App\Models\PartnerTransaction;
 use App\Models\User;
 use App\Models\Voucher;
-use App\Repositories\AuthRepository;
 use App\Repositories\CartRepository;
 use App\Repositories\CheckoutRepository;
 use App\Repositories\CustomerRepository;
@@ -26,7 +25,6 @@ use Sheba\Voucher\ReferralCreator;
 
 class CheckoutController extends Controller
 {
-    private $authRepository;
     private $checkoutRepository;
     private $voucherRepository;
     private $cartRepository;
@@ -36,7 +34,6 @@ class CheckoutController extends Controller
 
     public function __construct()
     {
-        $this->authRepository = new AuthRepository();
         $this->checkoutRepository = new CheckoutRepository();
         $this->fbKit = new FacebookAccountKit();
         $this->customer = new CustomerRepository();
