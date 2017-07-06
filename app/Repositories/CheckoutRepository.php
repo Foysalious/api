@@ -68,7 +68,7 @@ class CheckoutRepository
         $this->appPaymentUrl = config('portwallet.app_payment_url');
         $this->voucherRepository = new VoucherRepository();
         $this->discountRepository = new DiscountRepository();
-        $this->cartRepository=new CartRepository();
+        $this->cartRepository = new CartRepository();
     }
 
     public function storeDataInDB($order_info, $payment_method)
@@ -422,15 +422,16 @@ class CheckoutRepository
         $data['ipn_url'] = $this->appBaseUrl . "/ipn.php"; //IPN URL must be public URL which can be access remotely by portwallet system.
         $portwallet = $this->getPortWalletObject();
         $portwallet_response = $portwallet->generateInvoice($data);
-        if ($portwallet_response->status == 200) {
-            array_add($request, 'customer_id', $customer->id);
-            Cache::forever('portwallet-payment-' . $portwallet_response->data->invoice_id, $request->all());
-            Cache::forever('invoice-' . $portwallet_response->data->invoice_id, $portwallet_response->data->invoice_id);
-            $url = $this->appPaymentUrl . $portwallet_response->data->invoice_id;
-            return (['code' => 200, 'gateway_url' => $url]);
-        } else {
-            return (['code' => 500, 'msg' => 'Payment Gateway connection failed']);
+        if ($portwallet_response != null) {
+            if ($portwallet_response->status == 200) {
+                array_add($request, 'customer_id', $customer->id);
+                Cache::forever('portwallet-payment-' . $portwallet_response->data->invoice_id, $request->all());
+                Cache::forever('invoice-' . $portwallet_response->data->invoice_id, $portwallet_response->data->invoice_id);
+                $url = $this->appPaymentUrl . $portwallet_response->data->invoice_id;
+                return (['code' => 200, 'gateway_url' => $url]);
+            }
         }
+        return (['code' => 500, 'msg' => 'Payment Gateway connection failed']);
     }
 
     public function getPortWalletObject()
