@@ -51,6 +51,7 @@ class CheckoutRepository
 
     private $voucherRepository;
     private $discountRepository;
+    private $cartRepository;
     private $created_by;
     private $created_by_name;
     private $voucherApplied = false;
@@ -67,6 +68,7 @@ class CheckoutRepository
         $this->appPaymentUrl = config('portwallet.app_payment_url');
         $this->voucherRepository = new VoucherRepository();
         $this->discountRepository = new DiscountRepository();
+        $this->cartRepository = new CartRepository();
     }
 
     public function storeDataInDB($order_info, $payment_method)
@@ -101,9 +103,9 @@ class CheckoutRepository
         }
         $order = new Order();
         try {
-            DB::transaction(function () use ($order_info, $payment_method, $order, $job_discount, $loop_id) {
+            DB::transaction(function () use ($order_info, $cart, $payment_method, $order, $job_discount, $loop_id) {
                 $this->calculateAuthor($order_info);
-                $cart = json_decode($order_info['cart']);
+//                $cart = json_decode($order_info['cart']);
 
                 $order = $this->createOrder($order, $order_info);
                 $order->delivery_address = $this->getDeliveryAddress($order_info);
@@ -143,7 +145,8 @@ class CheckoutRepository
                         $job->department_id = isset($service->department_id) ? $service->department_id : '';
                         $job->service_unit_price = (float)$service->partner->prices;
                         if (isset($service->partner->discount_id)) {
-                            $discount = PartnerServiceDiscount::find($service->partner->discount_id);
+//                            $discount = PartnerServiceDiscount::find($service->partner->discount_id);
+                            $discount = $service->partner->discount;
                             $job->discount = $this->discountRepository
                                 ->getServiceDiscountAmount($discount, $service->partner->prices, $service->quantity);
                             $job->sheba_contribution = $discount->sheba_contribution;
@@ -175,7 +178,8 @@ class CheckoutRepository
                                 $job->service_variable_type = $service_variable_type = $service_details->variable_type;
                             } else {
                                 $job->service_variable_type = $service_variable_type = $service->service->variable_type;
-                                $job->service_variables = $service_variables = json_encode($service->service->variables);
+//                                $job->service_variables = $service_variables = json_encode($service->service->variables);
+                                $job->service_variables = $service_variables = $service->service->variables;
                             }
 
                             $service_variables = json_decode($service_variables, 1);
@@ -346,7 +350,6 @@ class CheckoutRepository
 
     public function sendSpPaymentClearMail($partner)
     {
-
 //        Mail::send('orders.order-verfication', ['customer' => $customer, 'order' => $order], function ($m) use ($customer)
 //        {
 //            $m->from('yourEmail@domain.com', 'Sheba.xyz');
@@ -364,7 +367,12 @@ class CheckoutRepository
 
     public function checkoutWithPortWallet($request, $customer)
     {
-        $cart = json_decode($request->input('cart'));
+        $cart = json_decode($request->cart);
+        $cart->items = $this->cartRepository->checkValidation($cart, $request->location_id);
+        if ($cart->items[0] == false) {
+            return (['code' => 409, 'msg' => $cart->items[1]]);
+        }
+        $request->merge(array('cart' => json_encode($cart)));
         $service_names = '';
         //get the service names
         foreach ($cart->items as $cart_item) {
@@ -414,15 +422,16 @@ class CheckoutRepository
         $data['ipn_url'] = $this->appBaseUrl . "/ipn.php"; //IPN URL must be public URL which can be access remotely by portwallet system.
         $portwallet = $this->getPortWalletObject();
         $portwallet_response = $portwallet->generateInvoice($data);
-        if ($portwallet_response->status == 200) {
-            array_add($request, 'customer_id', $customer->id);
-            Cache::forever('portwallet-payment-' . $portwallet_response->data->invoice_id, $request->all());
-            Cache::forever('invoice-' . $portwallet_response->data->invoice_id, $portwallet_response->data->invoice_id);
-            $url = $this->appPaymentUrl . $portwallet_response->data->invoice_id;
-            return (['code' => 200, 'gateway_url' => $url]);
-        } else {
-            return (['code' => 500, 'msg' => 'Payment Gateway connection failed']);
+        if ($portwallet_response != null) {
+            if ($portwallet_response->status == 200) {
+                array_add($request, 'customer_id', $customer->id);
+                Cache::forever('portwallet-payment-' . $portwallet_response->data->invoice_id, $request->all());
+                Cache::forever('invoice-' . $portwallet_response->data->invoice_id, $portwallet_response->data->invoice_id);
+                $url = $this->appPaymentUrl . $portwallet_response->data->invoice_id;
+                return (['code' => 200, 'gateway_url' => $url]);
+            }
         }
+        return (['code' => 500, 'msg' => 'Payment Gateway connection failed']);
     }
 
     public function getPortWalletObject()

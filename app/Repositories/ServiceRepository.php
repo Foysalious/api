@@ -141,7 +141,8 @@ class ServiceRepository
                 foreach ($partners as $partner) {
                     $min = min((array)json_decode($partner->pivot->prices));
                     $partner['prices'] = $min;
-                    $calculate_partner = $this->discountRepository->addDiscountToPartnerForService($partner);
+                    $discount = PartnerService::find($partner->pivot->id)->discount();
+                    $calculate_partner = $this->discountRepository->addDiscountToPartnerForService($partner, $discount);
                     array_push($price, $calculate_partner['discounted_price']);
 //                    array_push($price, (float)$min);
                 }
@@ -150,7 +151,8 @@ class ServiceRepository
                 $price = array();
                 foreach ($partners as $partner) {
                     $partner['prices'] = (float)$partner->pivot->prices;
-                    $calculate_partner = $this->discountRepository->addDiscountToPartnerForService($partner);
+                    $discount = PartnerService::find($partner->pivot->id)->discount();
+                    $calculate_partner = $this->discountRepository->addDiscountToPartnerForService($partner, $discount);
                     array_push($price, $calculate_partner['discounted_price']);
 //                    array_push($price, (float)$partner->pivot->prices);
 //                    array_push($price, (float)$min);
@@ -224,7 +226,8 @@ class ServiceRepository
 
     private function addToFinalPartnerListWithDiscount($partner, $final_partners)
     {
-        $partner = $this->discountRepository->addDiscountToPartnerForService($partner);
+        $discount = PartnerService::find($partner->pivot->id)->discount();
+        $partner = $this->discountRepository->addDiscountToPartnerForService($partner, $discount);
         array_forget($partner, 'pivot');
         array_push($final_partners, $partner);
         return $final_partners;

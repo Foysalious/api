@@ -36,15 +36,17 @@ class ShebaController extends Controller
                 ['is_verified', 1]
             ]);
         })->get()->count();
-        $images = $this->getImages();
+//        $images = $this->getImages();
         return response()->json(['service' => $service_count, 'job' => $job_count,
-            'resource' => $resource_count, 'images' => $images, 'msg' => 'successful', 'code' => 200]);
+            'resource' => $resource_count,
+//            'images' => $images,
+            'msg' => 'successful', 'code' => 200]);
     }
 
-    private function getImages()
+    public function getImages()
     {
         $images = Slider::select('id', 'image_link', 'target_link')->show();
-        return $images;
+        return response()->json(['images' => $images, 'msg' => 'successful', 'code' => 200]);
     }
 
     public function getOffers()

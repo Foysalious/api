@@ -7,7 +7,10 @@ use App\Http\Controllers\FacebookAccountKit;
 use App\Jobs\SendEmailVerficationEmail;
 use App\Models\Customer;
 use App\Models\CustomerMobile;
+use App\Models\Profile;
 use App\Repositories\CustomerRepository;
+use App\Repositories\ProfileRepository;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use JWTAuth;
 use JWTFactory;
@@ -17,11 +20,13 @@ class RegistrationController extends Controller
 {
     private $fbKit;
     private $customer;
+    private $profileRepository;
 
     public function __construct()
     {
         $this->fbKit = new FacebookAccountKit();
         $this->customer = new CustomerRepository();
+        $this->profileRepository = new ProfileRepository();
     }
 
     /**
@@ -109,6 +114,32 @@ class RegistrationController extends Controller
             'msg' => 'successful', 'code' => 200, 'token' => $token, 'remember_token' => $customer->remember_token,
             'customer' => $customer->id, 'customer_img' => $customer->pro_pic
         ]);
+    }
+
+    public function register(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|unique:profiles'
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['code' => 500, 'msg' => $validator->errors()->all()]);
+        }
+        $profile = $this->profileRepository->ifExist($request->email, 'email');
+        if ($profile == false) {
+            $profile = Profile::create([
+                'email' => $request->email,
+                'password' => bcrypt($request->password),
+                'remember_token' => str_random(255)
+            ]);
+            if ($request->from == env('SHEBA_CUSTOMER_APP')) {
+                $this->profileRepository->registerAvatarByEmail('customer', $request, $profile);
+            }
+            $info = $this->profileRepository->getProfileInfo($request->from, $profile);
+            if ($info != false) {
+                return response()->json(['code' => 200, 'info' => $info]);
+            }
+        }
+        return response()->json(['code' => 409, 'msg' => 'Already registered!']);
     }
 
 }
