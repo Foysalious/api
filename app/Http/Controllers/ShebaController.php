@@ -12,7 +12,7 @@ use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-
+use Redis;
 use App\Http\Requests;
 
 class ShebaController extends Controller
@@ -45,8 +45,15 @@ class ShebaController extends Controller
 
     public function getImages()
     {
-        $images = Slider::select('id', 'image_link', 'target_link')->show();
-        return response()->json(['images' => $images, 'msg' => 'successful', 'code' => 200]);
+//        $images = Slider::select('id', 'image_link', 'target_link')->show();
+//        return response()->json(['images' => $images, 'msg' => 'successful', 'code' => 200]);
+        $slider_images = Redis::get('slider_images');
+        if ($slider_images == null) {
+            $images = Slider::select('id', 'image_link', 'target_link')->show();
+            Redis::set('slider_images', json_encode($images));
+            return response()->json(['images' => $images, 'msg' => 'successful', 'code' => 200]);
+        }
+        return response()->json(['images' => json_decode($slider_images), 'msg' => 'successful', 'code' => 200]);
     }
 
     public function getOffers()
