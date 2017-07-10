@@ -67,4 +67,19 @@ class CategoryRepository
         return $services;
     }
 
+    public function getChildrenServices($category, $request)
+    {
+        $chlidren_category_id = $category->children->pluck('id');
+        $services = Service::select('id', 'category_id', 'name', 'thumb','variable_type', 'variables')
+            ->where('publication_status', 1)
+            ->whereIn('category_id', $chlidren_category_id)
+            ->get()
+            ->random(6);
+        $final_service = [];
+        foreach ($services as $service) {
+            array_push($final_service, $service);
+        }
+        return $this->addServiceInfo($final_service, $request);
+    }
+
 }

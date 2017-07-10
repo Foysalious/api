@@ -20,6 +20,7 @@ $api = app('Dingo\Api\Routing\Router');
 |
 */
 $api->version('v1', function ($api) {
+    /*API*/
     $api->post('continue-with-kit', 'App\Http\Controllers\FacebookController@continueWithKit');
     $api->post('continue-with-facebook', 'App\Http\Controllers\FacebookController@continueWithFacebook');
     $api->post('login', 'App\Http\Controllers\Auth\LoginController@login');

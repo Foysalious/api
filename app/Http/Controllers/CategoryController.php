@@ -79,9 +79,17 @@ class CategoryController extends Controller
 
     public function getServices($category, Request $request)
     {
-        $category = Category::find($category);
+        $category = Category::where([
+            ['id', $category],
+            ['publication_status', 1]
+        ])->first();
         if ($category != null) {
             $cat = collect($category)->only(['name', 'banner']);
+
+            if ($category->parent == null) {
+                $services = $this->categoryRepository->getChildrenServices($category, $request);
+                return response()->json(['category' => $cat, 'services' => $services, 'msg' => 'successful', 'code' => 200]);
+            };
             array_add($cat, 'parent', collect($category->parent)->only(['id', 'name']));
             $category = Category::with(['services' => function ($q) {
                 $q->select('id', 'category_id', 'name', 'thumb', 'banner', 'variable_type', 'variables')->where('publication_status', 1);
