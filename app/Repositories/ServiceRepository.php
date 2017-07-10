@@ -78,7 +78,9 @@ class ServiceRepository
     {
         return $service->partners()
             ->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'prices')
-            ->where([
+            ->with(['basicInformations' => function ($q) {
+                $q->select('id', 'partner_id', 'working_days', 'working_hours');
+            }])->where([
                 ['partners.status', 'Verified'],
                 ['is_verified', 1],
                 ['is_published', 1]
@@ -91,6 +93,8 @@ class ServiceRepository
     {
         return $service->partners()->with(['locations' => function ($query) {
             $query->select('id', 'name');
+        }])->with(['basicInformations' => function ($q) {
+            $q->select('id', 'partner_id', 'working_days', 'working_hours');
         }])->where([
             ['is_verified', 1],
             ['is_published', 1],
@@ -210,7 +214,7 @@ class ServiceRepository
 
     private function getPartnerService($service, $location)
     {
-        return array($service_partners = $location != null ? $this->partnerSelectByLocation($service, $location) : $this->partnerSelect($service), []);
+        return array($service_partners = $location != null ? $this->_filterPartnerOnWorkingHourAndDay($this->partnerSelectByLocation($service, $location)) : $this->_filterPartnerOnWorkingHourAndDay($this->partnerSelect($service)), []);
     }
 
 
@@ -233,4 +237,13 @@ class ServiceRepository
         return $final_partners;
     }
 
+    private function _filterPartnerOnWorkingHourAndDay($service_partners)
+    {
+        foreach ($service_partners as $key => $partner) {
+            if (array_search(date('l'), json_decode($partner->basicInformations->working_days)) == 0) {
+                array_forget($service_partners, $key);
+            }
+        }
+        return $service_partners;
+    }
 }
