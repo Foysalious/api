@@ -5,6 +5,7 @@ namespace App\Repositories;
 
 use App\Models\PartnerService;
 use App\Models\Service;
+use Carbon\Carbon;
 
 class ServiceRepository
 {
@@ -214,7 +215,8 @@ class ServiceRepository
 
     private function getPartnerService($service, $location)
     {
-        return array($service_partners = $location != null ? $this->_filterPartnerOnWorkingHourAndDay($this->partnerSelectByLocation($service, $location)) : $this->_filterPartnerOnWorkingHourAndDay($this->partnerSelect($service)), []);
+        $service_partners = $location != null ? $this->partnerSelectByLocation($service, $location) : $this->partnerSelect($service);
+        return array($this->_filterPartnerOnWorkingHourAndDay($service_partners), []);
     }
 
 
@@ -237,13 +239,40 @@ class ServiceRepository
         return $final_partners;
     }
 
+    /**
+     * @param $service_partners
+     * @return mixed
+     */
     private function _filterPartnerOnWorkingHourAndDay($service_partners)
     {
         foreach ($service_partners as $key => $partner) {
-            if (array_search(date('l'), json_decode($partner->basicInformations->working_days)) == 0) {
+            if ($this->_filterPartnerOnWorkingDay($partner) == 0) {
+                array_forget($service_partners, $key);
+            }
+            if ($this->_filterPartnerOnWorkingHour($partner) == 0) {
                 array_forget($service_partners, $key);
             }
         }
         return $service_partners;
+    }
+
+    /**
+     * @param $partner
+     * @return int
+     */
+    private function _filterPartnerOnWorkingHour($partner)
+    {
+        $working_hours = json_decode($partner->basicInformations->working_hours);
+        $present_time = strtotime(Carbon::now()->format('h:i A'));
+        return strtotime($working_hours->day_start) <= $present_time && $present_time <= strtotime($working_hours->day_end) ? 1 : 0;
+    }
+
+    /**
+     * @param $partner
+     * @return bool
+     */
+    private function _filterPartnerOnWorkingDay($partner)
+    {
+        return array_search(date('l'), json_decode($partner->basicInformations->working_days));
     }
 }
