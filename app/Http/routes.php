@@ -25,6 +25,8 @@ $api->version('v1', function ($api) {
     $api->post('continue-with-facebook', 'App\Http\Controllers\FacebookController@continueWithFacebook');
     $api->post('login', 'App\Http\Controllers\Auth\LoginController@login');
     $api->post('register', 'App\Http\Controllers\Auth\RegistrationController@register');
+    $api->post('send-password-reset-email', 'App\Http\Controllers\Auth\PasswordController@sendResetPasswordEmail');
+    $api->post('reset-password', 'App\Http\Controllers\Auth\PasswordController@resetPassword');
 
     $api->get('authenticate', 'App\Http\Controllers\AccountController@checkForAuthentication');
 
@@ -35,7 +37,7 @@ $api->version('v1', function ($api) {
     $api->post('register-email', 'App\Http\Controllers\Auth\RegistrationController@registerWithEmail');
     $api->post('register-with-facebook', 'App\Http\Controllers\Auth\RegistrationController@registerWithFacebook');
     $api->post('login-with-kit', 'App\Http\Controllers\Auth\LoginController@loginWithKit');
-    $api->post('forget-password', 'App\Http\Controllers\Auth\PasswordController@sendResetPasswordEmail');
+//    $api->post('forget-password', 'App\Http\Controllers\Auth\PasswordController@sendResetPasswordEmail');
 
     $api->get('info', 'App\Http\Controllers\ShebaController@getInfo');
     $api->get('images', 'App\Http\Controllers\ShebaController@getImages');
