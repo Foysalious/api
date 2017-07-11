@@ -10,14 +10,16 @@ use Carbon\Carbon;
 class ServiceRepository
 {
     private $discountRepository;
+    private $_serviceRequest = [];
 
     public function __construct()
     {
         $this->discountRepository = new DiscountRepository();
     }
 
-    public function partners($service, $location = null)
+    public function partners($service, $location = null, $request)
     {
+        $this->_serviceRequest = $request->all();
         list($service_partners, $final_partners) = $this->getPartnerService($service, $location);
         foreach ($service_partners as $key => $partner) {
             $prices = json_decode($partner->prices);
@@ -47,10 +49,12 @@ class ServiceRepository
      * @param $service
      * @param $option
      * @param $location
+     * @param $request
      * @return array
      */
-    public function partnerWithSelectedOption($service, $option, $location)
+    public function partnerWithSelectedOption($service, $option, $location, $request)
     {
+        $this->_serviceRequest = $request->all();
         list($service_partners, $final_partners) = $this->getPartnerService($service, $location);
         foreach ($service_partners as $key => $partner) {
             $partner = $this->getPartnerRatingReviewCount($service, $partner);
@@ -241,15 +245,13 @@ class ServiceRepository
 
     /**
      * @param $service_partners
+     * @param null $request
      * @return mixed
      */
     private function _filterPartnerOnWorkingHourAndDay($service_partners)
     {
         foreach ($service_partners as $key => $partner) {
-            if ($this->_filterPartnerOnWorkingDay($partner) == 0) {
-                array_forget($service_partners, $key);
-            }
-            if ($this->_filterPartnerOnWorkingHour($partner) == 0) {
+            if ($this->_worksAtThisTime($partner) == false) {
                 array_forget($service_partners, $key);
             }
         }
@@ -263,8 +265,30 @@ class ServiceRepository
     private function _filterPartnerOnWorkingHour($partner)
     {
         $working_hours = json_decode($partner->basicInformations->working_hours);
-        $present_time = strtotime(Carbon::now()->format('h:i A'));
-        return strtotime($working_hours->day_start) <= $present_time && $present_time <= strtotime($working_hours->day_end) ? 1 : 0;
+        if (array_key_exists('time', $this->_serviceRequest)) {
+            if ($this->_serviceRequest !== '') {
+                if (array_has(constants('JOB_PREFERRED_TIMES'), $this->_serviceRequest['time'])) {
+                    return $this->_betweenWorkingHours($working_hours, constants('JOB_WORKING_HOURS')[$this->_serviceRequest['time']]);
+                }
+            }
+        } else {
+            $time = strtotime(Carbon::now()->format('h:i A'));
+            return strtotime($working_hours->day_start) <= $time && $time <= strtotime($working_hours->day_end) ? 1 : 0;
+        }
+    }
+
+    private function _betweenWorkingHours($working_hours, $times)
+    {
+        $fail = 0;
+        foreach ($times as $time) {
+            $time = strtotime($time);
+            // time doesn't fall int working hour
+            if (!(strtotime($working_hours->day_start) <= $time && $time <= strtotime($working_hours->day_end))) {
+                $fail++;
+            }
+        }
+        // If both times don't fall into working hour return false
+        return $fail == 2 ? false : true;
     }
 
     /**
@@ -273,6 +297,27 @@ class ServiceRepository
      */
     private function _filterPartnerOnWorkingDay($partner)
     {
-        return array_search(date('l'), json_decode($partner->basicInformations->working_days));
+        if (array_key_exists('day', $this->_serviceRequest)) {
+            if ($this->_serviceRequest !== '') {
+                $day = date('l', strtotime($this->_serviceRequest['day']));
+            }
+        } else
+            $day = date('l');
+        return array_search($day, json_decode($partner->basicInformations->working_days));
+    }
+
+    /**
+     * @param $partner
+     * @return mixed
+     */
+    private function _worksAtThisTime($partner)
+    {
+        if ($this->_filterPartnerOnWorkingDay($partner) == 0) {
+            return false;
+        }
+        if ($this->_filterPartnerOnWorkingHour($partner) == 0) {
+            return false;
+        }
+        return true;
     }
 }
