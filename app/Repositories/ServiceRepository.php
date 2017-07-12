@@ -267,14 +267,17 @@ class ServiceRepository
         $working_hours = json_decode($partner->basicInformations->working_hours);
         if (array_key_exists('time', $this->_serviceRequest)) {
             if ($this->_serviceRequest !== '') {
-                if (array_has(constants('JOB_PREFERRED_TIMES'), $this->_serviceRequest['time'])) {
+                //If customer sets a time then check availability of partner otherwise don't check anyone
+                if (array_has(constants('JOB_PREFERRED_TIMES'), $this->_serviceRequest['time']) && $this->_serviceRequest['time'] != 'Anytime') {
                     return $this->_betweenWorkingHours($working_hours, constants('JOB_WORKING_HOURS')[$this->_serviceRequest['time']]);
                 }
             }
-        } else {
-            $time = strtotime(Carbon::now()->format('h:i A'));
-            return strtotime($working_hours->day_start) <= $time && $time <= strtotime($working_hours->day_end) ? 1 : 0;
         }
+//        else {
+//            $time = strtotime(Carbon::now()->format('h:i A'));
+//            return strtotime($working_hours->day_start) <= $time && $time <= strtotime($working_hours->day_end) ? 1 : 0;
+//        }
+        return 1;
     }
 
     private function _betweenWorkingHours($working_hours, $times)
