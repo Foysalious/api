@@ -129,9 +129,13 @@ class ServiceController extends Controller
 
     public function validService($service)
     {
-        $service = Service::find($service);
+        $service = Service::where([
+            ['id', $service],
+            ['publication_status', 1],
+            ['is_published_for_backend', 0]
+        ])->first();
         // Service exists and also published
-        if (!empty($service) && $service->publication_status == 1) {
+        if ($service != null) {
             return response()->json(['msg' => 'ok', 'code' => 200]);
         }
         return response()->json(['msg' => 'not ok', 'code' => 409]);

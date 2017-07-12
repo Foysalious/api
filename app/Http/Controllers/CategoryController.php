@@ -92,7 +92,10 @@ class CategoryController extends Controller
             };
             array_add($cat, 'parent', collect($category->parent)->only(['id', 'name']));
             $category = Category::with(['services' => function ($q) {
-                $q->select('id', 'category_id', 'name', 'thumb', 'banner', 'variable_type', 'variables')->where('publication_status', 1);
+                $q->select('id', 'category_id', 'name', 'thumb', 'banner', 'variable_type', 'variables')->where([
+                    ['publication_status', 1],
+                    ['is_published_for_backend', 0]
+                ]);
             }])->where([
                 ['id', $category->id],
                 ['publication_status', 1]
