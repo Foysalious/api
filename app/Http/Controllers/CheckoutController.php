@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\PartnerTransaction;
-use App\Models\User;
-use App\Models\Voucher;
 use App\Repositories\CartRepository;
 use App\Repositories\CheckoutRepository;
 use App\Repositories\CustomerRepository;
@@ -14,7 +12,6 @@ use App\Repositories\NotificationRepository;
 use App\Repositories\VoucherRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use function PHPSTORM_META\type;
 use Session;
 use Cache;
 use DB;
@@ -65,7 +62,7 @@ class CheckoutController extends Controller
                     }
                 }
             }
-            new NotificationRepository($order);
+            (new NotificationRepository())->send($order);
             $this->checkoutRepository->sendConfirmation($customer->id, $order);
             return response()->json(['code' => 200, 'msg' => 'Order placed successfully!']);
         } else {

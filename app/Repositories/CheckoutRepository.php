@@ -344,8 +344,9 @@ class CheckoutRepository
             $partner_order->payment_method = 'online';
             $partner_order->sheba_collection = $partner_order->due;
             $partner_order->update();
+            (new NotificationRepository())->forOnlinePayment($partner_order);
         }
-        $this->sendSpPaymentClearMail($partner);
+//        $this->sendSpPaymentClearMail($partner);
     }
 
     public function sendSpPaymentClearMail($partner)
