@@ -146,7 +146,7 @@ class ServiceController extends Controller
         $service = Service::with(['reviews' => function ($q) {
             $q->select('id', 'service_id', 'partner_id', 'customer_id', 'review_title', 'review', 'rating', 'updated_at')
                 ->with(['partner' => function ($q) {
-                    $q->select('id', 'name', 'status');
+                    $q->select('id', 'name', 'status', 'sub_domain');
                 }])
                 ->with(['customer' => function ($q) {
                     $q->select('id', 'name');

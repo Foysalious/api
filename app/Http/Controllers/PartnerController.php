@@ -32,8 +32,11 @@ class PartnerController extends Controller
     public function getPartnerServices($partner, Request $request)
     {
         $partner = Partner::select('id', 'name', 'sub_domain', 'description', 'logo', 'type', 'level')
-            ->where('id', $partner)
+            ->where('sub_domain', $partner)
             ->first();
+        if ($partner == null) {
+            return response()->json(['msg' => 'not found', 'code' => 404]);
+        }
         $review = $partner->reviews()->where('review', '<>', '')->count('review');
         $rating = round($partner->reviews()->avg('rating'), 1);
         if ($rating == 0) {
