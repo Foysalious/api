@@ -52,7 +52,8 @@ class PartnerController extends Controller
             ->where([
                 ['is_verified', 1],
                 ['is_published', 1],
-                ['services.publication_status', 1]
+                ['services.publication_status', 1],
+                ['is_published_for_backend', 0]
             ])->get();
         $count_of_partner_services = count($partner_services);
         array_add($partner, 'service_count', $count_of_partner_services);
