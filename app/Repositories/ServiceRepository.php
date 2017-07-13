@@ -250,12 +250,31 @@ class ServiceRepository
     private function _filterPartnerOnWorkingHourDayLeave($service_partners)
     {
         foreach ($service_partners as $key => $partner) {
+            array_add($partner, 'available', true);
             if (!(new PartnerRepository($partner))->available($this->_serviceRequest)) {
-                array_forget($service_partners, $key);
-                continue;
+//                array_forget($service_partners, $key);
+//                continue;
+                $partner['available'] = false;
             }
             array_forget($partner, 'basicInformations');
         }
         return $service_partners;
+    }
+
+    public function _sortPartnerListByAvailability($service_partners)
+    {
+        $final = [];
+        $not_available = [];
+        foreach ($service_partners as $partner) {
+            if ($partner->available) {
+                array_push($final, $partner);
+            } else {
+                array_push($not_available, $partner);
+            }
+        }
+        foreach ($not_available as $not){
+            array_push($final,$not);
+        }
+        return $final;
     }
 }
