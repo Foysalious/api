@@ -24,37 +24,42 @@ class ServiceController extends Controller
         $this->reviewRepository = $reviewRepository;
     }
 
-    public function getPartners($service, $location = null)
+    public function getPartners($service, $location = null, Request $request)
     {
-        $service = Service::where('id', $service)
-            ->select('id', 'name', 'unit', 'category_id', 'description', 'thumb', 'banner', 'faqs', 'variable_type', 'variables')
-            ->first();
-        if ($service == null)
-            return response()->json(['code' => 404, 'msg' => 'no service found']);
-        array_add($service, 'discount', $service->hasDiscounts());
-        //Add first options in service for render purpose
-        if ($service->variable_type == 'Options') {
-            $variables = json_decode($service->variables);
-            $first_option = key($variables->prices);
-            $first_option = array_map('intval', explode(',', $first_option));
-            array_add($service, 'first_option', $first_option);
+        if ($request->getMethod() == 'GET') {
+            $service = Service::where('id', $service)
+                ->select('id', 'name', 'unit', 'category_id', 'description', 'thumb', 'banner', 'faqs', 'variable_type', 'variables')
+                ->first();
+            if ($service == null)
+                return response()->json(['code' => 404, 'msg' => 'no service found']);
+            array_add($service, 'discount', $service->hasDiscounts());
+            //Add first options in service for render purpose
+            if ($service->variable_type == 'Options') {
+                $variables = json_decode($service->variables);
+                $first_option = key($variables->prices);
+                $first_option = array_map('intval', explode(',', $first_option));
+                array_add($service, 'first_option', $first_option);
+            }
+            // review count of this service
+            $review = $service->reviews()->where('review', '<>', '')->count('review');
+            //avg rating of this service
+            $rating = $service->reviews()->avg('rating');
+            array_add($service, 'review_count', $review);
+            $service['rating'] = empty($rating) ? 5 : floor($rating);
+            //get the category & parent of the service
+            $category = Category::with(['parent' => function ($query) {
+                $query->select('id', 'name');
+            }])->where('id', $service->category_id)->select('id', 'name', 'parent_id')->first();
+            array_add($service, 'category_name', $category->name);
+            array_add($service, 'parent_id', $category->parent->id);
+            array_add($service, 'parent_name', $category->parent->name);
+        } elseif ($request->getMethod() == 'POST') {
+            $service = Service::find($service);
         }
-        // review count of this service
-        $review = $service->reviews()->where('review', '<>', '')->count('review');
-        //avg rating of this service
-        $rating = $service->reviews()->avg('rating');
-        array_add($service, 'review_count', $review);
-        $service['rating'] = empty($rating) ? 5 : floor($rating);
-        //get the category & parent of the service
-        $category = Category::with(['parent' => function ($query) {
-            $query->select('id', 'name');
-        }])->where('id', $service->category_id)->select('id', 'name', 'parent_id')->first();
-        array_add($service, 'category_name', $category->name);
-        array_add($service, 'parent_id', $category->parent->id);
-        array_add($service, 'parent_name', $category->parent->name);
         //get partners of the service
-        $service_partners = $this->serviceRepository->partners($service, $location);
+        $service_partners = $this->serviceRepository->partners($service, $location, $request);
         $sorted_service_partners = collect($service_partners)->sortBy('discounted_price')->values()->all();
+        $sorted_service_partners=$this->serviceRepository->_sortPartnerListByAvailability($sorted_service_partners);
 //        $sorted_service_partners = collect($service_partners)->sortBy(function ($service_partner) {
 //            return sprintf('%-12s%s', $service_partner->discounted_price, $service_partner->rating);
 //        })->values()->all();
@@ -70,9 +75,17 @@ class ServiceController extends Controller
                 unset($service->variables->min_price);
                 unset($service->variables->price);
             }
-            return response()->json(['service' => $service, 'service_partners' => $sorted_service_partners, 'times' => config('constants.JOB_PREFERRED_TIMES'), 'msg' => 'successful', 'code' => 200]);
+            if ($request->getMethod() == 'GET') {
+                return response()->json(['service' => $service, 'service_partners' => $sorted_service_partners, 'times' => config('constants.JOB_PREFERRED_TIMES'), 'msg' => 'successful', 'code' => 200]);
+            } elseif ($request->getMethod() == 'POST') {
+                return response()->json(['service_partners' => $sorted_service_partners, 'msg' => 'successful', 'code' => 200]);
+            }
         }
-        return response()->json(['service' => $service, 'service_partners' => $sorted_service_partners, 'times' => config('constants.JOB_PREFERRED_TIMES'), 'msg' => 'no partner found in selected location', 'code' => 404]);
+        if ($request->getMethod() == 'GET') {
+            return response()->json(['service' => $service, 'service_partners' => $sorted_service_partners, 'times' => config('constants.JOB_PREFERRED_TIMES'), 'msg' => 'no partner found in selected location', 'code' => 404]);
+        } elseif ($request->getMethod() == 'POST') {
+            return response()->json(['service_partners' => $sorted_service_partners, 'msg' => 'no partner found in selected location', 'code' => 404]);
+        }
     }
 
 
@@ -92,8 +105,9 @@ class ServiceController extends Controller
             $option = implode(',', $request->input('options'));
         }
         //check if any partner provide service in the location
-        $service_partners = $this->serviceRepository->partnerWithSelectedOption($service, $option, $location);
+        $service_partners = $this->serviceRepository->partnerWithSelectedOption($service, $option, $location, $request);
         $sorted_service_partners = collect($service_partners)->sortBy('discounted_price')->values()->all();
+        $sorted_service_partners=$this->serviceRepository->_sortPartnerListByAvailability($sorted_service_partners);
 //        $sorted_service_partners = collect($service_partners)->sortBy(function ($service_partner) {
 //            return sprintf('%-12s%s', $service_partner->discounted_price, $service_partner->rating);
 //        })->values()->all();
@@ -108,7 +122,7 @@ class ServiceController extends Controller
         //get the selected options
         $option = implode(',', $request->input('options'));
         //check if any partner provide service in the location
-        $service_partners = $this->serviceRepository->partnerWithSelectedOption($service, $option, $location = null);
+        $service_partners = $this->serviceRepository->partnerWithSelectedOption($service, $option, $location = null, $request);
         if (!empty($service_partners)) {
             return response()->json(['service_partners' => $service_partners, 'msg' => 'successful', 'code' => 200]);
         } else
@@ -117,9 +131,13 @@ class ServiceController extends Controller
 
     public function validService($service)
     {
-        $service = Service::find($service);
+        $service = Service::where([
+            ['id', $service],
+            ['publication_status', 1],
+            ['is_published_for_backend', 0]
+        ])->first();
         // Service exists and also published
-        if (!empty($service) && $service->publication_status == 1) {
+        if ($service != null) {
             return response()->json(['msg' => 'ok', 'code' => 200]);
         }
         return response()->json(['msg' => 'not ok', 'code' => 409]);
@@ -130,7 +148,7 @@ class ServiceController extends Controller
         $service = Service::with(['reviews' => function ($q) {
             $q->select('id', 'service_id', 'partner_id', 'customer_id', 'review_title', 'review', 'rating', 'updated_at')
                 ->with(['partner' => function ($q) {
-                    $q->select('id', 'name', 'status');
+                    $q->select('id', 'name', 'status', 'sub_domain');
                 }])
                 ->with(['customer' => function ($q) {
                     $q->select('id', 'name');

@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class Partner extends Model
@@ -97,5 +98,30 @@ class Partner extends Model
     {
         $service_category = Service::find($service_id)->category->id;
         return $this->categories()->find($service_category)->pivot->commission;
+    }
+
+    public function leaves()
+    {
+        return $this->hasMany(PartnerLeave::class);
+    }
+
+    public function runningLeave($date = null)
+    {
+        $date = ($date) ? (($date instanceof Carbon) ? $date : new Carbon($date)) : Carbon::now();
+        foreach ($this->leaves()->whereDate('start', '<=', $date)->get() as $leave) {
+            if ($leave->isRunning($date)) return $leave;
+        }
+        return null;
+    }
+
+    public function hasLeave($date)
+    {
+        $date = $date == null ? Carbon::now() : new Carbon($date);
+        foreach ($this->leaves as $leave) {
+            if ($date->between($leave->start, $leave->end)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

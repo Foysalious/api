@@ -32,8 +32,10 @@ class SearchController extends Controller
                 $children_categories = $category->children()->pluck('id');
                 $query = $query->whereIn('category_id', $children_categories);
             }
-            $services = $query->where('publication_status', 1)
-                ->select('id', 'name', 'thumb', 'banner', 'variables', 'variable_type')
+            $services = $query->where([
+                ['publication_status', 1],
+                ['is_published_for_backend', 0]
+            ])->select('id', 'name', 'thumb', 'banner', 'variables', 'variable_type')
                 ->take(10)
                 ->get();
 
@@ -50,7 +52,7 @@ class SearchController extends Controller
                         array_add($service, 'end_price', 0);
                         continue;
                     }
-                    $service = $this->serviceRepository->getStartPrice($service,$request);
+                    $service = $this->serviceRepository->getStartPrice($service, $request);
                     // review count of this partner for this service
                     $review = $service->reviews()->where('review', '<>', '')->count('review');
                     //avg rating of the partner for this service
@@ -109,8 +111,7 @@ class SearchController extends Controller
         }
     }
 
-    private
-    function getProfile($field, $search, $business)
+    private function getProfile($field, $search, $business)
     {
         return Profile::with(['member' => function ($q) use ($business) {
             $q->select('id', 'profile_id')->with(['businesses' => function ($q) use ($business) {
@@ -125,8 +126,7 @@ class SearchController extends Controller
 
     }
 
-    private
-    function getBusiness($field, $search, $member)
+    private function getBusiness($field, $search, $member)
     {
         return Business::with(['joinRequests' => function ($q) {
             $q->select('*')->where('requester_type', 'App\Models\Profile');

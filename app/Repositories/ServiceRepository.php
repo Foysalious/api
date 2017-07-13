@@ -5,18 +5,21 @@ namespace App\Repositories;
 
 use App\Models\PartnerService;
 use App\Models\Service;
+use Carbon\Carbon;
 
 class ServiceRepository
 {
     private $discountRepository;
+    private $_serviceRequest = [];
 
     public function __construct()
     {
         $this->discountRepository = new DiscountRepository();
     }
 
-    public function partners($service, $location = null)
+    public function partners($service, $location = null, $request)
     {
+        $this->_serviceRequest = $request->all();
         list($service_partners, $final_partners) = $this->getPartnerService($service, $location);
         foreach ($service_partners as $key => $partner) {
             $prices = json_decode($partner->prices);
@@ -46,10 +49,12 @@ class ServiceRepository
      * @param $service
      * @param $option
      * @param $location
+     * @param $request
      * @return array
      */
-    public function partnerWithSelectedOption($service, $option, $location)
+    public function partnerWithSelectedOption($service, $option, $location, $request)
     {
+        $this->_serviceRequest = $request->all();
         list($service_partners, $final_partners) = $this->getPartnerService($service, $location);
         foreach ($service_partners as $key => $partner) {
             $partner = $this->getPartnerRatingReviewCount($service, $partner);
@@ -78,7 +83,9 @@ class ServiceRepository
     {
         return $service->partners()
             ->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'prices')
-            ->where([
+            ->with(['basicInformations' => function ($q) {
+                $q->select('id', 'partner_id', 'working_days', 'working_hours');
+            }])->where([
                 ['partners.status', 'Verified'],
                 ['is_verified', 1],
                 ['is_published', 1]
@@ -91,6 +98,8 @@ class ServiceRepository
     {
         return $service->partners()->with(['locations' => function ($query) {
             $query->select('id', 'name');
+        }])->with(['basicInformations' => function ($q) {
+            $q->select('id', 'partner_id', 'working_days', 'working_hours');
         }])->where([
             ['is_verified', 1],
             ['is_published', 1],
@@ -195,8 +204,7 @@ class ServiceRepository
      * @param $partner
      * @return mixed
      */
-    private
-    function getPartnerRatingReviewCount($service, $partner)
+    private function getPartnerRatingReviewCount($service, $partner)
     {
         $review = $partner->reviews()->where([
 //            ['review', '<>', ''],
@@ -210,7 +218,8 @@ class ServiceRepository
 
     private function getPartnerService($service, $location)
     {
-        return array($service_partners = $location != null ? $this->partnerSelectByLocation($service, $location) : $this->partnerSelect($service), []);
+        $service_partners = $location != null ? $this->partnerSelectByLocation($service, $location) : $this->partnerSelect($service);
+        return array($this->_filterPartnerOnWorkingHourDayLeave($service_partners), []);
     }
 
 
@@ -233,4 +242,39 @@ class ServiceRepository
         return $final_partners;
     }
 
+
+    /**
+     * @param $service_partners
+     * @return mixed
+     */
+    private function _filterPartnerOnWorkingHourDayLeave($service_partners)
+    {
+        foreach ($service_partners as $key => $partner) {
+            array_add($partner, 'available', true);
+            if (!(new PartnerRepository($partner))->available($this->_serviceRequest)) {
+//                array_forget($service_partners, $key);
+//                continue;
+                $partner['available'] = false;
+            }
+            array_forget($partner, 'basicInformations');
+        }
+        return $service_partners;
+    }
+
+    public function _sortPartnerListByAvailability($service_partners)
+    {
+        $final = [];
+        $not_available = [];
+        foreach ($service_partners as $partner) {
+            if ($partner->available) {
+                array_push($final, $partner);
+            } else {
+                array_push($not_available, $partner);
+            }
+        }
+        foreach ($not_available as $not){
+            array_push($final,$not);
+        }
+        return $final;
+    }
 }

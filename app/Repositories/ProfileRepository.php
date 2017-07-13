@@ -33,6 +33,16 @@ class ProfileRepository
         }
     }
 
+    public function registerEmail($request)
+    {
+        $profile = Profile::create([
+            'email' => $request->email,
+            'password' => bcrypt($request->password),
+            'remember_token' => str_random(255)
+        ]);
+        return Profile::find($profile->id);
+    }
+
     public function getProfileInfo($from, Profile $profile)
     {
         if ($from == env('SHEBA_RESOURCE_APP')) {
@@ -49,6 +59,8 @@ class ProfileRepository
             if ($customer != null) {
                 $info = array(
                     'id' => $customer->id,
+                    'name' => $profile->identity,
+                    'profile_image' => $profile->pro_pic,
                     'token' => $customer->remember_token
                 );
                 return $info;
@@ -148,6 +160,7 @@ class ProfileRepository
         $promo->valid_till = $date->toDateString() . " 23:59:59";
         return $promo->save();
     }
+
     /**
      * Mobile Registration
      * @param $info
@@ -155,11 +168,12 @@ class ProfileRepository
      */
     public function registerMobile($info)
     {
-        return Profile::create([
+        $profile = Profile::create([
             'mobile' => $info['mobile'],
             'mobile_verified' => 1,
             "remember_token" => str_random(255)
         ]);
+        return Profile::find($profile->id);
     }
 
 

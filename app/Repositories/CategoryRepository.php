@@ -30,7 +30,10 @@ class CategoryRepository
 
         foreach ($children as $child) {
             $services = $child->services()->select('id', 'category_id', 'name', 'thumb', 'banner', 'variable_type', 'variables')
-                ->where('publication_status', 1)->with(['partnerServices' => function ($q) {
+                ->where([
+                    ['publication_status', 1],
+                    ['is_published_for_backend', 0]
+                ])->with(['partnerServices' => function ($q) {
                     $q->select('id', 'partner_id', 'service_id')->with(['discounts' => function ($q) {
                         $q->select('id', 'partner_service_id', 'start_date', 'end_date', 'amount');
                     }]);
@@ -65,6 +68,21 @@ class CategoryRepository
             array_forget($service, 'partnerServices');
         }
         return $services;
+    }
+
+    public function getChildrenServices($category, $request)
+    {
+        $chlidren_category_id = $category->children->pluck('id');
+        $services = Service::select('id', 'category_id', 'name', 'thumb', 'variable_type', 'variables')
+            ->where('publication_status', 1)
+            ->whereIn('category_id', $chlidren_category_id)
+            ->get()
+            ->random(6);
+        $final_service = [];
+        foreach ($services as $service) {
+            array_push($final_service, $service);
+        }
+        return $this->addServiceInfo($final_service, $request);
     }
 
 }

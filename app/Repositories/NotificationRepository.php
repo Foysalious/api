@@ -10,14 +10,15 @@ class NotificationRepository
     private $sender_id;
     private $sender_type;
 
-    public function __construct($order)
+//    public function __construct($order)
+//    {
+//        $this->order = $order;
+//        $this->send();
+//    }
+
+    public function send($order)
     {
         $this->order = $order;
-        $this->send();
-    }
-
-    private function send()
-    {
         if ($this->order->sales_channel == 'Web') {
             $this->sender_id = $this->order->customer_id;
             $this->sender_type = 'customer';
@@ -62,6 +63,23 @@ class NotificationRepository
                 'type' => notificationType('Info')
             ]);
         }
+    }
+
+    public function forOnlinePayment($partner_order)
+    {
+        $this->order = $partner_order->order;
+        $this->sender_id = $this->order->customer_id;
+        $this->sender_type = 'customer';
+        $this->_sendPaymentNotificationToCM($partner_order);
+    }
+
+    private function _sendPaymentNotificationToCM($partner_order)
+    {
+        notify()->user($partner_order->jobs[0]->crm_id)->sender($this->sender_id, $this->sender_type)->send([
+            'title' => 'An online payment of ' . $partner_order->totalPrice . ' has been completed to this order ' . $this->order->code(),
+            'link' => env('SHEBA_BACKEND_URL') . '/order/' . $this->order->id,
+            'type' => notificationType('Info')
+        ]);
     }
 
 }

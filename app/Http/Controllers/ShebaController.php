@@ -12,7 +12,7 @@ use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-
+use Redis;
 use App\Http\Requests;
 
 class ShebaController extends Controller
@@ -36,10 +36,8 @@ class ShebaController extends Controller
                 ['is_verified', 1]
             ]);
         })->get()->count();
-//        $images = $this->getImages();
         return response()->json(['service' => $service_count, 'job' => $job_count,
             'resource' => $resource_count,
-//            'images' => $images,
             'msg' => 'successful', 'code' => 200]);
     }
 

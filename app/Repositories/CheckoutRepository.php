@@ -4,9 +4,11 @@ namespace App\Repositories;
 
 use App\Jobs\SendOrderConfirmationEmail;
 use App\Library\PortWallet;
+use App\Models\Affiliation;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\CustomOrder;
+use App\Models\InfoCall;
 use App\Models\Job;
 use App\Models\Order;
 use App\Models\PartnerOrder;
@@ -236,6 +238,8 @@ class CheckoutRepository
     {
         $order->customer_id = $order_info['customer_id'];
         $order->location_id = $order_info['location_id'];
+        $order->info_call_id = $this->_setInfoCallId($order_info);
+        $order->affiliation_id = $this->_setAffiliationId($order_info);
         $order->delivery_name = $order_info['name'];
         $order->delivery_mobile = $order_info['phone'];
         $order->sales_channel = isset($order_info['sales_channel']) ? $order_info['sales_channel'] : 'Web';
@@ -344,8 +348,9 @@ class CheckoutRepository
             $partner_order->payment_method = 'online';
             $partner_order->sheba_collection = $partner_order->due;
             $partner_order->update();
+            (new NotificationRepository())->forOnlinePayment($partner_order);
         }
-        $this->sendSpPaymentClearMail($partner);
+//        $this->sendSpPaymentClearMail($partner);
     }
 
     public function sendSpPaymentClearMail($partner)
@@ -469,5 +474,37 @@ class CheckoutRepository
         } else {
             return $cart->price;
         }
+    }
+
+    private function _setInfoCallId($order_info)
+    {
+        if (isset($order_info['info_call_id'])) {
+            $info_call_id = $order_info['info_call_id'];
+            if ($info_call_id != '' && $info_call_id != null) {
+                $info_call = InfoCall::find($info_call_id);
+                if ($info_call != null) {
+                    if ($info_call->order == null) {
+                        return $info_call_id;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private function _setAffiliationId($order_info)
+    {
+        if (isset($order_info['affiliation_id'])) {
+            $affiliation_id = $order_info['affiliation_id'];
+            if ($affiliation_id != '' && $affiliation_id != null) {
+                $affiliation = Affiliation::find($affiliation_id);
+                if ($affiliation != null) {
+                    if ($affiliation->order == null) {
+                        return $affiliation_id;
+                    }
+                }
+            }
+        }
+        return null;
     }
 }
