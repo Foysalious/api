@@ -252,7 +252,9 @@ class ServiceRepository
         foreach ($service_partners as $key => $partner) {
             if (!(new PartnerRepository($partner))->available($this->_serviceRequest)) {
                 array_forget($service_partners, $key);
+                continue;
             }
+            array_forget($partner, 'basicInformations');
         }
         return $service_partners;
     }
