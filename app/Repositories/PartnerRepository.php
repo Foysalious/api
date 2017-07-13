@@ -9,58 +9,53 @@ use App\Models\Partner;
 class PartnerRepository
 {
     private $_partner;
-    private $_date = null;
-    private $_time = '';
 
-    public function __construct($_partner, $request = null)
+    public function __construct($_partner)
     {
-        if (array_key_exists('day', $request)) {
-            $this->_date = $request['day'];
-        }
-        if (array_key_exists('time', $request)) {
-            $this->_time = $request['time'];
-        }
         $this->_partner = ($_partner) instanceof Partner ? $_partner : Partner::find($_partner);
     }
 
-    public function available()
+    public function available($data)
     {
-        if ($this->_partnerOnLeave()) {
+        $date = array_key_exists('day', $data) ? $data['day'] : date('Y-m-d');
+        $time = array_key_exists('time', $data) ? $data['time'] : 'Anytime';
+        if ($this->_partnerOnLeave($date)) {
             return false;
         }
-        if (!$this->_worksAtThisDay()) {
+        if (!$this->_worksAtThisDay($date)) {
             return false;
         }
-        if (!$this->_worksAtThisTime()) {
+        if (!$this->_worksAtThisTime($time)) {
             return false;
         }
         return true;
     }
 
-    private function _worksAtThisDay()
+    private function _worksAtThisDay($date)
     {
-        if ($this->_date != null) {
-            $day = date('l', strtotime($this->_date)); // extract day from date
-        } else {
-            $day = date('l'); // set to today's day
-        }
+        $day = date('l', strtotime($date));
         return in_array($day, json_decode($this->_partner->basicInformations->working_days));
     }
 
-    private function _partnerOnLeave()
+    private function _partnerOnLeave($date)
     {
-        return $this->_partner->runningLeave($this->_date) != null ? true : false;
+        return $this->_partner->runningLeave($date) != null ? true : false;
     }
 
-    private function _worksAtThisTime()
+    /**
+     * @param $time
+     * @return bool
+     */
+    private function _worksAtThisTime($time)
     {
-        if ($this->_time != '') {
-            if (array_has(constants('JOB_PREFERRED_TIMES'), $this->_time) && $this->_time != 'Anytime') {
-                $working_hours = json_decode($this->_partner->basicInformations->working_hours);
-                return $this->_betweenWorkingHours($working_hours, constants('JOB_START_END_TIMES')[$this->_time]);
-            }
+        //Means customer is available at anytime, no need to check partner working hours
+        if ($time == 'Anytime') {
+            return true;
         }
-        return true;
+        if (array_has(constants('JOB_PREFERRED_TIMES'), $time)) {
+            $working_hours = json_decode($this->_partner->basicInformations->working_hours);
+            return $this->_betweenWorkingHours($working_hours, constants('JOB_START_END_TIMES')[$time]);
+        }
     }
 
     private function _betweenWorkingHours($working_hours, $times)

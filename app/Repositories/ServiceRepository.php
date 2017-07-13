@@ -250,7 +250,7 @@ class ServiceRepository
     private function _filterPartnerOnWorkingHourDayLeave($service_partners)
     {
         foreach ($service_partners as $key => $partner) {
-            if (!(new PartnerRepository($partner, $this->_serviceRequest))->available()) {
+            if (!(new PartnerRepository($partner))->available($this->_serviceRequest)) {
                 array_forget($service_partners, $key);
             }
         }
