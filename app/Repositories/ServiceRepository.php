@@ -220,7 +220,7 @@ class ServiceRepository
     private function getPartnerService($service, $location)
     {
         $service_partners = $location != null ? $this->partnerSelectByLocation($service, $location) : $this->partnerSelect($service);
-        return array($this->_filterPartnerOnWorkingHourAndDay($service_partners), []);
+        return array($this->_filterPartnerOnWorkingHourDayLeave($service_partners), []);
     }
 
 
@@ -248,7 +248,7 @@ class ServiceRepository
      * @param null $request
      * @return mixed
      */
-    private function _filterPartnerOnWorkingHourAndDay($service_partners)
+    private function _filterPartnerOnWorkingHourDayLeave($service_partners)
     {
         foreach ($service_partners as $key => $partner) {
             if ($this->_worksAtThisTime($partner) == false) {
@@ -319,6 +319,9 @@ class ServiceRepository
             return false;
         }
         if ($this->_filterPartnerOnWorkingHour($partner) == 0) {
+            return false;
+        }
+        if ($partner->runningLeave() != null) {
             return false;
         }
         return true;
