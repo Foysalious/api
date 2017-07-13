@@ -204,8 +204,7 @@ class ServiceRepository
      * @param $partner
      * @return mixed
      */
-    private
-    function getPartnerRatingReviewCount($service, $partner)
+    private function getPartnerRatingReviewCount($service, $partner)
     {
         $review = $partner->reviews()->where([
 //            ['review', '<>', ''],
@@ -243,87 +242,18 @@ class ServiceRepository
         return $final_partners;
     }
 
+
     /**
      * @param $service_partners
-     * @param null $request
      * @return mixed
      */
     private function _filterPartnerOnWorkingHourDayLeave($service_partners)
     {
         foreach ($service_partners as $key => $partner) {
-            if ($this->_worksAtThisTime($partner) == false) {
+            if (!(new PartnerRepository($partner, $this->_serviceRequest))->available()) {
                 array_forget($service_partners, $key);
             }
         }
         return $service_partners;
-    }
-
-    /**
-     * @param $partner
-     * @return int
-     */
-    private function _filterPartnerOnWorkingHour($partner)
-    {
-        $working_hours = json_decode($partner->basicInformations->working_hours);
-        if (array_key_exists('time', $this->_serviceRequest)) {
-            if ($this->_serviceRequest !== '') {
-                //If customer sets a time then check availability of partner otherwise don't check anyone
-                if (array_has(constants('JOB_PREFERRED_TIMES'), $this->_serviceRequest['time']) && $this->_serviceRequest['time'] != 'Anytime') {
-                    return $this->_betweenWorkingHours($working_hours, constants('JOB_WORKING_HOURS')[$this->_serviceRequest['time']]);
-                }
-            }
-        }
-//        else {
-//            $time = strtotime(Carbon::now()->format('h:i A'));
-//            return strtotime($working_hours->day_start) <= $time && $time <= strtotime($working_hours->day_end) ? 1 : 0;
-//        }
-        return 1;
-    }
-
-    private function _betweenWorkingHours($working_hours, $times)
-    {
-        $fail = 0;
-        foreach ($times as $time) {
-            $time = strtotime($time);
-            // time doesn't fall int working hour
-            if (!(strtotime($working_hours->day_start) <= $time && $time <= strtotime($working_hours->day_end))) {
-                $fail++;
-            }
-        }
-        // If both times don't fall into working hour return false
-        return $fail == 2 ? false : true;
-    }
-
-    /**
-     * @param $partner
-     * @return bool
-     */
-    private function _filterPartnerOnWorkingDay($partner)
-    {
-        if (array_key_exists('day', $this->_serviceRequest)) {
-            if ($this->_serviceRequest !== '') {
-                $day = date('l', strtotime($this->_serviceRequest['day']));
-            }
-        } else
-            $day = date('l');
-        return array_search($day, json_decode($partner->basicInformations->working_days));
-    }
-
-    /**
-     * @param $partner
-     * @return mixed
-     */
-    private function _worksAtThisTime($partner)
-    {
-        if ($this->_filterPartnerOnWorkingDay($partner) == 0) {
-            return false;
-        }
-        if ($this->_filterPartnerOnWorkingHour($partner) == 0) {
-            return false;
-        }
-        if ($partner->runningLeave() != null) {
-            return false;
-        }
-        return true;
     }
 }

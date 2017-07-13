@@ -19,10 +19,11 @@ class PartnerLeave extends Model
         return $query->whereDate('start', '>', Carbon::now());
     }
 
-    public function isRunning()
+    public function isRunning($date = null)
     {
+        $date = ($date) ? (($date instanceof Carbon) ? $date : new Carbon($date)) : Carbon::now();
         $end = (!$this->end) ? Carbon::tomorrow() : $this->end;
-        return Carbon::now()->between($this->start, $end);
+        return $date->between($this->start, $end);
     }
 
     public function isUpcoming()

@@ -105,11 +105,23 @@ class Partner extends Model
         return $this->hasMany(PartnerLeave::class);
     }
 
-    public function runningLeave()
+    public function runningLeave($date = null)
     {
-        foreach ($this->leaves()->whereDate('start', '<', Carbon::now())->get() as $leave) {
-            if ($leave->isRunning()) return $leave;
+        $date = ($date) ? (($date instanceof Carbon) ? $date : new Carbon($date)) : Carbon::now();
+        foreach ($this->leaves()->whereDate('start', '<=', $date)->get() as $leave) {
+            if ($leave->isRunning($date)) return $leave;
         }
         return null;
+    }
+
+    public function hasLeave($date)
+    {
+        $date = $date == null ? Carbon::now() : new Carbon($date);
+        foreach ($this->leaves as $leave) {
+            if ($date->between($leave->start, $leave->end)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
