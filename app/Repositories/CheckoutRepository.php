@@ -236,6 +236,8 @@ class CheckoutRepository
     {
         $order->customer_id = $order_info['customer_id'];
         $order->location_id = $order_info['location_id'];
+        $order->info_call_id = $order_info['info_call_id'];
+        $order->affiliation_id = $order_info['affiliation_id'];
         $order->delivery_name = $order_info['name'];
         $order->delivery_mobile = $order_info['phone'];
         $order->sales_channel = isset($order_info['sales_channel']) ? $order_info['sales_channel'] : 'Web';
