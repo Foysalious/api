@@ -39,6 +39,7 @@ class PartnerRepository
 
     private function _partnerOnLeave($date)
     {
+        $date = $date . ' ' . date('H:i:s');
         return $this->_partner->runningLeave($date) != null ? true : false;
     }
 
