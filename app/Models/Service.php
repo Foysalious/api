@@ -92,4 +92,49 @@ class Service extends Model
         }
         return false;
     }
+
+    /** Scope a query to only include published Service.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopePublished($query)
+    {
+        return $query->where('publication_status', 1);
+    }
+
+    /**
+     * Scope a query to only include unpublished Service.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeUnpublished($query)
+    {
+        return $query->where('publication_status', 0);
+    }
+
+    /**
+     * Scope a query to only include published and backend published service.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopePublishedForAll($query)
+    {
+        return $query->where('publication_status', 1)->orWhere(function ($query) {
+            $query->publishedForBackendOnly();
+        });
+    }
+
+    /**
+     * Scope a query to only include backend published service.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopePublishedForBackendOnly($query)
+    {
+        return $query->where('publication_status', 0)->where('is_published_for_backend', 1);
+    }
 }
