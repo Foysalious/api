@@ -30,6 +30,11 @@ class Profile extends Model
         return $this->hasOne(Resource::class);
     }
 
+    public function affiliate()
+    {
+        return $this->hasOne(Affiliate::class);
+    }
+
     public function member()
     {
         return $this->hasOne(Member::class);

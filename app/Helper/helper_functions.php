@@ -15,12 +15,12 @@ if (!function_exists('setTrace')) {
         print_r($data);
         echo "</pre><hr>";
 
-        if($die)
+        if ($die)
             exit;
     }
 }
 
-if(!function_exists('clean')) {
+if (!function_exists('clean')) {
     /**
      * Clean a string from all special characters.
      *
@@ -35,7 +35,7 @@ if(!function_exists('clean')) {
     }
 }
 
-if(!function_exists('constants')) {
+if (!function_exists('constants')) {
     /**
      * Get the constant from config constants file.
      *
@@ -48,7 +48,7 @@ if(!function_exists('constants')) {
     }
 }
 
-if(!function_exists('formatTaka')) {
+if (!function_exists('formatTaka')) {
     /**
      * Format integer amount of taka into decimal.
      *
@@ -61,7 +61,7 @@ if(!function_exists('formatTaka')) {
     }
 }
 
-if(!function_exists('formatTaka')) {
+if (!function_exists('formatTaka')) {
     /**
      * Format integer amount of taka into decimal.
      *
@@ -94,5 +94,45 @@ if (!function_exists('randomString')) {
             $rand_string .= $characters[mt_rand(0, strlen($characters) - 1)];
         }
         return $rand_string;
+    }
+}
+
+if (!function_exists('formatMobileAux')) {
+    /**
+     * Format mobile number, add +88 & rebove space.
+     * This function should be removed at refactoring.
+     *
+     * @param $mobile
+     * @return mixed
+     */
+    function formatMobileAux($mobile)
+    {
+        $mobile = str_replace(" ", "", $mobile);
+        if ($mobile[0] == "0") {
+            $mobile = "+88" . $mobile;
+        }
+        return $mobile;
+    }
+}
+
+if (!function_exists('formatMobile')) {
+    /**
+     * Format Mobile number with +88 .
+     *
+     * @param  $number
+     * @return string
+     */
+    function formatMobile($number)
+    {
+        // mobile starts with '+88'
+        if (preg_match("/^(\+88)/", $number)) {
+            return $number;
+        } // when mobile starts with '88' replace it with '+880'
+        elseif (preg_match("/^(88)/", $number)) {
+            return preg_replace('/^88/', '+88', $number);
+        } // real mobile no add '+880' at the start
+        else {
+            return '+88' . $number;
+        }
     }
 }

@@ -163,4 +163,13 @@ $api->version('v1', function ($api) {
         });
     });
 
+    $api->group(['prefix' => 'affiliate/{affiliate}', 'middleware' => ['affiliate.auth']], function ($api) {
+        $api->post('edit', 'App\Http\Controllers\AffiliateController@edit');
+        $api->post('update-profile-picture', 'App\Http\Controllers\AffiliateController@updateProfilePic');
+
+        $api->get('affiliations', 'App\Http\Controllers\AffiliationController@index');
+        $api->post('affiliations', 'App\Http\Controllers\AffiliationController@create');
+
+    });
+
 });

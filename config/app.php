@@ -161,6 +161,7 @@ return [
         Sentry\SentryLaravel\SentryLaravelServiceProvider::class,
         Maatwebsite\Excel\ExcelServiceProvider::class,
 
+        App\Providers\CustomValidatorProvider::class,
 
     ],
 
