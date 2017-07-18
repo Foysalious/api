@@ -160,6 +160,7 @@ return [
         Tymon\JWTAuth\Providers\JWTAuthServiceProvider::class,
         Sentry\SentryLaravel\SentryLaravelServiceProvider::class,
         Maatwebsite\Excel\ExcelServiceProvider::class,
+        Jenssegers\Mongodb\MongodbServiceProvider::class,
 
         App\Providers\CustomValidatorProvider::class,
 

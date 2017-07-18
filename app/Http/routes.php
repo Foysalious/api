@@ -1,6 +1,27 @@
 <?php
 
+use App\Models\Group;
+use App\Models\Navigation;
+
 Route::get('/', function () {
+//    $navigation = new Group();
+//    $navigation->name = 'Work Station';
+//    $navigation->navigation_id = '596c9de68543bc2dd4005c03';
+//    $navigation->services = array(
+//        array(
+//            'id' => 127,
+//            'name' => 'adad'
+//        ),
+//        array(
+//            'id' => 1,
+//            'name' => 'khela hobe'
+//        )
+//    );
+//    $navigation->save();
+
+    $nav = Navigation::where('publication_status', 1)->first();
+    dd($nav->groups);
+
     return ['code' => 200, 'msg' => 'Success. This project will hold the api\'s'];
 });
 
@@ -39,7 +60,7 @@ $api->version('v1', function ($api) {
     $api->post('login-with-kit', 'App\Http\Controllers\Auth\LoginController@loginWithKit');
 //    $api->post('forget-password', 'App\Http\Controllers\Auth\PasswordController@sendResetPasswordEmail');
 
-    $api->get('info', 'App\Http\Controllers\ShebaController@getInfo');
+    $api->post('info', 'App\Http\Controllers\ShebaController@getInfo');
     $api->get('images', 'App\Http\Controllers\ShebaController@getImages');
     $api->get('locations', 'App\Http\Controllers\LocationController@getAllLocations');
     $api->get('search', 'App\Http\Controllers\SearchController@getService');
@@ -167,6 +188,7 @@ $api->version('v1', function ($api) {
         $api->post('edit', 'App\Http\Controllers\AffiliateController@edit');
         $api->post('update-profile-picture', 'App\Http\Controllers\AffiliateController@updateProfilePic');
 
+        $api->get('wallet', 'App\Http\Controllers\AffiliateController@getWallet');
         $api->get('affiliations', 'App\Http\Controllers\AffiliationController@index');
         $api->post('affiliations', 'App\Http\Controllers\AffiliationController@create');
 

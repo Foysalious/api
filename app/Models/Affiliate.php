@@ -35,7 +35,7 @@ class Affiliate extends Model
 
     public function getBankingInfoAttribute($info)
     {
-        return $info ? json_decode($info, 1) : [];
+        return $info ? json_decode($info) : [];
     }
 
     public function scopeSuspended($query)

@@ -6,7 +6,6 @@ use App\Models\Affiliate;
 use App\Models\Affiliation;
 use Illuminate\Http\Request;
 use Validator;
-use App\Http\Requests;
 
 class AffiliationController extends Controller
 {
@@ -40,9 +39,7 @@ class AffiliationController extends Controller
     private function _validateCreateRequest($request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|min:3',
             'mobile' => 'required|string|mobile:bd',
-            'service' => 'required|string'
         ], ['mobile' => 'Invalid mobile number!']);
         return $validator->fails() ? $validator->errors()->all()[0] : false;
     }

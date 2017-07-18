@@ -6,20 +6,22 @@ use App\Models\Affiliate;
 use App\Repositories\FileRepository;
 use Illuminate\Http\Request;
 use Validator;
-use App\Http\Requests;
 
 class AffiliateController extends Controller
 {
     private $fileRepository;
 
-    private function __construct()
+    public function __construct()
     {
         $this->fileRepository = new FileRepository();
     }
 
-    public function edit(Request $request)
+    public function edit($affiliate, Request $request)
     {
-        $affiliate = Affiliate::find($request->affiliate);
+        if ($msg = $this->_validateEdit($request)) {
+            return response()->json(['code' => 500, 'msg' => $msg]);
+        }
+        $affiliate = Affiliate::find($affiliate);
         if ($request->has('name')) {
             if ($request->name != '') {
                 $profile = $affiliate->profile;
@@ -29,7 +31,9 @@ class AffiliateController extends Controller
         }
         if ($request->has('bkash_no')) {
             if ($request->bkash_no != '' || $request->bkash_no != null) {
-                $affiliate->banking_info = $request->bkash_no;
+                $banking_info = $affiliate->banking_info;
+                $banking_info->bKash = $request->bkash_no;
+                $affiliate->banking_info = json_encode($banking_info);
             }
         }
         if ($request->has('geolocation')) {
@@ -42,7 +46,7 @@ class AffiliateController extends Controller
 
     public function updateProfilePic(Request $request)
     {
-        if ($msg = $this->_validateImage($request) != false) {
+        if ($msg = $this->_validateImage($request)) {
             return response()->json(['code' => 500, 'msg' => $msg]);
         }
         $photo = $request->file('photo');
@@ -55,10 +59,25 @@ class AffiliateController extends Controller
         return $profile->update() ? response()->json(['code' => 200, 'picture' => $profile->pro_pic]) : response()->json(['code' => 404]);
     }
 
+    public function getWallet($affiliate, Request $request)
+    {
+        $affiliate = Affiliate::find($affiliate);
+        if($affiliate)
+        return response()->json(['code' => 200, 'wallet' => $affiliate->wallet]);
+    }
+
     private function _validateImage($request)
     {
         $validator = Validator::make($request->all(), [
             'photo' => 'required|mimes:jpeg,png|max:500'
+        ]);
+        return $validator->fails() ? $validator->errors()->all()[0] : false;
+    }
+
+    private function _validateEdit($request)
+    {
+        $validator = Validator::make($request->all(), [
+            'bkash_no' => 'required|string'
         ]);
         return $validator->fails() ? $validator->errors()->all()[0] : false;
     }

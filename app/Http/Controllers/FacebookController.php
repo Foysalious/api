@@ -96,7 +96,7 @@ class FacebookController extends Controller
         $affiliation_app = env('SHEBA_AFFILIATION_APP');
         $validator = Validator::make($request->all(), [
             'from' => "required|in:$customer_app,$affiliation_app",
-        ]);
+        ],['in'=>'from value is invalid!']);
         return $validator->fails() ? $validator->errors()->all()[0] : false;
     }
 }

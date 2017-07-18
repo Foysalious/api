@@ -54,9 +54,10 @@ class ProfileRepository
                 'profile_image' => $profile->pro_pic,
                 'token' => $avatar->remember_token
             );
-            if ($avatar == env('AFFILIATE_AVATAR_NAME')) {
+            if ($from == env('AFFILIATE_AVATAR_NAME')) {
                 $info['name'] = $profile->name;
-                $info['banking_info'] = $avatar->banking_info;
+                $info['mobile'] = $profile->mobile;
+                $info['bKash'] = $avatar->banking_info->bKash;
                 $info['verification_status'] = $avatar->verification_status;
                 $info['is_suspended'] = $avatar->is_suspended;
             }
@@ -207,6 +208,7 @@ class ProfileRepository
             $affiliate = new Affiliate();
             $affiliate->profile_id = $user->id;
             $affiliate->remember_token = str_random(255);
+            $affiliate->banking_info = json_encode(array('bKash' => ''));
             $affiliate->save();
         }
     }
