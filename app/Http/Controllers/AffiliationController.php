@@ -35,7 +35,7 @@ class AffiliationController extends Controller
             return response()->json(['code' => 500, 'msg' => "You're not verified!"]);
         }
         $affiliation = new Affiliation();
-        $affiliation->affiliate_id = $affiliate;
+        $affiliation->affiliate_id = $affiliate->id;
         $affiliation->customer_name = $request->name;
         $affiliation->customer_mobile = $request->mobile;
         $affiliation->service = $request->service;
