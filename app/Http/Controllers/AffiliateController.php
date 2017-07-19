@@ -18,6 +18,7 @@ class AffiliateController extends Controller
 
     public function edit($affiliate, Request $request)
     {
+        $request->merge(['bkash_no' => formatMobile($request->bkash_no)]);
         if ($msg = $this->_validateEdit($request)) {
             return response()->json(['code' => 500, 'msg' => $msg]);
         }
@@ -62,8 +63,8 @@ class AffiliateController extends Controller
     public function getWallet($affiliate, Request $request)
     {
         $affiliate = Affiliate::find($affiliate);
-        if($affiliate)
-        return response()->json(['code' => 200, 'wallet' => $affiliate->wallet]);
+        if ($affiliate)
+            return response()->json(['code' => 200, 'wallet' => $affiliate->wallet]);
     }
 
     private function _validateImage($request)
@@ -77,8 +78,8 @@ class AffiliateController extends Controller
     private function _validateEdit($request)
     {
         $validator = Validator::make($request->all(), [
-            'bkash_no' => 'required|string'
-        ]);
+            'bkash_no' => 'required|string|mobile:bd',
+        ], ['mobile' => 'Invalid bKash number!']);
         return $validator->fails() ? $validator->errors()->all()[0] : false;
     }
 

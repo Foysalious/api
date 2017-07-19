@@ -111,7 +111,7 @@ class ServiceController extends Controller
 //        $sorted_service_partners = collect($service_partners)->sortBy(function ($service_partner) {
 //            return sprintf('%-12s%s', $service_partner->discounted_price, $service_partner->rating);
 //        })->values()->all();
-        if (!empty($service_partners)) {
+        if (!empty($sorted_service_partners)) {
             return response()->json(['service_partners' => $sorted_service_partners, 'msg' => 'successful', 'code' => 200]);
         } else
             return response()->json(['msg' => 'no partner found', 'code' => 404]);

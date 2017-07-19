@@ -29,8 +29,8 @@ class Affiliation extends Model
 
     public function scopeInPreviousMonth($query)
     {
-        return $query->whereMonth('created_at', '=',  Carbon::yesterday()->month)
-                ->whereYear('created_at', '=', Carbon::yesterday()->year);
+        return $query->whereMonth('created_at', '=', Carbon::yesterday()->month)
+            ->whereYear('created_at', '=', Carbon::yesterday()->year);
     }
 
     public function scopeInYesterday($query)

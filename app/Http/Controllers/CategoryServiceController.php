@@ -45,7 +45,7 @@ class CategoryServiceController extends Controller
             ['publication_status', 1],
             ['id', '<>', $service->id]
         ])->take(5)->get();
-        $services = $this->categoryRepository->addServiceInfo($services, $request);
+        $services = $this->categoryRepository->addServiceInfo($services, $request->location);
         if (count($services) > 3) {
             return response()->json(['services' => $services, 'msg' => 'successful', 'code' => 200]);
         } else {

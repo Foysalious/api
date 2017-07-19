@@ -30,12 +30,6 @@ class CategoryController extends Controller
             ->get();
         foreach ($categories as $category) {
             array_add($category, 'slug', str_slug($category->name, '-'));
-//            $total_service = 0;
-//            foreach ($category->children as $child) {
-//                $total_service += $child->services()->count();
-//            }
-//            array_add($category, 'total_service', $total_service);
-//            array_forget($category, 'children');
         }
         return count($categories) > 0 ? response()
             ->json(['categories' => $categories, 'msg' => 'successful', 'code' => 200]) : response()->json(['msg' => 'nothing found', 'code' => 404]);
@@ -100,7 +94,7 @@ class CategoryController extends Controller
                 ['id', $category->id],
                 ['publication_status', 1]
             ])->first();
-            $services = $this->categoryRepository->addServiceInfo($category->services, $request);
+            $services = $this->categoryRepository->addServiceInfo($category->services, $request->location);
             return response()->json(['category' => $cat, 'services' => $services, 'msg' => 'successful', 'code' => 200]);
         } else {
             return response()->json(['msg' => 'category not found', 'code' => 404]);
