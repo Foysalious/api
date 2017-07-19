@@ -15,7 +15,7 @@ class AffiliationController extends Controller
         $offset = 0;
         if ($request->get('page') != '') {
             $offset = 12;
-            $offset = ($request->get('page')-1) * $offset;
+            $offset = ($request->get('page') - 1) * $offset;
         }
         $affiliate = Affiliate::with(['affiliations' => function ($q) use ($offset) {
             $q->select('id', 'affiliate_id', 'customer_name', 'customer_mobile', 'service', 'status', 'is_fake', 'reject_reason', DB::raw('DATE_FORMAT(created_at, "%Y-%m-%d") as referred_date'))
@@ -29,6 +29,10 @@ class AffiliationController extends Controller
         $request->merge(['mobile' => formatMobile($request->mobile)]);
         if ($msg = $this->_validateCreateRequest($request)) {
             return response()->json(['code' => 500, 'msg' => $msg]);
+        }
+        $affiliate = Affiliate::find($affiliate);
+        if ($affiliate->status != 'verified') {
+            return response()->json(['code' => 500, 'msg' => "You're not verified!"]);
         }
         $affiliation = new Affiliation();
         $affiliation->affiliate_id = $affiliate;

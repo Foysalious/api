@@ -32,10 +32,7 @@ class SearchController extends Controller
                 $children_categories = $category->children()->pluck('id');
                 $query = $query->whereIn('category_id', $children_categories);
             }
-            $services = $query->where([
-                ['publication_status', 1],
-                ['is_published_for_backend', 0]
-            ])->select('id', 'name', 'thumb', 'banner', 'variables', 'variable_type')
+            $services = $query->where('publication_status', 1)->select('id', 'name', 'thumb', 'banner', 'variables', 'variable_type')
                 ->take(10)
                 ->get();
 

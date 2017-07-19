@@ -133,8 +133,7 @@ class ServiceController extends Controller
     {
         $service = Service::where([
             ['id', $service],
-            ['publication_status', 1],
-            ['is_published_for_backend', 0]
+            ['publication_status', 1]
         ])->first();
         // Service exists and also published
         if ($service != null) {

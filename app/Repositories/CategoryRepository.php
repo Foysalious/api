@@ -40,11 +40,8 @@ class CategoryRepository
                         $q->select('id', 'partner_service_id', 'start_date', 'end_date', 'amount');
                     }]);
                 }])->take(4)->get();
-//            array_add($child, 'services', $services);
             array_add($child, 'slug', str_slug($child->name, '-'));
-//            array_add($child, 'children_services', $this->addServiceInfo($services));
             $child['services'] = $this->addServiceInfo($services, $request->location);
-//            array_forget($child, 'services');
         }
         return $children;
     }
