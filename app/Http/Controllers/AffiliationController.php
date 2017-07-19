@@ -31,7 +31,7 @@ class AffiliationController extends Controller
             return response()->json(['code' => 500, 'msg' => $msg]);
         }
         $affiliate = Affiliate::find($affiliate);
-        if ($affiliate->status != 'verified') {
+        if ($affiliate != null && $affiliate->verification_status != 'verified') {
             return response()->json(['code' => 500, 'msg' => "You're not verified!"]);
         }
         $affiliation = new Affiliation();
