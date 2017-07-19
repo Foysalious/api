@@ -8,10 +8,12 @@ use App\Models\Service;
 class CategoryRepository
 {
     private $serviceRepository;
+    private $reviewRepository;
 
     public function __construct()
     {
         $this->serviceRepository = new ServiceRepository();
+        $this->reviewRepository = new ReviewRepository();
     }
 
     /**
@@ -54,16 +56,7 @@ class CategoryRepository
             //Get start & end price for services. Custom services don't have price so omitted
             $service = $this->serviceRepository->getStartPrice($service, $location);
             array_add($service, 'slug', str_slug($service->name, '-'));
-            // review count of this partner for this service
-            $review = $service->reviews()->where('review', '<>', '')->count('review');
-            //avg rating of the partner for this service
-            $rating = $service->reviews()->where('service_id', $service->id)->avg('rating');
-            array_add($service, 'review', $review);
-            if ($rating == null) {
-                $service['rating'] = 5;
-            } else {
-                $service['rating'] = $rating;
-            }
+            $this->reviewRepository->getReviews($service);
             array_forget($service, 'variables');
             array_forget($service, 'partnerServices');
         }
