@@ -1,6 +1,27 @@
 <?php
 
+use App\Models\Group;
+use App\Models\Navigation;
+
 Route::get('/', function () {
+//    $navigation = new Group();
+//    $navigation->name = 'Work Station';
+//    $navigation->navigation_id = '596c9de68543bc2dd4005c03';
+//    $navigation->services = array(
+//        array(
+//            'id' => 127,
+//            'name' => 'adad'
+//        ),
+//        array(
+//            'id' => 1,
+//            'name' => 'khela hobe'
+//        )
+//    );
+//    $navigation->save();
+
+    $nav = Navigation::where('publication_status', 1)->first();
+    dd($nav->groups);
+
     return ['code' => 200, 'msg' => 'Success. This project will hold the api\'s'];
 });
 
@@ -29,34 +50,28 @@ $api->version('v1', function ($api) {
     $api->post('reset-password', 'App\Http\Controllers\Auth\PasswordController@resetPassword');
 
     $api->get('authenticate', 'App\Http\Controllers\AccountController@checkForAuthentication');
-
     $api->post('account', 'App\Http\Controllers\AccountController@encryptData');
     $api->get('decrypt', 'App\Http\Controllers\AccountController@decryptData');
-
-    $api->post('register-mobile', 'App\Http\Controllers\Auth\RegistrationController@registerWithMobile');
-    $api->post('register-email', 'App\Http\Controllers\Auth\RegistrationController@registerWithEmail');
-    $api->post('register-with-facebook', 'App\Http\Controllers\Auth\RegistrationController@registerWithFacebook');
-    $api->post('login-with-kit', 'App\Http\Controllers\Auth\LoginController@loginWithKit');
-//    $api->post('forget-password', 'App\Http\Controllers\Auth\PasswordController@sendResetPasswordEmail');
 
     $api->get('info', 'App\Http\Controllers\ShebaController@getInfo');
     $api->get('images', 'App\Http\Controllers\ShebaController@getImages');
     $api->get('locations', 'App\Http\Controllers\LocationController@getAllLocations');
     $api->get('search', 'App\Http\Controllers\SearchController@getService');
+    $api->post('career', 'App\Http\Controllers\CareerController@apply');
     $api->get('category-service', 'App\Http\Controllers\CategoryServiceController@getCategoryServices');
     $api->get('{service}/similar-services', 'App\Http\Controllers\CategoryServiceController@getSimilarServices');
     $api->get('job-times', 'App\Http\Controllers\JobController@getPreferredTimes');
     $api->get('cancel-job-reasons', 'App\Http\Controllers\JobController@cancelJobReasons');
-    $api->get('images', 'App\Http\Controllers\ShebaController@getImages');
     $api->post('voucher-valid', 'App\Http\Controllers\CheckoutController@checkForValidity');
-
+    $api->post('rating', 'App\Http\Controllers\ReviewController@giveRatingFromEmail');
     $api->get('offers', 'App\Http\Controllers\ShebaController@getOffers');
     $api->get('offer/{offer}', 'App\Http\Controllers\ShebaController@getOffer');
     $api->get('offer/{offer}/similar-offer', 'App\Http\Controllers\ShebaController@getSimilarOffer');
 
-
-    $api->post('career', 'App\Http\Controllers\CareerController@apply');
-
+    $api->group(['prefix' => 'navigation'], function ($api) {
+        $api->get('/', 'App\Http\Controllers\NavigationController@getNavList');
+        $api->get('{navigation}/services', 'App\Http\Controllers\NavigationController@getServices');
+    });
     $api->group(['prefix' => 'category'], function ($api) {
         $api->get('/', 'App\Http\Controllers\CategoryController@index');
         $api->get('{category}/secondary-categories', 'App\Http\Controllers\CategoryController@getChildren');
@@ -79,12 +94,10 @@ $api->version('v1', function ($api) {
         $api->get('{partner}/services', 'App\Http\Controllers\PartnerController@getPartnerServices');
         $api->get('{partner}/reviews', 'App\Http\Controllers\PartnerController@getReviews');
     });
-
     $api->group(['prefix' => 'checkout'], function ($api) {
         $api->get('place-order-final', 'App\Http\Controllers\CheckoutController@placeOrderFinal');
         $api->get('sp-payment-final', 'App\Http\Controllers\CheckoutController@spPaymentFinal');
     });
-
     $api->group(['prefix' => 'customer', 'middleware' => ['customer.auth']], function ($api) {
         $api->get('{customer}', 'App\Http\Controllers\CustomerController@getCustomerInfo');
         $api->get('{customer}/general-info', 'App\Http\Controllers\CustomerController@getCustomerGeneralInfo');
@@ -127,9 +140,6 @@ $api->version('v1', function ($api) {
         $api->post('{customer}/send-verification-link', 'App\Http\Controllers\CustomerController@sendVerificationLink');
 
     });
-
-    $api->post('rating', 'App\Http\Controllers\ReviewController@giveRatingFromEmail');
-
     $api->group(['prefix' => 'business'], function ($api) {
         $api->get('check-url', 'App\Http\Controllers\BusinessController@checkURL');
         $api->get('type-category', 'App\Http\Controllers\BusinessController@getTypeAndCategories');
@@ -161,6 +171,16 @@ $api->version('v1', function ($api) {
             $api->post('{member}/send-invitation', 'App\Http\Controllers\InvitationController@sendInvitation');
             $api->post('{member}/manage-invitation', 'App\Http\Controllers\MemberController@manageInvitation');
         });
+    });
+    $api->group(['prefix' => 'affiliate/{affiliate}', 'middleware' => ['affiliate.auth']], function ($api) {
+        $api->post('edit', 'App\Http\Controllers\AffiliateController@edit');
+        $api->post('update-profile-picture', 'App\Http\Controllers\AffiliateController@updateProfilePic');
+
+        $api->get('wallet', 'App\Http\Controllers\AffiliateController@getWallet');
+        $api->get('status', 'App\Http\Controllers\AffiliateController@getStatus');
+        $api->get('affiliations', 'App\Http\Controllers\AffiliationController@index');
+        $api->post('affiliations', 'App\Http\Controllers\AffiliationController@create');
+
     });
 
 });

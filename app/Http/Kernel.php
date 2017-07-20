@@ -56,6 +56,7 @@ class Kernel extends HttpKernel {
         'cors2' => \App\Http\Middleware\Cors2MiddleWare::class,
 
         'customer.auth' => \App\Http\Middleware\CustomerAuthMiddleware::class,
+        'affiliate.auth' => \App\Http\Middleware\AffiliateAuthMiddleware::class,
         'member.auth' => \App\Http\Middleware\MemberAuthMiddleware::class,
         'admin.auth' => \App\Http\Middleware\AdminAuthMiddleware::class,
     ];

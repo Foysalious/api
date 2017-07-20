@@ -1,6 +1,8 @@
 <?php namespace App\Http\Controllers;
 
 
+use GuzzleHttp\Exception\RequestException;
+
 class FacebookAccountKit
 {
     /** @var \GuzzleHttp\Client $client contains the client for sending HTTP requests */
@@ -39,23 +41,31 @@ class FacebookAccountKit
     public function authenticateKit($code)
     {
         $userAccessToken = $this->retrieveUserAccessToken($code);
-        $request = $this->client->request('GET', $this->endPointUrl . $userAccessToken);
-        $data = json_decode($request->getBody());
+        if ($userAccessToken == false) {
+            return false;
+        } else {
+            try {
+                $request = $this->client->request('GET', $this->endPointUrl . $userAccessToken);
+            } catch (RequestException $e) {
+                return false;
+            }
+            $data = json_decode($request->getBody());
 
-        $credentials['mobile'] = null;
-        $credentials['email'] = null;
-        $credentials['email_or_mobile'] = null;
+            $credentials['mobile'] = null;
+            $credentials['email'] = null;
+            $credentials['email_or_mobile'] = null;
 
-        $userId = $data->id;
-        if (isset($data->phone)) {
-            $credentials['email_or_mobile'] = $data->phone->number;
-            $credentials['mobile'] = $data->phone->number;
-        } else if (isset($data->email)) {
-            $credentials['email_or_mobile'] = $data->email->address;
-            $credentials['email'] = $data->email->address;
+            $userId = $data->id;
+            if (isset($data->phone)) {
+                $credentials['email_or_mobile'] = $data->phone->number;
+                $credentials['mobile'] = $data->phone->number;
+            } else if (isset($data->email)) {
+                $credentials['email_or_mobile'] = $data->email->address;
+                $credentials['email'] = $data->email->address;
+            }
+
+            return $credentials;
         }
-
-        return $credentials;
     }
 
     /**
@@ -68,7 +78,11 @@ class FacebookAccountKit
         $url = $this->tokenExchangeUrl . 'grant_type=authorization_code' .
             '&code=' . $code .
             "&access_token=AA|$this->appId|$this->appSecret";
-        $apiRequest = $this->client->request('GET', $url);
+        try {
+            $apiRequest = $this->client->request('GET', $url);
+        } catch (RequestException $e) {
+            return false;
+        }
         $body = json_decode($apiRequest->getBody());
         return $body->access_token;
     }

@@ -45,7 +45,9 @@ class Voucher extends Model
 
     private function activatedPromo($customer_id)
     {
-        $promotion = Customer::find($customer_id)->promotions()->where('voucher_id', $this->id)->get();
+        $customer = Customer::find($customer_id);
+        if(!$customer) return false;
+        $promotion = $customer->promotions()->where('voucher_id', $this->id)->get();
         return $promotion == null ? false : $promotion->first();
     }
 }

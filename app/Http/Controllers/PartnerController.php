@@ -65,7 +65,7 @@ class PartnerController extends Controller
         }
         $final_service = [];
         foreach ($partner_services as $service) {
-            $service = $this->serviceRepository->getStartPrice($service, $request);
+            $service = $this->serviceRepository->getStartPrice($service, $request->location);
             array_add($service, 'slug_service', str_slug($service->name, '-'));
             //review count of partner of this service
             $review = $service->reviews()->where([

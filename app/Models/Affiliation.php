@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class Affiliation extends Model
@@ -19,5 +20,21 @@ class Affiliation extends Model
     public function statusChangeLogs()
     {
         return $this->hasMany(AffiliationStatusChangeLog::class);
+    }
+
+    public function scopeSuccessful($query)
+    {
+        return $query->where('status', 'successful');
+    }
+
+    public function scopeInPreviousMonth($query)
+    {
+        return $query->whereMonth('created_at', '=', Carbon::yesterday()->month)
+            ->whereYear('created_at', '=', Carbon::yesterday()->year);
+    }
+
+    public function scopeInYesterday($query)
+    {
+        return $query->whereDate('created_at', '=', Carbon::yesterday());
     }
 }

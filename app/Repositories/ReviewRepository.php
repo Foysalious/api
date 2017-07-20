@@ -32,6 +32,7 @@ class ReviewRepository
         }
         return $breakdown;
     }
+
     /**
      * return reviews for an object i.e. service,partner
      * @param $object
@@ -47,6 +48,9 @@ class ReviewRepository
         array_add($object, 'rating_count', $total_rating);
         //avg rating of this
         $rating = $object->reviews()->avg('rating');
+        if ($rating == null) {
+            $rating = 5;
+        }
         array_add($object, 'rating', round($rating, 1));
         return $object;
     }

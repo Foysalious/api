@@ -60,7 +60,6 @@ class ServiceRepository
             $partner = $this->getPartnerRatingReviewCount($service, $partner);
             if ($service->variable_type == 'Options') {
                 $prices = (array)json_decode($partner->prices);
-
                 $price = $this->partnerServesThisOption($prices, $option);
                 if ($price != null) {
                     array_set($partner, 'prices', $price);
@@ -128,12 +127,14 @@ class ServiceRepository
     /**
      * Get Start price based on location
      * @param $service
-     * @param $request
+     * @param int $location
      * @return mixed
      */
-    public function getStartPrice($service, $request)
+    public function getStartPrice($service, $location)
     {
-        $location = $request->location;
+        if (empty($location)) {
+            $location = 4;
+        }
         $calculated_service = Service::with(['partners' => function ($q) use ($location) {
             $q->where([
                 ['is_published', 1],
@@ -272,9 +273,34 @@ class ServiceRepository
                 array_push($not_available, $partner);
             }
         }
-        foreach ($not_available as $not){
-            array_push($final,$not);
+        foreach ($not_available as $not) {
+            array_push($final, $not);
         }
         return $final;
     }
+
+    public function addServiceInfo($services, $location)
+    {
+        foreach ($services as $key => $service) {
+            array_add($service, 'discount', Service::find($service->id)->hasDiscounts());
+            //Get start & end price for services. Custom services don't have price so omitted
+            $service = $this->getStartPrice($service, $location);
+            array_add($service, 'slug', str_slug($service->name, '-'));
+            // review count of this partner for this service
+            $review = $service->reviews()->where('review', '<>', '')->count('review');
+            array_add($service, 'review', $review);
+            //avg rating of the partner for this service
+            $rating = $service->reviews()->where('service_id', $service->id)->avg('rating');
+            if ($rating == null) {
+                $service['rating'] = 5;
+            } else {
+                $service['rating'] = $rating;
+            }
+            array_forget($service, 'variables');
+            array_forget($service, 'partnerServices');
+        }
+        return $services;
+    }
+
+
 }

@@ -85,6 +85,7 @@ class CartRepository
         }
         return false;
     }
+
     private function _validatePartnerPrice($price, $partner_service)
     {
         $partner = $partner_service->partner;
@@ -98,7 +99,7 @@ class CartRepository
         return PartnerService::with(['partner' => function ($q) {
             $q->select('*')->where('status', 'Verified');
         }])->with(['service' => function ($q) {
-            $q->select('*')->where('publication_status', 1);
+            $q->select('*')->publishedForAll();
         }])->with('discounts')->where([
             ['service_id', $item->service->id],
             ['partner_id', $item->partner->id],

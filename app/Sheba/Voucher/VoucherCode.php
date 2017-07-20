@@ -21,6 +21,7 @@ class VoucherCode
 
     private $customerId;
     private $customer;
+    private $customerMobile;
 
     public function __construct($code)
     {
@@ -75,6 +76,7 @@ class VoucherCode
 
         $this->setCustomerId($customer);
         $this->setCustomer($customer);
+        $this->customerMobile = $customer;
 
         return $this->checkService($partner, $service)
             ->checkLocation($location)
@@ -89,7 +91,7 @@ class VoucherCode
     {
         if (!$this->isValid) return $this;
         if (!$timestamp) $timestamp = Carbon::now();
-        list($start_date, $end_date) = $this->voucher->validityTimeLine($this->customer->id);
+        list($start_date, $end_date) = $this->voucher->validityTimeLine($this->customerId);
         $this->isValid = ($start_date <= $timestamp && $timestamp <= $end_date);
         if (!$this->isValid) {
             $this->rules->invalidMessage = $this->rules->invalidMessages('validity');
@@ -160,7 +162,10 @@ class VoucherCode
     private function checkCustomer()
     {
         if (!$this->isValid) return $this;
-        $this->isValid = $this->rules->checkCustomer($this->customer);
+        //$this->isValid = $this->rules->checkCustomer($this->customer);
+        $this->isValid = $this->rules->checkCustomerMobile($this->customerMobile);
+        if (!$this->isValid) return $this;
+        $this->isValid = $this->rules->checkCustomerId($this->customerId);
         return $this->checkNthOrder()->checkUsageLimit();
     }
 

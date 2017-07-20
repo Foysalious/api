@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Models\Affiliate;
 use App\Models\Member;
 use App\Models\Promotion;
 use App\Models\Voucher;
@@ -45,28 +46,24 @@ class ProfileRepository
 
     public function getProfileInfo($from, Profile $profile)
     {
-        if ($from == env('SHEBA_RESOURCE_APP')) {
-            $resource = $profile->resource;
-            if ($resource != null) {
-                $info = array(
-                    'id' => $resource->id,
-                    'token' => $resource->remember_token
-                );
-                return $info;
+        $avatar = $profile->$from;
+        if ($avatar != null) {
+            $info = array(
+                'id' => $avatar->id,
+                'name' => $profile->identity,
+                'profile_image' => $profile->pro_pic,
+                'token' => $avatar->remember_token
+            );
+            if ($from == env('AFFILIATE_AVATAR_NAME')) {
+                $info['name'] = $profile->name;
+                $info['mobile'] = $profile->mobile;
+                $info['bKash'] = $avatar->banking_info->bKash;
+                $info['verification_status'] = $avatar->verification_status;
+                $info['is_suspended'] = $avatar->is_suspended;
             }
-        } elseif ($from == env('SHEBA_CUSTOMER_APP')) {
-            $customer = $profile->customer;
-            if ($customer != null) {
-                $info = array(
-                    'id' => $customer->id,
-                    'name' => $profile->identity,
-                    'profile_image' => $profile->pro_pic,
-                    'token' => $customer->remember_token
-                );
-                return $info;
-            }
+            return $info;
         }
-        return false;
+        return null;
     }
 
     /**
@@ -207,6 +204,12 @@ class ProfileRepository
             $resource->remember_token = str_random(255);
             $resource->save();
             return $resource;
+        } elseif ($avatar == env('AFFILIATE_AVATAR_NAME')) {
+            $affiliate = new Affiliate();
+            $affiliate->profile_id = $user->id;
+            $affiliate->remember_token = str_random(255);
+            $affiliate->banking_info = json_encode(array('bKash' => ''));
+            $affiliate->save();
         }
     }
 

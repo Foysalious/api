@@ -32,10 +32,7 @@ class SearchController extends Controller
                 $children_categories = $category->children()->pluck('id');
                 $query = $query->whereIn('category_id', $children_categories);
             }
-            $services = $query->where([
-                ['publication_status', 1],
-                ['is_published_for_backend', 0]
-            ])->select('id', 'name', 'thumb', 'banner', 'variables', 'variable_type')
+            $services = $query->where('publication_status', 1)->select('id', 'name', 'thumb', 'banner', 'variables', 'variable_type')
                 ->take(10)
                 ->get();
 
@@ -52,7 +49,7 @@ class SearchController extends Controller
                         array_add($service, 'end_price', 0);
                         continue;
                     }
-                    $service = $this->serviceRepository->getStartPrice($service, $request);
+                    $service = $this->serviceRepository->getStartPrice($service, $request->location);
                     // review count of this partner for this service
                     $review = $service->reviews()->where('review', '<>', '')->count('review');
                     //avg rating of the partner for this service
