@@ -248,5 +248,17 @@ return [
         'Medium' => 'Medium',
         'High' => 'High',
     ],
-    'REFERRAL_VALID_DAYS' => 90
+    'REFERRAL_VALID_DAYS' => 90,
+
+    'AVATAR' => [
+        env('SHEBA_CUSTOMER_APP') => 'customer',
+        env('SHEBA_AFFILIATION_APP') => 'affiliate',
+        env('SHEBA_RESOURCE_APP') => 'resource'
+    ],
+    'FROM' => [
+        'resource-app',
+        'customer-app',
+        'affiliation-app'
+    ],
+
 ];

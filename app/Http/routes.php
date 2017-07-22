@@ -4,24 +4,6 @@ use App\Models\Group;
 use App\Models\Navigation;
 
 Route::get('/', function () {
-//    $navigation = new Group();
-//    $navigation->name = 'Work Station';
-//    $navigation->navigation_id = '596c9de68543bc2dd4005c03';
-//    $navigation->services = array(
-//        array(
-//            'id' => 127,
-//            'name' => 'adad'
-//        ),
-//        array(
-//            'id' => 1,
-//            'name' => 'khela hobe'
-//        )
-//    );
-//    $navigation->save();
-
-    $nav = Navigation::where('publication_status', 1)->first();
-    dd($nav->groups);
-
     return ['code' => 200, 'msg' => 'Success. This project will hold the api\'s'];
 });
 
@@ -42,10 +24,10 @@ $api = app('Dingo\Api\Routing\Router');
 */
 $api->version('v1', function ($api) {
     /*API*/
-    $api->post('continue-with-kit', 'App\Http\Controllers\FacebookController@continueWithKit');
-    $api->post('continue-with-facebook', 'App\Http\Controllers\FacebookController@continueWithFacebook');
     $api->post('login', 'App\Http\Controllers\Auth\LoginController@login');
     $api->post('register', 'App\Http\Controllers\Auth\RegistrationController@register');
+    $api->post('continue-with-kit', 'App\Http\Controllers\FacebookController@continueWithKit');
+    $api->post('continue-with-facebook', 'App\Http\Controllers\FacebookController@continueWithFacebook');
     $api->post('send-password-reset-email', 'App\Http\Controllers\Auth\PasswordController@sendResetPasswordEmail');
     $api->post('reset-password', 'App\Http\Controllers\Auth\PasswordController@resetPassword');
 
