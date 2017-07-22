@@ -54,7 +54,7 @@ class ProfileRepository
                 'profile_image' => $profile->pro_pic,
                 'token' => $avatar->remember_token
             );
-            if ($from == env('SHEBA_AFFILIATION_APP')) {
+            if ($from == 'affiliate') {
                 $info['name'] = $profile->name;
                 $info['mobile'] = $profile->mobile;
                 $info['bKash'] = $avatar->banking_info->bKash;
