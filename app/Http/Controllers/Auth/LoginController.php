@@ -90,13 +90,16 @@ class LoginController extends Controller
 
     public function login(Request $request)
     {
+        if ($msg = $this->_validateLoginRequest($request)) {
+            return response()->json(['code' => 500, 'msg' => $msg]);
+        }
         $profile = $this->profileRepository->ifExist($request->email, 'email');
         if ($profile == false) {
             $profile = $this->profileRepository->ifExist($this->formatMobile($request->email), 'mobile');
         }
         if ($profile != false) {
             if (Hash::check($request->input('password'), $profile->password)) {
-                $info = $this->profileRepository->getProfileInfo($request->from, $profile);
+                $info = $this->profileRepository->getProfileInfo($this->profileRepository->getAvatar($request->from), $profile);
                 if ($info != false) {
                     return response()->json(['code' => 200, 'info' => $info]);
                 }
@@ -170,6 +173,17 @@ class LoginController extends Controller
         } else {
             return response()->json(['msg' => 'not found', 'code' => 404]);
         }
+    }
+
+    private function _validateLoginRequest($request)
+    {
+        $from = implode(',', constants('FROM'));
+        $validator = Validator::make($request->all(), [
+            'from' => "required|in:$from",
+            'email' => 'required|string',
+            'password' => 'required'
+        ], ['in' => 'from value is invalid!']);
+        return $validator->fails() ? $validator->errors()->all()[0] : false;
     }
 
 }

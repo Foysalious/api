@@ -54,7 +54,7 @@ class ProfileRepository
                 'profile_image' => $profile->pro_pic,
                 'token' => $avatar->remember_token
             );
-            if ($from == env('AFFILIATE_AVATAR_NAME')) {
+            if ($from == 'affiliate') {
                 $info['name'] = $profile->name;
                 $info['mobile'] = $profile->mobile;
                 $info['bKash'] = $avatar->banking_info->bKash;
@@ -249,6 +249,11 @@ class ProfileRepository
             $member->save();
             return $member;
         }
+    }
+
+    public function getAvatar($from)
+    {
+        return constants('AVATAR')[$from];
     }
 
 }

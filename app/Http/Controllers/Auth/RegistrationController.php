@@ -124,10 +124,9 @@ class RegistrationController extends Controller
         $profile = $this->profileRepository->ifExist($request->email, 'email');
         if ($profile == false) {
             $profile = $this->profileRepository->registerEmail($request);
-            if ($request->from == env('SHEBA_CUSTOMER_APP')) {
-                $this->profileRepository->registerAvatarByEmail('customer', $request, $profile);
-            }
-            $info = $this->profileRepository->getProfileInfo($request->from, $profile);
+            $avatar = $this->profileRepository->getAvatar($request->from);
+            $this->profileRepository->registerAvatarByEmail($avatar, $request, $profile);
+            $info = $this->profileRepository->getProfileInfo($avatar, $profile);
             if ($info != false) {
                 return response()->json(['code' => 200, 'info' => $info]);
             }
@@ -137,9 +136,11 @@ class RegistrationController extends Controller
 
     private function _validateRegistration($request)
     {
+        $from = implode(',', constants('FROM'));
         $validator = Validator::make($request->all(), [
             'email' => 'required|email|unique:profiles',
-            'password' => 'required|min:6'
+            'password' => 'required|min:6',
+            'from' => "required|in:$from",
         ]);
         return $validator->fails() ? $validator->errors()->all()[0] : false;
     }
