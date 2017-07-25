@@ -1,12 +1,11 @@
 <?php
 
-
-namespace App\Repositories;
+namespace Sheba\Partner;
 
 
 use App\Models\Partner;
 
-class PartnerRepository
+class PartnerAvailable
 {
     private $partner;
 
@@ -19,7 +18,7 @@ class PartnerRepository
     {
         $date = array_key_exists('day', $data) ? $data['day'] : date('Y-m-d');
         $time = array_key_exists('time', $data) ? $data['time'] : 'Anytime';
-        if ($this->partnerOnLeave($date)) {
+        if ($this->_partnerOnLeave($date)) {
             return false;
         }
         if (!$this->_worksAtThisDay($date)) {
@@ -37,7 +36,7 @@ class PartnerRepository
         return in_array($day, json_decode($this->partner->basicInformations->working_days));
     }
 
-    private function partnerOnLeave($date)
+    private function _partnerOnLeave($date)
     {
         $date = $date . ' ' . date('H:i:s');
         return $this->partner->runningLeave($date) != null ? true : false;
@@ -72,6 +71,4 @@ class PartnerRepository
         // If both start & end time don't fall between working hour return false
         return $fail == 2 ? false : true;
     }
-
-
 }

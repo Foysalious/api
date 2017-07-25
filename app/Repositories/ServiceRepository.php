@@ -6,15 +6,18 @@ namespace App\Repositories;
 use App\Models\PartnerService;
 use App\Models\Service;
 use Carbon\Carbon;
+use Sheba\Partner\PartnerAvailable;
 
 class ServiceRepository
 {
     private $discountRepository;
+    private $reviewRepository;
     private $_serviceRequest = [];
 
     public function __construct()
     {
         $this->discountRepository = new DiscountRepository();
+        $this->reviewRepository=new ReviewRepository();
     }
 
     public function partners($service, $location = null, $request)
@@ -252,9 +255,7 @@ class ServiceRepository
     {
         foreach ($service_partners as $key => $partner) {
             array_add($partner, 'available', true);
-            if (!(new PartnerRepository($partner))->available($this->_serviceRequest)) {
-//                array_forget($service_partners, $key);
-//                continue;
+            if (!(new PartnerAvailable($partner))->available($this->_serviceRequest)) {
                 $partner['available'] = false;
             }
             array_forget($partner, 'basicInformations');
@@ -283,19 +284,9 @@ class ServiceRepository
     {
         foreach ($services as $key => $service) {
             array_add($service, 'discount', Service::find($service->id)->hasDiscounts());
-            //Get start & end price for services. Custom services don't have price so omitted
             $service = $this->getStartPrice($service, $location);
             array_add($service, 'slug', str_slug($service->name, '-'));
-            // review count of this partner for this service
-            $review = $service->reviews()->where('review', '<>', '')->count('review');
-            array_add($service, 'review', $review);
-            //avg rating of the partner for this service
-            $rating = $service->reviews()->where('service_id', $service->id)->avg('rating');
-            if ($rating == null) {
-                $service['rating'] = 5;
-            } else {
-                $service['rating'] = $rating;
-            }
+            $this->reviewRepository->getReviews($service);
             array_forget($service, 'variables');
             array_forget($service, 'partnerServices');
         }

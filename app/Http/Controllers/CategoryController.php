@@ -5,16 +5,21 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Service;
 use App\Repositories\CategoryRepository;
+use App\Repositories\ServiceRepository;
 use Illuminate\Http\Request;
-
+use Tinify\Tinify;
 class CategoryController extends Controller
 {
 
     private $categoryRepository;
+    private $serviceRepository;
+    private $tinify;
 
     public function __construct()
     {
+        $this->tinify=\Tinify\setKey(env(''));
         $this->categoryRepository = new CategoryRepository();
+        $this->serviceRepository = new ServiceRepository();
     }
 
 
@@ -94,7 +99,7 @@ class CategoryController extends Controller
                 ['id', $category->id],
                 ['publication_status', 1]
             ])->first();
-            $services = $this->categoryRepository->addServiceInfo($category->services, $request->location);
+            $services = $this->serviceRepository->addServiceInfo($category->services, $request->location);
             return response()->json(['category' => $cat, 'services' => $services, 'msg' => 'successful', 'code' => 200]);
         } else {
             return response()->json(['msg' => 'category not found', 'code' => 404]);
