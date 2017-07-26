@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Affiliate;
 use App\Repositories\FileRepository;
 use App\Repositories\LocationRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Validator;
 
@@ -67,7 +68,8 @@ class AffiliateController extends Controller
             $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
             $this->fileRepository->deleteFileFromCDN($filename);
         }
-        $profile->pro_pic = $this->fileRepository->uploadImage($profile, $request->file('photo'), 'images/profiles/', '.' . $photo->extension());
+        $filename = $profile->id . '_profile_image_' . Carbon::now()->timestamp . '.' . $photo->extension();
+        $profile->pro_pic = $this->fileRepository->uploadToCDN($filename, $request->file('photo'), 'images/profiles/');
         return $profile->update() ? response()->json(['code' => 200, 'picture' => $profile->pro_pic]) : response()->json(['code' => 404]);
     }
 

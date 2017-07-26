@@ -33,7 +33,7 @@ class AffiliationController extends Controller
         }
         $affiliate = Affiliate::find($affiliate);
         if ($affiliate->profile->mobile == $request->mobile) {
-            return response()->json(['code' => 500, 'msg' => "You can't reffer yourself!"]);
+            return response()->json(['code' => 501, 'msg' => "You can't reffer yourself!"]);
         }
         if ($affiliate != null && $affiliate->verification_status != 'verified') {
             return response()->json(['code' => 500, 'msg' => "You're not verified!"]);

@@ -2,7 +2,6 @@
 
 namespace App\Repositories;
 
-use Carbon\Carbon;
 use Storage;
 
 class FileRepository
@@ -14,11 +13,9 @@ class FileRepository
         }
     }
 
-    public function uploadImage($profile, $photo, $folder, $extension = ".jpg")
+    public function uploadToCDN($filename, $file, $folder)
     {
-        $filename = $profile->id . '_profile_image_'.Carbon::now()->timestamp . $extension;
-        $s3 = Storage::disk('s3');
-        $s3->put($folder . $filename, file_get_contents($photo), 'public');
+        Storage::disk('s3')->put($folder . $filename, file_get_contents($file), 'public');
         return env('S3_URL') . $folder . $filename;
     }
 }
