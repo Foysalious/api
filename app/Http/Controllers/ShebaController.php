@@ -30,12 +30,13 @@ class ShebaController extends Controller
     {
         $job_count = Job::all()->count() + 16000;
         $service_count = Service::where('publication_status', 1)->get()->count();
-        $resource_count = Resource::whereHas('partners', function ($q) {
-            $q->where([
-                ['resource_type', 'Handyman'],
-                ['is_verified', 1]
-            ]);
-        })->get()->count();
+//        $resource_count = Resource::whereHas('partners', function ($q) {
+//            $q->where([
+//                ['resource_type', 'Handyman'],
+//                ['is_verified', 1]
+//            ]);
+//        })->get()->count();
+        $resource_count=Resource::where('is_verified',1)->get()->count();
         return response()->json(['service' => $service_count, 'job' => $job_count,
             'resource' => $resource_count,
             'msg' => 'successful', 'code' => 200]);
