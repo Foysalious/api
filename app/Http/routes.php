@@ -62,6 +62,7 @@ $api->version('v1', function ($api) {
     });
     $api->group(['prefix' => 'service'], function ($api) {
         $api->get('{service}/valid', 'App\Http\Controllers\ServiceController@validService');
+        $api->get('{service}', 'App\Http\Controllers\ServiceController@GetInformation');
         $api->get('{service}/get-prices', 'App\Http\Controllers\ServiceController@getPrices');
         $api->get('{service}/partners', 'App\Http\Controllers\ServiceController@getPartners');
         $api->get('{service}/location/{location}/partners', 'App\Http\Controllers\ServiceController@getPartners');

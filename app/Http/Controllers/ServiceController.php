@@ -28,7 +28,7 @@ class ServiceController extends Controller
     {
         if ($request->getMethod() == 'GET') {
             $service = Service::where('id', $service)
-                ->select('id', 'name', 'unit', 'category_id', 'description', 'thumb', 'banner', 'faqs', 'variable_type', 'variables')
+                ->select('id', 'name', 'unit', 'category_id', 'description', 'thumb', 'slug', 'min_quantity', 'banner', 'faqs', 'variable_type', 'variables')
                 ->first();
             if ($service == null)
                 return response()->json(['code' => 404, 'msg' => 'no service found']);
@@ -54,12 +54,15 @@ class ServiceController extends Controller
             array_add($service, 'parent_id', $category->parent->id);
             array_add($service, 'parent_name', $category->parent->name);
         } elseif ($request->getMethod() == 'POST') {
-            $service = Service::find($service);
+            $service = Service::where('id', $service)
+                ->select('id', 'name', 'unit', 'category_id', 'description', 'min_quantity', 'thumb', 'banner', 'faqs', 'variable_type', 'variables')
+                ->first();
         }
+        array_add($service, 'web_link', env('SHEBA_FRONT_END_URL') . '/service/' . $service->id . '/' . $service->slug);
         //get partners of the service
         $service_partners = $this->serviceRepository->partners($service, $location, $request);
         $sorted_service_partners = collect($service_partners)->sortBy('discounted_price')->values()->all();
-        $sorted_service_partners=$this->serviceRepository->_sortPartnerListByAvailability($sorted_service_partners);
+        $sorted_service_partners = $this->serviceRepository->_sortPartnerListByAvailability($sorted_service_partners);
 //        $sorted_service_partners = collect($service_partners)->sortBy(function ($service_partner) {
 //            return sprintf('%-12s%s', $service_partner->discounted_price, $service_partner->rating);
 //        })->values()->all();
@@ -107,7 +110,7 @@ class ServiceController extends Controller
         //check if any partner provide service in the location
         $service_partners = $this->serviceRepository->partnerWithSelectedOption($service, $option, $location, $request);
         $sorted_service_partners = collect($service_partners)->sortBy('discounted_price')->values()->all();
-        $sorted_service_partners=$this->serviceRepository->_sortPartnerListByAvailability($sorted_service_partners);
+        $sorted_service_partners = $this->serviceRepository->_sortPartnerListByAvailability($sorted_service_partners);
 //        $sorted_service_partners = collect($service_partners)->sortBy(function ($service_partner) {
 //            return sprintf('%-12s%s', $service_partner->discounted_price, $service_partner->rating);
 //        })->values()->all();
@@ -135,11 +138,7 @@ class ServiceController extends Controller
             ['id', $service],
             ['publication_status', 1]
         ])->first();
-        // Service exists and also published
-        if ($service != null) {
-            return response()->json(['msg' => 'ok', 'code' => 200]);
-        }
-        return response()->json(['msg' => 'not ok', 'code' => 409]);
+        return $service != null ? response()->json(['msg' => 'ok', 'code' => 200]) : response()->json(['msg' => 'not ok', 'code' => 409]);
     }
 
     public function getReviews($service)
@@ -148,8 +147,7 @@ class ServiceController extends Controller
             $q->select('id', 'service_id', 'partner_id', 'customer_id', 'review_title', 'review', 'rating', 'updated_at')
                 ->with(['partner' => function ($q) {
                     $q->select('id', 'name', 'status', 'sub_domain');
-                }])
-                ->with(['customer' => function ($q) {
+                }])->with(['customer' => function ($q) {
                     $q->select('id', 'name');
                 }])->orderBy('updated_at', 'desc');
         }])->select('id')->where('id', $service)->first();
