@@ -137,4 +137,9 @@ class Service extends Model
     {
         return $query->where('publication_status', 0)->where('is_published_for_backend', 1);
     }
+
+    public function tags()
+    {
+        return $this->morphToMany(Tag::class, 'taggable');
+    }
 }

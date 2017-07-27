@@ -25,7 +25,9 @@ class SearchController extends Controller
     public function getService(Request $request)
     {
         if ($request->input('s') != '') {
-            $query = Service::where('name', 'like', "%" . $request->input('s') . "%");
+            $query = Service::whereHas('tags',function ($q) use ($request) {
+                $q->where('name', 'like', "%".$request->s . "%");
+            })->orWhere('name', 'like', "%" . $request->input('s') . "%");
             //if has parent category id
             if ($request->has('p_c')) {
                 $category = Category::find($request->input('p_c'));
@@ -35,7 +37,6 @@ class SearchController extends Controller
             $services = $query->where('publication_status', 1)->select('id', 'name', 'thumb', 'banner', 'variables', 'variable_type')
                 ->take(10)
                 ->get();
-
             if ($services->isEmpty())
                 return response()->json(['msg' => 'nothing found', 'code' => 404]);
             else {
