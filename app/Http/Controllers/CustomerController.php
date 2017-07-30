@@ -15,6 +15,7 @@ use Cache;
 use App\Http\Controllers\FacebookAccountKit;
 use Redis;
 use Sheba\Voucher\ReferralCreator;
+use Validator;
 
 class CustomerController extends Controller
 {
@@ -276,13 +277,14 @@ class CustomerController extends Controller
 
     public function sendReferralRequestEmail($customer, Request $request)
     {
-        $customer = Customer::find($customer);
-        $voucher = Voucher::where('code', $request->code)->first();
-        if ($voucher == null) {
-            return response()->json(['msg' => 'Invalid Referral Code', 'code' => 404]);
-        } else {
-            $this->dispatch(new SendReferralRequestEmail($customer, $request->email, $voucher));
-            return response()->json(['code' => 200]);
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email'
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['code' => 500, 'msg' => $validator->errors()->all()[0]]);
         }
+        $customer = Customer::find($customer);
+        $this->dispatch(new SendReferralRequestEmail($customer, $request->email, $customer->referral));
+        return response()->json(['code' => 200]);
     }
 }

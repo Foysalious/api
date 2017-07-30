@@ -180,7 +180,7 @@ class LoginController extends Controller
         $from = implode(',', constants('FROM'));
         $validator = Validator::make($request->all(), [
             'from' => "required|in:$from",
-            'email' => 'required|string',
+            'email' => 'required|email',
             'password' => 'required'
         ], ['in' => 'from value is invalid!']);
         return $validator->fails() ? $validator->errors()->all()[0] : false;

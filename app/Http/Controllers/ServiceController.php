@@ -3,15 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
-use App\Models\Customer;
-use App\Models\Job;
-use App\Models\PartnerService;
-use App\Models\Resource;
 use App\Models\Service;
-use App\Repositories\ReviewRatingRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
 use Illuminate\Http\Request;
+use DB;
 
 class ServiceController extends Controller
 {
@@ -144,7 +140,7 @@ class ServiceController extends Controller
     public function getReviews($service)
     {
         $service = Service::with(['reviews' => function ($q) {
-            $q->select('id', 'service_id', 'partner_id', 'customer_id', 'review_title', 'review', 'rating', 'updated_at')
+            $q->select('id', 'service_id', 'partner_id', 'customer_id', 'review_title', 'review', 'rating', DB::raw('DATE_FORMAT(updated_at, "%M %d,%Y at %h:%i:%s %p") as time'))
                 ->with(['partner' => function ($q) {
                     $q->select('id', 'name', 'status', 'sub_domain');
                 }])->with(['customer' => function ($q) {

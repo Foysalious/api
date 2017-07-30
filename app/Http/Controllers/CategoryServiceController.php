@@ -24,10 +24,7 @@ class CategoryServiceController extends Controller
     {
         $category_services = Category::parents()->with(['children' => function ($query) {
             $query->with(['services' => function ($query) {
-                $query->select('id', 'name', 'slug', 'category_id')->where([
-                    ['publication_status', 1],
-                    ['is_published_for_backend', 0]
-                ]);
+                $query->select('id', 'name', 'slug', 'category_id')->where('publication_status', 1);
             }])->select('id', 'name', 'parent_id');
         }])->select('id', 'name')->get();
         if (!$category_services->isEmpty()) {

@@ -11,7 +11,7 @@ use App\Repositories\ServiceRepository;
 use Illuminate\Http\Request;
 
 use App\Http\Requests;
-
+use DB;
 class PartnerController extends Controller
 {
     private $serviceRepository;
@@ -55,8 +55,7 @@ class PartnerController extends Controller
             ->where([
                 ['is_verified', 1],
                 ['is_published', 1],
-                ['services.publication_status', 1],
-                ['is_published_for_backend', 0]
+                ['services.publication_status', 1]
             ])->get();
         $count_of_partner_services = count($partner_services);
         array_add($partner, 'service_count', $count_of_partner_services);
@@ -79,13 +78,6 @@ class PartnerController extends Controller
             array_forget($service, 'pivot');
             array_push($final_service, $service);
         }
-//        $partner_categories = $partner->categories()->select('categories.id', 'name')->get();
-//        foreach ($partner_categories as $category) {
-//            $service = $partner_services->where('category_id', $category->id);
-//            array_add($category, 'service', $service);
-//            array_forget($category, 'pivot');
-//        }
-
         if (count($partner) > 0) {
             return response()->json([
                 'partner' => $partner,
@@ -112,7 +104,7 @@ class PartnerController extends Controller
     public function getReviews($partner)
     {
         $partner = Partner::with(['reviews' => function ($q) {
-            $q->select('id', 'service_id', 'partner_id', 'customer_id', 'review_title', 'review', 'rating', 'updated_at')
+            $q->select('id', 'service_id', 'partner_id', 'customer_id', 'review_title', 'review', 'rating', DB::raw('DATE_FORMAT(updated_at, "%M %d,%Y at %h:%i:%s %p") as time'))
                 ->with(['service' => function ($q) {
                     $q->select('id', 'name');
                 }])

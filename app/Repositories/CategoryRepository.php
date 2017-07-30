@@ -32,10 +32,7 @@ class CategoryRepository
 
         foreach ($children as $child) {
             $services = $child->services()->select('id', 'category_id', 'name', 'thumb', 'banner', 'variable_type', 'variables')
-                ->where([
-                    ['publication_status', 1],
-                    ['is_published_for_backend', 0]
-                ])->with(['partnerServices' => function ($q) {
+                ->where('publication_status', 1)->with(['partnerServices' => function ($q) {
                     $q->select('id', 'partner_id', 'service_id')->with(['discounts' => function ($q) {
                         $q->select('id', 'partner_service_id', 'start_date', 'end_date', 'amount');
                     }]);
