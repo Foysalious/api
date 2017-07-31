@@ -26,18 +26,18 @@ class SearchController extends Controller
     {
         if ($request->s != '') {
             $search_words = explode(' ', $request->s);
-            $query = Service::whereHas('tags', function ($q) use ($request, $search_words) {
+            $query = Service::where('publication_status', 1)->whereHas('tags', function ($q) use ($request, $search_words) {
                 foreach ($search_words as $word) {
                     $q->orwhere('name', 'like', "%" . $word . "%");
                 }
-            })->orWhere('name', 'like', "%" . $request->s . "%");
+            })->orWhere([['name', 'like', "%" . $request->s . "%"], ['publication_status', 1]]);
             //if has parent category id
             if ($request->has('p_c')) {
                 $category = Category::find($request->input('p_c'));
                 $children_categories = $category->children()->pluck('id');
                 $query = $query->whereIn('category_id', $children_categories);
             }
-            $services = $query->where('publication_status', 1)->select('id', 'name', 'thumb', 'banner', 'variables', 'variable_type')
+            $services = $query->select('id', 'name', 'thumb', 'banner', 'variables', 'variable_type')
                 ->take(10)
                 ->get();
             if ($services->isEmpty())
@@ -60,6 +60,7 @@ class SearchController extends Controller
                     $rating = $service->reviews()->avg('rating');
                     array_add($service, 'review', $review);
                     array_add($service, 'rating', $rating);
+                    array_forget($service,'partners');
                 }
             }
             return response()->json(['msg' => 'successful', 'code' => 200, 'services' => $services]);
