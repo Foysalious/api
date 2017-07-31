@@ -24,10 +24,13 @@ class SearchController extends Controller
 
     public function getService(Request $request)
     {
-        if ($request->input('s') != '') {
-            $query = Service::whereHas('tags',function ($q) use ($request) {
-                $q->where('name', 'like', "%".$request->s . "%");
-            })->orWhere('name', 'like', "%" . $request->input('s') . "%");
+        if ($request->s != '') {
+            $search_words = explode(' ', $request->s);
+            $query = Service::whereHas('tags', function ($q) use ($request, $search_words) {
+                foreach ($search_words as $word) {
+                    $q->orwhere('name', 'like', "%" . $word . "%");
+                }
+            })->orWhere('name', 'like', "%" . $request->s . "%");
             //if has parent category id
             if ($request->has('p_c')) {
                 $category = Category::find($request->input('p_c'));
