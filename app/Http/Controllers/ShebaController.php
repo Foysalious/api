@@ -36,7 +36,7 @@ class ShebaController extends Controller
 //                ['is_verified', 1]
 //            ]);
 //        })->get()->count();
-        $resource_count=Resource::where('is_verified',1)->get()->count();
+        $resource_count = Resource::where('is_verified', 1)->get()->count();
         return response()->json(['service' => $service_count, 'job' => $job_count,
             'resource' => $resource_count,
             'msg' => 'successful', 'code' => 200]);
@@ -73,5 +73,10 @@ class ShebaController extends Controller
                 ['is_active', 1]
             ])->get();
         return count($offer) >= 3 ? response()->json(['offer' => $offer, 'code' => 200]) : response()->json(['code' => 404]);
+    }
+
+    public function getLeadRewardAmount()
+    {
+        return response()->json(['code' => 200, 'amount' => constants('AFFILIATION_REWARD_MONEY')]);
     }
 }

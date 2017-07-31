@@ -260,5 +260,6 @@ return [
         'customer-app',
         'affiliation-app'
     ],
+    'AFFILIATION_REWARD_MONEY' => 10
 
 ];

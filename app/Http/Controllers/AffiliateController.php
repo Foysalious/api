@@ -77,7 +77,12 @@ class AffiliateController extends Controller
     {
         $affiliate = Affiliate::find($affiliate);
         return $affiliate != null ? response()->json(['code' => 200, 'wallet' => $affiliate->wallet]) : response()->json(['code' => 404, 'msg' => 'Not found!']);
+    }
 
+    public function leadInfo($affiliate, Request $request)
+    {
+        $affiliate = Affiliate::find($affiliate);
+        return response()->json(['code' => 200, 'total_lead' => $affiliate->totalLead(), 'earning_amount' => $affiliate->earningAmount()]);
     }
 
     private function _validateImage($request)

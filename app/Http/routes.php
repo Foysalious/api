@@ -34,6 +34,7 @@ $api->version('v1', function ($api) {
     $api->get('info', 'App\Http\Controllers\ShebaController@getInfo');
     $api->get('images', 'App\Http\Controllers\ShebaController@getImages');
     $api->get('locations', 'App\Http\Controllers\LocationController@getAllLocations');
+    $api->get('lead-reward', 'App\Http\Controllers\ShebaController@getLeadRewardAmount');
     $api->get('search', 'App\Http\Controllers\SearchController@getService');
     $api->post('career', 'App\Http\Controllers\CareerController@apply');
     $api->get('category-service', 'App\Http\Controllers\CategoryServiceController@getCategoryServices');
@@ -153,6 +154,7 @@ $api->version('v1', function ($api) {
     $api->group(['prefix' => 'affiliate/{affiliate}', 'middleware' => ['affiliate.auth']], function ($api) {
         $api->post('edit', 'App\Http\Controllers\AffiliateController@edit');
         $api->post('update-profile-picture', 'App\Http\Controllers\AffiliateController@updateProfilePic');
+        $api->get('lead-info', 'App\Http\Controllers\AffiliateController@leadInfo');
 
         $api->get('wallet', 'App\Http\Controllers\AffiliateController@getWallet');
         $api->get('status', 'App\Http\Controllers\AffiliateController@getStatus');

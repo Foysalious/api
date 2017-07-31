@@ -53,4 +53,14 @@ class Affiliate extends Model
     {
         return $query->where('verification_status', 'verified');
     }
+
+    public function totalLead()
+    {
+        return $this->affiliations->where('status', 'successful')->count();
+    }
+
+    public function earningAmount()
+    {
+        return $this->transactions->where('type', 'Credit')->sum('amount');
+    }
 }
