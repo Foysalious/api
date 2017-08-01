@@ -171,33 +171,8 @@ class ServiceRepository
             }
             array_forget($service, 'partners');
         }
+//        dump($service->id,min($price));
         return $service;
-//        $partners = $service->partners()->where([
-//            ['is_published', 1],
-//            ['is_verified', 1]
-//        ])->get();
-//        if (count($partners) > 0) {
-//            if ($service->variable_type == 'Options') {
-//                $price = array();
-//                foreach ($partners as $partner) {
-//                    $min = min((array)json_decode($partner->pivot->prices));
-//                    array_push($price, (float)$min);
-//                }
-//                array_add($service, 'start_price', min($price));
-//            } elseif ($service->variable_type == 'Fixed') {
-//                $price = array();
-//                foreach ($partners as $partner) {
-//                    array_push($price, (float)$partner->pivot->prices);
-//                }
-//                array_add($service, 'start_price', min($price));
-//            }
-//            array_forget($service, 'partners');
-//        }
-//        return $service;
-//        $partners = $service->partners()->where([
-//            ['is_published', 1],
-//            ['is_verified', 1]
-//        ])->get();
     }
 
     /**

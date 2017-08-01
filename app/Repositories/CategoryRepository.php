@@ -38,23 +38,9 @@ class CategoryRepository
                     }]);
                 }])->take(4)->get();
             array_add($child, 'slug', str_slug($child->name, '-'));
-            $child['services'] = $this->addServiceInfo($services, $request->location);
+            $child['services'] = $this->serviceRepository->addServiceInfo($services, $request->location);
         }
         return $children;
-    }
-
-    public function addServiceInfo($services, $location)
-    {
-        foreach ($services as $key => $service) {
-            array_add($service, 'discount', Service::find($service->id)->hasDiscounts());
-            //Get start & end price for services. Custom services don't have price so omitted
-            $service = $this->serviceRepository->getStartPrice($service, $location);
-            array_add($service, 'slug', str_slug($service->name, '-'));
-            $this->reviewRepository->getReviews($service);
-            array_forget($service, 'variables');
-            array_forget($service, 'partnerServices');
-        }
-        return $services;
     }
 
     public function getChildrenServices($category, $request)
@@ -69,7 +55,7 @@ class CategoryRepository
         foreach ($services as $service) {
             array_push($final_service, $service);
         }
-        return $this->addServiceInfo($final_service, $request->location);
+        return $this->serviceRepository->addServiceInfo($final_service, $request->location);
     }
 
 }

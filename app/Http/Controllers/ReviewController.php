@@ -24,7 +24,6 @@ class ReviewController extends Controller
             ['job_id', $request->input('job_id')],
             ['customer_id', $customer],
         ])->first();
-//        return $review;
         //There is already a review or rating for this job
         if ($review != null) {
             if ($request->input('rating') != '') {

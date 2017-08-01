@@ -27,7 +27,7 @@ class AccountController extends Controller
                 if ($customer->profile_id == $info->profile_id) {
                     return response()->json([
                         'msg' => 'successful', 'code' => 200, 'token' => $token,
-                        'remember_token' => $customer->remember_token, 'customer' => $customer->id, 'customer_img' => $customer->pro_pic
+                        'remember_token' => $customer->remember_token, 'customer' => $customer->id, 'customer_img' => $customer->profile->pro_pic
                     ]);
                 }
             } else if ($info->avatar == 'resource') {

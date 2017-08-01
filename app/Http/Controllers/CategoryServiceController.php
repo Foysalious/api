@@ -4,16 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Service;
-use App\Repositories\CategoryRepository;
+use App\Repositories\ServiceRepository;
 use Illuminate\Http\Request;
 
 class CategoryServiceController extends Controller
 {
-    private $categoryRepository;
+    private $serviceRepository;
 
-    public function __construct(CategoryRepository $categoryRepository)
+    public function __construct()
     {
-        $this->categoryRepository = $categoryRepository;
+        $this->serviceRepository = new ServiceRepository();
     }
 
     /**
@@ -42,7 +42,7 @@ class CategoryServiceController extends Controller
             ['publication_status', 1],
             ['id', '<>', $service->id]
         ])->take(5)->get();
-        $services = $this->categoryRepository->addServiceInfo($services, $request->location);
+        $services = $this->serviceRepository->addServiceInfo($services, $request->location);
         if (count($services) > 3) {
             return response()->json(['services' => $services, 'msg' => 'successful', 'code' => 200]);
         } else {
