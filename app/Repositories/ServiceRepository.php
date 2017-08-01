@@ -159,6 +159,7 @@ class ServiceRepository
                     array_push($price, $calculate_partner['discounted_price']);
 //                    array_push($price, (float)$min);
                 }
+                array_add($service, 'start_price', min($price) * $service->min_quantity);
             } elseif ($service->variable_type == 'Fixed') {
                 $price = array();
                 foreach ($partners as $partner) {
@@ -169,8 +170,8 @@ class ServiceRepository
 //                    array_push($price, (float)$partner->pivot->prices);
 //                    array_push($price, (float)$min);
                 }
+                array_add($service, 'start_price', min($price) * $service->min_quantity);
             }
-            array_add($service, 'start_price', min($price) * $service->min_quantity);
             array_forget($service, 'partners');
         }
         return $service;
