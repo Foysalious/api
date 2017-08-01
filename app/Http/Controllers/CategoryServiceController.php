@@ -38,7 +38,7 @@ class CategoryServiceController extends Controller
     {
         $service = Service::find($service);
         $category = Category::find($service->category_id);
-        $services = $category->services()->select('id', 'name', 'banner', 'variables', 'variable_type')->where([
+        $services = $category->services()->select('id', 'name', 'banner', 'variables', 'variable_type', 'min_quantity')->where([
             ['publication_status', 1],
             ['id', '<>', $service->id]
         ])->take(5)->get();

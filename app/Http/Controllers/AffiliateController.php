@@ -22,7 +22,8 @@ class AffiliateController extends Controller
 
     public function edit($affiliate, Request $request)
     {
-        $request->merge(['bkash_no' => formatMobile($request->bkash_no)]);
+        $mobile = formatMobile(ltrim($request->bkash_no));
+        $request->merge(['bkash_no' => $mobile]);
         if ($msg = $this->_validateEdit($request)) {
             return response()->json(['code' => 500, 'msg' => $msg]);
         }
@@ -37,7 +38,7 @@ class AffiliateController extends Controller
         if ($request->has('bkash_no')) {
             if ($request->bkash_no != '' && $request->bkash_no != null) {
                 $banking_info = $affiliate->banking_info;
-                $banking_info->bKash = $request->bkash_no;
+                $banking_info->bKash = $mobile;
                 $affiliate->banking_info = json_encode($banking_info);
             }
         }

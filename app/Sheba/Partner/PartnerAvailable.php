@@ -33,6 +33,10 @@ class PartnerAvailable
     private function _worksAtThisDay($date)
     {
         $day = date('l', strtotime($date));
+        //working days of partner is empty or has empty array
+        if (preg_match("(\[]|^$)", $this->partner->basicInformations->working_days) === 1) {
+            return false;
+        }
         return in_array($day, json_decode($this->partner->basicInformations->working_days));
     }
 
@@ -54,8 +58,9 @@ class PartnerAvailable
         }
         if (array_has(constants('JOB_PREFERRED_TIMES'), $time)) {
             $working_hours = json_decode($this->partner->basicInformations->working_hours);
-            return $this->_betweenWorkingHours($working_hours, constants('JOB_START_END_TIMES')[$time]);
+            return $working_hours != null ? $this->_betweenWorkingHours($working_hours, constants('JOB_START_END_TIMES')[$time]) : false;
         }
+        return false;
     }
 
     private function _betweenWorkingHours($working_hours, $times)
