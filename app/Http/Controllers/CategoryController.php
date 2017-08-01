@@ -8,6 +8,7 @@ use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
 use Illuminate\Http\Request;
 use Tinify\Tinify;
+
 class CategoryController extends Controller
 {
 
@@ -17,7 +18,7 @@ class CategoryController extends Controller
 
     public function __construct()
     {
-        $this->tinify=\Tinify\setKey(env(''));
+        $this->tinify = \Tinify\setKey(env(''));
         $this->categoryRepository = new CategoryRepository();
         $this->serviceRepository = new ServiceRepository();
     }
@@ -91,7 +92,7 @@ class CategoryController extends Controller
             };
             array_add($cat, 'parent', collect($category->parent)->only(['id', 'name']));
             $category = Category::with(['services' => function ($q) {
-                $q->select('id', 'category_id', 'name', 'thumb', 'banner', 'variable_type', 'variables')->where('publication_status', 1);
+                $q->select('id', 'category_id', 'name', 'thumb', 'banner', 'variable_type', 'variables', 'min_quantity')->where('publication_status', 1);
             }])->where([
                 ['id', $category->id],
                 ['publication_status', 1]

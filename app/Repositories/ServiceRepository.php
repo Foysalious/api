@@ -157,7 +157,6 @@ class ServiceRepository
                     $discount = PartnerService::find($partner->pivot->id)->discount();
                     $calculate_partner = $this->discountRepository->addDiscountToPartnerForService($partner, $discount);
                     array_push($price, $calculate_partner['discounted_price']);
-//                    array_push($price, (float)$min);
                 }
                 array_add($service, 'start_price', min($price) * $service->min_quantity);
             } elseif ($service->variable_type == 'Fixed') {
@@ -167,8 +166,6 @@ class ServiceRepository
                     $discount = PartnerService::find($partner->pivot->id)->discount();
                     $calculate_partner = $this->discountRepository->addDiscountToPartnerForService($partner, $discount);
                     array_push($price, $calculate_partner['discounted_price']);
-//                    array_push($price, (float)$partner->pivot->prices);
-//                    array_push($price, (float)$min);
                 }
                 array_add($service, 'start_price', min($price) * $service->min_quantity);
             }
