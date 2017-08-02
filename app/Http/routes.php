@@ -4,6 +4,18 @@ use App\Models\Group;
 use App\Models\Navigation;
 
 Route::get('/', function () {
+//    $cats=\App\Models\Category::where([['publication_status',1],['parent_id','<>',null]])->get();
+//    \Tinify\setKey("Jr1UGmg6-ow33-a_zHENfyihO-NPKR6n");
+//    foreach ($cats as $cat){
+//        $source = \Tinify\fromFile($cat->thumb);
+//        $source->store(array(
+//            "service" => "s3",
+//            "aws_access_key_id" => env('AWS_KEY'),
+//            "aws_secret_access_key" => env('AWS_SECRET'),
+//            "region" => env('AWS_REGION'),
+//            "path" => substr($cat->thumb,strlen('https://s3.ap-south-1.amazonaws.com/'))
+//        ));
+//    }
     return ['code' => 200, 'msg' => 'Success. This project will hold the api\'s'];
 });
 $api = app('Dingo\Api\Routing\Router');

@@ -37,7 +37,7 @@ class SearchController extends Controller
                 $children_categories = $category->children()->pluck('id');
                 $query = $query->whereIn('category_id', $children_categories);
             }
-            $services = $query->select('id', 'name', 'thumb', 'banner', 'variables', 'variable_type')
+            $services = $query->select('id', 'name', 'thumb', 'banner', 'variables', 'variable_type', 'min_quantity')
                 ->take(10)
                 ->get();
             if ($services->isEmpty())
@@ -60,7 +60,7 @@ class SearchController extends Controller
                     $rating = $service->reviews()->avg('rating');
                     array_add($service, 'review', $review);
                     array_add($service, 'rating', $rating);
-                    array_forget($service,'partners');
+                    array_forget($service, 'partners');
                 }
             }
             return response()->json(['msg' => 'successful', 'code' => 200, 'services' => $services]);
