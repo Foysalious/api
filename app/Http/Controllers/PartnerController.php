@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 
 use App\Http\Requests;
 use DB;
+
 class PartnerController extends Controller
 {
     private $serviceRepository;
@@ -51,7 +52,7 @@ class PartnerController extends Controller
         array_add($partner, 'resource_count', $resource_count);
 
         $partner_services = $partner->services()
-            ->select('services.id', 'services.banner', 'services.category_id', 'services.publication_status', 'name', 'variable_type')
+            ->select('services.id', 'services.banner', 'services.category_id', 'services.publication_status', 'name', 'variable_type', 'services.min_quantity')
             ->where([
                 ['is_verified', 1],
                 ['is_published', 1],
@@ -74,7 +75,11 @@ class PartnerController extends Controller
             //avg rating of the partner for this service
             $rating = $service->reviews()->where('partner_id', $partner->id)->avg('rating');
             array_add($service, 'review', $review);
-            array_add($service, 'rating', $rating);
+            if ($rating == null) {
+                array_add($service, 'rating', 5);
+            } else {
+                array_add($service, 'rating', round($rating, 1));
+            }
             array_forget($service, 'pivot');
             array_push($final_service, $service);
         }

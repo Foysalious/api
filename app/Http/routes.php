@@ -35,7 +35,7 @@ $api->version('v1', function ($api) {
     $api->get('images', 'App\Http\Controllers\ShebaController@getImages');
     $api->get('locations', 'App\Http\Controllers\LocationController@getAllLocations');
     $api->get('lead-reward', 'App\Http\Controllers\ShebaController@getLeadRewardAmount');
-    $api->get('search', 'App\Http\Controllers\SearchController@getService');
+    $api->get('search', 'App\Http\Controllers\SearchController@searchService');
     $api->post('career', 'App\Http\Controllers\CareerController@apply');
     $api->get('category-service', 'App\Http\Controllers\CategoryServiceController@getCategoryServices');
     $api->get('{service}/similar-services', 'App\Http\Controllers\CategoryServiceController@getSimilarServices');

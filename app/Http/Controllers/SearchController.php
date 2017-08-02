@@ -22,7 +22,7 @@ class SearchController extends Controller
         $this->inviteRepository = new InvitationRepository();
     }
 
-    public function getService(Request $request)
+    public function searchService(Request $request)
     {
         if ($request->s != '') {
             $search_words = explode(' ', $request->s);
