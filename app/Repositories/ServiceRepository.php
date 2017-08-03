@@ -41,6 +41,7 @@ class ServiceRepository
                 }
             }
             $partner = $this->getPartnerRatingReviewCount($service, $partner);
+            array_add($partner, 'ongoing_jobs', $partner->jobs()->where('status', 'Process')->count());
             $final_partners = $this->addToFinalPartnerListWithDiscount($partner, $final_partners);
         }
         return $final_partners;
@@ -61,6 +62,7 @@ class ServiceRepository
         list($service_partners, $final_partners) = $this->getPartnerService($service, $location);
         foreach ($service_partners as $key => $partner) {
             $partner = $this->getPartnerRatingReviewCount($service, $partner);
+            array_add($partner, 'ongoing_jobs', $partner->jobs()->where('status', 'Process')->count());
             if ($service->variable_type == 'Options') {
                 $prices = (array)json_decode($partner->prices);
                 $price = $this->partnerServesThisOption($prices, $option);
