@@ -82,4 +82,13 @@ class NotificationRepository
         ]);
     }
 
+    public function forAffiliateRegistration($affiliate)
+    {
+        notify()->departments([3, 8])->send([
+            'title' => 'New Affiliate Registration from ' . $affiliate->profile->mobile,
+            'link' => env('SHEBA_BACKEND_URL') . '/affiliate/' . $affiliate->id,
+            'type' => notificationType('Info')
+        ]);
+    }
+
 }

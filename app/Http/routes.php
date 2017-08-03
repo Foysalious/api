@@ -4,10 +4,10 @@ use App\Models\Group;
 use App\Models\Navigation;
 
 Route::get('/', function () {
-//    $cats=\App\Models\Category::where([['publication_status',1],['parent_id','<>',null]])->get();
+//    $cats=\App\Models\Category::where([['publication_status',1],['parent_id',null]])->get();
 //    \Tinify\setKey("Jr1UGmg6-ow33-a_zHENfyihO-NPKR6n");
 //    foreach ($cats as $cat){
-//        $source = \Tinify\fromFile($cat->thumb);
+//        $source = \Tinify\fromFile($cat->banner);
 //        $source->store(array(
 //            "service" => "s3",
 //            "aws_access_key_id" => env('AWS_KEY'),

@@ -210,6 +210,7 @@ class ProfileRepository
             $affiliate->remember_token = str_random(255);
             $affiliate->banking_info = json_encode(array('bKash' => ''));
             $affiliate->save();
+            (new NotificationRepository())->forAffiliateRegistration($affiliate);
         }
     }
 
