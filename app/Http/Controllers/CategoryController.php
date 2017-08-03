@@ -85,7 +85,6 @@ class CategoryController extends Controller
         ])->first();
         if ($category != null) {
             $cat = collect($category)->only(['name', 'banner']);
-
             if ($category->parent == null) {
                 $services = $this->categoryRepository->getChildrenServices($category, $request);
                 return response()->json(['category' => $cat, 'services' => $services, 'msg' => 'successful', 'code' => 200]);

@@ -28,10 +28,10 @@ class CategoryRepository
         if ($request->get('skip') != '') {
             $offset = $request->get('skip');
         }
-        $children = $category->children()->select('id', 'name', 'thumb', 'banner')->skip($offset)->take(2)->get();
-
+        $children = $category->children()->select('id', 'name', 'thumb', 'banner')->get();
+        $children = $this->childrenHasServices($children, $offset);
         foreach ($children as $child) {
-            $services = $child->services()->select('id', 'category_id', 'name', 'thumb', 'banner', 'variable_type', 'variables', 'min_quantity')
+            $services = $child->services()->select('id', 'category_id', 'name', 'thumb', 'banner', 'slug', 'variable_type', 'variables', 'min_quantity')
                 ->where('publication_status', 1)->with(['partnerServices' => function ($q) {
                     $q->select('id', 'partner_id', 'service_id')->with(['discounts' => function ($q) {
                         $q->select('id', 'partner_service_id', 'start_date', 'end_date', 'amount');
@@ -56,6 +56,18 @@ class CategoryRepository
             array_push($final_service, $service);
         }
         return $this->serviceRepository->addServiceInfo($final_service, $request->location);
+    }
+
+    public function childrenHasServices($children, $offset)
+    {
+        $final = array();
+        foreach ($children as $key => $child) {
+            if ($child->services->where('publication_status', 1)->count() > 0) {
+                array_forget($child, 'services');
+                array_push($final, $child);
+            }
+        }
+        return array_slice($final, $offset, 2);
     }
 
 }
