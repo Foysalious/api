@@ -91,4 +91,13 @@ class NotificationRepository
         ]);
     }
 
+    public function forAffiliation($affiliate, $affiliation)
+    {
+        notify()->department(7)->send([
+            'title' => 'New Affiliation Arrived from ' . $affiliate->profile->mobile,
+            'link' => env('SHEBA_BACKEND_URL') . '/affiliation/' . $affiliation->id,
+            'type' => notificationType('Info')
+        ]);
+    }
+
 }

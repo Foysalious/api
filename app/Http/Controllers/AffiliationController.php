@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Affiliate;
 use App\Models\Affiliation;
+use App\Repositories\NotificationRepository;
 use Illuminate\Http\Request;
 use Validator;
 use DB;
@@ -43,7 +44,12 @@ class AffiliationController extends Controller
         $affiliation->customer_name = $request->name;
         $affiliation->customer_mobile = $request->mobile;
         $affiliation->service = $request->service;
-        return $affiliation->save() ? response()->json(['code' => 200]) : response()->json(['code' => 404]);
+        if ($affiliation->save()) {
+            (new NotificationRepository())->forAffiliation($affiliate,$affiliation);
+            return response()->json(['code' => 200]);
+        } else {
+            return response()->json(['code' => 404]);
+        }
     }
 
     private function _validateCreateRequest($request)
