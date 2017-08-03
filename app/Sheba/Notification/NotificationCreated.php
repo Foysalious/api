@@ -25,8 +25,8 @@ class NotificationCreated extends Event implements ShouldBroadcastNow
     public function __construct($data, $sender_id = null, $sender_type = null)
     {
         $this->notificationData = $data;
-        $this->senderId = $sender_id ?: Auth::user()->id;
-        $this->senderType = $sender_type ?: "App\\Models\\User";
+        $this->senderId = $sender_id ?: (Auth::user() ? Auth::user()->id : null);
+        $this->senderType = $sender_type ?: (Auth::user() ? "App\\Models\\User" : null);
     }
 
     /**

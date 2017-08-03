@@ -23,4 +23,22 @@ class User extends Model {
     protected $hidden = [
         'password', 'remember_token',
     ];
+
+    public function notificationSetting()
+    {
+        return $this->hasOne(NotificationSettings::class);
+    }
+
+    public function unfollowedNotifications()
+    {
+        return $this->hasMany(UnfollowedNotification::class);
+    }
+
+
+    public function notifications()
+    {
+        return $this->morphMany(Notification::class, 'notifiable');
+    }
+
+
 }

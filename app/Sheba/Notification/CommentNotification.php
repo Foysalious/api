@@ -25,14 +25,21 @@ class CommentNotification
 
     private function Job(Job $job)
     {
-        // notify($job->crm())->send("");
+        if(!empty($job->crm)) {
+            notify()->user($job->crm)->send([
+                'title' => $this->authUser . " commented on job " . $job->id,
+                'link'  => url("job/$job->id") . "#comments-section",
+                'type'  => notificationType('Info')
+            ]);
+        }
     }
 
     private function Flag(Flag $flag)
     {
         notify($flag->department, $flag->byDepartment)->send([
             'title' => $this->authUser . " commented on flag " . $flag->id,
-            'link' => url("flag/$flag->id") . "#comments-section"
+            'link'  => url("flag/$flag->id") . "#comments-section",
+            'type'  => notificationType('Info')
         ]);
     }
 
@@ -45,6 +52,11 @@ class CommentNotification
     {
         // dd($complain->job);
         // $this->Job($complain->job);
+        notify()->department(13)->send([
+            'title' => $this->authUser . " commented on complain " . $complain->id,
+            'link'  => url("complain/$complain->id") . "#comments-section",
+            'type'  => notificationType('Danger')
+        ]);
     }
 
     public function CustomOrder(CustomOrder $customOrder)

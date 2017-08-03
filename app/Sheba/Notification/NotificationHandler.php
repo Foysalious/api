@@ -1,5 +1,6 @@
 <?php namespace Sheba\Notification;
 
+use App\Models\UnfollowedNotification;
 use Illuminate\Database\Eloquent\Collection;
 
 use App\Models\Department;
@@ -8,6 +9,7 @@ use App\Models\Partner;
 use App\Models\Resource;
 use App\Models\User;
 
+use Session;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
@@ -51,6 +53,13 @@ class NotificationHandler
         \View::share('NOTIFICATION_TYPES', getNotificationTypes());
     }
 
+    /**
+     * Define who is generating this notification
+     *
+     * @param $id
+     * @param $type
+     * @return $this|NotificationHandler
+     */
     public function sender($id, $type = 'user')
     {
         $this->senderId = $id;
@@ -67,7 +76,7 @@ class NotificationHandler
     {
         $data = $this->prepare($data);
 
-        if ($this->notifiable_type && $this->notifiable_id) {
+        if($this->notifiable_type && $this->notifiable_id) {
             array_push($this->notifiable_types, $this->notifiable_type);
             array_push($this->notifiable_ids, $this->notifiable_id);
         }
@@ -86,14 +95,29 @@ class NotificationHandler
         if($this->validateNotifiable()) {
             //$this->removeDuplication();
             #$notification_data = [];
+            $pubnub_notification = false;
+            $pubnub_users = [];
             foreach($this->notifiable_ids as $key => $id) {
-                if($this->isSent($key) || $this->isAuthUser($key)) continue;
+                if($this->isSent($key) || $this->isAuthUser($key) || $this->hasUserTurnedOffNotification($key, $data['link'])) continue;
                 unset($data['id']);
                 $data['notifiable_id'] = $id;
                 $data['notifiable_type'] = $this->notifiable_types[$key];
                 #$notification_data[] = $data;
                 $data['id'] = Notification::insertGetId($data);
                 if(config('sheba.socket_on')) event(new NotificationCreated($data, $this->senderId, $this->senderType));
+                if($data['notifiable_type'] == "App\\Models\\User") {
+                    $pubnub_notification = true;
+                    $pubnub_users[] = $data['notifiable_id'];
+                }
+            }
+            if($pubnub_notification) {
+                Session::flash('send_notification', true);
+                Session::flash('send_notification_users', json_encode($pubnub_users));
+                Session::flash('send_notification_data', json_encode([
+                    'title' => $data['title'],
+                    'link' => $data['link'],
+                    'description' => (!empty($data['description']) ? $data['description'] : "")
+                ]));
             }
             #Notification::insert($notification_data);
         }
@@ -106,10 +130,10 @@ class NotificationHandler
      */
     public function setNotifiable($notifiable)
     {
-        if (is_array($notifiable) || $notifiable instanceof Collection) {
+        if(is_array($notifiable) || $notifiable instanceof Collection) {
             return $this->setNotifiables($notifiable);
         }
-        if ($notifiable instanceof Department) {
+        if($notifiable instanceof Department) {
             return $this->department($notifiable);
         }
         $this->checkIfNotifiable($notifiable);
@@ -124,10 +148,9 @@ class NotificationHandler
      */
     public function setNotifiables($notifiables)
     {
-        foreach ($notifiables as $notifiable) {
-            if ($notifiable instanceof Department) {
-                $this->department($notifiable);
-                continue;
+        foreach($notifiables as $notifiable) {
+            if($notifiable instanceof Department) {
+                $this->department($notifiable); continue;
             }
 
             $this->checkIfNotifiable($notifiable);
@@ -167,7 +190,7 @@ class NotificationHandler
      */
     public function users($users)
     {
-        foreach ($users as $user) {
+        foreach($users as $user) {
             array_push($this->notifiable_types, 'App\Models\User');
             array_push($this->notifiable_ids, ($user instanceof User) ? $user->id : $user);
         }
@@ -190,7 +213,7 @@ class NotificationHandler
      */
     public function departments($departments)
     {
-        foreach ($departments as $department) {
+        foreach($departments as $department) {
             $this->department($department);
         }
         return $this;
@@ -212,7 +235,7 @@ class NotificationHandler
      */
     public function resources($resources)
     {
-        foreach ($resources as $resource) {
+        foreach($resources as $resource) {
             array_push($this->notifiable_types, 'App\Models\Resource');
             array_push($this->notifiable_ids, ($resource instanceof Resource) ? $resource->id : $resource);
         }
@@ -235,7 +258,7 @@ class NotificationHandler
      */
     public function partners($partners)
     {
-        foreach ($partners as $partner) {
+        foreach($partners as $partner) {
             array_push($this->notifiable_types, 'App\Models\Partner');
             array_push($this->notifiable_ids, ($partner instanceof Partner) ? $partner->id : $partner);
         }
@@ -249,12 +272,12 @@ class NotificationHandler
      */
     private function checkIfNotifiable($notifiable, $id = null)
     {
-        $class = (is_string($notifiable)) ? $notifiable : get_class($notifiable);
-        if (!in_array($class, $this->notifiables)) {
-            throw new \Exception("Invalid user provided for notification. " . get_class($notifiable) . " is not notifiable.");
+        $class = (is_string($notifiable)) ? $notifiable: get_class($notifiable);
+        if(!in_array($class, $this->notifiables)) {
+            throw new \Exception("Invalid user provided for notification. " . get_class($notifiable) . " is not notifiable." );
         }
 
-        if (!empty($id) && !is_int($id)) {
+        if(!empty($id) && !is_int($id)) {
             throw new \Exception("Integer expected as notifiable id, " . gettype($id) . " given.");
         }
     }
@@ -265,9 +288,8 @@ class NotificationHandler
     private function validateNotifiable()
     {
         $caller = debug_backtrace()[1]['function'];
-        if (($caller == "send" && !$this->notifiable_type && !$this->notifiable_id) ||
-            ($caller == "sendToAll" && empty($this->notifiable_types) && empty($this->notifiable_ids))
-        ) {
+        if( ($caller == "send" && !$this->notifiable_type && !$this->notifiable_id) ||
+            ($caller == "sendToAll" && empty($this->notifiable_types) && empty($this->notifiable_ids)) ) {
             return false;
             //throw new \Exception("I'm not sure about whom I should send this notification. Make sure to set that correctly.");
         }
@@ -281,11 +303,11 @@ class NotificationHandler
      */
     private function prepare($data)
     {
-        if (!isset($data) || (is_array($data) && !isset($data['title']))) {
+        if(!isset($data) || (is_array($data) && !isset($data['title']))) {
             throw new \Exception("Notifications must have a title.");
         }
 
-        return ((is_array($data)) ? $data : ['title' => $data]) + ['created_at' => Carbon::now()];
+        return ((is_array($data)) ? $data : ['title' => $data ]) + ['created_at' => Carbon::now()];
     }
 
     /**
@@ -293,11 +315,10 @@ class NotificationHandler
      */
     private function removeDuplication()
     {
-        for ($i = 0; $i < count($this->notifiable_ids); $i++) {
-            for ($j = 0; $j < $i; $j++) {
-                if ($this->notifiable_ids[$i] == $this->notifiable_ids[$j] &&
-                    $this->notifiable_types[$i] == $this->notifiable_types[$j]
-                ) {
+        for($i = 0; $i < count($this->notifiable_ids); $i++) {
+            for($j = 0; $j < $i; $j++) {
+                if($this->notifiable_ids[$i] == $this->notifiable_ids[$j] &&
+                    $this->notifiable_types[$i] == $this->notifiable_types[$j]) {
                     array_splice($this->notifiable_ids, $i, 1);
                     array_splice($this->notifiable_types, $i, 1);
                     $i--;
@@ -312,10 +333,9 @@ class NotificationHandler
      */
     private function isSent($key)
     {
-        for ($i = 0; $i <= $key - 1; $i++) {
-            if ($this->notifiable_ids[$i] == $this->notifiable_ids[$key] &&
-                $this->notifiable_types[$i] == $this->notifiable_types[$key]
-            )
+        for($i=0; $i <= $key - 1; $i++) {
+            if( $this->notifiable_ids[$i] == $this->notifiable_ids[$key] &&
+                $this->notifiable_types[$i] == $this->notifiable_types[$key] )
                 return true;
         }
         return false;
@@ -328,8 +348,46 @@ class NotificationHandler
     private function isAuthUser($key)
     {
         if(empty($this->senderId) && empty($this->senderType)) {
+            if(!Auth::user()) return false;
             return $this->notifiable_ids[$key] == Auth::user()->id && $this->notifiable_types[$key] == get_class(Auth::user());
         }
         return $this->notifiable_ids[$key] == $this->senderId && $this->notifiable_types[$key] == $this->senderType;
+    }
+
+    /**
+     * @param $key
+     * @param $link
+     * @return bool
+     */
+    private function hasUserTurnedOffNotification($key, $link)
+    {
+        if($this->notifiable_types[$key] != "App\\Models\\User") return false;
+        $link = explode('/', $link);
+        $event = ['event_type' => 'App\Models\\' . studly_case($link[3]), 'event_id' => $link[4]];
+        $user = User::find($this->notifiable_ids[$key]);
+        return $this->hasUserUnfollowedThisEvent($user, $event) || $this->hasUserTurnedOffThisEventType($user, $event['event_type']);
+    }
+
+    /**
+     * @param $user
+     * @param $event
+     * @return bool
+     */
+    private function hasUserUnfollowedThisEvent($user, $event)
+    {
+        return $user->unfollowedNotifications()->where($event)->count();
+    }
+
+    /**
+     * @param $user
+     * @param $event
+     * @return bool
+     */
+    private function hasUserTurnedOffThisEventType($user, $event)
+    {
+        $rules = $user->notificationSetting->rules;
+        $event = snake_case(class_basename($event)); // App\Models\Job => Job => job; App\Models\InfoCall => InfoCall => info_call;
+        if(!property_exists($rules, $event)) return true;
+        return !$rules->$event;
     }
 }
