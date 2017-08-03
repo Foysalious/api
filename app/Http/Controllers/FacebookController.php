@@ -28,19 +28,17 @@ class FacebookController extends Controller
 
     public function continueWithKit(Request $request)
     {
-//        if ($msg = $this->_validateKitRequest($request)) {
-//            return response()->json(['code' => 500, 'msg' => $msg]);
-//        }
-//        $code_data = $this->fbKit->authenticateKit($request->input('code'));
-//        if ($code_data == false) {
-//            return response()->json(['code' => 500, 'msg' => 'Code is invalid']);
-//        }
+        if ($msg = $this->_validateKitRequest($request)) {
+            return response()->json(['code' => 500, 'msg' => $msg]);
+        }
+        $code_data = $this->fbKit->authenticateKit($request->input('code'));
+        if ($code_data == false) {
+            return response()->json(['code' => 500, 'msg' => 'Code is invalid']);
+        }
         $from = $this->profileRepository->getAvatar($request->from);
-//        $profile = $this->profileRepository->ifExist($code_data['mobile'], 'mobile');
-        $profile = $this->profileRepository->ifExist('+8801678242969', 'mobile');
+        $profile = $this->profileRepository->ifExist($code_data['mobile'], 'mobile');
         if ($profile == false) {
-//            array_add($request, 'mobile', $code_data['mobile']);
-            array_add($request, 'mobile', '+8801678242969');
+            array_add($request, 'mobile', $code_data['mobile']);
             $profile = $this->profileRepository->registerMobile($request->all());
             $this->profileRepository->registerAvatarByKit($from, $request, $profile);
         }
