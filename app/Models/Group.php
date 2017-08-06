@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Models;
 
 use Jenssegers\Mongodb\Eloquent\Model as Eloquent;
@@ -13,4 +12,9 @@ class Group extends Eloquent
     {
         return $this->belongsTo(Navigation::class);
     }
+
+    public function navServices(){
+        return $this->belongsToMany(NavService::class);
+    }
+
 }

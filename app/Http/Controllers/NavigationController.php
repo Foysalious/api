@@ -20,8 +20,17 @@ class NavigationController extends Controller
     public function getNavList()
     {
         $navs = Navigation::with(['groups' => function ($q) {
-            $q->select('id', 'name', 'navigation_id', 'services');
+            $q->select('_id', 'name', 'navigation_id', 'services')->with(['navServices' => function ($q) {
+                $q->select('*')->where('publication_status', 1);
+            }]);
         }])->select('_id', 'name')->where('publication_status', 1)->get();
+        foreach ($navs as $nav) {
+            foreach ($nav->groups as $group) {
+                foreach ($group->navServices as $service) {
+                    array_forget($service, ['updated_at', 'created_at', 'group_ids']);
+                }
+            }
+        }
         return response()->json(['navigations' => $navs]);
     }
 
