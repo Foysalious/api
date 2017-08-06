@@ -171,7 +171,8 @@ class CustomerController extends Controller
     public function getDeliveryInfo($customer)
     {
         $customer = Customer::find($customer);
-        return response()->json(['msg' => 'successful', 'addresses' => $customer->delivery_addresses, 'name' => $customer->name, 'mobile' => $customer->mobile, 'code' => 200]);
+        return response()->json(['msg' => 'successful', 'addresses' => $customer->delivery_addresses()->select('id', 'address')->get(),
+            'name' => $customer->profile->name, 'mobile' => $customer->profile->mobile, 'code' => 200]);
     }
 
     public function removeDeliveryAddress($customer, Request $request)
