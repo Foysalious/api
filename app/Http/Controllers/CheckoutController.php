@@ -44,7 +44,7 @@ class CheckoutController extends Controller
         $cart = json_decode($request->cart);
         $cart->items = $this->cartRepository->checkValidation($cart, $request->location_id);
         if ($cart->items[0] == false) {
-            return response()->json(['code' => 409, 'msg' => $cart->items[1]]);
+            return response()->json(['code' => 400, 'msg' => $cart->items[1]]);
         }
         $request->merge(array('cart' => json_encode($cart)));
         //store order details for customer
