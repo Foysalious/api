@@ -32,6 +32,7 @@ class PartnerController extends Controller
 
     public function getPartnerServices($partner, Request $request)
     {
+        $location = $request->has('location') ? $request->location : 4;
         $partner = Partner::select('id', 'name', 'sub_domain', 'description', 'logo', 'type', 'level')
             ->where('sub_domain', $partner)
             ->first();
@@ -65,7 +66,7 @@ class PartnerController extends Controller
         }
         $final_service = [];
         foreach ($partner_services as $service) {
-            $service = $this->serviceRepository->getStartPrice($service, $request->location);
+            $service = $this->serviceRepository->getStartPrice($service, $location);
             array_add($service, 'slug_service', str_slug($service->name, '-'));
             //review count of partner of this service
             $review = $service->reviews()->where([
