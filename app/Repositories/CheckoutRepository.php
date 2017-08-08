@@ -375,7 +375,7 @@ class CheckoutRepository
         $cart = json_decode($request->cart);
         $cart->items = $this->cartRepository->checkValidation($cart, $request->location_id);
         if ($cart->items[0] == false) {
-            return (['code' => 409, 'msg' => $cart->items[1]]);
+            return (['code' => 400, 'msg' => $cart->items[1]]);
         }
         $request->merge(array('cart' => json_encode($cart)));
         $service_names = '';

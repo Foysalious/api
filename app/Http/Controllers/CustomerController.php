@@ -261,7 +261,7 @@ class CustomerController extends Controller
         if ($profile->update()) {
             return response()->json(['msg' => 'successful', 'code' => 200]);
         } else {
-            return response()->json(['msg' => 'something went wrong!', 'code' => 400]);
+            return response()->json(['msg' => 'something went wrong!', 'code' => 500]);
         }
     }
 
@@ -292,7 +292,7 @@ class CustomerController extends Controller
     private function _validateEditInfo($request, $profile)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required',
+            'name' => 'required|string',
             'email' => 'required|email|unique:profiles,email,' . $profile->id,
             'gender' => 'required|in:Male,Female,Other',
             'dob' => 'required|date|date_format:Y-m-d|before:' . date('Y-m-d')
