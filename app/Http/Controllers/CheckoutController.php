@@ -62,7 +62,6 @@ class CheckoutController extends Controller
                     }
                 }
             }
-            (new NotificationRepository())->send($order);
             $this->checkoutRepository->sendConfirmation($customer->id, $order);
             return response()->json(['code' => 200, 'msg' => 'Order placed successfully!']);
         } else {

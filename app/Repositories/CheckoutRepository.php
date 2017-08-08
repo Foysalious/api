@@ -462,6 +462,7 @@ class CheckoutRepository
         (new SmsHandler('order-created'))->send($customer->mobile, [
             'order_code' => $order->code()
         ]);
+        (new NotificationRepository())->send($order);
         if (isEmailValid($customer->email)) {
             $this->dispatch(new SendOrderConfirmationEmail($customer, $order));
         }
