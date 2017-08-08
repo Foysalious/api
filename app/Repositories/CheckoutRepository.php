@@ -410,8 +410,8 @@ class CheckoutRepository
         $data['currency'] = "BDT";
         $data['product_name'] = $product_name;
         $data['product_description'] = "N/A";
-        $data['name'] = !empty($customer->name) ? $customer->name : 'N/A';
-        $data['email'] = !empty($customer->email) ? $customer->email : 'N/A';
+        $data['name'] = !empty($customer->profile->name) ? $customer->profile->name : 'N/A';
+        $data['email'] = !empty($customer->profile->email) ? $customer->profile->email : 'N/A';
         $data['phone'] = $request->input('phone');
         if ($request->input('address') != '') {
             $data['address'] = $request->input('address');

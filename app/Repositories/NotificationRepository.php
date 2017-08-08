@@ -59,7 +59,7 @@ class NotificationRepository
             $partner = Partner::find($partner_order->partner_id);
             notify()->partner($partner->id)->sender($this->sender_id, $this->sender_type)->send([
                 'title' => 'New Order Placed',
-                'link' => env('SHEBA_PARTNER_END_URL') . '/' . $partner->sub_domain . '/order/' . $this->order->id,
+                'link' => env('SHEBA_PARTNER_END_URL') . '/' . $partner->sub_domain . '/order/' . $partner_order->id,
                 'type' => notificationType('Info')
             ]);
         }

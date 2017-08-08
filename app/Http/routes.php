@@ -93,6 +93,7 @@ $api->version('v1', function ($api) {
         $api->get('{customer}', 'App\Http\Controllers\CustomerController@getCustomerInfo');
         $api->post('{customer}/edit', 'App\Http\Controllers\CustomerController@editInfo');
         $api->get('{customer}/general-info', 'App\Http\Controllers\CustomerController@getCustomerGeneralInfo');
+        $api->post('{customer}/change-picture', 'App\Http\Controllers\ProfileController@changePicture');
         $api->get('{customer}/intercom-info', 'App\Http\Controllers\CustomerController@getIntercomInfo');
         $api->get('{customer}/order-list', 'App\Http\Controllers\OrderController@getNotClosedOrderInfo');
         $api->get('{customer}/order-history', 'App\Http\Controllers\OrderController@getClosedOrderInfo');
@@ -174,6 +175,10 @@ $api->version('v1', function ($api) {
         $api->get('affiliations', 'App\Http\Controllers\AffiliationController@index');
         $api->post('affiliations', 'App\Http\Controllers\AffiliationController@create');
 
+    });
+
+    $api->group(['prefix' => 'profile', 'middleware' => ['profile.auth']], function ($api) {
+        $api->post('change-picture', 'App\Http\Controllers\ProfileController@changePicture');
     });
 
 });

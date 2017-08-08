@@ -17,7 +17,7 @@ class CustomerAuthMiddleware
      */
     public function handle($request, Closure $next)
     {
-        If ($request->has('remember_token')) {
+        if ($request->has('remember_token')) {
             $customer = Customer::where('remember_token', $request->input('remember_token'))->first();
             //remember_token is valid for a customer
             if ($customer) {
