@@ -250,10 +250,10 @@ class CustomerController extends Controller
 
     public function editInfo($customer, Request $request)
     {
-        if ($msg = $this->_validateEditInfo($request)) {
+        $profile = (Customer::find($customer))->profile;
+        if ($msg = $this->_validateEditInfo($request, $profile)) {
             return response()->json(['code' => 500, 'msg' => $msg]);
         }
-        $profile = (Customer::find($customer))->profile;
         $profile->name = $request->name;
         $profile->email = $request->email;
         $profile->gender = $request->gender;
@@ -289,14 +289,13 @@ class CustomerController extends Controller
         return response()->json(['code' => 200]);
     }
 
-    private function _validateEditInfo($request)
+    private function _validateEditInfo($request, $profile)
     {
-        $today = date('Y-m-d');
         $validator = Validator::make($request->all(), [
             'name' => 'required',
-            'email' => 'required|email|unique:profiles',
+            'email' => 'required|email|unique:profiles,email,' . $profile->id,
             'gender' => 'required|in:Male,Female,Other',
-            'dob' => 'required|date|date_format:Y-m-d|before:' . $today
+            'dob' => 'required|date|date_format:Y-m-d|before:' . date('Y-m-d')
         ]);
         return $validator->fails() ? $validator->errors()->all()[0] : false;
     }
