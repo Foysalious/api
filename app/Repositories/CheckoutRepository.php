@@ -450,8 +450,8 @@ class CheckoutRepository
     {
         $partner_order_payment = new PartnerOrderPayment();
         $partner_order_payment->partner_order_id = $partner_order->id;
-        $partner_order_payment->transaction_type = 'Credit';
-        $partner_order_payment->method = 'online';
+        $partner_order_payment->transaction_type = 'Debit';
+        $partner_order_payment->method = 'Online';
         return $partner_order_payment;
     }
 

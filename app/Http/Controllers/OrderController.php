@@ -33,6 +33,10 @@ class OrderController extends Controller
                     $job = $partner_order->jobs[0];
                     if ($job->partnerChangeLog != null) {
                         array_add($partner_order, 'show', false);
+                        array_forget($partner_order, 'partner_collection');
+                        array_forget($partner_order, 'sheba_collection');
+                        array_forget($partner_order->partner, 'categories');
+                        array_forget($job, 'partnerChangeLog');
                         continue;
                     }
                 } else {
@@ -42,6 +46,10 @@ class OrderController extends Controller
                     if ($job->status == "Cancelled") {
                         if ($job->partnerChangeLog != null) {
                             array_add($job, 'show', false);
+                            array_forget($partner_order, 'partner_collection');
+                            array_forget($partner_order, 'sheba_collection');
+                            array_forget($partner_order->partner, 'categories');
+                            array_forget($job, 'partnerChangeLog');
                             continue;
                         } else {
                             array_add($job, 'show', true);

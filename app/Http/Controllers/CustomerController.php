@@ -248,20 +248,20 @@ class CustomerController extends Controller
         }
     }
 
-    public function modifyGeneralInfo($customer, Request $request)
+    public function editInfo($customer, Request $request)
     {
-        $customer = Customer::find($customer);
-        if ($request->has('name')) {
-            $customer->name = $request->input('name');
+        if ($msg = $this->_validateEditInfo($request)) {
+            return response()->json(['code' => 500, 'msg' => $msg]);
         }
-        if ($request->has('dob')) {
-            $customer->dob = $request->input('dob');
-        }
-        if ($request->has('gender')) {
-            $customer->gender = $request->input('gender');
-        }
-        if ($customer->update()) {
+        $profile = (Customer::find($customer))->profile;
+        $profile->name = $request->name;
+        $profile->email = $request->email;
+        $profile->gender = $request->gender;
+        $profile->dob = $request->dob;
+        if ($profile->update()) {
             return response()->json(['msg' => 'successful', 'code' => 200]);
+        } else {
+            return response()->json(['msg' => 'something went wrong!', 'code' => 400]);
         }
     }
 
@@ -287,5 +287,17 @@ class CustomerController extends Controller
         $customer = Customer::find($customer);
         $this->dispatch(new SendReferralRequestEmail($customer, $request->email, $customer->referral));
         return response()->json(['code' => 200]);
+    }
+
+    private function _validateEditInfo($request)
+    {
+        $today = date('Y-m-d');
+        $validator = Validator::make($request->all(), [
+            'name' => 'required',
+            'email' => 'required|email|unique:profiles',
+            'gender' => 'required|in:Male,Female,Other',
+            'dob' => 'required|date|date_format:Y-m-d|before:' . $today
+        ]);
+        return $validator->fails() ? $validator->errors()->all()[0] : false;
     }
 }
