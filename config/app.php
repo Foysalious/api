@@ -161,6 +161,8 @@ return [
         Sentry\SentryLaravel\SentryLaravelServiceProvider::class,
         Maatwebsite\Excel\ExcelServiceProvider::class,
         Jenssegers\Mongodb\MongodbServiceProvider::class,
+        LaravelFCM\FCMServiceProvider::class,
+        Intervention\Image\ImageServiceProvider::class,
 
         App\Providers\CustomValidatorProvider::class,
 
@@ -212,7 +214,10 @@ return [
         'JWTAuth' => Tymon\JWTAuth\Facades\JWTAuth::class,
         'JWTFactory' => Tymon\JWTAuth\Facades\JWTFactory::class,
         'Sentry' => Sentry\SentryLaravel\SentryFacade::class,
-        'Excel' => Maatwebsite\Excel\Facades\Excel::class
+        'Excel' => Maatwebsite\Excel\Facades\Excel::class,
+        'FCM'      => LaravelFCM\Facades\FCM::class,
+        'FCMGroup' => LaravelFCM\Facades\FCMGroup::class,
+        'Image' => Intervention\Image\Facades\Image::class
     ],
 
 ];
