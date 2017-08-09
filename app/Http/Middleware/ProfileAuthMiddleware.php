@@ -38,7 +38,7 @@ class ProfileAuthMiddleware
                     }
                     if ($avatar != null) {
                         if ($avatar->id == $request->id) {
-                            $request->merge(['avatar' => $avatar]);
+                            $request->merge(['profile' => $avatar->profile]);
                             return $next($request);
                         } else {
                             return response()->json(['msg' => 'unauthorized', 'code' => 409]);

@@ -25,7 +25,7 @@ class ProfileController extends Controller
         if ($msg = $this->_validateImage($request)) {
             return response()->json(['code' => 500, 'msg' => $msg]);
         }
-        $profile = $request->avatar->profile;
+        $profile = $request->profile;
         $photo = $request->file('photo');
         if (strpos($profile->pro_pic, 'images/customer/avatar/default.jpg') == false) {
             $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
