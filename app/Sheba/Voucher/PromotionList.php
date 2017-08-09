@@ -10,6 +10,7 @@ use Carbon\Carbon;
 class PromotionList
 {
     private $customer;
+    private $message = '';
 
     public function __construct($customer)
     {
@@ -21,11 +22,10 @@ class PromotionList
         $voucher = $this->isValid($promo, $this->customer);
         if ($voucher != false) {
             if ($this->canAdd($voucher, $this->customer)) {
-                return $this->create($voucher->id);
+                return array($this->create($voucher->id), 'successful');
             }
-        } else {
-            return false;
         }
+        return array(false, $this->message);
     }
 
     /**
@@ -63,6 +63,7 @@ class PromotionList
         foreach ($promotions as $promotion) {
             //voucher already added
             if ($promotion->voucher->id == $voucher->id) {
+                $this->message = "Voucher is already added!";
                 return false;
             }
             if ($voucher->is_referral) {

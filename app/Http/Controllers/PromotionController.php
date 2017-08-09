@@ -12,9 +12,9 @@ class PromotionController extends Controller
 {
     public function addPromo($customer, Request $request)
     {
-        $promotion = new PromotionList($customer);
-        $promotion = $promotion->add($request->promo);
-        return $promotion != false ? response()->json(['code' => 200, 'promotion' => $promotion]) : response()->json(['code' => 404]);
+        $promotion = new PromotionList($request->customer);
+        list($promotion, $msg) = $promotion->add($request->promo);
+        return $promotion != false ? response()->json(['code' => 200, 'promotion' => $promotion]) : response()->json(['code' => 404, 'msg' => $msg]);
     }
 
     public function getPromo($customer)
@@ -32,8 +32,7 @@ class PromotionController extends Controller
 
     public function suggestPromo($customer, Request $request)
     {
-        $customer = Customer::find($customer);
-        $voucher_suggest = new VoucherSuggester($customer, $request->cart, $request->location);
+        $voucher_suggest = new VoucherSuggester($request->customer, $request->cart, $request->location);
         $promo = $voucher_suggest->suggest();
         if ($promo != null) {
             return response()->json(['code' => 200, 'amount' => $promo['amount'], 'voucher_code' => $promo['voucher']->code]);

@@ -22,6 +22,7 @@ class CustomerAuthMiddleware
             //remember_token is valid for a customer
             if ($customer) {
                 if ($customer->id == $request->customer) {
+                    $request->merge(['customer' => $customer]);
                     return $next($request);
                 } else {
                     return response()->json(['msg' => 'unauthorized', 'code' => 409]);

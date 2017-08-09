@@ -18,9 +18,9 @@ class OrderController extends Controller
         $this->job_statuses_show = config('constants.JOB_STATUSES_SHOW');
     }
 
-    public function getNotClosedOrderInfo($customer)
+    public function getNotClosedOrderInfo($customer, Request $request)
     {
-        $customer = Customer::find($customer);
+        $customer = $request->customer;
         $orders = $this->orderRepository->getOrderInfo($customer);
         $final_orders = [];
         foreach ($orders as $key => $order) {
@@ -74,9 +74,9 @@ class OrderController extends Controller
         return response()->json(['orders' => $final_orders, 'code' => 200, 'msg' => 'successful']);
     }
 
-    public function getClosedOrderInfo($customer)
+    public function getClosedOrderInfo($customer, Request $request)
     {
-        $customer = Customer::find($customer);
+        $customer = $request->customer;
         $orders = $this->orderRepository->getOrderInfo($customer);
         $final_orders = [];
         foreach ($orders as $key => $order) {
@@ -118,9 +118,9 @@ class OrderController extends Controller
         return response()->json(['orders' => $final_orders, 'code' => 200, 'msg' => 'successful']);
     }
 
-    public function getCancelledOrders($customer)
+    public function getCancelledOrders($customer, Request $request)
     {
-        $customer = Customer::find($customer);
+        $customer = $request->customer;
         $orders = $this->orderRepository->getOrderInfo($customer);
         $final_orders = [];
         foreach ($orders as $key => $order) {

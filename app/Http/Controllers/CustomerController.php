@@ -16,6 +16,7 @@ use App\Http\Controllers\FacebookAccountKit;
 use Redis;
 use Sheba\Voucher\ReferralCreator;
 use Validator;
+use DB;
 
 class CustomerController extends Controller
 {
@@ -50,32 +51,16 @@ class CustomerController extends Controller
         }
     }
 
-    /**
-     * @param $customer
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function getCustomerInfo($customer)
+    public function getCustomerInfo($customer, Request $request)
     {
-        $cus = Customer::find($customer);
-        $customer = Customer::select('name', 'xp', 'rating')
-            ->find($customer);
-//        'secondary_mobiles' => $cus->mobiles()->select('mobile')->where('mobile', '<>', $customer->mobile)->get(),
         return response()->json([
-            'msg' => 'successful', 'code' => 200, 'customer' => $customer
+            'msg' => 'successful', 'code' => 200, 'customer' => $request->customer->profile()->select('name', DB::raw('pro_pic as picture'))->first()
         ]);
-//        $cus = Customer::find($customer);
-//        $customer = Customer::select('name', 'mobile', 'email', 'address', 'office_address', 'gender', 'dob', 'fb_id', 'pro_pic', 'xp', 'rating', 'reference_code', 'email_verified')
-//            ->find($customer);
-////        'secondary_mobiles' => $cus->mobiles()->select('mobile')->where('mobile', '<>', $customer->mobile)->get(),
-//        return response()->json([
-//            'msg' => 'successful', 'code' => 200, 'customer' => $customer,
-//            'addresses' => $cus->delivery_addresses()->select('id', 'address')->get()
-//        ]);
     }
 
-    public function getCustomerGeneralInfo($customer)
+    public function getCustomerGeneralInfo($customer, Request $request)
     {
-        $customer = Customer::find($customer);
+        $customer = $request->customer;
         $adresses = $customer->delivery_addresses()->select('id', 'address')->get();
         $customer = $customer->profile()->select('name', 'address', 'gender', 'dob', 'email', 'mobile')->first();
         return response()->json([
@@ -83,21 +68,17 @@ class CustomerController extends Controller
         ]);
     }
 
-    public function getIntercomInfo($customer)
+    public function getIntercomInfo($customer, Request $request)
     {
-        $customer = Customer::select('id', 'name', 'mobile', 'email', 'created_at')->where('id', $customer)->first();
+        $customer = $request->customer->profile()->select('id', 'name', 'mobile', 'email')->first();
         $user_hash = hash_hmac(
             'sha256', // hash function
             $customer->id, // user's email address
             env('INTERCOM_SECRET_KEY')// secret key (keep safe!)
         );
-        array_add($customer, 'signed_up_at', $customer->created_at->timestamp);
+        array_add($customer, 'signed_up_at', $request->customer->created_at->timestamp);
         array_add($customer, 'user_hash', $user_hash);
-        if (count($customer) != 0) {
-            return response()->json(['msg' => 'successful', 'code' => 200, 'customer' => $customer]);
-        } else {
-            return response()->json(['msg' => 'not ok', 'code' => 404]);
-        }
+        return response()->json(['msg' => 'successful', 'code' => 200, 'customer' => $customer]);
     }
 
     public function facebookIntegration(Request $request, $customer)
@@ -250,7 +231,7 @@ class CustomerController extends Controller
 
     public function editInfo($customer, Request $request)
     {
-        $profile = (Customer::find($customer))->profile;
+        $profile = $request->customer->profile;
         if ($msg = $this->_validateEditInfo($request, $profile)) {
             return response()->json(['code' => 500, 'msg' => $msg]);
         }
@@ -265,9 +246,9 @@ class CustomerController extends Controller
         }
     }
 
-    public function getReferral($customer)
+    public function getReferral($customer, Request $request)
     {
-        $customer = Customer::find($customer);
+        $customer = $request->customer;
         if ($customer->referral == '') {
             $referral_creator = new ReferralCreator($customer);
             $voucher = $referral_creator->create();
@@ -284,7 +265,7 @@ class CustomerController extends Controller
         if ($validator->fails()) {
             return response()->json(['code' => 500, 'msg' => $validator->errors()->all()[0]]);
         }
-        $customer = Customer::find($customer);
+        $customer = $request->customer;
         $this->dispatch(new SendReferralRequestEmail($customer, $request->email, $customer->referral));
         return response()->json(['code' => 200]);
     }
