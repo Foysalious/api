@@ -37,7 +37,7 @@ class AffiliationController extends Controller
             if ($affiliate->profile->mobile == $request->mobile) {
                 return response()->json(['code' => 501, 'msg' => "You can't reffer yourself!"]);
             }
-            if ($affiliate->verification_status != 'verified' || $affiliate->is_suspended == 0) {
+            if ($affiliate->verification_status != 'verified' || $affiliate->is_suspended == 1) {
                 return response()->json(['code' => 502, 'msg' => "You're not verified!"]);
             }
             $affiliation = new Affiliation();
