@@ -33,20 +33,24 @@ class AffiliationController extends Controller
             return response()->json(['code' => 500, 'msg' => $msg]);
         }
         $affiliate = Affiliate::find($affiliate);
-        if ($affiliate->profile->mobile == $request->mobile) {
-            return response()->json(['code' => 501, 'msg' => "You can't reffer yourself!"]);
-        }
-        if ($affiliate != null && $affiliate->verification_status != 'verified') {
-            return response()->json(['code' => 500, 'msg' => "You're not verified!"]);
-        }
-        $affiliation = new Affiliation();
-        $affiliation->affiliate_id = $affiliate->id;
-        $affiliation->customer_name = $request->name;
-        $affiliation->customer_mobile = $request->mobile;
-        $affiliation->service = $request->service;
-        if ($affiliation->save()) {
-            (new NotificationRepository())->forAffiliation($affiliate,$affiliation);
-            return response()->json(['code' => 200]);
+        if ($affiliate != null) {
+            if ($affiliate->profile->mobile == $request->mobile) {
+                return response()->json(['code' => 501, 'msg' => "You can't reffer yourself!"]);
+            }
+            if ($affiliate->verification_status != 'verified' || $affiliate->is_suspended == 0) {
+                return response()->json(['code' => 500, 'msg' => "You're not verified!"]);
+            }
+            $affiliation = new Affiliation();
+            $affiliation->affiliate_id = $affiliate->id;
+            $affiliation->customer_name = $request->name;
+            $affiliation->customer_mobile = $request->mobile;
+            $affiliation->service = $request->service;
+            if ($affiliation->save()) {
+                (new NotificationRepository())->forAffiliation($affiliate, $affiliation);
+                return response()->json(['code' => 200]);
+            } else {
+                return response()->json(['code' => 404]);
+            }
         } else {
             return response()->json(['code' => 404]);
         }
