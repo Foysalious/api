@@ -26,18 +26,17 @@ class FileRepository
             ],
         ]);
         try {
-            $result = $s3->putObject([
+            $s3->putObject([
                 'Bucket' => env('AWS_BUCKET'),
                 'Key' => $folder . $filename,
                 'Body' => file_get_contents($file),
                 'ACL' => 'public-read',
+                'ContentType' => $file->getMimeType(),
                 'CacheControl' => 'max-age=2628000, public',
             ]);
         } catch (S3Exception $e) {
             return false;
         }
-        return $result['ObjectURL'];
-//        Storage::disk('s3')->put($folder . $filename, file_get_contents($file), ['visibility' => 'public', 'CacheControl' => 'max-age=2628000, public']);
-//        return env('S3_URL') . $folder . $filename;
+        return env('S3_URL') . $folder . $filename;
     }
 }

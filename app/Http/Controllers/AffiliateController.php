@@ -58,21 +58,21 @@ class AffiliateController extends Controller
         return $affiliate != null ? response()->json(['code' => 200, 'affiliate' => $affiliate]) : response()->json(['code' => 404, 'msg' => 'Not found!']);
     }
 
-//    public function updateProfilePic(Request $request)
-//    {
-//        if ($msg = $this->_validateImage($request)) {
-//            return response()->json(['code' => 500, 'msg' => $msg]);
-//        }
-//        $photo = $request->file('photo');
-//        $profile = Affiliate::find($request->affiliate)->profile;
-//        if (strpos($profile->pro_pic, 'images/customer/avatar/default.jpg') == false) {
-//            $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
-//            $this->fileRepository->deleteFileFromCDN($filename);
-//        }
-//        $filename = $profile->id . '_profile_image_' . Carbon::now()->timestamp . '.' . $photo->extension();
-//        $profile->pro_pic = $this->fileRepository->uploadToCDN($filename, $request->file('photo'), 'images/profiles/');
-//        return $profile->update() ? response()->json(['code' => 200, 'picture' => $profile->pro_pic]) : response()->json(['code' => 404]);
-//    }
+    public function updateProfilePic(Request $request)
+    {
+        if ($msg = $this->_validateImage($request)) {
+            return response()->json(['code' => 500, 'msg' => $msg]);
+        }
+        $photo = $request->file('photo');
+        $profile = Affiliate::find($request->affiliate)->profile;
+        if (strpos($profile->pro_pic, 'images/customer/avatar/default.jpg') == false) {
+            $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
+            $this->fileRepository->deleteFileFromCDN($filename);
+        }
+        $filename = $profile->id . '_profile_image_' . Carbon::now()->timestamp . '.' . $photo->extension();
+        $profile->pro_pic = $this->fileRepository->uploadToCDN($filename, $request->file('photo'), 'images/profiles/');
+        return $profile->update() ? response()->json(['code' => 200, 'picture' => $profile->pro_pic]) : response()->json(['code' => 404]);
+    }
 
     public function getWallet($affiliate, Request $request)
     {
