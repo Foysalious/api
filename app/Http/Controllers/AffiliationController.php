@@ -38,7 +38,7 @@ class AffiliationController extends Controller
                 return response()->json(['code' => 501, 'msg' => "You can't reffer yourself!"]);
             }
             if ($affiliate->verification_status != 'verified' || $affiliate->is_suspended == 0) {
-                return response()->json(['code' => 500, 'msg' => "You're not verified!"]);
+                return response()->json(['code' => 502, 'msg' => "You're not verified!"]);
             }
             $affiliation = new Affiliation();
             $affiliation->affiliate_id = $affiliate->id;
