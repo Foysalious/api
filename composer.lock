@@ -4,21 +4,21 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "dce8d67baf841d3bf23f78f7da1f33d0",
-    "content-hash": "2b8552ad1f5d4aebb54d374b486815f9",
+    "hash": "2648f929baad5ca134f38815b10f0f61",
+    "content-hash": "ff50b0abf8a6a077f50f96fcc0d9fa50",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
-            "version": "3.32.4",
+            "version": "3.32.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/aws/aws-sdk-php.git",
-                "reference": "bf3a26b9706b6a91ca2d8a5b74d1d7ebd085a244"
+                "reference": "6d9a29bd750c50e491a4f458bf5e24f2adb35a5f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/bf3a26b9706b6a91ca2d8a5b74d1d7ebd085a244",
-                "reference": "bf3a26b9706b6a91ca2d8a5b74d1d7ebd085a244",
+                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/6d9a29bd750c50e491a4f458bf5e24f2adb35a5f",
+                "reference": "6d9a29bd750c50e491a4f458bf5e24f2adb35a5f",
                 "shasum": ""
             },
             "require": {
@@ -85,7 +85,7 @@
                 "s3",
                 "sdk"
             ],
-            "time": "2017-08-08 23:24:05"
+            "time": "2017-08-09 18:19:19"
         },
         {
             "name": "brozot/laravel-fcm",

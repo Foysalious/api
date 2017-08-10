@@ -61,7 +61,6 @@ $api->version('v1', function ($api) {
 
     $api->group(['prefix' => 'navigation'], function ($api) {
         $api->get('/', 'App\Http\Controllers\NavigationController@getNavList');
-        $api->get('{navigation}/services', 'App\Http\Controllers\NavigationController@getServices');
     });
     $api->group(['prefix' => 'category'], function ($api) {
         $api->get('/', 'App\Http\Controllers\CategoryController@index');
@@ -166,7 +165,7 @@ $api->version('v1', function ($api) {
     });
     $api->group(['prefix' => 'affiliate/{affiliate}', 'middleware' => ['affiliate.auth']], function ($api) {
         $api->post('edit', 'App\Http\Controllers\AffiliateController@edit');
-        $api->post('update-profile-picture', 'App\Http\Controllers\AffiliateController@updateProfilePic');
+//        $api->post('update-profile-picture', 'App\Http\Controllers\AffiliateController@updateProfilePic');
         $api->get('lead-info', 'App\Http\Controllers\AffiliateController@leadInfo');
 
         $api->get('wallet', 'App\Http\Controllers\AffiliateController@getWallet');

@@ -32,8 +32,14 @@ class ProfileController extends Controller
             $this->fileRepo->deleteFileFromCDN($filename);
         }
         $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id . '.' . $photo->extension();
-        $profile->pro_pic = $this->fileRepo->uploadToCDN($filename, $request->file('photo'), 'images/profiles/');
-        return $profile->update() ? response()->json(['code' => 200, 'picture' => $profile->pro_pic]) : response()->json(['code' => 404]);
+        $picture_link = $this->fileRepo->uploadToCDN($filename, $request->file('photo'), 'images/profiles/');
+        if ($picture_link != false) {
+            $profile->pro_pic = $picture_link;
+            $profile->update();
+            return response()->json(['code' => 200, 'picture' => $profile->pro_pic]);
+        } else {
+            return response()->json(['code' => 404]);
+        }
     }
 
     private function _validateImage($request)
