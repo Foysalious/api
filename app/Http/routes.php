@@ -93,6 +93,7 @@ $api->version('v1', function ($api) {
         $api->post('{customer}/edit', 'App\Http\Controllers\CustomerController@editInfo');
         $api->get('{customer}/general-info', 'App\Http\Controllers\CustomerController@getCustomerGeneralInfo');
         $api->get('{customer}/intercom-info', 'App\Http\Controllers\CustomerController@getIntercomInfo');
+        $api->get('{customer}/get-delivery-info', 'App\Http\Controllers\CustomerController@getDeliveryInfo');
         $api->get('{customer}/order-list', 'App\Http\Controllers\OrderController@getNotClosedOrderInfo');
         $api->get('{customer}/order-history', 'App\Http\Controllers\OrderController@getClosedOrderInfo');
         $api->get('{customer}/cancel-order-list', 'App\Http\Controllers\OrderController@getCancelledOrders');
@@ -120,7 +121,6 @@ $api->version('v1', function ($api) {
 //        $api->post('{customer}/fb-integration', 'App\Http\Controllers\CustomerController@facebookIntegration');
 //        $api->post('{customer}/change-address', 'App\Http\Controllers\CustomerController@changeAddress');
 //        $api->post('{customer}/add-delivery-address', 'App\Http\Controllers\CustomerController@addDeliveryAddress');
-//        $api->get('{customer}/get-delivery-info', 'App\Http\Controllers\CustomerController@getDeliveryInfo');
 //        $api->post('{customer}/remove-address', 'App\Http\Controllers\CustomerController@removeDeliveryAddress');
 //        $api->post('{customer}/mobile', 'App\Http\Controllers\CustomerController@modifyMobile');
 //        $api->post('{customer}/add-secondary-mobile', 'App\Http\Controllers\CustomerController@addSecondaryMobile');
