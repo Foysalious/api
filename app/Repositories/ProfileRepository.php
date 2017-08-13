@@ -50,7 +50,7 @@ class ProfileRepository
         if ($avatar != null) {
             $info = array(
                 'id' => $avatar->id,
-                'name' => $profile->identity,
+                'name' => $profile->name,
                 'profile_image' => $profile->pro_pic,
                 'token' => $avatar->remember_token
             );
@@ -78,10 +78,12 @@ class ProfileRepository
         $profile = new Profile();
         $profile->fb_id = $info['fb_id'];
         $profile->name = $info['fb_name'];
-        $profile->email = $info['fb_email'];
+        $profile->email = $info['fb_email'] != 'undefined' ? $info['fb_email'] : null;
+        if ($profile->email != null) {
+            $profile->email_verified = 1;
+        }
         $profile->gender = isset($info['fb_gender']) ? $info['fb_gender'] : '';
         $profile->pro_pic = $info['fb_picture'];
-        $profile->email_verified = 1;
         $profile->remember_token = str_random(255);
         $profile->save();
         return $profile;
@@ -106,11 +108,6 @@ class ProfileRepository
     {
         if ($avatar == 'customer') {
             $customer = Customer::create([
-                'fb_id' => $user->fb_id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'gender' => $user->gender,
-                'pro_pic' => $user->pro_pic,
                 'remember_token' => str_random(255),
                 'profile_id' => $user->id
             ]);
@@ -122,9 +119,6 @@ class ProfileRepository
             }
         } elseif ($avatar == 'resource') {
             $resource = new Resource();
-            $resource->name = $user->name;
-            $resource->profile_image = $user->pro_pic;
-            $resource->email = $user->email;
             $resource->profile_id = $user->id;
             $resource->remember_token = str_random(255);
             $resource->save();
@@ -186,8 +180,6 @@ class ProfileRepository
     {
         if ($avatar == 'customer') {
             $customer = Customer::create([
-                'mobile' => $user->mobile,
-                'mobile_verified' => 1,
                 'remember_token' => str_random(255),
                 'profile_id' => $user->id
             ]);
@@ -199,7 +191,6 @@ class ProfileRepository
             }
         } elseif ($avatar == 'resource') {
             $resource = new Resource();
-            $resource->contact_no = $user->mobile;
             $resource->profile_id = $user->id;
             $resource->remember_token = str_random(255);
             $resource->save();
@@ -225,8 +216,6 @@ class ProfileRepository
     {
         if ($avatar == 'customer') {
             $customer = Customer::create([
-                'email' => $user->email,
-                'password' => $user->password,
                 'remember_token' => str_random(255),
                 'profile_id' => $user->id
             ]);
@@ -238,8 +227,6 @@ class ProfileRepository
             }
         } elseif ($avatar == 'resource') {
             $resource = new Resource();
-            $resource->email = $user->email;
-            $resource->password = $user->password;
             $resource->profile_id = $user->id;
             $resource->remember_token = str_random(255);
             $resource->save();

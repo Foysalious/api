@@ -34,7 +34,7 @@ $api->version('v1', function ($api) {
     /*API*/
     $api->post('login', 'App\Http\Controllers\Auth\LoginController@login');
     $api->post('register', 'App\Http\Controllers\Auth\RegistrationController@register');
-    $api->post('continue-with-kit', 'App\Http\Controllers\FacebookController@continueWithKit');
+    $api->post('continue-with-kit', 'App\Http\Controllers\FacebookController@');
     $api->post('continue-with-facebook', 'App\Http\Controllers\FacebookController@continueWithFacebook');
     $api->post('send-password-reset-email', 'App\Http\Controllers\Auth\PasswordController@sendResetPasswordEmail');
     $api->post('reset-password', 'App\Http\Controllers\Auth\PasswordController@resetPassword');
