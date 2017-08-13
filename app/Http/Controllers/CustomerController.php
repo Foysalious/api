@@ -62,7 +62,7 @@ class CustomerController extends Controller
     {
         $customer = $request->customer;
         $adresses = $customer->delivery_addresses()->select('id', 'address')->get();
-        $customer = $customer->profile()->select('name', 'address', 'gender', 'dob', 'email', 'mobile')->first();
+        $customer = $customer->profile()->select('name', 'address', 'pro_pic', 'gender', 'dob', 'email', 'mobile')->first();
         return response()->json([
             'msg' => 'successful', 'code' => 200, 'customer' => $customer, 'addresses' => $adresses
         ]);
