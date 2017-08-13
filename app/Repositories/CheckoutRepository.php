@@ -459,12 +459,12 @@ class CheckoutRepository
     {
         $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
         //send order info to customer  by mail
-        (new SmsHandler('order-created'))->send($customer->mobile, [
+        (new SmsHandler('order-created'))->send($customer->profile->mobile, [
             'order_code' => $order->code()
         ]);
         (new NotificationRepository())->send($order);
-        if (isEmailValid($customer->email)) {
-            $this->dispatch(new SendOrderConfirmationEmail($customer, $order));
+        if (isEmailValid($customer->profile->email)) {
+            $this->dispatch(new SendOrderConfirmationEmail($customer->profile, $order));
         }
     }
 

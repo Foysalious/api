@@ -233,43 +233,22 @@ class CustomerRepository
     public function updateCustomerNameIfEmptyWhenPlacingOrder($order_info)
     {
         $customer = Customer::find($order_info['customer_id']);
+        $profile = $customer->profile;
         $update = false;
 
-        if (empty($customer->name) || $customer->name == "") {
-            $customer->name = $order_info['name'];
+        if (empty($profile->name) || $profile->name == "") {
+            $profile->name = $order_info['name'];
             $update = true;
         }
 
-        if (empty($customer->mobile)) {
-            $customer->mobile = $order_info['phone'];
+        if (empty($profile->mobile)) {
+            $profile->mobile = $order_info['phone'];
             $update = true;
         }
 
         if ($update) {
-            $customer->update();
+            $profile->update();
         }
-    }
-
-    public function createCustomerFromProfile($profile){
-        $customer = Customer::create([
-            'name' => $profile->name,
-            'mobile' => $profile->mobile,
-            'email' => $profile->email,
-            'password' => $profile->password,
-            'fb_id' => $profile->fb_id,
-            'mobile_verified' => $profile->mobile_verified,
-            'email_verified' => $profile->email_verified,
-            'address' => $profile->address,
-            'gender' => $profile->gender,
-            'dob' => $profile->dob,
-            'pro_pic' => $profile->pro_pic,
-            'reference_code' => str_random(6),
-            'remember_token' => str_random(255)
-        ]);
-        $customer = Customer::find($customer->id);
-        $customer->profile()->associate($profile);
-        $customer->update();
-        return $customer;
     }
 
 }
