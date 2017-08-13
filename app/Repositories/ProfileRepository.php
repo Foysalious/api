@@ -111,7 +111,6 @@ class ProfileRepository
                 'email' => $user->email,
                 'gender' => $user->gender,
                 'pro_pic' => $user->pro_pic,
-                'email_verified' => 1,
                 'remember_token' => str_random(255),
                 'profile_id' => $user->id
             ]);
@@ -201,7 +200,6 @@ class ProfileRepository
         } elseif ($avatar == 'resource') {
             $resource = new Resource();
             $resource->contact_no = $user->mobile;
-            $resource->is_verified = 1;
             $resource->profile_id = $user->id;
             $resource->remember_token = str_random(255);
             $resource->save();

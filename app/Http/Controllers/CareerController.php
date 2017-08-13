@@ -7,11 +7,20 @@ use Illuminate\Http\Request;
 use App\Http\Requests;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Mail;
+use Validator;
 
 class CareerController extends Controller
 {
     public function apply(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'file' => 'required|file',
+            'cover' => 'required|file'
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['msg' => 'validation fail!', 'code' => 500]);
+        }
         $cv = $request->file('file');
         $cover = $request->file('cover');
 
