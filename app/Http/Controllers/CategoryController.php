@@ -31,9 +31,7 @@ class CategoryController extends Controller
      */
     public function index(Request $request)
     {
-        $categories = Category::parents()
-            ->select('id', 'name', 'thumb', 'banner')
-            ->get();
+        $categories = Category::parents()->select('id', 'name', 'thumb', 'banner')->get();
         foreach ($categories as $category) {
             array_add($category, 'slug', str_slug($category->name, '-'));
         }

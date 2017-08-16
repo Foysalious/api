@@ -115,7 +115,7 @@ class PartnerController extends Controller
                     $q->select('id', 'name');
                 }])
                 ->with(['customer' => function ($q) {
-                    $q->select('id', 'name');
+                    $q->select('id');
                 }])->orderBy('updated_at', 'desc');
         }])->select('id')->where('id', $partner)->first();
         if (count($partner->reviews) > 0) {

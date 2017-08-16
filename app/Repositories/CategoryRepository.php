@@ -28,14 +28,15 @@ class CategoryRepository
         if ($request->get('skip') != '') {
             $offset = $request->get('skip');
         }
-        $children = $category->children()->select('id', 'name', 'thumb', 'banner')->get();
+        $children = $category->children->load('services');
         $children = $this->childrenHasServices($children, $offset);
         foreach ($children as $child) {
             $services = $child->services()->select('id', 'category_id', 'name', 'thumb', 'banner', 'slug', 'variable_type', 'variables', 'min_quantity')
                 ->where('publication_status', 1)->with(['partnerServices' => function ($q) {
-                    $q->select('id', 'partner_id', 'service_id')->with(['discounts' => function ($q) {
-                        $q->select('id', 'partner_service_id', 'start_date', 'end_date', 'amount');
-                    }]);
+                    $q->select('id', 'partner_id', 'service_id');
+//                        ->with(['discounts' => function ($q) {
+//                        $q->select('id', 'partner_service_id', 'start_date', 'end_date', 'amount');
+//                    }]);
                 }])->take(4)->get();
             array_add($child, 'slug', str_slug($child->name, '-'));
             $child['services'] = $this->serviceRepository->addServiceInfo($services, $request->location);

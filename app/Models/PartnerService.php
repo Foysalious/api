@@ -34,8 +34,8 @@ class PartnerService extends Model
 
     public function runningDiscounts()
     {
-        return $this->discounts()->where(function ($query) {
-            $now = Carbon::now();
+        $now = Carbon::now();
+        return $this->discounts()->where(function ($query) use ($now) {
             $query->where('start_date', '<=', $now);
             $query->where('end_date', '>=', $now);
         })->get();

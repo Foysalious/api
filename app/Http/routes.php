@@ -39,8 +39,7 @@ $api->version('v1', function ($api) {
     $api->post('send-password-reset-email', 'App\Http\Controllers\Auth\PasswordController@sendResetPasswordEmail');
     $api->post('reset-password', 'App\Http\Controllers\Auth\PasswordController@resetPassword');
 
-    $api->get('authenticate', 'App\Http\Controllers\AccountController@
-    ');
+    $api->get('authenticate', 'App\Http\Controllers\AccountController@checkForAuthentication');
     $api->post('account', 'App\Http\Controllers\AccountController@encryptData');
     $api->get('decrypt', 'App\Http\Controllers\AccountController@decryptData');
 

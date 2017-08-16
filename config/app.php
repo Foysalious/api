@@ -163,6 +163,7 @@ return [
         Jenssegers\Mongodb\MongodbServiceProvider::class,
         LaravelFCM\FCMServiceProvider::class,
         Intervention\Image\ImageServiceProvider::class,
+        Clockwork\Support\Laravel\ClockworkServiceProvider::class,
 
         App\Providers\CustomValidatorProvider::class,
 
@@ -217,7 +218,8 @@ return [
         'Excel' => Maatwebsite\Excel\Facades\Excel::class,
         'FCM'      => LaravelFCM\Facades\FCM::class,
         'FCMGroup' => LaravelFCM\Facades\FCMGroup::class,
-        'Image' => Intervention\Image\Facades\Image::class
+        'Image' => Intervention\Image\Facades\Image::class,
+        'Clockwork' => Clockwork\Support\Laravel\Facade::class,
     ],
 
 ];

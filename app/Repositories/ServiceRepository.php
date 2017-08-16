@@ -157,6 +157,9 @@ class ServiceRepository
                     $min = min((array)json_decode($partner->pivot->prices));
                     $partner['prices'] = $min;
                     $discount = PartnerService::find($partner->pivot->id)->discount();
+                    if ($discount != null && $service['discount'] == false) {
+                        $service['discount'] = true;
+                    }
                     $calculate_partner = $this->discountRepository->addDiscountToPartnerForService($partner, $discount);
                     array_push($price, $calculate_partner['discounted_price']);
                 }
@@ -166,6 +169,9 @@ class ServiceRepository
                 foreach ($partners as $partner) {
                     $partner['prices'] = (float)$partner->pivot->prices;
                     $discount = PartnerService::find($partner->pivot->id)->discount();
+                    if ($discount != null && $service['discount'] == false) {
+                        $service['discount'] = true;
+                    }
                     $calculate_partner = $this->discountRepository->addDiscountToPartnerForService($partner, $discount);
                     array_push($price, $calculate_partner['discounted_price']);
                 }
@@ -173,7 +179,6 @@ class ServiceRepository
             }
             array_forget($service, 'partners');
         }
-//        dump($service->id,min($price));
         return $service;
     }
 
@@ -185,7 +190,7 @@ class ServiceRepository
     private function getPartnerRatingReviewCount($service, $partner)
     {
         $review = $partner->reviews()->where([
-//            ['review', '<>', ''],
+            ['review', '<>', ''],
             ['service_id', $service->id]
         ])->count('review');
         $rating = $partner->reviews()->where('service_id', $service->id)->avg('rating');
@@ -257,7 +262,7 @@ class ServiceRepository
     public function addServiceInfo($services, $location)
     {
         foreach ($services as $key => $service) {
-            array_add($service, 'discount', Service::find($service->id)->hasDiscounts());
+            $service['discount'] = false;
             $service = $this->getStartPrice($service, $location);
             array_add($service, 'slug', str_slug($service->name, '-'));
             $this->reviewRepository->getReviews($service);
