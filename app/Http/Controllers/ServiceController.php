@@ -144,7 +144,9 @@ class ServiceController extends Controller
                 ->with(['partner' => function ($q) {
                     $q->select('id', 'name', 'status', 'sub_domain');
                 }])->with(['customer' => function ($q) {
-                    $q->select('id');
+                    $q->select('id', 'profile_id')->with(['profile' => function ($q) {
+                        $q->select('id', 'name');
+                    }]);
                 }])->orderBy('updated_at', 'desc');
         }])->select('id')->where('id', $service)->first();
         if (count($service->reviews) > 0) {

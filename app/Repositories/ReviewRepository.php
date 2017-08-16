@@ -40,18 +40,17 @@ class ReviewRepository
      */
     public function getReviews($object)
     {
-        // review count of this
         $review = $object->reviews->filter(function ($item) {
             return $item->review != '';
         })->count();
         array_add($object, 'review_count', $review);
         array_add($object, 'rating_count', $object->reviews->count());
-        //avg rating of this
         $rating = $object->reviews->avg('rating');
         if ($rating == null) {
             $rating = 5;
         }
         array_add($object, 'rating', round($rating, 1));
+        array_forget($object,'reviews');
         return $object;
     }
 

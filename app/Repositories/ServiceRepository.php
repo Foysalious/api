@@ -132,53 +132,41 @@ class ServiceRepository
     /**
      * Get Start price based on location
      * @param $service
-     * @param int $location
      * @return mixed
      */
-    public function getStartPrice($service, $location)
+    public function getStartPrice($service)
     {
-        if (empty($location)) {
-            $location = 4;
-        }
-        $calculated_service = Service::with(['partners' => function ($q) use ($location) {
-            $q->where([
-                ['is_published', 1],
-                ['is_verified', 1],
-                ['partners.status', 'Verified']
-            ])->whereHas('locations', function ($query) use ($location) {
-                $query->where('id', $location);
-            });
-        }])->where('id', $service->id)->first();
-        $partners = $calculated_service->partners;
-        if (count($partners) > 0) {
-            if ($service->variable_type == 'Options') {
-                $price = array();
-                foreach ($partners as $partner) {
-                    $min = min((array)json_decode($partner->pivot->prices));
-                    $partner['prices'] = $min;
-                    $discount = PartnerService::find($partner->pivot->id)->discount();
-                    if ($discount != null && $service['discount'] == false) {
-                        $service['discount'] = true;
-                    }
-                    $calculate_partner = $this->discountRepository->addDiscountToPartnerForService($partner, $discount);
-                    array_push($price, $calculate_partner['discounted_price']);
+        $partner_services = $service->partnerServices;
+        if ($service->variable_type == 'Options') {
+            $price = array();
+            foreach ($partner_services as $partner_service) {
+                if ($partner_service->partner == null) {
+                    continue;
+                };
+                $min = min((array)json_decode($partner_service->prices));
+                $partner_service['prices'] =(float) $min;
+                $discount =$partner_service->discount();
+                if ($discount != null && $service['discount'] == false) {
+                    $service['discount'] = true;
                 }
-                array_add($service, 'start_price', min($price) * $service->min_quantity);
-            } elseif ($service->variable_type == 'Fixed') {
-                $price = array();
-                foreach ($partners as $partner) {
-                    $partner['prices'] = (float)$partner->pivot->prices;
-                    $discount = PartnerService::find($partner->pivot->id)->discount();
-                    if ($discount != null && $service['discount'] == false) {
-                        $service['discount'] = true;
-                    }
-                    $calculate_partner = $this->discountRepository->addDiscountToPartnerForService($partner, $discount);
-                    array_push($price, $calculate_partner['discounted_price']);
-                }
-                array_add($service, 'start_price', min($price) * $service->min_quantity);
+                $calculate_partner = $this->discountRepository->addDiscountToPartnerForService($partner_service, $discount);
+                array_push($price, $calculate_partner['discounted_price']);
             }
-            array_forget($service, 'partners');
+            array_add($service, 'start_price', min($price) * $service->min_quantity);
+        } elseif ($service->variable_type == 'Fixed') {
+            $price = array();
+            foreach ($partner_services as $partner_service) {
+                $partner_service['prices'] = (float)$partner_service->prices;
+                $discount =$partner_service->discount();
+                if ($discount != null && $service['discount'] == false) {
+                    $service['discount'] = true;
+                }
+                $calculate_partner = $this->discountRepository->addDiscountToPartnerForService($partner_service, $discount);
+                array_push($price, $calculate_partner['discounted_price']);
+            }
+            array_add($service, 'start_price', min($price) * $service->min_quantity);
         }
+        array_forget($service, 'partners');
         return $service;
     }
 
