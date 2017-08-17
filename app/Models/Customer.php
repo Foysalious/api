@@ -73,7 +73,7 @@ class Customer extends Authenticatable
 
     public function generateReferral()
     {
-        return VoucherCodeGenerator::byName($this->name);
+        return VoucherCodeGenerator::byName($this->profile->name);
     }
 
     public function vouchers()
@@ -87,4 +87,13 @@ class Customer extends Authenticatable
         return $vouchers ? $vouchers->first() : null;
     }
 
+    public function getIdentityAttribute()
+    {
+        if ($this->profile->name != '') {
+            return $this->profile->name;
+        } elseif ($this->profile->mobile) {
+            return $this->profile->mobile;
+        }
+        return $this->profile->email;
+    }
 }
