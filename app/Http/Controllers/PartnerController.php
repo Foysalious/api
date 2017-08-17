@@ -107,7 +107,7 @@ class PartnerController extends Controller
                 }])->orderBy('updated_at', 'desc');
         }])->select('id')->where('id', $partner)->first();
         if (count($partner->reviews) > 0) {
-//            $partner = $this->reviewRepository->getReviews($partner);
+            $partner = $this->reviewRepository->getGeneralReviewInformation($partner);
             $breakdown = $this->reviewRepository->getReviewBreakdown($partner->reviews);
             return response()->json(['msg' => 'ok', 'code' => 200, 'partner' => $partner, 'breakdown' => $breakdown]);
         }

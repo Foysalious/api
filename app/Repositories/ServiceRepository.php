@@ -144,29 +144,35 @@ class ServiceRepository
                     continue;
                 };
                 $min = min((array)json_decode($partner_service->prices));
-                $partner_service['prices'] =(float) $min;
-                $discount =$partner_service->discount();
+                $partner_service['prices'] = (float)$min;
+                $discount = $partner_service->discount();
                 if ($discount != null && $service['discount'] == false) {
                     $service['discount'] = true;
                 }
                 $calculate_partner = $this->discountRepository->addDiscountToPartnerForService($partner_service, $discount);
                 array_push($price, $calculate_partner['discounted_price']);
             }
-            array_add($service, 'start_price', min($price) * $service->min_quantity);
+            if (count($price) > 0) {
+                array_add($service, 'start_price', min($price) * $service->min_quantity);
+            }
         } elseif ($service->variable_type == 'Fixed') {
             $price = array();
             foreach ($partner_services as $partner_service) {
+                if ($partner_service->partner == null) {
+                    continue;
+                };
                 $partner_service['prices'] = (float)$partner_service->prices;
-                $discount =$partner_service->discount();
+                $discount = $partner_service->discount();
                 if ($discount != null && $service['discount'] == false) {
                     $service['discount'] = true;
                 }
                 $calculate_partner = $this->discountRepository->addDiscountToPartnerForService($partner_service, $discount);
                 array_push($price, $calculate_partner['discounted_price']);
             }
-            array_add($service, 'start_price', min($price) * $service->min_quantity);
+            if (count($price) > 0) {
+                array_add($service, 'start_price', min($price) * $service->min_quantity);
+            }
         }
-        array_forget($service, 'partners');
         return $service;
     }
 
@@ -253,9 +259,10 @@ class ServiceRepository
             $service['discount'] = false;
             $service = $this->getStartPrice($service, $location);
             array_add($service, 'slug', str_slug($service->name, '-'));
-            $this->reviewRepository->getReviews($service);
+            $this->reviewRepository->getGeneralReviewInformation($service);
             array_forget($service, 'variables');
             array_forget($service, 'partnerServices');
+            array_forget($service, 'reviews');
         }
         return $services;
     }

@@ -38,7 +38,7 @@ class ReviewRepository
      * @param $object
      * @return mixed
      */
-    public function getReviews($object)
+    public function getGeneralReviewInformation($object)
     {
         $review = $object->reviews->filter(function ($item) {
             return $item->review != '';
@@ -50,7 +50,6 @@ class ReviewRepository
             $rating = 5;
         }
         array_add($object, 'rating', round($rating, 1));
-        array_forget($object,'reviews');
         return $object;
     }
 

@@ -28,23 +28,27 @@ class CategoryRepository
         if ($request->get('skip') != '') {
             $offset = $request->get('skip');
         }
-        $location = $request->location;
-        $children = $category->children->load('services');
+        $location = $request->location != '' ? $request->location : 4;
+        $children = $category->children->load(['services' => function ($q) {
+            $q->select('id', 'category_id', 'name', 'thumb', 'banner', 'slug', 'variable_type', 'variables', 'min_quantity')->where('publication_status', 1);
+        }]);
         $children = $this->childrenHasServices($children, $offset);
         foreach ($children as $child) {
-            $services = $child->services()->select('id', 'category_id', 'name', 'thumb', 'banner', 'slug', 'variable_type', 'variables', 'min_quantity')
-                ->where('publication_status', 1)->with(['partnerServices' => function ($q) use ($location) {
-                    $q->select('id', 'partner_id', 'service_id', 'is_published', 'is_verified','prices')->where([
-                        ['is_published', 1],
-                        ['is_verified', 1],
-                    ])->with(['partner' => function ($q) use ($location) {
-                        $q->where('status', 'Verified')->whereHas('locations', function ($query) use ($location) {
-                            $query->where('id', $location);
-                        });
-                    }]);
-                }])->take(4)->get();
+            $services = $child->services->load(['partnerServices' => function ($q) use ($location) {
+                $q->select('id', 'partner_id', 'service_id', 'is_published', 'is_verified', 'prices')->where([
+                    ['is_published', 1],
+                    ['is_verified', 1],
+                ])->with(['partner' => function ($q) use ($location) {
+                    $q->where('status', 'Verified')->whereHas('locations', function ($query) use ($location) {
+                        $query->where('id', $location);
+                    });
+                }]);
+            }])->take(4);
+            array_forget($child,'services');
+            $child['services']=$services;
             array_add($child, 'slug', str_slug($child->name, '-'));
-            $child['services'] = $this->serviceRepository->addServiceInfo($services, $request->location);
+            $child['services'] = $this->serviceRepository->addServiceInfo($child['services'], $request->location);
+            array_forget($child->services,'reviews');
         }
         return $children;
     }
@@ -68,8 +72,7 @@ class CategoryRepository
     {
         $final = array();
         foreach ($children as $key => $child) {
-            if ($child->services->where('publication_status', 1)->count() > 0) {
-                array_forget($child, 'services');
+            if ($child->services->count() > 0) {
                 array_push($final, $child);
             }
         }
