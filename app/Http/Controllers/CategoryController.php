@@ -77,24 +77,19 @@ class CategoryController extends Controller
 
     public function getServices($category, Request $request)
     {
-        $category = Category::where([
-            ['id', $category],
-            ['publication_status', 1]
-        ])->first();
+        $category = Category::where([['id', $category], ['publication_status', 1]])->first();
         if ($category != null) {
+            $location = $request->location != '' ? $request->location : 4;
             $cat = collect($category)->only(['name', 'banner']);
-            if ($category->parent == null) {
-                $services = $this->categoryRepository->getChildrenServices($category, $request);
-                return response()->json(['category' => $cat, 'services' => $services, 'msg' => 'successful', 'code' => 200]);
-            };
-            array_add($cat, 'parent', collect($category->parent)->only(['id', 'name']));
-            $category = Category::with(['services' => function ($q) {
-                $q->select('id', 'category_id', 'name', 'thumb', 'banner', 'variable_type', 'variables', 'min_quantity')->where('publication_status', 1);
-            }])->where([
-                ['id', $category->id],
-                ['publication_status', 1]
-            ])->first();
-            $services = $this->serviceRepository->addServiceInfo($category->services, $request->location);
+            if ($category->parent_id == null) {
+                $services = $this->categoryRepository->getServicesOfCategory($category->children->pluck('id'), $location);
+                $services = $this->serviceRepository->addServiceInfo($services);
+            } else {
+                $category = Category::with(['services' => function ($q) {
+                    $q->select('id', 'category_id', 'name', 'thumb', 'banner', 'variable_type', 'min_quantity')->where('publication_status', 1);
+                }])->where([['id', $category->id], ['publication_status', 1]])->first();
+                $services = $this->serviceRepository->addServiceInfo($category->services, $location);
+            }
             return response()->json(['category' => $cat, 'services' => $services, 'msg' => 'successful', 'code' => 200]);
         } else {
             return response()->json(['msg' => 'category not found', 'code' => 404]);

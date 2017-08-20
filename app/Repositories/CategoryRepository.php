@@ -44,28 +44,30 @@ class CategoryRepository
                     });
                 }]);
             }])->take(4);
-            array_forget($child,'services');
-            $child['services']=$services;
+            array_forget($child, 'services');
+            $child['services'] = $services;
             array_add($child, 'slug', str_slug($child->name, '-'));
             $child['services'] = $this->serviceRepository->addServiceInfo($child['services'], $request->location);
-            array_forget($child->services,'reviews');
+            array_forget($child->services, 'reviews');
         }
         return $children;
     }
 
-    public function getChildrenServices($category, $request)
+    public function getServicesOfCategory($category_ids, $location)
     {
-        $chlidren_category_id = $category->children->pluck('id');
-        $services = Service::select('id', 'category_id', 'name', 'thumb', 'variable_type', 'variables', 'min_quantity')
-            ->where('publication_status', 1)
-            ->whereIn('category_id', $chlidren_category_id)
-            ->get()
-            ->random(6);
-        $final_service = [];
+        $services = Service::with(['partnerServices' => function ($q) use ($location) {
+            $q->where([['is_published', 1], ['is_verified', 1]])->with(['partner' => function ($q) use ($location) {
+                $q->where('status', 'Verified')->whereHas('locations', function ($query) use ($location) {
+                    $query->where('id', $location);
+                });
+            }]);
+        }])->select('id', 'category_id', 'name', 'thumb', 'min_quantity', 'variable_type')
+            ->where('publication_status', 1)->whereIn('category_id', $category_ids)->get()->random(6);
+        $final_services = [];
         foreach ($services as $service) {
-            array_push($final_service, $service);
+            array_push($final_services, $service);
         }
-        return $this->serviceRepository->addServiceInfo($final_service, $request->location);
+        return $final_services;
     }
 
     public function childrenHasServices($children, $offset)

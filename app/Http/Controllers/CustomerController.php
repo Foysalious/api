@@ -62,7 +62,7 @@ class CustomerController extends Controller
     {
         $customer = $request->customer;
         $adresses = $customer->delivery_addresses()->select('id', 'address')->get();
-        $customer = $customer->profile()->select('name', 'address', DB::raw('pro_pic as picture'), 'gender', 'dob', 'email', 'mobile')->first();
+        $customer = $customer->profile()->select('name', 'address', DB::raw('pro_pic as picture'), 'gender', DB::raw('dob as birthdate'), 'email', 'mobile')->first();
         return response()->json([
             'msg' => 'successful', 'code' => 200, 'customer' => $customer, 'addresses' => $adresses
         ]);
@@ -71,11 +71,7 @@ class CustomerController extends Controller
     public function getIntercomInfo($customer, Request $request)
     {
         $customer = $request->customer->profile()->select('id', 'name', 'mobile', 'email')->first();
-        $user_hash = hash_hmac(
-            'sha256', // hash function
-            $customer->id, // user's email address
-            env('INTERCOM_SECRET_KEY')// secret key (keep safe!)
-        );
+        $user_hash = hash_hmac('sha256', $customer->id, env('INTERCOM_SECRET_KEY'));
         array_add($customer, 'signed_up_at', $request->customer->created_at->timestamp);
         array_add($customer, 'user_hash', $user_hash);
         return response()->json(['msg' => 'successful', 'code' => 200, 'customer' => $customer]);

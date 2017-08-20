@@ -184,7 +184,7 @@ class ServiceRepository
     private function getPartnerRatingReviewCount($service, $partner)
     {
         $review = $partner->reviews()->where([
-            ['review', '<>', ''],
+            ['review', ' <> ', ''],
             ['service_id', $service->id]
         ])->count('review');
         $rating = $partner->reviews()->where('service_id', $service->id)->avg('rating');
@@ -253,11 +253,11 @@ class ServiceRepository
         return $final;
     }
 
-    public function addServiceInfo($services, $location)
+    public function addServiceInfo($services)
     {
         foreach ($services as $key => $service) {
             $service['discount'] = false;
-            $service = $this->getStartPrice($service, $location);
+            $service = $this->getStartPrice($service);
             array_add($service, 'slug', str_slug($service->name, '-'));
             $this->reviewRepository->getGeneralReviewInformation($service);
             array_forget($service, 'variables');
@@ -265,6 +265,17 @@ class ServiceRepository
             array_forget($service, 'reviews');
         }
         return $services;
+    }
+
+    private function _getPartnerServicesAndPartners($service, $location)
+    {
+        return $service->load(['partnerServices' => function ($q) use ($location) {
+            $q->where([['is_published', 1], ['is_verified', 1]])->with(['partner' => function ($q) use ($location) {
+                $q->where('status', 'Verified')->whereHas('locations', function ($query) use ($location) {
+                    $query->where('id', $location);
+                });
+            }]);
+        }]);
     }
 
 

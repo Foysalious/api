@@ -57,7 +57,7 @@ $api->version('v1', function ($api) {
     $api->post('rating', 'App\Http\Controllers\ReviewController@giveRatingFromEmail');
     $api->get('offers', 'App\Http\Controllers\ShebaController@getOffers');
     $api->get('offer/{offer}', 'App\Http\Controllers\ShebaController@getOffer');
-    $api->get('offer/{offer}/similar-offer', 'App\Http\Controllers\ShebaController@getSimilarOffer');
+    $api->get('offer/{offer}/similar', 'App\Http\Controllers\ShebaController@getSimilarOffer');
 
     $api->group(['prefix' => 'navigation'], function ($api) {
         $api->get('/', 'App\Http\Controllers\NavigationController@getNavList');
@@ -93,21 +93,21 @@ $api->version('v1', function ($api) {
         $api->post('{customer}/edit', 'App\Http\Controllers\CustomerController@editInfo');
         $api->get('{customer}/general-info', 'App\Http\Controllers\CustomerController@getCustomerGeneralInfo');
         $api->get('{customer}/intercom-info', 'App\Http\Controllers\CustomerController@getIntercomInfo');
-        $api->get('{customer}/get-delivery-info', 'App\Http\Controllers\CustomerController@getDeliveryInfo');
+        $api->get('{customer}/checkout-info', 'App\Http\Controllers\CustomerController@getDeliveryInfo');
         $api->get('{customer}/order-list', 'App\Http\Controllers\OrderController@getNotClosedOrderInfo');
         $api->get('{customer}/order-history', 'App\Http\Controllers\OrderController@getClosedOrderInfo');
         $api->get('{customer}/cancel-order-list', 'App\Http\Controllers\OrderController@getCancelledOrders');
-        $api->get('{customer}/get-referral', 'App\Http\Controllers\CustomerController@getReferral');
+        $api->get('{customer}/referral', 'App\Http\Controllers\CustomerController@getReferral');
         $api->post('{customer}/send-referral-request-email', 'App\Http\Controllers\CustomerController@sendReferralRequestEmail');
-        $api->get('{customer}/get-promo', 'App\Http\Controllers\PromotionController@getPromo');
-        $api->post('{customer}/add-promo', 'App\Http\Controllers\PromotionController@addPromo');
+        $api->get('{customer}/promo', 'App\Http\Controllers\PromotionController@getPromo');
+        $api->post('{customer}/promo', 'App\Http\Controllers\PromotionController@addPromo');
         $api->post('{customer}/suggest-promo', 'App\Http\Controllers\PromotionController@suggestPromo');
 
         $api->post('{customer}/sp-payment', 'App\Http\Controllers\CheckoutController@spPayment');
         $api->post('{customer}/order-valid', 'App\Http\Controllers\OrderController@checkOrderValidity');
         $api->post('{customer}/modify-review', 'App\Http\Controllers\ReviewController@modifyReview');
         $api->get('{customer}/job/{job}', 'App\Http\Controllers\JobController@getInfo');
-        $api->post('{customer}/{job}/cancel-job', 'App\Http\Controllers\JobController@cancelJob');
+        $api->post('{customer}/{job}/cancel', 'App\Http\Controllers\JobController@cancelJob');
 
         $api->post('{customer}/ask-quotation', 'App\Http\Controllers\CustomOrderController@askForQuotation');
         $api->get('{customer}/custom-order', 'App\Http\Controllers\CustomOrderController@getCustomOrders');
