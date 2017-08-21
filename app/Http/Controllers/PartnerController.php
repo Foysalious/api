@@ -94,6 +94,19 @@ class PartnerController extends Controller
         }
     }
 
+    public function insert()
+    {
+        $partner_orders = PartnerOrder::where('closed_at', null)->get();
+        foreach ($partner_orders as $partner_order) {
+            $partner_order->calculate();
+            if ($partner_order->status == 'Closed') {
+                $dates = $partner_order->jobs()->select('delivered_date')->get();
+                $partner_order->closed_at = $dates->max()->delivered_date;
+                $partner_order->update();
+            }
+        }
+    }
+
     public function getReviews($partner)
     {
         $partner = Partner::with(['reviews' => function ($q) {
@@ -107,7 +120,7 @@ class PartnerController extends Controller
                 }])->orderBy('updated_at', 'desc');
         }])->select('id')->where('id', $partner)->first();
         if (count($partner->reviews) > 0) {
-            $partner = $this->reviewRepository->getGeneralReviewInformation($partner);
+            $partner = $this->reviewRepository->getReviews($partner);
             $breakdown = $this->reviewRepository->getReviewBreakdown($partner->reviews);
             return response()->json(['msg' => 'ok', 'code' => 200, 'partner' => $partner, 'breakdown' => $breakdown]);
         }
