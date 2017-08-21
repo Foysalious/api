@@ -23,7 +23,9 @@ class AffiliateController extends Controller
     public function edit($affiliate, Request $request)
     {
         $mobile = formatMobile(ltrim($request->bkash_no));
-        $request->merge(['bkash_no' => $mobile]);
+        if(empty($mobile)){
+            $request->merge(['bkash_no' => $mobile]);
+        }
         if ($msg = $this->_validateEdit($request)) {
             return response()->json(['code' => 500, 'msg' => $msg]);
         }
@@ -97,7 +99,7 @@ class AffiliateController extends Controller
     private function _validateEdit($request)
     {
         $validator = Validator::make($request->all(), [
-            'bkash_no' => 'required|string|mobile:bd',
+            'bkash_no' => 'sometimes|required|string|mobile:bd',
         ], ['mobile' => 'Invalid bKash number!']);
         return $validator->fails() ? $validator->errors()->all()[0] : false;
     }
