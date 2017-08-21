@@ -22,34 +22,32 @@ class AffiliateController extends Controller
 
     public function edit($affiliate, Request $request)
     {
-        $mobile = formatMobile(ltrim($request->bkash_no));
-        if(empty($mobile)){
+        $except_fields = [];
+        if ($request->has('bkash_no')) {
+            $mobile = formatMobile(ltrim($request->bkash_no));
             $request->merge(['bkash_no' => $mobile]);
+        } else {
+            $except_fields = ['bkash_no'];
         }
-        if ($msg = $this->_validateEdit($request)) {
+        $validation_fields = count($except_fields) > 0 ? $request->except($except_fields) : $request->all();
+        if ($msg = $this->_validateEdit($validation_fields)) {
             return response()->json(['code' => 500, 'msg' => $msg]);
         }
         $affiliate = Affiliate::find($affiliate);
         if ($request->has('name')) {
-            if ($request->name != '' && $request->name != null) {
-                $profile = $affiliate->profile;
-                $profile->name = $request->name;
-                $profile->update();
-            }
+            $profile = $affiliate->profile;
+            $profile->name = $request->name;
+            $profile->update();
         }
         if ($request->has('bkash_no')) {
-            if ($request->bkash_no != '' && $request->bkash_no != null) {
-                $banking_info = $affiliate->banking_info;
-                $banking_info->bKash = $mobile;
-                $affiliate->banking_info = json_encode($banking_info);
-            }
+            $banking_info = $affiliate->banking_info;
+            $banking_info->bKash = $mobile;
+            $affiliate->banking_info = json_encode($banking_info);
         }
         if ($request->has('geolocation')) {
-            if ($request->geolocation != '') {
-//                $location = json_decode($request->geolocation);
+            //                $location = json_decode($request->geolocation);
 //                $this->locationRepository->getLocationFromLatLng($location->lat . ',' . $location->lng);
-                $affiliate->geolocation = $request->geolocation;
-            }
+            $affiliate->geolocation = $request->geolocation;
         }
         return $affiliate->update() ? response()->json(['code' => 200]) : response()->json(['code' => 404]);
     }
@@ -98,7 +96,8 @@ class AffiliateController extends Controller
 
     private function _validateEdit($request)
     {
-        $validator = Validator::make($request->all(), [
+
+        $validator = Validator::make($request, [
             'bkash_no' => 'sometimes|required|string|mobile:bd',
         ], ['mobile' => 'Invalid bKash number!']);
         return $validator->fails() ? $validator->errors()->all()[0] : false;
