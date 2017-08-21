@@ -71,7 +71,7 @@ $api->version('v1', function ($api) {
     $api->group(['prefix' => 'categories'], function ($api) {
         $api->get('/', 'App\Http\Controllers\CategoryController@index');
         $api->get('{category}/secondaries', 'App\Http\Controllers\CategoryController@getSecondaries');
-        $api->get('{category}/secondaries/services', 'App\Http\Controllers\CategoryController@getSecondariesServices');
+        $api->get('{category}/secondaries/services', 'App\Http\Controllers\CategoryController@getSecondaryServices');
         $api->get('{category}/services', 'App\Http\Controllers\CategoryController@getServices');
         $api->get('{category}/parent', 'App\Http\Controllers\CategoryController@getParent');
     });

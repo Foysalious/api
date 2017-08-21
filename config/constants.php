@@ -260,6 +260,10 @@ return [
         'customer-app',
         'affiliation-app'
     ],
-    'AFFILIATION_REWARD_MONEY' => 10
+    'AFFILIATION_REWARD_MONEY' => 10,
+    'API_RESPONSE_CODE' => [
+        404 => ['msg' => 'not found!', 'code' => 404],
+        200 => ['msg' => 'successful', 'code' => 200]
+    ]
 
 ];

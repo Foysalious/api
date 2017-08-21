@@ -99,44 +99,53 @@ class CategoryController extends Controller
 
     public function getSecondaries($category, Request $request)
     {
-        $category = Category::find($category);
-        if ($category != null) {
+        try {
+            $category = Category::find($category);
             $children = $category->children;
-            if (count($category->children) > 0) {
+            if (count($category->children) != 0) {
                 $category = collect($category)->only(['name', 'banner']);
                 $category->put('secondaries', $children);
-                return class_basename($request) == 'Request' ? response()->json(['category' => $category->all(), 'msg' => 'successful', 'code' => 200]) : $category->all();
+                return api_response($request, $category->all(), ['category' => $category->all(), 'msg' => 'successful', 'code' => 200]);
             } else
-                return class_basename($request) == 'Request' ? response()->json(['msg' => 'no secondary categories found!', 'code' => 404]) : null;
-        } else {
-            return class_basename($request) == 'Request' ? response()->json(['msg' => 'category not found', 'code' => 404]) : null;
+                return api_response($request, null, constants('API_RESPONSE_CODE')[404]);
+        } catch (\Exception $e) {
+            return api_response($request, null, constants('API_RESPONSE_CODE')[404]);
         }
     }
 
-    public function getSecondariesServices($category, Request $request)
+    public function getSecondaryServices($category, Request $request)
     {
-        $category = $this->api->get('categories/' . $category . '/secondaries');
-        if ($category != null) {
-            $secondaries = $category['secondaries'];
-            if(count($secondaries)>0){
-                $offset = $request->offset != '' ? $request->offset : 0;
-                $limit = $request->limit != '' ? $request->limit : 2;
+        if ($category = $this->api->get('categories/' . $category . '/secondaries')) {
+            try {
+                $secondaries = $category['secondaries'];
+                list($offset, $limit) = calculatePagination($request);
                 $location = $request->location != '' ? $request->location : 4;
                 $service_limit = $request->service != '' ? $request->services : 4;
                 $secondaries->load(['services' => function ($q) {
                     $q->select('id', 'category_id', 'name', 'thumb', 'banner', 'slug', 'variable_type', 'variables', 'min_quantity')->published();
                 }]);
-                $secondaries = $this->categoryRepository->onlyChildrenWithServices($secondaries, $offset, $limit);
-                foreach ($secondaries as $child) {
-                    $child['slug'] = str_slug($child->name, '-');
-                    $services = $this->serviceRepository->getPartnerServicesAndPartners($child->services, $location, $service_limit);
-                    array_forget($child, 'services');
-                    $child['services'] = $services;
-                    $child['services'] = $this->serviceRepository->addServiceInfo($child['services']);
+                $secondaries = ($secondaries->filter(function ($secondary, $key) {
+                    return $secondary->services->count() > 0;
+                }))->splice($offset, $limit)->all();
+                $category['secondaries'] = $secondaries;
+                if (count($secondaries) != 0) {
+                    foreach ($secondaries as $secondary) {
+                        $secondary['slug'] = str_slug($secondary->name, '-');
+                        $services = $this->serviceRepository->getPartnerServicesAndPartners($secondary->services, $location, $service_limit);
+                        array_forget($secondary, 'services');
+                        $secondary['services'] = $this->serviceRepository->addServiceInfo($services);
+                    }
+                    $response = constants('API_RESPONSE_CODE')[200];
+                    $response['category'] = $category;
+                    return api_response($request, $category, $response);
+                } else {
+                    return api_response($request, null, constants('API_RESPONSE_CODE')[404]);
                 }
-                $category['secondaries']=$secondaries;
-                return class_basename($request) == 'Request' ? response()->json(['category' => $category, 'msg' => 'successful', 'code' => 200]) : $category;
+            } catch (\Exception $e) {
+                return api_response($request, null, constants('API_RESPONSE_CODE')[404]);
             }
+        } else {
+            return api_response($request, null, constants('API_RESPONSE_CODE')[404]);
         }
     }
 }

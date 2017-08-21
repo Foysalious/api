@@ -96,7 +96,6 @@ class AffiliateController extends Controller
 
     private function _validateEdit($request)
     {
-
         $validator = Validator::make($request, [
             'bkash_no' => 'sometimes|required|string|mobile:bd',
         ], ['mobile' => 'Invalid bKash number!']);
