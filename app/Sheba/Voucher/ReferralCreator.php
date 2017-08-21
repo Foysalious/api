@@ -33,7 +33,7 @@ class ReferralCreator
     public function saveVoucher($voucher)
     {
         $voucher->rules = json_encode($this->rules);
-        $voucher->title = $this->getIdentity() . " has gifted you " . self::AMOUNT . "tk &#128526;";
+        $voucher->title = $this->referrer->identity . " has gifted you " . self::AMOUNT . "tk &#128526;";
         $voucher->amount = self::AMOUNT;
         $voucher->max_order = 1;
         $voucher->sheba_contribution = 100;
@@ -45,13 +45,4 @@ class ReferralCreator
         }
     }
 
-    private function getIdentity()
-    {
-        if ($this->referrer->name != '') {
-            return $this->referrer->name;
-        } elseif ($this->referrer->mobile) {
-            return $this->referrer->mobile;
-        }
-        return $this->referrer->email;
-    }
 }

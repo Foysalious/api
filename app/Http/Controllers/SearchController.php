@@ -25,12 +25,13 @@ class SearchController extends Controller
     public function searchService(Request $request)
     {
         if ($request->s != '') {
-            $search_words = explode(' ', $request->s);
+            $search_text = trim($request->s);
+            $search_words = explode(' ', $search_text);
             $query = Service::where('publication_status', 1)->whereHas('tags', function ($q) use ($request, $search_words) {
                 foreach ($search_words as $word) {
                     $q->orwhere('name', 'like', "%" . $word . "%");
                 }
-            })->orWhere([['name', 'like', "%" . $request->s . "%"], ['publication_status', 1]]);
+            })->orWhere([['name', 'like', "%" . $search_text . "%"], ['publication_status', 1]]);
             //if has parent category id
             if ($request->has('p_c')) {
                 $category = Category::find($request->input('p_c'));

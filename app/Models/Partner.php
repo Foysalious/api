@@ -2,6 +2,7 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Voucher\VoucherCodeGenerator;
 
 class Partner extends Model
 {
@@ -123,5 +124,20 @@ class Partner extends Model
             }
         }
         return false;
+    }
+
+    public function getIdentityAttribute()
+    {
+        if ($this->name != '') {
+            return $this->name;
+        } elseif ($this->mobile) {
+            return $this->mobile;
+        }
+        return $this->email;
+    }
+
+    public function generateReferral()
+    {
+        return VoucherCodeGenerator::byName($this->name);
     }
 }

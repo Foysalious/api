@@ -13,18 +13,18 @@ class SendOrderConfirmationEmail extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
 
-    private $customer;
+    private $profile;
     private $order;
 
     /**
      * Create a new job instance.
      *
-     * @param Customer $customer
+     * @param Customer $profile
      * @param Order $order
      */
-    public function __construct($customer, $order)
+    public function __construct($profile, $order)
     {
-        $this->customer = $customer;
+        $this->profile = $profile;
         $this->order = $order;
     }
 
@@ -36,9 +36,9 @@ class SendOrderConfirmationEmail extends Job implements ShouldQueue
      */
     public function handle(Mailer $mailer)
     {
-        $mailer->send('emails.order-verification', ['customer' => $this->customer, 'order' => $this->order], function ($m) {
+        $mailer->send('emails.order-verification', ['profile' => $this->profile, 'order' => $this->order], function ($m) {
             $m->from('yourEmail@domain.com', 'Sheba.xyz');
-            $m->to($this->customer->email)->subject('Order Verification');
+            $m->to($this->profile->email)->subject('Order Verification');
         });
     }
 }

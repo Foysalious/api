@@ -38,16 +38,14 @@ class ReviewRepository
      * @param $object
      * @return mixed
      */
-    public function getReviews($object)
+    public function getGeneralReviewInformation($object)
     {
-        // review count of this
-        $review = $object->reviews()->where('review', '<>', '')->count('review');
+        $review = $object->reviews->filter(function ($item) {
+            return $item->review != '';
+        })->count();
         array_add($object, 'review_count', $review);
-        //rating count of this
-        $total_rating = $object->reviews()->where('rating', '<>', '')->count('rating');
-        array_add($object, 'rating_count', $total_rating);
-        //avg rating of this
-        $rating = $object->reviews()->avg('rating');
+        array_add($object, 'rating_count', $object->reviews->count());
+        $rating = $object->reviews->avg('rating');
         if ($rating == null) {
             $rating = 5;
         }

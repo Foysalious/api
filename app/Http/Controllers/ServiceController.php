@@ -144,11 +144,13 @@ class ServiceController extends Controller
                 ->with(['partner' => function ($q) {
                     $q->select('id', 'name', 'status', 'sub_domain');
                 }])->with(['customer' => function ($q) {
-                    $q->select('id', 'name');
+                    $q->select('id', 'profile_id')->with(['profile' => function ($q) {
+                        $q->select('id', 'name');
+                    }]);
                 }])->orderBy('updated_at', 'desc');
         }])->select('id')->where('id', $service)->first();
         if (count($service->reviews) > 0) {
-            $service = $this->reviewRepository->getReviews($service);
+            $service = $this->reviewRepository->getGeneralReviewInformation($service);
             $breakdown = $this->reviewRepository->getReviewBreakdown($service->reviews);
             return response()->json(['msg' => 'ok', 'code' => 200, 'service' => $service, 'breakdown' => $breakdown]);
         }

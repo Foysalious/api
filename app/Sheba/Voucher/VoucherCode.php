@@ -3,6 +3,7 @@
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Partner;
+use App\Models\Profile;
 use App\Models\Service;
 use App\Models\PartnerService;
 use App\Models\CategoryPartner;
@@ -102,13 +103,31 @@ class VoucherCode
 
     private function setCustomerId($customer)
     {
-        $customer = is_string($customer) ? Customer::where('mobile', $customer)->first() : $customer;
+        if (is_string($customer)) {
+            $profile = Profile::where('mobile', $customer)->first();
+            if ($profile != null && $profile->customer != null) {
+                $customer = $profile->customer;
+            }
+        }
+//        $customer = is_string($customer) ? Customer::where('mobile', $customer)->first() : $customer;
         $this->customerId = ($customer instanceof Customer) ? $customer->id : $customer;
     }
 
     private function setCustomer($customer)
     {
-        $this->customer = is_int($customer) ? Customer::find($customer) : ( is_string($customer) ? Customer::where('mobile', $customer)->first() : $customer );
+        if (is_int($customer)) {
+            $this->customer = Customer::find($customer);
+        } else {
+            if (is_string($customer)) {
+                $profile = Profile::where('mobile', $customer)->first();
+                if ($profile != null && $profile->customer != null) {
+                    $this->customer = $profile->customer;
+                }
+            } else {
+                $this->customer = $customer;
+            }
+        }
+//        $this->customer = is_int($customer) ? Customer::find($customer) : (is_string($customer) ? Customer::where('mobile', $customer)->first() : $customer);
     }
 
     private function checkService($partner, $service)

@@ -62,7 +62,7 @@ class CustomerController extends Controller
     {
         $customer = $request->customer;
         $adresses = $customer->delivery_addresses()->select('id', 'address')->get();
-        $customer = $customer->profile()->select('name', 'address', 'pro_pic', 'gender', 'dob', 'email', 'mobile')->first();
+        $customer = $customer->profile()->select('name', 'address', DB::raw('pro_pic as picture'), 'gender', 'dob', 'email', 'mobile')->first();
         return response()->json([
             'msg' => 'successful', 'code' => 200, 'customer' => $customer, 'addresses' => $adresses
         ]);
@@ -149,9 +149,9 @@ class CustomerController extends Controller
         }
     }
 
-    public function getDeliveryInfo($customer)
+    public function getDeliveryInfo($customer, Request $request)
     {
-        $customer = Customer::find($customer);
+        $customer = $request->customer;
         return response()->json(['msg' => 'successful', 'addresses' => $customer->delivery_addresses()->select('id', 'address')->get(),
             'name' => $customer->profile->name, 'mobile' => $customer->profile->mobile, 'code' => 200]);
     }

@@ -108,7 +108,7 @@
             <div class="text-container">
                 <p class="main-text">
                     Howdy, <br>
-                    {{$customer->identity}} has sent you a gift! Please go to this link to register with Sheba & get <span
+                    {{$profile->identity}} has sent you a gift! Please go to this link to register with Sheba & get <span
                             class="highlight">BDT 200</span> off on your first order.
                 </p>
                 <br>
