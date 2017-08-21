@@ -267,15 +267,16 @@ class ServiceRepository
         return $services;
     }
 
-    private function _getPartnerServicesAndPartners($service, $location)
+    public function getPartnerServicesAndPartners($services, $location, $limit = 0)
     {
-        return $service->load(['partnerServices' => function ($q) use ($location) {
-            $q->where([['is_published', 1], ['is_verified', 1]])->with(['partner' => function ($q) use ($location) {
-                $q->where('status', 'Verified')->whereHas('locations', function ($query) use ($location) {
+        $services = $services->load(['partnerServices' => function ($q) use ($location) {
+            $q->published()->with(['partner' => function ($q) use ($location) {
+                $q->published()->whereHas('locations', function ($query) use ($location) {
                     $query->where('id', $location);
                 });
             }]);
         }]);
+        return $limit > 0 ? $services->take($limit) : $services;
     }
 
 

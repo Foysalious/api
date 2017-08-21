@@ -45,4 +45,12 @@ class PartnerService extends Model
     {
         return $this->runningDiscounts()->first();
     }
+
+    public function scopePublished($query)
+    {
+        return $query->where([
+            ['is_published', 1],
+            ['is_verified', 1]
+        ]);
+    }
 }

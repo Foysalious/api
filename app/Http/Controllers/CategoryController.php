@@ -8,10 +8,11 @@ use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
 use Illuminate\Http\Request;
 use Tinify\Tinify;
+use Dingo\Api\Routing\Helpers;
 
 class CategoryController extends Controller
 {
-
+    use Helpers;
     private $categoryRepository;
     private $serviceRepository;
     private $tinify;
@@ -94,5 +95,28 @@ class CategoryController extends Controller
         } else {
             return response()->json(['msg' => 'category not found', 'code' => 404]);
         }
+    }
+
+    public function getSecondaries($category, Request $request)
+    {
+        $category = Category::where('id', $category)->with('children')->first();
+        if ($category != null) {
+            if (count($category->children) > 0) {
+                $category = collect($category)->only(['name', 'banner']);
+//                array_add($category->children, 'secondaries', $category->children);
+//                array_add($category->children, 'secondaries', $category->children);
+                return class_basename($request) == 'Request' ? response()->json(['category' => $category, 'msg' => 'successful', 'code' => 200]) : $category;
+            } else
+                return response()->json(['msg' => 'no secondary categories found!', 'code' => 404]);
+        } else {
+            return response()->json(['msg' => 'category not found', 'code' => 404]);
+        }
+    }
+
+    public function getSecondariesServices($category, Request $request)
+    {
+        $category = $this->api->get('categories/' . $category . '/secondaries');
+        dd(collect($category));
+        dd($this->categoryRepository->onlyChildrenWithServices($category->secondaries, 0, 2));
     }
 }

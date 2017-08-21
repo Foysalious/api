@@ -140,4 +140,9 @@ class Partner extends Model
     {
         return VoucherCodeGenerator::byName($this->name);
     }
+
+    public function scopePublished($query)
+    {
+        return $query->where('status', 'Verified');
+    }
 }

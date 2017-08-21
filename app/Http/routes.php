@@ -59,12 +59,19 @@ $api->version('v1', function ($api) {
     $api->get('offer/{offer}', 'App\Http\Controllers\ShebaController@getOffer');
     $api->get('offer/{offer}/similar', 'App\Http\Controllers\ShebaController@getSimilarOffer');
 
-    $api->group(['prefix' => 'navigation'], function ($api) {
+    $api->group(['prefix' => 'navigations'], function ($api) {
         $api->get('/', 'App\Http\Controllers\NavigationController@getNavList');
     });
     $api->group(['prefix' => 'category'], function ($api) {
         $api->get('/', 'App\Http\Controllers\CategoryController@index');
         $api->get('{category}/secondary-categories', 'App\Http\Controllers\CategoryController@getChildren');
+        $api->get('{category}/services', 'App\Http\Controllers\CategoryController@getServices');
+        $api->get('{category}/parent', 'App\Http\Controllers\CategoryController@getParent');
+    });
+    $api->group(['prefix' => 'categories'], function ($api) {
+        $api->get('/', 'App\Http\Controllers\CategoryController@index');
+        $api->get('{category}/secondaries', 'App\Http\Controllers\CategoryController@getSecondaries');
+        $api->get('{category}/secondaries/services', 'App\Http\Controllers\CategoryController@getSecondariesServices');
         $api->get('{category}/services', 'App\Http\Controllers\CategoryController@getServices');
         $api->get('{category}/parent', 'App\Http\Controllers\CategoryController@getParent');
     });
