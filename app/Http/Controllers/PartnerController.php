@@ -113,9 +113,10 @@ class PartnerController extends Controller
             $q->select('id', 'service_id', 'partner_id', 'customer_id', 'review_title', 'review', 'rating', DB::raw('DATE_FORMAT(updated_at, "%M %d,%Y at %h:%i:%s %p") as time'))
                 ->with(['service' => function ($q) {
                     $q->select('id', 'name');
-                }])
-                ->with(['customer' => function ($q) {
-                    $q->select('id', 'name');
+                }])->with(['customer' => function ($q) {
+                    $q->select('id', 'profile_id')->with(['profile' => function ($q) {
+                        $q->select('id', 'name');
+                    }]);
                 }])->orderBy('updated_at', 'desc');
         }])->select('id')->where('id', $partner)->first();
         if (count($partner->reviews) > 0) {
