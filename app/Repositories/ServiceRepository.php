@@ -145,11 +145,8 @@ class ServiceRepository
                 };
                 $min = min((array)json_decode($partner_service->prices));
                 $partner_service['prices'] = (float)$min;
-                $discount = $partner_service->discount();
-                if ($discount != null && $service['discount'] == false) {
-                    $service['discount'] = true;
-                }
-                $calculate_partner = $this->discountRepository->addDiscountToPartnerForService($partner_service, $discount);
+                $partner_service['discount'] = $partner_service->discount();
+                $calculate_partner = $this->discountRepository->addDiscountToPartnerForService($partner_service, $partner_service['discount']);
                 array_push($price, $calculate_partner['discounted_price']);
             }
             if (count($price) > 0) {
@@ -162,11 +159,8 @@ class ServiceRepository
                     continue;
                 };
                 $partner_service['prices'] = (float)$partner_service->prices;
-                $discount = $partner_service->discount();
-                if ($discount != null && $service['discount'] == false) {
-                    $service['discount'] = true;
-                }
-                $calculate_partner = $this->discountRepository->addDiscountToPartnerForService($partner_service, $discount);
+                $partner_service['discount'] = $partner_service->discount();
+                $calculate_partner = $this->discountRepository->addDiscountToPartnerForService($partner_service, $partner_service['discount']);
                 array_push($price, $calculate_partner['discounted_price']);
             }
             if (count($price) > 0) {
@@ -253,31 +247,67 @@ class ServiceRepository
         return $final;
     }
 
-    public function addServiceInfo($services)
+    public function addServiceInfo($services, array $scope)
     {
         foreach ($services as $key => $service) {
-            $service['discount'] = false;
-            $service = $this->getStartPrice($service);
+            if (array_search('start_price', $scope) !== false) {
+                $service = $this->getStartPrice($service);
+            }
+            if (array_search('discount', $scope) !== false) {
+                $service = $this->_getDiscount($service);
+            }
+            if (array_search('reviews', $scope) !== false) {
+                $this->reviewRepository->getGeneralReviewInformation($service);
+                array_forget($service, 'reviews');
+            }
             array_add($service, 'slug', str_slug($service->name, '-'));
-            $this->reviewRepository->getGeneralReviewInformation($service);
             array_forget($service, 'variables');
             array_forget($service, 'partnerServices');
-            array_forget($service, 'reviews');
         }
         return $services;
     }
 
-    public function getPartnerServicesAndPartners($services, $location, $limit = 0)
+    public function getPartnerServicesAndPartners($services, $location)
     {
-        $services = $services->load(['partnerServices' => function ($q) use ($location) {
+        return $services->load(['partnerServices' => function ($q) use ($location) {
             $q->published()->with(['partner' => function ($q) use ($location) {
                 $q->published()->whereHas('locations', function ($query) use ($location) {
                     $query->where('id', $location);
                 });
             }]);
         }]);
-        return $limit > 0 ? $services->take($limit) : $services;
     }
 
+    private function _getDiscount($service)
+    {
+        $service['discount'] = false;
+        $partner_services = $service->partnerServices;
+        foreach ($partner_services as $partner_service) {
+            if ($partner_service->partner != null) {
+                if ($service['start_price'] == null) {
+                    $partner_service['discount'] = $partner_service->discount();
+                }
+                if ($partner_service['discount'] != null) {
+                    $service['discount'] = true;
+                    break;
+                }
+            }
+        }
+        return $service;
+    }
+
+    public function getServiceScope($scope)
+    {
+        $final_scope = [];
+        $scope_requested = explode(',', $scope);
+        if (count($scope_requested) != 0) {
+            foreach ($scope_requested as $key => $value) {
+                if (in_array(trim($value), ['reviews', 'start_price', 'discount'])) {
+                    array_push($final_scope, $scope_requested[$key]);
+                }
+            }
+        }
+        return $final_scope;
+    }
 
 }

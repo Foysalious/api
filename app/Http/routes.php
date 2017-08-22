@@ -50,7 +50,6 @@ $api->version('v1', function ($api) {
     $api->get('search', 'App\Http\Controllers\SearchController@searchService');
     $api->post('career', 'App\Http\Controllers\CareerController@apply');
     $api->get('category-service', 'App\Http\Controllers\CategoryServiceController@getCategoryServices');
-    $api->get('{service}/similar-services', 'App\Http\Controllers\CategoryServiceController@getSimilarServices');
     $api->get('job-times', 'App\Http\Controllers\JobController@getPreferredTimes');
     $api->get('cancel-job-reasons', 'App\Http\Controllers\JobController@cancelJobReasons');
     $api->post('voucher-valid', 'App\Http\Controllers\CheckoutController@checkForValidity');
@@ -59,24 +58,23 @@ $api->version('v1', function ($api) {
     $api->get('offer/{offer}', 'App\Http\Controllers\ShebaController@getOffer');
     $api->get('offer/{offer}/similar', 'App\Http\Controllers\ShebaController@getSimilarOffer');
 
-    $api->group(['prefix' => 'navigations'], function ($api) {
+    $api->group(['prefix' => 'navigation'], function ($api) {
         $api->get('/', 'App\Http\Controllers\NavigationController@getNavList');
     });
-    $api->group(['prefix' => 'category'], function ($api) {
-        $api->get('/', 'App\Http\Controllers\CategoryController@index');
-        $api->get('{category}/secondary-categories', 'App\Http\Controllers\CategoryController@getChildren');
-        $api->get('{category}/services', 'App\Http\Controllers\CategoryController@getServices');
-        $api->get('{category}/parent', 'App\Http\Controllers\CategoryController@getParent');
-    });
+//    $api->group(['prefix' => 'category'], function ($api) {
+//        $api->get('/', 'App\Http\Controllers\CategoryController@index');
+//        $api->get('{category}/secondary-categories', 'App\Http\Controllers\CategoryController@getChildren');
+//        $api->get('{category}/services', 'App\Http\Controllers\CategoryController@getServices');
+//        $api->get('{category}/parent', 'App\Http\Controllers\CategoryController@getParent');
+//    });
     $api->group(['prefix' => 'categories'], function ($api) {
         $api->get('/', 'App\Http\Controllers\CategoryController@index');
         $api->get('{category}/secondaries', 'App\Http\Controllers\CategoryController@getSecondaries');
         $api->get('{category}/secondaries/services', 'App\Http\Controllers\CategoryController@getSecondaryServices');
         $api->get('{category}/services', 'App\Http\Controllers\CategoryController@getServices');
-        $api->get('{category}/parent', 'App\Http\Controllers\CategoryController@getParent');
+        $api->get('{category}/master', 'App\Http\Controllers\CategoryController@getMaster');
     });
     $api->group(['prefix' => 'service'], function ($api) {
-        $api->get('{service}/valid', 'App\Http\Controllers\ServiceController@validService');
         $api->get('{service}', 'App\Http\Controllers\ServiceController@GetInformation');
         $api->get('{service}/get-prices', 'App\Http\Controllers\ServiceController@getPrices');
         $api->get('{service}/location/{location}/partners', 'App\Http\Controllers\ServiceController@getPartners');
@@ -85,6 +83,10 @@ $api->version('v1', function ($api) {
         $api->get('/{service}/reviews', 'App\Http\Controllers\ServiceController@getReviews');
         //For Back-end
         $api->post('{service}/change-partner', 'App\Http\Controllers\ServiceController@changePartnerWithoutLocation');
+    });
+    $api->group(['prefix' => 'services'], function ($api) {
+        $api->get('{service}/valid', 'App\Http\Controllers\ServiceController@checkForValidity');
+        $api->get('{service}/similar', 'App\Http\Controllers\ServiceController@getSimilarServices');
     });
     $api->group(['prefix' => 'partner'], function ($api) {
         $api->get('/', 'App\Http\Controllers\PartnerController@index');

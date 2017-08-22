@@ -6,15 +6,15 @@ use App\Models\PartnerService;
 
 class DiscountRepository
 {
-    public function addDiscountToPartnerForService($partner, $discount)
+    public function addDiscountToPartnerForService($partner_service, $discount)
     {
         /**
          * partner service has no discount
          */
         if ($discount == null) {
             //initially discount set to zero
-            $partner['discount_price'] = 0;
-            $partner['discounted_price'] = $partner->prices;
+            $partner_service['discount_price'] = 0;
+            $partner_service['discounted_price'] = $partner_service->prices;
         } /**
          * partner service has discount
          */
@@ -23,25 +23,25 @@ class DiscountRepository
              * discount is in percentage
              */
             if ($discount->is_amount_percentage) {
-                $amount = ((float)$partner->prices * $discount->amount) / 100;
+                $amount = ((float)$partner_service->prices * $discount->amount) / 100;
                 if ($discount->cap != 0 && $amount > (float)$discount->cap) {
                     $amount = $discount->cap;
                 }
-                $partner['cap'] = $discount->cap;
-                $partner['discount_price'] = $amount;
-                $partner['discounted_price'] = $partner->prices - $amount;
+                $partner_service['cap'] = $discount->cap;
+                $partner_service['discount_price'] = $amount;
+                $partner_service['discounted_price'] = $partner_service->prices - $amount;
             } else {
-                $partner['cap'] = null;
-                $partner['discount_price'] = $discount->amount;
-                $partner['discounted_price'] = $partner->prices - $discount->amount;
-                $partner['discount_id'] = $discount->id;
+                $partner_service['cap'] = null;
+                $partner_service['discount_price'] = $discount->amount;
+                $partner_service['discounted_price'] = $partner_service->prices - $discount->amount;
+                $partner_service['discount_id'] = $discount->id;
             }
-            if ($partner['discounted_price'] < 0) {
-                $partner['discounted_price'] = 0;
+            if ($partner_service['discounted_price'] < 0) {
+                $partner_service['discounted_price'] = 0;
             }
-            $partner['discount_id'] = $discount->id;
+            $partner_service['discount_id'] = $discount->id;
         }
-        return $partner;
+        return $partner_service;
     }
 
     /**
