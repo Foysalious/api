@@ -16,59 +16,45 @@ class CategoryRepository
         $this->reviewRepository = new ReviewRepository();
     }
 
-    /**
-     * Send children with services for a category
-     * @param $category
-     * @param $request
-     * @return mixed
-     */
     public function childrenWithServices($category, $request)
     {
-        $offset = 0;
-        if ($request->get('skip') != '') {
-            $offset = $request->get('skip');
-        }
+        $offset = $request->offset != '' ? $request->offset : 0;
+        $limit = $request->limit != '' ? $request->limit : 2;
         $location = $request->location != '' ? $request->location : 4;
+        $service_limit = $request->service != '' ? $request->services : 4;
+
         $children = $category->children->load(['services' => function ($q) {
-            $q->select('id', 'category_id', 'name', 'thumb', 'banner', 'slug', 'variable_type', 'variables', 'min_quantity')->where('publication_status', 1);
+            $q->select('id', 'category_id', 'name', 'thumb', 'banner', 'slug', 'variable_type', 'variables', 'min_quantity')->published();
         }]);
-        $children = $this->childrenHasServices($children, $offset);
+        $children = $this->onlyChildrenWithServices($children, $offset, $limit);
         foreach ($children as $child) {
-            $services = $child->services->load(['partnerServices' => function ($q) use ($location) {
-                $q->select('id', 'partner_id', 'service_id', 'is_published', 'is_verified', 'prices')->where([
-                    ['is_published', 1],
-                    ['is_verified', 1],
-                ])->with(['partner' => function ($q) use ($location) {
-                    $q->where('status', 'Verified')->whereHas('locations', function ($query) use ($location) {
-                        $query->where('id', $location);
-                    });
-                }]);
-            }])->take(4);
-            array_forget($child,'services');
-            $child['services']=$services;
-            array_add($child, 'slug', str_slug($child->name, '-'));
-            $child['services'] = $this->serviceRepository->addServiceInfo($child['services'], $request->location);
-            array_forget($child->services,'reviews');
+            $child['slug'] = str_slug($child->name, '-');
+            $services = $this->serviceRepository->getPartnerServicesAndPartners($child->services, $location, $service_limit);
+            array_forget($child, 'services');
+            $child['services'] = $services;
+            $child['services'] = $this->serviceRepository->addServiceInfo($child['services']);
         }
         return $children;
     }
 
-    public function getChildrenServices($category, $request)
+    public function getServicesOfCategory($category_ids, $location)
     {
-        $chlidren_category_id = $category->children->pluck('id');
-        $services = Service::select('id', 'category_id', 'name', 'thumb', 'variable_type', 'variables', 'min_quantity')
-            ->where('publication_status', 1)
-            ->whereIn('category_id', $chlidren_category_id)
-            ->get()
-            ->random(6);
-        $final_service = [];
+        $services = Service::with(['partnerServices' => function ($q) use ($location) {
+            $q->where([['is_published', 1], ['is_verified', 1]])->with(['partner' => function ($q) use ($location) {
+                $q->where('status', 'Verified')->whereHas('locations', function ($query) use ($location) {
+                    $query->where('id', $location);
+                });
+            }]);
+        }])->select('id', 'category_id', 'name', 'thumb', 'min_quantity', 'variable_type')
+            ->where('publication_status', 1)->whereIn('category_id', $category_ids)->get()->random(6);
+        $final_services = [];
         foreach ($services as $service) {
-            array_push($final_service, $service);
+            array_push($final_services, $service);
         }
-        return $this->serviceRepository->addServiceInfo($final_service, $request->location);
+        return $final_services;
     }
 
-    public function childrenHasServices($children, $offset)
+    public function onlyChildrenWithServices($children, $offset, $limit)
     {
         $final = array();
         foreach ($children as $key => $child) {
@@ -76,7 +62,7 @@ class CategoryRepository
                 array_push($final, $child);
             }
         }
-        return array_slice($final, $offset, 2);
+        return array_slice($final, $offset, $limit);
     }
 
 }
