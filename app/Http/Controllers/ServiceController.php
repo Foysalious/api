@@ -128,13 +128,10 @@ class ServiceController extends Controller
             return response()->json(['msg' => 'no partner found', 'code' => 404]);
     }
 
-    public function validService($service)
+    public function checkForValidity($service, Request $request)
     {
-        $service = Service::where([
-            ['id', $service],
-            ['publication_status', 1]
-        ])->first();
-        return $service != null ? response()->json(['msg' => 'ok', 'code' => 200]) : response()->json(['msg' => 'not ok', 'code' => 409]);
+        $service = Service::where('id', $service)->published()->first();
+        return $service != null ? api_response($request, true, constants('API_RESPONSE_CODE')[200]) : api_response($request, false, constants('API_RESPONSE_CODE')[404]);
     }
 
     public function getReviews($service)
@@ -162,5 +159,27 @@ class ServiceController extends Controller
         $service = Service::find($service);
         $prices = $this->serviceRepository->getMaxMinPrice($service);
         return response()->json(['max' => $prices[0], 'min' => $prices[1], 'code' => 200]);
+    }
+
+
+    public function getSimilarServices($service, Request $request)
+    {
+        $service = Service::find($service);
+        $category = $service->category;
+        list($offset, $limit) = calculatePagination($request);
+        $location = $request->location != '' ? $request->location : 4;
+        $scope = [];
+        if ($request->has('scope')) {
+            $scope = $this->serviceRepository->getServiceScope($request->scope);
+        }
+        $category->load(['services' => function ($q) use ($offset, $limit, $service) {
+            $q->select('id', 'category_id', 'name', 'banner', 'variables', 'variable_type', 'min_quantity')->where('id', '<>', $service->id)->skip($offset)->limit($limit);
+        }]);
+        $services = $this->serviceRepository->addServiceInfo($this->serviceRepository->getPartnerServicesAndPartners($category->services, $location), $scope);
+        if (count($services) > 3) {
+            return response()->json(['services' => $services, 'msg' => 'successful', 'code' => 200]);
+        } else {
+            return response()->json(['msg' => 'not found', 'code' => 404]);
+        }
     }
 }
