@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class Service extends Model
@@ -85,12 +86,41 @@ class Service extends Model
 
     public function hasDiscounts()
     {
-        foreach ($this->partnerServices as $partner_service) {
-            if ($partner_service->is_verified == 1 && $partner_service->is_published == 1 && $partner_service->discount() && $partner_service->partner->status == 'Verified') {
+        $this->load(['partnerServices' => function ($q) {
+            $q->published()->with(['partner' => function ($q) {
+                $q->published();
+            }])->with(['discounts' => function ($q) {
+                $q->where([
+                    ['start_date', '<=', Carbon::now()],
+                    ['end_date', '>=', Carbon::now()]
+                ]);
+            }]);
+        }]);
+        foreach ($this->partnerServices as $partnerService) {
+            if (count($partnerService->discounts) != 0) {
                 return true;
             }
         }
         return false;
+//        foreach ($this->partnerServices as $partner_service) {
+//            if ($partner_service->is_verified == 1 && $partner_service->is_published == 1 && $partner_service->partner->status == 'Verified' && $partner_service->discount()) {
+//                return true;
+//            }
+//        }
+//        return false;
+    }
+
+    public function discounts(){
+        return $this->load(['partnerServices' => function ($q) {
+            $q->published()->with(['partner' => function ($q) {
+                $q->published();
+            }])->with(['discounts' => function ($q) {
+                $q->where([
+                    ['start_date', '<=', Carbon::now()],
+                    ['end_date', '>=', Carbon::now()]
+                ])->first();
+            }]);
+        }]);
     }
 
     /** Scope a query to only include published Service.

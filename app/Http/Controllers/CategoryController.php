@@ -3,11 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
-use App\Models\Service;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
 use Illuminate\Http\Request;
-use Tinify\Tinify;
 use Dingo\Api\Routing\Helpers;
 
 class CategoryController extends Controller
@@ -15,11 +13,9 @@ class CategoryController extends Controller
     use Helpers;
     private $categoryRepository;
     private $serviceRepository;
-    private $tinify;
 
     public function __construct()
     {
-        $this->tinify = \Tinify\setKey(env(''));
         $this->categoryRepository = new CategoryRepository();
         $this->serviceRepository = new ServiceRepository();
     }
@@ -105,23 +101,24 @@ class CategoryController extends Controller
                     $scope = $this->serviceRepository->getServiceScope($request->scope);
                 }
                 $secondaries->load(['services' => function ($q) {
-                    $q->select('id', 'category_id', 'name', 'thumb', 'banner', 'slug', 'variable_type', 'variables', 'min_quantity')->published();
+                    $q->select('id', 'category_id', 'name', 'thumb', 'banner', 'slug', 'variable_type', 'variables', 'min_quantity');
                 }]);
-                $secondaries = ($secondaries->filter(function ($secondary, $key) {
-                    return $secondary->services->count() > 0;
-                }))->splice($offset, $limit)->all();
+                $secondaries = $secondaries->splice($offset, $limit)->all();
                 $category['secondaries'] = $secondaries;
                 if (count($secondaries) != 0) {
                     foreach ($secondaries as $secondary) {
                         $secondary['slug'] = str_slug($secondary->name, '-');
-                        $services = $this->serviceRepository->getPartnerServicesAndPartners($secondary->services, $location);
-                        $services = $services->take($service_limit);
+                        $services = $secondary->services->take($service_limit);
+                        if (in_array('discount', $scope) || in_array('start_price', $scope)) {
+                            $services = $this->serviceRepository->getpartnerServicePartnerDiscount($services, $location);
+                        }
+                        if (in_array('reviews', $scope)) {
+                            $services->load('reviews');
+                        }
                         array_forget($secondary, 'services');
                         $secondary['services'] = $this->serviceRepository->addServiceInfo($services, $scope);
                     }
-                    $response = constants('API_RESPONSE_CODE')[200];
-                    $response['category'] = $category;
-                    return api_response($request, $category, $response);
+                    return api_response($request, $category, ['category' => $category, 'msg' => 'successful', 'code' => 200]);
                 } else {
                     return api_response($request, null, constants('API_RESPONSE_CODE')[404]);
                 }

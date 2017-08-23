@@ -145,7 +145,12 @@ class ServiceRepository
                 };
                 $min = min((array)json_decode($partner_service->prices));
                 $partner_service['prices'] = (float)$min;
-                $partner_service['discount'] = $partner_service->discount();
+                if (count($partner_service->discounts) == 0) {
+                    $partner_service['discount'] = null;
+                } else {
+                    $partner_service['discount'] = $partner_service->discounts->first();
+                }
+//                $partner_service['discount'] = $partner_service->discount();
                 $calculate_partner = $this->discountRepository->addDiscountToPartnerForService($partner_service, $partner_service['discount']);
                 array_push($price, $calculate_partner['discounted_price']);
             }
@@ -159,7 +164,12 @@ class ServiceRepository
                     continue;
                 };
                 $partner_service['prices'] = (float)$partner_service->prices;
-                $partner_service['discount'] = $partner_service->discount();
+                if (count($partner_service->discounts) == 0) {
+                    $partner_service['discount'] = null;
+                } else {
+                    $partner_service['discount'] = $partner_service->discounts->first();
+                }
+//                $partner_service['discount'] = $partner_service->discount();
                 $calculate_partner = $this->discountRepository->addDiscountToPartnerForService($partner_service, $partner_service['discount']);
                 array_push($price, $calculate_partner['discounted_price']);
             }
@@ -260,21 +270,47 @@ class ServiceRepository
                 $this->reviewRepository->getGeneralReviewInformation($service);
                 array_forget($service, 'reviews');
             }
-            array_add($service, 'slug', str_slug($service->name, '-'));
             array_forget($service, 'variables');
-            array_forget($service, 'partnerServices');
+            if (in_array('discount', $scope) || in_array('start_price', $scope)) {
+                array_forget($service, 'partnerServices');
+            }
         }
         return $services;
     }
 
     public function getPartnerServicesAndPartners($services, $location)
     {
+        return $services->load(['reviews', 'partnerServices' => function ($q) use ($location) {
+            $q->published()
+                ->with(['partner' => function ($q) use ($location) {
+                    $q->published()->whereHas('locations', function ($query) use ($location) {
+                        $query->where('id', $location);
+                    });
+                }])
+                ->with(['discounts' => function ($q) {
+                    $q->where([
+                        ['start_date', '<=', Carbon::now()],
+                        ['end_date', '>=', Carbon::now()]
+                    ])->first();
+                }]);
+        }]);
+    }
+
+    public function getpartnerServicePartnerDiscount($services, $location)
+    {
         return $services->load(['partnerServices' => function ($q) use ($location) {
-            $q->published()->with(['partner' => function ($q) use ($location) {
-                $q->published()->whereHas('locations', function ($query) use ($location) {
-                    $query->where('id', $location);
-                });
-            }]);
+            $q->published()
+                ->with(['partner' => function ($q) use ($location) {
+                    $q->published()->whereHas('locations', function ($query) use ($location) {
+                        $query->where('id', $location);
+                    });
+                }])
+                ->with(['discounts' => function ($q) {
+                    $q->where([
+                        ['start_date', '<=', Carbon::now()],
+                        ['end_date', '>=', Carbon::now()]
+                    ]);
+                }]);
         }]);
     }
 
@@ -284,13 +320,20 @@ class ServiceRepository
         $partner_services = $service->partnerServices;
         foreach ($partner_services as $partner_service) {
             if ($partner_service->partner != null) {
-                if ($service['start_price'] == null) {
-                    $partner_service['discount'] = $partner_service->discount();
-                }
-                if ($partner_service['discount'] != null) {
+                if (count($partner_service->discounts) != 0) {
                     $service['discount'] = true;
                     break;
                 }
+//                else{
+//                    $partner_service['discount']=$partner_service->discounts->first();
+//                }
+//                if ($service['start_price'] == null) {
+//                    $partner_service['discount'] = $partner_service->discounts->first();
+//                }
+//                if ($partner_service['discount'] != null) {
+//                    $service['discount'] = true;
+//                    break;
+//                }
             }
         }
         return $service;
@@ -308,6 +351,14 @@ class ServiceRepository
             }
         }
         return $final_scope;
+    }
+
+    public function getFirstOption($service)
+    {
+        $variables = json_decode($service->variables);
+        $first_option = array_map('intval', explode(',', key($variables->prices)));
+        array_add($service, 'first_option', $first_option);
+        return $service;
     }
 
 }

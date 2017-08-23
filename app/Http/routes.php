@@ -61,12 +61,12 @@ $api->version('v1', function ($api) {
     $api->group(['prefix' => 'navigation'], function ($api) {
         $api->get('/', 'App\Http\Controllers\NavigationController@getNavList');
     });
-//    $api->group(['prefix' => 'category'], function ($api) {
-//        $api->get('/', 'App\Http\Controllers\CategoryController@index');
-//        $api->get('{category}/secondary-categories', 'App\Http\Controllers\CategoryController@getChildren');
-//        $api->get('{category}/services', 'App\Http\Controllers\CategoryController@getServices');
-//        $api->get('{category}/parent', 'App\Http\Controllers\CategoryController@getParent');
-//    });
+    $api->group(['prefix' => 'category'], function ($api) {
+        $api->get('/', 'App\Http\Controllers\CategoryController@index');
+        $api->get('{category}/secondary-categories', 'App\Http\Controllers\CategoryController@getChildren');
+        $api->get('{category}/services', 'App\Http\Controllers\CategoryController@getServices');
+        $api->get('{category}/parent', 'App\Http\Controllers\CategoryController@getParent');
+    });
     $api->group(['prefix' => 'categories'], function ($api) {
         $api->get('/', 'App\Http\Controllers\CategoryController@index');
         $api->get('{category}/secondaries', 'App\Http\Controllers\CategoryController@getSecondaries');
@@ -75,7 +75,6 @@ $api->version('v1', function ($api) {
         $api->get('{category}/master', 'App\Http\Controllers\CategoryController@getMaster');
     });
     $api->group(['prefix' => 'service'], function ($api) {
-        $api->get('{service}', 'App\Http\Controllers\ServiceController@GetInformation');
         $api->get('{service}/get-prices', 'App\Http\Controllers\ServiceController@getPrices');
         $api->get('{service}/location/{location}/partners', 'App\Http\Controllers\ServiceController@getPartners');
         $api->post('{service}/location/{location}/partners', 'App\Http\Controllers\ServiceController@getPartners');
@@ -85,8 +84,11 @@ $api->version('v1', function ($api) {
         $api->post('{service}/change-partner', 'App\Http\Controllers\ServiceController@changePartnerWithoutLocation');
     });
     $api->group(['prefix' => 'services'], function ($api) {
+        $api->get('{service}', 'App\Http\Controllers\ServiceController@get');
         $api->get('{service}/valid', 'App\Http\Controllers\ServiceController@checkForValidity');
         $api->get('{service}/similar', 'App\Http\Controllers\ServiceController@getSimilarServices');
+        $api->get('{service}/locations/{location}/partners', 'App\Http\Controllers\ServiceController@getPartners');
+//        $api->post('{service}/location/{location}/partners', 'App\Http\Controllers\ServiceController@getPartners');
     });
     $api->group(['prefix' => 'partner'], function ($api) {
         $api->get('/', 'App\Http\Controllers\PartnerController@index');

@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Service;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use DB;
 
@@ -18,6 +19,32 @@ class ServiceController extends Controller
     {
         $this->serviceRepository = $srp;
         $this->reviewRepository = $reviewRepository;
+    }
+
+    public function get($service, Request $request)
+    {
+        $service = Service::where('id', $service)
+            ->select('id', 'name', 'unit', 'category_id', 'description', 'thumb', 'slug', 'min_quantity', 'banner', 'faqs', 'variable_type', 'variables')
+            ->published()
+            ->first();
+        if ($service == null)
+            return response()->json(['code' => 404, 'msg' => 'no service found']);
+        array_add($service, 'discount', $service->hasDiscounts());
+        array_forget($service, 'partnerServices');
+        //Add first options in service
+        if ($service->variable_type == 'Options') {
+            $service = $this->serviceRepository->getFirstOption($service);
+        }
+        $service = $this->reviewRepository->getGeneralReviewInformation($service);
+        array_forget($service, 'reviews');
+        //get the category & parent of the service
+        $category = Category::with(['parent' => function ($query) {
+            $query->select('id', 'name');
+        }])->where('id', $service->category_id)->select('id', 'name', 'parent_id')->first();
+        array_add($service, 'category_name', $category->name);
+        array_add($service, 'master_category_id', $category->parent->id);
+        array_add($service, 'master_category_name', $category->parent->name);
+        return response()->json(['service' => $service, 'code' => 200]);
     }
 
     public function getPartners($service, $location = null, Request $request)
@@ -38,7 +65,6 @@ class ServiceController extends Controller
             }
             // review count of this service
             $review = $service->reviews()->where('review', '<>', '')->count('review');
-            //avg rating of this service
             $rating = $service->reviews()->avg('rating');
             array_add($service, 'review_count', $review);
             $service['rating'] = empty($rating) ? 5 : floor($rating);
@@ -160,7 +186,6 @@ class ServiceController extends Controller
         $prices = $this->serviceRepository->getMaxMinPrice($service);
         return response()->json(['max' => $prices[0], 'min' => $prices[1], 'code' => 200]);
     }
-
 
     public function getSimilarServices($service, Request $request)
     {
