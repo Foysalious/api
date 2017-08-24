@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Service;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use DB;
 
@@ -18,6 +19,32 @@ class ServiceController extends Controller
     {
         $this->serviceRepository = $srp;
         $this->reviewRepository = $reviewRepository;
+    }
+
+    public function get($service, Request $request)
+    {
+        $service = Service::where('id', $service)
+            ->select('id', 'name', 'unit', 'category_id', 'description', 'thumb', 'slug', 'min_quantity', 'banner', 'faqs', 'variable_type', 'variables')
+            ->published()
+            ->first();
+        if ($service == null)
+            return response()->json(['code' => 404, 'msg' => 'no service found']);
+        array_add($service, 'discount', $service->hasDiscounts());
+        array_forget($service, 'partnerServices');
+        //Add first options in service
+        if ($service->variable_type == 'Options') {
+            $service = $this->serviceRepository->getFirstOption($service);
+        }
+        $service = $this->reviewRepository->getGeneralReviewInformation($service);
+        array_forget($service, 'reviews');
+        //get the category & parent of the service
+        $category = Category::with(['parent' => function ($query) {
+            $query->select('id', 'name');
+        }])->where('id', $service->category_id)->select('id', 'name', 'parent_id')->first();
+        array_add($service, 'category_name', $category->name);
+        array_add($service, 'master_category_id', $category->parent->id);
+        array_add($service, 'master_category_name', $category->parent->name);
+        return response()->json(['service' => $service, 'code' => 200]);
     }
 
     public function getPartners($service, $location = null, Request $request)
@@ -38,7 +65,6 @@ class ServiceController extends Controller
             }
             // review count of this service
             $review = $service->reviews()->where('review', '<>', '')->count('review');
-            //avg rating of this service
             $rating = $service->reviews()->avg('rating');
             array_add($service, 'review_count', $review);
             $service['rating'] = empty($rating) ? 5 : floor($rating);
@@ -128,13 +154,10 @@ class ServiceController extends Controller
             return response()->json(['msg' => 'no partner found', 'code' => 404]);
     }
 
-    public function validService($service)
+    public function checkForValidity($service, Request $request)
     {
-        $service = Service::where([
-            ['id', $service],
-            ['publication_status', 1]
-        ])->first();
-        return $service != null ? response()->json(['msg' => 'ok', 'code' => 200]) : response()->json(['msg' => 'not ok', 'code' => 409]);
+        $service = Service::where('id', $service)->published()->first();
+        return $service != null ? api_response($request, true, constants('API_RESPONSE_CODE')[200]) : api_response($request, false, constants('API_RESPONSE_CODE')[404]);
     }
 
     public function getReviews($service)
@@ -162,5 +185,26 @@ class ServiceController extends Controller
         $service = Service::find($service);
         $prices = $this->serviceRepository->getMaxMinPrice($service);
         return response()->json(['max' => $prices[0], 'min' => $prices[1], 'code' => 200]);
+    }
+
+    public function getSimilarServices($service, Request $request)
+    {
+        $service = Service::find($service);
+        $category = $service->category;
+        list($offset, $limit) = calculatePagination($request);
+        $location = $request->location != '' ? $request->location : 4;
+        $scope = [];
+        if ($request->has('scope')) {
+            $scope = $this->serviceRepository->getServiceScope($request->scope);
+        }
+        $category->load(['services' => function ($q) use ($offset, $limit, $service) {
+            $q->select('id', 'category_id', 'name', 'banner', 'variables', 'variable_type', 'min_quantity')->where('id', '<>', $service->id)->skip($offset)->limit($limit);
+        }]);
+        $services = $this->serviceRepository->addServiceInfo($this->serviceRepository->getPartnerServicesAndPartners($category->services, $location), $scope);
+        if (count($services) > 3) {
+            return response()->json(['services' => $services, 'msg' => 'successful', 'code' => 200]);
+        } else {
+            return response()->json(['msg' => 'not found', 'code' => 404]);
+        }
     }
 }

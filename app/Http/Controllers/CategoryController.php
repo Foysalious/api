@@ -3,11 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
-use App\Models\Service;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
 use Illuminate\Http\Request;
-use Tinify\Tinify;
 use Dingo\Api\Routing\Helpers;
 
 class CategoryController extends Controller
@@ -15,11 +13,9 @@ class CategoryController extends Controller
     use Helpers;
     private $categoryRepository;
     private $serviceRepository;
-    private $tinify;
 
     public function __construct()
     {
-        $this->tinify = \Tinify\setKey(env(''));
         $this->categoryRepository = new CategoryRepository();
         $this->serviceRepository = new ServiceRepository();
     }
@@ -46,20 +42,20 @@ class CategoryController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getChildren($category, Request $request)
-    {
-        $category = Category::find($category);
-        if ($category != null) {
-            $children = $this->categoryRepository->childrenWithServices($category, $request);
-            $cat = collect($category)->only(['name', 'banner']);
-            if (count($children) > 0)
-                return response()->json(['category' => $cat, 'secondary_categories' => $children, 'msg' => 'successful', 'code' => 200]);
-            else
-                return response()->json(['msg' => 'no secondary categories found!', 'code' => 404]);
-        } else {
-            return response()->json(['msg' => 'category not found', 'code' => 404]);
-        }
-    }
+//    public function getChildren($category, Request $request)
+//    {
+//        $category = Category::find($category);
+//        if ($category != null) {
+//            $children = $this->categoryRepository->childrenWithServices($category, $request);
+//            $cat = collect($category)->only(['name', 'banner']);
+//            if (count($children) > 0)
+//                return response()->json(['category' => $cat, 'secondary_categories' => $children, 'msg' => 'successful', 'code' => 200]);
+//            else
+//                return response()->json(['msg' => 'no secondary categories found!', 'code' => 404]);
+//        } else {
+//            return response()->json(['msg' => 'category not found', 'code' => 404]);
+//        }
+//    }
 
 
     /**
@@ -67,34 +63,13 @@ class CategoryController extends Controller
      * @param Category $category
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getParent($category)
+    public function getMaster($category)
     {
         $category = Category::find($category);
         $parent = $category->parent()->select('id', 'name', 'thumb', 'banner')->first();
         if ($parent)
             return response()->json(['parent' => $parent, 'msg' => 'successful', 'code' => 200]);
-        return response()->json(['msg' => 'no parent found', 'code' => 404]);
-    }
-
-    public function getServices($category, Request $request)
-    {
-        $category = Category::where([['id', $category], ['publication_status', 1]])->first();
-        if ($category != null) {
-            $location = $request->location != '' ? $request->location : 4;
-            $cat = collect($category)->only(['name', 'banner']);
-            if ($category->parent_id == null) {
-                $services = $this->categoryRepository->getServicesOfCategory($category->children->pluck('id'), $location);
-                $services = $this->serviceRepository->addServiceInfo($services);
-            } else {
-                $category = Category::with(['services' => function ($q) {
-                    $q->select('id', 'category_id', 'name', 'thumb', 'banner', 'variable_type', 'min_quantity')->where('publication_status', 1);
-                }])->where([['id', $category->id], ['publication_status', 1]])->first();
-                $services = $this->serviceRepository->addServiceInfo($category->services, $location);
-            }
-            return response()->json(['category' => $cat, 'services' => $services, 'msg' => 'successful', 'code' => 200]);
-        } else {
-            return response()->json(['msg' => 'category not found', 'code' => 404]);
-        }
+        return response()->json(['msg' => 'not found', 'code' => 404]);
     }
 
     public function getSecondaries($category, Request $request)
@@ -120,24 +95,30 @@ class CategoryController extends Controller
                 $secondaries = $category['secondaries'];
                 list($offset, $limit) = calculatePagination($request);
                 $location = $request->location != '' ? $request->location : 4;
-                $service_limit = $request->service != '' ? $request->services : 4;
+                $service_limit = $request->service_limit != '' ? $request->service_limit : 4;
+                $scope = [];
+                if ($request->has('scope')) {
+                    $scope = $this->serviceRepository->getServiceScope($request->scope);
+                }
                 $secondaries->load(['services' => function ($q) {
-                    $q->select('id', 'category_id', 'name', 'thumb', 'banner', 'slug', 'variable_type', 'variables', 'min_quantity')->published();
+                    $q->select('id', 'category_id', 'name', 'thumb', 'banner', 'slug', 'variable_type', 'variables', 'min_quantity');
                 }]);
-                $secondaries = ($secondaries->filter(function ($secondary, $key) {
-                    return $secondary->services->count() > 0;
-                }))->splice($offset, $limit)->all();
+                $secondaries = $secondaries->splice($offset, $limit)->all();
                 $category['secondaries'] = $secondaries;
                 if (count($secondaries) != 0) {
                     foreach ($secondaries as $secondary) {
                         $secondary['slug'] = str_slug($secondary->name, '-');
-                        $services = $this->serviceRepository->getPartnerServicesAndPartners($secondary->services, $location, $service_limit);
+                        $services = $secondary->services->take($service_limit);
+                        if (in_array('discount', $scope) || in_array('start_price', $scope)) {
+                            $services = $this->serviceRepository->getpartnerServicePartnerDiscount($services, $location);
+                        }
+                        if (in_array('reviews', $scope)) {
+                            $services->load('reviews');
+                        }
                         array_forget($secondary, 'services');
-                        $secondary['services'] = $this->serviceRepository->addServiceInfo($services);
+                        $secondary['services'] = $this->serviceRepository->addServiceInfo($services, $scope);
                     }
-                    $response = constants('API_RESPONSE_CODE')[200];
-                    $response['category'] = $category;
-                    return api_response($request, $category, $response);
+                    return api_response($request, $category, ['category' => $category, 'msg' => 'successful', 'code' => 200]);
                 } else {
                     return api_response($request, null, constants('API_RESPONSE_CODE')[404]);
                 }
@@ -146,6 +127,33 @@ class CategoryController extends Controller
             }
         } else {
             return api_response($request, null, constants('API_RESPONSE_CODE')[404]);
+        }
+    }
+
+    public function getServices($category, Request $request)
+    {
+        $category = Category::where('id', $category)->published()->first();
+        if ($category != null) {
+            list($offset, $limit) = calculatePagination($request);
+            $location = $request->location != '' ? $request->location : 4;
+            $scope = [];
+            if ($request->has('scope')) {
+                $scope = $this->serviceRepository->getServiceScope($request->scope);
+            }
+            if ($category->parent_id == null) {
+                $services = $this->categoryRepository->getServicesOfCategory($category->children->pluck('id'), $location, $offset, $limit);
+                $services = $this->serviceRepository->addServiceInfo($services, $scope);
+            } else {
+                $category = Category::with(['services' => function ($q) use ($offset, $limit) {
+                    $q->select('id', 'category_id', 'name', 'thumb', 'banner', 'variable_type', 'min_quantity')->published()->skip($offset)->take($limit);
+                }])->where('id', $category->id)->published()->first();
+                $services = $this->serviceRepository->addServiceInfo($this->serviceRepository->getPartnerServicesAndPartners($category->services, $location), $scope);
+            }
+            $category = collect($category)->only(['name', 'banner']);
+            $category['services'] = $services;
+            return response()->json(['category' => $category, 'msg' => 'successful', 'code' => 200]);
+        } else {
+            return response()->json(['msg' => 'category not found', 'code' => 404]);
         }
     }
 }
