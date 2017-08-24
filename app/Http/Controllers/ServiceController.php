@@ -173,7 +173,7 @@ class ServiceController extends Controller
                 }])->orderBy('updated_at', 'desc');
         }])->select('id')->where('id', $service)->first();
         if (count($service->reviews) > 0) {
-            $service = $this->reviewRepository->getReviews($service);
+            $service = $this->reviewRepository->getGeneralReviewInformation($service);
             $breakdown = $this->reviewRepository->getReviewBreakdown($service->reviews);
             return response()->json(['msg' => 'ok', 'code' => 200, 'service' => $service, 'breakdown' => $breakdown]);
         }
