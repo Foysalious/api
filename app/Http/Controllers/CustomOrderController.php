@@ -10,7 +10,7 @@ use App\Models\Service;
 use App\Repositories\CustomOrderRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-
+use DB;
 
 class CustomOrderController extends Controller
 {
@@ -57,10 +57,11 @@ class CustomOrderController extends Controller
         }])->with(['quotations' => function ($query) {
             $query->select('id', 'custom_order_id', 'proposal', 'partner_id', 'attachment', 'proposed_price')->where('is_sent', 1)
                 ->with(['partner' => function ($q) {
-                    $q->select('id', 'name');
+                    $q->select('id', 'name', DB::Raw('sub_domain as slug'));
                 }]);
         }])->select('id', 'service_id', 'status', 'service_variables', 'created_at', 'additional_info')->where('id', $custom_order)->first();
         if (count($orders) != 0) {
+
             return response()->json(['order' => $orders, 'code' => 200]);
         } else {
             return response()->json(['code' => 404]);
