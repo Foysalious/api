@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 
 use App\Models\PartnerService;
+use App\Models\Quotation;
 
 class CartRepository
 {
@@ -32,15 +33,24 @@ class CartRepository
             if (!$this->_validPartnerLocation($location, $partner_service->partner)) {
                 return array(false, 'Partner Location not valid');
             }
-            $price = $partner_service->prices;
-            if ($partner_service->service->variable_type == 'Options') {
-                $price = $this->_validOption($item->serviceOptions, $partner_service);
-                if (!$price) {
-                    return array(false, 'Service Option not valid');
+            if ($partner_service->service->variable_type == 'Custom') {
+                $price = $this->_validateQuotePrice($item->partner->quote_id);
+                if ($price != false) {
+                    $item->partner->prices = $price;
+                } else {
+                    return array(false, 'Invalid Quotation');
                 }
+            } else {
+                $price = $partner_service->prices;
+                if ($partner_service->service->variable_type == 'Options') {
+                    $price = $this->_validOption($item->serviceOptions, $partner_service);
+                    if (!$price) {
+                        return array(false, 'Service Option not valid');
+                    }
+                }
+                unset($item->partner);
+                $item->partner = $this->_validatePartnerPrice($price, $partner_service);
             }
-            unset($item->partner);
-            $item->partner = $this->_validatePartnerPrice($price, $partner_service);
         }
         return $items;
     }
@@ -106,6 +116,12 @@ class CartRepository
             ['is_published', 1]
         ])->first();
 
+    }
+
+    private function _validateQuotePrice($quote_id)
+    {
+        $quotation = Quotation::find($quote_id);
+        return $quotation != null ? $quotation->proposed_price : false;
     }
 
 }

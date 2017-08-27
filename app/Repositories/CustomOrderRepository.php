@@ -48,7 +48,7 @@ class CustomOrderRepository
         }
         $custom_order->sales_channel = $request->has('sales_channel') ? $request->sales_channel : 'Web';
         $custom_order->job_name = $request->has('job_name') ? $request->job_name : '';
-        $custom_order->crm_id = $request->has('crm_id') ? $request->crm_id : '';
+        $custom_order->crm_id = $request->has('crm_id') ? $request->crm_id : null;
         $custom_order->created_by = $request->has('created_by') ? $request->created_by : '';
         $custom_order->status = 'Open';
         if ($custom_order->save()) {

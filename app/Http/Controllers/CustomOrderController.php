@@ -42,7 +42,7 @@ class CustomOrderController extends Controller
     {
         $orders = CustomOrder::with(['service' => function ($q) {
             $q->select('id', 'name');
-        }])->select('id', 'service_id', 'status', 'created_at')->where('customer_id', $customer)->get();
+        }])->select('id', 'service_id', 'status', 'created_at')->where('customer_id', $customer)->orderBy('id','desc')->get();
         if (count($orders) != 0) {
             return response()->json(['orders' => $orders, 'code' => 200]);
         } else {
