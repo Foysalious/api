@@ -30,6 +30,9 @@ class CartRepository
             }
             unset($item->service);
             $item->service = $partner_service->service;
+            if ($partner_service->partner == null) {
+                return array(false, 'Partner not Verified!');
+            }
             if (!$this->_validPartnerLocation($location, $partner_service->partner)) {
                 return array(false, 'Partner Location not valid');
             }
