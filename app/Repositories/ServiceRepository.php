@@ -72,10 +72,6 @@ class ServiceRepository
                 }
             } elseif ($service->variable_type == 'Fixed') {
                 $final_partners = $this->addToFinalPartnerListWithDiscount($partner, $final_partners);
-            } else {
-                if($this->partnerServesThisCustomOption($partner->options, $option)) {
-                    $final_partners = $this->addToFinalPartnerListWithDiscount($partner, $final_partners);
-                }
             }
         }
         return $final_partners;
@@ -90,7 +86,7 @@ class ServiceRepository
     public function partnerSelectByLocation($service, $location)
     {
         return $service->partners()
-            ->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'prices', 'options')
+            ->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'prices')
             ->with(['basicInformations' => function ($q) {
                 $q->select('id', 'partner_id', 'working_days', 'working_hours');
             }])->where([
@@ -216,21 +212,6 @@ class ServiceRepository
             }
         }
         return null;
-    }
-
-    private function partnerServesThisCustomOption($partner_options, $selected_options)
-    {
-        $result = true;
-        if(!empty($selected_options) && !empty($partner_options)) {
-            $selected_options = explode(',', $selected_options);
-            foreach ($partner_options as $key => $partner_option) {
-                if (!in_array($selected_options[$key], $partner_option)) {
-                    $result = false;
-                    break;
-                }
-            }
-        }
-        return $result;
     }
 
     private function addToFinalPartnerListWithDiscount($partner, $final_partners)
