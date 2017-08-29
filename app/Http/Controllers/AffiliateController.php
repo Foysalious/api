@@ -86,6 +86,38 @@ class AffiliateController extends Controller
         return response()->json(['code' => 200, 'total_lead' => $affiliate->totalLead(), 'earning_amount' => $affiliate->earningAmount()]);
     }
 
+    public function joinClan($affiliate, Request $request)
+    {
+        try {
+            $affiliate = $request->affiliate;
+            if ($affiliate->is_ambassador == 1 || $affiliate->ambassador_id != null) {
+                return api_response($request, null, 403);
+            }
+            $validator = Validator::make($request->all(), [
+                'code' => 'required|string'
+            ]);
+            if ($validator->fails()) {
+                $error = $validator->errors()->all()[0];
+                return api_response($request, $error, 400, ['msg' => $error]);
+            }
+            $ambassador = Affiliate::where([
+                ['ambassador_code', 'like', '%' . $request->code . '%'],
+                ['id', '<>', $affiliate->id],
+                ['is_ambassador', 1]
+            ])->first();
+            if ($ambassador) {
+                $affiliate = $request->affiliate;
+                $affiliate->ambassador_id = $ambassador->id;
+                $affiliate->update();
+                return api_response($request, true, 200);
+            } else {
+                return api_response($request, null, 404);
+            }
+        } catch (\Exception $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
     private function _validateImage($request)
     {
         $validator = Validator::make($request->all(), [

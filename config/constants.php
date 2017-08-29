@@ -262,8 +262,12 @@ return [
     ],
     'AFFILIATION_REWARD_MONEY' => 10,
     'API_RESPONSE_CODE' => [
-        404 => ['msg' => 'not found!', 'code' => 404],
-        200 => ['msg' => 'successful', 'code' => 200]
+        200 => ['message' => 'Successful', 'code' => 200],
+        400 => ['message' => 'Bad request', 'code' => 400],
+        401 => ['message' => 'Unauthorized', 'code' => 401],
+        403 => ['message' => 'Forbidden', 'code' => 403],
+        404 => ['message' => 'Not found', 'code' => 404],
+        500 => ['message' => 'Internal Server Error', 'code' => 500],
     ]
 
 ];

@@ -80,11 +80,11 @@ class CategoryController extends Controller
             if (count($category->children) != 0) {
                 $category = collect($category)->only(['name', 'banner']);
                 $category->put('secondaries', $children);
-                return api_response($request, $category->all(), ['category' => $category->all(), 'msg' => 'successful', 'code' => 200]);
+                return api_response($request, $category->all(), 200, ['category' => $category->all()]);
             } else
-                return api_response($request, null, constants('API_RESPONSE_CODE')[404]);
+                return api_response($request, null, 404);
         } catch (\Exception $e) {
-            return api_response($request, null, constants('API_RESPONSE_CODE')[404]);
+            return api_response($request, null, 500);
         }
     }
 
@@ -118,15 +118,15 @@ class CategoryController extends Controller
                         array_forget($secondary, 'services');
                         $secondary['services'] = $this->serviceRepository->addServiceInfo($services, $scope);
                     }
-                    return api_response($request, $category, ['category' => $category, 'msg' => 'successful', 'code' => 200]);
+                    return api_response($request, $category, 200, ['category' => $category]);
                 } else {
-                    return api_response($request, null, constants('API_RESPONSE_CODE')[404]);
+                    return api_response($request, null, 404);
                 }
             } catch (\Exception $e) {
-                return api_response($request, null, constants('API_RESPONSE_CODE')[404]);
+                return api_response($request, null, 500);
             }
         } else {
-            return api_response($request, null, constants('API_RESPONSE_CODE')[404]);
+            return api_response($request, null, 404);
         }
     }
 

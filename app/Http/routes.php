@@ -183,7 +183,21 @@ $api->version('v1', function ($api) {
         $api->get('status', 'App\Http\Controllers\AffiliateController@getStatus');
         $api->get('affiliations', 'App\Http\Controllers\AffiliationController@index');
         $api->post('affiliations', 'App\Http\Controllers\AffiliationController@create');
+    });
 
+    $api->group(['prefix' => 'affiliates/{affiliate}', 'middleware' => ['affiliate.auth']], function ($api) {
+        $api->post('edit', 'App\Http\Controllers\AffiliateController@edit');
+        $api->post('update-profile-picture', 'App\Http\Controllers\AffiliateController@updateProfilePic');
+        $api->get('lead-info', 'App\Http\Controllers\AffiliateController@leadInfo');
+
+        $api->get('wallet', 'App\Http\Controllers\AffiliateController@getWallet');
+        $api->get('status', 'App\Http\Controllers\AffiliateController@getStatus');
+        $api->get('affiliations', 'App\Http\Controllers\AffiliationController@index');
+        $api->post('affiliations', 'App\Http\Controllers\AffiliationController@create');
+
+        $api->group(['prefix' => 'ambassador'], function ($api) {
+            $api->post('code', 'App\Http\Controllers\AffiliateController@joinClan');
+        });
     });
 
     $api->group(['prefix' => 'profile', 'middleware' => ['profile.auth']], function ($api) {

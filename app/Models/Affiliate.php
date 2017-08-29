@@ -63,4 +63,9 @@ class Affiliate extends Model
     {
         return $this->transactions->where('type', 'Credit')->sum('amount');
     }
+
+    public function ambassador()
+    {
+        return $this->belongsTo(Affiliate::class, 'ambassador_id');
+    }
 }

@@ -157,7 +157,7 @@ class ServiceController extends Controller
     public function checkForValidity($service, Request $request)
     {
         $service = Service::where('id', $service)->published()->first();
-        return $service != null ? api_response($request, true, constants('API_RESPONSE_CODE')[200]) : api_response($request, false, constants('API_RESPONSE_CODE')[404]);
+        return $service != null ? api_response($request, true, 200) : api_response($request, false, 404);
     }
 
     public function getReviews($service)

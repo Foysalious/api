@@ -18,15 +18,15 @@ class AffiliateAuthMiddleware
     {
         If ($request->has('remember_token')) {
             $affiliate = Affiliate::where('remember_token', $request->input('remember_token'))->first();
-            //remember_token is valid for a customer
             if ($affiliate) {
                 if ($affiliate->id == $request->affiliate) {
+                    $request->merge(['affiliate' => $affiliate]);
                     return $next($request);
                 } else {
-                    return response()->json(['msg' => 'unauthorized', 'code' => 409]);
+                    return api_response($request, null, 403);
                 }
             }
         }
-        return response()->json(['msg' => 'unauthorized', 'code' => 409]);
+        return api_response($request, null, 401);
     }
 }
