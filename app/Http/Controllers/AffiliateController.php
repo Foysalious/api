@@ -123,13 +123,16 @@ class AffiliateController extends Controller
     public function getLeaderboard($affiliate, Request $request)
     {
         try {
-            $affiliates = Affiliate::with(['profile' => function ($q) {
-                $q->select('id', 'name', 'pro_pic');
-            }])->with(['transactions' => function ($q) {
+            list($offset, $limit) = calculatePagination($request);
+            $affiliates = Affiliate::whereHas('transactions', function ($q) {
                 $q->where('type', 'Credit');
-            }])->with(['affiliations' => function ($q) {
+            })->select('id', 'profile_id')->get();
+
+            $affiliates->load(['profile' => function ($q) {
+                $q->select('id', 'name', 'pro_pic');
+            }])->load(['affiliations' => function ($q) {
                 $q->where('status', 'successful');
-            }])->select('id', 'profile_id')->get();
+            }])->load('transactions');
 
             foreach ($affiliates as $affiliate) {
                 $affiliate['earning_amount'] = $affiliate->transactions->sum('amount');
@@ -141,7 +144,6 @@ class AffiliateController extends Controller
                 array_forget($affiliate, 'profile');
                 array_forget($affiliate, 'profile_id');
             }
-            list($offset, $limit) = calculatePagination($request);
             return api_response($request, null, 200, ['affiliates' => $affiliates->sortByDesc('earning_amount')->splice($offset, $limit)->values()]);
         } catch (Exception $e) {
             return api_response($request, null, 500);

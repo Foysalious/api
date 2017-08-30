@@ -172,7 +172,7 @@ if (!function_exists('calculatePagination')) {
     function calculatePagination($request)
     {
         $offset = $request->has('offset') ? $request->offset : 0;
-        $limit = $request->has('limit') ? $request->limit : 200;
+        $limit = $request->has('limit') ? $request->limit : 20;
         return array($offset, $limit);
     }
 }
