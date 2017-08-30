@@ -144,7 +144,40 @@ class AffiliateController extends Controller
                 array_forget($affiliate, 'profile');
                 array_forget($affiliate, 'profile_id');
             }
-            return api_response($request, null, 200, ['affiliates' => $affiliates->sortByDesc('earning_amount')->splice($offset, $limit)->values()]);
+            $affiliates = $affiliates->sortByDesc('earning_amount')->splice($offset, $limit)->values();
+            return api_response($request, $affiliates, 200, ['affiliates' => $affiliates]);
+        } catch (Exception $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getAgents($affiliate, Request $request)
+    {
+        try {
+            $affiliate = $request->affiliate;
+            if ($affiliate->is_ambassador == 0) {
+                return api_response($request, null, 403);
+            }
+            $affiliate->load(['agents' => function ($q) {
+                $q->select('id', 'profile_id', 'ambassador_id', 'total_gifted_number', 'total_gifted_amount')->with(['profile' => function ($q) {
+                    $q->select('id', 'name', 'pro_pic');
+                }]);
+            }]);
+            if (count($affiliate->agents) != 0) {
+                foreach ($affiliate->agents as $agent) {
+                    $agent['name'] = $agent->profile->name;
+                    $agent['picture'] = $agent->profile->pro_pic;
+                    $agent['total_gifted_amount'] = (double)$agent->total_gifted_amount;
+                    array_forget($agent, 'profile');
+                    array_forget($agent, 'ambassador_id');
+                    array_forget($agent, 'profile_id');
+                }
+                list($offset, $limit) = calculatePagination($request);
+                $agents = $affiliate->agents->splice($offset, $limit)->values();
+                return api_response($request, $agents, 200, ['agents' => $agents]);
+            } else {
+                return api_response($request, null, 404);
+            }
         } catch (Exception $e) {
             return api_response($request, null, 500);
         }

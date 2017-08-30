@@ -184,6 +184,7 @@ $api->version('v1', function ($api) {
         $api->get('affiliations', 'App\Http\Controllers\AffiliationController@index');
         $api->group(['prefix' => 'ambassador'], function ($api) {
             $api->post('code', 'App\Http\Controllers\AffiliateController@joinClan');
+            $api->get('agents', 'App\Http\Controllers\AffiliateController@getAgents');
         });
     });
 
