@@ -41,7 +41,7 @@ class SearchController extends Controller
             $services = $query->select('id', 'name', 'thumb', 'banner', 'variables', 'variable_type', 'min_quantity')
                 ->take(10)
                 ->get();
-            if ($services->isEmpty())
+            if (count($services) == 0)
                 return response()->json(['msg' => 'nothing found', 'code' => 404]);
             else {
                 foreach ($services as $service) {

@@ -6,8 +6,10 @@ use App\Models\Affiliate;
 use App\Repositories\FileRepository;
 use App\Repositories\LocationRepository;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Request;
 use Validator;
+use DB;
 
 class AffiliateController extends Controller
 {
@@ -89,16 +91,16 @@ class AffiliateController extends Controller
     public function joinClan($affiliate, Request $request)
     {
         try {
-            $affiliate = $request->affiliate;
-            if ($affiliate->is_ambassador == 1 || $affiliate->ambassador_id != null) {
-                return api_response($request, null, 403);
-            }
             $validator = Validator::make($request->all(), [
                 'code' => 'required|string'
             ]);
             if ($validator->fails()) {
                 $error = $validator->errors()->all()[0];
                 return api_response($request, $error, 400, ['msg' => $error]);
+            }
+            $affiliate = $request->affiliate;
+            if ($affiliate->is_ambassador == 1 || $affiliate->ambassador_id != null) {
+                return api_response($request, null, 403);
             }
             $ambassador = Affiliate::where([
                 ['ambassador_code', 'like', '%' . $request->code . '%'],
@@ -114,6 +116,34 @@ class AffiliateController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (\Exception $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getLeaderboard($affiliate, Request $request)
+    {
+        try {
+            $affiliates = Affiliate::with(['profile' => function ($q) {
+                $q->select('id', 'name', 'pro_pic');
+            }])->with(['transactions' => function ($q) {
+                $q->where('type', 'Credit');
+            }])->with(['affiliations' => function ($q) {
+                $q->where('status', 'successful');
+            }])->select('id', 'profile_id')->get();
+
+            foreach ($affiliates as $affiliate) {
+                $affiliate['earning_amount'] = $affiliate->transactions->sum('amount');
+                $affiliate['total_reference'] = $affiliate->affiliations->count();
+                $affiliate['name'] = $affiliate->profile->name;
+                $affiliate['picture'] = $affiliate->profile->pro_pic;
+                array_forget($affiliate, 'transactions');
+                array_forget($affiliate, 'affiliations');
+                array_forget($affiliate, 'profile');
+                array_forget($affiliate, 'profile_id');
+            }
+            list($offset, $limit) = calculatePagination($request);
+            return api_response($request, null, 200, ['affiliates' => $affiliates->sortByDesc('earning_amount')->splice($offset, $limit)->values()]);
+        } catch (Exception $e) {
             return api_response($request, null, 500);
         }
     }

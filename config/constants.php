@@ -261,7 +261,7 @@ return [
         'affiliation-app'
     ],
     'AFFILIATION_REWARD_MONEY' => 10,
-    'API_RESPONSE_CODE' => [
+    'API_RESPONSE_CODES' => [
         200 => ['message' => 'Successful', 'code' => 200],
         400 => ['message' => 'Bad request', 'code' => 400],
         401 => ['message' => 'Unauthorized', 'code' => 401],

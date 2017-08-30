@@ -68,4 +68,8 @@ class Affiliate extends Model
     {
         return $this->belongsTo(Affiliate::class, 'ambassador_id');
     }
+
+    public function agents(){
+        return $this->hasMany(Affiliate::class, 'ambassador_id');
+    }
 }
