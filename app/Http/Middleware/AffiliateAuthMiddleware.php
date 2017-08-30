@@ -22,10 +22,9 @@ class AffiliateAuthMiddleware
                 if ($affiliate->id == $request->affiliate) {
                     $request->merge(['affiliate' => $affiliate]);
                     return $next($request);
-                } else {
-                    return api_response($request, null, 403);
                 }
             }
+            return api_response($request, null, 403);
         }
         return api_response($request, null, 401);
     }

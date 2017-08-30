@@ -8,6 +8,8 @@ use App\Repositories\LocationRepository;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
+use PhpParser\Node\Expr\Cast\Object_;
+use stdClass;
 use Validator;
 use DB;
 
@@ -173,11 +175,28 @@ class AffiliateController extends Controller
                     array_forget($agent, 'profile_id');
                 }
                 list($offset, $limit) = calculatePagination($request);
-                $agents = $affiliate->agents->splice($offset, $limit)->values();
+                $agents = $affiliate->agents->splice($offset, $limit)->all();
                 return api_response($request, $agents, 200, ['agents' => $agents]);
             } else {
                 return api_response($request, null, 404);
             }
+        } catch (Exception $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getAmbassadorSummary($affiliate, Request $request)
+    {
+        try {
+            $affiliate = $request->affiliate;
+            if ($affiliate->is_ambassador == 0) {
+                return api_response($request, null, 403);
+            }
+            $info = collect();
+            $info->put('agent_count', $affiliate->agents->count());
+            $info->put('earning_amount', $affiliate->agents->sum('total_gifted_amount'));
+            $info->put('total_refer', $affiliate->agents->sum('total_gifted_number'));
+            return api_response($request, $info, 200, ['info' => $info->all()]);
         } catch (Exception $e) {
             return api_response($request, null, 500);
         }
