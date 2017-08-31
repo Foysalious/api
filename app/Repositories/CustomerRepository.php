@@ -242,8 +242,11 @@ class CustomerRepository
         }
 
         if (empty($profile->mobile)) {
-            $profile->mobile = $order_info['phone'];
-            $update = true;
+            $profile = Profile::where('mobile', $order_info['phone'])->first();
+            if (count($profile) != 0) {
+                $profile->mobile = $order_info['phone'];
+                $update = true;
+            }
         }
 
         if ($update) {
