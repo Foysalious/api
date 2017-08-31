@@ -30,7 +30,7 @@ $api = app('Dingo\Api\Routing\Router');
 |
 |
 */
-$api->version('v1', function ($api) {
+$api->version('v1', ['middleware' => 'api.throttle'], function ($api) {
     /*API*/
     $api->post('login', 'App\Http\Controllers\Auth\LoginController@login');
     $api->post('register', 'App\Http\Controllers\Auth\RegistrationController@register');
