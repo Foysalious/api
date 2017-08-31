@@ -113,7 +113,7 @@ class AffiliateController extends Controller
                 $affiliate = $request->affiliate;
                 $affiliate->ambassador_id = $ambassador->id;
                 $affiliate->update();
-                return api_response($request, true, 200);
+                return api_response($request, $ambassador, 200);
             } else {
                 return api_response($request, null, 404);
             }
@@ -146,8 +146,12 @@ class AffiliateController extends Controller
                 array_forget($affiliate, 'profile');
                 array_forget($affiliate, 'profile_id');
             }
-            $affiliates = $affiliates->sortByDesc('earning_amount')->splice($offset, $limit)->values();
-            return api_response($request, $affiliates, 200, ['affiliates' => $affiliates]);
+            $affiliates = $affiliates->sortByDesc('earning_amount')->splice($offset, $limit);
+            if (count($affiliates) != 0) {
+                return api_response($request, $affiliates, 200, ['affiliates' => $affiliates]);
+            } else {
+                return api_response($request, null, 404);
+            }
         } catch (Exception $e) {
             return api_response($request, null, 500);
         }
@@ -166,20 +170,21 @@ class AffiliateController extends Controller
                 }]);
             }]);
             if (count($affiliate->agents) != 0) {
-                foreach ($affiliate->agents as $agent) {
-                    $agent['name'] = $agent->profile->name;
-                    $agent['picture'] = $agent->profile->pro_pic;
-                    $agent['total_gifted_amount'] = (double)$agent->total_gifted_amount;
-                    array_forget($agent, 'profile');
-                    array_forget($agent, 'ambassador_id');
-                    array_forget($agent, 'profile_id');
-                }
                 list($offset, $limit) = calculatePagination($request);
                 $agents = $affiliate->agents->splice($offset, $limit)->all();
-                return api_response($request, $agents, 200, ['agents' => $agents]);
-            } else {
-                return api_response($request, null, 404);
+                if (count($agents) != 0) {
+                    foreach ($agents as $agent) {
+                        $agent['name'] = $agent->profile->name;
+                        $agent['picture'] = $agent->profile->pro_pic;
+                        $agent['total_gifted_amount'] = (double)$agent->total_gifted_amount;
+                        array_forget($agent, 'profile');
+                        array_forget($agent, 'ambassador_id');
+                        array_forget($agent, 'profile_id');
+                    }
+                    return api_response($request, $agents, 200, ['agents' => $agents]);
+                }
             }
+            return api_response($request, null, 404);
         } catch (Exception $e) {
             return api_response($request, null, 500);
         }

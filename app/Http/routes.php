@@ -178,7 +178,6 @@ $api->version('v1', function ($api) {
         $api->get('affiliations', 'App\Http\Controllers\AffiliationController@index');
         $api->post('affiliations', 'App\Http\Controllers\AffiliationController@create');
     });
-
     $api->group(['prefix' => 'affiliates/{affiliate}', 'middleware' => ['affiliate.auth']], function ($api) {
         $api->get('leaderboard', 'App\Http\Controllers\AffiliateController@getLeaderboard');
         $api->get('affiliations', 'App\Http\Controllers\AffiliationController@index');
@@ -188,7 +187,6 @@ $api->version('v1', function ($api) {
             $api->get('summary', 'App\Http\Controllers\AffiliateController@getAmbassadorSummary');
         });
     });
-
     $api->group(['prefix' => 'profile', 'middleware' => ['profile.auth']], function ($api) {
         $api->post('change-picture', 'App\Http\Controllers\ProfileController@changePicture');
     });

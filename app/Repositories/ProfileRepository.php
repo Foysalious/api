@@ -51,8 +51,9 @@ class ProfileRepository
             $info = array(
                 'id' => $avatar->id,
                 'name' => $profile->name,
+                'mobile' => $profile->mobile,
                 'profile_image' => $profile->pro_pic,
-                'token' => $avatar->remember_token
+                'token' => $avatar->remember_token,
             );
             if ($from == 'affiliate') {
                 $info['name'] = $profile->name;
