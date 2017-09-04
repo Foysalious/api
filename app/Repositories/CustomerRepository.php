@@ -232,25 +232,27 @@ class CustomerRepository
 
     public function updateCustomerNameIfEmptyWhenPlacingOrder($order_info)
     {
-        $customer = Customer::find($order_info['customer_id']);
-        $profile = $customer->profile;
         $update = false;
+        $profile = Customer::find($order_info['customer_id'])->profile;
+        $this->updateProfileNameIfEmpty($profile, $order_info['name'], $update);
+        $this->updateProfileMobileIfEmpty($profile, $order_info['phone'], $update);
+        if ($update) $profile->update();
+    }
 
-        if (empty($profile->name) || $profile->name == "") {
-            $profile->name = $order_info['name'];
+    private function updateProfileNameIfEmpty(&$profile, $name, &$update)
+    {
+        if (empty($profile->name)) {
+            $profile->name = $name;
             $update = true;
         }
+    }
 
-        if (empty($profile->mobile)) {
-            $profile = Profile::where('mobile', $order_info['phone'])->first();
-            if (count($profile) != 0) {
-                $profile->mobile = $order_info['phone'];
-                $update = true;
-            }
-        }
-
-        if ($update) {
-            $profile->update();
+    private function updateProfileMobileIfEmpty(&$profile, $mobile, &$update)
+    {
+        $mobile_profile = Profile::where('mobile', $mobile)->first();
+        if (empty($profile->mobile) && !$mobile_profile) {
+            $profile->mobile = $mobile;
+            $update = true;
         }
     }
 
