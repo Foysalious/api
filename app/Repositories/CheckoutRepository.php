@@ -111,12 +111,13 @@ class CheckoutRepository
 
                 $order = $this->createOrder($order, $order_info);
                 $order->delivery_address = $this->getDeliveryAddress($order_info);
-                $order->update();
-
                 //For custom order
                 if (isset($cart->custom_order_id)) {
+                    $order->custom_order_id = $cart->custom_order_id;
                     $this->updateCustomOrder($order, $cart->custom_order_id);
                 }
+                $order->update();
+
                 (new CustomerRepository())->updateCustomerNameIfEmptyWhenPlacingOrder($order_info);
 
                 $cart_partner = collect($cart->items)->groupBy('partner.id');
@@ -262,7 +263,7 @@ class CheckoutRepository
     private function updateCustomOrder($order, $custom_order_id)
     {
         $custom_order = CustomOrder::find($custom_order_id);
-        $custom_order->order_id = $order->id;
+//        $custom_order->order_id = $order->id;
         $custom_order->status = 'Converted To Order';
         $custom_order->update();
     }
