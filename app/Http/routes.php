@@ -180,7 +180,6 @@ $api->version('v1', ['middleware' => 'api.throttle', 'limit' => 60, 'expires' =>
     });
     $api->group(['prefix' => 'affiliates/{affiliate}', 'middleware' => ['affiliate.auth']], function ($api) {
         $api->post('edit', 'App\Http\Controllers\AffiliateController@edit');
-        $api->post('update-profile-picture', 'App\Http\Controllers\AffiliateController@updateProfilePic');
         $api->get('lead-info', 'App\Http\Controllers\AffiliateController@leadInfo');
 
         $api->get('wallet', 'App\Http\Controllers\AffiliateController@getWallet');

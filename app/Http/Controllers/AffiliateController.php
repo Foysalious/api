@@ -58,7 +58,7 @@ class AffiliateController extends Controller
 
     public function getStatus($affiliate, Request $request)
     {
-        $affiliate = Affiliate::where('id', $affiliate)->select('verification_status', 'is_suspended')->first();
+        $affiliate = Affiliate::where('id', $affiliate)->select('verification_status', 'is_suspended', 'ambassador_code')->first();
         return $affiliate != null ? response()->json(['code' => 200, 'affiliate' => $affiliate]) : response()->json(['code' => 404, 'msg' => 'Not found!']);
     }
 
@@ -112,12 +112,46 @@ class AffiliateController extends Controller
             if ($ambassador) {
                 $affiliate = $request->affiliate;
                 $affiliate->ambassador_id = $ambassador->id;
+                $affiliate->under_ambassador_since = Carbon::now();
                 $affiliate->update();
                 return api_response($request, $ambassador, 200);
             } else {
                 return api_response($request, null, 404);
             }
         } catch (\Exception $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getAgents($affiliate, Request $request)
+    {
+        try {
+            $affiliate = $request->affiliate;
+            if ($affiliate->is_ambassador == 0) {
+                return api_response($request, null, 403);
+            }
+            $affiliate->load(['agents' => function ($q) {
+                $q->select('id', 'profile_id', 'ambassador_id', 'total_gifted_number', 'total_gifted_amount')->with(['profile' => function ($q) {
+                    $q->select('id', 'name', 'pro_pic');
+                }]);
+            }]);
+            if (count($affiliate->agents) != 0) {
+                list($offset, $limit) = calculatePagination($request);
+                $agents = $affiliate->agents->splice($offset, $limit)->all();
+                if (count($agents) != 0) {
+                    foreach ($agents as $agent) {
+                        $agent['name'] = $agent->profile->name;
+                        $agent['picture'] = $agent->profile->pro_pic;
+                        $agent['total_gifted_amount'] = (double)$agent->total_gifted_amount;
+                        array_forget($agent, 'profile');
+                        array_forget($agent, 'ambassador_id');
+                        array_forget($agent, 'profile_id');
+                    }
+                    return api_response($request, $agents, 200, ['agents' => $agents]);
+                }
+            }
+            return api_response($request, null, 404);
+        } catch (Exception $e) {
             return api_response($request, null, 500);
         }
     }
@@ -152,39 +186,6 @@ class AffiliateController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (Exception $e) {
-            return api_response($request, null, 500);
-        }
-    }
-
-    public function getAgents($affiliate, Request $request)
-    {
-        try {
-            $affiliate = $request->affiliate;
-            if ($affiliate->is_ambassador == 0) {
-                return api_response($request, null, 403);
-            }
-            $affiliate->load(['agents' => function ($q) {
-                $q->select('id', 'profile_id', 'ambassador_id', 'total_gifted_number', 'total_gifted_amount')->with(['profile' => function ($q) {
-                    $q->select('id', 'name', 'pro_pic');
-                }]);
-            }]);
-            if (count($affiliate->agents) != 0) {
-                list($offset, $limit) = calculatePagination($request);
-                $agents = $affiliate->agents->splice($offset, $limit)->all();
-                if (count($agents) != 0) {
-                    foreach ($agents as $agent) {
-                        $agent['name'] = $agent->profile->name;
-                        $agent['picture'] = $agent->profile->pro_pic;
-                        $agent['total_gifted_amount'] = (double)$agent->total_gifted_amount;
-                        array_forget($agent, 'profile');
-                        array_forget($agent, 'ambassador_id');
-                        array_forget($agent, 'profile_id');
-                    }
-                    return api_response($request, $agents, 200, ['agents' => $agents]);
-                }
-            }
-            return api_response($request, null, 404);
         } catch (Exception $e) {
             return api_response($request, null, 500);
         }
