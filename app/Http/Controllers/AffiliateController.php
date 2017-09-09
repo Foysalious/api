@@ -68,7 +68,7 @@ class AffiliateController extends Controller
             return response()->json(['code' => 500, 'msg' => $msg]);
         }
         $photo = $request->file('photo');
-        $profile = Affiliate::find($request->affiliate)->profile;
+        $profile = ($request->affiliate)->profile;
         if (strpos($profile->pro_pic, 'images/customer/avatar/default.jpg') == false) {
             $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
             $this->fileRepository->deleteFileFromCDN($filename);
@@ -203,6 +203,21 @@ class AffiliateController extends Controller
             $info->put('earning_amount', $affiliate->agents->sum('total_gifted_amount'));
             $info->put('total_refer', $affiliate->agents->sum('total_gifted_number'));
             return api_response($request, $info, 200, ['info' => $info->all()]);
+        } catch (Exception $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getTransactions($affiliate, Request $request)
+    {
+        try {
+            $affiliate = $request->affiliate;
+            $affiliate->load('transactions');
+            if ($affiliate->transactions != null) {
+                return api_response($request, $affiliate->transactions, 200, ['transactions' => $affiliate->transactions]);
+            } else {
+                return api_response($request, null, 404);
+            }
         } catch (Exception $e) {
             return api_response($request, null, 500);
         }
