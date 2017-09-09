@@ -11,6 +11,21 @@ use DB;
 
 class AffiliationController extends Controller
 {
+    public function newIndex($affiliate, Request $request)
+    {
+        list($offset, $limit) = calculatePagination($request);
+        $affiliate = Affiliate::with(['affiliations' => function ($q) use ($offset, $limit) {
+            $q->select('id', 'affiliate_id', 'customer_name', 'customer_mobile', 'service', 'status', 'is_fake', 'reject_reason', DB::raw('DATE_FORMAT(created_at, "%Y-%m-%d") as referred_date'))
+                ->orderBy('id', 'desc')
+                ->skip($offset)->take($limit);
+        }])->select('id')->where('id', $affiliate)->first();
+        if (count($affiliate->affiliations) != 0) {
+            return api_response($request, $affiliate->affiliations, 200, ['affiliations' => $affiliate->affiliations]);
+        } else {
+            return api_response($request, null, 404);
+        }
+    }
+
     public function index($affiliate, Request $request)
     {
         $offset = 0;
@@ -35,7 +50,7 @@ class AffiliationController extends Controller
         $affiliate = Affiliate::find($affiliate);
         if ($affiliate != null) {
             if ($affiliate->profile->mobile == $request->mobile) {
-                return response()->json(['code' => 501, 'msg' => "You can't reffer yourself!"]);
+                return response()->json(['code' => 501, 'msg' => "You can't refer yourself!"]);
             }
             if ($affiliate->verification_status != 'verified' || $affiliate->is_suspended == 1) {
                 return response()->json(['code' => 502, 'msg' => "You're not verified!"]);
