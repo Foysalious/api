@@ -16,11 +16,22 @@ class AffiliationController extends Controller
         list($offset, $limit) = calculatePagination($request);
         $affiliate = Affiliate::with(['affiliations' => function ($q) use ($offset, $limit) {
             $q->select('id', 'affiliate_id', 'customer_name', 'customer_mobile', 'service', 'status', 'is_fake', 'reject_reason', DB::raw('DATE_FORMAT(created_at, "%Y-%m-%d") as referred_date'))
-                ->orderBy('id', 'desc')
+                ->with(['transactions' => function ($q) {
+                    $q->where('type', 'Credit');
+                }])->orderBy('id', 'desc')
                 ->skip($offset)->take($limit);
         }])->select('id')->where('id', $affiliate)->first();
         if (count($affiliate->affiliations) != 0) {
-            return api_response($request, $affiliate->affiliations, 200, ['affiliations' => $affiliate->affiliations]);
+            $affiliations = $affiliate->affiliations;
+            foreach ($affiliate->affiliations as $affiliation) {
+                if ($affiliation->transactions != null) {
+                    array_add($affiliation, 'earning_amount', $affiliation->transactions->sum('amount'));
+                } else {
+                    array_add($affiliation, 'earning_amount', 0);
+                }
+                array_forget($affiliation, 'transactions');
+            }
+            return api_response($request, $affiliate->affiliations, 200, ['affiliations' => $affiliations]);
         } else {
             return api_response($request, null, 404);
         }
@@ -35,10 +46,25 @@ class AffiliationController extends Controller
         }
         $affiliate = Affiliate::with(['affiliations' => function ($q) use ($offset) {
             $q->select('id', 'affiliate_id', 'customer_name', 'customer_mobile', 'service', 'status', 'is_fake', 'reject_reason', DB::raw('DATE_FORMAT(created_at, "%Y-%m-%d") as referred_date'))
-                ->orderBy('id', 'desc')
+                ->with(['transactions' => function ($q) {
+                    $q->where('type', 'Credit');
+                }])->orderBy('id', 'desc')
                 ->skip($offset)->take(12);
         }])->select('id')->where('id', $affiliate)->first();
-        return count($affiliate->affiliations) > 0 ? response()->json(['code' => 200, 'affiliations' => $affiliate->affiliations]) : response()->json(['code' => 404]);
+        if (count($affiliate->affiliations) != 0) {
+            $affiliations = $affiliate->affiliations;
+            foreach ($affiliate->affiliations as $affiliation) {
+                if ($affiliation->transactions != null) {
+                    array_add($affiliation, 'earning_amount', $affiliation->transactions->sum('amount'));
+                } else {
+                    array_add($affiliation, 'earning_amount', 0);
+                }
+                array_forget($affiliation, 'transactions');
+            }
+            return api_response($request, $affiliate->affiliations, 200, ['affiliations' => $affiliations]);
+        } else {
+            return api_response($request, null, 404);
+        }
     }
 
     public function create($affiliate, Request $request)
