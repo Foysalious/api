@@ -88,6 +88,32 @@ class AffiliateController extends Controller
         return response()->json(['code' => 200, 'total_lead' => $affiliate->totalLead(), 'earning_amount' => $affiliate->earningAmount()]);
     }
 
+    public function getAmbassador($affiliate, Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'code' => 'required|string'
+            ]);
+            if ($validator->fails()) {
+                $error = $validator->errors()->all()[0];
+                return api_response($request, $error, 400, ['msg' => $error]);
+            }
+            $ambassador = Affiliate::with(['profile' => function ($q) {
+                $q->select('id', 'name', DB::raw('pro_pic as picture'));
+            }])->where([
+                ['ambassador_code', strtoupper(trim($request->code))],
+                ['is_ambassador', 1]
+            ])->first();
+            if ($ambassador) {
+                return api_response($request, $ambassador->profile, 200, ['info' => $ambassador->profile]);
+            } else {
+                return api_response($request, null, 404);
+            }
+        } catch (\Exception $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
     public function joinClan($affiliate, Request $request)
     {
         try {
@@ -103,7 +129,7 @@ class AffiliateController extends Controller
                 return api_response($request, null, 403);
             }
             $ambassador = Affiliate::where([
-                ['ambassador_code', 'like', '%' . $request->code . '%'],
+                ['ambassador_code', strtoupper(trim($request->code))],
                 ['id', '<>', $affiliate->id],
                 ['is_ambassador', 1]
             ])->first();
