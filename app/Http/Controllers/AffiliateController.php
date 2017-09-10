@@ -237,7 +237,7 @@ class AffiliateController extends Controller
         try {
             $affiliate = $request->affiliate;
             $affiliate->load(['transactions' => function ($q) {
-                $q->select('id', 'affiliate_id', 'affiliation_id', 'type', 'log', 'amount', DB::raw('DATE_FORMAT(updated_at, "%M %d, %Y at %h:%i %p") as time'));
+                $q->select('id', 'affiliate_id', 'affiliation_id', 'type', 'log', 'amount', DB::raw('DATE_FORMAT(created_at, "%M %d, %Y at %h:%i %p") as time'))->orderBy('id', 'desc');
             }]);
             if ($affiliate->transactions != null) {
                 $transactions = $affiliate->transactions;
