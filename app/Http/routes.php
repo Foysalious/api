@@ -49,6 +49,7 @@ $api->version('v1', ['middleware' => 'api.throttle', 'limit' => 60, 'expires' =>
     $api->get('lead-reward', 'App\Http\Controllers\ShebaController@getLeadRewardAmount');
     $api->get('search', 'App\Http\Controllers\SearchController@searchService');
     $api->post('career', 'App\Http\Controllers\CareerController@apply');
+    $api->get('career', 'App\Http\Controllers\CareerController@getVacantPosts');
     $api->get('category-service', 'App\Http\Controllers\CategoryServiceController@getCategoryServices');
     $api->get('job-times', 'App\Http\Controllers\JobController@getPreferredTimes');
     $api->get('cancel-job-reasons', 'App\Http\Controllers\JobController@cancelJobReasons');
