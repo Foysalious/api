@@ -8,8 +8,6 @@ use App\Repositories\LocationRepository;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
-use PhpParser\Node\Expr\Cast\Object_;
-use stdClass;
 use Validator;
 use DB;
 
@@ -58,7 +56,7 @@ class AffiliateController extends Controller
 
     public function getStatus($affiliate, Request $request)
     {
-        $affiliate = Affiliate::where('id', $affiliate)->select('verification_status', 'is_suspended')->first();
+        $affiliate = Affiliate::where('id', $affiliate)->select('verification_status', 'is_suspended', 'ambassador_code')->first();
         return $affiliate != null ? response()->json(['code' => 200, 'affiliate' => $affiliate]) : response()->json(['code' => 404, 'msg' => 'Not found!']);
     }
 
@@ -68,7 +66,7 @@ class AffiliateController extends Controller
             return response()->json(['code' => 500, 'msg' => $msg]);
         }
         $photo = $request->file('photo');
-        $profile = Affiliate::find($request->affiliate)->profile;
+        $profile = ($request->affiliate)->profile;
         if (strpos($profile->pro_pic, 'images/customer/avatar/default.jpg') == false) {
             $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
             $this->fileRepository->deleteFileFromCDN($filename);
@@ -90,6 +88,32 @@ class AffiliateController extends Controller
         return response()->json(['code' => 200, 'total_lead' => $affiliate->totalLead(), 'earning_amount' => $affiliate->earningAmount()]);
     }
 
+    public function getAmbassador($affiliate, Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'code' => 'required|string'
+            ]);
+            if ($validator->fails()) {
+                $error = $validator->errors()->all()[0];
+                return api_response($request, $error, 400, ['msg' => $error]);
+            }
+            $ambassador = Affiliate::with(['profile' => function ($q) {
+                $q->select('id', 'name', DB::raw('pro_pic as picture'));
+            }])->where([
+                ['ambassador_code', strtoupper(trim($request->code))],
+                ['is_ambassador', 1]
+            ])->first();
+            if ($ambassador) {
+                return api_response($request, $ambassador->profile, 200, ['info' => $ambassador->profile]);
+            } else {
+                return api_response($request, null, 404);
+            }
+        } catch (\Exception $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
     public function joinClan($affiliate, Request $request)
     {
         try {
@@ -105,54 +129,20 @@ class AffiliateController extends Controller
                 return api_response($request, null, 403);
             }
             $ambassador = Affiliate::where([
-                ['ambassador_code', 'like', '%' . $request->code . '%'],
+                ['ambassador_code', strtoupper(trim($request->code))],
                 ['id', '<>', $affiliate->id],
                 ['is_ambassador', 1]
             ])->first();
             if ($ambassador) {
                 $affiliate = $request->affiliate;
                 $affiliate->ambassador_id = $ambassador->id;
+                $affiliate->under_ambassador_since = Carbon::now();
                 $affiliate->update();
                 return api_response($request, $ambassador, 200);
             } else {
                 return api_response($request, null, 404);
             }
         } catch (\Exception $e) {
-            return api_response($request, null, 500);
-        }
-    }
-
-    public function getLeaderboard($affiliate, Request $request)
-    {
-        try {
-            list($offset, $limit) = calculatePagination($request);
-            $affiliates = Affiliate::whereHas('transactions', function ($q) {
-                $q->where('type', 'Credit');
-            })->select('id', 'profile_id')->get();
-
-            $affiliates->load(['profile' => function ($q) {
-                $q->select('id', 'name', 'pro_pic');
-            }])->load(['affiliations' => function ($q) {
-                $q->where('status', 'successful');
-            }])->load('transactions');
-
-            foreach ($affiliates as $affiliate) {
-                $affiliate['earning_amount'] = $affiliate->transactions->sum('amount');
-                $affiliate['total_reference'] = $affiliate->affiliations->count();
-                $affiliate['name'] = $affiliate->profile->name;
-                $affiliate['picture'] = $affiliate->profile->pro_pic;
-                array_forget($affiliate, 'transactions');
-                array_forget($affiliate, 'affiliations');
-                array_forget($affiliate, 'profile');
-                array_forget($affiliate, 'profile_id');
-            }
-            $affiliates = $affiliates->sortByDesc('earning_amount')->splice($offset, $limit);
-            if (count($affiliates) != 0) {
-                return api_response($request, $affiliates, 200, ['affiliates' => $affiliates]);
-            } else {
-                return api_response($request, null, 404);
-            }
-        } catch (Exception $e) {
             return api_response($request, null, 500);
         }
     }
@@ -190,6 +180,43 @@ class AffiliateController extends Controller
         }
     }
 
+    public function getLeaderboard($affiliate, Request $request)
+    {
+        try {
+            list($offset, $limit) = calculatePagination($request);
+            $affiliates = Affiliate::whereHas('transactions', function ($q) {
+                $q->where('type', 'Credit');
+            })->select('id', 'profile_id')->get();
+
+            $affiliates->load(['profile' => function ($q) {
+                $q->select('id', 'name', 'pro_pic');
+            }])->load(['affiliations' => function ($q) {
+                $q->where('status', 'successful');
+            }])->load(['transactions' => function ($q) {
+                $q->where('type', 'Credit');
+            }]);
+
+            foreach ($affiliates as $affiliate) {
+                $affiliate['earning_amount'] = $affiliate->transactions->sum('amount');
+                $affiliate['total_reference'] = $affiliate->affiliations->count();
+                $affiliate['name'] = $affiliate->profile->name;
+                $affiliate['picture'] = $affiliate->profile->pro_pic;
+                array_forget($affiliate, 'transactions');
+                array_forget($affiliate, 'affiliations');
+                array_forget($affiliate, 'profile');
+                array_forget($affiliate, 'profile_id');
+            }
+            $affiliates = $affiliates->sortByDesc('earning_amount')->splice($offset, $limit);
+            if (count($affiliates) != 0) {
+                return api_response($request, $affiliates, 200, ['affiliates' => $affiliates]);
+            } else {
+                return api_response($request, null, 404);
+            }
+        } catch (Exception $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
     public function getAmbassadorSummary($affiliate, Request $request)
     {
         try {
@@ -202,6 +229,26 @@ class AffiliateController extends Controller
             $info->put('earning_amount', $affiliate->agents->sum('total_gifted_amount'));
             $info->put('total_refer', $affiliate->agents->sum('total_gifted_number'));
             return api_response($request, $info, 200, ['info' => $info->all()]);
+        } catch (Exception $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getTransactions($affiliate, Request $request)
+    {
+        try {
+            $affiliate = $request->affiliate;
+            $affiliate->load(['transactions' => function ($q) {
+                $q->select('id', 'affiliate_id', 'affiliation_id', 'type', 'log', 'amount', DB::raw('DATE_FORMAT(created_at, "%M %d, %Y at %h:%i %p") as time'))->orderBy('id', 'desc');
+            }]);
+            if ($affiliate->transactions != null) {
+                $transactions = $affiliate->transactions;
+                $credit = $transactions->where('type', 'Credit')->values()->all();
+                $debit = $transactions->where('type', 'Debit')->values()->all();
+                return api_response($request, $affiliate->transactions, 200, ['credit' => $credit, 'debit' => $debit]);
+            } else {
+                return api_response($request, null, 404);
+            }
         } catch (Exception $e) {
             return api_response($request, null, 500);
         }

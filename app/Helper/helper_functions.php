@@ -153,11 +153,11 @@ if (!function_exists('isEmailValid')) {
 
 if (!function_exists('api_response')) {
 
-    function api_response($request, $internal_response, $response_code, array $additional_data = null)
+    function api_response($request, $internal_response, $response_code, array $external_response = null)
     {
         $public_response = constants('API_RESPONSE_CODES')[$response_code];
-        if ($additional_data != null) {
-            $public_response = array_merge($public_response, $additional_data);
+        if ($external_response != null) {
+            $public_response = array_merge($public_response, $external_response);
         }
         if (class_basename($request) == 'Request') {
             return response()->json($public_response);

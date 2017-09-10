@@ -22,6 +22,11 @@ class Affiliation extends Model
         return $this->hasMany(AffiliationStatusChangeLog::class);
     }
 
+    public function transactions()
+    {
+        return $this->hasMany(AffiliateTransaction::class);
+    }
+
     public function scopeSuccessful($query)
     {
         return $query->where('status', 'successful');
@@ -37,4 +42,5 @@ class Affiliation extends Model
     {
         return $query->whereDate('created_at', '=', Carbon::yesterday());
     }
+
 }

@@ -181,16 +181,17 @@ $api->version('v1', ['middleware' => 'api.throttle', 'limit' => 60, 'expires' =>
     });
     $api->group(['prefix' => 'affiliates/{affiliate}', 'middleware' => ['affiliate.auth']], function ($api) {
         $api->post('edit', 'App\Http\Controllers\AffiliateController@edit');
-        $api->post('update-profile-picture', 'App\Http\Controllers\AffiliateController@updateProfilePic');
-        $api->get('lead-info', 'App\Http\Controllers\AffiliateController@leadInfo');
+        $api->get('leads', 'App\Http\Controllers\AffiliateController@leadInfo');
 
         $api->get('wallet', 'App\Http\Controllers\AffiliateController@getWallet');
         $api->get('status', 'App\Http\Controllers\AffiliateController@getStatus');
-        $api->get('affiliations', 'App\Http\Controllers\AffiliationController@index');
+        $api->get('affiliations', 'App\Http\Controllers\AffiliationController@newIndex');
         $api->post('affiliations', 'App\Http\Controllers\AffiliationController@create');
+        $api->get('transactions', 'App\Http\Controllers\AffiliateController@getTransactions');
 
         $api->get('leaderboard', 'App\Http\Controllers\AffiliateController@getLeaderboard');
         $api->group(['prefix' => 'ambassador'], function ($api) {
+            $api->get('code', 'App\Http\Controllers\AffiliateController@getAmbassador');
             $api->post('code', 'App\Http\Controllers\AffiliateController@joinClan');
             $api->get('agents', 'App\Http\Controllers\AffiliateController@getAgents');
             $api->get('summary', 'App\Http\Controllers\AffiliateController@getAmbassadorSummary');
