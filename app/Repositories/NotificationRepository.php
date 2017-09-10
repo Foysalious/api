@@ -28,7 +28,7 @@ class NotificationRepository
             $this->sender_id = $this->order->created_by;
             $this->sender_type = 'user';
 
-//            $this->sendNotificationToCRM($this->order->jobs);
+            $this->sendNotificationToCRM($this->order->jobs); //REMOVE
         }
         $this->sendNotificationToPartner($this->order->partner_orders);
     }
