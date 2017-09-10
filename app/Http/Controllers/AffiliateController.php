@@ -192,7 +192,9 @@ class AffiliateController extends Controller
                 $q->select('id', 'name', 'pro_pic');
             }])->load(['affiliations' => function ($q) {
                 $q->where('status', 'successful');
-            }])->load('transactions');
+            }])->load(['transactions' => function ($q) {
+                $q->where('type', 'Credit');
+            }]);
 
             foreach ($affiliates as $affiliate) {
                 $affiliate['earning_amount'] = $affiliate->transactions->sum('amount');
