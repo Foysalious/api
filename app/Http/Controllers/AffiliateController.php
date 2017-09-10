@@ -8,8 +8,6 @@ use App\Repositories\LocationRepository;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
-use PhpParser\Node\Expr\Cast\Object_;
-use stdClass;
 use Validator;
 use DB;
 
@@ -212,9 +210,14 @@ class AffiliateController extends Controller
     {
         try {
             $affiliate = $request->affiliate;
-            $affiliate->load('transactions');
+            $affiliate->load(['transactions' => function ($q) {
+                $q->select('id', 'affiliate_id', 'affiliation_id', 'type', 'log', 'amount', DB::raw('DATE_FORMAT(updated_at, "%M %d, %Y at %h:%i %p") as time'));
+            }]);
             if ($affiliate->transactions != null) {
-                return api_response($request, $affiliate->transactions, 200, ['transactions' => $affiliate->transactions]);
+                $transactions = $affiliate->transactions;
+                $credit = $transactions->where('type', 'Credit')->values()->all();
+                $debit = $transactions->where('type', 'Debit')->values()->all();
+                return api_response($request, $affiliate->transactions, 200, ['credit' => $credit, 'debit' => $debit]);
             } else {
                 return api_response($request, null, 404);
             }
