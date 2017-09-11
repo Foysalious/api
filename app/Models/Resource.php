@@ -8,7 +8,8 @@ class Resource extends Model
         'id'
     ];
 
-    public function partners() {
+    public function partners()
+    {
         return $this->belongsToMany(Partner::class);
     }
 
@@ -17,7 +18,13 @@ class Resource extends Model
         return $this->hasMany(Review::class);
     }
 
-    public function profile(){
+    public function profile()
+    {
         return $this->belongsTo(Profile::class);
+    }
+
+    public function jobs()
+    {
+        return $this->hasMany(Job::class);
     }
 }
