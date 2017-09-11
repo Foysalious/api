@@ -16,4 +16,8 @@ class Resource extends Model
     {
         return $this->hasMany(Review::class);
     }
+
+    public function profile(){
+        return $this->belongsTo(Profile::class);
+    }
 }
