@@ -62,6 +62,7 @@ class ProfileRepository
                 $info['verification_status'] = $avatar->verification_status;
                 $info['is_suspended'] = $avatar->is_suspended;
                 $info['ambassador_code'] = $avatar->ambassador_code;
+                $info['is_ambassador'] = $avatar->is_ambassador;
             } elseif ($from == 'customer') {
                 $info['referral'] = $avatar->referral->code;
             }

@@ -169,6 +169,11 @@ $api->version('v1', ['middleware' => 'api.throttle', 'limit' => 60, 'expires' =>
             $api->post('{member}/manage-invitation', 'App\Http\Controllers\MemberController@manageInvitation');
         });
     });
+    $api->group(['prefix' => 'resources/{resource}', 'middleware' => ['resource.auth']], function ($api) {
+        $api->group(['prefix' => 'jobs', 'middleware' => ['resource.auth']], function ($api) {
+            $api->get('/', 'App\Http\Controllers\ResourceJobController@index');
+        });
+    });
     $api->group(['prefix' => 'affiliate/{affiliate}', 'middleware' => ['affiliate.auth']], function ($api) {
         $api->post('edit', 'App\Http\Controllers\AffiliateController@edit');
         $api->post('update-profile-picture', 'App\Http\Controllers\AffiliateController@updateProfilePic');
