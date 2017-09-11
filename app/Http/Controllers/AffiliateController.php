@@ -180,6 +180,23 @@ class AffiliateController extends Controller
         }
     }
 
+    public function getGodFather($affiliate, Request $request)
+    {
+        try {
+            $affiliate = $request->affiliate;
+            if ($affiliate->ambassador_id == null) {
+                return api_response($request, null, 404);
+            } else {
+                $profile = collect($affiliate->ambassador->profile)->only(['name', 'pro_pic', 'mobile'])->all();
+                $profile['picture'] = $profile['pro_pic'];
+                array_forget($profile, 'pro_pic');
+                return api_response($request, $profile, 200, ['info' => $profile]);
+            }
+        } catch (Exception $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
     public function getLeaderboard($affiliate, Request $request)
     {
         try {

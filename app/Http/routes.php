@@ -191,6 +191,7 @@ $api->version('v1', ['middleware' => 'api.throttle', 'limit' => 60, 'expires' =>
 
         $api->get('leaderboard', 'App\Http\Controllers\AffiliateController@getLeaderboard');
         $api->group(['prefix' => 'ambassador'], function ($api) {
+            $api->get('/', 'App\Http\Controllers\AffiliateController@getGodFather');
             $api->get('code', 'App\Http\Controllers\AffiliateController@getAmbassador');
             $api->post('code', 'App\Http\Controllers\AffiliateController@joinClan');
             $api->get('agents', 'App\Http\Controllers\AffiliateController@getAgents');
