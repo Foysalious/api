@@ -128,6 +128,25 @@ class ProfileRepository
         }
     }
 
+    public function integrateFacebook($profile, $request)
+    {
+        $profile->fb_id = $request->fb_id;
+        if (empty($profile->name)) {
+            $profile->name = $request->fb_name;
+        }
+        if (empty($profile->gender) && $request->has('fb_gender')) {
+            $profile->gender = $request->fb_gender;
+        }
+        if (empty($profile->pro_pic) || basename($profile->pro_pic) == 'default.jpg') {
+            $profile->pro_pic = $this->uploadImage($profile, $request->fb_picture, 'images/profiles/');
+        }
+        if ($profile->email_verified == 0) {
+            $profile->email_verified = 1;
+        }
+        $profile->update();
+        return $profile;
+    }
+
     private function updateCustomerOwnVoucherNReferral($customer, $referrer)
     {
         $voucher = Voucher::where('code', $referrer)->first();
