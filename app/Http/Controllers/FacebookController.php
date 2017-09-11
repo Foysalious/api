@@ -62,11 +62,17 @@ class FacebookController extends Controller
         if ($this->facebookRepository->verifyAccessToken($request->access_token, $request->fb_id)) {
             $avatar = $this->profileRepository->getAvatar($request->from);
             $profile = $this->profileRepository->ifExist($request->input('fb_id'), 'fb_id');
-            //if profile doesn't exist with this facebook id create profile
             if ($profile == false) {
-                $profile = $this->profileRepository->registerFacebook($request->all());
-                $profile->pro_pic = $this->profileRepository->uploadImage($profile, $request->fb_picture, 'images/profiles/');
-                $profile->update();
+                $email_profile = $this->profileRepository->ifExist($request->fb_email, 'email');
+                if ($email_profile == false) {
+                    $profile = $this->profileRepository->registerFacebook($request->all());
+                    $profile->pro_pic = $this->profileRepository->uploadImage($profile, $request->fb_picture, 'images/profiles/');
+                    $profile->update();
+                } else {
+                    $profile = $this->profileRepository->integrateFacebook($email_profile, $request);
+                }
+            }
+            if ($profile->$avatar == null) {
                 $this->profileRepository->registerAvatarByFacebook($avatar, $request, $profile);
             }
             $info = $this->profileRepository->getProfileInfo($avatar, $profile);

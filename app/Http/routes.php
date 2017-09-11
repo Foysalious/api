@@ -169,6 +169,11 @@ $api->version('v1', ['middleware' => 'api.throttle', 'limit' => 60, 'expires' =>
             $api->post('{member}/manage-invitation', 'App\Http\Controllers\MemberController@manageInvitation');
         });
     });
+    $api->group(['prefix' => 'resources/{resource}', 'middleware' => ['resource.auth']], function ($api) {
+        $api->group(['prefix' => 'jobs'], function ($api) {
+            $api->get('/', 'App\Http\Controllers\ResourceJobController@getOngoingJobs');
+        });
+    });
     $api->group(['prefix' => 'affiliate/{affiliate}', 'middleware' => ['affiliate.auth']], function ($api) {
         $api->post('edit', 'App\Http\Controllers\AffiliateController@edit');
         $api->post('update-profile-picture', 'App\Http\Controllers\AffiliateController@updateProfilePic');
@@ -191,6 +196,7 @@ $api->version('v1', ['middleware' => 'api.throttle', 'limit' => 60, 'expires' =>
 
         $api->get('leaderboard', 'App\Http\Controllers\AffiliateController@getLeaderboard');
         $api->group(['prefix' => 'ambassador'], function ($api) {
+            $api->get('/', 'App\Http\Controllers\AffiliateController@getGodFather');
             $api->get('code', 'App\Http\Controllers\AffiliateController@getAmbassador');
             $api->post('code', 'App\Http\Controllers\AffiliateController@joinClan');
             $api->get('agents', 'App\Http\Controllers\AffiliateController@getAgents');

@@ -14,10 +14,13 @@ class AffiliationController extends Controller
     public function newIndex($affiliate, Request $request)
     {
         list($offset, $limit) = calculatePagination($request);
-        $affiliate = Affiliate::with(['affiliations' => function ($q) use ($offset, $limit) {
+        $affiliate = Affiliate::with(['affiliations' => function ($q) use ($offset, $limit, $affiliate) {
             $q->select('id', 'affiliate_id', 'customer_name', 'customer_mobile', 'service', 'status', 'is_fake', 'reject_reason', DB::raw('DATE_FORMAT(created_at, "%Y-%m-%d") as referred_date'))
-                ->with(['transactions' => function ($q) {
-                    $q->where('type', 'Credit');
+                ->with(['transactions' => function ($q) use ($affiliate) {
+                    $q->where([
+                        ['type', 'Credit'],
+                        ['affiliate_id', $affiliate]
+                    ]);
                 }])->orderBy('id', 'desc')
                 ->skip($offset)->take($limit);
         }])->select('id')->where('id', $affiliate)->first();

@@ -56,7 +56,7 @@ class AffiliateController extends Controller
 
     public function getStatus($affiliate, Request $request)
     {
-        $affiliate = Affiliate::where('id', $affiliate)->select('verification_status', 'is_suspended', 'ambassador_code')->first();
+        $affiliate = Affiliate::where('id', $affiliate)->select('verification_status', 'is_suspended', 'ambassador_code', 'is_ambassador')->first();
         return $affiliate != null ? response()->json(['code' => 200, 'affiliate' => $affiliate]) : response()->json(['code' => 404, 'msg' => 'Not found!']);
     }
 
@@ -175,6 +175,23 @@ class AffiliateController extends Controller
                 }
             }
             return api_response($request, null, 404);
+        } catch (Exception $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getGodFather($affiliate, Request $request)
+    {
+        try {
+            $affiliate = $request->affiliate;
+            if ($affiliate->ambassador_id == null) {
+                return api_response($request, null, 404);
+            } else {
+                $profile = collect($affiliate->ambassador->profile)->only(['name', 'pro_pic', 'mobile'])->all();
+                $profile['picture'] = $profile['pro_pic'];
+                array_forget($profile, 'pro_pic');
+                return api_response($request, $profile, 200, ['info' => $profile]);
+            }
         } catch (Exception $e) {
             return api_response($request, null, 500);
         }

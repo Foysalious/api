@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Job;
 use App\Models\JobCancelLog;
 use Illuminate\Http\Request;
+use DB;
 
 class JobController extends Controller
 {
@@ -28,6 +29,10 @@ class JobController extends Controller
                 }])->with(['order' => function ($query) {
                     $query->select('id');
                 }]);
+            }])->with(['resource' => function ($q) {
+                $q->select('id', 'profile_id')->with(['profile' => function ($q) {
+                    $q->select('id', 'name', 'mobile', 'pro_pic');
+                }]);
             }])->with(['usedMaterials' => function ($query) {
                 $query->select('id', 'job_id', 'material_name', 'material_price');
             }])->with(['service' => function ($query) {
@@ -35,7 +40,7 @@ class JobController extends Controller
             }])->with(['review' => function ($query) {
                 $query->select('job_id', 'review_title', 'review', 'rating');
             }])->where('id', $job->id)
-                ->select('id', 'service_id', 'service_name', 'service_quantity', 'service_variable_type', 'service_variables', 'job_additional_info', 'service_option', 'discount', 'status', 'service_unit_price', 'created_at', 'partner_order_id')
+                ->select('id', 'service_id', 'resource_id', DB::raw('DATE_FORMAT(schedule_date, "%M %d, %Y") as schedule_date'), DB::raw('DATE_FORMAT(delivered_date, "%M %d, %Y at %h:%i %p") as delivered_date'), 'created_at', 'preferred_time', 'service_name', 'service_quantity', 'service_variable_type', 'service_variables', 'job_additional_info', 'service_option', 'discount', 'status', 'service_unit_price', 'partner_order_id')
                 ->first();
             array_add($job, 'status_show', $this->job_statuses_show[array_search($job->status, $this->job_statuses)]);
 
@@ -47,6 +52,13 @@ class JobController extends Controller
             array_add($job, 'time', $job->created_at->format('jS M, Y'));
             array_forget($job, 'created_at');
             array_add($job, 'service_price', $job_model->servicePrice);
+            if ($job->resource != null) {
+                $profile = $job->resource->profile;
+                array_forget($job,'resource');
+                $job['resource'] = $profile;
+            } else {
+                $job['resource'] = null;
+            }
 
             return response()->json(['job' => $job, 'msg' => 'successful', 'code' => 200]);
         } else {
