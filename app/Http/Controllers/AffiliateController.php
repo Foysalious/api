@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Affiliate;
+use App\Repositories\AffiliateRepository;
 use App\Repositories\FileRepository;
 use App\Repositories\LocationRepository;
 use Carbon\Carbon;
@@ -15,11 +16,13 @@ class AffiliateController extends Controller
 {
     private $fileRepository;
     private $locationRepository;
+    private $affiliateRepository;
 
     public function __construct()
     {
         $this->fileRepository = new FileRepository();
         $this->locationRepository = new LocationRepository();
+        $this->affiliateRepository = new AffiliateRepository();
     }
 
     public function edit($affiliate, Request $request)
@@ -171,6 +174,7 @@ class AffiliateController extends Controller
                         array_forget($agent, 'ambassador_id');
                         array_forget($agent, 'profile_id');
                     }
+                    $agents=$this->affiliateRepository->sortAgents($request,$agents);
                     return api_response($request, $agents, 200, ['agents' => $agents]);
                 }
             }
