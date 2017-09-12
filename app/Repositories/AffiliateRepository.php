@@ -8,14 +8,16 @@ class AffiliateRepository
 
     public function sortAgents($request, $agents)
     {
+        $sortBy = 'name';
         if ($request->has('sort')) {
-            if ($request->sort != 'name') {
-                array_multisort(array_column($agents, $request->sort), SORT_DESC, $agents);
+            $sortBy = $request->sort;
+            if ($sortBy != 'name') {
+                array_multisort(array_column($agents, $sortBy), SORT_DESC, $agents);
             } else {
-                array_multisort(array_column($agents, $request->sort), SORT_STRING, $agents);
+                array_multisort(array_column($agents, $sortBy), SORT_STRING, $agents);
             }
         } else {
-            array_multisort(array_column($agents, $request->sort), SORT_STRING, $agents);
+            array_multisort(array_column($agents, $sortBy), SORT_STRING, $agents);
         }
         return $agents;
     }
