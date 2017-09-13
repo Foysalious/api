@@ -48,13 +48,15 @@ $api->version('v1', ['middleware' => 'api.throttle', 'limit' => 60, 'expires' =>
     $api->get('locations', 'App\Http\Controllers\LocationController@getAllLocations');
     $api->get('lead-reward', 'App\Http\Controllers\ShebaController@getLeadRewardAmount');
     $api->get('search', 'App\Http\Controllers\SearchController@searchService');
-    $api->post('career', 'App\Http\Controllers\CareerController@apply');
     $api->get('career', 'App\Http\Controllers\CareerController@getVacantPosts');
+    $api->post('career', 'App\Http\Controllers\CareerController@apply');
     $api->get('category-service', 'App\Http\Controllers\CategoryServiceController@getCategoryServices');
     $api->get('job-times', 'App\Http\Controllers\JobController@getPreferredTimes');
     $api->get('cancel-job-reasons', 'App\Http\Controllers\JobController@cancelJobReasons');
     $api->post('voucher-valid', 'App\Http\Controllers\CheckoutController@checkForValidity');
     $api->post('rating', 'App\Http\Controllers\ReviewController@giveRatingFromEmail');
+    $api->post('sms', 'App\Http\Controllers\SmsController@send');
+    $api->post('faq', 'App\Http\Controllers\ShebaController@sendFaq');
     $api->get('offers', 'App\Http\Controllers\ShebaController@getOffers');
     $api->get('offer/{offer}', 'App\Http\Controllers\ShebaController@getOffer');
     $api->get('offer/{offer}/similar', 'App\Http\Controllers\ShebaController@getSimilarOffer');

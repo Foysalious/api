@@ -2,21 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendFaqEmail;
 use App\Models\Job;
 use App\Models\OfferShowcase;
-use App\Models\PartnerServiceDiscount;
 use App\Models\Resource;
 use App\Models\Service;
 use App\Models\Slider;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
-use Carbon\Carbon;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
-use Redis;
-use App\Http\Requests;
+
+use Validator;
 
 class ShebaController extends Controller
 {
+    use DispatchesJobs;
     private $serviceRepository;
     private $reviewRepository;
 
@@ -40,6 +41,25 @@ class ShebaController extends Controller
         return response()->json(['service' => $service_count, 'job' => $job_count,
             'resource' => $resource_count,
             'msg' => 'successful', 'code' => 200]);
+    }
+
+    public function sendFaq(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'name' => 'required|string',
+                'email' => 'required|email',
+                'subject' => 'required|string',
+                'message' => 'required|string'
+            ]);
+            if ($validator->fails()) {
+                return api_response($request, null, 500, ['message' => $validator->errors()->all()[0]]);
+            }
+            $this->dispatch(new SendFaqEmail($request->all()));
+            return api_response($request, null, 200);
+        } catch (\Exception $e) {
+            return api_response($request, null, 500);
+        }
     }
 
     public function getImages()
