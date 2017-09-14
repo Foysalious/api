@@ -11,6 +11,7 @@ use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
 use Validator;
 use App\Http\Requests;
+use DB;
 
 class ResourceJobController extends Controller
 {
@@ -26,7 +27,7 @@ class ResourceJobController extends Controller
     {
         try {
             $resource = $request->resource->load(['jobs' => function ($q) {
-                $q->select('id', 'resource_id', 'schedule_date', 'preferred_time', 'service_name', 'status', 'partner_order_id')->where('schedule_date', '<=', date('Y-m-d'))->whereIn('status', ['Accepted', 'Process', 'Schedule Due'])->with(['partner_order' => function ($q) {
+                $q->select('id', 'resource_id', 'schedule_date', 'preferred_time', 'service_name', 'status', 'partner_order_id', 'service_unit_price')->where('schedule_date', '<=', date('Y-m-d'))->whereIn('status', ['Accepted', 'Process', 'Schedule Due'])->with(['partner_order' => function ($q) {
                     $q->with('order.customer.profile');
                 }]);
             }]);
@@ -37,9 +38,11 @@ class ResourceJobController extends Controller
                     $job['customer_mobile'] = $job->partner_order->order->customer->profile->mobile;
                     $job['address'] = $job->partner_order->order->delivery_address;
                     $job['code'] = $job->code();
+                    $job['price'] = (double)$job->service_unit_price;
                     array_forget($job, 'partner_order');
                     array_forget($job, 'partner_order_id');
                     array_forget($job, 'resource_id');
+                    array_forget($job, 'service_unit_price');
                 }
                 $jobs = $this->resourceJobRepository->rearrange($jobs);
                 list($offset, $limit) = calculatePagination($request);
@@ -99,7 +102,7 @@ class ResourceJobController extends Controller
     {
         try {
             $resource = $request->resource;
-            $job = Job::where('id', $job)->select('id', 'resource_id')->first();
+            $job = Job::where('id', $job)->select('id', 'resource_id', 'service_unit_price')->first();
             if ($job->resource_id != $resource->id) {
                 return api_response($request, null, 403);
             }
@@ -107,6 +110,8 @@ class ResourceJobController extends Controller
             if ($jobs != null) {
                 if ($jobs[0]->status == 'Process') {
                     $job['can_process'] = false;
+                    $job['price'] = (double)$job->service_unit_price;
+                    array_forget($job, 'service_unit_price');
                 }
                 return api_response($request, $job, 200, ['job' => $job]);
             }
