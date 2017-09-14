@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Job;
-use App\Repositories\JobRepository;
+use App\Models\PartnerOrder;
 use App\Repositories\ResourceJobRepository;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
-
+use Validator;
 use App\Http\Requests;
 
 class ResourceJobController extends Controller
@@ -53,19 +53,97 @@ class ResourceJobController extends Controller
     public function update($resource, $job, Request $request)
     {
         try {
+            if ($request->has('status')) {
+                $response = $this->_changeStatus($job, $request);
+                if ($response != null) {
+                    return api_response($request, $response, $response->code);
+                }
+                return api_response($request, null, 500);
+            } elseif ($request->has('schedule_date') && $request->has('preferred_time')) {
+                $response = $this->_reschedule($job, $request);
+                if ($response != null) {
+                    return api_response($request, $response, $response->code);
+                }
+                return api_response($request, null, 500);
+            }
+            return api_response($request, null, 400);
+        } catch (\Exception $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function collect($resource, $job, Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'amount' => 'required|numeric',
+            ]);
+            if ($validator->fails()) {
+                return api_response($request, null, 500, ['message' => $validator->errors()->all()[0]]);
+            }
+            $partner_order = (Job::find($job))->partner_order;
+            $response = $this->_collectMoney($partner_order, $request);
+            if ($response != null) {
+                return api_response($request, $response, $response->code);
+            }
+            return api_response($request, null, 500);
+        } catch (\Exception $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    private function _changeStatus($job, $request)
+    {
+        try {
             $client = new Client();
             $res = $client->request('POST', env('SHEBA_BACKEND_URL') . '/api/job/' . $job . '/change-status',
                 [
                     'form_params' => [
-                        'resource_id' => $resource,
-                        'remember_token' => $request->remember_token,
+                        'resource_id' => $request->resource->id,
+                        'remember_token' => $request->resource->remember_token,
                         'status' => $request->status
                     ]
                 ]);
-            $response = json_decode($res->getBody());
-            return api_response($request, null, $response->code);
-        } catch (\Exception $e) {
-            return api_response($request, null, 500);
+            return json_decode($res->getBody());
+        } catch (RequestException $e) {
+            return null;
+        }
+    }
+
+    private function _reschedule($job, $request)
+    {
+        try {
+            $client = new Client();
+            $res = $client->request('POST', env('SHEBA_BACKEND_URL') . '/api/job/' . $job . '/reschedule',
+                [
+                    'form_params' => [
+                        'resource_id' => $request->resource->id,
+                        'remember_token' => $request->resource->remember_token,
+                        'schedule_date' => $request->schedule_date,
+                        'preferred_time' => $request->preferred_time,
+                    ]
+                ]);
+            return json_decode($res->getBody());
+        } catch (RequestException $e) {
+            return null;
+        }
+    }
+
+    private function _collectMoney(PartnerOrder $order, Request $request)
+    {
+        try {
+            $client = new Client();
+            $res = $client->request('POST', env('SHEBA_BACKEND_URL') . '/api/partner-order/' . $order->id . '/collect',
+                [
+                    'form_params' => [
+                        'resource_id' => $request->resource->id,
+                        'remember_token' => $request->resource->remember_token,
+                        'partner_collection' => $request->amount,
+                    ]
+                ]);
+            return json_decode($res->getBody());
+        } catch (RequestException $e) {
+            return null;
         }
     }
 }
