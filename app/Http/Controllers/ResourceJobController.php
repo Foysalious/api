@@ -99,7 +99,7 @@ class ResourceJobController extends Controller
     {
         try {
             $resource = $request->resource;
-            $job = Job::where('id', $job)->select('id')->first();
+            $job = Job::where('id', $job)->select('id', 'resource_id')->first();
             if ($job->resource_id != $resource->id) {
                 return api_response($request, null, 403);
             }
