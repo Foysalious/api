@@ -272,8 +272,10 @@ return [
         400 => ['message' => 'Bad request', 'code' => 400],
         401 => ['message' => 'Unauthorized', 'code' => 401],
         403 => ['message' => 'Forbidden', 'code' => 403],
+        422 => ['message' => 'Unprocessable Entity', 'code' => 422],
         404 => ['message' => 'Not found', 'code' => 404],
         500 => ['message' => 'Internal Server Error', 'code' => 500],
-    ]
+    ],
+
 
 ];

@@ -174,6 +174,7 @@ $api->version('v1', ['middleware' => 'api.throttle', 'limit' => 60, 'expires' =>
     $api->group(['prefix' => 'resources/{resource}', 'middleware' => ['resource.auth']], function ($api) {
         $api->group(['prefix' => 'jobs'], function ($api) {
             $api->get('/', 'App\Http\Controllers\ResourceJobController@index');
+            $api->put('{job}', 'App\Http\Controllers\ResourceJobController@update');
         });
     });
     $api->group(['prefix' => 'affiliate/{affiliate}', 'middleware' => ['affiliate.auth']], function ($api) {

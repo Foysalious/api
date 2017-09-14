@@ -19,5 +19,6 @@ class ResourceJobRepository
             return sprintf('%-12s%s', $job->schedule_date, $job->preferred_time_priority);
         })->values()->all();
         $jobs = array_merge($process_job, $other_jobs);
+        return $jobs;
     }
 }
