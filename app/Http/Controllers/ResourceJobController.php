@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Job;
 use App\Models\PartnerOrder;
 use App\Repositories\ResourceJobRepository;
+use Dingo\Api\Routing\Helpers;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
@@ -13,6 +14,7 @@ use App\Http\Requests;
 
 class ResourceJobController extends Controller
 {
+    use Helpers;
     private $resourceJobRepository;
 
     public function __construct()
@@ -32,6 +34,7 @@ class ResourceJobController extends Controller
             if (count($jobs) != 0) {
                 foreach ($jobs as $job) {
                     $job['customer_name'] = $job->partner_order->order->customer->profile->name;
+                    $job['customer_mobile'] = $job->partner_order->order->customer->profile->mobile;
                     $job['address'] = $job->partner_order->order->delivery_address;
                     $job['code'] = $job->code();
                     array_forget($job, 'partner_order');
@@ -87,6 +90,26 @@ class ResourceJobController extends Controller
                 return api_response($request, $response, $response->code);
             }
             return api_response($request, null, 500);
+        } catch (\Exception $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function show($resource, $job, Request $request)
+    {
+        try {
+            $resource = $request->resource;
+            $job = Job::where('id', $job)->select('id')->first();
+            if ($job->resource_id != $resource->id) {
+                return api_response($request, null, 403);
+            }
+            $jobs = $this->api->get('resources/' . $resource->id . '/jobs?remember_token=' . $resource->remember_token . '&limit=1');
+            if ($jobs != null) {
+                if ($jobs[0]->status == 'Process') {
+                    $job['can_process'] = false;
+                }
+                return api_response($request, $job, 200, ['job' => $job]);
+            }
         } catch (\Exception $e) {
             return api_response($request, null, 500);
         }
