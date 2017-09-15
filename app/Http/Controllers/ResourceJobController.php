@@ -26,13 +26,9 @@ class ResourceJobController extends Controller
     public function index($resource, Request $request)
     {
         try {
-            $resource = $request->resource->load(['jobs' => function ($q) {
-                $q->select('id', 'resource_id', 'schedule_date', 'preferred_time', 'service_name', 'status', 'partner_order_id', 'service_unit_price')->where('schedule_date', '<=', date('Y-m-d'))->whereIn('status', ['Accepted', 'Process', 'Schedule Due'])->with(['partner_order' => function ($q) {
-                    $q->with('order.customer.profile');
-                }]);
-            }]);
-            $jobs = $resource->jobs;
+            $jobs = $this->resourceJobRepository->getJobs($request->resource);
             if (count($jobs) != 0) {
+                $jobs = $this->resourceJobRepository->rearrange($jobs);
                 foreach ($jobs as $job) {
                     $job['customer_name'] = $job->partner_order->order->customer->profile->name;
                     $job['customer_mobile'] = $job->partner_order->order->customer->profile->mobile;
@@ -44,7 +40,6 @@ class ResourceJobController extends Controller
                     array_forget($job, 'resource_id');
                     array_forget($job, 'service_unit_price');
                 }
-                $jobs = $this->resourceJobRepository->rearrange($jobs);
                 list($offset, $limit) = calculatePagination($request);
                 $jobs = array_slice($jobs, $offset, $limit);
                 return api_response($request, $jobs, 200, ['jobs' => $jobs]);
@@ -102,19 +97,35 @@ class ResourceJobController extends Controller
     {
         try {
             $resource = $request->resource;
-            $job = Job::where('id', $job)->select('id', 'resource_id', 'service_unit_price')->first();
+            $job = Job::select('id', 'status', 'resource_id', 'partner_order_id')->where('id', $job)->first();
+            if (!$job) {
+                return api_response($request, null, 404);
+            }
             if ($job->resource_id != $resource->id) {
                 return api_response($request, null, 403);
             }
+            $job['can_process'] = false;
+            $job['can_serve'] = false;
+            $job['can_collect'] = false;
             $jobs = $this->api->get('resources/' . $resource->id . '/jobs?remember_token=' . $resource->remember_token . '&limit=1');
-            if ($jobs != null) {
-                if ($jobs[0]->status == 'Process') {
-                    $job['can_process'] = false;
-                    $job['price'] = (double)$job->service_unit_price;
-                    array_forget($job, 'service_unit_price');
+            if ($job->status == 'Served') {
+                if ($jobs[0]->status == 'Served' && $job->id == $jobs[0]->id) {
+                    $job['can_collect'] = true;
+                    $partner_order = $job->partner_order;
+                    $partner_order->calculate();
+                    $job['collect_money'] = (double)$partner_order->due;
+                    array_forget($job, 'partner_order');
                 }
-                return api_response($request, $job, 200, ['job' => $job]);
+            } elseif ($job->status == 'Process') {
+                if ($jobs[0]->status == 'Process' && $job->id == $jobs[0]->id) {
+                    $job['can_serve'] = true;
+                }
+            } else {
+                if ($jobs[0]->status != 'Process' && $jobs[0]->status != 'Served') {
+                    $job['can_process'] = true;
+                }
             }
+            return api_response($request, $job, 200, ['job' => $job]);
         } catch (\Exception $e) {
             return api_response($request, null, 500);
         }
