@@ -29,6 +29,8 @@ class ResourceJobController extends Controller
             $jobs = $this->resourceJobRepository->getJobs($request->resource);
             if (count($jobs) != 0) {
                 $jobs = $this->resourceJobRepository->rearrange($jobs);
+                list($offset, $limit) = calculatePagination($request);
+                $jobs = array_slice($jobs, $offset, $limit);
                 foreach ($jobs as $job) {
                     $job['customer_name'] = $job->partner_order->order->customer->profile->name;
                     $job['customer_mobile'] = $job->partner_order->order->customer->profile->mobile;
@@ -40,8 +42,6 @@ class ResourceJobController extends Controller
                     array_forget($job, 'resource_id');
                     array_forget($job, 'service_unit_price');
                 }
-                list($offset, $limit) = calculatePagination($request);
-                $jobs = array_slice($jobs, $offset, $limit);
                 return api_response($request, $jobs, 200, ['jobs' => $jobs]);
             } else {
                 return api_response($request, null, 404);

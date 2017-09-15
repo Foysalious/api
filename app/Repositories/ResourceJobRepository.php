@@ -46,7 +46,9 @@ class ResourceJobRepository
             $last_job = $partner_order_jobs->sortBy(function ($job) {
                 return sprintf('%-12s%s', $job->schedule_date, $job->preferred_time_priority);
             })->last();
-            if ($last_job->id == $job->id) {
+            $partner_order = $job->partner_order;
+            $partner_order->calculate();
+            if ($last_job->id == $job->id && $partner_order->due != 0) {
                 array_push($final, $job);
             }
         }
