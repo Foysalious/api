@@ -31,11 +31,9 @@ class ResourceJobRepository
     public function getJobs($resource)
     {
         $resource->load(['jobs' => function ($q) {
-            $q->select('id', 'resource_id', 'schedule_date', 'preferred_time', 'service_name', 'status', 'partner_order_id', 'service_unit_price')
+            $q->select('id', 'resource_id', 'schedule_date', 'preferred_time', 'service_name', 'status', 'partner_order_id')
                 ->where('schedule_date', '<=', date('Y-m-d'))->whereIn('status', ['Accepted', 'Served', 'Process', 'Schedule Due'])
-                ->with(['partner_order' => function ($q) {
-                    $q->with('order.customer.profile');
-                }]);
+                ->with('partner_order.order');
         }]);
         return $resource->jobs;
     }
@@ -62,11 +60,10 @@ class ResourceJobRepository
     public function addJobInformationForAPI($jobs)
     {
         foreach ($jobs as $job) {
-            $job['customer_name'] = $job->partner_order->order->customer->profile->name;
-            $job['customer_mobile'] = $job->partner_order->order->customer->profile->mobile;
-            $job['address'] = $job->partner_order->order->delivery_address;
+            $job['delivery_name'] = $job->partner_order->order->delivery_name;
+            $job['delivery_mobile'] = $job->partner_order->order->delivery_mobile;
+            $job['delivery_address'] = $job->partner_order->order->delivery_address;
             $job['code'] = $job->code();
-            $job['price'] = (double)$job->service_unit_price;
             $this->_stripUnwantedInformationForAPI($job);
         }
         return $jobs;
@@ -77,7 +74,6 @@ class ResourceJobRepository
         array_forget($job, 'partner_order');
         array_forget($job, 'partner_order_id');
         array_forget($job, 'resource_id');
-        array_forget($job, 'service_unit_price');
         return $job;
     }
 
