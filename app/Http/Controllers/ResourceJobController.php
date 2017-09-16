@@ -31,18 +31,7 @@ class ResourceJobController extends Controller
                 $jobs = $this->resourceJobRepository->rearrange($jobs);
                 list($offset, $limit) = calculatePagination($request);
                 $jobs = array_slice($jobs, $offset, $limit);
-                foreach ($jobs as $job) {
-                    $job['customer_name'] = $job->partner_order->order->customer->profile->name;
-                    $job['customer_mobile'] = $job->partner_order->order->customer->profile->mobile;
-                    $job['address'] = $job->partner_order->order->delivery_address;
-                    $job['code'] = $job->code();
-                    $job['price'] = (double)$job->service_unit_price;
-                    array_forget($job, 'partner_order');
-                    array_forget($job, 'partner_order_id');
-                    array_forget($job, 'resource_id');
-                    array_forget($job, 'service_unit_price');
-                }
-                return api_response($request, $jobs, 200, ['jobs' => $jobs]);
+                return api_response($request, $jobs, 200, ['jobs' => $this->resourceJobRepository->addJobInformationForAPI($jobs)]);
             } else {
                 return api_response($request, null, 404);
             }
@@ -55,14 +44,14 @@ class ResourceJobController extends Controller
     {
         try {
             if ($request->has('status')) {
-                $response = $this->_changeStatus($job, $request);
-                if ($response != null) {
+                $response = $this->resourceJobRepository->changeStatus($job, $request);
+                if ($response) {
                     return api_response($request, $response, $response->code);
                 }
                 return api_response($request, null, 500);
             } elseif ($request->has('schedule_date') && $request->has('preferred_time')) {
-                $response = $this->_reschedule($job, $request);
-                if ($response != null) {
+                $response = $this->resourceJobRepository->reschedule($job, $request);
+                if ($response) {
                     return api_response($request, $response, $response->code);
                 }
                 return api_response($request, null, 500);
@@ -83,8 +72,8 @@ class ResourceJobController extends Controller
                 return api_response($request, null, 500, ['message' => $validator->errors()->all()[0]]);
             }
             $partner_order = (Job::find($job))->partner_order;
-            $response = $this->_collectMoney($partner_order, $request);
-            if ($response != null) {
+            $response = $this->resourceJobRepository->collectMoney($partner_order, $request);
+            if ($response) {
                 return api_response($request, $response, $response->code);
             }
             return api_response($request, null, 500);
@@ -104,85 +93,15 @@ class ResourceJobController extends Controller
             if ($job->resource_id != $resource->id) {
                 return api_response($request, null, 403);
             }
-            $job['can_process'] = false;
-            $job['can_serve'] = false;
-            $job['can_collect'] = false;
             $jobs = $this->api->get('resources/' . $resource->id . '/jobs?remember_token=' . $resource->remember_token . '&limit=1');
-            if ($job->status == 'Served') {
-                if ($jobs[0]->status == 'Served' && $job->id == $jobs[0]->id) {
-                    $job['can_collect'] = true;
-                    $partner_order = $job->partner_order;
-                    $partner_order->calculate();
-                    $job['collect_money'] = (double)$partner_order->due;
-                    array_forget($job, 'partner_order');
-                }
-            } elseif ($job->status == 'Process') {
-                if ($jobs[0]->status == 'Process' && $job->id == $jobs[0]->id) {
-                    $job['can_serve'] = true;
-                }
+            if ($jobs) {
+                return api_response($request, $job, 200, ['job' => $this->resourceJobRepository->calculateActionsForThisJob($jobs[0], $job)]);
             } else {
-                if ($jobs[0]->status != 'Process' && $jobs[0]->status != 'Served') {
-                    $job['can_process'] = true;
-                }
+                return api_response($request, null, 404);
             }
-            return api_response($request, $job, 200, ['job' => $job]);
         } catch (\Exception $e) {
             return api_response($request, null, 500);
         }
     }
 
-    private function _changeStatus($job, $request)
-    {
-        try {
-            $client = new Client();
-            $res = $client->request('POST', env('SHEBA_BACKEND_URL') . '/api/job/' . $job . '/change-status',
-                [
-                    'form_params' => [
-                        'resource_id' => $request->resource->id,
-                        'remember_token' => $request->resource->remember_token,
-                        'status' => $request->status
-                    ]
-                ]);
-            return json_decode($res->getBody());
-        } catch (RequestException $e) {
-            return null;
-        }
-    }
-
-    private function _reschedule($job, $request)
-    {
-        try {
-            $client = new Client();
-            $res = $client->request('POST', env('SHEBA_BACKEND_URL') . '/api/job/' . $job . '/reschedule',
-                [
-                    'form_params' => [
-                        'resource_id' => $request->resource->id,
-                        'remember_token' => $request->resource->remember_token,
-                        'schedule_date' => $request->schedule_date,
-                        'preferred_time' => $request->preferred_time,
-                    ]
-                ]);
-            return json_decode($res->getBody());
-        } catch (RequestException $e) {
-            return null;
-        }
-    }
-
-    private function _collectMoney(PartnerOrder $order, Request $request)
-    {
-        try {
-            $client = new Client();
-            $res = $client->request('POST', env('SHEBA_BACKEND_URL') . '/api/partner-order/' . $order->id . '/collect',
-                [
-                    'form_params' => [
-                        'resource_id' => $request->resource->id,
-                        'remember_token' => $request->resource->remember_token,
-                        'partner_collection' => $request->amount,
-                    ]
-                ]);
-            return json_decode($res->getBody());
-        } catch (RequestException $e) {
-            return null;
-        }
-    }
 }

@@ -165,7 +165,6 @@ $api->version('v1', ['middleware' => 'api.throttle', 'limit' => 60, 'expires' =>
             $api->get('{job}', 'App\Http\Controllers\ResourceJobController@show');
             $api->put('{job}', 'App\Http\Controllers\ResourceJobController@update');
             $api->post('{job}/payment', 'App\Http\Controllers\ResourceJobController@collect');
-//            $api->get('{job}/actions', 'App\Http\Controllers\ResourceJobController@getAction');
         });
     });
     $api->group(['prefix' => 'affiliate/{affiliate}', 'middleware' => ['affiliate.auth']], function ($api) {

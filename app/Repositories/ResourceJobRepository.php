@@ -3,6 +3,11 @@
 namespace App\Repositories;
 
 
+use App\Models\PartnerOrder;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
+use Illuminate\Http\Request;
+
 class ResourceJobRepository
 {
 
@@ -19,8 +24,7 @@ class ResourceJobRepository
         $other_jobs = $other_jobs->sortBy(function ($job) {
             return sprintf('%-12s%s', $job->schedule_date, $job->preferred_time_priority);
         })->values()->all();
-        $jobs = array_merge($process_job, $other_jobs);
-        $jobs = array_merge($served_jobs, $jobs);
+        $jobs = array_merge($served_jobs, array_merge($process_job, $other_jobs));
         return $jobs;
     }
 
@@ -53,5 +57,107 @@ class ResourceJobRepository
             }
         }
         return $final;
+    }
+
+    public function addJobInformationForAPI($jobs)
+    {
+        foreach ($jobs as $job) {
+            $job['customer_name'] = $job->partner_order->order->customer->profile->name;
+            $job['customer_mobile'] = $job->partner_order->order->customer->profile->mobile;
+            $job['address'] = $job->partner_order->order->delivery_address;
+            $job['code'] = $job->code();
+            $job['price'] = (double)$job->service_unit_price;
+            $this->_stripUnwantedInformationForAPI($job);
+        }
+        return $jobs;
+    }
+
+    private function _stripUnwantedInformationForAPI($job)
+    {
+        array_forget($job, 'partner_order');
+        array_forget($job, 'partner_order_id');
+        array_forget($job, 'resource_id');
+        array_forget($job, 'service_unit_price');
+        return $job;
+    }
+
+    public function changeStatus($job, $request)
+    {
+        try {
+            $client = new Client();
+            $res = $client->request('POST', env('SHEBA_BACKEND_URL') . '/api/job/' . $job . '/change-status',
+                [
+                    'form_params' => [
+                        'resource_id' => $request->resource->id,
+                        'remember_token' => $request->resource->remember_token,
+                        'status' => $request->status
+                    ]
+                ]);
+            return json_decode($res->getBody());
+        } catch (RequestException $e) {
+            return false;
+        }
+    }
+
+    public function reschedule($job, $request)
+    {
+        try {
+            $client = new Client();
+            $res = $client->request('POST', env('SHEBA_BACKEND_URL') . '/api/job/' . $job . '/reschedule',
+                [
+                    'form_params' => [
+                        'resource_id' => $request->resource->id,
+                        'remember_token' => $request->resource->remember_token,
+                        'schedule_date' => $request->schedule_date,
+                        'preferred_time' => $request->preferred_time,
+                    ]
+                ]);
+            return json_decode($res->getBody());
+        } catch (RequestException $e) {
+            return false;
+        }
+    }
+
+    public function collectMoney(PartnerOrder $order, Request $request)
+    {
+        try {
+            $client = new Client();
+            $res = $client->request('POST', env('SHEBA_BACKEND_URL') . '/api/partner-order/' . $order->id . '/collect',
+                [
+                    'form_params' => [
+                        'resource_id' => $request->resource->id,
+                        'remember_token' => $request->resource->remember_token,
+                        'partner_collection' => $request->amount,
+                    ]
+                ]);
+            return json_decode($res->getBody());
+        } catch (RequestException $e) {
+            return false;
+        }
+    }
+
+    public function calculateActionsForThisJob($first_job_from_list, $job)
+    {
+        $job['can_process'] = false;
+        $job['can_serve'] = false;
+        $job['can_collect'] = false;
+        if ($job->status == 'Served') {
+            if ($first_job_from_list->status == 'Served' && $job->id == $first_job_from_list->id) {
+                $job['can_collect'] = true;
+                $partner_order = $job->partner_order;
+                $partner_order->calculate();
+                $job['collect_money'] = (double)$partner_order->due;
+                array_forget($job, 'partner_order');
+            }
+        } elseif ($job->status == 'Process') {
+            if ($first_job_from_list->status == 'Process' && $job->id == $first_job_from_list->id) {
+                $job['can_serve'] = true;
+            }
+        } else {
+            if ($first_job_from_list->status != 'Process' && $first_job_from_list->status != 'Served') {
+                $job['can_process'] = true;
+            }
+        }
+        return $job;
     }
 }
