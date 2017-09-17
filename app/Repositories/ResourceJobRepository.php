@@ -150,7 +150,7 @@ class ResourceJobRepository
                 $job['can_serve'] = true;
             }
         } else {
-            if ($first_job_from_list->status != 'Process' && $first_job_from_list->status != 'Served' && $first_job_from_list->id == $job->id) {
+            if ($first_job_from_list->status != 'Process' && $first_job_from_list->status != 'Served') {
                 $job['can_process'] = true;
             }
         }
