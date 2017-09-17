@@ -65,6 +65,9 @@ class ProfileRepository
                 $info['is_ambassador'] = $avatar->is_ambassador;
             } elseif ($from == 'customer') {
                 $info['referral'] = $avatar->referral->code;
+            } elseif ($from == 'resource') {
+                $info['is_verified'] = $avatar->is_verified;
+                $info['partners'] = $avatar->partners->count();
             }
             return $info;
         }

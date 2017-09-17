@@ -30,6 +30,12 @@ class CategoryController extends Controller
     {
         $categories = Category::parents()->select('id', 'name', 'thumb', 'banner')->get();
         foreach ($categories as $category) {
+            if ($request->has('with')) {
+                $with = $request->has('with');
+                if ($with == 'children') {
+                    $category->children;
+                }
+            }
             array_add($category, 'slug', str_slug($category->name, '-'));
         }
         return count($categories) > 0 ? response()

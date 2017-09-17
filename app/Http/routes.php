@@ -4,19 +4,7 @@ use App\Models\Group;
 use App\Models\Navigation;
 
 Route::get('/', function () {
-//    $cats=\App\Models\Category::where([['publication_status',1],['parent_id',null]])->get();
-//    \Tinify\setKey("Jr1UGmg6-ow33-a_zHENfyihO-NPKR6n");
-//    foreach ($cats as $cat){
-//        $source = \Tinify\fromFile($cat->banner);
-//        $source->store(array(
-//            "service" => "s3",
-//            "aws_access_key_id" => env('AWS_KEY'),
-//            "aws_secret_access_key" => env('AWS_SECRET'),
-//            "region" => env('AWS_REGION'),
-//            "path" => substr($cat->thumb,strlen('https://s3.ap-south-1.amazonaws.com/'))
-//        ));
-//    }
-    return ['code' => 200, 'msg' => 'Success. This project will hold the api\'s'];
+    return ['code' => 200, 'msg' => "Success. This project will hold the api's"];
 });
 $api = app('Dingo\Api\Routing\Router');
 
@@ -48,13 +36,15 @@ $api->version('v1', ['middleware' => 'api.throttle', 'limit' => 60, 'expires' =>
     $api->get('locations', 'App\Http\Controllers\LocationController@getAllLocations');
     $api->get('lead-reward', 'App\Http\Controllers\ShebaController@getLeadRewardAmount');
     $api->get('search', 'App\Http\Controllers\SearchController@searchService');
-    $api->post('career', 'App\Http\Controllers\CareerController@apply');
     $api->get('career', 'App\Http\Controllers\CareerController@getVacantPosts');
+    $api->post('career', 'App\Http\Controllers\CareerController@apply');
     $api->get('category-service', 'App\Http\Controllers\CategoryServiceController@getCategoryServices');
     $api->get('job-times', 'App\Http\Controllers\JobController@getPreferredTimes');
     $api->get('cancel-job-reasons', 'App\Http\Controllers\JobController@cancelJobReasons');
     $api->post('voucher-valid', 'App\Http\Controllers\CheckoutController@checkForValidity');
     $api->post('rating', 'App\Http\Controllers\ReviewController@giveRatingFromEmail');
+    $api->post('sms', 'App\Http\Controllers\SmsController@send');
+    $api->post('faq', 'App\Http\Controllers\ShebaController@sendFaq');
     $api->get('offers', 'App\Http\Controllers\ShebaController@getOffers');
     $api->get('offer/{offer}', 'App\Http\Controllers\ShebaController@getOffer');
     $api->get('offer/{offer}/similar', 'App\Http\Controllers\ShebaController@getSimilarOffer');
@@ -171,7 +161,10 @@ $api->version('v1', ['middleware' => 'api.throttle', 'limit' => 60, 'expires' =>
     });
     $api->group(['prefix' => 'resources/{resource}', 'middleware' => ['resource.auth']], function ($api) {
         $api->group(['prefix' => 'jobs'], function ($api) {
-            $api->get('/', 'App\Http\Controllers\ResourceJobController@getOngoingJobs');
+            $api->get('/', 'App\Http\Controllers\ResourceJobController@index');
+            $api->get('{job}', 'App\Http\Controllers\ResourceJobController@show');
+            $api->put('{job}', 'App\Http\Controllers\ResourceJobController@update');
+            $api->post('{job}/payment', 'App\Http\Controllers\ResourceJobController@collect');
         });
     });
     $api->group(['prefix' => 'affiliate/{affiliate}', 'middleware' => ['affiliate.auth']], function ($api) {

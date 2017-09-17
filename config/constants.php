@@ -94,6 +94,12 @@ return [
         '05.00 P.M. - 09.00 P.M.' => '05.00 P.M. - 09.00 P.M.',
         'Anytime' => 'Anytime',
     ],
+    'JOB_PREFERRED_TIMES_PRIORITY' => [
+        '10.00 A.M. - 01.00 P.M.' => 1,
+        '01.00 P.M. - 05.00 P.M.' => 2,
+        '05.00 P.M. - 09.00 P.M.' => 3,
+        'Anytime' => 4,
+    ],
     'JOB_START_END_TIMES' => [
         '10.00 A.M. - 01.00 P.M.' => ['10:00 AM', '1:00 PM'],
         '01.00 P.M. - 05.00 P.M.' => ['1:00 PM', '5:00 PM'],
@@ -266,8 +272,10 @@ return [
         400 => ['message' => 'Bad request', 'code' => 400],
         401 => ['message' => 'Unauthorized', 'code' => 401],
         403 => ['message' => 'Forbidden', 'code' => 403],
+        422 => ['message' => 'Unprocessable Entity', 'code' => 422],
         404 => ['message' => 'Not found', 'code' => 404],
         500 => ['message' => 'Internal Server Error', 'code' => 500],
-    ]
+    ],
+
 
 ];
