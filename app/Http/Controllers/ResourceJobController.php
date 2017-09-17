@@ -27,10 +27,10 @@ class ResourceJobController extends Controller
     {
         try {
             $jobs = $this->resourceJobRepository->getJobs($request->resource);
+            $jobs = $this->resourceJobRepository->rearrange($jobs);
+            list($offset, $limit) = calculatePagination($request);
+            $jobs = array_slice($jobs, $offset, $limit);
             if (count($jobs) != 0) {
-                $jobs = $this->resourceJobRepository->rearrange($jobs);
-                list($offset, $limit) = calculatePagination($request);
-                $jobs = array_slice($jobs, $offset, $limit);
                 return api_response($request, $jobs, 200, ['jobs' => $this->resourceJobRepository->addJobInformationForAPI($jobs)]);
             } else {
                 return api_response($request, null, 404);
