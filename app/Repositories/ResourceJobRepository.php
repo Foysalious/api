@@ -61,11 +61,11 @@ class ResourceJobRepository
             $partner_order_other_jobs = $job->partner_order->jobs->reject(function ($item, $key) use ($job) {
                 return $item->id == $job->id;
             });
-            if ($partner_order_other_jobs->count() == 0) {
+            $partner_order = $job->partner_order;
+            $partner_order->calculate();
+            if ($partner_order_other_jobs->count() == 0 && $partner_order->due != 0) {
                 array_push($final, $job);
             } else {
-                $partner_order = $job->partner_order;
-                $partner_order->calculate();
                 if ($partner_order_other_jobs->where('status', 'Served')->count() == $partner_order_other_jobs->count() && $partner_order->due != 0) {
                     array_push($final, $job);
                 }
