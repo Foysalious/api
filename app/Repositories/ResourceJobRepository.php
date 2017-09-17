@@ -40,18 +40,33 @@ class ResourceJobRepository
 
     private function _getLastServedJobOfPartnerOrder($jobs)
     {
+//        $final = [];
+//        foreach ($jobs as $job) {
+//            $partner_order_jobs = $job->partner_order->jobs->map(function ($item) {
+//                return array_add($item, 'preferred_time_priority', constants('JOB_PREFERRED_TIMES_PRIORITY')[$item->preferred_time]);
+//            });
+//            $last_job = $partner_order_jobs->sortBy(function ($job) {
+//                return sprintf('%-12s%s', $job->schedule_date, $job->preferred_time_priority);
+//            })->last();
+//            $partner_order = $job->partner_order;
+//            $partner_order->calculate();
+//            if ($last_job->id == $job->id && $partner_order->due != 0) {
+//                array_push($final, $job);
+//            }
+//        }
+//        return $final;
+//
         $final = [];
         foreach ($jobs as $job) {
-            $partner_order_jobs = $job->partner_order->jobs->map(function ($item) {
-                return array_add($item, 'preferred_time_priority', constants('JOB_PREFERRED_TIMES_PRIORITY')[$item->preferred_time]);
+            $partner_order_other_jobs = $job->partner_order->jobs->reject(function ($item, $key) use ($job) {
+                return $item->id == $job->id;
             });
-            $last_job = $partner_order_jobs->sortBy(function ($job) {
-                return sprintf('%-12s%s', $job->schedule_date, $job->preferred_time_priority);
-            })->last();
-            $partner_order = $job->partner_order;
-            $partner_order->calculate();
-            if ($last_job->id == $job->id && $partner_order->due != 0) {
+            if ($partner_order_other_jobs->count() == 0) {
                 array_push($final, $job);
+            } else {
+                if ($partner_order_other_jobs->where('status', 'Served')->count() == $partner_order_other_jobs->count()) {
+                    array_push($final, $job);
+                }
             }
         }
         return $final;
