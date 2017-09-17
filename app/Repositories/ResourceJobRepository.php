@@ -64,7 +64,9 @@ class ResourceJobRepository
             if ($partner_order_other_jobs->count() == 0) {
                 array_push($final, $job);
             } else {
-                if ($partner_order_other_jobs->where('status', 'Served')->count() == $partner_order_other_jobs->count()) {
+                $partner_order = $job->partner_order;
+                $partner_order->calculate();
+                if ($partner_order_other_jobs->where('status', 'Served')->count() == $partner_order_other_jobs->count() && $partner_order->due != 0) {
                     array_push($final, $job);
                 }
             }
