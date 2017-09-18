@@ -151,9 +151,6 @@ class ResourceJobRepository
 
     public function calculateActionsForThisJob($first_job_from_list, $job)
     {
-        $job['can_process'] = false;
-        $job['can_serve'] = false;
-        $job['can_collect'] = false;
         if ($job->status == 'Served') {
             if ($first_job_from_list->status == 'Served' && $job->id == $first_job_from_list->id) {
                 $job['can_collect'] = true;
