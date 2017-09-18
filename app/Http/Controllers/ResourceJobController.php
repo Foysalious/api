@@ -93,12 +93,14 @@ class ResourceJobController extends Controller
             if ($job->resource_id != $resource->id) {
                 return api_response($request, null, 403);
             }
+            $job['can_process'] = false;
+            $job['can_serve'] = false;
+            $job['can_collect'] = false;
             $jobs = $this->api->get('resources/' . $resource->id . '/jobs?remember_token=' . $resource->remember_token . '&limit=1');
             if ($jobs) {
-                return api_response($request, $job, 200, ['job' => $this->resourceJobRepository->calculateActionsForThisJob($jobs[0], $job)]);
-            } else {
-                return api_response($request, null, 404);
+                $job = $this->resourceJobRepository->calculateActionsForThisJob($jobs[0], $job);
             }
+            return api_response($request, $job, 200, ['job' => $job]);
         } catch (\Exception $e) {
             return api_response($request, null, 500);
         }
