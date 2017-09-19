@@ -68,7 +68,7 @@ class ResourceJobRepository
             if ($partner_order->due > 0) {
                 //only one served job in partner order
                 if ($partner_order_other_jobs->count() == 0) {
-                    array_push($final, $job);
+                    array_push($final_last_jobs, $job);
                 } //all other jobs are served. Then check if job is the last job of partner order
                 else if ($partner_order_other_jobs->where('status', 'Served')->count() == $partner_order_other_jobs->count()) {
                     $last_job = ($all_jobs_of_this_partner_order->sortBy('delivered_date'))->last();
