@@ -56,22 +56,30 @@ class ResourceJobRepository
 //        }
 //        return $final;
 //
-        $final = [];
+        $final_last_jobs = [];
         foreach ($jobs as $job) {
-            $partner_order_other_jobs = $job->partner_order->jobs->reject(function ($item, $key) use ($job) {
-                return $item->id == $job->id;
-            });
             $partner_order = $job->partner_order;
             $partner_order->calculate();
-            if ($partner_order_other_jobs->count() == 0 && $partner_order->due != 0) {
-                array_push($final, $job);
-            } else {
-                if ($partner_order_other_jobs->where('status', 'Served')->count() == $partner_order_other_jobs->count() && $partner_order->due != 0) {
+            $all_jobs_of_this_partner_order = $job->partner_order->jobs;
+            $partner_order_other_jobs = $all_jobs_of_this_partner_order->reject(function ($item, $key) use ($job) {
+                return $item->id == $job->id;
+            });
+            //partner order has due
+            if ($partner_order->due > 0) {
+                //only one served job in partner order
+                if ($partner_order_other_jobs->count() == 0) {
                     array_push($final, $job);
+                } //all other jobs are served. Then check if job is the last job of partner order
+                else if ($partner_order_other_jobs->where('status', 'Served')->count() == $partner_order_other_jobs->count()) {
+                    $last_job = ($all_jobs_of_this_partner_order->sortBy('delivered_date'))->last();
+                    if ($last_job->id == $job->id) {
+                        array_push($final_last_jobs, $job);
+                    }
                 }
             }
+
         }
-        return $final;
+        return $final_last_jobs;
     }
 
     public function addJobInformationForAPI($jobs)
