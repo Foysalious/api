@@ -268,14 +268,18 @@ class ServiceRepository
             }
             if (array_search('reviews', $scope) !== false) {
                 $this->reviewRepository->getGeneralReviewInformation($service);
-                array_forget($service, 'reviews');
             }
             array_forget($service, 'variables');
-            if (in_array('discount', $scope) || in_array('start_price', $scope)) {
-                array_forget($service, 'partnerServices');
-            }
+            $this->_removeRelationsFromModel($service, $service->getRelations());
         }
         return $services;
+    }
+
+    private function _removeRelationsFromModel($model, $relations)
+    {
+        foreach ($relations as $key => $relation) {
+            array_forget($model, $key);
+        }
     }
 
     public function getPartnerServicesAndPartners($services, $location)
