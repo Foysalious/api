@@ -42,7 +42,7 @@ class CareerController extends Controller
             "job_nature", "location", "salary", "experience", "benefits", "note", "additional_info", "deadline")
             ->where([
                 ['deadline', '>=', date('Y-m-d')],
-//                ['publication_status', 1]
+                ['publication_status', 1]
             ])->get();
         if ($job_posts) {
             return api_response($request, $job_posts, 200, ['posts' => $job_posts]);
