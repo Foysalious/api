@@ -29,7 +29,12 @@ class CategoryController extends Controller
      */
     public function index(Request $request)
     {
-        $categories = Redis::get('categories');
+        if ($request->has('with')) {
+            $key = 'categories-with-children';
+        } else {
+            $key = 'categories';
+        }
+        $categories = Redis::get($key);
         if ($categories) {
             $categories = json_decode($categories);
         } else {
@@ -43,7 +48,7 @@ class CategoryController extends Controller
                 }
                 array_add($category, 'slug', str_slug($category->name, '-'));
             }
-            Redis::set('categories', json_encode($categories));
+            Redis::set($key, json_encode($categories));
             Redis::expire('categories', 30 * 60);
         }
         return count($categories) > 0 ? response()
