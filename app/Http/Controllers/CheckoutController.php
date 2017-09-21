@@ -175,6 +175,34 @@ class CheckoutController extends Controller
         return response()->json(['code' => 404, 'result' => $result]);
     }
 
+    public function validateVoucher(Request $request)
+    {
+        $data = json_decode($request->data);
+        $sales_channel = property_exists($data, 'sales_channel') ? $data->sales_channel : "Web";
+        $cart = $data->cart;
+        $amount = [];
+        $applied = false;
+        foreach ($cart->items as $item) {
+            $result = $this->voucherRepository
+                ->isValid($data->voucher_code, $item->service->id, $item->partner->id, $data->location, $data->customer, $cart->price, $sales_channel);
+            if ($result['is_valid']) {
+                $applied = true;
+                $item->partner = $this->cartRepository->getPartnerPrice($item);
+                if ($result['is_percentage']) {
+                    $result['amount'] = ((float)$item->partner->prices * $result['amount']) / 100;
+                    if ($result['voucher']->cap != 0 && $result['amount'] > $result['voucher']->cap) {
+                        $result['amount'] = $result['voucher']->cap;
+                    }
+                }
+                $amount[] = (new DiscountRepository())->validateDiscountValue($item->partner->prices * $item->quantity, $result['amount']);
+            }
+        }
+        if ($applied) {
+            return response()->json(['code' => 200, 'amount' => max($amount)]);
+        }
+        return response()->json(['code' => 404, 'result' => $result]);
+    }
+
     /**
      * @param $order
      * @param $voucher

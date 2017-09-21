@@ -42,6 +42,7 @@ $api->version('v1', ['middleware' => 'api.throttle', 'limit' => 60, 'expires' =>
     $api->get('job-times', 'App\Http\Controllers\JobController@getPreferredTimes');
     $api->get('cancel-job-reasons', 'App\Http\Controllers\JobController@cancelJobReasons');
     $api->post('voucher-valid', 'App\Http\Controllers\CheckoutController@checkForValidity');
+    $api->post('vouchers', 'App\Http\Controllers\CheckoutController@validateVoucher');
     $api->post('rating', 'App\Http\Controllers\ReviewController@giveRatingFromEmail');
     $api->post('sms', 'App\Http\Controllers\SmsController@send');
     $api->post('faq', 'App\Http\Controllers\ShebaController@sendFaq');
