@@ -7,6 +7,7 @@ use App\Repositories\ServiceRepository;
 use Illuminate\Http\Request;
 
 use App\Http\Requests;
+use Illuminate\Support\Facades\Redis;
 
 class NavigationController extends Controller
 {
@@ -17,21 +18,28 @@ class NavigationController extends Controller
         $this->serviceRepository = new ServiceRepository();
     }
 
-    public function getNavList()
+    public function getNavList(Request $request)
     {
-        $navs = Navigation::with(['groups' => function ($q) {
-            $q->select('_id', 'name', 'navigation_id', 'services')->with(['navServices' => function ($q) {
-                $q->select('*')->where('publication_status', 1);
-            }]);
-        }])->select('_id', 'name')->where('publication_status', 1)->get();
-        foreach ($navs as $nav) {
-            foreach ($nav->groups as $group) {
-                foreach ($group->navServices as $service) {
-                    array_forget($service, ['updated_at', 'created_at', 'group_ids']);
+        $navs = Redis::get('navigation');
+        if ($navs) {
+            $navs = json_decode($navs);
+        } else {
+            $navs = Navigation::with(['groups' => function ($q) {
+                $q->select('_id', 'name', 'navigation_id', 'services')->with(['navServices' => function ($q) {
+                    $q->select('*')->where('publication_status', 1);
+                }]);
+            }])->select('_id', 'name')->where('publication_status', 1)->get();
+            foreach ($navs as $nav) {
+                foreach ($nav->groups as $group) {
+                    foreach ($group->navServices as $service) {
+                        array_forget($service, ['updated_at', 'created_at', 'group_ids']);
+                    }
                 }
             }
+            Redis::set('navigation', json_encode($navs));
+            Redis::expire('navigation', 30 * 60);
         }
-        return response()->json(['navigations' => $navs]);
+        return api_response($request, $navs, 200, ['navigations' => $navs]);
     }
 
     public function getServices($navigation, Request $request)
