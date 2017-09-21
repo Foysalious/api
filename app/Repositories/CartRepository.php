@@ -133,7 +133,7 @@ class CartRepository
         if ($partner_service->service->variable_type == 'Custom') {
             $price = $this->_validateQuotePrice($item->partner->quote_id);
             if ($price != false) {
-                $item->partner['prices'] = $price;
+                $item->partner->prices = $price;
             }
             return $item->partner;
         } else {
