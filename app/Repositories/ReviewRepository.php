@@ -3,7 +3,10 @@
 
 namespace App\Repositories;
 
+use App\Models\Customer;
 use App\Models\Job;
+use App\Models\Review;
+use Illuminate\Http\Request;
 
 class ReviewRepository
 {
@@ -51,6 +54,30 @@ class ReviewRepository
         }
         array_add($object, 'rating', round($rating, 1));
         return $object;
+    }
+
+    public function save(Job $job, Request $request)
+    {
+        $review = new Review();
+        $review->rating = $request->rating;
+        $review->review_title = $request->review_title;
+        $review->review = $request->review;
+        $review->job_id = $job->id;
+        $review->resource_id = $job->resource_id;
+        $review->partner_id = $job->partner_order->partner_itd;
+        $review->service_id = $job->service_id;
+        $review->customer_id = $job->partner_order->order->customer_id;
+        $review->save();
+        return $review;
+    }
+
+    public function update(Review $review, Request $request)
+    {
+        $review->rating = $request->rating;
+        $review->review_title = $request->review_title;
+        $review->review = $request->review;
+        $review->update();
+        return $review;
     }
 
 }
