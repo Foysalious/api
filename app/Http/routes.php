@@ -130,6 +130,10 @@ $api->version('v1', ['middleware' => 'api.throttle', 'limit' => 60, 'expires' =>
 //        $api->post('{customer}/send-verification-link', 'App\Http\Controllers\CustomerController@sendVerificationLink');
 
     });
+    $api->group(['prefix' => 'customers/{customer}', 'middleware' => ['customer.auth']], function ($api) {
+        $api->post('reviews','App\Http\Controllers\ReviewController@modifyReview');
+    });
+
     $api->group(['prefix' => 'business'], function ($api) {
         $api->get('check-url', 'App\Http\Controllers\BusinessController@checkURL');
         $api->get('type-category', 'App\Http\Controllers\BusinessController@getTypeAndCategories');
