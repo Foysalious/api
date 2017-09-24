@@ -18,7 +18,7 @@ class ReviewRepository
             return false;
         }
         if ($job->partner_order->order->customer_id == $customer) {
-            return true;
+            return $job;
         } else
             return false;
     }

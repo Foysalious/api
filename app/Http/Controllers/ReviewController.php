@@ -8,6 +8,7 @@ use App\Models\Review;
 use App\Repositories\ReviewRepository;
 use Illuminate\Http\Request;
 use Gate;
+use Validator;
 
 class ReviewController extends Controller
 {
@@ -20,6 +21,9 @@ class ReviewController extends Controller
 
     public function modifyReview($customer, Request $request)
     {
+        if ($msg = $this->_validateReview($request)) {
+            return response()->json(['code' => 500, 'msg' => $msg]);
+        }
         $review = Review::where([
             ['job_id', $request->input('job_id')],
             ['customer_id', $customer],
@@ -38,22 +42,16 @@ class ReviewController extends Controller
             $review->update();
             return response()->json(['msg' => 'successful', 'code' => 200]);
         } else {
-            if ($this->reviewRepository->customerCanGiveReview($customer, $request->input('job_id'))) {
+            $job = $this->reviewRepository->customerCanGiveReview($customer, $request->job_id);
+            if ($job != false) {
                 $review = new Review();
-                if ($request->input('rating') != '') {
-                    $review->rating = $request->input('rating');
-                }
-                if ($request->input('review_title') != '') {
-                    $review->review_title = $request->input('review_title');
-                }
-                if ($request->input('review') != '') {
-                    $review->review = $request->input('review');
-                }
-                $job = Job::find($request->job_id);
+                $review->rating = $request->input('rating');
+                $review->review_title = $request->input('review_title');
+                $review->review = $request->input('review');
                 $review->job_id = $request->input('job_id');
                 $review->resource_id = $job->resource_id;
-                $review->partner_id = $request->input('partner_id');
-                $review->service_id = $request->input('service_id');
+                $review->partner_id = $job->partner_order->partner_itd;
+                $review->service_id = $job->service_id;
                 $review->customer_id = $customer;
                 $review->save();
                 return response()->json(['msg' => 'successful', 'code' => 200]);
@@ -105,6 +103,16 @@ class ReviewController extends Controller
             }
         }
         return response()->json(['msg' => 'unauthorized', 'code' => 409]);
+    }
+
+    private function _validateReview(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'review' => 'required_with:review_title|string|min:40',
+            'review_title' => 'required_with:review|string|min:5',
+            'rating' => 'required|numeric|between:1,5',
+        ]);
+        return $validator->fails() ? $validator->errors()->all()[0] : false;
     }
 
 }
