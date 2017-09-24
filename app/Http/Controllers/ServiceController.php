@@ -28,15 +28,12 @@ class ServiceController extends Controller
             ->published()
             ->first();
         if ($service == null)
-            return response()->json(['code' => 404, 'msg' => 'no service found']);
+            return api_response($request, null, 404);
         array_add($service, 'discount', $service->hasDiscounts());
-        array_forget($service, 'partnerServices');
-        //Add first options in service
         if ($service->variable_type == 'Options') {
-            $service = $this->serviceRepository->getFirstOption($service);
+            $service['first_option'] = $this->serviceRepository->getFirstOption($service);
         }
         $service = $this->reviewRepository->getGeneralReviewInformation($service);
-        array_forget($service, 'reviews');
         //get the category & parent of the service
         $category = Category::with(['parent' => function ($query) {
             $query->select('id', 'name');
@@ -44,7 +41,12 @@ class ServiceController extends Controller
         array_add($service, 'category_name', $category->name);
         array_add($service, 'master_category_id', $category->parent->id);
         array_add($service, 'master_category_name', $category->parent->name);
-        return response()->json(['service' => $service, 'code' => 200]);
+        $service['variables'] = json_decode($service->variables);
+        unset($service->variables->max_prices);
+        unset($service->variables->min_prices);
+        unset($service->variables->prices);
+        $this->serviceRepository->removeRelationsFromModel($service, $service->getRelations());
+        return api_response($request, $service, 200, ['service' => $service]);
     }
 
     public function getPartners($service, $location = null, Request $request)
@@ -77,7 +79,7 @@ class ServiceController extends Controller
             array_add($service, 'parent_name', $category->parent->name);
         } elseif ($request->getMethod() == 'POST') {
             $service = Service::where('id', $service)
-                ->select('id', 'name', 'unit', 'category_id', 'description', 'min_quantity', 'thumb', 'banner', 'faqs', 'variable_type', 'variables')
+                ->select('id', 'name', 'unit', 'category_id', 'description', 'min_quantity', 'thumb', 'banner', 'faqs','slug', 'variable_type', 'variables')
                 ->first();
         }
         array_add($service, 'web_link', env('SHEBA_FRONT_END_URL') . '/service/' . $service->id . '/' . $service->slug);

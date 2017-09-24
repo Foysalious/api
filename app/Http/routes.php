@@ -55,6 +55,9 @@ $api->version('v1', ['middleware' => 'api.throttle', 'limit' => 60, 'expires' =>
     $api->group(['prefix' => 'navigation'], function ($api) {
         $api->get('/', 'App\Http\Controllers\NavigationController@getNavList');
     });
+    $api->group(['prefix' => 'jobs'], function ($api) {
+        $api->get('times', 'App\Http\Controllers\JobController@getPreferredTimes');
+    });
     $api->group(['prefix' => 'categories'], function ($api) {
         $api->get('/', 'App\Http\Controllers\CategoryController@index');
         $api->get('{category}/secondaries', 'App\Http\Controllers\CategoryController@getSecondaries');

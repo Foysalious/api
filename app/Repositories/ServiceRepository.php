@@ -270,12 +270,12 @@ class ServiceRepository
                 $this->reviewRepository->getGeneralReviewInformation($service);
             }
             array_forget($service, 'variables');
-            $this->_removeRelationsFromModel($service, $service->getRelations());
+            $this->removeRelationsFromModel($service, $service->getRelations());
         }
         return $services;
     }
 
-    private function _removeRelationsFromModel($model, $relations)
+    public function removeRelationsFromModel($model, $relations)
     {
         foreach ($relations as $key => $relation) {
             array_forget($model, $key);
@@ -361,8 +361,7 @@ class ServiceRepository
     {
         $variables = json_decode($service->variables);
         $first_option = array_map('intval', explode(',', key($variables->prices)));
-        array_add($service, 'first_option', $first_option);
-        return $service;
+        return $first_option;
     }
 
 }
