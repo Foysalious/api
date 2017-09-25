@@ -347,7 +347,7 @@ class CheckoutRepository
             $partner_order_payment->log = 'Due paid';
             $partner_order_payment->save();
             $partner_order->payment_method = 'online';
-            $partner_order->sheba_collection = $partner_order->due;
+            $partner_order->sheba_collection += $partner_order->due;
             $partner_order->update();
 //            (new NotificationRepository())->forOnlinePayment($partner_order);
         }

@@ -18,7 +18,7 @@ $api = app('Dingo\Api\Routing\Router');
 |
 |
 */
-$api->version('v1', ['middleware' => 'api.throttle', 'limit' => 60, 'expires' => 1], function ($api) {
+$api->version('v1', function ($api) {
     /*API*/
     $api->post('login', 'App\Http\Controllers\Auth\LoginController@login');
     $api->post('register', 'App\Http\Controllers\Auth\RegistrationController@register');
@@ -86,10 +86,6 @@ $api->version('v1', ['middleware' => 'api.throttle', 'limit' => 60, 'expires' =>
         $api->get('{partner}/services', 'App\Http\Controllers\PartnerController@getPartnerServices');
         $api->get('{partner}/reviews', 'App\Http\Controllers\PartnerController@getReviews');
     });
-    $api->group(['prefix' => 'checkout'], function ($api) {
-        $api->get('place-order-final', 'App\Http\Controllers\CheckoutController@placeOrderFinal');
-        $api->get('sp-payment-final', 'App\Http\Controllers\CheckoutController@spPaymentFinal');
-    });
     $api->group(['prefix' => 'customer', 'middleware' => ['customer.auth']], function ($api) {
         $api->get('{customer}', 'App\Http\Controllers\CustomerController@getCustomerInfo');
         $api->post('{customer}/edit', 'App\Http\Controllers\CustomerController@editInfo');
@@ -132,6 +128,10 @@ $api->version('v1', ['middleware' => 'api.throttle', 'limit' => 60, 'expires' =>
 //        $api->post('{customer}/email-verification', 'App\Http\Controllers\CustomerController@checkEmailVerification');
 //        $api->post('{customer}/send-verification-link', 'App\Http\Controllers\CustomerController@sendVerificationLink');
 
+    });
+    $api->group(['prefix' => 'checkout'], function ($api) {
+        $api->get('place-order-final', 'App\Http\Controllers\CheckoutController@placeOrderFinal');
+        $api->get('sp-payment-final', 'App\Http\Controllers\CheckoutController@spPaymentFinal');
     });
     $api->group(['prefix' => 'customers/{customer}', 'middleware' => ['customer.auth']], function ($api) {
         $api->post('reviews','App\Http\Controllers\ReviewController@modifyReview');

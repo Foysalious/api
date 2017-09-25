@@ -159,7 +159,6 @@ return [
         Dingo\Api\Provider\LaravelServiceProvider::class,
         Tymon\JWTAuth\Providers\JWTAuthServiceProvider::class,
         Sentry\SentryLaravel\SentryLaravelServiceProvider::class,
-        Maatwebsite\Excel\ExcelServiceProvider::class,
         Jenssegers\Mongodb\MongodbServiceProvider::class,
         LaravelFCM\FCMServiceProvider::class,
         Intervention\Image\ImageServiceProvider::class,
@@ -215,11 +214,10 @@ return [
         'JWTAuth' => Tymon\JWTAuth\Facades\JWTAuth::class,
         'JWTFactory' => Tymon\JWTAuth\Facades\JWTFactory::class,
         'Sentry' => Sentry\SentryLaravel\SentryFacade::class,
-        'Excel' => Maatwebsite\Excel\Facades\Excel::class,
         'FCM'      => LaravelFCM\Facades\FCM::class,
         'FCMGroup' => LaravelFCM\Facades\FCMGroup::class,
         'Image' => Intervention\Image\Facades\Image::class,
-        'Clockwork' => Clockwork\Support\Laravel\Facade::class,
+        'Clockwork' => Clockwork\Support\Laravel\Facade::class
     ],
 
 ];
