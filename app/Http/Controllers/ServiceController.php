@@ -79,7 +79,7 @@ class ServiceController extends Controller
             array_add($service, 'parent_name', $category->parent->name);
         } elseif ($request->getMethod() == 'POST') {
             $service = Service::where('id', $service)
-                ->select('id', 'name', 'unit', 'category_id', 'description', 'min_quantity', 'thumb', 'banner', 'faqs','slug', 'variable_type', 'variables')
+                ->select('id', 'name', 'unit', 'category_id', 'description', 'min_quantity', 'thumb', 'banner', 'faqs', 'slug', 'variable_type', 'variables')
                 ->first();
         }
         array_add($service, 'web_link', env('SHEBA_FRONT_END_URL') . '/service/' . $service->id . '/' . $service->slug);
@@ -113,6 +113,31 @@ class ServiceController extends Controller
         } elseif ($request->getMethod() == 'POST') {
             return response()->json(['service_partners' => $sorted_service_partners, 'msg' => 'no partner found in selected location', 'code' => 404]);
         }
+    }
+
+    public function getPartnersOfLocation($service, $location = null, Request $request)
+    {
+        $service = Service::where('id', $service)
+            ->select('id', 'name', 'unit', 'category_id', 'description', 'min_quantity', 'thumb', 'banner', 'faqs', 'slug', 'variable_type', 'variables')
+            ->first();
+        array_add($service, 'web_link', env('SHEBA_FRONT_END_URL') . '/service/' . $service->id . '/' . $service->slug);
+        $service_partners = $this->serviceRepository->partners($service, $location, $request);
+        $sorted_service_partners = collect($service_partners)->sortBy('discounted_price')->values()->all();
+        $sorted_service_partners = $this->serviceRepository->_sortPartnerListByAvailability($sorted_service_partners);
+        $service->variables = json_decode($service->variables);
+        array_forget($service, 'partnerServices');
+        if (count($service_partners) != 0) {
+            unset($service->variables->max_prices);
+            unset($service->variables->min_prices);
+            unset($service->variables->prices);
+            if ($service->variable_type == 'Fixed') {
+                unset($service->variables->max_price);
+                unset($service->variables->min_price);
+                unset($service->variables->price);
+            }
+            return api_response($request, $sorted_service_partners, 200, ['service_partners' => $sorted_service_partners]);
+        }
+        return api_response($request, null, 404);
     }
 
 
