@@ -16,6 +16,9 @@ class ResourceJobRepository
     {
         $process_job = $jobs->where('status', 'Process')->values()->all();
         $served_jobs = $this->_getLastServedJobOfPartnerOrder($jobs->where('status', 'Served')->values()->all());
+        $served_jobs = collect($served_jobs)->filter(function ($job) {
+            return $job->partner_order->payment_method != 'online';
+        })->values()->all();
         $other_jobs = $jobs->filter(function ($job) {
             return $job->status != 'Process' && $job->status != 'Served';
         });
@@ -66,7 +69,7 @@ class ResourceJobRepository
                 return $item->id == $job->id;
             });
             //partner order has due
-            if ($partner_order->due > 0) {
+            if ((double)$partner_order->due > 0) {
                 //only one served job in partner order
                 if ($partner_order_other_jobs->count() == 0) {
                     array_push($final_last_jobs, $job);
@@ -167,8 +170,12 @@ class ResourceJobRepository
     {
         if ($job->status == 'Served') {
             if ($first_job_from_list->status == 'Served' && $job->id == $first_job_from_list->id) {
-                $job['can_collect'] = true;
                 $partner_order = $job->partner_order;
+                if ($partner_order->payment_method == 'online') {
+                    $job['can_collect'] = false;
+                } else {
+                    $job['can_collect'] = true;
+                }
                 $partner_order->calculate();
                 $job['collect_money'] = (double)$partner_order->due;
                 array_forget($job, 'partner_order');

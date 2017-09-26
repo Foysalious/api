@@ -96,4 +96,9 @@ class Customer extends Authenticatable
         }
         return $this->profile->email;
     }
+
+    public function notifications()
+    {
+        return $this->morphMany(Notification::class, 'notifiable');
+    }
 }

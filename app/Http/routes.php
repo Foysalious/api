@@ -134,7 +134,8 @@ $api->version('v1', function ($api) {
         $api->get('sp-payment-final', 'App\Http\Controllers\CheckoutController@spPaymentFinal');
     });
     $api->group(['prefix' => 'customers/{customer}', 'middleware' => ['customer.auth']], function ($api) {
-        $api->post('reviews','App\Http\Controllers\ReviewController@modifyReview');
+        $api->post('reviews', 'App\Http\Controllers\ReviewController@modifyReview');
+        $api->get('notifications', 'App\Http\Controllers\CustomerController@getNotifications');
     });
 
     $api->group(['prefix' => 'business'], function ($api) {
