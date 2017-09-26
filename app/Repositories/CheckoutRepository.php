@@ -21,7 +21,10 @@ use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Support\Facades\DB;
-
+use LaravelFCM\Message\OptionsBuilder;
+use LaravelFCM\Message\PayloadDataBuilder;
+use LaravelFCM\Message\PayloadNotificationBuilder;
+use FCM;
 
 class CheckoutRepository
 {
@@ -508,5 +511,26 @@ class CheckoutRepository
             }
         }
         return null;
+    }
+
+    public function sendOnlinePaymentNotificationToDevice($token, bool $online_payment_status)
+    {
+        $msg = $online_payment_status ? 'Payment Successful' : 'Payment Unsuccessful';
+        $optionBuilder = new OptionsBuilder();
+        $optionBuilder->setTimeToLive(60 * 20);
+
+        $notificationBuilder = new PayloadNotificationBuilder('Order Placement');
+        $notificationBuilder->setBody($msg)
+            ->setSound('default');
+
+        $dataBuilder = new PayloadDataBuilder();
+        $dataBuilder->addData(['online_payment_status' => $online_payment_status]);
+
+        $option = $optionBuilder->build();
+        $notification = $notificationBuilder->build();
+        $data = $dataBuilder->build();
+
+        $downstreamResponse = FCM::sendTo($token, $option, $notification, $data);
+//        dd($downstreamResponse->numberSuccess());
     }
 }
