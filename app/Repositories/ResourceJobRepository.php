@@ -171,7 +171,7 @@ class ResourceJobRepository
         if ($job->status == 'Served') {
             if ($first_job_from_list->status == 'Served' && $job->id == $first_job_from_list->id) {
                 $partner_order = $job->partner_order;
-                if ($partner_order->payment_method == 'online') {
+                if ($partner_order->payment_method == 'bad-debt') {
                     $job['can_collect'] = false;
                 } else {
                     $job['can_collect'] = true;
