@@ -17,7 +17,7 @@ class ResourceJobRepository
         $process_job = $jobs->where('status', 'Process')->values()->all();
         $served_jobs = $this->_getLastServedJobOfPartnerOrder($jobs->where('status', 'Served')->values()->all());
         $served_jobs = collect($served_jobs)->filter(function ($job) {
-            return $job->partner_order->payment_method != 'online';
+            return $job->partner_order->payment_method != 'bad-debt';
         })->values()->all();
         $other_jobs = $jobs->filter(function ($job) {
             return $job->status != 'Process' && $job->status != 'Served';
