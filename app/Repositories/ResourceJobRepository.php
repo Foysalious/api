@@ -7,6 +7,7 @@ use App\Models\PartnerOrder;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class ResourceJobRepository
 {
@@ -90,6 +91,7 @@ class ResourceJobRepository
             $job['delivery_address'] = $job->partner_order->order->delivery_address;
             $job['service_unit_price'] = (double)$job->service_unit_price;
             $job['service_unit'] = $job->service->unit;
+            $job['schedule_date'] = Carbon::parse($job->schedule_date)->format('jS M, Y');
             $job['code'] = $job->code();
             $this->_stripUnwantedInformationForAPI($job);
         }
