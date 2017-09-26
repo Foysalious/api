@@ -127,4 +127,23 @@ class CartRepository
         return $quotation != null ? $quotation->proposed_price : false;
     }
 
+    public function getPartnerPrice($item)
+    {
+        $partner_service = $this->_validPartnerService($item);
+        if ($partner_service->service->variable_type == 'Custom') {
+            $price = $this->_validateQuotePrice($item->partner->quote_id);
+            if ($price != false) {
+                $item->partner->prices = $price;
+            }
+            return $item->partner;
+        } else {
+            $price = $partner_service->prices;
+            if ($partner_service->service->variable_type == 'Options') {
+                $price = $this->_validOption($item->serviceOptions, $partner_service);
+            }
+            return $this->_validatePartnerPrice($price, $partner_service);
+        }
+
+    }
+
 }

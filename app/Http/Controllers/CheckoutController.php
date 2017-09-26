@@ -77,7 +77,7 @@ class CheckoutController extends Controller
      */
     public function placeOrderWithPayment(Request $request, $customer)
     {
-        $customer = Customer::find($customer);
+        $customer = $request->customer;
         $connectionResponse = $this->checkoutRepository->checkoutWithPortWallet($request, $customer);
         return response()->json($connectionResponse);
     }
@@ -105,13 +105,21 @@ class CheckoutController extends Controller
                 $this->checkoutRepository->sendConfirmation($order_info['customer_id'], $order);
                 Cache::forget('invoice-' . $request->input('invoice'));
                 Cache::forget('portwallet-payment-' . $request->input('invoice'));
-                $s_id = str_random(10);
-                Redis::set($s_id, 'online');
-                Redis::expire($s_id, 500);
-                return redirect(env('SHEBA_FRONT_END_URL') . '/order-list?s_token=' . $s_id);
+                if (array_key_exists('device_token', $order_info)) {
+                    $this->checkoutRepository->sendOnlinePaymentNotificationToDevice($order_info['device_token'], true);
+                } else {
+                    $s_id = str_random(10);
+                    Redis::set($s_id, 'online');
+                    Redis::expire($s_id, 500);
+                    return redirect(env('SHEBA_FRONT_END_URL') . '/order-list?s_token=' . $s_id);
+                }
             }
         } else {
-            return "Something went wrong";
+            if (array_key_exists('device_token', $order_info)) {
+                $this->checkoutRepository->sendOnlinePaymentNotificationToDevice($order_info['device_token'], false);
+            } else {
+                return "Something went wrong";
+            }
         }
     }
 
@@ -142,12 +150,7 @@ class CheckoutController extends Controller
         }
     }
 
-    /**
-     * Check if voucher is valid
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function checkForValidity(Request $request)
+    public function validateVoucher(Request $request)
     {
         $data = json_decode($request->data);
         $sales_channel = property_exists($data, 'sales_channel') ? $data->sales_channel : "Web";
@@ -159,12 +162,12 @@ class CheckoutController extends Controller
                 ->isValid($data->voucher_code, $item->service->id, $item->partner->id, $data->location, $data->customer, $cart->price, $sales_channel);
             if ($result['is_valid']) {
                 $applied = true;
+                $item->partner = $this->cartRepository->getPartnerPrice($item);
                 if ($result['is_percentage']) {
                     $result['amount'] = ((float)$item->partner->prices * $result['amount']) / 100;
                     if ($result['voucher']->cap != 0 && $result['amount'] > $result['voucher']->cap) {
                         $result['amount'] = $result['voucher']->cap;
                     }
-//                    $result['amount'] = (new DiscountRepository())->validateDiscountValue($item->partner->prices * $item->quantity, $result['amount']);
                 }
                 $amount[] = (new DiscountRepository())->validateDiscountValue($item->partner->prices * $item->quantity, $result['amount']);
             }

@@ -31,9 +31,9 @@ class ResourceJobRepository
     public function getJobs($resource)
     {
         $resource->load(['jobs' => function ($q) {
-            $q->select('id', 'resource_id', 'schedule_date', 'preferred_time', 'service_name', 'status', 'partner_order_id')
+            $q->select('id', 'resource_id', 'schedule_date', 'preferred_time', 'service_name', 'status', 'service_quantity', 'service_unit_price', 'service_id', 'partner_order_id')
                 ->where('schedule_date', '<=', date('Y-m-d'))->whereIn('status', ['Accepted', 'Served', 'Process', 'Schedule Due'])
-                ->with('partner_order.order');
+                ->with('partner_order.order', 'service');
         }]);
         return $resource->jobs;
     }
@@ -88,6 +88,8 @@ class ResourceJobRepository
             $job['delivery_name'] = $job->partner_order->order->delivery_name;
             $job['delivery_mobile'] = $job->partner_order->order->delivery_mobile;
             $job['delivery_address'] = $job->partner_order->order->delivery_address;
+            $job['service_unit_price'] = (double)$job->service_unit_price;
+            $job['service_unit'] = $job->service->unit;
             $job['code'] = $job->code();
             $this->_stripUnwantedInformationForAPI($job);
         }
@@ -99,6 +101,8 @@ class ResourceJobRepository
         array_forget($job, 'partner_order');
         array_forget($job, 'partner_order_id');
         array_forget($job, 'resource_id');
+        array_forget($job, 'service_id');
+        array_forget($job, 'service');
         return $job;
     }
 

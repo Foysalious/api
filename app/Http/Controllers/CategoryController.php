@@ -7,6 +7,7 @@ use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
 use Illuminate\Http\Request;
 use Dingo\Api\Routing\Helpers;
+use Redis;
 
 class CategoryController extends Controller
 {
@@ -28,6 +29,28 @@ class CategoryController extends Controller
      */
     public function index(Request $request)
     {
+//        if ($request->has('with')) {
+//            $key = 'categories-with-children';
+//        } else {
+//            $key = 'categories';
+//        }
+//        $categories = Redis::get($key);
+//        if ($categories) {
+//            $categories = json_decode($categories);
+//        } else {
+//            $categories = Category::parents()->select('id', 'name', 'thumb', 'banner')->get();
+//            foreach ($categories as $category) {
+//                if ($request->has('with')) {
+//                    $with = $request->has('with');
+//                    if ($with == 'children') {
+//                        $category->children;
+//                    }
+//                }
+//                array_add($category, 'slug', str_slug($category->name, '-'));
+//            }
+//            Redis::set($key, json_encode($categories));
+//            Redis::expire('categories', 30 * 60);
+//        }
         $categories = Category::parents()->select('id', 'name', 'thumb', 'banner')->get();
         foreach ($categories as $category) {
             if ($request->has('with')) {

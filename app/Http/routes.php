@@ -18,7 +18,7 @@ $api = app('Dingo\Api\Routing\Router');
 |
 |
 */
-$api->version('v1', ['middleware' => 'api.throttle', 'limit' => 60, 'expires' => 1], function ($api) {
+$api->version('v1', function ($api) {
     /*API*/
     $api->post('login', 'App\Http\Controllers\Auth\LoginController@login');
     $api->post('register', 'App\Http\Controllers\Auth\RegistrationController@register');
@@ -41,7 +41,10 @@ $api->version('v1', ['middleware' => 'api.throttle', 'limit' => 60, 'expires' =>
     $api->get('category-service', 'App\Http\Controllers\CategoryServiceController@getCategoryServices');
     $api->get('job-times', 'App\Http\Controllers\JobController@getPreferredTimes');
     $api->get('cancel-job-reasons', 'App\Http\Controllers\JobController@cancelJobReasons');
-    $api->post('voucher-valid', 'App\Http\Controllers\CheckoutController@checkForValidity');
+
+    $api->post('voucher-valid', 'App\Http\Controllers\CheckoutController@validateVoucher');
+    $api->post('vouchers', 'App\Http\Controllers\CheckoutController@validateVoucher');
+
     $api->post('rating', 'App\Http\Controllers\ReviewController@giveRatingFromEmail');
     $api->post('sms', 'App\Http\Controllers\SmsController@send');
     $api->post('faq', 'App\Http\Controllers\ShebaController@sendFaq');
@@ -51,6 +54,9 @@ $api->version('v1', ['middleware' => 'api.throttle', 'limit' => 60, 'expires' =>
 
     $api->group(['prefix' => 'navigation'], function ($api) {
         $api->get('/', 'App\Http\Controllers\NavigationController@getNavList');
+    });
+    $api->group(['prefix' => 'jobs'], function ($api) {
+        $api->get('times', 'App\Http\Controllers\JobController@getPreferredTimes');
     });
     $api->group(['prefix' => 'categories'], function ($api) {
         $api->get('/', 'App\Http\Controllers\CategoryController@index');
@@ -72,17 +78,13 @@ $api->version('v1', ['middleware' => 'api.throttle', 'limit' => 60, 'expires' =>
         $api->get('{service}', 'App\Http\Controllers\ServiceController@get');
         $api->get('{service}/valid', 'App\Http\Controllers\ServiceController@checkForValidity');
         $api->get('{service}/similar', 'App\Http\Controllers\ServiceController@getSimilarServices');
-        $api->get('{service}/locations/{location}/partners', 'App\Http\Controllers\ServiceController@getPartners');
+        $api->get('{service}/locations/{location}/partners', 'App\Http\Controllers\ServiceController@getPartnersOfLocation');
 //        $api->post('{service}/location/{location}/partners', 'App\Http\Controllers\ServiceController@getPartners');
     });
     $api->group(['prefix' => 'partner'], function ($api) {
         $api->get('/', 'App\Http\Controllers\PartnerController@index');
         $api->get('{partner}/services', 'App\Http\Controllers\PartnerController@getPartnerServices');
         $api->get('{partner}/reviews', 'App\Http\Controllers\PartnerController@getReviews');
-    });
-    $api->group(['prefix' => 'checkout'], function ($api) {
-        $api->get('place-order-final', 'App\Http\Controllers\CheckoutController@placeOrderFinal');
-        $api->get('sp-payment-final', 'App\Http\Controllers\CheckoutController@spPaymentFinal');
     });
     $api->group(['prefix' => 'customer', 'middleware' => ['customer.auth']], function ($api) {
         $api->get('{customer}', 'App\Http\Controllers\CustomerController@getCustomerInfo');
@@ -127,6 +129,14 @@ $api->version('v1', ['middleware' => 'api.throttle', 'limit' => 60, 'expires' =>
 //        $api->post('{customer}/send-verification-link', 'App\Http\Controllers\CustomerController@sendVerificationLink');
 
     });
+    $api->group(['prefix' => 'checkout'], function ($api) {
+        $api->get('place-order-final', 'App\Http\Controllers\CheckoutController@placeOrderFinal');
+        $api->get('sp-payment-final', 'App\Http\Controllers\CheckoutController@spPaymentFinal');
+    });
+    $api->group(['prefix' => 'customers/{customer}', 'middleware' => ['customer.auth']], function ($api) {
+        $api->post('reviews','App\Http\Controllers\ReviewController@modifyReview');
+    });
+
     $api->group(['prefix' => 'business'], function ($api) {
         $api->get('check-url', 'App\Http\Controllers\BusinessController@checkURL');
         $api->get('type-category', 'App\Http\Controllers\BusinessController@getTypeAndCategories');

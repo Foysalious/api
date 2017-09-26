@@ -6,8 +6,6 @@ use App\Models\Navigation;
 use App\Repositories\ServiceRepository;
 use Illuminate\Http\Request;
 
-use App\Http\Requests;
-
 class NavigationController extends Controller
 {
     private $serviceRepository;
@@ -17,7 +15,7 @@ class NavigationController extends Controller
         $this->serviceRepository = new ServiceRepository();
     }
 
-    public function getNavList()
+    public function getNavList(Request $request)
     {
         $navs = Navigation::with(['groups' => function ($q) {
             $q->select('_id', 'name', 'navigation_id', 'services')->with(['navServices' => function ($q) {
@@ -31,13 +29,16 @@ class NavigationController extends Controller
                 }
             }
         }
-        return response()->json(['navigations' => $navs]);
+        if (count($navs) != 0) {
+            return api_response($request, $navs, 200, ['navigations' => $navs]);
+        } else {
+            return api_response($request, $navs, 404);
+        }
     }
 
     public function getServices($navigation, Request $request)
     {
         $navigation = Navigation::where('name', 'like', '%' . $navigation . '%')->first();
-//        return response()->json(['services' => $navigation->services(), 'code' => 200]);
         if ($navigation != null) {
             $services = $this->serviceRepository->addServiceInfo($navigation->services(), $request->location);
             if (count($services) > 0) {
