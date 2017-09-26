@@ -19,6 +19,10 @@ use Mail;
 use Redis;
 use Sheba\Voucher\PromotionList;
 use Sheba\Voucher\ReferralCreator;
+use LaravelFCM\Message\OptionsBuilder;
+use LaravelFCM\Message\PayloadDataBuilder;
+use LaravelFCM\Message\PayloadNotificationBuilder;
+use FCM;
 
 class CheckoutController extends Controller
 {
@@ -77,7 +81,7 @@ class CheckoutController extends Controller
      */
     public function placeOrderWithPayment(Request $request, $customer)
     {
-        $customer = Customer::find($customer);
+        $customer = $request->customer;
         $connectionResponse = $this->checkoutRepository->checkoutWithPortWallet($request, $customer);
         return response()->json($connectionResponse);
     }
@@ -105,10 +109,28 @@ class CheckoutController extends Controller
                 $this->checkoutRepository->sendConfirmation($order_info['customer_id'], $order);
                 Cache::forget('invoice-' . $request->input('invoice'));
                 Cache::forget('portwallet-payment-' . $request->input('invoice'));
-                $s_id = str_random(10);
-                Redis::set($s_id, 'online');
-                Redis::expire($s_id, 500);
-                return redirect(env('SHEBA_FRONT_END_URL') . '/order-list?s_token=' . $s_id);
+                if (array_key_exists('device_token', $order_info)) {
+                    $optionBuilder = new OptionsBuilder();
+                    $optionBuilder->setTimeToLive(60 * 20);
+
+                    $notificationBuilder = new PayloadNotificationBuilder('my title');
+                    $notificationBuilder->setBody('Hello world')
+                        ->setSound('default');
+
+                    $dataBuilder = new PayloadDataBuilder();
+                    $dataBuilder->addData(['a_data' => 'my_data']);
+
+                    $option = $optionBuilder->build();
+                    $notification = $notificationBuilder->build();
+                    $data = $dataBuilder->build();
+
+                    $downstreamResponse = FCM::sendTo($order_info['device_token'], $option, $notification, $data);
+                } else {
+                    $s_id = str_random(10);
+                    Redis::set($s_id, 'online');
+                    Redis::expire($s_id, 500);
+                    return redirect(env('SHEBA_FRONT_END_URL') . '/order-list?s_token=' . $s_id);
+                }
             }
         } else {
             return "Something went wrong";

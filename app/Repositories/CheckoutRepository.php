@@ -464,9 +464,9 @@ class CheckoutRepository
             'order_code' => $order->code()
         ]);
         (new NotificationRepository())->send($order);
-        if (isEmailValid($customer->profile->email)) {
-            $this->dispatch(new SendOrderConfirmationEmail($customer->profile, $order));
-        }
+//        if (isEmailValid($customer->profile->email)) {
+//            $this->dispatch(new SendOrderConfirmationEmail($customer->profile, $order));
+//        }
     }
 
     public function getTotalCartAmount($cart)
