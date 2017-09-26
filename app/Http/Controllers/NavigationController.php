@@ -6,9 +6,6 @@ use App\Models\Navigation;
 use App\Repositories\ServiceRepository;
 use Illuminate\Http\Request;
 
-use App\Http\Requests;
-use Illuminate\Support\Facades\Redis;
-
 class NavigationController extends Controller
 {
     private $serviceRepository;
@@ -20,32 +17,28 @@ class NavigationController extends Controller
 
     public function getNavList(Request $request)
     {
-        $navs = Redis::get('navigation');
-        if ($navs) {
-            $navs = json_decode($navs);
-        } else {
-            $navs = Navigation::with(['groups' => function ($q) {
-                $q->select('_id', 'name', 'navigation_id', 'services')->with(['navServices' => function ($q) {
-                    $q->select('*')->where('publication_status', 1);
-                }]);
-            }])->select('_id', 'name')->where('publication_status', 1)->get();
-            foreach ($navs as $nav) {
-                foreach ($nav->groups as $group) {
-                    foreach ($group->navServices as $service) {
-                        array_forget($service, ['updated_at', 'created_at', 'group_ids']);
-                    }
+        $navs = Navigation::with(['groups' => function ($q) {
+            $q->select('_id', 'name', 'navigation_id', 'services')->with(['navServices' => function ($q) {
+                $q->select('*')->where('publication_status', 1);
+            }]);
+        }])->select('_id', 'name')->where('publication_status', 1)->get();
+        foreach ($navs as $nav) {
+            foreach ($nav->groups as $group) {
+                foreach ($group->navServices as $service) {
+                    array_forget($service, ['updated_at', 'created_at', 'group_ids']);
                 }
             }
-            Redis::set('navigation', json_encode($navs));
-            Redis::expire('navigation', 30 * 60);
         }
-        return api_response($request, $navs, 200, ['navigations' => $navs]);
+        if (count($navs) != 0) {
+            return api_response($request, $navs, 200, ['navigations' => $navs]);
+        } else {
+            return api_response($request, $navs, 404);
+        }
     }
 
     public function getServices($navigation, Request $request)
     {
         $navigation = Navigation::where('name', 'like', '%' . $navigation . '%')->first();
-//        return response()->json(['services' => $navigation->services(), 'code' => 200]);
         if ($navigation != null) {
             $services = $this->serviceRepository->addServiceInfo($navigation->services(), $request->location);
             if (count($services) > 0) {
