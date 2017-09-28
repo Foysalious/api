@@ -18,7 +18,7 @@ class OrderRepository
                 }]);
             }])->with(['jobs' => function ($query) {
                 $query->select('id', 'service_id', 'service_unit_price', 'service_quantity', 'discount', 'status', 'partner_order_id')->with(['service' => function ($query) {
-                    $query->select('id', 'name', 'category_id')->with(['category' => function ($query) {
+                    $query->select('id', 'name', 'category_id', 'thumb')->with(['category' => function ($query) {
                         $query->select('categories.id');
                     }]);
                 }]);
