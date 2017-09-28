@@ -283,7 +283,7 @@ class CustomerController extends Controller
         $notifications = ($customer->notifications()->select('id', 'title', 'event_type', 'event_id', 'is_seen', 'created_at')->get())->sortByDesc('created_at');
         $notifications->map(function ($notification) {
             $notification->event_type = str_replace('App\Models\\', "", $notification->event_type);
-            array_add($notification, 'time', $notification->created_at->format('jS M, Y h:i:s A'));
+            array_add($notification, 'time', $notification->created_at->format('j M \\a\\t h:i A'));
             array_forget($notification, 'created_at');
             return $notification;
         });
