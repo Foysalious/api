@@ -48,15 +48,16 @@ class ResourceJobRepository
             $partner_order = $job->partner_order;
             $partner_order->calculate();
             $all_jobs_of_this_partner_order = $job->partner_order->jobs;
-            $partner_order_other_jobs = $all_jobs_of_this_partner_order->reject(function ($item, $key) use ($job) {
-                return $item->id == $job->id;
+            $cancel_status = constants('JOB_STATUSES_SHOW')['Cancelled']['sheba'];
+            $partner_order_other_jobs = $all_jobs_of_this_partner_order->reject(function ($item, $key) use ($job, $cancel_status) {
+                return $item->id == $job->id || $item->status == $cancel_status;
             });
             if ((double)$partner_order->due > 0) {
                 if ($partner_order_other_jobs->count() == 0) {
                     array_push($final_last_jobs, $job);
                 } //all other jobs are served. Then check if job is the last job of partner order
                 else if ($partner_order_other_jobs->where('status', 'Served')->count() == $partner_order_other_jobs->count()) {
-                    $last_job = ($all_jobs_of_this_partner_order->sortBy('delivered_date'))->last();
+                    $last_job = $all_jobs_of_this_partner_order->where('status', 'Served')->last();
                     if ($last_job->id == $job->id) {
                         array_push($final_last_jobs, $job);
                     }
@@ -76,7 +77,7 @@ class ResourceJobRepository
             $job['service_unit_price'] = (double)$job->service_unit_price;
             $job['service_unit'] = $job->service->unit;
             $job['schedule_date'] = Carbon::parse($job->schedule_date)->format('jS M, Y');
-            $job['code'] = $job->code();
+            $job['code'] = $job->fullCode();
             $this->_stripUnwantedInformationForAPI($job);
         }
         return $jobs;
