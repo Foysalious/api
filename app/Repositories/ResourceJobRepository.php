@@ -76,7 +76,7 @@ class ResourceJobRepository
             $job['service_unit_price'] = (double)$job->service_unit_price;
             $job['service_unit'] = $job->service->unit;
             $job['schedule_date'] = Carbon::parse($job->schedule_date)->format('jS M, Y');
-            $job['code'] = $job->code();
+            $job['code'] = $job->fullCode();
             $this->_stripUnwantedInformationForAPI($job);
         }
         return $jobs;
