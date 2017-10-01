@@ -272,7 +272,7 @@ class CustomerController extends Controller
             'name' => 'required|string',
             'email' => 'required|email|unique:profiles,email,' . $profile->id,
             'gender' => 'required|in:Male,Female,Other',
-            'dob' => 'required|date|date_format:Y-m-d|before:' . date('Y-m-d')
+            'dob' => 'sometimes|required|date|date_format:Y-m-d|before:' . date('Y-m-d')
         ]);
         return $validator->fails() ? $validator->errors()->all()[0] : false;
     }
