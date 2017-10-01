@@ -31,7 +31,11 @@ class ResourceJobController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $jobs = array_slice($jobs, $offset, $limit);
             if (count($jobs) != 0) {
-                return api_response($request, $jobs, 200, ['jobs' => $this->resourceJobRepository->addJobInformationForAPI($jobs)]);
+                $jobs = $this->resourceJobRepository->addJobInformationForAPI($jobs);
+                if ($request->has('group_by')) {
+                    $jobs = collect($jobs)->groupBy('schedule_date');
+                }
+                return api_response($request, $jobs, 200, ['jobs' => $jobs]);
             } else {
                 return api_response($request, null, 404);
             }

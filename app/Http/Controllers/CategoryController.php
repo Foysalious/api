@@ -124,7 +124,7 @@ class CategoryController extends Controller
                 $secondaries = $category['secondaries'];
                 list($offset, $limit) = calculatePagination($request);
                 $location = $request->location != '' ? $request->location : 4;
-                $service_limit = $request->service_limit != '' ? $request->service_limit : 4;
+//                $service_limit = $request->service_limit != '' ? $request->service_limit : 4;
                 $scope = [];
                 if ($request->has('scope')) {
                     $scope = $this->serviceRepository->getServiceScope($request->scope);
@@ -137,7 +137,10 @@ class CategoryController extends Controller
                 if (count($secondaries) != 0) {
                     foreach ($secondaries as $secondary) {
                         $secondary['slug'] = str_slug($secondary->name, '-');
-                        $services = $secondary->services->take($service_limit);
+                        $services = $secondary->services;
+                        if ($request->has('service_limit')) {
+                            $services = $services->take($request->service_limit);
+                        }
                         if (in_array('discount', $scope) || in_array('start_price', $scope)) {
                             $services = $this->serviceRepository->getpartnerServicePartnerDiscount($services, $location);
                         }
@@ -159,7 +162,8 @@ class CategoryController extends Controller
         }
     }
 
-    public function getServices($category, Request $request)
+    public
+    function getServices($category, Request $request)
     {
         $category = Category::where('id', $category)->published()->first();
         if ($category != null) {
