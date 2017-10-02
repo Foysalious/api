@@ -78,6 +78,7 @@ $api->version('v1', function ($api) {
         $api->get('{service}', 'App\Http\Controllers\ServiceController@get');
         $api->get('{service}/valid', 'App\Http\Controllers\ServiceController@checkForValidity');
         $api->get('{service}/similar', 'App\Http\Controllers\ServiceController@getSimilarServices');
+        $api->get('/{service}/reviews', 'App\Http\Controllers\ServiceController@getReviews');
         $api->get('{service}/locations/{location}/partners', 'App\Http\Controllers\ServiceController@getPartnersOfLocation');
 //        $api->post('{service}/location/{location}/partners', 'App\Http\Controllers\ServiceController@getPartners');
     });
@@ -129,15 +130,14 @@ $api->version('v1', function ($api) {
 //        $api->post('{customer}/send-verification-link', 'App\Http\Controllers\CustomerController@sendVerificationLink');
 
     });
-    $api->group(['prefix' => 'checkout'], function ($api) {
-        $api->get('place-order-final', 'App\Http\Controllers\CheckoutController@placeOrderFinal');
-        $api->get('sp-payment-final', 'App\Http\Controllers\CheckoutController@spPaymentFinal');
-    });
     $api->group(['prefix' => 'customers/{customer}', 'middleware' => ['customer.auth']], function ($api) {
         $api->post('reviews', 'App\Http\Controllers\ReviewController@modifyReview');
         $api->get('notifications', 'App\Http\Controllers\CustomerController@getNotifications');
     });
-
+    $api->group(['prefix' => 'checkout'], function ($api) {
+        $api->get('place-order-final', 'App\Http\Controllers\CheckoutController@placeOrderFinal');
+        $api->get('sp-payment-final', 'App\Http\Controllers\CheckoutController@spPaymentFinal');
+    });
     $api->group(['prefix' => 'business'], function ($api) {
         $api->get('check-url', 'App\Http\Controllers\BusinessController@checkURL');
         $api->get('type-category', 'App\Http\Controllers\BusinessController@getTypeAndCategories');
