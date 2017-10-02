@@ -51,93 +51,100 @@ class ServiceController extends Controller
 
     public function getPartners($service, $location = null, Request $request)
     {
-        if ($request->getMethod() == 'GET') {
-            $service = Service::where('id', $service)
-                ->select('id', 'name', 'unit', 'category_id', 'description', 'thumb', 'slug', 'min_quantity', 'banner', 'faqs', 'variable_type', 'variables')
-                ->first();
-            if ($service == null)
-                return response()->json(['code' => 404, 'msg' => 'no service found']);
-            array_add($service, 'discount', $service->hasDiscounts());
-            //Add first options in service for render purpose
-            if ($service->variable_type == 'Options') {
-                $variables = json_decode($service->variables);
-                $first_option = key($variables->prices);
-                $first_option = array_map('intval', explode(',', $first_option));
-                array_add($service, 'first_option', $first_option);
+        try {
+            if ($request->getMethod() == 'GET') {
+                $service = Service::where('id', $service)
+                    ->select('id', 'name', 'unit', 'category_id', 'description', 'thumb', 'slug', 'min_quantity', 'banner', 'faqs', 'variable_type', 'variables')
+                    ->first();
+                if ($service == null)
+                    return response()->json(['code' => 404, 'msg' => 'no service found']);
+                array_add($service, 'discount', $service->hasDiscounts());
+                //Add first options in service for render purpose
+                if ($service->variable_type == 'Options') {
+                    $variables = json_decode($service->variables);
+                    $first_option = key($variables->prices);
+                    $first_option = array_map('intval', explode(',', $first_option));
+                    array_add($service, 'first_option', $first_option);
+                }
+                // review count of this service
+                $review = $service->reviews()->where('review', '<>', '')->count('review');
+                $rating = $service->reviews()->avg('rating');
+                array_add($service, 'review_count', $review);
+                $service['rating'] = empty($rating) ? 5 : floor($rating);
+                //get the category & parent of the service
+                $category = Category::with(['parent' => function ($query) {
+                    $query->select('id', 'name');
+                }])->where('id', $service->category_id)->select('id', 'name', 'parent_id')->first();
+                array_add($service, 'category_name', $category->name);
+                array_add($service, 'parent_id', $category->parent->id);
+                array_add($service, 'parent_name', $category->parent->name);
+            } elseif ($request->getMethod() == 'POST') {
+                $service = Service::where('id', $service)
+                    ->select('id', 'name', 'unit', 'category_id', 'description', 'min_quantity', 'thumb', 'banner', 'faqs', 'slug', 'variable_type', 'variables')
+                    ->first();
             }
-            // review count of this service
-            $review = $service->reviews()->where('review', '<>', '')->count('review');
-            $rating = $service->reviews()->avg('rating');
-            array_add($service, 'review_count', $review);
-            $service['rating'] = empty($rating) ? 5 : floor($rating);
-            //get the category & parent of the service
-            $category = Category::with(['parent' => function ($query) {
-                $query->select('id', 'name');
-            }])->where('id', $service->category_id)->select('id', 'name', 'parent_id')->first();
-            array_add($service, 'category_name', $category->name);
-            array_add($service, 'parent_id', $category->parent->id);
-            array_add($service, 'parent_name', $category->parent->name);
-        } elseif ($request->getMethod() == 'POST') {
-            $service = Service::where('id', $service)
-                ->select('id', 'name', 'unit', 'category_id', 'description', 'min_quantity', 'thumb', 'banner', 'faqs', 'slug', 'variable_type', 'variables')
-                ->first();
-        }
-        array_add($service, 'web_link', env('SHEBA_FRONT_END_URL') . '/service/' . $service->id . '/' . $service->slug);
-        //get partners of the service
-        $service_partners = $this->serviceRepository->partners($service, $location, $request);
-        $sorted_service_partners = collect($service_partners)->sortBy('discounted_price')->values()->all();
-        $sorted_service_partners = $this->serviceRepository->_sortPartnerListByAvailability($sorted_service_partners);
+            array_add($service, 'web_link', env('SHEBA_FRONT_END_URL') . '/service/' . $service->id . '/' . $service->slug);
+            //get partners of the service
+            $service_partners = $this->serviceRepository->partners($service, $location, $request);
+            $sorted_service_partners = collect($service_partners)->sortBy('discounted_price')->values()->all();
+            $sorted_service_partners = $this->serviceRepository->_sortPartnerListByAvailability($sorted_service_partners);
 //        $sorted_service_partners = collect($service_partners)->sortBy(function ($service_partner) {
 //            return sprintf('%-12s%s', $service_partner->discounted_price, $service_partner->rating);
 //        })->values()->all();
-        $service->variables = json_decode($service->variables);
-        array_forget($service, 'partnerServices');
-        //If service has partner
-        if (count($service_partners) != 0) {
-            unset($service->variables->max_prices);
-            unset($service->variables->min_prices);
-            unset($service->variables->prices);
-            if ($service->variable_type == 'Fixed') {
-                unset($service->variables->max_price);
-                unset($service->variables->min_price);
-                unset($service->variables->price);
+            $service->variables = json_decode($service->variables);
+            array_forget($service, 'partnerServices');
+            if (count($service_partners) != 0) {
+                unset($service->variables->max_prices);
+                unset($service->variables->min_prices);
+                unset($service->variables->prices);
+                if ($service->variable_type == 'Fixed') {
+                    unset($service->variables->max_price);
+                    unset($service->variables->min_price);
+                    unset($service->variables->price);
+                }
+                if ($request->getMethod() == 'GET') {
+                    return response()->json(['service' => $service, 'service_partners' => $sorted_service_partners, 'times' => config('constants.JOB_PREFERRED_TIMES'), 'msg' => 'successful', 'code' => 200]);
+                } elseif ($request->getMethod() == 'POST') {
+                    return response()->json(['service_partners' => $sorted_service_partners, 'msg' => 'successful', 'code' => 200]);
+                }
             }
             if ($request->getMethod() == 'GET') {
-                return response()->json(['service' => $service, 'service_partners' => $sorted_service_partners, 'times' => config('constants.JOB_PREFERRED_TIMES'), 'msg' => 'successful', 'code' => 200]);
+                return response()->json(['service' => $service, 'service_partners' => $sorted_service_partners, 'times' => config('constants.JOB_PREFERRED_TIMES'), 'msg' => 'no partner found in selected location', 'code' => 404]);
             } elseif ($request->getMethod() == 'POST') {
-                return response()->json(['service_partners' => $sorted_service_partners, 'msg' => 'successful', 'code' => 200]);
+                return response()->json(['service_partners' => $sorted_service_partners, 'msg' => 'no partner found in selected location', 'code' => 404]);
             }
-        }
-        if ($request->getMethod() == 'GET') {
-            return response()->json(['service' => $service, 'service_partners' => $sorted_service_partners, 'times' => config('constants.JOB_PREFERRED_TIMES'), 'msg' => 'no partner found in selected location', 'code' => 404]);
-        } elseif ($request->getMethod() == 'POST') {
-            return response()->json(['service_partners' => $sorted_service_partners, 'msg' => 'no partner found in selected location', 'code' => 404]);
+        } catch (\Exception $e) {
+            return api_response($request, null, 500);
         }
     }
 
     public function getPartnersOfLocation($service, $location = null, Request $request)
     {
-        $service = Service::where('id', $service)
-            ->select('id', 'name', 'unit', 'category_id', 'description', 'min_quantity', 'thumb', 'banner', 'faqs', 'slug', 'variable_type', 'variables')
-            ->first();
-        array_add($service, 'web_link', env('SHEBA_FRONT_END_URL') . '/service/' . $service->id . '/' . $service->slug);
-        $service_partners = $this->serviceRepository->partners($service, $location, $request);
-        $sorted_service_partners = collect($service_partners)->sortBy('discounted_price')->values()->all();
-        $sorted_service_partners = $this->serviceRepository->_sortPartnerListByAvailability($sorted_service_partners);
-        $service->variables = json_decode($service->variables);
-        array_forget($service, 'partnerServices');
-        if (count($service_partners) != 0) {
-            unset($service->variables->max_prices);
-            unset($service->variables->min_prices);
-            unset($service->variables->prices);
-            if ($service->variable_type == 'Fixed') {
-                unset($service->variables->max_price);
-                unset($service->variables->min_price);
-                unset($service->variables->price);
+        try {
+            $service = Service::where('id', $service)
+                ->select('id', 'name', 'unit', 'category_id', 'description', 'min_quantity', 'thumb', 'banner', 'faqs', 'slug', 'variable_type', 'variables')
+                ->first();
+            array_add($service, 'web_link', env('SHEBA_FRONT_END_URL') . '/service/' . $service->id . '/' . $service->slug);
+            $service_partners = $this->serviceRepository->partners($service, $location, $request);
+            $sorted_service_partners = collect($service_partners)->sortBy('discounted_price')->values()->all();
+            $sorted_service_partners = $this->serviceRepository->_sortPartnerListByAvailability($sorted_service_partners);
+            $service->variables = json_decode($service->variables);
+            array_forget($service, 'partnerServices');
+            if (count($service_partners) != 0) {
+                unset($service->variables->max_prices);
+                unset($service->variables->min_prices);
+                unset($service->variables->prices);
+                if ($service->variable_type == 'Fixed') {
+                    unset($service->variables->max_price);
+                    unset($service->variables->min_price);
+                    unset($service->variables->price);
+                }
+                return api_response($request, $sorted_service_partners, 200, ['service_partners' => $sorted_service_partners]);
             }
-            return api_response($request, $sorted_service_partners, 200, ['service_partners' => $sorted_service_partners]);
+            return api_response($request, null, 404);
+        } catch (\Exception $e) {
+            return api_response($request, null, 500);
         }
-        return api_response($request, null, 404);
     }
 
 
@@ -202,6 +209,7 @@ class ServiceController extends Controller
         if (count($service->reviews) > 0) {
             $service = $this->reviewRepository->getGeneralReviewInformation($service);
             $breakdown = $this->reviewRepository->getReviewBreakdown($service->reviews);
+            $service = $this->reviewRepository->filterReviews($service);
             return response()->json(['msg' => 'ok', 'code' => 200, 'service' => $service, 'breakdown' => $breakdown]);
         }
         return response()->json(['msg' => 'not found', 'code' => 404]);

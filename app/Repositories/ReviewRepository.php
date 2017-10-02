@@ -80,4 +80,14 @@ class ReviewRepository
         return $review;
     }
 
+    public function filterReviews($service)
+    {
+        $reviews = $service->reviews->filter(function ($review) {
+            return !empty($review->review);
+        })->values()->all();
+        array_forget($service, 'reviews');
+        $service['reviews'] = $reviews;
+        return $service;
+    }
+
 }
