@@ -110,7 +110,6 @@ class CheckoutRepository
         try {
             DB::transaction(function () use ($order_info, $cart, $payment_method, $order, $job_discount, $loop_id) {
                 $this->calculateAuthor($order_info);
-//                $cart = json_decode($order_info['cart']);
 
                 $order = $this->createOrder($order, $order_info);
                 $order->delivery_address = $this->getDeliveryAddress($order_info);
@@ -245,7 +244,7 @@ class CheckoutRepository
         $order->info_call_id = $this->_setInfoCallId($order_info);
         $order->affiliation_id = $this->_setAffiliationId($order_info);
         $order->delivery_name = $order_info['name'];
-        $order->delivery_mobile = $order_info['phone'];
+        $order->delivery_mobile = formatMobile($order_info['phone']);
         $order->sales_channel = isset($order_info['sales_channel']) ? $order_info['sales_channel'] : 'Web';
         $order = $this->getAuthor($order);
         $order->save();
