@@ -55,6 +55,7 @@ class OrderController extends Controller
                             array_add($job, 'show', true);
                         }
                     }
+                    $job['code']=$job->fullCode();
                     array_add($job, 'customer_charge', $job->grossPrice);
                     array_add($job, 'material_price', $job->materialPrice);
                     array_forget($job, 'partner_order');

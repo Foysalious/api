@@ -17,11 +17,15 @@ class OrderRepository
                     $query->select('category_id');
                 }]);
             }])->with(['jobs' => function ($query) {
-                $query->select('id', 'service_id', 'service_unit_price', 'service_quantity', 'discount', 'status', 'partner_order_id')->with(['service' => function ($query) {
-                    $query->select('id', 'name', 'category_id', 'thumb')->with(['category' => function ($query) {
-                        $query->select('categories.id');
+                $query->select('id', 'service_id', 'service_unit_price', 'service_quantity', 'discount', 'status', 'partner_order_id')
+                    ->with(['usedMaterials' => function ($q) {
+                        $q->select('id', 'job_id', 'material_id', 'material_name', 'material_price');
+                    }])
+                    ->with(['service' => function ($query) {
+                        $query->select('id', 'name', 'category_id', 'thumb')->with(['category' => function ($query) {
+                            $query->select('categories.id');
+                        }]);
                     }]);
-                }]);
             }]);
         }])->with(['location' => function ($query) {
             $query->select('id', 'name');
