@@ -259,12 +259,14 @@ return [
     'AVATAR' => [
         env('SHEBA_CUSTOMER_APP') => 'customer',
         env('SHEBA_AFFILIATION_APP') => 'affiliate',
-        env('SHEBA_RESOURCE_APP') => 'resource'
+        env('SHEBA_RESOURCE_APP') => 'resource',
+        'manager-app' => 'manager',
     ],
     'FROM' => [
         'resource-app',
         'customer-app',
-        'affiliation-app'
+        'affiliation-app',
+        'manager-app',
     ],
     'AFFILIATION_REWARD_MONEY' => 10,
     'API_RESPONSE_CODES' => [
