@@ -278,7 +278,7 @@ return [
         404 => ['message' => 'Not found', 'code' => 404],
         500 => ['message' => 'Internal Server Error', 'code' => 500],
     ],
-    'TRENDING' => [58, 392, 117, 118, 656, 453]
+    'TRENDING' => [775, 783, 629, 118, 76, 756]
 
 
 ];
