@@ -156,6 +156,8 @@ class ServiceRepository
             }
             if (count($price) > 0) {
                 array_add($service, 'start_price', min($price) * $service->min_quantity);
+            } else {
+                array_add($service, 'start_price', 0);
             }
         } elseif ($service->variable_type == 'Fixed') {
             $price = array();
@@ -259,7 +261,7 @@ class ServiceRepository
 
     public function addServiceInfo($services, array $scope)
     {
-        foreach ($services as $key => $service) {
+        foreach ($services as $service) {
             if (array_search('start_price', $scope) !== false) {
                 $service = $this->getStartPrice($service);
             }
