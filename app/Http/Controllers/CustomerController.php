@@ -7,6 +7,8 @@ use App\Jobs\SendReferralRequestEmail;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\CustomerMobile;
+use App\Models\Job;
+use App\Models\Order;
 use App\Models\Voucher;
 use App\Repositories\CustomerRepository;
 use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -285,6 +287,11 @@ class CustomerController extends Controller
             $notification->event_type = str_replace('App\Models\\', "", $notification->event_type);
             array_add($notification, 'time', $notification->created_at->format('j M \\a\\t h:i A'));
             array_forget($notification, 'created_at');
+            if ($notification->event_type == 'Job') {
+                array_add($notification, 'event_code', (Job::find($notification->event_id))->fullCode());
+            }elseif ($notification->event_type == 'Order'){
+                array_add($notification, 'event_code', (Order::find($notification->event_id))->code());
+            }
             return $notification;
         });
         if (count($notifications) != 0) {
