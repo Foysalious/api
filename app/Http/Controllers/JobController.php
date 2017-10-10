@@ -49,7 +49,7 @@ class JobController extends Controller
                 $job_model->calculate();
                 array_add($job, 'material_price', $job_model->materialPrice);
                 array_add($job, 'total_cost', $job_model->grossPrice);
-                array_add($job, 'job_code', $job_model->code());
+                array_add($job, 'job_code', $job_model->fullCode());
                 array_add($job, 'time', $job->created_at->format('jS M, Y'));
                 array_forget($job, 'created_at');
                 array_add($job, 'service_price', $job_model->servicePrice);
