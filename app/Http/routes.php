@@ -75,10 +75,11 @@ $api->version('v1', function ($api) {
         $api->post('{service}/change-partner', 'App\Http\Controllers\ServiceController@changePartnerWithoutLocation');
     });
     $api->group(['prefix' => 'services'], function ($api) {
+        $api->get('/', 'App\Http\Controllers\ServiceController@index');
         $api->get('{service}', 'App\Http\Controllers\ServiceController@get');
         $api->get('{service}/valid', 'App\Http\Controllers\ServiceController@checkForValidity');
         $api->get('{service}/similar', 'App\Http\Controllers\ServiceController@getSimilarServices');
-        $api->get('/{service}/reviews', 'App\Http\Controllers\ServiceController@getReviews');
+        $api->get('{service}/reviews', 'App\Http\Controllers\ServiceController@getReviews');
         $api->get('{service}/locations/{location}/partners', 'App\Http\Controllers\ServiceController@getPartnersOfLocation');
 //        $api->post('{service}/location/{location}/partners', 'App\Http\Controllers\ServiceController@getPartners');
     });
@@ -176,6 +177,9 @@ $api->version('v1', function ($api) {
             $api->get('{job}', 'App\Http\Controllers\ResourceJobController@show');
             $api->put('{job}', 'App\Http\Controllers\ResourceJobController@update');
             $api->post('{job}/payment', 'App\Http\Controllers\ResourceJobController@collect');
+        });
+        $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
+            $api->get('/', 'App\Http\Controllers\ResourceJobController@index');
         });
     });
     $api->group(['prefix' => 'affiliate/{affiliate}', 'middleware' => ['affiliate.auth']], function ($api) {
