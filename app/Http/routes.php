@@ -134,7 +134,7 @@ $api->version('v1', function ($api) {
     $api->group(['prefix' => 'customers/{customer}', 'middleware' => ['customer.auth']], function ($api) {
         $api->post('reviews', 'App\Http\Controllers\ReviewController@modifyReview');
         $api->get('notifications', 'App\Http\Controllers\CustomerController@getNotifications');
-        $api->post('{customer}/suggest-promo', 'App\Http\Controllers\PromotionController@suggestPromo');
+        $api->post('suggest-promo', 'App\Http\Controllers\PromotionController@suggestPromo');
     });
     $api->group(['prefix' => 'checkout'], function ($api) {
         $api->get('place-order-final', 'App\Http\Controllers\CheckoutController@placeOrderFinal');
