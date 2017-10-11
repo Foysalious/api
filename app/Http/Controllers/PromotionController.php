@@ -32,10 +32,10 @@ class PromotionController extends Controller
 
     public function suggestPromo($customer, Request $request)
     {
-        $voucher_suggest = new VoucherSuggester($request->customer, $request->cart, $request->location);
+        $voucher_suggest = new VoucherSuggester($request->customer, $request->cart, $request->location, $request->has('sales_channel') ? 'App' : 'Web');
         $promo = $voucher_suggest->suggest();
         if ($promo != null) {
-            return response()->json(['code' => 200, 'amount' => $promo['amount'], 'voucher_code' => $promo['voucher']->code]);
+            return response()->json(['code' => 200, 'amount' => (double)$promo['amount'], 'voucher_code' => $promo['voucher']->code]);
         } else {
             return response()->json(['code' => 404]);
         }
