@@ -27,46 +27,50 @@ class SearchController extends Controller
         if ($request->s != '') {
             $search_text = trim($request->s);
             $search_words = explode(' ', $search_text);
-            $query = Service::where('publication_status', 1)->whereHas('tags', function ($q) use ($request, $search_words) {
+            $query = Service::query();
+            $query = $query->where('publication_status', 1)->whereHas('tags', function ($q) use ($request, $search_words) {
                 foreach ($search_words as $word) {
                     $q->orwhere('name', 'like', "%" . $word . "%");
                 }
             })->orWhere([['name', 'like', "%" . $search_text . "%"], ['publication_status', 1]]);
             //if has parent category id
-            if ($request->has('p_c')) {
-                $category = Category::find($request->input('p_c'));
-                $children_categories = $category->children()->pluck('id');
-                $query = $query->whereIn('category_id', $children_categories);
-            }
-            $services = $query->select('id', 'name', 'thumb', 'banner', 'variables', 'variable_type', 'min_quantity')
+            $services = $query->select('id', 'name', 'thumb', 'banner', 'variables', 'variable_type', 'min_quantity', 'category_id')
                 ->take(10)
                 ->get();
-            if (count($services) == 0)
-                return response()->json(['msg' => 'nothing found', 'code' => 404]);
-            else {
-                foreach ($services as $service) {
-                    array_add($service, 'slug_service', str_slug($service->name));
-                    //if service has no partners
-                    if ($service->partners->isEmpty()) {
-                        array_add($service, 'review', 0);
-                        array_add($service, 'rating', 0);
-                        array_add($service, 'start_price', 0);
-                        array_add($service, 'end_price', 0);
-                        continue;
-                    }
-                    $service = $this->serviceRepository->getStartPrice($service, $request->location);
-                    // review count of this partner for this service
-                    $review = $service->reviews()->where('review', '<>', '')->count('review');
-                    //avg rating of the partner for this service
-                    $rating = $service->reviews()->avg('rating');
-                    array_add($service, 'review', $review);
-                    array_add($service, 'rating', $rating);
-                    array_forget($service, 'partners');
-                }
+            if ($request->has('p_c')) {
+                $category = Category::find($request->p_c);
+                $children_categories = $category->children()->pluck('id');
+                $services = $services->whereIn('category_id', $children_categories->values()->all());
             }
-            return response()->json(['msg' => 'successful', 'code' => 200, 'services' => $services]);
+            if (count($services) == 0)
+                return api_response($request, null, 404);
+            else {
+                $location = $request->has('location') ? $request->location : 4;
+                $services = $this->serviceRepository->getpartnerServicePartnerDiscount($services, $location);
+                $services = $this->serviceRepository->addServiceInfo($services, ['start_price', 'reviews']);
+//                foreach ($services as $service) {
+//                    array_add($service, 'slug_service', str_slug($service->name));
+//                    //if service has no partners
+//                    if ($service->partners->isEmpty()) {
+//                        array_add($service, 'review', 0);
+//                        array_add($service, 'rating', 0);
+//                        array_add($service, 'start_price', 0);
+//                        array_add($service, 'end_price', 0);
+//                        continue;
+//                    }
+//                    $service = $this->serviceRepository->getStartPrice($service, $request->location);
+//                    // review count of this partner for this service
+//                    $review = $service->reviews()->where('review', '<>', '')->count('review');
+//                    //avg rating of the partner for this service
+//                    $rating = $service->reviews()->avg('rating');
+//                    array_add($service, 'review', $review);
+//                    array_add($service, 'rating', $rating);
+//                    array_forget($service, 'partners');
+//                }
+            }
+            return api_response($request, null, 200, ['services' => $services]);
         } else
-            return response()->json(['msg' => 'nothing found', 'code' => 404]);
+            return api_response($request, null, 404);
 
     }
 
