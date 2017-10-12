@@ -69,7 +69,7 @@ class ProfileRepository
                 $info['voucher_code'] = constants('APP_VOUCHER');
             } elseif ($from == 'resource') {
                 $info['is_verified'] = $avatar->is_verified;
-                $info['partners'] = $avatar->partners->count();
+                $info['partners'] = $avatar->partners->unique('partner_id')->count();
             }
             return $info;
         }

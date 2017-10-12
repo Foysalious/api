@@ -2,6 +2,7 @@
 
 use App\Models\Customer;
 use App\Models\Voucher;
+use App\Repositories\CartRepository;
 use App\Repositories\DiscountRepository;
 use Carbon\Carbon;
 
@@ -15,13 +16,14 @@ class VoucherSuggester
     private $wVal = 0.8;
     private $wDis = 0.2;
     private $result = [];
-
+    private $cartRepository;
     public function __construct($customer, $cart, $location, $sales_channel = 'Web')
     {
         $this->customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
         $this->cart = json_decode($cart);
         $this->location = $location;
         $this->salesChannel = $sales_channel;
+        $this->cartRepository=new CartRepository();
         $this->validPromos = collect([]);
         $this->result = [
             's' => 0,
@@ -64,6 +66,7 @@ class VoucherSuggester
                     ->check($item->service->id, $item->partner->id, $this->location, $this->customer, $this->cart->price, $this->salesChannel)
                     ->reveal();
                 if ($result['is_valid']) {
+                    $item->partner = $this->cartRepository->getPartnerPrice($item);
                     if ($result['is_percentage']) {
                         $result['amount'] = (((float)$item->partner->prices * $item->quantity) * $result['amount']) / 100;
                         if ($result['voucher']->cap != 0 && $result['amount'] > $result['voucher']->cap) {
