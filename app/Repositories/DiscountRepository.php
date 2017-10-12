@@ -27,13 +27,13 @@ class DiscountRepository
                 if ($discount->cap != 0 && $amount > (double)$discount->cap) {
                     $amount = $discount->cap;
                 }
-                $partner_service['cap'] = $discount->cap;
+                $partner_service['cap'] = (double)$discount->cap;
                 $partner_service['discount_price'] = (double)$amount;
-                $partner_service['discounted_price'] = (double)$partner_service->prices - $amount;
+                $partner_service['discounted_price'] = (double)($partner_service->prices - $amount);
             } else {
-                $partner_service['cap'] = null;
+                $partner_service['cap'] = 0;
                 $partner_service['discount_price'] = (double)$discount->amount;
-                $partner_service['discounted_price'] = (double)$partner_service->prices - $discount->amount;
+                $partner_service['discounted_price'] = (double)($partner_service->prices - $discount->amount);
                 $partner_service['discount_id'] = $discount->id;
             }
             if ($partner_service['discounted_price'] < 0) {
