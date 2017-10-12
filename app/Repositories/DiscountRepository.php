@@ -28,8 +28,8 @@ class DiscountRepository
                     $amount = $discount->cap;
                 }
                 $partner_service['cap'] = $discount->cap;
-                $partner_service['discount_price'] = $amount;
-                $partner_service['discounted_price'] = $partner_service->prices - $amount;
+                $partner_service['discount_price'] = (double)$amount;
+                $partner_service['discounted_price'] = (double)$partner_service->prices - $amount;
             } else {
                 $partner_service['cap'] = null;
                 $partner_service['discount_price'] = (double)$discount->amount;
