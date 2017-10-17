@@ -126,6 +126,10 @@ class ServiceController extends Controller
             $service_partners = $this->serviceRepository->partners($service, $location, $request);
             $sorted_service_partners = collect($service_partners)->sortBy('discounted_price')->values()->all();
             $sorted_service_partners = $this->serviceRepository->_sortPartnerListByAvailability($sorted_service_partners);
+
+            $sorted_service_partners = collect($sorted_service_partners)->sortBy(function ($sorted_service_partner) {
+                $sorted_service_partner['partner']=$sorted_service_partner->getContactNumber();
+            })->values()->all();
 //        $sorted_service_partners = collect($service_partners)->sortBy(function ($service_partner) {
 //            return sprintf('%-12s%s', $service_partner->discounted_price, $service_partner->rating);
 //        })->values()->all();
@@ -205,6 +209,10 @@ class ServiceController extends Controller
         $service_partners = $this->serviceRepository->partnerWithSelectedOption($service, $option, $location, $request);
         $sorted_service_partners = collect($service_partners)->sortBy('discounted_price')->values()->all();
         $sorted_service_partners = $this->serviceRepository->_sortPartnerListByAvailability($sorted_service_partners);
+
+        $sorted_service_partners = collect($sorted_service_partners)->sortBy(function ($sorted_service_partner) {
+            $sorted_service_partner['partner']=$sorted_service_partner->getContactNumber();
+        })->values()->all();
 //        $sorted_service_partners = collect($service_partners)->sortBy(function ($service_partner) {
 //            return sprintf('%-12s%s', $service_partner->discounted_price, $service_partner->rating);
 //        })->values()->all();
@@ -280,4 +288,5 @@ class ServiceController extends Controller
             return response()->json(['msg' => 'not found', 'code' => 404]);
         }
     }
+
 }

@@ -145,4 +145,13 @@ class Partner extends Model
     {
         return $query->where('status', 'Verified');
     }
+
+    public function getContactNumber()
+    {
+        if ($operation_resource = $this->operationResources()->first())
+            return $operation_resource->profile->mobile;
+        if ($admin_resource = $this->admins()->first())
+            return $admin_resource->profile->mobile;
+        return null;
+    }
 }
