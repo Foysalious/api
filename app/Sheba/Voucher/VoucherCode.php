@@ -77,7 +77,9 @@ class VoucherCode
 
         $this->setCustomerId($customer);
         $this->setCustomer($customer);
-        $this->customerMobile = $customer;
+        if (is_string($customer)) {
+            $this->customerMobile = $customer;
+        }
 
         return $this->checkService($partner, $service)
             ->checkLocation($location)
@@ -182,8 +184,10 @@ class VoucherCode
     {
         if (!$this->isValid) return $this;
         //$this->isValid = $this->rules->checkCustomer($this->customer);
-        $this->isValid = $this->rules->checkCustomerMobile($this->customerMobile);
-        if (!$this->isValid) return $this;
+        if (!empty($this->customerMobile)) {
+            $this->isValid = $this->rules->checkCustomerMobile($this->customerMobile);
+            if (!$this->isValid) return $this;
+        }
         $this->isValid = $this->rules->checkCustomerId($this->customerId);
         return $this->checkNthOrder()->checkUsageLimit();
     }
