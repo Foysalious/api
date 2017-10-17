@@ -235,7 +235,7 @@ class CustomerRepository
         $update = false;
         $profile = Customer::find($order_info['customer_id'])->profile;
         $this->updateProfileNameIfEmpty($profile, $order_info['name'], $update);
-        $this->updateProfileMobileIfEmpty($profile, $order_info['phone'], $update);
+        $this->updateProfileMobileIfEmpty($profile, formatMobile($order_info['phone']), $update);
         if ($update) $profile->update();
     }
 
