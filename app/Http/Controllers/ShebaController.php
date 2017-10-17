@@ -68,7 +68,7 @@ class ShebaController extends Controller
         if ($request->has('for')) {
             $for = $request->for == 'app' ? 'is_active_for_app' : 'is_active_for_web';
         }
-        $images = Slider::select('id', 'image_link', 'target_link', 'target_type', 'target_id', 'is_active_for_web', 'is_active_for_app')->show();
+        $images = Slider::select('id', 'image_link', 'small_image_link', 'target_link', 'target_type', 'target_id', 'is_active_for_web', 'is_active_for_app')->show();
         if (!empty($for)) {
             $images = $images->where($for, 1);
         }
