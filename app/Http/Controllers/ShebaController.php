@@ -62,10 +62,17 @@ class ShebaController extends Controller
         }
     }
 
-    public function getImages()
+    public function getImages(Request $request)
     {
-        $images = Slider::select('id', 'image_link', 'target_link')->show();
-        return response()->json(['images' => $images, 'msg' => 'successful', 'code' => 200]);
+        $for = null;
+        if ($request->has('for')) {
+            $for = $request->for == 'app' ? 'is_active_for_app' : 'is_active_for_web';
+        }
+        $images = Slider::select('id', 'image_link', 'target_link', 'target_type', 'target_id', 'is_active_for_web', 'is_active_for_app')->show();
+        if (!empty($for)) {
+            $images = $images->where($for, 1);
+        }
+        return count($images) > 0 ? api_response($request, $images, 200, ['images' => $images]) : api_response($request, null, 404);
     }
 
     public function getOffers()
