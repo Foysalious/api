@@ -109,7 +109,7 @@
                 <p class="main-text">
                     Howdy, <br>
                     {{$profile->identity}} has sent you a gift! Please go to this link to register with Sheba & get <span
-                            class="highlight">BDT 200</span> off on your first order.
+                            class="highlight">BDT 500</span> off on your first order.
                 </p>
                 <br>
                 <a href="{{env('SHEBA_ACCOUNT_URL')}}/register?redirect_url={{env('SHEBA_FRONT_END_URL')}}&referral_code={{$voucher->code}}"
