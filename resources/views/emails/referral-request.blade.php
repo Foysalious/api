@@ -112,14 +112,14 @@
                             class="highlight">BDT 500</span> off on your first order.
                 </p>
                 <br>
-                <a href="{{env('SHEBA_ACCOUNT_URL')}}/register?redirect_url={{env('SHEBA_FRONT_END_URL')}}&referral_code={{$voucher->code}}"
+                <a href="{{env('SHEBA_ACCOUNT_URL')}}/register?code={{$voucher->code}}"
                    class="button">
                     Register Now
                 </a>
                 <br>
                 <br>
                 <p style="color: red; font-size: 12px;">If the register button is not clickable, try copying and pasting this
-                    {{env('SHEBA_ACCOUNT_URL')}}/register?redirect_url={{env('SHEBA_FRONT_END_URL')}}&referral_code={{$voucher->code}} into the address bar of
+                    {{env('SHEBA_ACCOUNT_URL')}}/register?code={{$voucher->code}} into the address bar of
                     your web browser.</p>
             </div>
         </div>
