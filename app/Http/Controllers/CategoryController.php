@@ -162,8 +162,7 @@ class CategoryController extends Controller
         }
     }
 
-    public
-    function getServices($category, Request $request)
+    public function getServices($category, Request $request)
     {
         $category = Category::where('id', $category)->published()->first();
         if ($category != null) {
@@ -182,7 +181,7 @@ class CategoryController extends Controller
                 }])->where('id', $category->id)->published()->first();
                 $services = $this->serviceRepository->addServiceInfo($this->serviceRepository->getPartnerServicesAndPartners($category->services, $location), $scope);
             }
-            $category = collect($category)->only(['name', 'banner']);
+            $category = collect($category)->only(['name', 'banner','parent_id']);
             $category['services'] = $services;
             return response()->json(['category' => $category, 'msg' => 'successful', 'code' => 200]);
         } else {

@@ -64,7 +64,7 @@ class ReviewRepository
         $review->review = $request->review;
         $review->job_id = $job->id;
         $review->resource_id = $job->resource_id;
-        $review->partner_id = $job->partner_order->partner_itd;
+        $review->partner_id = $job->partner_order->partner_id;
         $review->service_id = $job->service_id;
         $review->customer_id = $job->partner_order->order->customer_id;
         $review->save();
