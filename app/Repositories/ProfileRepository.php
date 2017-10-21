@@ -67,6 +67,7 @@ class ProfileRepository
                 $info['referral'] = $avatar->referral->code;
                 $info['order_count'] = $avatar->orders->count();
                 $info['voucher_code'] = constants('APP_VOUCHER');
+                $info['referrer_id'] = $avatar->referrer_id;
             } elseif ($from == 'resource') {
                 $info['is_verified'] = $avatar->is_verified;
                 $info['partners'] = $avatar->partners->unique('partner_id')->count();
