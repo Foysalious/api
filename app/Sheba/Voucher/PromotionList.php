@@ -124,7 +124,7 @@ class PromotionList
             $for_you = false;
             $mobiles = $rules->customers;
             foreach ($mobiles as $mobile) {
-                if ($mobile == $customer->mobile) {
+                if ($mobile == $customer->profile->mobile) {
                     $for_you = true;
                 }
             }
