@@ -78,6 +78,8 @@ class ResourceJobRepository
             $job['service_unit'] = $job->service->unit;
             $job['schedule_date'] = Carbon::parse($job->schedule_date)->format('jS M, Y');
             $job['code'] = $job->fullCode();
+            $job->calculate();
+            $job['total_price'] = (double)$job->totalPrice;
             $this->_stripUnwantedInformationForAPI($job);
         }
         return $jobs;
@@ -90,6 +92,7 @@ class ResourceJobRepository
         array_forget($job, 'resource_id');
         array_forget($job, 'service_id');
         array_forget($job, 'service');
+        array_forget($job, 'usedMaterials');
         return $job;
     }
 
