@@ -7,6 +7,7 @@ class Voucher extends Model
 {
     protected $guarded = ['id'];
     protected $dates = ['start_date', 'end_date'];
+    protected $casts = ['is_amount_percentage' => 'integer', 'cap' => 'double'];
 
     public function orders()
     {
@@ -46,7 +47,7 @@ class Voucher extends Model
     private function activatedPromo($customer_id)
     {
         $customer = Customer::find($customer_id);
-        if(!$customer) return false;
+        if (!$customer) return false;
         $promotion = $customer->promotions()->where('voucher_id', $this->id)->get();
         return $promotion == null ? false : $promotion->first();
     }
