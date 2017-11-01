@@ -79,7 +79,7 @@ class ResourceJobRepository
             $job['schedule_date'] = Carbon::parse($job->schedule_date)->format('jS M, Y');
             $job['code'] = $job->fullCode();
             $job->calculate();
-            $job['total_price'] = (double)$job->totalPrice;
+            $job['total_price'] = (double)$job->grossPrice;
             $this->_stripUnwantedInformationForAPI($job);
         }
         return $jobs;
