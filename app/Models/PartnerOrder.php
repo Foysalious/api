@@ -154,7 +154,7 @@ class PartnerOrder extends Model
         // for now:
         /*$this->roundingCutOff = 0;*/
 
-        $total = $this->totalPrice - $this->totalDiscount;
+        $total = $this->totalPrice - floatval($this->discount);
         $this->roundingCutOff = $total - floor($total);
         return $this;
     }
