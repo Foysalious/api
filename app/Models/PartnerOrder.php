@@ -74,8 +74,9 @@ class PartnerOrder extends Model
 
     public function calculate()
     {
-        $this->_calculateThisJobs()->_calculateRoundingCutOff();
+        $this->_calculateThisJobs();
         $this->totalDiscount = $this->jobDiscounts + $this->discount;
+        $this->_calculateRoundingCutOff();
         $this->grossAmount = $this->totalPrice - $this->discount  - $this->roundingCutOff;
         $this->paid = $this->sheba_collection + $this->partner_collection;
         $this->due = $this->grossAmount - $this->paid;
@@ -150,18 +151,11 @@ class PartnerOrder extends Model
 
     private function _calculateRoundingCutOff()
     {
-        /**
-         * need to talk with finance.
-         *
-         * $total = $this->totalPrice - $this->discount;
-         * $whole = floor($total);
-         * $fraction = $total - $whole;
-         * $this->roundingCutOff = ( $whole % 5 ) + $fraction;
-         * $this->roundingCutOff = $fraction;
-         */
-
         // for now:
-        $this->roundingCutOff = 0;
+        /*$this->roundingCutOff = 0;*/
+
+        $total = $this->totalPrice - $this->totalDiscount;
+        $this->roundingCutOff = $total - floor($total);
         return $this;
     }
 
