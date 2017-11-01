@@ -24,7 +24,7 @@ class PromotionController extends Controller
                 ['valid_till', '>=', Carbon::now()],
                 ['is_valid', 1]
             ])->with(['voucher' => function ($q) {
-                $q->select('id', 'code', 'amount', 'title');
+                $q->select('id', 'code', 'amount', 'title', 'is_amount_percentage', 'cap');
             }]);
         }])->select('id')->where('id', $customer)->first();
         return $customer != null ? response()->json(['code' => 200, 'promotions' => $customer->promotions]) : response()->json(['code' => 404]);
