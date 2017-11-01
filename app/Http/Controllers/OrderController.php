@@ -60,7 +60,7 @@ class OrderController extends Controller
                     array_add($job, 'material_price', $job->materialPrice);
                     array_forget($job, 'partner_order');
                 }
-                array_add($partner_order, 'total_amount', $partner_order->grossPrice);
+                array_add($partner_order, 'total_amount', $partner_order->grossAmount);
                 array_add($partner_order, 'paid_amount', $partner_order->paid);
                 array_add($partner_order, 'due_amount', $partner_order->due);
                 array_forget($partner_order, 'partner_collection');
@@ -87,7 +87,7 @@ class OrderController extends Controller
             }
             foreach ($order->partner_orders as $partner_order) {
                 array_add($partner_order, 'show', true);
-                array_add($partner_order, 'total_amount', $partner_order->grossPrice);
+                array_add($partner_order, 'total_amount', $partner_order->grossAmount);
                 array_add($partner_order, 'paid_amount', $partner_order->paid);
                 array_add($partner_order, 'due_amount', $partner_order->due);
                 array_add($partner_order, 'rounding_cut_off', $partner_order->roundingCutOff);
@@ -131,7 +131,7 @@ class OrderController extends Controller
             }
             foreach ($order->partner_orders as $partner_order) {
                 array_add($partner_order, 'show', true);
-                array_add($partner_order, 'total_amount', $partner_order->grossPrice);
+                array_add($partner_order, 'total_amount', $partner_order->grossAmount);
                 array_add($partner_order, 'paid_amount', $partner_order->paid);
                 array_add($partner_order, 'due_amount', $partner_order->due);
                 array_add($partner_order, 'rounding_cut_off', $partner_order->roundingCutOff);
