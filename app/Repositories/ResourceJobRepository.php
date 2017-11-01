@@ -34,7 +34,7 @@ class ResourceJobRepository
     public function getJobs($resource)
     {
         $resource->load(['jobs' => function ($q) {
-            $q->select('id', 'resource_id', 'schedule_date', 'preferred_time', 'service_name', 'status', 'service_quantity', 'service_unit_price', 'service_id', 'partner_order_id')
+            $q->select('id', 'resource_id', 'schedule_date', 'preferred_time', 'service_name', 'status', 'service_quantity', 'service_unit_price', 'service_id', 'partner_order_id', 'discount')
                 ->where('schedule_date', '<=', date('Y-m-d'))->whereIn('status', ['Accepted', 'Served', 'Process', 'Schedule Due'])
                 ->with('partner_order.order', 'service');
         }]);
@@ -79,7 +79,7 @@ class ResourceJobRepository
             $job['schedule_date'] = Carbon::parse($job->schedule_date)->format('jS M, Y');
             $job['code'] = $job->fullCode();
             $job->calculate();
-            $job['total_price'] = (double)$job->totalPrice;
+            $job['total_price'] = (double)$job->grossPrice;
             $this->_stripUnwantedInformationForAPI($job);
         }
         return $jobs;
