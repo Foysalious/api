@@ -6,7 +6,7 @@ use App\Models\Voucher;
 
 class ReferralCreator
 {
-    const AMOUNT = 200;
+    const AMOUNT = 500;
     private $rules = array(
         'sales_channels' => array('Web', 'App'),
         'nth_orders' => [1]

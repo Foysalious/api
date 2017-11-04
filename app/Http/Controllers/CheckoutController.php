@@ -27,7 +27,7 @@ class CheckoutController extends Controller
     private $cartRepository;
     private $fbKit;
     private $customer;
-    const AMOUNT = 200;
+    const AMOUNT = 500;
 
     public function __construct()
     {
