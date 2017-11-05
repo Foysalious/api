@@ -8,6 +8,7 @@ class Order extends Model
 {
     public $totalPrice;
     public $due;
+    public $profit;
 
     public function jobs()
     {
@@ -47,6 +48,7 @@ class Order extends Model
             $partnerOrder->calculate();
             $this->totalPrice += $partnerOrder->grossAmount;
             $this->due += $partnerOrder->due;
+            $this->profit += $partnerOrder->profit;
             $po_status_counter[$partnerOrder->status]++;
             $total_partner_orders++;
         }
