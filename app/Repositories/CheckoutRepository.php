@@ -146,7 +146,7 @@ class CheckoutRepository
                         $job->preferred_time = $service->time;
                         $job->job_additional_info = $service->additional_info;
                         $job->service_quantity = $service->quantity;
-//                        $job->crm_id = isset($service->crm_id) ? $service->crm_id : null;
+                        $job->crm_id = isset($service->crm_id) ? $service->crm_id : null; //REMOVE
                         $job->department_id = isset($service->department_id) ? $service->department_id : '';
                         $job->service_unit_price = (float)$service->partner->prices;
                         if (isset($service->partner->discount_id)) {
@@ -351,7 +351,7 @@ class CheckoutRepository
             $partner_order->payment_method = 'online';
             $partner_order->sheba_collection += $partner_order->due;
             $partner_order->update();
-//            (new NotificationRepository())->forOnlinePayment($partner_order);
+            (new NotificationRepository())->forOnlinePayment($partner_order); //REMOVE
         }
 //        $this->sendSpPaymentClearMail($partner);
     }
