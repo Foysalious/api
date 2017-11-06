@@ -70,7 +70,8 @@ class AffiliateController extends Controller
         }
         $photo = $request->file('photo');
         $profile = ($request->affiliate)->profile;
-        if (strpos($profile->pro_pic, 'images/customer/avatar/default.jpg') == false) {
+//        if (strpos($profile->pro_pic, 'images/customer/avatar/default.jpg') == false) {
+        if (basename($profile->pro_pic) != 'default.jpg') {
             $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
             $this->fileRepository->deleteFileFromCDN($filename);
         }
@@ -174,7 +175,7 @@ class AffiliateController extends Controller
                         array_forget($agent, 'ambassador_id');
                         array_forget($agent, 'profile_id');
                     }
-                    $agents=$this->affiliateRepository->sortAgents($request,$agents);
+                    $agents = $this->affiliateRepository->sortAgents($request, $agents);
                     return api_response($request, $agents, 200, ['agents' => $agents]);
                 }
             }

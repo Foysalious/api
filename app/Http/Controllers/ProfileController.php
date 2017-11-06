@@ -27,7 +27,8 @@ class ProfileController extends Controller
         }
         $profile = $request->profile;
         $photo = $request->file('photo');
-        if (strpos($profile->pro_pic, 'images/customer/avatar/default.jpg') == false) {
+//        if (strpos($profile->pro_pic, 'images/customer/avatar/default.jpg') == false) {
+        if (basename($profile->pro_pic) != 'default.jpg') {
             $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
             $this->fileRepo->deleteFileFromCDN($filename);
         }
