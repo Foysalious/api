@@ -37,7 +37,7 @@ class JobController extends Controller
                 }])->with(['usedMaterials' => function ($query) {
                     $query->select('id', 'job_id', 'material_name', 'material_price');
                 }])->with(['service' => function ($query) {
-                    $query->select('id', 'name');
+                    $query->select('id', 'name','unit');
                 }])->with(['review' => function ($query) {
                     $query->select('job_id', 'review_title', 'review', 'rating');
                 }])->where('id', $job->id)
