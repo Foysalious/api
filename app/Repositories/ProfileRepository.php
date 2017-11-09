@@ -214,9 +214,9 @@ class ProfileRepository
             $customer = Customer::find($customer->id);
             $referral_creator = new ReferralCreator($customer);
             $referral_creator->create();
-            if ($request->has('referral_code')) {
-                $this->updateCustomerOwnVoucherNReferral($customer, $request->referral_code);
-            }
+//            if ($request->has('referral_code')) {
+//                $this->updateCustomerOwnVoucherNReferral($customer, $request->referral_code);
+//            }
         } elseif ($avatar == 'resource') {
             $resource = new Resource();
             $resource->profile_id = $user->id;

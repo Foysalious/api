@@ -64,8 +64,6 @@ class CheckoutController extends Controller
             }
             $this->checkoutRepository->sendConfirmation($customer->id, $order);
             return response()->json(['code' => 200, 'msg' => 'Order placed successfully!']);
-//            $order->calculate();
-//            return response()->json(['code' => 200, 'cost' => (double)$order->profit, 'order_id' => $order->code(), 'msg' => 'Order placed successfully!']);
         } else {
             return response()->json(['code' => 500, 'msg' => 'There is a problem while placing the order!']);
         }
