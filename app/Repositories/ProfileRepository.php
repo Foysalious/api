@@ -52,6 +52,7 @@ class ProfileRepository
                 'id' => $avatar->id,
                 'name' => $profile->name,
                 'mobile' => $profile->mobile,
+                'email' => $profile->email,
                 'profile_image' => $profile->pro_pic,
                 'token' => $avatar->remember_token,
             );
