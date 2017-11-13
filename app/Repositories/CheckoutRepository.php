@@ -18,6 +18,8 @@ use App\Models\Service;
 use App\Models\User;
 use Cache;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Support\Facades\DB;
@@ -338,21 +340,36 @@ class CheckoutRepository
     public function clearSpPayment($payment_info)
     {
         $partner_order_id = array_unique($payment_info['partner_order_id']);
-        $partner = [];
-        for ($i = 0; $i < count($partner_order_id); $i++) {
-            $partner_order = PartnerOrder::find($partner_order_id[$i]);
-            $partner_order->calculate();
-            //to send data in email
-            array_push($partner, array("partner_order_id" => $partner_order->id, "due" => $partner_order->due));
-            $partner_order_payment = $this->getPartnerOrderPayment($partner_order);
-            $partner_order_payment->amount = $partner_order->due;
-            $partner_order_payment->log = 'Due paid';
-            $partner_order_payment->save();
-            $partner_order->payment_method = 'online';
-            $partner_order->sheba_collection += $partner_order->due;
-            $partner_order->update();
-            (new NotificationRepository())->forOnlinePayment($partner_order); //REMOVE
+        try {
+            $client = new Client();
+            $res = $client->request('POST', env('SHEBA_BACKEND_URL') . '/api/partner-order/' . $partner_order_id[0] . '/collect',
+                [
+                    'form_params' => [
+                        'customer_id' => $payment_info['customer_id'],
+                        'remember_token' => $payment_info['remember_token'],
+                        'sheba_collection' => (double)$payment_info['price'],
+                        'payment_method' => 'Online'
+                    ]
+                ]);
+            return json_decode($res->getBody());
+        } catch (RequestException $e) {
+            return false;
         }
+//        $partner = [];
+//        for ($i = 0; $i < count($partner_order_id); $i++) {
+//            $partner_order = PartnerOrder::find($partner_order_id[$i]);
+//            $partner_order->calculate();
+//            //to send data in email
+//            array_push($partner, array("partner_order_id" => $partner_order->id, "due" => $partner_order->due));
+//            $partner_order_payment = $this->getPartnerOrderPayment($partner_order);
+//            $partner_order_payment->amount = $partner_order->due;
+//            $partner_order_payment->log = 'Due paid';
+//            $partner_order_payment->save();
+//            $partner_order->payment_method = 'online';
+//            $partner_order->sheba_collection += $partner_order->due;
+//            $partner_order->update();
+//            (new NotificationRepository())->forOnlinePayment($partner_order); //REMOVE
+//        }
 //        $this->sendSpPaymentClearMail($partner);
     }
 

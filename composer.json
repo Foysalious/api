@@ -36,7 +36,8 @@
     "files": [
       "app/Helper/helper_functions.php",
       "app/Sheba/Voucher/functions.php",
-      "app/Sheba/Notification/functions.php"
+      "app/Sheba/Notification/functions.php",
+      "app/Sheba/PapApi.class.php"
     ],
     "psr-4": {
       "App\\": "app/",

@@ -63,7 +63,8 @@ class CheckoutController extends Controller
                 }
             }
             $this->checkoutRepository->sendConfirmation($customer->id, $order);
-            return response()->json(['code' => 200, 'msg' => 'Order placed successfully!']);
+            $order->calculate();
+            return response()->json(['code' => 200, 'cost' => ((double)$order->profit * 50) / 100, 'order_id' => $order->code(), 'msg' => 'Order placed successfully!']);
         } else {
             return response()->json(['code' => 500, 'msg' => 'There is a problem while placing the order!']);
         }
@@ -141,10 +142,17 @@ class CheckoutController extends Controller
         $portwallet_response = $portwallet->ipnValidate($data);
         //check payment validity
         if ($portwallet_response->status == 200 && $portwallet_response->data->status == "ACCEPTED") {
-            $this->checkoutRepository->clearSpPayment($payment_info);
-            Cache::forget('invoice-' . $request->input('invoice'));
-            Cache::forget('portwallet-payment-' . $request->input('invoice'));
-            return redirect(env('SHEBA_FRONT_END_URL') . '/order-list');
+            $response = $this->checkoutRepository->clearSpPayment($payment_info);
+            if ($response) {
+                if ($response->code == 200) {
+                    (new NotificationRepository())->forOnlinePayment($payment_info['partner_order_id'][0], $payment_info['price']);
+                    Cache::forget('invoice-' . $request->input('invoice'));
+                    Cache::forget('portwallet-payment-' . $request->input('invoice'));
+                    return redirect(env('SHEBA_FRONT_END_URL') . '/order-list');
+                }
+            } else {
+                return "Something went wrong";
+            }
         } else {
             return "Something went wrong";
         }
