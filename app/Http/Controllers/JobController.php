@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Job;
 use App\Models\JobCancelLog;
+use App\Repositories\PapRepository;
 use Illuminate\Http\Request;
 use DB;
 
@@ -95,6 +96,11 @@ class JobController extends Controller
                 $job_cancel->cancel_reason_details = $request->reason;
                 $job_cancel->created_by_name = 'Customer';
                 if ($job_cancel->save()) {
+                    $order = $job->partner_order->order;
+                    $order->calculate();
+                    if ($order->status == constants('ORDER_STATUSES_SHOW')['Cancelled']['sheba']) {
+                        (new PapRepository())->refund($order->code());
+                    }
                     return response()->json(['msg' => 'Job Cancelled Successfully!', 'code' => 200]);
                 }
             }
