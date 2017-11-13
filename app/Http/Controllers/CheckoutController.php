@@ -64,7 +64,7 @@ class CheckoutController extends Controller
             }
             $this->checkoutRepository->sendConfirmation($customer->id, $order);
             $order->calculate();
-            return response()->json(['code' => 200, 'cost' => ((double)$order->profit * 50) / 100, 'order_id' => $order->code(), 'msg' => 'Order placed successfully!']);
+            return response()->json(['code' => 200, 'pap_number' => (double)$order->profit, 'pap_code' => $order->code(), 'msg' => 'Order placed successfully!']);
         } else {
             return response()->json(['code' => 500, 'msg' => 'There is a problem while placing the order!']);
         }
@@ -112,7 +112,8 @@ class CheckoutController extends Controller
                     $s_id = str_random(10);
                     Redis::set($s_id, 'online');
                     Redis::expire($s_id, 500);
-                    return redirect(env('SHEBA_FRONT_END_URL') . '/order-list?s_token=' . $s_id);
+                    $order->calculate();
+                    return redirect(env('SHEBA_FRONT_END_URL') . '/order-list?s_token=' . $s_id . '&pap_number=' . (double)$order->profit . '&pap_code=' . $order->code());
                 }
             }
         } else {
