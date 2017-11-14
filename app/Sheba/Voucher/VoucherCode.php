@@ -77,9 +77,7 @@ class VoucherCode
 
         $this->setCustomerId($customer);
         $this->setCustomer($customer);
-        if (is_string($customer)) {
-            $this->customerMobile = $customer;
-        }
+        $this->setCustomerMobile($customer);
 
         return $this->checkService($partner, $service)
             ->checkLocation($location)
@@ -128,6 +126,18 @@ class VoucherCode
             } else {
                 $this->customer = $customer;
             }
+        }
+//        $this->customer = is_int($customer) ? Customer::find($customer) : (is_string($customer) ? Customer::where('mobile', $customer)->first() : $customer);
+    }
+
+    private function setCustomerMobile($customer)
+    {
+        if (is_string($customer)) {
+            $this->customerMobile = $customer;
+        } elseif (!empty($this->customer)) {
+            $this->customerMobile = $this->customer->profile->mobile;
+        } else {
+            $this->customerMobile = null;
         }
 //        $this->customer = is_int($customer) ? Customer::find($customer) : (is_string($customer) ? Customer::where('mobile', $customer)->first() : $customer);
     }
