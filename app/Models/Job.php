@@ -68,8 +68,8 @@ class Job extends Model
         $this->totalPrice = formatTaka($this->totalPriceWithoutVat);
         $this->grossPrice = formatTaka($this->totalPrice - $this->discount);
         $this->service_unit_price = formatTaka($this->service_unit_price);
-        $this->discountContributionSheba = formatTaka( ($this->discount * $this->sheba_contribution) / 100);
-        $this->discountContributionPartner = formatTaka( ($this->discount * $this->partner_contribution) / 100);
+        $this->discountContributionSheba = formatTaka(($this->discount * $this->sheba_contribution) / 100);
+        $this->discountContributionPartner = formatTaka(($this->discount * $this->partner_contribution) / 100);
         $this->totalCost = $this->totalCostWithoutDiscount - $this->discountContributionPartner;
         $this->grossCost = formatTaka($this->totalCost);
         $this->profit = formatTaka($this->grossPrice - $this->totalCost);
@@ -109,5 +109,20 @@ class Job extends Model
     public function partnerChangeLog()
     {
         return $this->hasOne(JobPartnerChangeLog::class);
+    }
+
+    public function scopeInfo($query)
+    {
+        return $query->select('id', 'resource_id', 'schedule_date', 'preferred_time', 'service_name', 'status', 'service_quantity', 'service_unit_price', 'service_id', 'partner_order_id', 'discount');
+    }
+
+    public function scopeValidStatus($query)
+    {
+        return $query->whereIn('status', ['Accepted', 'Served', 'Process', 'Schedule Due']);
+    }
+
+    public function scopeTillNow($query)
+    {
+        $query->where('schedule_date', '<=', date('Y-m-d'));
     }
 }
