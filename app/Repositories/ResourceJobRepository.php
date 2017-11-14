@@ -80,6 +80,8 @@ class ResourceJobRepository
             $job['code'] = $job->fullCode();
             $job->calculate();
             $job['total_price'] = (double)$job->grossPrice;
+            $job['service_price'] = (double)$job->servicePrice;
+            $job['material_price'] = (double)$job->materialPrice;
             $this->_stripUnwantedInformationForAPI($job);
         }
         return $jobs;
