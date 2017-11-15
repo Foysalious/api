@@ -174,7 +174,7 @@ class CheckoutController extends Controller
                     $applied = true;
                     $item->partner = $this->cartRepository->getPartnerPrice($item);
                     if ($result['is_percentage']) {
-                        $result['amount'] = ((float)$item->partner->prices * $result['amount']) / 100;
+                        $result['amount'] = ((float)$item->partner->prices * $item->quantity * $result['amount']) / 100;
                         if ($result['voucher']->cap != 0 && $result['amount'] > $result['voucher']->cap) {
                             $result['amount'] = $result['voucher']->cap;
                         }
