@@ -24,9 +24,9 @@ class PapRepository
         $pap_password = env('PAP_PASSWORD'); // Merchant password
         $session = new Pap_Api_Session($pap_url . "scripts/server.php");
 
-        if (@!$session->login($pap_user, $pap_password)) {
-            die("Cannot login. Message: " . $session->getMessage());
-        }
+//        if (@!$session->login($pap_user, $pap_password)) {
+//            die("Cannot login. Message: " . $session->getMessage());
+//        }
         $transaction = new Pap_Api_Transaction($session);
         $transaction->setOrderId($order_code);
 
@@ -35,10 +35,10 @@ class PapRepository
         //$result = $transaction->refundByOrderId('affiliate note', '0.1');
         //$result = $transaction->chargeBackByOrderId('affiliate note', '0.1');
 
-        if ($result->isError()) {
-            echo 'Error: ' . $result->getErrorMessage();
-        } else {
-            echo 'Success: ' . $result->getInfoMessage();
-        }
+//        if ($result->isError()) {
+//            echo 'Error: ' . $result->getErrorMessage();
+//        } else {
+//            echo 'Success: ' . $result->getInfoMessage();
+//        }
     }
 }

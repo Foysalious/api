@@ -177,8 +177,8 @@ $api->version('v1', function ($api) {
             $api->get('/', 'App\Http\Controllers\ResourceJobController@index');
             $api->group(['prefix' => '{job}','middleware' => ['resource_job.auth']], function ($api) {
                 $api->get('/', 'App\Http\Controllers\ResourceJobController@show');
-                $api->get('others', 'App\Http\Controllers\ResourceJobController@otherJobs');
                 $api->put('/', 'App\Http\Controllers\ResourceJobController@update');
+                $api->get('others', 'App\Http\Controllers\ResourceJobController@otherJobs');
                 $api->post('payment', 'App\Http\Controllers\ResourceJobController@collect');
             });
         });
