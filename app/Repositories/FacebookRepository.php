@@ -10,7 +10,6 @@ class FacebookRepository
 {
     public function verifyAccessToken($token, $fb_id)
     {
-        return true;
         try {
             $client = new Client();
             $res = $client->request('GET', 'https://graph.facebook.com/me?fields=id&access_token=' . $token);
