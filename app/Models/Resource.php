@@ -52,4 +52,9 @@ class Resource extends Model
     {
         return boolval(count(array_intersect(constants('MANAGER'), $this->typeIn($partner))));
     }
+
+    public function scopeVerified($query)
+    {
+        return $query->where('resources.is_verified', 1);
+    }
 }

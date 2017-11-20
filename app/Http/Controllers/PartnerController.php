@@ -122,7 +122,7 @@ class PartnerController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $partner = $request->partner;
             $partner->load(['jobs' => function ($q) {
-                $q->info()->status(['PENDING', 'NOT RESPONDED'])->with('partner_order.order.location');
+                $q->info()->status([constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']])->with('partner_order.order.location');
             }]);
             $jobs = $partner->jobs;
             if (count($jobs) > 0) {
@@ -137,6 +137,36 @@ class PartnerController extends Controller
                 return api_response($request, $jobs, 200, ['jobs' => $jobs]);
             } else {
                 return api_response($request, null, 404);
+            }
+        } catch (\Exception $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getResources($partner, Request $request)
+    {
+        try {
+            list($offset, $limit) = calculatePagination($request);
+            $this->partnerRepo = new PartnerRepository($request->partner);
+            $resources = $this->partnerRepo->resources();
+            if (count($resources) > 0) {
+                return api_response($request, $resources, 200, ['resources' => array_slice($resources->sortBy('name')->values()->all(), $offset, $limit)]);
+            } else {
+                return api_response($request, null, 404);
+            }
+        } catch (\Exception $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function assignResource($partner, Request $request)
+    {
+        try {
+            $job = $request->job;
+            if (in_array($request->resource_id, $request->partner->resources->unique()->pluck('id')->toArray())) {
+                $job->resource_id = $request->resource_id;
+                $job->update();
+                return api_response($request, true, 200);
             }
         } catch (\Exception $e) {
             return api_response($request, null, 500);
