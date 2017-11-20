@@ -42,9 +42,14 @@ class Resource extends Model
     {
         $partner = $partner instanceof Partner ? $partner->id : $partner;
         $types = [];
-        foreach($this->partners()->withPivot('resource_type')->where('partner_id', $partner)->get() as $unique_partner) {
+        foreach ($this->partners()->withPivot('resource_type')->where('partner_id', $partner)->get() as $unique_partner) {
             $types[] = $unique_partner->pivot->resource_type;
         }
         return $types;
+    }
+
+    public function isManager(Partner $partner)
+    {
+        return boolval(count(array_intersect(constants('MANAGER'), $this->typeIn($partner))));
     }
 }

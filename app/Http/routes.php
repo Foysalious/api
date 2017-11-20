@@ -172,10 +172,13 @@ $api->version('v1', function ($api) {
             $api->post('{member}/manage-invitation', 'App\Http\Controllers\MemberController@manageInvitation');
         });
     });
+    $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
+        $api->get('jobs','App\Http\Controllers\PartnerController@getNewJobs');
+    });
     $api->group(['prefix' => 'resources/{resource}', 'middleware' => ['resource.auth']], function ($api) {
         $api->group(['prefix' => 'jobs'], function ($api) {
             $api->get('/', 'App\Http\Controllers\ResourceJobController@index');
-            $api->group(['prefix' => '{job}','middleware' => ['resource_job.auth']], function ($api) {
+            $api->group(['prefix' => '{job}', 'middleware' => ['resource_job.auth']], function ($api) {
                 $api->get('/', 'App\Http\Controllers\ResourceJobController@show');
                 $api->put('/', 'App\Http\Controllers\ResourceJobController@update');
                 $api->get('others', 'App\Http\Controllers\ResourceJobController@otherJobs');

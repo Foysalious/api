@@ -113,7 +113,7 @@ class Job extends Model
 
     public function scopeInfo($query)
     {
-        return $query->select('id', 'resource_id', 'schedule_date', 'preferred_time', 'service_name', 'status', 'service_quantity', 'service_unit_price', 'service_id', 'partner_order_id', 'discount');
+        return $query->select('jobs.id', 'jobs.discount', 'jobs.created_at', 'resource_id', 'schedule_date', 'preferred_time', 'service_name', 'status', 'service_quantity', 'service_unit_price', 'service_id', 'partner_order_id');
     }
 
     public function scopeValidStatus($query)
@@ -123,6 +123,11 @@ class Job extends Model
 
     public function scopeTillNow($query)
     {
-        $query->where('schedule_date', '<=', date('Y-m-d'));
+        return $query->where('schedule_date', '<=', date('Y-m-d'));
+    }
+
+    public function scopeStatus($query, Array $status)
+    {
+        return $query->whereIn('status', $status);
     }
 }

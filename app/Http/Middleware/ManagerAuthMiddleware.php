@@ -2,10 +2,11 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Partner;
 use App\Models\Resource;
 use Closure;
 
-class ResourceAuthMiddleware
+class ManagerAuthMiddleware
 {
     /**
      * Handle an incoming request.
@@ -18,9 +19,10 @@ class ResourceAuthMiddleware
     {
         if ($request->has('remember_token')) {
             $resource = Resource::where('remember_token', $request->input('remember_token'))->first();
-            if ($resource) {
-                if ($resource->id == $request->resource) {
-                    $request->merge(['resource' => $resource]);
+            $partner = Partner::find($request->partner);
+            if ($resource && $partner) {
+                if ($resource->isManager($partner)) {
+                    $request->merge(['resource' => $resource, 'partner' => $partner]);
                     return $next($request);
                 }
             }

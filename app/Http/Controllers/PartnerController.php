@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Job;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
+use App\Repositories\PartnerRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
 use Illuminate\Http\Request;
@@ -17,6 +18,7 @@ class PartnerController extends Controller
 {
     private $serviceRepository;
     private $reviewRepository;
+    private $partnerRepo;
 
     public function __construct()
     {
@@ -112,5 +114,32 @@ class PartnerController extends Controller
             return response()->json(['msg' => 'ok', 'code' => 200, 'partner' => $partner, 'breakdown' => $breakdown]);
         }
         return response()->json(['msg' => 'not found', 'code' => 404]);
+    }
+
+    public function getNewJobs($partner, Request $request)
+    {
+        try {
+            list($offset, $limit) = calculatePagination($request);
+            $partner = $request->partner;
+            $partner->load(['jobs' => function ($q) {
+                $q->info()->status(['PENDING', 'NOT RESPONDED'])->with('partner_order.order.location');
+            }]);
+            $jobs = $partner->jobs;
+            if (count($jobs) > 0) {
+                $jobs = $jobs->sortByDesc('created_at');
+                $jobs = $jobs->each(function ($job) {
+                    $job['location'] = $job->partner_order->order->location->name;
+                    $job['service_unit_price'] = (double)$job->service_unit_price;
+                    $job['discount'] = (double)$job->discount;
+                    $this->serviceRepository->removeRelationsFromModel($job, $job->getRelations());
+                })->values()->all();
+                $jobs = array_slice($jobs, $offset, $limit);
+                return api_response($request, $jobs, 200, ['jobs' => $jobs]);
+            } else {
+                return api_response($request, null, 404);
+            }
+        } catch (\Exception $e) {
+            return api_response($request, null, 500);
+        }
     }
 }
