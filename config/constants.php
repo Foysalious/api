@@ -260,7 +260,10 @@ return [
         env('SHEBA_CUSTOMER_APP') => 'customer',
         env('SHEBA_AFFILIATION_APP') => 'affiliate',
         env('SHEBA_RESOURCE_APP') => 'resource',
-        'manager-app' => 'manager',
+        env('SHEBA_MANGER_APP') => 'resource',
+    ],
+    'MANAGER' => [
+        'Owner', 'Management', 'Admin', 'Operation', 'Finance'
     ],
     'FROM' => [
         'resource-app',

@@ -48,7 +48,7 @@ class FacebookController extends Controller
                 $this->profileRepository->registerAvatarByKit($from, $request, $profile);
                 $profile = Profile::find($profile->id);
             }
-            $info = $this->profileRepository->getProfileInfo($from, $profile);
+            $info = $this->profileRepository->getProfileInfo($from, $profile, $request);
             if ($info != null) {
                 return response()->json(['code' => 200, 'info' => $info]);
             }
@@ -80,8 +80,9 @@ class FacebookController extends Controller
                 }
                 if ($profile->$avatar == null) {
                     $this->profileRepository->registerAvatarByFacebook($avatar, $request, $profile);
+                    $profile = Profile::find($profile->id);
                 }
-                $info = $this->profileRepository->getProfileInfo($avatar, $profile);
+                $info = $this->profileRepository->getProfileInfo($avatar, $profile, $request);
                 if ($info != false) {
                     return response()->json(['code' => 200, 'info' => $info]);
                 }

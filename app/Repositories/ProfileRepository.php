@@ -18,6 +18,7 @@ use Sheba\Voucher\ReferralCreator;
 
 class ProfileRepository
 {
+
     /**
      * Check if user already exists
      * @param $data
@@ -44,7 +45,7 @@ class ProfileRepository
         return Profile::find($profile->id);
     }
 
-    public function getProfileInfo($from, Profile $profile)
+    public function getProfileInfo($from, Profile $profile, $request = null)
     {
         $avatar = $profile->$from;
         if ($avatar != null) {
@@ -71,7 +72,16 @@ class ProfileRepository
                 $info['referrer_id'] = $avatar->referrer_id;
             } elseif ($from == 'resource') {
                 $info['is_verified'] = $avatar->is_verified;
-                $info['partners'] = $avatar->partners->unique('partner_id')->count();
+                if ($request) {
+                    if ($request->from == env('SHEBA_RESOURCE_APP')) {
+                        $info['partners'] = $avatar->partners->unique('partner_id')->count();
+                    } elseif ($request->from == env('SHEBA_MANGER_APP')) {
+                        $info['resource_types'] = null;
+                        if ($info['partner'] = (new ResourceRepository($avatar))->getPartner()) {
+                            $info['resource_types'] = $avatar->typeIn($info['partner']['id']);
+                        }
+                    }
+                }
             }
             return $info;
         }

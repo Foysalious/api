@@ -27,4 +27,24 @@ class Resource extends Model
     {
         return $this->hasMany(Job::class);
     }
+
+    public function associatePartners()
+    {
+        return $this->partners->unique();
+    }
+
+    public function firstPartner()
+    {
+        return $this->associatePartners()->first();
+    }
+
+    public function typeIn($partner)
+    {
+        $partner = $partner instanceof Partner ? $partner->id : $partner;
+        $types = [];
+        foreach($this->partners()->withPivot('resource_type')->where('partner_id', $partner)->get() as $unique_partner) {
+            $types[] = $unique_partner->pivot->resource_type;
+        }
+        return $types;
+    }
 }

@@ -99,7 +99,7 @@ class LoginController extends Controller
         }
         if ($profile != false) {
             if (Hash::check($request->input('password'), $profile->password)) {
-                $info = $this->profileRepository->getProfileInfo($this->profileRepository->getAvatar($request->from), $profile);
+                $info = $this->profileRepository->getProfileInfo($this->profileRepository->getAvatar($request->from), $profile, $request);
                 if ($info != false) {
                     return response()->json(['code' => 200, 'info' => $info]);
                 }
