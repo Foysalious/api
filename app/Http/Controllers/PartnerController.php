@@ -116,21 +116,23 @@ class PartnerController extends Controller
         return response()->json(['msg' => 'not found', 'code' => 404]);
     }
 
-    public function getNewJobs($partner, Request $request)
+    public function getJobs($partner, Request $request)
     {
         try {
             list($offset, $limit) = calculatePagination($request);
             $partner = $request->partner;
-            $partner->load(['jobs' => function ($q) {
-                $q->info()->status([constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']])->with('partner_order.order.location');
-            }]);
-            $jobs = $partner->jobs;
+            $jobs = (new  PartnerRepository($partner))->jobs($request->status);
             if (count($jobs) > 0) {
                 $jobs = $jobs->sortByDesc('created_at');
                 $jobs = $jobs->each(function ($job) {
                     $job['location'] = $job->partner_order->order->location->name;
                     $job['service_unit_price'] = (double)$job->service_unit_price;
                     $job['discount'] = (double)$job->discount;
+                    $job['code'] = $job->partner_order->order->code();
+                    $job['customer_name'] = $job->partner_order->order->customer->profile->name;
+                    $job['resource_picture'] = $job->resource->profile->pro_pic;
+                    $job['resource_mobile'] = $job->resource->profile->mobile;
+                    $job['rating'] = $job->review != null ? $job->review->rating : null;
                     $this->serviceRepository->removeRelationsFromModel($job, $job->getRelations());
                 })->values()->all();
                 $jobs = array_slice($jobs, $offset, $limit);
@@ -138,7 +140,7 @@ class PartnerController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
     }

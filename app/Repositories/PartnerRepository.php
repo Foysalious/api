@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 
 use App\Models\Partner;
+use Illuminate\Database\QueryException;
 
 class PartnerRepository
 {
@@ -34,6 +35,21 @@ class PartnerRepository
         return $this->partner->resources;
     }
 
+    public function jobs($status)
+    {
+        $status = $this->_resolveStatus($status);
+        $this->partner->load(['jobs' => function ($q) use ($status) {
+            $q->info()->status($status)->with(['resource.profile', 'review', 'partner_order.order.location']);
+        }]);
+        return $this->partner->jobs;
+    }
+
+    private function _resolveStatus($status)
+    {
+        if ($status == 'new') {
+            return array(constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']);
+        }
+    }
 
 }
 

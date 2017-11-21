@@ -173,9 +173,11 @@ $api->version('v1', function ($api) {
         });
     });
     $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
-        $api->get('jobs/new', 'App\Http\Controllers\PartnerController@getNewJobs');
-        $api->group(['prefix' => 'jobs/{job}', 'middleware' => ['partner_job.auth']], function ($api) {
-            $api->post('assign', 'App\Http\Controllers\PartnerController@assignResource');
+        $api->group(['prefix' => 'jobs'], function ($api) {
+            $api->get('/', 'App\Http\Controllers\PartnerController@getJobs');
+            $api->group(['prefix' => '{job}', 'middleware' => ['partner_job.auth']], function ($api) {
+                $api->post('assign', 'App\Http\Controllers\PartnerController@assignResource');
+            });
         });
         $api->get('resources', 'App\Http\Controllers\PartnerController@getResources');
     });
