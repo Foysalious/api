@@ -176,3 +176,13 @@ if (!function_exists('calculatePagination')) {
         return array($offset, $limit);
     }
 }
+
+if (!function_exists('removeRelationsFromModel')) {
+
+    function removeRelationsFromModel($model)
+    {
+        foreach ($model->getRelations() as $key => $relation) {
+            array_forget($model, $key);
+        }
+    }
+}

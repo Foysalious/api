@@ -17,10 +17,10 @@ class PartnerRepository
         $this->serviceRepo = new ServiceRepository();
     }
 
-    public function resources()
+    public function resources($type = 'Handyman')
     {
-        $this->partner->load(['resources' => function ($q) {
-            $q->select('resources.id', 'profile_id', 'resources.is_verified')->verified()->with(['jobs' => function ($q) {
+        $this->partner->load(['resources' => function ($q) use ($type) {
+            $q->select('resources.id', 'profile_id', 'resources.is_verified')->verified()->type($type)->with(['jobs' => function ($q) {
                 $q->info()->status([constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Served']]);
             }])->with('profile', 'reviews');
         }]);

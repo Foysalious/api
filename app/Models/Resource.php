@@ -57,4 +57,9 @@ class Resource extends Model
     {
         return $query->where('resources.is_verified', 1);
     }
+
+    public function scopeType($query, $type)
+    {
+        return $query->where('resource_type', $type);
+    }
 }

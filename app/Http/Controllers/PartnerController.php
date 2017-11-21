@@ -6,7 +6,9 @@ use App\Models\Category;
 use App\Models\Job;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
+use App\Models\Resource;
 use App\Repositories\PartnerRepository;
+use App\Repositories\ResourceJobRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
 use Illuminate\Http\Request;
@@ -18,12 +20,14 @@ class PartnerController extends Controller
 {
     private $serviceRepository;
     private $reviewRepository;
+    private $resourceJobRepository;
     private $partnerRepo;
 
     public function __construct()
     {
         $this->serviceRepository = new ServiceRepository();
         $this->reviewRepository = new ReviewRepository();
+        $this->resourceJobRepository = new ResourceJobRepository();
     }
 
     public function index()
@@ -130,10 +134,10 @@ class PartnerController extends Controller
                     $job['discount'] = (double)$job->discount;
                     $job['code'] = $job->partner_order->order->code();
                     $job['customer_name'] = $job->partner_order->order->customer->profile->name;
-                    $job['resource_picture'] = $job->resource->profile->pro_pic;
-                    $job['resource_mobile'] = $job->resource->profile->mobile;
+                    $job['resource_picture'] = $job->resource != null ? $job->resource->profile->pro_pic : null;
+                    $job['resource_mobile'] = $job->resource != null ? $job->resource->profile->mobile : null;
                     $job['rating'] = $job->review != null ? $job->review->rating : null;
-                    $this->serviceRepository->removeRelationsFromModel($job, $job->getRelations());
+                    removeRelationsFromModel($job);
                 })->values()->all();
                 $jobs = array_slice($jobs, $offset, $limit);
                 return api_response($request, $jobs, 200, ['jobs' => $jobs]);
@@ -165,10 +169,18 @@ class PartnerController extends Controller
     {
         try {
             $job = $request->job;
-            if (in_array($request->resource_id, $request->partner->resources->unique()->pluck('id')->toArray())) {
-                $job->resource_id = $request->resource_id;
-                $job->update();
-                return api_response($request, true, 200);
+            $to_be_assigned_resource = $request->partner->resources->where('id', (int)$request->resource_id)->where('pivot.resource_type', 'Handyman')->first();
+            if ($to_be_assigned_resource != null) {
+                $request->merge(['remember_token' => $to_be_assigned_resource->remember_token, 'status' => 'Accepted']);
+                if ($this->resourceJobRepository->changeStatus($job->id, $request) != false) {
+                    $job->resource_id = $request->resource_id;
+                    $job->update();
+                    return api_response($request, true, 200);
+                } else {
+                    return api_response($request, null, 500);
+                }
+            } else {
+                return api_response($request, null, 403);
             }
         } catch (\Exception $e) {
             return api_response($request, null, 500);
