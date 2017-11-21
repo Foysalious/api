@@ -28,7 +28,7 @@ class ReviewRepository
 
     public function getReviewBreakdown($review)
     {
-        $breakdown = array();
+        $breakdown = array_fill(1,5,0);
         $ratings = $review->groupBy('rating');
         foreach ($ratings as $key => $rating) {
             $breakdown[$key] = $rating->count();

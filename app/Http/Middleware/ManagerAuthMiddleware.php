@@ -18,11 +18,11 @@ class ManagerAuthMiddleware
     public function handle($request, Closure $next)
     {
         if ($request->has('remember_token')) {
-            $resource = Resource::where('remember_token', $request->input('remember_token'))->first();
+            $manager_resource = Resource::where('remember_token', $request->input('remember_token'))->first();
             $partner = Partner::find($request->partner);
-            if ($resource && $partner) {
-                if ($resource->isManager($partner)) {
-                    $request->merge(['resource' => $resource, 'partner' => $partner]);
+            if ($manager_resource && $partner) {
+                if ($manager_resource->isManager($partner)) {
+                    $request->merge(['manager_resource' => $manager_resource, 'partner' => $partner]);
                     return $next($request);
                 }
             }

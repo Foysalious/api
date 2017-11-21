@@ -2,18 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Category;
-use App\Models\Job;
+
 use App\Models\Partner;
-use App\Models\PartnerOrder;
-use App\Models\Resource;
 use App\Repositories\PartnerRepository;
 use App\Repositories\ResourceJobRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
 use Illuminate\Http\Request;
 
-use App\Http\Requests;
 use DB;
 
 class PartnerController extends Controller
@@ -120,34 +116,6 @@ class PartnerController extends Controller
         return response()->json(['msg' => 'not found', 'code' => 404]);
     }
 
-    public function getJobs($partner, Request $request)
-    {
-        try {
-            list($offset, $limit) = calculatePagination($request);
-            $partner = $request->partner;
-            $jobs = (new  PartnerRepository($partner))->jobs($request->status);
-            if (count($jobs) > 0) {
-                $jobs = $jobs->sortByDesc('created_at');
-                $jobs = $jobs->each(function ($job) {
-                    $job['location'] = $job->partner_order->order->location->name;
-                    $job['service_unit_price'] = (double)$job->service_unit_price;
-                    $job['discount'] = (double)$job->discount;
-                    $job['code'] = $job->partner_order->order->code();
-                    $job['customer_name'] = $job->partner_order->order->customer->profile->name;
-                    $job['resource_picture'] = $job->resource != null ? $job->resource->profile->pro_pic : null;
-                    $job['resource_mobile'] = $job->resource != null ? $job->resource->profile->mobile : null;
-                    $job['rating'] = $job->review != null ? $job->review->rating : null;
-                    removeRelationsFromModel($job);
-                })->values()->all();
-                $jobs = array_slice($jobs, $offset, $limit);
-                return api_response($request, $jobs, 200, ['jobs' => $jobs]);
-            } else {
-                return api_response($request, null, 404);
-            }
-        } catch (\Throwable $e) {
-            return api_response($request, null, 500);
-        }
-    }
 
     public function getResources($partner, Request $request)
     {
@@ -165,44 +133,4 @@ class PartnerController extends Controller
         }
     }
 
-    public function acceptJobAndAssignResource($partner, Request $request)
-    {
-        try {
-            $job = $request->job;
-            $to_be_assigned_resource = $request->partner->resources->where('id', (int)$request->resource_id)->where('pivot.resource_type', 'Handyman')->first();
-            if ($to_be_assigned_resource != null) {
-                $request->merge(['remember_token' => $to_be_assigned_resource->remember_token, 'status' => 'Accepted']);
-                $response = $this->resourceJobRepository->changeStatus($job->id, $request);
-                if ($response) {
-                    if ($response->code == 200) {
-                        $job->resource_id = $request->resource_id;
-                        $job->update();
-                        return api_response($request, $job, 200);
-                    } else {
-                        return api_response($request, $response, $response->code);
-                    }
-                }
-                return api_response($request, null, 500);
-            } else {
-                return api_response($request, null, 403);
-            }
-        } catch (\Throwable $e) {
-            return api_response($request, null, 500);
-        }
-    }
-
-    public function declineJob($partner, Request $request)
-    {
-        try {
-            $request->merge(['remember_token' => $request->resource->remember_token, 'status' => 'Declined']);
-            $response = $this->resourceJobRepository->changeStatus($request->job->id, $request);
-            if ($response) {
-                return api_response($request, $response, $response->code);
-            } else {
-                return api_response($request, null, 500);
-            }
-        } catch (\Throwable $e) {
-            return api_response($request, null, 500);
-        }
-    }
 }

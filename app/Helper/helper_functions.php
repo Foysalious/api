@@ -186,3 +186,18 @@ if (!function_exists('removeRelationsFromModel')) {
         }
     }
 }
+
+if (!function_exists('removeSelectedFieldsFromModel')) {
+
+    function removeSelectedFieldsFromModel($model)
+    {
+        array_forget($model,'created_by');
+        array_forget($model,'updated_by');
+        array_forget($model,'created_at');
+        array_forget($model,'updated_at');
+        array_forget($model,'created_by_name');
+        array_forget($model,'updated_by_name');
+        array_forget($model,'remember_token');
+        return $model;
+    }
+}

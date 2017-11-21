@@ -173,14 +173,21 @@ $api->version('v1', function ($api) {
         });
     });
     $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
-        $api->group(['prefix' => 'jobs'], function ($api) {
-            $api->get('/', 'App\Http\Controllers\PartnerController@getJobs');
-            $api->group(['prefix' => '{job}', 'middleware' => ['partner_job.auth']], function ($api) {
-                $api->post('accept', 'App\Http\Controllers\PartnerController@acceptJobAndAssignResource');
-                $api->post('reject', 'App\Http\Controllers\PartnerController@declineJob');
+        $api->group(['prefix' => 'resources'], function ($api) {
+            $api->get('/', 'App\Http\Controllers\PartnerController@getResources');
+            $api->group(['prefix' => '{resource}', 'middleware' => ['partner_resource.auth']], function ($api) {
+                $api->get('/', 'App\Http\Controllers\ResourceController@show');
+                $api->get('reviews', 'App\Http\Controllers\ResourceController@getReviews');
             });
         });
-        $api->get('resources', 'App\Http\Controllers\PartnerController@getResources');
+        $api->group(['prefix' => 'jobs'], function ($api) {
+            $api->get('/', 'App\Http\Controllers\PartnerJobController@index');
+            $api->group(['prefix' => '{job}', 'middleware' => ['partner_job.auth']], function ($api) {
+                $api->get('/', 'App\Http\Controllers\PartnerJobController@show');
+                $api->post('accept', 'App\Http\Controllers\PartnerJobController@acceptJobAndAssignResource');
+                $api->post('reject', 'App\Http\Controllers\PartnerJobController@declineJob');
+            });
+        });
     });
     $api->group(['prefix' => 'resources/{resource}', 'middleware' => ['resource.auth']], function ($api) {
         $api->group(['prefix' => 'jobs'], function ($api) {
