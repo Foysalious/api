@@ -21,7 +21,7 @@ class PartnerJobAuthMiddleware
         if (!$job) {
             return api_response($request, null, 404);
         }
-        if ($job->partner_order->partner->id != $partner->id || in_array($job->status, [constants('JOB_STATUSES')['Served'], constants('JOB_STATUSES')['Cancelled']])) {
+        if ($job->partner_order->partner->id != $partner->id) {
             return api_response($request, null, 403);
         }
         $request->merge(['job' => $job]);

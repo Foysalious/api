@@ -165,24 +165,43 @@ class PartnerController extends Controller
         }
     }
 
-    public function assignResource($partner, Request $request)
+    public function acceptJobAndAssignResource($partner, Request $request)
     {
         try {
             $job = $request->job;
             $to_be_assigned_resource = $request->partner->resources->where('id', (int)$request->resource_id)->where('pivot.resource_type', 'Handyman')->first();
             if ($to_be_assigned_resource != null) {
                 $request->merge(['remember_token' => $to_be_assigned_resource->remember_token, 'status' => 'Accepted']);
-                if ($this->resourceJobRepository->changeStatus($job->id, $request) != false) {
-                    $job->resource_id = $request->resource_id;
-                    $job->update();
-                    return api_response($request, true, 200);
-                } else {
-                    return api_response($request, null, 500);
+                $response = $this->resourceJobRepository->changeStatus($job->id, $request);
+                if ($response) {
+                    if ($response->code == 200) {
+                        $job->resource_id = $request->resource_id;
+                        $job->update();
+                        return api_response($request, $job, 200);
+                    } else {
+                        return api_response($request, $response, $response->code);
+                    }
                 }
+                return api_response($request, null, 500);
             } else {
                 return api_response($request, null, 403);
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function declineJob($partner, Request $request)
+    {
+        try {
+            $request->merge(['remember_token' => $request->resource->remember_token, 'status' => 'Declined']);
+            $response = $this->resourceJobRepository->changeStatus($request->job->id, $request);
+            if ($response) {
+                return api_response($request, $response, $response->code);
+            } else {
+                return api_response($request, null, 500);
+            }
+        } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
     }

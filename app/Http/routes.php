@@ -176,7 +176,8 @@ $api->version('v1', function ($api) {
         $api->group(['prefix' => 'jobs'], function ($api) {
             $api->get('/', 'App\Http\Controllers\PartnerController@getJobs');
             $api->group(['prefix' => '{job}', 'middleware' => ['partner_job.auth']], function ($api) {
-                $api->post('assign', 'App\Http\Controllers\PartnerController@assignResource');
+                $api->post('accept', 'App\Http\Controllers\PartnerController@acceptJobAndAssignResource');
+                $api->post('reject', 'App\Http\Controllers\PartnerController@declineJob');
             });
         });
         $api->get('resources', 'App\Http\Controllers\PartnerController@getResources');
