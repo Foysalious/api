@@ -180,9 +180,14 @@ $api->version('v1', function ($api) {
         $api->group(['prefix' => 'jobs'], function ($api) {
             $api->get('/', 'App\Http\Controllers\PartnerJobController@index');
             $api->group(['prefix' => '{job}', 'middleware' => ['partner_job.auth']], function ($api) {
-                $api->get('/', 'App\Http\Controllers\PartnerJobController@show');
                 $api->post('accept', 'App\Http\Controllers\PartnerJobController@acceptJobAndAssignResource');
                 $api->post('reject', 'App\Http\Controllers\PartnerJobController@declineJob');
+            });
+        });
+        $api->group(['prefix' => 'orders'], function ($api) {
+            $api->get('/', 'App\Http\Controllers\PartnerOrderController@getOrders');
+            $api->group(['prefix' => '{order}', 'middleware' => ['partner_order.auth']], function ($api) {
+                $api->get('/', 'App\Http\Controllers\PartnerOrderController@show');
             });
         });
     });

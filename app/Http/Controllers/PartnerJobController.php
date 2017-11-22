@@ -52,12 +52,6 @@ class PartnerJobController extends Controller
         }
     }
 
-    public function show($partner, $job, Request $request)
-    {
-        $job = $request->job;
-        dd($job);
-    }
-
     public function acceptJobAndAssignResource($partner, $job, Request $request)
     {
         try {

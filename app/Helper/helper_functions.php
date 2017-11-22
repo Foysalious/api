@@ -198,6 +198,5 @@ if (!function_exists('removeSelectedFieldsFromModel')) {
         array_forget($model,'created_by_name');
         array_forget($model,'updated_by_name');
         array_forget($model,'remember_token');
-        return $model;
     }
 }

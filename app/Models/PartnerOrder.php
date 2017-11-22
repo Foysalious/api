@@ -72,20 +72,20 @@ class PartnerOrder extends Model
         return $this->order->code() . "-" . str_pad($this->partner_id, 4, '0', STR_PAD_LEFT);
     }
 
-    public function calculate()
+    public function calculate($price_only = false)
     {
-        $this->_calculateThisJobs();
+        $this->_calculateThisJobs($price_only);
         $this->totalDiscount = $this->jobDiscounts + $this->discount;
         $this->_calculateRoundingCutOff();
-        $this->grossAmount = $this->totalPrice - $this->discount  - $this->roundingCutOff;
+        $this->grossAmount = $this->totalPrice - $this->discount - $this->roundingCutOff;
         $this->paid = $this->sheba_collection + $this->partner_collection;
         $this->due = $this->grossAmount - $this->paid;
         $this->profitBeforeDiscount = $this->jobPrices - $this->totalCost;
         $this->totalDiscountedCost = ($this->totalDiscountedCost < 0) ? 0 : $this->totalDiscountedCost;
         $this->profit = $this->grossAmount - $this->totalCost;
-        $this->margin = $this->totalPrice ? ( ($this->totalPrice - $this->totalCost) * 100 ) / $this->totalPrice : 0;
-        $this->marginBeforeDiscount = $this->jobPrices ? ( ($this->jobPrices - $this->totalCost) * 100 ) / $this->jobPrices : 0;
-        $this->marginAfterDiscount = $this->grossAmount ? ( ($this->grossAmount - $this->totalCost) * 100 ) / $this->grossAmount : 0;
+        $this->margin = $this->totalPrice ? (($this->totalPrice - $this->totalCost) * 100) / $this->totalPrice : 0;
+        $this->marginBeforeDiscount = $this->jobPrices ? (($this->jobPrices - $this->totalCost) * 100) / $this->jobPrices : 0;
+        $this->marginAfterDiscount = $this->grossAmount ? (($this->grossAmount - $this->totalCost) * 100) / $this->grossAmount : 0;
         $this->spPayable = ($this->partner_collection < $this->totalCost) ? ($this->totalCost - $this->partner_collection) : 0;
         $this->shebaReceivable = ($this->sheba_collection < $this->profit) ? ($this->profit - $this->sheba_collection) : 0;
         $this->_setPaymentStatus()->_setFinanceDue();
@@ -100,12 +100,12 @@ class PartnerOrder extends Model
 
     private function _setFinanceDue()
     {
-        if($this->due) {
+        if ($this->due) {
             $this->financeDue = true;
         } else {
-            if($this->finance_collection == $this->paid) {
+            if ($this->finance_collection == $this->paid) {
                 $this->financeDue = false;
-            } else if($this->finance_collection == $this->profit && $this->partner_collection == $this->totalCost) {
+            } else if ($this->finance_collection == $this->profit && $this->partner_collection == $this->totalCost) {
                 $this->financeDue = false;
             } else {
                 $this->financeDue = true;
@@ -114,13 +114,13 @@ class PartnerOrder extends Model
         return $this;
     }
 
-    private function _calculateThisJobs()
+    private function _calculateThisJobs($price_only = false)
     {
         $this->_initializeStatusCounter();
         $this->_initializeTotalsToZero();
-        foreach($this->jobs as $job) {
-            $job = $job->calculate();
-            if($job->status != $this->jobStatuses['Cancelled']) {
+        foreach ($this->jobs as $job) {
+            $job = $job->calculate($price_only);
+            if ($job->status != $this->jobStatuses['Cancelled']) {
                 $this->_updateTotalPriceAndCost($job);
             }
             $this->jobStatusCounter[$job->status]++;
