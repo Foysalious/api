@@ -4,6 +4,29 @@ use App\Models\Group;
 use App\Models\Navigation;
 
 Route::get('/', function () {
+//    $profiles = \App\Models\Profile::where('fb_id', '<>', '')->whereRaw('MONTH(created_at) >= MONTH(CURRENT_DATE - INTERVAL 2 MONTH)')->orderBy('id', 'desc')->get();
+//    $fb_pro = [];
+//    foreach ($profiles as $profile) {
+//        $image = explode('//', $profile->pro_pic)[1];
+//        $final = explode('/', $image);
+//        $id = explode('_', end($final))[0];
+//        if (strlen($id) == 5) {
+//            array_push($fb_pro, $profile);
+//        }
+//    }
+//    $profileRepo = new \App\Repositories\ProfileRepository();
+//    foreach ($fb_pro as $profile) {
+//        $url = "graph.facebook.com/$profile->fb_id/picture?height=400&width=400";
+//        $ch = curl_init();
+//        curl_setopt($ch, CURLOPT_URL, $url);
+//        curl_setopt($ch, CURLOPT_HEADER, true);
+//        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true); // Must be set to true so that PHP follows any "Location:" header
+//        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+//        $a = curl_exec($ch); // $a will contain all headers
+//        $url = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL); // This is what you need, it will return you the last effective URL
+//        $profile->pro_pic = $profileRepo->uploadImage($profile, $url, 'images/profiles/');
+//        $profile->update();
+//    }
     return ['code' => 200, 'msg' => "Success. This project will hold the api's"];
 });
 $api = app('Dingo\Api\Routing\Router');
@@ -175,7 +198,7 @@ $api->version('v1', function ($api) {
     $api->group(['prefix' => 'resources/{resource}', 'middleware' => ['resource.auth']], function ($api) {
         $api->group(['prefix' => 'jobs'], function ($api) {
             $api->get('/', 'App\Http\Controllers\ResourceJobController@index');
-            $api->group(['prefix' => '{job}','middleware' => ['resource_job.auth']], function ($api) {
+            $api->group(['prefix' => '{job}', 'middleware' => ['resource_job.auth']], function ($api) {
                 $api->get('/', 'App\Http\Controllers\ResourceJobController@show');
                 $api->put('/', 'App\Http\Controllers\ResourceJobController@update');
                 $api->get('others', 'App\Http\Controllers\ResourceJobController@otherJobs');
