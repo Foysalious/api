@@ -65,14 +65,14 @@ class FacebookController extends Controller
                 return response()->json(['code' => 500, 'msg' => $msg]);
             }
             //validate access token
-            if ($this->facebookRepository->verifyAccessToken($request->access_token, $request->fb_id)) {
+            if ($fb_profile_image_url = $this->facebookRepository->verifyAccessToken($request->access_token, $request->fb_id)) {
                 $avatar = $this->profileRepository->getAvatar($request->from);
                 $profile = $this->profileRepository->ifExist($request->input('fb_id'), 'fb_id');
                 if ($profile == false) {
                     $email_profile = $this->profileRepository->ifExist($request->fb_email, 'email');
                     if ($email_profile == false) {
                         $profile = $this->profileRepository->registerFacebook($request->all());
-                        $profile->pro_pic = $this->profileRepository->uploadImage($profile, $request->fb_picture, 'images/profiles/');
+                        $profile->pro_pic = $this->profileRepository->uploadImage($profile, $fb_profile_image_url, 'images/profiles/');
                         $profile->update();
                     } else {
                         $profile = $this->profileRepository->integrateFacebook($email_profile, $request);

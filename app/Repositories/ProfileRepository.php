@@ -111,7 +111,7 @@ class ProfileRepository
 
     public function uploadImage($profile, $photo, $folder, $extension = ".jpg")
     {
-        $filename = $profile->id . '_profile_image' . $extension;
+        $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id . $extension;
         $s3 = Storage::disk('s3');
         $s3->put($folder . $filename, file_get_contents($photo), 'public');
         return env('S3_URL') . $folder . $filename;
