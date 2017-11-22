@@ -80,6 +80,7 @@ class FacebookController extends Controller
                 }
                 if ($profile->$avatar == null) {
                     $this->profileRepository->registerAvatarByFacebook($avatar, $request, $profile);
+                    $profile = Profile::find($profile->id);
                 }
                 $info = $this->profileRepository->getProfileInfo($avatar, $profile);
                 if ($info != false) {
