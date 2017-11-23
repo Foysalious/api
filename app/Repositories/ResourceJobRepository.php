@@ -13,7 +13,14 @@ class ResourceJobRepository
 {
     public function rearrange($jobs)
     {
-        $process_job = $jobs->where('status', 'Process')->values()->all();
+        $process_job = $jobs->where('status', 'Process');
+        $process_job = $process_job->map(function ($item) {
+            return array_add($item, 'preferred_time_priority', constants('JOB_PREFERRED_TIMES_PRIORITY')[$item->preferred_time]);
+        });
+        $process_job = $process_job->sortBy(function ($job) {
+            return sprintf('%-12s%s', $job->schedule_date, $job->preferred_time_priority);
+        })->values()->all();
+
         $served_jobs = $this->_getLastServedJobOfPartnerOrder($jobs->where('status', 'Served')->values()->all());
         $served_jobs = collect($served_jobs)->filter(function ($job) {
             return $job->partner_order->payment_method != 'bad-debt';
