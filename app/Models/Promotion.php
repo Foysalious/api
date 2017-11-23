@@ -16,4 +16,9 @@ class Promotion extends Model
     {
         return $this->belongsTo(Voucher::class);
     }
+
+    public function scopeValid($query)
+    {
+        return $query->where('is_valid', 1);
+    }
 }

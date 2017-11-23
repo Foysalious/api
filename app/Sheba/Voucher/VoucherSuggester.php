@@ -87,7 +87,7 @@ class VoucherSuggester
 
     private function getValidPromos()
     {
-        foreach ($this->customer->promotions as $promotion) {
+        foreach ($this->customer->promotions()->valid()->get() as $promotion) {
             if (!$promotion->is_valid) {
                 continue;
             }
