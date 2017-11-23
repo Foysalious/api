@@ -55,7 +55,6 @@ class Job extends Model
 
     public function calculate()
     {
-        //$this->commissionRate = $this->partnerOrder->partner->categories()->find($this->service->category->id)->pivot->commission;
         $costRate = 1 - ($this->commission_rate / 100);
 
         $this->servicePrice = formatTaka($this->service_unit_price * $this->service_quantity);
