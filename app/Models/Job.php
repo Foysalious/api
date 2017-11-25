@@ -55,7 +55,6 @@ class Job extends Model
 
     public function calculate()
     {
-        //$this->commissionRate = $this->partnerOrder->partner->categories()->find($this->service->category->id)->pivot->commission;
         $costRate = 1 - ($this->commission_rate / 100);
 
         $this->servicePrice = formatTaka($this->service_unit_price * $this->service_quantity);
@@ -66,7 +65,7 @@ class Job extends Model
         $this->totalPriceWithoutVat = formatTaka($this->servicePrice + $this->materialPrice);
         //$this->totalPrice = formatTaka($this->totalPriceWithoutVat + $this->vat); // later
         $this->totalPrice = formatTaka($this->totalPriceWithoutVat);
-        $this->grossPrice = formatTaka($this->totalPrice - $this->discount);
+        $this->grossPrice = ($this->totalPrice > $this->discount) ? formatTaka($this->totalPrice - $this->discount) : 0;
         $this->service_unit_price = formatTaka($this->service_unit_price);
         $this->discountContributionSheba = formatTaka(($this->discount * $this->sheba_contribution) / 100);
         $this->discountContributionPartner = formatTaka(($this->discount * $this->partner_contribution) / 100);
