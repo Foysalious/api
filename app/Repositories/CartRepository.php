@@ -4,7 +4,9 @@ namespace App\Repositories;
 
 
 use App\Models\PartnerService;
+use App\Models\PartnerServiceDiscount;
 use App\Models\Quotation;
+use Carbon\Carbon;
 
 class CartRepository
 {
@@ -104,7 +106,7 @@ class CartRepository
         $partner = $partner_service->partner;
         $partner['prices'] = $price;
         $partner['discount'] = $partner_service->discount();
-        return $this->discountRepository->addDiscountToPartnerForService($partner, $partner_service->discount());
+        return $this->discountRepository->addDiscountToPartnerForService($partner, $partner['discount']);
     }
 
     private function _validPartnerService($item)
@@ -143,6 +145,28 @@ class CartRepository
             }
             return $this->_validatePartnerPrice($price, $partner_service);
         }
+
+    }
+
+    public function hasDiscount($items)
+    {
+        $now = Carbon::now();
+        $discounts = PartnerServiceDiscount::where(
+            [
+                ['start_date', '<=', $now],
+                ['end_date', '>=', $now],
+            ])
+            ->whereIn('partner_service_id', function ($q) use ($items) {
+                $q->select('id')->from('partner_service');
+                foreach ($items as $item) {
+                    $q->where([
+                        ['service_id', $item->service->id],
+                        ['partner_id', $item->partner->id]
+                    ]);
+                }
+            })
+            ->get();
+        return count($discounts) > 0 ? true : false;
 
     }
 
