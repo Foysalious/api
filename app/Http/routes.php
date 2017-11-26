@@ -170,6 +170,7 @@ $api->version('v1', function ($api) {
         });
     });
     $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
+        $api->get('order-graph','App\Http\Controllers\PartnerOrderController@getOrderGraph');
         $api->group(['prefix' => 'resources'], function ($api) {
             $api->get('/', 'App\Http\Controllers\PartnerController@getResources');
             $api->group(['prefix' => '{resource}', 'middleware' => ['partner_resource.auth']], function ($api) {

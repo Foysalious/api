@@ -3,8 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Repositories\PartnerRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
-
+use Validator;
 use App\Http\Requests;
 
 class PartnerOrderController extends Controller
@@ -24,7 +25,9 @@ class PartnerOrderController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $partner = $request->partner;
             $jobs = (new  PartnerRepository($partner))->jobs('new');
-            $jobsGroupByPartnerOrder = $jobs->groupBy('partner_order_id')->sort();
+            $jobsGroupByPartnerOrder = $jobs->groupBy('partner_order_id')->sortByDesc(function ($item, $key) {
+                return $key;
+            });
             $final_orders = [];
             foreach ($jobsGroupByPartnerOrder as $jobs) {
                 $order = array(
@@ -64,7 +67,10 @@ class PartnerOrderController extends Controller
         list($offset, $limit) = calculatePagination($request);
         $partner->load(['partner_orders' => function ($q) use ($offset, $limit, $request) {
             if ($request->status == 'ongoing') {
-                $q->where('closed_at', null);
+                $q->where([
+                    ['cancelled_at', null],
+                    ['closed_and_paid_at', null]
+                ]);
             } elseif ($request->status == 'history') {
                 $q->where('closed_and_paid_at', '<>', null);
             }
@@ -83,6 +89,49 @@ class PartnerOrderController extends Controller
         } else {
             return api_response($request, null, 404);
         }
+    }
+
+    public function getOrderGraph($partner, Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'month' => 'sometimes|required|integer|between:1,12',
+            'year' => 'sometimes|required|integer|min:2017'
+        ]);
+        if ($validator->fails()) {
+            $errors = $validator->errors()->all()[0];
+            return api_response($request, $errors, 400, ['message' => $errors]);
+        }
+        $partner = $request->partner;
+        $month = null;
+        $year = null;
+        if ($request->has('month')) {
+            $month = $request->month;
+        }
+        if ($request->has('year')) {
+            $year = $request->year;
+        }
+        $end = Carbon::create($year, $month, null)->endOfMonth();
+        $start = Carbon::create($year, $month, null)->startOfMonth();
+        $breakdown = collect(array_fill(1, Carbon::create($year, $month, null)->daysInMonth, 0));
+        $partner->load(['partner_orders' => function ($q) use ($start, $end) {
+            $q->where([
+                ['created_at', '<=', $end],
+                ['created_at', '>=', $start],
+                ['cancelled_at', null]
+            ]);
+        }]);
+        $partner_orders = $partner->partner_orders;
+        $day_orders = $partner_orders->groupBy('created_at.day')
+            ->map(function ($item, $key) {
+                return $item->count();
+            })
+            ->sortBy(function ($item, $key) {
+                return $key;
+            });
+        $breakdown = $breakdown->map(function ($item, $key) use ($day_orders) {
+            return $day_orders->has($key) ? $day_orders->get($key) : 0;
+        });
+        return api_response($request, $partner_orders, 200, ['breakdown' => $breakdown]);
     }
 
     private function _getInfo($partner_order)
