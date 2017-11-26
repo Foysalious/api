@@ -29,6 +29,7 @@ class PartnerRepository
             $resource['completed'] = $resource->jobs->where('status', constants('JOB_STATUSES')['Served'])->count();
             $resource['name'] = $resource->profile->name;
             $resource['mobile'] = $resource->profile->mobile;
+            $resource['picture'] = $resource->profile->pro_pic;
             $resource['rating'] = $resource->reviews->avg('rating') != null ? round($resource->reviews->avg('rating'), 2) : null;
             $this->serviceRepo->removeRelationsFromModel($resource, $resource->getRelations());
         }
