@@ -52,6 +52,7 @@ class PartnerJobController extends Controller
         }
     }
 
+
     public function acceptJobAndAssignResource($partner, $job, Request $request)
     {
         try {

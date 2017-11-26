@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Repositories\PartnerRepository;
 use Illuminate\Http\Request;
 
 use App\Http\Requests;
@@ -15,6 +16,46 @@ class PartnerOrderController extends Controller
         removeRelationsFromModel($partner_order);
         removeSelectedFieldsFromModel($partner_order);
         return api_response($request, $partner_order, 200, ['order' => $partner_order]);
+    }
+
+    public function newOrders($partner, Request $request)
+    {
+        try {
+            list($offset, $limit) = calculatePagination($request);
+            $partner = $request->partner;
+            $jobs = (new  PartnerRepository($partner))->jobs('new');
+            $jobsGroupByPartnerOrder = $jobs->groupBy('partner_order_id')->sort();
+            $final_orders = [];
+            foreach ($jobsGroupByPartnerOrder as $jobs) {
+                $order = array(
+                    'customer_name' => $jobs[0]->partner_order->order->delivery_name,
+                    'location_name' => $jobs[0]->partner_order->order->location->name,
+                    'total_job' => count($jobs),
+                    'created_at' => $jobs[0]->partner_order->created_at->timestamp,
+                    'created_at_readable' => $jobs[0]->partner_order->created_at->diffForHumans(),
+                    'code' => $jobs[0]->partner_order->code()
+                );
+                $jobs = $jobs->sortByDesc('created_at');
+                $jobs = $jobs->each(function ($job) {
+                    $job->calculate();
+                    $job['total_cost'] = $job->totalCost;
+                    $job['location'] = $job->partner_order->order->location->name;
+                    $job['service_unit_price'] = (double)$job->service_unit_price;
+                    $job['discount'] = (double)$job->discount;
+                    $job['resource_picture'] = $job->resource != null ? $job->resource->profile->pro_pic : null;
+                    $job['resource_mobile'] = $job->resource != null ? $job->resource->profile->mobile : null;
+                    $job['rating'] = $job->review != null ? $job->review->rating : null;
+                    removeRelationsFromModel($job);
+                })->values()->all();
+                $jobs = array_slice($jobs, $offset, $limit);
+                $order['jobs'] = $jobs;
+                array_push($final_orders, $order);
+            }
+            return api_response($request, $jobs, 200, ['orders' => $final_orders]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+
     }
 
     public function getOrders($partner, Request $request)
