@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Repositories\CartRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Sheba\Voucher\PromotionList;
@@ -32,6 +33,9 @@ class PromotionController extends Controller
 
     public function suggestPromo($customer, Request $request)
     {
+        if ((new CartRepository())->hasDiscount(json_decode($request->cart)->items)) {
+            return api_response($request, null, 404, ['result' => 'Discount available for service!']);
+        }
         $voucher_suggest = new VoucherSuggester($request->customer, $request->cart, $request->location, $request->has('sales_channel') ? $request->sales_channel : 'Web');
         $promo = $voucher_suggest->suggest();
         if ($promo != null) {

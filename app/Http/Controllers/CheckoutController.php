@@ -165,6 +165,9 @@ class CheckoutController extends Controller
             $data = json_decode($request->data);
             $sales_channel = property_exists($data, 'sales_channel') ? $data->sales_channel : "Web";
             $cart = $data->cart;
+            if ($this->cartRepository->hasDiscount($cart->items)) {
+                return api_response($request, null, 404, ['result' => 'Discount available for service!']);
+            }
             $amount = [];
             $applied = false;
             foreach ($cart->items as $item) {
