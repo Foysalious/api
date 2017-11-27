@@ -153,6 +153,8 @@ class PartnerController extends Controller
             $resource_ids = $partner->resources->pluck('id')->unique();
             $assigned_resource_ids = $jobs->whereIn('status', [constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Schedule_Due']])->pluck('resource_id')->unique();
             $unassigned_resource_ids = $resource_ids->diff($assigned_resource_ids);
+            $weekly = (new SalesGrowth($partner))->getWeekData();
+            $breakdown = (new SalesGrowth($partner))->get();
             $info = array(
                 'schedule_due' => $jobs->where('status', constants('JOB_STATUSES')['Schedule_Due'])->count(),
                 'todays_jobs' => $jobs->where('schedule_date', Carbon::now()->toDateString())->count(),
@@ -163,6 +165,10 @@ class PartnerController extends Controller
                 'total_resources' => $resource_ids->count(),
                 'assigned_resources' => $assigned_resource_ids->count(),
                 'unassigned_resources' => $unassigned_resource_ids->count(),
+                'balance' => (double)$partner->wallet,
+                'today' => $weekly[date('d')],
+                'week' => $weekly->sum(),
+                'month' => $breakdown->sum()
             );
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {

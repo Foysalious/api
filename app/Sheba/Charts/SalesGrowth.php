@@ -49,6 +49,16 @@ class SalesGrowth
         return $this->getData($this->month, $this->year, $this->location, $this->service, $this->category, $this->resource);
     }
 
+    public function getWeekData()
+    {
+        Carbon::setWeekStartsAt(Carbon::SATURDAY);
+        Carbon::setWeekEndsAt(Carbon::FRIDAY);
+        $start_time = Carbon::now()->startOfWeek();
+        $end_time = Carbon::now()->endOfWeek();
+        $this->processOrders($data, "day", $start_time, $end_time, $this->location, $this->service, $this->category, $this->resource);
+        return $this->_getBreakdown($data);
+    }
+
     /**
      * @param null $month
      * @param null $year
@@ -67,32 +77,47 @@ class SalesGrowth
 
         if ($month == 0 && $year != 0) {
             for ($i = 1; $i <= 12; $i++) {
-                $this->processOrders($data, "month", $i, $year, $location, $service, $category, $resource);
+                $this->processOrderWithMonth($data, 'month', $i, $year, $location, $service, $category, $resource);
             }
 //            $data = $this->makeChartDataMonthWise($data);
         } else if ($month && $year) {
-            $this->processOrders($data, "day", $month, $year, $location, $service, $category, $resource);
+            $this->processOrderWithMonth($data, 'day', $month, $year, $location, $service, $category, $resource);
 //            $data = $this->makeChartDataDayWise($data, $month, $year);
         }
-        return $this->_getBreakdown($data);;
+        return $this->_getBreakdown($data);
+    }
+
+    /**
+     * @param $month
+     * @param $year
+     * @return array
+     */
+    private function getStartEndTime($month, $year)
+    {
+        $startEndDate = findStartEndDateOfAMonth($month, $year);
+        return array($startEndDate['start_time'], $startEndDate['end_time']);
+    }
+
+    private function processOrderWithMonth(&$data, $base, $month, $year, $location, $service, $category, $resource)
+    {
+        list($start_time, $end_time) = $this->getStartEndTime($month, $year);
+        $this->processOrders($data, $base, $start_time, $end_time, $location, $service, $category, $resource);
     }
 
     /**
      * @param $data
      * @param $base
-     * @param $month
-     * @param $year
+     * @param $start_time
+     * @param $end_time
      * @param $location
      * @param $service
      * @param $category
      * @param $resource
+     * @internal param $month
+     * @internal param $year
      */
-    private function processOrders(&$data, $base, $month, $year, $location, $service, $category, $resource)
+    private function processOrders(&$data, $base, $start_time, $end_time, $location, $service, $category, $resource)
     {
-        $startEndDate = findStartEndDateOfAMonth($month, $year);
-        $start_time = $startEndDate['start_time'];
-        $end_time = $startEndDate['end_time'];
-
         PartnerOrder::with('order.location', 'jobs.usedMaterials')->where('partner_id', $this->partner->id)->whereBetween('closed_at', [$start_time, $end_time])
             ->get()->filter(function ($partner_order) use ($location, $service, $category, $resource) {
                 if (!empty($location) && ($partner_order->order->location->name != $location)) return false;
@@ -108,8 +133,6 @@ class SalesGrowth
                     ]);
                     return $partner_order->jobs->count();
                 };
-
-
                 return true;
             })->each(function ($partner_order) use (&$data, $start_time, $end_time, $base) {
                 $this->incrementTempData($data, $partner_order->closed_at, $base, $partner_order->calculate($price_only = true)->totalCost);
@@ -167,6 +190,9 @@ class SalesGrowth
     private function _getBreakdown($data)
     {
         $breakdown = collect(array_fill(1, Carbon::create($this->year, $this->month, null)->daysInMonth, 0));
+        if (empty($data)) {
+            return $breakdown;
+        }
         $collection = collect($data['day'])->map(function ($item, $key) {
             return (double)$item;
         })->sortBy(function ($item, $key) {
