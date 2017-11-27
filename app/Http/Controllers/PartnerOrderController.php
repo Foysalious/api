@@ -12,10 +12,24 @@ class PartnerOrderController extends Controller
 {
     public function show($partner, Request $request)
     {
-        $partner_order = $request->partner_order->load(['order', 'jobs.resource.profile']);
+        $partner_order = $request->partner_order->load(['order', 'jobs' => function ($q) {
+            $q->info()->with(['usedMaterials' => function ($q) {
+                $q->select('id', 'job_id', 'material_name', 'material_price');
+            }, 'resource.profile']);
+        }]);
         $this->_getInfo($partner_order);
+        $jobs = $partner_order->jobs->each(function ($job) {
+            $job['service_unit_price'] = (double)$job->service_unit_price;
+            $job['discount'] = (double)$job->discount;
+            $job['code'] = $job->code();
+            $job['resource_picture'] = $job->resource != null ? $job->resource->profile->pro_pic : null;
+            $job['resource_mobile'] = $job->resource != null ? $job->resource->profile->mobile : null;
+            $job['materials'] = $job->usedMaterials;
+            removeRelationsFromModel($job);
+        });
         removeRelationsFromModel($partner_order);
         removeSelectedFieldsFromModel($partner_order);
+        $partner_order['jobs'] = $jobs;
         return api_response($request, $partner_order, 200, ['order' => $partner_order]);
     }
 
@@ -102,7 +116,9 @@ class PartnerOrderController extends Controller
     {
         $partner_order->calculate();
         $partner_order['code'] = $partner_order->code();
-        $partner_order['customer_name'] = $partner_order->order->customer->profile->name;
+        $partner_order['customer_name'] = $partner_order->order->delivery_name;
+        $partner_order['customer_mobile'] = $partner_order->order->delivery_mobile;
+        $partner_order['address'] = $partner_order->order->delivery_address;
         $partner_order['location'] = $partner_order->order->location->name;
         $partner_order['discount'] = (double)$partner_order->discount;
         $partner_order['sheba_collection'] = (double)$partner_order->sheba_collection;
