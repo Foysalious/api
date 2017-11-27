@@ -8,6 +8,7 @@ use App\Repositories\PartnerRepository;
 use App\Repositories\ResourceJobRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 use DB;
@@ -17,7 +18,6 @@ class PartnerController extends Controller
     private $serviceRepository;
     private $reviewRepository;
     private $resourceJobRepository;
-    private $partnerRepo;
 
     public function __construct()
     {
@@ -121,14 +121,50 @@ class PartnerController extends Controller
     {
         try {
             list($offset, $limit) = calculatePagination($request);
-            $this->partnerRepo = new PartnerRepository($request->partner);
-            $resources = $this->partnerRepo->resources();
+            $partnerRepo = new PartnerRepository($request->partner);
+            $resources = $partnerRepo->resources();
             if (count($resources) > 0) {
                 return api_response($request, $resources, 200, ['resources' => array_slice($resources->sortBy('name')->values()->all(), $offset, $limit)]);
             } else {
                 return api_response($request, null, 404);
             }
         } catch (\Exception $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getDashboardInfo($partner, Request $request)
+    {
+        try {
+            $partner = $request->partner;
+            $statuses = array(
+                constants('JOB_STATUSES')['Accepted'],
+                constants('JOB_STATUSES')['Schedule_Due'],
+                constants('JOB_STATUSES')['Process'],
+                constants('JOB_STATUSES')['Served'],
+            );
+            $partner->load(['resources' => function ($q) {
+                $q->verified()->type('Handyman');
+            }, 'jobs' => function ($q) use ($statuses) {
+                $q->info()->status($statuses)->with('resource');
+            }]);
+            $jobs = $partner->jobs;
+            $resource_ids = $partner->resources->pluck('id')->unique();
+            $assigned_resource_ids = $jobs->whereIn('status', [constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Schedule_Due']])->pluck('resource_id')->unique();
+            $unassigned_resource_ids = $resource_ids->diff($assigned_resource_ids);
+            $info = array(
+                'schedule_due' => $jobs->where('status', constants('JOB_STATUSES')['Schedule_Due'])->count(),
+                'todays_jobs' => $jobs->where('schedule_date', Carbon::now()->toDateString())->count(),
+                'tomorrows_jobs' => $jobs->where('schedule_date', Carbon::tomorrow()->toDateString())->count(),
+                'accepted_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Accepted'])->count(),
+                'process_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Process'])->count(),
+                'served_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Served'])->count(),
+                'total_resources' => $resource_ids->count(),
+                'assigned_resources' => $assigned_resource_ids->count(),
+                'unassigned_resources' => $unassigned_resource_ids->count(),
+            );
+            return api_response($request, $info, 200, ['info' => $info]);
+        } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
     }

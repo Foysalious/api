@@ -28,7 +28,9 @@ class PartnerJobController extends Controller
             }
             list($offset, $limit) = calculatePagination($request);
             $partner = $request->partner;
-            $jobs = (new  PartnerRepository($partner))->jobs($request->status);
+            $partnerRepo = new PartnerRepository($partner);
+            $statuses = $partnerRepo->resolveStatus($request->status);
+            $jobs = $partnerRepo->jobs($statuses);
             if (count($jobs) > 0) {
                 $jobs = $jobs->sortByDesc('created_at');
                 $jobs = $jobs->each(function ($job) {

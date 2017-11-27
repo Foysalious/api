@@ -36,16 +36,15 @@ class PartnerRepository
         return $this->partner->resources;
     }
 
-    public function jobs($status)
+    public function jobs(Array $statuses)
     {
-        $status = $this->_resolveStatus($status);
-        $this->partner->load(['jobs' => function ($q) use ($status) {
-            $q->info()->status($status)->with(['resource.profile', 'review', 'partner_order.order.location']);
+        $this->partner->load(['jobs' => function ($q) use ($statuses) {
+            $q->info()->status($statuses)->with(['resource.profile', 'review', 'partner_order.order.location']);
         }]);
         return $this->partner->jobs;
     }
 
-    private function _resolveStatus($status)
+    public function resolveStatus($status)
     {
         if ($status == 'new') {
             return array(constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']);
