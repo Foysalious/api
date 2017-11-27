@@ -12,6 +12,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 use DB;
+use Sheba\Charts\SalesGrowth;
 
 class PartnerController extends Controller
 {
@@ -168,5 +169,6 @@ class PartnerController extends Controller
             return api_response($request, null, 500);
         }
     }
+
 
 }
