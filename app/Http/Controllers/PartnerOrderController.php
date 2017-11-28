@@ -118,7 +118,7 @@ class PartnerOrderController extends Controller
             }
             $partner = $request->partner;
             list($offset, $limit) = calculatePagination($request);
-            $partner->load(['partner_orders' => function ($q) use ($offset, $limit, $request, $sort, $field) {
+            $partner->load(['partner_orders' => function ($q) use ($request, $sort, $field) {
                 if ($request->status == 'ongoing') {
                     $q->where([
                         ['cancelled_at', null],
@@ -127,7 +127,7 @@ class PartnerOrderController extends Controller
                 } elseif ($request->status == 'history') {
                     $q->where('closed_and_paid_at', '<>', null);
                 }
-                $q->orderBy($field, $sort)->skip($offset)->take($limit)->with(['jobs', 'order' => function ($q) {
+                $q->orderBy($field, $sort)->with(['jobs.usedMaterials', 'order' => function ($q) {
                     $q->with(['customer.profile', 'location']);
                 }]);
             }]);
@@ -136,6 +136,9 @@ class PartnerOrderController extends Controller
                 removeRelationsFromModel($partner_order);
                 removeSelectedFieldsFromModel($partner_order);
             });
+            $partner_orders = array_slice($partner_orders->reject(function ($item, $key) {
+                return $item->order_status == 'Open';
+            })->toArray(), $offset, $limit);
             if (count($partner_orders) > 0) {
                 return api_response($request, $partner_orders, 200, ['orders' => $partner_orders]);
             } else {
