@@ -18,6 +18,8 @@ class PartnerOrderController extends Controller
             }, 'resource.profile']);
         }]);
         $this->_getInfo($partner_order);
+        removeRelationsFromModel($partner_order);
+        removeSelectedFieldsFromModel($partner_order);
         $jobs = $partner_order->jobs->each(function ($job) {
             $this->_getJobInfo($job);
         });
@@ -73,13 +75,15 @@ class PartnerOrderController extends Controller
                 $final_orders->push($order);
             }
             if (count($final_orders) > 0) {
-                $sorted_jobs = $all_jobs->$sort('schedule_date');
                 if ($field == 'created_at') {
                     $final_orders = $final_orders->$sort('created_at')->toArray();
                 } else {
-                    $final_orders = $final_orders->$sort(function ($item, $key) use ($sort, $field) {
-                        return min($item->get('jobs')->pluck($field)->toArray());
-                    })->toArray();
+                    $sorted_jobs = $all_jobs->$sort($field);
+                    $final = collect();
+                    foreach ($sorted_jobs as $job) {
+                        $final->push($final_orders->where('id', $job->partner_order_id)->first());
+                    }
+                    $final_orders = $final->unique('id')->toArray();
                 }
                 $final_orders = array_slice($final_orders, $offset, $limit);
                 return api_response($request, $final_orders, 200, ['orders' => $final_orders]);
@@ -113,6 +117,8 @@ class PartnerOrderController extends Controller
             }]);
             $partner_orders->each(function ($partner_order, $key) {
                 $this->_getInfo($partner_order);
+                removeRelationsFromModel($partner_order);
+                removeSelectedFieldsFromModel($partner_order);
             });
             if (count($partner_orders) > 0) {
                 return api_response($request, $partner_orders, 200, ['orders' => $partner_orders]);
@@ -142,8 +148,6 @@ class PartnerOrderController extends Controller
         $partner_order['discount'] = (double)$partner_order->discount;
         $partner_order['total_jobs'] = count($partner_order->jobs);
         $partner_order['order_status'] = $partner_order->status;
-        removeRelationsFromModel($partner_order);
-        removeSelectedFieldsFromModel($partner_order);
     }
 
     private function _getJobInfo($job)
