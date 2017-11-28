@@ -39,7 +39,9 @@ class PartnerRepository
     public function jobs(Array $statuses)
     {
         $this->partner->load(['jobs' => function ($q) use ($statuses) {
-            $q->info()->status($statuses)->with(['resource.profile', 'review', 'partner_order.order.location']);
+            $q->info()->status($statuses)->with(['usedMaterials' => function ($q) {
+                $q->select('id', 'job_id', 'material_name', 'material_price');
+            }, 'resource.profile', 'review', 'partner_order.order.location']);
         }]);
         return $this->partner->jobs;
     }

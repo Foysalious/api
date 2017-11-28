@@ -14,10 +14,15 @@ class ResourceRepository
         $this->resource = $resource instanceof Resource ? $resource : Resource::find($resource);
     }
 
-    public function getPartner()
+    public function getPartner($avatar)
     {
-        $partner = $this->resource->firstPartner();
-        return count($partner) > 0 ? collect($partner)->only(['id', 'name', 'sub_domain', 'mobile', 'email']) : null;
+        $partners = $this->resource->partners->unique();
+        foreach ($partners as $partner){
+            if ($avatar->isManager($partner)) {
+                return collect($partner)->only(['id', 'name', 'sub_domain', 'mobile', 'email']);
+            }
+        }
+        return null;
     }
 
 }
