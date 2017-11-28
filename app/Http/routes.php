@@ -196,6 +196,7 @@ $api->version('v1', function ($api) {
             $api->group(['prefix' => '{order}', 'middleware' => ['partner_order.auth']], function ($api) {
                 $api->get('/', 'App\Http\Controllers\PartnerOrderController@show');
                 $api->get('bills', 'App\Http\Controllers\PartnerOrderController@getBills');
+                $api->get('logs', 'App\Http\Controllers\PartnerOrderController@getLogs');
             });
         });
     });

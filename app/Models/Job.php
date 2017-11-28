@@ -110,6 +110,16 @@ class Job extends Model
         return $this->hasOne(JobPartnerChangeLog::class);
     }
 
+    public function statusChangeLog()
+    {
+        return $this->hasMany(JobStatusChangeLog::class);
+    }
+
+    public function updateLogs()
+    {
+        return $this->hasMany(JobUpdateLog::class);
+    }
+
     public function scopeInfo($query)
     {
         return $query->select('jobs.id', 'jobs.discount', 'jobs.created_at', 'resource_id', 'schedule_date', 'delivered_date', 'preferred_time', 'service_name', 'status', 'service_quantity', 'service_unit_price', 'service_id', 'partner_order_id');

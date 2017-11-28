@@ -6,6 +6,7 @@ use App\Repositories\PartnerRepository;
 use App\Repositories\ResourceJobRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Sheba\Logs\JobLogs;
 use Validator;
 use App\Http\Requests;
 
@@ -160,9 +161,9 @@ class PartnerOrderController extends Controller
             }]);
             $jobs = (new ResourceJobRepository())->addJobInformationForAPI($partner_order->jobs);
             $partner_order->calculate();
-            $partner_order['paid_amount'] =(double) $partner_order->paid;
-            $partner_order['total'] =(double) $partner_order->totalPrice;
-            $partner_order['due_amount'] =(double) $partner_order->due;
+            $partner_order['paid_amount'] = (double)$partner_order->paid;
+            $partner_order['total'] = (double)$partner_order->totalPrice;
+            $partner_order['due_amount'] = (double)$partner_order->due;
             $partner_order['order_status'] = $partner_order->status;
             removeRelationsFromModel($partner_order);
             removeSelectedFieldsFromModel($partner_order);
@@ -171,6 +172,17 @@ class PartnerOrderController extends Controller
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
+    }
+
+    public function getLogs($partner, Request $request)
+    {
+        $jobs = $request->partner_order->jobs;
+        $all_logs=collect();
+        foreach ($jobs as $job) {
+            $all_logs->push((new JobLogs($job))->all());
+        }
+        dd($all_logs);
+
     }
 
     private function _getInfo($partner_order)
