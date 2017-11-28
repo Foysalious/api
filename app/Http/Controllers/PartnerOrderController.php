@@ -22,6 +22,8 @@ class PartnerOrderController extends Controller
         removeSelectedFieldsFromModel($partner_order);
         $jobs = $partner_order->jobs->each(function ($job) {
             $this->_getJobInfo($job);
+            removeSelectedFieldsFromModel($job);
+            removeRelationsFromModel($job);
         });
         $partner_order['jobs'] = $jobs->sortBy('schedule_date');
         return api_response($request, $partner_order, 200, ['order' => $partner_order]);
@@ -37,11 +39,6 @@ class PartnerOrderController extends Controller
                 $errors = $validator->errors()->all()[0];
                 return api_response($request, $errors, 400, ['message' => $errors]);
             }
-            list($offset, $limit) = calculatePagination($request);
-            $partner = $request->partner;
-            $partnerRepo = new PartnerRepository($partner);
-            $statuses = $partnerRepo->resolveStatus('new');
-            $jobs = $partnerRepo->jobs($statuses);
             $sort = 'sortByDesc';
             $field = 'created_at';
             if ($request->has('sort')) {
@@ -54,6 +51,11 @@ class PartnerOrderController extends Controller
                     $sort = 'sortBy';
                 }
             }
+            list($offset, $limit) = calculatePagination($request);
+            $partner = $request->partner;
+            $partnerRepo = new PartnerRepository($partner);
+            $statuses = $partnerRepo->resolveStatus('new');
+            $jobs = $partnerRepo->jobs($statuses);
             $jobsGroupByPartnerOrder = $jobs->groupBy('partner_order_id');
             $final_orders = collect();
             $all_jobs = collect();
@@ -99,9 +101,24 @@ class PartnerOrderController extends Controller
     public function getOrders($partner, Request $request)
     {
         try {
+            $validator = Validator::make($request->all(), [
+                'sort' => 'sometimes|required|string|in:created_at,created_at:asc,created_at:desc'
+            ]);
+            if ($validator->fails()) {
+                $errors = $validator->errors()->all()[0];
+                return api_response($request, $errors, 400, ['message' => $errors]);
+            }
+            $sort = 'desc';
+            $field = 'created_at';
+            if ($request->has('sort')) {
+                $explode = explode(':', $request->get('sort'));
+                if (isset($explode[1])) {
+                    $sort = $explode[1];
+                }
+            }
             $partner = $request->partner;
             list($offset, $limit) = calculatePagination($request);
-            $partner->load(['partner_orders' => function ($q) use ($offset, $limit, $request) {
+            $partner->load(['partner_orders' => function ($q) use ($offset, $limit, $request, $sort, $field) {
                 if ($request->status == 'ongoing') {
                     $q->where([
                         ['cancelled_at', null],
@@ -110,12 +127,11 @@ class PartnerOrderController extends Controller
                 } elseif ($request->status == 'history') {
                     $q->where('closed_and_paid_at', '<>', null);
                 }
-                $q->orderBy('id', 'desc')->skip($offset)->take($limit);
+                $q->orderBy($field, $sort)->skip($offset)->take($limit)->with(['jobs', 'order' => function ($q) {
+                    $q->with(['customer.profile', 'location']);
+                }]);
             }]);
-            $partner_orders = $partner->partner_orders->load(['jobs', 'order' => function ($q) {
-                $q->with(['customer.profile', 'location']);
-            }]);
-            $partner_orders->each(function ($partner_order, $key) {
+            $partner_orders = $partner->partner_orders->each(function ($partner_order, $key) {
                 $this->_getInfo($partner_order);
                 removeRelationsFromModel($partner_order);
                 removeSelectedFieldsFromModel($partner_order);
@@ -158,8 +174,8 @@ class PartnerOrderController extends Controller
         $job['service_unit_price'] = (double)$job->service_unit_price;
         $job['discount'] = (double)$job->discount;
         $job['resource_picture'] = $job->resource != null ? $job->resource->profile->pro_pic : null;
+        $job['resource_name'] = $job->resource != null ? $job->resource->profile->name : null;
         $job['resource_mobile'] = $job->resource != null ? $job->resource->profile->mobile : null;
         $job['materials'] = $job->usedMaterials;
-        removeRelationsFromModel($job);
     }
 }
