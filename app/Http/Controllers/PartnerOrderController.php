@@ -21,7 +21,7 @@ class PartnerOrderController extends Controller
         $jobs = $partner_order->jobs->each(function ($job) {
             $this->_getJobInfo($job);
         });
-        $partner_order['jobs'] = $jobs;
+        $partner_order['jobs'] = $jobs->sortBy('schedule_date');
         return api_response($request, $partner_order, 200, ['order' => $partner_order]);
     }
 
@@ -54,6 +54,7 @@ class PartnerOrderController extends Controller
             }
             $jobsGroupByPartnerOrder = $jobs->groupBy('partner_order_id');
             $final_orders = collect();
+            $all_jobs = collect();
             foreach ($jobsGroupByPartnerOrder as $jobs) {
                 $order = collect();
                 $order->put('customer_name', $jobs[0]->partner_order->order->delivery_name);
@@ -62,14 +63,19 @@ class PartnerOrderController extends Controller
                 $order->put('created_at', $jobs[0]->partner_order->created_at->timestamp);
                 $order->put('created_at_readable', $jobs[0]->partner_order->created_at->diffForHumans());
                 $order->put('code', $jobs[0]->partner_order->code());
-                $order->put('jobs', $jobs->each(function ($job) use ($order) {
+                $order->put('id', $jobs[0]->partner_order->id);
+                $order->put('jobs', $jobs->each(function ($job) use ($order, $all_jobs) {
                     $this->_getJobInfo($job);
                 }));
+                foreach ($order->get('jobs') as $job) {
+                    $all_jobs->push($job);
+                }
                 $final_orders->push($order);
             }
             if (count($final_orders) > 0) {
-                if ($field == 'created_by') {
-                    $final_orders = $final_orders->$sort('created_by')->toArray();
+                $sorted_jobs = $all_jobs->$sort('schedule_date');
+                if ($field == 'created_at') {
+                    $final_orders = $final_orders->$sort('created_at')->toArray();
                 } else {
                     $final_orders = $final_orders->$sort(function ($item, $key) use ($sort, $field) {
                         return min($item->get('jobs')->pluck($field)->toArray());
@@ -122,6 +128,7 @@ class PartnerOrderController extends Controller
     private function _getInfo($partner_order)
     {
         $partner_order->calculate();
+        $partner_order['due_amount'] = (double)$partner_order->due;
         $partner_order['code'] = $partner_order->code();
         $partner_order['customer_name'] = $partner_order->order->delivery_name;
         $partner_order['customer_mobile'] = $partner_order->order->delivery_mobile;
