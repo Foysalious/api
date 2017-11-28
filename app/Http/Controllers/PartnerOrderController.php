@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Repositories\PartnerRepository;
+use App\Repositories\ResourceJobRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Validator;
@@ -149,6 +150,28 @@ class PartnerOrderController extends Controller
         }
     }
 
+    public function getBills($partner, Request $request)
+    {
+        try {
+            $partner_order = $request->partner_order->load(['order', 'jobs' => function ($q) {
+                $q->info()->with(['usedMaterials' => function ($q) {
+                    $q->select('id', 'job_id', 'material_name', 'material_price');
+                }]);
+            }]);
+            $jobs = (new ResourceJobRepository())->addJobInformationForAPI($partner_order->jobs);
+            $partner_order->calculate();
+            $partner_order['paid_amount'] =(double) $partner_order->paid;
+            $partner_order['total'] =(double) $partner_order->totalPrice;
+            $partner_order['due_amount'] =(double) $partner_order->due;
+            $partner_order['order_status'] = $partner_order->status;
+            removeRelationsFromModel($partner_order);
+            removeSelectedFieldsFromModel($partner_order);
+            $partner_order['jobs'] = $jobs;
+            return api_response($request, $partner_order, 200, ['order' => $partner_order]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
 
     private function _getInfo($partner_order)
     {
