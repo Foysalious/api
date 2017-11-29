@@ -103,4 +103,21 @@ class PartnerJobController extends Controller
         }
     }
 
+    public function update($partner, $job, Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'schedule_date' => 'required_with:preferred_time|string',
+                'preferred_time' => 'required_with:schedule_date|string',
+                'resource_id' => 'sometimes|string',
+            ]);
+            if ($validator->fails()) {
+                $errors = $validator->errors()->all()[0];
+                return api_response($request, $errors, 400, ['message' => $errors]);
+            }
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
 }

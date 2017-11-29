@@ -26,7 +26,7 @@ class PartnerOrderController extends Controller
             $this->_getJobInfo($job);
             removeSelectedFieldsFromModel($job);
             removeRelationsFromModel($job);
-            array_forget($job,'partner_order');
+            array_forget($job, 'partner_order');
         });
         removeRelationsFromModel($partner_order);
         removeSelectedFieldsFromModel($partner_order);
@@ -208,7 +208,6 @@ class PartnerOrderController extends Controller
         $partner_order['finance_collection'] = (double)$partner_order->finance_collection;
         $partner_order['discount'] = (double)$partner_order->discount;
         $partner_order['total_jobs'] = count($partner_order->jobs);
-        $partner_order['total_materials'] = count($partner_order->jobs->pluck('usedMaterials'));
         $partner_order['order_status'] = $partner_order->status;
     }
 
@@ -223,5 +222,6 @@ class PartnerOrderController extends Controller
         $job['resource_name'] = $job->resource != null ? $job->resource->profile->name : null;
         $job['resource_mobile'] = $job->resource != null ? $job->resource->profile->mobile : null;
         $job['materials'] = $job->usedMaterials;
+        $job['total_materials'] = count($job->usedMaterials);
     }
 }

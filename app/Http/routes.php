@@ -190,7 +190,7 @@ $api->version('v1', function ($api) {
             $api->group(['prefix' => '{job}', 'middleware' => ['partner_job.auth']], function ($api) {
                 $api->post('accept', 'App\Http\Controllers\PartnerJobController@acceptJobAndAssignResource');
                 $api->post('reject', 'App\Http\Controllers\PartnerJobController@declineJob');
-                $api->put('/', 'App\Http\Controllers\PartnerJobController@assignResource');
+                $api->put('/', 'App\Http\Controllers\PartnerJobController@update');
             });
         });
         $api->group(['prefix' => 'orders'], function ($api) {
