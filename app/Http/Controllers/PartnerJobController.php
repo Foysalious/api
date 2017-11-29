@@ -107,22 +107,26 @@ class PartnerJobController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'schedule_date' => 'required_with:preferred_time|string',
+                'schedule_date' => 'sometimes|required|string',
                 'preferred_time' => 'required_with:schedule_date|string',
-                'resource_id' => 'sometimes|string',
+                'resource_id' => 'required_without_all:schedule_date,preferred_time',
             ]);
             if ($validator->fails()) {
                 $errors = $validator->errors()->all()[0];
                 return api_response($request, $errors, 400, ['message' => $errors]);
             }
+            $job = $request->job;
             if ($request->has('schedule_date')) {
                 $request->merge(['resource' => $request->manager_resource]);
-                $response = $this->resourceJobRepository->reschedule($job->id, $request);
-                if ($response) {
+                $response = $this->resourceJobRepository->reschedule($request->job->id, $request);
+                if (!$response) {
+                    return api_response($request, null, 500);
+                }
+                if ($response->code != 200) {
                     return api_response($request, $response, $response->code);
                 }
-                return api_response($request, null, 500);
-            } elseif ($request->has('resource_id')) {
+            }
+            if ($request->has('resource_id')) {
                 if ($request->partner->hasThisResource($request->resource_id, 'Handyman')) {
                     $job->resource_id = $request->resource_id;
                     $job->update();
@@ -135,5 +139,6 @@ class PartnerJobController extends Controller
             return api_response($request, null, 500);
         }
     }
+
 
 }

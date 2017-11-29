@@ -185,4 +185,8 @@ class ResourceJobRepository
         }
         return $job;
     }
+
+    public function assignResource(){
+
+    }
 }
