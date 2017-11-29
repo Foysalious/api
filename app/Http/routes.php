@@ -191,6 +191,17 @@ $api->version('v1', function ($api) {
                 $api->post('accept', 'App\Http\Controllers\PartnerJobController@acceptJobAndAssignResource');
                 $api->post('reject', 'App\Http\Controllers\PartnerJobController@declineJob');
                 $api->put('/', 'App\Http\Controllers\PartnerJobController@update');
+
+                $api->group(['prefix' => 'materials'], function ($api) {
+                    $api->get('/', 'App\Http\Controllers\PartnerJobController@getMaterials');
+                    $api->post('/', 'App\Http\Controllers\PartnerJobController@addMaterial');
+                    $api->put('/', 'App\Http\Controllers\PartnerJobController@updateMaterial');
+
+                    $api->group(['prefix' => '{material}'], function ($api) {
+                        $api->put('/', 'App\Http\Controllers\PartnerJobController@updateMaterial');
+                    });
+                });
+
             });
         });
         $api->group(['prefix' => 'orders'], function ($api) {

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\JobMaterial;
+use App\Models\Material;
 use App\Repositories\PartnerRepository;
 use App\Repositories\ResourceJobRepository;
 use Illuminate\Http\Request;
@@ -135,6 +137,78 @@ class PartnerJobController extends Controller
                     return api_response($request, null, 403);
                 }
             }
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getMaterials($partner, $job, Request $request)
+    {
+        try {
+            $materials = $request->job->usedMaterials;
+            if (count($materials) > 0) {
+                $materials->each(function ($item, $key) {
+                    $item['material_price'] = (double)$item->material_price;
+                    $item['added_by'] = trim(explode('-', $item->created_by_name)[1]);
+                    removeSelectedFieldsFromModel($item);
+                });
+                return api_response($request, $materials, 200, ['materials' => $materials]);
+            } else {
+                return api_response($request, $job, 404);
+            }
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function addMaterial($partner, $job, Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'name' => 'required|string',
+                'price' => 'required|numeric|min:1'
+            ]);
+            if ($validator->fails()) {
+                $errors = $validator->errors()->all()[0];
+                return api_response($request, $errors, 400, ['message' => $errors]);
+            }
+            $job = $request->job;
+            $material = new JobMaterial();
+            $material->material_name = $request->name;
+            $material->material_price = (double)$request->price;
+            $material->job_id = $job->id;
+            $material->created_by = $request->manager_resource->id;
+            $material->created_by_name = 'Resource - ' . $request->manager_resource->profile->name;
+            $material->save();
+            return api_response($request, $material, 200);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function updateMaterial($partner, $job, Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'material_id' => 'required|numeric',
+                'name' => 'required|string',
+                'price' => 'required|numeric|min:1'
+            ]);
+            if ($validator->fails()) {
+                $errors = $validator->errors()->all()[0];
+                return api_response($request, $errors, 400, ['message' => $errors]);
+            }
+            $job = $request->job;
+            $material = $job->usedMaterials->where('id', (int)$request->material_id)->first();
+            if ($material) {
+                $material->material_name = $request->name;
+                $material->material_price = $request->price;
+                $material->updated_by = $request->manager_resource->id;
+                $material->updated_by_name = 'Resource - ' . $request->manager_resource->profile->name;
+                $material->update();
+                return api_response($request, null, 200);
+            }
+            return api_response($request, null, 403);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }

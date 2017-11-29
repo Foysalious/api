@@ -25,7 +25,8 @@ class ResourceController extends Controller
             $resource['mobile'] = $profile->mobile;
             $resource['address'] = $profile->address;
             removeRelationsFromModel($resource);
-            return api_response($request, $resource, 200, ['resource' => removeSelectedFieldsFromModel($resource)]);
+            removeSelectedFieldsFromModel($resource);
+            return api_response($request, $resource, 200, ['resource' =>$resource ]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }

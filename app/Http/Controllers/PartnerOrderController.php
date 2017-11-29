@@ -183,13 +183,20 @@ class PartnerOrderController extends Controller
 
     public function getLogs($partner, Request $request)
     {
-        $jobs = $request->partner_order->jobs;
-        $all_logs = collect();
-        foreach ($jobs as $job) {
-            $all_logs->push((new JobLogs($job))->all());
+        try {
+            if ($request->has('filter')) {
+                $logs = $request->partner_order->payments->where('transaction_type', 'Debit');
+                return api_response($request, $logs, 200, ['logs' => $logs]);
+            }
+            $jobs = $request->partner_order->jobs;
+            $all_logs = collect();
+            foreach ($jobs as $job) {
+                $all_logs->push((new JobLogs($job))->all());
+            }
+            dd($all_logs);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
         }
-        dd($all_logs);
-
     }
 
     private function _getInfo($partner_order)
@@ -217,6 +224,7 @@ class PartnerOrderController extends Controller
         $job['total_cost'] = $job->totalCost;
         $job['location'] = $job->partner_order->order->location->name;
         $job['service_unit_price'] = (double)$job->service_unit_price;
+        $job['schedule_date'] = Carbon::parse($job->schedule_date)->format('dS M,Y');
         $job['discount'] = (double)$job->discount;
         $job['resource_picture'] = $job->resource != null ? $job->resource->profile->pro_pic : null;
         $job['resource_name'] = $job->resource != null ? $job->resource->profile->name : null;
