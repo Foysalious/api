@@ -154,4 +154,9 @@ class Partner extends Model
             return $admin_resource->profile->mobile;
         return null;
     }
+
+    public function isHandymanResource($resource_id)
+    {
+        return $this->resources->where('id', (int)$resource_id)->where('pivot.resource_type', 'Handyman')->first() ? true : false;
+    }
 }

@@ -170,14 +170,15 @@ $api->version('v1', function ($api) {
         });
     });
     $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
-        $api->get('dashboard','App\Http\Controllers\PartnerController@getDashboardInfo');
-        $api->get('','App\Http\Controllers\PartnerController@getDashboardInfo');
+        $api->get('dashboard', 'App\Http\Controllers\PartnerController@getDashboardInfo');
+        $api->get('', 'App\Http\Controllers\PartnerController@getDashboardInfo');
         $api->group(['prefix' => 'graphs'], function ($api) {
             $api->get('orders', 'App\Http\Controllers\GraphController@getOrdersGraph');
             $api->get('sales', 'App\Http\Controllers\GraphController@getSalesGraph');
         });
         $api->group(['prefix' => 'resources'], function ($api) {
             $api->get('/', 'App\Http\Controllers\PartnerController@getResources');
+
             $api->group(['prefix' => '{resource}', 'middleware' => ['partner_resource.auth']], function ($api) {
                 $api->get('/', 'App\Http\Controllers\ResourceController@show');
                 $api->get('reviews', 'App\Http\Controllers\ResourceController@getReviews');
@@ -185,14 +186,17 @@ $api->version('v1', function ($api) {
         });
         $api->group(['prefix' => 'jobs'], function ($api) {
             $api->get('/', 'App\Http\Controllers\PartnerJobController@index');
+
             $api->group(['prefix' => '{job}', 'middleware' => ['partner_job.auth']], function ($api) {
                 $api->post('accept', 'App\Http\Controllers\PartnerJobController@acceptJobAndAssignResource');
                 $api->post('reject', 'App\Http\Controllers\PartnerJobController@declineJob');
+                $api->put('/', 'App\Http\Controllers\PartnerJobController@assignResource');
             });
         });
         $api->group(['prefix' => 'orders'], function ($api) {
             $api->get('new', 'App\Http\Controllers\PartnerOrderController@newOrders');
             $api->get('/', 'App\Http\Controllers\PartnerOrderController@getOrders');
+
             $api->group(['prefix' => '{order}', 'middleware' => ['partner_order.auth']], function ($api) {
                 $api->get('/', 'App\Http\Controllers\PartnerOrderController@show');
                 $api->get('bills', 'App\Http\Controllers\PartnerOrderController@getBills');

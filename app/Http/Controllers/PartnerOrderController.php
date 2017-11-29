@@ -14,19 +14,22 @@ class PartnerOrderController extends Controller
 {
     public function show($partner, Request $request)
     {
-        $partner_order = $request->partner_order->load(['order', 'jobs' => function ($q) {
+        $partner_order = $request->partner_order->load(['order.location', 'jobs' => function ($q) {
             $q->info()->with(['usedMaterials' => function ($q) {
                 $q->select('id', 'job_id', 'material_name', 'material_price');
             }, 'resource.profile']);
         }]);
         $this->_getInfo($partner_order);
-        removeRelationsFromModel($partner_order);
-        removeSelectedFieldsFromModel($partner_order);
-        $jobs = $partner_order->jobs->each(function ($job) {
+        $jobs = $partner_order->jobs;
+        $jobs = $jobs->each(function ($job) use ($partner_order) {
+            $job['partner_order'] = $partner_order;
             $this->_getJobInfo($job);
             removeSelectedFieldsFromModel($job);
             removeRelationsFromModel($job);
+            array_forget($job,'partner_order');
         });
+        removeRelationsFromModel($partner_order);
+        removeSelectedFieldsFromModel($partner_order);
         $partner_order['jobs'] = $jobs->sortBy('schedule_date');
         return api_response($request, $partner_order, 200, ['order' => $partner_order]);
     }
@@ -155,11 +158,13 @@ class PartnerOrderController extends Controller
     {
         try {
             $partner_order = $request->partner_order->load(['order', 'jobs' => function ($q) {
-                $q->info()->with(['usedMaterials' => function ($q) {
+                $q->info()->with(['service', 'usedMaterials' => function ($q) {
                     $q->select('id', 'job_id', 'material_name', 'material_price');
                 }]);
             }]);
-            $jobs = (new ResourceJobRepository())->addJobInformationForAPI($partner_order->jobs);
+            $jobs = (new ResourceJobRepository())->addJobInformationForAPI($partner_order->jobs->each(function ($item) use ($partner_order) {
+                $item['partner_order'] = $partner_order;
+            }));
             $partner_order->calculate();
             $partner_order['paid_amount'] = (double)$partner_order->paid;
             $partner_order['total'] = (double)$partner_order->totalPrice;
@@ -167,7 +172,9 @@ class PartnerOrderController extends Controller
             $partner_order['order_status'] = $partner_order->status;
             removeRelationsFromModel($partner_order);
             removeSelectedFieldsFromModel($partner_order);
-            $partner_order['jobs'] = $jobs;
+            $partner_order['jobs'] = $jobs->each(function ($item) {
+                removeRelationsFromModel($item);
+            });
             return api_response($request, $partner_order, 200, ['order' => $partner_order]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
@@ -177,7 +184,7 @@ class PartnerOrderController extends Controller
     public function getLogs($partner, Request $request)
     {
         $jobs = $request->partner_order->jobs;
-        $all_logs=collect();
+        $all_logs = collect();
         foreach ($jobs as $job) {
             $all_logs->push((new JobLogs($job))->all());
         }
@@ -201,6 +208,7 @@ class PartnerOrderController extends Controller
         $partner_order['finance_collection'] = (double)$partner_order->finance_collection;
         $partner_order['discount'] = (double)$partner_order->discount;
         $partner_order['total_jobs'] = count($partner_order->jobs);
+        $partner_order['total_materials'] = count($partner_order->jobs->pluck('usedMaterials'));
         $partner_order['order_status'] = $partner_order->status;
     }
 
