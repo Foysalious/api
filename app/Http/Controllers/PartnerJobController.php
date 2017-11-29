@@ -115,6 +115,22 @@ class PartnerJobController extends Controller
                 $errors = $validator->errors()->all()[0];
                 return api_response($request, $errors, 400, ['message' => $errors]);
             }
+            if ($request->has('schedule_date')) {
+                $request->merge(['resource' => $request->manager_resource]);
+                $response = $this->resourceJobRepository->reschedule($job->id, $request);
+                if ($response) {
+                    return api_response($request, $response, $response->code);
+                }
+                return api_response($request, null, 500);
+            } elseif ($request->has('resource_id')) {
+                if ($request->partner->hasThisResource($request->resource_id, 'Handyman')) {
+                    $job->resource_id = $request->resource_id;
+                    $job->update();
+                    return api_response($request, $job, 200);
+                } else {
+                    return api_response($request, null, 403);
+                }
+            }
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }

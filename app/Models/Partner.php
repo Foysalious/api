@@ -155,8 +155,8 @@ class Partner extends Model
         return null;
     }
 
-    public function isHandymanResource($resource_id)
+    public function hasThisResource($resource_id, $type)
     {
-        return $this->resources->where('id', (int)$resource_id)->where('pivot.resource_type', 'Handyman')->first() ? true : false;
+        return $this->resources->where('id', (int)$resource_id)->where('pivot.resource_type', $type)->first() ? true : false;
     }
 }
