@@ -122,7 +122,7 @@ class Job extends Model
 
     public function scopeInfo($query)
     {
-        return $query->select('jobs.id', 'jobs.discount', 'jobs.created_at', 'resource_id', 'schedule_date', 'service_variables', 'delivered_date', 'preferred_time', 'service_name', 'status', 'service_quantity', 'service_unit_price', 'service_id', 'partner_order_id');
+        return $query->select('jobs.id', 'jobs.discount', 'jobs.created_at', 'resource_id', 'schedule_date', 'service_variables', 'job_additional_info', 'delivered_date', 'preferred_time', 'service_name', 'status', 'service_quantity', 'service_unit_price', 'service_id', 'partner_order_id');
     }
 
     public function scopeValidStatus($query)
