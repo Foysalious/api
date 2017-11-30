@@ -200,8 +200,17 @@ class PartnerOrderController extends Controller
     {
         try {
             if ($request->has('filter')) {
-                $logs = $request->partner_order->payments->where('transaction_type', 'Debit');
-                return api_response($request, $logs, 200, ['logs' => $logs]);
+                $logs = $request->partner_order->$request->get('filter')->where('transaction_type', 'Debit');
+                if (count($logs) > 0) {
+                    $logs->each(function ($item, $key) {
+                        $item['amount'] = (double)$item->amount;
+                        $item['collected_by'] = trim(explode('-', $item->created_by_name)[1]);
+                        removeSelectedFieldsFromModel($item);
+                    });
+                    return api_response($request, $logs, 200, ['logs' => $logs]);
+                } else {
+                    return api_response($request, $logs, 400);
+                }
             }
             $jobs = $request->partner_order->jobs;
             $all_logs = collect();

@@ -186,15 +186,21 @@ class PartnerJobController extends Controller
                 $errors = $validator->errors()->all()[0];
                 return api_response($request, $errors, 400, ['message' => $errors]);
             }
-            $job = $request->job;
-            $material = new JobMaterial();
-            $material->material_name = $request->name;
-            $material->material_price = (double)$request->price;
-            $material->job_id = $job->id;
-            $material->created_by = $request->manager_resource->id;
-            $material->created_by_name = 'Resource - ' . $request->manager_resource->profile->name;
-            $material->save();
-            return api_response($request, $material, 200);
+            try {
+                DB::transaction(function () use ($job, $request) {
+                    $job = $request->job;
+                    $material = new JobMaterial();
+                    $material->material_name = $request->name;
+                    $material->material_price = (double)$request->price;
+                    $material->job_id = $job->id;
+                    $material->created_by = $request->manager_resource->id;
+                    $material->created_by_name = 'Resource-' . $request->manager_resource->profile->name;
+                    $material->save();
+                });
+                return api_response($request, $job, 200);
+            } catch (QueryException $e) {
+                return api_response($request, null, 500);
+            }
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
@@ -215,12 +221,19 @@ class PartnerJobController extends Controller
             $job = $request->job;
             $material = $job->usedMaterials->where('id', (int)$request->material_id)->first();
             if ($material) {
-                $material->material_name = $request->name;
-                $material->material_price = $request->price;
-                $material->updated_by = $request->manager_resource->id;
-                $material->updated_by_name = 'Resource - ' . $request->manager_resource->profile->name;
-                $material->update();
-                return api_response($request, null, 200);
+                try {
+                    DB::transaction(function () use ($job, $request, $material) {
+                        $material->material_name = $request->name;
+                        $material->material_price = $request->price;
+                        $material->updated_by = $request->manager_resource->id;
+                        $material->updated_by_name = 'Resource-' . $request->manager_resource->profile->name;
+                        $material->update();
+                        return api_response($request, null, 200);
+                    });
+                    return api_response($request, $job, 200);
+                } catch (QueryException $e) {
+                    return api_response($request, null, 500);
+                }
             }
             return api_response($request, null, 403);
         } catch (\Throwable $e) {
