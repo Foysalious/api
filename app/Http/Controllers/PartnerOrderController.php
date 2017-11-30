@@ -112,7 +112,7 @@ class PartnerOrderController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'sort' => 'sometimes|required|string|in:created_at,created_at:asc,created_at:desc',
-                'status' => 'required|ongoing,history'
+                'status' => 'required|in:ongoing,history'
             ]);
             if ($validator->fails()) {
                 $errors = $validator->errors()->all()[0];
@@ -172,9 +172,17 @@ class PartnerOrderController extends Controller
             }));
             $partner_order->calculate();
             $partner_order['paid_amount'] = (double)$partner_order->paid;
-            $partner_order['total'] = (double)$partner_order->totalPrice;
             $partner_order['due_amount'] = (double)$partner_order->due;
+            $partner_order['total'] = (double)$partner_order->totalPrice;
+            $partner_order['is_paid'] = ((double)$partner_order->due == 0) ? true : false;
+            $partner_order['is_due'] = ((double)$partner_order->due > 0) ? true : false;
+            $partner_order['is_closed'] = ((double)$partner_order->closed_at != null) ? true : false;
             $partner_order['order_status'] = $partner_order->status;
+            if ($partner_order['is_closed']) {
+                $partner_order['overdue'] = $partner_order->closed_at->diffInDays(Carbon::now());
+            } else {
+                $partner_order['overdue'] = null;
+            }
             removeRelationsFromModel($partner_order);
             removeSelectedFieldsFromModel($partner_order);
             $partner_order['jobs'] = $jobs->each(function ($item) {
