@@ -69,7 +69,6 @@ class StatusCalculator
         $cancelled_jobs = self::$jobStatusCounter[self::$jobStatuses['Cancelled']];
         $declined_jobs = self::$jobStatusCounter[self::$jobStatuses['Declined']];
         $not_responded_jobs = self::$jobStatusCounter[self::$jobStatuses['Not_Responded']];
-        dd(self::$jobStatusCounter, self::$totalJobs);
         return $pending_jobs + $cancelled_jobs + $declined_jobs + $not_responded_jobs  == self::$totalJobs;
     }
 
