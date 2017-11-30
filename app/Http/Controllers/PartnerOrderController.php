@@ -79,6 +79,8 @@ class PartnerOrderController extends Controller
                 $order->put('id', $jobs[0]->partner_order->id);
                 $order->put('jobs', $jobs->each(function ($job) use ($order, $all_jobs) {
                     $this->_getJobInfo($job);
+                    removeSelectedFieldsFromModel($job);
+                    removeRelationsFromModel($job);
                 }));
                 foreach ($order->get('jobs') as $job) {
                     $all_jobs->push($job);
@@ -237,7 +239,6 @@ class PartnerOrderController extends Controller
         $job['total_cost'] = $job->totalCost;
         $job['location'] = $job->partner_order->order->location->name;
         $job['service_unit_price'] = (double)$job->service_unit_price;
-        $job['schedule_date'] = Carbon::parse($job->schedule_date)->format('dS M,Y');
         $job['discount'] = (double)$job->discount;
         $job['resource_picture'] = $job->resource != null ? $job->resource->profile->pro_pic : null;
         $job['resource_name'] = $job->resource != null ? $job->resource->profile->name : null;
