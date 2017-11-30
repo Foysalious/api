@@ -176,7 +176,7 @@ class PartnerOrderController extends Controller
             $partner_order['total'] = (double)$partner_order->totalPrice;
             $partner_order['is_paid'] = ((double)$partner_order->due == 0) ? true : false;
             $partner_order['is_due'] = ((double)$partner_order->due > 0) ? true : false;
-            $partner_order['is_closed'] = ((double)$partner_order->closed_at != null) ? true : false;
+            $partner_order['is_closed'] = ($partner_order->closed_at != null) ? true : false;
             $partner_order['order_status'] = $partner_order->status;
             if ($partner_order['is_closed']) {
                 $partner_order['overdue'] = $partner_order->closed_at->diffInDays(Carbon::now());
