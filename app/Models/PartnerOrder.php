@@ -214,6 +214,7 @@ class PartnerOrder extends Model
             $this->totalJobs++;
         }
         $this->_setStatus();*/
+        StatusCalculator::initialize();
         $this->status = StatusCalculator::calculate($this);
         return $this;
     }
