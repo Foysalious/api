@@ -200,17 +200,17 @@ class PartnerOrderController extends Controller
     {
         try {
             if ($request->has('filter')) {
-                $logs = $request->partner_order->$request->get('filter')->where('transaction_type', 'Debit');
-                if (count($logs) > 0) {
-                    $logs->each(function ($item, $key) {
-                        $item['amount'] = (double)$item->amount;
-                        $item['collected_by'] = trim(explode('-', $item->created_by_name)[1]);
-                        removeSelectedFieldsFromModel($item);
-                    });
-                    return api_response($request, $logs, 200, ['logs' => $logs]);
-                } else {
-                    return api_response($request, $logs, 400);
+                $filter = $request->filter;
+                $logs = $request->partner_order->$filter->where('transaction_type', 'Debit');
+                if (count($logs) == 0) {
+                    return api_response($request, $logs, 404);
                 }
+                $logs->each(function ($item, $key) {
+                    $item['amount'] = (double)$item->amount;
+                    $item['collected_by'] = trim(explode('-', $item->created_by_name)[1]);
+                    removeSelectedFieldsFromModel($item);
+                });
+                return api_response($request, $logs, 200, ['logs' => $logs]);
             }
             $jobs = $request->partner_order->jobs;
             $all_logs = collect();
@@ -223,7 +223,8 @@ class PartnerOrderController extends Controller
         }
     }
 
-    private function _getInfo($partner_order)
+    private
+    function _getInfo($partner_order)
     {
         $partner_order->calculate();
         $partner_order['due_amount'] = (double)$partner_order->due;
@@ -242,7 +243,8 @@ class PartnerOrderController extends Controller
         $partner_order['order_status'] = $partner_order->status;
     }
 
-    private function _getJobInfo($job)
+    private
+    function _getJobInfo($job)
     {
         $job->calculate();
         $job['total_cost'] = $job->totalCost;
