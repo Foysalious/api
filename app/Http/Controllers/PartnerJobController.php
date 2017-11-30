@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\JobMaterial;
+use App\Models\JobUpdateLog;
 use App\Models\Material;
 use App\Repositories\PartnerRepository;
 use App\Repositories\ResourceJobRepository;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Validator;
+use DB;
 
 class PartnerJobController extends Controller
 {
@@ -129,13 +132,24 @@ class PartnerJobController extends Controller
                 }
             }
             if ($request->has('resource_id')) {
-                if ($request->partner->hasThisResource($request->resource_id, 'Handyman')) {
-                    $job->resource_id = $request->resource_id;
-                    $job->update();
-                    return api_response($request, $job, 200);
-                } else {
-                    return api_response($request, null, 403);
+                if ($request->partner->hasThisResource($request->resource_id, 'Handyman') && in_array([constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process']], $job->status) && ($job->resource_id != $request->resource_id)) {
+                    try {
+                        DB::transaction(function () use ($job, $request) {
+                            $updatedData = [
+                                'msg' => 'Resource Change',
+                                'old_resource_id' => $job->resource_id,
+                                'new_resource_id' => $request->resource_id
+                            ];
+                            $job->resource_id = $request->resource_id;
+                            $job->update();
+                            $this->jobUpdateLog($job->id, json_encode($updatedData), $request->manager_resource);
+                        });
+                        return api_response($request, $job, 200);
+                    } catch (QueryException $e) {
+                        return api_response($request, null, 500);
+                    }
                 }
+                return api_response($request, null, 403);
             }
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
@@ -214,5 +228,15 @@ class PartnerJobController extends Controller
         }
     }
 
+    private function jobUpdateLog($job_id, $log, $created_by)
+    {
+        $logData = [
+            'job_id' => $job_id,
+            'log' => $log,
+            'created_by' => $created_by->id,
+            'created_by_name' => class_basename($created_by) . "-" . $created_by->profile->name
+        ];
+        JobUpdateLog::create(($logData));
+    }
 
 }

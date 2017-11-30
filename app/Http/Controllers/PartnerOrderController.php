@@ -14,24 +14,28 @@ class PartnerOrderController extends Controller
 {
     public function show($partner, Request $request)
     {
-        $partner_order = $request->partner_order->load(['order.location', 'jobs' => function ($q) {
-            $q->info()->with(['usedMaterials' => function ($q) {
-                $q->select('id', 'job_id', 'material_name', 'material_price');
-            }, 'resource.profile']);
-        }]);
-        $this->_getInfo($partner_order);
-        $jobs = $partner_order->jobs;
-        $jobs = $jobs->each(function ($job) use ($partner_order) {
-            $job['partner_order'] = $partner_order;
-            $this->_getJobInfo($job);
-            removeSelectedFieldsFromModel($job);
-            removeRelationsFromModel($job);
-            array_forget($job, 'partner_order');
-        });
-        removeRelationsFromModel($partner_order);
-        removeSelectedFieldsFromModel($partner_order);
-        $partner_order['jobs'] = $jobs->sortBy('schedule_date');
-        return api_response($request, $partner_order, 200, ['order' => $partner_order]);
+        try {
+            $partner_order = $request->partner_order->load(['order.location', 'jobs' => function ($q) {
+                $q->info()->with(['usedMaterials' => function ($q) {
+                    $q->select('id', 'job_id', 'material_name', 'material_price');
+                }, 'resource.profile']);
+            }]);
+            $this->_getInfo($partner_order);
+            $jobs = $partner_order->jobs;
+            $jobs = $jobs->each(function ($job) use ($partner_order) {
+                $job['partner_order'] = $partner_order;
+                $this->_getJobInfo($job);
+                removeSelectedFieldsFromModel($job);
+                removeRelationsFromModel($job);
+                array_forget($job, 'partner_order');
+            });
+            removeRelationsFromModel($partner_order);
+            removeSelectedFieldsFromModel($partner_order);
+            $partner_order['jobs'] = $jobs->sortBy('schedule_date');
+            return api_response($request, $partner_order, 200, ['order' => $partner_order]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
     }
 
     public function newOrders($partner, Request $request)
@@ -107,7 +111,8 @@ class PartnerOrderController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'sort' => 'sometimes|required|string|in:created_at,created_at:asc,created_at:desc'
+                'sort' => 'sometimes|required|string|in:created_at,created_at:asc,created_at:desc',
+                'status' => 'required|ongoing,history'
             ]);
             if ($validator->fails()) {
                 $errors = $validator->errors()->all()[0];
