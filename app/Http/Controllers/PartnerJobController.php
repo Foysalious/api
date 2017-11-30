@@ -132,7 +132,7 @@ class PartnerJobController extends Controller
                 }
             }
             if ($request->has('resource_id')) {
-                if ($request->partner->hasThisResource($request->resource_id, 'Handyman') && in_array([constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process']], $job->status) && ($job->resource_id != $request->resource_id)) {
+                if ($request->partner->hasThisResource($request->resource_id, 'Handyman') && in_array($job->status, [constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process']]) && ($job->resource_id != $request->resource_id)) {
                     try {
                         DB::transaction(function () use ($job, $request) {
                             $updatedData = [

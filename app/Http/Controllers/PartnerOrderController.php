@@ -216,10 +216,10 @@ class PartnerOrderController extends Controller
                 });
                 return api_response($request, $logs, 200, ['logs' => $logs]);
             }
-            $jobs = $request->partner_order->jobs->with(['cancelLog', 'partnerChangeLog', 'statusChangeLog', 'updateLogs']);
             $all_logs = collect();
-            foreach ($jobs as $job) {
-                $all_logs->push((new JobLogs($job))->all());
+            foreach ($request->partner_order->jobs as $job) {
+                $job_logs = (new JobLogs($job))->all();
+                dd($job_logs);
             }
             dd($all_logs);
         } catch (\Throwable $e) {
