@@ -169,13 +169,17 @@ class PartnerOrderController extends Controller
                     $q->select('id', 'job_id', 'material_name', 'material_price');
                 }]);
             }]);
+            $partner_order->calculate();
             $jobs = (new ResourceJobRepository())->addJobInformationForAPI($partner_order->jobs->each(function ($item) use ($partner_order) {
                 $item['partner_order'] = $partner_order;
             }));
-            $partner_order->calculate();
             $partner_order['paid_amount'] = (double)$partner_order->paid;
             $partner_order['due_amount'] = (double)$partner_order->due;
             $partner_order['total'] = (double)$partner_order->totalPrice;
+            $partner_order['sheba_fee'] = ((double)$partner_order->profit > 0) ? (double)$partner_order->profit : 0;
+            $partner_order['total_cost_without_discount'] = (double)$partner_order->totalCostWithoutDiscount;
+            $partner_order['total_partner_discount'] = (double)$partner_order->totalPartnerDiscount;
+            $partner_order['total_cost'] = (double)$partner_order->totalCost;
             $partner_order['is_paid'] = ((double)$partner_order->due == 0) ? true : false;
             $partner_order['is_due'] = ((double)$partner_order->due > 0) ? true : false;
             $partner_order['is_closed'] = ($partner_order->closed_at != null) ? true : false;
@@ -212,7 +216,7 @@ class PartnerOrderController extends Controller
                 });
                 return api_response($request, $logs, 200, ['logs' => $logs]);
             }
-            $jobs = $request->partner_order->jobs;
+            $jobs = $request->partner_order->jobs->with(['cancelLog', 'partnerChangeLog', 'statusChangeLog', 'updateLogs']);
             $all_logs = collect();
             foreach ($jobs as $job) {
                 $all_logs->push((new JobLogs($job))->all());
@@ -223,8 +227,7 @@ class PartnerOrderController extends Controller
         }
     }
 
-    private
-    function _getInfo($partner_order)
+    private function _getInfo($partner_order)
     {
         $partner_order->calculate();
         $partner_order['due_amount'] = (double)$partner_order->due;
@@ -243,8 +246,7 @@ class PartnerOrderController extends Controller
         $partner_order['order_status'] = $partner_order->status;
     }
 
-    private
-    function _getJobInfo($job)
+    private function _getJobInfo($job)
     {
         $job->calculate();
         $job['total_cost'] = $job->totalCost;
