@@ -1,9 +1,11 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\PartnerOrder\StatusCalculator;
 
 class PartnerOrder extends Model
 {
+    private $jobStatuses;
     public $status;
     public $paymentStatus;
     public $totalServicePrice;
@@ -35,16 +37,11 @@ class PartnerOrder extends Model
     protected $guarded = ['id'];
     protected $dates = ['closed_at', 'closed_and_paid_at'];
 
-    private $totalJobs;
-    private $jobStatuses;
-    private $statuses;
-    private $jobStatusCounter;
-
     public function __construct($attributes = [])
     {
         parent::__construct($attributes);
-        $this->jobStatuses = constants('JOB_STATUSES');
-        $this->statuses = constants('PARTNER_ORDER_STATUSES');
+        StatusCalculator::initialize();
+        $this->jobStatuses = StatusCalculator::$jobStatuses;
     }
 
     public function order()
@@ -67,14 +64,20 @@ class PartnerOrder extends Model
         return $this->hasMany(PartnerOrderPayment::class);
     }
 
+    public function transactions()
+    {
+        return $this->hasMany(PartnerTransaction::class);
+    }
+
     public function code()
     {
         return $this->order->code() . "-" . str_pad($this->partner_id, 4, '0', STR_PAD_LEFT);
     }
 
-    public function calculate()
+    public function calculate($price_only = false)
     {
-        $this->_calculateThisJobs();
+        $this->_calculateThisJobs($price_only);
+        $this->calculateStatus();
         $this->totalDiscount = $this->jobDiscounts + $this->discount;
         $this->_calculateRoundingCutOff();
         $this->grossAmount = $this->totalPrice - $this->discount  - $this->roundingCutOff;
@@ -114,19 +117,19 @@ class PartnerOrder extends Model
         return $this;
     }
 
-    private function _calculateThisJobs()
+    private function _calculateThisJobs($price_only = false)
     {
-        $this->_initializeStatusCounter();
+        //$this->_initializeStatusCounter();
         $this->_initializeTotalsToZero();
         foreach($this->jobs as $job) {
-            $job = $job->calculate();
+            $job = $job->calculate($price_only);
             if($job->status != $this->jobStatuses['Cancelled']) {
                 $this->_updateTotalPriceAndCost($job);
             }
-            $this->jobStatusCounter[$job->status]++;
-            $this->totalJobs++;
+            //$this->jobStatusCounter[$job->status]++;
+            //$this->totalJobs++;
         }
-        $this->_setStatus();
+        //$this->_setStatus();
         return $this;
     }
 
@@ -186,23 +189,9 @@ class PartnerOrder extends Model
         return $this;
     }
 
-    private function _initializeStatusCounter()
-    {
-        $this->jobStatusCounter = [
-            $this->jobStatuses['Pending'] => 0,
-            $this->jobStatuses['Accepted'] => 0,
-            $this->jobStatuses['Declined'] => 0,
-            $this->jobStatuses['Not_Responded'] => 0,
-            $this->jobStatuses['Schedule_Due'] => 0,
-            $this->jobStatuses['Process'] => 0,
-            $this->jobStatuses['Served'] => 0,
-            $this->jobStatuses['Cancelled'] => 0
-        ];
-    }
-
     private function _initializeTotalsToZero()
     {
-        $this->totalJobs = 0;
+        //$this->totalJobs = 0;
         $this->totalServicePrice = 0;
         $this->totalServiceCost = 0;
         $this->totalMaterialPrice = 0;
@@ -217,44 +206,15 @@ class PartnerOrder extends Model
         $this->totalCostWithoutDiscount = 0;
     }
 
-    private function _setStatus()
+    public function calculateStatus()
     {
-        if ($this->isAllJobsCancelled()) {
-            $this->status = $this->statuses['Cancelled'];
-        } else if ($this->isAllJobsPending()) {
-            $this->status = $this->statuses['Open'];
-        } else if ($this->isAllJobsServed()) {
-            $this->status = $this->statuses['Closed'];
-        } else {
-            $this->status = $this->statuses['Process'];
+        /*$this->_initializeStatusCounter();
+        foreach($this->jobs as $job) {
+            $this->jobStatusCounter[$job->status]++;
+            $this->totalJobs++;
         }
-    }
-
-    /**
-     * @return bool
-     */
-    private function isAllJobsCancelled()
-    {
-        return $this->jobStatusCounter[$this->jobStatuses['Cancelled']] == $this->totalJobs;
-    }
-
-    /**
-     * @return bool
-     */
-    private function isAllJobsPending()
-    {
-        $pending_jobs = $this->jobStatusCounter[$this->jobStatuses['Pending']];
-        $cancelled_jobs = $this->jobStatusCounter[$this->jobStatuses['Cancelled']];
-        return $pending_jobs + $cancelled_jobs == $this->totalJobs;
-    }
-
-    /**
-     * @return bool
-     */
-    private function isAllJobsServed()
-    {
-        $served_jobs = $this->jobStatusCounter[$this->jobStatuses['Served']];
-        $cancelled_jobs = $this->jobStatusCounter[$this->jobStatuses['Cancelled']];
-        return $served_jobs + $cancelled_jobs == $this->totalJobs;
+        $this->_setStatus();*/
+        $this->status = StatusCalculator::calculate($this);
+        return $this;
     }
 }
