@@ -166,7 +166,7 @@ class PartnerController extends Controller
                 'assigned_resources' => $assigned_resource_ids->count(),
                 'unassigned_resources' => $unassigned_resource_ids->count(),
                 'balance' => (double)$partner->wallet,
-                'today' => $weekly[date('d')],
+                'today' => $weekly[(int)date('d')],
                 'week' => $weekly->sum(),
                 'month' => $breakdown->sum()
             );
