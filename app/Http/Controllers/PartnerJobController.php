@@ -137,8 +137,8 @@ class PartnerJobController extends Controller
                         DB::transaction(function () use ($job, $request) {
                             $updatedData = [
                                 'msg' => 'Resource Change',
-                                'old_resource_id' => $job->resource_id,
-                                'new_resource_id' => $request->resource_id
+                                'old_resource_id' => (int)$job->resource_id,
+                                'new_resource_id' => (int)$request->resource_id
                             ];
                             $job->resource_id = $request->resource_id;
                             $job->update();
