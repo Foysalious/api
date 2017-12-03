@@ -181,21 +181,39 @@ class PartnerController extends Controller
     {
 
 //        try {
-        $breakdown = collect(array_fill(1, Carbon::create($this->year, $this->month, null)->daysInMonth, 0));
+            Carbon::setWeekStartsAt(Carbon::SATURDAY);
+            Carbon::setWeekEndsAt(Carbon::FRIDAY);
+            $start_time = Carbon::now()->startOfWeek();
+            $end_time = Carbon::now()->endOfWeek();
             $partner = $request->partner;
             $partner_orders = PartnerOrder::with('order.location', 'jobs.usedMaterials')
                 ->where('partner_id', $partner->id)
-                ->whereBetween('closed_at', [Carbon::parse('2017-11-2'), Carbon::parse('2017-11-8')])
-                ->get()
-                ->each(function ($partner_order) {
+                ->whereBetween('closed_at', [$start_time, $end_time])
+                ->get()->each(function ($partner_order) {
                     $partner_order['sales'] = (double)$partner_order->calculate($price_only = true)->totalCost;
                     $partner_order['code'] = $partner_order->code();
-                   $partner_order['week_name']=$partner_order->closed_at->format('D');
+                    $partner_order['week_name'] = $partner_order->closed_at->format('D');
                     $partner_order['day'] = $partner_order->closed_at->day;
                     removeRelationsFromModel($partner_order);
                     removeSelectedFieldsFromModel($partner_order);
                 });
-            dd($partner_orders->groupBy('day'));
+            $breakdown = collect(array_fill(1, Carbon::create(date('Y'), date('m'), null)->daysInMonth, 0));
+            if (count($partner_orders) > 0) {
+                $partner_orders->groupBy('day')->each(function ($item, $key) use ($breakdown) {
+                    $breakdown[$key] = $item->sum('sales');
+                });
+            }
+            $weekly_breakdown = collect();
+            $breakdown->filter(function ($item, $key) use ($start_time, $end_time) {
+                return ($start_time->day <= $key && $key <= $end_time->day);
+            })->each(function ($item, $key) use ($weekly_breakdown) {
+                $weekly_breakdown->put(Carbon::createFromDate(null, null, $key)->format('D'), $item);
+            });
+            $info = array(
+                'today' => $breakdown[(int)date('d')],
+                'week' => $breakdown->sum(),
+            );
+            return api_response($request, $info, 200, ['info' => $info, 'breakdown' => $weekly_breakdown, 'orders' => $partner_orders]);
 //        } catch (\Throwable $e) {
 //            return api_response($request, null, 500);
 //        }
