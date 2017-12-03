@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 
 use App\Models\Partner;
+use App\Models\PartnerOrder;
 use App\Repositories\PartnerRepository;
 use App\Repositories\ResourceJobRepository;
 use App\Repositories\ReviewRepository;
@@ -174,6 +175,30 @@ class PartnerController extends Controller
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
+    }
+
+    public function getEarnings($partner, Request $request)
+    {
+
+//        try {
+        $breakdown = collect(array_fill(1, Carbon::create($this->year, $this->month, null)->daysInMonth, 0));
+            $partner = $request->partner;
+            $partner_orders = PartnerOrder::with('order.location', 'jobs.usedMaterials')
+                ->where('partner_id', $partner->id)
+                ->whereBetween('closed_at', [Carbon::parse('2017-11-2'), Carbon::parse('2017-11-8')])
+                ->get()
+                ->each(function ($partner_order) {
+                    $partner_order['sales'] = (double)$partner_order->calculate($price_only = true)->totalCost;
+                    $partner_order['code'] = $partner_order->code();
+                   $partner_order['week_name']=$partner_order->closed_at->format('D');
+                    $partner_order['day'] = $partner_order->closed_at->day;
+                    removeRelationsFromModel($partner_order);
+                    removeSelectedFieldsFromModel($partner_order);
+                });
+            dd($partner_orders->groupBy('day'));
+//        } catch (\Throwable $e) {
+//            return api_response($request, null, 500);
+//        }
     }
 
 

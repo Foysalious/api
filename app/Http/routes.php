@@ -171,7 +171,7 @@ $api->version('v1', function ($api) {
     });
     $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
         $api->get('dashboard', 'App\Http\Controllers\PartnerController@getDashboardInfo');
-        $api->get('', 'App\Http\Controllers\PartnerController@getDashboardInfo');
+        $api->get('earnings', 'App\Http\Controllers\PartnerController@getEarnings');
         $api->group(['prefix' => 'graphs'], function ($api) {
             $api->get('orders', 'App\Http\Controllers\GraphController@getOrdersGraph');
             $api->get('sales', 'App\Http\Controllers\GraphController@getSalesGraph');

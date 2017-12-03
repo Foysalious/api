@@ -202,7 +202,7 @@ class PartnerOrderController extends Controller
 
     public function getLogs($partner, Request $request)
     {
-//        try {
+        try {
             if ($request->has('filter')) {
                 $filter = $request->filter;
                 $logs = $request->partner_order->$filter->where('transaction_type', 'Debit');
@@ -225,6 +225,7 @@ class PartnerOrderController extends Controller
                         foreach ($price_changes as $price_change) {
                             $collect = collect();
                             $collect->put('log', $price_change->log. ' from ' . $price_change->from . ' to ' . $price_change->to);
+                            $collect->put('timestamp', $price_change->created_at->timestamp);
                             $collect->put('created_at', $price_change->created_at->format('Y-m-d'));
                             $all_logs->push($collect->toArray());
                         }
@@ -233,13 +234,18 @@ class PartnerOrderController extends Controller
                         foreach ($status_changes as $status_change) {
                             $collect = collect();
                             $collect->put('log', 'Job status changed from ' . $status_change->from_status . ' to ' . $status_change->to_status);
+                            $collect->put('timestamp', $status_change->created_at->timestamp);
                             $collect->put('created_at', $status_change->created_at->format('Y-m-d'));
                             $all_logs->push($collect->toArray());
                         }
                     } else {
                         foreach ($job_log as $log) {
-                            $log->created_at = $log->created_at->toDateString();
-                            $all_logs->push((collect($log)->forget('created_by_name'))->toArray());
+                            $collect=collect($log);
+                            $collect->put('created_at',$log->created_at->toDateString());
+                            $collect->put('timestamp',$log->created_at->timestamp);
+                            $collect->put('type',$key);
+                            $collect->forget('created_by_name');
+                            $all_logs->push(($collect)->toArray());
                         }
                     }
                 }
@@ -248,9 +254,9 @@ class PartnerOrderController extends Controller
                 return $key;
             });
             return api_response($request, $dates, 200, ['logs' => $dates]);
-//        } catch (\Throwable $e) {
-//            return api_response($request, null, 500);
-//        }
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
     }
 
     private function _getInfo($partner_order)
