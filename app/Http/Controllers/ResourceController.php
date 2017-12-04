@@ -56,7 +56,7 @@ class ResourceController extends Controller
             $resource['total_rating'] = $resource->reviews->count();
             $reviews = $resource->reviews->filter(function ($item, $key) {
                 return $item->review != '' || $item->review != null;
-            });
+            })->sortByDesc('created_at');
             $resource['total_reviews'] = $reviews->count();
             foreach ($reviews as $review) {
                 $review['order_id'] = $review->job->partner_order->id;
