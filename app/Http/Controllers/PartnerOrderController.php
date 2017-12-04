@@ -225,6 +225,7 @@ class PartnerOrderController extends Controller
                         foreach ($price_changes as $price_change) {
                             $collect = collect();
                             $collect->put('log', $price_change->log. ' from ' . $price_change->from . ' to ' . $price_change->to);
+                            $collect->put('type',$key);
                             $collect->put('timestamp', $price_change->created_at->timestamp);
                             $collect->put('created_at', $price_change->created_at->format('Y-m-d'));
                             $all_logs->push($collect->toArray());
@@ -234,6 +235,7 @@ class PartnerOrderController extends Controller
                         foreach ($status_changes as $status_change) {
                             $collect = collect();
                             $collect->put('log', 'Job status changed from ' . $status_change->from_status . ' to ' . $status_change->to_status);
+                            $collect->put('type',$key);
                             $collect->put('timestamp', $status_change->created_at->timestamp);
                             $collect->put('created_at', $status_change->created_at->format('Y-m-d'));
                             $all_logs->push($collect->toArray());
@@ -248,6 +250,16 @@ class PartnerOrderController extends Controller
                             $all_logs->push(($collect)->toArray());
                         }
                     }
+                }
+                $comments=$job->comments->where('is_visible',1);
+                foreach ($comments as $comment){
+                    $collect = collect();
+                    $collect->put('log', $comment->commentator_type::find($comment->created_by)->name.' has commented');
+                    $collect->put('comment', $comment->comment);
+                    $collect->put('timestamp', $comment->created_at->timestamp);
+                    $collect->put('created_at', $comment->created_at->format('Y-m-d'));
+                    $collect->put('type','comment');
+                    $all_logs->push($collect->toArray());
                 }
             }
             $dates = $all_logs->groupBy('created_at')->sortBy(function ($item, $key) {

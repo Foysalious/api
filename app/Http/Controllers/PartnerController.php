@@ -180,7 +180,7 @@ class PartnerController extends Controller
     public function getEarnings($partner, Request $request)
     {
 
-//        try {
+        try {
             Carbon::setWeekStartsAt(Carbon::SATURDAY);
             Carbon::setWeekEndsAt(Carbon::FRIDAY);
             $start_time = Carbon::now()->startOfWeek();
@@ -214,9 +214,9 @@ class PartnerController extends Controller
                 'week' => $breakdown->sum(),
             );
             return api_response($request, $info, 200, ['info' => $info, 'breakdown' => $weekly_breakdown, 'orders' => $partner_orders]);
-//        } catch (\Throwable $e) {
-//            return api_response($request, null, 500);
-//        }
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
     }
 
 

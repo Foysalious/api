@@ -52,6 +52,10 @@ class Job extends Model
     {
         return $this->hasOne(Review::class);
     }
+    public function comments()
+    {
+        return $this->morphMany(Comment::class, 'commentable');
+    }
 
     public function calculate()
     {
