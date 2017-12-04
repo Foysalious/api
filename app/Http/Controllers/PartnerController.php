@@ -181,6 +181,7 @@ class PartnerController extends Controller
     {
 
         try {
+            dd((new SalesGrowth($partner, null, 2017))->get());
             Carbon::setWeekStartsAt(Carbon::SATURDAY);
             Carbon::setWeekEndsAt(Carbon::FRIDAY);
             $start_time = Carbon::now()->startOfWeek();
@@ -189,11 +190,15 @@ class PartnerController extends Controller
             $partner_orders = PartnerOrder::with('order.location', 'jobs.usedMaterials')
                 ->where('partner_id', $partner->id)
                 ->whereBetween('closed_at', [$start_time, $end_time])
+                ->select('id', 'partner_id', 'order_id', 'closed_at', 'sheba_collection', 'partner_collection', 'finance_collection')
                 ->get()->each(function ($partner_order) {
                     $partner_order['sales'] = (double)$partner_order->calculate($price_only = true)->totalCost;
                     $partner_order['code'] = $partner_order->code();
                     $partner_order['week_name'] = $partner_order->closed_at->format('D');
                     $partner_order['day'] = $partner_order->closed_at->day;
+                    $partner_order['sheba_collection'] = (double)$partner_order->sheba_collection;
+                    $partner_order['partner_collection'] = (double)$partner_order->partner_collection;
+                    $partner_order['finance_collection'] = (double)$partner_order->finance_collection;
                     removeRelationsFromModel($partner_order);
                     removeSelectedFieldsFromModel($partner_order);
                 });

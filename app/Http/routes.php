@@ -212,6 +212,7 @@ $api->version('v1', function ($api) {
                 $api->get('/', 'App\Http\Controllers\PartnerOrderController@show');
                 $api->get('bills', 'App\Http\Controllers\PartnerOrderController@getBills');
                 $api->get('logs', 'App\Http\Controllers\PartnerOrderController@getLogs');
+                $api->post('comments', 'App\Http\Controllers\PartnerOrderController@postComment');
             });
         });
     });

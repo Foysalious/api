@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Comment;
+use App\Repositories\CommentRepository;
 use App\Repositories\PartnerRepository;
 use App\Repositories\ResourceJobRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Sheba\Logs\JobLogs;
 use Validator;
-use App\Http\Requests;
 
 class PartnerOrderController extends Controller
 {
@@ -224,8 +225,8 @@ class PartnerOrderController extends Controller
                         $price_changes = $job_log;
                         foreach ($price_changes as $price_change) {
                             $collect = collect();
-                            $collect->put('log', $price_change->log. ' from ' . $price_change->from . ' to ' . $price_change->to);
-                            $collect->put('type',$key);
+                            $collect->put('log', $price_change->log . ' from ' . $price_change->from . ' to ' . $price_change->to);
+                            $collect->put('type', $key);
                             $collect->put('timestamp', $price_change->created_at->timestamp);
                             $collect->put('created_at', $price_change->created_at->format('Y-m-d'));
                             $all_logs->push($collect->toArray());
@@ -234,31 +235,31 @@ class PartnerOrderController extends Controller
                         $status_changes = $job_log;
                         foreach ($status_changes as $status_change) {
                             $collect = collect();
-                            $collect->put('log', 'Job status changed from ' . $status_change->from_status . ' to ' . $status_change->to_status);
-                            $collect->put('type',$key);
+                            $collect->put('log', 'Job status has changed from ' . $status_change->from_status . ' to ' . $status_change->to_status);
+                            $collect->put('type', $key);
                             $collect->put('timestamp', $status_change->created_at->timestamp);
                             $collect->put('created_at', $status_change->created_at->format('Y-m-d'));
                             $all_logs->push($collect->toArray());
                         }
                     } else {
                         foreach ($job_log as $log) {
-                            $collect=collect($log);
-                            $collect->put('created_at',$log->created_at->toDateString());
-                            $collect->put('timestamp',$log->created_at->timestamp);
-                            $collect->put('type',$key);
+                            $collect = collect($log);
+                            $collect->put('created_at', $log->created_at->toDateString());
+                            $collect->put('timestamp', $log->created_at->timestamp);
+                            $collect->put('type', $key);
                             $collect->forget('created_by_name');
                             $all_logs->push(($collect)->toArray());
                         }
                     }
                 }
-                $comments=$job->comments->where('is_visible',1);
-                foreach ($comments as $comment){
+                $comments = $job->comments->where('is_visible', 1);
+                foreach ($comments as $comment) {
                     $collect = collect();
-                    $collect->put('log', $comment->commentator_type::find($comment->created_by)->name.' has commented');
+                    $collect->put('log', explode('-', $comment->created_by_name)[1] . ' has commented');
                     $collect->put('comment', $comment->comment);
                     $collect->put('timestamp', $comment->created_at->timestamp);
                     $collect->put('created_at', $comment->created_at->format('Y-m-d'));
-                    $collect->put('type','comment');
+                    $collect->put('type', 'comment');
                     $all_logs->push($collect->toArray());
                 }
             }
@@ -266,6 +267,21 @@ class PartnerOrderController extends Controller
                 return $key;
             });
             return api_response($request, $dates, 200, ['logs' => $dates]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function postComment($partner, Request $request)
+    {
+        try {
+            $partner_order = $request->partner_order;
+            $manager_resource = $request->manager_resource;
+            $comment = (new CommentRepository('Job', $partner_order->jobs->pluck('id')->first(), $manager_resource))->store($request->comment, true);
+            if ($comment) {
+                return api_response($request, $comment, 200);
+            }
+            return api_response($request, $comment, 500);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
