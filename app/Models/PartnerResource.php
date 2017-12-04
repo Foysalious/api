@@ -9,11 +9,13 @@ class PartnerResource extends Model
         'id'
     ];
 
-    public function details() {
+    public function details()
+    {
         return $this->belongsToMany(Resource::class);
     }
 
-    public function partners() {
+    public function partners()
+    {
         return $this->belongsToMany(Partner::class);
     }
 

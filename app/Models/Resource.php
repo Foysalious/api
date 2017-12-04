@@ -38,6 +38,11 @@ class Resource extends Model
         return $this->associatePartners()->first();
     }
 
+    public function partnerResources()
+    {
+        return $this->hasMany(PartnerResource::class);
+    }
+
     public function typeIn($partner)
     {
         $partner = $partner instanceof Partner ? $partner->id : $partner;
@@ -46,6 +51,18 @@ class Resource extends Model
             $types[] = $unique_partner->pivot->resource_type;
         }
         return $types;
+    }
+
+    public function categoriesIn($partner)
+    {
+        $categories = collect();
+        $partner_resources = ($this->partnerResources()->where('partner_id', $partner)->get())->load('categories');
+        foreach ($partner_resources as $partner_resource) {
+            foreach ($partner_resource->categories as $item) {
+                $categories->push($item);
+            }
+        }
+        return $categories->unique('id');
     }
 
     public function isManager(Partner $partner)
