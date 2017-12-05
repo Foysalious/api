@@ -14,6 +14,7 @@ class StatusCalculator
         self::$jobStatuses = constants('JOB_STATUSES');
         self::$statuses = constants('PARTNER_ORDER_STATUSES');
         self::initializeStatusCounter();
+        self::$totalJobs = 0;
     }
 
     public static function calculate(PartnerOrder $partner_order)

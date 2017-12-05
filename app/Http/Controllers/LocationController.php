@@ -12,11 +12,16 @@ class LocationController extends Controller
     public function getAllLocations()
     {
         $locations = Location::select('id', 'name')->where([
-            ['name', '<>', 'Rest'],
+            ['name', 'NOT LIKE', '%Rest%'],
             ['publication_status', 1]
         ])->orderBy('name')->get();
-        $rest = Location::select('id', 'name')->where('name', 'Rest')->first();
-        $locations->push($rest);
+
+        Location::select('id', 'name')->where([
+            ['name', 'LIKE', '%Rest%'],
+            ['publication_status', 1]
+        ])->get()->each(function ($location, $key) use ($locations) {
+            $locations->push($location);
+        });
         return response()->json(['locations' => $locations, 'code' => 200, 'msg' => 'successful']);
     }
 }
