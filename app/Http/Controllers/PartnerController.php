@@ -282,21 +282,25 @@ class PartnerController extends Controller
 
     public function show($partner, Request $request)
     {
-        $partner = $request->partner->load(['basicInformations', 'reviews', 'services' => function ($q) {
-            $q->where('partner_service.is_verified', 1);
-        }], 'locations');
-        $locations = $partner->locations;
-        $basic_info = $partner->basicInformations;
-        $info = collect($partner)->only(['id', 'name', 'mobile', 'email', 'verified_at', 'status', 'logo', 'wallet', 'address', 'created_at']);
-        $info->put('total_rating', $partner->reviews->count());
-        $info->put('avg_rating', round($partner->reviews->avg('rating'), 2));
-        $info->put('working_days', collect($basic_info)->only('working_days')->get('working_days'));
-        $info->put('working_hours', collect($basic_info)->only('working_hours')->get('working_hours'));
-        $info->put('locations', $locations->pluck('name'));
-        $info->put('total_locations', $locations->count());
-        $info->put('total_services', $partner->services->count());
-        $info->put('wallet', (double)$info->get('wallet'));
-        return api_response($request, $info, 200, ['info' => $info]);
+        try{
+            $partner = $request->partner->load(['basicInformations', 'reviews', 'services' => function ($q) {
+                $q->where('partner_service.is_verified', 1);
+            }], 'locations');
+            $locations = $partner->locations;
+            $basic_info = $partner->basicInformations;
+            $info = collect($partner)->only(['id', 'name', 'mobile', 'email', 'verified_at', 'status', 'logo', 'wallet', 'address', 'created_at']);
+            $info->put('total_rating', $partner->reviews->count());
+            $info->put('avg_rating', round($partner->reviews->avg('rating'), 2));
+            $info->put('working_days', collect($basic_info)->only('working_days')->get('working_days'));
+            $info->put('working_hours', collect($basic_info)->only('working_hours')->get('working_hours'));
+            $info->put('locations', $locations->pluck('name'));
+            $info->put('total_locations', $locations->count());
+            $info->put('total_services', $partner->services->count());
+            $info->put('wallet', (double)$info->get('wallet'));
+            return api_response($request, $info, 200, ['info' => $info]);
+        }catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
     }
 
 

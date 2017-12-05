@@ -154,4 +154,34 @@ class Partner extends Model
     {
         return $this->resources->where('id', (int)$resource_id)->where('pivot.resource_type', $type)->first() ? true : false;
     }
+
+    public function transactions()
+    {
+        return $this->hasMany(PartnerTransaction::class);
+    }
+
+    public function notifications()
+    {
+        return $this->morphMany(Notification::class, 'notifiable');
+    }
+
+    public function withdrawalRequests()
+    {
+        return $this->hasMany(PartnerWithdrawalRequest::class);
+    }
+
+    public function lastWeekWithdrawalRequest()
+    {
+        return $this->withdrawalRequests()->lastWeek()->notCancelled()->first();
+    }
+
+    public function currentWeekWithdrawalRequest()
+    {
+        return $this->withdrawalRequests()->currentWeek()->notCancelled()->first();
+    }
+
+    public function walletSetting()
+    {
+        return $this->hasOne(PartnerWalletSetting::class);
+    }
 }

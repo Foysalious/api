@@ -282,6 +282,14 @@ return [
         500 => ['message' => 'Internal Server Error', 'code' => 500],
     ],
     'TRENDING' => [875, 775, 783, 629, 118, 76, 756],
-    'APP_VOUCHER' => env('APP_VOUCHER')
+    'APP_VOUCHER' => env('APP_VOUCHER'),
+    'PARTNER_WITHDRAWAL_REQUEST_STATUSES' => [
+        'pending' => 'pending',
+        'approval_pending' => 'Approval Pending',
+        'approved' => 'Approved',
+        'rejected' => 'rejected',
+        'completed' => 'Completed',
+        'cancelled' => 'cancelled'
+    ]
 
 ];
