@@ -120,44 +120,48 @@ class PartnerController extends Controller
 
     public function getReviewInfo($partner, Request $request)
     {
-        list($offset, $limit) = calculatePagination($request);
-        $partner = $request->partner->load(['reviews' => function ($q) use ($request) {
-            $q->with(['job.partner_order.partner', 'resource.profile', 'service']);
-            if ($request->has('service')) {
-                $q->where('service_id', $request->service);
+        try {
+            list($offset, $limit) = calculatePagination($request);
+            $partner = $request->partner->load(['reviews' => function ($q) use ($request) {
+                $q->with(['job.partner_order.partner', 'resource.profile', 'service']);
+                if ($request->has('service')) {
+                    $q->where('service_id', $request->service);
+                }
+                if ($request->has('resource')) {
+                    $q->where('resource_id', $request->resource);
+                }
+            }]);
+            $reviews = $partner->reviews;
+            $breakdown = array_fill(1, 5, 0);
+            $avg_rating = null;
+            if (count($reviews) > 0) {
+                $breakdown = $this->reviewRepository->getReviewBreakdown($reviews);
+                $partner = $this->reviewRepository->getGeneralReviewInformation($partner);
+                $avg_rating = $reviews->avg('rating');
+                $reviews = $reviews->filter(function ($item, $key) {
+                    return $item->review != '' || $item->review != null;
+                })->each(function ($review, $key) {
+                    $review['order_id'] = $review->job->partner_order->id;
+                    $review['order_code'] = $review->job->partner_order->code();
+                    $review['partner'] = $review->job->partner_order->partner->name;
+                    $review['resource_name'] = ($review->resource) ? $review->resource->profile->name : null;
+                    $review['service_name'] = $review->service->name;
+                    removeRelationsFromModel($review);
+                    removeSelectedFieldsFromModel($review);
+                })->sortByDesc('created_at');
+                removeRelationsFromModel($partner);
+                removeSelectedFieldsFromModel($partner);
             }
-            if ($request->has('resource')) {
-                $q->where('resource_id', $request->resource);
-            }
-        }]);
-        $reviews = $partner->reviews;
-        $breakdown = array_fill(1, 5, 0);
-        $avg_rating = null;
-        if (count($reviews) > 0) {
-            $breakdown = $this->reviewRepository->getReviewBreakdown($reviews);
-            $partner = $this->reviewRepository->getGeneralReviewInformation($partner);
-            $avg_rating = $reviews->avg('rating');
-            $reviews = $reviews->filter(function ($item, $key) {
-                return $item->review != '' || $item->review != null;
-            })->each(function ($review, $key) {
-                $review['order_id'] = $review->job->partner_order->id;
-                $review['order_code'] = $review->job->partner_order->code();
-                $review['partner'] = $review->job->partner_order->partner->name;
-                $review['resource_name'] = ($review->resource) ? $review->resource->profile->name : null;
-                $review['service_name'] = $review->service->name;
-                removeRelationsFromModel($review);
-                removeSelectedFieldsFromModel($review);
-            })->sortByDesc('created_at');
-            removeRelationsFromModel($partner);
-            removeSelectedFieldsFromModel($partner);
+            $info = array(
+                'rating' => $avg_rating ? round($avg_rating, 2) : 5,
+                'total_reviews' => $reviews->count(),
+                'reviews' => array_slice($reviews->values()->all(), $offset, $limit),
+                'breakdown' => $breakdown
+            );
+            return api_response($request, $info, 200, ['info' => $info]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
         }
-        $info = array(
-            'rating' => $avg_rating ? round($avg_rating, 2) : 5,
-            'total_reviews' => $reviews->count(),
-            'reviews' => array_slice($reviews->values()->all(), $offset, $limit),
-            'breakdown' => $breakdown
-        );
-        return api_response($request, $info, 200, ['info' => $info]);
     }
 
     public function getResources($partner, Request $request)
@@ -257,7 +261,7 @@ class PartnerController extends Controller
             $info = array(
                 'today' => $breakdown[(int)date('d')],
                 'week' => $breakdown->sum(),
-                'month' => $yearly[(int)date('m')],
+                'month' => isset($yearly[(int)date('m')]) ? $yearly[(int)date('m')] : 0,
                 'year' => $yearly->sum(),
                 'total' => 1000
             );
