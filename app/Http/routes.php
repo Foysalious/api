@@ -199,7 +199,6 @@ $api->version('v1', function ($api) {
                     $api->post('/', 'App\Http\Controllers\PartnerJobController@addMaterial');
                     $api->put('/', 'App\Http\Controllers\PartnerJobController@updateMaterial');
                 });
-
             });
         });
         $api->group(['prefix' => 'orders'], function ($api) {
