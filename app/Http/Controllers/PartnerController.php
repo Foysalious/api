@@ -241,7 +241,7 @@ class PartnerController extends Controller
                     removeRelationsFromModel($partner_order);
                     removeSelectedFieldsFromModel($partner_order);
                 });
-            $breakdown = collect(array_fill(1, Carbon::create(date('Y'), date('m'), null)->daysInMonth, 0));
+            $breakdown = collect(array_fill((int)$start_time->format('d'), 7, 0));
             if (count($partner_orders) > 0) {
                 $partner_orders->groupBy('day')->each(function ($item, $key) use ($breakdown) {
                     $breakdown[$key] = $item->sum('sales');
@@ -253,9 +253,13 @@ class PartnerController extends Controller
             })->each(function ($item, $key) use ($weekly_breakdown) {
                 $weekly_breakdown->put(Carbon::createFromDate(null, null, $key)->format('D'), $item);
             });
+            $yearly = collect((new SalesGrowth($partner, 0, (int)date('Y')))->get());
             $info = array(
                 'today' => $breakdown[(int)date('d')],
                 'week' => $breakdown->sum(),
+                'month' => $yearly[(int)date('m')],
+                'year' => $yearly->sum(),
+                'total' => 1000
             );
             return api_response($request, $info, 200, ['info' => $info, 'breakdown' => $weekly_breakdown, 'orders' => $partner_orders]);
         } catch (\Throwable $e) {
