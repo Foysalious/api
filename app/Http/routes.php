@@ -183,6 +183,7 @@ $api->version('v1', function ($api) {
         $api->group(['prefix' => 'transactions'], function ($api) {
             $api->get('/', 'App\Http\Controllers\PartnerTransactionController@index');
         });
+        $api->get('notifications', 'App\Http\Controllers\PartnerController@getNotifications');
 
         $api->group(['prefix' => 'graphs'], function ($api) {
             $api->get('orders', 'App\Http\Controllers\GraphController@getOrdersGraph');

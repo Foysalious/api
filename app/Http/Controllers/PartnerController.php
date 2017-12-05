@@ -313,5 +313,24 @@ class PartnerController extends Controller
         }
     }
 
+    public function getNotifications($partner, Request $request)
+    {
+        $partner = $request->partner;
+        $notifications = ($partner->notifications()->select('id', 'title', 'event_type', 'event_id', 'type', 'is_seen', 'created_at')->get())->sortByDesc('created_at');
+        $notifications->map(function ($notification) {
+            $notification->event_type = str_replace('App\Models\\', "", $notification->event_type);
+            if ($notification->event_type == 'Job') {
+                array_add($notification, 'event_code', (Job::find($notification->event_id))->fullCode());
+            }elseif ($notification->event_type == 'Order'){
+                array_add($notification, 'event_code', (Order::find($notification->event_id))->code());
+            }
+            return $notification;
+        });
+        if (count($notifications) != 0) {
+            return api_response($request, $notifications, 200, ['notifications' => $notifications->values()->all()]);
+        } else {
+            return api_response($request, null, 404);
+        }
+    }
 
 }
