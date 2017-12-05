@@ -180,6 +180,9 @@ $api->version('v1', function ($api) {
             $api->put('{withdrawals}', 'App\Http\Controllers\PartnerWithdrawalRequestController@update');
             $api->get('status', 'App\Http\Controllers\PartnerWithdrawalRequestController@getStatus');
         });
+        $api->group(['prefix' => 'transactions'], function ($api) {
+            $api->get('/', 'App\Http\Controllers\PartnerTransactionController@index');
+        });
 
         $api->group(['prefix' => 'graphs'], function ($api) {
             $api->get('orders', 'App\Http\Controllers\GraphController@getOrdersGraph');

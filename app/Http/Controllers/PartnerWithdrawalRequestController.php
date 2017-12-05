@@ -59,11 +59,18 @@ class PartnerWithdrawalRequestController extends Controller
     public function update($partner, $withdrawals, Request $request)
     {
         try {
+            $validator = Validator::make($request->all(), [
+                'status' => 'required|in:cancelled'
+            ]);
+            if ($validator->fails()) {
+                $errors = $validator->errors()->all()[0];
+                return api_response($request, $errors, 400, ['message' => $errors]);
+            }
             $partner = $request->partner;
             $partnerWithdrawalRequest = PartnerWithdrawalRequest::find($withdrawals);
             if ($partner->id == $partnerWithdrawalRequest->partner_id && $partnerWithdrawalRequest->status == constants('PARTNER_WITHDRAWAL_REQUEST_STATUSES')['pending']) {
                 $withdrawal_update = $partnerWithdrawalRequest->update([
-                    'status' => constants('PARTNER_WITHDRAWAL_REQUEST_STATUSES')['cancelled'],
+                    'status' => $request->status,
                     'updated_by' => $request->manager_resource->id,
                     'updated_by_name' => 'Resource - ' . $request->manager_resource->profile->name,
                 ]);
@@ -88,7 +95,7 @@ class PartnerWithdrawalRequestController extends Controller
                 $status = 'You don\'t have sufficient balance on your wallet. So you can\'t send a withdraw request.';
                 $can_withdraw = false;
             } elseif ($is_wallet_has_sufficient_balance && $activePartnerWithdrawalRequest) {
-                $status = 'Already Sent a Withdraw Request';
+                $status = 'You have already sent a Withdrawal Request';
                 $can_withdraw = false;
             }
             return api_response($request, $status, 200, ['status' => $status, 'can_withdraw' => $can_withdraw]);
