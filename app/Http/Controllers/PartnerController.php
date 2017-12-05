@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
 
 use DB;
 use Sheba\Charts\SalesGrowth;
-
+use Validator;
 class PartnerController extends Controller
 {
     private $serviceRepository;
@@ -121,14 +121,22 @@ class PartnerController extends Controller
     public function getReviewInfo($partner, Request $request)
     {
         try {
+            $validator = Validator::make($request->all(), [
+                'service_id' => 'sometimes|required|numeric',
+                'resource_id' => 'sometimes|required|numeric'
+            ]);
+            if ($validator->fails()) {
+                $errors = $validator->errors()->all()[0];
+                return api_response($request, $errors, 400, ['message' => $errors]);
+            }
             list($offset, $limit) = calculatePagination($request);
             $partner = $request->partner->load(['reviews' => function ($q) use ($request) {
                 $q->with(['job.partner_order.partner', 'resource.profile', 'service']);
-                if ($request->has('service')) {
-                    $q->where('service_id', $request->service);
+                if ($request->has('service_id')) {
+                    $q->where('service_id', $request->service_id);
                 }
-                if ($request->has('resource')) {
-                    $q->where('resource_id', $request->resource);
+                if ($request->has('resource_id')) {
+                    $q->where('resource_id', $request->resource_id);
                 }
             }]);
             $reviews = $partner->reviews;
