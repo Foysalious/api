@@ -17,12 +17,18 @@ class PartnerRepository
         $this->serviceRepo = new ServiceRepository();
     }
 
-    public function resources($type = 'Handyman')
+    public function resources($type = null, $verify = null)
     {
-        $this->partner->load(['resources' => function ($q) use ($type) {
-            $q->select('resources.id', 'profile_id', 'resources.is_verified')->verified()->type($type)->with(['jobs' => function ($q) {
+        $this->partner->load(['resources' => function ($q) use ($type, $verify) {
+            $q->select('resources.id', 'profile_id', 'resource_type', 'resources.is_verified')->with(['jobs' => function ($q) {
                 $q->info()->status([constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Served']]);
             }])->with('profile', 'reviews');
+            if ($type) {
+                $q->type($type);
+            }
+            if ($verify) {
+                $q->verified();
+            }
         }]);
         foreach ($this->partner->resources as $resource) {
             $resource['ongoing'] = $resource->jobs->whereIn('status', [constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Process']])->count();

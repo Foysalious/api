@@ -176,9 +176,19 @@ class PartnerController extends Controller
     public function getResources($partner, Request $request)
     {
         try {
+            $validator = Validator::make($request->all(), [
+                'type' => 'sometimes|required|string',
+                'verified' => 'sometimes|required|boolean'
+            ]);
+            if ($validator->fails()) {
+                $errors = $validator->errors()->all()[0];
+                return api_response($request, $errors, 400, ['message' => $errors]);
+            }
             list($offset, $limit) = calculatePagination($request);
             $partnerRepo = new PartnerRepository($request->partner);
-            $resources = $partnerRepo->resources();
+            $type = $request->has('type') ? $request->type : null;
+            $verified = $request->has('verified') ? $request->verified : null;
+            $resources = $partnerRepo->resources($type, $verified);
             if (count($resources) > 0) {
                 return api_response($request, $resources, 200, ['resources' => array_slice($resources->sortBy('name')->values()->all(), $offset, $limit)]);
             } else {
@@ -282,7 +292,7 @@ class PartnerController extends Controller
 
     public function show($partner, Request $request)
     {
-        try{
+        try {
             $partner = $request->partner->load(['basicInformations', 'reviews', 'services' => function ($q) {
                 $q->where('partner_service.is_verified', 1);
             }], 'locations');
@@ -298,7 +308,7 @@ class PartnerController extends Controller
             $info->put('total_services', $partner->services->count());
             $info->put('wallet', (double)$info->get('wallet'));
             return api_response($request, $info, 200, ['info' => $info]);
-        }catch (\Throwable $e) {
+        } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
     }
