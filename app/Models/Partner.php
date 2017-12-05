@@ -19,11 +19,6 @@ class Partner extends Model
         return $this->hasOne(PartnerBasicInformation::class);
     }
 
-    public function bankInformations()
-    {
-        return $this->hasOne(PartnerBankInformation::class);
-    }
-
     public function admins()
     {
         return $this->belongsToMany(Resource::class)

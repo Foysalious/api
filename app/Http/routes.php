@@ -173,6 +173,7 @@ $api->version('v1', function ($api) {
         $api->get('dashboard', 'App\Http\Controllers\PartnerController@getDashboardInfo');
         $api->get('earnings', 'App\Http\Controllers\PartnerController@getEarnings');
         $api->get('reviews', 'App\Http\Controllers\PartnerController@getReviewInfo');
+        $api->get('info', 'App\Http\Controllers\PartnerController@show');
 
         $api->group(['prefix' => 'graphs'], function ($api) {
             $api->get('orders', 'App\Http\Controllers\GraphController@getOrdersGraph');
