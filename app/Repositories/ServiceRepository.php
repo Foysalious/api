@@ -86,10 +86,10 @@ class ServiceRepository
     public function partnerSelectByLocation($service, $location)
     {
         return $service->partners()
-            ->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'prices')
+            ->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet', 'prices')
             ->with(['basicInformations' => function ($q) {
                 $q->select('id', 'partner_id', 'working_days', 'working_hours');
-            }])->where([
+            }, 'walletSetting'])->where([
                 ['partners.status', 'Verified'],
                 ['is_verified', 1],
                 ['is_published', 1]
@@ -104,11 +104,11 @@ class ServiceRepository
             $query->select('id', 'name');
         }])->with(['basicInformations' => function ($q) {
             $q->select('id', 'partner_id', 'working_days', 'working_hours');
-        }])->where([
+        }, 'walletSetting'])->where([
             ['is_verified', 1],
             ['is_published', 1],
             ['partners.status', 'Verified']
-        ])->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'prices')->get();
+        ])->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet', 'prices')->get();
     }
 
     public function getMaxMinPrice($service)
@@ -203,9 +203,19 @@ class ServiceRepository
     private function getPartnerService($service, $location)
     {
         $service_partners = $location != null ? $this->partnerSelectByLocation($service, $location) : $this->partnerSelect($service);
+        $service_partners = $this->getPartnersWithAppropriateCreditLimit($service_partners);
         return array($this->_filterPartnerOnWorkingHourDayLeave($service_partners), []);
     }
 
+    private function getPartnersWithAppropriateCreditLimit($partners)
+    {
+        return $partners->reject(function ($item, $key) {
+            return (double)$item->wallet < (double)$item->min_wallet_threshold;
+        })->each(function ($partner, $key) {
+            array_forget($partner,'walletSetting');
+            array_forget($partner,'wallet');
+        });
+    }
 
     private function partnerServesThisOption($prices, $option)
     {
