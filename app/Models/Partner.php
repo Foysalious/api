@@ -185,8 +185,4 @@ class Partner extends Model
         return $this->withdrawalRequests()->currentWeek()->notCancelled()->first();
     }
 
-    public function walletSetting()
-    {
-        return $this->hasOne(PartnerWalletSetting::class);
-    }
 }
