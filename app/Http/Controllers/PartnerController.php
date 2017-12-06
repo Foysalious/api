@@ -154,6 +154,7 @@ class PartnerController extends Controller
                     $review['order_code'] = $review->job->partner_order->code();
                     $review['partner'] = $review->job->partner_order->partner->name;
                     $review['resource_name'] = ($review->resource) ? $review->resource->profile->name : null;
+                    $review['resource_pic'] = ($review->resource) ? $review->resource->profile->pro_pic : null;
                     $review['service_name'] = $review->service->name;
                     removeRelationsFromModel($review);
                     removeSelectedFieldsFromModel($review);

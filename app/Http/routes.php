@@ -174,6 +174,7 @@ $api->version('v1', function ($api) {
         $api->get('earnings', 'App\Http\Controllers\PartnerController@getEarnings');
         $api->get('reviews', 'App\Http\Controllers\PartnerController@getReviewInfo');
         $api->get('info', 'App\Http\Controllers\PartnerController@show');
+
         $api->group(['prefix' => 'withdrawals'], function ($api) {
             $api->get('/', 'App\Http\Controllers\PartnerWithdrawalRequestController@index');
             $api->post('/', 'App\Http\Controllers\PartnerWithdrawalRequestController@store');
