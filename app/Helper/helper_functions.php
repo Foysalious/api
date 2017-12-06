@@ -176,3 +176,26 @@ if (!function_exists('calculatePagination')) {
         return array($offset, $limit);
     }
 }
+
+if (!function_exists('removeRelationsFromModel')) {
+
+    function removeRelationsFromModel($model)
+    {
+        foreach ($model->getRelations() as $key => $relation) {
+            array_forget($model, $key);
+        }
+    }
+}
+
+if (!function_exists('removeSelectedFieldsFromModel')) {
+
+    function removeSelectedFieldsFromModel($model)
+    {
+        array_forget($model, 'created_by');
+        array_forget($model, 'updated_by');
+        array_forget($model, 'updated_at');
+        array_forget($model, 'created_by_name');
+        array_forget($model, 'updated_by_name');
+        array_forget($model, 'remember_token');
+    }
+}
