@@ -4,6 +4,7 @@
 namespace App\Http\Controllers;
 
 
+use App\Models\PartnerResource;
 use App\Repositories\ReviewRepository;
 use Illuminate\Http\Request;
 
@@ -16,7 +17,7 @@ class ResourceController extends Controller
         $this->reviewRepository = new ReviewRepository();
     }
 
-    public function show($resource, Request $request)
+    public function show($partner, $resource, Request $request)
     {
         try {
             $resource = $request->resource;
@@ -35,6 +36,7 @@ class ResourceController extends Controller
             $resource['total_reviews'] = $resource->reviews->filter(function ($item, $key) {
                 return $item->review != '' || $item->review != null;
             })->count();
+            $resource['joined_at'] = $resource->partners->where('pivot.partner_id', (int)$partner)->first()->created_at->timestamp;
             removeRelationsFromModel($resource);
             removeSelectedFieldsFromModel($resource);
             return api_response($request, $resource, 200, ['resource' => $resource]);
