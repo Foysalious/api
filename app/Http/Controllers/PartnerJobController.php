@@ -78,7 +78,7 @@ class PartnerJobController extends Controller
                 if ($response) {
                     if ($response->code == 200) {
                         $updatedData = [
-                            'msg' => 'Resource Assign',
+                            'msg' => 'Resource Change',
                             'old_resource_id' => null,
                             'new_resource_id' => (int)$request->resource_id
                         ];
