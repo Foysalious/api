@@ -77,8 +77,14 @@ class PartnerJobController extends Controller
                 $response = $this->resourceJobRepository->changeStatus($job->id, $request);
                 if ($response) {
                     if ($response->code == 200) {
+                        $updatedData = [
+                            'msg' => 'Resource Assign',
+                            'old_resource_id' => null,
+                            'new_resource_id' => (int)$request->resource_id
+                        ];
                         $job->resource_id = $request->resource_id;
                         $job->update();
+                        $this->jobUpdateLog($job->id, json_encode($updatedData), $request->manager_resource);
                         return api_response($request, $job, 200);
                     } else {
                         return api_response($request, $response, $response->code);
