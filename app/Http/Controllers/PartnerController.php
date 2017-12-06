@@ -276,7 +276,8 @@ class PartnerController extends Controller
             })->each(function ($item, $key) use ($weekly_breakdown) {
                 $weekly_breakdown->put(Carbon::createFromDate(null, null, $key)->format('D'), $item);
             });
-            $yearly = collect((new SalesGrowth($partner, 0, (int)date('Y')))->get());
+            $yearly = (new SalesGrowth($partner, 0, (int)date('Y')))->get();
+            $yearly = array_has($yearly, 'month') ? collect($yearly['month']) : collect();
             $info = array(
                 'today' => $breakdown[(int)date('d')],
                 'week' => $breakdown->sum(),
@@ -321,7 +322,7 @@ class PartnerController extends Controller
             $notification->event_type = str_replace('App\Models\\', "", $notification->event_type);
             if ($notification->event_type == 'Job') {
                 array_add($notification, 'event_code', (Job::find($notification->event_id))->fullCode());
-            }elseif ($notification->event_type == 'Order'){
+            } elseif ($notification->event_type == 'Order') {
                 array_add($notification, 'event_code', (Order::find($notification->event_id))->code());
             }
             return $notification;

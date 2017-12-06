@@ -79,7 +79,7 @@ class SalesGrowth
             for ($i = 1; $i <= 12; $i++) {
                 $this->processOrderWithMonth($data, 'month', $i, $year, $location, $service, $category, $resource);
             }
-            return $data['month'];
+            return $data;
 //            $data = $this->makeChartDataMonthWise($data);
         } else if ($month && $year) {
             $this->processOrderWithMonth($data, 'day', $month, $year, $location, $service, $category, $resource);
