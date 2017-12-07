@@ -30,6 +30,7 @@ class ResourceController extends Controller
             $resource['name'] = $profile->name;
             $resource['mobile'] = $profile->mobile;
             $resource['address'] = $profile->address;
+            $resource['profile_picture'] = $profile->pro_pic;
             $avg_rating = $resource->reviews->avg('rating');
             $resource['rating'] = $avg_rating == null ? 5 : round($avg_rating, 2);
             $resource['total_rating'] = $resource->reviews->count();
