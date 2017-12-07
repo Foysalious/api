@@ -176,3 +176,10 @@ if (!function_exists('calculatePagination')) {
         return array($offset, $limit);
     }
 }
+
+if (! function_exists('floatValFormat')) {
+    function floatValFormat($value)
+    {
+        return floatval(number_format($value, 2, '.', ''));
+    }
+}
