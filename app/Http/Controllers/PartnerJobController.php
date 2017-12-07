@@ -172,6 +172,7 @@ class PartnerJobController extends Controller
                     $item['added_by'] = trim(explode('-', $item->created_by_name)[1]);
                     removeSelectedFieldsFromModel($item);
                 });
+                $materials['total_material_price'] = $materials->sum('material_price');
                 return api_response($request, $materials, 200, ['materials' => $materials]);
             } else {
                 return api_response($request, $job, 404);
