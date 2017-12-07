@@ -109,6 +109,11 @@ class PartnerController extends Controller
         if (count($partner->reviews) > 0) {
             $partner = $this->reviewRepository->getGeneralReviewInformation($partner);
             $breakdown = $this->reviewRepository->getReviewBreakdown($partner->reviews);
+            $reviews = $partner->reviews->filter(function ($review, $key) {
+                return $review->review != '' || $review->review != null;
+            })->values()->all();
+            array_forget($partner, 'reviews');
+            $partner['reviews'] = $reviews;
             return response()->json(['msg' => 'ok', 'code' => 200, 'partner' => $partner, 'breakdown' => $breakdown]);
         }
         return response()->json(['msg' => 'not found', 'code' => 404]);
