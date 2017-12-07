@@ -210,7 +210,7 @@ class ServiceRepository
     private function getPartnersWithAppropriateCreditLimit($partners)
     {
         return $partners->reject(function ($item, $key) {
-            return (double)$item->wallet < (double)$item->min_wallet_threshold;
+            return (double)$item->wallet < (double)$item->walletSetting->min_wallet_threshold;
         })->each(function ($partner, $key) {
             array_forget($partner,'walletSetting');
             array_forget($partner,'wallet');
