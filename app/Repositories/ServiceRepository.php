@@ -273,6 +273,7 @@ class ServiceRepository
     public function addServiceInfo($services, array $scope)
     {
         foreach ($services as $service) {
+            $service->partnerServices=$this->_filterByPartnerAndWallet($service->partnerServices);
             if (array_search('start_price', $scope) !== false) {
                 $service = $this->getStartPrice($service);
             }
@@ -293,6 +294,17 @@ class ServiceRepository
         foreach ($relations as $key => $relation) {
             array_forget($model, $key);
         }
+    }
+
+    private function _filterByPartnerAndWallet($partnerServices){
+        return $partnerServices->filter(function ($partner_service, $key) {
+            if ($partner_service->partner != null) {
+                if ((double)$partner_service->partner->wallet > (double)$partner_service->partner->walletSetting->min_wallet_threshold) {
+                    return true;
+                }
+            }
+            return false;
+        });
     }
 
     public function getPartnerServicesAndPartners($services, $location)
@@ -318,7 +330,7 @@ class ServiceRepository
         return $services->load(['partnerServices' => function ($q) use ($location) {
             $q->published()
                 ->with(['partner' => function ($q) use ($location) {
-                    $q->published()->whereHas('locations', function ($query) use ($location) {
+                    $q->published()->with('walletSetting')->whereHas('locations', function ($query) use ($location) {
                         $query->where('id', $location);
                     });
                 }])
