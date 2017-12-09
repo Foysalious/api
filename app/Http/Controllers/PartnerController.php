@@ -310,10 +310,13 @@ class PartnerController extends Controller
             $info->put('total_rating', $partner->reviews->count());
             $info->put('avg_rating', round($partner->reviews->avg('rating'), 2));
             $info->put('working_days', json_decode(collect($basic_info)->only('working_days')->get('working_days')));
-            $info->put('working_hours', collect($basic_info)->only('working_hours')->get('working_hours'));
+            $working_hours = json_decode(collect($basic_info)->only('working_hours')->get('working_hours'));
+            $info->put('working_hour_starts', $working_hours->day_start);
+            $info->put('working_hour_ends', $working_hours->day_end);
             $info->put('locations', $locations->pluck('name'));
             $info->put('total_locations', $locations->count());
             $info->put('total_services', $partner->services->count());
+            $info->put('total_resources', $partner->resources->count());
             $info->put('wallet', (double)$info->get('wallet'));
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
