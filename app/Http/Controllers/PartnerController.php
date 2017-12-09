@@ -309,7 +309,7 @@ class PartnerController extends Controller
             $info = collect($partner)->only(['id', 'name', 'mobile', 'email', 'verified_at', 'status', 'logo', 'wallet', 'address', 'created_at']);
             $info->put('total_rating', $partner->reviews->count());
             $info->put('avg_rating', round($partner->reviews->avg('rating'), 2));
-            $info->put('working_days', collect($basic_info)->only('working_days')->get('working_days'));
+            $info->put('working_days', json_decode(collect($basic_info)->only('working_days')->get('working_days')));
             $info->put('working_hours', collect($basic_info)->only('working_hours')->get('working_hours'));
             $info->put('locations', $locations->pluck('name'));
             $info->put('total_locations', $locations->count());
@@ -323,7 +323,8 @@ class PartnerController extends Controller
 
     public function getNotifications($partner, Request $request)
     {
-        $notifications = (new NotificationRepository())->getNotifications($request->partner);
+        list($offset, $limit) = calculatePagination($request);
+        $notifications = (new NotificationRepository())->getNotifications($request->partner, $offset, $limit);
         if (count($notifications) > 0) {
             return api_response($request, $notifications, 200, ['notifications' => $notifications->values()->all()]);
         } else {
