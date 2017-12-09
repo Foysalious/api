@@ -80,17 +80,17 @@ class PartnerOrder extends Model
         $this->calculateStatus();
         $this->totalDiscount = $this->jobDiscounts + $this->discount;
         $this->_calculateRoundingCutOff();
-        $this->grossAmount = $this->totalPrice - $this->discount  - $this->roundingCutOff;
+        $this->grossAmount = floatValFormat($this->totalPrice - $this->discount  - $this->roundingCutOff);
         $this->paid = $this->sheba_collection + $this->partner_collection;
-        $this->due = $this->grossAmount - $this->paid;
-        $this->profitBeforeDiscount = $this->jobPrices - $this->totalCost;
+        $this->due = floatValFormat($this->grossAmount - $this->paid);
+        $this->profitBeforeDiscount = floatValFormat($this->jobPrices - $this->totalCost);
         $this->totalDiscountedCost = ($this->totalDiscountedCost < 0) ? 0 : $this->totalDiscountedCost;
-        $this->profit = $this->grossAmount - $this->totalCost;
-        $this->margin = $this->totalPrice ? ( ($this->totalPrice - $this->totalCost) * 100 ) / $this->totalPrice : 0;
-        $this->marginBeforeDiscount = $this->jobPrices ? ( ($this->jobPrices - $this->totalCost) * 100 ) / $this->jobPrices : 0;
-        $this->marginAfterDiscount = $this->grossAmount ? ( ($this->grossAmount - $this->totalCost) * 100 ) / $this->grossAmount : 0;
-        $this->spPayable = ($this->partner_collection < $this->totalCost) ? ($this->totalCost - $this->partner_collection) : 0;
-        $this->shebaReceivable = ($this->sheba_collection < $this->profit) ? ($this->profit - $this->sheba_collection) : 0;
+        $this->profit = floatValFormat($this->grossAmount - $this->totalCost);
+        $this->margin = $this->totalPrice ? (floatValFormat($this->totalPrice - $this->totalCost) * 100 ) / $this->totalPrice : 0;
+        $this->marginBeforeDiscount = $this->jobPrices ? (floatValFormat($this->jobPrices - $this->totalCost) * 100 ) / $this->jobPrices : 0;
+        $this->marginAfterDiscount = $this->grossAmount ? (floatValFormat($this->grossAmount - $this->totalCost, 2) * 100 ) / $this->grossAmount : 0;
+        $this->spPayable = ($this->partner_collection < $this->totalCost) ? (floatValFormat($this->totalCost - $this->partner_collection)) : 0;
+        $this->shebaReceivable = ($this->sheba_collection < $this->profit) ? (floatValFormat($this->profit - $this->sheba_collection)) : 0;
         $this->_setPaymentStatus()->_setFinanceDue();
         return $this->_formatAllToTaka();
     }

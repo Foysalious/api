@@ -199,3 +199,10 @@ if (!function_exists('removeSelectedFieldsFromModel')) {
         array_forget($model, 'remember_token');
     }
 }
+
+if (! function_exists('floatValFormat')) {
+    function floatValFormat($value)
+    {
+        return floatval(number_format($value, 2, '.', ''));
+    }
+}
