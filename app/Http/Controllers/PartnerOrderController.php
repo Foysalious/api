@@ -44,7 +44,7 @@ class PartnerOrderController extends Controller
             });
             removeRelationsFromModel($partner_order);
             removeSelectedFieldsFromModel($partner_order);
-            $partner_order['jobs'] = $jobs;
+            $partner_order['jobs'] = $jobs->values()->all();
             return api_response($request, $partner_order, 200, ['order' => $partner_order]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
