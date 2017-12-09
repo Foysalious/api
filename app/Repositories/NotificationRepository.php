@@ -107,7 +107,7 @@ class NotificationRepository
 
     public function getNotifications($model, $offset, $limit)
     {
-        $notifications = ($model->notifications()->select('id', 'title', 'event_type', 'event_id', 'type', 'is_seen', 'created_at')->skip($offset)->limit($limit)->orderBy('id', 'desc')->get());
+        $notifications = $model->notifications()->select('id', 'title', 'event_type', 'event_id', 'type', 'is_seen', 'created_at')->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
         if (count($notifications) > 0) {
             $notifications = $notifications->map(function ($notification) {
                 $notification->event_type = str_replace('App\Models\\', "", $notification->event_type);

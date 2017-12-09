@@ -140,7 +140,11 @@ class PartnerOrderController extends Controller
                 } elseif ($request->status == 'history') {
                     $q->where('closed_and_paid_at', '<>', null);
                 }
-                $q->orderBy($field, $sort)->with(['jobs.usedMaterials', 'order' => function ($q) {
+                $q->orderBy($field, $sort)->with(['jobs.usedMaterials' => function ($q) use ($request) {
+                    if ($request->status == 'ongoing') {
+                        $q->whereIn('status', ['Accepted', 'Schedule Due', 'Process', 'Served']);
+                    }
+                }, 'order' => function ($q) {
                     $q->with(['customer.profile', 'location']);
                 }]);
             }]);

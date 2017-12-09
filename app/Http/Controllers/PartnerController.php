@@ -326,12 +326,16 @@ class PartnerController extends Controller
 
     public function getNotifications($partner, Request $request)
     {
-        list($offset, $limit) = calculatePagination($request);
-        $notifications = (new NotificationRepository())->getNotifications($request->partner, $offset, $limit);
-        if (count($notifications) > 0) {
-            return api_response($request, $notifications, 200, ['notifications' => $notifications->values()->all()]);
-        } else {
-            return api_response($request, null, 404);
+        try {
+            list($offset, $limit) = calculatePagination($request);
+            $notifications = (new NotificationRepository())->getNotifications($request->partner, $offset, $limit);
+            if (count($notifications) > 0) {
+                return api_response($request, $notifications, 200, ['notifications' => $notifications->values()->all()]);
+            } else {
+                return api_response($request, null, 404);
+            }
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
         }
     }
 

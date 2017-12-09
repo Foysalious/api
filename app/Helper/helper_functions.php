@@ -191,16 +191,16 @@ if (!function_exists('removeSelectedFieldsFromModel')) {
 
     function removeSelectedFieldsFromModel($model)
     {
-        array_forget($model,'created_by');
-        array_forget($model,'updated_by');
-        array_forget($model,'updated_at');
-        array_forget($model,'created_by_name');
-        array_forget($model,'updated_by_name');
-        array_forget($model,'remember_token');
+        array_forget($model, 'created_by');
+        array_forget($model, 'updated_by');
+        array_forget($model, 'updated_at');
+        array_forget($model, 'created_by_name');
+        array_forget($model, 'updated_by_name');
+        array_forget($model, 'remember_token');
     }
 }
 
-if (! function_exists('floatValFormat')) {
+if (!function_exists('floatValFormat')) {
     function floatValFormat($value)
     {
         return floatval(number_format($value, 2, '.', ''));
