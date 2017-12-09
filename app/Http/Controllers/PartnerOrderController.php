@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Comment;
 use App\Repositories\CommentRepository;
+use App\Repositories\PartnerJobRepository;
 use App\Repositories\PartnerOrderRepository;
 use App\Repositories\PartnerRepository;
 use App\Repositories\ResourceJobRepository;
@@ -15,27 +16,28 @@ use Validator;
 class PartnerOrderController extends Controller
 {
     private $partnerOrderRepository;
+    private $partnerJobRepository;
 
     public function __construct()
     {
         $this->partnerOrderRepository = new PartnerOrderRepository();
+        $this->partnerJobRepository = new PartnerJobRepository();
     }
 
     public function show($partner, Request $request)
     {
         try {
-            if ($errors = $this->partnerOrderRepository->_validateShowRequest($request)) {
+            if ($errors = $this->partnerOrderRepository->validateShowRequest($request)) {
                 return api_response($request, $errors, 400, ['message' => $errors]);
             }
-            $partner_order = $request->partner_order->load(['order.location', 'jobs' => function ($q) use ($request) {
-                $q->info()->whereIn('status', (new PartnerOrderRepository())->getStatusFromRequest($request))->orderBy('schedule_date')->with(['usedMaterials' => function ($q) {
+            $partner_order = $this->partnerOrderRepository->getOrderInfo($request->partner_order->load(['order.location', 'jobs' => function ($q) {
+                $q->info()->orderBy('schedule_date')->with(['usedMaterials' => function ($q) {
                     $q->select('id', 'job_id', 'material_name', 'material_price');
                 }, 'resource.profile']);
-            }]);
-            $this->_getInfo($partner_order);
-            $jobs = $partner_order->jobs->each(function ($job) use ($partner_order) {
+            }]));
+            $jobs = $partner_order->jobs->whereIn('status', $this->partnerOrderRepository->getStatusFromRequest($request))->each(function ($job) use ($partner_order) {
                 $job['partner_order'] = $partner_order;
-                $this->_getJobInfo($job);
+                $job = $this->partnerJobRepository->getJobInfo($job);
                 removeSelectedFieldsFromModel($job);
                 removeRelationsFromModel($job);
                 array_forget($job, 'partner_order');
@@ -89,7 +91,7 @@ class PartnerOrderController extends Controller
                 $order->put('code', $jobs[0]->partner_order->code());
                 $order->put('id', $jobs[0]->partner_order->id);
                 $order->put('jobs', $jobs->each(function ($job) use ($order, $all_jobs) {
-                    $this->_getJobInfo($job);
+                    $job = $this->partnerJobRepository->getJobInfo($job);
                     removeSelectedFieldsFromModel($job);
                     removeRelationsFromModel($job);
                 }));
@@ -155,7 +157,7 @@ class PartnerOrderController extends Controller
                 }]);
             }]);
             $partner_orders = $partner->partner_orders->each(function ($partner_order, $key) {
-                $this->_getInfo($partner_order);
+                $partner_order = $this->partnerOrderRepository->getOrderInfo($partner_order);
                 removeRelationsFromModel($partner_order);
                 removeSelectedFieldsFromModel($partner_order);
             });
@@ -292,38 +294,5 @@ class PartnerOrderController extends Controller
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
-    }
-
-    private function _getInfo($partner_order)
-    {
-        $partner_order->calculate();
-        $partner_order['due_amount'] = (double)$partner_order->due;
-        $partner_order['code'] = $partner_order->code();
-        $partner_order['customer_name'] = $partner_order->order->delivery_name;
-        $partner_order['customer_mobile'] = $partner_order->order->delivery_mobile;
-        $partner_order['address'] = $partner_order->order->delivery_address;
-        $partner_order['location'] = $partner_order->order->location->name;
-        $partner_order['discount'] = (double)$partner_order->discount;
-        $partner_order['sheba_collection'] = (double)$partner_order->sheba_collection;
-        $partner_order['partner_collection'] = (double)$partner_order->partner_collection;
-        $partner_order['partner_collection'] = (double)$partner_order->partner_collection;
-        $partner_order['finance_collection'] = (double)$partner_order->finance_collection;
-        $partner_order['discount'] = (double)$partner_order->discount;
-        $partner_order['total_jobs'] = count($partner_order->jobs);
-        $partner_order['order_status'] = $partner_order->status;
-    }
-
-    private function _getJobInfo($job)
-    {
-        $job->calculate();
-        $job['total_cost'] = $job->totalCost;
-        $job['location'] = $job->partner_order->order->location->name;
-        $job['service_unit_price'] = (double)$job->service_unit_price;
-        $job['discount'] = (double)$job->discount;
-        $job['resource_picture'] = $job->resource != null ? $job->resource->profile->pro_pic : null;
-        $job['resource_name'] = $job->resource != null ? $job->resource->profile->name : null;
-        $job['resource_mobile'] = $job->resource != null ? $job->resource->profile->mobile : null;
-        $job['materials'] = $job->usedMaterials;
-        $job['total_materials'] = count($job->usedMaterials);
     }
 }
