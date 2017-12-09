@@ -114,10 +114,8 @@ class NotificationRepository
                 array_add($notification, 'time', $notification->created_at->format('j M \\a\\t h:i A'));
                 if ($notification->event_type == 'Job') {
                     array_add($notification, 'event_code', (Job::find($notification->event_id))->fullCode());
-                } elseif ($notification->event_type == 'Order') {
-                    array_add($notification, 'event_code', (Order::find($notification->event_id))->code());
-                } elseif ($notification->event_type == 'PartnerOrder') {
-                    array_add($notification, 'event_code', (PartnerOrder::find($notification->event_id))->code());
+                } else {
+                    array_add($notification, 'event_code', ($notification->event_type::find($notification->event_id))->code());
                 }
                 return $notification;
             });

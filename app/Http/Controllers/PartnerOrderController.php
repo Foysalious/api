@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Comment;
 use App\Repositories\CommentRepository;
+use App\Repositories\PartnerOrderRepository;
 use App\Repositories\PartnerRepository;
 use App\Repositories\ResourceJobRepository;
 use Carbon\Carbon;
@@ -13,17 +14,26 @@ use Validator;
 
 class PartnerOrderController extends Controller
 {
+    private $partnerOrderRepository;
+
+    public function __construct()
+    {
+        $this->partnerOrderRepository = new PartnerOrderRepository();
+    }
+
     public function show($partner, Request $request)
     {
         try {
-            $partner_order = $request->partner_order->load(['order.location', 'jobs' => function ($q) {
-                $q->info()->with(['usedMaterials' => function ($q) {
+            if ($errors = $this->partnerOrderRepository->_validateShowRequest($request)) {
+                return api_response($request, $errors, 400, ['message' => $errors]);
+            }
+            $partner_order = $request->partner_order->load(['order.location', 'jobs' => function ($q) use ($request) {
+                $q->info()->whereIn('status', (new PartnerOrderRepository())->getStatusFromRequest($request))->orderBy('schedule_date')->with(['usedMaterials' => function ($q) {
                     $q->select('id', 'job_id', 'material_name', 'material_price');
                 }, 'resource.profile']);
             }]);
             $this->_getInfo($partner_order);
-            $jobs = $partner_order->jobs;
-            $jobs = $jobs->each(function ($job) use ($partner_order) {
+            $jobs = $partner_order->jobs->each(function ($job) use ($partner_order) {
                 $job['partner_order'] = $partner_order;
                 $this->_getJobInfo($job);
                 removeSelectedFieldsFromModel($job);
@@ -32,7 +42,7 @@ class PartnerOrderController extends Controller
             });
             removeRelationsFromModel($partner_order);
             removeSelectedFieldsFromModel($partner_order);
-            $partner_order['jobs'] = $jobs->sortBy('schedule_date');
+            $partner_order['jobs'] = $jobs;
             return api_response($request, $partner_order, 200, ['order' => $partner_order]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
@@ -140,11 +150,7 @@ class PartnerOrderController extends Controller
                 } elseif ($request->status == 'history') {
                     $q->where('closed_and_paid_at', '<>', null);
                 }
-                $q->orderBy($field, $sort)->with(['jobs.usedMaterials' => function ($q) use ($request) {
-                    if ($request->status == 'ongoing') {
-                        $q->whereIn('status', ['Accepted', 'Schedule Due', 'Process', 'Served']);
-                    }
-                }, 'order' => function ($q) {
+                $q->orderBy($field, $sort)->with(['jobs.usedMaterials', 'order' => function ($q) {
                     $q->with(['customer.profile', 'location']);
                 }]);
             }]);
@@ -282,10 +288,7 @@ class PartnerOrderController extends Controller
             $partner_order = $request->partner_order;
             $manager_resource = $request->manager_resource;
             $comment = (new CommentRepository('Job', $partner_order->jobs->pluck('id')->first(), $manager_resource))->store($request->comment, true);
-            if ($comment) {
-                return api_response($request, $comment, 200);
-            }
-            return api_response($request, $comment, 500);
+            return $comment ? api_response($request, $comment, 200) : api_response($request, $comment, 500);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }

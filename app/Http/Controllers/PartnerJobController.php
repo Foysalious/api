@@ -25,7 +25,7 @@ class PartnerJobController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'status' => 'required|string|in:new,ongoing,history'
+                'filter' => 'required|string|in:new,ongoing,history'
             ]);
             if ($validator->fails()) {
                 $errors = $validator->errors()->all()[0];
@@ -34,7 +34,7 @@ class PartnerJobController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $partner = $request->partner;
             $partnerRepo = new PartnerRepository($partner);
-            $statuses = $partnerRepo->resolveStatus($request->status);
+            $statuses = $partnerRepo->resolveStatus($request->filter);
             $jobs = $partnerRepo->jobs($statuses);
             if (count($jobs) > 0) {
                 $jobs = $jobs->sortByDesc('created_at');
