@@ -18,7 +18,7 @@ class PartnerWithdrawalRequestController extends Controller
                 removeSelectedFieldsFromModel($item);
             })->sortByDesc('id')->values()->all();
             if (count($withdrawalRequests) > 0) {
-                return api_response($request, $withdrawalRequests, 200, ['withdrawalRequests' => $withdrawalRequests]);
+                return api_response($request, $withdrawalRequests, 200, ['withdrawalRequests' => $withdrawalRequests, 'wallet' => $request->partner->wallet]);
             } else {
                 return api_response($request, null, 404);
             }
