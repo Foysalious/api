@@ -63,6 +63,8 @@ class PartnerRepository
             return array(constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']);
         } elseif ($status == 'ongoing') {
             return array(constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Process']);
+        } elseif ($status == 'history') {
+            return array(constants('JOB_STATUSES')['Served']);
         }
     }
 
