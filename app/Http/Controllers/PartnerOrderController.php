@@ -42,7 +42,7 @@ class PartnerOrderController extends Controller
                 array_forget($job, 'partner_order');
             })->values()->all();
             removeRelationsAndFields($partner_order);
-            $partner_order['jobs'] = $jobs->values()->all();
+            $partner_order['jobs'] = $jobs;
             return api_response($request, $partner_order, 200, ['order' => $partner_order]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
