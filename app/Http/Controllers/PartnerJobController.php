@@ -130,12 +130,7 @@ class PartnerJobController extends Controller
             if ($request->has('schedule_date')) {
                 $request->merge(['resource' => $request->manager_resource]);
                 $response = $this->resourceJobRepository->reschedule($request->job->id, $request);
-                if (!$response) {
-                    return api_response($request, null, 500);
-                }
-                if ($response->code != 200) {
-                    return api_response($request, $response, $response->code);
-                }
+                return api_response($request, $response, $response->code);
             }
             if ($request->has('resource_id')) {
                 if ($request->partner->hasThisResource($request->resource_id, 'Handyman') && in_array($job->status, [constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process']]) && ($job->resource_id != $request->resource_id)) {
