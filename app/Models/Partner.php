@@ -96,6 +96,11 @@ class Partner extends Model
         return $this->hasOne(PartnerWalletSetting::class);
     }
 
+    public function dailyStats()
+    {
+        return $this->hasMany(PartnerDailyStat::class);
+    }
+
     public function commission($service_id)
     {
         $service_category = Service::find($service_id)->category->id;

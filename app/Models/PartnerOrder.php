@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\PartnerOrder\StatusCalculator;
 
@@ -217,5 +218,16 @@ class PartnerOrder extends Model
         StatusCalculator::initialize();
         $this->status = StatusCalculator::calculate($this);
         return $this;
+    }
+
+    public function scopeClosedAt($query, Carbon $date)
+    {
+        $query->whereDate('closed_at', '=', $date->toDateString());
+    }
+
+    public function scopeOf($query, $partner)
+    {
+        if(is_array($partner)) $query->whereIn('partner_id', $partner);
+        else $query->where('partner_id', '=', $partner);
     }
 }
