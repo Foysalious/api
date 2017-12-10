@@ -9,6 +9,7 @@ use App\Repositories\PartnerOrderRepository;
 use App\Repositories\PartnerRepository;
 use App\Repositories\ResourceJobRepository;
 use Carbon\Carbon;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
 use Sheba\Logs\JobLogs;
 use Validator;
@@ -27,23 +28,15 @@ class PartnerOrderController extends Controller
     public function show($partner, Request $request)
     {
         try {
-            if ($errors = $this->partnerOrderRepository->validateShowRequest($request)) {
-                return api_response($request, $errors, 400, ['message' => $errors]);
-            }
-            $partner_order = $this->partnerOrderRepository->getOrderInfo($request->partner_order->load(['order.location', 'jobs' => function ($q) {
-                $q->info()->orderBy('schedule_date')->with(['usedMaterials' => function ($q) {
-                    $q->select('id', 'job_id', 'material_name', 'material_price');
-                }, 'resource.profile']);
-            }]));
-            $jobs = $partner_order->jobs->whereIn('status', $this->partnerOrderRepository->getStatusFromRequest($request))->each(function ($job) use ($partner_order) {
-                $job['partner_order'] = $partner_order;
-                $job = $this->partnerJobRepository->getJobInfo($job);
-                removeRelationsAndFields($job);
-                array_forget($job, 'partner_order');
-            })->values()->all();
-            removeRelationsAndFields($partner_order);
-            $partner_order['jobs'] = $jobs;
+            $this->validate($request, [
+                'status' => 'sometimes|bail|required|string',
+                'filter' => 'sometimes|bail|required|string|in:ongoing,history'
+            ]);
+            $partner_order = $this->partnerOrderRepository->getOrderDetails($request);
             return api_response($request, $partner_order, 200, ['order' => $partner_order]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
@@ -52,13 +45,9 @@ class PartnerOrderController extends Controller
     public function newOrders($partner, Request $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
+            $this->validate($request, [
                 'sort' => 'sometimes|required|string|in:created_at,created_at:asc,created_at:desc,jobs.schedule_date,jobs.schedule_date:asc,jobs.schedule_date:desc'
             ]);
-            if ($validator->fails()) {
-                $errors = $validator->errors()->all()[0];
-                return api_response($request, $errors, 400, ['message' => $errors]);
-            }
             $sort = 'sortByDesc';
             $field = 'created_at';
             if ($request->has('sort')) {
@@ -114,6 +103,9 @@ class PartnerOrderController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }

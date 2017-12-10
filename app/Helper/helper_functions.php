@@ -208,9 +208,21 @@ if (!function_exists('removeRelationsAndFields')) {
     }
 }
 
+if (!function_exists('getValidationErrorMessage')) {
+    function getValidationErrorMessage($errors)
+    {
+        $msg = '';
+        foreach ($errors as $error) {
+            $msg .= $error;
+        }
+        return $msg;
+    }
+}
+
 if (!function_exists('floatValFormat')) {
     function floatValFormat($value)
     {
         return floatval(number_format($value, 2, '.', ''));
     }
 }
+
