@@ -3,7 +3,6 @@
 
 namespace App\Http\Controllers;
 
-
 use App\Models\Partner;
 use App\Models\PartnerWithdrawalRequest;
 use Illuminate\Http\Request;
@@ -16,6 +15,7 @@ class PartnerWithdrawalRequestController extends Controller
         try {
             $withdrawalRequests = $request->partner->withdrawalRequests->each(function ($item, $key) {
                 $item['amount'] = (double)$item->amount;
+                $item['requested_by'] = $item->created_by_name;
                 removeSelectedFieldsFromModel($item);
             })->sortByDesc('id')->values()->all();
             list($can_withdraw, $status) = $this->canWithdraw($request->partner);
@@ -23,7 +23,7 @@ class PartnerWithdrawalRequestController extends Controller
                 return api_response($request, $withdrawalRequests, 200,
                     ['withdrawalRequests' => $withdrawalRequests, 'wallet' => $request->partner->wallet, 'can_withdraw' => $can_withdraw, 'status' => $status]);
             } else {
-                return api_response($request, null, 404, ['can_withdraw' => $can_withdraw, 'status' => $status]);
+                return api_response($request, null, 404, ['can_withdraw' => $can_withdraw, 'status' => $status, 'wallet' => $request->partner->wallet]);
             }
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
@@ -90,17 +90,6 @@ class PartnerWithdrawalRequestController extends Controller
     {
         try {
             $partner = $request->partner;
-//            $activePartnerWithdrawalRequest = $partner->withdrawalRequests()->currentWeek()->notCancelled()->first();
-//            $is_wallet_has_sufficient_balance = ((double)$partner->wallet > (double)$partner->walletSetting->security_money);
-//            $can_withdraw = true;
-//            $status = 'You can send withdraw request';
-//            if (!$is_wallet_has_sufficient_balance) {
-//                $status = 'You don\'t have sufficient balance on your wallet. So you can\'t send a withdraw request.';
-//                $can_withdraw = false;
-//            } elseif ($is_wallet_has_sufficient_balance && $activePartnerWithdrawalRequest) {
-//                $status = 'You have already sent a Withdrawal Request';
-//                $can_withdraw = false;
-//            }
             list($can_withdraw, $status) = $this->canWithdraw($partner);
             return api_response($request, $status, 200, ['status' => $status, 'can_withdraw' => $can_withdraw]);
         } catch (\Throwable $e) {
