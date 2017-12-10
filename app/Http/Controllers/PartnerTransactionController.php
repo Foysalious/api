@@ -13,8 +13,8 @@ class PartnerTransactionController extends Controller
         try {
             $partner = $request->partner;
             list($offset, $limit) = calculatePagination($request);
-            $partner->load(['transactions' => function ($q) use ($offset, $limit) {
-                $q->orderBy('partner_transactions.id');
+            $partner->load(['transactions' => function ($q) {
+                $q->orderBy('partner_transactions.id', 'desc');
             }]);
             $balance = 0;
             $transactions = $partner->transactions->each(function ($transaction, $key) use ($partner, &$balance) {
@@ -25,9 +25,8 @@ class PartnerTransactionController extends Controller
                     $transaction['balance'] = $balance -= $transaction->amount;
                 }
                 removeRelationsFromModel($transaction);
-                removeSelectedFieldsFromModel($transaction);
-            })->sortByDesc('id')->values()->all();
-            return count($transactions) > 0 ? api_response($request, $transactions, 200, ['transactions' => $transactions]) : api_response($request, null, 404);
+            })->values()->all();
+            return count($transactions) > 0 ? api_response($request, $transactions, 200, ['transactions' => $transactions, 'balance' => $partner->wallet]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
