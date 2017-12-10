@@ -38,12 +38,10 @@ class PartnerOrderController extends Controller
             $jobs = $partner_order->jobs->whereIn('status', $this->partnerOrderRepository->getStatusFromRequest($request))->each(function ($job) use ($partner_order) {
                 $job['partner_order'] = $partner_order;
                 $job = $this->partnerJobRepository->getJobInfo($job);
-                removeSelectedFieldsFromModel($job);
-                removeRelationsFromModel($job);
+                removeRelationsAndFields($job);
                 array_forget($job, 'partner_order');
-            });
-            removeRelationsFromModel($partner_order);
-            removeSelectedFieldsFromModel($partner_order);
+            })->values()->all();
+            removeRelationsAndFields($partner_order);
             $partner_order['jobs'] = $jobs->values()->all();
             return api_response($request, $partner_order, 200, ['order' => $partner_order]);
         } catch (\Throwable $e) {

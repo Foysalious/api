@@ -200,6 +200,14 @@ if (!function_exists('removeSelectedFieldsFromModel')) {
     }
 }
 
+if (!function_exists('removeRelationsAndFields')) {
+    function removeRelationsAndFields($model)
+    {
+        removeRelationsFromModel($model);
+        removeSelectedFieldsFromModel($model);
+    }
+}
+
 if (!function_exists('floatValFormat')) {
     function floatValFormat($value)
     {
