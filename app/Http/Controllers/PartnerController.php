@@ -14,6 +14,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 use DB;
+use Sheba\Analysis\Sales\PartnerSalesStatistics;
 use Sheba\Charts\SalesGrowth;
 use Validator;
 
@@ -228,10 +229,10 @@ class PartnerController extends Controller
             $weekly = (new SalesGrowth($partner))->getWeekData();
             $breakdown = (new SalesGrowth($partner))->get();
             $info = array(
-                'schedule_due' => $jobs->where('status', constants('JOB_STATUSES')['Schedule_Due'])->count(),
                 'todays_jobs' => $jobs->where('schedule_date', Carbon::now()->toDateString())->count(),
                 'tomorrows_jobs' => $jobs->where('schedule_date', Carbon::tomorrow()->toDateString())->count(),
                 'accepted_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Accepted'])->count(),
+                'schedule_due_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Schedule_Due'])->count(),
                 'process_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Process'])->count(),
                 'served_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Served'])->count(),
                 'total_resources' => $resource_ids->count(),
@@ -303,7 +304,7 @@ class PartnerController extends Controller
         try {
             $partner = $request->partner->load(['basicInformations', 'reviews', 'services' => function ($q) {
                 $q->where('partner_service.is_verified', 1);
-            }], 'locations');
+            }, 'locations']);
             $locations = $partner->locations;
             $basic_info = $partner->basicInformations;
             $info = collect($partner)->only(['id', 'name', 'mobile', 'email', 'verified_at', 'status', 'logo', 'wallet', 'address', 'created_at']);
@@ -317,7 +318,7 @@ class PartnerController extends Controller
             $info->put('total_locations', $locations->count());
             $info->put('total_services', $partner->services->count());
             $info->put('total_resources', $partner->resources->count());
-            $info->put('wallet', (double)$info->get('wallet'));
+            $info->put('wallet', $partner->wallet);
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);

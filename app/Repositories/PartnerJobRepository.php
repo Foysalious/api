@@ -15,7 +15,9 @@ class PartnerJobRepository
         $job['resource_picture'] = $job->resource != null ? $job->resource->profile->pro_pic : null;
         $job['resource_name'] = $job->resource != null ? $job->resource->profile->name : null;
         $job['resource_mobile'] = $job->resource != null ? $job->resource->profile->mobile : null;
-        $job['materials'] = $job->usedMaterials;
+        $job['materials'] = count($job->usedMaterials) > 0 ? $job->usedMaterials->each(function ($item, $key) {
+            removeRelationsAndFields($item);
+        })->values()->all() : null;
         $job['total_materials'] = count($job->usedMaterials);
         return $job;
     }

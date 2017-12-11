@@ -46,31 +46,29 @@ class PartnerOrderRepository
             ]);
             $all_partner_orders->push($order);
         }
-        list($field, $sort) = $this->getSortByFieldAdOrderFromRequest($request);
+        list($field, $orderBy) = $this->getSortByFieldAdOrderFromRequest($request);
         list($offset, $limit) = calculatePagination($request);
-        return array_slice($this->partnerOrdersSortBy($field, $sort, $all_partner_orders, $all_jobs)->toArray(), $offset, $limit);
+        return array_slice($this->partnerOrdersSortBy($field, $orderBy, $all_partner_orders, $all_jobs)->toArray(), $offset, $limit);
     }
 
     private function getSortByFieldAdOrderFromRequest($request)
     {
-        $sort = 'sortByDesc';
+        $orderBy = 'sortByDesc';
         $field = 'created_at';
         if ($request->has('sort')) {
             $explode = explode(':', $request->get('sort'));
             $field = $explode[0];
             if (isset($explode[1]) && $explode[1] == 'asc') {
-                $sort = 'sortBy';
+                $orderBy = 'sortBy';
             }
         }
-        return array($field, $sort);
+        return array($field, $orderBy);
     }
 
     private function loadAllRelatedRelations($partner_order)
     {
         return $partner_order->load(['order.location', 'jobs' => function ($q) {
-            $q->info()->orderBy('schedule_date')->with(['usedMaterials' => function ($q) {
-                $q->select('id', 'job_id', 'material_name', 'material_price');
-            }, 'resource.profile']);
+            $q->info()->orderBy('schedule_date')->with(['usedMaterials', 'resource.profile']);
         }]);
     }
 
@@ -89,7 +87,10 @@ class PartnerOrderRepository
     {
         if ($filter == 'ongoing') {
             return array(constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Served']);
+        } elseif ($filter == 'history') {
+            return constants('JOB_STATUSES');
         }
+        return constants('JOB_STATUSES');
     }
 
     public function getOrderInfo($partner_order)
@@ -113,12 +114,12 @@ class PartnerOrderRepository
     }
 
 
-    private function partnerOrdersSortBy($field, $sort, $all_partner_orders, $all_jobs)
+    private function partnerOrdersSortBy($field, $orderBy, $all_partner_orders, $all_jobs)
     {
         if ($field == 'created_at') {
-            $all_partner_orders = $all_partner_orders->$sort('created_at');
+            $all_partner_orders = $all_partner_orders->$orderBy('created_at');
         } else {
-            $all_jobs = $all_jobs->$sort($field);
+            $all_jobs = $all_jobs->$orderBy($field);
             $final = collect();
             foreach ($all_jobs as $job) {
                 $final->push($all_partner_orders->where('id', $job->partner_order_id)->first());
