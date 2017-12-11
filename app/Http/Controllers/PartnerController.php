@@ -24,12 +24,14 @@ class PartnerController extends Controller
     private $serviceRepository;
     private $reviewRepository;
     private $resourceJobRepository;
+    private $partnerOrderRepository;
 
     public function __construct()
     {
         $this->serviceRepository = new ServiceRepository();
         $this->reviewRepository = new ReviewRepository();
         $this->resourceJobRepository = new ResourceJobRepository();
+        $this->partnerOrderRepository = new PartnerOrderRepository();
     }
 
     public function index()
@@ -252,33 +254,16 @@ class PartnerController extends Controller
     public function getEarnings($partner, Request $request)
     {
         try {
-//            Carbon::setWeekStartsAt(Carbon::SATURDAY);
-//            Carbon::setWeekEndsAt(Carbon::FRIDAY);
+            Carbon::setWeekStartsAt(Carbon::SATURDAY);
+            Carbon::setWeekEndsAt(Carbon::FRIDAY);
             $start_time = Carbon::now()->startOfWeek();
             $end_time = Carbon::now()->endOfWeek();
             $partner = $request->partner;
             $sales_stats = (new PartnerSalesStatistics($partner))->calculate();
-            $partner_orders = (new PartnerOrderRepository())->getOrdersByClosedAt($partner, $start_time, $end_time);
-            $breakdown = collect(array_fill((int)$start_time->format('d'), 7, 0));
-            if (count($partner_orders) > 0) {
-                $partner_orders->groupBy('day')->each(function ($item, $key) use ($breakdown) {
-                    $breakdown[$key] = $item->sum('sales');
-                });
-            }
-            $weekly_breakdown = collect();
-            $breakdown->filter(function ($item, $key) use ($start_time, $end_time) {
-                return ($start_time->day <= $key && $key <= $end_time->day);
-            })->each(function ($item, $key) use ($weekly_breakdown) {
-                $weekly_breakdown->put(Carbon::createFromDate(null, null, $key)->format('D'), $item);
-            });
-            $info = array(
-                'today' => $sales_stats->today->sale,
-                'week' => $sales_stats->week->sale,
-                'month' => $sales_stats->month->sale,
-                'year' => $sales_stats->year->sale,
-                'total' => $sales_stats->lifetime->sale
-            );
-            return api_response($request, $info, 200, ['info' => $info, 'breakdown' => $weekly_breakdown, 'orders' => $partner_orders]);
+            $partner_orders = $this->partnerOrderRepository->getOrdersByClosedAt($partner, $start_time, $end_time);
+            $breakdown = $this->partnerOrderRepository->getWeeklyBreakdown($partner_orders, $start_time, $end_time);
+            $info = array('today' => $sales_stats->today->sale, 'week' => $sales_stats->week->sale, 'month' => $sales_stats->month->sale, 'year' => $sales_stats->year->sale, 'total' => $sales_stats->lifetime->sale);
+            return api_response($request, $info, 200, ['info' => $info, 'breakdown' => $breakdown, 'orders' => $partner_orders]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
@@ -324,5 +309,6 @@ class PartnerController extends Controller
             return api_response($request, null, 500);
         }
     }
+
 
 }

@@ -2,8 +2,8 @@
 
 namespace App\Repositories;
 
-
 use App\Models\PartnerOrder;
+use Carbon\Carbon;
 
 class PartnerOrderRepository
 {
@@ -79,12 +79,12 @@ class PartnerOrderRepository
             ->select('id', 'partner_id', 'order_id', 'closed_at', 'sheba_collection', 'partner_collection', 'finance_collection')
             ->get()->each(function ($partner_order) {
                 $partner_order['sales'] = (double)$partner_order->calculate($price_only = true)->totalCost;
-                $partner_order['code'] = $partner_order->code();
                 $partner_order['week_name'] = $partner_order->closed_at->format('D');
                 $partner_order['day'] = $partner_order->closed_at->day;
                 $partner_order['sheba_collection'] = (double)$partner_order->sheba_collection;
                 $partner_order['partner_collection'] = (double)$partner_order->partner_collection;
                 $partner_order['finance_collection'] = (double)$partner_order->finance_collection;
+                $partner_order['code'] = $partner_order->code();
                 removeRelationsFromModel($partner_order);
             });
     }
@@ -108,6 +108,23 @@ class PartnerOrderRepository
         return $partner_order->load(['order.location', 'jobs' => function ($q) {
             $q->info()->orderBy('schedule_date')->with(['usedMaterials', 'resource.profile']);
         }]);
+    }
+
+    public function getWeeklyBreakdown($partner_orders, $start_time, $end_time)
+    {
+        $week = collect();
+        if (count($partner_orders) > 0) {
+            $partner_orders->groupBy('day')->each(function ($item, $key) use ($week) {
+                $week[Carbon::createFromDate(null, null, $key)->format('D')] = $item->sum('sales');
+            });
+        }
+        for ($date = $start_time; $date < $end_time; $date->addDay()) {
+            $day = $date->format('D');
+            if (!isset($week[$day])) {
+                $week->put($day, 0);
+            }
+        }
+        return $week;
     }
 
     private function getStatusFromRequest($request)
