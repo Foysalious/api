@@ -44,9 +44,8 @@ abstract class SalesStatsBeforeToday
         $year_start = $startEndDate['start_time'];
         $year_end = $startEndDate['end_time'];
         $this->yearTimeFrame = [$year_start, $year_end];
-        $week_start = Carbon::today()->subDays(Carbon::today()->dayOfWeek);
-        $week_end = Carbon::today()->addDays(7 - Carbon::today()->dayOfWeek)->subSecond();
-        $this->weekTimeFrame = [$week_start, $week_end];
+        Carbon::setWeekStartsAt(Carbon::SATURDAY);
+        $this->weekTimeFrame = [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()];
     }
 
     private function getFromRedis()
