@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
 use App\Repositories\NotificationRepository;
+use App\Repositories\PartnerOrderRepository;
 use App\Repositories\PartnerRepository;
 use App\Repositories\ResourceJobRepository;
 use App\Repositories\ReviewRepository;
@@ -226,8 +227,7 @@ class PartnerController extends Controller
             $resource_ids = $partner->resources->pluck('id')->unique();
             $assigned_resource_ids = $jobs->whereIn('status', [constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Schedule_Due']])->pluck('resource_id')->unique();
             $unassigned_resource_ids = $resource_ids->diff($assigned_resource_ids);
-            $weekly = (new SalesGrowth($partner))->getWeekData();
-            $breakdown = (new SalesGrowth($partner))->get();
+            $sales_stats = (new PartnerSalesStatistics($request->partner))->calculate();
             $info = array(
                 'todays_jobs' => $jobs->where('schedule_date', Carbon::now()->toDateString())->count(),
                 'tomorrows_jobs' => $jobs->where('schedule_date', Carbon::tomorrow()->toDateString())->count(),
@@ -239,9 +239,9 @@ class PartnerController extends Controller
                 'assigned_resources' => $assigned_resource_ids->count(),
                 'unassigned_resources' => $unassigned_resource_ids->count(),
                 'balance' => (double)$partner->wallet,
-                'today' => $weekly[(int)date('d')],
-                'week' => $weekly->sum(),
-                'month' => $breakdown->sum()
+                'today' => $sales_stats->today->sale,
+                'week' => $sales_stats->week->sale,
+                'month' => $sales_stats->month->sale
             );
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
@@ -252,26 +252,13 @@ class PartnerController extends Controller
     public function getEarnings($partner, Request $request)
     {
         try {
-            Carbon::setWeekStartsAt(Carbon::SATURDAY);
-            Carbon::setWeekEndsAt(Carbon::FRIDAY);
+//            Carbon::setWeekStartsAt(Carbon::SATURDAY);
+//            Carbon::setWeekEndsAt(Carbon::FRIDAY);
             $start_time = Carbon::now()->startOfWeek();
             $end_time = Carbon::now()->endOfWeek();
             $partner = $request->partner;
-            $partner_orders = PartnerOrder::with('order.location', 'jobs.usedMaterials')
-                ->where('partner_id', $partner->id)
-                ->whereBetween('closed_at', [$start_time, $end_time])
-                ->select('id', 'partner_id', 'order_id', 'closed_at', 'sheba_collection', 'partner_collection', 'finance_collection')
-                ->get()->each(function ($partner_order) {
-                    $partner_order['sales'] = (double)$partner_order->calculate($price_only = true)->totalCost;
-                    $partner_order['code'] = $partner_order->code();
-                    $partner_order['week_name'] = $partner_order->closed_at->format('D');
-                    $partner_order['day'] = $partner_order->closed_at->day;
-                    $partner_order['sheba_collection'] = (double)$partner_order->sheba_collection;
-                    $partner_order['partner_collection'] = (double)$partner_order->partner_collection;
-                    $partner_order['finance_collection'] = (double)$partner_order->finance_collection;
-                    removeRelationsFromModel($partner_order);
-                    removeSelectedFieldsFromModel($partner_order);
-                });
+            $sales_stats = (new PartnerSalesStatistics($partner))->calculate();
+            $partner_orders = (new PartnerOrderRepository())->getOrdersByClosedAt($partner, $start_time, $end_time);
             $breakdown = collect(array_fill((int)$start_time->format('d'), 7, 0));
             if (count($partner_orders) > 0) {
                 $partner_orders->groupBy('day')->each(function ($item, $key) use ($breakdown) {
@@ -284,14 +271,12 @@ class PartnerController extends Controller
             })->each(function ($item, $key) use ($weekly_breakdown) {
                 $weekly_breakdown->put(Carbon::createFromDate(null, null, $key)->format('D'), $item);
             });
-            $yearly = (new SalesGrowth($partner, 0, (int)date('Y')))->get();
-            $yearly = array_has($yearly, 'month') ? collect($yearly['month']) : collect();
             $info = array(
-                'today' => $breakdown[(int)date('d')],
-                'week' => $breakdown->sum(),
-                'month' => isset($yearly[(int)date('m')]) ? $yearly[(int)date('m')] : 0,
-                'year' => $yearly->sum(),
-                'total' => 1000
+                'today' => $sales_stats->today->sale,
+                'week' => $sales_stats->week->sale,
+                'month' => $sales_stats->month->sale,
+                'year' => $sales_stats->year->sale,
+                'total' => $sales_stats->lifetime->sale
             );
             return api_response($request, $info, 200, ['info' => $info, 'breakdown' => $weekly_breakdown, 'orders' => $partner_orders]);
         } catch (\Throwable $e) {
