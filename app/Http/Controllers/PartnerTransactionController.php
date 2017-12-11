@@ -22,7 +22,7 @@ class PartnerTransactionController extends Controller
                 }
                 removeRelationsFromModel($transaction);
             })->sortByDesc('id')->values()->all();
-            return count($transactions) > 0 ? api_response($request, $transactions, 200, ['transactions' => $transactions, 'balance' => $partner->wallet]) : api_response($request, null, 404);
+            return count($transactions) > 0 ? api_response($request, $transactions, 200, ['transactions' => $transactions, 'balance' => $request->partner->wallet]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
