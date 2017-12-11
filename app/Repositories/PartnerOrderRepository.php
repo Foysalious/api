@@ -14,7 +14,7 @@ class PartnerOrderRepository
 
     public function getOrderDetails($request)
     {
-        $partner_order = $this->getOrderInfo($this->loadAllRelatedRelations($request->partner_order));
+        $partner_order = $this->getInfo($this->loadAllRelatedRelations($request->partner_order));
         $jobs = $partner_order->jobs->whereIn('status', $this->getStatusFromRequest($request))->each(function ($job) use ($partner_order) {
             $job['partner_order'] = $partner_order;
             $job = $this->partnerJobRepository->getJobInfo($job);
@@ -47,19 +47,37 @@ class PartnerOrderRepository
             $all_partner_orders->push($order);
         }
         list($field, $orderBy) = $this->getSortByFieldAdOrderFromRequest($request);
+        $orderBy = $orderBy == 'asc' ? 'sortBy' : 'sortByDesc';
         list($offset, $limit) = calculatePagination($request);
         return array_slice($this->partnerOrdersSortBy($field, $orderBy, $all_partner_orders, $all_jobs)->toArray(), $offset, $limit);
     }
 
+    public function getOrders($request)
+    {
+        list($field, $orderBy) = $this->getSortByFieldAdOrderFromRequest($request);
+        list($offset, $limit) = calculatePagination($request);
+        $filter = $request->filter;
+        $partner = $request->partner->load(['partner_orders' => function ($q) use ($filter, $orderBy, $field) {
+            $q->$filter()->orderBy($field, $orderBy)->with(['jobs.usedMaterials', 'order' => function ($q) {
+                $q->with(['customer.profile', 'location']);
+            }]);
+        }]);
+        return array_slice($partner->partner_orders->each(function ($partner_order, $key) {
+            removeRelationsAndFields($this->getInfo($partner_order));
+        })->reject(function ($item, $key) {
+            return $item->order_status == 'Open';
+        })->values()->all(), $offset, $limit);
+    }
+
     private function getSortByFieldAdOrderFromRequest($request)
     {
-        $orderBy = 'sortByDesc';
+        $orderBy = 'desc';
         $field = 'created_at';
         if ($request->has('sort')) {
             $explode = explode(':', $request->get('sort'));
             $field = $explode[0];
             if (isset($explode[1]) && $explode[1] == 'asc') {
-                $orderBy = 'sortBy';
+                $orderBy = 'asc';
             }
         }
         return array($field, $orderBy);
@@ -93,7 +111,7 @@ class PartnerOrderRepository
         return constants('JOB_STATUSES');
     }
 
-    public function getOrderInfo($partner_order)
+    public function getInfo($partner_order)
     {
         $partner_order->calculate();
         $partner_order['code'] = $partner_order->code();

@@ -81,15 +81,15 @@ class PartnerOrder extends Model
         $this->calculateStatus();
         $this->totalDiscount = $this->jobDiscounts + $this->discount;
         $this->_calculateRoundingCutOff();
-        $this->grossAmount = floatValFormat($this->totalPrice - $this->discount  - $this->roundingCutOff);
+        $this->grossAmount = floatValFormat($this->totalPrice - $this->discount - $this->roundingCutOff);
         $this->paid = $this->sheba_collection + $this->partner_collection;
         $this->due = floatValFormat($this->grossAmount - $this->paid);
         $this->profitBeforeDiscount = floatValFormat($this->jobPrices - $this->totalCost);
         $this->totalDiscountedCost = ($this->totalDiscountedCost < 0) ? 0 : $this->totalDiscountedCost;
         $this->profit = floatValFormat($this->grossAmount - $this->totalCost);
-        $this->margin = $this->totalPrice ? (floatValFormat($this->totalPrice - $this->totalCost) * 100 ) / $this->totalPrice : 0;
-        $this->marginBeforeDiscount = $this->jobPrices ? (floatValFormat($this->jobPrices - $this->totalCost) * 100 ) / $this->jobPrices : 0;
-        $this->marginAfterDiscount = $this->grossAmount ? (floatValFormat($this->grossAmount - $this->totalCost, 2) * 100 ) / $this->grossAmount : 0;
+        $this->margin = $this->totalPrice ? (floatValFormat($this->totalPrice - $this->totalCost) * 100) / $this->totalPrice : 0;
+        $this->marginBeforeDiscount = $this->jobPrices ? (floatValFormat($this->jobPrices - $this->totalCost) * 100) / $this->jobPrices : 0;
+        $this->marginAfterDiscount = $this->grossAmount ? (floatValFormat($this->grossAmount - $this->totalCost, 2) * 100) / $this->grossAmount : 0;
         $this->spPayable = ($this->partner_collection < $this->totalCost) ? (floatValFormat($this->totalCost - $this->partner_collection)) : 0;
         $this->shebaReceivable = ($this->sheba_collection < $this->profit) ? (floatValFormat($this->profit - $this->sheba_collection)) : 0;
         $this->_setPaymentStatus()->_setFinanceDue();
@@ -104,12 +104,12 @@ class PartnerOrder extends Model
 
     private function _setFinanceDue()
     {
-        if($this->due) {
+        if ($this->due) {
             $this->financeDue = true;
         } else {
-            if($this->finance_collection == $this->paid) {
+            if ($this->finance_collection == $this->paid) {
                 $this->financeDue = false;
-            } else if($this->finance_collection == $this->profit && $this->partner_collection == $this->totalCost) {
+            } else if ($this->finance_collection == $this->profit && $this->partner_collection == $this->totalCost) {
                 $this->financeDue = false;
             } else {
                 $this->financeDue = true;
@@ -122,9 +122,9 @@ class PartnerOrder extends Model
     {
         //$this->_initializeStatusCounter();
         $this->_initializeTotalsToZero();
-        foreach($this->jobs as $job) {
+        foreach ($this->jobs as $job) {
             $job = $job->calculate($price_only);
-            if($job->status != $this->jobStatuses['Cancelled']) {
+            if ($job->status != $this->jobStatuses['Cancelled']) {
                 $this->_updateTotalPriceAndCost($job);
             }
             //$this->jobStatusCounter[$job->status]++;
@@ -227,7 +227,20 @@ class PartnerOrder extends Model
 
     public function scopeOf($query, $partner)
     {
-        if(is_array($partner)) $query->whereIn('partner_id', $partner);
+        if (is_array($partner)) $query->whereIn('partner_id', $partner);
         else $query->where('partner_id', '=', $partner);
+    }
+
+    public function scopeOngoing($query)
+    {
+        return $query->where([
+            ['cancelled_at', null],
+            ['closed_and_paid_at', null]
+        ]);
+    }
+
+    public function scopeHistory($query)
+    {
+        return $query->where('closed_and_paid_at', '<>', null);
     }
 }

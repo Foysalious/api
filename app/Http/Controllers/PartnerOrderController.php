@@ -59,50 +59,15 @@ class PartnerOrderController extends Controller
     public function getOrders($partner, Request $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
+            $this->validate($request, [
                 'sort' => 'sometimes|required|string|in:created_at,created_at:asc,created_at:desc',
-                'status' => 'required|in:ongoing,history'
+                'filter' => 'required|in:ongoing,history'
             ]);
-            if ($validator->fails()) {
-                $errors = $validator->errors()->all()[0];
-                return api_response($request, $errors, 400, ['message' => $errors]);
-            }
-            $sort = 'desc';
-            $field = 'created_at';
-            if ($request->has('sort')) {
-                $explode = explode(':', $request->get('sort'));
-                if (isset($explode[1])) {
-                    $sort = $explode[1];
-                }
-            }
-            $partner = $request->partner;
-            list($offset, $limit) = calculatePagination($request);
-            $partner->load(['partner_orders' => function ($q) use ($request, $sort, $field) {
-                if ($request->status == 'ongoing') {
-                    $q->where([
-                        ['cancelled_at', null],
-                        ['closed_and_paid_at', null]
-                    ]);
-                } elseif ($request->status == 'history') {
-                    $q->where('closed_and_paid_at', '<>', null);
-                }
-                $q->orderBy($field, $sort)->with(['jobs.usedMaterials', 'order' => function ($q) {
-                    $q->with(['customer.profile', 'location']);
-                }]);
-            }]);
-            $partner_orders = $partner->partner_orders->each(function ($partner_order, $key) {
-                $partner_order = $this->partnerOrderRepository->getOrderInfo($partner_order);
-                removeRelationsFromModel($partner_order);
-                removeSelectedFieldsFromModel($partner_order);
-            });
-            $partner_orders = array_slice($partner_orders->reject(function ($item, $key) {
-                return $item->order_status == 'Open';
-            })->toArray(), $offset, $limit);
-            if (count($partner_orders) > 0) {
-                return api_response($request, $partner_orders, 200, ['orders' => $partner_orders]);
-            } else {
-                return api_response($request, null, 404);
-            }
+            $partner_orders = $this->partnerOrderRepository->getOrders($request);
+            return count($partner_orders) > 0 ? api_response($request, $partner_orders, 200, ['orders' => $partner_orders]) : api_response($request, null, 404);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
