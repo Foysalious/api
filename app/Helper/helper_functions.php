@@ -205,6 +205,7 @@ if (!function_exists('removeRelationsAndFields')) {
     {
         removeRelationsFromModel($model);
         removeSelectedFieldsFromModel($model);
+        return $model;
     }
 }
 

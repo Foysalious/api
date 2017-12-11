@@ -45,71 +45,15 @@ class PartnerOrderController extends Controller
     public function newOrders($partner, Request $request)
     {
         try {
-            $this->validate($request, [
-                'sort' => 'sometimes|required|string|in:created_at,created_at:asc,created_at:desc,jobs.schedule_date,jobs.schedule_date:asc,jobs.schedule_date:desc'
-            ]);
-            $sort = 'sortByDesc';
-            $field = 'created_at';
-            if ($request->has('sort')) {
-                $explode = explode(':', $request->get('sort'));
-                $column = explode('.', $explode[0]);
-                if (isset($column[1])) {
-                    $field = $column[1];
-                }
-                if (isset($explode[1]) && $explode[1] == 'asc') {
-                    $sort = 'sortBy';
-                }
-            }
-            list($offset, $limit) = calculatePagination($request);
-            $partner = $request->partner;
-            $partnerRepo = new PartnerRepository($partner);
-            $statuses = $partnerRepo->resolveStatus('new');
-            $jobs = $partnerRepo->jobs($statuses);
-            $jobsGroupByPartnerOrder = $jobs->groupBy('partner_order_id');
-            $final_orders = collect();
-            $all_jobs = collect();
-            foreach ($jobsGroupByPartnerOrder as $jobs) {
-                $order = collect();
-                $order->put('customer_name', $jobs[0]->partner_order->order->delivery_name);
-                $order->put('location_name', $jobs[0]->partner_order->order->location->name);
-                $order->put('total_job', count($jobs));
-                $order->put('created_at', $jobs[0]->partner_order->created_at->timestamp);
-                $order->put('created_at_readable', $jobs[0]->partner_order->created_at->diffForHumans());
-                $order->put('code', $jobs[0]->partner_order->code());
-                $order->put('id', $jobs[0]->partner_order->id);
-                $order->put('jobs', $jobs->each(function ($job) use ($order, $all_jobs) {
-                    $job = $this->partnerJobRepository->getJobInfo($job);
-                    removeSelectedFieldsFromModel($job);
-                    removeRelationsFromModel($job);
-                }));
-                foreach ($order->get('jobs') as $job) {
-                    $all_jobs->push($job);
-                }
-                $final_orders->push($order);
-            }
-            if (count($final_orders) > 0) {
-                if ($field == 'created_at') {
-                    $final_orders = $final_orders->$sort('created_at')->toArray();
-                } else {
-                    $sorted_jobs = $all_jobs->$sort($field);
-                    $final = collect();
-                    foreach ($sorted_jobs as $job) {
-                        $final->push($final_orders->where('id', $job->partner_order_id)->first());
-                    }
-                    $final_orders = $final->unique('id')->toArray();
-                }
-                $final_orders = array_slice($final_orders, $offset, $limit);
-                return api_response($request, $final_orders, 200, ['orders' => $final_orders]);
-            } else {
-                return api_response($request, null, 404);
-            }
+            $this->validate($request, ['sort' => 'sometimes|required|string|in:created_at,created_at:asc,created_at:desc,schedule_date,schedule_date:asc,schedule_date:desc']);
+            $orders = $this->partnerOrderRepository->getNewOrdersWithJobs($request);
+            return count($orders) > 0 ? api_response($request, $orders, 200, ['orders' => $orders]) : api_response($request, null, 404);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
-
     }
 
     public function getOrders($partner, Request $request)
