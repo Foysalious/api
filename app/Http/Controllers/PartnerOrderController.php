@@ -59,10 +59,7 @@ class PartnerOrderController extends Controller
     public function getOrders($partner, Request $request)
     {
         try {
-            $this->validate($request, [
-                'sort' => 'sometimes|required|string|in:created_at,created_at:asc,created_at:desc',
-                'filter' => 'required|in:ongoing,history'
-            ]);
+            $this->validate($request, ['sort' => 'sometimes|required|string|in:created_at,created_at:asc,created_at:desc', 'filter' => 'required|in:ongoing,history']);
             $partner_orders = $this->partnerOrderRepository->getOrders($request);
             return count($partner_orders) > 0 ? api_response($request, $partner_orders, 200, ['orders' => $partner_orders]) : api_response($request, null, 404);
         } catch (ValidationException $e) {

@@ -37,9 +37,8 @@ class ResourceController extends Controller
             $resource['total_reviews'] = $resource->reviews->filter(function ($item, $key) {
                 return $item->review != '' || $item->review != null;
             })->count();
-            $resource['joined_at'] = $resource->partners->where('pivot.partner_id', (int)$partner)->first()->created_at->timestamp;
-            removeRelationsFromModel($resource);
-            removeSelectedFieldsFromModel($resource);
+            $resource['joined_at'] = (PartnerResource::where([['resource_id', $resource->id], ['partner_id', (int)$partner]])->first())->created_at->timestamp;
+            removeRelationsAndFields($resource);
             return api_response($request, $resource, 200, ['resource' => $resource]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
