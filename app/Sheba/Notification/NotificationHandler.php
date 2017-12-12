@@ -1,17 +1,17 @@
 <?php namespace Sheba\Notification;
 
-use App\Models\UnfollowedNotification;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Auth;
+use Session;
+use Carbon\Carbon;
 
+use App\Models\Customer;
 use App\Models\Department;
 use App\Models\Notification;
 use App\Models\Partner;
 use App\Models\Resource;
 use App\Models\User;
 
-use Session;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
 
 class NotificationHandler
 {
@@ -26,6 +26,9 @@ class NotificationHandler
 
     protected $senderId;
     protected $senderType;
+
+    private $userSettingsIgnored = false;
+    private $forceSending = false;
 
     /** @var array */
     public $notifiables = [
@@ -67,6 +70,18 @@ class NotificationHandler
         return $this;
     }
 
+    public function ignoreUserSettings()
+    {
+        $this->userSettingsIgnored = true;
+        return $this;
+    }
+
+    public function forceSend($data)
+    {
+        $this->forceSending = true;
+        return $this->send($data);
+    }
+
     /**
      * @param $data
      * @throws \Exception
@@ -81,8 +96,7 @@ class NotificationHandler
             array_push($this->notifiable_ids, $this->notifiable_id);
         }
 
-        $this->sendToAll($data);
-        return $this;
+        return $this->sendToAll($data);
     }
 
     /**
@@ -93,33 +107,17 @@ class NotificationHandler
     public function sendToAll($data)
     {
         if($this->validateNotifiable()) {
-            //$this->removeDuplication();
-            #$notification_data = [];
-            $pubnub_notification = false;
-            $pubnub_users = [];
             foreach($this->notifiable_ids as $key => $id) {
-                if($this->isSent($key) || $this->isAuthUser($key) || $this->hasUserTurnedOffNotification($key, $data['link'])) continue;
+                if($this->isSent($key)) continue;
+                if(!$this->forceSending) {
+                    if($this->isAuthUser($key) || $this->hasUserTurnedOffNotification($key, $data['link'])) continue;
+                }
                 unset($data['id']);
                 $data['notifiable_id'] = $id;
                 $data['notifiable_type'] = $this->notifiable_types[$key];
-                #$notification_data[] = $data;
                 $data['id'] = Notification::insertGetId($data);
                 if(config('sheba.socket_on')) event(new NotificationCreated($data, $this->senderId, $this->senderType));
-                if($data['notifiable_type'] == "App\\Models\\User") {
-                    $pubnub_notification = true;
-                    $pubnub_users[] = $data['notifiable_id'];
-                }
             }
-            if($pubnub_notification) {
-                Session::flash('send_notification', true);
-                Session::flash('send_notification_users', json_encode($pubnub_users));
-                Session::flash('send_notification_data', json_encode([
-                    'title' => $data['title'],
-                    'link' => $data['link'],
-                    'description' => (!empty($data['description']) ? $data['description'] : "")
-                ]));
-            }
-            #Notification::insert($notification_data);
         }
         return $this;
     }
@@ -266,6 +264,32 @@ class NotificationHandler
     }
 
     /**
+     * Customer
+     *
+     * @param $customer
+     * @return NotificationHandler
+     * @throws \Exception
+     */
+    public function customer($customer)
+    {
+        return $this->setNotifiableDirectly('App\Models\Customer', ($customer instanceof Customer) ? $customer->id : $customer);
+    }
+
+    /**
+     * @param $customers
+     * @return $this
+     */
+
+    public function customers($customers)
+    {
+        foreach($customers as $customer) {
+            array_push($this->notifiable_types, 'App\Models\Customer');
+            array_push($this->notifiable_ids, ($customer instanceof Customer) ? $customer->id : $customer);
+        }
+        return $this;
+    }
+
+    /**
      * @param $notifiable
      * @param null $id
      * @throws \Exception
@@ -361,11 +385,16 @@ class NotificationHandler
      */
     private function hasUserTurnedOffNotification($key, $link)
     {
+        if($this->userSettingsIgnored) return false;
         if($this->notifiable_types[$key] != "App\\Models\\User") return false;
-        $link = explode('/', $link);
-        $event = ['event_type' => 'App\Models\\' . studly_case($link[3]), 'event_id' => $link[4]];
+        if(!$link) return false;
         $user = User::find($this->notifiable_ids[$key]);
-        return $this->hasUserUnfollowedThisEvent($user, $event) || $this->hasUserTurnedOffThisEventType($user, $event['event_type']);
+        $link = explode('/', $link);
+        if(count($link) < 4) return false;
+        $event_type = 'App\Models\\' . studly_case($link[3]);
+        if(count($link) == 4) return $this->hasUserTurnedOffThisEventType($user, $event_type);
+        $event = ['event_type' => $event_type, 'event_id' => $link[4]];
+        return $this->hasUserUnfollowedThisEvent($user, $event) || $this->hasUserTurnedOffThisEventType($user, $event_type);
     }
 
     /**
