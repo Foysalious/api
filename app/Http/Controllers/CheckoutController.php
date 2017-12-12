@@ -51,17 +51,7 @@ class CheckoutController extends Controller
         $order = $this->checkoutRepository->storeDataInDB($request->all(), 'cash-on-delivery');
         if ($order) {
             $customer = Customer::find($order->customer_id);
-            if ($order->voucher_id != null) {
-                $voucher = $order->voucher;
-                $this->updateVoucherInPromoList($customer, $voucher, $order);
-                if ($this->isOriginalReferral($order, $voucher)) {
-                    if ($voucher->owner_type == 'App\Models\Customer') {
-                        $this->createVoucherNPromotionForReferrer($customer, $order);
-                    } elseif ($voucher->owner_type == 'App\Models\Partner') {
-                        $this->addAmountToPartnerWallet($voucher, $customer);
-                    }
-                }
-            }
+            $this->updateVouchers($order, $customer);
             $this->checkoutRepository->sendConfirmation($customer->id, $order);
             $order->calculate();
             return response()->json(['code' => 200, 'pap_number' => (double)$order->profit, 'pap_code' => $order->code(), 'msg' => 'Order placed successfully!']);
@@ -103,6 +93,8 @@ class CheckoutController extends Controller
         if ($portwallet_response->status == 200 && $portwallet_response->data->status == "ACCEPTED") {
             $order = $this->checkoutRepository->storeDataInDB($order_info, 'online');
             if ($order) {
+                $customer = Customer::find($order->customer_id);
+                $this->updateVouchers($order, $customer);
                 $this->checkoutRepository->sendConfirmation($order_info['customer_id'], $order);
                 Cache::forget('invoice-' . $request->input('invoice'));
                 Cache::forget('portwallet-payment-' . $request->input('invoice'));
@@ -121,6 +113,21 @@ class CheckoutController extends Controller
                 $this->checkoutRepository->sendOnlinePaymentNotificationToDevice($order_info['device_token'], false);
             } else {
                 return "Something went wrong";
+            }
+        }
+    }
+
+    private function updateVouchers($order, $customer)
+    {
+        if ($order->voucher_id != null) {
+            $voucher = $order->voucher;
+            $this->updateVoucherInPromoList($customer, $voucher, $order);
+            if ($this->isOriginalReferral($order, $voucher)) {
+                if ($voucher->owner_type == 'App\Models\Customer') {
+                    $this->createVoucherNPromotionForReferrer($customer, $order);
+                } elseif ($voucher->owner_type == 'App\Models\Partner') {
+                    $this->addAmountToPartnerWallet($voucher, $customer);
+                }
             }
         }
     }
