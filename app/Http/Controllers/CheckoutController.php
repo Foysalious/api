@@ -181,6 +181,10 @@ class CheckoutController extends Controller
                 $result = $this->voucherRepository
                     ->isValid($data->voucher_code, $item->service->id, $item->partner->id, $data->location, $data->customer, $cart->price, $sales_channel);
                 if ($result['is_valid']) {
+                    if ($this->voucherRepository->isOwnVoucher($data->customer, $result['voucher'])) {
+                        $result = "Can't add your own voucher";
+                        return api_response($request, $result, 403, ['result' => $result]);
+                    }
                     $applied = true;
                     $item->partner = $this->cartRepository->getPartnerPrice($item);
                     if ($result['is_percentage']) {
