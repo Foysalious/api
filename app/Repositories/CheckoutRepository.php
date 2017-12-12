@@ -136,7 +136,7 @@ class CheckoutRepository
                     $partner_order = $this->createPartnerOrder($order, $partner, $payment_method);
                     if ($payment_method == 'online') {
                         $partner_order_price = $this->calculatePartnerOrderPrice($cart_partner);
-                        $partner_order->sheba_collection = $partner_order_price[$partner];
+                        $partner_order->sheba_collection = floor($partner_order_price[$partner]);
                     }
                     $partner_services = $cart_partner[$partner];
                     foreach ($partner_services as $service) {
@@ -304,7 +304,7 @@ class CheckoutRepository
     private function createPartnerOrderPayment($partner_order)
     {
         $partner_order_payment = $this->getPartnerOrderPayment($partner_order);
-        $partner_order_payment->amount = $partner_order->sheba_collection;
+        $partner_order_payment->amount = floor($partner_order->sheba_collection);
         $partner_order_payment->log = 'advanced payment';
         $partner_order_payment->collected_by = 'Sheba';
         $partner_order_payment = $this->getAuthor($partner_order_payment);
