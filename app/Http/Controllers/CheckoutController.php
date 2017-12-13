@@ -53,8 +53,9 @@ class CheckoutController extends Controller
             $customer = Customer::find($order->customer_id);
             $this->updateVouchers($order, $customer);
             $this->checkoutRepository->sendConfirmation($customer->id, $order);
-            $order->calculate();
-            return response()->json(['code' => 200, 'pap_number' => (double)$order->profit, 'pap_code' => $order->code(), 'msg' => 'Order placed successfully!']);
+//            $order->calculate();
+//            return response()->json(['code' => 200, 'pap_number' => (double)$order->profit, 'pap_code' => $order->code(), 'msg' => 'Order placed successfully!']);
+            return response()->json(['code' => 200, 'msg' => 'Order placed successfully!']);
         } else {
             return response()->json(['code' => 500, 'msg' => 'There is a problem while placing the order!']);
         }
