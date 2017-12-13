@@ -212,6 +212,7 @@ class CheckoutRepository
                         $job->update();
                     }
                     if ($payment_method == 'online') {
+                        $partner_order->sheba_collection = floor($partner_order->sheba_collection);
                         $partner_order->update();
                         $this->createPartnerOrderPayment($partner_order);
                     }
@@ -304,7 +305,7 @@ class CheckoutRepository
     private function createPartnerOrderPayment($partner_order)
     {
         $partner_order_payment = $this->getPartnerOrderPayment($partner_order);
-        $partner_order_payment->amount = $partner_order->sheba_collection;
+        $partner_order_payment->amount = floor($partner_order->sheba_collection);
         $partner_order_payment->log = 'advanced payment';
         $partner_order_payment->collected_by = 'Sheba';
         $partner_order_payment = $this->getAuthor($partner_order_payment);
