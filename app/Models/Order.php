@@ -95,4 +95,9 @@ class Order extends Model
         return $this->belongsTo(Voucher::class);
     }
 
+    public function updateLogs()
+    {
+        return $this->hasMany(OrderUpdateLog::class);
+    }
+
 }

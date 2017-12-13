@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Comment;
+use App\Models\OrderUpdateLog;
 use App\Repositories\CommentRepository;
 use App\Repositories\PartnerJobRepository;
 use App\Repositories\PartnerOrderRepository;
 use App\Repositories\PartnerRepository;
 use App\Repositories\ResourceJobRepository;
+use App\Sheba\Logs\OrderLogs;
 use App\Sheba\Logs\PartnerOrderLogs;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
@@ -127,30 +129,16 @@ class PartnerOrderController extends Controller
                 return api_response($request, $logs, 200, ['logs' => $logs]);
             }
             $all_logs = collect();
-            $partner_order_logs = (new PartnerOrderLogs($request->partner_order))->all();
-            foreach ($partner_order_logs as $key => $partner_order_log) {
-                foreach ($partner_order_log as $log) {
-                    $collect = collect($log);
-                    $collect->put('created_at', $log->created_at->toDateString());
-                    $collect->put('timestamp', $log->created_at->timestamp);
-                    $collect->put('type', $key);
-                    $all_logs->push(($collect)->toArray());
-                }
-            }
+            $this->formatLogs((new PartnerOrderLogs($request->partner_order))->all(), $all_logs);
+            $this->formatLogs((new OrderLogs($request->partner_order->order))->all(), $all_logs);
             foreach ($request->partner_order->jobs as $job) {
                 $job_logs = (new JobLogs($job))->all();
-                foreach ($job_logs as $key => $job_log) {
-                    foreach ($job_log as $log) {
-                        $collect = collect($log);
-                        $collect->put('created_at', $log->created_at->toDateString());
-                        $collect->put('timestamp', $log->created_at->timestamp);
-                        $collect->put('type', $key);
-                        $all_logs->push(($collect)->toArray());
-                    }
-                }
+                $this->formatLogs($job_logs, $all_logs);
             }
             $dates = $all_logs->groupBy('created_at')->sortBy(function ($item, $key) {
                 return $key;
+            })->map(function ($item, $key) {
+                return ($item->sortByDesc('timestamp'))->values()->all();
             });
             return api_response($request, $dates, 200, ['logs' => $dates]);
         } catch (\Throwable $e) {
@@ -167,6 +155,23 @@ class PartnerOrderController extends Controller
             return $comment ? api_response($request, $comment, 200) : api_response($request, $comment, 500);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param $job_logs
+     * @param $all_logs
+     */
+    private function formatLogs($job_logs, $all_logs)
+    {
+        foreach ($job_logs as $key => $job_log) {
+            foreach ($job_log as $log) {
+                $collect = collect($log);
+                $collect->put('created_at', $log->created_at->toDateString());
+                $collect->put('timestamp', $log->created_at->timestamp);
+                $collect->put('type', $key);
+                $all_logs->push($collect);
+            }
         }
     }
 }
