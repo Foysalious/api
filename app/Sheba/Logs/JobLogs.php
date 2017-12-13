@@ -9,14 +9,17 @@ class JobLogs
     private $generalLogs;
     private $scheduleChangeLogs;
     private $priceChangeLogs;
+    private $materialChangeLogs;
 
     public function __construct(Job $job)
     {
         $this->job = $job;
-
         $this->generalLogs = collect([]);
         $this->priceChangeLogs = collect([]);
         $this->scheduleChangeLogs = collect([]);
+        $this->statusChangeLogs = collect([]);
+        $this->materialChangeLogs = collect([]);
+        $this->comments = collect([]);
     }
 
     public function all()
@@ -31,13 +34,80 @@ class JobLogs
                 $this->generalLog($update_log, $log);
             }
         }
-
+        $this->materialLogs($this->job->materialLogs);
+        $this->statusChangeLogs($this->job->statusChangeLog);
+        $this->getComments($this->job->comments->where('is_visible', 1));
         return [
             'general' => $this->generalLogs,
             'schedule_change' => $this->scheduleChangeLogs,
-            'price_change' => $this->priceChangeLogs,
-            'status_change' => $this->job->statusChangeLog
+            'price_change' => $this->formatLogInPriceChangeLogs($this->priceChangeLogs),
+            'status_change' => $this->statusChangeLogs,
+            'comments' => $this->comments
         ];
+    }
+
+    private function formatLogInPriceChangeLogs($priceChangeLogs)
+    {
+        return $priceChangeLogs->each(function ($item, $key) {
+            $item->log = $item->log . ' from ' . $item->from . ' to ' . $item->to;
+        });
+    }
+
+    private function getComments($comments)
+    {
+        foreach ($comments as $comment) {
+            $this->comments->push((object)[
+                'created_at' => $comment->created_at,
+                'created_by_name' => $comment->created_by_name,
+                'comment' => $comment->comment,
+                'log' => explode('-', $comment->created_by_name)[1] . ' has commented',
+            ]);
+        }
+    }
+
+    private function statusChangeLogs($status_changes)
+    {
+        foreach ($status_changes as $status_change) {
+            $this->statusChangeLogs->push((object)[
+                'created_at' => $status_change->created_at,
+                'created_by_name' => $status_change->created_by_name,
+                'log' => 'Job '.$this->job->fullCode(). ' status has changed from ' . $status_change->from_status . ' to ' . $status_change->to_status,
+            ]);
+        }
+    }
+
+    private function materialLogs($materialLogs)
+    {
+        foreach ($materialLogs as $materialLog) {
+            $this->materialChangeLogs->push((object)[
+                'created_at' => $materialLog->created_at,
+                'created_by_name' => $materialLog->created_by_name,
+                'log' => $this->getMaterialLog($materialLog)
+            ]);
+        }
+    }
+
+    private function isNewMaterialAddChangeLog($materialLog)
+    {
+        return $materialLog->old_data == null && $materialLog->new_data != null;
+    }
+
+    private function isMaterialUpdateChangeLog($materialLog)
+    {
+        return $materialLog->old_data != null && $materialLog->new_data != null;
+    }
+
+    private function getMaterialUpdatedFields($old_data, $new_data)
+    {
+        $price_update = false;
+        $name_update = false;
+        if (trim($new_data->material_price) != trim($old_data->material_price)) {
+            $price_update = true;
+        }
+        if (trim($new_data->material_name) != trim($old_data->material_name)) {
+            $name_update = true;
+        }
+        return array($name_update, $price_update);
     }
 
     private function generalLog($update_log, $decoded_log)
@@ -103,7 +173,7 @@ class JobLogs
 
     private function newPriceChangeLog($update_log, $decoded_log)
     {
-        if ($decoded_log['msg'] == "Service Price Updated ") {
+        if ($decoded_log['msg'] == "Service Price Updated") {
             if ($decoded_log['old_service_unit_price'] != $decoded_log['new_service_unit_price']) {
                 $this->newUnitPriceChangeLog($update_log, $decoded_log);
             }
@@ -191,7 +261,7 @@ class JobLogs
     private function isPriceChangeLog($log)
     {
         return array_key_exists('msg', $log) &&
-            (in_array($log['msg'], ["Service Price Updated ", "Discount Cost Updated", "Commission Rate Updated"]));
+            (in_array($log['msg'], ["Service Price Updated", "Discount Cost Updated", "Commission Rate Updated"]));
     }
 
     /**
@@ -228,5 +298,28 @@ class JobLogs
     private function isPartnerChangeLog($log)
     {
         return array_key_exists('msg', $log) && startsWith($log['msg'], "Partner Changed to");
+    }
+
+    /**
+     * @param $materialLog
+     * @return string
+     */
+    private function getMaterialLog($materialLog)
+    {
+        if ($this->isNewMaterialAddChangeLog($materialLog)) {
+            $log = trim($materialLog->new_data->material_name) . ' material has been added for ' . trim($materialLog->new_data->material_price) . ' TK';
+        } elseif ($this->isMaterialUpdateChangeLog($materialLog)) {
+            list($name_update, $price_update) = $this->getMaterialUpdatedFields($materialLog->old_data, $materialLog->new_data);
+            if ($name_update && $price_update) {
+                $log = trim($materialLog->old_data->material_name) . ' material of ' . trim($materialLog->old_data->material_price) . ' TK' . ' has been updated to ' . trim($materialLog->new_data->material_name) . ' material of ' . trim($materialLog->new_data->material_price) . ' TK';
+            } elseif ($name_update) {
+                $log = trim($materialLog->old_data->material_name) . ' material name has been updated to ' . trim($materialLog->new_data->material_name);
+            } else {
+                $log = trim($materialLog->old_data->material_name) . ' material price has been updated to ' . trim($materialLog->new_data->material_price) . ' TK from ' . trim($materialLog->old_data->material_price) . ' TK';
+            }
+        } else {
+            $log = trim($materialLog->old_data->material_name) . ' material of ' . trim($materialLog->old_data->material_price) . ' TK has been deleted';
+        }
+        return $log;
     }
 }

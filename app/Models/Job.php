@@ -52,6 +52,7 @@ class Job extends Model
     {
         return $this->hasOne(Review::class);
     }
+
     public function comments()
     {
         return $this->morphMany(Comment::class, 'commentable');
@@ -142,5 +143,15 @@ class Job extends Model
     public function scopeStatus($query, Array $status)
     {
         return $query->whereIn('status', $status);
+    }
+
+    public function materialLogs()
+    {
+        return $this->hasMany(JobMaterialLog::class);
+    }
+
+    public function complains()
+    {
+        return $this->morphMany(Complain::class, 'complainable');
     }
 }

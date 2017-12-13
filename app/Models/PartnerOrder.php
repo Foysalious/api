@@ -243,4 +243,9 @@ class PartnerOrder extends Model
     {
         return $query->where('closed_and_paid_at', '<>', null);
     }
+
+    public function stageChangeLogs()
+    {
+        return $this->hasMany(PartnerOrderStatusLog::class);
+    }
 }

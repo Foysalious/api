@@ -8,6 +8,7 @@ use App\Repositories\PartnerJobRepository;
 use App\Repositories\PartnerOrderRepository;
 use App\Repositories\PartnerRepository;
 use App\Repositories\ResourceJobRepository;
+use App\Sheba\Logs\PartnerOrderLogs;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
@@ -126,49 +127,26 @@ class PartnerOrderController extends Controller
                 return api_response($request, $logs, 200, ['logs' => $logs]);
             }
             $all_logs = collect();
+            $partner_order_logs = (new PartnerOrderLogs($request->partner_order))->all();
+            foreach ($partner_order_logs as $key => $partner_order_log) {
+                foreach ($partner_order_log as $log) {
+                    $collect = collect($log);
+                    $collect->put('created_at', $log->created_at->toDateString());
+                    $collect->put('timestamp', $log->created_at->timestamp);
+                    $collect->put('type', $key);
+                    $all_logs->push(($collect)->toArray());
+                }
+            }
             foreach ($request->partner_order->jobs as $job) {
                 $job_logs = (new JobLogs($job))->all();
                 foreach ($job_logs as $key => $job_log) {
-                    if ($key == 'price_change') {
-                        $price_changes = $job_log;
-                        foreach ($price_changes as $price_change) {
-                            $collect = collect();
-                            $collect->put('log', $price_change->log . ' from ' . $price_change->from . ' to ' . $price_change->to);
-                            $collect->put('type', $key);
-                            $collect->put('timestamp', $price_change->created_at->timestamp);
-                            $collect->put('created_at', $price_change->created_at->format('Y-m-d'));
-                            $all_logs->push($collect->toArray());
-                        }
-                    } elseif ($key == 'status_change') {
-                        $status_changes = $job_log;
-                        foreach ($status_changes as $status_change) {
-                            $collect = collect();
-                            $collect->put('log', 'Job status has changed from ' . $status_change->from_status . ' to ' . $status_change->to_status);
-                            $collect->put('type', $key);
-                            $collect->put('timestamp', $status_change->created_at->timestamp);
-                            $collect->put('created_at', $status_change->created_at->format('Y-m-d'));
-                            $all_logs->push($collect->toArray());
-                        }
-                    } else {
-                        foreach ($job_log as $log) {
-                            $collect = collect($log);
-                            $collect->put('created_at', $log->created_at->toDateString());
-                            $collect->put('timestamp', $log->created_at->timestamp);
-                            $collect->put('type', $key);
-                            $collect->forget('created_by_name');
-                            $all_logs->push(($collect)->toArray());
-                        }
+                    foreach ($job_log as $log) {
+                        $collect = collect($log);
+                        $collect->put('created_at', $log->created_at->toDateString());
+                        $collect->put('timestamp', $log->created_at->timestamp);
+                        $collect->put('type', $key);
+                        $all_logs->push(($collect)->toArray());
                     }
-                }
-                $comments = $job->comments->where('is_visible', 1);
-                foreach ($comments as $comment) {
-                    $collect = collect();
-                    $collect->put('log', explode('-', $comment->created_by_name)[1] . ' has commented');
-                    $collect->put('comment', $comment->comment);
-                    $collect->put('timestamp', $comment->created_at->timestamp);
-                    $collect->put('created_at', $comment->created_at->format('Y-m-d'));
-                    $collect->put('type', 'comment');
-                    $all_logs->push($collect->toArray());
                 }
             }
             $dates = $all_logs->groupBy('created_at')->sortBy(function ($item, $key) {
