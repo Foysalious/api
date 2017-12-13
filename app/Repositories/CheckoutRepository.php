@@ -149,6 +149,8 @@ class CheckoutRepository
                         $job->job_additional_info = $service->additional_info;
                         $job->service_quantity = $service->quantity;
                         $job->crm_id = isset($service->crm_id) ? $service->crm_id : null; //REMOVE
+                        $job->resource_id = isset($service->resource_id) ? $service->resource_id : null;
+                        $job->status = isset($service->resource_id) ? constants('JOB_STATUSES')['Accepted'] : constants('JOB_STATUSES')['Pending'];
                         $job->department_id = isset($service->department_id) ? $service->department_id : '';
                         $job->service_unit_price = (float)$service->partner->prices;
                         if (isset($service->partner->discount_id)) {
@@ -227,9 +229,12 @@ class CheckoutRepository
     private function calculateAuthor($order_info)
     {
         if (isset($order_info['created_by'])) {
-            $user = User::find($order_info['created_by']);
-            $this->created_by = $user->id;
-            $this->created_by_name = $user->name;
+//            $user = User::find($order_info['created_by']);
+//            $this->created_by = $user->id;
+//            $this->created_by_name = $user->name;
+            $this->created_by = $order_info['created_by'];
+        } elseif (isset($order_info['created_by'])) {
+            $this->created_by = $order_info['created_by_name'];
         }
     }
 
