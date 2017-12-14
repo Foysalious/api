@@ -78,7 +78,7 @@ $api->version('v1', function ($api) {
         $api->get('{service}/similar', 'App\Http\Controllers\ServiceController@getSimilarServices');
         $api->get('{service}/reviews', 'App\Http\Controllers\ServiceController@getReviews');
         $api->get('{service}/locations/{location}/partners', 'App\Http\Controllers\ServiceController@getPartnersOfLocation');
-//        $api->post('{service}/location/{location}/partners', 'App\Http\Controllers\ServiceController@getPartners');
+        $api->post('{service}/locations/{location}/partners', 'App\Http\Controllers\ServiceController@getPartners');
     });
     $api->group(['prefix' => 'partner'], function ($api) {
         $api->get('/', 'App\Http\Controllers\PartnerController@index');
