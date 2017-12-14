@@ -301,13 +301,14 @@ class ServiceController extends Controller
             if ($request->day < Carbon::now()->toDateString()) {
                 return false;
             }
+            return true;
         }
         if ($request->has('time')) {
             if (!array_has($this->getSelectableTimes(), $request->time)) {
                 return false;
             }
+            return true;
         }
-        return true;
     }
 
     private function getSelectableTimes()
