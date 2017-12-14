@@ -117,6 +117,9 @@ class ServiceController extends Controller
                 array_add($service, 'parent_id', $category->parent->id);
                 array_add($service, 'parent_name', $category->parent->name);
             } elseif ($request->getMethod() == 'POST') {
+                if (!$this->validateDateAndTime($request)) {
+                    return api_response($request, null, 403, ['result' => 'Selected Date or Time is invalid!']);
+                }
                 $service = Service::where('id', $service)
                     ->select('id', 'name', 'unit', 'category_id', 'description', 'min_quantity', 'thumb', 'banner', 'faqs', 'slug', 'variable_type', 'variables')
                     ->first();
@@ -128,7 +131,7 @@ class ServiceController extends Controller
             $sorted_service_partners = $this->serviceRepository->_sortPartnerListByAvailability($sorted_service_partners);
 
             $sorted_service_partners = collect($sorted_service_partners)->sortBy(function ($sorted_service_partner) {
-                $sorted_service_partner['mobile']=$sorted_service_partner->getContactNumber();
+                $sorted_service_partner['mobile'] = $sorted_service_partner->getContactNumber();
             })->values()->all();
 //        $sorted_service_partners = collect($service_partners)->sortBy(function ($service_partner) {
 //            return sprintf('%-12s%s', $service_partner->discounted_price, $service_partner->rating);
@@ -199,6 +202,9 @@ class ServiceController extends Controller
      */
     public function changePartner($service, $location = null, Request $request)
     {
+        if (!$this->validateDateAndTime($request)) {
+            return api_response($request, null, 403, ['result' => 'Selected Date or Time is invalid!']);
+        }
         $service = Service::find($service);
         $option = null;
         //get the selected options
@@ -211,7 +217,7 @@ class ServiceController extends Controller
         $sorted_service_partners = $this->serviceRepository->_sortPartnerListByAvailability($sorted_service_partners);
 
         $sorted_service_partners = collect($sorted_service_partners)->sortBy(function ($sorted_service_partner) {
-            $sorted_service_partner['mobile']=$sorted_service_partner->getContactNumber();
+            $sorted_service_partner['mobile'] = $sorted_service_partner->getContactNumber();
         })->values()->all();
 //        $sorted_service_partners = collect($service_partners)->sortBy(function ($service_partner) {
 //            return sprintf('%-12s%s', $service_partner->discounted_price, $service_partner->rating);
@@ -288,5 +294,32 @@ class ServiceController extends Controller
             return response()->json(['msg' => 'not found', 'code' => 404]);
         }
     }
+
+    private function validateDateAndTime(Request $request)
+    {
+        if ($request->has('day')) {
+            if ($request->day < Carbon::now()->toDateString()) {
+                return false;
+            }
+        }
+        if ($request->has('time')) {
+            if (!array_has($this->getSelectableTimes(), $request->time)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private function getSelectableTimes()
+    {
+        $today_slots = [];
+        foreach (constants('JOB_PREFERRED_TIMES') as $time) {
+            if ($time == "Anytime" || Carbon::now()->lte(Carbon::createFromTimestamp(strtotime(explode(' - ', $time)[1])))) {
+                $today_slots[$time] = $time;
+            }
+        }
+        return $today_slots;
+    }
+
 
 }

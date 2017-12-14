@@ -233,8 +233,9 @@ class CheckoutRepository
 //            $this->created_by = $user->id;
 //            $this->created_by_name = $user->name;
             $this->created_by = $order_info['created_by'];
-        } elseif (isset($order_info['created_by'])) {
-            $this->created_by = $order_info['created_by_name'];
+        }
+        if (isset($order_info['created_by_name'])) {
+            $this->created_by_name = $order_info['created_by_name'];
         }
     }
 
