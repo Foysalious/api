@@ -7,7 +7,7 @@ use App\Models\JobCancelLog;
 use App\Repositories\PapRepository;
 use Illuminate\Http\Request;
 use DB;
-
+use Carbon\Carbon;
 class JobController extends Controller
 {
     private $job_statuses_show;
@@ -38,7 +38,7 @@ class JobController extends Controller
                 }])->with(['usedMaterials' => function ($query) {
                     $query->select('id', 'job_id', 'material_name', 'material_price');
                 }])->with(['service' => function ($query) {
-                    $query->select('id', 'name','unit');
+                    $query->select('id', 'name', 'unit');
                 }])->with(['review' => function ($query) {
                     $query->select('job_id', 'review_title', 'review', 'rating');
                 }])->where('id', $job->id)
@@ -73,7 +73,18 @@ class JobController extends Controller
 
     public function getPreferredTimes()
     {
-        return response()->json(['times' => config('constants.JOB_PREFERRED_TIMES'), 'code' => 200]);
+        return response()->json(['times' => config('constants.JOB_PREFERRED_TIMES'), 'valid_times' => $this->getSelectableTimes(), 'code' => 200]);
+    }
+
+    private function getSelectableTimes()
+    {
+        $today_slots = [];
+        foreach (constants('JOB_PREFERRED_TIMES') as $time) {
+            if ($time == "Anytime" || Carbon::now()->lte(Carbon::createFromTimestamp(strtotime(explode(' - ', $time)[1])))) {
+                $today_slots[$time] = $time;
+            }
+        }
+        return $today_slots;
     }
 
     public function cancelJobReasons()
