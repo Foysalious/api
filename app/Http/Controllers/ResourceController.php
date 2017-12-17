@@ -31,8 +31,7 @@ class ResourceController extends Controller
             $resource['mobile'] = $profile->mobile;
             $resource['address'] = $profile->address;
             $resource['profile_picture'] = $profile->pro_pic;
-            $avg_rating = $resource->reviews->avg('rating');
-            $resource['rating'] = $avg_rating == null ? 5 : round($avg_rating, 2);
+            $resource['rating'] = round($resource->reviews->avg('rating'), 2);
             $resource['total_rating'] = $resource->reviews->count();
             $resource['total_reviews'] = $resource->reviews->filter(function ($item, $key) {
                 return $item->review != '' || $item->review != null;
@@ -53,8 +52,7 @@ class ResourceController extends Controller
                 $q->with('job.partner_order.order');
             }]);
             $breakdown = $this->reviewRepository->getReviewBreakdown($resource->reviews);
-            $avg_rating = $resource->reviews->avg('rating');
-            $resource['rating'] = $avg_rating == null ? 5 : round($avg_rating, 2);
+            $resource['rating'] = round($resource->reviews->avg('rating'), 2);
             $resource['total_rating'] = $resource->reviews->count();
             $reviews = $resource->reviews->filter(function ($item, $key) {
                 return $item->review != '' || $item->review != null;
@@ -63,8 +61,7 @@ class ResourceController extends Controller
             foreach ($reviews as $review) {
                 $review['order_id'] = $review->job->partner_order->id;
                 $review['order_code'] = $review->job->partner_order->code();
-                removeRelationsFromModel($review);
-                removeSelectedFieldsFromModel($review);
+                removeRelationsAndFields($review);
             }
             $info = array(
                 'rating' => $resource['rating'],
