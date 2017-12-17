@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Comment;
 use App\Models\OrderUpdateLog;
+use App\Models\Resource;
 use App\Repositories\CommentRepository;
 use App\Repositories\PartnerJobRepository;
 use App\Repositories\PartnerOrderRepository;
@@ -115,19 +116,6 @@ class PartnerOrderController extends Controller
     public function getLogs($partner, Request $request)
     {
         try {
-            if ($request->has('filter')) {
-                $filter = $request->filter;
-                $logs = $request->partner_order->$filter->where('transaction_type', 'Debit');
-                if (count($logs) == 0) {
-                    return api_response($request, $logs, 404);
-                }
-                $logs->each(function ($item, $key) {
-                    $item['amount'] = (double)$item->amount;
-                    $item['collected_by'] = trim(explode('-', $item->created_by_name)[1]);
-                    removeSelectedFieldsFromModel($item);
-                });
-                return api_response($request, $logs, 200, ['logs' => $logs]);
-            }
             $all_logs = collect();
             $this->formatLogs((new PartnerOrderLogs($request->partner_order))->all(), $all_logs);
             $this->formatLogs((new OrderLogs($request->partner_order->order))->all(), $all_logs);
@@ -141,6 +129,32 @@ class PartnerOrderController extends Controller
                 return ($item->sortByDesc('timestamp'))->values()->all();
             });
             return api_response($request, $dates, 200, ['logs' => $dates]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getPayments($partner, Request $request)
+    {
+        try {
+            $logs = $request->partner_order->payments->where('transaction_type', 'Debit');
+            if (count($logs) != 0) {
+                $logs->each(function ($item, $key) {
+                    $name = explode('-', $item->created_by_name);
+                    $item['collected_by'] = $item->created_by_name;
+                    if (trim($name[0]) == 'Resource') {
+                        $resource = Resource::find($item->created_by);
+                        $item['picture_of_collected_by'] = $resource != null ? $resource->profile->pro_pic : null;
+                    } elseif (trim($name[0]) == 'Customer') {
+                        $item['picture_of_collected_by'] = 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/manager_app/customer.jpg';
+                    } else {
+                        $item['picture_of_collected_by'] = 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/manager_app/sheba.jpg';
+                    }
+                    removeSelectedFieldsFromModel($item);
+                });
+                return api_response($request, $logs, 200, ['logs' => $logs]);
+            }
+            return api_response($request, $logs, 404);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }

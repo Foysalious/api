@@ -5,6 +5,7 @@ use Illuminate\Database\Eloquent\Model;
 class PartnerOrderPayment extends Model
 {
     protected $guarded = ['id'];
+    protected $casts = ['amount' => 'double'];
 
     public function partnerOrder()
     {
