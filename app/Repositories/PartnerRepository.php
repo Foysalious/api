@@ -21,7 +21,7 @@ class PartnerRepository
     {
         $this->partner->load(['resources' => function ($q) use ($type, $verify) {
             $q->select('resources.id', 'profile_id', 'resource_type', 'resources.is_verified')->with(['jobs' => function ($q) {
-                $q->info()->status([constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Served']]);
+                $q->info();
             }])->with('profile', 'reviews');
             if ($type) {
                 $q->type($type);
@@ -31,7 +31,7 @@ class PartnerRepository
             }
         }]);
         foreach ($this->partner->resources as $resource) {
-            $resource['ongoing'] = $resource->jobs->whereIn('status', [constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Process']])->count();
+            $resource['ongoing'] = $resource->jobs->whereIn('status', [constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Schedule_Due']])->count();
             $resource['completed'] = $resource->jobs->where('status', constants('JOB_STATUSES')['Served'])->count();
             $resource['name'] = $resource->profile->name;
             $resource['mobile'] = $resource->profile->mobile;

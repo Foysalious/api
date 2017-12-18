@@ -11,6 +11,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Validator;
 use DB;
+use Illuminate\Validation\ValidationException;
 
 class PartnerJobController extends Controller
 {
@@ -24,16 +25,11 @@ class PartnerJobController extends Controller
     public function index($partner, Request $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
+            $this->validate($request, [
                 'filter' => 'required|string|in:new,ongoing,history'
             ]);
-            if ($validator->fails()) {
-                $errors = $validator->errors()->all()[0];
-                return api_response($request, $errors, 400, ['message' => $errors]);
-            }
             list($offset, $limit) = calculatePagination($request);
-            $partner = $request->partner;
-            $partnerRepo = new PartnerRepository($partner);
+            $partnerRepo = new PartnerRepository($request->partner);
             $statuses = $partnerRepo->resolveStatus($request->filter);
             $jobs = $partnerRepo->jobs($statuses);
             if (count($jobs) > 0) {
@@ -54,6 +50,9 @@ class PartnerJobController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }

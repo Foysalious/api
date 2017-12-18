@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Comment;
-use App\Models\OrderUpdateLog;
 use App\Models\Resource;
 use App\Repositories\CommentRepository;
 use App\Repositories\PartnerJobRepository;
