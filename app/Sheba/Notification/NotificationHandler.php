@@ -12,7 +12,6 @@ use App\Models\Partner;
 use App\Models\Resource;
 use App\Models\User;
 
-
 class NotificationHandler
 {
     /** @var */
