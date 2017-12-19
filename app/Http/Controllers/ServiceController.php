@@ -117,9 +117,9 @@ class ServiceController extends Controller
                 array_add($service, 'parent_id', $category->parent->id);
                 array_add($service, 'parent_name', $category->parent->name);
             } elseif ($request->getMethod() == 'POST') {
-                if (!$this->validateDateAndTime($request)) {
-                    return api_response($request, null, 403, ['result' => 'Selected Date or Time is invalid!']);
-                }
+//                if (!$this->validateDateAndTime($request)) {
+//                    return api_response($request, null, 403, ['result' => 'Selected Date or Time is invalid!']);
+//                }
                 $service = Service::where('id', $service)
                     ->select('id', 'name', 'unit', 'category_id', 'description', 'min_quantity', 'thumb', 'banner', 'faqs', 'slug', 'variable_type', 'variables')
                     ->first();
@@ -202,9 +202,9 @@ class ServiceController extends Controller
      */
     public function changePartner($service, $location = null, Request $request)
     {
-        if (!$this->validateDateAndTime($request)) {
-            return api_response($request, null, 403, ['result' => 'Selected Date or Time is invalid!']);
-        }
+//        if (!$this->validateDateAndTime($request)) {
+//            return api_response($request, null, 403, ['result' => 'Selected Date or Time is invalid!']);
+//        }
         $service = Service::find($service);
         $option = null;
         //get the selected options
