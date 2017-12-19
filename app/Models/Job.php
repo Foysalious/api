@@ -6,6 +6,7 @@ class Job extends Model
 {
     protected $materialPivotColumns = ['id', 'material_name', 'material_price', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
     protected $guarded = ['id'];
+    protected $casts = ['sheba_contribution' => 'double', 'partner_contribution' => 'double', 'commission_rate' => 'double'];
 
     public $servicePrice;
     public $commissionRate;
@@ -127,7 +128,12 @@ class Job extends Model
 
     public function scopeInfo($query)
     {
-        return $query->select('jobs.id', 'jobs.discount', 'jobs.created_at', 'resource_id', 'schedule_date', 'service_variables', 'job_additional_info', 'delivered_date', 'preferred_time', 'service_name', 'status', 'service_quantity', 'service_unit_price', 'service_id', 'partner_order_id');
+        return $query->select(
+            'jobs.id', 'jobs.discount', 'jobs.created_at', 'jobs.discount', 'sheba_contribution',
+            'partner_contribution', 'commission_rate', 'resource_id', 'schedule_date', 'service_variables',
+            'job_additional_info', 'delivered_date', 'preferred_time', 'service_name',
+            'status', 'service_quantity', 'service_unit_price', 'service_id', 'partner_order_id'
+        );
     }
 
     public function scopeValidStatus($query)

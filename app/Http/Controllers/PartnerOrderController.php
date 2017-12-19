@@ -121,7 +121,7 @@ class PartnerOrderController extends Controller
                 $job_logs = (new JobLogs($job))->all();
                 $this->formatLogs($job_logs, $all_logs);
             }
-            $dates = $all_logs->groupBy('created_at')->sortBy(function ($item, $key) {
+            $dates = $all_logs->groupBy('created_at')->sortByDesc(function ($item, $key) {
                 return $key;
             })->map(function ($item, $key) {
                 return ($item->sortByDesc('timestamp'))->values()->all();
