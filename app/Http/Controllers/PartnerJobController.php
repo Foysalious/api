@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Job;
 use App\Models\JobMaterial;
 use App\Models\JobUpdateLog;
 use App\Models\Material;
+use App\Models\Partner;
+use App\Models\Resource;
 use App\Repositories\PartnerRepository;
 use App\Repositories\ResourceJobRepository;
 use Illuminate\Database\QueryException;
@@ -62,37 +65,26 @@ class PartnerJobController extends Controller
     public function acceptJobAndAssignResource($partner, $job, Request $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
+            $this->validate($request, [
                 'resource_id' => 'required|int'
             ]);
-            if ($validator->fails()) {
-                $errors = $validator->errors()->all()[0];
-                return api_response($request, $errors, 400, ['message' => $errors]);
-            }
             $job = $request->job;
-            $to_be_assigned_resource = $request->partner->resources->where('id', (int)$request->resource_id)->where('pivot.resource_type', 'Handyman')->first();
-            if ($to_be_assigned_resource != null) {
-                $request->merge(['remember_token' => $to_be_assigned_resource->remember_token, 'status' => 'Accepted', 'resource' => $request->manager_resource]);
+            if ($request->partner->hasThisResource((int)$request->resource_id, 'Handyman') && $job->hasStatus(['Pending', 'Not_Responded'])) {
+                $request->merge(['remember_token' => $request->manager_resource->remember_token, 'status' => 'Accepted', 'resource' => $request->manager_resource]);
                 $response = $this->resourceJobRepository->changeStatus($job->id, $request);
                 if ($response) {
                     if ($response->code == 200) {
-                        $updatedData = [
-                            'msg' => 'Resource Change',
-                            'old_resource_id' => null,
-                            'new_resource_id' => (int)$request->resource_id
-                        ];
-                        $job->resource_id = $request->resource_id;
-                        $job->update();
-                        $this->jobUpdateLog($job->id, json_encode($updatedData), $request->manager_resource);
+                        $job = $this->assignResource($job, $request->resource_id, $request->manager_resource);
                         return api_response($request, $job, 200);
-                    } else {
-                        return api_response($request, $response, $response->code);
                     }
+                    return api_response($request, $response, $response->code);
                 }
                 return api_response($request, null, 500);
-            } else {
-                return api_response($request, null, 403);
             }
+            return api_response($request, null, 403);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
@@ -105,9 +97,8 @@ class PartnerJobController extends Controller
             $response = $this->resourceJobRepository->changeStatus($request->job->id, $request);
             if ($response) {
                 return api_response($request, $response, $response->code);
-            } else {
-                return api_response($request, null, 500);
             }
+            return api_response($request, null, 500);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
@@ -116,41 +107,28 @@ class PartnerJobController extends Controller
     public function update($partner, $job, Request $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
-                'schedule_date' => 'sometimes|required|string',
-                'preferred_time' => 'required_with:schedule_date|string',
-                'resource_id' => 'required_without_all:schedule_date,preferred_time',
-            ]);
-            if ($validator->fails()) {
-                $errors = $validator->errors()->all()[0];
-                return api_response($request, $errors, 400, ['message' => $errors]);
-            }
             $job = $request->job;
-            if ($request->has('schedule_date')) {
+            $this->validate($request, [
+                'schedule_date' => 'sometimes|required|date|after:yesterday',
+                'preferred_time' => 'required_with:schedule_date|string',
+                'resource_id' => 'required_without_all:schedule_date,preferred_time|not_in:' . $job->resource_id,
+            ]);
+            if ($request->has('schedule_date') && $request->has('preferred_time')) {
                 $request->merge(['resource' => $request->manager_resource]);
-                $response = $this->resourceJobRepository->reschedule($request->job->id, $request);
+                $response = $this->resourceJobRepository->reschedule($job->id, $request);
                 return api_response($request, $response, $response->code);
             }
             if ($request->has('resource_id')) {
-                if ($request->partner->hasThisResource($request->resource_id, 'Handyman') && in_array($job->status, [constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process']]) && ($job->resource_id != $request->resource_id)) {
-                    try {
-                        DB::transaction(function () use ($job, $request) {
-                            $updatedData = [
-                                'msg' => 'Resource Change',
-                                'old_resource_id' => (int)$job->resource_id,
-                                'new_resource_id' => (int)$request->resource_id
-                            ];
-                            $job->resource_id = $request->resource_id;
-                            $job->update();
-                            $this->jobUpdateLog($job->id, json_encode($updatedData), $request->manager_resource);
-                        });
-                        return api_response($request, $job, 200);
-                    } catch (QueryException $e) {
-                        return api_response($request, null, 500);
-                    }
+                if ($request->partner->hasThisResource((int)$request->resource_id, 'Handyman') && $job->hasStatus(['Accepted', 'Schedule_Due', 'Process'])) {
+                    $job = $this->assignResource($job, $request->resource_id, $request->manager_resource);
+                    return api_response($request, $job, 200);
                 }
                 return api_response($request, null, 403);
             }
+            return api_response($request, null, 500);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
@@ -251,5 +229,19 @@ class PartnerJobController extends Controller
         ];
         JobUpdateLog::create(($logData));
     }
+
+    private function assignResource($job, $resource_id, Resource $manager_resource)
+    {
+        $updatedData = [
+            'msg' => 'Resource Change',
+            'old_resource_id' => $job->resource_id,
+            'new_resource_id' => (int)$resource_id
+        ];
+        $job->resource_id = $resource_id;
+        $job->update();
+        $this->jobUpdateLog($job->id, json_encode($updatedData), $manager_resource);
+        return $job;
+    }
+
 
 }

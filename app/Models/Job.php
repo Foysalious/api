@@ -160,4 +160,12 @@ class Job extends Model
     {
         return $this->morphMany(Complain::class, 'complainable');
     }
+
+    public function hasStatus(Array $status)
+    {
+        foreach ($status as $key => $value) {
+            $status[$key] = constants('JOB_STATUSES')[$value];
+        }
+        return in_array($this->status, $status);
+    }
 }

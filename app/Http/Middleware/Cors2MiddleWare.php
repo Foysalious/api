@@ -31,14 +31,14 @@ class Cors2MiddleWare
             "http://sheba.dev",
             null,
             "chrome-extension://fhbjgbiflinjbdggehcddcbncdddomop",
-            "http://admin.sheba.dev",
-            "http://partners.sheba.dev",
+            "http://admin.sheba.test",
+            "http://partners.sheba.test",
             "http://partners.sheba.new",
             "https://www.sheba.xyz",
             "https://admin.sheba.xyz",
             "https://partners.sheba.xyz",
             "http://admin.sheba.new",
-            "http://accounts.sheba.dev"
+            "http://accounts.sheba.test"
         ];
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Credentials'] = 'true';
