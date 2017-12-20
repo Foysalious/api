@@ -2,19 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Job;
 use App\Models\JobMaterial;
 use App\Models\JobUpdateLog;
-use App\Models\Material;
-use App\Models\Partner;
 use App\Models\Resource;
 use App\Repositories\PartnerRepository;
 use App\Repositories\ResourceJobRepository;
+use DB;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
-use Validator;
-use DB;
 use Illuminate\Validation\ValidationException;
+use Validator;
 
 class PartnerJobController extends Controller
 {
@@ -141,13 +138,12 @@ class PartnerJobController extends Controller
             if (count($materials) > 0) {
                 $materials->each(function ($item, $key) {
                     $item['material_price'] = (double)$item->material_price;
-                    $item['added_by'] = trim(explode('-', $item->created_by_name)[1]);
+                    $item['added_by'] = $item->created_by_name;
                     removeSelectedFieldsFromModel($item);
                 });
                 return api_response($request, $materials, 200, ['materials' => $materials, 'total_material_price' => $materials->sum('material_price')]);
-            } else {
-                return api_response($request, $job, 404);
             }
+            return api_response($request, $job, 404);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
@@ -156,18 +152,14 @@ class PartnerJobController extends Controller
     public function addMaterial($partner, $job, Request $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
+            $this->validate($request, [
                 'name' => 'required|string',
                 'price' => 'required|numeric|min:1'
             ]);
-            if ($validator->fails()) {
-                $errors = $validator->errors()->all()[0];
-                return api_response($request, $errors, 400, ['message' => $errors]);
-            }
             try {
-                DB::transaction(function () use ($job, $request) {
+                $material = new JobMaterial();
+                DB::transaction(function () use ($job, $request, $material) {
                     $job = $request->job;
-                    $material = new JobMaterial();
                     $material->material_name = $request->name;
                     $material->material_price = (double)$request->price;
                     $material->job_id = $job->id;
@@ -175,10 +167,13 @@ class PartnerJobController extends Controller
                     $material->created_by_name = 'Resource-' . $request->manager_resource->profile->name;
                     $material->save();
                 });
-                return api_response($request, $job, 200);
+                return api_response($request, $material, 200);
             } catch (QueryException $e) {
                 return api_response($request, null, 500);
             }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
@@ -187,15 +182,11 @@ class PartnerJobController extends Controller
     public function updateMaterial($partner, $job, Request $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
+            $this->validate($request, [
                 'material_id' => 'required|numeric',
                 'name' => 'required|string',
                 'price' => 'required|numeric|min:1'
             ]);
-            if ($validator->fails()) {
-                $errors = $validator->errors()->all()[0];
-                return api_response($request, $errors, 400, ['message' => $errors]);
-            }
             $job = $request->job;
             $material = $job->usedMaterials->where('id', (int)$request->material_id)->first();
             if ($material) {
@@ -208,12 +199,15 @@ class PartnerJobController extends Controller
                         $material->update();
                         return api_response($request, null, 200);
                     });
-                    return api_response($request, $job, 200);
+                    return api_response($request, $material, 200);
                 } catch (QueryException $e) {
                     return api_response($request, null, 500);
                 }
             }
-            return api_response($request, null, 403);
+            return api_response($request, null, 404);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
