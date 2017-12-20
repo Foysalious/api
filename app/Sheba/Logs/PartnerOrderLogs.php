@@ -34,7 +34,8 @@ class PartnerOrderLogs
             $this->paymentLogs->push((object)[
                 'created_at' => $payment->created_at,
                 'created_by_name' => $payment->created_by_name,
-            ]);
+                'log' => $payment->amount . 'tk has been paid']
+            );
         }
     }
 
