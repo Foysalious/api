@@ -166,14 +166,13 @@ class PartnerController extends Controller
                     $review['resource_name'] = ($review->resource) ? $review->resource->profile->name : null;
                     $review['resource_pic'] = ($review->resource) ? $review->resource->profile->pro_pic : null;
                     $review['service_name'] = $review->service->name;
-                    removeRelationsFromModel($review);
-                    removeSelectedFieldsFromModel($review);
+                    removeRelationsAndFields($review);
                 })->sortByDesc('created_at');
-                removeRelationsFromModel($partner);
-                removeSelectedFieldsFromModel($partner);
+                removeRelationsAndFields($partner);
             }
             $info = array(
-                'rating' => $avg_rating ? round($avg_rating, 2) : 5,
+//                'rating' => $avg_rating ? round($avg_rating, 2) : 5,
+                'rating' => $avg_rating,
                 'total_reviews' => $reviews->count(),
                 'reviews' => array_slice($reviews->values()->all(), $offset, $limit),
                 'breakdown' => $breakdown
