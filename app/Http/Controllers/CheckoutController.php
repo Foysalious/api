@@ -123,13 +123,13 @@ class CheckoutController extends Controller
         if ($order->voucher_id != null) {
             $voucher = $order->voucher;
             $this->updateVoucherInPromoList($customer, $voucher, $order);
-            if ($this->isOriginalReferral($order, $voucher)) {
-                if ($voucher->owner_type == 'App\Models\Customer') {
-                    $this->createVoucherNPromotionForReferrer($customer, $order);
-                } elseif ($voucher->owner_type == 'App\Models\Partner') {
-                    $this->addAmountToPartnerWallet($voucher, $customer);
-                }
-            }
+//            if ($this->isOriginalReferral($order, $voucher)) {
+//                if ($voucher->owner_type == 'App\Models\Customer') {
+//                    $this->createVoucherNPromotionForReferrer($customer, $order);
+//                } elseif ($voucher->owner_type == 'App\Models\Partner') {
+//                    $this->addAmountToPartnerWallet($voucher, $customer);
+//                }
+//            }
         }
     }
 
