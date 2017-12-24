@@ -146,6 +146,7 @@ class PartnerOrderController extends Controller
                     } elseif (trim($name[0]) == 'Customer') {
                         $item['picture_of_collected_by'] = 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/manager_app/customer.jpg';
                     } else {
+                        $item['collected_by'] = 'Sheba.xyz';
                         $item['picture_of_collected_by'] = 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/manager_app/sheba.jpg';
                     }
                     removeSelectedFieldsFromModel($item);
