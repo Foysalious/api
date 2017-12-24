@@ -28,7 +28,7 @@ class ReviewRepository
 
     public function getReviewBreakdown($review)
     {
-        $breakdown = array_fill(1,5,0);
+        $breakdown = array_fill(1, 5, 0);
         $ratings = $review->groupBy('rating');
         foreach ($ratings as $key => $rating) {
             $breakdown[$key] = $rating->count();
@@ -88,6 +88,12 @@ class ReviewRepository
         array_forget($service, 'reviews');
         $service['reviews'] = $reviews;
         return $service;
+    }
+
+    public function getAvgRating($reviews, $precision = 2)
+    {
+        $avg = $reviews->avg('rating');
+        return $avg != null ? round($avg, $precision) : null;
     }
 
 }

@@ -31,7 +31,7 @@ class ResourceController extends Controller
             $resource['mobile'] = $profile->mobile;
             $resource['address'] = $profile->address;
             $resource['profile_picture'] = $profile->pro_pic;
-            $resource['rating'] = $resource->reviews->avg('rating');
+            $resource['rating'] = $this->reviewRepository->getAvgRating($resource->reviews);
             $resource['total_rating'] = $resource->reviews->count();
             $resource['total_reviews'] = $resource->reviews->filter(function ($item, $key) {
                 return $item->review != '' || $item->review != null;
@@ -52,7 +52,7 @@ class ResourceController extends Controller
                 $q->with('job.partner_order.order');
             }]);
             $breakdown = $this->reviewRepository->getReviewBreakdown($resource->reviews);
-            $resource['rating'] = $resource->reviews->avg('rating');
+            $resource['rating'] = $this->reviewRepository->getAvgRating($resource->reviews);
             $resource['total_rating'] = $resource->reviews->count();
             $reviews = $resource->reviews->filter(function ($item, $key) {
                 return $item->review != '' || $item->review != null;
