@@ -278,7 +278,7 @@ class PartnerController extends Controller
             $basic_info = $partner->basicInformations;
             $info = collect($partner)->only(['id', 'name', 'mobile', 'email', 'verified_at', 'status', 'logo', 'wallet', 'address', 'created_at']);
             $info->put('total_rating', $partner->reviews->count());
-            $info->put('avg_rating', round($partner->reviews->avg('rating'), 2));
+            $info->put('avg_rating', $partner->reviews->avg('rating'));
             $info->put('working_days', json_decode(collect($basic_info)->only('working_days')->get('working_days')));
             $working_hours = json_decode(collect($basic_info)->only('working_hours')->get('working_hours'));
             $info->put('working_hour_starts', $working_hours->day_start);

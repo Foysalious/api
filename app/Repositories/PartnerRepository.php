@@ -36,7 +36,8 @@ class PartnerRepository
             $resource['name'] = $resource->profile->name;
             $resource['mobile'] = $resource->profile->mobile;
             $resource['picture'] = $resource->profile->pro_pic;
-            $resource['rating'] = $resource->reviews->avg('rating') != null ? round($resource->reviews->avg('rating'), 2) : null;
+            $avg_rating = $resource->reviews->avg('rating');
+            $resource['rating'] = $avg_rating != null ? $avg_rating : null;
             $resource['joined_at'] = $resource->pivot->created_at->timestamp;
             $this->serviceRepo->removeRelationsFromModel($resource, $resource->getRelations());
         }
