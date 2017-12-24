@@ -41,7 +41,7 @@ class ServiceRepository
                 }
             }
             $partner = $this->getPartnerRatingReviewCount($service, $partner);
-            array_add($partner, 'ongoing_jobs', $partner->jobs()->where('status', 'Process')->count());
+            array_add($partner, 'ongoing_jobs', $partner->jobs()->whereIn('status', [constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Schedule_Due']])->count());
             $final_partners = $this->addToFinalPartnerListWithDiscount($partner, $final_partners);
         }
         return $final_partners;
@@ -62,7 +62,7 @@ class ServiceRepository
         list($service_partners, $final_partners) = $this->getPartnerService($service, $location);
         foreach ($service_partners as $key => $partner) {
             $partner = $this->getPartnerRatingReviewCount($service, $partner);
-            array_add($partner, 'ongoing_jobs', $partner->jobs()->where('status', 'Process')->count());
+            array_add($partner, 'ongoing_jobs', $partner->jobs()->whereIn('status', [constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Schedule_Due']])->count());
             if ($service->variable_type == 'Options') {
                 $prices = (array)json_decode($partner->prices);
                 $price = $this->partnerServesThisOption($prices, $option);
@@ -212,8 +212,8 @@ class ServiceRepository
         return $partners->reject(function ($item, $key) {
             return (double)$item->wallet < (double)$item->walletSetting->min_wallet_threshold;
         })->each(function ($partner, $key) {
-            array_forget($partner,'walletSetting');
-            array_forget($partner,'wallet');
+            array_forget($partner, 'walletSetting');
+            array_forget($partner, 'wallet');
         });
     }
 
@@ -273,7 +273,7 @@ class ServiceRepository
     public function addServiceInfo($services, array $scope)
     {
         foreach ($services as $service) {
-            $service->partnerServices=$this->_filterByPartnerAndWallet($service->partnerServices);
+            $service->partnerServices = $this->_filterByPartnerAndWallet($service->partnerServices);
             if (array_search('start_price', $scope) !== false) {
                 $service = $this->getStartPrice($service);
             }
@@ -296,7 +296,8 @@ class ServiceRepository
         }
     }
 
-    private function _filterByPartnerAndWallet($partnerServices){
+    private function _filterByPartnerAndWallet($partnerServices)
+    {
         return $partnerServices->filter(function ($partner_service, $key) {
             if ($partner_service->partner != null) {
                 if ((double)$partner_service->partner->wallet > (double)$partner_service->partner->walletSetting->min_wallet_threshold) {
