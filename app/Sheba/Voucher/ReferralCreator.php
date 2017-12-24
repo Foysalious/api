@@ -6,7 +6,6 @@ use App\Models\Voucher;
 
 class ReferralCreator
 {
-    const AMOUNT = 500;
     private $rules = array(
         'sales_channels' => array('Web', 'App'),
         'nth_orders' => [1]
@@ -33,8 +32,8 @@ class ReferralCreator
     public function saveVoucher($voucher)
     {
         $voucher->rules = json_encode($this->rules);
-        $voucher->title = $this->referrer->identity . " has gifted you " . self::AMOUNT . "tk &#128526;";
-        $voucher->amount = self::AMOUNT;
+        $voucher->title = $this->referrer->identity . " has gifted you " . constants('REFERRAL_GIFT_AMOUNT') . "tk &#128526;";
+        $voucher->amount = constants('REFERRAL_GIFT_AMOUNT');
         $voucher->max_order = 1;
         $voucher->sheba_contribution = 100;
         $voucher->owner_type = get_class($this->referrer);
