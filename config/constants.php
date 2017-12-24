@@ -291,5 +291,7 @@ return [
         'completed' => 'Completed',
         'cancelled' => 'cancelled'
     ]
+    'APP_VOUCHER' => env('APP_VOUCHER'),
+    'REFERRAL_GIFT_AMOUNT' => env('REFERRAL_GIFT_AMOUNT')
 
 ];

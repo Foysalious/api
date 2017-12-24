@@ -27,7 +27,6 @@ class CheckoutController extends Controller
     private $cartRepository;
     private $fbKit;
     private $customer;
-    const AMOUNT = 500;
 
     public function __construct()
     {
@@ -123,13 +122,13 @@ class CheckoutController extends Controller
         if ($order->voucher_id != null) {
             $voucher = $order->voucher;
             $this->updateVoucherInPromoList($customer, $voucher, $order);
-            if ($this->isOriginalReferral($order, $voucher)) {
-                if ($voucher->owner_type == 'App\Models\Customer') {
-                    $this->createVoucherNPromotionForReferrer($customer, $order);
-                } elseif ($voucher->owner_type == 'App\Models\Partner') {
-                    $this->addAmountToPartnerWallet($voucher, $customer);
-                }
-            }
+//            if ($this->isOriginalReferral($order, $voucher)) {
+//                if ($voucher->owner_type == 'App\Models\Customer') {
+//                    $this->createVoucherNPromotionForReferrer($customer, $order);
+//                } elseif ($voucher->owner_type == 'App\Models\Partner') {
+//                    $this->addAmountToPartnerWallet($voucher, $customer);
+//                }
+//            }
         }
     }
 
@@ -234,7 +233,7 @@ class CheckoutController extends Controller
     private function addAmountToPartnerWallet($voucher, $customer)
     {
         $partner = $voucher->owner;
-        $partner->wallet += self::AMOUNT;
+        $partner->wallet += constants('REFERRAL_GIFT_AMOUNT');
         $partner->update();
         $this->addPartnerTransactionLog($partner, $customer);
     }
@@ -244,8 +243,8 @@ class CheckoutController extends Controller
         $transaction = new PartnerTransaction();
         $transaction->partner_id = $partner->id;
         $transaction->type = 'Debit';
-        $transaction->amount = self::AMOUNT;
-        $transaction->log = $customer->name . " has gifted you " . self::AMOUNT . "tk &#128526;";
+        $transaction->amount = constants('REFERRAL_GIFT_AMOUNT');
+        $transaction->log = $customer->name . " has gifted you " . constants('REFERRAL_GIFT_AMOUNT') . "tk &#128526;";
         $transaction->created_at = Carbon::now();
         $transaction->save();
     }
