@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\PartnerService;
+use App\Models\PartnerServiceDiscount;
 
 class DiscountRepository
 {
@@ -71,7 +72,7 @@ class DiscountRepository
         return $service_price < $discountValue ? $service_price : $discountValue;
     }
 
-    public function getServiceDiscountAmount($discount, $partnerPrice, $quantity)
+    public function getServiceDiscountAmount(PartnerServiceDiscount $discount, $partnerPrice, $quantity)
     {
         if ($discount->is_amount_percentage) {
             $amount = ((double)$partnerPrice * $quantity * $discount->amount) / 100;
@@ -83,5 +84,4 @@ class DiscountRepository
             return $this->validateDiscountValue($partnerPrice * $quantity, $discount->amount * $quantity);
         }
     }
-
 }
