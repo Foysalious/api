@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Partner;
+use App\Models\Service;
 use App\Repositories\DiscountRepository;
 use App\Repositories\NotificationRepository;
 use App\Repositories\PartnerOrderRepository;
@@ -314,12 +315,17 @@ class PartnerController extends Controller
 
     public function getPartnerList(Request $request, $location)
     {
-        $partner_list = new PartnerList($request->services, $location);
-        $partners = $partner_list->generatePartnerList($request->date, $request->time)->filter()->values()->all();
-        if (count($partners) > 0) {
-            return api_response($request, $partners, 200, ['partners' => $partners]);
-        } else {
-            return api_response($request, null, 404);
+        try {
+            $service_details = collect(json_decode($request->services))->each(function ($item, $key) {
+                $item->service = Service::find($item->service_id);
+            });
+            $partner_list = new PartnerList($location);
+            $partners = $partner_list->getList($service_details,$request->date, $request->time)->filter()->each(function ($partner){
+                removeRelationsAndFields($partner);
+            })->values()->all();
+            return count($partners) > 0 ? api_response($request, $partners, 200, ['partners' => $partners]) : api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
         }
     }
 

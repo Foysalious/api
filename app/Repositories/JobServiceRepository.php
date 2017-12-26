@@ -18,7 +18,7 @@ class JobServiceRepository
         $this->partnerServiceRepository = new PartnerServiceRepository();
     }
 
-    public function save(PartnerService $partner_service, Array $data)
+    public function save( $partner_service, Array $data)
     {
         try {
             $service = $partner_service->service;

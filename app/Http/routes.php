@@ -283,4 +283,7 @@ $api->version('v2', ['namespace' => 'App\Http\Controllers'], function ($api) {
     $api->group(['prefix' => 'job_service'], function ($api) {
         $api->post('/', 'JobServiceController@store');
     });
+    $api->group(['prefix' => 'customers/{customer}'], function ($api) {
+        $api->post('orders', 'OrderController@store');
+    });
 });
