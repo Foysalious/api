@@ -5,6 +5,7 @@ namespace App\Repositories;
 
 use App\Models\Partner;
 use Illuminate\Database\QueryException;
+use Sheba\Partner\PartnerAvailable;
 
 class PartnerRepository
 {
@@ -69,5 +70,14 @@ class PartnerRepository
         }
     }
 
+    public function hasAppropriateCreditLimit()
+    {
+        return (double)$this->partner->wallet > (double)$this->partner->walletSetting->min_wallet_threshold;
+    }
+
+    public function isAvailable($day, $time)
+    {
+        return (new PartnerAvailable($this->partner))->available(array('day' => $day, 'time' => $time)) ? 1 : 0;
+    }
 }
 

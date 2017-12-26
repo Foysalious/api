@@ -2,29 +2,30 @@
 
 namespace App\Http\Controllers;
 
-
 use App\Models\Partner;
-use App\Models\PartnerOrder;
+use App\Repositories\DiscountRepository;
 use App\Repositories\NotificationRepository;
 use App\Repositories\PartnerOrderRepository;
 use App\Repositories\PartnerRepository;
+use App\Repositories\PartnerServiceRepository;
 use App\Repositories\ResourceJobRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
+use App\Sheba\Partner\PartnerList;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-
 use DB;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
-use Sheba\Charts\SalesGrowth;
 use Validator;
 
 class PartnerController extends Controller
 {
     private $serviceRepository;
+    private $partnerServiceRepository;
     private $reviewRepository;
     private $resourceJobRepository;
     private $partnerOrderRepository;
+    private $discountRepository;
 
     public function __construct()
     {
@@ -32,6 +33,8 @@ class PartnerController extends Controller
         $this->reviewRepository = new ReviewRepository();
         $this->resourceJobRepository = new ResourceJobRepository();
         $this->partnerOrderRepository = new PartnerOrderRepository();
+        $this->partnerServiceRepository = new PartnerServiceRepository();
+        $this->discountRepository = new DiscountRepository();
     }
 
     public function index()
@@ -306,6 +309,17 @@ class PartnerController extends Controller
             }
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
+        }
+    }
+
+    public function getPartnerList(Request $request, $location)
+    {
+        $partner_list = new PartnerList($request->services, $location);
+        $partners = $partner_list->generatePartnerList($request->date, $request->time)->filter()->values()->all();
+        if (count($partners) > 0) {
+            return api_response($request, $partners, 200, ['partners' => $partners]);
+        } else {
+            return api_response($request, null, 404);
         }
     }
 

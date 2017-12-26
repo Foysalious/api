@@ -28,4 +28,27 @@ class PartnerServiceRepository
         }
         return array($unit_price, $option, $variables);
     }
+
+
+    public function getPriceOfThisOption($prices, $option)
+    {
+        $prices = json_decode($prices);
+        foreach ($prices as $key => $price) {
+            if ($key == $option) {
+                return (double)$price;
+            }
+        }
+        return null;
+    }
+
+    public function hasThisOption($prices, $option)
+    {
+        $prices = json_decode($prices);
+        foreach ($prices as $key => $price) {
+            if ($key == $option) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

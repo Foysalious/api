@@ -16,6 +16,9 @@ $api = app('Dingo\Api\Routing\Router');
 |
 */
 $api->version('v1', ['prefix' => 'v1'], function ($api) {
+    $api->group(['prefix' => 'v1'], function ($api) {
+
+    });
     /*API*/
     $api->post('login', 'App\Http\Controllers\Auth\LoginController@login');
     $api->post('register', 'App\Http\Controllers\Auth\RegistrationController@register');
@@ -275,8 +278,9 @@ $api->version('v1', ['prefix' => 'v1'], function ($api) {
 
 });
 
-$api->version('v2', function ($api) {
-    $api->group(['prefix' => 'job_service', 'namespace' => 'App\Http\Controllers'], function ($api) {
+$api->version('v2', ['namespace' => 'App\Http\Controllers'], function ($api) {
+    $api->get('locations/{location}/partners', 'PartnerController@getPartnerList');
+    $api->group(['prefix' => 'job_service'], function ($api) {
         $api->post('/', 'JobServiceController@store');
     });
 });
