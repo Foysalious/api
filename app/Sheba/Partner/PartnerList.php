@@ -115,7 +115,7 @@ class PartnerList
                 array_add($service, 'discount_id', null);
                 array_add($service, 'sheba_contribution', 0);
                 array_add($service, 'partner_contribution', 0);
-                array_add($service, 'discount_percentage', null);
+                array_add($service, 'discount_percentage', 0);
             }
         }
         return array($total_discount_price, $total_price_with_discount, $totalPriceWithoutDiscount);

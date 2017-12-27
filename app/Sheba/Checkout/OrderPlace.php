@@ -49,7 +49,6 @@ class OrderPlace
             $request->merge(['customer' => $this->customer->id]);
             $data = $this->makeOrderData($request);
             $partner = $this->calculateVoucher($request, $partner, $service_details, $data);
-            dd($partner->services);
             $data['payment_method'] = $request->has('payment_method') ? $request->payment_method : 'cash-on-delivery';
             if ($order = $this->storeInDB($data, $service_details, $partner)) {
                 $profile = $this->customerRepository->updateProfileInfoWhilePlacingOrder($order);

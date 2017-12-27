@@ -196,7 +196,11 @@ class OrderController extends Controller
         try {
             $order = new OrderPlace($customer);
             $order = $order->placeOrder($request);
-            return api_response($request, $order, 200);
+            if ($order) {
+                return api_response($request, $order, 200);
+            } else {
+                return api_response($request, $order, 500);
+            }
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
