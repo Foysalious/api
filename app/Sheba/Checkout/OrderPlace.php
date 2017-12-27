@@ -47,24 +47,12 @@ class OrderPlace
         if (count($partner) != 0) {
             $request->merge(['customer' => $this->customer->id]);
             $data = $this->makeOrderData($request);
-            $total_order_price = $partner->services->sum('price_with_discount');
-            foreach ($partner->services as $service) {
-                $this->calculateVoucher($request->voucher, $service, $partner, $total_order_price, $data, $service->price_with_discount, (double)($service_details->where('service_id', $service->id)->first())->quantity);
-            }
+//            $partner = $this->calculateVoucher($request, $partner, $service_details, $data);
             $data['payment_method'] = $request->has('payment_method') ? $request->payment_method : 'cash-on-delivery';
             if ($order = $this->storeInDB($data, $service_details, $partner)) {
                 $profile = $this->customerRepository->updateProfileInfoWhilePlacingOrder($order);
             }
             return $order;
-        }
-    }
-
-    private function calculateVoucher($voucher_id, $service, $partner, $total_order_price, $data, $service_price, $quantity)
-    {
-        $result = $this->voucherRepository
-            ->isValid($voucher_id, $service, $partner, (int)$data['location_id'], (int)$data['customer_id'], $total_order_price, $data['sales_channel']);
-        if ($result['is_valid']) {
-            return array((double)$this->discountRepository->getDiscountAmount($result, $service_price, $quantity), (double)$result['voucher']['sheba_contribution'], (double)$result['voucher']['partner_contribution'], $result['id']);
         }
     }
 
@@ -100,7 +88,7 @@ class OrderPlace
                     'payment_method' => $data['payment_method']
                 ]);
                 $job = Job::create(['partner_order_id' => $partner_order->id, 'schedule_date' => $data['date'], 'preferred_time' => $data['time']]);
-                $this->saveJobServices($job, $partner->services->pluck('pivot'), $service_details, $data);
+                $this->saveJobServices($job, $partner->services, $service_details, $data);
             });
         } catch (QueryException $e) {
             return false;
@@ -111,16 +99,23 @@ class OrderPlace
     private function saveJobServices(Job $job, $services, $service_details, $data)
     {
         foreach ($services as $service) {
-            $service_detail = $service_details->where('service_id', $service->service_id)->first();
+            $service_detail = $service_details->where('service_id', $service->id)->first();
             $data = array(
                 'job_id' => $job->id,
                 'service_id' => $service_detail->service_id,
                 'quantity' => $service_detail->quantity,
-                'option' => $service_detail->option,
                 'created_by' => $data['created_by'],
-                'created_by_name' => $data['created_by_name']
+                'created_by_name' => $data['created_by_name'],
+                'unit_price' => $service->price,
+                'sheba_contribution' => $service->sheba_contribution,
+                'partner_contribution' => $service->partner_contribution,
+                'discount_id' => $service->id,
+                'discount_percentage' => $service->discount_percentage,
+                'name' => $service->name,
+                'variable_type' => $service->variable_type,
+                'option' => $service_detail
             );
-            $this->jobServiceRepository->save(PartnerService::find($service->id), $data);
+            $this->jobServiceRepository->save($service, $data);
         }
     }
 
@@ -160,5 +155,25 @@ class OrderPlace
             }
         }
         return '';
+    }
+
+    private function calculateVoucher($request, $partner, $service_details, $data)
+    {
+        $total_order_price = $partner->services->sum('price_with_discount');
+        $max = 0;
+        foreach ($partner->services as &$service) {
+            $service_detail = $service_details->where('service_id', $service->id)->first();
+            $result = $this->voucherRepository->isValid($request->voucher, $service, $partner, (int)$data['location_id'], (int)$data['customer_id'], $total_order_price, $data['sales_channel']);
+            if ($result['is_valid']) {
+                $service['discountPrice'] = (double)$this->discountRepository->getDiscountAmount($result, $service->priceWithDiscount, $service_detail->quantity);
+                if ($service['discountPrice'] > $max) {
+                    $service['priceWithDiscount'] = (double)($service['price'] - $service['discountPrice']);
+                    $service['sheba_contribution'] = (double)$result['voucher']['sheba_contribution'];
+                    $service['partner_contribution'] = (double)$result['voucher']['partner_contribution'];
+                    $partner['voucher_id'] = $result['id'];
+                }
+            }
+        }
+        return $partner;
     }
 }

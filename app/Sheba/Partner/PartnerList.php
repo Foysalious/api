@@ -98,13 +98,25 @@ class PartnerList
         foreach ($partner->services as &$service) {
             $selected_service = $service_details->where('id', $service->service_id)->first();
             $price = $service->variable_type == 'Options' ? $this->partnerServiceRepository->getPriceOfThisOption($service->pivot->prices, implode(',', $selected_service->option)) : (double)$service->pivot->prices;
-            list($discount_price, $price_with_discount, $priceWithoutDiscount) = $this->discountRepository->getServiceDiscountValues((PartnerService::find($service->pivot->id))->discount(), (double)$price, (double)$selected_service->quantity);
+            $running_discount = (PartnerService::find($service->pivot->id))->discount();
+            list($discount_price, $price_with_discount, $priceWithoutDiscount) = $this->discountRepository->getServiceDiscountValues($running_discount, (double)$price, (double)$selected_service->quantity);
             $total_discount_price += $discount_price;
             $total_price_with_discount += $price_with_discount;
             $totalPriceWithoutDiscount += $priceWithoutDiscount;
             array_add($service, 'price', $price);
-            array_add($service, 'price_with_discount', $price_with_discount);
-            array_add($service, 'discount_price', $discount_price);
+            array_add($service, 'priceWithDiscount', $price_with_discount);
+            array_add($service, 'discountPrice', $discount_price);
+            if ($running_discount) {
+                array_add($service, 'discount_id', $running_discount->id);
+                array_add($service, 'sheba_contribution', (double)$running_discount->sheba_contribution);
+                array_add($service, 'partner_contribution', (double)$running_discount->partner_contribution);
+                array_add($service, 'discount_percentage', $running_discount->is_amount_percentage);
+            } else {
+                array_add($service, 'discount_id', null);
+                array_add($service, 'sheba_contribution', 0);
+                array_add($service, 'partner_contribution', 0);
+                array_add($service, 'discount_percentage', null);
+            }
         }
         return array($total_discount_price, $total_price_with_discount, $totalPriceWithoutDiscount);
     }
