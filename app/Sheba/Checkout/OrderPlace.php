@@ -48,7 +48,8 @@ class OrderPlace
         if (count($partner) != 0) {
             $request->merge(['customer' => $this->customer->id]);
             $data = $this->makeOrderData($request);
-//            $partner = $this->calculateVoucher($request, $partner, $service_details, $data);
+            $partner = $this->calculateVoucher($request, $partner, $service_details, $data);
+            dd($partner->services);
             $data['payment_method'] = $request->has('payment_method') ? $request->payment_method : 'cash-on-delivery';
             if ($order = $this->storeInDB($data, $service_details, $partner)) {
                 $profile = $this->customerRepository->updateProfileInfoWhilePlacingOrder($order);
@@ -117,7 +118,6 @@ class OrderPlace
             );
             list($service_data['option'], $service_data['variables']) = $this->getVariableOptionOfService($service, $service->pivot->prices, $service_detail->option);
             JobService::create($service_data);
-//            $this->jobServiceRepository->save($service, $data);
         }
     }
 
@@ -167,8 +167,10 @@ class OrderPlace
             $service_detail = $service_details->where('service_id', $service->id)->first();
             $result = $this->voucherRepository->isValid($request->voucher, $service, $partner, (int)$data['location_id'], (int)$data['customer_id'], $total_order_price, $data['sales_channel']);
             if ($result['is_valid']) {
-                $service['discountPrice'] = (double)$this->discountRepository->getDiscountAmount($result, $service->priceWithDiscount, $service_detail->quantity);
-                if ($service['discountPrice'] > $max) {
+                $amount = (double)$this->discountRepository->getDiscountAmount($result, $service->priceWithDiscount, $service_detail->quantity);
+                if ($amount > $max) {
+                    $max = $amount;
+                    $service['discountPrice'] = $amount;
                     $service['priceWithDiscount'] = (double)($service['price'] - $service['discountPrice']);
                     $service['sheba_contribution'] = (double)$result['voucher']['sheba_contribution'];
                     $service['partner_contribution'] = (double)$result['voucher']['partner_contribution'];
