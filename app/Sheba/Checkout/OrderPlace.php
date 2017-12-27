@@ -5,6 +5,7 @@ namespace App\Sheba\Checkout;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\Job;
+use App\Models\JobService;
 use App\Models\Order;
 use App\Models\PartnerOrder;
 use App\Models\PartnerService;
@@ -100,7 +101,7 @@ class OrderPlace
     {
         foreach ($services as $service) {
             $service_detail = $service_details->where('service_id', $service->id)->first();
-            $data = array(
+            $service_data = array(
                 'job_id' => $job->id,
                 'service_id' => $service_detail->service_id,
                 'quantity' => $service_detail->quantity,
@@ -113,9 +114,10 @@ class OrderPlace
                 'discount_percentage' => $service->discount_percentage,
                 'name' => $service->name,
                 'variable_type' => $service->variable_type,
-                'option' => $service_detail
             );
-            $this->jobServiceRepository->save($service, $data);
+            list($service_data['option'], $service_data['variables']) = $this->getVariableOptionOfService($service, $service->pivot->prices, $service_detail->option);
+            JobService::create($service_data);
+//            $this->jobServiceRepository->save($service, $data);
         }
     }
 
@@ -175,5 +177,25 @@ class OrderPlace
             }
         }
         return $partner;
+    }
+
+    private function getVariableOptionOfService(Service $service, $partner_service_prices, Array $option)
+    {
+        if ($service->variable_type == 'Options') {
+            $variables = [];
+            $options = implode(',', $option);
+            foreach ((array)(json_decode($service->variables))->options as $key => $service_option) {
+                array_push($variables, [
+                    'question' => $service_option->question,
+                    'answer' => explode(',', $service_option->answers)[$option[$key]]
+                ]);
+            }
+            $option = '[' . $options . ']';
+            $variables = json_encode($variables);
+        } else {
+            $option = '[]';
+            $variables = '[]';
+        }
+        return array($option, $variables);
     }
 }
