@@ -292,6 +292,6 @@ return [
         'cancelled' => 'cancelled'
     ],
     'REFERRAL_GIFT_AMOUNT' => env('REFERRAL_GIFT_AMOUNT'),
-    'send_push_notifications' => env('SHEBA_SEND_PUSH_NOTIFICATIONS', true),
+    'send_push_notifications' => env('SHEBA_SEND_PUSH_NOTIFICATIONS'),
 
 ];

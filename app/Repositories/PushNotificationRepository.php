@@ -22,7 +22,7 @@ class PushNotificationRepository
 
         $topic = (new Topics())->topic($topic);
 
-        if (config('sheba.send_push_notifications')) {
+        if (constants('send_push_notifications')) {
             FCM::sendToTopic($topic, null, null, $data);
         }
 
