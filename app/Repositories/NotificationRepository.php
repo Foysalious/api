@@ -67,6 +67,13 @@ class NotificationRepository
                 'event_type' => "App\Models\PartnerOrder",
                 'event_id' => $partner_order->id
             ]);
+            (new PushNotificationRepository())->send([
+                "title" => 'New Order',
+                "message" => 'New Order Placed ID ' . $partner_order->code(),
+                "event_type" => 'PartnerOrder',
+                "event_id" => $partner_order->id,
+                "link" => "new_order"
+            ], 'manager_' . $partner_order->partner_id);
         }
     }
 
