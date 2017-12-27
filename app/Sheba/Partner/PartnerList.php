@@ -103,6 +103,7 @@ class PartnerList
             $total_price_with_discount += $price_with_discount;
             $totalPriceWithoutDiscount += $priceWithoutDiscount;
             array_add($service, 'price', $price);
+            array_add($service, 'price_with_discount', $price_with_discount);
             array_add($service, 'discount_price', $discount_price);
         }
         return array($total_discount_price, $total_price_with_discount, $totalPriceWithoutDiscount);

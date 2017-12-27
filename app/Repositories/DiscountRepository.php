@@ -102,6 +102,6 @@ class DiscountRepository
                 $priceWithDiscount = $price - $discount_price;
             }
         }
-        return array($discount_price, $priceWithDiscount, $priceWithoutDiscount);
+        return array((double)$discount_price, (double)$priceWithDiscount, (double)$priceWithoutDiscount);
     }
 }

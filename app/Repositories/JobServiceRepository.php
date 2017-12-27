@@ -4,7 +4,6 @@ namespace App\Repositories;
 
 
 use App\Models\JobService;
-use App\Models\PartnerService;
 use Illuminate\Database\QueryException;
 
 class JobServiceRepository
@@ -18,7 +17,7 @@ class JobServiceRepository
         $this->partnerServiceRepository = new PartnerServiceRepository();
     }
 
-    public function save( $partner_service, Array $data)
+    public function save($partner_service, Array $data, $calculate_discount = true)
     {
         try {
             $service = $partner_service->service;
@@ -37,4 +36,6 @@ class JobServiceRepository
             return false;
         }
     }
+
+
 }

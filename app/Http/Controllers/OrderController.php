@@ -12,6 +12,7 @@ use App\Models\PartnerService;
 use App\Models\Service;
 use App\Repositories\JobServiceRepository;
 use App\Repositories\OrderRepository;
+use App\Sheba\Checkout\OrderPlace;
 use App\Sheba\Partner\PartnerList;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -192,53 +193,12 @@ class OrderController extends Controller
 
     public function store($customer, Request $request)
     {
-        try {
-            $service_details = collect(json_decode($request->services))->each(function ($item, $key) {
-                $item->service = Service::find($item->service_id);
-            });
-            $partner_list = new PartnerList($request->location);
-            $partner = $partner_list->getList($service_details, $request->date, $request->time, $request->partner)->first();
-            if (count($partner) != 0) {
-                $data = $request->only(['delivery_mobile', 'delivery_name', 'delivery_address', 'sales_channel']);
-                $data['location_id'] = $request->location;
-                $data['customer_id'] = $request->customer;
-                $data['created_by'] = $created_by = $request->has('created_by') ? $request->created_by : 0;
-                $data['created_by_name'] = $created_by_name = $request->has('created_by_name') ? $request->created_by_name : 'Customer';
-                $order = new Order();
-                try {
-                    DB::transaction(function () use ($data, $request, $created_by_name, $created_by, $service_details, $partner, $order) {
-                        $order = $order->create($data);
-                        $order = Order::find($order->id);
-                        $partner_order = PartnerOrder::create([
-                            'created_by' => $created_by, 'created_by_name' => $created_by_name,
-                            'order_id' => $order->id, 'partner_id' => $request->partner,
-                            'payment_method' => $request->has('payment_method') ? $request->payment_method : 'cash-on-delivery'
-                        ]);
-                        $job = new Job();
-                        $job->partner_order_id = $partner_order->id;
-                        $job->schedule_date = $request->date;
-                        $job->preferred_time = $request->time;
-                        $job->save();
-                        foreach ($partner->services as $service) {
-                            $service_detail = $service_details->where('service_id', $service->id)->first();
-                            $data = array(
-                                'job_id' => $job->id,
-                                'service_id' => $service_detail->service_id,
-                                'quantity' => $service_detail->quantity,
-                                'option' => $service_detail->option,
-                                'created_by' => $created_by,
-                                'created_by_name' => $created_by_name
-                            );
-                            $this->jobServiceRepository->save(PartnerService::find($service->pivot->id), $data);
-                        }
-                    });
-                    return api_response($request, $order, 200, ['order_id' => $order->id]);
-                } catch (QueryException $e) {
-                    return api_response($request, null, 500);
-                }
-            }
-        } catch (\Throwable $e) {
-            return api_response($request, null, 500);
-        }
+//        try {
+            $order = new OrderPlace($customer);
+            $order = $order->placeOrder($request);
+            return api_response($request, $order, 200);
+//        } catch (\Throwable $e) {
+//            return api_response($request, null, 500);
+//        }
     }
 }

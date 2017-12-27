@@ -1,0 +1,164 @@
+<?php
+
+namespace App\Sheba\Checkout;
+
+use App\Models\Customer;
+use App\Models\CustomerDeliveryAddress;
+use App\Models\Job;
+use App\Models\Order;
+use App\Models\PartnerOrder;
+use App\Models\PartnerService;
+use App\Models\Service;
+use App\Repositories\CustomerRepository;
+use App\Repositories\DiscountRepository;
+use App\Repositories\JobServiceRepository;
+use App\Repositories\OrderRepository;
+use App\Repositories\VoucherRepository;
+use App\Sheba\Partner\PartnerList;
+use Illuminate\Database\QueryException;
+use DB;
+
+class OrderPlace
+{
+    private $customer;
+    private $orderRepository;
+    private $jobServiceRepository;
+    private $customerRepository;
+    private $discountRepository;
+    private $voucherRepository;
+    private $voucherApplied;
+
+    public function __construct($customer)
+    {
+        $this->customer = $customer instanceof Customer ? $customer : Customer::find($customer);
+        $this->orderRepository = new OrderRepository();
+        $this->jobServiceRepository = new JobServiceRepository();
+        $this->customerRepository = new CustomerRepository();
+        $this->voucherRepository = new VoucherRepository();
+        $this->discountRepository = new DiscountRepository();
+    }
+
+    public function placeOrder($request)
+    {
+        $service_details = collect(json_decode($request->services))->each(function ($item, $key) {
+            $item->service = Service::find($item->service_id);
+        });
+        $partner = (new PartnerList($request->location))->getList($service_details, $request->date, $request->time, $request->partner)->first();
+        if (count($partner) != 0) {
+            $request->merge(['customer' => $this->customer->id]);
+            $data = $this->makeOrderData($request);
+            $total_order_price = $partner->services->sum('price_with_discount');
+            foreach ($partner->services as $service) {
+                $this->calculateVoucher($request->voucher, $service, $partner, $total_order_price, $data, $service->price_with_discount, (double)($service_details->where('service_id', $service->id)->first())->quantity);
+            }
+            $data['payment_method'] = $request->has('payment_method') ? $request->payment_method : 'cash-on-delivery';
+            if ($order = $this->storeInDB($data, $service_details, $partner)) {
+                $profile = $this->customerRepository->updateProfileInfoWhilePlacingOrder($order);
+            }
+            return $order;
+        }
+    }
+
+    private function calculateVoucher($voucher_id, $service, $partner, $total_order_price, $data, $service_price, $quantity)
+    {
+        $result = $this->voucherRepository
+            ->isValid($voucher_id, $service, $partner, (int)$data['location_id'], (int)$data['customer_id'], $total_order_price, $data['sales_channel']);
+        if ($result['is_valid']) {
+            return array((double)$this->discountRepository->getDiscountAmount($result, $service_price, $quantity), (double)$result['voucher']['sheba_contribution'], (double)$result['voucher']['partner_contribution'], $result['id']);
+        }
+    }
+
+    private function makeOrderData($request)
+    {
+        $data['location_id'] = $request->location;
+        $data['customer_id'] = $request->customer;
+        $data['delivery_mobile'] = $request->mobile;
+        $data['delivery_name'] = $request->name;
+        $data['sales_channel'] = $request->sales_channel;
+        $data['date'] = $request->date;
+        $data['time'] = $request->time;
+        if ($request->has('address')) {
+            $data['address'] = $request->address;
+        }
+        if ($request->has('address_id')) {
+            $data['address_id'] = $request->address_id;
+        }
+        $data['created_by'] = $created_by = $request->has('created_by') ? $request->created_by : 0;
+        $data['created_by_name'] = $created_by_name = $request->has('created_by_name') ? $request->created_by_name : 'Customer';
+        return $data;
+    }
+
+    private function storeInDB($data, $service_details, $partner)
+    {
+        $order = new Order;
+        try {
+            DB::transaction(function () use ($data, $service_details, $partner, $order) {
+                $order = $this->createOrder($order, $data);
+                $partner_order = PartnerOrder::create([
+                    'created_by' => $data['created_by'], 'created_by_name' => $data['created_by_name'],
+                    'order_id' => $order->id, 'partner_id' => $partner->id,
+                    'payment_method' => $data['payment_method']
+                ]);
+                $job = Job::create(['partner_order_id' => $partner_order->id, 'schedule_date' => $data['date'], 'preferred_time' => $data['time']]);
+                $this->saveJobServices($job, $partner->services->pluck('pivot'), $service_details, $data);
+            });
+        } catch (QueryException $e) {
+            return false;
+        }
+        return $order;
+    }
+
+    private function saveJobServices(Job $job, $services, $service_details, $data)
+    {
+        foreach ($services as $service) {
+            $service_detail = $service_details->where('service_id', $service->service_id)->first();
+            $data = array(
+                'job_id' => $job->id,
+                'service_id' => $service_detail->service_id,
+                'quantity' => $service_detail->quantity,
+                'option' => $service_detail->option,
+                'created_by' => $data['created_by'],
+                'created_by_name' => $data['created_by_name']
+            );
+            $this->jobServiceRepository->save(PartnerService::find($service->id), $data);
+        }
+    }
+
+    private function createOrder(Order $order, $data)
+    {
+        $order->delivery_mobile = formatMobile($data['delivery_mobile']);
+        $order->delivery_name = $data['delivery_name'];
+        $order->sales_channel = $data['sales_channel'];
+        $order->location_id = $data['location_id'];
+        $order->customer_id = $data['customer_id'];
+        $order->created_by = $data['created_by'];
+        $order->created_by_name = $data['created_by_name'];
+        $order->delivery_address = $this->getDeliveryAddress($data);
+        $order->save();
+        return $order;
+    }
+
+    private function getDeliveryAddress($data)
+    {
+        if (array_has($data, 'address_id')) {
+            if ($data['address_id'] != '' || $data['address_id'] != null) {
+                $deliver_address = CustomerDeliveryAddress::find($data['address_id']);
+                if ($deliver_address) {
+                    return $deliver_address->address;
+                }
+            }
+        }
+        if (array_has($data, 'address')) {
+            if ($data['address'] != '' || $data['address'] != null) {
+                $deliver_address = new CustomerDeliveryAddress();
+                $deliver_address->address = $data['address'];
+                $deliver_address->customer_id = $data['customer_id'];
+                $deliver_address->created_by = $data['created_by'];
+                $deliver_address->created_by = $data['created_by_name'];
+                $deliver_address->save();
+                return $data['address'];
+            }
+        }
+        return '';
+    }
+}
