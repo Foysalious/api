@@ -88,7 +88,7 @@ class OrderPlace
                     'order_id' => $order->id, 'partner_id' => $partner->id,
                     'payment_method' => $data['payment_method']
                 ]);
-                $job = Job::create(['partner_order_id' => $partner_order->id, 'schedule_date' => $data['date'], 'preferred_time' => $data['time']]);
+                $job = Job::create(['category_id' => ($service_details->first())->service->category_id, 'partner_order_id' => $partner_order->id, 'schedule_date' => $data['date'], 'preferred_time' => $data['time']]);
                 $this->saveJobServices($job, $partner->services, $service_details, $data);
             });
         } catch (QueryException $e) {
