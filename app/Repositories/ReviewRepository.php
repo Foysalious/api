@@ -67,7 +67,15 @@ class ReviewRepository
         $review->partner_id = $job->partner_order->partner_id;
         $review->service_id = $job->service_id;
         $review->customer_id = $job->partner_order->order->customer_id;
-        $review->save();
+        if ($review->save()) {
+            notify()->partner($job->partner_order->partner)->send([
+                "title" => $job->partner_order->order->customer->profile->name . " has given " . $review->rating . " rating on the Job: " . $job->code(),
+                "link" => env('SHEBA_PARTNER_END_URL') . "/" . $job->partner_order->partner->sub_domain . "/job/" . $job->id,
+                "type" => notificationType('Info'),
+                "event_type" => 'App\Models\Job',
+                "event_id" => $job->id
+            ]);
+        }
         return $review;
     }
 
