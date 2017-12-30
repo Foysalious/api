@@ -106,4 +106,14 @@ class ShebaController extends Controller
     {
         return response()->json(['code' => 200, 'amount' => constants('AFFILIATION_REWARD_MONEY')]);
     }
+
+    public function getVersion()
+    {
+        return [
+            'customer_app'  => '1.2.3',
+            'manager_app'   => '1.2.4',
+            'resource_app'  => '1.2.5',
+            'bondhu_app'    => '1.2.3'
+        ];
+    }
 }
