@@ -110,12 +110,10 @@ class ShebaController extends Controller
     public function getVersion()
     {
         return [
-            'customer_app'  => '1.2.3',
-            'manager_app'   => '1.2.4',
-            'resource_app'  => '1.2.5',
-            'bondhu_app'    => '1.2.3',
-            'code'          => 200,
-            'msg'           => 'success'
+            'version_code' => 15,
+            'version_name' => '1.2.3',
+            'code'         => 200,
+            'msg'          => 'success'
         ];
     }
 }
