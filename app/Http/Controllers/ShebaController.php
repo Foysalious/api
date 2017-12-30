@@ -113,7 +113,9 @@ class ShebaController extends Controller
             'customer_app'  => '1.2.3',
             'manager_app'   => '1.2.4',
             'resource_app'  => '1.2.5',
-            'bondhu_app'    => '1.2.3'
+            'bondhu_app'    => '1.2.3',
+            'code'          => 200,
+            'msg'           => 'success'
         ];
     }
 }
