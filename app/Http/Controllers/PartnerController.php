@@ -230,8 +230,8 @@ class PartnerController extends Controller
             $unassigned_resource_ids = $resource_ids->diff($assigned_resource_ids);
             $sales_stats = (new PartnerSalesStatistics($request->partner))->calculate();
             $info = array(
-                'todays_jobs' => $jobs->where('schedule_date', Carbon::now()->toDateString())->count(),
-                'tomorrows_jobs' => $jobs->where('schedule_date', Carbon::tomorrow()->toDateString())->count(),
+                'todays_jobs' => $jobs->where('schedule_date', Carbon::now()->toDateString())->where('status', '<>', constants('JOB_STATUSES')['Served'])->count(),
+                'tomorrows_jobs' => $jobs->where('schedule_date', Carbon::tomorrow()->toDateString())->where('status', '<>', constants('JOB_STATUSES')['Served'])->count(),
                 'accepted_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Accepted'])->count(),
                 'schedule_due_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Schedule_Due'])->count(),
                 'process_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Process'])->count(),
