@@ -12,7 +12,7 @@ use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Redis;
 use Validator;
 
 class ShebaController extends Controller
@@ -107,13 +107,36 @@ class ShebaController extends Controller
         return response()->json(['code' => 200, 'amount' => constants('AFFILIATION_REWARD_MONEY')]);
     }
 
-    public function getVersion()
+    public function getVersions(Request $request)
     {
-        return [
-            'version_code' => 15,
-            'version_name' => '1.2.3',
-            'code'         => 200,
-            'msg'          => 'success'
-        ];
+        try {
+            $apps = json_decode(Redis::get('app_versions'));
+            if ($apps == null) {
+                $version_string = 'itemprop="softwareVersion">';
+                $playstore_link = "https://play.google.com/store/apps/details?id=xyz.sheba.";
+                $apps = [
+                    "customer_app" => $playstore_link . env('CUSTOMER_APP_PACKAGE_NAME'),
+                    "bondhu_app" => $playstore_link . env('BONDHU_APP_PACKAGE_NAME'),
+                    "resource_app" => $playstore_link . env('RESOURCE_APP_PACKAGE_NAME'),
+                    "manager_app" => $playstore_link . env('MANAGER_APP_PACKAGE_NAME')
+                ];
+                foreach ($apps as $key => $value) {
+                    $headers = get_headers($value);
+                    if (substr($headers[0], 9, 3) == "200") {
+                        $dom = file_get_contents($value);
+                        $version = strpos($dom, $version_string);
+                        $result_string = trim(substr($dom, $version + strlen($version_string), 15));
+                        $final_string = explode(' ', $result_string);
+                        $apps[$key] = (int)str_replace('.', '', $final_string[0]);
+                    } else {
+                        $apps[$key] = 0;
+                    }
+                }
+                Redis::set('app_versions', json_encode($apps));
+            }
+            return api_response($request, $apps, 200, ['apps' => $apps]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
     }
 }
