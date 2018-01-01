@@ -112,31 +112,32 @@ class ShebaController extends Controller
         try {
             $apps = json_decode(Redis::get('app_versions'));
             if ($apps == null) {
-                $version_string = 'itemprop="softwareVersion">';
-                $playstore_link = "https://play.google.com/store/apps/details?id=xyz.sheba.";
-                $apps = [
-                    "customer_app" => $playstore_link . env('CUSTOMER_APP_PACKAGE_NAME'),
-                    "bondhu_app" => $playstore_link . env('BONDHU_APP_PACKAGE_NAME'),
-                    "resource_app" => $playstore_link . env('RESOURCE_APP_PACKAGE_NAME'),
-                    "manager_app" => $playstore_link . env('MANAGER_APP_PACKAGE_NAME')
-                ];
-                foreach ($apps as $key => $value) {
-                    $headers = get_headers($value);
-                    if (substr($headers[0], 9, 3) == "200") {
-                        $dom = file_get_contents($value);
-                        $version = strpos($dom, $version_string);
-                        $result_string = trim(substr($dom, $version + strlen($version_string), 15));
-                        $final_string = explode(' ', $result_string);
-                        $apps[$key] = (int)str_replace('.', '', $final_string[0]);
-                    } else {
-                        $apps[$key] = 0;
-                    }
-                }
-                Redis::set('app_versions', json_encode($apps));
+                $apps = $this->scrapeAppVersionsAndStoreInRedis();
             }
             return api_response($request, $apps, 200, ['apps' => $apps]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
+    }
+
+    private function scrapeAppVersionsAndStoreInRedis()
+    {
+        $version_string = 'itemprop="softwareVersion">';
+        $apps = constants('APPS');
+        $final = [];
+        foreach ($apps as $key => $value) {
+            $headers = get_headers($value);
+            $version_code = 0;
+            if (substr($headers[0], 9, 3) == "200") {
+                $dom = file_get_contents($value);
+                $version = strpos($dom, $version_string);
+                $result_string = trim(substr($dom, $version + strlen($version_string), 15));
+                $final_string = explode(' ', $result_string);
+                $version_code = (int)str_replace('.', '', $final_string[0]);
+            }
+            array_push($final, ['name' => $key, 'version_code' => $version_code, 'is_critical' => 0]);
+        }
+        Redis::set('app_versions', json_encode($final));
+        return $final;
     }
 }
