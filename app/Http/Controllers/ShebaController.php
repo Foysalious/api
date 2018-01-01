@@ -110,20 +110,20 @@ class ShebaController extends Controller
 
     public function getTimeSlots(Request $request)
     {
-        $start_time = Carbon::parse('8:00');
-        $end_time = Carbon::parse('22:00');
-        $times = $valid_times = [];
-        $now = Carbon::now();
-        for ($date = $start_time; $date->lessThan($end_time);) {
-            if ($date > $now) {
-                $string = $date->format('h:i A') . ' - ' . ($date->addHour(1))->format('h:i A');
-                array_push($valid_times, $string);
-                array_push($times, $string);
+        $start_of_working_hour = Carbon::parse('8:00');
+        $end_of_working_hour = Carbon::parse('22:00');
+        $time_slots = $valid_time_slots = [];
+        $current_time = Carbon::now();
+        for ($time = $start_of_working_hour; $time->lessThan($end_of_working_hour);) {
+            if ($time > $current_time) {
+                $time_slot = $time->format('h:i A') . ' - ' . ($time->addHour(1))->format('h:i A');
+                array_push($valid_time_slots, $time_slot);
+                array_push($time_slots, $time_slot);
             } else {
-                array_push($times, $date->format('h:i A') . ' - ' . ($date->addHour(1))->format('h:i A'));
+                array_push($time_slots, $time->format('h:i A') . ' - ' . ($time->addHour(1))->format('h:i A'));
             }
         }
-        $result = ['times' => $times, 'todays_valid_times' => $valid_times];
+        $result = ['time_slots' => $time_slots, 'valid_time_slots' => $valid_time_slots];
         return api_response($request, $result, 200, $result);
 
     }
