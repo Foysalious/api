@@ -274,7 +274,8 @@ $api->version('v1', function ($api) {
         });
 
     });
-    $api->group(['prefix' => 'v2'], function ($api) {
+    $api->group(['prefix' => 'v2', 'namespace' => 'App\Http\Controllers'], function ($api) {
+        $api->get('times', 'ShebaController@getTimeSlots');
         $api->get('locations/{location}/partners', 'PartnerController@getPartnerList');
         $api->group(['prefix' => 'job_service'], function ($api) {
             $api->post('/', 'JobServiceController@store');

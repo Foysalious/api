@@ -10,6 +10,7 @@ use App\Models\Service;
 use App\Models\Slider;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
+use Carbon\Carbon;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
 
@@ -105,5 +106,25 @@ class ShebaController extends Controller
     public function getLeadRewardAmount()
     {
         return response()->json(['code' => 200, 'amount' => constants('AFFILIATION_REWARD_MONEY')]);
+    }
+
+    public function getTimeSlots(Request $request)
+    {
+        $start_time = Carbon::parse('8:00');
+        $end_time = Carbon::parse('22:00');
+        $times = $valid_times = [];
+        $now = Carbon::now();
+        for ($date = $start_time; $date->lessThan($end_time);) {
+            if ($date > $now) {
+                $string = $date->format('h:i A') . ' - ' . ($date->addHour(1))->format('h:i A');
+                array_push($valid_times, $string);
+                array_push($times, $string);
+            } else {
+                array_push($times, $date->format('h:i A') . ' - ' . ($date->addHour(1))->format('h:i A'));
+            }
+        }
+        $result = ['times' => $times, 'todays_valid_times' => $valid_times];
+        return api_response($request, $result, 200, $result);
+
     }
 }
