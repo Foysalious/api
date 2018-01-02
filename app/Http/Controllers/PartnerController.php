@@ -156,7 +156,7 @@ class PartnerController extends Controller
             if (count($reviews) > 0) {
                 $breakdown = $this->reviewRepository->getReviewBreakdown($reviews);
                 $partner = $this->reviewRepository->getGeneralReviewInformation($partner);
-                $avg_rating = $reviews->avg('rating');
+                $avg_rating = $this->reviewRepository->getAvgRating($reviews);
                 $reviews = $reviews->filter(function ($item, $key) {
                     return $item->review != '' || $item->review != null;
                 })->each(function ($review, $key) {
