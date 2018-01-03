@@ -39,6 +39,7 @@ class PartnerList
 //            removeRelationsAndFields($partner);
             array_forget($partner, 'wallet');
         }
+        $this->filter();
         return $this->partners;
     }
 
@@ -54,7 +55,6 @@ class PartnerList
                 return $partner->priceWithDiscount;
             });
         }
-        return $this->partners;
     }
 
     private function getPartners($service_ids, $partner = null)

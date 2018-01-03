@@ -320,7 +320,7 @@ class PartnerController extends Controller
                 $item->service = Service::find($item->service_id);
             });
             $partner_list = new PartnerList($location);
-            $partners = $partner_list->getList($service_details,$request->date, $request->time)->filter()->each(function ($partner){
+            $partners = $partner_list->getList($service_details,$request->date, $request->time)->each(function ($partner){
                 removeRelationsAndFields($partner);
             })->values()->all();
             return count($partners) > 0 ? api_response($request, $partners, 200, ['partners' => $partners]) : api_response($request, null, 404);
