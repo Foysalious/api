@@ -42,7 +42,7 @@ class Checkout
         $service_details = collect(json_decode($request->services))->each(function ($item, $key) {
             $item->service = Service::find($item->service_id);
         });
-        $partner = (new PartnerList($request->location))->getList($service_details, $request->date, $request->time, $request->partner)->first();
+        $partner = (new PartnerList($request->location))->get($service_details, $request->date, $request->time, $request->partner)->first();
         if (count($partner) != 0) {
             $request->merge(['customer' => $this->customer->id]);
             $data = $this->makeOrderData($request);

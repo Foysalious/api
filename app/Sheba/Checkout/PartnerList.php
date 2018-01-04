@@ -12,31 +12,49 @@ use App\Repositories\ReviewRepository;
 
 class PartnerList
 {
-    private $services;
+    private $selected_services;
     private $partners;
     private $location;
+    private $date;
+    private $time;
     private $partnerServiceRepository;
+    private $discountRepository;
+    private $reviewRepository;
 
-    public function __construct($location)
+    public function __construct(Array $services, $date, $time, $location)
     {
         $this->location = $location;
+        $this->date = $date;
+        $this->time = $time;
+        $this->selected_services = $this->getSelectedServices($services);
         $this->partnerServiceRepository = new PartnerServiceRepository();
         $this->discountRepository = new DiscountRepository();
         $this->reviewRepository = new ReviewRepository();
     }
 
-    public function getList($service_details, $date, $time, $partner = null)
+    private function getSelectedServices($services)
     {
-        $service_ids = $service_details->pluck('service_id');
-        $this->partners = $this->getPartners($service_ids, $partner);
-        $this->filterPartnersByServiceOption($service_details);
-        $this->filterPartnersByCreditLimitAndAvailability($date, $time);
+        $selected_services = collect();
+        foreach ($services as $service) {
+            $selected_service = Service::select('id', 'category_id', 'min_quantity', 'variable_type', 'variables')->where('id', $service->id)->published()->first();
+            $selected_service['quantity'] = $service->quantity;
+            $selected_service['option'] = $service->option;
+            $selected_services->push($selected_service);
+        }
+        return $selected_services;
+    }
+
+    public function get($partner = null)
+    {
+        $this->partners = $this->getPartners($this->selected_services->pluck('id'), $partner);
+        $selected_option_services = $this->selected_services->where('variable_type', 'Options');
+        $this->filterByOption($selected_option_services);
+        $this->filterByCreditLimitAndAvailability();
         $this->partners->load('reviews');
         foreach ($this->partners as $partner) {
             $total_discount_price = $total_price_with_discount = $totalPriceWithoutDiscount = 0;
-            list($partner['discount'], $partner['priceWithDiscount'], $partner['priceWithoutDiscount']) = $this->getTotalServicePricing($partner, $service_details, $total_discount_price, $total_price_with_discount, $totalPriceWithoutDiscount);
+            list($partner['discount'], $partner['priceWithDiscount'], $partner['priceWithoutDiscount']) = $this->getTotalServicePricing($partner, $total_discount_price, $total_price_with_discount, $totalPriceWithoutDiscount);
             $partner['rating'] = $this->reviewRepository->getAvgRating($partner->reviews);
-//            removeRelationsAndFields($partner);
             array_forget($partner, 'wallet');
         }
         $this->filter();
@@ -72,32 +90,30 @@ class PartnerList
         return $query->get();
     }
 
-    private function filterPartnersByServiceOption($service_details)
+    private function filterByOption($option_services)
     {
-        foreach ($service_details as $service_detail) {
-            if ($service_detail->service->variable_type == 'Options') {
-                $this->partners = $this->partners->filter(function ($partner, $key) use ($service_detail) {
-                    $service = $partner->services->where('id', $service_detail->service_id)->first();
-                    return $this->partnerServiceRepository->hasThisOption($service->pivot->prices, implode(',', $service_detail->option));
-                });
-            }
+        foreach ($option_services as $option_service) {
+            $this->partners = $this->partners->filter(function ($partner, $key) use ($option_service) {
+                $service = $partner->services->where('id', $option_service->id)->first();
+                return $this->partnerServiceRepository->hasThisOption($service->pivot->prices, implode(',', $option_service->option));
+            });
         }
     }
 
-    private function filterPartnersByCreditLimitAndAvailability($date, $time)
+    private function filterByCreditLimitAndAvailability()
     {
         $this->partners = $this->partners->load('walletSetting')->filter(function ($partner, $key) {
             return ((new PartnerRepository($partner)))->hasAppropriateCreditLimit();
-        })->load('basicInformations')->each(function (&$partner, $key) use ($date, $time) {
-            $partner['is_available'] = ((new PartnerRepository($partner)))->isAvailable($date, $time);
+        })->load('basicInformations')->each(function (&$partner, $key) {
+            $partner['is_available'] = ((new PartnerRepository($partner)))->isAvailable($this->date, $this->time);
         });
     }
 
-    private function getTotalServicePricing($partner, $service_details, $total_discount_price, $total_price_with_discount, $totalPriceWithoutDiscount)
+    private function getTotalServicePricing($partner, $total_discount_price, $total_price_with_discount, $totalPriceWithoutDiscount)
     {
         foreach ($partner->services as &$service) {
-            $selected_service = $service_details->where('id', $service->service_id)->first();
-            $price = $service->variable_type == 'Options' ? $this->partnerServiceRepository->getPriceOfThisOption($service->pivot->prices, implode(',', $selected_service->option)) : (double)$service->pivot->prices;
+            $selected_service = $this->selected_services->where('id', $service->id)->first();
+            $price = $selected_service->variable_type == 'Options' ? $this->partnerServiceRepository->getPriceOfThisOption($service->pivot->prices, implode(',', $selected_service->option)) : (double)$service->pivot->prices;
             $running_discount = (PartnerService::find($service->pivot->id))->discount();
             list($discount_price, $price_with_discount, $priceWithoutDiscount) = $this->discountRepository->getServiceDiscountValues($running_discount, (double)$price, (double)$selected_service->quantity);
             $total_discount_price += $discount_price;
