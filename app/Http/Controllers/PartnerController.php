@@ -316,24 +316,23 @@ class PartnerController extends Controller
 
     public function findPartners(Request $request, $location)
     {
-        try {
-            $this->validate($request, [
-                'date' => 'required|date_format:Y-m-d',
-                'time' => 'required|string',
-                'location' => 'required|numeric',
-                'services' => 'required|string'
-            ]);
-            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $location);
-            $partners = $partner_list->get()->each(function ($partner) {
-                removeRelationsAndFields($partner);
-            })->values()->all();
-            return count($partners) > 0 ? api_response($request, $partners, 200, ['partners' => $partners]) : api_response($request, null, 404);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            return api_response($request, null, 500);
-        }
+//        try {
+        $this->validate($request, [
+            'date' => 'required|date_format:Y-m-d',
+            'time' => 'required|string',
+            'location' => 'required|numeric',
+            'services' => 'required|string'
+        ]);
+        $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $location);
+        $partners = $partner_list->get();
+        dd($partners);
+        return count($partners) > 0 ? api_response($request, $partners, 200, ['partners' => $partners]) : api_response($request, null, 404);
+//        } catch (ValidationException $e) {
+//            $message = getValidationErrorMessage($e->validator->errors()->all());
+//            return api_response($request, $message, 400, ['message' => $message]);
+//        } catch (\Throwable $e) {
+//            return api_response($request, null, 500);
+//        }
     }
 
 

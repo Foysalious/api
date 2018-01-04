@@ -32,7 +32,7 @@ class PartnerList
         $this->reviewRepository = new ReviewRepository();
     }
 
-    private function getSelectedServices($services)
+    protected function getSelectedServices($services)
     {
         $selected_services = collect();
         foreach ($services as $service) {
@@ -46,19 +46,61 @@ class PartnerList
 
     public function get($partner = null)
     {
-        $this->partners = $this->getPartners($this->selected_services->pluck('id'), $partner);
+        $this->partners = $this->findPartnersByServiceAndLocation($partner);
+        $this->partners->load(['walletSetting', 'basicInformations', 'reviews', 'services' => function ($q) {
+            $q->whereIn('services.id', $this->selected_services->pluck('id'));
+        }]);
         $selected_option_services = $this->selected_services->where('variable_type', 'Options');
         $this->filterByOption($selected_option_services);
-        $this->filterByCreditLimitAndAvailability();
-        $this->partners->load('reviews');
-        foreach ($this->partners as $partner) {
-            $total_discount_price = $total_price_with_discount = $totalPriceWithoutDiscount = 0;
-            list($partner['discount'], $partner['priceWithDiscount'], $partner['priceWithoutDiscount']) = $this->getTotalServicePricing($partner, $total_discount_price, $total_price_with_discount, $totalPriceWithoutDiscount);
-            $partner['rating'] = $this->reviewRepository->getAvgRating($partner->reviews);
-            array_forget($partner, 'wallet');
-        }
-        $this->filter();
+        $this->filterByCreditLimit();
+        $this->addAvailability();
+//        foreach ($this->partners as $partner) {
+//            $total_discount_price = $total_price_with_discount = $totalPriceWithoutDiscount = 0;
+//            list($partner['discount'], $partner['priceWithDiscount'], $partner['priceWithoutDiscount']) = $this->getTotalServicePricing($partner, $total_discount_price, $total_price_with_discount, $totalPriceWithoutDiscount);
+//            $partner['rating'] = $this->reviewRepository->getAvgRating($partner->reviews);
+//            array_forget($partner, 'wallet');
+//        }
+//        $this->filter();
         return $this->partners;
+    }
+
+
+    private function findPartnersByServiceAndLocation($partner = null)
+    {
+        $service_ids = $this->selected_services->pluck('id');
+        $query = Partner::whereHas('locations', function ($query) {
+            $query->where('locations.id', (int)$this->location);
+        })->whereHas('services', function ($query) use ($service_ids) {
+            $query->whereIn('services.id', $service_ids)->published();
+        })->published()->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet');
+        if ($partner != null) {
+            $query = $query->where('partners.id', $partner);
+        }
+        return $query->get();
+    }
+
+    private function filterByOption($selected_option_services)
+    {
+        foreach ($selected_option_services as $selected_option_service) {
+            $this->partners = $this->partners->filter(function ($partner, $key) use ($selected_option_service) {
+                $service = $partner->services->where('id', $selected_option_service->id)->first();
+                return $this->partnerServiceRepository->hasThisOption($service->pivot->prices, implode(',', $selected_option_service->option));
+            });
+        }
+    }
+
+    private function filterByCreditLimit()
+    {
+        $this->partners = $this->partners->filter(function ($partner, $key) {
+            return ((new PartnerRepository($partner)))->hasAppropriateCreditLimit();
+        });
+    }
+
+    private function addAvailability()
+    {
+        $this->partners = $this->partners->each(function (&$partner, $key) {
+            $partner['is_available'] = ((new PartnerRepository($partner)))->isAvailable($this->date, $this->time);
+        });
     }
 
     public function filter($rating = true, $priceWithDiscount = true)
@@ -73,40 +115,6 @@ class PartnerList
                 return $partner->priceWithDiscount;
             });
         }
-    }
-
-    private function getPartners($service_ids, $partner = null)
-    {
-        $query = Partner::whereHas('locations', function ($query) {
-            $query->where('locations.id', (int)$this->location);
-        })->whereHas('services', function ($query) use ($service_ids) {
-            $query->whereIn('services.id', $service_ids)->published();
-        })->with(['services' => function ($q) use ($service_ids) {
-            $q->whereIn('services.id', $service_ids)->published();
-        }])->published()->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet');
-        if ($partner != null) {
-            $query = $query->where('partners.id', $partner);
-        }
-        return $query->get();
-    }
-
-    private function filterByOption($option_services)
-    {
-        foreach ($option_services as $option_service) {
-            $this->partners = $this->partners->filter(function ($partner, $key) use ($option_service) {
-                $service = $partner->services->where('id', $option_service->id)->first();
-                return $this->partnerServiceRepository->hasThisOption($service->pivot->prices, implode(',', $option_service->option));
-            });
-        }
-    }
-
-    private function filterByCreditLimitAndAvailability()
-    {
-        $this->partners = $this->partners->load('walletSetting')->filter(function ($partner, $key) {
-            return ((new PartnerRepository($partner)))->hasAppropriateCreditLimit();
-        })->load('basicInformations')->each(function (&$partner, $key) {
-            $partner['is_available'] = ((new PartnerRepository($partner)))->isAvailable($this->date, $this->time);
-        });
     }
 
     private function getTotalServicePricing($partner, $total_discount_price, $total_price_with_discount, $totalPriceWithoutDiscount)
