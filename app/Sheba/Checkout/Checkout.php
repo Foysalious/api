@@ -8,18 +8,16 @@ use App\Models\Job;
 use App\Models\JobService;
 use App\Models\Order;
 use App\Models\PartnerOrder;
-use App\Models\PartnerService;
 use App\Models\Service;
 use App\Repositories\CustomerRepository;
 use App\Repositories\DiscountRepository;
 use App\Repositories\JobServiceRepository;
 use App\Repositories\OrderRepository;
 use App\Repositories\VoucherRepository;
-use App\Sheba\Partner\PartnerList;
 use Illuminate\Database\QueryException;
 use DB;
 
-class OrderPlace
+class Checkout
 {
     private $customer;
     private $orderRepository;

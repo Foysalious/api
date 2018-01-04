@@ -12,7 +12,7 @@ use App\Models\PartnerService;
 use App\Models\Service;
 use App\Repositories\JobServiceRepository;
 use App\Repositories\OrderRepository;
-use App\Sheba\Checkout\OrderPlace;
+use App\Sheba\Checkout\Checkout;
 use App\Sheba\Partner\PartnerList;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -194,13 +194,9 @@ class OrderController extends Controller
     public function store($customer, Request $request)
     {
         try {
-            $order = new OrderPlace($customer);
+            $order = new Checkout($customer);
             $order = $order->placeOrder($request);
-            if ($order) {
-                return api_response($request, $order, 200);
-            } else {
-                return api_response($request, $order, 500);
-            }
+            return $order ? api_response($request, $order, 200) : api_response($request, $order, 500);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }

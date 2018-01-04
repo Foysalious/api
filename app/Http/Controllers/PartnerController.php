@@ -12,7 +12,7 @@ use App\Repositories\PartnerServiceRepository;
 use App\Repositories\ResourceJobRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
-use App\Sheba\Partner\PartnerList;
+use App\Sheba\Checkout\PartnerList;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use DB;
@@ -313,7 +313,7 @@ class PartnerController extends Controller
         }
     }
 
-    public function getPartnerList(Request $request, $location)
+    public function findPartners(Request $request, $location)
     {
         try {
             $service_details = collect(json_decode($request->services))->each(function ($item, $key) {

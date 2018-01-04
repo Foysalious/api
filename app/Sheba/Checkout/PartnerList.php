@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Sheba\Partner;
+namespace App\Sheba\Checkout;
 
 use App\Models\Partner;
 use App\Models\PartnerService;
