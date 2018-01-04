@@ -105,7 +105,7 @@ $api->version('v1', function ($api) {
         $api->post('{customer}/order-valid', 'App\Http\Controllers\OrderController@checkOrderValidity');
         $api->post('{customer}/modify-review', 'App\Http\Controllers\ReviewController@modifyReview');
         $api->get('{customer}/job/{job}', 'App\Http\Controllers\JobController@getInfo');
-        $api->post('{customer}/{job}/cancel', 'App\Http\Controllers\JobController@cancelJob');
+        $api->post('{customer}/{job}/cancel', 'App\Http\Controllers\JobController@cancel');
 
         $api->post('{customer}/ask-quotation', 'App\Http\Controllers\CustomOrderController@askForQuotation');
         $api->get('{customer}/custom-order', 'App\Http\Controllers\CustomOrderController@getCustomOrders');
