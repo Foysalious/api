@@ -110,7 +110,8 @@ class Service extends Model
 //        return false;
     }
 
-    public function discounts(){
+    public function discounts()
+    {
         return $this->load(['partnerServices' => function ($q) {
             $q->published()->with(['partner' => function ($q) {
                 $q->published();
@@ -172,4 +173,10 @@ class Service extends Model
     {
         return $this->morphToMany(Tag::class, 'taggable');
     }
+
+    public function isOptions()
+    {
+        return $this->variable_type == 'Options';
+    }
+
 }

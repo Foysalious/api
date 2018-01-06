@@ -327,7 +327,8 @@ class PartnerController extends Controller
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $location);
             $partner_list->find();
             if ($partner_list->hasPartners) {
-                $partner_list->calculatePrice();
+                $partner_list->addPricing();
+                $partner_list->calculateAverageRating();
                 $partner_list->sortByShebaSelectedCriteria();
                 $partners = $partner_list->partners;
                 $partners->each(function ($partner, $key) {

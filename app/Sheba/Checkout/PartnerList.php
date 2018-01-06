@@ -10,6 +10,7 @@ use App\Repositories\PartnerRepository;
 use App\Repositories\PartnerServiceRepository;
 use App\Repositories\ReviewRepository;
 use App\Sheba\Checkout\PartnerPrice;
+use App\Sheba\Discount;
 
 class PartnerList
 {
@@ -20,7 +21,6 @@ class PartnerList
     private $date;
     private $time;
     private $partnerServiceRepository;
-    private $discountRepository;
 
     public function __construct($services, $date, $time, $location)
     {
@@ -29,7 +29,6 @@ class PartnerList
         $this->time = $time;
         $this->selected_services = $this->getSelectedServices($services);
         $this->partnerServiceRepository = new PartnerServiceRepository();
-        $this->discountRepository = new DiscountRepository();
     }
 
     private function getSelectedServices($services)
@@ -97,27 +96,28 @@ class PartnerList
         });
     }
 
-    public function calculatePrice()
+    public function addPricing()
     {
         foreach ($this->partners as $partner) {
-            $total_discount_price = $total_price_with_discount = $totalPriceWithoutDiscount = 0;
-            list($partner['discount'], $partner['priceWithDiscount'], $partner['priceWithoutDiscount']) = $this->getTotalServicePricing($partner, $total_discount_price, $total_price_with_discount, $totalPriceWithoutDiscount);
+            $pricing = $this->calculateServicePricing($partner);
+            foreach ($pricing as $key => $value) {
+                $partner[$key] = $value;
+            }
         }
     }
 
-    public function sortByShebaSelectedCriteria()
-    {
-        $this->calculateAverageRating();
-        $this->sortByRatingDesc();
-        $this->sortByLowestPrice();
-    }
-
-    private function calculateAverageRating()
+    public function calculateAverageRating()
     {
         $this->partners->load('reviews');
         foreach ($this->partners as $partner) {
             $partner['rating'] = (new ReviewRepository())->getAvgRating($partner->reviews);
         }
+    }
+
+    public function sortByShebaSelectedCriteria()
+    {
+        $this->sortByRatingDesc();
+        $this->sortByLowestPrice();
     }
 
     private function sortByRatingDesc()
@@ -134,32 +134,22 @@ class PartnerList
         });
     }
 
-    private function getTotalServicePricing($partner, $total_discount_price, $total_price_with_discount, $totalPriceWithoutDiscount)
+    private function calculateServicePricing($partner)
     {
-        foreach ($partner->services as &$service) {
+        $total_service_price = [
+            'discount' => 0,
+            'discounted_price' => 0,
+            'original_price' => 0
+        ];
+        foreach ($partner->services as $service) {
             $selected_service = $this->selected_services->where('id', $service->id)->first();
-            $price = $selected_service->variable_type == 'Options' ? $this->partnerServiceRepository->getPriceOfThisOption($service->pivot->prices, implode(',', $selected_service->option)) : (double)$service->pivot->prices;
-            $running_discount = (PartnerService::find($service->pivot->id))->discount();
-            list($discount_price, $price_with_discount, $priceWithoutDiscount) = $this->discountRepository->getServiceDiscountValues($running_discount, (double)$price, (double)$selected_service->quantity);
-            $total_discount_price += $discount_price;
-            $total_price_with_discount += $price_with_discount;
-            $totalPriceWithoutDiscount += $priceWithoutDiscount;
-            array_add($service, 'price', $price);
-            array_add($service, 'priceWithDiscount', $price_with_discount);
-            array_add($service, 'discountPrice', $discount_price);
-            if ($running_discount) {
-                array_add($service, 'discount_id', $running_discount->id);
-                array_add($service, 'sheba_contribution', (double)$running_discount->sheba_contribution);
-                array_add($service, 'partner_contribution', (double)$running_discount->partner_contribution);
-                array_add($service, 'discount_percentage', $running_discount->is_amount_percentage);
-            } else {
-                array_add($service, 'discount_id', null);
-                array_add($service, 'sheba_contribution', 0);
-                array_add($service, 'partner_contribution', 0);
-                array_add($service, 'discount_percentage', 0);
-            }
+            $price = $this->partnerServiceRepository->getPriceOfService($service, $selected_service->option);
+            $discount = $this->calculateDiscountForService($price, $selected_service, $service);
+            $total_service_price['discount'] += $discount->__get('discount');
+            $total_service_price['discounted_price'] += $discount->__get('discounted_price');
+            $total_service_price['original_price'] += $discount->__get('original_price');
         }
-        return array($total_discount_price, $total_price_with_discount, $totalPriceWithoutDiscount);
+        return $total_service_price;
     }
 
     private function calculateHasPartner()
@@ -167,5 +157,12 @@ class PartnerList
         if (count($this->partners) > 0) {
             $this->hasPartners = true;
         }
+    }
+
+    private function calculateDiscountForService($price, $selected_service, $service)
+    {
+        $discount = new Discount($price, $selected_service->quantity);
+        $discount->calculateServiceDiscount((PartnerService::find($service->pivot->id))->discount());
+        return $discount;
     }
 }

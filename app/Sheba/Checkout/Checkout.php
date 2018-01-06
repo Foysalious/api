@@ -8,12 +8,15 @@ use App\Models\Job;
 use App\Models\JobService;
 use App\Models\Order;
 use App\Models\PartnerOrder;
+use App\Models\PartnerService;
 use App\Models\Service;
 use App\Repositories\CustomerRepository;
 use App\Repositories\DiscountRepository;
 use App\Repositories\JobServiceRepository;
 use App\Repositories\OrderRepository;
+use App\Repositories\PartnerServiceRepository;
 use App\Repositories\VoucherRepository;
+use App\Sheba\Discount;
 use Illuminate\Database\QueryException;
 use DB;
 
@@ -41,7 +44,6 @@ class Checkout
     {
         $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $request->location);
         $partner_list->find($request->partner);
-        $partner_list->calculatePrice();
         if ($partner_list->hasPartners) {
             $partner = $partner_list->partners->first();
             $request->merge(['customer' => $this->customer->id]);
@@ -98,22 +100,25 @@ class Checkout
     private function saveJobServices(Job $job, $services, $selected_services, $data)
     {
         foreach ($services as $service) {
-            $service_detail = $selected_services->where('id', $service->id)->first();
+            $selected_service = $selected_services->where('id', $service->id)->first();
+            $price = (new PartnerServiceRepository())->getPriceOfService($service, $selected_service->option);
+            $discount = new Discount($price, $selected_service->quantity);
+            $discount->calculateServiceDiscount((PartnerService::find($service->pivot->id))->discount());
             $service_data = array(
                 'job_id' => $job->id,
-                'service_id' => $service_detail->id,
-                'quantity' => $service_detail->quantity,
+                'service_id' => $selected_service->id,
+                'quantity' => $selected_service->quantity,
                 'created_by' => $data['created_by'],
                 'created_by_name' => $data['created_by_name'],
-                'unit_price' => $service->price,
-                'sheba_contribution' => $service->sheba_contribution,
-                'partner_contribution' => $service->partner_contribution,
-                'discount_id' => $service->id,
-                'discount_percentage' => $service->discount_percentage,
+                'unit_price' => $price,
+                'sheba_contribution' => $discount->__get('sheba_contribution'),
+                'partner_contribution' => $discount->__get('partner_contribution'),
+                'discount_id' => $discount->__get('discount_id'),
+                'discount_percentage' => $discount->__get('discount_percentage'),
                 'name' => $service->name,
                 'variable_type' => $service->variable_type,
             );
-            list($service_data['option'], $service_data['variables']) = $this->getVariableOptionOfService($service, $service->pivot->prices, $service_detail->option);
+            list($service_data['option'], $service_data['variables']) = $this->getVariableOptionOfService($service, $service->pivot->prices, $selected_service->option);
             JobService::create($service_data);
         }
     }
