@@ -30,8 +30,12 @@ class PartnerServiceRepository
         return array($unit_price, $option, $variables);
     }
 
+    public function getPriceOfOptionsService($prices, $selected_option)
+    {
+        return $this->getPriceOfThisOption($prices, implode(',', $selected_option));
+    }
 
-    public function getPriceOfThisOption($prices, $option)
+    private function getPriceOfThisOption($prices, $option)
     {
         $prices = json_decode($prices);
         foreach ($prices as $key => $price) {
@@ -75,9 +79,4 @@ class PartnerServiceRepository
         return array($unit_price, $option, $variables);
     }
 
-    public function getPriceOfService(Service $service, $selected_option)
-    {
-        $price = $service->isOptions() ? $this->getPriceOfThisOption($service->pivot->prices, implode(',', $selected_option)) : (double)$service->pivot->prices;
-        return $price;
-    }
 }

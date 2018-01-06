@@ -9,6 +9,7 @@ use App\Models\Service;
 use App\Repositories\DiscountRepository;
 use App\Repositories\JobServiceRepository;
 use App\Repositories\PartnerServiceRepository;
+use App\Sheba\Checkout\Discount;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -29,17 +30,19 @@ class JobServiceController extends Controller
     {
         try {
             $this->validate($request, [
-                'job_id' => 'required|numeric',
-                'service_id' => 'required|numeric',
+                'job' => 'required|numeric',
+                'service' => 'required|numeric',
                 'quantity' => 'required:min:1',
                 'option' => 'required|array',
                 'created_by' => 'required|numeric',
                 'created_by_name' => 'required|string',
                 'additional_info' => 'sometimes|required|string'
             ]);
-            $job = Job::find((int)$request->job_id);
-            $partner_service = PartnerService::where([['partner_id', $job->partner_order->partner_id], ['service_id', (int)$request->service_id]])->first();
-            $data = $request->only(['job_id', 'service_id', 'quantity', 'additional_info', 'created_by', 'created_by_name', 'option']);
+            $job = Job::find((int)$request->job);
+            $partner_service = PartnerService::where([['partner_id', $job->partner_order->partner_id], ['service_id', (int)$request->service]])->first();
+            $data = $request->only(['quantity', 'additional_info', 'created_by', 'created_by_name', 'option']);
+            $data['job_id'] = $request->job;
+            $data['service_id'] = $request->service;
             if ($job_service = $this->jobServiceRepository->save($partner_service, $data)) {
                 return api_response($request, $job_service, 200);
             }

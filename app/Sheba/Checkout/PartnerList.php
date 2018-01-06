@@ -4,13 +4,13 @@ namespace App\Sheba\Checkout;
 
 use App\Models\Partner;
 use App\Models\PartnerService;
+use App\Models\PartnerServiceDiscount;
 use App\Models\Service;
 use App\Repositories\DiscountRepository;
 use App\Repositories\PartnerRepository;
 use App\Repositories\PartnerServiceRepository;
 use App\Repositories\ReviewRepository;
-use App\Sheba\Checkout\PartnerPrice;
-use App\Sheba\Discount;
+
 
 class PartnerList
 {
@@ -130,7 +130,7 @@ class PartnerList
     private function sortByLowestPrice()
     {
         $this->partners = $this->partners->sortBy(function ($partner, $key) {
-            return $partner->priceWithDiscount;
+            return $partner->discounted_price;
         });
     }
 
@@ -143,7 +143,11 @@ class PartnerList
         ];
         foreach ($partner->services as $service) {
             $selected_service = $this->selected_services->where('id', $service->id)->first();
-            $price = $this->partnerServiceRepository->getPriceOfService($service, $selected_service->option);
+            if ($service->isOptions()) {
+                $price = $this->partnerServiceRepository->getPriceOfOptionsService($service->pivot->prices, $selected_service->option);
+            } else {
+                $price = (double)$service->pivot->prices;
+            }
             $discount = $this->calculateDiscountForService($price, $selected_service, $service);
             $total_service_price['discount'] += $discount->__get('discount');
             $total_service_price['discounted_price'] += $discount->__get('discounted_price');
@@ -162,7 +166,7 @@ class PartnerList
     private function calculateDiscountForService($price, $selected_service, $service)
     {
         $discount = new Discount($price, $selected_service->quantity);
-        $discount->calculateServiceDiscount((PartnerService::find($service->pivot->id))->discount());
+        $discount->calculateServiceDiscount((PartnerServiceDiscount::find($service->pivot->id)));
         return $discount;
     }
 }
