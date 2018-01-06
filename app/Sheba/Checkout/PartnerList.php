@@ -9,30 +9,30 @@ use App\Repositories\DiscountRepository;
 use App\Repositories\PartnerRepository;
 use App\Repositories\PartnerServiceRepository;
 use App\Repositories\ReviewRepository;
+use App\Sheba\Checkout\PartnerPrice;
 
 class PartnerList
 {
-    private $selected_services;
-    private $partners;
+    public $partners;
+    public $hasPartners = false;
+    public $selected_services;
     private $location;
     private $date;
     private $time;
     private $partnerServiceRepository;
     private $discountRepository;
-    private $reviewRepository;
 
-    public function __construct(Array $services, $date, $time, $location)
+    public function __construct($services, $date, $time, $location)
     {
-        $this->location = $location;
+        $this->location = (int)$location;
         $this->date = $date;
         $this->time = $time;
         $this->selected_services = $this->getSelectedServices($services);
         $this->partnerServiceRepository = new PartnerServiceRepository();
         $this->discountRepository = new DiscountRepository();
-        $this->reviewRepository = new ReviewRepository();
     }
 
-    protected function getSelectedServices($services)
+    private function getSelectedServices($services)
     {
         $selected_services = collect();
         foreach ($services as $service) {
@@ -44,28 +44,20 @@ class PartnerList
         return $selected_services;
     }
 
-    public function get($partner = null)
+    public function find($partner_id = null)
     {
-        $this->partners = $this->findPartnersByServiceAndLocation($partner);
-        $this->partners->load(['walletSetting', 'basicInformations', 'reviews', 'services' => function ($q) {
+        $this->partners = $this->findPartnersByServiceAndLocation($partner_id);
+        $this->partners->load(['services' => function ($q) {
             $q->whereIn('services.id', $this->selected_services->pluck('id'));
         }]);
         $selected_option_services = $this->selected_services->where('variable_type', 'Options');
         $this->filterByOption($selected_option_services);
         $this->filterByCreditLimit();
         $this->addAvailability();
-//        foreach ($this->partners as $partner) {
-//            $total_discount_price = $total_price_with_discount = $totalPriceWithoutDiscount = 0;
-//            list($partner['discount'], $partner['priceWithDiscount'], $partner['priceWithoutDiscount']) = $this->getTotalServicePricing($partner, $total_discount_price, $total_price_with_discount, $totalPriceWithoutDiscount);
-//            $partner['rating'] = $this->reviewRepository->getAvgRating($partner->reviews);
-//            array_forget($partner, 'wallet');
-//        }
-//        $this->filter();
-        return $this->partners;
+        $this->calculateHasPartner();
     }
 
-
-    private function findPartnersByServiceAndLocation($partner = null)
+    private function findPartnersByServiceAndLocation($partner_id = null)
     {
         $service_ids = $this->selected_services->pluck('id');
         $query = Partner::whereHas('locations', function ($query) {
@@ -73,8 +65,8 @@ class PartnerList
         })->whereHas('services', function ($query) use ($service_ids) {
             $query->whereIn('services.id', $service_ids)->published();
         })->published()->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet');
-        if ($partner != null) {
-            $query = $query->where('partners.id', $partner);
+        if ($partner_id != null) {
+            $query = $query->where('partners.id', $partner_id);
         }
         return $query->get();
     }
@@ -91,6 +83,7 @@ class PartnerList
 
     private function filterByCreditLimit()
     {
+        $this->partners->load('walletSetting');
         $this->partners = $this->partners->filter(function ($partner, $key) {
             return ((new PartnerRepository($partner)))->hasAppropriateCreditLimit();
         });
@@ -98,23 +91,47 @@ class PartnerList
 
     private function addAvailability()
     {
-        $this->partners = $this->partners->each(function (&$partner, $key) {
+        $this->partners->load('basicInformations');
+        $this->partners->each(function ($partner, $key) {
             $partner['is_available'] = ((new PartnerRepository($partner)))->isAvailable($this->date, $this->time);
         });
     }
 
-    public function filter($rating = true, $priceWithDiscount = true)
+    public function calculatePrice()
     {
-        if ($rating) {
-            $this->partners = $this->partners->sortByDesc(function ($partner, $key) {
-                return $partner->rating;
-            });
+        foreach ($this->partners as $partner) {
+            $total_discount_price = $total_price_with_discount = $totalPriceWithoutDiscount = 0;
+            list($partner['discount'], $partner['priceWithDiscount'], $partner['priceWithoutDiscount']) = $this->getTotalServicePricing($partner, $total_discount_price, $total_price_with_discount, $totalPriceWithoutDiscount);
         }
-        if ($priceWithDiscount) {
-            $this->partners = $this->partners->sortBy(function ($partner, $key) {
-                return $partner->priceWithDiscount;
-            });
+    }
+
+    public function sortByShebaSelectedCriteria()
+    {
+        $this->calculateAverageRating();
+        $this->sortByRatingDesc();
+        $this->sortByLowestPrice();
+    }
+
+    private function calculateAverageRating()
+    {
+        $this->partners->load('reviews');
+        foreach ($this->partners as $partner) {
+            $partner['rating'] = (new ReviewRepository())->getAvgRating($partner->reviews);
         }
+    }
+
+    private function sortByRatingDesc()
+    {
+        $this->partners = $this->partners->sortByDesc(function ($partner, $key) {
+            return $partner->rating;
+        });
+    }
+
+    private function sortByLowestPrice()
+    {
+        $this->partners = $this->partners->sortBy(function ($partner, $key) {
+            return $partner->priceWithDiscount;
+        });
     }
 
     private function getTotalServicePricing($partner, $total_discount_price, $total_price_with_discount, $totalPriceWithoutDiscount)
@@ -143,5 +160,12 @@ class PartnerList
             }
         }
         return array($total_discount_price, $total_price_with_discount, $totalPriceWithoutDiscount);
+    }
+
+    private function calculateHasPartner()
+    {
+        if (count($this->partners) > 0) {
+            $this->hasPartners = true;
+        }
     }
 }

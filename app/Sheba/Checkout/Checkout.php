@@ -39,16 +39,16 @@ class Checkout
 
     public function placeOrder($request)
     {
-        $service_details = collect(json_decode($request->services))->each(function ($item, $key) {
-            $item->service = Service::find($item->service_id);
-        });
-        $partner = (new PartnerList($request->location))->get($service_details, $request->date, $request->time, $request->partner)->first();
-        if (count($partner) != 0) {
+        $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $request->location);
+        $partner_list->find($request->partner);
+        $partner_list->calculatePrice();
+        if ($partner_list->hasPartners) {
+            $partner = $partner_list->partners->first();
             $request->merge(['customer' => $this->customer->id]);
             $data = $this->makeOrderData($request);
-            $partner = $this->calculateVoucher($request, $partner, $service_details, $data);
+            $partner = $this->calculateVoucher($request, $partner, $partner_list->selected_services, $data);
             $data['payment_method'] = $request->has('payment_method') ? $request->payment_method : 'cash-on-delivery';
-            if ($order = $this->storeInDB($data, $service_details, $partner)) {
+            if ($order = $this->storeInDB($data, $partner_list->selected_services, $partner)) {
                 $profile = $this->customerRepository->updateProfileInfoWhilePlacingOrder($order);
             }
             return $order;
@@ -75,19 +75,19 @@ class Checkout
         return $data;
     }
 
-    private function storeInDB($data, $service_details, $partner)
+    private function storeInDB($data, $selected_services, $partner)
     {
         $order = new Order;
         try {
-            DB::transaction(function () use ($data, $service_details, $partner, $order) {
+            DB::transaction(function () use ($data, $selected_services, $partner, $order) {
                 $order = $this->createOrder($order, $data);
                 $partner_order = PartnerOrder::create([
                     'created_by' => $data['created_by'], 'created_by_name' => $data['created_by_name'],
                     'order_id' => $order->id, 'partner_id' => $partner->id,
                     'payment_method' => $data['payment_method']
                 ]);
-                $job = Job::create(['category_id' => ($service_details->first())->service->category_id, 'partner_order_id' => $partner_order->id, 'schedule_date' => $data['date'], 'preferred_time' => $data['time']]);
-                $this->saveJobServices($job, $partner->services, $service_details, $data);
+                $job = Job::create(['category_id' => ($selected_services->first())->category_id, 'partner_order_id' => $partner_order->id, 'schedule_date' => $data['date'], 'preferred_time' => $data['time']]);
+                $this->saveJobServices($job, $partner->services, $selected_services, $data);
             });
         } catch (QueryException $e) {
             return false;
@@ -95,13 +95,13 @@ class Checkout
         return $order;
     }
 
-    private function saveJobServices(Job $job, $services, $service_details, $data)
+    private function saveJobServices(Job $job, $services, $selected_services, $data)
     {
         foreach ($services as $service) {
-            $service_detail = $service_details->where('service_id', $service->id)->first();
+            $service_detail = $selected_services->where('id', $service->id)->first();
             $service_data = array(
                 'job_id' => $job->id,
-                'service_id' => $service_detail->service_id,
+                'service_id' => $service_detail->id,
                 'quantity' => $service_detail->quantity,
                 'created_by' => $data['created_by'],
                 'created_by_name' => $data['created_by_name'],
@@ -156,12 +156,12 @@ class Checkout
         return '';
     }
 
-    private function calculateVoucher($request, $partner, $service_details, $data)
+    private function calculateVoucher($request, $partner, $selected_services, $data)
     {
         $total_order_price = $partner->services->sum('price_with_discount');
         $max = 0;
         foreach ($partner->services as &$service) {
-            $service_detail = $service_details->where('service_id', $service->id)->first();
+            $service_detail = $selected_services->where('id', $service->id)->first();
             $result = $this->voucherRepository->isValid($request->voucher, $service, $partner, (int)$data['location_id'], (int)$data['customer_id'], $total_order_price, $data['sales_channel']);
             if ($result['is_valid']) {
                 $amount = (double)$this->discountRepository->getDiscountAmount($result, $service->priceWithDiscount, $service_detail->quantity);

@@ -13,6 +13,7 @@ use App\Repositories\ResourceJobRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
 use App\Sheba\Checkout\PartnerList;
+use App\Sheba\Checkout\PartnerPrice;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use DB;
@@ -316,23 +317,31 @@ class PartnerController extends Controller
 
     public function findPartners(Request $request, $location)
     {
-//        try {
-        $this->validate($request, [
-            'date' => 'required|date_format:Y-m-d',
-            'time' => 'required|string',
-            'location' => 'required|numeric',
-            'services' => 'required|string'
-        ]);
-        $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $location);
-        $partners = $partner_list->get();
-        dd($partners);
-        return count($partners) > 0 ? api_response($request, $partners, 200, ['partners' => $partners]) : api_response($request, null, 404);
-//        } catch (ValidationException $e) {
-//            $message = getValidationErrorMessage($e->validator->errors()->all());
-//            return api_response($request, $message, 400, ['message' => $message]);
-//        } catch (\Throwable $e) {
-//            return api_response($request, null, 500);
-//        }
+        try {
+            $this->validate($request, [
+                'date' => 'required|date_format:Y-m-d',
+                'time' => 'required|string',
+                'location' => 'required|numeric',
+                'services' => 'required|string'
+            ]);
+            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $location);
+            $partner_list->find();
+            if ($partner_list->hasPartners) {
+                $partner_list->calculatePrice();
+                $partner_list->sortByShebaSelectedCriteria();
+                $partners = $partner_list->partners;
+                $partners->each(function ($partner, $key) {
+                    removeRelationsAndFields($partner);
+                });
+                return api_response($request, $partners, 200, ['partners' => $partners->values()->all()]);
+            }
+            return api_response($request, null, 404);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
     }
 
 
