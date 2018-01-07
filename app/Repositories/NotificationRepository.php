@@ -134,4 +134,13 @@ class NotificationRepository
         return $notifications;
     }
 
+    public function sendToCRM($cm_id, $title, $model)
+    {
+        notify()->user($cm_id)->send([
+            'title' => $title,
+            'link' => env('SHEBA_BACKEND_URL') . '/' . strtolower(class_basename($model)) . '/' . $model->id,
+            'type' => notificationType('Info')
+        ]);
+    }
+
 }

@@ -6,6 +6,7 @@ use App\Models\Job;
 use App\Models\JobMaterial;
 use App\Models\JobUpdateLog;
 use App\Models\Resource;
+use App\Repositories\NotificationRepository;
 use App\Repositories\PartnerRepository;
 use App\Repositories\PushNotificationRepository;
 use App\Repositories\ResourceJobRepository;
@@ -74,6 +75,9 @@ class PartnerJobController extends Controller
                 if ($response) {
                     if ($response->code == 200) {
                         $job = $this->assignResource($job, $request->resource_id, $request->manager_resource);
+                        if ($job->crm_id != null) {
+                            (new NotificationRepository())->sendToCRM($job->crm_id, "Partner has accepted this job, ID-" . $job->fullCode(), $job);
+                        }
                         return api_response($request, $job, 200);
                     }
                     return api_response($request, $response, $response->code);
