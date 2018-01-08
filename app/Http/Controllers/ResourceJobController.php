@@ -75,7 +75,7 @@ class ResourceJobController extends Controller
                 return api_response($request, null, 500);
             } elseif ($request->has('schedule_date') && $request->has('preferred_time')) {
                 $job_time = new JobTime($request->schedule_date, $request->preferred_time);
-                $job_time->calculateIsValid();
+                $job_time->validate();
                 if ($job_time->isValid) {
                     $response = $this->resourceJobRepository->reschedule($job->id, $request);
                     if ($response) {

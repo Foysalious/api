@@ -18,7 +18,7 @@ class JobTime
         $this->preferred_time = $preferred_time != null ? $preferred_time : 'Anytime';
     }
 
-    public function calculateIsValid()
+    public function validate()
     {
         if (!$this->isValidDate()) {
             $this->error_message .= "Schedule Date is Invalid";
@@ -26,8 +26,9 @@ class JobTime
         } elseif (!$this->isValidTime()) {
             $this->isValid = 0;
             $this->error_message .= "Preferred Time is Invalid";
+        } else {
+            $this->isValid = 1;
         }
-        $this->isValid = 1;
     }
 
     private function isValidDate()

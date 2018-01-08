@@ -6,6 +6,7 @@ namespace App\Repositories;
 use App\Models\PartnerService;
 use App\Models\PartnerServiceDiscount;
 use App\Models\Quotation;
+use App\Sheba\JobTime;
 use Carbon\Carbon;
 
 class CartRepository
@@ -21,11 +22,10 @@ class CartRepository
     {
         $items = $cart->items;
         foreach ($items as $item) {
-            if (!$this->_validTime($item->time)) {
-                return array(false, 'Time is not valid');
-            }
-            if (!$this->_validDate($item->date)) {
-                return array(false, 'Date is not valid');
+            $job_time = new JobTime($item->day, $item->time);
+            $job_time->validate();
+            if (!$job_time->isValid) {
+                return array(false, $job_time->error_message);
             }
             if (($partner_service = $this->_validPartnerService($item)) == null) {
                 return array(false, 'Partner Service not valid');

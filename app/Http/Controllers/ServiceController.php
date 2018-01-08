@@ -168,10 +168,9 @@ class ServiceController extends Controller
     {
         try {
             $job_time = new JobTime($request->day, $request->time);
-            if (!$job_time->isValidDate()) {
-                return api_response($request, null, 400, ['result' => 'Schedule Date is invalid']);
-            } elseif (!$job_time->isValidTime()) {
-                return api_response($request, null, 400, ['result' => 'Preferred Time is invalid']);
+            $job_time->validate();
+            if (!$job_time->isValid) {
+                return api_response($request, null, 400, ['message' => $job_time->error_message]);
             }
             $service = Service::where('id', $service)
                 ->select('id', 'name', 'unit', 'category_id', 'description', 'min_quantity', 'thumb', 'banner', 'faqs', 'slug', 'variable_type', 'variables')
@@ -201,13 +200,10 @@ class ServiceController extends Controller
 
     public function changePartner($service, $location = null, Request $request)
     {
-        $day = $request->has('day') ? $request->day : Carbon::now()->toDateString();
-        $time = $request->has('time') ? $request->time : 'Anytime';
-        if (!$this->isValidDay($day)) {
-            return api_response($request, null, 400, ['result' => 'date is invalid']);
-        }
-        if (!$this->isValidTime($time)) {
-            return api_response($request, null, 400, ['result' => 'time is invalid']);
+        $job_time = new JobTime($request->day, $request->time);
+        $job_time->validate();
+        if (!$job_time->isValid) {
+            return api_response($request, null, 400, ['message' => $job_time->error_message]);
         }
         $service = Service::find($service);
         $option = null;

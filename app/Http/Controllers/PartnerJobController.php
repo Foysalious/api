@@ -7,6 +7,8 @@ use App\Models\JobUpdateLog;
 use App\Models\Resource;
 use App\Repositories\PartnerRepository;
 use App\Repositories\ResourceJobRepository;
+use App\Sheba\JobTime;
+use Carbon\Carbon;
 use DB;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -106,11 +108,16 @@ class PartnerJobController extends Controller
         try {
             $job = $request->job;
             $this->validate($request, [
-                'schedule_date' => 'sometimes|required|date|after:yesterday',
+                'schedule_date' => 'sometimes|required|date|after:' . Carbon::yesterday(),
                 'preferred_time' => 'required_with:schedule_date|string',
                 'resource_id' => 'required_without_all:schedule_date,preferred_time|not_in:' . $job->resource_id,
             ]);
             if ($request->has('schedule_date') && $request->has('preferred_time')) {
+                $job_time = new JobTime($request->day, $request->time);
+                $job_time->validate();
+                if (!$job_time->isValid) {
+                    return api_response($request, null, 400, ['message' => $job_time->error_message]);
+                }
                 $request->merge(['resource' => $request->manager_resource]);
                 $response = $this->resourceJobRepository->reschedule($job->id, $request);
                 return api_response($request, $response, $response->code);
