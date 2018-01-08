@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Job;
 use App\Models\PartnerOrder;
 use App\Repositories\ResourceJobRepository;
+use App\Sheba\JobTime;
 use Dingo\Api\Routing\Helpers;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -73,11 +74,18 @@ class ResourceJobController extends Controller
                 }
                 return api_response($request, null, 500);
             } elseif ($request->has('schedule_date') && $request->has('preferred_time')) {
-                $response = $this->resourceJobRepository->reschedule($job->id, $request);
-                if ($response) {
-                    return api_response($request, $response, $response->code);
+                $job_time = new JobTime($request->schedule_date, $request->preferred_time);
+                $job_time->calculateIsValid();
+                if ($job_time->isValid) {
+                    $response = $this->resourceJobRepository->reschedule($job->id, $request);
+                    if ($response) {
+                        return api_response($request, $response, $response->code);
+                    } else {
+                        return api_response($request, null, 500);
+                    }
+                } else {
+                    return api_response($request, null, 400, ['result' => $job_time->error_message]);
                 }
-                return api_response($request, null, 500);
             }
             return api_response($request, null, 400);
         } catch (\Exception $e) {

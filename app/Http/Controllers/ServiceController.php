@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Service;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
+use App\Sheba\JobTime;
 use Carbon\Carbon;
 use Dingo\Api\Routing\Helpers;
 use Illuminate\Http\Request;
@@ -166,13 +167,11 @@ class ServiceController extends Controller
     public function getPartnersOfLocation($service, $location = null, Request $request)
     {
         try {
-            $day = $request->has('day') ? $request->day : Carbon::now()->toDateString();
-            $time = $request->has('time') ? $request->time : 'Anytime';
-            if (!$this->isValidDay($day)) {
-                return api_response($request, null, 400, ['result' => 'date is invalid']);
-            }
-            if (!$this->isValidTime($time)) {
-                return api_response($request, null, 400, ['result' => 'time is invalid']);
+            $job_time = new JobTime($request->day, $request->time);
+            if (!$job_time->isValidDate()) {
+                return api_response($request, null, 400, ['result' => 'Schedule Date is invalid']);
+            } elseif (!$job_time->isValidTime()) {
+                return api_response($request, null, 400, ['result' => 'Preferred Time is invalid']);
             }
             $service = Service::where('id', $service)
                 ->select('id', 'name', 'unit', 'category_id', 'description', 'min_quantity', 'thumb', 'banner', 'faqs', 'slug', 'variable_type', 'variables')
