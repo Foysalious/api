@@ -22,7 +22,7 @@ class CartRepository
     {
         $items = $cart->items;
         foreach ($items as $item) {
-            $job_time = new JobTime($item->day, $item->time);
+            $job_time = new JobTime($item->date->time, $item->time);
             $job_time->validate();
             if (!$job_time->isValid) {
                 return array(false, $job_time->error_message);
