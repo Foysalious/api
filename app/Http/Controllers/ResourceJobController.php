@@ -84,7 +84,7 @@ class ResourceJobController extends Controller
                         return api_response($request, null, 500);
                     }
                 } else {
-                    return api_response($request, null, 400, ['result' => $job_time->error_message]);
+                    return api_response($request, null, 400, ['message' => $job_time->error_message]);
                 }
             }
             return api_response($request, null, 400);
