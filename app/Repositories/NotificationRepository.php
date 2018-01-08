@@ -73,7 +73,7 @@ class NotificationRepository
                 "event_type" => 'PartnerOrder',
                 "event_id" => $partner_order->id,
                 "link" => "new_order"
-            ], 'manager_' . $partner_order->partner_id);
+            ], constants('MANAGER_TOPIC_NAME') . $partner_order->partner_id);
         }
     }
 
