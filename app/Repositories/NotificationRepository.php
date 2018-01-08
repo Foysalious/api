@@ -114,7 +114,7 @@ class NotificationRepository
         ]);
     }
 
-    public function getNotifications($model, $offset, $limit)
+    public function getManagerNotifications($model, $offset, $limit)
     {
         $notifications = $model->notifications()->select('id', 'title', 'event_type', 'event_id', 'type', 'is_seen', 'created_at')->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
         if (count($notifications) > 0) {
@@ -122,7 +122,15 @@ class NotificationRepository
                 $notification->event_type = str_replace('App\Models\\', "", $notification->event_type);
                 array_add($notification, 'time', $notification->created_at->format('j M \\a\\t h:i A'));
                 if ($notification->event_type == 'Job') {
-                    array_add($notification, 'event_code', (Job::find($notification->event_id))->fullCode());
+                    if (!stristr($notification->title, 'cancel')) {
+                        $job = Job::find($notification->event_id);
+                        $notification->event_type = 'PartnerOrder';
+                        $notification->event_id = $job->partner_order->id;
+                        $notification->event_code = $job->partner_order->code();
+                    } else {
+                        $notification->event_type = null;
+                        $notification->event_id = null;
+                    }
                 } elseif ($notification->event_type == 'Order') {
                     array_add($notification, 'event_code', (Order::find($notification->event_id))->code());
                 } elseif ($notification->event_type == 'PartnerOrder') {
