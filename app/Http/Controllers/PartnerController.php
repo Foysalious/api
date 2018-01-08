@@ -302,7 +302,7 @@ class PartnerController extends Controller
     {
         try {
             list($offset, $limit) = calculatePagination($request);
-            $notifications = (new NotificationRepository())->getNotifications($request->partner, $offset, $limit);
+            $notifications = (new NotificationRepository())->getManagerNotifications($request->partner, $offset, $limit);
             if (count($notifications) > 0) {
                 return api_response($request, $notifications, 200, ['notifications' => $notifications->values()->all()]);
             } else {

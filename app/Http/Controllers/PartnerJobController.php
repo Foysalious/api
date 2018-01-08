@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Job;
 use App\Models\JobMaterial;
 use App\Models\JobUpdateLog;
 use App\Models\Resource;
+use App\Repositories\NotificationRepository;
 use App\Repositories\PartnerRepository;
+use App\Repositories\PushNotificationRepository;
 use App\Repositories\ResourceJobRepository;
 use DB;
 use Illuminate\Database\QueryException;
@@ -72,6 +75,9 @@ class PartnerJobController extends Controller
                 if ($response) {
                     if ($response->code == 200) {
                         $job = $this->assignResource($job, $request->resource_id, $request->manager_resource);
+                        if ($job->crm_id != null) {
+                            (new NotificationRepository())->sendToCRM($job->crm_id, "Partner has accepted this job, ID-" . $job->fullCode(), $job);
+                        }
                         return api_response($request, $job, 200);
                     }
                     return api_response($request, $response, $response->code);
@@ -224,7 +230,7 @@ class PartnerJobController extends Controller
         JobUpdateLog::create(($logData));
     }
 
-    private function assignResource($job, $resource_id, Resource $manager_resource)
+    private function assignResource(Job $job, $resource_id, Resource $manager_resource)
     {
         $updatedData = [
             'msg' => 'Resource Change',
@@ -234,6 +240,20 @@ class PartnerJobController extends Controller
         $job->resource_id = $resource_id;
         $job->update();
         $this->jobUpdateLog($job->id, json_encode($updatedData), $manager_resource);
+
+        (new PushNotificationRepository())->send([
+            "title" => 'Resource has been assigned',
+            "message" => $job->resource->profile->name . " has been added as a resource for your job.",
+            "event_type" => 'Job',
+            "event_id" => $job->id
+        ], 'customer_' . $job->partner_order->order->customer->id);
+
+        (new PushNotificationRepository())->send([
+            "title" => 'Assigned to a new job',
+            "message" => 'You have been assigned to a new job. Job ID: ' . $job->fullCode(),
+            "event_type" => 'Job',
+            "event_id" => $job->id
+        ], 'resource_' . $job->resource_id);
         return $job;
     }
 

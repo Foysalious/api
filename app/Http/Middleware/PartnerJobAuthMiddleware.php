@@ -17,7 +17,7 @@ class PartnerJobAuthMiddleware
     public function handle($request, Closure $next)
     {
         $partner = $request->partner;
-        $job = Job::select('id', 'status', 'resource_id', 'partner_order_id')->where('id', $request->job)->first();
+        $job = Job::select('id', 'status', 'resource_id', 'partner_order_id', 'crm_id')->where('id', $request->job)->first();
         if (!$job) {
             return api_response($request, null, 404);
         }
