@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 
 use App\Models\PartnerOrder;
+use App\Sheba\UserRequestInformation;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
@@ -111,11 +112,11 @@ class ResourceJobRepository
             $client = new Client();
             $res = $client->request('POST', env('SHEBA_BACKEND_URL') . '/api/job/' . $job . '/change-status',
                 [
-                    'form_params' => [
+                    'form_params' => array_merge((new UserRequestInformation($request))->getInformationArray(), [
                         'resource_id' => $request->resource->id,
                         'remember_token' => $request->resource->remember_token,
                         'status' => $request->status
-                    ]
+                    ])
                 ]);
             return json_decode($res->getBody());
         } catch (RequestException $e) {
@@ -129,12 +130,12 @@ class ResourceJobRepository
             $client = new Client();
             $res = $client->request('POST', env('SHEBA_BACKEND_URL') . '/api/job/' . $job . '/reschedule',
                 [
-                    'form_params' => [
+                    'form_params' => array_merge((new UserRequestInformation($request))->getInformationArray(), [
                         'resource_id' => $request->resource->id,
                         'remember_token' => $request->resource->remember_token,
                         'schedule_date' => $request->schedule_date,
                         'preferred_time' => $request->preferred_time,
-                    ]
+                    ])
                 ]);
             return json_decode($res->getBody());
         } catch (RequestException $e) {
@@ -148,11 +149,11 @@ class ResourceJobRepository
             $client = new Client();
             $res = $client->request('POST', env('SHEBA_BACKEND_URL') . '/api/partner-order/' . $order->id . '/collect',
                 [
-                    'form_params' => [
+                    'form_params' => array_merge((new UserRequestInformation($request))->getInformationArray(), [
                         'resource_id' => $request->resource->id,
                         'remember_token' => $request->resource->remember_token,
                         'partner_collection' => $request->amount,
-                    ]
+                    ])
                 ]);
             return json_decode($res->getBody());
         } catch (RequestException $e) {
@@ -186,7 +187,8 @@ class ResourceJobRepository
         return $job;
     }
 
-    public function assignResource(){
+    public function assignResource()
+    {
 
     }
 }
