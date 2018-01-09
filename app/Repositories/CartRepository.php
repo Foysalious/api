@@ -22,7 +22,12 @@ class CartRepository
     {
         $items = $cart->items;
         foreach ($items as $item) {
-            $job_time = new JobTime($item->date->time, $item->time);
+            if (is_object($item->date)) {
+                $date = Carbon::parse($item->date->time)->format('Y-m-d');
+            } else {
+                $date = Carbon::parse($item->date)->format('Y-m-d');
+            }
+            $job_time = new JobTime($date, $item->time);
             $job_time->validate();
             if (!$job_time->isValid) {
                 return array(false, $job_time->error_message);
