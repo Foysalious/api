@@ -50,6 +50,10 @@ class PartnerWithdrawalRequestController extends Controller
             $new_withdrawal = PartnerWithdrawalRequest::create([
                 'partner_id' => $partner->id,
                 'amount' => $request->amount,
+                'portal_name' => $request->header('portal-name'),
+                'ip' => $request->ip(),
+                'user_agent' => $request->header('User-Agent'),
+                'created_by_type' => class_basename($request->manager_resource),
                 'created_by' => $request->manager_resource->id,
                 'created_by_name' => 'Resource - ' . $request->manager_resource->profile->name,
             ]);
