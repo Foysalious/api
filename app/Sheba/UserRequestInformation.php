@@ -17,7 +17,7 @@ class UserRequestInformation
     public function getInformationArray()
     {
         return array(
-            'portal_name' => $this->request->header('portal-name'),
+            'portal_name' => $this->request->header('portal-name') != null ? $this->request->header('portal-name') : 'web',
             'user_agent' => $this->request->header('User-Agent'),
             'ip' => $this->request->ip()
         );

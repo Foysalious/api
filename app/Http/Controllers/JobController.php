@@ -103,7 +103,7 @@ class JobController extends Controller
             $job = Job::find($job);
             $previous_status = $job->status;
             $customer = $request->customer;
-            $job_status = new JobStatus($job);
+            $job_status = new JobStatus($job,$request);
             $job_status->__set('updated_by', $request->customer);
             if ($response = $job_status->update('Cancelled')) {
                 $job_cancel_log = new JobCancelLogRepository($job);
