@@ -35,9 +35,10 @@ class PartnerList
     {
         $selected_services = collect();
         foreach ($services as $service) {
-            $selected_service = Service::select('id', 'category_id', 'min_quantity', 'variable_type', 'variables')->where('id', $service->id)->published()->first();
-            $selected_service['quantity'] = $service->quantity;
-            $selected_service['option'] = $service->option;
+            $selected_service = Service::select('id', 'category_id', 'min_quantity', 'variable_type', 'variables')->where('id', $service->id)->publishedForAll()->first();
+            foreach ($service as $key=>$value){
+                $selected_service[$key] = $value;
+            }
             $selected_services->push($selected_service);
         }
         return $selected_services;
@@ -47,13 +48,14 @@ class PartnerList
     {
         $this->partners = $this->findPartnersByServiceAndLocation($partner_id);
         $this->partners->load(['services' => function ($q) {
-            $q->whereIn('services.id', $this->selected_services->pluck('id'));
+            $q->whereIn('service_id', $this->selected_services->pluck('id'));
         }]);
         $selected_option_services = $this->selected_services->where('variable_type', 'Options');
         $this->filterByOption($selected_option_services);
         $this->filterByCreditLimit();
         $this->addAvailability();
         $this->calculateHasPartner();
+
     }
 
     private function findPartnersByServiceAndLocation($partner_id = null)
@@ -62,7 +64,9 @@ class PartnerList
         $query = Partner::whereHas('locations', function ($query) {
             $query->where('locations.id', (int)$this->location);
         })->whereHas('services', function ($query) use ($service_ids) {
-            $query->whereIn('services.id', $service_ids)->published();
+            foreach ($service_ids as $service_id) {
+                $query->where('services.id', $service_id)->publishedForAll();
+            }
         })->published()->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet');
         if ($partner_id != null) {
             $query = $query->where('partners.id', $partner_id);
@@ -111,6 +115,20 @@ class PartnerList
         $this->partners->load('reviews');
         foreach ($this->partners as $partner) {
             $partner['rating'] = (new ReviewRepository())->getAvgRating($partner->reviews);
+        }
+    }
+
+    public function calculateTotalRatings()
+    {
+        foreach ($this->partners as $partner) {
+            $partner['total_ratings'] = count($partner->reviews);
+        }
+    }
+
+    public function calculateOngoingJobs()
+    {
+        foreach ($this->partners as $partner) {
+            $partner['ongoing_jobs'] = $partner->onGoingJobs();
         }
     }
 

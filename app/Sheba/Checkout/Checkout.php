@@ -66,6 +66,7 @@ class Checkout
         $data['sales_channel'] = $request->sales_channel;
         $data['date'] = $request->date;
         $data['time'] = $request->time;
+        $data['crm_id'] = $request->crm;
         if ($request->has('address')) {
             $data['address'] = $request->address;
         }
@@ -88,7 +89,7 @@ class Checkout
                     'order_id' => $order->id, 'partner_id' => $partner->id,
                     'payment_method' => $data['payment_method']
                 ]);
-                $job = Job::create(['category_id' => ($selected_services->first())->category_id, 'partner_order_id' => $partner_order->id, 'schedule_date' => $data['date'], 'preferred_time' => $data['time']]);
+                $job = Job::create(['category_id' => ($selected_services->first())->category_id, 'partner_order_id' => $partner_order->id, 'schedule_date' => $data['date'], 'preferred_time' => $data['time'], 'crm_id' => $data['crm_id']]);
                 $this->saveJobServices($job, $partner->services, $selected_services, $data);
             });
         } catch (QueryException $e) {
@@ -112,6 +113,7 @@ class Checkout
                 'job_id' => $job->id,
                 'service_id' => $selected_service->id,
                 'quantity' => $selected_service->quantity,
+                'additional_info' => $selected_service->additional_information,
                 'created_by' => $data['created_by'],
                 'created_by_name' => $data['created_by_name'],
                 'unit_price' => $price,

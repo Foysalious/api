@@ -37,6 +37,7 @@ $api->version('v1', function ($api) {
         $api->post('career', 'App\Http\Controllers\CareerController@apply');
         $api->get('category-service', 'App\Http\Controllers\CategoryServiceController@getCategoryServices');
         $api->get('job-times', 'App\Http\Controllers\JobController@getPreferredTimes');
+        $api->get('times', 'App\Http\Controllers\JobController@getPreferredTimes');
         $api->get('cancel-job-reasons', 'App\Http\Controllers\JobController@cancelJobReasons');
 
         $api->post('voucher-valid', 'App\Http\Controllers\CheckoutController@validateVoucher');

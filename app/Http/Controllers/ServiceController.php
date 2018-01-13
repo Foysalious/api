@@ -50,7 +50,7 @@ class ServiceController extends Controller
         try {
             $service = Service::where('id', $service)
                 ->select('id', 'name', 'unit', 'category_id', 'description', 'thumb', 'slug', 'min_quantity', 'banner', 'faqs', 'variable_type', 'variables')
-                ->published()
+                ->publishedForAll()
                 ->first();
             if ($service == null)
                 return api_response($request, null, 404);

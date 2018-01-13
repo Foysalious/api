@@ -191,4 +191,9 @@ class Partner extends Model
         return $this->withdrawalRequests()->currentWeek()->notCancelled()->first();
     }
 
+    public function onGoingJobs()
+    {
+        return $this->jobs()->whereIn('status', [constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Schedule_Due']])->count();
+    }
+
 }

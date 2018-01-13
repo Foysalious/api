@@ -193,12 +193,12 @@ class OrderController extends Controller
 
     public function store($customer, Request $request)
     {
-        try {
+//        try {
             $order = new Checkout($customer);
             $order = $order->placeOrder($request);
             return $order ? api_response($request, $order, 200) : api_response($request, $order, 500);
-        } catch (\Throwable $e) {
-            return api_response($request, null, 500);
-        }
+//        } catch (\Throwable $e) {
+//            return api_response($request, null, 500);
+//        }
     }
 }

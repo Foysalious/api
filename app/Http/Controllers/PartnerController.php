@@ -321,7 +321,6 @@ class PartnerController extends Controller
             $this->validate($request, [
                 'date' => 'required|date_format:Y-m-d',
                 'time' => 'required|string',
-                'location' => 'required|numeric',
                 'services' => 'required|string'
             ]);
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $location);
@@ -329,6 +328,8 @@ class PartnerController extends Controller
             if ($partner_list->hasPartners) {
                 $partner_list->addPricing();
                 $partner_list->calculateAverageRating();
+                $partner_list->calculateTotalRatings();
+                $partner_list->calculateOngoingJobs();
                 $partner_list->sortByShebaSelectedCriteria();
                 $partners = $partner_list->partners;
                 $partners->each(function ($partner, $key) {
