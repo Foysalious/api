@@ -162,7 +162,7 @@ class PartnerController extends Controller
             if (count($reviews) > 0) {
                 $breakdown = $this->reviewRepository->getReviewBreakdown($reviews);
                 $partner = $this->reviewRepository->getGeneralReviewInformation($partner);
-                $avg_rating = $reviews->avg('rating');
+                $avg_rating = $this->reviewRepository->getAvgRating($reviews);
                 $reviews = $reviews->filter(function ($item, $key) {
                     return $item->review != '' || $item->review != null;
                 })->each(function ($review, $key) {
@@ -236,8 +236,12 @@ class PartnerController extends Controller
             $unassigned_resource_ids = $resource_ids->diff($assigned_resource_ids);
             $sales_stats = (new PartnerSalesStatistics($request->partner))->calculate();
             $info = array(
-                'todays_jobs' => $jobs->where('schedule_date', Carbon::now()->toDateString())->count(),
-                'tomorrows_jobs' => $jobs->where('schedule_date', Carbon::tomorrow()->toDateString())->count(),
+                'todays_jobs' => $jobs->filter(function ($job, $key) {
+                    return $job->schedule_date == Carbon::now()->toDateString() && $job->status != constants('JOB_STATUSES')['Served'];
+                })->count(),
+                'tomorrows_jobs' => $jobs->filter(function ($job, $key) {
+                    return $job->schedule_date == Carbon::tomorrow()->toDateString() && $job->status != constants('JOB_STATUSES')['Served'];
+                })->count(),
                 'accepted_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Accepted'])->count(),
                 'schedule_due_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Schedule_Due'])->count(),
                 'process_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Process'])->count(),
@@ -304,7 +308,7 @@ class PartnerController extends Controller
     {
         try {
             list($offset, $limit) = calculatePagination($request);
-            $notifications = (new NotificationRepository())->getNotifications($request->partner, $offset, $limit);
+            $notifications = (new NotificationRepository())->getManagerNotifications($request->partner, $offset, $limit);
             if (count($notifications) > 0) {
                 return api_response($request, $notifications, 200, ['notifications' => $notifications->values()->all()]);
             } else {

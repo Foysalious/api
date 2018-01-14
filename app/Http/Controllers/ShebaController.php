@@ -13,7 +13,7 @@ use App\Repositories\ServiceRepository;
 use Carbon\Carbon;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Redis;
 use Validator;
 
 class ShebaController extends Controller
@@ -126,5 +126,39 @@ class ShebaController extends Controller
         $result = ['time_slots' => $time_slots, 'valid_time_slots' => $valid_time_slots];
         return api_response($request, $result, 200, $result);
 
+    }
+
+    public function getVersions(Request $request)
+    {
+        try {
+            $apps = json_decode(Redis::get('app_versions'));
+            if ($apps == null) {
+                $apps = $this->scrapeAppVersionsAndStoreInRedis();
+            }
+            return api_response($request, $apps, 200, ['apps' => $apps]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    private function scrapeAppVersionsAndStoreInRedis()
+    {
+        $version_string = 'itemprop="softwareVersion">';
+        $apps = constants('APPS');
+        $final = [];
+        foreach ($apps as $key => $value) {
+            $headers = get_headers($value);
+            $version_code = 0;
+            if (substr($headers[0], 9, 3) == "200") {
+                $dom = file_get_contents($value);
+                $version = strpos($dom, $version_string);
+                $result_string = trim(substr($dom, $version + strlen($version_string), 15));
+                $final_string = explode(' ', $result_string);
+                $version_code = (int)str_replace('.', '', $final_string[0]);
+            }
+            array_push($final, ['name' => $key, 'version_code' => $version_code, 'is_critical' => 0]);
+        }
+        Redis::set('app_versions', json_encode($final));
+        return $final;
     }
 }

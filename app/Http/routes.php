@@ -29,6 +29,7 @@ $api->version('v1', function ($api) {
         $api->get('decrypt', 'App\Http\Controllers\AccountController@decryptData');
 
         $api->get('info', 'App\Http\Controllers\ShebaController@getInfo');
+        $api->get('versions', 'App\Http\Controllers\ShebaController@getVersions');
         $api->get('images', 'App\Http\Controllers\ShebaController@getImages');
         $api->get('locations', 'App\Http\Controllers\LocationController@getAllLocations');
         $api->get('lead-reward', 'App\Http\Controllers\ShebaController@getLeadRewardAmount');

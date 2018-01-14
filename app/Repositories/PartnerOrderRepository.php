@@ -80,7 +80,7 @@ class PartnerOrderRepository
             ->get()->each(function ($partner_order) {
                 $partner_order['sales'] = (double)$partner_order->calculate($price_only = true)->totalCost;
                 $partner_order['week_name'] = $partner_order->closed_at->format('D');
-                $partner_order['day'] = $partner_order->closed_at->day;
+                $partner_order['day'] = $partner_order->closed_at->toDateString();
                 $partner_order['sheba_collection'] = (double)$partner_order->sheba_collection;
                 $partner_order['partner_collection'] = (double)$partner_order->partner_collection;
                 $partner_order['finance_collection'] = (double)$partner_order->finance_collection;
@@ -115,7 +115,7 @@ class PartnerOrderRepository
         $week = collect();
         if (count($partner_orders) > 0) {
             $partner_orders->groupBy('day')->each(function ($item, $key) use ($week) {
-                $week[Carbon::createFromDate(null, null, $key)->format('D')] = $item->sum('sales');
+                $week[Carbon::parse($key)->format('D')] = $item->sum('sales');
             });
         }
         for ($date = $start_time; $date < $end_time; $date->addDay()) {

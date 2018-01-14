@@ -362,32 +362,8 @@ class CheckoutRepository
         } catch (RequestException $e) {
             return false;
         }
-//        $partner = [];
-//        for ($i = 0; $i < count($partner_order_id); $i++) {
-//            $partner_order = PartnerOrder::find($partner_order_id[$i]);
-//            $partner_order->calculate();
-//            //to send data in email
-//            array_push($partner, array("partner_order_id" => $partner_order->id, "due" => $partner_order->due));
-//            $partner_order_payment = $this->getPartnerOrderPayment($partner_order);
-//            $partner_order_payment->amount = $partner_order->due;
-//            $partner_order_payment->log = 'Due paid';
-//            $partner_order_payment->save();
-//            $partner_order->payment_method = 'online';
-//            $partner_order->sheba_collection += $partner_order->due;
-//            $partner_order->update();
-//            (new NotificationRepository())->forOnlinePayment($partner_order); //REMOVE
-//        }
-//        $this->sendSpPaymentClearMail($partner);
     }
 
-    public function sendSpPaymentClearMail($partner)
-    {
-//        Mail::send('orders.order-verfication', ['customer' => $customer, 'order' => $order], function ($m) use ($customer)
-//        {
-//            $m->from('yourEmail@domain.com', 'Sheba.xyz');
-//            $m->to($customer->email)->subject('Order Verification');
-//        });
-    }
 
     public function sendOrderConfirmationMail($order, $customer)
     {
@@ -485,14 +461,10 @@ class CheckoutRepository
     public function sendConfirmation($customer, $order)
     {
         $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
-        //send order info to customer  by mail
         (new SmsHandler('order-created'))->send($customer->profile->mobile, [
             'order_code' => $order->code()
         ]);
         (new NotificationRepository())->send($order);
-//        if (isEmailValid($customer->profile->email)) {
-//            $this->dispatch(new SendOrderConfirmationEmail($customer->profile, $order));
-//        }
     }
 
     public function getTotalCartAmount($cart)
@@ -553,7 +525,6 @@ class CheckoutRepository
         $notification = $notificationBuilder->build();
         $data = $dataBuilder->build();
 
-        $downstreamResponse = FCM::sendTo($token, $option, $notification, $data);
-//        dd($downstreamResponse->numberSuccess());
+        FCM::sendTo($token, $option, $notification, $data);
     }
 }

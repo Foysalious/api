@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class PartnerTransactionController extends Controller
@@ -21,7 +22,13 @@ class PartnerTransactionController extends Controller
                     $transaction['balance'] = $balance -= $transaction->amount;
                 }
                 removeRelationsFromModel($transaction);
-            })->sortByDesc('id')->values()->all();
+            })->sortByDesc('id');
+            if ($request->has('month') && $request->has('year')) {
+                $transactions = $transactions->filter(function ($transaction, $key) use ($request) {
+                    return ($transaction->created_at->month == $request->month) && ($transaction->created_at->year == $request->year);
+                });
+            }
+            $transactions = array_slice($transactions->values()->all(), $offset, $limit);
             return count($transactions) > 0 ? api_response($request, $transactions, 200, ['transactions' => $transactions, 'balance' => $request->partner->wallet]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);

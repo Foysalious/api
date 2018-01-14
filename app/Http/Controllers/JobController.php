@@ -4,10 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Job;
 use App\Models\JobCancelLog;
+use App\Repositories\JobCancelLogRepository;
 use App\Repositories\PapRepository;
+use App\Sheba\JobStatus;
+use FacebookAds\Http\Exception\RequestException;
+use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use DB;
 use Carbon\Carbon;
+
 class JobController extends Controller
 {
     private $job_statuses_show;
@@ -92,31 +97,25 @@ class JobController extends Controller
         return response()->json(['reasons' => config('constants.JOB_CANCEL_REASONS_FROM_CUSTOMER'), 'code' => 200]);
     }
 
-    public function cancelJob($customer, $job, Request $request)
+    public function cancel($customer, $job, Request $request)
     {
-        $job = Job::find($job);
-        $previous_status = $job->status;
-        if ($previous_status == config("constants.JOB_STATUSES_SHOW")['Pending']['customer']) {
-            $job->status = 'Cancelled';
-            if ($job->update()) {
-                $job_cancel = new JobCancelLog();
-                $job_cancel->job_id = $job->id;
-                $job_cancel->from_status = $previous_status;
-                $job_cancel->cancel_reason = 'Customer Dependency';
-                $job_cancel->log = 'Job has been cancelled by customer from front-end';
-                $job_cancel->cancel_reason_details = $request->reason;
-                $job_cancel->created_by_name = 'Customer';
-                if ($job_cancel->save()) {
-//                    $order = $job->partner_order->order;
-//                    $order->calculate();
-//                    if ($order->status == constants('ORDER_STATUSES_SHOW')['Cancelled']['sheba']) {
-//                        (new PapRepository())->refund($order->code());
-//                    }
-                    return response()->json(['msg' => 'Job Cancelled Successfully!', 'code' => 200]);
-                }
+        try {
+            $job = Job::find($job);
+            $previous_status = $job->status;
+            $customer = $request->customer;
+            $job_status = new JobStatus($job,$request);
+            $job_status->__set('updated_by', $request->customer);
+            if ($response = $job_status->update('Cancelled')) {
+                $job_cancel_log = new JobCancelLogRepository($job);
+                $job_cancel_log->__set('created_by', $customer);
+                $job_cancel_log->store($previous_status, $request->reason);
+                return api_response($request, true, 200);
+            } else {
+                return api_response($request, $response, $response->code);
             }
-        } else {
-            return response()->json(['code' => 404]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
         }
     }
+
 }

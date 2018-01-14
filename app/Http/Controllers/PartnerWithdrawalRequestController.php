@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Partner;
 use App\Models\PartnerWithdrawalRequest;
+use App\Sheba\UserRequestInformation;
 use Illuminate\Http\Request;
 use Validator;
 
@@ -47,12 +48,13 @@ class PartnerWithdrawalRequestController extends Controller
                 $result = 'You are not eligible for sending withdraw request.';
                 return api_response($request, $result, 403, ['result' => $result]);
             }
-            $new_withdrawal = PartnerWithdrawalRequest::create([
+            $new_withdrawal = PartnerWithdrawalRequest::create(array_merge((new UserRequestInformation($request))->getInformationArray(), [
                 'partner_id' => $partner->id,
                 'amount' => $request->amount,
+                'created_by_type' => class_basename($request->manager_resource),
                 'created_by' => $request->manager_resource->id,
                 'created_by_name' => 'Resource - ' . $request->manager_resource->profile->name,
-            ]);
+            ]));
             return api_response($request, $new_withdrawal, 200);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);

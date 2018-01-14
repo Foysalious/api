@@ -2,11 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Job;
 use App\Models\JobMaterial;
 use App\Models\JobUpdateLog;
 use App\Models\Resource;
+use App\Repositories\NotificationRepository;
 use App\Repositories\PartnerRepository;
+use App\Repositories\PushNotificationRepository;
 use App\Repositories\ResourceJobRepository;
+use App\Sheba\JobTime;
+use Carbon\Carbon;
 use DB;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -72,6 +77,9 @@ class PartnerJobController extends Controller
                 if ($response) {
                     if ($response->code == 200) {
                         $job = $this->assignResource($job, $request->resource_id, $request->manager_resource);
+                        if ($job->crm_id != null) {
+                            (new NotificationRepository())->sendToCRM($job->crm_id, "Partner has accepted this job, ID-" . $job->fullCode(), $job);
+                        }
                         return api_response($request, $job, 200);
                     }
                     return api_response($request, $response, $response->code);
@@ -106,11 +114,16 @@ class PartnerJobController extends Controller
         try {
             $job = $request->job;
             $this->validate($request, [
-                'schedule_date' => 'sometimes|required|date|after:yesterday',
+                'schedule_date' => 'sometimes|required|date|after:' . Carbon::yesterday(),
                 'preferred_time' => 'required_with:schedule_date|string',
                 'resource_id' => 'required_without_all:schedule_date,preferred_time|not_in:' . $job->resource_id,
             ]);
             if ($request->has('schedule_date') && $request->has('preferred_time')) {
+                $job_time = new JobTime($request->day, $request->time);
+                $job_time->validate();
+                if (!$job_time->isValid) {
+                    return api_response($request, null, 400, ['message' => $job_time->error_message]);
+                }
                 $request->merge(['resource' => $request->manager_resource]);
                 $response = $this->resourceJobRepository->reschedule($job->id, $request);
                 return api_response($request, $response, $response->code);
@@ -224,7 +237,7 @@ class PartnerJobController extends Controller
         JobUpdateLog::create(($logData));
     }
 
-    private function assignResource($job, $resource_id, Resource $manager_resource)
+    private function assignResource(Job $job, $resource_id, Resource $manager_resource)
     {
         $updatedData = [
             'msg' => 'Resource Change',
@@ -234,6 +247,20 @@ class PartnerJobController extends Controller
         $job->resource_id = $resource_id;
         $job->update();
         $this->jobUpdateLog($job->id, json_encode($updatedData), $manager_resource);
+
+        (new PushNotificationRepository())->send([
+            "title" => 'Resource has been assigned',
+            "message" => $job->resource->profile->name . " has been added as a resource for your job.",
+            "event_type" => 'Job',
+            "event_id" => $job->id
+        ], 'customer_' . $job->partner_order->order->customer->id);
+
+        (new PushNotificationRepository())->send([
+            "title" => 'Assigned to a new job',
+            "message" => 'You have been assigned to a new job. Job ID: ' . $job->fullCode(),
+            "event_type" => 'Job',
+            "event_id" => $job->id
+        ], 'resource_' . $job->resource_id);
         return $job;
     }
 

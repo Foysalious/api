@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Service;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
+use App\Sheba\JobTime;
 use Carbon\Carbon;
 use Dingo\Api\Routing\Helpers;
 use Illuminate\Http\Request;
@@ -166,6 +167,11 @@ class ServiceController extends Controller
     public function getPartnersOfLocation($service, $location = null, Request $request)
     {
         try {
+            $job_time = new JobTime($request->day, $request->time);
+            $job_time->validate();
+            if (!$job_time->isValid) {
+                return api_response($request, null, 400, ['message' => $job_time->error_message]);
+            }
             $service = Service::where('id', $service)
                 ->select('id', 'name', 'unit', 'category_id', 'description', 'min_quantity', 'thumb', 'banner', 'faqs', 'slug', 'variable_type', 'variables')
                 ->first();
@@ -192,19 +198,13 @@ class ServiceController extends Controller
         }
     }
 
-
-    /**
-     * Change partner according to the selected options
-     * @param $service
-     * @param null $location
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function changePartner($service, $location = null, Request $request)
     {
-//        if (!$this->validateDateAndTime($request)) {
-//            return api_response($request, null, 403, ['result' => 'Selected Date or Time is invalid!']);
-//        }
+        $job_time = new JobTime($request->day, $request->time);
+        $job_time->validate();
+        if (!$job_time->isValid) {
+            return api_response($request, null, 400, ['message' => $job_time->error_message]);
+        }
         $service = Service::find($service);
         $option = null;
         //get the selected options
@@ -295,20 +295,15 @@ class ServiceController extends Controller
         }
     }
 
-    private function validateDateAndTime(Request $request)
+
+    private function isValidDay($day)
     {
-        if ($request->has('day')) {
-            if ($request->day < Carbon::now()->toDateString()) {
-                return false;
-            }
-            return true;
-        }
-        if ($request->has('time')) {
-            if (!array_has($this->getSelectableTimes(), $request->time)) {
-                return false;
-            }
-            return true;
-        }
+        return Carbon::parse($day) >= Carbon::now()->toDateString();
+    }
+
+    private function isValidTime($time)
+    {
+        return array_has($this->getSelectableTimes(), $time);
     }
 
     private function getSelectableTimes()
