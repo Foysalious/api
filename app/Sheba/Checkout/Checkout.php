@@ -100,8 +100,8 @@ class Checkout
 
     private function saveJobServices(Job $job, $services, $selected_services, $data)
     {
-        foreach ($services as $service) {
-            $selected_service = $selected_services->where('id', $service->id)->first();
+        foreach ($selected_services as $selected_service) {
+            $service = $services->where('id', $selected_service->id)->first();
             if ($service->isOptions()) {
                 $price = (new PartnerServiceRepository())->getPriceOfOptionsService($service->pivot->prices, $selected_service->option);
             } else {

@@ -10,7 +10,7 @@ use App\Repositories\DiscountRepository;
 use App\Repositories\PartnerRepository;
 use App\Repositories\PartnerServiceRepository;
 use App\Repositories\ReviewRepository;
-
+use DB;
 
 class PartnerList
 {
@@ -36,7 +36,7 @@ class PartnerList
         $selected_services = collect();
         foreach ($services as $service) {
             $selected_service = Service::select('id', 'category_id', 'min_quantity', 'variable_type', 'variables')->where('id', $service->id)->publishedForAll()->first();
-            foreach ($service as $key=>$value){
+            foreach ($service as $key => $value) {
                 $selected_service[$key] = $value;
             }
             $selected_services->push($selected_service);
@@ -48,7 +48,7 @@ class PartnerList
     {
         $this->partners = $this->findPartnersByServiceAndLocation($partner_id);
         $this->partners->load(['services' => function ($q) {
-            $q->whereIn('service_id', $this->selected_services->pluck('id'));
+            $q->whereIn('service_id', $this->selected_services->pluck('id')->unique());
         }]);
         $selected_option_services = $this->selected_services->where('variable_type', 'Options');
         $this->filterByOption($selected_option_services);
@@ -60,13 +60,11 @@ class PartnerList
 
     private function findPartnersByServiceAndLocation($partner_id = null)
     {
-        $service_ids = $this->selected_services->pluck('id');
+        $service_ids = $this->selected_services->pluck('id')->unique();
         $query = Partner::whereHas('locations', function ($query) {
             $query->where('locations.id', (int)$this->location);
         })->whereHas('services', function ($query) use ($service_ids) {
-            foreach ($service_ids as $service_id) {
-                $query->where('services.id', $service_id)->publishedForAll();
-            }
+            $query->select(DB::raw('count(*) as c'))->whereIn('services.id', $service_ids)->publishedForAll()->groupBy('partner_id')->havingRaw('c=' . count($service_ids));
         })->published()->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet');
         if ($partner_id != null) {
             $query = $query->where('partners.id', $partner_id);
@@ -159,8 +157,8 @@ class PartnerList
             'discounted_price' => 0,
             'original_price' => 0
         ];
-        foreach ($partner->services as $service) {
-            $selected_service = $this->selected_services->where('id', $service->id)->first();
+        foreach ($this->selected_services as $selected_service) {
+            $service = $partner->services->where('id', $selected_service->id)->first();
             if ($service->isOptions()) {
                 $price = $this->partnerServiceRepository->getPriceOfOptionsService($service->pivot->prices, $selected_service->option);
             } else {
@@ -171,6 +169,18 @@ class PartnerList
             $total_service_price['discounted_price'] += $discount->__get('discounted_price');
             $total_service_price['original_price'] += $discount->__get('original_price');
         }
+//        foreach ($partner->services as $service) {
+//            $selected_service = $this->selected_services->where('id', $service->id)->first();
+//            if ($service->isOptions()) {
+//                $price = $this->partnerServiceRepository->getPriceOfOptionsService($service->pivot->prices, $selected_service->option);
+//            } else {
+//                $price = (double)$service->pivot->prices;
+//            }
+//            $discount = $this->calculateDiscountForService($price, $selected_service, $service);
+//            $total_service_price['discount'] += $discount->__get('discount');
+//            $total_service_price['discounted_price'] += $discount->__get('discounted_price');
+//            $total_service_price['original_price'] += $discount->__get('original_price');
+//        }
         return $total_service_price;
     }
 
