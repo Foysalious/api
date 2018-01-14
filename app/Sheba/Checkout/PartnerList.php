@@ -101,7 +101,7 @@ class PartnerList
     public function addPricing()
     {
         foreach ($this->partners as $partner) {
-            $pricing = $this->calculateServicePricing($partner);
+            $pricing = $this->calculateServicePricingAndBreakdowntoPartner($partner);
             foreach ($pricing as $key => $value) {
                 $partner[$key] = $value;
             }
@@ -150,13 +150,14 @@ class PartnerList
         });
     }
 
-    private function calculateServicePricing($partner)
+    private function calculateServicePricingAndBreakdowntoPartner($partner)
     {
         $total_service_price = [
             'discount' => 0,
             'discounted_price' => 0,
             'original_price' => 0
         ];
+        $services = [];
         foreach ($this->selected_services as $selected_service) {
             $service = $partner->services->where('id', $selected_service->id)->first();
             if ($service->isOptions()) {
@@ -165,22 +166,19 @@ class PartnerList
                 $price = (double)$service->pivot->prices;
             }
             $discount = $this->calculateDiscountForService($price, $selected_service, $service);
-            $total_service_price['discount'] += $discount->__get('discount');
-            $total_service_price['discounted_price'] += $discount->__get('discounted_price');
-            $total_service_price['original_price'] += $discount->__get('original_price');
+            $service = [];
+            $service['discount'] = $discount->__get('discount');
+            $service['discounted_price'] = $discount->__get('discounted_price');
+            $service['original_price'] = $discount->__get('original_price');
+
+            $total_service_price['discount'] += $service['discount'];
+            $total_service_price['discounted_price'] += $service['discounted_price'];
+            $total_service_price['original_price'] += $service['original_price'];
+            $service['id'] = $selected_service->id;
+            $service['option'] = $selected_service->option;
+            array_push($services, $service);
         }
-//        foreach ($partner->services as $service) {
-//            $selected_service = $this->selected_services->where('id', $service->id)->first();
-//            if ($service->isOptions()) {
-//                $price = $this->partnerServiceRepository->getPriceOfOptionsService($service->pivot->prices, $selected_service->option);
-//            } else {
-//                $price = (double)$service->pivot->prices;
-//            }
-//            $discount = $this->calculateDiscountForService($price, $selected_service, $service);
-//            $total_service_price['discount'] += $discount->__get('discount');
-//            $total_service_price['discounted_price'] += $discount->__get('discounted_price');
-//            $total_service_price['original_price'] += $discount->__get('original_price');
-//        }
+        array_add($partner, 'breakdown', $services);
         return $total_service_price;
     }
 
