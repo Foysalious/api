@@ -24,10 +24,10 @@ class Job extends Model
     public $profit;
     public $margin;
 
-//    public function service()
-//    {
-//        return $this->belongsTo(Service::class);
-//    }
+    public function service()
+    {
+        return $this->belongsTo(Service::class);
+    }
     public function jobServices()
     {
         return $this->hasMany(JobService::class);
