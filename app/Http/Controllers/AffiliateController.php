@@ -170,6 +170,7 @@ class AffiliateController extends Controller
                     foreach ($agents as $agent) {
                         $agent['name'] = $agent->profile->name;
                         $agent['picture'] = $agent->profile->pro_pic;
+                        $agent['mobile'] = $agent->profile->mobile;
                         $agent['total_gifted_amount'] = (double)$agent->total_gifted_amount;
                         array_forget($agent, 'profile');
                         array_forget($agent, 'ambassador_id');
