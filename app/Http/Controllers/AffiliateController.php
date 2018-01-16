@@ -160,7 +160,7 @@ class AffiliateController extends Controller
             }
             $affiliate->load(['agents' => function ($q) {
                 $q->select('id', 'profile_id', 'ambassador_id', 'total_gifted_number', 'total_gifted_amount')->with(['profile' => function ($q) {
-                    $q->select('id', 'name', 'pro_pic');
+                    $q->select('id', 'name', 'pro_pic', 'mobile');
                 }]);
             }]);
             if (count($affiliate->agents) != 0) {
