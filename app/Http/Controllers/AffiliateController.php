@@ -6,6 +6,7 @@ use App\Models\Affiliate;
 use App\Repositories\AffiliateRepository;
 use App\Repositories\FileRepository;
 use App\Repositories\LocationRepository;
+use App\Repositories\NotificationRepository;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
@@ -273,6 +274,24 @@ class AffiliateController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (Exception $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getNotifications($affiliate, Request $request)
+    {
+        try {
+            list($offset, $limit) = calculatePagination($request);
+            $notifications = $request->affiliate->notifications()->select('id', 'title', 'event_type', 'event_id', 'type', 'is_seen', 'created_at')->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
+            if (count($notifications) > 0) {
+                $notifications = $notifications->map(function ($notification) {
+                    $notification->event_type = str_replace('App\Models\\', "", $notification->event_type);
+                    array_add($notification, 'time', $notification->created_at->timestamp);
+                    return $notification;
+                });
+            }
+            return $notifications;
+        } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
     }
