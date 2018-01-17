@@ -36,26 +36,55 @@ class LocationController extends Controller
                 'lng' => 'required|numeric',
             ]);
             $locations = Location::where('name', 'NOT LIKE', '%Rest%')->published()->get();
-            foreach ($locations as $location) {
-                $geo_info = json_decode($location->geo_informations);
-                $location['radius'] = (double)$geo_info->radius * 1000;
-                $location['distance'] = $this->calculateDistanceByGoogle($request, $geo_info);
-//                $location['distance'] = $this->calculateDistance($request, $geo_info) * 1000;
+            $origins = $this->getOriginsForDistanceMatrix($locations);
+            if ($result = $this->getDistanceCalculationResult($request->lat, $request->lng, $origins)) {
+                if ($result->status == 'OK') {
+                    $rows = $result->rows;
+                    foreach ($locations as $key => $location) {
+                        if ($rows[$key]->elements[0]->status == 'OK') {
+                            $location['radius'] = (double)(json_decode($location->geo_informations))->radius;
+                            $location['distance'] = round($rows[$key]->elements[0]->distance->value / 1000);
+                        } else {
+                            unset($locations[$key]);
+                        }
+                    }
+                    $locations = $locations->sortBy('distance')->filter(function ($location, $key) {
+                        return $location->distance <= $location->radius;
+                    });
+                    $location = count($locations) > 0 ? $locations->first() : Location::where('name', 'LIKE', '%Rest%')->published()->first();
+                    return api_response($request, $location, 200, ['location' => collect($location)->only(['id', 'name'])]);
+                }
             }
-            $locations = $locations->sortBy('distance')->filter(function ($location, $key) {
-                return $location->distance <= $location->radius;
-            });
-            if (count($locations) > 0) {
-                $location = $locations->first();
-            } else {
-                $location = Location::where('name', 'LIKE', '%Rest%')->published()->first();
-            }
-            return api_response($request, $location, 200, ['location' => collect($location)->only(['id', 'name'])]);
+            return api_response($request, null, 500, ['result' => $result]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
+        }
+    }
+
+    private function getOriginsForDistanceMatrix($locations)
+    {
+        $origins = '';
+        foreach ($locations as $location) {
+            $geo_info = json_decode($location->geo_informations);
+            $origins .= "$geo_info->lat,$geo_info->lng|";
+        }
+        return rtrim($origins, "|");
+    }
+
+    private function getDistanceCalculationResult($lat, $lng, $origins)
+    {
+        $client = new Client();
+        try {
+            $res = $client->request('GET', 'https://maps.googleapis.com/maps/api/distancematrix/json',
+                [
+                    'query' => ['origins' => $origins, 'destinations' => "$lat,$lng", 'key' => env('GOOGLE_DISTANCEMATRIX_KEY')]
+                ]);
+            return json_decode($res->getBody());
+        } catch (RequestException $e) {
+            return null;
         }
     }
 
@@ -69,27 +98,4 @@ class LocationController extends Controller
         return ROUND((6371.0 * ACOS(SIN($lat1 * PI() / 180) * SIN($lat2 * PI() / 180) + COS($lat1 * PI() / 180) * COS($lat2 * PI() / 180) * COS(($lng1 * PI() / 180) - ($lng2 * PI() / 180)))), 2);
     }
 
-    private function calculateDistanceByGoogle(Request $request, $geo_info)
-    {
-        $client = new Client();
-        try {
-            $res = $client->request('GET', 'https://maps.googleapis.com/maps/api/distancematrix/json',
-                [
-                    'query' => ['origins' => "$geo_info->lat,$geo_info->lng", 'destinations' => "$request->lat,$request->lng", 'key' => 'AIzaSyB5FJ8GazV8DOtjmqBc_Xy1MN1gOGEksQA']
-                ]);
-            $result = json_decode($res->getBody());
-            if ($result->status == "OK") {
-                $rows = ($result->rows[0]);
-                foreach ($rows as $row) {
-                    if ($row[0]->status == 'OK') {
-                        return (double)$row[0]->distance->value;
-                        break;
-                    }
-                }
-                return null;
-            }
-        } catch (RequestException $e) {
-            return null;
-        }
-    }
 }
