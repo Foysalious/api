@@ -57,6 +57,9 @@ $api->version('v1', function ($api) {
         $api->group(['prefix' => 'jobs'], function ($api) {
             $api->get('times', 'App\Http\Controllers\JobController@getPreferredTimes');
         });
+        $api->group(['prefix' => 'locations'], function ($api) {
+            $api->get('current', 'App\Http\Controllers\LocationController@getCurrent');
+        });
         $api->group(['prefix' => 'categories'], function ($api) {
             $api->get('/', 'App\Http\Controllers\CategoryController@index');
             $api->get('{category}/secondaries', 'App\Http\Controllers\CategoryController@getSecondaries');
