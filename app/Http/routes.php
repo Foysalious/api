@@ -254,6 +254,7 @@ $api->version('v1', function ($api) {
     $api->group(['prefix' => 'affiliates/{affiliate}', 'middleware' => ['affiliate.auth']], function ($api) {
         $api->post('edit', 'App\Http\Controllers\AffiliateController@edit');
         $api->get('leads', 'App\Http\Controllers\AffiliateController@leadInfo');
+        $api->get('notifications', 'App\Http\Controllers\AffiliateController@getNotifications');
 
         $api->get('wallet', 'App\Http\Controllers\AffiliateController@getWallet');
         $api->get('status', 'App\Http\Controllers\AffiliateController@getStatus');
