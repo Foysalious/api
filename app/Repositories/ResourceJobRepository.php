@@ -12,7 +12,7 @@ use Carbon\Carbon;
 
 class ResourceJobRepository
 {
-    private $created_by_type = 'Resource';
+    private $created_by_type = 'App/Models/Resource';
 
     public function rearrange($jobs)
     {
