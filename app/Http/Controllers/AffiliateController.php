@@ -286,11 +286,13 @@ class AffiliateController extends Controller
             if (count($notifications) > 0) {
                 $notifications = $notifications->map(function ($notification) {
                     $notification->event_type = str_replace('App\Models\\', "", $notification->event_type);
-                    array_add($notification, 'time', $notification->created_at->timestamp);
+                    array_add($notification, 'timestamp', $notification->created_at->timestamp);
                     return $notification;
                 });
+                return api_response($request, $notifications, 200, ['notifications' => $notifications]);
+            } else {
+                return api_response($request, null, 404);
             }
-            return $notifications;
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
