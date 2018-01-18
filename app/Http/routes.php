@@ -138,6 +138,9 @@ $api->version('v1', function ($api) {
             $api->get('notifications', 'App\Http\Controllers\CustomerController@getNotifications');
             $api->post('suggest-promo', 'App\Http\Controllers\PromotionController@suggestPromo');
             $api->put('addresses/{address}', 'App\Http\Controllers\CustomerAddressController@update');
+            $api->group(['prefix' => 'favorites'], function ($api) {
+                $api->get('/', 'App\Http\Controllers\CustomerController@getFavorites');
+            });
         });
         $api->group(['prefix' => 'checkout'], function ($api) {
             $api->get('place-order-final', 'App\Http\Controllers\CheckoutController@placeOrderFinal');
