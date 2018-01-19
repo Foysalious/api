@@ -47,9 +47,67 @@ class CustomerFavoriteController extends Controller
                 $favorite->services()->attach($service->id, [
                     'name' => $service->name, 'variable_type' => $service->variable_type,
                     'variables' => $service->isOptions() ? $service->getVariablesOfOptionsService($service_info->option) : '[]',
-                    'option' => json_encode($service_info->option), 'quantity' => $service_info->quantity
+                    'option' => json_encode($service_info->option),
+                    'quantity' => (double)$service->min_quantity <= (double)$service_info->quantity ? $service_info->quantity : $service->min_quantity
                 ]);
             }
         }
     }
+
+    public function update($customer, Request $request)
+    {
+
+        try {
+            $favorites = json_decode($request->data);
+            if ($response = $this->updateFavorite($customer, $favorites)) {
+                return api_response($request, null, 200);
+            } else {
+                return api_response($request, null, 500);
+            }
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    private function updateFavorite($customer, $favorites)
+    {
+        try {
+            DB::transaction(function () use ($favorites, $customer) {
+                foreach ($favorites as $favorite) {
+                    $customer_favorite = CustomerFavorite::where([['id', $favorite->id], ['customer_id', (int)$customer]])->first();
+                    if ($customer_favorite) {
+                        $customer_favorite->name = $favorite->name;
+                        $customer_favorite->additional_info = $favorite->additional_info;
+                        $customer_favorite->update();
+                        $this->updateServices($customer_favorite, $favorite->services);
+                    }
+                }
+            });
+            return true;
+        } catch (QueryException $e) {
+            return false;
+        }
+    }
+
+    public function updateServices($customer_favorite, $services)
+    {
+        foreach ($services as $service_info) {
+            if (isset($service_info->favorite_service)) {
+                $service = $customer_favorite->services()->where('customer_favourite_service.id', $service_info->favorite_service)->first();
+                if ($service) {
+                    if ($service->parent_category == (int)$customer_favorite->category_id) {
+                        $service->pivot->name = $service->name;
+                        $service->pivot->variable_type = $service->variable_type;
+                        $service->pivot->variables = $service->isOptions() ? $service->getVariablesOfOptionsService($service_info->option) : '[]';
+                        $service->pivot->option = json_encode($service_info->option);
+                        $service->pivot->quantity = (double)$service->min_quantity <= (double)$service_info->quantity ? $service_info->quantity : $service->min_quantity;
+                        $service->pivot->update();
+                    }
+                }
+            } else {
+                $this->saveServices($customer_favorite, [$service_info]);
+            }
+        }
+    }
+
 }

@@ -140,6 +140,7 @@ $api->version('v1', function ($api) {
             $api->put('addresses/{address}', 'App\Http\Controllers\CustomerAddressController@update');
             $api->group(['prefix' => 'favorites'], function ($api) {
                 $api->post('/', 'App\Http\Controllers\CustomerFavoriteController@store');
+                $api->put('/', 'App\Http\Controllers\CustomerFavoriteController@update');
             });
         });
         $api->group(['prefix' => 'checkout'], function ($api) {

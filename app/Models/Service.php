@@ -196,4 +196,8 @@ class Service extends Model
         return json_encode($variables);
     }
 
+    public function favorites()
+    {
+        return $this->belongsToMany(CustomerFavorite::class, 'customer_favourite_service', 'service_id', 'customer_favourite_id')->withPivot(['name', 'additional_info', 'variable_type', 'variables', 'option', 'quantity']);
+    }
 }
