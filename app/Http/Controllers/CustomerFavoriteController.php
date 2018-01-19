@@ -10,6 +10,25 @@ use DB;
 
 class CustomerFavoriteController extends Controller
 {
+    public function index($customer, Request $request)
+    {
+        $customer = $request->customer;
+        $customer->load(['favorites' => function ($q) {
+            $q->with('services');
+        }]);
+        $favorites = $customer->favorites->each(function ($favorite, $key) {
+            $services = [];
+            $favorite->services->each(function ($service) use ($favorite, &$services) {
+                array_push($services, $service->pivot);
+            });
+            removeRelationsAndFields($favorite);
+            $favorite['services'] = $services;
+        });
+        if (count($customer->favorites) > 0) {
+            return api_response($request, null, 200, ['favorites' => $favorites]);
+        }
+    }
+
     public function store($customer, Request $request)
     {
         try {

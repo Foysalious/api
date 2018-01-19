@@ -139,6 +139,7 @@ $api->version('v1', function ($api) {
             $api->post('suggest-promo', 'App\Http\Controllers\PromotionController@suggestPromo');
             $api->put('addresses/{address}', 'App\Http\Controllers\CustomerAddressController@update');
             $api->group(['prefix' => 'favorites'], function ($api) {
+                $api->get('/', 'App\Http\Controllers\CustomerFavoriteController@index');
                 $api->post('/', 'App\Http\Controllers\CustomerFavoriteController@store');
                 $api->put('/', 'App\Http\Controllers\CustomerFavoriteController@update');
             });
