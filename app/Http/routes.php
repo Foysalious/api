@@ -142,6 +142,7 @@ $api->version('v1', function ($api) {
                 $api->get('/', 'App\Http\Controllers\CustomerFavoriteController@index');
                 $api->post('/', 'App\Http\Controllers\CustomerFavoriteController@store');
                 $api->put('/', 'App\Http\Controllers\CustomerFavoriteController@update');
+                $api->delete('{favorite}', 'App\Http\Controllers\CustomerFavoriteController@destroy');
             });
         });
         $api->group(['prefix' => 'checkout'], function ($api) {

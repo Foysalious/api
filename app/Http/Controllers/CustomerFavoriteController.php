@@ -75,7 +75,6 @@ class CustomerFavoriteController extends Controller
 
     public function update($customer, Request $request)
     {
-
         try {
             $favorites = json_decode($request->data);
             if ($response = $this->updateFavorite($customer, $favorites)) {
@@ -126,6 +125,19 @@ class CustomerFavoriteController extends Controller
             } else {
                 $this->saveServices($customer_favorite, [$service_info]);
             }
+        }
+    }
+
+    public function destroy($customer, $favorite, Request $request)
+    {
+        try {
+            $customer_favorite = CustomerFavorite::where([['id', $favorite], ['customer_id', (int)$customer]])->first();
+            if ($customer_favorite) {
+                $customer_favorite->delete();
+                return api_response($request, null, 200);
+            }
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
         }
     }
 
