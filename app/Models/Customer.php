@@ -101,4 +101,9 @@ class Customer extends Authenticatable
     {
         return $this->morphMany(Notification::class, 'notifiable');
     }
+
+    public function favorites()
+    {
+        return $this->hasMany(CustomerFavorite::class);
+    }
 }

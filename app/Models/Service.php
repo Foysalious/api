@@ -36,6 +36,11 @@ class Service extends Model
         return $this->category();
     }
 
+    public function getParentCategoryAttribute()
+    {
+        return $this->category->parent->id;
+    }
+
     public function partners()
     {
         return $this->belongsToMany(Partner::class)->withPivot($this->servicePivotColumns);
@@ -177,6 +182,18 @@ class Service extends Model
     public function isOptions()
     {
         return $this->variable_type == 'Options';
+    }
+
+    public function getVariablesOfOptionsService(array $options)
+    {
+        $variables = [];
+        foreach ((array)(json_decode($this->variables))->options as $key => $service_option) {
+            array_push($variables, [
+                'question' => $service_option->question,
+                'answer' => explode(',', $service_option->answers)[$options[$key]]
+            ]);
+        }
+        return json_encode($variables);
     }
 
 }
