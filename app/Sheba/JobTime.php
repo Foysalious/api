@@ -9,13 +9,15 @@ class JobTime
 {
     private $schedule_date;
     private $preferred_time;
-    public $isValid;
+    private $today;
+    public $isValid = 1;
     public $error_message = '';
 
     public function __construct($schedule_date, $preferred_time)
     {
-        $this->schedule_date = $schedule_date != null ? $schedule_date : Carbon::now()->toDateString();
+        $this->schedule_date = $schedule_date != null ? Carbon::parse($schedule_date) : Carbon::now()->toDateString();
         $this->preferred_time = $preferred_time != null ? $preferred_time : 'Anytime';
+        $this->today = Carbon::now()->toDateString();
     }
 
     public function validate()
@@ -26,18 +28,20 @@ class JobTime
         } elseif (!$this->isValidTime()) {
             $this->isValid = 0;
             $this->error_message .= "Preferred Time is Invalid";
-        } else {
-            $this->isValid = 1;
         }
+        return $this->isValid;
     }
 
     private function isValidDate()
     {
-        return Carbon::parse($this->schedule_date) >= Carbon::now()->toDateString();
+        return $this->schedule_date >= $this->today;
     }
 
     private function isValidTime()
     {
+        if ($this->schedule_date > $this->today) {
+            return 1;
+        }
         return array_has($this->getSelectableTimes(), $this->preferred_time);
     }
 
