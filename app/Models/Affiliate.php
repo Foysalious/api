@@ -38,6 +38,11 @@ class Affiliate extends Model
         return $info ? json_decode($info) : [];
     }
 
+    public function notifications()
+    {
+        return $this->morphMany(Notification::class, 'notifiable');
+    }
+
     public function scopeSuspended($query)
     {
         return $query->where('is_suspended', 1);
@@ -69,7 +74,8 @@ class Affiliate extends Model
         return $this->belongsTo(Affiliate::class, 'ambassador_id');
     }
 
-    public function agents(){
+    public function agents()
+    {
         return $this->hasMany(Affiliate::class, 'ambassador_id');
     }
 }

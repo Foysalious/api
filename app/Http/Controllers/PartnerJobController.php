@@ -11,6 +11,7 @@ use App\Repositories\PartnerRepository;
 use App\Repositories\PushNotificationRepository;
 use App\Repositories\ResourceJobRepository;
 use App\Sheba\JobTime;
+use App\Sheba\UserRequestInformation;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Database\QueryException;
@@ -232,9 +233,10 @@ class PartnerJobController extends Controller
             'job_id' => $job_id,
             'log' => $log,
             'created_by' => $created_by->id,
-            'created_by_name' => class_basename($created_by) . "-" . $created_by->profile->name
+            'created_by_name' => class_basename($created_by) . "-" . $created_by->profile->name,
+            'created_by_type' => 'App/Models/' . class_basename($created_by)
         ];
-        JobUpdateLog::create(($logData));
+        JobUpdateLog::create(array_merge((new UserRequestInformation(\request()))->getInformationArray(), $logData));
     }
 
     private function assignResource(Job $job, $resource_id, Resource $manager_resource)
