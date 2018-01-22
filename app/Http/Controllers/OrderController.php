@@ -3,18 +3,32 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\Job;
+use App\Models\JobService;
+use App\Models\Order;
+use App\Models\Partner;
+use App\Models\PartnerOrder;
+use App\Models\PartnerService;
+use App\Models\Service;
+use App\Repositories\JobServiceRepository;
 use App\Repositories\OrderRepository;
+use App\Sheba\Checkout\Checkout;
+use App\Sheba\Partner\PartnerList;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Redis;
+use DB;
 
 class OrderController extends Controller
 {
     private $orderRepository;
+    private $jobServiceRepository;
     private $job_statuses_show;
 
     public function __construct()
     {
         $this->orderRepository = new OrderRepository();
+        $this->jobServiceRepository = new JobServiceRepository();
         $this->job_statuses_show = config('constants.JOB_STATUSES_SHOW');
     }
 
@@ -55,7 +69,7 @@ class OrderController extends Controller
                             array_add($job, 'show', true);
                         }
                     }
-                    $job['code']=$job->fullCode();
+                    $job['code'] = $job->fullCode();
                     array_add($job, 'customer_charge', $job->grossPrice);
                     array_add($job, 'material_price', $job->materialPrice);
                     array_forget($job, 'partner_order');
@@ -174,6 +188,17 @@ class OrderController extends Controller
             return response()->json(['msg' => 'successful', 'code' => 200]);
         } else {
             return response()->json(['msg' => 'not found', 'code' => 404]);
+        }
+    }
+
+    public function store($customer, Request $request)
+    {
+        try {
+            $order = new Checkout($customer);
+            $order = $order->placeOrder($request);
+            return $order ? api_response($request, $order, 200) : api_response($request, $order, 500);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
         }
     }
 }

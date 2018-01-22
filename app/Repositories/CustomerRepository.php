@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\Customer;
 use App\Models\CustomerMobile;
+use App\Models\Order;
 use App\Models\Profile;
 use Cache;
 use Mail;
@@ -253,6 +254,19 @@ class CustomerRepository
         if (empty($profile->mobile) && !$mobile_profile) {
             $profile->mobile = $mobile;
             $update = true;
+        }
+    }
+
+    public function updateProfileInfoWhilePlacingOrder(Order $order)
+    {
+        try {
+            $update = false;
+            $profile = $order->customer->profile;
+            $this->updateProfileNameIfEmpty($profile, $order->delivery_name, $update);
+            $this->updateProfileMobileIfEmpty($profile, formatMobile($order->delivery_mobile), $update);
+            if ($update) return $profile->update();
+        } catch (\Throwable $e) {
+            return false;
         }
     }
 

@@ -52,9 +52,9 @@ class CheckoutController extends Controller
             $customer = Customer::find($order->customer_id);
             $this->updateVouchers($order, $customer);
             $this->checkoutRepository->sendConfirmation($customer->id, $order);
-//            $order->calculate();
-//            return response()->json(['code' => 200, 'pap_number' => (double)$order->profit, 'pap_code' => $order->code(), 'msg' => 'Order placed successfully!']);
-            return response()->json(['code' => 200, 'msg' => 'Order placed successfully!']);
+            $order->calculate();
+            return response()->json(['code' => 200, 'pap_number' => (double)$order->profit, 'pap_code' => $order->code(), 'msg' => 'Order placed successfully!']);
+//            return response()->json(['code' => 200, 'msg' => 'Order placed successfully!']);
         } else {
             return response()->json(['code' => 500, 'msg' => 'There is a problem while placing the order!']);
         }
@@ -249,27 +249,17 @@ class CheckoutController extends Controller
         $transaction->save();
     }
 
-    /**
-     * @param $customer
-     * @param $voucher
-     * @param $order
-     */
     private function updateVoucherInPromoList(Customer $customer, $voucher, $order)
     {
-        if ($voucher->is_referral) {
-            $customer->promotions()->where('voucher_id', $order->voucher_id)->update(['is_valid' => 0]);
-            return;
-        }
         $rules = json_decode($voucher->rules);
-        if (array_key_exists('nth_orders', $rules)) {
+        if (array_key_exists('nth_orders', $rules) && !array_key_exists('ignore_nth_orders_if_used', $rules)) {
             $nth_orders = $rules->nth_orders;
-            //customer next order count will cross max nth order value
-            if ($customer->orders->count() >= max($nth_orders)) {
+            if ($customer->orders->count() == max($nth_orders)) {
                 $customer->promotions()->where('voucher_id', $order->voucher_id)->update(['is_valid' => 0]);
                 return;
             }
         }
-        if ($voucher->usage($customer->id) >= $voucher->max_order) {
+        if ($voucher->usage($customer->id) == $voucher->max_order) {
             $customer->promotions()->where('voucher_id', $order->voucher_id)->update(['is_valid' => 0]);
             return;
         }

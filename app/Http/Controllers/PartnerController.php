@@ -2,29 +2,33 @@
 
 namespace App\Http\Controllers;
 
-
 use App\Models\Partner;
-use App\Models\PartnerOrder;
+use App\Models\Service;
+use App\Repositories\DiscountRepository;
 use App\Repositories\NotificationRepository;
 use App\Repositories\PartnerOrderRepository;
 use App\Repositories\PartnerRepository;
+use App\Repositories\PartnerServiceRepository;
 use App\Repositories\ResourceJobRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
+use App\Sheba\Checkout\PartnerList;
+use App\Sheba\Checkout\PartnerPrice;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-
 use DB;
+use Illuminate\Validation\ValidationException;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
-use Sheba\Charts\SalesGrowth;
 use Validator;
 
 class PartnerController extends Controller
 {
     private $serviceRepository;
+    private $partnerServiceRepository;
     private $reviewRepository;
     private $resourceJobRepository;
     private $partnerOrderRepository;
+    private $discountRepository;
 
     public function __construct()
     {
@@ -32,6 +36,8 @@ class PartnerController extends Controller
         $this->reviewRepository = new ReviewRepository();
         $this->resourceJobRepository = new ResourceJobRepository();
         $this->partnerOrderRepository = new PartnerOrderRepository();
+        $this->partnerServiceRepository = new PartnerServiceRepository();
+        $this->discountRepository = new DiscountRepository();
     }
 
     public function index()
@@ -308,6 +314,37 @@ class PartnerController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function findPartners(Request $request, $location)
+    {
+        try {
+            $this->validate($request, [
+                'date' => 'required|date_format:Y-m-d',
+                'time' => 'required|string',
+                'services' => 'required|string'
+            ]);
+            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $location);
+            $partner_list->find();
+            if ($partner_list->hasPartners) {
+                $partner_list->addPricing();
+                $partner_list->calculateAverageRating();
+                $partner_list->calculateTotalRatings();
+                $partner_list->calculateOngoingJobs();
+                $partner_list->sortByShebaSelectedCriteria();
+                $partners = $partner_list->partners;
+                $partners->each(function ($partner, $key) {
+                    removeRelationsAndFields($partner);
+                });
+                return api_response($request, $partners, 200, ['partners' => $partners->values()->all()]);
+            }
+            return api_response($request, null, 404);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }

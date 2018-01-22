@@ -4,8 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class CustomerDeliveryAddress extends Model {
+class CustomerDeliveryAddress extends Model
+{
     protected $table = 'customer_delivery_addresses';
+
+    protected $fillable = ['name', 'address'];
 
     public function customer()
     {

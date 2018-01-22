@@ -10,6 +10,7 @@ use App\Models\Service;
 use App\Models\Slider;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
+use Carbon\Carbon;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
@@ -105,6 +106,26 @@ class ShebaController extends Controller
     public function getLeadRewardAmount()
     {
         return response()->json(['code' => 200, 'amount' => constants('AFFILIATION_REWARD_MONEY')]);
+    }
+
+    public function getTimeSlots(Request $request)
+    {
+        $start_of_working_hour = Carbon::parse('8:00');
+        $end_of_working_hour = Carbon::parse('22:00');
+        $time_slots = $valid_time_slots = [];
+        $current_time = Carbon::now();
+        for ($time = $start_of_working_hour; $time->lessThan($end_of_working_hour);) {
+            if ($time > $current_time) {
+                $time_slot = $time->format('h:i A') . ' - ' . ($time->addHour(1))->format('h:i A');
+                array_push($valid_time_slots, $time_slot);
+                array_push($time_slots, $time_slot);
+            } else {
+                array_push($time_slots, $time->format('h:i A') . ' - ' . ($time->addHour(1))->format('h:i A'));
+            }
+        }
+        $result = ['time_slots' => $time_slots, 'valid_time_slots' => $valid_time_slots];
+        return api_response($request, $result, 200, $result);
+
     }
 
     public function getVersions(Request $request)

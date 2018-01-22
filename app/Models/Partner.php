@@ -53,7 +53,7 @@ class Partner extends Model
 
     public function services()
     {
-        return $this->belongsToMany(Service::class);
+        return $this->belongsToMany(Service::class)->withPivot($this->servicePivotColumns);
     }
 
     public function locations()
@@ -189,6 +189,11 @@ class Partner extends Model
     public function currentWeekWithdrawalRequest()
     {
         return $this->withdrawalRequests()->currentWeek()->notCancelled()->first();
+    }
+
+    public function onGoingJobs()
+    {
+        return $this->jobs()->whereIn('status', [constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Schedule_Due']])->count();
     }
 
 }

@@ -28,6 +28,10 @@ class Job extends Model
     {
         return $this->belongsTo(Service::class);
     }
+    public function jobServices()
+    {
+        return $this->hasMany(JobService::class);
+    }
 
     public function resource()
     {

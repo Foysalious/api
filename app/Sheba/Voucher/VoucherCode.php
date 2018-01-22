@@ -199,7 +199,7 @@ class VoucherCode
             if (!$this->isValid) return $this;
         }
         $this->isValid = $this->rules->checkCustomerId($this->customerId);
-        return $this->checkNthOrder()->checkUsageLimit();
+        return $this->checkNthOrder()->checkUsageLimit()->checkBroadcastingPromoUsage();
     }
 
     private function checkOrderAmount($amount)
@@ -213,7 +213,7 @@ class VoucherCode
     {
         if (!$this->isValid) return $this;
         $total_order = Order::where('customer_id', $this->customerId)->count();
-        $this->isValid = $this->rules->checkCustomerNthOrder($total_order + 1);
+        $this->isValid = $this->rules->checkCustomerNthOrder($this->customer, $this->voucher, $total_order + 1);
         return $this;
     }
 
@@ -233,5 +233,21 @@ class VoucherCode
             array_push($this->rules->errors, 'max_usage');
         }
         return $this;
+    }
+
+    private function checkBroadcastingPromoUsage()
+    {
+        if (!$this->isValid) return $this;
+        $this->isValid = !$this->hasCustomerUsedAmbassadorPromoBefore();
+        if (!$this->isValid) {
+            $this->rules->invalidMessage = $this->rules->invalidMessages('customers');
+            array_push($this->rules->errors, 'broadcasting');
+        }
+        return $this;
+    }
+
+    private function hasCustomerUsedAmbassadorPromoBefore()
+    {
+        return $this->customer->usedVouchers()->where('owner_type', "App\\Models\\Affiliate")->count() > 0;
     }
 }

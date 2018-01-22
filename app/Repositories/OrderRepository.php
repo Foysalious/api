@@ -32,4 +32,8 @@ class OrderRepository
         }])->select('id', 'delivery_mobile', 'delivery_name', 'delivery_address', 'sales_channel', 'location_id', 'created_at')->orderBy('id', 'desc')->get();
     }
 
+    public function save($data){
+
+    }
+
 }
