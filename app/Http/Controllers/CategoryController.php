@@ -119,7 +119,7 @@ class CategoryController extends Controller
 
     public function getSecondaryServices($category, Request $request)
     {
-        if ($category = $this->api->get('categories/' . $category . '/secondaries')) {
+        if ($category = $this->api->get('v1/categories/' . $category . '/secondaries')) {
             try {
                 $secondaries = $category['secondaries'];
                 list($offset, $limit) = calculatePagination($request);
