@@ -44,7 +44,7 @@ class ResourceJobRepository
     public function getJobs($resource)
     {
         $resource->load(['jobs' => function ($q) {
-            $q->info()->whereIn('status', ['Accepted', 'Process', 'Schedule Due'])->tillNow()->with('partner_order.order', 'service');
+            $q->info()->validStatus()->tillNow()->with('partner_order.order', 'service');
         }]);
         return $resource->jobs;
     }
