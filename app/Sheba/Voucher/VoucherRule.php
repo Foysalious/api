@@ -1,6 +1,9 @@
 <?php namespace Sheba\Voucher;
 
 
+use App\Models\Customer;
+use App\Models\Voucher;
+
 class VoucherRule
 {
     private $rules;
@@ -89,11 +92,13 @@ class VoucherRule
         return false;
     }
 
-    public function checkCustomerNthOrder($n)
+    public function checkCustomerNthOrder(Customer $customer, Voucher $voucher, $n)
     {
         if(!$this->hasKey('nth_orders')) return true;
 
         if(in_array($n, $this->rules->nth_orders)) return true;
+
+        if($this->checkForIgnoringNthOrder($customer, $voucher)) return true;
 
         $this->invalidMessage = $this->invalidMessages('customers');
         array_push($this->errors, 'nth_orders');
@@ -134,6 +139,18 @@ class VoucherRule
             'sales_channels' => $general_message . '(For selected channel)',
         ];
         return (array_key_exists($key, $messages)) ? $messages[$key] : $general_message;
+    }
+
+    private function checkForIgnoringNthOrder(Customer $customer, Voucher $voucher)
+    {
+        return $this->hasKey('ignore_nth_orders_if_used') &&
+        $this->rules->ignore_nth_orders_if_used &&
+        $this->customerNthOrderHasVoucher($customer, $voucher);
+    }
+
+    private function customerNthOrderHasVoucher(Customer $customer, Voucher $voucher)
+    {
+        return in_array($voucher->id, $customer->nthOrders($this->rules->nth_orders)->pluck('voucher_id')->toArray());
     }
 
 }
