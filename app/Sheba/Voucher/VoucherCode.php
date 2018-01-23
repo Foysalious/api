@@ -248,6 +248,6 @@ class VoucherCode
 
     private function hasCustomerUsedAmbassadorPromoBefore()
     {
-        return $this->customer->usedVouchers()->where('owner_type', "App\\Models\\Affiliate")->count() > 0;
+        return $this->customer->usedVouchers()->where('owner_type', "App\\Models\\Affiliate")->where('id', '<>', $this->voucher->id)->count() > 0;
     }
 }
