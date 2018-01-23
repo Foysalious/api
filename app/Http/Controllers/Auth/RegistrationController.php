@@ -36,16 +36,19 @@ class RegistrationController extends Controller
             $from = implode(',', constants('FROM'));
             $this->validate($request, ['email' => 'required|email|unique:profiles', 'password' => 'required|min:6', 'kit_code' => 'required', 'from' => "required|in:$from"]);
             if ($kit_data = $this->fbKit->authenticateKit($request->kit_code)) {
+                $from = $this->profileRepository->getAvatar($request->from);
                 $profile = $this->profileRepository->ifExist(formatMobile($kit_data['mobile']), 'mobile');
                 if (!$profile) {
-                    $profile = $this->profileRepository->store(array_merge($request->all(), ['mobile' => $kit_data['mobile']]));
-                    $from = $this->profileRepository->getAvatar($request->from);
-                    $this->profileRepository->registerAvatar($from, $request, $profile);
-                    $info = $this->profileRepository->getProfileInfo($from, Profile::find($profile->id), $request);
-                    return $info ? api_response($request, $info, 200, ['info' => $info]) : api_response($request, null, 404);
+                    $profile = $this->profileRepository->store(array_merge($request->all(), ['mobile' => $kit_data['mobile'], 'mobile_verified' => 1]));
                 } else {
-                    return api_response($request, null, 500, ['message' => 'Mobile already exits']);
+                    $this->profileRepository->update($profile, ['email' => $request->email]);
                 }
+                $this->profileRepository->registerAvatar($from, $request, $profile);
+                if ($profile->$from) {
+                    $this->profileRepository->registerAvatar($from, $request, $profile);
+                }
+                $info = $this->profileRepository->getProfileInfo($from, Profile::find($profile->id), $request);
+                return $info ? api_response($request, $info, 200, ['info' => $info]) : api_response($request, null, 404);
             }
             return api_response($request, null, 403);
         } catch (ValidationException $e) {

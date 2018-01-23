@@ -32,7 +32,6 @@ class ProfileRepository
         foreach ($data as $key => $value) {
             $profile->$key = $value;
         }
-        $profile->mobile_verified = $profile->mobile != null ? 1 : 0;
         $profile->save();
         return $profile;
     }
@@ -44,7 +43,6 @@ class ProfileRepository
                 $profile->$key = $value;
             }
         }
-        $profile->mobile_verified = 1;
         $profile->update();
         return $profile;
     }

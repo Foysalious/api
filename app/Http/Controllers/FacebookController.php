@@ -75,18 +75,18 @@ class FacebookController extends Controller
                         }
                         if (!$profile) {
                             DB::transaction(function () use ($fb_profile_info, $kit_data, &$profile) {
-                                $profile = $this->profileRepository->store(array_merge($fb_profile_info, ['mobile' => $kit_data['mobile']]));
+                                $profile = $this->profileRepository->store(array_merge($fb_profile_info, ['mobile' => $kit_data['mobile'], 'mobile_verified' => 1]));
                                 $profile->pro_pic = $this->profileRepository->uploadImage($profile, $fb_profile_info['pro_pic'], 'images/profiles/');
                                 $profile->update();
                             });
                         } else {
-                            $profile = $this->profileRepository->update($profile, array_merge($fb_profile_info, ['mobile' => $kit_data['mobile']]));
+                            $profile = $this->profileRepository->update($profile, array_merge($fb_profile_info, ['mobile' => $kit_data['mobile'], 'mobile_verified' => 1]));
                         }
                     } else {
                         $profile = $this->profileRepository->update($profile, $fb_profile_info);
                     }
                 } else {
-                    $profile = $this->profileRepository->update($profile, ['mobile' => $kit_data['mobile']]);
+                    $profile = $this->profileRepository->update($profile, ['mobile' => $kit_data['mobile'], 'mobile_verified' => 1]);
                 }
                 if ($profile->$from) {
                     $this->profileRepository->registerAvatar($from, $request, $profile);
