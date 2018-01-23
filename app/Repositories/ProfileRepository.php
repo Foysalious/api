@@ -14,6 +14,7 @@ use App\Models\Resource;
 use DB;
 use Auth;
 use Mockery\Exception;
+use PhpParser\Node\Expr\Array_;
 use Sheba\Voucher\ReferralCreator;
 
 class ProfileRepository
@@ -207,6 +208,35 @@ class ProfileRepository
         return Profile::find($profile->id);
     }
 
+    public function registerAvatar($avatar, $request, Profile $profile)
+    {
+        if ($avatar == 'customer') {
+            $customer = new Customer();
+            $customer->profile_id = $profile->id;
+            $customer->remember_token = str_random(255);
+            $customer->save();
+            $referral_creator = new ReferralCreator($customer);
+            $referral_creator->create();
+            if ($request->has('referral_code')) {
+                $this->updateCustomerOwnVoucherNReferral($customer, $request->referral_code);
+            }
+            return $customer;
+        } elseif ($avatar == 'resource') {
+            $resource = new Resource();
+            $resource->profile_id = $profile->id;
+            $resource->remember_token = str_random(255);
+            $resource->save();
+            return $resource;
+        } elseif ($avatar == env('AFFILIATE_AVATAR_NAME')) {
+            $affiliate = new Affiliate();
+            $affiliate->profile_id = $profile->id;
+            $affiliate->remember_token = str_random(255);
+            $affiliate->banking_info = json_encode(array('bKash' => ''));
+            $affiliate->save();
+            (new NotificationRepository())->forAffiliateRegistration($affiliate);
+        }
+    }
+
 
     /**
      * Avatar registration by Kit
@@ -281,6 +311,19 @@ class ProfileRepository
     public function getAvatar($from)
     {
         return constants('AVATAR')[$from];
+    }
+
+    public function store(array $data)
+    {
+        $profile = new Profile();
+        $profile->remember_token = str_random(255);
+        foreach ($data as $key => $value) {
+            $profile->$key = $value;
+        }
+        $profile->email_verified = $profile->email != null ? 1 : 0;
+        $profile->mobile_verified = $profile->mobile != null ? 1 : 0;
+        $profile->save();
+        return $profile;
     }
 
 }

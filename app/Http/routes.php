@@ -21,6 +21,13 @@ $api->version('v1', function ($api) {
     $api->post('register', 'App\Http\Controllers\Auth\RegistrationController@register');
     $api->post('continue-with-kit', 'App\Http\Controllers\FacebookController@continueWithKit');
     $api->post('continue-with-facebook', 'App\Http\Controllers\FacebookController@continueWithFacebook');
+    $api->group(['prefix' => 'login', 'namespace' => 'App\Http\Controllers'], function ($api) {
+        $api->post('facebook', 'FacebookController@login');
+    });
+    $api->group(['prefix' => 'register', 'namespace' => 'App\Http\Controllers'], function ($api) {
+        $api->post('email', 'Auth\RegistrationController@registerByEmailAndMobile');
+        $api->post('facebook', 'FacebookController@register');
+    });
     $api->post('send-password-reset-email', 'App\Http\Controllers\Auth\PasswordController@sendResetPasswordEmail');
     $api->post('reset-password', 'App\Http\Controllers\Auth\PasswordController@resetPassword');
 
