@@ -34,13 +34,16 @@ class FacebookController extends Controller
             $this->validate($request, ['access_token' => 'required', 'from' => "required|in:$from"]);
             if ($fb_profile_info = $this->getFacebookProfileInfo($request->access_token)) {
                 $fb_profile_info = (new FacebookProfile($fb_profile_info))->getProfileInformation();
-                $profile = $this->profileRepository->ifExist($fb_profile_info['fb_id'], 'fb_id');
+                $profile = $this->profileRepository->getIfExist($fb_profile_info['fb_id'], 'fb_id');
                 if ($profile) {
                     $from = $this->profileRepository->getAvatar($request->from);
+                    if ($profile->$from) {
+                        $this->profileRepository->registerAvatar($from, $request, $profile);
+                    }
                     $info = $this->profileRepository->getProfileInfo($from, Profile::find($profile->id), $request);
                     return $info ? api_response($request, $info, 200, ['info' => $info]) : api_response($request, null, 404);
                 } else {
-                    return api_response($request, null, 500, ['message' => 'Facebook already exits']);
+                    return api_response($request, null, 500, ['message' => 'Facebook account not registered! Please register first']);
                 }
             }
             return api_response($request, null, 403);
