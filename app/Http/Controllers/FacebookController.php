@@ -11,6 +11,7 @@ use GuzzleHttp\Exception\RequestException;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
 use Validator;
+use DB;
 
 class FacebookController extends Controller
 {
@@ -56,27 +57,39 @@ class FacebookController extends Controller
         try {
             $from = implode(',', constants('FROM'));
             $this->validate($request, ['access_token' => 'required', 'kit_code' => 'required', 'from' => "required|in:$from"]);
-            if ($fb_profile_info = $this->getFacebookProfileInfo($request->access_token)) {
-                $fb_profile_info = (new FacebookProfile($fb_profile_info))->getProfileInformation();
-                $profile = $this->profileRepository->ifExist($fb_profile_info['fb_id'], 'fb_id');
+            $fb_profile_info = $this->getFacebookProfileInfo($request->access_token);
+            $kit_data = $this->fbKit->authenticateKit($request->kit_code);
+            if ($fb_profile_info && $kit_data) {
+                $from = $this->profileRepository->getAvatar($request->from);
+                $fb_profile = new FacebookProfile($fb_profile_info);
+                $fb_profile_info = $fb_profile->getProfileInformation();
+                $profile = $this->profileRepository->getIfExist($fb_profile_info['fb_id'], 'fb_id');
                 if (!$profile) {
-                    if ($kit_data = $this->fbKit->authenticateKit($request->kit_code)) {
-                        $profile = $this->profileRepository->ifExist(formatMobile($kit_data['mobile']), 'mobile');
-                        if (!$profile) {
-                            $profile = $this->profileRepository->store(array_merge($fb_profile_info, ['mobile' => $kit_data['mobile']]));
-                            $profile->pro_pic = $this->profileRepository->uploadImage($profile, $fb_profile_info['pro_pic'], 'images/profiles/');
-                            $profile->update();
-                            $from = $this->profileRepository->getAvatar($request->from);
-                            $this->profileRepository->registerAvatar($from, $request, $profile);
-                            $info = $this->profileRepository->getProfileInfo($from, Profile::find($profile->id), $request);
-                            return $info ? api_response($request, $info, 200, ['info' => $info]) : api_response($request, null, 404);
-                        } else {
-                            return api_response($request, null, 500, ['message' => 'Mobile already exits']);
+                    $profile = $this->profileRepository->getIfExist($kit_data['mobile'], 'mobile');
+                    if (!$profile) {
+                        if ($fb_profile->hasEmail()) {
+                            $profile = $this->profileRepository->getIfExist($fb_profile_info['email'], 'email');
                         }
+                        if (!$profile) {
+                            DB::transaction(function () use ($fb_profile_info, $kit_data, &$profile) {
+                                $profile = $this->profileRepository->store(array_merge($fb_profile_info, ['mobile' => $kit_data['mobile']]));
+                                $profile->pro_pic = $this->profileRepository->uploadImage($profile, $fb_profile_info['pro_pic'], 'images/profiles/');
+                                $profile->update();
+                            });
+                        } else {
+                            $profile = $this->profileRepository->update($profile, array_merge($fb_profile_info, ['mobile' => $kit_data['mobile']]));
+                        }
+                    } else {
+                        $profile = $this->profileRepository->update($profile, $fb_profile_info);
                     }
                 } else {
-                    return api_response($request, null, 500, ['message' => 'Facebook already exits']);
+                    $profile = $this->profileRepository->update($profile, ['mobile' => $kit_data['mobile']]);
                 }
+                if ($profile->$from) {
+                    $this->profileRepository->registerAvatar($from, $request, $profile);
+                }
+                $info = $this->profileRepository->getProfileInfo($from, Profile::find($profile->id), $request);
+                return $info ? api_response($request, $info, 200, ['info' => $info]) : api_response($request, null, 404);
             }
             return api_response($request, null, 403);
         } catch (ValidationException $e) {

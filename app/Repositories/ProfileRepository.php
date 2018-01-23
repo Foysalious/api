@@ -19,6 +19,35 @@ use Sheba\Voucher\ReferralCreator;
 
 class ProfileRepository
 {
+    public function getIfExist($data, $queryColumn)
+    {
+        $profile = Profile::where($queryColumn, $data)->first();
+        return $profile != null ? $profile : false;
+    }
+
+    public function store(array $data)
+    {
+        $profile = new Profile();
+        $profile->remember_token = str_random(255);
+        foreach ($data as $key => $value) {
+            $profile->$key = $value;
+        }
+        $profile->mobile_verified = $profile->mobile != null ? 1 : 0;
+        $profile->save();
+        return $profile;
+    }
+
+    public function update($profile, array $data)
+    {
+        foreach ($data as $key => $value) {
+            if (empty($profile->$key) || $profile->$key == null) {
+                $profile->$key = $value;
+            }
+        }
+        $profile->mobile_verified = 1;
+        $profile->update();
+        return $profile;
+    }
 
     /**
      * Check if user already exists
@@ -313,17 +342,5 @@ class ProfileRepository
         return constants('AVATAR')[$from];
     }
 
-    public function store(array $data)
-    {
-        $profile = new Profile();
-        $profile->remember_token = str_random(255);
-        foreach ($data as $key => $value) {
-            $profile->$key = $value;
-        }
-        $profile->email_verified = $profile->email != null ? 1 : 0;
-        $profile->mobile_verified = $profile->mobile != null ? 1 : 0;
-        $profile->save();
-        return $profile;
-    }
 
 }

@@ -6,7 +6,7 @@ namespace App\Sheba;
 class FacebookProfile
 {
     public $name;
-    public $email;
+    public $email = null;
     public $picture;
     public $gender;
     public $id;
@@ -21,7 +21,11 @@ class FacebookProfile
     private function set()
     {
         $this->name = $this->fb_info['name'];
-        $this->email = isset($this->fb_info['email']) ? $this->fb_info['email'] : null;
+        if (isset($this->fb_info['email'])) {
+            if ($this->fb_info['email'] != 'undefined') {
+                $this->email = $this->fb_info['email'];
+            }
+        }
         $this->gender = isset($this->fb_info['gender']) ? ucfirst($this->fb_info['gender']) : null;
         $this->id = $this->fb_info['id'];
         $this->picture = $this->fb_info['picture']['data']['url'];
@@ -30,11 +34,17 @@ class FacebookProfile
     public function getProfileInformation()
     {
         return array(
-            'fb_id' =>$this->id,
+            'fb_id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
             'gender' => $this->gender,
             'pro_pic' => $this->picture,
+            'email_verified' => $this->email != null ? 1 : 0
         );
+    }
+
+    public function hasEmail()
+    {
+        return $this->email != null ? 1 : 0;
     }
 }
