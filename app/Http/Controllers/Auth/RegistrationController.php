@@ -39,7 +39,8 @@ class RegistrationController extends Controller
                 $from = $this->profileRepository->getAvatar($request->from);
                 $profile = $this->profileRepository->ifExist(formatMobile($kit_data['mobile']), 'mobile');
                 if (!$profile) {
-                    $profile = $this->profileRepository->store(array_merge($request->all(), ['mobile' => $kit_data['mobile'], 'mobile_verified' => 1]));
+                    return api_response($request, null, 400, ['message' => 'Email already exists! Please login']);
+//                    $profile = $this->profileRepository->store(array_merge($request->all(), ['mobile' => $kit_data['mobile'], 'mobile_verified' => 1]));
                 } else {
                     $this->profileRepository->update($profile, ['email' => $request->email]);
                 }

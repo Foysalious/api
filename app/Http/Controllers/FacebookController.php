@@ -68,25 +68,26 @@ class FacebookController extends Controller
                 $fb_profile_info = $fb_profile->getProfileInformation();
                 $profile = $this->profileRepository->getIfExist($fb_profile_info['fb_id'], 'fb_id');
                 if (!$profile) {
-                    $profile = $this->profileRepository->getIfExist($kit_data['mobile'], 'mobile');
+                    $profile = $this->profileRepository->getIfExist(formatMobile($kit_data['mobile']), 'mobile');
                     if (!$profile) {
-                        if ($fb_profile->hasEmail()) {
-                            $profile = $this->profileRepository->getIfExist($fb_profile_info['email'], 'email');
-                        }
+                        $profile = $this->profileRepository->getIfExist($fb_profile_info['email'], 'email');
                         if (!$profile) {
                             DB::transaction(function () use ($fb_profile_info, $kit_data, &$profile) {
-                                $profile = $this->profileRepository->store(array_merge($fb_profile_info, ['mobile' => $kit_data['mobile'], 'mobile_verified' => 1]));
+                                $profile = $this->profileRepository->store(array_merge($fb_profile_info, ['mobile' => formatMobile($kit_data['mobile']), 'mobile_verified' => 1]));
                                 $profile->pro_pic = $this->profileRepository->uploadImage($profile, $fb_profile_info['pro_pic'], 'images/profiles/');
                                 $profile->update();
                             });
                         } else {
-                            $profile = $this->profileRepository->update($profile, array_merge($fb_profile_info, ['mobile' => $kit_data['mobile'], 'mobile_verified' => 1]));
+                            return api_response($request, null, 400, ['message' => 'Email already exists! Please login']);
+//                            $profile = $this->profileRepository->update($profile, array_merge($fb_profile_info, ['mobile' => $kit_data['mobile'], 'mobile_verified' => 1]));
                         }
                     } else {
-                        $profile = $this->profileRepository->update($profile, $fb_profile_info);
+                        return api_response($request, null, 400, ['message' => 'Mobile already exists! Please login']);
+//                        $profile = $this->profileRepository->update($profile, $fb_profile_info);
                     }
                 } else {
-                    $profile = $this->profileRepository->update($profile, ['mobile' => $kit_data['mobile'], 'mobile_verified' => 1]);
+                    return api_response($request, null, 400, ['message' => 'Facebook already exists! Please login']);
+//                    $profile = $this->profileRepository->update($profile, ['mobile' => $kit_data['mobile'], 'mobile_verified' => 1]);
                 }
                 if ($profile->$from) {
                     $this->profileRepository->registerAvatar($from, $request, $profile);
