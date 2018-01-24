@@ -34,8 +34,12 @@ class PartnerOrderRepository
         $jobs = $partner_order->jobs->each(function ($job) use ($partner_order) {
             $job['partner_order'] = $partner_order;
             $job = $this->partnerJobRepository->getJobInfo($job);
-            dd($job->jobServices);
+            $services = [];
+            $job->jobServices->each(function ($job_service) use (&$services) {
+                array_push($services, $this->partnerJobRepository->getJobServiceInfo($job_service));
+            });
             removeRelationsAndFields($job);
+            $job['services'] = $services;
             array_forget($job, 'partner_order');
         })->values()->all();
         removeRelationsAndFields($partner_order);

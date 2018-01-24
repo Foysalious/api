@@ -119,19 +119,6 @@ $api->version('v1', function ($api) {
 
             $api->post('{customer}/checkout/place-order', 'App\Http\Controllers\CheckoutController@placeOrder');
             $api->post('{customer}/checkout/place-order-with-online-payment', 'App\Http\Controllers\CheckoutController@placeOrderWithPayment');
-
-//        $api->post('{customer}/fb-integration', 'App\Http\Controllers\CustomerController@facebookIntegration');
-//        $api->post('{customer}/change-address', 'App\Http\Controllers\CustomerController@changeAddress');
-//        $api->post('{customer}/add-delivery-address', 'App\Http\Controllers\CustomerController@addDeliveryAddress');
-//        $api->post('{customer}/remove-address', 'App\Http\Controllers\CustomerController@removeDeliveryAddress');
-//        $api->post('{customer}/mobile', 'App\Http\Controllers\CustomerController@modifyMobile');
-//        $api->post('{customer}/add-secondary-mobile', 'App\Http\Controllers\CustomerController@addSecondaryMobile');
-//        $api->post('{customer}/remove-secondary-mobile', 'App\Http\Controllers\CustomerController@removeSecondaryMobile');
-//        $api->post('{customer}/set-primary-mobile', 'App\Http\Controllers\CustomerController@setPrimaryMobile');
-//        $api->post('{customer}/email', 'App\Http\Controllers\CustomerController@modifyEmail');
-//        $api->post('{customer}/email-verification', 'App\Http\Controllers\CustomerController@checkEmailVerification');
-//        $api->post('{customer}/send-verification-link', 'App\Http\Controllers\CustomerController@sendVerificationLink');
-
         });
         $api->group(['prefix' => 'customers/{customer}', 'middleware' => ['customer.auth']], function ($api) {
             $api->post('reviews', 'App\Http\Controllers\ReviewController@modifyReview');
@@ -257,15 +244,15 @@ $api->version('v1', function ($api) {
             $api->post('update-profile-picture', 'App\Http\Controllers\AffiliateController@updateProfilePic');
             $api->get('lead-info', 'App\Http\Controllers\AffiliateController@leadInfo');
 
-        $api->get('wallet', 'App\Http\Controllers\AffiliateController@getWallet');
-        $api->get('status', 'App\Http\Controllers\AffiliateController@getStatus');
-        $api->get('affiliations', 'App\Http\Controllers\AffiliationController@index');
-        $api->post('affiliations', 'App\Http\Controllers\AffiliationController@create');
-    });
-    $api->group(['prefix' => 'affiliates/{affiliate}', 'middleware' => ['affiliate.auth']], function ($api) {
-        $api->post('edit', 'App\Http\Controllers\AffiliateController@edit');
-        $api->get('leads', 'App\Http\Controllers\AffiliateController@leadInfo');
-        $api->get('notifications', 'App\Http\Controllers\AffiliateController@getNotifications');
+            $api->get('wallet', 'App\Http\Controllers\AffiliateController@getWallet');
+            $api->get('status', 'App\Http\Controllers\AffiliateController@getStatus');
+            $api->get('affiliations', 'App\Http\Controllers\AffiliationController@index');
+            $api->post('affiliations', 'App\Http\Controllers\AffiliationController@create');
+        });
+        $api->group(['prefix' => 'affiliates/{affiliate}', 'middleware' => ['affiliate.auth']], function ($api) {
+            $api->post('edit', 'App\Http\Controllers\AffiliateController@edit');
+            $api->get('leads', 'App\Http\Controllers\AffiliateController@leadInfo');
+            $api->get('notifications', 'App\Http\Controllers\AffiliateController@getNotifications');
 
             $api->get('wallet', 'App\Http\Controllers\AffiliateController@getWallet');
             $api->get('status', 'App\Http\Controllers\AffiliateController@getStatus');
@@ -295,6 +282,26 @@ $api->version('v1', function ($api) {
         });
         $api->group(['prefix' => 'customers/{customer}'], function ($api) {
             $api->post('orders', 'OrderController@store');
+        });
+        $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
+            $api->group(['prefix' => 'orders'], function ($api) {
+                $api->get('new', 'PartnerOrderController@newOrders');
+                $api->get('/', 'PartnerOrderController@getOrders');
+
+                $api->group(['prefix' => '{order}', 'middleware' => ['partner_order.auth']], function ($api) {
+                    $api->get('/', 'PartnerOrderController@showV2');
+                });
+            });
+            $api->group(['prefix' => 'jobs'], function ($api) {
+                $api->get('/', 'PartnerJobController@index');
+                $api->group(['prefix' => '{job}', 'middleware' => ['partner_job.auth']], function ($api) {
+                    $api->put('/', 'App\Http\Controllers\PartnerJobController@update');
+
+                    $api->group(['prefix' => 'materials'], function ($api) {
+                        $api->get('/', 'App\Http\Controllers\PartnerJobController@getMaterials');
+                    });
+                });
+            });
         });
     });
 

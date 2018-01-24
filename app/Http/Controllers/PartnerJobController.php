@@ -41,10 +41,12 @@ class PartnerJobController extends Controller
             if (count($jobs) > 0) {
                 $jobs = $jobs->sortByDesc('created_at');
                 $jobs = $jobs->each(function ($job) {
+                    dd($job);
                     $job['location'] = $job->partner_order->order->location->name;
                     $job['service_unit_price'] = (double)$job->service_unit_price;
                     $job['discount'] = (double)$job->discount;
                     $job['code'] = $job->partner_order->order->code();
+                    $job['category_name'] = $job->category->parent->name;
                     $job['customer_name'] = $job->partner_order->order->customer->profile->name;
                     $job['resource_picture'] = $job->resource != null ? $job->resource->profile->pro_pic : null;
                     $job['resource_mobile'] = $job->resource != null ? $job->resource->profile->mobile : null;

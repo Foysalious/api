@@ -141,6 +141,7 @@ class Job extends Model
         $this->complexityIndex = (new CiCalculator($this))->calculate();
         return $this;
     }
+
     private function calculateMaterialPrice()
     {
         $total_material_price = 0;
@@ -184,7 +185,7 @@ class Job extends Model
     public function scopeInfo($query)
     {
         return $query->select(
-            'jobs.id', 'jobs.discount', 'jobs.created_at', 'jobs.discount', 'sheba_contribution',
+            'jobs.id', 'jobs.discount', 'jobs.created_at', 'jobs.category_id', 'sheba_contribution',
             'partner_contribution', 'commission_rate', 'resource_id', 'schedule_date', 'service_variables',
             'job_additional_info', 'delivered_date', 'preferred_time', 'service_name',
             'status', 'service_quantity', 'service_unit_price', 'service_id', 'partner_order_id'
@@ -228,4 +229,10 @@ class Job extends Model
         }
         return in_array($this->status, $status);
     }
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
 }

@@ -29,24 +29,38 @@ class PartnerOrderController extends Controller
 
     public function show($partner, Request $request)
     {
-//        try {
+        try {
             $this->validate($request, [
                 'status' => 'sometimes|bail|required|string',
                 'filter' => 'sometimes|bail|required|string|in:ongoing,history'
             ]);
-            $partner_order = $request->partner_order;
-            if ($partner_order->id <= env('LAST_PARTNER_ORDER_ID_V1')) {
-                $partner_order = $this->partnerOrderRepository->getOrderDetails($request);
-            }else{
-                $partner_order = $this->partnerOrderRepository->getOrderDetailsV2($request);
-            }
+            $partner_order = $this->partnerOrderRepository->getOrderDetails($request);
+            $partner_order['version'] = 'v1';
             return api_response($request, $partner_order, 200, ['order' => $partner_order]);
-//        } catch (ValidationException $e) {
-//            $message = getValidationErrorMessage($e->validator->errors()->all());
-//            return api_response($request, $message, 400, ['message' => $message]);
-//        } catch (\Throwable $e) {
-//            return api_response($request, null, 500);
-//        }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function showV2($partner, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'status' => 'sometimes|bail|required|string',
+                'filter' => 'sometimes|bail|required|string|in:ongoing,history'
+            ]);
+            $partner_order = $this->partnerOrderRepository->getOrderDetailsV2($request);
+            $partner_order['version'] = 'v2';
+            return api_response($request, $partner_order, 200, ['order' => $partner_order]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
     }
 
     public function newOrders($partner, Request $request)
