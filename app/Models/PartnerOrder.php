@@ -249,4 +249,9 @@ class PartnerOrder extends Model
     {
         return $this->hasMany(PartnerOrderStatusLog::class);
     }
+
+    public function getIsV2Attribute()
+    {
+        return $this->id > env('LAST_PARTNER_ORDER_ID_V1');
+    }
 }
