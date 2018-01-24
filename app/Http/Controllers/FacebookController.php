@@ -43,7 +43,7 @@ class FacebookController extends Controller
                     $info = $this->profileRepository->getProfileInfo($from, Profile::find($profile->id), $request);
                     return $info ? api_response($request, $info, 200, ['info' => $info]) : api_response($request, null, 404);
                 } else {
-                    return api_response($request, null, 500, ['message' => 'Facebook account not registered! Please register first']);
+                    return api_response($request, null, 400, ['message' => 'Facebook account not registered! Please register first']);
                 }
             }
             return api_response($request, null, 403);
