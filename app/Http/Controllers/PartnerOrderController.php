@@ -130,6 +130,15 @@ class PartnerOrderController extends Controller
         }
     }
 
+    public function getBillsV2($partner, Request $request)
+    {
+        try {
+            dd($p)
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
     public function getLogs($partner, Request $request)
     {
         try {

@@ -290,6 +290,7 @@ $api->version('v1', function ($api) {
 
                 $api->group(['prefix' => '{order}', 'middleware' => ['partner_order.auth']], function ($api) {
                     $api->get('/', 'PartnerOrderController@showV2');
+                    $api->get('bills', 'PartnerOrderController@getBillsV2');
                 });
             });
             $api->group(['prefix' => 'jobs'], function ($api) {
