@@ -18,6 +18,7 @@ class PartnerAvailable
     {
         $date = array_key_exists('day', $data) ? $data['day'] : date('Y-m-d');
         $time = array_key_exists('time', $data) ? $data['time'] : 'Anytime';
+//        dd($this->hasAvailableResources());
         if ($this->_partnerOnLeave($date)) {
             return false;
         }
@@ -75,5 +76,13 @@ class PartnerAvailable
         }
         // If both start & end time don't fall between working hour return false
         return $fail == 2 ? false : true;
+    }
+
+    private function hasAvailableResources()
+    {
+        $this->partner->load(['resources' => function ($q) {
+            $q->verified()->type('Handyman')->with('resourceSchedules');
+        }]);
+        return $this->partner->resources;
     }
 }

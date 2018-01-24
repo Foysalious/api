@@ -79,4 +79,9 @@ class Resource extends Model
     {
         return $query->where('resource_type', $type);
     }
+
+    public function resourceSchedules()
+    {
+        return $this->hasMany(ResourceSchedule::class);
+    }
 }

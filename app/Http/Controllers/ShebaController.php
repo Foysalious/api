@@ -119,12 +119,11 @@ class ShebaController extends Controller
                 $slot_start_time = Carbon::parse($slot->start);
                 $slot_end_time = Carbon::parse($slot->end);
                 $time_slot_key = $slot->start . '-' . $slot->end;
-                $time_slot_value = $slot_start_time->format('g:i A') . ' - ' . $slot_end_time->format('g:i A');
+                $time_slot_value = $slot_start_time->format('g:i A') . '-' . $slot_end_time->format('g:i A');
                 if ($slot_start_time > $current_time) {
                     $valid_time_slots[$time_slot_key] = $time_slot_value;
-                } else {
-                    $time_slots[$time_slot_key] = $time_slot_value;
                 }
+                $time_slots[$time_slot_key] = $time_slot_value;
             }
             $result = ['time_slots' => $time_slots, 'valid_time_slots' => $valid_time_slots];
             return api_response($request, $result, 200, $result);
