@@ -6,6 +6,7 @@ use App\Jobs\SendFaqEmail;
 use App\Models\Job;
 use App\Models\OfferShowcase;
 use App\Models\Resource;
+use App\Models\ScheduleSlot;
 use App\Models\Service;
 use App\Models\Slider;
 use App\Repositories\ReviewRepository;
@@ -110,22 +111,26 @@ class ShebaController extends Controller
 
     public function getTimeSlots(Request $request)
     {
-        $start_of_working_hour = Carbon::parse('8:00');
-        $end_of_working_hour = Carbon::parse('22:00');
-        $time_slots = $valid_time_slots = [];
-        $current_time = Carbon::now();
-        for ($time = $start_of_working_hour; $time->lessThan($end_of_working_hour);) {
-            if ($time > $current_time) {
-                $time_slot = $time->format('h:i A') . ' - ' . ($time->addHour(1))->format('h:i A');
-                array_push($valid_time_slots, $time_slot);
-                array_push($time_slots, $time_slot);
-            } else {
-                array_push($time_slots, $time->format('h:i A') . ' - ' . ($time->addHour(1))->format('h:i A'));
+        try {
+            $slots = ScheduleSlot::all();
+            $time_slots = $valid_time_slots = [];
+            $current_time = Carbon::now();
+            foreach ($slots as $slot) {
+                $slot_start_time = Carbon::parse($slot->start);
+                $slot_end_time = Carbon::parse($slot->end);
+                $time_slot_key = $slot->start . '-' . $slot->end;
+                $time_slot_value = $slot_start_time->format('g:i A') . ' - ' . $slot_end_time->format('g:i A');
+                if ($slot_start_time > $current_time) {
+                    $valid_time_slots[$time_slot_key] = $time_slot_value;
+                } else {
+                    $time_slots[$time_slot_key] = $time_slot_value;
+                }
             }
+            $result = ['time_slots' => $time_slots, 'valid_time_slots' => $valid_time_slots];
+            return api_response($request, $result, 200, $result);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
         }
-        $result = ['time_slots' => $time_slots, 'valid_time_slots' => $valid_time_slots];
-        return api_response($request, $result, 200, $result);
-
     }
 
     public function getVersions(Request $request)
