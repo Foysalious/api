@@ -41,7 +41,6 @@ class PartnerJobController extends Controller
             if (count($jobs) > 0) {
                 $jobs = $jobs->sortByDesc('created_at');
                 $jobs = $jobs->each(function ($job) {
-                    dd($job);
                     $job['location'] = $job->partner_order->order->location->name;
                     $job['service_unit_price'] = (double)$job->service_unit_price;
                     $job['discount'] = (double)$job->discount;
@@ -51,6 +50,7 @@ class PartnerJobController extends Controller
                     $job['resource_picture'] = $job->resource != null ? $job->resource->profile->pro_pic : null;
                     $job['resource_mobile'] = $job->resource != null ? $job->resource->profile->mobile : null;
                     $job['rating'] = $job->review != null ? $job->review->rating : null;
+                    $job['version'] = $job->getVersion();
                     removeRelationsFromModel($job);
                 })->values()->all();
                 $jobs = array_slice($jobs, $offset, $limit);

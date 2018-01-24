@@ -235,4 +235,9 @@ class Job extends Model
         return $this->belongsTo(Category::class);
     }
 
+    public function getVersion()
+    {
+        return $this->partner_order_id > env('LAST_PARTNER_ORDER_ID_V1') ? 'v2' : 'v1';
+    }
+
 }
