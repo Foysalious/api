@@ -40,6 +40,8 @@ class DiscountRepository
                 $partner_service['discounted_price'] = 0;
             }
             $partner_service['discount_id'] = $discount->id;
+            $partner_service['sheba_contribution'] = $discount->sheba_contribution;
+            $partner_service['partner_contribution'] = $discount->partner_contribution;
         }
         return $partner_service;
     }
