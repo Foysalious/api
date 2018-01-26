@@ -219,7 +219,7 @@ class PartnerController extends Controller
                 constants('JOB_STATUSES')['Process'],
                 constants('JOB_STATUSES')['Served'],
             );
-            $partner->load(['resources' => function ($q) {
+            $partner->load(['walletSetting', 'resources' => function ($q) {
                 $q->verified()->type('Handyman');
             }, 'jobs' => function ($q) use ($statuses) {
                 $q->info()->status($statuses)->with('resource');
@@ -244,6 +244,7 @@ class PartnerController extends Controller
                 'assigned_resources' => $assigned_resource_ids->count(),
                 'unassigned_resources' => $unassigned_resource_ids->count(),
                 'balance' => (double)$partner->wallet,
+                'is_credit_limit_exceed' => $partner->isCreditLimitExceed() ? 1 : 0,
                 'today' => $sales_stats->today->sale,
                 'week' => $sales_stats->week->sale,
                 'month' => $sales_stats->month->sale

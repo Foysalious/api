@@ -191,4 +191,9 @@ class Partner extends Model
         return $this->withdrawalRequests()->currentWeek()->notCancelled()->first();
     }
 
+    public function isCreditLimitExceed()
+    {
+        return (double)$this->wallet < (double)$this->walletSetting->min_wallet_threshold;
+    }
+
 }
