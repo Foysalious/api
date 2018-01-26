@@ -90,7 +90,7 @@ class FacebookController extends Controller
                     return api_response($request, null, 400, ['message' => 'Facebook already exists! Please login']);
 //                    $profile = $this->profileRepository->update($profile, ['mobile' => $kit_data['mobile'], 'mobile_verified' => 1]);
                 }
-                if ($profile->$from) {
+                if ($profile->$from == null) {
                     $this->profileRepository->registerAvatar($from, $request, $profile);
                 }
                 $info = $this->profileRepository->getProfileInfo($from, Profile::find($profile->id), $request);
