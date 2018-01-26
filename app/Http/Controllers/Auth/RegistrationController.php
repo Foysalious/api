@@ -34,12 +34,12 @@ class RegistrationController extends Controller
     {
         try {
             $from = implode(',', constants('FROM'));
-            $this->validate($request, ['email' => 'required|email|unique:profiles', 'password' => 'required|min:6', 'kit_code' => 'required', 'from' => "required|in:$from"]);
+            $this->validate($request, ['email' => 'required|email|unique:profiles', 'password' => 'required|min:6', 'kit_code' => 'required|string', 'from' => "required|in:$from"]);
             if ($kit_data = $this->fbKit->authenticateKit($request->kit_code)) {
                 $from = $this->profileRepository->getAvatar($request->from);
                 $profile = $this->profileRepository->ifExist(formatMobile($kit_data['mobile']), 'mobile');
                 if (!$profile) {
-                    $profile = $this->profileRepository->store(array_merge($request->all(), ['mobile' => $kit_data['mobile'], 'mobile_verified' => 1]));
+                    $profile = $this->profileRepository->store(['mobile' => formatMobile($kit_data['mobile']), 'mobile_verified' => 1, 'email' => $request->email]);
                 } else {
                     return api_response($request, null, 400, ['message' => 'Mobile already exists! Please login']);
 //                    $this->profileRepository->update($profile, ['email' => $request->email]);
