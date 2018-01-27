@@ -28,6 +28,25 @@ class PartnerOrderRepository
         return $partner_order;
     }
 
+    public function getOrderDetailsV2($request)
+    {
+        $partner_order = $this->getInfo($this->loadAllRelatedRelationsV2($request->partner_order));
+        $jobs = $partner_order->jobs->each(function ($job) use ($partner_order) {
+            $job['partner_order'] = $partner_order;
+            $job = $this->partnerJobRepository->getJobInfo($job);
+            $services = [];
+            $job->jobServices->each(function ($job_service) use (&$services) {
+                array_push($services, $this->partnerJobRepository->getJobServiceInfo($job_service));
+            });
+            removeRelationsAndFields($job);
+            $job['services'] = $services;
+            array_forget($job, 'partner_order');
+        })->values()->all();
+        removeRelationsAndFields($partner_order);
+        $partner_order['jobs'] = $jobs;
+        return $partner_order;
+    }
+
     public function getNewOrdersWithJobs($request)
     {
         $jobs = (new PartnerRepository($request->partner))->jobs(array(constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']));
@@ -110,6 +129,15 @@ class PartnerOrderRepository
         }]);
     }
 
+    private function loadAllRelatedRelationsV2($partner_order)
+    {
+        return $partner_order->load(['order.location', 'jobs' => function ($q) {
+            $q->info()->with(['usedMaterials', 'resource.profile', 'jobServices' => function ($q) {
+                $q->with('service');
+            }]);
+        }]);
+    }
+
     public function getWeeklyBreakdown($partner_orders, $start_time, $end_time)
     {
         $week = collect();
@@ -150,7 +178,7 @@ class PartnerOrderRepository
 
     public function getInfo($partner_order)
     {
-        $partner_order->calculate();
+        $partner_order->calculate(true);
         $partner_order['code'] = $partner_order->code();
         $partner_order['customer_name'] = $partner_order->order->delivery_name;
         $partner_order['customer_mobile'] = $partner_order->order->delivery_mobile;

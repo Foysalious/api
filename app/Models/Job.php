@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class Job extends Model
@@ -28,6 +29,7 @@ class Job extends Model
     {
         return $this->belongsTo(Service::class);
     }
+
     public function jobServices()
     {
         return $this->hasMany(JobService::class);
@@ -63,11 +65,11 @@ class Job extends Model
         return $this->morphMany(Comment::class, 'commentable');
     }
 
-    public function calculate()
+    public function calculate($price_only = false)
     {
         $costRate = 1 - ($this->commission_rate / 100);
 
-        $this->servicePrice = formatTaka($this->service_unit_price * $this->service_quantity);
+        $this->servicePrice = formatTaka(($this->service_unit_price * $this->service_quantity) + $this->calculateServicePrice());
         $this->serviceCost = formatTaka($this->servicePrice * $costRate);
         $this->materialPrice = formatTaka($this->calculateMaterialPrice());
         $this->materialCost = formatTaka($this->materialPrice * $costRate);
@@ -75,21 +77,71 @@ class Job extends Model
         $this->totalPriceWithoutVat = formatTaka($this->servicePrice + $this->materialPrice);
         //$this->totalPrice = formatTaka($this->totalPriceWithoutVat + $this->vat); // later
         $this->totalPrice = formatTaka($this->totalPriceWithoutVat);
+        $this->discount = $this->discount + $this->calculateServiceDiscount();
         $this->grossPrice = ($this->totalPrice > $this->discount) ? formatTaka($this->totalPrice - $this->discount) : 0;
         $this->service_unit_price = formatTaka($this->service_unit_price);
-        $this->discountContributionSheba = formatTaka(($this->discount * $this->sheba_contribution) / 100);
-        $this->discountContributionPartner = formatTaka(($this->discount * $this->partner_contribution) / 100);
+        $this->discountContributionSheba = formatTaka((($this->discount * $this->sheba_contribution) / 100) + $this->calculateDiscountContributionSheba());
+        $this->discountContributionPartner = formatTaka((($this->discount * $this->partner_contribution) / 100) + $this->calculateDiscountContributionPartner());
         $this->totalCost = $this->totalCostWithoutDiscount - $this->discountContributionPartner;
         $this->grossCost = formatTaka($this->totalCost);
         $this->profit = formatTaka($this->grossPrice - $this->totalCost);
         $this->margin = ($this->totalPrice != 0) ? (($this->grossPrice - $this->totalCost) * 100) / $this->totalPrice : 0;
         $this->margin = formatTaka($this->margin);
+        if (!$price_only) {
+            $this->calculateComplexityIndex();
+        }
+        $this->isInWarranty = $this->isInWarranty();
         return $this;
     }
 
-    /**
-     * @return mixed
-     */
+    private function calculateServicePrice()
+    {
+        $total_service_price = 0;
+        foreach ($this->jobServices as $jobService) {
+            $total_service_price += $jobService->unit_price * $jobService->quantity;
+        }
+        return $total_service_price;
+    }
+
+    private function calculateServiceDiscount()
+    {
+        $total_discount_price = 0;
+        foreach ($this->jobServices as $jobService) {
+            $total_discount_price += $jobService->discount;
+        }
+        return $total_discount_price;
+    }
+
+    private function calculateDiscountContributionSheba()
+    {
+        $total_sheba_discount_contribution_price = 0;
+        foreach ($this->jobServices as $jobService) {
+            $total_sheba_discount_contribution_price += $jobService->discount * $jobService->sheba_contribution;
+        }
+        return $total_sheba_discount_contribution_price / 100;
+    }
+
+    private function calculateDiscountContributionPartner()
+    {
+        $total_partner_discount_contribution_price = 0;
+        foreach ($this->jobServices as $jobService) {
+            $total_partner_discount_contribution_price += $jobService->discount * $jobService->partner_contribution;
+        }
+        return $total_partner_discount_contribution_price / 100;
+    }
+
+    private function isInWarranty()
+    {
+        if ($this->status != $this->jobStatuses["Served"] || !$this->delivered_date) return false;
+        return Carbon::now()->between($this->delivered_date, $this->delivered_date->addDays($this->warranty));
+    }
+
+    public function calculateComplexityIndex()
+    {
+        $this->complexityIndex = (new CiCalculator($this))->calculate();
+        return $this;
+    }
+
     private function calculateMaterialPrice()
     {
         $total_material_price = 0;
@@ -133,11 +185,16 @@ class Job extends Model
     public function scopeInfo($query)
     {
         return $query->select(
-            'jobs.id', 'jobs.discount', 'jobs.created_at', 'jobs.discount', 'sheba_contribution',
+            'jobs.id', 'jobs.discount', 'jobs.created_at', 'jobs.category_id', 'sheba_contribution',
             'partner_contribution', 'commission_rate', 'resource_id', 'schedule_date', 'service_variables',
             'job_additional_info', 'delivered_date', 'preferred_time', 'service_name',
             'status', 'service_quantity', 'service_unit_price', 'service_id', 'partner_order_id'
         );
+    }
+
+    public function scopeInfoV2($query)
+    {
+        return $query->select('jobs.id', 'jobs.created_at', 'resource_id', 'schedule_date', 'preferred_time', 'status', 'partner_order_id', 'resource_id');
     }
 
     public function scopeValidStatus($query)
@@ -172,4 +229,15 @@ class Job extends Model
         }
         return in_array($this->status, $status);
     }
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function getVersion()
+    {
+        return $this->partner_order_id > env('LAST_PARTNER_ORDER_ID_V1') ? 'v2' : 'v1';
+    }
+
 }

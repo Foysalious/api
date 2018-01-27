@@ -15,4 +15,9 @@ class JobService extends Model
     {
         return $this->belongsTo(Job::class);
     }
+
+    public function service()
+    {
+        return $this->belongsTo(Service::class);
+    }
 }
