@@ -21,77 +21,25 @@ class CategoryController extends Controller
         $this->serviceRepository = new ServiceRepository();
     }
 
-
-    /**
-     * Get all categories
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function index(Request $request)
     {
-//        if ($request->has('with')) {
-//            $key = 'categories-with-children';
-//        } else {
-//            $key = 'categories';
-//        }
-//        $categories = Redis::get($key);
-//        if ($categories) {
-//            $categories = json_decode($categories);
-//        } else {
-//            $categories = Category::parents()->select('id', 'name', 'thumb', 'banner')->get();
-//            foreach ($categories as $category) {
-//                if ($request->has('with')) {
-//                    $with = $request->has('with');
-//                    if ($with == 'children') {
-//                        $category->children;
-//                    }
-//                }
-//                array_add($category, 'slug', str_slug($category->name, '-'));
-//            }
-//            Redis::set($key, json_encode($categories));
-//            Redis::expire('categories', 30 * 60);
-//        }
-        $categories = Category::parents()->select('id', 'name', 'thumb', 'banner')->get();
-        foreach ($categories as $category) {
+        $category_ids = [183, 185, 184, 1, 5, 73, 186, 3];
+        $categories = [];
+        foreach ($category_ids as $category_id) {
+            $category = Category::where('id', $category_id)->select('id', 'name', 'thumb', 'banner')->first();
             if ($request->has('with')) {
-                $with = $request->has('with');
+                $with = $request->with;
                 if ($with == 'children') {
                     $category->children;
                 }
             }
             array_add($category, 'slug', str_slug($category->name, '-'));
+            array_push($categories, $category);
         }
         return count($categories) > 0 ? response()
-            ->json(['categories' => $categories, 'msg' => 'successful', 'code' => 200]) : response()->json(['msg' => 'nothing found', 'code' => 404]);
+            ->json(['categories' => $categories, 'message' => 'successful', 'code' => 200]) : response()->json(['message' => 'nothing found', 'code' => 404]);
     }
 
-    /**
-     * Get children of a category with services
-     * @param Category $category
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-//    public function getChildren($category, Request $request)
-//    {
-//        $category = Category::find($category);
-//        if ($category != null) {
-//            $children = $this->categoryRepository->childrenWithServices($category, $request);
-//            $cat = collect($category)->only(['name', 'banner']);
-//            if (count($children) > 0)
-//                return response()->json(['category' => $cat, 'secondary_categories' => $children, 'msg' => 'successful', 'code' => 200]);
-//            else
-//                return response()->json(['msg' => 'no secondary categories found!', 'code' => 404]);
-//        } else {
-//            return response()->json(['msg' => 'category not found', 'code' => 404]);
-//        }
-//    }
-
-
-    /**
-     * Get parent of a category
-     * @param Category $category
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function getMaster($category)
     {
         $category = Category::find($category);
@@ -181,7 +129,7 @@ class CategoryController extends Controller
                 }])->where('id', $category->id)->published()->first();
                 $services = $this->serviceRepository->addServiceInfo($this->serviceRepository->getPartnerServicesAndPartners($category->services, $location), $scope);
             }
-            $category = collect($category)->only(['name', 'banner','parent_id']);
+            $category = collect($category)->only(['name', 'banner', 'parent_id']);
             $category['services'] = $services;
             return response()->json(['category' => $category, 'msg' => 'successful', 'code' => 200]);
         } else {
