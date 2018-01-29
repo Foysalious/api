@@ -16,7 +16,7 @@ class HomePageSettingController extends Controller
                 'for' => 'sometimes|required|string|in:app,web'
             ]);
             $for = $this->getPublishedFor($request->for);
-            $settings = HomepageSetting::$for()->select('id', 'order', 'type', 'type_id', 'updated_at')->orderBy('order', 'desc')->get();
+            $settings = HomepageSetting::$for()->select('id', 'order', 'type', 'type_id', 'updated_at')->orderBy('order')->get();
             foreach ($settings as $setting) {
                 $setting->type = str_replace('App\Models\\', "", $setting->type);
                 $setting['updated_at_timestamp'] = $setting->updated_at->timestamp;

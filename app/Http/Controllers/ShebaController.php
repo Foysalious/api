@@ -77,23 +77,6 @@ class ShebaController extends Controller
         return count($images) > 0 ? api_response($request, $images, 200, ['images' => $images]) : api_response($request, null, 404);
     }
 
-    public function getOffers()
-    {
-        $offers = OfferShowcase::select('id', 'thumb', 'title', 'short_description', 'target_link')
-            ->where('is_active', 1)->get();
-        return response()->json(['offers' => $offers, 'code' => 200]);
-    }
-
-    public function getOffer($offer)
-    {
-        $offer = OfferShowcase::select('id', 'thumb', 'title', 'banner', 'short_description', 'detail_description', 'target_link')
-            ->where([
-                ['id', $offer],
-                ['is_active', 1]
-            ])->first();
-        return count($offer) > 0 ? response()->json(['offer' => $offer, 'code' => 200]) : response()->json(['code' => 404]);
-    }
-
     public function getSimilarOffer($offer)
     {
         $offer = OfferShowcase::select('id', 'thumb', 'title', 'banner', 'short_description', 'detail_description', 'target_link')
