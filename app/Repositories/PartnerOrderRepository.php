@@ -54,6 +54,7 @@ class PartnerOrderRepository
         $all_partner_orders = collect();
         $all_jobs = collect();
         foreach ($jobs->groupBy('partner_order_id') as $jobs) {
+            $jobs[0]->partner_order->calculate(true);
             $order = collect([
                 'customer_name' => $jobs[0]->partner_order->order->delivery_name,
                 'location_name' => $jobs[0]->partner_order->order->location->name,
@@ -61,10 +62,9 @@ class PartnerOrderRepository
                 'created_at_readable' => $jobs[0]->partner_order->created_at->diffForHumans(),
                 'code' => $jobs[0]->partner_order->code(),
                 'id' => $jobs[0]->partner_order->id,
-                'total_job' => count($jobs),
-                'jobs' => $jobs->each(function ($job) use ($all_jobs) {
-                    $all_jobs->push(removeRelationsAndFields($this->partnerJobRepository->getJobInfo($job)));
-                })
+                'total_price' => (double)$jobs[0]->partner_order->totalPrice,
+                'category_name' => $jobs[0]->category->name,
+                'schedule_date'=>$jobs[0]->schedule_date
             ]);
             $all_partner_orders->push($order);
         }

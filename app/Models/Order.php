@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Order\StatusCalculator;
 
 class Order extends Model
 {
@@ -31,44 +32,28 @@ class Order extends Model
         return $this->belongsTo(Location::class);
     }
 
-    public function calculate()
+    public function calculate($price_only = false)
     {
-        $o_statuses = constants('ORDER_STATUSES');
-        $po_statuses = constants('PARTNER_ORDER_STATUSES');
-
-        $total_partner_orders = 0;
-        $po_status_counter = [
-            $po_statuses['Open'] => 0,
-            $po_statuses['Process'] => 0,
-            $po_statuses['Closed'] => 0,
-            $po_statuses['Cancelled'] => 0
-        ];
         $this->totalPrice = 0;
         $this->due = 0;
         foreach ($this->partner_orders as $partnerOrder) {
-            $partnerOrder->calculate();
+            $partnerOrder->calculate($price_only);
             $this->totalPrice += $partnerOrder->grossAmount;
             $this->due += $partnerOrder->due;
             $this->profit += $partnerOrder->profit;
-            $po_status_counter[$partnerOrder->status]++;
-            $total_partner_orders++;
         }
-
-        if ($po_status_counter[$po_statuses['Open']] == $total_partner_orders) {
-            $this->status = $o_statuses['Open'];
-        } else if ($po_status_counter[$po_statuses['Cancelled']] == $total_partner_orders) {
-            $this->status = $o_statuses['Cancelled'];
-        } else if ($po_status_counter[$po_statuses['Closed']] == $total_partner_orders) {
-            $this->status = $o_statuses['Closed'];
-        } else if ($po_status_counter[$po_statuses['Open']] + $po_status_counter[$po_statuses['Cancelled']] == $total_partner_orders) {
-            $this->status = $o_statuses['Open'];
-        } else if ($po_status_counter[$po_statuses['Closed']] + $po_status_counter[$po_statuses['Cancelled']] == $total_partner_orders) {
-            $this->status = $o_statuses['Closed'];
-        } else {
-            $this->status = $o_statuses['Process'];
-        }
-
+        $this->status = $this->getStatus();
         return $this;
+    }
+
+    public function getStatus()
+    {
+        return $this->isStatusCalculated() ? $this->status : (new StatusCalculator($this))->calculate();
+    }
+
+    private function isStatusCalculated()
+    {
+        return property_exists($this, 'status') && $this->status;
     }
 
     public function channelCode()
