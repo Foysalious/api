@@ -64,7 +64,7 @@ class PartnerOrderRepository
                 'id' => $jobs[0]->partner_order->id,
                 'total_price' => (double)$jobs[0]->partner_order->totalPrice,
                 'category_name' => $jobs[0]->category->name,
-                'schedule_date'=>$jobs[0]->schedule_date
+                'schedule_date' => $jobs[0]->schedule_date
             ]);
             $all_partner_orders->push($order);
         }
@@ -80,11 +80,14 @@ class PartnerOrderRepository
         list($offset, $limit) = calculatePagination($request);
         $filter = $request->filter;
         $partner = $request->partner->load(['partner_orders' => function ($q) use ($filter, $orderBy, $field) {
-            $q->$filter()->orderBy($field, $orderBy)->with(['jobs.usedMaterials', 'order' => function ($q) {
+            $q->$filter()->orderBy($field, $orderBy)->with(['jobs' => function ($q) {
+                $q->with('usedMaterials', 'jobServices', 'category');
+            }, 'order' => function ($q) {
                 $q->with(['customer.profile', 'location']);
             }]);
         }]);
         return array_slice($partner->partner_orders->each(function ($partner_order, $key) {
+            $partner_order['category_name'] = $partner_order->jobs[0]->category->name;
             removeRelationsAndFields($this->getInfo($partner_order));
         })->reject(function ($item, $key) {
             return $item->order_status == 'Open';
