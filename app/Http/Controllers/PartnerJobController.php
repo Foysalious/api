@@ -51,7 +51,11 @@ class PartnerJobController extends Controller
                     $job['resource_mobile'] = $job->resource != null ? $job->resource->profile->mobile : null;
                     $job['rating'] = $job->review != null ? $job->review->rating : null;
                     $job['version'] = $job->getVersion();
-                    $job['completed_at_timestamp'] = $job->partner_order->closed_and_paid_at->timestamp;
+                    if ($job->partner_order->closed_and_paid_at != null) {
+                        $job['completed_at_timestamp'] = $job->partner_order->closed_and_paid_at->timestamp;
+                    } else {
+                        $job['completed_at_timestamp'] = null;
+                    }
                     removeRelationsFromModel($job);
                 })->values()->all();
                 return api_response($request, $jobs, 200, ['jobs' => $jobs]);
