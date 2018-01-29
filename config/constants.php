@@ -297,7 +297,7 @@ return [
         "customer_app" => "https://play.google.com/store/apps/details?id=xyz.sheba.customersapp",
         "bondhu_app" => "https://play.google.com/store/apps/details?id=xyz.sheba.bondhu",
         "resource_app" => "https://play.google.com/store/apps/details?id=xyz.sheba.resource",
-        "manager_app" => "https://play.google.com/store/apps/details?id=xyz.sheba.manager"
+        "manager_app" => "https://play.google.com/store/apps/details?id=xyz.sheba.managerapp"
     ],
     'MANAGER_TOPIC_NAME' => env('MANAGER_TOPIC_NAME')
 
