@@ -37,7 +37,7 @@ class PartnerJobController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $partnerRepo = new PartnerRepository($request->partner);
             $statuses = $partnerRepo->resolveStatus($request->filter);
-            $jobs = $partnerRepo->jobs($statuses);
+            $jobs = $partnerRepo->jobs($statuses, $offset, $limit);
             if (count($jobs) > 0) {
                 $jobs = $jobs->sortByDesc('created_at');
                 $jobs = $jobs->each(function ($job) {
@@ -51,9 +51,9 @@ class PartnerJobController extends Controller
                     $job['resource_mobile'] = $job->resource != null ? $job->resource->profile->mobile : null;
                     $job['rating'] = $job->review != null ? $job->review->rating : null;
                     $job['version'] = $job->getVersion();
+                    $job['completed_at_timestamp'] = $job->partner_order->closed_and_paid_at->timestamp;
                     removeRelationsFromModel($job);
                 })->values()->all();
-                $jobs = array_slice($jobs, $offset, $limit);
                 return api_response($request, $jobs, 200, ['jobs' => $jobs]);
             } else {
                 return api_response($request, null, 404);

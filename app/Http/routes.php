@@ -1,16 +1,6 @@
 <?php
 
 Route::get('/', function () {
-    $resources = (\App\Models\Partner::find(3))->resources;
-    foreach ($resources as $resource) {
-        if ($resource->pivot->resource_type == 'Handyman' && $resource->pivot->is_verified) {
-            $schedule = new \App\Models\ResourceSchedule();
-            $schedule->job_id = 1;
-            $schedule->start = '00:00:00-01:00:00';
-            $schedule->end = '23:00:00-24:00:00';
-            $schedule->save();
-        }
-    }
     return ['code' => 200, 'msg' => "Success. This project will hold the api's"];
 });
 $api = app('Dingo\Api\Routing\Router');

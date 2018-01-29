@@ -49,7 +49,8 @@ class PartnerOrderRepository
 
     public function getNewOrdersWithJobs($request)
     {
-        $jobs = (new PartnerRepository($request->partner))->jobs(array(constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']));
+        list($offset, $limit) = calculatePagination($request);
+        $jobs = (new PartnerRepository($request->partner))->jobs(array(constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']), $offset, $limit);
         $all_partner_orders = collect();
         $all_jobs = collect();
         foreach ($jobs->groupBy('partner_order_id') as $jobs) {
