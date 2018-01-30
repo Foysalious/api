@@ -64,7 +64,8 @@ class PartnerOrderRepository
                 'id' => $jobs[0]->partner_order->id,
                 'total_price' => (double)$jobs[0]->partner_order->totalPrice,
                 'category_name' => $jobs[0]->category->name,
-                'schedule_date' => $jobs[0]->schedule_date
+                'schedule_date' => $jobs[0]->schedule_date,
+                'preferred_time' => $jobs[0]->preferred_time
             ]);
             $all_partner_orders->push($order);
         }
