@@ -3,14 +3,13 @@
 namespace App\Sheba\Checkout;
 
 use App\Models\Partner;
-use App\Models\PartnerService;
 use App\Models\PartnerServiceDiscount;
 use App\Models\Service;
-use App\Repositories\DiscountRepository;
 use App\Repositories\PartnerRepository;
 use App\Repositories\PartnerServiceRepository;
 use App\Repositories\ReviewRepository;
 use DB;
+use Sheba\Partner\PartnerAvailable;
 
 class PartnerList
 {
@@ -92,9 +91,9 @@ class PartnerList
 
     private function addAvailability()
     {
-        $this->partners->load('basicInformations');
+        $this->partners->load(['basicInformations', 'leaves']);
         $this->partners->each(function ($partner, $key) {
-            $partner['is_available'] = ((new PartnerRepository($partner)))->isAvailable($this->date, $this->time);
+            $partner['is_available'] = (new PartnerAvailable($partner))->available($this->date,$this->time,$this->selected_services->first()->category_id);
         });
     }
 

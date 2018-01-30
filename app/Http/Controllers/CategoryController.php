@@ -65,33 +65,6 @@ class CategoryController extends Controller
             ->json(['categories' => $categories, 'msg' => 'successful', 'code' => 200]) : response()->json(['msg' => 'nothing found', 'code' => 404]);
     }
 
-    /**
-     * Get children of a category with services
-     * @param Category $category
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-//    public function getChildren($category, Request $request)
-//    {
-//        $category = Category::find($category);
-//        if ($category != null) {
-//            $children = $this->categoryRepository->childrenWithServices($category, $request);
-//            $cat = collect($category)->only(['name', 'banner']);
-//            if (count($children) > 0)
-//                return response()->json(['category' => $cat, 'secondary_categories' => $children, 'msg' => 'successful', 'code' => 200]);
-//            else
-//                return response()->json(['msg' => 'no secondary categories found!', 'code' => 404]);
-//        } else {
-//            return response()->json(['msg' => 'category not found', 'code' => 404]);
-//        }
-//    }
-
-
-    /**
-     * Get parent of a category
-     * @param Category $category
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function getMaster($category)
     {
         $category = Category::find($category);

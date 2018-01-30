@@ -3,7 +3,7 @@
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Voucher\VoucherCodeGenerator;
-
+use DB;
 class Partner extends Model
 {
     protected $guarded = [
@@ -38,6 +38,13 @@ class Partner extends Model
     {
         return $this->belongsToMany(Resource::class)
             ->where('resource_type', constants('RESOURCE_TYPES')['Finance'])
+            ->withPivot($this->resourcePivotColumns);
+    }
+
+    public function handymanResources()
+    {
+        return $this->belongsToMany(Resource::class)
+            ->where('resource_type', constants('RESOURCE_TYPES')['Handyman'])
             ->withPivot($this->resourcePivotColumns);
     }
 
@@ -194,6 +201,28 @@ class Partner extends Model
     public function onGoingJobs()
     {
         return $this->jobs()->whereIn('status', [constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Schedule_Due']])->count();
+    }
+
+    public function resourcesInCategory($category)
+    {
+        $category = $category instanceof Category ? $category->id : $category;
+        $partner_resource_ids = [];
+        $this->handymanResources()->get()->map(function ($resource) use (&$partner_resource_ids) {
+            $partner_resource_ids[$resource->pivot->id] = $resource;
+        });
+
+        $result = [];
+
+        collect(
+            DB::table('category_partner_resource')->select('partner_resource_id')
+                ->whereIn('partner_resource_id', array_keys($partner_resource_ids))
+                ->where('category_id', $category)
+                ->get()
+        )->pluck('partner_resource_id')->each(function ($partner_resource_id) use ($partner_resource_ids, &$result) {
+            $result[] = $partner_resource_ids[$partner_resource_id];
+        });
+
+        return collect($result);
     }
 
 }
