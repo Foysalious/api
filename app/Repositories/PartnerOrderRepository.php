@@ -197,6 +197,7 @@ class PartnerOrderRepository
         $partner_order['address'] = $partner_order->order->delivery_address;
         $partner_order['location'] = $partner_order->order->location->name;
         $partner_order['total_price'] = (double)$partner_order->totalPrice;
+        $partner_order['rating'] = $job->rating ? (double)$job->rating : null;
         $partner_order['due_amount'] = (double)$partner_order->due;
         $partner_order['discount'] = (double)$partner_order->discount;
         $partner_order['sheba_collection'] = (double)$partner_order->sheba_collection;
