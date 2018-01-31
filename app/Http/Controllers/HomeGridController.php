@@ -16,6 +16,8 @@ class HomeGridController extends Controller
                 $model = $grid->typable::where('id', $grid->type_id)->first();
                 $collection = collect($model)->only(['id', 'name', 'icon', 'web_link']);
                 $collection->put('updated_at_timestamp', $model->updated_at->timestamp);
+                $collection->put('type', str_replace('App\Models\\', "", $grid->typable));
+                $collection->put('type_id', $grid->type_id);
                 array_push($data, $collection);
             }
             return count($data) > 0 ? api_response($request, $data, 200, ['grids' => $data]) : api_response($request, null, 500);
