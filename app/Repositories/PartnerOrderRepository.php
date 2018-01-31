@@ -89,6 +89,7 @@ class PartnerOrderRepository
             }]);
         }]);
         return array_slice($partner->partner_orders->each(function ($partner_order, $key) {
+            $partner_order['version'] = $partner_order->is_v2 ? 'v2' : 'v1';
             $partner_order['category_name'] = $partner_order->jobs[0]->category->name;
             removeRelationsAndFields($this->getInfo($partner_order));
         })->reject(function ($item, $key) {

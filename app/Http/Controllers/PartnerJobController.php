@@ -256,6 +256,8 @@ class PartnerJobController extends Controller
         $job->update();
         $this->jobUpdateLog($job->id, json_encode($updatedData), $manager_resource);
 
+        $this->resourceJobRepository->book($job,$manager_resource);
+
         (new PushNotificationRepository())->send([
             "title" => 'Resource has been assigned',
             "message" => $job->resource->profile->name . " has been added as a resource for your job.",

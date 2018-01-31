@@ -3,7 +3,9 @@
 namespace App\Repositories;
 
 
+use App\Models\Job;
 use App\Models\PartnerOrder;
+use App\Models\ResourceSchedule;
 use App\Sheba\UserRequestInformation;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -192,8 +194,15 @@ class ResourceJobRepository
         return $job;
     }
 
-    public function assignResource()
+    public function book(Job $job, $created_by)
     {
-
+        $resource_schedule = new ResourceSchedule();
+        $resource_schedule->job_id = $job->id;
+        $resource_schedule->resource_id = $job->resource_id;
+        $resource_schedule->start = $job->preferred_time_start;
+        $resource_schedule->end = explode('-', $job->preferred_time)[1];
+        $resource_schedule->created_by = $created_by->id;
+        $resource_schedule->created_by_name = class_basename($created_by) . "-" . $created_by->profile->name;
+        $resource_schedule->save();
     }
 }
