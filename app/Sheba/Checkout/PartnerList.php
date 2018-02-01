@@ -93,7 +93,7 @@ class PartnerList
     {
         $this->partners->load(['basicInformations', 'leaves']);
         $this->partners->each(function ($partner, $key) {
-            $partner['is_available'] = (new PartnerAvailable($partner))->available($this->date,$this->time,$this->selected_services->first()->category_id);
+            $partner['is_available'] = (new PartnerAvailable($partner))->available($this->date, $this->time, $this->selected_services->first()->category_id);
         });
     }
 
@@ -133,6 +133,14 @@ class PartnerList
     {
         $this->sortByRatingDesc();
         $this->sortByLowestPrice();
+        $this->sortByAvailability();
+    }
+
+    private function sortByAvailability()
+    {
+        $this->partners = $this->partners->sortByDesc(function ($partner, $key) {
+            return $partner->is_available;
+        });
     }
 
     private function sortByRatingDesc()

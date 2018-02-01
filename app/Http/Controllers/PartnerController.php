@@ -306,7 +306,7 @@ class PartnerController extends Controller
 
     public function getNotifications($partner, Request $request)
     {
-//        try {
+        try {
             list($offset, $limit) = calculatePagination($request);
             $notifications = (new NotificationRepository())->getManagerNotifications($request->partner, $offset, $limit);
             if (count($notifications) > 0) {
@@ -314,16 +314,16 @@ class PartnerController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-//        } catch (\Throwable $e) {
-//            return api_response($request, null, 500);
-//        }
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
     }
 
     public function findPartners(Request $request, $location)
     {
         try {
             $this->validate($request, [
-                'date' => 'required|date_format:Y-m-d',
+                'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
                 'time' => 'required|string',
                 'services' => 'required|string'
             ]);
@@ -337,6 +337,7 @@ class PartnerController extends Controller
                 $partner_list->sortByShebaSelectedCriteria();
                 $partners = $partner_list->partners;
                 $partners->each(function ($partner, $key) {
+                    array_forget($partner, 'wallet');
                     removeRelationsAndFields($partner);
                 });
                 return api_response($request, $partners, 200, ['partners' => $partners->values()->all()]);
