@@ -16,9 +16,9 @@ class HomePageSettingController extends Controller
                 'for' => 'sometimes|required|string|in:app,web'
             ]);
             $for = $this->getPublishedFor($request->for);
-            $settings = HomepageSetting::$for()->select('id', 'order', 'settings_type', 'settings_type_id', 'updated_at')->orderBy('order')->get();
+            $settings = HomepageSetting::$for()->select('id', 'order', 'item_type', 'item_id', 'updated_at')->orderBy('order')->get();
             foreach ($settings as $setting) {
-                $setting->settings_type = str_replace('App\Models\\', "", $setting->settings_type);
+                $setting->item_type = str_replace('App\Models\\', "", $setting->item_type);
                 $setting['updated_at_timestamp'] = $setting->updated_at->timestamp;
             }
             return count($settings) > 0 ? api_response($request, $settings, 200, ['settings' => $settings]) : api_response($request, $settings, 404);

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Partner;
+use App\Models\PartnerTransaction;
 use App\Models\Service;
 use App\Repositories\DiscountRepository;
 use App\Repositories\NotificationRepository;
@@ -314,6 +315,16 @@ class PartnerController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getCollections($partner, Request $request)
+    {
+        try {
+            list($offset, $limit) = calculatePagination($request);
+            $collections = $partner->transactions->where('type', 'Debit')->get();
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
