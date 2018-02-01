@@ -127,7 +127,8 @@ class NotificationRepository
                         $notification->event_type = 'PartnerOrder';
                         $notification->event_id = $job->partner_order->id;
                         $notification->event_code = $job->partner_order->code();
-                        $notification->status = (($job->partner_order)->calculate())->status;
+                        $notification->status = (($job->partner_order)->calculate(true))->status;
+                        array_add($notification, 'version', $job->partner_order->getVersion());
                     } else {
                         $notification->event_type = null;
                         $notification->event_id = null;
@@ -135,8 +136,10 @@ class NotificationRepository
                 } elseif ($notification->event_type == 'Order') {
                     array_add($notification, 'event_code', (Order::find($notification->event_id))->code());
                 } elseif ($notification->event_type == 'PartnerOrder') {
-                    array_add($notification, 'event_code', (PartnerOrder::find($notification->event_id))->code());
-                    $notification->status = ((PartnerOrder::find($notification->event_id))->calculate())->status;
+                    $partner_order = PartnerOrder::find($notification->event_id);
+                    array_add($notification, 'event_code', $partner_order->code());
+                    array_add($notification, 'version', $partner_order->getVersion());
+                    $notification->status = ((PartnerOrder::find($notification->event_id))->calculate(true))->status;
                 }
                 return $notification;
             });

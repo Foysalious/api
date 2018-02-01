@@ -86,4 +86,9 @@ class Order extends Model
         return $this->hasMany(OrderUpdateLog::class);
     }
 
+    public function getVersion()
+    {
+        return $this->id > env('LAST_ORDER_ID_V1') ? 'v2' : 'v1';
+    }
+
 }
