@@ -56,8 +56,9 @@ class LocationController extends Controller
                         return api_response($request, $location, 200, ['location' => collect($location)->only(['id', 'name'])]);
                     }
                 }
+                return api_response($request, null, 500, ['result' => $result]);
             }
-            return api_response($request, null, 500, ['result' => $result]);
+            return api_response($request, null, 404);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
