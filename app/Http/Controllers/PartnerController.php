@@ -178,7 +178,6 @@ class PartnerController extends Controller
                 removeRelationsAndFields($partner);
             }
             $info = array(
-//                'rating' => $avg_rating ? round($avg_rating, 2) : 5,
                 'rating' => $avg_rating,
                 'total_reviews' => $reviews->count(),
                 'reviews' => array_slice($reviews->values()->all(), $offset, $limit),
@@ -315,16 +314,6 @@ class PartnerController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Throwable $e) {
-            return api_response($request, null, 500);
-        }
-    }
-
-    public function getCollections($partner, Request $request)
-    {
-        try {
-            list($offset, $limit) = calculatePagination($request);
-            $collections = $partner->transactions->where('type', 'Debit')->get();
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }

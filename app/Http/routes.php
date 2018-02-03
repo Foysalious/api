@@ -289,6 +289,7 @@ $api->version('v1', function ($api) {
             $api->post('orders', 'OrderController@store');
         });
         $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
+            $api->get('collections', 'PartnerOrderPaymentController@index');
             $api->group(['prefix' => 'orders'], function ($api) {
                 $api->group(['prefix' => '{order}', 'middleware' => ['partner_order.auth']], function ($api) {
                     $api->get('/', 'PartnerOrderController@showV2');

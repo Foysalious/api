@@ -4,6 +4,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Voucher\VoucherCodeGenerator;
 use DB;
+
 class Partner extends Model
 {
     protected $guarded = [
@@ -91,6 +92,11 @@ class Partner extends Model
     public function jobs()
     {
         return $this->hasManyThrough(Job::class, PartnerOrder::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasManyThrough(PartnerOrderPayment::class, PartnerOrder::class);
     }
 
     public function partner_orders()

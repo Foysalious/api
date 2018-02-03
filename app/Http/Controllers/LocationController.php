@@ -37,25 +37,30 @@ class LocationController extends Controller
             ]);
             $locations = Location::where('name', 'NOT LIKE', '%Rest%')->published()->get();
             $origins = $this->getOriginsForDistanceMatrix($locations);
-            if ($result = $this->getDistanceCalculationResult($request->lat, $request->lng, $origins)) {
-                if ($result->status == 'OK') {
-                    $rows = $result->rows;
-                    foreach ($locations as $key => $location) {
-                        if ($rows[$key]->elements[0]->status == 'OK') {
-                            $location['radius'] = (double)(json_decode($location->geo_informations))->radius;
-                            $location['distance'] = round($rows[$key]->elements[0]->distance->value / 1000);
-                        } else {
-                            unset($locations[$key]);
+            if (!empty($origins)) {
+                if ($result = $this->getDistanceCalculationResult($request->lat, $request->lng, $origins)) {
+                    if ($result->status == 'OK') {
+                        $rows = $result->rows;
+                        foreach ($locations as $key => $location) {
+                            if ($rows[$key]->elements[0]->status == 'OK') {
+                                $location['radius'] = (double)(json_decode($location->geo_informations))->radius;
+                                $location['distance'] = round($rows[$key]->elements[0]->distance->value / 1000);
+                            } else {
+                                unset($locations[$key]);
+                            }
                         }
+                        $locations = $locations->sortBy('distance')->filter(function ($location, $key) {
+                            return $location->distance <= $location->radius;
+                        });
+                        $location = count($locations) > 0 ? $locations->first() : Location::where('name', 'LIKE', '%Rest%')->published()->first();
+                        return api_response($request, $location, 200, ['location' => collect($location)->only(['id', 'name'])]);
                     }
-                    $locations = $locations->sortBy('distance')->filter(function ($location, $key) {
-                        return $location->distance <= $location->radius;
-                    });
-                    $location = count($locations) > 0 ? $locations->first() : Location::where('name', 'LIKE', '%Rest%')->published()->first();
-                    return api_response($request, $location, 200, ['location' => collect($location)->only(['id', 'name'])]);
+                } else {
+                    return api_response($request, null, 500, ['result' => $result]);
                 }
+            } else {
+                return api_response($request, null, 404);
             }
-            return api_response($request, null, 500, ['result' => $result]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -69,7 +74,9 @@ class LocationController extends Controller
         $origins = '';
         foreach ($locations as $location) {
             $geo_info = json_decode($location->geo_informations);
-            $origins .= "$geo_info->lat,$geo_info->lng|";
+            if ($geo_info) {
+                $origins .= "$geo_info->lat,$geo_info->lng|";
+            }
         }
         return rtrim($origins, "|");
     }
