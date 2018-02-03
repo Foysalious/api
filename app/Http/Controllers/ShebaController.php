@@ -102,7 +102,7 @@ class ShebaController extends Controller
                 }
                 $time_slots[$time_slot_key] = $time_slot_value;
             }
-            $result = ['time_slots' => $time_slots, 'valid_time_slots' => $valid_time_slots];
+            $result = ['times' => $time_slots, 'valid_times' => $valid_time_slots];
             return api_response($request, $result, 200, $result);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
