@@ -59,9 +59,6 @@ $api->version('v1', function ($api) {
         $api->group(['prefix' => 'jobs'], function ($api) {
             $api->get('times', 'JobController@getPreferredTimes');
         });
-        $api->group(['prefix' => 'locations'], function ($api) {
-            $api->get('current', 'LocationController@getCurrent');
-        });
         $api->group(['prefix' => 'categories'], function ($api) {
             $api->get('/', 'CategoryController@index');
             $api->get('{category}/secondaries', 'CategoryController@getSecondaries');
@@ -281,7 +278,10 @@ $api->version('v1', function ($api) {
         $api->get('settings', 'HomePageSettingController@index');
         $api->get('home-grids', 'HomeGridController@index');
         $api->get('category-groups/{id}', 'CategoryGroupController@show');
-        $api->get('locations/{location}/partners', 'PartnerController@findPartners');
+        $api->group(['prefix' => 'locations'], function ($api) {
+            $api->get('{location}/partners', 'PartnerController@findPartners');
+            $api->get('current', 'LocationController@getCurrent');
+        });
         $api->group(['prefix' => 'job_service'], function ($api) {
             $api->post('/', 'JobServiceController@store');
         });

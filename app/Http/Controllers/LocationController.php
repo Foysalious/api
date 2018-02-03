@@ -55,9 +55,8 @@ class LocationController extends Controller
                         $location = count($locations) > 0 ? $locations->first() : Location::where('name', 'LIKE', '%Rest%')->published()->first();
                         return api_response($request, $location, 200, ['location' => collect($location)->only(['id', 'name'])]);
                     }
-                } else {
-                    return api_response($request, null, 500, ['result' => $result]);
                 }
+                return api_response($request, null, 500, ['result' => $result]);
             } else {
                 return api_response($request, null, 404);
             }
