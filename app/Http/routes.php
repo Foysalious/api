@@ -31,6 +31,7 @@ $api->version('v1', function ($api) {
         $api->get('info', 'ShebaController@getInfo');
         $api->get('versions', 'ShebaController@getVersions');
         $api->get('images', 'ShebaController@getImages');
+        $api->get('sliders', 'SliderController@index');
         $api->get('locations', 'LocationController@getAllLocations');
         $api->get('lead-reward', 'ShebaController@getLeadRewardAmount');
         $api->get('search', 'SearchController@searchService');

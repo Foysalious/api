@@ -60,15 +60,12 @@ class ShebaController extends Controller
 
     public function getImages(Request $request)
     {
-        $for = null;
-        if ($request->has('for')) {
-            $for = $request->for == 'app' ? 'is_active_for_app' : 'is_active_for_web';
+        try {
+            $images = Slider::select('id', 'image_link', 'small_image_link', 'target_link', 'target_type', 'target_id')->show();
+            return count($images) > 0 ? api_response($request, $images, 200, ['images' => $images]) : api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
         }
-        $images = Slider::select('id', 'image_link', 'small_image_link', 'target_link', 'target_type', 'target_id', 'is_active_for_web', 'is_active_for_app')->show();
-        if (!empty($for)) {
-            $images = $images->where($for, 1);
-        }
-        return count($images) > 0 ? api_response($request, $images, 200, ['images' => $images]) : api_response($request, null, 404);
     }
 
     public function getSimilarOffer($offer)
