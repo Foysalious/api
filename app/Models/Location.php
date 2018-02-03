@@ -30,4 +30,9 @@ class Location extends Model
         return $query->where('publication_status', 1);
     }
 
+    public function scopeHasGeoInformation($query)
+    {
+        return $query->where('geo_informations', '<>', null);
+    }
+
 }

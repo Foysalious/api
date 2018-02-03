@@ -35,9 +35,9 @@ class LocationController extends Controller
                 'lat' => 'required|numeric',
                 'lng' => 'required|numeric',
             ]);
-            $locations = Location::where('name', 'NOT LIKE', '%Rest%')->published()->get();
-            $origins = $this->getOriginsForDistanceMatrix($locations);
-            if (!empty($origins)) {
+            $locations = Location::published()->hasGeoInformation()->where('name', 'NOT LIKE', '%Rest%')->get();
+            if (count($locations) > 0) {
+                $origins = $this->getOriginsForDistanceMatrix($locations);
                 if ($result = $this->getDistanceCalculationResult($request->lat, $request->lng, $origins)) {
                     if ($result->status == 'OK') {
                         $rows = $result->rows;
@@ -56,10 +56,8 @@ class LocationController extends Controller
                         return api_response($request, $location, 200, ['location' => collect($location)->only(['id', 'name'])]);
                     }
                 }
-                return api_response($request, null, 500, ['result' => $result]);
-            } else {
-                return api_response($request, null, 404);
             }
+            return api_response($request, null, 500, ['result' => $result]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -73,9 +71,7 @@ class LocationController extends Controller
         $origins = '';
         foreach ($locations as $location) {
             $geo_info = json_decode($location->geo_informations);
-            if ($geo_info) {
-                $origins .= "$geo_info->lat,$geo_info->lng|";
-            }
+            $origins .= "$geo_info->lat,$geo_info->lng|";
         }
         return rtrim($origins, "|");
     }
