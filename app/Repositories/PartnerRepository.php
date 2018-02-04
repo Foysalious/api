@@ -74,10 +74,5 @@ class PartnerRepository
     {
         return (double)$this->partner->wallet > (double)$this->partner->walletSetting->min_wallet_threshold;
     }
-
-    public function isAvailable($day, $time)
-    {
-        return (new PartnerAvailable($this->partner))->available(array('day' => $day, 'time' => $time)) ? 1 : 0;
-    }
 }
 

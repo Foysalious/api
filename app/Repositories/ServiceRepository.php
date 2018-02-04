@@ -5,8 +5,8 @@ namespace App\Repositories;
 
 use App\Models\PartnerService;
 use App\Models\Service;
+use App\Sheba\Partner\v1\PartnerAvailable;
 use Carbon\Carbon;
-use Sheba\Partner\PartnerAvailable;
 
 class ServiceRepository
 {
