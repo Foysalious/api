@@ -21,36 +21,8 @@ class CategoryController extends Controller
         $this->serviceRepository = new ServiceRepository();
     }
 
-
-    /**
-     * Get all categories
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function index(Request $request)
     {
-//        if ($request->has('with')) {
-//            $key = 'categories-with-children';
-//        } else {
-//            $key = 'categories';
-//        }
-//        $categories = Redis::get($key);
-//        if ($categories) {
-//            $categories = json_decode($categories);
-//        } else {
-//            $categories = Category::parents()->select('id', 'name', 'thumb', 'banner')->get();
-//            foreach ($categories as $category) {
-//                if ($request->has('with')) {
-//                    $with = $request->has('with');
-//                    if ($with == 'children') {
-//                        $category->children;
-//                    }
-//                }
-//                array_add($category, 'slug', str_slug($category->name, '-'));
-//            }
-//            Redis::set($key, json_encode($categories));
-//            Redis::expire('categories', 30 * 60);
-//        }
         $categories = Category::parents()->select('id', 'name', 'thumb', 'banner')->get();
         foreach ($categories as $category) {
             if ($request->has('with')) {
@@ -154,7 +126,7 @@ class CategoryController extends Controller
                 }])->where('id', $category->id)->published()->first();
                 $services = $this->serviceRepository->addServiceInfo($this->serviceRepository->getPartnerServicesAndPartners($category->services, $location), $scope);
             }
-            $category = collect($category)->only(['name', 'banner','parent_id']);
+            $category = collect($category)->only(['name', 'banner', 'parent_id']);
             $category['services'] = $services;
             return response()->json(['category' => $category, 'msg' => 'successful', 'code' => 200]);
         } else {
