@@ -33,11 +33,11 @@ class CategoryController extends Controller
                 if ($request->has('with')) {
                     $with = $request->with;
                     if ($with == 'children') {
-                        $category->children->each(function (&$category) use ($location) {
-                            $start_price = new StartPrice($category, $location);
+                        $category->children->each(function (&$child) use ($location) {
+                            $start_price = new StartPrice($child, $location);
                             $start_price->calculate();
-                            $category['starting_price'] = $start_price->price;
-                            removeRelationsAndFields($category);
+                            $child['starting_price'] = $start_price->price;
+                            removeRelationsAndFields($child);
                         });
                     }
                 }

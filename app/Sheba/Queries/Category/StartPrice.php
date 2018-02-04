@@ -28,7 +28,8 @@ class StartPrice
             $services = collect();
             if ($this->isMasterCategory()) {
                 $this->category = $this->loadServices($this->category->children);
-                foreach ($this->category->pluck('services') as $service) {
+                $pluck_services = $this->category->pluck('services');
+                foreach ($pluck_services as $service) {
                     foreach ($service as $key => $value) {
                         $services->push($value);
                     }
@@ -51,14 +52,18 @@ class StartPrice
     private function loadServices($categories)
     {
         return $categories->load(['services' => function ($q) {
-            $q->published()->with(['partners' => function ($q) {
-                $q->with('walletSetting')->where([
-                    ['partners.status', 'Verified'],
-                    ['is_verified', 1],
-                    ['is_published', 1]
-                ])->whereHas('locations', function ($query) {
-                    $query->where('id', $this->location_id);
-                });
+            $q->published()->with(['partnerServices' => function ($q) {
+                $q->published()->with(['discounts' => function ($q) {
+                    $now = Carbon::now();
+                    $q->where(function ($query) use ($now) {
+                        $query->where('start_date', '<=', $now);
+                        $query->where('end_date', '>=', $now);
+                    });
+                }, 'partner' => function ($q) {
+                    $q->published()->with('walletSetting')->whereHas('locations', function ($query) {
+                        $query->where('id', $this->location_id);
+                    });
+                }]);
             }]);
         }]);
     }
@@ -67,18 +72,22 @@ class StartPrice
     {
         $service_prices = collect();
         foreach ($services as $service) {
-            foreach ($service->partners as $partner) {
-                if ((new PartnerRepository($partner))->hasAppropriateCreditLimit()) {
-                    $prices = $partner->pivot->prices;
-                    if ($service->isFixed()) {
-                        $price = (float)$prices;
-                    } else {
-                        $prices = (array)json_decode($prices);
-                        $price = (float)min($prices);
+            foreach ($service->partnerServices as $partnerService) {
+                $partner = $partnerService->partner;
+                if ($partnerService->partner) {
+                    if ((new PartnerRepository($partner))->hasAppropriateCreditLimit()) {
+                        $prices = $partnerService->prices;
+                        if ($service->isFixed()) {
+                            $price = (float)$prices;
+                        } else {
+                            $prices = (array)json_decode($prices);
+                            $price = (float)min($prices);
+                        }
+                        $discount = new Discount($price, $service->min_quantity);
+                        $running_discount = $partnerService->discounts->first();
+                        $discount->calculateServiceDiscount($running_discount);
+                        $service_prices->push($discount->__get('discounted_price'));
                     }
-                    $discount = new Discount($price, $service->min_quantity);
-                    $discount->calculateServiceDiscount((PartnerService::find($partner->pivot->id))->discount());
-                    $service_prices->push($discount->__get('discounted_price'));
                 }
             }
         }
