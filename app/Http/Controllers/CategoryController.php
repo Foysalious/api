@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
+use App\Sheba\Queries\Category\StartPrice;
 use Illuminate\Http\Request;
 use Dingo\Api\Routing\Helpers;
 use Redis;
@@ -23,18 +24,53 @@ class CategoryController extends Controller
 
     public function index(Request $request)
     {
-        $categories = Category::parents()->select('id', 'name', 'thumb', 'banner')->get();
-        foreach ($categories as $category) {
-            if ($request->has('with')) {
-                $with = $request->has('with');
-                if ($with == 'children') {
-                    $category->children;
+        try {
+            $category_ids = [183, 185, 184, 1, 5, 73, 186, 3];
+            $categories = [];
+            $location = $request->location;
+            foreach ($category_ids as $category_id) {
+                $category = Category::where('id', $category_id)->select('id', 'name', 'thumb', 'banner', 'parent_id')->first();
+                if ($request->has('with')) {
+                    $with = $request->with;
+                    if ($with == 'children') {
+                        $category->children->each(function (&$category) use ($location) {
+                            $start_price = new StartPrice($category, $location);
+                            $start_price->calculate();
+                            $category['starting_price'] = $start_price->price;
+                            removeRelationsAndFields($category);
+                        });
+                    }
                 }
+                array_add($category, 'slug', str_slug($category->name, '-'));
+                array_push($categories, $category);
             }
-            array_add($category, 'slug', str_slug($category->name, '-'));
+            return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories]) : api_response($request, $categories, 404);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
         }
-        return count($categories) > 0 ? response()
-            ->json(['categories' => $categories, 'msg' => 'successful', 'code' => 200]) : response()->json(['msg' => 'nothing found', 'code' => 404]);
+    }
+
+    public function getSecondaries($category, Request $request)
+    {
+        try {
+            $category = Category::find($category);
+            $location = $request->location;
+            $children = $category->children;
+            if (count($children) != 0) {
+                $children = $children->each(function (&$child) use ($location) {
+                    $start_price = new StartPrice($child, $location);
+                    $start_price->calculate();
+                    $child['starting_price'] = $start_price->price;
+                    removeRelationsAndFields($child);
+                });
+                $category = collect($category)->only(['name', 'banner']);
+                $category->put('secondaries', $children);
+                return api_response($request, $category->all(), 200, ['category' => $category->all()]);
+            } else
+                return api_response($request, null, 404);
+        } catch (\Exception $e) {
+            return api_response($request, null, 500);
+        }
     }
 
     public function getMaster($category)
@@ -44,22 +80,6 @@ class CategoryController extends Controller
         if ($parent)
             return response()->json(['parent' => $parent, 'msg' => 'successful', 'code' => 200]);
         return response()->json(['msg' => 'not found', 'code' => 404]);
-    }
-
-    public function getSecondaries($category, Request $request)
-    {
-        try {
-            $category = Category::find($category);
-            $children = $category->children;
-            if (count($category->children) != 0) {
-                $category = collect($category)->only(['name', 'banner']);
-                $category->put('secondaries', $children);
-                return api_response($request, $category->all(), 200, ['category' => $category->all()]);
-            } else
-                return api_response($request, null, 404);
-        } catch (\Exception $e) {
-            return api_response($request, null, 500);
-        }
     }
 
     public function getSecondaryServices($category, Request $request)

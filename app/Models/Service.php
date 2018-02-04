@@ -183,6 +183,10 @@ class Service extends Model
     {
         return $this->variable_type == 'Options';
     }
+    public function isFixed()
+    {
+        return $this->variable_type == 'Fixed';
+    }
 
     public function getVariablesOfOptionsService(array $options)
     {
