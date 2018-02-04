@@ -6,10 +6,12 @@ use App\Jobs\SendFaqEmail;
 use App\Models\Job;
 use App\Models\OfferShowcase;
 use App\Models\Resource;
+use App\Models\ScheduleSlot;
 use App\Models\Service;
 use App\Models\Slider;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
+use Carbon\Carbon;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
@@ -31,12 +33,6 @@ class ShebaController extends Controller
     {
         $job_count = Job::all()->count() + 16000;
         $service_count = Service::where('publication_status', 1)->get()->count();
-//        $resource_count = Resource::whereHas('partners', function ($q) {
-//            $q->where([
-//                ['resource_type', 'Handyman'],
-//                ['is_verified', 1]
-//            ]);
-//        })->get()->count();
         $resource_count = Resource::where('is_verified', 1)->get()->count();
         return response()->json(['service' => $service_count, 'job' => $job_count,
             'resource' => $resource_count,
@@ -64,32 +60,12 @@ class ShebaController extends Controller
 
     public function getImages(Request $request)
     {
-        $for = null;
-        if ($request->has('for')) {
-            $for = $request->for == 'app' ? 'is_active_for_app' : 'is_active_for_web';
+        try {
+            $images = Slider::select('id', 'image_link', 'small_image_link', 'target_link', 'target_type', 'target_id')->show();
+            return count($images) > 0 ? api_response($request, $images, 200, ['images' => $images]) : api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
         }
-        $images = Slider::select('id', 'image_link', 'small_image_link', 'target_link', 'target_type', 'target_id', 'is_active_for_web', 'is_active_for_app')->show();
-        if (!empty($for)) {
-            $images = $images->where($for, 1);
-        }
-        return count($images) > 0 ? api_response($request, $images, 200, ['images' => $images]) : api_response($request, null, 404);
-    }
-
-    public function getOffers()
-    {
-        $offers = OfferShowcase::select('id', 'thumb', 'title', 'short_description', 'target_link')
-            ->where('is_active', 1)->get();
-        return response()->json(['offers' => $offers, 'code' => 200]);
-    }
-
-    public function getOffer($offer)
-    {
-        $offer = OfferShowcase::select('id', 'thumb', 'title', 'banner', 'short_description', 'detail_description', 'target_link')
-            ->where([
-                ['id', $offer],
-                ['is_active', 1]
-            ])->first();
-        return count($offer) > 0 ? response()->json(['offer' => $offer, 'code' => 200]) : response()->json(['code' => 404]);
     }
 
     public function getSimilarOffer($offer)
@@ -105,6 +81,29 @@ class ShebaController extends Controller
     public function getLeadRewardAmount()
     {
         return response()->json(['code' => 200, 'amount' => constants('AFFILIATION_REWARD_MONEY')]);
+    }
+
+    public function getTimeSlots(Request $request)
+    {
+        try {
+            $slots = ScheduleSlot::all();
+            $time_slots = $valid_time_slots = [];
+            $current_time = Carbon::now();
+            foreach ($slots as $slot) {
+                $slot_start_time = Carbon::parse($slot->start);
+                $slot_end_time = Carbon::parse($slot->end);
+                $time_slot_key = $slot->start . '-' . $slot->end;
+                $time_slot_value = $slot_start_time->format('g:i A') . '-' . $slot_end_time->format('g:i A');
+                if ($slot_start_time > $current_time) {
+                    $valid_time_slots[$time_slot_key] = $time_slot_value;
+                }
+                $time_slots[$time_slot_key] = $time_slot_value;
+            }
+            $result = ['times' => $time_slots, 'valid_times' => $valid_time_slots];
+            return api_response($request, $result, 200, $result);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
     }
 
     public function getVersions(Request $request)

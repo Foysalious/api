@@ -89,10 +89,11 @@ class PartnerOrder extends Model
         $this->profit = floatValFormat($this->grossAmount - $this->totalCost);
         $this->margin = $this->totalPrice ? (floatValFormat($this->totalPrice - $this->totalCost) * 100) / $this->totalPrice : 0;
         $this->marginBeforeDiscount = $this->jobPrices ? (floatValFormat($this->jobPrices - $this->totalCost) * 100) / $this->jobPrices : 0;
-        $this->marginAfterDiscount = $this->grossAmount ? (floatValFormat($this->grossAmount - $this->totalCost, 2) * 100) / $this->grossAmount : 0;
+        $this->marginAfterDiscount = $this->grossAmount ? (floatValFormat($this->grossAmount - $this->totalCost) * 100) / $this->grossAmount : 0;
         $this->spPayable = ($this->partner_collection < $this->totalCost) ? (floatValFormat($this->totalCost - $this->partner_collection)) : 0;
         $this->shebaReceivable = ($this->sheba_collection < $this->profit) ? (floatValFormat($this->profit - $this->sheba_collection)) : 0;
         $this->_setPaymentStatus()->_setFinanceDue();
+        $this->isCalculated = true;
         return $this->_formatAllToTaka();
     }
 
@@ -247,5 +248,15 @@ class PartnerOrder extends Model
     public function stageChangeLogs()
     {
         return $this->hasMany(PartnerOrderStatusLog::class);
+    }
+
+    public function getVersion()
+    {
+        return $this->id > env('LAST_PARTNER_ORDER_ID_V1') ? 'v2' : 'v1';
+    }
+
+    public function getIsV2Attribute()
+    {
+        return $this->id > env('LAST_PARTNER_ORDER_ID_V1');
     }
 }

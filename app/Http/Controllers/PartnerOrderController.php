@@ -35,6 +35,25 @@ class PartnerOrderController extends Controller
                 'filter' => 'sometimes|bail|required|string|in:ongoing,history'
             ]);
             $partner_order = $this->partnerOrderRepository->getOrderDetails($request);
+            $partner_order['version'] = 'v1';
+            return api_response($request, $partner_order, 200, ['order' => $partner_order]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function showV2($partner, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'status' => 'sometimes|bail|required|string',
+                'filter' => 'sometimes|bail|required|string|in:ongoing,history'
+            ]);
+            $partner_order = $this->partnerOrderRepository->getOrderDetailsV2($request);
+            $partner_order['version'] = 'v2';
             return api_response($request, $partner_order, 200, ['order' => $partner_order]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -75,36 +94,18 @@ class PartnerOrderController extends Controller
     public function getBills($partner, Request $request)
     {
         try {
-            $partner_order = $request->partner_order->load(['order', 'jobs' => function ($q) {
-                $q->info()->with(['service', 'usedMaterials' => function ($q) {
-                    $q->select('id', 'job_id', 'material_name', 'material_price');
-                }]);
-            }]);
-            $partner_order->calculate();
-            $jobs = (new ResourceJobRepository())->addJobInformationForAPI($partner_order->jobs->each(function ($item) use ($partner_order) {
-                $item['partner_order'] = $partner_order;
-            }));
-            $partner_order['paid_amount'] = (double)$partner_order->paid;
-            $partner_order['due_amount'] = (double)$partner_order->due;
-            $partner_order['total'] = (double)$partner_order->totalPrice;
-            $partner_order['sheba_fee'] = ((double)$partner_order->profit > 0) ? (double)$partner_order->profit : 0;
-            $partner_order['total_cost_without_discount'] = (double)$partner_order->totalCostWithoutDiscount;
-            $partner_order['total_partner_discount'] = (double)$partner_order->totalPartnerDiscount;
-            $partner_order['total_cost'] = (double)$partner_order->totalCost;
-            $partner_order['is_paid'] = ((double)$partner_order->due == 0) ? true : false;
-            $partner_order['is_due'] = ((double)$partner_order->due > 0) ? true : false;
-            $partner_order['is_closed'] = ($partner_order->closed_at != null) ? true : false;
-            $partner_order['order_status'] = $partner_order->status;
-            if ($partner_order['is_closed'] && $partner_order['is_due']) {
-                $partner_order['overdue'] = $partner_order->closed_at->diffInDays(Carbon::now());
-            } else {
-                $partner_order['overdue'] = null;
-            }
-            removeRelationsFromModel($partner_order);
-            removeSelectedFieldsFromModel($partner_order);
-            $partner_order['jobs'] = $jobs->each(function ($item) {
-                removeRelationsFromModel($item);
-            });
+            $partner_order = $request->partner_order;
+            $partner_order->calculate(true);
+            $partner_order = array(
+                'id' => $partner_order->id,
+                'service_price' => (double)$partner_order->totalServicePrice,
+                'material_price' => (double)$partner_order->totalMaterialPrice,
+                'discount' => (double)$partner_order->totalDiscount,
+                'total_price' => (double)$partner_order->totalPrice,
+                'paid' => (double)$partner_order->paid,
+                'due' => (double)$partner_order->due,
+                'invoice' => $partner_order->invoice
+            );
             return api_response($request, $partner_order, 200, ['order' => $partner_order]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);

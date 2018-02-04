@@ -53,7 +53,7 @@ class ResourceJobController extends Controller
             $job['can_process'] = false;
             $job['can_serve'] = false;
             $job['can_collect'] = false;
-            $jobs = $this->api->get('resources/' . $resource->id . '/jobs?remember_token=' . $resource->remember_token . '&limit=1');
+            $jobs = $this->api->get('v1/resources/' . $resource->id . '/jobs?remember_token=' . $resource->remember_token . '&limit=1');
             if ($jobs) {
                 $job = $this->resourceJobRepository->calculateActionsForThisJob($jobs[0], $job);
             }

@@ -36,7 +36,7 @@ class Category extends Model
 
     public function children()
     {
-        return $this->hasMany(Category::class, 'parent_id')->has('services', '>', 0)->published()->select('id', 'name', 'thumb', 'banner');
+        return $this->hasMany(Category::class, 'parent_id')->has('services', '>', 0)->published()->select('id', 'name', 'thumb', 'banner','parent_id');
     }
 
     public function services()

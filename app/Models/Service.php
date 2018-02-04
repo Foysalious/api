@@ -36,6 +36,11 @@ class Service extends Model
         return $this->category();
     }
 
+    public function getParentCategoryAttribute()
+    {
+        return $this->category->parent->id;
+    }
+
     public function partners()
     {
         return $this->belongsToMany(Partner::class)->withPivot($this->servicePivotColumns);
@@ -110,7 +115,8 @@ class Service extends Model
 //        return false;
     }
 
-    public function discounts(){
+    public function discounts()
+    {
         return $this->load(['partnerServices' => function ($q) {
             $q->published()->with(['partner' => function ($q) {
                 $q->published();
@@ -171,5 +177,31 @@ class Service extends Model
     public function tags()
     {
         return $this->morphToMany(Tag::class, 'taggable');
+    }
+
+    public function isOptions()
+    {
+        return $this->variable_type == 'Options';
+    }
+    public function isFixed()
+    {
+        return $this->variable_type == 'Fixed';
+    }
+
+    public function getVariablesOfOptionsService(array $options)
+    {
+        $variables = [];
+        foreach ((array)(json_decode($this->variables))->options as $key => $service_option) {
+            array_push($variables, [
+                'question' => $service_option->question,
+                'answer' => explode(',', $service_option->answers)[$options[$key]]
+            ]);
+        }
+        return json_encode($variables);
+    }
+
+    public function favorites()
+    {
+        return $this->belongsToMany(CustomerFavorite::class, 'customer_favourite_service', 'service_id', 'customer_favourite_id')->withPivot(['name', 'additional_info', 'variable_type', 'variables', 'option', 'quantity']);
     }
 }

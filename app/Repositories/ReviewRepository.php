@@ -58,25 +58,21 @@ class ReviewRepository
 
     public function save(Job $job, Request $request)
     {
-        $review = new Review();
-        $review->rating = $request->rating;
-        $review->review_title = $request->review_title;
-        $review->review = $request->review;
-        $review->job_id = $job->id;
-        $review->resource_id = $job->resource_id;
-        $review->partner_id = $job->partner_order->partner_id;
-        $review->service_id = $job->service_id;
-        $review->customer_id = $job->partner_order->order->customer_id;
-        if ($review->save()) {
-            notify()->partner($job->partner_order->partner)->send([
-                "title" => $job->partner_order->order->customer->profile->name . " has given " . $review->rating . " rating on the Job: " . $job->code(),
-                "link" => env('SHEBA_PARTNER_END_URL') . "/" . $job->partner_order->partner->sub_domain . "/job/" . $job->id,
-                "type" => notificationType('Info'),
-                "event_type" => 'App\Models\Job',
-                "event_id" => $job->id
-            ]);
+        $services = $job->jobServices;
+        foreach ($services as $service) {
+            $review = new Review();
+            $review->rating = $request->rating;
+            $review->review_title = $request->review_title;
+            $review->review = $request->review;
+            $review->job_id = $job->id;
+            $review->category_id = $job->category_id;
+            $review->resource_id = $job->resource_id;
+            $review->partner_id = $job->partner_order->partner_id;
+            $review->service_id = $service->service_id;
+            $review->customer_id = $job->partner_order->order->customer_id;
+            $review->save();
+            return $review;
         }
-        return $review;
     }
 
     public function update(Review $review, Request $request)

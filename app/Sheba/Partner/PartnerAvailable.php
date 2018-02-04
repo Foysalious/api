@@ -4,6 +4,7 @@ namespace Sheba\Partner;
 
 
 use App\Models\Partner;
+use Carbon\Carbon;
 
 class PartnerAvailable
 {
@@ -14,20 +15,21 @@ class PartnerAvailable
         $this->partner = ($partner) instanceof Partner ? $partner : Partner::find($partner);
     }
 
-    public function available($data)
+    public function available($date, $preferred_time, $category_id)
     {
-        $date = array_key_exists('day', $data) ? $data['day'] : date('Y-m-d');
-        $time = array_key_exists('time', $data) ? $data['time'] : 'Anytime';
         if ($this->_partnerOnLeave($date)) {
-            return false;
+            return 0;
         }
         if (!$this->_worksAtThisDay($date)) {
-            return false;
+            return 0;
         }
-        if (!$this->_worksAtThisTime($time)) {
-            return false;
+        if (!$this->_worksAtThisTime($preferred_time)) {
+            return 0;
         }
-        return true;
+        if (!scheduler($this->partner)->isAvailable($date, explode('-', $preferred_time), $category_id)) {
+            return 0;
+        }
+        return 1;
     }
 
     private function _worksAtThisDay($date)
@@ -46,21 +48,11 @@ class PartnerAvailable
         return $this->partner->runningLeave($date) != null ? true : false;
     }
 
-    /**
-     * @param $time
-     * @return bool
-     */
-    private function _worksAtThisTime($time)
+    private function _worksAtThisTime($preferred_time)
     {
-        //Means customer is available at anytime, no need to check partner working hours
-        if ($time == 'Anytime') {
-            return true;
-        }
-        if (array_has(constants('JOB_PREFERRED_TIMES'), $time)) {
-            $working_hours = json_decode($this->partner->basicInformations->working_hours);
-            return $working_hours != null ? $this->_betweenWorkingHours($working_hours, constants('JOB_START_END_TIMES')[$time]) : false;
-        }
-        return false;
+        $working_hours = json_decode($this->partner->basicInformations->working_hours);
+        $start_time = Carbon::parse(explode('-', $preferred_time)[0]);
+        return $start_time->gte(Carbon::parse($working_hours->day_start)) && $start_time->lte(Carbon::parse($working_hours->day_end));
     }
 
     private function _betweenWorkingHours($working_hours, $times)
