@@ -11,11 +11,11 @@ class HomepageSetting extends Model
 
     public function scopePublishedForApp($q)
     {
-        return $q->select('is_published_for_app')->where('is_published_for_app', 1);
+        return $q->where('is_published_for_app', 1);
     }
 
     public function scopePublishedForWeb($q)
     {
-        return $q->select('is_published_for_web')->where('is_published_for_web', 1);
+        return $q->where('is_published_for_web', 1);
     }
 }

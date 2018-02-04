@@ -278,7 +278,12 @@ $api->version('v1', function ($api) {
         $api->get('times', 'ShebaController@getTimeSlots');
         $api->get('settings', 'HomePageSettingController@index');
         $api->get('home-grids', 'HomeGridController@index');
-        $api->get('category-groups/{id}', 'CategoryGroupController@show');
+        $api->group(['prefix' => 'category-groups'], function ($api) {
+            $api->get('', 'CategoryGroupController@index');
+            $api->group(['prefix' => '{id}'], function ($api) {
+                $api->get('', 'CategoryGroupController@show');
+            });
+        });
         $api->group(['prefix' => 'locations'], function ($api) {
             $api->get('{location}/partners', 'PartnerController@findPartners');
             $api->get('current', 'LocationController@getCurrent');
