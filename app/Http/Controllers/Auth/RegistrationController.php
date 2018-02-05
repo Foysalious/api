@@ -12,6 +12,7 @@ use App\Repositories\CustomerRepository;
 use App\Repositories\ProfileRepository;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use JWTAuth;
 use JWTFactory;
 use Session;
@@ -27,6 +28,33 @@ class RegistrationController extends Controller
         $this->fbKit = new FacebookAccountKit();
         $this->customer = new CustomerRepository();
         $this->profileRepository = new ProfileRepository();
+    }
+
+    public function registerByEmailAndMobile(Request $request)
+    {
+        try {
+            $from = implode(',', constants('FROM'));
+            $this->validate($request, ['email' => 'required|email|unique:profiles', 'password' => 'required|min:6', 'kit_code' => 'required|string', 'from' => "required|in:$from"]);
+            if ($kit_data = $this->fbKit->authenticateKit($request->kit_code)) {
+                $from = $this->profileRepository->getAvatar($request->from);
+                $profile = $this->profileRepository->ifExist(formatMobile($kit_data['mobile']), 'mobile');
+                if (!$profile) {
+                    $profile = $this->profileRepository->store(['mobile' => formatMobile($kit_data['mobile']), 'mobile_verified' => 1, 'email' => $request->email, 'password' => bcrypt($request->password)]);
+                } else {
+                    return api_response($request, null, 400, ['message' => 'Mobile already exists! Please login']);
+//                    $this->profileRepository->update($profile, ['email' => $request->email]);
+                }
+                $this->profileRepository->registerAvatar($from, $request, $profile);
+                $info = $this->profileRepository->getProfileInfo($from, Profile::find($profile->id), $request);
+                return $info ? api_response($request, $info, 200, ['info' => $info]) : api_response($request, null, 404);
+            }
+            return api_response($request, null, 403);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
     }
 
     /**

@@ -20,7 +20,8 @@
     "jenssegers/mongodb": "^3.2",
     "brozot/laravel-fcm": "^1.2",
     "aws/aws-sdk-php": "^3.32",
-    "sunra/php-simple-html-dom-parser": "1.5.2"
+    "sunra/php-simple-html-dom-parser": "1.5.2",
+    "google/apiclient": "^2.2"
   },
   "require-dev": {
     "fzaninotto/faker": "~1.4",

@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Customer;
 use App\Models\Profile;
-use App\Models\Service;
 use App\Repositories\FacebookRepository;
 use App\Repositories\ProfileRepository;
-use App\Repositories\ServiceRepository;
+use App\Sheba\FacebookProfile;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
-use Excel;
-use Illuminate\Support\Facades\Storage;
 use Validator;
+use DB;
 
 class FacebookController extends Controller
 {
@@ -19,11 +19,102 @@ class FacebookController extends Controller
     private $profileRepository;
     private $facebookRepository;
 
+
     public function __construct()
     {
         $this->fbKit = new FacebookAccountKit();
         $this->profileRepository = new ProfileRepository();
         $this->facebookRepository = new FacebookRepository();
+    }
+
+    public function login(Request $request)
+    {
+        try {
+            $from = implode(',', constants('FROM'));
+            $this->validate($request, ['access_token' => 'required', 'from' => "required|in:$from"]);
+            if ($fb_profile_info = $this->getFacebookProfileInfo($request->access_token)) {
+                $fb_profile_info = (new FacebookProfile($fb_profile_info))->getProfileInformation();
+                $profile = $this->profileRepository->getIfExist($fb_profile_info['fb_id'], 'fb_id');
+                if ($profile) {
+                    $from = $this->profileRepository->getAvatar($request->from);
+                    if ($profile->$from == null) {
+                        $this->profileRepository->registerAvatar($from, $request, $profile);
+                    }
+                    $info = $this->profileRepository->getProfileInfo($from, Profile::find($profile->id), $request);
+                    return $info ? api_response($request, $info, 200, ['info' => $info]) : api_response($request, null, 404);
+                } else {
+                    return api_response($request, null, 400, ['message' => 'Facebook account not registered! Please register']);
+                }
+            }
+            return api_response($request, null, 403);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            dd($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function register(Request $request)
+    {
+        try {
+            $from = implode(',', constants('FROM'));
+            $this->validate($request, ['access_token' => 'required', 'kit_code' => 'required', 'from' => "required|in:$from"]);
+            $fb_profile_info = $this->getFacebookProfileInfo($request->access_token);
+            $kit_data = $this->fbKit->authenticateKit($request->kit_code);
+            if ($fb_profile_info && $kit_data) {
+                $from = $this->profileRepository->getAvatar($request->from);
+                $fb_profile = new FacebookProfile($fb_profile_info);
+                $fb_profile_info = $fb_profile->getProfileInformation();
+                $profile = $this->profileRepository->getIfExist($fb_profile_info['fb_id'], 'fb_id');
+                if (!$profile) {
+                    $profile = $this->profileRepository->getIfExist(formatMobile($kit_data['mobile']), 'mobile');
+                    if (!$profile) {
+                        $profile = $this->profileRepository->getIfExist($fb_profile_info['email'], 'email');
+                        if (!$profile) {
+                            DB::transaction(function () use ($fb_profile_info, $kit_data, &$profile) {
+                                $profile = $this->profileRepository->store(array_merge($fb_profile_info, ['mobile' => formatMobile($kit_data['mobile']), 'mobile_verified' => 1]));
+                                $profile->pro_pic = $this->profileRepository->uploadImage($profile, $fb_profile_info['pro_pic'], 'images/profiles/');
+                                $profile->update();
+                            });
+                        } else {
+                            return api_response($request, null, 400, ['message' => 'Email already exists! Please login']);
+//                            $profile = $this->profileRepository->update($profile, array_merge($fb_profile_info, ['mobile' => $kit_data['mobile'], 'mobile_verified' => 1]));
+                        }
+                    } else {
+                        return api_response($request, null, 400, ['message' => 'Mobile already exists! Please login']);
+//                        $profile = $this->profileRepository->update($profile, $fb_profile_info);
+                    }
+                } else {
+                    return api_response($request, null, 400, ['message' => 'Facebook already exists! Please login']);
+//                    $profile = $this->profileRepository->update($profile, ['mobile' => $kit_data['mobile'], 'mobile_verified' => 1]);
+                }
+                if ($profile->$from == null) {
+                    $this->profileRepository->registerAvatar($from, $request, $profile);
+                }
+                $info = $this->profileRepository->getProfileInfo($from, Profile::find($profile->id), $request);
+                return $info ? api_response($request, $info, 200, ['info' => $info]) : api_response($request, null, 404);
+            }
+            return api_response($request, null, 403);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    private function getFacebookProfileInfo($token)
+    {
+        try {
+            $client = new Client();
+            $res = $client->request('GET', 'https://graph.facebook.com/me?fields=id,name,email,gender,picture.height(400).width(400)&access_token=' . $token);
+            $data = json_decode($res->getBody(), true);
+            return $data;
+        } catch (RequestException $e) {
+            return false;
+        }
     }
 
     public function continueWithKit(Request $request)

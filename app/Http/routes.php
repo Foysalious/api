@@ -19,6 +19,13 @@ $api->version('v1', function ($api) {
     $api->group(['prefix' => 'v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
         $api->post('login', 'Auth\LoginController@login');
         $api->post('register', 'Auth\RegistrationController@register');
+        $api->group(['prefix' => 'login'], function ($api) {
+            $api->post('facebook', 'FacebookController@login');
+        });
+        $api->group(['prefix' => 'register'], function ($api) {
+            $api->post('email', 'Auth\RegistrationController@registerByEmailAndMobile');
+            $api->post('facebook', 'FacebookController@register');
+        });
         $api->post('continue-with-kit', 'FacebookController@continueWithKit');
         $api->post('continue-with-facebook', 'FacebookController@continueWithFacebook');
         $api->post('send-password-reset-email', 'Auth\PasswordController@sendResetPasswordEmail');
@@ -275,6 +282,12 @@ $api->version('v1', function ($api) {
 
     });
     $api->group(['prefix' => 'v2', 'namespace' => 'App\Http\Controllers'], function ($api) {
+        $api->group(['prefix' => 'login'], function ($api) {
+            $api->post('gmail', 'Auth\GoogleController@login');
+        });
+        $api->group(['prefix' => 'register'], function ($api) {
+            $api->post('gmail', 'Auth\GoogleController@register');
+        });
         $api->get('times', 'ShebaController@getTimeSlots');
         $api->get('settings', 'HomePageSettingController@index');
         $api->get('home-grids', 'HomeGridController@index');
