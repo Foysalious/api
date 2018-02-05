@@ -7,13 +7,10 @@ use App\Http\Controllers\FacebookAccountKit;
 use App\Models\Profile;
 use App\Repositories\FacebookRepository;
 use App\Repositories\ProfileRepository;
-
-;
-
 use Google_Client;
-use Illuminate\Contracts\Validation\ValidationException;
 use Illuminate\Http\Request;
 use Auth;
+use Illuminate\Validation\ValidationException;
 
 class GoogleController extends Controller
 {
