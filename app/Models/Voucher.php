@@ -51,4 +51,14 @@ class Voucher extends Model
         $promotion = $customer->promotions()->where('voucher_id', $this->id)->get();
         return $promotion == null ? false : $promotion->first();
     }
+
+    public function ownerIsCustomer()
+    {
+        return $this->owner_type == "App\\Models\\Customer";
+    }
+
+    public function ownerIsAffiliate()
+    {
+        return $this->owner_type == "App\\Models\\Affiliate";
+    }
 }
