@@ -9,6 +9,7 @@ use App\Repositories\PapRepository;
 use App\Sheba\JobStatus;
 use FacebookAds\Http\Exception\RequestException;
 use GuzzleHttp\Client;
+use function GuzzleHttp\Promise\all;
 use Illuminate\Http\Request;
 use DB;
 use Carbon\Carbon;
@@ -32,12 +33,48 @@ class JobController extends Controller
             $this->validate($request, [
                 'filter' => 'required|string|in:ongoing,history'
             ]);
+            $filter = $request->filter;
+            $customer = $request->customer->load(['orders' => function ($q) use ($filter) {
+                $q->with(['partnerOrders' => function ($q) use ($filter) {
+                    $q->$filter()->with(['jobs' => function ($q) {
+                        $q->with(['resource.profile', 'category']);
+                    }]);
+                }]);
+            }]);
+            $all_jobs = $this->getJobOfOrders($customer->orders->filter(function ($order) {
+                return $order->partnerOrders->count() > 0;
+            }))->sortByDesc('created_at');
+            return api_response($request, $all_jobs, 200, ['orders' => $all_jobs->values()->all()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
+    }
+
+    private function getJobOfOrders($orders)
+    {
+        $all_jobs = collect();
+        foreach ($orders as $order) {
+            foreach ($order->partnerOrders as $partnerOrder) {
+                $partnerOrder->calculateStatus();
+                foreach ($partnerOrder->jobs as $job) {
+                    $category = $job->category == null ? $job->service->category : $job->category;
+                    $all_jobs->push(collect(array(
+                        'job_id' => $job->id,
+                        'category_name' => $category->name,
+                        'schedule_date' => $job->schedule_date ? $job->schedule_date : null,
+                        'preferred_time' => $job->preferred_time ? $job->preferred_time : null,
+                        'status' => $partnerOrder->status,
+                        'order_code' => $order->code(),
+                        'created_at' => $job->created_at->format('Y-m-d'),
+                        'created_at_timestamp' => $job->created_at->timestamp
+                    )));
+                }
+            }
+        }
+        return $all_jobs;
     }
 
     public function getInfo($customer, $job, Request $request)

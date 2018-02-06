@@ -310,7 +310,7 @@ $api->version('v1', function ($api) {
                     $api->post('/', 'OrderController@store');
                 });
                 $api->group(['prefix' => 'jobs'], function ($api) {
-                    $api->post('/', 'JobController@index');
+                    $api->get('/', 'JobController@index');
                 });
             });
         });

@@ -27,6 +27,11 @@ class Order extends Model
         return $this->hasMany(PartnerOrder::class);
     }
 
+    public function partnerOrders()
+    {
+        return $this->hasMany(PartnerOrder::class);
+    }
+
     public function location()
     {
         return $this->belongsTo(Location::class);
