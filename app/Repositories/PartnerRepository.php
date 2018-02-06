@@ -4,8 +4,6 @@ namespace App\Repositories;
 
 
 use App\Models\Partner;
-use Illuminate\Database\QueryException;
-use Sheba\Partner\PartnerAvailable;
 
 class PartnerRepository
 {

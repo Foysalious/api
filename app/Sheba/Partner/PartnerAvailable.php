@@ -1,6 +1,6 @@
 <?php
 
-namespace Sheba\Partner;
+namespace App\Sheba\Partner;
 
 
 use App\Models\Partner;
