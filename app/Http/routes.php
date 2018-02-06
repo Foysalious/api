@@ -304,8 +304,15 @@ $api->version('v1', function ($api) {
         $api->group(['prefix' => 'job_service'], function ($api) {
             $api->post('/', 'JobServiceController@store');
         });
-        $api->group(['prefix' => 'customers/{customer}'], function ($api) {
-            $api->post('orders', 'OrderController@store');
+        $api->group(['prefix' => 'customers'], function ($api) {
+            $api->group(['prefix' => '{customer}', 'middleware' => ['customer.auth']], function ($api) {
+                $api->group(['prefix' => 'orders'], function ($api) {
+                    $api->post('/', 'OrderController@store');
+                });
+                $api->group(['prefix' => 'jobs'], function ($api) {
+                    $api->post('/', 'JobController@index');
+                });
+            });
         });
         $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
             $api->get('collections', 'PartnerOrderPaymentController@index');

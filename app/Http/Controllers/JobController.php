@@ -12,6 +12,7 @@ use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use DB;
 use Carbon\Carbon;
+use Illuminate\Validation\ValidationException;
 
 class JobController extends Controller
 {
@@ -23,6 +24,20 @@ class JobController extends Controller
     {
         $this->job_statuses_show = config('constants.JOB_STATUSES_SHOW');
         $this->job_statuses = config('constants.JOB_STATUSES');
+    }
+
+    public function index(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'filter' => 'required|string|in:ongoing,history'
+            ]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
     }
 
     public function getInfo($customer, $job, Request $request)
@@ -103,7 +118,7 @@ class JobController extends Controller
             $job = Job::find($job);
             $previous_status = $job->status;
             $customer = $request->customer;
-            $job_status = new JobStatus($job,$request);
+            $job_status = new JobStatus($job, $request);
             $job_status->__set('updated_by', $request->customer);
             if ($response = $job_status->update('Cancelled')) {
                 $job_cancel_log = new JobCancelLogRepository($job);
