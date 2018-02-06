@@ -31,9 +31,17 @@ class GoogleController extends Controller
         try {
             $from = implode(',', constants('FROM'));
             $this->validate($request, ['id_token' => 'required', 'from' => "required|in:$from"]);
-            if ($google_id = $this->getGoogleId($request->id_token)) {
-                $profile = $this->profileRepository->ifExist($google_id, 'google_id');
+            if ($payload = $this->getGooglePayload($request->id_token)) {
+                $profile = $this->profileRepository->ifExist($payload['email'], 'email');
                 if ($profile) {
+                    if (basename($profile->pro_pic) == 'default.jpg') {
+                        $profile->pro_pic = $this->profileRepository->uploadImage($profile, $payload['picture'], 'images/profiles/');
+                    }
+                    if ($profile->google_id == null) {
+                        $profile->google_id = $payload['sub'];
+                    }
+                    $profile->email_verified = 1;
+                    $profile->update();
                     $from = $this->profileRepository->getAvatar($request->from);
                     if ($profile->$from == null) {
                         $this->profileRepository->registerAvatar($from, $request, $profile);
@@ -58,10 +66,10 @@ class GoogleController extends Controller
         try {
             $from = implode(',', constants('FROM'));
             $this->validate($request, ['id_token' => 'required', 'email' => 'required|email', 'kit_code' => 'required', 'from' => "required|in:$from"]);
-            $google_id = $this->getGoogleId($request->id_token);
+            $payload = $this->getGooglePayload($request->id_token);
             $kit_data = $this->fbKit->authenticateKit($request->kit_code);
-            if ($google_id && $kit_data) {
-                $profile = $this->profileRepository->getIfExist($google_id, 'google_id');
+            if ($payload && $kit_data) {
+                $profile = $this->profileRepository->getIfExist($payload['email'], 'email');
                 if ($profile) {
                     return api_response($request, null, 400, ['message' => 'Gmail already exists! Please login']);
                 }
@@ -70,11 +78,11 @@ class GoogleController extends Controller
                     return api_response($request, null, 400, ['message' => 'Mobile already exists! Please login']);
                 }
                 $profile = new Profile();
-                DB::transaction(function () use ($kit_data, &$profile, $request) {
+                DB::transaction(function () use ($kit_data, &$profile, $payload) {
                     $profile = $this->profileRepository->store([
-                        'email' => $request->email, 'mobile' => formatMobile($kit_data['mobile']), 'name' => trim($request->name), 'mobile_verified' => 1, 'email_verified' => 1
+                        'email' => $payload['email'], 'mobile' => formatMobile($kit_data['mobile']), 'name' => trim($payload['name']), 'mobile_verified' => 1, 'email_verified' => 1, 'google_id' => $payload['sub']
                     ]);
-                    $profile->pro_pic = $this->profileRepository->uploadImage($profile, $request->picture, 'images/profiles/');
+                    $profile->pro_pic = $this->profileRepository->uploadImage($profile, $payload['picture'], 'images/profiles/');
                     $profile->update();
                 });
                 if ($profile->$from == null) {
@@ -92,17 +100,12 @@ class GoogleController extends Controller
         }
     }
 
-    private function getGoogleId($id_token)
+    private function getGooglePayload($id_token)
     {
         $client = new Google_Client(['client_id' => env('GOOGLE_APP_CLIENT_ID')]);
         try {
             $payload = $client->verifyIdToken($id_token);
-            if ($payload) {
-                // If request specified a G Suite domain:
-                return $payload['sub'];
-            } else {
-                return null;
-            }
+            return $payload ? $payload : null;
         } catch (\Throwable $e) {
             return null;
         }
