@@ -29,10 +29,6 @@ class Voucher extends Model
         return $this->morphTo();
     }
 
-    /**
-     * @param $customer_id
-     * @return array
-     */
     public function validityTimeLine($customer_id)
     {
         if ($this->is_referral) {
@@ -60,5 +56,13 @@ class Voucher extends Model
     public function ownerIsAffiliate()
     {
         return $this->owner_type == "App\\Models\\Affiliate";
+    }
+
+    public function scopeValid($query)
+    {
+        return $query->where([
+            ['valid_till', '>=', Carbon::now()],
+            ['is_valid', 1]
+        ]);
     }
 }
