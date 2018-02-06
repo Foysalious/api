@@ -128,6 +128,7 @@ class PromotionList
             $nth_orders = $rules->nth_orders;
             //customer order is less than max nth order value
             if ($customer_order_count >= max($nth_orders)) {
+                $this->message = "already crossed voucher order limit";
                 return false;
             }
         }
@@ -141,6 +142,7 @@ class PromotionList
             }
             //voucher is not for you
             if ($for_you == false) {
+                $this->message = "voucher code not for user";
                 return false;
             }
         }
@@ -154,6 +156,7 @@ class PromotionList
             }
             //voucher is not for you
             if ($for_you == false) {
+                $this->message = "voucher code not for user";
                 return false;
             }
         }
