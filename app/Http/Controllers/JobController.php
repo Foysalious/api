@@ -55,11 +55,33 @@ class JobController extends Controller
     public function show($customer, $job, Request $request)
     {
         try {
-            $customer = $request->customer;
-            $job = $request->job;
+            $job = $request->job->load(['resource.profile', 'category', 'review', 'jobServices']);
+            $job->calculate(true);
+            $job_collection = collect();
+            $job_collection->put('id', $job->id);
+            $job_collection->put('resource_name', $job->resource ? $job->resource->profile->name : null);
+            $job_collection->put('resource_picture', $job->resource ? $job->resource->profile->pro_pic : null);
+            $job_collection->put('resource_mobile', $job->resource ? $job->resource->profile->mobile : null);
+            $job_collection->put('deliver_address', $job->partnerOrder->order->delivery_address);
+            $job_collection->put('deliver_name', $job->partnerOrder->order->deliver_name);
+            $job_collection->put('deliver_mobile', $job->partnerOrder->order->deliver_mobile);
+            $job_collection->put('schedule_date', $job->schedule_date);
+            $job_collection->put('preferred_time', $job->preferred_time);
+            $job_collection->put('category_name', $job->category->name);
+            $job_collection->put('status', $job->status);
+            $job_collection->put('rating', $job->review->rating);
+            $job_collection->put('price', (double)$job->totalPrice);
             if (count($job->jobServices) == 0) {
-
+                $services = collect();
+                $services->push(json_decode($job->service_variables));
+            } else {
+                $services = collect();
+                foreach ($job->jobServices as $jobService) {
+                    $services->push(json_decode($jobService->service_variables));
+                }
             }
+            $job_collection->put('services', $services);
+            return api_response($request, $job_collection, 200, ['job' => $job_collection]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);

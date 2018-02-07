@@ -56,6 +56,11 @@ class Job extends Model
         return $this->belongsTo(PartnerOrder::class);
     }
 
+    public function partnerOrder()
+    {
+        return $this->belongsTo(PartnerOrder::class);
+    }
+
     public function review()
     {
         return $this->hasOne(Review::class);
@@ -239,6 +244,11 @@ class Job extends Model
     public function getVersion()
     {
         return $this->partner_order_id > env('LAST_PARTNER_ORDER_ID_V1') ? 'v2' : 'v1';
+    }
+
+    public function department()
+    {
+        return  $this->partnerOrder->order->department();
     }
 
 }

@@ -96,4 +96,9 @@ class Order extends Model
         return $this->id > env('LAST_ORDER_ID_V1') ? 'v2' : 'v1';
     }
 
+    public function department()
+    {
+        return getSalesChannels('department')[$this->sales_channel];
+    }
+
 }
