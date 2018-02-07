@@ -89,4 +89,9 @@ class Affiliate extends Model
         $vouchers = $this->vouchers;
         return $vouchers ? $vouchers->first() : null;
     }
+
+    public function isAmbassador()
+    {
+        return $this->is_ambassador == 1;
+    }
 }
