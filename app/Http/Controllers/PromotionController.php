@@ -13,16 +13,21 @@ class PromotionController extends Controller
 {
     public function index($customer, Request $request)
     {
-        $customer = $request->customer->load(['orders', 'promotions' => function ($q) {
-            $q->valid()->select('id', 'voucher_id', 'customer_id', 'valid_till')->with(['voucher' => function ($q) {
-                $q->select('id', 'code', 'amount', 'title', 'is_amount_percentage', 'cap', 'max_order');
+        try {
+            $customer = $request->customer->load(['orders', 'promotions' => function ($q) {
+                $q->valid()->select('id', 'voucher_id', 'customer_id', 'valid_till')->with(['voucher' => function ($q) {
+                    $q->select('id', 'code', 'amount', 'title', 'is_amount_percentage', 'cap', 'max_order');
+                }]);
             }]);
-        }]);
-        foreach ($customer->promotions as &$promotion) {
-            $promotion['valid_till_timestamp'] = $promotion->valid_till->timestamp;
-            $promotion['usage_left'] = $promotion->voucher->max_order - $customer->orders->where('voucher_id', $promotion->voucher->id)->count();
+            foreach ($customer->promotions as &$promotion) {
+                $promotion['valid_till_timestamp'] = $promotion->valid_till->timestamp;
+                $promotion['usage_left'] = (int)$promotion->voucher->max_order - $customer->orders->where('voucher_id', $promotion->voucher->id)->count();
+            }
+            return $customer->promotions->count() > 0 ? api_response($request, $customer->promotions, 200, ['promotions' => $customer->promotions]) : api_response($request, $customer->promotions, 404);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
         }
-        return $customer != null ? response()->json(['code' => 200, 'promotions' => $customer->promotions]) : response()->json(['code' => 404]);
+
     }
 
     public function addPromo($customer, Request $request)

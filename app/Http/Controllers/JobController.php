@@ -18,7 +18,6 @@ use Illuminate\Validation\ValidationException;
 class JobController extends Controller
 {
     private $job_statuses_show;
-    private $job_preferred_times;
     private $job_statuses;
 
     public function __construct()
@@ -45,6 +44,22 @@ class JobController extends Controller
                 return $order->partnerOrders->count() > 0;
             }))->sortByDesc('created_at');
             return api_response($request, $all_jobs, 200, ['orders' => $all_jobs->values()->all()]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function show($customer, $job, Request $request)
+    {
+        try {
+            $customer = $request->customer;
+            $job = $request->job;
+            if (count($job->jobServices) == 0) {
+
+            }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);

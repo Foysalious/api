@@ -7,7 +7,7 @@ class Voucher extends Model
 {
     protected $guarded = ['id'];
     protected $dates = ['start_date', 'end_date'];
-    protected $casts = ['is_amount_percentage' => 'integer', 'cap' => 'double'];
+    protected $casts = ['is_amount_percentage' => 'integer', 'cap' => 'double', 'amount' => 'double'];
 
     public function orders()
     {
