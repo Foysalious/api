@@ -2,107 +2,129 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Models\Customer;
+use App\Library\Sms;
 use App\Http\Controllers\Controller;
 use App\Models\Profile;
-use App\Repositories\CustomerRepository;
-use App\Repositories\ProfileRepository;
 use Illuminate\Http\Request;
 use Cache;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 use Validator;
 use Redis;
 use Mail;
 
 class PasswordController extends Controller
 {
-    private $customer;
-    private $sheba_front_end_url;
-    private $profile;
-
-    public function __construct()
+    public function sendResetPasswordEmail($customer, Request $request)
     {
-        $this->customer = new CustomerRepository();
-        $this->profile = new ProfileRepository();
-        $this->sheba_front_end_url = env('SHEBA_FRONT_END_URL');
-    }
-
-    public function getResetPasswordForm(Customer $customer, $code)
-    {
-        $code = Cache::get($customer->id . '-reset-password');
-        if (empty($code)) {
-            Cache::forget($customer->id . '-reset-password');
-            return view('reset-password-form', ['show' => false]);
-        } else {
-            return view('reset-password-form', ['show' => true, 'customer' => $customer]);
-        }
-    }
-
-
-    public function resetPassword(Request $request)
-    {
-        if (in_array($request->from, [env('SHEBA_CUSTOMER_APP'), env('SHEBA_RESOURCE_APP')]) == false) {
-            return response()->json(['code' => 409, 'msg' => 'unauthorized']);
-        }
-        $key = Redis::get($request->code);
-        if ($key != null) {
-            if ($msg = $this->_validatePassword($request)) {
-                return response()->json(['code' => 500, 'msg' => $msg]);
+        try {
+            $this->validate($request, [
+                'email' => 'required',
+                'from' => 'required|string|in:' . implode(',', constants('FROM'))
+            ]);
+            $profile = Profile::where('email', $request->email)->first();
+            if ($profile != null) {
+                if ($request->customer->profile->email == $request->email) {
+                    $this->sendResetCode($request->customer->profile, 'email', $request->email);
+                    return api_response($request, 1, 200);
+                } else {
+                    return api_response($request, null, 403);
+                }
+            } else {
+                $mobile = formatMobile($request->email);
+                $profile = Profile::where('mobile', $mobile)->first();
+                if ($profile != null) {
+                    if ($request->customer->profile->mobile == $mobile) {
+                        $this->sendResetCode($request->customer->profile, 'mobile', $mobile);
+                        return api_response($request, 1, 200);
+                    } else {
+                        return api_response($request, null, 403);
+                    }
+                }
             }
-            $email = json_decode($key)->email;
-            $profile = Profile::where('email', $email)->first();
-            $profile->password = bcrypt($request->password);
-            if ($profile->update()) {
-                return response()->json(['code' => 200, 'msg' => 'Ok']);
+            return api_response($request, null, 404);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function validatePasswordResetCode($customer, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'code' => 'required',
+                'from' => 'required|string|in:' . implode(',', constants('FROM'))
+            ]);
+            $code = Redis::get('password_reset_code_' . $request->code);
+            if ($code != null) {
+                $data = json_decode($code);
+                if ($data->profile_id == $request->customer->profile->id) {
+                    Redis::set('password_reset_profile_' . $data->profile_id, 1);
+                    Redis::expire('password_reset_profile_' . $data->profile_id, 600);
+                    Redis::del('password_reset_code_' . $request->code);
+                    return api_response($request, 1, 200);
+                }
             }
+            return api_response($request, 0, 403);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function reset($customer, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'password' => 'required|min:6',
+                'from' => 'required|string|in:' . implode(',', constants('FROM'))
+            ]);
+            $profile = $request->customer->profile;
+            $key = Redis::get('password_reset_profile_' . $profile->id);
+            if ($key != null) {
+                $profile->password = bcrypt($request->password);
+                $profile->update();
+                Redis::del('password_reset_profile_' . $profile->id);
+                return api_response($request, $profile, 200);
+            }else{
+                return api_response($request, 0, 403);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    private function sendResetCode(Profile $profile, $column, $email)
+    {
+        $reset_token = randomString(4, 1);
+        $key_name = 'password_reset_code_' . $reset_token;
+        Redis::set($key_name, json_encode(["profile_id" => $profile->id, 'code' => $reset_token]));
+        if ($column == 'email') {
+            $this->sendPasswordResetEmail($email, $reset_token);
         } else {
-            return response()->json(['code' => 409, 'msg' => 'unauthorized']);
+            $this->sendPasswordResetSms($email, $reset_token);
         }
+        Redis::expire($key_name, 600);
     }
 
-
-    public function sendResetPasswordEmail(Request $request)
+    private function sendPasswordResetEmail($email, $reset_token)
     {
-        if (in_array($request->from, [env('SHEBA_CUSTOMER_APP'), env('SHEBA_RESOURCE_APP')]) == false) {
-            return response()->json(['code' => 409, 'msg' => 'unauthorized']);
-        }
-        if ($msg = $this->_validateRegistration($request)) {
-            return response()->json(['code' => 500, 'msg' => $msg]);
-        }
-        $this->_sendResetEmail($request->email);
-        return response()->json(['code' => 200, 'msg' => 'Ok']);
-    }
-
-    /**
-     * @param $request
-     * @return bool
-     */
-    private function _validateRegistration($request)
-    {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email|exists:profiles',
-            'from' => 'required'
-        ]);
-        return $validator->fails() ? $validator->errors()->all()[0] : false;
-    }
-
-    private function _validatePassword($request)
-    {
-        $validator = Validator::make($request->all(), [
-            'password' => 'required|min:6|confirmed'
-        ]);
-        return $validator->fails() ? $validator->errors()->all()[0] : false;
-    }
-
-    private function _sendResetEmail($email)
-    {
-        $verfication_code = randomString(10, 1);
-        Redis::set($verfication_code, json_encode(['email' => $email]));
-        Redis::expire($verfication_code, 600);
-        Mail::send('emails.reset-password', ['code' => $verfication_code], function ($m) use ($email) {
+        Mail::send('emails.reset-password', ['code' => $reset_token], function ($m) use ($email) {
             $m->from('mail@sheba.xyz', 'Sheba.xyz');
             $m->to($email)->subject('Reset Password');
 
         });
+    }
+
+    private function sendPasswordResetSms($mobile, $reset_token)
+    {
+        Sms::send_single_message($mobile, 'Your password reset code is ' . $reset_token . ' . This code will be valid for only 10 minutes.');
     }
 }

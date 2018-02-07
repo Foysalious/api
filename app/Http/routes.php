@@ -1,5 +1,6 @@
 <?php
 
+
 Route::get('/', function () {
     return ['code' => 200, 'msg' => "Success. This project will hold the api's"];
 });
@@ -28,8 +29,6 @@ $api->version('v1', function ($api) {
         });
         $api->post('continue-with-kit', 'FacebookController@continueWithKit');
         $api->post('continue-with-facebook', 'FacebookController@continueWithFacebook');
-        $api->post('send-password-reset-email', 'Auth\PasswordController@sendResetPasswordEmail');
-        $api->post('reset-password', 'Auth\PasswordController@resetPassword');
 
         $api->get('authenticate', 'AccountController@checkForAuthentication');
         $api->post('account', 'AccountController@encryptData');
@@ -306,6 +305,10 @@ $api->version('v1', function ($api) {
         });
         $api->group(['prefix' => 'customers'], function ($api) {
             $api->group(['prefix' => '{customer}', 'middleware' => ['customer.auth']], function ($api) {
+                $api->post('password/email', 'Auth\PasswordController@sendResetPasswordEmail');
+                $api->post('password/validate', 'Auth\PasswordController@validatePasswordResetCode');
+                $api->post('password/reset', 'Auth\PasswordController@reset');
+
                 $api->group(['prefix' => 'promotions'], function ($api) {
                     $api->get('/', 'PromotionController@index');
                 });
