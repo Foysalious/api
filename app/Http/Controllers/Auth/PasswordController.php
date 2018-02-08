@@ -14,7 +14,7 @@ use Mail;
 
 class PasswordController extends Controller
 {
-    public function sendResetPasswordEmail($customer, Request $request)
+    public function sendResetPasswordEmail(Request $request)
     {
         try {
             $this->validate($request, [
@@ -23,22 +23,14 @@ class PasswordController extends Controller
             ]);
             $profile = Profile::where('email', $request->email)->first();
             if ($profile != null) {
-                if ($request->customer->profile->email == $request->email) {
-                    $this->sendResetCode($request->customer->profile, 'email', $request->email);
-                    return api_response($request, 1, 200);
-                } else {
-                    return api_response($request, null, 403);
-                }
+                $this->sendResetCode($profile, 'email', $request->email);
+                return api_response($request, 1, 200);
             } else {
                 $mobile = formatMobile($request->email);
                 $profile = Profile::where('mobile', $mobile)->first();
                 if ($profile != null) {
-                    if ($request->customer->profile->mobile == $mobile) {
-                        $this->sendResetCode($request->customer->profile, 'mobile', $mobile);
-                        return api_response($request, 1, 200);
-                    } else {
-                        return api_response($request, null, 403);
-                    }
+                    $this->sendResetCode($profile, 'mobile', $mobile);
+                    return api_response($request, 1, 200);
                 }
             }
             return api_response($request, null, 404);
@@ -50,24 +42,15 @@ class PasswordController extends Controller
         }
     }
 
-    public function validatePasswordResetCode($customer, Request $request)
+    public function validatePasswordResetCode(Request $request)
     {
         try {
             $this->validate($request, [
                 'code' => 'required',
                 'from' => 'required|string|in:' . implode(',', constants('FROM'))
             ]);
-            $code = Redis::get('password_reset_code_' . $request->code);
-            if ($code != null) {
-                $data = json_decode($code);
-                if ($data->profile_id == $request->customer->profile->id) {
-                    Redis::set('password_reset_profile_' . $data->profile_id, 1);
-                    Redis::expire('password_reset_profile_' . $data->profile_id, 600);
-                    Redis::del('password_reset_code_' . $request->code);
-                    return api_response($request, 1, 200);
-                }
-            }
-            return api_response($request, 0, 403);
+            $code = Redis::get('password_reset_code_' . (int)$request->code);
+            return $code != null ? api_response($request, 1, 200) : api_response($request, 0, 404);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -76,21 +59,23 @@ class PasswordController extends Controller
         }
     }
 
-    public function reset($customer, Request $request)
+    public function reset(Request $request)
     {
         try {
             $this->validate($request, [
                 'password' => 'required|min:6',
-                'from' => 'required|string|in:' . implode(',', constants('FROM'))
+                'from' => 'required|string|in:' . implode(',', constants('FROM')),
+                'code' => 'required'
             ]);
-            $profile = $request->customer->profile;
-            $key = Redis::get('password_reset_profile_' . $profile->id);
+            $key = Redis::get('password_reset_code_' . (int)$request->code);
             if ($key != null) {
+                $data = json_decode($key);
+                $profile = Profile::find((int)$data->profile_id);
                 $profile->password = bcrypt($request->password);
                 $profile->update();
-                Redis::del('password_reset_profile_' . $profile->id);
+                Redis::del('password_reset_code_' . (int)$request->code);
                 return api_response($request, $profile, 200);
-            }else{
+            } else {
                 return api_response($request, 0, 403);
             }
         } catch (ValidationException $e) {

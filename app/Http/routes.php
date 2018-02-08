@@ -281,6 +281,10 @@ $api->version('v1', function ($api) {
 
     });
     $api->group(['prefix' => 'v2', 'namespace' => 'App\Http\Controllers'], function ($api) {
+      $api->post('password/email', 'Auth\PasswordController@sendResetPasswordEmail');
+      $api->post('password/validate', 'Auth\PasswordController@validatePasswordResetCode');
+      $api->post('password/reset', 'Auth\PasswordController@reset');
+
         $api->group(['prefix' => 'login'], function ($api) {
             $api->post('gmail', 'Auth\GoogleController@login');
         });
@@ -305,10 +309,6 @@ $api->version('v1', function ($api) {
         });
         $api->group(['prefix' => 'customers'], function ($api) {
             $api->group(['prefix' => '{customer}', 'middleware' => ['customer.auth']], function ($api) {
-                $api->post('password/email', 'Auth\PasswordController@sendResetPasswordEmail');
-                $api->post('password/validate', 'Auth\PasswordController@validatePasswordResetCode');
-                $api->post('password/reset', 'Auth\PasswordController@reset');
-
                 $api->group(['prefix' => 'promotions'], function ($api) {
                     $api->get('/', 'PromotionController@index');
                 });
