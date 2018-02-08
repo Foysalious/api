@@ -17,8 +17,10 @@ use Cache;
 use DB;
 use Mail;
 use Redis;
+use Sheba\Voucher\Creator\GiftedReferral;
 use Sheba\Voucher\PromotionList;
-use Sheba\Voucher\ReferralCreator;
+#use Sheba\Voucher\ReferralCreator;
+use Sheba\Voucher\Creator\Referral;
 
 class CheckoutController extends Controller
 {
@@ -224,8 +226,10 @@ class CheckoutController extends Controller
         $order_voucher = $order->voucher;
         $customer->referrer_id = $order_voucher->owner_id;
         $customer->update();
-        $referral_creator = new ReferralCreator($customer);
-        $voucher = $referral_creator->create($order->voucher_id);
+        #$referral_creator = new ReferralCreator($customer);
+        #$voucher = $referral_creator->create($order->voucher_id);
+        $voucher = new GiftedReferral($customer, $order->voucher);
+
         $promo_list = new PromotionList($order_voucher->owner_id);
         $promo_list->create($voucher->id);
     }
