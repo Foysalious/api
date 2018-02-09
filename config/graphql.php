@@ -128,7 +128,7 @@ return [
                 'customers' => 'App\GraphQL\Query\CustomerQuery'
             ],
             'mutation' => [
-
+                'updateProfile' => 'App\GraphQL\Mutation\UpdateProfileMutation'
             ]
         ]
     ],
