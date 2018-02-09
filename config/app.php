@@ -163,6 +163,7 @@ return [
         LaravelFCM\FCMServiceProvider::class,
         Intervention\Image\ImageServiceProvider::class,
         Clockwork\Support\Laravel\ClockworkServiceProvider::class,
+        Folklore\GraphQL\ServiceProvider::class,
 
         App\Providers\CustomValidatorProvider::class,
 
@@ -217,7 +218,8 @@ return [
         'FCM'      => LaravelFCM\Facades\FCM::class,
         'FCMGroup' => LaravelFCM\Facades\FCMGroup::class,
         'Image' => Intervention\Image\Facades\Image::class,
-        'Clockwork' => Clockwork\Support\Laravel\Facade::class
+        'Clockwork' => Clockwork\Support\Laravel\Facade::class,
+        'GraphQL' => Folklore\GraphQL\Support\Facades\GraphQL::class
     ],
 
 ];
