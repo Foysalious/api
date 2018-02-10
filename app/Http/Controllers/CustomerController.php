@@ -9,13 +9,11 @@ use App\Models\CustomerDeliveryAddress;
 use App\Models\CustomerMobile;
 use App\Models\Job;
 use App\Models\Order;
-use App\Models\Voucher;
 use App\Repositories\CustomerRepository;
 use Carbon\Carbon;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
 use Cache;
-use App\Http\Controllers\FacebookAccountKit;
 use Illuminate\Validation\ValidationException;
 use Redis;
 use Sheba\Voucher\ReferralCreator;
@@ -109,7 +107,7 @@ class CustomerController extends Controller
                     $profile->update();
                     return api_response($request, 1, 200);
                 } else {
-                    return api_response($request, null, 40, ['message' => 'Old password doesn\'t match']);
+                    return api_response($request, null, 400, ['message' => 'Old password doesn\'t match']);
                 }
             }
         } catch (ValidationException $e) {
