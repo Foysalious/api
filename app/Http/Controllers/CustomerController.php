@@ -133,10 +133,10 @@ class CustomerController extends Controller
     {
         try {
             $this->validate($request, [
-                'photo' => 'required|mimes:jpeg,png'
+                'picture' => 'required|mimes:jpeg,png'
             ]);
             $profile = $request->customer->profile;
-            $photo = $request->file('photo');
+            $photo = $request->file('picture');
             if (basename($profile->pro_pic) != 'default.jpg') {
                 $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
                 $this->fileRepository->deleteFileFromCDN($filename);
@@ -146,7 +146,7 @@ class CustomerController extends Controller
             if ($picture_link != false) {
                 $profile->pro_pic = $picture_link;
                 $profile->update();
-                return api_response($request, null, 500, ['picture' => $profile->pro_pic]);
+                return api_response($request, $profile, 200, ['picture' => $profile->pro_pic]);
             } else {
                 return api_response($request, null, 500);
             }
