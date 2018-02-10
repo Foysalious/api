@@ -55,18 +55,28 @@ class CustomerController extends Controller
         try {
             $this->validate($request, [
                 'field' => 'required|string|in:name,birthday,gender,address',
-                'name' => 'sometimes|required|string',
                 'birthday' => 'sometimes|required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
                 'gender' => 'sometimes|required|string|in:Male,Female,Other',
-                'address' => 'sometimes|required|string'
+                'value' => 'required|string'
             ]);
             $customer = $request->customer;
             $field = $request->field;
             $profile = $customer->profile;
             if ($field == 'birthday') {
+                $this->validate($request, [
+                    'value' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
+                ]);
                 $profile->dob = $request->$field;
+            } elseif ($field == 'gender') {
+                $this->validate($request, [
+                    'value' => 'required|string|in:Male,Female,Other',
+                ]);
+                $profile->gender = $request->value;
             } else {
-                $profile->$field = $request->$field;
+                $this->validate($request, [
+                    'value' => 'required|string'
+                ]);
+                $profile->$field = trim($request->value);
             }
             $profile->update();
             return api_response($request, 1, 200);
