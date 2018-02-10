@@ -9,7 +9,7 @@ class Job extends Model
     protected $materialPivotColumns = ['id', 'material_name', 'material_price', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
     protected $guarded = ['id'];
     protected $casts = ['sheba_contribution' => 'double', 'partner_contribution' => 'double', 'commission_rate' => 'double'];
-
+    protected $dates = ['delivered_date'];
     public $servicePrice;
     public $commissionRate;
     public $serviceCost;
@@ -248,7 +248,7 @@ class Job extends Model
 
     public function department()
     {
-        return  $this->partnerOrder->order->department();
+        return $this->partnerOrder->order->department();
     }
 
 }

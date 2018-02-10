@@ -82,9 +82,37 @@ class JobController extends Controller
             }
             $job_collection->put('services', $services);
             return api_response($request, $job_collection, 200, ['job' => $job_collection]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getBills($customer, $job, Request $request)
+    {
+        try {
+            $job = $request->job->load(['partnerOrder.order', 'category', 'jobServices']);
+            $job->calculate(true);
+            if (count($job->jobServices) == 0) {
+                $services = array();
+                array_push($services, array('name' => $job->category->name, 'price' => (double)$job->servicePrice));
+            } else {
+                $services = array();
+                foreach ($job->jobServices as $jobService) {
+                    array_push($services, array('name' => $jobService->category->name, 'price' => (double)$jobService->unit_price * (double)$jobService->quantity));
+                }
+            }
+            $order = $job->partnerOrder->order;
+            $order->calculate(true);
+            $bill = collect();
+            $bill['total_price'] = (double)$order->totalPrice;
+            $bill['paid'] = (double)$order->paid;
+            $bill['due'] = (double)$order->due;
+            $bill['discount'] = (double)$job->discount;
+            $bill['services'] = $services;
+            $bill['material_price'] = (double)$job->materialPrice;
+            $bill['delivered_date'] = $job->delivered_date->format('Y-m-d');
+            $bill['delivered_date_timestamp'] = $job->delivered_date->timestamp;
+            return api_response($request, $bill, 200, ['bill' => $bill]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
