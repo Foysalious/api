@@ -16,10 +16,13 @@ use Auth;
 use Mockery\Exception;
 use PhpParser\Node\Expr\Array_;
 #use Sheba\Voucher\ReferralCreator;
+use Sheba\ModificationFields;
 use Sheba\Voucher\Creator\Referral;
 
 class ProfileRepository
 {
+    use ModificationFields;
+
     public function getIfExist($data, $queryColumn)
     {
         $profile = Profile::where($queryColumn, $data)->first();
@@ -163,6 +166,7 @@ class ProfileRepository
             $customer = Customer::find($customer->id);
             #$referral_creator = new ReferralCreator($customer);
             #$referral_creator->create();
+            $this->setModifier($customer);
             new Referral($customer);
 
             if ($request->has('referral_code')) {
@@ -247,6 +251,7 @@ class ProfileRepository
             $customer->save();
             #$referral_creator = new ReferralCreator($customer);
             #$referral_creator->create();
+            $this->setModifier($customer);
             new Referral($customer);
 
             if ($request->has('referral_code')) {
@@ -286,7 +291,9 @@ class ProfileRepository
             $customer = Customer::find($customer->id);
             #$referral_creator = new ReferralCreator($customer);
             #$referral_creator->create();
+            $this->setModifier($customer);
             new Referral($customer);
+
 //            if ($request->has('referral_code')) {
 //                $this->updateCustomerOwnVoucherNReferral($customer, $request->referral_code);
 //            }
@@ -323,7 +330,9 @@ class ProfileRepository
             $customer = Customer::find($customer->id);
             #$referral_creator = new ReferralCreator($customer);
             #$referral_creator->create();
+            $this->setModifier($customer);
             new Referral($customer);
+
             if ($request->has('referral_code')) {
                 $this->updateCustomerOwnVoucherNReferral($customer, $request->referral_code);
             }
