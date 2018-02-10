@@ -32,12 +32,18 @@ class CustomerController extends Controller
         $this->fbKit = new FacebookAccountKit();
     }
 
-    /**
-     * Verify a customer's email with email verification code
-     * @param Customer $customer
-     * @param $code
-     * @return string
-     */
+    public function index($customer, Request $request)
+    {
+        try {
+            $customer = $request->customer->load(['profile' => function ($q) {
+                $q->select('id', 'name', 'address', DB::raw('pro_pic as picture'), 'gender', DB::raw('dob as birthday'), 'email', 'mobile');
+            }]);
+            return api_response($request, $customer->profile, 200, ['profile' => $customer->profile]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
     public function emailVerification(Customer $customer, $code)
     {
         $verification_code = Cache::get($customer->id . '-verification-email');
@@ -289,7 +295,7 @@ class CustomerController extends Controller
             array_forget($notification, 'created_at');
             if ($notification->event_type == 'Job') {
                 array_add($notification, 'event_code', (Job::find($notification->event_id))->fullCode());
-            }elseif ($notification->event_type == 'Order'){
+            } elseif ($notification->event_type == 'Order') {
                 array_add($notification, 'event_code', (Order::find($notification->event_id))->code());
             }
             return $notification;

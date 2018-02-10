@@ -127,6 +127,7 @@ $api->version('v1', function ($api) {
             $api->post('{customer}/checkout/place-order-with-online-payment', 'CheckoutController@placeOrderWithPayment');
         });
         $api->group(['prefix' => 'customers/{customer}', 'middleware' => ['customer.auth']], function ($api) {
+            $api->get('/', 'CustomerController@index');
             $api->post('reviews', 'ReviewController@modifyReview');
             $api->get('notifications', 'CustomerController@getNotifications');
             $api->post('suggest-promo', 'PromotionController@suggestPromo');
