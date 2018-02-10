@@ -55,8 +55,6 @@ class CustomerController extends Controller
         try {
             $this->validate($request, [
                 'field' => 'required|string|in:name,birthday,gender,address',
-                'birthday' => 'sometimes|required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
-                'gender' => 'sometimes|required|string|in:Male,Female,Other',
                 'value' => 'required|string'
             ]);
             $customer = $request->customer;
