@@ -10,6 +10,7 @@ use App\Models\CustomerMobile;
 use App\Models\Job;
 use App\Models\Order;
 use App\Repositories\CustomerRepository;
+use App\Repositories\FileRepository;
 use Carbon\Carbon;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
@@ -26,11 +27,13 @@ class CustomerController extends Controller
     use DispatchesJobs;
     private $customer;
     private $fbKit;
+    private $fileRepository;
 
     public function __construct()
     {
         $this->customer = new CustomerRepository();
         $this->fbKit = new FacebookAccountKit();
+        $this->fileRepository = new FileRepository();
     }
 
     public function index($customer, Request $request)
@@ -109,6 +112,35 @@ class CustomerController extends Controller
                 } else {
                     return api_response($request, null, 400, ['message' => 'Old password doesn\'t match']);
                 }
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function updatePicture($customer, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'photo' => 'required|mimes:jpeg,png'
+            ]);
+            $profile = $request->customer->profile;
+            $photo = $request->file('photo');
+            if (basename($profile->pro_pic) != 'default.jpg') {
+                $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
+                $this->fileRepository->deleteFileFromCDN($filename);
+            }
+            $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id . '.' . $photo->extension();
+            $picture_link = $this->fileRepository->uploadToCDN($filename, $photo, 'images/profiles/');
+            if ($picture_link != false) {
+                $profile->pro_pic = $picture_link;
+                $profile->update();
+                return api_response($request, null, 500, ['picture' => $profile->pro_pic]);
+            } else {
+                return api_response($request, null, 500);
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
