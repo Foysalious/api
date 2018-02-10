@@ -29,6 +29,7 @@ class Cors2MiddleWare
             "https://admin.dev-sheba.xyz",
             "http://partners.dev-sheba.xyz",
             "http://accounts.dev-sheba.xyz",
+            "http://api.sheba.test",
             "http://sheba.dev",
             null,
             "chrome-extension://fhbjgbiflinjbdggehcddcbncdddomop",

@@ -11,14 +11,17 @@ use App\Models\Job;
 use App\Models\Order;
 use App\Models\Voucher;
 use App\Repositories\CustomerRepository;
+use Carbon\Carbon;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
 use Cache;
 use App\Http\Controllers\FacebookAccountKit;
+use Illuminate\Validation\ValidationException;
 use Redis;
 use Sheba\Voucher\ReferralCreator;
 use Validator;
 use DB;
+use Hash;
 
 class CustomerController extends Controller
 {
@@ -36,9 +39,82 @@ class CustomerController extends Controller
     {
         try {
             $customer = $request->customer->load(['profile' => function ($q) {
-                $q->select('id', 'name', 'address', DB::raw('pro_pic as picture'), 'gender', DB::raw('dob as birthday'), 'email', 'mobile');
+                $q->select('id', 'name', 'password', 'address', DB::raw('pro_pic as picture'), 'gender', DB::raw('dob as birthday'), 'email', 'mobile');
             }]);
+            $profile = $customer->profile;
+            $profile->password = ($profile->password) ? 1 : 0;
             return api_response($request, $customer->profile, 200, ['profile' => $customer->profile]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function update($customer, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'field' => 'required|string|in:name,birthday,gender,address',
+                'name' => 'sometimes|required|string',
+                'birthday' => 'sometimes|required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
+                'gender' => 'sometimes|required|string|in:Male,Female,Other',
+                'address' => 'sometimes|required|string'
+            ]);
+            $customer = $request->customer;
+            $field = $request->field;
+            $profile = $customer->profile;
+            if ($field == 'birthday') {
+                $profile->dob = $request->$field;
+            } else {
+                $profile->$field = $request->$field;
+            }
+            $profile->update();
+            return api_response($request, 1, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function updateEmail($customer, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'email' => 'required|email|unique:profiles'
+            ]);
+            $profile = $request->customer->profile;
+            $profile->email = $request->email;
+            $profile->update();
+            return api_response($request, 1, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function updatePassword($customer, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'new_password' => 'required|string|min:6',
+                'old_password' => 'required|string',
+            ]);
+            $profile = $request->customer->profile;
+            if ($profile->password) {
+                if (Hash::check($request->old_password, $profile->password)) {
+                    $profile->password = bcrypt($request->new_password);
+                    $profile->update();
+                    return api_response($request, 1, 200);
+                } else {
+                    return api_response($request, null, 40, ['message' => 'Old password doesn\'t match']);
+                }
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }

@@ -128,6 +128,11 @@ $api->version('v1', function ($api) {
         });
         $api->group(['prefix' => 'customers/{customer}', 'middleware' => ['customer.auth']], function ($api) {
             $api->get('/', 'CustomerController@index');
+            $api->group(['prefix' => 'edit'], function ($api) {
+                $api->put('/', 'CustomerController@update');
+                $api->put('email', 'CustomerController@updateEmail');
+                $api->put('password', 'CustomerController@updatePassword');
+            });
             $api->post('reviews', 'ReviewController@modifyReview');
             $api->get('notifications', 'CustomerController@getNotifications');
             $api->post('suggest-promo', 'PromotionController@suggestPromo');
@@ -282,9 +287,9 @@ $api->version('v1', function ($api) {
 
     });
     $api->group(['prefix' => 'v2', 'namespace' => 'App\Http\Controllers'], function ($api) {
-      $api->post('password/email', 'Auth\PasswordController@sendResetPasswordEmail');
-      $api->post('password/validate', 'Auth\PasswordController@validatePasswordResetCode');
-      $api->post('password/reset', 'Auth\PasswordController@reset');
+        $api->post('password/email', 'Auth\PasswordController@sendResetPasswordEmail');
+        $api->post('password/validate', 'Auth\PasswordController@validatePasswordResetCode');
+        $api->post('password/reset', 'Auth\PasswordController@reset');
 
         $api->group(['prefix' => 'login'], function ($api) {
             $api->post('gmail', 'Auth\GoogleController@login');
