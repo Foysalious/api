@@ -15,10 +15,10 @@ trait ModificationFields
         return in_array($this->modifierModelName, ['Customer', 'Resource', 'Partner', 'User', 'Member', 'Affiliate', 'Profile']);
     }
 
-    public function setModifier($entity)
+    public function setModifier($entity, $is_flush = true)
     {
         if($this->isOfValidClass($entity)) {
-            Session::flash('modifier', $entity);
+            ($is_flush) ? Session::flash('modifier', $entity) : Session::put('modifier', $entity);
         }
     }
 
@@ -117,7 +117,7 @@ trait ModificationFields
      */
     private function getData()
     {
-        $this->modifier = Session::get('modifier') ? : Auth::user();
+        $this->modifier = Session::has('modifier') ? Session::get('modifier') : Auth::user();
 
         $id = 0;
         $name = "";
@@ -126,7 +126,7 @@ trait ModificationFields
         if($this->modifier && $this->isOfValidClass($this->modifier)) {
             $user   = $this->modifier ? $this->modifier : Auth::user();
             $id     = $user->id;
-            $name   = ($this->modifierModelName == "User") ? $user->department->name . '-' . $user->name : $this->modifierModelName . '-' . $this->modifier->name;
+            $name   = ($this->modifierModelName == "User") ? $user->department->name . ' - ' . $user->name : $this->modifierModelName . ' - ' . $this->modifier->name;
         }
 
         return [$id, $name, $time];
