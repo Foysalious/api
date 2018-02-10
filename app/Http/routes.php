@@ -133,6 +133,7 @@ $api->version('v1', function ($api) {
                 $api->put('email', 'CustomerController@updateEmail');
                 $api->put('password', 'CustomerController@updatePassword');
                 $api->post('picture', 'CustomerController@updatePicture');
+                $api->put('mobile', 'CustomerController@updateMobile');
             });
             $api->post('reviews', 'ReviewController@modifyReview');
             $api->get('notifications', 'CustomerController@getNotifications');

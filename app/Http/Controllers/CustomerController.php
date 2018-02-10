@@ -9,6 +9,7 @@ use App\Models\CustomerDeliveryAddress;
 use App\Models\CustomerMobile;
 use App\Models\Job;
 use App\Models\Order;
+use App\Models\Profile;
 use App\Repositories\CustomerRepository;
 use App\Repositories\FileRepository;
 use Carbon\Carbon;
@@ -64,7 +65,7 @@ class CustomerController extends Controller
                 $this->validate($request, [
                     'value' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
                 ]);
-                $profile->dob = $request->$field;
+                $profile->dob = $request->value;
             } elseif ($field == 'gender') {
                 $this->validate($request, [
                     'value' => 'required|string|in:Male,Female,Other',
@@ -150,6 +151,34 @@ class CustomerController extends Controller
             } else {
                 return api_response($request, null, 500);
             }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function updateMobile($customer, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'code' => 'required|string'
+            ]);
+            $code_data = $this->fbKit->authenticateKit($request->code);
+            if ($code_data) {
+                $mobile = formatMobile($code_data['mobile']);
+                $mobile_profile = Profile::where('mobile', $mobile)->first();
+                if ($mobile_profile == null) {
+                    $profile = $request->customer->profile;
+                    $profile->mobile = $mobile;
+                    $profile->mobile_verified = 1;
+                    $profile->update();
+                } else {
+                    return api_response($request, null, 400, ['message' => 'Mobile already exits!']);
+                }
+            }
+            return api_response($request, null, 403);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
