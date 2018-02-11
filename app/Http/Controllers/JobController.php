@@ -132,6 +132,7 @@ class JobController extends Controller
                         'schedule_date' => $job->schedule_date ? $job->schedule_date : null,
                         'preferred_time' => $job->preferred_time ? $job->preferred_time : null,
                         'status' => $partnerOrder->status,
+                        'rating' => $job->review->rating,
                         'order_code' => $order->code(),
                         'created_at' => $job->created_at->format('Y-m-d'),
                         'created_at_timestamp' => $job->created_at->timestamp
