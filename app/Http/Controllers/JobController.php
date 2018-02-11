@@ -101,15 +101,15 @@ class JobController extends Controller
                     array_push($services, array('name' => $jobService->category->name, 'price' => (double)$jobService->unit_price * (double)$jobService->quantity));
                 }
             }
-            $order = $job->partnerOrder->order;
-            $order->calculate(true);
+            $partnerOrder = $job->partnerOrder;
+            $partnerOrder->calculate(true);
             $bill = collect();
-            $bill['total_price'] = (double)$order->totalPrice;
-            $bill['paid'] = (double)$order->paid;
-            $bill['due'] = (double)$order->due;
+            $bill['total'] = (double)$partnerOrder->totalPrice;
+            $bill['paid'] = (double)$partnerOrder->paid;
+            $bill['due'] = (double)$partnerOrder->due;
+            $bill['material_price'] = (double)$job->materialPrice;
             $bill['discount'] = (double)$job->discount;
             $bill['services'] = $services;
-            $bill['material_price'] = (double)$job->materialPrice;
             $bill['delivered_date'] = $job->delivered_date->format('Y-m-d');
             $bill['delivered_date_timestamp'] = $job->delivered_date->timestamp;
             return api_response($request, $bill, 200, ['bill' => $bill]);
