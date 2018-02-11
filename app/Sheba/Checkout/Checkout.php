@@ -67,6 +67,8 @@ class Checkout
         $data['date'] = $request->date;
         $data['time'] = $request->time;
         $data['crm_id'] = $request->crm;
+        $data['category_answers'] = $request->category_answers;
+
         if ($request->has('address')) {
             $data['address'] = $request->address;
         }
@@ -90,8 +92,14 @@ class Checkout
                     'payment_method' => $data['payment_method']
                 ]);
                 $job = Job::create([
-                    'category_id' => ($selected_services->first())->category_id, 'partner_order_id' => $partner_order->id, 'schedule_date' => $data['date'],
-                    'preferred_time' => $data['time'], 'preferred_time_start' => explode('-', $data['time'])[0], 'crm_id' => $data['crm_id']]);
+                    'category_id' => ($selected_services->first())->category_id,
+                    'partner_order_id' => $partner_order->id,
+                    'schedule_date' => $data['date'],
+                    'preferred_time' => $data['time'],
+                    'preferred_time_start' => explode('-', $data['time'])[0],
+                    'crm_id' => $data['crm_id'],
+                    'category_answers' => $data['category_answers']
+                ]);
                 $this->saveJobServices($job, $partner->services, $selected_services, $data);
             });
         } catch (QueryException $e) {
