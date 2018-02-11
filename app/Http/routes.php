@@ -29,6 +29,10 @@ $api->version('v1', function ($api) {
         });
         $api->post('continue-with-kit', 'FacebookController@continueWithKit');
         $api->post('continue-with-facebook', 'FacebookController@continueWithFacebook');
+        
+        $api->post('send-password-reset-email', 'Auth\PasswordController@sendResetPasswordEmail');
+        $api->post('reset-password', 'Auth\PasswordController@resetPassword');
+
 
         $api->get('authenticate', 'AccountController@checkForAuthentication');
         $api->post('account', 'AccountController@encryptData');
