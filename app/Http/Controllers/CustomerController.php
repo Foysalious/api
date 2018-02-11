@@ -110,18 +110,17 @@ class CustomerController extends Controller
         try {
             $this->validate($request, [
                 'new_password' => 'required|string|min:6',
-                'old_password' => 'required|string',
+                'old_password' => 'sometimes|string',
             ]);
             $profile = $request->customer->profile;
             if ($profile->password) {
-                if (Hash::check($request->old_password, $profile->password)) {
-                    $profile->password = bcrypt($request->new_password);
-                    $profile->update();
-                    return api_response($request, 1, 200);
-                } else {
+                if (!Hash::check($request->old_password, $profile->password)) {
                     return api_response($request, null, 400, ['message' => 'Old password doesn\'t match']);
                 }
             }
+            $profile->password = bcrypt($request->new_password);
+            $profile->update();
+            return api_response($request, 1, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
