@@ -2,13 +2,14 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\CiCalculator;
 
 class Job extends Model
 {
     protected $materialPivotColumns = ['id', 'material_name', 'material_price', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
     protected $guarded = ['id'];
     protected $casts = ['sheba_contribution' => 'double', 'partner_contribution' => 'double', 'commission_rate' => 'double'];
-
+    protected $dates = ['delivered_date'];
     public $servicePrice;
     public $commissionRate;
     public $serviceCost;
@@ -51,6 +52,11 @@ class Job extends Model
     }
 
     public function partner_order()
+    {
+        return $this->belongsTo(PartnerOrder::class);
+    }
+
+    public function partnerOrder()
     {
         return $this->belongsTo(PartnerOrder::class);
     }
@@ -238,6 +244,11 @@ class Job extends Model
     public function getVersion()
     {
         return $this->partner_order_id > env('LAST_PARTNER_ORDER_ID_V1') ? 'v2' : 'v1';
+    }
+
+    public function department()
+    {
+        return $this->partnerOrder->order->department();
     }
 
 }

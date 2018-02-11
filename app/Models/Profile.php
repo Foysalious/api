@@ -11,6 +11,8 @@ class Profile extends Model
         'mobile',
         'password',
         'mobile_verified',
+        'email_verified',
+        'gender',
         "remember_token",
         "reference_code",
         "referrer_id",

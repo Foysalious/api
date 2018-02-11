@@ -51,7 +51,6 @@ class FacebookController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             return api_response($request, null, 500);
         }
     }
@@ -120,12 +119,13 @@ class FacebookController extends Controller
     public function continueWithKit(Request $request)
     {
         try {
-            if ($msg = $this->_validateKitRequest($request)) {
-                return response()->json(['code' => 500, 'msg' => $msg]);
-            }
-            $code_data = $this->fbKit->authenticateKit($request->input('code'));
+            $this->validate($request, [
+                'code' => "required",
+                'from' => 'required|string|in:' . implode(',', constants('FROM'))
+            ]);
+            $code_data = $this->fbKit->authenticateKit($request->code);
             if ($code_data == false) {
-                return response()->json(['code' => 500, 'msg' => 'Code is invalid']);
+                return api_response($request, null, 500);
             }
             $code_data['mobile'] = formatMobile($code_data['mobile']);
             $from = $this->profileRepository->getAvatar($request->from);
@@ -141,10 +141,13 @@ class FacebookController extends Controller
             }
             $info = $this->profileRepository->getProfileInfo($from, $profile, $request);
             if ($info != null) {
-                return response()->json(['code' => 200, 'info' => $info]);
+                return api_response($request, $info, 200, ['info' => $info]);
             }
-            return response()->json(['code' => 404, 'msg' => 'Not found!']);
-        } catch (\Exception $e) {
+            return api_response($request, null, 404);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
     }

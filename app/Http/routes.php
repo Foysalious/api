@@ -1,5 +1,6 @@
 <?php
 
+
 Route::get('/', function () {
     return ['code' => 200, 'msg' => "Success. This project will hold the api's"];
 });
@@ -19,10 +20,19 @@ $api->version('v1', function ($api) {
     $api->group(['prefix' => 'v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
         $api->post('login', 'Auth\LoginController@login');
         $api->post('register', 'Auth\RegistrationController@register');
+        $api->group(['prefix' => 'login'], function ($api) {
+            $api->post('facebook', 'FacebookController@login');
+        });
+        $api->group(['prefix' => 'register'], function ($api) {
+            $api->post('email', 'Auth\RegistrationController@registerByEmailAndMobile');
+            $api->post('facebook', 'FacebookController@register');
+        });
         $api->post('continue-with-kit', 'FacebookController@continueWithKit');
         $api->post('continue-with-facebook', 'FacebookController@continueWithFacebook');
+        
         $api->post('send-password-reset-email', 'Auth\PasswordController@sendResetPasswordEmail');
         $api->post('reset-password', 'Auth\PasswordController@resetPassword');
+
 
         $api->get('authenticate', 'AccountController@checkForAuthentication');
         $api->post('account', 'AccountController@encryptData');
@@ -121,6 +131,14 @@ $api->version('v1', function ($api) {
             $api->post('{customer}/checkout/place-order-with-online-payment', 'CheckoutController@placeOrderWithPayment');
         });
         $api->group(['prefix' => 'customers/{customer}', 'middleware' => ['customer.auth']], function ($api) {
+            $api->get('/', 'CustomerController@index');
+            $api->group(['prefix' => 'edit'], function ($api) {
+                $api->put('/', 'CustomerController@update');
+                $api->put('email', 'CustomerController@updateEmail');
+                $api->put('password', 'CustomerController@updatePassword');
+                $api->post('picture', 'CustomerController@updatePicture');
+                $api->put('mobile', 'CustomerController@updateMobile');
+            });
             $api->post('reviews', 'ReviewController@modifyReview');
             $api->get('notifications', 'CustomerController@getNotifications');
             $api->post('suggest-promo', 'PromotionController@suggestPromo');
@@ -275,10 +293,25 @@ $api->version('v1', function ($api) {
 
     });
     $api->group(['prefix' => 'v2', 'namespace' => 'App\Http\Controllers'], function ($api) {
+        $api->post('password/email', 'Auth\PasswordController@sendResetPasswordEmail');
+        $api->post('password/validate', 'Auth\PasswordController@validatePasswordResetCode');
+        $api->post('password/reset', 'Auth\PasswordController@reset');
+
+        $api->group(['prefix' => 'login'], function ($api) {
+            $api->post('gmail', 'Auth\GoogleController@login');
+        });
+        $api->group(['prefix' => 'register'], function ($api) {
+            $api->post('gmail', 'Auth\GoogleController@register');
+        });
         $api->get('times', 'ShebaController@getTimeSlots');
         $api->get('settings', 'HomePageSettingController@index');
         $api->get('home-grids', 'HomeGridController@index');
-        $api->get('category-groups/{id}', 'CategoryGroupController@show');
+        $api->group(['prefix' => 'category-groups'], function ($api) {
+            $api->get('', 'CategoryGroupController@index');
+            $api->group(['prefix' => '{id}'], function ($api) {
+                $api->get('', 'CategoryGroupController@show');
+            });
+        });
         $api->group(['prefix' => 'locations'], function ($api) {
             $api->get('{location}/partners', 'PartnerController@findPartners');
             $api->get('current', 'LocationController@getCurrent');
@@ -286,8 +319,22 @@ $api->version('v1', function ($api) {
         $api->group(['prefix' => 'job_service'], function ($api) {
             $api->post('/', 'JobServiceController@store');
         });
-        $api->group(['prefix' => 'customers/{customer}'], function ($api) {
-            $api->post('orders', 'OrderController@store');
+        $api->group(['prefix' => 'customers'], function ($api) {
+            $api->group(['prefix' => '{customer}', 'middleware' => ['customer.auth']], function ($api) {
+                $api->group(['prefix' => 'promotions'], function ($api) {
+                    $api->get('/', 'PromotionController@index');
+                });
+                $api->group(['prefix' => 'orders'], function ($api) {
+                    $api->post('/', 'OrderController@store');
+                });
+                $api->group(['prefix' => 'jobs'], function ($api) {
+                    $api->get('/', 'JobController@index');
+                    $api->group(['prefix' => '{job}', 'middleware' => ['customer_job.auth']], function ($api) {
+                        $api->get('/', 'JobController@show');
+                        $api->get('bills', 'JobController@getBills');
+                    });
+                });
+            });
         });
         $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
             $api->get('collections', 'PartnerOrderPaymentController@index');

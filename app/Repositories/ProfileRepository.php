@@ -22,7 +22,7 @@ class ProfileRepository
     public function getIfExist($data, $queryColumn)
     {
         $profile = Profile::where($queryColumn, $data)->first();
-        return $profile != null ? $profile : false;
+        return $profile != null ? $profile : null;
     }
 
     public function store(array $data)
@@ -91,7 +91,7 @@ class ProfileRepository
                 $info['bKash'] = $avatar->banking_info->bKash;
                 $info['verification_status'] = $avatar->verification_status;
                 $info['is_suspended'] = $avatar->is_suspended;
-                $info['ambassador_code'] = $avatar->ambassador_code;
+                $info['ambassador_code'] = $avatar->isAmbassador() ? $avatar->referral->code : null;
                 $info['is_ambassador'] = $avatar->is_ambassador;
             } elseif ($from == 'customer') {
                 $info['referral'] = $avatar->referral->code;

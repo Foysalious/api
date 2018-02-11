@@ -27,6 +27,11 @@ class Order extends Model
         return $this->hasMany(PartnerOrder::class);
     }
 
+    public function partnerOrders()
+    {
+        return $this->hasMany(PartnerOrder::class);
+    }
+
     public function location()
     {
         return $this->belongsTo(Location::class);
@@ -89,6 +94,11 @@ class Order extends Model
     public function getVersion()
     {
         return $this->id > env('LAST_ORDER_ID_V1') ? 'v2' : 'v1';
+    }
+
+    public function department()
+    {
+        return getSalesChannels('department')[$this->sales_channel];
     }
 
 }

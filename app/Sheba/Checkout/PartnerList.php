@@ -8,8 +8,8 @@ use App\Models\Service;
 use App\Repositories\PartnerRepository;
 use App\Repositories\PartnerServiceRepository;
 use App\Repositories\ReviewRepository;
+use App\Sheba\Partner\PartnerAvailable;
 use DB;
-use Sheba\Partner\PartnerAvailable;
 
 class PartnerList
 {

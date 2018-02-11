@@ -7,7 +7,7 @@ class Voucher extends Model
 {
     protected $guarded = ['id'];
     protected $dates = ['start_date', 'end_date'];
-    protected $casts = ['is_amount_percentage' => 'integer', 'cap' => 'double'];
+    protected $casts = ['is_amount_percentage' => 'integer', 'cap' => 'double', 'amount' => 'double'];
 
     public function orders()
     {
@@ -29,10 +29,6 @@ class Voucher extends Model
         return $this->morphTo();
     }
 
-    /**
-     * @param $customer_id
-     * @return array
-     */
     public function validityTimeLine($customer_id)
     {
         if ($this->is_referral) {
@@ -50,5 +46,23 @@ class Voucher extends Model
         if (!$customer) return false;
         $promotion = $customer->promotions()->where('voucher_id', $this->id)->get();
         return $promotion == null ? false : $promotion->first();
+    }
+
+    public function ownerIsCustomer()
+    {
+        return $this->owner_type == "App\\Models\\Customer";
+    }
+
+    public function ownerIsAffiliate()
+    {
+        return $this->owner_type == "App\\Models\\Affiliate";
+    }
+
+    public function scopeValid($query)
+    {
+        return $query->where([
+            ['valid_till', '>=', Carbon::now()],
+            ['is_valid', 1]
+        ]);
     }
 }

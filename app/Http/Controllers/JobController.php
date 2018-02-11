@@ -9,20 +9,137 @@ use App\Repositories\PapRepository;
 use App\Sheba\JobStatus;
 use FacebookAds\Http\Exception\RequestException;
 use GuzzleHttp\Client;
+use function GuzzleHttp\Promise\all;
 use Illuminate\Http\Request;
 use DB;
 use Carbon\Carbon;
+use Illuminate\Validation\ValidationException;
 
 class JobController extends Controller
 {
     private $job_statuses_show;
-    private $job_preferred_times;
     private $job_statuses;
 
     public function __construct()
     {
         $this->job_statuses_show = config('constants.JOB_STATUSES_SHOW');
         $this->job_statuses = config('constants.JOB_STATUSES');
+    }
+
+    public function index(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'filter' => 'required|string|in:ongoing,history'
+            ]);
+            $filter = $request->filter;
+            $customer = $request->customer->load(['orders' => function ($q) use ($filter) {
+                $q->with(['partnerOrders' => function ($q) use ($filter) {
+                    $q->$filter()->with(['jobs' => function ($q) {
+                        $q->with(['resource.profile', 'category']);
+                    }]);
+                }]);
+            }]);
+            $all_jobs = $this->getJobOfOrders($customer->orders->filter(function ($order) {
+                return $order->partnerOrders->count() > 0;
+            }))->sortByDesc('created_at');
+            return api_response($request, $all_jobs, 200, ['orders' => $all_jobs->values()->all()]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function show($customer, $job, Request $request)
+    {
+        try {
+            $job = $request->job->load(['resource.profile', 'category', 'review', 'jobServices']);
+            $job->calculate(true);
+            $job_collection = collect();
+            $job_collection->put('id', $job->id);
+            $job_collection->put('resource_name', $job->resource ? $job->resource->profile->name : null);
+            $job_collection->put('resource_picture', $job->resource ? $job->resource->profile->pro_pic : null);
+            $job_collection->put('resource_mobile', $job->resource ? $job->resource->profile->mobile : null);
+            $job_collection->put('deliver_address', $job->partnerOrder->order->delivery_address);
+            $job_collection->put('deliver_name', $job->partnerOrder->order->deliver_name);
+            $job_collection->put('deliver_mobile', $job->partnerOrder->order->deliver_mobile);
+            $job_collection->put('schedule_date', $job->schedule_date);
+            $job_collection->put('preferred_time', $job->preferred_time);
+            $job_collection->put('category_name', $job->category->name);
+            $job_collection->put('status', $job->status);
+            $job_collection->put('rating', $job->review->rating);
+            $job_collection->put('price', (double)$job->totalPrice);
+            if (count($job->jobServices) == 0) {
+                $services = collect();
+                $services->push(json_decode($job->service_variables));
+            } else {
+                $services = collect();
+                foreach ($job->jobServices as $jobService) {
+                    $services->push(json_decode($jobService->service_variables));
+                }
+            }
+            $job_collection->put('services', $services);
+            return api_response($request, $job_collection, 200, ['job' => $job_collection]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getBills($customer, $job, Request $request)
+    {
+        try {
+            $job = $request->job->load(['partnerOrder.order', 'category', 'jobServices']);
+            $job->calculate(true);
+            if (count($job->jobServices) == 0) {
+                $services = array();
+                array_push($services, array('name' => $job->category->name, 'price' => (double)$job->servicePrice));
+            } else {
+                $services = array();
+                foreach ($job->jobServices as $jobService) {
+                    array_push($services, array('name' => $jobService->category->name, 'price' => (double)$jobService->unit_price * (double)$jobService->quantity));
+                }
+            }
+            $order = $job->partnerOrder->order;
+            $order->calculate(true);
+            $bill = collect();
+            $bill['total_price'] = (double)$order->totalPrice;
+            $bill['paid'] = (double)$order->paid;
+            $bill['due'] = (double)$order->due;
+            $bill['discount'] = (double)$job->discount;
+            $bill['services'] = $services;
+            $bill['material_price'] = (double)$job->materialPrice;
+            $bill['delivered_date'] = $job->delivered_date->format('Y-m-d');
+            $bill['delivered_date_timestamp'] = $job->delivered_date->timestamp;
+            return api_response($request, $bill, 200, ['bill' => $bill]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    private function getJobOfOrders($orders)
+    {
+        $all_jobs = collect();
+        foreach ($orders as $order) {
+            foreach ($order->partnerOrders as $partnerOrder) {
+                $partnerOrder->calculateStatus();
+                foreach ($partnerOrder->jobs as $job) {
+                    $category = $job->category == null ? $job->service->category : $job->category;
+                    $all_jobs->push(collect(array(
+                        'job_id' => $job->id,
+                        'category_name' => $category->name,
+                        'schedule_date' => $job->schedule_date ? $job->schedule_date : null,
+                        'preferred_time' => $job->preferred_time ? $job->preferred_time : null,
+                        'status' => $partnerOrder->status,
+                        'order_code' => $order->code(),
+                        'created_at' => $job->created_at->format('Y-m-d'),
+                        'created_at_timestamp' => $job->created_at->timestamp
+                    )));
+                }
+            }
+        }
+        return $all_jobs;
     }
 
     public function getInfo($customer, $job, Request $request)
@@ -103,7 +220,7 @@ class JobController extends Controller
             $job = Job::find($job);
             $previous_status = $job->status;
             $customer = $request->customer;
-            $job_status = new JobStatus($job,$request);
+            $job_status = new JobStatus($job, $request);
             $job_status->__set('updated_by', $request->customer);
             if ($response = $job_status->update('Cancelled')) {
                 $job_cancel_log = new JobCancelLogRepository($job);

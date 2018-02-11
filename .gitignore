@@ -3,3 +3,4 @@
 .idea/
 /storage
 /node_modules
+npm-debug.log

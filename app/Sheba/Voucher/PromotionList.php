@@ -11,6 +11,8 @@ class PromotionList
 {
     private $customer;
     private $message = '';
+    private $customerReferralAdded = false;
+    private $ambassadorReferralAdded = false;
 
     public function __construct($customer)
     {
@@ -28,12 +30,6 @@ class PromotionList
         return array(false, $this->message);
     }
 
-    /**
-     * voucher code exists, code isn't your own promo, check validity of code or check is_referral(because referral validity won't match)
-     * @param $promo
-     * @param $customer
-     * @return bool
-     */
     private function isValid($promo, Customer $customer)
     {
         $timestamp = Carbon::now();
@@ -51,29 +47,38 @@ class PromotionList
         return $voucher != null ? $voucher : false;
     }
 
-    /**
-     * @param Voucher $voucher
-     * @param Customer $customer
-     * @return bool
-     */
     private function canAdd(Voucher $voucher, Customer $customer)
     {
         $customer_order_count = $customer->orders->count();
+        $customer->load(['promotions' => function ($q) {
+            $q->with('voucher');
+        }]);
         $promotions = $customer->promotions;
-        foreach ($promotions as $promotion) {
-            //voucher already added
-            if ($promotion->voucher->id == $voucher->id) {
-                $this->message = "Voucher is already added!";
-                return false;
-            }
-            if ($voucher->is_referral) {
-                //customer referred id exist, already given first order & already a referral code of someone exists
-                if ($customer->referrer_id != '' || $customer_order_count > 0 || ($promotion->voucher->is_referral && $promotion->voucher->referred_from == null)) {
+        if ($voucher->is_referral) {
+            $this->calculateIsReferralAdded($promotions);
+            if ($voucher->ownerIsCustomer()) {
+                if ($customer->referrer_id != '') {
+                    $this->message = 'Already used a Customer referral code';
+                    return false;
+                } elseif ($customer_order_count > 0) {
+                    $this->message = "Already took first order";
+                    return false;
+                } elseif ($this->customerReferralAdded) {
+                    $this->message = "Already added a Customer referral code";
+                    return false;
+                }
+            } elseif ($voucher->ownerIsAffiliate()) {
+                if ($this->ambassadorReferralAdded) {
+                    $this->message = "Already added a Ambassador referral code";
                     return false;
                 }
             }
         }
-        // if voucher max order is zero that means infinity times one can avail the voucher
+        foreach ($promotions as $promotion) {
+            if ($this->voucherAlreadyAdded($voucher, $promotion)) {
+                return false;
+            }
+        }
         if ($voucher->max_order != 0) {
             if ($voucher->usage($customer->id) >= $voucher->max_order) {
                 return false;
@@ -85,6 +90,20 @@ class PromotionList
         }
         return true;
     }
+
+    private function calculateIsReferralAdded($promotions)
+    {
+        foreach ($promotions as $promotion) {
+            if ($promotion->voucher->is_referral && $promotion->voucher->referred_from == null) {
+                if ($promotion->voucher->ownerIsCustomer()) {
+                    $this->customerReferralAdded = true;
+                } elseif ($promotion->voucher->ownerIsAffiliate()) {
+                    $this->ambassadorReferralAdded = true;
+                }
+            }
+        }
+    }
+
 
     public function create($voucher)
     {
@@ -103,20 +122,13 @@ class PromotionList
         return false;
     }
 
-    /**
-     * @param $rules
-     * @param Customer $customer
-     * @param $customer_order_count
-     * @return bool
-     * @internal param Voucher $voucher
-     * @internal param $order_count
-     */
     private function voucherRuleMatches($rules, Customer $customer, $customer_order_count)
     {
         if (array_key_exists('nth_orders', $rules)) {
             $nth_orders = $rules->nth_orders;
             //customer order is less than max nth order value
             if ($customer_order_count >= max($nth_orders)) {
+                $this->message = "already crossed voucher order limit";
                 return false;
             }
         }
@@ -130,6 +142,7 @@ class PromotionList
             }
             //voucher is not for you
             if ($for_you == false) {
+                $this->message = "voucher code not for user";
                 return false;
             }
         }
@@ -143,9 +156,20 @@ class PromotionList
             }
             //voucher is not for you
             if ($for_you == false) {
+                $this->message = "voucher code not for user";
                 return false;
             }
         }
         return true;
+    }
+
+    private function voucherAlreadyAdded(Voucher $voucher, $promotion)
+    {
+        if ($promotion->voucher->id == $voucher->id) {
+            $this->message = "Voucher is already added!";
+            return true;
+        } else {
+            return false;
+        }
     }
 }
