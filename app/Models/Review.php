@@ -31,7 +31,7 @@ class Review extends Model
         return $this->belongsTo(Customer::class);
     }
 
-    public function scopeHasReview($query)
+    public function scopeIsEmptyReview($query)
     {
         return $query->where('review', '<>', '');
     }

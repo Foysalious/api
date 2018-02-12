@@ -48,4 +48,14 @@ class Category extends Model
     {
         return $this->hasMany(Review::class);
     }
+
+    public function partners()
+    {
+        return $this->belongsToMany(Partner::class);
+    }
+
+    public function partnerResources()
+    {
+        return $this->belongsToMany(PartnerResource::class);
+    }
 }

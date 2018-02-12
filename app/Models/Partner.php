@@ -164,6 +164,10 @@ class Partner extends Model
     {
         return $query->where('status', 'Verified');
     }
+    public function scopeVerified($query)
+    {
+        return $query->where('status', 'Verified');
+    }
 
     public function getContactNumber()
     {
