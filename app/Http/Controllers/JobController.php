@@ -35,7 +35,7 @@ class JobController extends Controller
             $filter = $request->filter;
             $customer = $request->customer->load(['orders' => function ($q) use ($filter) {
                 $q->with(['partnerOrders' => function ($q) use ($filter) {
-                    $q->$filter()->with(['jobs' => function ($q) {
+                    $q->$filter()->with(['partner', 'jobs' => function ($q) {
                         $q->with(['resource.profile', 'category', 'review']);
                     }]);
                 }]);
@@ -132,7 +132,8 @@ class JobController extends Controller
                         'category_thumb' => $category->thumb,
                         'schedule_date' => $job->schedule_date ? $job->schedule_date : null,
                         'preferred_time' => $job->preferred_time ? $job->preferred_time : null,
-                        'status' => $partnerOrder->status,
+                        'status' => array(constants('JOB_STATUSES_SHOW')[$job->status]['sheba'] => constants('JOB_STATUSES_SHOW')[$job->status]['customer']),
+                        'partner_name' => $partnerOrder->partner->name,
                         'rating' => $job->review != null ? $job->review->rating : null,
                         'order_code' => $order->code(),
                         'created_at' => $job->created_at->format('Y-m-d'),
