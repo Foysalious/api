@@ -27,6 +27,14 @@ return [
         'Served' => ['sheba' => 'Served', 'partner' => 'Served', 'customer' => 'Served'],
         'Cancelled' => ['sheba' => 'Cancelled', 'partner' => 'Cancelled', 'customer' => 'Cancelled']
     ],
+    'JOB_STATUSES_COLOR' => [
+        'Pending' => ['sheba' => 'Pending', 'partner' => 'Pending', 'customer' => '#fcce54'],
+        'Accepted' => ['sheba' => 'Accepted', 'partner' => 'Accepted', 'customer' => '#4ec2e7'],
+        'Not_Responded' => ['sheba' => 'Not Responded', 'partner' => 'Not Responded', 'customer' => '#fcce54'],
+        'Schedule_Due' => ['sheba' => 'Schedule Due', 'partner' => 'Schedule Due', 'customer' => '#fcce54'],
+        'Process' => ['sheba' => 'Process', 'partner' => 'Process', 'customer' => '#5c9ded'],
+        'Served' => ['sheba' => 'Served', 'partner' => 'Served', 'customer' => '#42cb6f']
+    ],
     'PARTNER_ORDER_STATUSES' => [
         'Open' => 'Open',
         'Process' => 'Process',
