@@ -129,6 +129,7 @@ class JobController extends Controller
                     $all_jobs->push(collect(array(
                         'job_id' => $job->id,
                         'category_name' => $category->name,
+                        'category_thumb' => $category->thumb,
                         'schedule_date' => $job->schedule_date ? $job->schedule_date : null,
                         'preferred_time' => $job->preferred_time ? $job->preferred_time : null,
                         'status' => $partnerOrder->status,

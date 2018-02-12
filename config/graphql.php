@@ -125,7 +125,8 @@ return [
         'default' => [
             'query' => [
                 'services' => 'App\GraphQL\Query\ServiceQuery',
-                'customers' => 'App\GraphQL\Query\CustomerQuery'
+                'customers' => 'App\GraphQL\Query\CustomerQuery',
+                'category' => 'App\GraphQL\Query\CategoryQuery',
             ],
             'mutation' => [
                 'updateProfile' => 'App\GraphQL\Mutation\UpdateProfileMutation'
@@ -172,6 +173,7 @@ return [
         'App\GraphQL\Type\ServiceType',
         'App\GraphQL\Type\CustomerType',
         'App\GraphQL\Type\ProfileType',
+        'App\GraphQL\Type\CategoryType',
     ],
 
     /*
