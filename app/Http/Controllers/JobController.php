@@ -43,7 +43,7 @@ class JobController extends Controller
             $all_jobs = $this->getJobOfOrders($customer->orders->filter(function ($order) {
                 return $order->partnerOrders->count() > 0;
             }))->sortByDesc('created_at');
-            return api_response($request, $all_jobs, 200, ['orders' => $all_jobs->values()->all()]);
+            return count($all_jobs) > 0 ? api_response($request, $all_jobs, 200, ['orders' => $all_jobs->values()->all()]) : api_response($request, null, 404);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
