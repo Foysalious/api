@@ -28,7 +28,7 @@ class JobController extends Controller
 
     public function index(Request $request)
     {
-//        try {
+        try {
             $this->validate($request, [
                 'filter' => 'required|string|in:ongoing,history'
             ]);
@@ -44,12 +44,12 @@ class JobController extends Controller
                 return $order->partnerOrders->count() > 0;
             }))->sortByDesc('created_at');
             return count($all_jobs) > 0 ? api_response($request, $all_jobs, 200, ['orders' => $all_jobs->values()->all()]) : api_response($request, null, 404);
-//        } catch (ValidationException $e) {
-//            $message = getValidationErrorMessage($e->validator->errors()->all());
-//            return api_response($request, $message, 400, ['message' => $message]);
-//        } catch (\Throwable $e) {
-//            return api_response($request, null, 500);
-//        }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
     }
 
     public function show($customer, $job, Request $request)
@@ -132,7 +132,7 @@ class JobController extends Controller
                         'category_thumb' => $category->thumb,
                         'schedule_date' => $job->schedule_date ? $job->schedule_date : null,
                         'preferred_time' => $job->preferred_time ? $job->preferred_time : null,
-                        'status' => constants('JOB_STATUSES_SHOW')[$job->status]['customer'],
+                        'status' => $job->status,
                         'status_color' => constants('JOB_STATUSES_COLOR')[$job->status]['customer'],
                         'partner_name' => $partnerOrder->partner->name,
                         'rating' => $job->review != null ? $job->review->rating : null,

@@ -317,6 +317,7 @@ $api->version('v1', function ($api) {
             $api->group(['prefix' => '{customer}', 'middleware' => ['customer.auth']], function ($api) {
                 $api->group(['prefix' => 'promotions'], function ($api) {
                     $api->get('/', 'PromotionController@index');
+                    $api->post('/', 'PromotionController@addPromo');
                 });
                 $api->group(['prefix' => 'orders'], function ($api) {
                     $api->post('/', 'OrderController@store');
