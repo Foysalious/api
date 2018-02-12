@@ -34,7 +34,7 @@ class PromotionController extends Controller
     {
         $promotion = new PromotionList($request->customer);
         list($promotion, $msg) = $promotion->add($request->promo);
-        return $promotion != false ? response()->json(['code' => 200, 'promotion' => $promotion]) : response()->json(['code' => 404, 'msg' => $msg]);
+        return $promotion != false ? api_response($request, $promotion, 200, ['promotion' => $promotion]) : api_response($request, null, 404);
     }
 
     public function getPromo($customer)
