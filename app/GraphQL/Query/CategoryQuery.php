@@ -21,13 +21,20 @@ class CategoryQuery extends Query
 
     public function args()
     {
-        return [
-            'id' => ['name' => 'id', 'type' => Type::int()],
-        ];
+        return ['id' => ['name' => 'id', 'type' => Type::int()]];
     }
 
     public function resolve($root, $args, $context, ResolveInfo $info)
     {
-        return isset($args['id']) ? Category::find($args['id']) : null;
+        $category = Category::query();
+        $where = function ($query) use ($args) {
+            if (isset($args['id'])) {
+                $query->where('id', $args['id']);
+            }
+            $query->published();
+        };
+        $category = $category->where($where)->first();
+        return $category ? $category : null;
     }
+
 }

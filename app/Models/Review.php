@@ -15,10 +15,12 @@ class Review extends Model
     {
         return $this->belongsTo(Partner::class);
     }
+
     public function resource()
     {
         return $this->belongsTo(Resource::class);
     }
+
     public function job()
     {
         return $this->belongsTo(Job::class);
@@ -29,5 +31,9 @@ class Review extends Model
         return $this->belongsTo(Customer::class);
     }
 
+    public function scopeHasReview($query)
+    {
+        return $query->where('review', '<>', '');
+    }
 
 }
