@@ -125,6 +125,7 @@ return [
         'default' => [
             'query' => [
                 'services' => 'App\GraphQL\Query\ServiceQuery',
+                'reviews' => 'App\GraphQL\Query\ReviewsQuery',
                 'category' => 'App\GraphQL\Query\CategoryQuery'
             ],
             'mutation' => [
