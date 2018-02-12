@@ -28,7 +28,7 @@ class JobController extends Controller
 
     public function index(Request $request)
     {
-        try {
+//        try {
             $this->validate($request, [
                 'filter' => 'required|string|in:ongoing,history'
             ]);
@@ -44,12 +44,12 @@ class JobController extends Controller
                 return $order->partnerOrders->count() > 0;
             }))->sortByDesc('created_at');
             return count($all_jobs) > 0 ? api_response($request, $all_jobs, 200, ['orders' => $all_jobs->values()->all()]) : api_response($request, null, 404);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            return api_response($request, null, 500);
-        }
+//        } catch (ValidationException $e) {
+//            $message = getValidationErrorMessage($e->validator->errors()->all());
+//            return api_response($request, $message, 400, ['message' => $message]);
+//        } catch (\Throwable $e) {
+//            return api_response($request, null, 500);
+//        }
     }
 
     public function show($customer, $job, Request $request)

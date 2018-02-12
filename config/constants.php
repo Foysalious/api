@@ -33,7 +33,9 @@ return [
         'Not_Responded' => ['sheba' => 'Not Responded', 'partner' => 'Not Responded', 'customer' => '#fcce54'],
         'Schedule_Due' => ['sheba' => 'Schedule Due', 'partner' => 'Schedule Due', 'customer' => '#fcce54'],
         'Process' => ['sheba' => 'Process', 'partner' => 'Process', 'customer' => '#5c9ded'],
-        'Served' => ['sheba' => 'Served', 'partner' => 'Served', 'customer' => '#42cb6f']
+        'Served' => ['sheba' => 'Served', 'partner' => 'Served', 'customer' => '#42cb6f'],
+        'Cancelled' => ['sheba' => 'Served', 'partner' => 'Served', 'customer' => '#42cb6f'],
+        'Declined' => ['sheba' => 'Served', 'partner' => 'Served', 'customer' => '#42cb6f']
     ],
     'PARTNER_ORDER_STATUSES' => [
         'Open' => 'Open',
