@@ -34,10 +34,19 @@ class CategoryType extends GraphQlType
                 ],
                 'type' => Type::listOf(GraphQL::type('Reviews'))
             ],
+            'services' => ['type' => Type::listOf(GraphQL::type('Service'))],
             'total_partners' => ['type' => Type::int(), 'description' => 'Total partner count of Category'],
             'total_services' => ['type' => Type::int(), 'description' => 'Total service count of Category'],
             'total_experts' => ['type' => Type::int(), 'description' => 'Total expert count of Category'],
         ];
+    }
+
+    protected function resolveServicesField($root, $args)
+    {
+        $root->load(['services' => function ($q) {
+            $q->published();
+        }]);
+        return $root->services;
     }
 
     protected function resolveReviewsField($root, $args)
@@ -49,7 +58,7 @@ class CategoryType extends GraphQlType
             if (isset($args['isEmptyReview'])) {
                 $q->isEmptyReview();
             }
-            return $q->with('customer.profile');
+            $q->with('customer.profile');
         }]);
         return $root->reviews;
     }
