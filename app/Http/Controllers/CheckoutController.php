@@ -93,6 +93,7 @@ class CheckoutController extends Controller
         $portwallet_response = $portwallet->ipnValidate($data);
         //check payment validity
         if ($portwallet_response->status == 200 && $portwallet_response->data->status == "ACCEPTED") {
+            $order_info['portwallet_response'] = $portwallet_response;
             $order = $this->checkoutRepository->storeDataInDB($order_info, 'online');
             if ($order) {
                 $customer = Customer::find($order->customer_id);
@@ -152,7 +153,7 @@ class CheckoutController extends Controller
         $portwallet_response = $portwallet->ipnValidate($data);
         //check payment validity
         if ($portwallet_response->status == 200 && $portwallet_response->data->status == "ACCEPTED") {
-            $response = $this->checkoutRepository->clearSpPayment($payment_info);
+            $response = $this->checkoutRepository->clearSpPayment($payment_info,$portwallet_response);
             if ($response) {
                 if ($response->code == 200) {
                     (new NotificationRepository())->forOnlinePayment($payment_info['partner_order_id'][0], $payment_info['price']);

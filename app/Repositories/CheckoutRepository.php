@@ -216,7 +216,7 @@ class CheckoutRepository
                     if ($payment_method == 'online') {
                         $partner_order->sheba_collection = floor($partner_order->sheba_collection);
                         $partner_order->update();
-                        $this->createPartnerOrderPayment($partner_order);
+                        $this->createPartnerOrderPayment($partner_order, $order_info['portwallet_response']);
                     }
                 }
             });
@@ -308,12 +308,13 @@ class CheckoutRepository
         }
     }
 
-    private function createPartnerOrderPayment($partner_order)
+    private function createPartnerOrderPayment($partner_order, $portwallet_response)
     {
         $partner_order_payment = $this->getPartnerOrderPayment($partner_order);
         $partner_order_payment->amount = floor($partner_order->sheba_collection);
         $partner_order_payment->log = 'advanced payment';
         $partner_order_payment->collected_by = 'Sheba';
+        $partner_order_payment->transaction_detail = json_encode($portwallet_response);
         $partner_order_payment = $this->getAuthor($partner_order_payment);
         $partner_order_payment->save();
     }
@@ -344,7 +345,7 @@ class CheckoutRepository
         }
     }
 
-    public function clearSpPayment($payment_info)
+    public function clearSpPayment($payment_info, $portwallet_response)
     {
         $partner_order_id = array_unique($payment_info['partner_order_id']);
         try {
@@ -355,7 +356,8 @@ class CheckoutRepository
                         'customer_id' => $payment_info['customer_id'],
                         'remember_token' => $payment_info['remember_token'],
                         'sheba_collection' => (double)$payment_info['price'],
-                        'payment_method' => 'Online'
+                        'payment_method' => 'Online',
+                        'transaction_detail' => $portwallet_response
                     ]
                 ]);
             return json_decode($res->getBody());
