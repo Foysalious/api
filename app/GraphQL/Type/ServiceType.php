@@ -4,7 +4,7 @@ namespace App\GraphQL\Type;
 
 use \Folklore\GraphQL\Support\Type as GraphQlType;
 use GraphQL\Type\Definition\Type;
-
+use GraphQL;
 class ServiceType extends GraphQlType
 {
     protected $attributes = [
@@ -28,6 +28,7 @@ class ServiceType extends GraphQlType
             'faqs' => ['type' => Type::string()],
             'variable_type' => ['type' => Type::string()],
             'variables' => ['type' => Type::string()],
+            'category' => ['type' => GraphQL::type('Category')]
         ];
     }
 
