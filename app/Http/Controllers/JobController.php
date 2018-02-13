@@ -77,7 +77,7 @@ class JobController extends Controller
             } else {
                 $services = collect();
                 foreach ($job->jobServices as $jobService) {
-                    $services->push(json_decode($jobService->service_variables));
+                    $services->push(json_decode($jobService->variables));
                 }
             }
             $job_collection->put('services', $services);
@@ -94,11 +94,11 @@ class JobController extends Controller
             $job->calculate(true);
             if (count($job->jobServices) == 0) {
                 $services = array();
-                array_push($services, array('name' => $job->category->name, 'price' => (double)$job->servicePrice));
+                array_push($services, array('name' => $job->category ? $job->category->name : null, 'price' => (double)$job->servicePrice));
             } else {
                 $services = array();
                 foreach ($job->jobServices as $jobService) {
-                    array_push($services, array('name' => $jobService->category->name, 'price' => (double)$jobService->unit_price * (double)$jobService->quantity));
+                    array_push($services, array('name' => $jobService->job->category ? $jobService->job->category->name : null, 'price' => (double)$jobService->unit_price * (double)$jobService->quantity));
                 }
             }
             $partnerOrder = $job->partnerOrder;
@@ -110,8 +110,8 @@ class JobController extends Controller
             $bill['material_price'] = (double)$job->materialPrice;
             $bill['discount'] = (double)$job->discount;
             $bill['services'] = $services;
-            $bill['delivered_date'] = $job->delivered_date->format('Y-m-d');
-            $bill['delivered_date_timestamp'] = $job->delivered_date->timestamp;
+            $bill['delivered_date'] = $job->delivered_date != null ? $job->delivered_date->format('Y-m-d') : null;
+            $bill['delivered_date_timestamp'] = $job->delivered_date != null ? $job->delivered_date->timestamp : null;
             return api_response($request, $bill, 200, ['bill' => $bill]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
