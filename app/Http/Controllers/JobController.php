@@ -7,6 +7,7 @@ use App\Models\JobCancelLog;
 use App\Repositories\JobCancelLogRepository;
 use App\Repositories\PapRepository;
 use App\Sheba\JobStatus;
+use App\Sheba\Logs\PartnerOrderLogs;
 use FacebookAds\Http\Exception\RequestException;
 use GuzzleHttp\Client;
 use function GuzzleHttp\Promise\all;
@@ -63,7 +64,7 @@ class JobController extends Controller
             $job_collection->put('resource_picture', $job->resource ? $job->resource->profile->pro_pic : null);
             $job_collection->put('resource_mobile', $job->resource ? $job->resource->profile->mobile : null);
             $job_collection->put('delivery_address', $job->partnerOrder->order->delivery_address);
-            $job_collection->put('delivery_name', $job->partnerOrder->order->sdelivery_name);
+            $job_collection->put('delivery_name', $job->partnerOrder->order->delivery_name);
             $job_collection->put('delivery_mobile', $job->partnerOrder->order->delivery_mobile);
             $job_collection->put('additional_information', $job->job_additional_info);
             $job_collection->put('schedule_date', $job->schedule_date);
@@ -113,7 +114,31 @@ class JobController extends Controller
             $bill['services'] = $services;
             $bill['delivered_date'] = $job->delivered_date != null ? $job->delivered_date->format('Y-m-d') : null;
             $bill['delivered_date_timestamp'] = $job->delivered_date != null ? $job->delivered_date->timestamp : null;
+            $bill['closed_and_paid_at'] = $partnerOrder->closed_and_paid_at;
+            $bill['closed_and_paid_at_timestamp'] = $partnerOrder->closed_and_paid_at != null ? $partnerOrder->closed_and_paid_at->timestamp : null;
+            $bill['status'] = $job->status;
             return api_response($request, $bill, 200, ['bill' => $bill]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function logs($customer, $job, Request $request)
+    {
+        try {
+            $all_logs = collect();
+            $this->formatLogs((new PartnerOrderLogs($request->partner_order))->all(), $all_logs);
+            $this->formatLogs((new OrderLogs($request->partner_order->order))->all(), $all_logs);
+            foreach ($request->partner_order->jobs as $job) {
+                $job_logs = (new JobLogs($job))->all();
+                $this->formatLogs($job_logs, $all_logs);
+            }
+            $dates = $all_logs->groupBy('created_at')->sortByDesc(function ($item, $key) {
+                return $key;
+            })->map(function ($item, $key) {
+                return ($item->sortByDesc('timestamp'))->values()->all();
+            });
+            return api_response($request, $dates, 200, ['logs' => $dates]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
