@@ -160,6 +160,7 @@ class CheckoutRepository
                                 ->getServiceDiscountAmount($discount, $service->partner->prices, $service->quantity);
                             $job->sheba_contribution = $discount->sheba_contribution;
                             $job->partner_contribution = $discount->partner_contribution;
+                            $job->discount_percentage = $discount->is_amount_percentage ? $discount->amount : null;
                             $this->discountApplied = true;
                         } elseif ($this->voucherApplied && $loop_id['i'] == $i && $loop_id['j'] == $j) {
                             $job->discount = $loop_id['discount'];
