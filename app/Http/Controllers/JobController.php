@@ -75,11 +75,13 @@ class JobController extends Controller
             $job_collection->put('price', (double)$job->totalPrice);
             if (count($job->jobServices) == 0) {
                 $services = collect();
-                $services->push(json_decode($job->service_variables));
+                $variables = json_decode($job->service_variables);
+                $services->push(array('name' => $job->service_name, 'variables' => $variables));
             } else {
                 $services = collect();
                 foreach ($job->jobServices as $jobService) {
-                    $services->push(json_decode($jobService->variables));
+                    $variables = json_decode($jobService->variables);
+                    $services->push(array('name' => $jobService->service->name, 'variables' => $variables));
                 }
             }
             $job_collection->put('services', $services);
