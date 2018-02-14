@@ -63,12 +63,12 @@ class JobController extends Controller
             $job_collection->put('resource_picture', $job->resource ? $job->resource->profile->pro_pic : null);
             $job_collection->put('resource_mobile', $job->resource ? $job->resource->profile->mobile : null);
             $job_collection->put('delivery_address', $job->partnerOrder->order->delivery_address);
-            $job_collection->put('delivery_name', $job->partnerOrder->order->delivery_name);
+            $job_collection->put('delivery_name', $job->partnerOrder->order->sdelivery_name);
             $job_collection->put('delivery_mobile', $job->partnerOrder->order->delivery_mobile);
             $job_collection->put('additional_information', $job->job_additional_info);
             $job_collection->put('schedule_date', $job->schedule_date);
             $job_collection->put('preferred_time', $job->preferred_time);
-            $job_collection->put('category_name', $job->category->name);
+            $job_collection->put('category_name', $job->category ? $job->category->name : null);
             $job_collection->put('status', $job->status);
             $job_collection->put('rating', $job->review != null ? $job->review->rating : null);
             $job_collection->put('price', (double)$job->totalPrice);
