@@ -31,13 +31,13 @@ class PromotionController extends Controller
         return $customer != null ? response()->json(['code' => 200, 'promotions' => $customer->promotions]) : response()->json(['code' => 404]);
     }
 
-    public function suggestPromo($customer, Request $request)
+    public function suggestPromo($customer, Request $request, VoucherSuggester $voucherSuggester)
     {
         if ((new CartRepository())->hasDiscount(json_decode($request->cart)->items)) {
             return api_response($request, null, 404, ['result' => 'Discount available for service!']);
         }
-        $voucher_suggest = new VoucherSuggester($request->customer, $request->cart, $request->location, $request->has('sales_channel') ? $request->sales_channel : 'Web');
-        $promo = $voucher_suggest->suggest();
+        $voucherSuggester->init($request->customer, $request->cart, $request->location, $request->has('sales_channel') ? $request->sales_channel : 'Web');
+        $promo = $voucherSuggester->suggest();
         if ($promo != null) {
             return response()->json(['code' => 200, 'amount' => (double)$promo['amount'], 'voucher_code' => $promo['voucher']->code]);
         } else {

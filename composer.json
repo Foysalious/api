@@ -28,7 +28,8 @@
     "phpunit/phpunit": "~4.0",
     "symfony/css-selector": "2.8.*|3.0.*",
     "symfony/dom-crawler": "2.8.*|3.0.*",
-    "itsgoingd/clockwork": "^1.14"
+    "itsgoingd/clockwork": "^1.14",
+    "sheba/voucher": "dev-master"
   },
   "autoload": {
     "classmap": [
@@ -36,7 +37,6 @@
     ],
     "files": [
       "app/Helper/helper_functions.php",
-      "app/Sheba/Voucher/functions.php",
       "app/Sheba/Notification/functions.php",
       "app/Sheba/PapApi.class.php"
     ],
@@ -68,5 +68,11 @@
   },
   "config": {
     "preferred-install": "dist"
-  }
+  },
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://mac_pasha@bitbucket.org/startern/sheba_voucher.git"
+    }
+  ]
 }

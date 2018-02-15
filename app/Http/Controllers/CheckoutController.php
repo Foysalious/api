@@ -17,8 +17,10 @@ use Cache;
 use DB;
 use Mail;
 use Redis;
+use Sheba\Voucher\Creator\GiftedReferral;
 use Sheba\Voucher\PromotionList;
-use Sheba\Voucher\ReferralCreator;
+#use Sheba\Voucher\ReferralCreator;
+use Sheba\Voucher\Creator\Referral;
 
 class CheckoutController extends Controller
 {
@@ -91,6 +93,7 @@ class CheckoutController extends Controller
         $portwallet_response = $portwallet->ipnValidate($data);
         //check payment validity
         if ($portwallet_response->status == 200 && $portwallet_response->data->status == "ACCEPTED") {
+            $order_info['portwallet_response'] = $portwallet_response;
             $order = $this->checkoutRepository->storeDataInDB($order_info, 'online');
             if ($order) {
                 $customer = Customer::find($order->customer_id);
@@ -150,7 +153,7 @@ class CheckoutController extends Controller
         $portwallet_response = $portwallet->ipnValidate($data);
         //check payment validity
         if ($portwallet_response->status == 200 && $portwallet_response->data->status == "ACCEPTED") {
-            $response = $this->checkoutRepository->clearSpPayment($payment_info);
+            $response = $this->checkoutRepository->clearSpPayment($payment_info,$portwallet_response);
             if ($response) {
                 if ($response->code == 200) {
                     (new NotificationRepository())->forOnlinePayment($payment_info['partner_order_id'][0], $payment_info['price']);
@@ -224,8 +227,10 @@ class CheckoutController extends Controller
         $order_voucher = $order->voucher;
         $customer->referrer_id = $order_voucher->owner_id;
         $customer->update();
-        $referral_creator = new ReferralCreator($customer);
-        $voucher = $referral_creator->create($order->voucher_id);
+        #$referral_creator = new ReferralCreator($customer);
+        #$voucher = $referral_creator->create($order->voucher_id);
+        $voucher = new GiftedReferral($customer, $order->voucher);
+
         $promo_list = new PromotionList($order_voucher->owner_id);
         $promo_list->create($voucher->id);
     }

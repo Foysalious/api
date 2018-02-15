@@ -78,4 +78,20 @@ class Affiliate extends Model
     {
         return $this->hasMany(Affiliate::class, 'ambassador_id');
     }
+
+    public function vouchers()
+    {
+        return $this->morphMany(Voucher::class, 'owner');
+    }
+
+    public function getReferralAttribute()
+    {
+        $vouchers = $this->vouchers;
+        return $vouchers ? $vouchers->first() : null;
+    }
+
+    public function isAmbassador()
+    {
+        return $this->is_ambassador == 1;
+    }
 }

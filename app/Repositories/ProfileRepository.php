@@ -15,10 +15,14 @@ use DB;
 use Auth;
 use Mockery\Exception;
 use PhpParser\Node\Expr\Array_;
-use Sheba\Voucher\ReferralCreator;
+#use Sheba\Voucher\ReferralCreator;
+use Sheba\ModificationFields;
+use Sheba\Voucher\Creator\Referral;
 
 class ProfileRepository
 {
+    use ModificationFields;
+
     public function getIfExist($data, $queryColumn)
     {
         $profile = Profile::where($queryColumn, $data)->first();
@@ -91,7 +95,7 @@ class ProfileRepository
                 $info['bKash'] = $avatar->banking_info->bKash;
                 $info['verification_status'] = $avatar->verification_status;
                 $info['is_suspended'] = $avatar->is_suspended;
-                $info['ambassador_code'] = $avatar->ambassador_code;
+                $info['ambassador_code'] = $avatar->isAmbassador() ? $avatar->referral->code : null;
                 $info['is_ambassador'] = $avatar->is_ambassador;
             } elseif ($from == 'customer') {
                 $info['referral'] = $avatar->referral->code;
@@ -160,8 +164,11 @@ class ProfileRepository
                 'profile_id' => $user->id
             ]);
             $customer = Customer::find($customer->id);
-            $referral_creator = new ReferralCreator($customer);
-            $referral_creator->create();
+            #$referral_creator = new ReferralCreator($customer);
+            #$referral_creator->create();
+            $this->setModifier($customer);
+            new Referral($customer);
+
             if ($request->has('referral_code')) {
                 $this->updateCustomerOwnVoucherNReferral($customer, $request->referral_code);
             }
@@ -242,8 +249,11 @@ class ProfileRepository
             $customer->profile_id = $profile->id;
             $customer->remember_token = str_random(255);
             $customer->save();
-            $referral_creator = new ReferralCreator($customer);
-            $referral_creator->create();
+            #$referral_creator = new ReferralCreator($customer);
+            #$referral_creator->create();
+            $this->setModifier($customer);
+            new Referral($customer);
+
             if ($request->has('referral_code')) {
                 $this->updateCustomerOwnVoucherNReferral($customer, $request->referral_code);
             }
@@ -264,7 +274,6 @@ class ProfileRepository
         }
     }
 
-
     /**
      * Avatar registration by Kit
      * @param $avatar
@@ -280,8 +289,11 @@ class ProfileRepository
                 'profile_id' => $user->id
             ]);
             $customer = Customer::find($customer->id);
-            $referral_creator = new ReferralCreator($customer);
-            $referral_creator->create();
+            #$referral_creator = new ReferralCreator($customer);
+            #$referral_creator->create();
+            $this->setModifier($customer);
+            new Referral($customer);
+
 //            if ($request->has('referral_code')) {
 //                $this->updateCustomerOwnVoucherNReferral($customer, $request->referral_code);
 //            }
@@ -316,8 +328,11 @@ class ProfileRepository
                 'profile_id' => $user->id
             ]);
             $customer = Customer::find($customer->id);
-            $referral_creator = new ReferralCreator($customer);
-            $referral_creator->create();
+            #$referral_creator = new ReferralCreator($customer);
+            #$referral_creator->create();
+            $this->setModifier($customer);
+            new Referral($customer);
+
             if ($request->has('referral_code')) {
                 $this->updateCustomerOwnVoucherNReferral($customer, $request->referral_code);
             }
@@ -339,6 +354,4 @@ class ProfileRepository
     {
         return constants('AVATAR')[$from];
     }
-
-
 }

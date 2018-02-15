@@ -1,0 +1,134 @@
+<?php namespace Sheba;
+
+use Auth;
+use Session;
+use Carbon\Carbon;
+
+trait ModificationFields
+{
+    private $modifier = null;
+    private $modifierModelName = null;
+
+    private function isOfValidClass($obj)
+    {
+        $this->modifierModelName = substr(strrchr(get_class($obj), '\\'), 1);
+        return in_array($this->modifierModelName, ['Customer', 'Resource', 'Partner', 'User', 'Member', 'Affiliate', 'Profile']);
+    }
+
+    public function setModifier($entity, $is_flush = true)
+    {
+        if($this->isOfValidClass($entity)) {
+            ($is_flush) ? Session::flash('modifier', $entity) : Session::put('modifier', $entity);
+        }
+    }
+
+    /**
+     * Make the modification fields.
+     *
+     * @param bool|true $created_fields
+     * @param bool|true $updated_fields
+     * @return array
+     */
+    private function modificationFields($created_fields = true, $updated_fields = true)
+    {
+        list($id, $name, $time) = $this->getData();
+
+        $data = [];
+        if($created_fields) {
+            $data['created_by'] = $id;
+            $data['created_by_name'] = $name;
+            $data['created_at'] = $time;
+        }
+
+        if($updated_fields) {
+            $data['updated_by'] = $id;
+            $data['updated_by_name'] = $name;
+            $data['updated_at'] = $time;
+        }
+
+        return $data;
+    }
+
+    /**
+     * Add the modification fields to an Object.
+     *
+     * @param $model
+     * @param bool|true $created_fields
+     * @param bool|true $updated_fields
+     */
+    private function addModificationFieldsToObject($model, $created_fields = true, $updated_fields = true)
+    {
+        list($id, $name, $time) = $this->getData();
+
+        if($created_fields) {
+            $model->created_by = $id;
+            $model->created_by_name = $name;
+            $model->created_at = $time;
+        }
+
+        if($updated_fields) {
+            $model->updated_by = $id;
+            $model->updated_by_name = $name;
+            $model->updated_at = $time;
+        }
+    }
+
+    /**
+     * Merge the data with both(created and updated) modification fields.
+     *
+     * @param $data
+     * @return array
+     */
+    public function withBothModificationFields($data)
+    {
+        if (is_array($data)) return array_merge($data, $this->modificationFields());
+
+        $this->addModificationFieldsToObject($data);
+    }
+
+    /**
+     * Merge the data with only created modification fields.
+     *
+     * @param $data
+     * @return array
+     */
+    public function withCreateModificationField($data)
+    {
+        if (is_array($data)) return array_merge($data, $this->modificationFields($create = true, $update = false));
+
+        $this->addModificationFieldsToObject($data, $create = true, $update = false);
+    }
+
+    /**
+     * Merge the data with only updated modification fields.
+     *
+     * @param $data
+     * @return array
+     */
+    public function withUpdateModificationField($data)
+    {
+        if (is_array($data)) return array_merge($data, $this->modificationFields($create = false));
+
+        $this->addModificationFieldsToObject($data, $create = false);
+    }
+
+    /**
+     * @return array
+     */
+    private function getData()
+    {
+        $this->modifier = Session::has('modifier') ? Session::get('modifier') : Auth::user();
+
+        $id = 0;
+        $name = "";
+        $time = Carbon::now();
+
+        if($this->modifier && $this->isOfValidClass($this->modifier)) {
+            $user   = $this->modifier ? $this->modifier : Auth::user();
+            $id     = $user->id;
+            $name   = ($this->modifierModelName == "User") ? $user->department->name . ' - ' . $user->name : $this->modifierModelName . ' - ' . $this->modifier->name;
+        }
+
+        return [$id, $name, $time];
+    }
+}

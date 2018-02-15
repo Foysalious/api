@@ -1,8 +1,9 @@
-<?php
-
-namespace App\Providers;
+<?php namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+
+use Sheba\Voucher\VoucherCodeServiceProvider;
+use Sheba\Voucher\VoucherSuggesterServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,6 +24,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->app->register(VoucherCodeServiceProvider::class);
+        $this->app->register(VoucherSuggesterServiceProvider::class);
     }
 }
