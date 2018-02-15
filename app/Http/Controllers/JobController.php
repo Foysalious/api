@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use DB;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
+use Sheba\Logs\JobLogs;
 
 class JobController extends Controller
 {
@@ -125,16 +126,11 @@ class JobController extends Controller
         }
     }
 
-    public function logs($customer, $job, Request $request)
+    public function getLogs($customer, $job, Request $request)
     {
         try {
             $all_logs = collect();
-            $this->formatLogs((new PartnerOrderLogs($request->partner_order))->all(), $all_logs);
-            $this->formatLogs((new OrderLogs($request->partner_order->order))->all(), $all_logs);
-            foreach ($request->partner_order->jobs as $job) {
-                $job_logs = (new JobLogs($job))->all();
-                $this->formatLogs($job_logs, $all_logs);
-            }
+            $this->formatLogs((new JobLogs($request->job))->all(), $all_logs);
             $dates = $all_logs->groupBy('created_at')->sortByDesc(function ($item, $key) {
                 return $key;
             })->map(function ($item, $key) {
@@ -143,6 +139,20 @@ class JobController extends Controller
             return api_response($request, $dates, 200, ['logs' => $dates]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
+        }
+    }
+
+    private function formatLogs($job_logs, $all_logs)
+    {
+        foreach ($job_logs as $key => $job_log) {
+            foreach ($job_log as $log) {
+                $collect = collect($log);
+                $collect->put('created_at', $log->created_at->toDateString());
+                $collect->put('timestamp', $log->created_at->timestamp);
+                $collect->put('type', $key);
+                $collect->put('color_code', '#02adfc');
+                $all_logs->push($collect);
+            }
         }
     }
 
