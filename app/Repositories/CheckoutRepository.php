@@ -358,7 +358,7 @@ class CheckoutRepository
                         'remember_token' => $payment_info['remember_token'],
                         'sheba_collection' => (double)$payment_info['price'],
                         'payment_method' => 'Online',
-                        'transaction_detail' => $portwallet_response
+                        'transaction_detail' => json_encode($portwallet_response)
                     ]
                 ]);
             return json_decode($res->getBody());
