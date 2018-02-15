@@ -131,12 +131,12 @@ class JobController extends Controller
         try {
             $all_logs = collect();
             $this->formatLogs((new JobLogs($request->job))->all(), $all_logs);
-            $dates = $all_logs->groupBy('created_at')->sortByDesc(function ($item, $key) {
+            $dates = $all_logs->sortByDesc(function ($item, $key) {
                 return $key;
             })->map(function ($item, $key) {
-                return ($item->sortByDesc('timestamp'))->values()->all();
+                return ($item->sortByDesc('timestamp'));
             });
-            return api_response($request, $dates, 200, ['logs' => $dates]);
+            return api_response($request, $dates, 200, ['logs' => $dates->values()->all()]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
