@@ -50,6 +50,32 @@ class CategoryController extends Controller
         }
     }
 
+    public function show($category, Request $request)
+    {
+        try {
+            $category = Category::select('id', 'name', 'short_description', 'long_description', 'thumb', 'banner', 'app_thumb', 'app_banner', 'publication_status', 'icon', 'questions')->published()->where('id', $category)->first();
+            if ($category == null) {
+                return api_response($request, null, 404);
+            }
+            $category->load(['partners' => function ($q) {
+                $q->verified();
+            }, 'services' => function ($q) {
+                $q->published();
+            }, 'partnerResources' => function ($q) {
+                $q->whereHas('resource', function ($query) {
+                    $query->verified();
+                });
+            }]);
+            array_add($category, 'total_partners', $category->partners->count());
+            array_add($category, 'total_experts', $category->partnerResources->count());
+            array_add($category, 'total_services', $category->services->count());
+            removeRelationsAndFields($category);
+            return api_response($request, $category, 200, ['category' => $category]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
     public function getSecondaries($category, Request $request)
     {
         try {

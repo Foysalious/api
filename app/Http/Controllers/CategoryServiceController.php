@@ -34,4 +34,9 @@ class CategoryServiceController extends Controller
         }
     }
 
+    public function index($category, Request $request)
+    {
+
+    }
+
 }

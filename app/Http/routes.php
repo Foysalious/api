@@ -306,6 +306,12 @@ $api->version('v1', function ($api) {
                 $api->get('', 'CategoryGroupController@show');
             });
         });
+        $api->group(['prefix' => 'categories'], function ($api) {
+            $api->group(['prefix' => '{id}'], function ($api) {
+                $api->get('', 'CategoryController@show');
+                $api->get('services', 'CategoryController@show');
+            });
+        });
         $api->group(['prefix' => 'locations'], function ($api) {
             $api->get('{location}/partners', 'PartnerController@findPartners');
             $api->get('current', 'LocationController@getCurrent');

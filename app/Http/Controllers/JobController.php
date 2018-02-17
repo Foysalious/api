@@ -3,19 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Job;
-use App\Models\JobCancelLog;
 use App\Repositories\JobCancelLogRepository;
-use App\Repositories\PapRepository;
 use App\Sheba\JobStatus;
-use App\Sheba\Logs\PartnerOrderLogs;
-use FacebookAds\Http\Exception\RequestException;
-use GuzzleHttp\Client;
 use function GuzzleHttp\Promise\all;
 use Illuminate\Http\Request;
 use DB;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
-use Sheba\Logs\JobLogs;
+use Sheba\Logs\Customer\JobLogs;
 
 class JobController extends Controller
 {
@@ -136,7 +131,7 @@ class JobController extends Controller
             })->map(function ($item, $key) {
                 return ($item->sortByDesc('timestamp'));
             });
-            return api_response($request, $dates, 200, ['logs' => $dates->values()->all()]);
+            return count($dates) > 0 ? api_response($request, $dates, 200, ['logs' => $dates->values()->all()]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
