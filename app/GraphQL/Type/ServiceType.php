@@ -28,7 +28,7 @@ class ServiceType extends GraphQlType
             'banner' => ['type' => Type::string()],
             'faqs' => ['type' => Type::string(), 'description' => 'Frequently asked questions for this service'],
             'type' => ['type' => Type::string(), 'description' => 'Available types: Fixed,Options,Custom'],
-            'question_answers' => ['type' => Type::string(), 'description' => 'Q&A of service, can be null'],
+            'question_answers' => ['type' => Type::listOf(GraphQL::type('ServiceQuestion')), 'description' => 'Q&A of service, can be null'],
             'category' => ['type' => GraphQL::type('Category')]
         ];
     }
@@ -40,7 +40,11 @@ class ServiceType extends GraphQlType
 
     protected function resolveQuestionAnswersField($root, $args)
     {
-        return $root->variable_type == 'Options' ? json_encode(json_decode($root->variables)->options) : null;
+        if ($root->variable_type == 'Options') {
+            return json_decode($root->variables)->options;
+        } else {
+            return null;
+        }
     }
 
 }

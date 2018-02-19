@@ -34,7 +34,12 @@ class CategoryType extends GraphQlType
                 ],
                 'type' => Type::listOf(GraphQL::type('Reviews'))
             ],
-            'services' => ['type' => Type::listOf(GraphQL::type('Service'))],
+            'services' => [
+                'args' => [
+                    'id' => ['type' => Type::listOf(Type::int())],
+                ],
+                'type' => Type::listOf(GraphQL::type('Service'))
+            ],
             'total_partners' => ['type' => Type::int(), 'description' => 'Total partner count of Category'],
             'total_services' => ['type' => Type::int(), 'description' => 'Total service count of Category'],
             'total_experts' => ['type' => Type::int(), 'description' => 'Total expert count of Category'],
@@ -44,8 +49,11 @@ class CategoryType extends GraphQlType
 
     protected function resolveServicesField($root, $args)
     {
-        $root->load(['services' => function ($q) {
+        $root->load(['services' => function ($q) use ($args) {
             $q->published();
+            if (isset($args['id'])) {
+                $q->whereIn('id', $args['id']);
+            }
         }]);
         return $root->services;
     }
