@@ -290,7 +290,6 @@ $api->version('v1', function ($api) {
         $api->post('password/email', 'Auth\PasswordController@sendResetPasswordEmail');
         $api->post('password/validate', 'Auth\PasswordController@validatePasswordResetCode');
         $api->post('password/reset', 'Auth\PasswordController@reset');
-
         $api->group(['prefix' => 'login'], function ($api) {
             $api->post('gmail', 'Auth\GoogleController@login');
         });
@@ -328,12 +327,17 @@ $api->version('v1', function ($api) {
                 $api->group(['prefix' => 'orders'], function ($api) {
                     $api->post('/', 'OrderController@store');
                 });
+                $api->group(['prefix' => 'rates'], function ($api) {
+                    $api->get('/', 'RateController@index');
+                });
                 $api->group(['prefix' => 'jobs'], function ($api) {
                     $api->get('/', 'JobController@index');
                     $api->group(['prefix' => '{job}', 'middleware' => ['customer_job.auth']], function ($api) {
                         $api->get('/', 'JobController@show');
                         $api->get('bills', 'JobController@getBills');
                         $api->get('logs', 'JobController@getLogs');
+                        $api->post('reviews', 'ReviewController@store');
+                        $api->post('rates', 'RateController@store');
                     });
                 });
             });
