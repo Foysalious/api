@@ -5,6 +5,7 @@ namespace App\GraphQL\Type;
 use \Folklore\GraphQL\Support\Type as GraphQlType;
 use GraphQL\Type\Definition\Type;
 use GraphQL;
+
 class ServiceType extends GraphQlType
 {
     protected $attributes = [
@@ -22,14 +23,24 @@ class ServiceType extends GraphQlType
             'description' => ['type' => Type::string()],
             'unit' => ['type' => Type::string()],
             'min_quantity' => ['type' => Type::float()],
-            'publication_status' => ['type' => Type::int()],
+            'publication_status' => ['type' => Type::int(), 'description' => 'Indicates if service is published or not; 1 or 0'],
             'thumb' => ['type' => Type::string()],
             'banner' => ['type' => Type::string()],
-            'faqs' => ['type' => Type::string()],
-            'variable_type' => ['type' => Type::string()],
-            'variables' => ['type' => Type::string()],
+            'faqs' => ['type' => Type::string(), 'description' => 'Frequently asked questions for this service'],
+            'type' => ['type' => Type::string(), 'description' => 'Available types: Fixed,Options,Custom'],
+            'question_answers' => ['type' => Type::string(), 'description' => 'Q&A of service, can be null'],
             'category' => ['type' => GraphQL::type('Category')]
         ];
+    }
+
+    protected function resolveTypeField($root, $args)
+    {
+        return $root->variable_type;
+    }
+
+    protected function resolveQuestionAnswersField($root, $args)
+    {
+        return $root->variable_type == 'Options' ? json_encode(json_decode($root->variables)->options) : null;
     }
 
 }

@@ -38,6 +38,7 @@ class CategoryType extends GraphQlType
             'total_partners' => ['type' => Type::int(), 'description' => 'Total partner count of Category'],
             'total_services' => ['type' => Type::int(), 'description' => 'Total service count of Category'],
             'total_experts' => ['type' => Type::int(), 'description' => 'Total expert count of Category'],
+            'updated_at_timestamp' => ['type' => Type::int(), 'description' => 'Timestamp when any of the row information has been last updated']
         ];
     }
 
@@ -87,5 +88,10 @@ class CategoryType extends GraphQlType
             $q->published();
         }]);
         return $root->services->count();
+    }
+
+    protected function resolveUpdatedAtTimestampField($root, $args)
+    {
+        return $root->updated_at->timestamp;
     }
 }
