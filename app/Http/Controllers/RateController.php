@@ -19,7 +19,7 @@ class RateController extends Controller
                 }]);
             }])->select('id', 'name', 'icon', 'value')->get();
             foreach ($rates as $rate) {
-                array_add($rate, 'height', '30dp');
+                array_add($rate, 'height', '30');
                 foreach ($rate->questions as $question) {
                     array_forget($question, 'pivot');
                     foreach ($question->answers as $answer) {
