@@ -27,6 +27,7 @@ class RateController extends Controller
                     }
                 }
             }
+            $rates=$rates->sortBy('value')->values()->all();
             return api_response($request, $rates, 200, ['rates' => $rates, 'rate_message'=>'Rate this job']);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
@@ -36,7 +37,6 @@ class RateController extends Controller
     public function store($customer, Request $request)
     {
         try {
-            $this->validate($request, ['question' => 'required|string', 'answer' => 'sometimes|required|string', 'answer_id' => 'sometimes|required|numeric']);
             $job = $request->job;
             $review = $job->review;
             if ($review == null) {
