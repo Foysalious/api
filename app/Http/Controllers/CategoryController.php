@@ -197,7 +197,7 @@ class CategoryController extends Controller
                 $review['customer_picture'] = $review->customer ? $review->customer->profile->pro_pic : null;
                 removeRelationsAndFields($review);
             }
-            return $reviews;
+            return count($reviews) > 0 ? api_response($request, $category, 200, ['reviews' => $reviews]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
