@@ -309,6 +309,7 @@ $api->version('v1', function ($api) {
             $api->group(['prefix' => '{id}'], function ($api) {
                 $api->get('', 'CategoryController@show');
                 $api->get('services', 'CategoryController@show');
+                $api->get('reviews', 'CategoryController@getReviews');
             });
         });
         $api->group(['prefix' => 'locations'], function ($api) {
@@ -327,9 +328,6 @@ $api->version('v1', function ($api) {
                 $api->group(['prefix' => 'orders'], function ($api) {
                     $api->post('/', 'OrderController@store');
                 });
-                $api->group(['prefix' => 'rates'], function ($api) {
-                    $api->get('/', 'RateController@index');
-                });
                 $api->group(['prefix' => 'jobs'], function ($api) {
                     $api->get('/', 'JobController@index');
                     $api->group(['prefix' => '{job}', 'middleware' => ['customer_job.auth']], function ($api) {
@@ -337,7 +335,10 @@ $api->version('v1', function ($api) {
                         $api->get('bills', 'JobController@getBills');
                         $api->get('logs', 'JobController@getLogs');
                         $api->post('reviews', 'ReviewController@store');
-                        $api->post('rates', 'RateController@store');
+                        $api->group(['prefix' => 'rates'], function ($api) {
+                            $api->get('/', 'RateController@index');
+                            $api->post('/', 'RateController@store');
+                        });
                     });
                 });
             });

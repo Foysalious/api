@@ -10,7 +10,7 @@ use Illuminate\Validation\ValidationException;
 
 class RateController extends Controller
 {
-    public function index($customer, Request $request)
+    public function index($customer, $job, Request $request)
     {
         try {
             $rates = Rate::where('type', 'review')->with(['questions' => function ($q) {
@@ -19,6 +19,7 @@ class RateController extends Controller
                 }]);
             }])->select('id', 'name', 'icon', 'value')->get();
             foreach ($rates as $rate) {
+                array_add($rate, 'height', '30dp');
                 foreach ($rate->questions as $question) {
                     array_forget($question, 'pivot');
                     foreach ($question->answers as $answer) {
@@ -26,7 +27,7 @@ class RateController extends Controller
                     }
                 }
             }
-            return api_response($request, $rates, 200, ['rates' => $rates]);
+            return api_response($request, $rates, 200, ['rates' => $rates, 'rate_message']);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }

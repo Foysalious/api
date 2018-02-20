@@ -179,4 +179,27 @@ class CategoryController extends Controller
             return response()->json(['msg' => 'category not found', 'code' => 404]);
         }
     }
+
+    public function getReviews($category, Request $request)
+    {
+        try {
+            $category = Category::find($category);
+            $category->load(['reviews' => function ($q) {
+                $q->select('id', 'category_id', 'customer_id', 'rating', 'review', 'review_title')->notEmptyReview()->whereIn('rating', [4, 5])->with(['customer' => function ($q) {
+                    $q->with(['profile' => function ($q) {
+                        $q->select('id', 'name', 'pro_pic');
+                    }]);
+                }]);
+            }]);
+            $reviews = $category->reviews;
+            foreach ($reviews as $review) {
+                $review['customer_name'] = $review->customer ? $review->customer->profile->name : null;
+                $review['customer_picture'] = $review->customer ? $review->customer->profile->pro_pic : null;
+                removeRelationsAndFields($review);
+            }
+            return $reviews;
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
 }

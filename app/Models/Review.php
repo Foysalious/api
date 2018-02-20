@@ -36,6 +36,11 @@ class Review extends Model
         return $query->where('review', '<>', '');
     }
 
+    public function scopeNotEmptyReview($query)
+    {
+        return $query->where('review', '<>', '');
+    }
+
     public function rate()
     {
         return $this->hasOne(ReviewQuestionAnswer::class, 'review_id');
