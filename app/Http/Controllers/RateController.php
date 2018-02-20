@@ -27,7 +27,7 @@ class RateController extends Controller
                     }
                 }
             }
-            return api_response($request, $rates, 200, ['rates' => $rates, 'rate_message']);
+            return api_response($request, $rates, 200, ['rates' => $rates, 'rate_message'=>'Rate this job']);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
