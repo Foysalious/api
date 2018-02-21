@@ -19,7 +19,7 @@ class RateController extends Controller
                 }]);
             }])->select('id', 'name', 'icon', 'value')->get();
             foreach ($rates as $rate) {
-                array_add($rate, 'height', '30');
+                array_add($rate, 'height', 30);
                 foreach ($rate->questions as $question) {
                     array_forget($question, 'pivot');
                     foreach ($question->answers as $answer) {
@@ -27,8 +27,8 @@ class RateController extends Controller
                     }
                 }
             }
-            $rates=$rates->sortBy('value')->values()->all();
-            return api_response($request, $rates, 200, ['rates' => $rates, 'rate_message'=>'Rate this job']);
+            $rates = $rates->sortBy('value')->values()->all();
+            return api_response($request, $rates, 200, ['rates' => $rates, 'rate_message' => 'Rate this job']);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
@@ -45,15 +45,21 @@ class RateController extends Controller
             if ($review->rate != null) {
                 return api_response($request, null, 403);
             }
-            $review_answer = new ReviewQuestionAnswer();
-            $review_answer->review_type = "App\\Models\\Review";
-            $review_answer->review_id = $review->id;
-            $review_answer->rate_question_id = $request->question;
-            $review_answer->rate_answer_id = $request->answer_id;
-            $review_answer->rate_answer_text = $request->answer;
-            $review_answer->rate_id = $request->rate;
-            $review_answer->save();
-            return api_response($request, $review_answer, 200);
+            $reviews = json_decode($request->data);
+            foreach ($reviews as $data) {
+                $review_answer = new ReviewQuestionAnswer();
+                $review_answer->review_type = "App\\Models\\Review";
+                $review_answer->review_id = $review->id;
+                $review_answer->rate_id = $request->rate;
+                $review_answer->rate_question_id = $data->question;
+                if (isset($data->answer)) {
+                    $review_answer->rate_answer_id = $data->answer;
+                } else {
+                    $review_answer->rate_answer_text = $data->answer_text;
+                }
+                $review_answer->save();
+            }
+            return api_response($request, 1, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
