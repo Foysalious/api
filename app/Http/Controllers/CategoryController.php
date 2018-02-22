@@ -124,12 +124,14 @@ class CategoryController extends Controller
                 $services = $this->categoryRepository->getServicesOfCategory($category->children->pluck('id'), $location, $offset, $limit);
                 $services = $this->serviceRepository->addServiceInfo($services, $scope);
             } else {
-                $category = Category::with(['services' => function ($q) use ($offset, $limit) {
+                $category = Category::with(['parent', 'services' => function ($q) use ($offset, $limit) {
                     $q->select('id', 'category_id', 'name', 'thumb', 'banner', 'variable_type', 'min_quantity')->published()->skip($offset)->take($limit);
                 }])->where('id', $category->id)->published()->first();
                 $services = $this->serviceRepository->addServiceInfo($this->serviceRepository->getPartnerServicesAndPartners($category->services, $location), $scope);
             }
+            $parent_category_name = $category->parent->name;
             $category = collect($category)->only(['name', 'banner', 'parent_id']);
+            $category['parent_category_name'] = $parent_category_name;
             $category['services'] = $services;
             return response()->json(['category' => $category, 'msg' => 'successful', 'code' => 200]);
         } else {

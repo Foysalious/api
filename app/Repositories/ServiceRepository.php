@@ -95,6 +95,8 @@ class ServiceRepository
                 ['is_published', 1]
             ])->whereHas('locations', function ($query) use ($location) {
                 $query->where('id', $location);
+            })->whereHas('categories', function ($query) use ($location,$service) {
+                $query->where('categories.id', $service->category_id)->where('is_verified',1);
             })->get();
     }
 
