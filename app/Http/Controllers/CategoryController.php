@@ -129,7 +129,7 @@ class CategoryController extends Controller
                 }])->where('id', $category->id)->published()->first();
                 $services = $this->serviceRepository->addServiceInfo($this->serviceRepository->getPartnerServicesAndPartners($category->services, $location), $scope);
             }
-            $parent_category_name = $category->parent->name;
+            $parent_category_name = $category->parent != null ? $category->parent->name : null;
             $category = collect($category)->only(['name', 'banner', 'parent_id']);
             $category['parent_category_name'] = $parent_category_name;
             $category['services'] = $services;
