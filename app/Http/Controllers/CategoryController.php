@@ -187,6 +187,7 @@ class CategoryController extends Controller
     private function serviceQuestionSet($services)
     {
         foreach ($services as &$service) {
+            $questions = null;
             if ($service->variable_type == 'Options') {
                 $questions = json_decode($service->variables)->options;
                 foreach ($questions as &$question) {
@@ -194,9 +195,9 @@ class CategoryController extends Controller
                     $question->put('input_type', $this->resolveInputTypeField($question->get('answers')));
                     $question->put('screen', $this->resolveScreenField($question->get('question')));
                 }
-                $service['questions'] = $questions;
-                array_forget($service, 'variables');
             }
+            $service['questions'] = $questions;
+            array_forget($service, 'variables');
         }
         return $services;
     }
