@@ -155,29 +155,62 @@ class CategoryController extends Controller
 
     public function getServices($category, Request $request)
     {
-        $category = Category::where('id', $category)->published()->first();
-        if ($category != null) {
-            list($offset, $limit) = calculatePagination($request);
-            $location = $request->location != '' ? $request->location : 4;
-            $scope = [];
-            if ($request->has('scope')) {
-                $scope = $this->serviceRepository->getServiceScope($request->scope);
-            }
-            if ($category->parent_id == null) {
-                $services = $this->categoryRepository->getServicesOfCategory($category->children->pluck('id'), $location, $offset, $limit);
-                $services = $this->serviceRepository->addServiceInfo($services, $scope);
+        try {
+            $category = Category::where('id', $category)->published()->first();
+            if ($category != null) {
+                list($offset, $limit) = calculatePagination($request);
+                $location = $request->location != '' ? $request->location : 4;
+                $scope = [];
+                if ($request->has('scope')) {
+                    $scope = $this->serviceRepository->getServiceScope($request->scope);
+                }
+                if ($category->parent_id == null) {
+                    $services = $this->categoryRepository->getServicesOfCategory($category->children->pluck('id'), $location, $offset, $limit);
+                    $services = $this->serviceRepository->addServiceInfo($services, $scope);
+                } else {
+                    $category = Category::with(['services' => function ($q) use ($offset, $limit) {
+                        $q->select('id', 'category_id', 'unit', 'name', 'thumb', 'banner', 'faqs', 'variables', 'variable_type', 'min_quantity')->published()->skip($offset)->take($limit);
+                    }])->where('id', $category->id)->published()->first();
+                    $services = $this->serviceRepository->addServiceInfo($this->serviceRepository->getPartnerServicesAndPartners($category->services, $location), $scope);
+                }
+                $category = collect($category)->only(['name', 'banner', 'parent_id']);
+                $category['services'] = $this->serviceQuestionSet($services);
+                return api_response($request, null, 200, ['category' => $category]);
             } else {
-                $category = Category::with(['services' => function ($q) use ($offset, $limit) {
-                    $q->select('id', 'category_id', 'name', 'thumb', 'banner', 'variable_type', 'min_quantity')->published()->skip($offset)->take($limit);
-                }])->where('id', $category->id)->published()->first();
-                $services = $this->serviceRepository->addServiceInfo($this->serviceRepository->getPartnerServicesAndPartners($category->services, $location), $scope);
+                return api_response($request, null, 404);
             }
-            $category = collect($category)->only(['name', 'banner', 'parent_id']);
-            $category['services'] = $services;
-            return response()->json(['category' => $category, 'msg' => 'successful', 'code' => 200]);
-        } else {
-            return response()->json(['msg' => 'category not found', 'code' => 404]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
         }
+    }
+
+    private function serviceQuestionSet($services)
+    {
+        foreach ($services as &$service) {
+            if ($service->variable_type == 'Options') {
+                $questions = json_decode($service->variables)->options;
+                foreach ($questions as &$question) {
+                    $question = collect($question);
+                    $question->put('input_type', $this->resolveInputTypeField($question->get('answers')));
+                    $question->put('screen', $this->resolveScreenField($question->get('question')));
+                }
+                $service['questions'] = $questions;
+                array_forget($service, 'variables');
+            }
+        }
+        return $services;
+    }
+
+    private function resolveInputTypeField($answers)
+    {
+        $answers = explode(',', $answers);
+        return count($answers) <= 4 ? "radiobox" : "selectbox";
+    }
+
+    private function resolveScreenField($question)
+    {
+        $words = explode(' ', trim($question));
+        return count($words) <= 5 ? "normal" : "slide";
     }
 
     public function getReviews($category, Request $request)

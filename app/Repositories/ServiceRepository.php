@@ -283,7 +283,6 @@ class ServiceRepository
             if (array_search('reviews', $scope) !== false) {
                 $this->reviewRepository->getGeneralReviewInformation($service);
             }
-            array_forget($service, 'variables');
             $this->removeRelationsFromModel($service, $service->getRelations());
         }
         return $services;

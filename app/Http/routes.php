@@ -308,7 +308,7 @@ $api->version('v1', function ($api) {
         $api->group(['prefix' => 'categories'], function ($api) {
             $api->group(['prefix' => '{id}'], function ($api) {
                 $api->get('', 'CategoryController@show');
-                $api->get('services', 'CategoryController@show');
+                $api->get('services', 'CategoryController@getServices');
                 $api->get('reviews', 'CategoryController@getReviews');
             });
         });
