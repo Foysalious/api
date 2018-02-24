@@ -220,7 +220,7 @@ class JobLogs
     private function newDiscountChangeLog($update_log, $decoded_log)
     {
         $this->priceChangeLogs->push((object)[
-            "log" => "Discount Updated.",
+            "log" => "Discount Updated",
             "from" => $decoded_log['old_discount_cost'],
             "to" => $decoded_log['new_discount_cost'],
             "created_at" => $update_log->created_at,

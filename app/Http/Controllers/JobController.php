@@ -127,9 +127,7 @@ class JobController extends Controller
             $all_logs = collect();
             $this->formatLogs((new JobLogs($request->job))->all(), $all_logs);
             $dates = $all_logs->sortByDesc(function ($item, $key) {
-                return $key;
-            })->map(function ($item, $key) {
-                return ($item->sortByDesc('timestamp'));
+                return $item->get('timestamp');
             });
             return count($dates) > 0 ? api_response($request, $dates, 200, ['logs' => $dates->values()->all()]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
