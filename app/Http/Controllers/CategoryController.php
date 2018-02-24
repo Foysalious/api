@@ -169,7 +169,7 @@ class CategoryController extends Controller
                     $services = $this->serviceRepository->addServiceInfo($services, $scope);
                 } else {
                     $category = Category::with(['services' => function ($q) use ($offset, $limit) {
-                        $q->select('id', 'category_id', 'unit', 'name', 'thumb', 'banner', 'faqs', 'variables', 'variable_type', 'min_quantity')->published()->skip($offset)->take($limit);
+                        $q->select('id', 'category_id', 'unit', 'name', 'thumb', 'description', 'banner', 'faqs', 'variables', 'variable_type', 'min_quantity')->published()->skip($offset)->take($limit);
                     }])->where('id', $category->id)->published()->first();
                     $services = $this->serviceRepository->addServiceInfo($this->serviceRepository->getPartnerServicesAndPartners($category->services, $location), $scope);
                 }
