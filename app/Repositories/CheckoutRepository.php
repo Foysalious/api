@@ -16,6 +16,7 @@ use App\Models\PartnerOrderPayment;
 use App\Models\PartnerServiceDiscount;
 use App\Models\Service;
 use App\Models\User;
+use App\Sheba\Pap\Pap;
 use Cache;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
@@ -222,6 +223,7 @@ class CheckoutRepository
                 }
             });
         } catch (QueryException $e) {
+            dd($e);
             return false;
         }
         return $order;
@@ -256,6 +258,10 @@ class CheckoutRepository
         $order->delivery_name = $order_info['name'];
         $order->delivery_mobile = formatMobile($order_info['phone']);
         $order->sales_channel = isset($order_info['sales_channel']) ? $order_info['sales_channel'] : 'Web';
+        if (isset($order_info['pap_visitor_id'])) {
+            $order->pap_visitor_id = $order_info['pap_visitor_id'];
+            $order->pap_affiliate_id = (new Pap())->getAffiliateId($order->pap_visitor_id);
+        }
         $order = $this->getAuthor($order);
         $order->save();
         return $order;
