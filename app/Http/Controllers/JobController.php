@@ -66,8 +66,10 @@ class JobController extends Controller
             $job_collection->put('schedule_date', $job->schedule_date);
             $job_collection->put('preferred_time', $job->preferred_time);
             $job_collection->put('category_name', $job->category ? $job->category->name : null);
+            $job_collection->put('partner_name', $job->partnerOrder->partner->name);
             $job_collection->put('status', $job->status);
             $job_collection->put('rating', $job->review != null ? $job->review->rating : null);
+            $job_collection->put('review', $job->review != null ? $job->review->review : null);
             $job_collection->put('price', (double)$job->totalPrice);
             if (count($job->jobServices) == 0) {
                 $services = collect();
