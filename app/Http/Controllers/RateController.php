@@ -20,6 +20,7 @@ class RateController extends Controller
             }])->select('id', 'name', 'icon', 'value')->get();
             foreach ($rates as $rate) {
                 array_add($rate, 'height', 30);
+                array_add($rate, 'icon_not_selected', 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/sheba_xyz/rate2.png');
                 foreach ($rate->questions as $question) {
                     array_forget($question, 'pivot');
                     foreach ($question->answers as $answer) {
