@@ -23,6 +23,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use LaravelFCM\Message\OptionsBuilder;
 use LaravelFCM\Message\PayloadDataBuilder;
@@ -260,7 +261,6 @@ class CheckoutRepository
         $order->sales_channel = isset($order_info['sales_channel']) ? $order_info['sales_channel'] : 'Web';
         if (isset($order_info['pap_visitor_id'])) {
             $order->pap_visitor_id = $order_info['pap_visitor_id'];
-            $order->pap_affiliate_id = (new Pap())->getAffiliateId($order->pap_visitor_id);
         }
         $order = $this->getAuthor($order);
         $order->save();

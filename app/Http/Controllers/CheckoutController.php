@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\CalculatePapAffiliateId;
 use App\Models\Customer;
 use App\Models\PartnerTransaction;
 use App\Repositories\CartRepository;
@@ -11,6 +12,7 @@ use App\Repositories\DiscountRepository;
 use App\Repositories\NotificationRepository;
 use App\Repositories\VoucherRepository;
 use Carbon\Carbon;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
 use Session;
 use Cache;
@@ -24,6 +26,7 @@ use Sheba\Voucher\Creator\Referral;
 
 class CheckoutController extends Controller
 {
+    use DispatchesJobs;
     private $checkoutRepository;
     private $voucherRepository;
     private $cartRepository;
@@ -54,9 +57,11 @@ class CheckoutController extends Controller
             $customer = Customer::find($order->customer_id);
             $this->updateVouchers($order, $customer);
             $this->checkoutRepository->sendConfirmation($customer->id, $order);
+            if ($order->pap_visitor_id != null) {
+                $this->dispatch(new CalculatePapAffiliateId($order));
+            }
             $order->calculate();
             return response()->json(['code' => 200, 'pap_number' => (double)$order->profit, 'pap_code' => $order->code(), 'msg' => 'Order placed successfully!']);
-//            return response()->json(['code' => 200, 'msg' => 'Order placed successfully!']);
         } else {
             return response()->json(['code' => 500, 'msg' => 'There is a problem while placing the order!']);
         }
@@ -153,7 +158,7 @@ class CheckoutController extends Controller
         $portwallet_response = $portwallet->ipnValidate($data);
         //check payment validity
         if ($portwallet_response->status == 200 && $portwallet_response->data->status == "ACCEPTED") {
-            $response = $this->checkoutRepository->clearSpPayment($payment_info,$portwallet_response);
+            $response = $this->checkoutRepository->clearSpPayment($payment_info, $portwallet_response);
             if ($response) {
                 if ($response->code == 200) {
                     (new NotificationRepository())->forOnlinePayment($payment_info['partner_order_id'][0], $payment_info['price']);
