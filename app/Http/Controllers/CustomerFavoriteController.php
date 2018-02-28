@@ -26,6 +26,8 @@ class CustomerFavoriteController extends Controller
         });
         if (count($customer->favorites) > 0) {
             return api_response($request, null, 200, ['favorites' => $favorites]);
+        } else {
+            return api_response($request, null, 404);
         }
     }
 

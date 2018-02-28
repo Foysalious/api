@@ -1,6 +1,4 @@
 <?php
-
-
 Route::get('/', function () {
     return ['code' => 200, 'msg' => "Success. This project will hold the api's"];
 });
@@ -137,12 +135,6 @@ $api->version('v1', function ($api) {
             $api->get('notifications', 'CustomerController@getNotifications');
             $api->post('suggest-promo', 'PromotionController@suggestPromo');
             $api->put('addresses/{address}', 'CustomerAddressController@update');
-            $api->group(['prefix' => 'favorites'], function ($api) {
-                $api->get('/', 'CustomerFavoriteController@index');
-                $api->post('/', 'CustomerFavoriteController@store');
-                $api->put('/', 'CustomerFavoriteController@update');
-                $api->delete('{favorite}', 'CustomerFavoriteController@destroy');
-            });
         });
         $api->group(['prefix' => 'checkout'], function ($api) {
             $api->get('place-order-final', 'CheckoutController@placeOrderFinal');
@@ -321,6 +313,12 @@ $api->version('v1', function ($api) {
         });
         $api->group(['prefix' => 'customers'], function ($api) {
             $api->group(['prefix' => '{customer}', 'middleware' => ['customer.auth']], function ($api) {
+                $api->group(['prefix' => 'favorites'], function ($api) {
+                    $api->get('/', 'CustomerFavoriteController@index');
+                    $api->post('/', 'CustomerFavoriteController@store');
+                    $api->put('/', 'CustomerFavoriteController@update');
+                    $api->delete('{favorite}', 'CustomerFavoriteController@destroy');
+                });
                 $api->group(['prefix' => 'promotions'], function ($api) {
                     $api->get('/', 'PromotionController@index');
                     $api->post('/', 'PromotionController@addPromo');
