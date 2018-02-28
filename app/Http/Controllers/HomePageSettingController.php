@@ -13,7 +13,7 @@ class HomePageSettingController extends Controller
     {
         try {
             $this->validate($request, [
-                'for' => 'sometimes|required|string|in:app,web'
+                'for' => 'required|string|in:app,web'
             ]);
             $for = $this->getPublishedFor($request->for);
             $settings = HomepageSetting::$for()->select('id', 'order', 'item_type', 'item_id', 'updated_at')->orderBy('order')->get();
