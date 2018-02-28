@@ -4,6 +4,7 @@ namespace Sheba\Partner;
 
 
 use App\Models\Partner;
+use Carbon\Carbon;
 
 class PartnerAvailable
 {
@@ -24,7 +25,7 @@ class PartnerAvailable
         if (!$this->_worksAtThisDay($date)) {
             return false;
         }
-        if (!$this->_worksAtThisTime($time)) {
+        if (!$this->_worksAtThisTime($date, $time)) {
             return false;
         }
         return true;
@@ -46,14 +47,10 @@ class PartnerAvailable
         return $this->partner->runningLeave($date) != null ? true : false;
     }
 
-    /**
-     * @param $time
-     * @return bool
-     */
-    private function _worksAtThisTime($time)
+    private function _worksAtThisTime($date, $time)
     {
         //Means customer is available at anytime, no need to check partner working hours
-        if ($time == 'Anytime') {
+        if ((Carbon::parse($date) > Carbon::now()) && $time == 'Anytime') {
             return true;
         }
         if (array_has(constants('JOB_PREFERRED_TIMES'), $time)) {
