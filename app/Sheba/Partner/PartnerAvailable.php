@@ -50,7 +50,7 @@ class PartnerAvailable
     private function _worksAtThisTime($date, $time)
     {
         //Means customer is available at anytime, no need to check partner working hours
-        if ((Carbon::parse($date) > Carbon::now()) && $time == 'Anytime') {
+        if ($time == 'Anytime' && Carbon::parse($date)->gte(Carbon::today())) {
             return true;
         }
         if (array_has(constants('JOB_PREFERRED_TIMES'), $time)) {
