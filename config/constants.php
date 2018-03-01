@@ -102,8 +102,9 @@ return [
     ],
     'JOB_START_END_TIMES' => [
         '10.00 A.M. - 01.00 P.M.' => ['10:00 AM', '1:00 PM'],
-        '01.00 P.M. - 05.00 P.M.' => ['1:00 PM', '5:00 PM'],
-        '05.00 P.M. - 09.00 P.M.' => ['5:00 PM', '09:00 PM']
+        '01.00 P.M. - 05.00 P.M.' => ['1:01 PM', '5:00 PM'],
+        '05.00 P.M. - 09.00 P.M.' => ['5:01 PM', '09:00 PM'],
+        'Anytime' => ['12:00 AM', '11:59 PM']
     ],
     'JOB_CI_LEVELS' => ['High' => 'High', 'Medium' => 'Medium', 'Low' => 'Low'],
     'JOB_SATISFACTION_LEVELS' => ['High' => 'High', 'Medium' => 'Medium', 'Low' => 'Low'],

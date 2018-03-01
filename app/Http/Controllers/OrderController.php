@@ -25,7 +25,7 @@ class OrderController extends Controller
         $final_orders = [];
         foreach ($orders as $key => $order) {
             $order->calculate();
-            if (in_array($order->status, ['Cancelled']) || ($order->status == 'Closed' && $order->due == 0)) {
+            if (in_array($order->status, ['Cancelled']) || ($order->status == 'Closed' && $order->due <= 0)) {
                 continue;
             }
             foreach ($order->partner_orders as $partner_order) {
