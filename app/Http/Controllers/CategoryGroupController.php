@@ -13,9 +13,15 @@ class CategoryGroupController extends Controller
     {
         try {
             $this->validate($request, [
-                'for' => 'sometimes|required|string|in:app,web'
+                'for' => 'sometimes|required|string|in:app,web',
+                'name' => 'sometimes|required|string'
             ]);
+            $location = $request->has('location') ? $request->location : 4;
             $for = $this->getPublishedFor($request->for);
+            if ($request->has('name')) {
+                $categories = $this->getCategoryByColumn('name', $request->name, $location);
+                return $categories ? api_response($request, $categories, 200, ['categories' => $categories]) : api_response($request, null, 404);
+            }
             $categoryGroups = CategoryGroup::$for()->select('id', 'name', 'app_thumb', 'app_banner')->get();
             return count($categoryGroups) > 0 ? api_response($request, $categoryGroups, 200, ['category_groups' => $categoryGroups]) : api_response($request, null, 404);
         } catch (ValidationException $e) {
@@ -53,5 +59,23 @@ class CategoryGroupController extends Controller
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
+    }
+
+    public function getCategoryByColumn($column, $value, $location)
+    {
+        $category_group = CategoryGroup::with(['categories' => function ($q) {
+            $q->select('id', 'name', 'icon', 'thumb', 'banner', 'parent_id')->has('services', '>', 0);
+        }])->where($column, $value)->first();
+        if ($category_group != null) {
+            $categories = $category_group->categories->each(function ($category) use ($location) {
+                $start_price = new StartPrice($category, $location);
+                $start_price->calculate();
+                removeRelationsAndFields($category);
+            });
+            if (count($categories) > 0) {
+                return $categories;
+            }
+        }
+        return null;
     }
 }
