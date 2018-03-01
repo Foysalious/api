@@ -17,11 +17,11 @@ class CustomerFavoriteController extends Controller
             $q->with('services');
         }]);
         $favorites = $customer->favorites->each(function (&$favorite, $key) {
-            $favorite['picture'] = $favorite->category->thumb;
             $services = [];
             $favorite->services->each(function ($service) use ($favorite, &$services) {
                 $pivot = $service->pivot;
                 $pivot['variables'] = json_decode($pivot['variables']);
+                $pivot['picture'] = $service->thumb;
                 array_push($services, $pivot);
             });
             removeRelationsAndFields($favorite);
