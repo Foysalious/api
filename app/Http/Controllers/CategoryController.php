@@ -197,6 +197,7 @@ class CategoryController extends Controller
                 }
             }
             $service['questions'] = $questions;
+            $service['faqs']=json_decode($service->faqs);
             array_forget($service, 'variables');
         }
         return $services;
