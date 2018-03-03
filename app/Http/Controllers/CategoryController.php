@@ -169,7 +169,7 @@ class CategoryController extends Controller
                     $services = $this->serviceRepository->addServiceInfo($services, $scope);
                 } else {
                     $category = Category::with(['services' => function ($q) use ($offset, $limit) {
-                        $q->select('id', 'category_id', 'unit', 'name', 'thumb', 'description', 'banner', 'faqs', 'variables', 'variable_type', 'min_quantity')->published()->skip($offset)->take($limit);
+                        $q->select('id', 'category_id', 'unit', 'name', 'thumb', 'short_description', 'description', 'banner', 'faqs', 'variables', 'variable_type', 'min_quantity')->published()->skip($offset)->take($limit);
                     }])->where('id', $category->id)->published()->first();
                     $services = $this->serviceRepository->addServiceInfo($this->serviceRepository->getPartnerServicesAndPartners($category->services, $location), $scope);
                 }
@@ -180,6 +180,7 @@ class CategoryController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (\Throwable $e) {
+            dd($e);
             return api_response($request, null, 500);
         }
     }
@@ -194,10 +195,12 @@ class CategoryController extends Controller
                     $question = collect($question);
                     $question->put('input_type', $this->resolveInputTypeField($question->get('answers')));
                     $question->put('screen', $this->resolveScreenField($question->get('question')));
+                    $explode_answers = explode(',', $question->get('answers'));
+                    $question->put('answers', $explode_answers);
                 }
             }
             $service['questions'] = $questions;
-            $service['faqs']=json_decode($service->faqs);
+            $service['faqs'] = json_decode($service->faqs);
             array_forget($service, 'variables');
         }
         return $services;
