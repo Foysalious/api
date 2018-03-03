@@ -176,6 +176,7 @@ return [
         'App\GraphQL\Type\CategoryType',
         'App\GraphQL\Type\ReviewsType',
         'App\GraphQL\Type\ServiceQuestionType',
+        'App\GraphQL\Type\AnswerType',
     ],
 
     /*

@@ -17,7 +17,7 @@ class ServiceQuestionType extends GraphQlType
     {
         return [
             'question' => ['type' => Type::string()],
-            'answers' => ['type' => Type::string()],
+            'answers' => ['type' => Type::listOf(GraphQlType::type('Answer'))],
             'input_type' => ['type' => Type::string()],
             'screen' => ['type' => Type::string()],
         ];
@@ -26,6 +26,11 @@ class ServiceQuestionType extends GraphQlType
     protected function resolveQuestionField($root)
     {
         return trim($root->question);
+    }
+
+    protected function resolveAnswersField($root)
+    {
+        return $root->answers;
     }
 
     protected function resolveInputTypeField($root)

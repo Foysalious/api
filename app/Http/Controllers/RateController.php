@@ -46,26 +46,40 @@ class RateController extends Controller
             if ($review->rate != null) {
                 return api_response($request, null, 403);
             }
-            $reviews = json_decode($request->data);
-            foreach ($reviews as $data) {
-                $review_answer = new ReviewQuestionAnswer();
-                $review_answer->review_type = "App\\Models\\Review";
-                $review_answer->review_id = $review->id;
-                $review_answer->rate_id = $request->rate;
-                $review_answer->rate_question_id = $data->question;
-                if (isset($data->answer)) {
-                    $review_answer->rate_answer_id = $data->answer;
-                } else {
-                    $review_answer->rate_answer_text = $data->answer_text;
+            $data = json_decode($request->data);
+            $quesAns = $data->quesAns;
+            $quesAnsText = $data->quesAnsText;
+            if (count($quesAns) > 0) {
+                foreach ($quesAns as $qa) {
+                    $review_answer = $this->initializeReviewQuestionAnswer($review, $request->rate, $qa);
+                    $review_answer->rate_answer_id = $qa->answer;
+                    $review_answer->save();
                 }
-                $review_answer->save();
+            }
+            if (count($quesAnsText) > 0) {
+                foreach ($quesAnsText as $qa) {
+                    $review_answer = $this->initializeReviewQuestionAnswer($review, $request->rate, $qa);
+                    $review_answer->rate_answer_text = $qa->answer;
+                    $review_answer->save();
+                }
             }
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function initializeReviewQuestionAnswer($review, $rate_id, $qa)
+    {
+        $review_answer = new ReviewQuestionAnswer();
+        $review_answer->review_type = "App\\Models\\Review";
+        $review_answer->review_id = $review->id;
+        $review_answer->rate_id = (int)$rate_id;
+        $review_answer->rate_question_id = $qa->question;
+        return $review_answer;
     }
 }
