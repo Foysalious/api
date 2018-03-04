@@ -17,7 +17,7 @@ class ServiceQuestionType extends GraphQlType
     {
         return [
             'question' => ['type' => Type::string()],
-            'answers' => ['type' => Type::listOf(GraphQlType::type('Answer'))],
+            'answers' => ['type' => Type::string()],
             'input_type' => ['type' => Type::string()],
             'screen' => ['type' => Type::string()],
         ];

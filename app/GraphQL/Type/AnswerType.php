@@ -16,10 +16,10 @@ class AnswerType extends GraphQlType
     public function fields()
     {
         return [
-            'answer' => ['type' => Type::string()]
+            'text' => ['type' => Type::string()]
         ];
     }
-    public function resolveAnswerField($root){
-//        dd($root);
+    public function resolveTextField($root){
+        return $root;
     }
 }
