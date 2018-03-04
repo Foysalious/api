@@ -56,7 +56,7 @@ class ResourceJobRepository
         $final_last_jobs = [];
         foreach ($jobs as $job) {
             $partner_order = $job->partner_order;
-            $partner_order->calculate();
+            $partner_order->calculate(true);
             $all_jobs_of_this_partner_order = $job->partner_order->jobs;
             $cancel_status = constants('JOB_STATUSES_SHOW')['Cancelled']['sheba'];
             $partner_order_other_jobs = $all_jobs_of_this_partner_order->reject(function ($item, $key) use ($job, $cancel_status) {
@@ -88,7 +88,7 @@ class ResourceJobRepository
             $job['service_unit'] = $job->service->unit;
             $job['schedule_date'] = Carbon::parse($job->schedule_date)->format('jS M, Y');
             $job['code'] = $job->fullCode();
-            $job->calculate();
+            $job->calculate(true);
             $job['total_price'] = (double)$job->grossPrice;
             $job['service_price'] = (double)$job->servicePrice;
             $job['material_price'] = (double)$job->materialPrice;
@@ -178,7 +178,7 @@ class ResourceJobRepository
                 } else {
                     $job['can_collect'] = true;
                 }
-                $partner_order->calculate();
+                $partner_order->calculate(true);
                 $job['collect_money'] = (double)$partner_order->due;
                 array_forget($job, 'partner_order');
             }

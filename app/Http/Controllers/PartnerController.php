@@ -47,6 +47,35 @@ class PartnerController extends Controller
         return response()->json(['partners' => $partners, 'code' => 200, 'msg' => 'successful']);
     }
 
+    public function show($partner, Request $request)
+    {
+        try {
+            $partner = Partner::where([['id', (int)$partner], ['status', 'Verified']])->first();
+            if ($partner == null)
+                return api_response($request, null, 404);
+            $partner->load(['basicInformations', 'reviews', 'jobs', 'services' => function ($q) {
+                $q->where('partner_service.is_verified', 1);
+            }, 'locations']);
+            $locations = $partner->locations;
+            $basic_info = $partner->basicInformations;
+            $info = collect($partner)->only(['id', 'name', 'mobile', 'email', 'verified_at', 'status', 'logo', 'address', 'created_at']);
+            $info->put('working_days', json_decode(collect($basic_info)->only('working_days')->get('working_days')));
+            $working_hours = json_decode(collect($basic_info)->only('working_hours')->get('working_hours'));
+            $info->put('working_hour_starts', $working_hours->day_start);
+            $info->put('working_hour_ends', $working_hours->day_end);
+            $info->put('locations', $locations->pluck('name'));
+            $info->put('total_locations', $locations->count());
+            $info->put('total_services', $partner->services->count());
+            $info->put('total_resources', $partner->resources->count());
+            $info->put('total_jobs', $partner->jobs->count());
+            $info->put('total_rating', $partner->reviews->count());
+            $info->put('avg_rating', $this->reviewRepository->getAvgRating($partner->reviews));
+            return api_response($request, $info, 200, ['info' => $info]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
     public function getPartnerServices($partner, Request $request)
     {
         $location = $request->has('location') ? $request->location : 4;
@@ -279,7 +308,7 @@ class PartnerController extends Controller
         }
     }
 
-    public function show($partner, Request $request)
+    public function getInfo($partner, Request $request)
     {
         try {
             $partner = $request->partner->load(['basicInformations', 'reviews', 'services' => function ($q) {

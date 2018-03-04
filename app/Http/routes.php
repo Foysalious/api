@@ -176,7 +176,7 @@ $api->version('v1', function ($api) {
             $api->get('dashboard', 'PartnerController@getDashboardInfo');
             $api->get('earnings', 'PartnerController@getEarnings');
             $api->get('reviews', 'PartnerController@getReviewInfo');
-            $api->get('info', 'PartnerController@show');
+            $api->get('info', 'PartnerController@getInfo');
             $api->get('notifications', 'PartnerController@getNotifications');
 
             $api->group(['prefix' => 'withdrawals'], function ($api) {
@@ -310,6 +310,11 @@ $api->version('v1', function ($api) {
         });
         $api->group(['prefix' => 'job_service'], function ($api) {
             $api->post('/', 'JobServiceController@store');
+        });
+        $api->group(['prefix' => 'partners'], function ($api) {
+            $api->group(['prefix' => '{partner}'], function ($api) {
+                $api->get('/', 'PartnerController@show');
+            });
         });
         $api->group(['prefix' => 'customers'], function ($api) {
             $api->group(['prefix' => '{customer}', 'middleware' => ['customer.auth']], function ($api) {

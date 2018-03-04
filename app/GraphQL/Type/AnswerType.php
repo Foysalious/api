@@ -2,17 +2,18 @@
 
 namespace App\GraphQL\Type;
 
+use GraphQL;
+use \Folklore\GraphQL\Support\Type as GraphQlType;
+use GraphQL\Type\Definition\Type;
 
-use MongoDB\BSON\Type;
-
-class AnswerType
+class AnswerType extends GraphQlType
 {
     protected $attributes = [
         'name' => 'Answer',
         'description' => 'Sheba service question answers'
     ];
 
-    public function fields($root)
+    public function fields()
     {
         return [
             'answer' => ['type' => Type::string()]

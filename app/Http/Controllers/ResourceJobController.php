@@ -127,7 +127,7 @@ class ResourceJobController extends Controller
             if (count($jobs) != 0) {
                 $partner_order = $job->partner_order;
                 $partner_order->order;
-                $partner_order->calculate();
+                $partner_order->calculate(true);
                 $jobs = $this->resourceJobRepository->addJobInformationForAPI($jobs);
                 return api_response($request, $jobs, 200, ['jobs' => $jobs, 'total_price' => (double)$partner_order->totalPrice, 'paid' => (double)$partner_order->paid, 'due' => (double)$partner_order->due]);
             } else {
