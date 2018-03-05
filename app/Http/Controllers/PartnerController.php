@@ -69,7 +69,14 @@ class PartnerController extends Controller
             $basic_info = $partner->basicInformations;
             $info = collect($partner)->only(['id', 'name', 'mobile', 'email', 'verified_at', 'status', 'logo', 'address', 'created_at']);
             $working_days = json_decode(collect($basic_info)->only('working_days')->get('working_days'));
-            $info->put('working_days', $working_days);
+            $working_info=[];
+            foreach ($working_days as $key=>$value){
+                array_push($working_info,array(
+                    'day'=>$value,
+                    'hour'=>'10:00 AM - 8:00 PM'
+                ));
+            }
+            $info->put('working_days', $working_info);
             $info->put('is_available', in_array((Carbon::today())->format('D') . 'day', $working_days) ? 1 : 0);
             $working_hours = json_decode(collect($basic_info)->only('working_hours')->get('working_hours'));
             $info->put('working_hour_starts', $working_hours->day_start);
@@ -103,7 +110,7 @@ class PartnerController extends Controller
             }));
             $compliments = RateAnswer::select('id', 'badge', 'answer')->inRandomOrder()->take(5)->get();
             $info->put('compliments', $compliments->each(function (&$compliment) {
-                array_add($compliment,'count',rand(5,10));
+                array_add($compliment, 'count', rand(5, 10));
             }));
             $info->put('total_resources', $partner->resources->count());
             $info->put('total_jobs', $partner->jobs->count());
