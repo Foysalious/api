@@ -69,18 +69,15 @@ class PartnerController extends Controller
             $basic_info = $partner->basicInformations;
             $info = collect($partner)->only(['id', 'name', 'mobile', 'email', 'verified_at', 'status', 'logo', 'address', 'created_at']);
             $working_days = json_decode(collect($basic_info)->only('working_days')->get('working_days'));
-            $working_info=[];
-            foreach ($working_days as $key=>$value){
-                array_push($working_info,array(
-                    'day'=>$value,
-                    'hour'=>'10:00 AM - 8:00 PM'
+            $working_info = [];
+            foreach ($working_days as $key => $value) {
+                array_push($working_info, array(
+                    'day' => $value,
+                    'hour' => '10:00 AM - 8:00 PM'
                 ));
             }
             $info->put('working_days', $working_info);
             $info->put('is_available', in_array((Carbon::today())->format('D') . 'day', $working_days) ? 1 : 0);
-            $working_hours = json_decode(collect($basic_info)->only('working_hours')->get('working_hours'));
-            $info->put('working_hour_starts', $working_hours->day_start);
-            $info->put('working_hour_ends', $working_hours->day_end);
             $info->put('total_locations', $locations->count());
             $info->put('total_services', $partner->services->count());
             $job_with_review = $partner->jobs->where('status', 'Served')->filter(function ($job) {
@@ -92,6 +89,7 @@ class PartnerController extends Controller
                 $all_resources->push(collect([
                     'name' => $resource_job[0]->resource->profile->name,
                     'mobile' => $resource_job[0]->resource->profile->mobile,
+                    'picture' => $resource_job[0]->resource->profile->apro_pic,
                     'total_rating' => $resource_job->count(),
                     'avg_rating' => round($resource_job->avg('review.rating'), 2),
                 ]));
