@@ -27,6 +27,9 @@ class CategoryType extends GraphQlType
             'publication_status' => ['type' => Type::int()],
             'icon' => ['type' => Type::int()],
             'questions' => ['type' => Type::int()],
+            'children' => [
+                'type' => Type::listOf(GraphQL::type('Category'))
+            ],
             'reviews' => [
                 'args' => [
                     'rating' => ['type' => Type::listOf(Type::int())],
@@ -56,6 +59,13 @@ class CategoryType extends GraphQlType
             }
         }]);
         return $root->services;
+    }
+
+    protected function resolveChildrenField($root, $args)
+    {
+        if ($root->isParent()) {
+            return $root->children;
+        }
     }
 
     protected function resolveReviewsField($root, $args)

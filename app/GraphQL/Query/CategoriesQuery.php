@@ -8,21 +8,21 @@ use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use Folklore\GraphQL\Support\Query;
 
-class CategoryQuery extends Query
+class CategoriesQuery extends Query
 {
     protected $attributes = [
-        'name' => 'category'
+        'name' => 'categories'
     ];
 
     public function type()
     {
-        return GraphQL::type('Category');
+        return Type::listOf(GraphQL::type('Category'));
     }
 
     public function args()
     {
         return [
-            'id' => ['name' => 'id', 'type' => Type::int()],
+            'id' => ['name' => 'id', 'type' =>  Type::listOf(Type::int())],
             'master' => ['name' => 'master', 'type' => Type::boolean()]
         ];
     }
@@ -32,15 +32,14 @@ class CategoryQuery extends Query
         $category = Category::query();
         $where = function ($query) use ($args) {
             if (isset($args['id'])) {
-                $query->where('id', $args['id']);
+                $query->whereIn('id', $args['id']);
             }
             if (isset($args['master'])) {
                 $query->where('parent_id', null);
             }
             $query->published();
         };
-        $category = $category->where($where)->first();
-        return $category ? $category : null;
+        $categories = $category->where($where)->get();
+        return $categories ? $categories : null;
     }
-
 }
