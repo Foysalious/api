@@ -329,6 +329,10 @@ $api->version('v1', function ($api) {
                     $api->get('/', 'PromotionController@index');
                     $api->post('/', 'PromotionController@addPromo');
                 });
+                $api->group(['prefix' => 'delivery-addresses'], function ($api) {
+                    $api->get('/', 'CustomerDeliveryAddressController@index');
+                    $api->put('{delivery_address}', 'CustomerDeliveryAddressController@update');
+                });
                 $api->group(['prefix' => 'orders'], function ($api) {
                     $api->post('/', 'OrderController@store');
                 });
