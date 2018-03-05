@@ -297,9 +297,13 @@ class CustomerController extends Controller
 
     public function getDeliveryInfo($customer, Request $request)
     {
-        $customer = $request->customer;
-        return response()->json(['msg' => 'successful', 'addresses' => $customer->delivery_addresses()->select('id', 'address')->get(),
-            'name' => $customer->profile->name, 'mobile' => $customer->profile->mobile, 'code' => 200]);
+        try {
+            $customer = $request->customer;
+            return api_response($request, null, 200, ['addresses' => $customer->delivery_addresses()->select('id', 'address')->get(),
+                'name' => $customer->profile->name, 'mobile' => $customer->profile->mobile]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
     }
 
     public function removeDeliveryAddress($customer, Request $request)

@@ -59,11 +59,12 @@ class PartnerController extends Controller
             $locations = $partner->locations;
             $basic_info = $partner->basicInformations;
             $info = collect($partner)->only(['id', 'name', 'mobile', 'email', 'verified_at', 'status', 'logo', 'address', 'created_at']);
-            $info->put('working_days', json_decode(collect($basic_info)->only('working_days')->get('working_days')));
+            $working_days = json_decode(collect($basic_info)->only('working_days')->get('working_days'));
+            $info->put('working_days', $working_days);
+            $info->put('is_available', in_array((Carbon::today())->format('D') . 'day', $working_days) ? 1 : 0);
             $working_hours = json_decode(collect($basic_info)->only('working_hours')->get('working_hours'));
             $info->put('working_hour_starts', $working_hours->day_start);
             $info->put('working_hour_ends', $working_hours->day_end);
-            $info->put('locations', $locations->pluck('name'));
             $info->put('total_locations', $locations->count());
             $info->put('total_services', $partner->services->count());
             $info->put('total_resources', $partner->resources->count());
@@ -72,6 +73,7 @@ class PartnerController extends Controller
             $info->put('avg_rating', $this->reviewRepository->getAvgRating($partner->reviews));
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
+            dd($e);
             return api_response($request, null, 500);
         }
     }
