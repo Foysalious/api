@@ -89,7 +89,7 @@ class PartnerController extends Controller
                 $all_resources->push(collect([
                     'name' => $resource_job[0]->resource->profile->name,
                     'mobile' => $resource_job[0]->resource->profile->mobile,
-                    'picture' => $resource_job[0]->resource->profile->apro_pic,
+                    'picture' => $resource_job[0]->resource->profile->pro_pic,
                     'total_rating' => $resource_job->count(),
                     'avg_rating' => round($resource_job->avg('review.rating'), 2),
                 ]));
