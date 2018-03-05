@@ -60,10 +60,15 @@ class PartnerList
     private function findPartnersByServiceAndLocation($partner_id = null)
     {
         $service_ids = $this->selected_services->pluck('id')->unique();
-        $query = Partner::whereHas('locations', function ($query) {
+        $category_ids = $this->selected_services->pluck('category_id')->unique()->toArray();
+        $query = Partner::WhereHas('categories', function ($q) use ($category_ids) {
+            $q->whereIn('categories.id', $category_ids)->where('category_partner.is_verified', 1);
+        })->whereHas('locations', function ($query) {
             $query->where('locations.id', (int)$this->location);
         })->whereHas('services', function ($query) use ($service_ids) {
-            $query->select(DB::raw('count(*) as c'))->whereIn('services.id', $service_ids)->publishedForAll()->groupBy('partner_id')->havingRaw('c=' . count($service_ids));
+            $query->whereHas('category', function ($q) {
+                $q->published();
+            })->select(DB::raw('count(*) as c'))->whereIn('services.id', $service_ids)->where('partner_service.is_published', 1)->publishedForAll()->groupBy('partner_id')->havingRaw('c=' . count($service_ids));
         })->published()->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet');
         if ($partner_id != null) {
             $query = $query->where('partners.id', $partner_id);
