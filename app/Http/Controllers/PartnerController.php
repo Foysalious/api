@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Partner;
 use App\Models\PartnerTransaction;
+use App\Models\RateAnswer;
 use App\Models\Service;
 use App\Repositories\DiscountRepository;
 use App\Repositories\NotificationRepository;
@@ -53,7 +54,15 @@ class PartnerController extends Controller
             $partner = Partner::where([['id', (int)$partner], ['status', 'Verified']])->first();
             if ($partner == null)
                 return api_response($request, null, 404);
-            $partner->load(['basicInformations', 'reviews', 'jobs', 'services' => function ($q) {
+            $partner->load(['basicInformations', 'categories' => function ($q) {
+                $q->select('categories.id', 'name', 'thumb', 'icon')->where('category_partner.is_verified', 1);
+            }, 'reviews', 'jobs' => function ($q) {
+                $q->with(['resource' => function ($q) {
+                    $q->select('resources.id', 'profile_id')->with('profile');
+                }, 'review' => function ($q) {
+                    $q->select('id', 'job_id', 'resource_id', 'rating', 'review');
+                }]);
+            }, 'services' => function ($q) {
                 $q->where('partner_service.is_verified', 1);
             }, 'locations']);
             $locations = $partner->locations;
@@ -67,12 +76,42 @@ class PartnerController extends Controller
             $info->put('working_hour_ends', $working_hours->day_end);
             $info->put('total_locations', $locations->count());
             $info->put('total_services', $partner->services->count());
+            $job_with_review = $partner->jobs->where('status', 'Served')->filter(function ($job) {
+                return $job->resource_id != null && $job->review != null;
+            });
+            $resource_jobs = $job_with_review->groupBy('resource_id');
+            $all_resources = collect();
+            foreach ($resource_jobs as $resource_job) {
+                $all_resources->push(collect([
+                    'name' => $resource_job[0]->resource->profile->name,
+                    'mobile' => $resource_job[0]->resource->profile->mobile,
+                    'total_rating' => $resource_job->count(),
+                    'avg_rating' => round($resource_job->avg('review.rating'), 2),
+                ]));
+            }
+            $all_resources = $all_resources->take(4);
+            $info->put('resources', $all_resources->values()->all());
+            $reviews = [];
+            $job_with_review->filter(function ($job) {
+                return $job->review->rating >= 4 && ($job->review->review != null || $job->review->review != '');
+            })->each(function ($job) use (&$reviews) {
+                array_push($reviews, $job->review);
+            });
+            $info->put('reviews', $reviews);
+            $info->put('categories', $partner->categories->each(function ($category) {
+                removeRelationsAndFields($category);
+            }));
+            $compliments = RateAnswer::select('id', 'badge', 'answer')->inRandomOrder()->take(5)->get();
+            $info->put('compliments', $compliments->each(function (&$compliment) {
+                array_add($compliment,'count',rand(5,10));
+            }));
             $info->put('total_resources', $partner->resources->count());
             $info->put('total_jobs', $partner->jobs->count());
             $info->put('total_rating', $partner->reviews->count());
             $info->put('avg_rating', $this->reviewRepository->getAvgRating($partner->reviews));
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
+            dd($e);
             return api_response($request, null, 500);
         }
     }
