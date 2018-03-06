@@ -23,7 +23,6 @@ class CategoryQuery extends Query
     {
         return [
             'id' => ['name' => 'id', 'type' => Type::int()],
-            'master' => ['name' => 'master', 'type' => Type::boolean()]
         ];
     }
 
@@ -33,9 +32,6 @@ class CategoryQuery extends Query
         $where = function ($query) use ($args) {
             if (isset($args['id'])) {
                 $query->where('id', $args['id']);
-            }
-            if (isset($args['master'])) {
-                $query->where('parent_id', null);
             }
             $query->published();
         };

@@ -15,6 +15,7 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Validation\ValidationException;
 use Validator;
 
 class ShebaController extends Controller
@@ -86,7 +87,14 @@ class ShebaController extends Controller
     public function getTimeSlots(Request $request)
     {
         try {
+            $this->validate($request, [
+                'for' => 'sometimes|required|string|in:app',
+            ]);
             $slots = ScheduleSlot::all();
+            if ($request->has('for')) {
+                $sheba_slots = $this->getShebaSlots($slots);
+                return api_response($request, $sheba_slots, 200, ['times' => $sheba_slots]);
+            }
             $time_slots = $valid_time_slots = [];
             $current_time = Carbon::now();
             foreach ($slots as $slot) {
@@ -101,9 +109,32 @@ class ShebaController extends Controller
             }
             $result = ['times' => $time_slots, 'valid_times' => $valid_time_slots];
             return api_response($request, $result, 200, $result);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
+    }
+
+    private function getShebaSlots($slots)
+    {
+        $sheba_slots = [];
+        $current_time = Carbon::now();
+        foreach ($slots as $slot) {
+            $slot_start_time = Carbon::parse($slot->start);
+            $slot_end_time = Carbon::parse($slot->end);
+            $isValid = 0;
+            if ($slot_start_time > $current_time) {
+                $isValid = 1;
+            }
+            array_push($sheba_slots, array(
+                'key' => $slot->start . '-' . $slot->end,
+                'value' => $slot_start_time->format('g:i A') . '-' . $slot_end_time->format('g:i A'),
+                'isValid' => $isValid
+            ));
+        }
+        return $sheba_slots;
     }
 
     public function getVersions(Request $request)

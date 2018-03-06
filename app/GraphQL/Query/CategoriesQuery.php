@@ -22,8 +22,8 @@ class CategoriesQuery extends Query
     public function args()
     {
         return [
-            'id' => ['name' => 'id', 'type' =>  Type::listOf(Type::int())],
-            'master' => ['name' => 'master', 'type' => Type::boolean()]
+            'id' => ['name' => 'id', 'type' => Type::listOf(Type::int())],
+            'isMaster' => ['name' => 'isMaster', 'type' => Type::boolean()]
         ];
     }
 
@@ -34,8 +34,12 @@ class CategoriesQuery extends Query
             if (isset($args['id'])) {
                 $query->whereIn('id', $args['id']);
             }
-            if (isset($args['master'])) {
-                $query->where('parent_id', null);
+            if (isset($args['isMaster'])) {
+                if ($args['isMaster']) {
+                    $query->where('parent_id', null);
+                } else {
+                    $query->where('parent_id', '<>', null);
+                }
             }
             $query->published();
         };
