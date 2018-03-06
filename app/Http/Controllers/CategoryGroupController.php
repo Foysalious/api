@@ -42,7 +42,7 @@ class CategoryGroupController extends Controller
         try {
             $location = $request->location;
             $category_group = CategoryGroup::with(['categories' => function ($q) {
-                $q->select('id', 'name', 'thumb', 'banner', 'parent_id')->has('services', '>', 0);
+                $q->select('id', 'name', 'thumb', 'banner', 'parent_id');
             }])->where('id', $id)->first();
             if ($category_group != null) {
                 $categories = $category_group->categories->each(function ($category) use ($location) {
