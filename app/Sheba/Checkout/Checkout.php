@@ -118,7 +118,7 @@ class Checkout
                 $price = (double)$service->pivot->prices;
             }
             $discount = new Discount($price, $selected_service->quantity);
-            $discount->calculateServiceDiscount((PartnerServiceDiscount::find($service->pivot->id)));
+            $discount->calculateServiceDiscount((PartnerService::find($service->pivot->id))->discount());
             $service_data = array(
                 'job_id' => $job->id,
                 'service_id' => $selected_service->id,

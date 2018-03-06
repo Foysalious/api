@@ -33,7 +33,7 @@ class JobServiceRepository
                 $data['unit_price'] = (double)$partner_service->prices;
             }
             $discount = new Discount($data['unit_price'], $data['quantity']);
-            $discount->calculateServiceDiscount((PartnerServiceDiscount::find($partner_service->id)));
+            $discount->calculateServiceDiscount((PartnerService::find($service->pivot->id))->discount());
             $data['sheba_contribution'] = $discount->__get('sheba_contribution');
             $data['partner_contribution'] = $discount->__get('partner_contribution');
             $data['discount_id'] = $discount->__get('discount_id');

@@ -3,6 +3,7 @@
 namespace App\Sheba\Checkout;
 
 use App\Models\Partner;
+use App\Models\PartnerService;
 use App\Models\PartnerServiceDiscount;
 use App\Models\Service;
 use App\Repositories\PartnerRepository;
@@ -204,7 +205,7 @@ class PartnerList
     private function calculateDiscountForService($price, $selected_service, $service)
     {
         $discount = new Discount($price, $selected_service->quantity);
-        $discount->calculateServiceDiscount((PartnerServiceDiscount::find($service->pivot->id)));
+        $discount->calculateServiceDiscount((PartnerService::find($service->pivot->id))->discount());
         return $discount;
     }
 }
