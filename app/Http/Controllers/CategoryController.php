@@ -197,6 +197,9 @@ class CategoryController extends Controller
                     $explode_answers = explode(',', $question->get('answers'));
                     $question->put('answers', $explode_answers);
                 }
+                if (count($questions) == 1) {
+                    $questions[0]->put('input_type', 'selectbox');
+                }
             }
             $service['questions'] = $questions;
             $service['faqs'] = json_decode($service->faqs);

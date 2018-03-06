@@ -123,7 +123,6 @@ class Checkout
                 'job_id' => $job->id,
                 'service_id' => $selected_service->id,
                 'quantity' => $selected_service->quantity,
-                'additional_info' => $selected_service->additional_information,
                 'created_by' => $data['created_by'],
                 'created_by_name' => $data['created_by_name'],
                 'unit_price' => $price,
