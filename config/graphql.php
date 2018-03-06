@@ -127,7 +127,8 @@ return [
                 'services' => 'App\GraphQL\Query\ServiceQuery',
                 'reviews' => 'App\GraphQL\Query\ReviewsQuery',
                 'category' => 'App\GraphQL\Query\CategoryQuery',
-                'categories' => 'App\GraphQL\Query\CategoriesQuery'
+                'categories' => 'App\GraphQL\Query\CategoriesQuery',
+                'categoryGroups' => 'App\GraphQL\Query\CategoryGroupsQuery'
             ],
             'mutation' => [
                 'updateProfile' => 'App\GraphQL\Mutation\UpdateProfileMutation'
@@ -175,6 +176,7 @@ return [
         'App\GraphQL\Type\CustomerType',
         'App\GraphQL\Type\ProfileType',
         'App\GraphQL\Type\CategoryType',
+        'App\GraphQL\Type\CategoryGroupType',
         'App\GraphQL\Type\ReviewsType',
         'App\GraphQL\Type\ServiceQuestionType',
         'App\GraphQL\Type\AnswerType',
