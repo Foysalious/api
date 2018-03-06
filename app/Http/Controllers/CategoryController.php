@@ -211,7 +211,7 @@ class CategoryController extends Controller
     private function resolveInputTypeField($answers)
     {
         $answers = explode(',', $answers);
-        return count($answers) <= 4 ? "radiobox" : "selectbox";
+        return count($answers) <= 4 ? "radiobox" : "dropdown";
     }
 
     private function resolveScreenField($question)
