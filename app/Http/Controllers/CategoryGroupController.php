@@ -46,9 +46,6 @@ class CategoryGroupController extends Controller
             }])->where('id', $id)->first();
             if ($category_group != null) {
                 $categories = $category_group->categories->each(function ($category) use ($location) {
-                    $start_price = new StartPrice($category, $location);
-                    $start_price->calculate();
-                    $category['starting_price'] = $start_price->price;
                     removeRelationsAndFields($category);
                 });
                 if (count($categories) > 0) {
