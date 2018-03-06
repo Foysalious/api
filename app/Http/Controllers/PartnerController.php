@@ -67,7 +67,7 @@ class PartnerController extends Controller
             }, 'locations']);
             $locations = $partner->locations;
             $basic_info = $partner->basicInformations;
-            $info = collect($partner)->only(['id', 'name', 'mobile', 'email', 'verified_at', 'status', 'logo', 'address', 'created_at']);
+            $info = collect($partner)->only(['id', 'name', 'mobile', 'description', 'email', 'verified_at', 'status', 'logo', 'address', 'created_at']);
             $working_days = json_decode(collect($basic_info)->only('working_days')->get('working_days'));
             $working_info = [];
             foreach ($working_days as $key => $value) {
