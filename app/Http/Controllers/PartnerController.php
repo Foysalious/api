@@ -400,10 +400,19 @@ class PartnerController extends Controller
             $this->validate($request, [
                 'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
                 'time' => 'required|string',
-                'services' => 'required|string'
+                'services' => 'required|string',
+                'isAvailable' => 'sometimes|required'
             ]);
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $location);
             $partner_list->find();
+            if ($request->has('isAvailable')) {
+                $partners = $partner_list->partners;
+                $available_partners = $partners->filter(function ($partner) {
+                    return $partner->is_available == 1;
+                });
+                $is_available = count($available_partners) != 0 ? 1 : 0;
+                return api_response($request, $is_available, 200,['is_available' => $is_available]);
+            }
             if ($partner_list->hasPartners) {
                 $partner_list->addPricing();
                 $partner_list->calculateAverageRating();
@@ -422,6 +431,7 @@ class PartnerController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             return api_response($request, null, 500);
         }
     }
