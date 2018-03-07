@@ -61,6 +61,8 @@ class CategoryController extends Controller
                 $q->verified();
             }, 'services' => function ($q) {
                 $q->published();
+            }, 'usps' => function ($q) {
+                $q->select('usps.id', 'name');
             }, 'partnerResources' => function ($q) {
                 $q->whereHas('resource', function ($query) {
                     $query->verified();
@@ -69,9 +71,13 @@ class CategoryController extends Controller
             array_add($category, 'total_partners', $category->partners->count());
             array_add($category, 'total_experts', $category->partnerResources->count());
             array_add($category, 'total_services', $category->services->count());
+            array_add($category, 'selling_points', $category->usps->each(function ($usp){
+                removeRelationsAndFields($usp);
+            }));
             removeRelationsAndFields($category);
             return api_response($request, $category, 200, ['category' => $category]);
         } catch (\Throwable $e) {
+            dd($e);
             return api_response($request, null, 500);
         }
     }

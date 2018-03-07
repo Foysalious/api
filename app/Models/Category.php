@@ -63,4 +63,9 @@ class Category extends Model
     {
         return $this->parent_id == null;
     }
+
+    public function usps()
+    {
+        return $this->belongsToMany(Usp::class)->withPivot(['value']);
+    }
 }
