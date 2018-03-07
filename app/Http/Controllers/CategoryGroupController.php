@@ -51,7 +51,7 @@ class CategoryGroupController extends Controller
                 });
                 if (count($categories) > 0) {
                     $setting = HomepageSetting::where([['item_type', 'App\\Models\\CategoryGroup'], ['item_id', $category_group->id]])->first();
-                    $category_group['position_at_settings'] = $setting ? $setting->order : null;
+                    $category_group['position_at_home'] = $setting ? $setting->order : null;
                     removeRelationsAndFields($category_group);
                     return api_response($request, $categories, 200, ['category_group' => $category_group, 'categories' => $categories]);
                 }
