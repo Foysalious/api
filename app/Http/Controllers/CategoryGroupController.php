@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CategoryGroup;
+use App\Models\HomepageSetting;
 use App\Sheba\Queries\Category\StartPrice;
 use Illuminate\Contracts\Validation\ValidationException;
 use Illuminate\Http\Request;
@@ -43,13 +44,16 @@ class CategoryGroupController extends Controller
             $location = $request->location;
             $category_group = CategoryGroup::with(['categories' => function ($q) {
                 $q->select('id', 'name', 'thumb', 'banner', 'parent_id');
-            }])->where('id', $id)->first();
+            }])->where('id', $id)->select('id', 'name')->first();
             if ($category_group != null) {
                 $categories = $category_group->categories->each(function ($category) use ($location) {
                     removeRelationsAndFields($category);
                 });
                 if (count($categories) > 0) {
-                    return api_response($request, $categories, 200, ['categories' => $categories]);
+                    $setting = HomepageSetting::where([['item_type', 'App\\Models\\CategoryGroup'], ['item_id', $category_group->id]])->first();
+                    $category_group['position_at_settings'] = $setting ? $setting->order : null;
+                    removeRelationsAndFields($category_group);
+                    return api_response($request, $categories, 200, ['category_group' => $category_group, 'categories' => $categories]);
                 }
             }
             return api_response($request, null, 404);
