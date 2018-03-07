@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 use App\Models\HomepageSetting;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Redis;
 
 class HomePageSettingController extends Controller
 {
@@ -13,8 +14,12 @@ class HomePageSettingController extends Controller
     {
         try {
             $this->validate($request, [
-                'for' => 'required|string|in:app,web'
+                'for' => 'required|string|in:app,web,app_json'
             ]);
+            if ($request->for == 'app_json') {
+                $settings = json_decode(Redis::get('app_settings'));
+                return api_response($request, $settings, 200, ['settings' => $settings]);
+            }
             $for = $this->getPublishedFor($request->for);
             $settings = HomepageSetting::$for()->select('id', 'order', 'item_type', 'item_id', 'updated_at')->orderBy('order')->get();
             foreach ($settings as $setting) {
