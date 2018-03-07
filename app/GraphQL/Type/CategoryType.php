@@ -2,9 +2,11 @@
 
 namespace App\GraphQL\Type;
 
+use Carbon\Carbon;
 use GraphQL;
 use \Folklore\GraphQL\Support\Type as GraphQlType;
 use GraphQL\Type\Definition\Type;
+use Redis;
 
 class CategoryType extends GraphQlType
 {
@@ -44,7 +46,12 @@ class CategoryType extends GraphQlType
                 'type' => Type::listOf(GraphQL::type('Service'))
             ],
             'total_partners' => ['type' => Type::int(), 'description' => 'Total partner count of Category'],
+            'total_available_partners' => [
+                'args' => ['location_id' => ['type' => Type::int()]],
+                'type' => Type::int(),
+                'description' => 'Total partner count of Category'],
             'total_services' => ['type' => Type::int(), 'description' => 'Total service count of Category'],
+            'total_jobs' => ['type' => Type::int(), 'description' => 'Total service count of Category'],
             'total_experts' => ['type' => Type::int(), 'description' => 'Total expert count of Category'],
             'updated_at_timestamp' => ['type' => Type::int(), 'description' => 'Timestamp when any of the row information has been last updated']
         ];
@@ -65,6 +72,8 @@ class CategoryType extends GraphQlType
     {
         if ($root->isParent()) {
             return $root->children;
+        } else {
+            return null;
         }
     }
 
@@ -87,6 +96,26 @@ class CategoryType extends GraphQlType
         $root->load(['partners' => function ($q) {
             $q->verified();
         }]);
+
+        return $root->partners->count();
+    }
+
+    protected function resolveTotalAvailablePartnersField($root, $args)
+    {
+        if (!isset($args['location_id'])) {
+            return null;
+        }
+        $sheba_times = json_decode(Redis::get('sheba_times'));
+        $root->load(['partners' => function ($q) use ($args) {
+            $q->verified()->with('handymanResources')->whereHas('locations', function ($query) use ($args) {
+                $query->where('locations.id', (int)$args['location_id']);
+            });
+        }]);
+        foreach ($root->partners as $partner) {
+            if (!scheduler($partner)->isAvailable((Carbon::today())->format('Y-m-d'), explode('-', (collect($sheba_times->valid_times))->first()), $root->id)) {
+                unset($partner);
+            }
+        }
         return $root->partners->count();
     }
 

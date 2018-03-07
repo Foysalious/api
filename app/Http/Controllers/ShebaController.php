@@ -95,6 +95,10 @@ class ShebaController extends Controller
                 $sheba_slots = $this->getShebaSlots($slots);
                 return api_response($request, $sheba_slots, 200, ['times' => $sheba_slots]);
             }
+            $sheba_slots = json_decode(Redis::get('sheba_times'));
+            if ($sheba_slots != null) {
+                return api_response($request, $sheba_slots, 200, ['result' => $sheba_slots]);
+            }
             $time_slots = $valid_time_slots = [];
             $current_time = Carbon::now();
             foreach ($slots as $slot) {
@@ -108,6 +112,7 @@ class ShebaController extends Controller
                 $time_slots[$time_slot_key] = $time_slot_value;
             }
             $result = ['times' => $time_slots, 'valid_times' => $valid_time_slots];
+            Redis::set('sheba_times', json_encode($result));
             return api_response($request, $result, 200, $result);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

@@ -16,8 +16,7 @@ class PartnerHandler
         $is_available = false;
         $available_resources = collect([]);
         $unavailable_resources = collect([]);
-
-        $this->partner->resourcesInCategory($category)->each(function ($resource) use($date, $start_time, &$is_available, &$available_resources, &$unavailable_resources) {
+        $this->partner->resourcesInCategory($category)->each(function ($resource) use ($date, $start_time, &$is_available, &$available_resources, &$unavailable_resources) {
             if (scheduler($resource)->isAvailable($date, $start_time)) {
                 $available_resources->push($resource);
                 $is_available = true;

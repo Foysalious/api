@@ -6,7 +6,7 @@ return [
     /*
      * The prefix for routes
      */
-    'prefix' => 'graphql',
+    'prefix' => 'sheba',
 
     /*
      * The domain for routes
