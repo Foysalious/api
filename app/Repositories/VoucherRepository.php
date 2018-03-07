@@ -9,17 +9,6 @@ use App\Models\Voucher;
 
 class VoucherRepository
 {
-    /**
-     * @param $voucher
-     * @param $service
-     * @param $partner
-     * @param $location
-     * @param $customer
-     * @param $price
-     * @param $sales_channel
-     * @return array
-     * @throws \Exception
-     */
     public function isValid($voucher, $service, $partner, $location, $customer, $price, $sales_channel)
     {
         return voucher($voucher)

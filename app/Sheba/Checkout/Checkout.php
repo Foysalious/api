@@ -2,6 +2,7 @@
 
 namespace App\Sheba\Checkout;
 
+use App\Library\PortWallet;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\Job;
@@ -19,6 +20,7 @@ use App\Repositories\PartnerServiceRepository;
 use App\Repositories\VoucherRepository;
 use Illuminate\Database\QueryException;
 use DB;
+use Redis;
 
 class Checkout
 {
@@ -49,7 +51,7 @@ class Checkout
             $request->merge(['customer' => $this->customer->id]);
             $data = $this->makeOrderData($request);
             $partner = $this->calculateVoucher($request, $partner, $partner_list->selected_services, $data);
-            $data['payment_method'] = $request->has('payment_method') ? $request->payment_method : 'cash-on-delivery';
+            $data['payment_method'] = $request->payment_method == 'cod' ? 'cash-on-delivery' : 'online';
             if ($order = $this->storeInDB($data, $partner_list->selected_services, $partner)) {
                 $profile = $this->customerRepository->updateProfileInfoWhilePlacingOrder($order);
             }
@@ -217,4 +219,5 @@ class Checkout
         }
         return array($option, $variables);
     }
+
 }

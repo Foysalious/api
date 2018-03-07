@@ -282,6 +282,9 @@ $api->version('v1', function ($api) {
         $api->post('password/email', 'Auth\PasswordController@sendResetPasswordEmail');
         $api->post('password/validate', 'Auth\PasswordController@validatePasswordResetCode');
         $api->post('password/reset', 'Auth\PasswordController@reset');
+        $api->group(['prefix' => 'orders'], function ($api) {
+            $api->get('online', 'OrderController@clearPayment');
+        });
         $api->group(['prefix' => 'login'], function ($api) {
             $api->post('gmail', 'Auth\GoogleController@login');
         });

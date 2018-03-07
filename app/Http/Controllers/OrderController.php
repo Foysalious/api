@@ -2,19 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Customer;
-use App\Models\Job;
-use App\Models\JobService;
+use App\Library\PortWallet;
 use App\Models\Order;
-use App\Models\Partner;
-use App\Models\PartnerOrder;
-use App\Models\PartnerService;
-use App\Models\Service;
 use App\Repositories\JobServiceRepository;
 use App\Repositories\OrderRepository;
 use App\Sheba\Checkout\Checkout;
-use App\Sheba\Partner\PartnerList;
-use Illuminate\Database\QueryException;
+use App\Sheba\Checkout\OnlinePayment;
 use Illuminate\Http\Request;
 use Redis;
 use DB;
@@ -196,9 +189,30 @@ class OrderController extends Controller
         try {
             $order = new Checkout($customer);
             $order = $order->placeOrder($request);
-            return $order ? api_response($request, $order, 200) : api_response($request, $order, 500);
+            if ($order) {
+                $link = null;
+                if ($request->payment_method == 'online') {
+                    $link = (new OnlinePayment())->generatePortWalletLink($order);
+                }
+                return api_response($request, $order, 200, ['link' => $link]);
+            }
+            return api_response($request, $order, 500);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
+    }
+
+
+    public function clearPayment(Request $request)
+    {
+        $redis_key_name = 'portwallet-payment-' . $request->invoice;
+        $redis_key = Redis::get($redis_key_name);
+        if ($redis_key != null) {
+            if ($payment = (new OnlinePayment())->pay($redis_key, $request)) {
+                Redis::del($redis_key_name);
+                return api_response($request, $payment, 200);
+            }
+        }
+        return api_response($request, null, 404);
     }
 }
