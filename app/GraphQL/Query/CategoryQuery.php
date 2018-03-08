@@ -23,6 +23,7 @@ class CategoryQuery extends Query
     {
         return [
             'id' => ['name' => 'id', 'type' => Type::int()],
+            'slug' => ['name' => 'slug', 'type' => Type::string()],
         ];
     }
 
@@ -30,7 +31,9 @@ class CategoryQuery extends Query
     {
         $category = Category::query();
         $where = function ($query) use ($args) {
-            if (isset($args['id'])) {
+            if (isset($args['slug'])) {
+                $query->where('slug', $args['slug']);
+            } elseif (isset($args['id'])) {
                 $query->where('id', $args['id']);
             }
             $query->published();
