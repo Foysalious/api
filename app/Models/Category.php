@@ -68,4 +68,9 @@ class Category extends Model
     {
         return $this->belongsToMany(Usp::class)->withPivot(['value']);
     }
+
+    public function jobs()
+    {
+        return $this->hasMany(Job::class);
+    }
 }

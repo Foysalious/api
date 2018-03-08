@@ -20,7 +20,8 @@ class ReviewsType extends GraphQlType
             'rating' => ['type' => Type::int()],
             'review' => ['type' => Type::string()],
             'review_title' => ['type' => Type::string()],
-            'customer' => ['type' => GraphQL::type('Customer')]
+            'customer' => ['type' => GraphQL::type('Customer')],
+            'partner' => ['type' => GraphQL::type('Partner')]
         ];
     }
 }

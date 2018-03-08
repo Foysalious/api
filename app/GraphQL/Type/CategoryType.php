@@ -51,8 +51,9 @@ class CategoryType extends GraphQlType
                 'type' => Type::int(),
                 'description' => 'Total partner count of Category'],
             'total_services' => ['type' => Type::int(), 'description' => 'Total service count of Category'],
-            'total_jobs' => ['type' => Type::int(), 'description' => 'Total service count of Category'],
+            'total_jobs' => ['type' => Type::int(), 'description' => 'Total served jobs of Category'],
             'total_experts' => ['type' => Type::int(), 'description' => 'Total expert count of Category'],
+            'total_good_reviews' => ['type' => Type::int(), 'description' => 'Total good reviews of Category'],
             'updated_at_timestamp' => ['type' => Type::int(), 'description' => 'Timestamp when any of the row information has been last updated']
         ];
     }
@@ -86,7 +87,7 @@ class CategoryType extends GraphQlType
             if (isset($args['isEmptyReview'])) {
                 $q->isEmptyReview();
             }
-            $q->with('customer.profile');
+            $q->with('customer.profile', 'partner');
         }]);
         return $root->reviews;
     }
@@ -140,5 +141,21 @@ class CategoryType extends GraphQlType
     protected function resolveUpdatedAtTimestampField($root, $args)
     {
         return $root->updated_at->timestamp;
+    }
+
+    protected function resolveTotalJobsField($root, $args)
+    {
+        $root->load(['jobs' => function ($q) {
+            $q->where('status', 'Served');
+        }]);
+        return $root->jobs->count();
+    }
+
+    protected function resolveTotalGoodReviewsField($root, $args)
+    {
+        $root->load(['reviews' => function ($q) {
+            $q->whereIn('rating', [4, 5]);
+        }]);
+        return $root->reviews->count();
     }
 }
