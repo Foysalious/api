@@ -45,6 +45,7 @@ class CategoryType extends GraphQlType
                 ],
                 'type' => Type::listOf(GraphQL::type('Service'))
             ],
+            'usps' => ['type' => Type::listOf(GraphQL::type('Usp'))],
             'total_partners' => ['type' => Type::int(), 'description' => 'Total partner count of Category'],
             'total_available_partners' => [
                 'args' => ['location_id' => ['type' => Type::int()]],
@@ -157,5 +158,11 @@ class CategoryType extends GraphQlType
             $q->whereIn('rating', [4, 5]);
         }]);
         return $root->reviews->count();
+    }
+
+    protected function resolveUspsField($root, $args)
+    {
+        $root->load('usps');
+        return $root->usps;
     }
 }

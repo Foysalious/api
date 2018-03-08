@@ -181,6 +181,7 @@ return [
         'App\GraphQL\Type\ServiceQuestionType',
         'App\GraphQL\Type\AnswerType',
         'App\GraphQL\Type\PartnerType',
+        'App\GraphQL\Type\UspType',
     ],
 
     /*
