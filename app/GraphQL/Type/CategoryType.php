@@ -22,6 +22,7 @@ class CategoryType extends GraphQlType
             'name' => ['type' => Type::string()],
             'short_description' => ['type' => Type::string()],
             'long_description' => ['type' => Type::string()],
+            'slug' => ['type' => Type::string()],
             'thumb' => ['type' => Type::string()],
             'banner' => ['type' => Type::string()],
             'app_thumb' => ['type' => Type::string()],
