@@ -35,8 +35,9 @@ class ServiceQuestionType extends GraphQlType
 
     protected function resolveInputTypeField($root)
     {
+        if (($root->question)) return 'selectbox';
         $answers = explode(',', $root->answers);
-        return count($answers) <= 4 ? "radiobox" : "selectbox";
+        return count($answers) <= 4 ? "radiobox" : "dropdown";
     }
 
     protected function resolveScreenField($root)
