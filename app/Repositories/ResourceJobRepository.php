@@ -20,7 +20,11 @@ class ResourceJobRepository
     {
         $process_job = $jobs->where('status', 'Process');
         $process_job = $process_job->map(function ($item) {
-            return array_add($item, 'preferred_time_priority', constants('JOB_PREFERRED_TIMES_PRIORITY')[$item->preferred_time]);
+            if (in_array($item->preferred_time, constants('JOB_PREFERRED_TIMES'))) {
+                return array_add($item, 'preferred_time_priority', constants('JOB_PREFERRED_TIMES_PRIORITY')[$item->preferred_time]);
+            } else {
+                return array_add($item, 'preferred_time_priority', 500);
+            }
         });
         $process_job = $process_job->sortBy(function ($job) {
             return sprintf('%-12s%s', $job->schedule_date, $job->preferred_time_priority);
@@ -34,7 +38,11 @@ class ResourceJobRepository
             return $job->status != 'Process' && $job->status != 'Served';
         });
         $other_jobs = $other_jobs->map(function ($item) {
-            return array_add($item, 'preferred_time_priority', constants('JOB_PREFERRED_TIMES_PRIORITY')[$item->preferred_time]);
+            if (in_array($item->preferred_time, constants('JOB_PREFERRED_TIMES'))) {
+                return array_add($item, 'preferred_time_priority', constants('JOB_PREFERRED_TIMES_PRIORITY')[$item->preferred_time]);
+            } else {
+                return array_add($item, 'preferred_time_priority', 500);
+            }
         });
         $other_jobs = $other_jobs->sortBy(function ($job) {
             return sprintf('%-12s%s', $job->schedule_date, $job->preferred_time_priority);
@@ -85,7 +93,7 @@ class ResourceJobRepository
             $job['delivery_mobile'] = $job->partner_order->order->delivery_mobile;
             $job['delivery_address'] = $job->partner_order->order->delivery_address;
             $job['service_unit_price'] = (double)$job->service_unit_price;
-            $job['service_unit'] = $job->service->unit;
+            $job['service_unit'] = null;
             $job['schedule_date'] = Carbon::parse($job->schedule_date)->format('jS M, Y');
             $job['code'] = $job->fullCode();
             $job->calculate(true);
