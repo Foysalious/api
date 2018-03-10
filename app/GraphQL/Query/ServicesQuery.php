@@ -1,6 +1,7 @@
 <?php
 
-namespace App\GraphQL\Query;
+
+namespace App\graphQL\Query;
 
 use App\Models\Service;
 use GraphQL;
@@ -8,21 +9,21 @@ use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use Folklore\GraphQL\Support\Query;
 
-class ServiceQuery extends Query
+class ServicesQuery extends Query
 {
     protected $attributes = [
-        'name' => 'service'
+        'name' => 'services'
     ];
 
     public function type()
     {
-        return GraphQL::type('Service');
+        return Type::listOf(GraphQL::type('Service'));
     }
 
     public function args()
     {
         return [
-            'id' => ['name' => 'id', 'type' => Type::int()]
+            'id' => ['name' => 'id', 'type' => Type::listOf(Type::int())]
         ];
     }
 
@@ -30,13 +31,13 @@ class ServiceQuery extends Query
     {
         $fields = $info->getFieldSelection(10);
         if (isset($args['id'])) {
-            $service = Service::query();
+            $services = Service::query();
             foreach ($fields as $field => $keys) {
                 if ($field === 'category') {
-                    $service->with('category');
+                    $services->with('category');
                 }
             }
-            return $service->published()->where('id', $args['id'])->first();
+            return $services->whereIn('id', $args['id'])->get();
         } else {
             return null;
         }
