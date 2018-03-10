@@ -92,6 +92,7 @@ class ResourceJobRepository
             $job['delivery_name'] = $job->partner_order->order->delivery_name;
             $job['delivery_mobile'] = $job->partner_order->order->delivery_mobile;
             $job['delivery_address'] = $job->partner_order->order->delivery_address;
+            $job['schedule_date_timestamp'] = (Carbon::parse($job->schedule_date))->timestamp;
             $job['service_unit_price'] = (double)$job->service_unit_price;
             $job['category_name'] = $job->category ? $job->category->nam : null;
             $job['service_unit'] = null;
