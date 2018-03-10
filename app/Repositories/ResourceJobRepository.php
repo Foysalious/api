@@ -99,7 +99,7 @@ class ResourceJobRepository
             if (count($job->jobServices) == 0) {
                 $services = collect();
                 $variables = json_decode($job->service_variables);
-                $services->push(array('name' => $job->service_name, 'variables' => $variables, 'unit' => $job->service->unit, 'quantity' => $job->quantity));
+                $services->push(array('name' => $job->service_name, 'variables' => $variables, 'unit' => $job->service->unit, 'quantity' => $job->service_quantity));
             } else {
                 $services = collect();
                 foreach ($job->jobServices as $jobService) {

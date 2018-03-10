@@ -354,6 +354,13 @@ $api->version('v1', function ($api) {
                 });
             });
         });
+        $api->group(['prefix' => 'resources/{resource}', 'middleware' => ['resource.auth']], function ($api) {
+            $api->group(['prefix' => 'jobs'], function ($api) {
+                $api->group(['prefix' => '{job}', 'middleware' => ['resource_job.auth']], function ($api) {
+                    $api->get('bills', 'ResourceJobController@getBills');
+                });
+            });
+        });
         $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
             $api->get('collections', 'PartnerOrderPaymentController@index');
             $api->group(['prefix' => 'orders'], function ($api) {
