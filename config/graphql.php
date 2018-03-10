@@ -182,6 +182,7 @@ return [
         'App\GraphQL\Type\AnswerType',
         'App\GraphQL\Type\PartnerType',
         'App\GraphQL\Type\UspType',
+        'App\GraphQL\Type\JobType',
     ],
 
     /*
