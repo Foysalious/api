@@ -108,7 +108,7 @@ class ReviewController extends Controller
             $rates = Rate::where('type', 'review')->get();
             $max = $rates->max('value');
             $min = $rates->min('value');
-            $this->validate($request, ['rating' => 'required|numeric|between:' . $min . ',' . $max, 'review' => 'sometimes|required|string|min:20']);
+            $this->validate($request, ['rating' => 'required|numeric|between:' . $min . ',' . $max]);
             $job = $request->job;
             if ($job->status != 'Served') {
                 return api_response($request, null, 403);

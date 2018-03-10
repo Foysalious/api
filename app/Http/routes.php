@@ -358,6 +358,11 @@ $api->version('v1', function ($api) {
             $api->group(['prefix' => 'jobs'], function ($api) {
                 $api->group(['prefix' => '{job}', 'middleware' => ['resource_job.auth']], function ($api) {
                     $api->get('bills', 'ResourceJobController@getBills');
+                    $api->post('reviews', 'ReviewController@store');
+                    $api->group(['prefix' => 'rates'], function ($api) {
+                        $api->get('/', 'ResourceJobRateController@index');
+                        $api->post('/', 'RateController@store');
+                    });
                 });
             });
         });
