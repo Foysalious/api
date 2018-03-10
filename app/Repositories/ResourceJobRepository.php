@@ -54,7 +54,7 @@ class ResourceJobRepository
     public function getJobs($resource)
     {
         $resource->load(['jobs' => function ($q) {
-            $q->info()->validStatus()->tillNow()->with('partner_order.order', 'service');
+            $q->info()->validStatus()->tillNow()->with('category', 'partner_order.order', 'service');
         }]);
         return $resource->jobs;
     }
@@ -93,7 +93,20 @@ class ResourceJobRepository
             $job['delivery_mobile'] = $job->partner_order->order->delivery_mobile;
             $job['delivery_address'] = $job->partner_order->order->delivery_address;
             $job['service_unit_price'] = (double)$job->service_unit_price;
+            $job['category_name'] = $job->category ? $job->category->nam : null;
             $job['service_unit'] = null;
+            if (count($job->jobServices) == 0) {
+                $services = collect();
+                $variables = json_decode($job->service_variables);
+                $services->push(array('name' => $job->service_name, 'variables' => $variables, 'unit' => $job->service->unit, 'quantity' => $job->quantity));
+            } else {
+                $services = collect();
+                foreach ($job->jobServices as $jobService) {
+                    $variables = json_decode($jobService->variables);
+                    $services->push(array('name' => $jobService->service->name, 'variables' => $variables, 'unit' => $jobService->unit, 'quantity' => $jobService->quantity));
+                }
+            }
+            $job['services'] = $services;
             $job['schedule_date'] = Carbon::parse($job->schedule_date)->format('jS M, Y');
             $job['code'] = $job->fullCode();
             $job->calculate(true);
@@ -102,6 +115,8 @@ class ResourceJobRepository
             $job['material_price'] = (double)$job->materialPrice;
             $job['discount'] = (double)$job->discount;
             $job['service_unit_price'] = (double)$job->service_unit_price;
+            $job['isDue'] = $job->partner_order->closed_and_paid_at ? 1 : 0;
+            $job['missed_at'] = $job->status == 'Schedule_date' ? $job->schedule_date : null;
             $this->_stripUnwantedInformationForAPI($job);
         }
         return $jobs;
@@ -115,6 +130,8 @@ class ResourceJobRepository
         array_forget($job, 'service_id');
         array_forget($job, 'service');
         array_forget($job, 'usedMaterials');
+        array_forget($job, 'jobServices');
+        array_forget($job, 'category');
         return $job;
     }
 

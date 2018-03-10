@@ -41,7 +41,6 @@ class ResourceJobController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (\Exception $e) {
-            dd($e);
             return api_response($request, null, 500);
         }
     }
