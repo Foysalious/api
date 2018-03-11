@@ -116,7 +116,7 @@ class ResourceJobRepository
             $job['material_price'] = (double)$job->materialPrice;
             $job['discount'] = (double)$job->discount;
             $job['service_unit_price'] = (double)$job->service_unit_price;
-            $job['isDue'] = $job->partner_order->closed_and_paid_at ? 1 : 0;
+            $job['isDue'] = $job->partner_order->closed_and_paid_at ? 0 : 1;
             $job['missed_at'] = $job->status == 'Schedule_date' ? $job->schedule_date : null;
             $this->_stripUnwantedInformationForAPI($job);
         }
