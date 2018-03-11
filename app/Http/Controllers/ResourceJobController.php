@@ -6,6 +6,7 @@ use App\Models\Job;
 use App\Models\PartnerOrder;
 use App\Repositories\ResourceJobRepository;
 use App\Sheba\JobTime;
+use Carbon\Carbon;
 use Dingo\Api\Routing\Helpers;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -35,6 +36,18 @@ class ResourceJobController extends Controller
                 $jobs = $this->resourceJobRepository->addJobInformationForAPI($jobs);
                 if ($request->has('group_by')) {
                     $jobs = collect($jobs)->groupBy('schedule_date');
+                } elseif ($request->has('sort_by')) {
+                    $jobs = collect($jobs);
+                    $schedule_due_jobs = $jobs->filter(function ($job) {
+                        return (Carbon::parse($job->schedule_date) < Carbon::today() && $job->status == 'Schedule Due');
+                    })->values()->all();
+                    $todays_jobs = $jobs->filter(function ($job) {
+                        return (Carbon::parse($job->schedule_date))->format('Y-m-d') == (Carbon::today())->format('Y-m-d') && $job->status != 'Served';
+                    })->values()->all();
+                    $payment_due_jobs = $jobs->filter(function ($job) {
+                        return $job->isDue == 1 && $job->delevered_at != null;
+                    })->values()->all();
+                    return api_response($request, $jobs, 200, ['schedule_due' => $schedule_due_jobs, 'today' => $todays_jobs, 'payment_due' => $payment_due_jobs]);
                 }
                 return api_response($request, $jobs, 200, ['jobs' => $jobs]);
             } else {
