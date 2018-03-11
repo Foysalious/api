@@ -45,7 +45,7 @@ class ResourceJobController extends Controller
                         return (Carbon::parse($job->schedule_date))->format('Y-m-d') == (Carbon::today())->format('Y-m-d') && $job->status != 'Served';
                     })->values()->all();
                     $payment_due_jobs = $jobs->filter(function ($job) {
-                        return $job->isDue == 1 && $job->delevered_at != null;
+                        return $job->isDue == 1 && $job->delivered_date != null;
                     })->values()->all();
                     return api_response($request, $jobs, 200, ['schedule_due' => $schedule_due_jobs, 'today' => $todays_jobs, 'payment_due' => $payment_due_jobs]);
                 }
