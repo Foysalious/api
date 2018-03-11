@@ -27,6 +27,7 @@ class ServiceType extends GraphQlType
             'publication_status' => ['type' => Type::int(), 'description' => 'Indicates if service is published or not; 1 or 0'],
             'thumb' => ['type' => Type::string()],
             'banner' => ['type' => Type::string()],
+            'screen' => ['type' => Type::string()],
             'faqs' => ['type' => Type::string(), 'description' => 'Frequently asked questions for this service'],
             'type' => ['type' => Type::string(), 'description' => 'Available types: Fixed,Options,Custom'],
             'options' => ['type' => Type::listOf(GraphQL::type('ServiceQuestion')), 'description' => 'Q&A of service, can be null'],
@@ -46,6 +47,19 @@ class ServiceType extends GraphQlType
         } else {
             return null;
         }
+    }
+
+    protected function resolveScreenField($root)
+    {
+        if ($root->variable_type == 'Options') {
+            $questions = (collect(json_decode($root->variables)->options))->pluck('question');
+            foreach ($questions as $question) {
+                if (strlen(trim($question)) >= 50) {
+                    return "slide";
+                }
+            }
+        }
+        return "normal";
     }
 
 }

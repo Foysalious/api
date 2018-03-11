@@ -19,7 +19,6 @@ class ServiceQuestionType extends GraphQlType
             'question' => ['type' => Type::string()],
             'answers' => ['type' => Type::string()],
             'input_type' => ['type' => Type::string()],
-            'screen' => ['type' => Type::string()],
         ];
     }
 
@@ -38,11 +37,5 @@ class ServiceQuestionType extends GraphQlType
         if (($root->question)) return 'selectbox';
         $answers = explode(',', $root->answers);
         return count($answers) <= 4 ? "radiobox" : "dropdown";
-    }
-
-    protected function resolveScreenField($root)
-    {
-        $words = explode(' ', trim($root->question));
-        return count($words) <= 5 ? "normal" : "slide";
     }
 }
