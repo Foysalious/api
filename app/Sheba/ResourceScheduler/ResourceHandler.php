@@ -54,20 +54,27 @@ class ResourceHandler
     /**
      * @param Schedule $schedule
      * @param $min
+     * @return bool
      */
     public function extend(Schedule $schedule, $min)
     {
-        //TODO
+        $extended_time = $schedule->end->addMinutes($min);
+        $is_available_for_extend = ($this->resourceSchedules->filterByDateTime($this->resource, $extended_time)->count() == 0) ? true : false;
+
+        if (!$is_available_for_extend)
+            return false;
+
+        return $this->resourceSchedules->updateAgainstJob($schedule->job, ['end' => $extended_time]);
     }
 
     private function getStartEndTimeFromJob(Job $job)
     {
-        $category = $job->category_id ? $job->category: $job->service->category;
+        $category = $job->category_id ? $job->category : $job->service->category;
         $start = Carbon::parse($job->schedule_date . ' ' . $job->preferred_time_start);
 
         return [
             'start' => $start,
-            'end'   => $start->copy()->addMinutes($category->book_resource_minutes)
+            'end' => $start->copy()->addMinutes($category->book_resource_minutes)
         ];
     }
 

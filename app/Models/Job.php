@@ -251,4 +251,9 @@ class Job extends Model
         return $this->partnerOrder->order->department();
     }
 
+    public function resourceSchedule()
+    {
+        return $this->belongsTo(ResourceSchedule::class);
+    }
+
 }

@@ -117,7 +117,6 @@ class ReviewController extends Controller
             if ($review == null) {
                 $review = new Review();
                 $review->rating = $request->rating;
-                $review->review = $request->review;
                 $review->job_id = $job->id;
                 $review->resource_id = $job->resource_id;
                 $review->partner_id = $job->partner_order->partner_id;
