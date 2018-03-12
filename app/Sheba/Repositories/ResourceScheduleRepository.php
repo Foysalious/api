@@ -43,11 +43,11 @@ class ResourceScheduleRepository extends BaseRepository
 
     public function updateAgainstJob(Job $job, $data)
     {
-        $this->update($job->resourceSchedule, $data);
+        return $this->update($job->resourceSchedule, $data);
     }
 
     public function update(ResourceSchedule $resource_schedule, $data)
     {
-        $resource_schedule->update($this->withUpdateModificationField($data));
+        return $resource_schedule->update($this->withUpdateModificationField($data));
     }
 }

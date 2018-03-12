@@ -253,7 +253,7 @@ class Job extends Model
 
     public function resourceSchedule()
     {
-        return $this->belongsTo(ResourceSchedule::class);
+        return $this->hasOne(ResourceSchedule::class);
     }
 
 }
