@@ -3,6 +3,7 @@
 namespace App\Sheba\Checkout;
 
 use App\Library\PortWallet;
+use App\Models\Category;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\Job;
@@ -100,7 +101,8 @@ class Checkout
                     'preferred_time' => $data['time'],
                     'preferred_time_start' => explode('-', $data['time'])[0],
                     'crm_id' => $data['crm_id'],
-                    'category_answers' => $data['category_answers']
+                    'category_answers' => $data['category_answers'],
+                    'commission_rate' => (Category::find(($selected_services->first())->category_id))->commission($partner_order->partner_id)
                 ]);
                 $this->saveJobServices($job, $partner->services, $selected_services, $data);
             });

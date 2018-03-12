@@ -59,10 +59,13 @@ class ResourceHandler
     public function extend(Schedule $schedule, $min)
     {
         $extended_time = $schedule->end->addMinutes($min);
-        $is_available_for_extend = ($this->resourceSchedules->filterByDateTime($this->resource, $extended_time)->count() == 0) ? true : false;
+        $conflicted_schedule = $this->resourceSchedules->filterByDateTime($this->resource, $extended_time);
+        $is_available_for_extend = ($conflicted_schedule->count() == 0) ? true : false;
 
-        if (!$is_available_for_extend)
-            return false;
+        if (!$is_available_for_extend) {
+            $conflicted_schedule->first()->job->update(['resource_id' => null]);
+            $this->resourceSchedules->destroy($conflicted_schedule->first());
+        }
 
         return $this->resourceSchedules->updateAgainstJob($schedule->job, ['end' => $extended_time]);
     }
