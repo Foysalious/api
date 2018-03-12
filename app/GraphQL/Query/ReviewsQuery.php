@@ -39,7 +39,7 @@ class ReviewsQuery extends Query
                 $query->whereIN('rating', $args['rating']);
             }
         };
-        return $reviews->where($where)->get();
+        return $reviews->where($where)->orderBy('reviews.id', 'desc')->get();
     }
 
 }

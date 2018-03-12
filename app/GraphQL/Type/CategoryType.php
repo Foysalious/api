@@ -91,7 +91,7 @@ class CategoryType extends GraphQlType
             }
             $q->with('customer.profile', 'partner');
         }]);
-        return $root->reviews;
+        return $root->reviews->sortByDesc('id');
     }
 
     protected function resolveTotalPartnersField($root, $args)
