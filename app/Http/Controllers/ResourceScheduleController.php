@@ -11,8 +11,7 @@ class ResourceScheduleController extends Controller
     public function extendTime($resource, $job, Request $request)
     {
         try {
-            $job = $request->job;
-            $resource_schedule = $job->resourceSchedule;
+            $resource_schedule = ResourceSchedule::where([['job_id',$job],['resource_id',$resource]])->first();
             if ($resource_schedule == null) {
                 return api_response($request, null, 403);
             }
