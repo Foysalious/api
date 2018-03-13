@@ -125,7 +125,7 @@ class FacebookController extends Controller
             ]);
             $code_data = $this->fbKit->authenticateKit($request->code);
             if ($code_data == false) {
-                return api_response($request, null, 500);
+                return api_response($request, null, 401);
             }
             $code_data['mobile'] = formatMobile($code_data['mobile']);
             $from = $this->profileRepository->getAvatar($request->from);
