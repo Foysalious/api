@@ -198,6 +198,7 @@ class OrderController extends Controller
             }
             return api_response($request, $order, 500);
         } catch (\Throwable $e) {
+            dd($e);
             return api_response($request, null, 500);
         }
     }
