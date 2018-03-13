@@ -94,7 +94,7 @@ class ResourceJobRepository
             $job['delivery_address'] = $job->partner_order->order->delivery_address;
             $job['schedule_date_timestamp'] = (Carbon::parse($job->schedule_date))->timestamp;
             $job['service_unit_price'] = (double)$job->service_unit_price;
-            $job['category_name'] = $job->category ? $job->category->nam : null;
+            $job['category_name'] = $job->category ? $job->category->name : null;
             $job['service_unit'] = null;
             if (count($job->jobServices) == 0) {
                 $services = collect();
@@ -118,7 +118,7 @@ class ResourceJobRepository
             $job['version'] = $job->getVersion();
             $job['service_unit_price'] = (double)$job->service_unit_price;
             $job['isDue'] = $job->partner_order->closed_and_paid_at ? 0 : 1;
-            $job['missed_at'] = $job->status == 'Schedule_date' ? $job->schedule_date : null;
+            $job['missed_at'] = $job->status == 'Schedule Due' ? $job->schedule_date : null;
             $this->_stripUnwantedInformationForAPI($job);
         }
         return $jobs;
