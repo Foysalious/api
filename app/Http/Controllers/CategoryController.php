@@ -71,7 +71,7 @@ class CategoryController extends Controller
             array_add($category, 'total_partners', $category->partners->count());
             array_add($category, 'total_experts', $category->partnerResources->count());
             array_add($category, 'total_services', $category->services->count());
-            array_add($category, 'selling_points', $category->usps->each(function ($usp){
+            array_add($category, 'selling_points', $category->usps->each(function ($usp) {
                 removeRelationsAndFields($usp);
             }));
             removeRelationsAndFields($category);
@@ -186,6 +186,7 @@ class CategoryController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (\Throwable $e) {
+            dd($e);
             return api_response($request, null, 500);
         }
     }
@@ -194,14 +195,33 @@ class CategoryController extends Controller
     {
         foreach ($services as &$service) {
             $questions = null;
+            $service['type'] = 'normal';
             if ($service->variable_type == 'Options') {
                 $questions = json_decode($service->variables)->options;
+                $slide = false;
                 foreach ($questions as &$question) {
                     $question = collect($question);
                     $question->put('input_type', $this->resolveInputTypeField($question->get('answers')));
-                    $question->put('screen', $this->resolveScreenField($question->get('question')));
+                    $screen = $this->resolveScreenField($question->get('question'));
+                    if ($screen == 'slide') {
+                        $slide = true;
+                    }
+                    if ($slide) {
+                        $question->put('screen', 'slide');
+                    } else {
+                        $question->put('screen', $screen);
+                    }
                     $explode_answers = explode(',', $question->get('answers'));
                     $question->put('answers', $explode_answers);
+                }
+                $questions = collect($questions);
+                $slide_questions = $questions->filter(function ($question) {
+                    return $question['screen'] == 'slide';
+                });
+                if (count($slide_questions) > 0) {
+                    $service['type'] = 'slide';
+                } else {
+                    $service['type'] = 'normal';
                 }
                 if (count($questions) == 1) {
                     $questions[0]->put('input_type', 'selectbox');
