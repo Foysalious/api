@@ -36,9 +36,8 @@ class PartnerList
         $selected_services = collect();
         foreach ($services as $service) {
             $selected_service = Service::select('id', 'category_id', 'min_quantity', 'variable_type', 'variables')->where('id', $service->id)->publishedForAll()->first();
-            foreach ($service as $key => $value) {
-                $selected_service[$key] = $value;
-            }
+            $selected_service['option'] = $service->option;
+            $selected_service['quantity'] = $service->quantity;
             $selected_services->push($selected_service);
         }
         return $selected_services;
@@ -191,6 +190,7 @@ class PartnerList
             $service['option'] = $selected_service->option;
             array_push($services, $service);
         }
+        dd($services);
         array_add($partner, 'breakdown', $services);
         return $total_service_price;
     }
