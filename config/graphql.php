@@ -128,6 +128,7 @@ return [
                 'service' => 'App\GraphQL\Query\ServiceQuery',
                 'reviews' => 'App\GraphQL\Query\ReviewsQuery',
                 'category' => 'App\GraphQL\Query\CategoryQuery',
+                'customer' => 'App\GraphQL\Query\CustomerQuery',
                 'categories' => 'App\GraphQL\Query\CategoriesQuery',
                 'categoryGroups' => 'App\GraphQL\Query\CategoryGroupsQuery'
             ],
@@ -184,6 +185,7 @@ return [
         'App\GraphQL\Type\PartnerType',
         'App\GraphQL\Type\UspType',
         'App\GraphQL\Type\JobType',
+        'App\GraphQL\Type\DeliveryAddressType',
     ],
 
     /*
