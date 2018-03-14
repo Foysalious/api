@@ -91,20 +91,77 @@ class PartnerOrderController extends Controller
         }
     }
 
-    public function getBills($partner, Request $request)
+    public function getBillsV1($partner, Request $request)
+    {
+        try {
+            $partner_order = $request->partner_order->load(['order', 'jobs' => function ($q) {
+                $q->info()->with(['service', 'usedMaterials' => function ($q) {
+                    $q->select('id', 'job_id', 'material_name', 'material_price');
+                }]);
+            }]);
+            $partner_order->calculate(true);
+            $jobs = (new ResourceJobRepository())->addJobInformationForAPI($partner_order->jobs->each(function ($item) use ($partner_order) {
+                $item['partner_order'] = $partner_order;
+            }));
+            $partner_order['paid_amount'] = (double)$partner_order->paid;
+            $partner_order['due_amount'] = (double)$partner_order->due;
+            $partner_order['total'] = (double)$partner_order->totalPrice;
+            $partner_order['sheba_fee'] = ((double)$partner_order->profit > 0) ? (double)$partner_order->profit : 0;
+            $partner_order['total_cost_without_discount'] = (double)$partner_order->totalCostWithoutDiscount;
+            $partner_order['total_partner_discount'] = (double)$partner_order->totalPartnerDiscount;
+            $partner_order['total_cost'] = (double)$partner_order->totalCost;
+            $partner_order['is_paid'] = ((double)$partner_order->due == 0) ? true : false;
+            $partner_order['is_due'] = ((double)$partner_order->due > 0) ? true : false;
+            $partner_order['is_closed'] = ($partner_order->closed_at != null) ? true : false;
+            $partner_order['order_status'] = $partner_order->status;
+            if ($partner_order['is_closed'] && $partner_order['is_due']) {
+                $partner_order['overdue'] = $partner_order->closed_at->diffInDays(Carbon::now());
+            } else {
+                $partner_order['overdue'] = null;
+            }
+            removeRelationsFromModel($partner_order);
+            removeSelectedFieldsFromModel($partner_order);
+            $partner_order['jobs'] = $jobs->each(function ($item) {
+                removeRelationsFromModel($item);
+            });
+            return api_response($request, $partner_order, 200, ['order' => $partner_order]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getBillsV2($partner, Request $request)
     {
         try {
             $partner_order = $request->partner_order;
             $partner_order->calculate(true);
+            foreach ($partner_order->jobs as $job) {
+                if (count($job->jobServices) == 0) {
+                    $services = array();
+                    array_push($services, array(
+                        'name' => $job->category ? $job->category->name : null,
+                        'quantity' => (double)$job->quantity, 'price' => (double)$job->servicePrice));
+                } else {
+                    $services = array();
+                    foreach ($job->jobServices as $jobService) {
+                        array_push($services, array(
+                            'name' => $jobService->job->category ? $jobService->job->category->name : null,
+                            'quantity' => (double)$jobService->quantity,
+                            'price' => (double)$jobService->unit_price * (double)$jobService->quantity));
+                    }
+                }
+            }
             $partner_order = array(
                 'id' => $partner_order->id,
-                'service_price' => (double)$partner_order->totalServicePrice,
-                'material_price' => (double)$partner_order->totalMaterialPrice,
-                'discount' => (double)$partner_order->totalDiscount,
+                'total_material_price' => (double)$partner_order->totalMaterialPrice,
                 'total_price' => (double)$partner_order->totalPrice,
+                'discount' => (double)$partner_order->totalDiscount,
                 'paid' => (double)$partner_order->paid,
                 'due' => (double)$partner_order->due,
-                'invoice' => $partner_order->invoice
+                'invoice' => $partner_order->invoice,
+                'sheba_commission' => (double)$partner_order->shebaReceivable,
+                'partner_commission' => (double)$partner_order->spPayable,
+                'service' => $services
             );
             return api_response($request, $partner_order, 200, ['order' => $partner_order]);
         } catch (\Throwable $e) {

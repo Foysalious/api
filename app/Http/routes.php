@@ -222,7 +222,7 @@ $api->version('v1', function ($api) {
 
                 $api->group(['prefix' => '{order}', 'middleware' => ['partner_order.auth']], function ($api) {
                     $api->get('/', 'PartnerOrderController@show');
-                    $api->get('bills', 'PartnerOrderController@getBills');
+                    $api->get('bills', 'PartnerOrderController@getBillsV2');
                     $api->get('logs', 'PartnerOrderController@getLogs');
                     $api->get('payments', 'PartnerOrderController@getPayments');
                     $api->post('comments', 'PartnerOrderController@postComment');
@@ -372,6 +372,7 @@ $api->version('v1', function ($api) {
             $api->group(['prefix' => 'orders'], function ($api) {
                 $api->group(['prefix' => '{order}', 'middleware' => ['partner_order.auth']], function ($api) {
                     $api->get('/', 'PartnerOrderController@showV2');
+                    $api->get('bills', 'PartnerOrderController@getBillsV2');
                 });
             });
             $api->group(['prefix' => 'jobs'], function ($api) {
