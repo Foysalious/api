@@ -45,7 +45,7 @@ class PartnerJobController extends Controller
                     $job['service_unit_price'] = (double)$job->service_unit_price;
                     $job['discount'] = (double)$job->discount;
                     $job['code'] = $job->partner_order->order->code();
-                    $job['category_name'] = $job->category->name;
+                    $job['category_name'] = $job->category ? $job->category->name : null;
                     $job['customer_name'] = $job->partner_order->order->customer->profile->name;
                     $job['resource_picture'] = $job->resource != null ? $job->resource->profile->pro_pic : null;
                     $job['resource_mobile'] = $job->resource != null ? $job->resource->profile->mobile : null;
@@ -256,7 +256,7 @@ class PartnerJobController extends Controller
         $job->update();
         $this->jobUpdateLog($job->id, json_encode($updatedData), $manager_resource);
 
-        $this->resourceJobRepository->book($job,$manager_resource);
+        $this->resourceJobRepository->book($job, $manager_resource);
 
         (new PushNotificationRepository())->send([
             "title" => 'Resource has been assigned',
