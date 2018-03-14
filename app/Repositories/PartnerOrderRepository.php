@@ -38,6 +38,7 @@ class PartnerOrderRepository
             $job->jobServices->each(function ($job_service) use (&$services) {
                 array_push($services, $this->partnerJobRepository->getJobServiceInfo($job_service));
             });
+            $job['category_name'] = $job->category ? $job->category->name : null;
             removeRelationsAndFields($job);
             $job['services'] = $services;
             array_forget($job, 'partner_order');
