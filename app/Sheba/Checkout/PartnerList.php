@@ -112,6 +112,16 @@ class PartnerList
         }
     }
 
+    public function addInfo()
+    {
+        $this->partners->load(['jobs' => function ($q) {
+            $q->validStatus();
+        }]);
+        foreach ($this->partners as $partner) {
+            $partner['total_jobs'] = $partner->jobs->count();
+        }
+    }
+
     public function calculateAverageRating()
     {
         $this->partners->load('reviews');
@@ -124,6 +134,9 @@ class PartnerList
     {
         foreach ($this->partners as $partner) {
             $partner['total_ratings'] = count($partner->reviews);
+            $partner['total_five_star_ratings'] = count($partner->reviews->filter(function ($review) {
+                return $review->rating == 5;
+            }));
         }
     }
 

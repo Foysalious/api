@@ -414,6 +414,7 @@ class PartnerController extends Controller
             }
             if ($partner_list->hasPartners) {
                 $partner_list->addPricing();
+                $partner_list->addInfo();
                 $partner_list->calculateAverageRating();
                 $partner_list->calculateTotalRatings();
                 $partner_list->calculateOngoingJobs();
