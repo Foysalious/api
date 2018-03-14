@@ -185,19 +185,17 @@ class PartnerOrderRepository
 
     public function getInfo($partner_order)
     {
-        $job = $partner_order->order->jobs->filter(function ($job, $key) {
-            return $job->status != 'Cancelled';
-        })->first();
+        $job = $partner_order->order->jobs->first();
         $partner_order->calculate(true);
         $partner_order['code'] = $partner_order->code();
         $partner_order['customer_name'] = $partner_order->order->delivery_name;
         $partner_order['customer_mobile'] = $partner_order->order->delivery_mobile;
         $partner_order['resource_picture'] = $job->resource ? $job->resource->profile->pro_pic : null;
         $partner_order['resource_mobile'] = $job->resource ? $job->resource->profile->mobile : null;
+        $partner_order['rating'] = $job->review ? (double)$job->review->rating : null;
         $partner_order['address'] = $partner_order->order->delivery_address;
         $partner_order['location'] = $partner_order->order->location->name;
         $partner_order['total_price'] = (double)$partner_order->totalPrice;
-        $partner_order['rating'] = $job->rating ? (double)$job->rating : null;
         $partner_order['due_amount'] = (double)$partner_order->due;
         $partner_order['discount'] = (double)$partner_order->discount;
         $partner_order['sheba_collection'] = (double)$partner_order->sheba_collection;
