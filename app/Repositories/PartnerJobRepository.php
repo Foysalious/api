@@ -23,7 +23,7 @@ class PartnerJobRepository
 
     public function getJobServiceInfo($job_service)
     {
-        return (collect($job_service)->only('id', 'job_id', 'service_id', 'name', 'variable_type', 'variables', 'option', 'additional_info'))->toArray();
+        return (collect($job_service)->only('id', 'job_id', 'service_id', 'name', 'variable_type', 'variables', 'option', 'additional_info', 'quantity'))->toArray();
     }
 
 
