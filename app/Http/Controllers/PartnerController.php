@@ -330,7 +330,6 @@ class PartnerController extends Controller
             );
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
-            dd($e);
             return api_response($request, null, 500);
         }
     }
