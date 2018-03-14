@@ -3,6 +3,7 @@
 namespace App\GraphQL\Type;
 
 use \Folklore\GraphQL\Support\Type as GraphQlType;
+use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use GraphQL;
 
@@ -63,7 +64,9 @@ class CustomerType extends GraphQlType
             return null;
         }
         $root->load(['partnerOrders' => function ($q) use ($filter) {
-            $q->$filter()->with(['partner', 'order.customer', 'jobs' => function ($q) {
+            $q->$filter()->with(['partner', 'order' => function ($q) {
+                $q->with('location', 'customer');
+            }, 'jobs' => function ($q) {
                 $q->with(['category', 'usedMaterials', 'jobServices']);
             }]);
         }]);

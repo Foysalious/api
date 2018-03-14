@@ -185,6 +185,7 @@ return [
         'App\GraphQL\Type\PartnerType',
         'App\GraphQL\Type\OrderType',
         'App\GraphQL\Type\UspType',
+        'App\GraphQL\Type\LocationType',
         'App\GraphQL\Type\JobType',
         'App\GraphQL\Type\DeliveryAddressType',
     ],

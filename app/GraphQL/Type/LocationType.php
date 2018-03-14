@@ -2,17 +2,15 @@
 
 namespace App\GraphQL\Type;
 
-use Carbon\Carbon;
 use GraphQL;
 use \Folklore\GraphQL\Support\Type as GraphQlType;
 use GraphQL\Type\Definition\Type;
-use Redis;
 
-class PartnerType extends GraphQlType
+class LocationType extends GraphQlType
 {
     protected $attributes = [
-        'name' => 'Partner',
-        'description' => 'Sheba Partner'
+        'name' => 'Location',
+        'description' => 'Sheba Location'
     ];
 
     public function fields()
@@ -20,7 +18,6 @@ class PartnerType extends GraphQlType
         return [
             'id' => ['type' => Type::int()],
             'name' => ['type' => Type::string()],
-            'logo' => ['type' => Type::string()],
         ];
     }
 }

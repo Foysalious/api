@@ -21,6 +21,9 @@ class OrderType extends GraphQlType
             'partner' => ['type' => GraphQL::type('Partner')],
             'jobs' => ['type' => Type::listOf(GraphQL::type('Job'))],
             'code' => ['type' => Type::string()],
+            'address' => ['type' => Type::string()],
+            'location' => ['type' => GraphQL::type('Location')],
+            'total_price' => ['type' => Type::float()],
             'paid' => ['type' => Type::float()],
             'due' => ['type' => Type::float()]
         ];
@@ -55,5 +58,23 @@ class OrderType extends GraphQlType
             $root->calculate(true);
         }
         return (float)$root->due;
+    }
+
+    protected function resolveTotalPriceField($root)
+    {
+        if (!isset($root['totalPrice'])) {
+            $root->calculate(true);
+        }
+        return (float)$root->totalPrice;
+    }
+
+    protected function resolveAddressField($root)
+    {
+        return $root->order->delivery_address;
+    }
+
+    protected function resolveLocationField($root)
+    {
+        return $root->order->location;
     }
 }
