@@ -106,7 +106,7 @@ class ResourceJobController extends Controller
             $bill['total'] = (double)$partnerOrder->totalPrice;
             $bill['paid'] = (double)$partnerOrder->paid;
             $bill['due'] = (double)$partnerOrder->due;
-            $bill['total_material_price'] = (double)$job->materialCost;
+            $bill['total_material_price'] = (double)$job->materialPrice;
             $bill['total_service_price'] = (double)$job->servicePrice;
             $bill['discount'] = (double)$job->discount;
             $bill['services'] = $services;
