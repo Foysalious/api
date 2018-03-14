@@ -190,7 +190,6 @@ class PartnerList
             $service['option'] = $selected_service->option;
             array_push($services, $service);
         }
-        dd($services);
         array_add($partner, 'breakdown', $services);
         return $total_service_price;
     }

@@ -77,7 +77,6 @@ class CategoryController extends Controller
             removeRelationsAndFields($category);
             return api_response($request, $category, 200, ['category' => $category]);
         } catch (\Throwable $e) {
-            dd($e);
             return api_response($request, null, 500);
         }
     }
@@ -186,7 +185,6 @@ class CategoryController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (\Throwable $e) {
-            dd($e);
             return api_response($request, null, 500);
         }
     }

@@ -120,8 +120,7 @@ class ResourceJobController extends Controller
             $bill['isDue'] = $job->partnerOrder->closed_at_paid == null ? 1 : 0;
             $bill['job_code'] = $job->fullcode();
             return api_response($request, $bill, 200, ['bill' => $bill]);
-        } catch (\Exception $e) {
-            dd($e);
+        } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
     }
