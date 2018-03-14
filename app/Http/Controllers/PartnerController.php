@@ -323,13 +323,14 @@ class PartnerController extends Controller
                 'assigned_resources' => $assigned_resource_ids->count(),
                 'unassigned_resources' => $unassigned_resource_ids->count(),
                 'balance' => (double)$partner->wallet,
-                'is_credit_limit_exceed' => $partner->isCreditLimitExceed() ? 1 : 0,
+                'is_credit_limit_exceed' => $partner->isCreditLimitExceed(),
                 'today' => $sales_stats->today->sale,
                 'week' => $sales_stats->week->sale,
                 'month' => $sales_stats->month->sale
             );
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
+            dd($e);
             return api_response($request, null, 500);
         }
     }

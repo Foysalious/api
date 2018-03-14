@@ -164,6 +164,7 @@ class Partner extends Model
     {
         return $query->where('status', 'Verified');
     }
+
     public function scopeVerified($query)
     {
         return $query->where('status', 'Verified');
@@ -233,5 +234,10 @@ class Partner extends Model
         });
 
         return collect($result);
+    }
+
+    public function isCreditLimitExceed()
+    {
+        return (double)$this->wallet < (double)$this->walletSetting->min_wallet_threshold;
     }
 }
