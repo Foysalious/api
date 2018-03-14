@@ -46,7 +46,7 @@ class PartnerJobController extends Controller
                     $job['discount'] = (double)$job->discount;
                     $job['code'] = $job->partner_order->order->code();
                     $job['category_name'] = $job->category ? $job->category->name : null;
-                    $job['customer_name'] = $job->partner_order->order->customer->profile->name;
+                    $job['customer_name'] = $job->partner_order->order->customer ? $job->partner_order->order->customer->profile->name : null;
                     $job['resource_picture'] = $job->resource != null ? $job->resource->profile->pro_pic : null;
                     $job['resource_mobile'] = $job->resource != null ? $job->resource->profile->mobile : null;
                     $job['rating'] = $job->review != null ? $job->review->rating : null;
