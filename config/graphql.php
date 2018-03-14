@@ -183,6 +183,7 @@ return [
         'App\GraphQL\Type\ServiceQuestionType',
         'App\GraphQL\Type\AnswerType',
         'App\GraphQL\Type\PartnerType',
+        'App\GraphQL\Type\OrderType',
         'App\GraphQL\Type\UspType',
         'App\GraphQL\Type\JobType',
         'App\GraphQL\Type\DeliveryAddressType',

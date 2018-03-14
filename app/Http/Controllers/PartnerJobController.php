@@ -98,6 +98,7 @@ class PartnerJobController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             return api_response($request, null, 500);
         }
     }
@@ -255,7 +256,6 @@ class PartnerJobController extends Controller
         $job->resource_id = $resource_id;
         $job->update();
         $this->jobUpdateLog($job->id, json_encode($updatedData), $manager_resource);
-
         $this->resourceJobRepository->book($job, $manager_resource);
 
         (new PushNotificationRepository())->send([

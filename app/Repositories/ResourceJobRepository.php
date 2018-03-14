@@ -226,8 +226,8 @@ class ResourceJobRepository
         $resource_schedule = new ResourceSchedule();
         $resource_schedule->job_id = $job->id;
         $resource_schedule->resource_id = $job->resource_id;
-        $resource_schedule->start = $job->preferred_time_start;
-        $resource_schedule->end = explode('-', $job->preferred_time)[1];
+        $resource_schedule->start = Carbon::parse(explode('-', $job->preferred_time)[0]);
+        $resource_schedule->end = Carbon::parse(explode('-', $job->preferred_time)[1]);
         $resource_schedule->created_by = $created_by->id;
         $resource_schedule->created_by_name = class_basename($created_by) . "-" . $created_by->profile->name;
         $resource_schedule->save();

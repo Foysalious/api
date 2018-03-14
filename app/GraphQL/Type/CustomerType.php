@@ -20,7 +20,13 @@ class CustomerType extends GraphQlType
             'name' => ['type' => Type::string()],
             'picture' => ['type' => Type::string()],
             'mobile' => ['type' => Type::string()],
-            'addresses' => ['type' => Type::listOf(GraphQL::type('Address'))]
+            'addresses' => ['type' => Type::listOf(GraphQL::type('Address'))],
+            'orders' => [
+                'args' => [
+                    'filter' => ['type' => Type::string()],
+                ],
+                'type' => Type::listOf(GraphQL::type('Order'))
+            ]
         ];
     }
 
@@ -42,5 +48,25 @@ class CustomerType extends GraphQlType
     protected function resolveAddressesField($root, $args)
     {
         return $root->delivery_addresses;
+    }
+
+    protected function resolveOrdersField($root, $args)
+    {
+        $filter = null;
+        if (isset($args['filter'])) {
+            if ($args['filter'] === 'ongoing') {
+                $filter = $args['filter'];
+            } elseif ($args['filter'] === 'history') {
+                $filter = $args['filter'];
+            }
+        } else {
+            return null;
+        }
+        $root->load(['partnerOrders' => function ($q) use ($filter) {
+            $q->$filter()->with(['partner', 'order.customer', 'jobs' => function ($q) {
+                $q->with(['category', 'usedMaterials', 'jobServices']);
+            }]);
+        }]);
+        return $root->partnerOrders->sortByDesc('id');
     }
 }
