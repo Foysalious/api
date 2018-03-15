@@ -21,7 +21,7 @@ class CategoryGroupController extends Controller
             $for = $this->getPublishedFor($request->for);
             if ($request->has('name')) {
                 $categories = $this->getCategoryByColumn('name', $request->name, $location);
-                return $categories ? api_response($request, $categories, 200, ['categories' => $categories]) : api_response($request, null, 404);
+                return $categories ? api_response($request, $categories, 200, ['category' => $categories]) : api_response($request, null, 404);
             }
             $categoryGroups = CategoryGroup::$for()->select('id', 'name', 'app_thumb', 'app_banner')->get();
             return count($categoryGroups) > 0 ? api_response($request, $categoryGroups, 200, ['categories' => $categoryGroups]) : api_response($request, null, 404);
@@ -64,16 +64,18 @@ class CategoryGroupController extends Controller
     public function getCategoryByColumn($column, $value, $location)
     {
         $category_group = CategoryGroup::with(['categories' => function ($q) {
-            $q->select('id', 'name', 'icon', 'thumb', 'banner', 'parent_id')->has('services', '>', 0);
-        }])->where($column, $value)->first();
+            $q->has('services', '>', 0);
+        }])->where($column, $value)->select('id', 'name', 'banner')->first();
+        $setting = HomepageSetting::where([['item_type', 'App\\Models\\CategoryGroup'], ['item_id', $category_group->id]])->first();
+        $category_group['position_at_home'] = $setting ? $setting->order : null;
         if ($category_group != null) {
             $categories = $category_group->categories->each(function ($category) use ($location) {
-                $start_price = new StartPrice($category, $location);
-                $start_price->calculate();
                 removeRelationsAndFields($category);
             });
             if (count($categories) > 0) {
-                return $categories;
+                $category_group['secondaries'] = $categories;
+                removeRelationsAndFields($category_group);
+                return $category_group;
             }
         }
         return null;
