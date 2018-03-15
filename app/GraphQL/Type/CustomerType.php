@@ -6,6 +6,7 @@ use \Folklore\GraphQL\Support\Type as GraphQlType;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use GraphQL;
+use Illuminate\Http\Request;
 
 class CustomerType extends GraphQlType
 {
@@ -25,6 +26,8 @@ class CustomerType extends GraphQlType
             'orders' => [
                 'args' => [
                     'filter' => ['type' => Type::string()],
+                    'offset' => ['type' => Type::int()],
+                    'limit' => ['type' => Type::int()],
                 ],
                 'type' => Type::listOf(GraphQL::type('Order'))
             ]
@@ -60,16 +63,23 @@ class CustomerType extends GraphQlType
             } elseif ($args['filter'] === 'history') {
                 $filter = $args['filter'];
             }
-        } else {
+        }
+        if ($filter === null) {
             return null;
         }
-        $root->load(['partnerOrders' => function ($q) use ($filter) {
-            $q->$filter()->with(['partner', 'order' => function ($q) {
+        if (isset($args['offset']) && isset($args['limit'])) {
+            $offset = $args['offset'];
+            $limit = $args['limit'];
+        } else {
+            list($offset, $limit) = calculatePagination(\request());
+        }
+        $root->load(['partnerOrders' => function ($q) use ($filter, $offset, $limit) {
+            $q->$filter()->skip($offset)->take($limit)->orderBy('id', 'desc')->with(['partner', 'order' => function ($q) {
                 $q->with('location', 'customer');
             }, 'jobs' => function ($q) {
                 $q->with(['category', 'usedMaterials', 'jobServices']);
             }]);
         }]);
-        return $root->partnerOrders->sortByDesc('id');
+        return $root->partnerOrders;
     }
 }
