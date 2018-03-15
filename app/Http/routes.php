@@ -222,7 +222,7 @@ $api->version('v1', function ($api) {
 
                 $api->group(['prefix' => '{order}', 'middleware' => ['partner_order.auth']], function ($api) {
                     $api->get('/', 'PartnerOrderController@show');
-                    $api->get('bills', 'PartnerOrderController@getBillsV2');
+                    $api->get('bills', 'PartnerOrderController@getBillsV1');
                     $api->get('logs', 'PartnerOrderController@getLogs');
                     $api->get('payments', 'PartnerOrderController@getPayments');
                     $api->post('comments', 'PartnerOrderController@postComment');
