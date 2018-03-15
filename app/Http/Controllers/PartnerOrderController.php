@@ -162,9 +162,9 @@ class PartnerOrderController extends Controller
                 'sheba_commission' => (double)$partner_order->shebaReceivable,
                 'partner_commission' => (double)$partner_order->spPayable,
                 'service' => $services,
-                'is_paid' => ((double)$partner_order->due == 0) ? true : false,
-                'is_due' => ((double)$partner_order->due > 0) ? true : false,
-                'is_closed' => ($partner_order->closed_at != null) ? true : false
+                'is_paid' => (double)$partner_order->due == 0,
+                'is_due' => (double)$partner_order->due > 0,
+                'is_closed' => $partner_order->closed_at != null
             );
             return api_response($request, $partner_order, 200, ['order' => $partner_order]);
         } catch (\Throwable $e) {
