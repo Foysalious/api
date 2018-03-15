@@ -34,9 +34,6 @@ class CategoryController extends Controller
                     $with = $request->with;
                     if ($with == 'children') {
                         $category->children->each(function (&$child) use ($location) {
-                            $start_price = new StartPrice($child, $location);
-                            $start_price->calculate();
-                            $child['starting_price'] = $start_price->price;
                             removeRelationsAndFields($child);
                         });
                     }
@@ -89,9 +86,6 @@ class CategoryController extends Controller
             $children = $category->children;
             if (count($children) != 0) {
                 $children = $children->each(function (&$child) use ($location) {
-                    $start_price = new StartPrice($child, $location);
-                    $start_price->calculate();
-                    $child['starting_price'] = $start_price->price;
                     removeRelationsAndFields($child);
                 });
                 $category = collect($category)->only(['name', 'banner']);

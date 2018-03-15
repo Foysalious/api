@@ -24,7 +24,7 @@ class CategoryGroupController extends Controller
                 return $categories ? api_response($request, $categories, 200, ['categories' => $categories]) : api_response($request, null, 404);
             }
             $categoryGroups = CategoryGroup::$for()->select('id', 'name', 'app_thumb', 'app_banner')->get();
-            return count($categoryGroups) > 0 ? api_response($request, $categoryGroups, 200, ['category_groups' => $categoryGroups]) : api_response($request, null, 404);
+            return count($categoryGroups) > 0 ? api_response($request, $categoryGroups, 200, ['categories' => $categoryGroups]) : api_response($request, null, 404);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -42,9 +42,7 @@ class CategoryGroupController extends Controller
     {
         try {
             $location = $request->location;
-            $category_group = CategoryGroup::with(['categories' => function ($q) {
-                $q->select('id', 'name', 'thumb', 'banner', 'parent_id');
-            }])->where('id', $id)->select('id', 'name')->first();
+            $category_group = CategoryGroup::with('categories')->where('id', $id)->select('id', 'name')->first();
             if ($category_group != null) {
                 $categories = $category_group->categories->each(function ($category) use ($location) {
                     removeRelationsAndFields($category);
@@ -53,7 +51,8 @@ class CategoryGroupController extends Controller
                     $setting = HomepageSetting::where([['item_type', 'App\\Models\\CategoryGroup'], ['item_id', $category_group->id]])->first();
                     $category_group['position_at_home'] = $setting ? $setting->order : null;
                     removeRelationsAndFields($category_group);
-                    return api_response($request, $categories, 200, ['category_group' => $category_group, 'categories' => $categories]);
+                    $category_group['secondaries'] = $categories;
+                    return api_response($request, $categories, 200, ['category' => $category_group]);
                 }
             }
             return api_response($request, null, 404);

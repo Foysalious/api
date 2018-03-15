@@ -3,9 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Resource;
-use Carbon\Carbon;
-use Illuminate\Contracts\Validation\ValidationException;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class PartnerOrderPaymentController extends Controller
 {
@@ -39,9 +38,9 @@ class PartnerOrderPaymentController extends Controller
         }
     }
 
-    private function getCollectionInformation($collections): array
+    private function getCollectionInformation($collections)
     {
-        $final = [];
+        $final =collect();
         $collections->each(function ($collection) use (&$final) {
             $profile = (Resource::find($collection->created_by))->profile;
             $created_at_timestamp = $collection->created_at->timestamp;
@@ -50,7 +49,7 @@ class PartnerOrderPaymentController extends Controller
             $collection->put('resource_mobile', $profile->mobile);
             $collection->put('resource_picture', $profile->pro_pic);
             $collection->put('created_at_timestamp', $created_at_timestamp);
-            array_push($final, $collection);
+            $final->push($collection);
         });
         return $final;
     }
