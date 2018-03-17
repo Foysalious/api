@@ -2,6 +2,7 @@
 
 namespace App\GraphQL\Type;
 
+use App\Models\ScheduleSlot;
 use Carbon\Carbon;
 use GraphQL;
 use \Folklore\GraphQL\Support\Type as GraphQlType;
@@ -108,14 +109,14 @@ class CategoryType extends GraphQlType
         if (!isset($args['location_id'])) {
             return null;
         }
-        $sheba_times = json_decode(Redis::get('sheba_times'));
         $root->load(['partners' => function ($q) use ($args) {
             $q->verified()->with('handymanResources')->whereHas('locations', function ($query) use ($args) {
                 $query->where('locations.id', (int)$args['location_id']);
             });
         }]);
+        $first = $this->getFirstValidSlot();
         foreach ($root->partners as $partner) {
-            if (!scheduler($partner)->isAvailable((Carbon::today())->format('Y-m-d'), explode('-', (collect($sheba_times->valid_times))->first()), $root->id)) {
+            if (!scheduler($partner)->isAvailable((Carbon::today())->format('Y-m-d'), explode('-', $first), $root->id)) {
                 unset($partner);
             }
         }
@@ -165,5 +166,18 @@ class CategoryType extends GraphQlType
     {
         $root->load('usps');
         return $root->usps;
+    }
+
+    private function getFirstValidSlot()
+    {
+        $slots = ScheduleSlot::all();
+        $current_time = Carbon::now();
+        foreach ($slots as $slot) {
+            $slot_start_time = Carbon::parse($slot->start);
+            $time_slot_key = $slot->start . '-' . $slot->end;
+            if ($slot_start_time > $current_time) {
+                return $time_slot_key;
+            }
+        }
     }
 }
