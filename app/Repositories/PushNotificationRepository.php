@@ -23,7 +23,7 @@ class PushNotificationRepository
         $topic = (new Topics())->topic($topic);
 
         if (constants('send_push_notifications')) {
-            FCM::sendToTopic($topic, null, null, $data);
+            FCM::sendToTopic($topic, null, $notification, $data);
         }
 
     }
