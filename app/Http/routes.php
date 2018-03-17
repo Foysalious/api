@@ -3,6 +3,14 @@
 use App\Repositories\PushNotificationRepository;
 
 Route::get('/', function () {
+    $partner_order = App\Models\PartnerOrder::find(36826);
+    (new PushNotificationRepository())->send([
+        "title" => 'Resource extended time',
+        "message" => " has extended time for ",
+        "event_type" => 'PartnerOrder',
+        "event_id" => $partner_order->id,
+        "action" => 'extend_time'
+    ], env('MANAGER_TOPIC_NAME') . 3);
     return ['code' => 200, 'msg' => "Success. This project will hold the api's"];
 });
 $api = app('Dingo\Api\Routing\Router');
