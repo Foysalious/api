@@ -129,6 +129,7 @@ return [
                 'reviews' => 'App\GraphQL\Query\ReviewsQuery',
                 'category' => 'App\GraphQL\Query\CategoryQuery',
                 'customer' => 'App\GraphQL\Query\CustomerQuery',
+                'order' => 'App\GraphQL\Query\OrderQuery',
                 'categories' => 'App\GraphQL\Query\CategoriesQuery',
                 'categoryGroups' => 'App\GraphQL\Query\CategoryGroupsQuery'
             ],
