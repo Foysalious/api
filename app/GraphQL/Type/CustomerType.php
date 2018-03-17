@@ -19,6 +19,7 @@ class CustomerType extends GraphQlType
     {
         return [
             'id' => ['type' => Type::int()],
+            'referral_code' => ['type' => Type::string()],
             'addresses' => ['type' => Type::listOf(GraphQL::type('Address'))],
             'profile' => ['type' => GraphQL::type('Profile')],
             'orders' => [
@@ -36,6 +37,11 @@ class CustomerType extends GraphQlType
     protected function resolveAddressesField($root, $args)
     {
         return $root->delivery_addresses;
+    }
+
+    protected function resolveReferralCodeField($root, $args)
+    {
+        return $root->referral->code;
     }
 
     protected function resolveOrdersField($root, $args)
