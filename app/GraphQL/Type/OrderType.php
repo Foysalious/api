@@ -16,22 +16,33 @@ class OrderType extends GraphQlType
     {
         return [
             'id' => ['type' => Type::int()],
+            'order_id' => ['type' => Type::int()],
             'customer' => ['type' => GraphQL::type('Customer')],
             'category' => ['type' => GraphQL::type('Category')],
             'partner' => ['type' => GraphQL::type('Partner')],
             'jobs' => ['type' => Type::listOf(GraphQL::type('Job'))],
             'code' => ['type' => Type::string()],
             'address' => ['type' => Type::string()],
+            'status' => ['type' => Type::string()],
+            'schedule_date' => ['type' => Type::string()],
             'location' => ['type' => GraphQL::type('Location')],
             'total_price' => ['type' => Type::float()],
             'paid' => ['type' => Type::float()],
-            'due' => ['type' => Type::float()]
+            'due' => ['type' => Type::float()],
+            'delivery_address' => ['type' => Type::string()],
+            'delivery_name' => ['type' => Type::string()],
+            'delivery_mobile' => ['type' => Type::string()],
         ];
     }
 
     protected function resolveCustomerField($root)
     {
         return $root->order->customer;
+    }
+
+    protected function resolveOrderIdField($root)
+    {
+        return $root->order->id;
     }
 
     protected function resolveCategoryField($root)
@@ -76,5 +87,31 @@ class OrderType extends GraphQlType
     protected function resolveLocationField($root)
     {
         return $root->order->location;
+    }
+
+    protected function resolveStatusField($root)
+    {
+        $root->order->calculate(true);
+        return $root->order->status;
+    }
+
+    protected function resolveScheduleDateField($root)
+    {
+        return $root->jobs[0]->schedule_date;
+    }
+
+    protected function resolveDeliveryAddressField($root)
+    {
+        return $root->order->delivery_address;
+    }
+
+    protected function resolveDeliveryNameField($root)
+    {
+        return $root->order->delivery_name;
+    }
+
+    protected function resolveDeliveryMobileField($root)
+    {
+        return $root->order->delivery_mobile;
     }
 }

@@ -17,7 +17,13 @@ class JobType extends GraphQlType
         return [
             'id' => ['type' => Type::int()],
             'completed_at' => ['type' => Type::string()],
+            'additional_information' => ['type' => Type::string()],
+            'schedule_date' => ['type' => Type::string()],
+            'preferred_time' => ['type' => Type::string()],
             'completed_at_timestamp' => ['type' => Type::float()],
+            'category' => ['type' => GraphQL::type('Category')],
+            'review' => ['type' => GraphQL::type('Review')],
+            'resource' => ['type' => GraphQL::type('Resource')],
         ];
     }
 

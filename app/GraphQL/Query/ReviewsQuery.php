@@ -16,7 +16,7 @@ class ReviewsQuery extends Query
 
     public function type()
     {
-        return Type::listOf(GraphQL::type('Reviews'));
+        return Type::listOf(GraphQL::type('Review'));
     }
 
     public function args()

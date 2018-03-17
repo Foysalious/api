@@ -39,7 +39,7 @@ class CategoryType extends GraphQlType
                     'rating' => ['type' => Type::listOf(Type::int())],
                     'isEmptyReview' => ['type' => Type::boolean()]
                 ],
-                'type' => Type::listOf(GraphQL::type('Reviews'))
+                'type' => Type::listOf(GraphQL::type('Review'))
             ],
             'services' => [
                 'args' => [

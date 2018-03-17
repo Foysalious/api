@@ -7,10 +7,10 @@ use GraphQL;
 use \Folklore\GraphQL\Support\Type as GraphQlType;
 use GraphQL\Type\Definition\Type;
 
-class ReviewsType extends GraphQlType
+class ReviewType extends GraphQlType
 {
     protected $attributes = [
-        'name' => 'Reviews'
+        'name' => 'Review'
     ];
 
     public function fields()
