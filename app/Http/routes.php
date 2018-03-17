@@ -9,7 +9,8 @@ Route::get('/', function () {
         "message" => " has extended time for ",
         "event_type" => 'PartnerOrder',
         "event_id" => "$partner_order->id",
-        "action" => 'extend_time'
+        "action" => 'extend_time',
+        "version" => "v2"
     ], env('MANAGER_TOPIC_NAME') . 3);
     return ['code' => 200, 'msg' => "Success. This project will hold the api's"];
 });
