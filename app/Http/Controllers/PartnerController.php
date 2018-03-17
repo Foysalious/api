@@ -410,7 +410,7 @@ class PartnerController extends Controller
                     return $partner->is_available == 1;
                 });
                 $is_available = count($available_partners) != 0 ? 1 : 0;
-                return api_response($request, $is_available, 200,['is_available' => $is_available]);
+                return api_response($request, $is_available, 200, ['is_available' => $is_available, 'available_partners' => count($available_partners)]);
             }
             if ($partner_list->hasPartners) {
                 $partner_list->addPricing();
