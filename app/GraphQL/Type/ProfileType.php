@@ -18,17 +18,22 @@ class ProfileType extends GraphQlType
         return [
             'id' => ['type' => Type::int()],
             'name' => ['type' => Type::string()],
-            'pro_pic' => ['type' => Type::string()],
+            'picture' => ['type' => Type::string()],
             'email' => ['type' => Type::string()],
             'mobile' => ['type' => Type::string()],
             'gender' => ['type' => Type::string()],
             'birthday' => ['type' => Type::string()],
-            'address' => ['type' => Type::string()],
+            'address' => ['type' => Type::string()]
         ];
     }
 
     protected function resolveBirthdayField($root, $args)
     {
         return $root->dob;
+    }
+
+    protected function resolvePictureField($root, $args)
+    {
+        return $root->pro_pic;
     }
 }

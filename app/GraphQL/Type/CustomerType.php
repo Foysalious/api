@@ -19,10 +19,8 @@ class CustomerType extends GraphQlType
     {
         return [
             'id' => ['type' => Type::int()],
-            'name' => ['type' => Type::string()],
-            'picture' => ['type' => Type::string()],
-            'mobile' => ['type' => Type::string()],
             'addresses' => ['type' => Type::listOf(GraphQL::type('Address'))],
+            'profile' => ['type' => GraphQL::type('Profile')],
             'orders' => [
                 'args' => [
                     'filter' => ['type' => Type::string()],
@@ -34,20 +32,6 @@ class CustomerType extends GraphQlType
         ];
     }
 
-    protected function resolveNameField($root, $args)
-    {
-        return $root->profile->name;
-    }
-
-    protected function resolvePictureField($root, $args)
-    {
-        return $root->profile->pro_pic;
-    }
-
-    protected function resolveMobileField($root, $args)
-    {
-        return $root->profile->mobile;
-    }
 
     protected function resolveAddressesField($root, $args)
     {
