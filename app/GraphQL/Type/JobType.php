@@ -24,6 +24,7 @@ class JobType extends GraphQlType
             'category' => ['type' => GraphQL::type('Category')],
             'review' => ['type' => GraphQL::type('Review')],
             'resource' => ['type' => GraphQL::type('Resource')],
+            'services' => ['type' => Type::listOf(GraphQL::type('JobService'))]
         ];
     }
 
@@ -35,5 +36,18 @@ class JobType extends GraphQlType
     protected function resolveCompletedAtTimestampField($root, $args)
     {
         return $root->delivered_date ? $root->delivered_date->timestamp : null;
+    }
+
+    protected function resolveServicesField($root, $args)
+    {
+        if (count($root->jobServices) == 0) {
+            return array(array('name' => $root->service_name, 'options' => $root->service_variables));
+        } else {
+            $services = [];
+            foreach ($root->jobServices as $jobService) {
+                array_push($services, array('name' => $jobService->service->name, 'options' => $jobService->variables));
+            }
+            return $services;
+        }
     }
 }

@@ -3,7 +3,6 @@
 namespace App\GraphQL\Query;
 
 use App\Models\Customer;
-use App\Models\Order;
 use GraphQL;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;

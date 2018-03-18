@@ -185,10 +185,12 @@ return [
         'App\GraphQL\Type\AnswerType',
         'App\GraphQL\Type\PartnerType',
         'App\GraphQL\Type\OrderType',
+        'App\GraphQL\Type\OrderServiceType',
         'App\GraphQL\Type\ResourceType',
         'App\GraphQL\Type\UspType',
         'App\GraphQL\Type\LocationType',
         'App\GraphQL\Type\JobType',
+        'App\GraphQL\Type\JobServiceType',
         'App\GraphQL\Type\DeliveryAddressType',
     ],
 

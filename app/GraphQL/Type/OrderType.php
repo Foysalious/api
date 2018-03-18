@@ -2,6 +2,7 @@
 
 namespace App\GraphQL\Type;
 
+use Carbon\Carbon;
 use GraphQL;
 use \Folklore\GraphQL\Support\Type as GraphQlType;
 use GraphQL\Type\Definition\Type;
@@ -25,13 +26,14 @@ class OrderType extends GraphQlType
             'address' => ['type' => Type::string()],
             'status' => ['type' => Type::string()],
             'schedule_date' => ['type' => Type::string()],
+            'schedule_time' => ['type' => Type::string()],
             'location' => ['type' => GraphQL::type('Location')],
             'total_price' => ['type' => Type::float()],
             'paid' => ['type' => Type::float()],
             'due' => ['type' => Type::float()],
             'delivery_address' => ['type' => Type::string()],
             'delivery_name' => ['type' => Type::string()],
-            'delivery_mobile' => ['type' => Type::string()],
+            'delivery_mobile' => ['type' => Type::string()]
         ];
     }
 
@@ -98,6 +100,16 @@ class OrderType extends GraphQlType
     protected function resolveScheduleDateField($root)
     {
         return $root->jobs[0]->schedule_date;
+    }
+
+    protected function resolveScheduleTimeField($root)
+    {
+        $time = $root->jobs[0]->preferred_time;
+        if ($time === 'Anytime') {
+            return $time;
+        }
+        $time = explode('-', $time);
+        return (Carbon::parse($time[0]))->format('g:i A') . '-' . (Carbon::parse($time[1]))->format('g:i A');
     }
 
     protected function resolveDeliveryAddressField($root)
