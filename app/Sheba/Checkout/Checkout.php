@@ -100,6 +100,7 @@ class Checkout
                     'schedule_date' => $data['date'],
                     'preferred_time' => $data['time'],
                     'preferred_time_start' => explode('-', $data['time'])[0],
+                    'preferred_time_end' => explode('-', $data['time'])[1],
                     'crm_id' => $data['crm_id'],
                     'category_answers' => $data['category_answers'],
                     'commission_rate' => (Category::find(($selected_services->first())->category_id))->commission($partner_order->partner_id)
