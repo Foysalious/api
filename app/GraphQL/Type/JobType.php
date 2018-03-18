@@ -24,7 +24,8 @@ class JobType extends GraphQlType
             'category' => ['type' => GraphQL::type('Category')],
             'review' => ['type' => GraphQL::type('Review')],
             'resource' => ['type' => GraphQL::type('Resource')],
-            'services' => ['type' => Type::listOf(GraphQL::type('JobService'))]
+            'services' => ['type' => Type::listOf(GraphQL::type('JobService'))],
+            'materials' => ['type' => Type::listOf(GraphQL::type('JobMaterial'))],
         ];
     }
 
@@ -41,13 +42,25 @@ class JobType extends GraphQlType
     protected function resolveServicesField($root, $args)
     {
         if (count($root->jobServices) == 0) {
-            return array(array('name' => $root->service_name, 'options' => $root->service_variables));
+            return array(array(
+                'name' => $root->service_name, 'options' => $root->service_variables,
+                'quantity' => (float)$root->service_quantity, 'unit_price' => (float)$root->service_unit_price)
+            );
         } else {
             $services = [];
             foreach ($root->jobServices as $jobService) {
-                array_push($services, array('name' => $jobService->service->name, 'options' => $jobService->variables));
+                array_push($services, array(
+                        'name' => $jobService->service->name, 'options' => $jobService->variables,
+                        'quantity' => (float)$jobService->quantity, 'unit_price' => (float)$jobService->unit_price)
+                );
             }
             return $services;
         }
     }
+
+    protected function resolveMaterialsField($root, $args)
+    {
+        return $root->usedMaterials;
+    }
+
 }

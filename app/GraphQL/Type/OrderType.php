@@ -29,11 +29,15 @@ class OrderType extends GraphQlType
             'schedule_time' => ['type' => Type::string()],
             'location' => ['type' => GraphQL::type('Location')],
             'total_price' => ['type' => Type::float()],
+            'total_material_price' => ['type' => Type::float()],
+            'total_discount' => ['type' => Type::float()],
             'paid' => ['type' => Type::float()],
             'due' => ['type' => Type::float()],
             'delivery_address' => ['type' => Type::string()],
             'delivery_name' => ['type' => Type::string()],
-            'delivery_mobile' => ['type' => Type::string()]
+            'delivery_mobile' => ['type' => Type::string()],
+            'closed_and_paid_at' => ['type' => Type::string()],
+            'closed_and_paid_at_timestamp' => ['type' => Type::int()],
         ];
     }
 
@@ -81,6 +85,22 @@ class OrderType extends GraphQlType
         return (float)$root->totalPrice;
     }
 
+    protected function resolveTotalMaterialPriceField($root)
+    {
+        if (!isset($root['totalMaterialPrice'])) {
+            $root->calculate(true);
+        }
+        return (float)$root->totalMaterialPrice;
+    }
+
+    protected function resolveTotalDiscountField($root)
+    {
+        if (!isset($root['totalDiscount'])) {
+            $root->calculate(true);
+        }
+        return (float)$root->totalDiscount;
+    }
+
     protected function resolveAddressField($root)
     {
         return $root->order->delivery_address;
@@ -125,5 +145,15 @@ class OrderType extends GraphQlType
     protected function resolveDeliveryMobileField($root)
     {
         return $root->order->delivery_mobile;
+    }
+
+    protected function resolveClosedAndPaidAtField($root)
+    {
+        return $root->closed_and_paid_at ? $root->closed_and_paid_at->format('Y-m-d') : null;
+    }
+
+    protected function resolveClosedAndPaidAtTimestamp($root)
+    {
+        return $root->closed_and_paid_at ? $root->closed_and_paid_at->timestamp : null;
     }
 }
