@@ -256,4 +256,13 @@ class Job extends Model
         return $this->hasOne(ResourceSchedule::class);
     }
 
+    public function getReadablePreferredTimeAttribute()
+    {
+        if ($this->preferred_time !== 'Anytime') {
+            $time = explode('-', $this->preferred_time);
+            return (Carbon::parse($time[0]))->format('g:i A') . '-' . (Carbon::parse($time[1]))->format('g:i A');
+        }
+        return $this->preferred_time;
+    }
+
 }

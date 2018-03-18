@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\PartnerOrder;
+use App\Sheba\JobTime;
 use Carbon\Carbon;
 
 class PartnerOrderRepository
@@ -67,7 +68,7 @@ class PartnerOrderRepository
                 'category_name' => $jobs[0]->category ? $jobs[0]->category->name : null,
                 'job_id' => $jobs[0]->id,
                 'schedule_date' => $jobs[0]->schedule_date,
-                'preferred_time' => $jobs[0]->preferred_time
+                'preferred_time' => $jobs[0]->readable_preferred_time
             ]);
             $all_partner_orders->push($order);
         }

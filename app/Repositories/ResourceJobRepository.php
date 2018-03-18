@@ -95,6 +95,7 @@ class ResourceJobRepository
             $job['schedule_date_timestamp'] = (Carbon::parse($job->schedule_date))->timestamp;
             $job['service_unit_price'] = (double)$job->service_unit_price;
             $job['category_name'] = $job->category ? $job->category->name : null;
+            $job['preferred_time'] = $job->readable_preferred_time;
             $job['service_unit'] = null;
             if (count($job->jobServices) == 0) {
                 $services = collect();
