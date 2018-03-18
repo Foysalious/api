@@ -50,7 +50,7 @@ class ResourceType extends GraphQlType
 
     protected function resolveMobileField($root, $args)
     {
-        return $root->profile->email;
+        return $root->profile->mobile;
     }
 
     protected function resolveGenderField($root, $args)
