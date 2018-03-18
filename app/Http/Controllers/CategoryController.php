@@ -171,7 +171,7 @@ class CategoryController extends Controller
                     unset($partner);
                 }
             }
-            $available_partners = $category->partners->count();
+            $available_partners = $category->partners;
             return api_response($request, $available_partners, 200, ['total_available_partners' => $available_partners, 'isAvailable' => count($available_partners) > 0 ? 1 : 0]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
