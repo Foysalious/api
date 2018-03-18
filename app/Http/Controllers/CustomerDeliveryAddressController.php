@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 
+use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -16,6 +17,24 @@ class CustomerDeliveryAddressController extends Controller
             $customer = $request->customer;
             $addresses = $customer->delivery_addresses()->select('id', 'address')->get();
             return api_response($request, null, 200, ['addresses' => $addresses, 'name' => $customer->profile->name, 'mobile' => $customer->profile->mobile]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function store($customer, Request $request)
+    {
+        try {
+            $customer = $request->customer;
+            $delivery_address = new CustomerDeliveryAddress();
+            $delivery_address->address = $request->adress;
+            $delivery_address->name = $request->name;
+            $delivery_address->customer_id = $customer->id;
+            if ($delivery_address->save()) {
+                return api_response($request, 1, 200, ['address' => $delivery_address->id]);
+            } else {
+                return api_response($request, null, 500);
+            }
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
