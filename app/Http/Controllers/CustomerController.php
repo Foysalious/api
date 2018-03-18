@@ -115,7 +115,7 @@ class CustomerController extends Controller
             $profile = $request->customer->profile;
             if ($profile->password) {
                 if (!Hash::check($request->old_password, $profile->password)) {
-                    return api_response($request, null, 400, ['message' => 'Old password doesn\'t match']);
+                    return api_response($request, null, 403, ['message' => "Old password doesn't match"]);
                 }
             }
             $profile->password = bcrypt($request->new_password);
@@ -174,10 +174,10 @@ class CustomerController extends Controller
                     $profile->mobile_verified = 1;
                     $profile->update();
                 } else {
-                    return api_response($request, null, 400, ['message' => 'Mobile already exits!']);
+                    return api_response($request, null, 403, ['message' => 'Mobile already exits!']);
                 }
             }
-            return api_response($request, null, 403);
+            return api_response($request, null, 409);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
