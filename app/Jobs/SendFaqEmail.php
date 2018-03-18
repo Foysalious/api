@@ -32,7 +32,6 @@ class SendFaqEmail extends Job implements ShouldQueue
     public function handle()
     {
         Mail::raw($this->data['message'], function ($m) {
-            $m->from($this->data['email'], $this->data['name']);
             $m->to('career@sheba.xyz');
             $m->subject($this->data['subject']);
         });

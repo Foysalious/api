@@ -27,7 +27,6 @@ class CareerController extends Controller
         $cover = $request->file('cover');
 
         Mail::raw($request->input('description'), function ($m) use ($request, $cv, $cover) {
-            $m->from($request->input('email'), $request->input('name'));
             $m->to('career@sheba.xyz');
             $m->subject($request->input('jobTitle'));
             $m->attachData(file_get_contents($cv), 'Resume - ' . $request->input('name') . '.' . $cv->extension());

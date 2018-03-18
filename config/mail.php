@@ -55,7 +55,7 @@ return [
     |
     */
 
-    'from' => ['address' => null, 'name' => null],
+    'from' => ['address' => 'noreply@sheba.xyz', 'name' => 'Sheba Platform Ltd.'],
 
     /*
     |--------------------------------------------------------------------------

@@ -107,7 +107,6 @@ class CustomerRepository
         Redis::set('email_verification-' . $customer->id, $verfication_code);
         Redis::expire('email_verification-' . $customer->id, 30 * 60);
         Mail::send('emails.email-verification', ['customer' => $customer, 'code' => $verfication_code], function ($m) use ($customer) {
-            $m->from('yourEmail@domain.com', 'Sheba.xyz');
             $m->to($customer->email)->subject('Email Verification');
 
         });
@@ -123,7 +122,6 @@ class CustomerRepository
     {
         $verfication_code = str_random(60);
         Mail::send('emails.reset-password', ['customer' => $customer, 'code' => $verfication_code], function ($m) use ($customer) {
-            $m->from('yourEmail@domain.com', 'Sheba.xyz');
             $m->to($customer->email)->subject('Reset Password');
 
         });

@@ -377,7 +377,6 @@ class CheckoutRepository
     public function sendOrderConfirmationMail($order, $customer)
     {
         Mail::send('orders.order-verfication', ['customer' => $customer, 'order' => $order], function ($m) use ($customer) {
-            $m->from('yourEmail@domain.com', 'Sheba.xyz');
             $m->to($customer->email)->subject('Order Verification');
         });
     }

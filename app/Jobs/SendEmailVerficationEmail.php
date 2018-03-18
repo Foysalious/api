@@ -34,7 +34,6 @@ class SendEmailVerficationEmail extends Job implements ShouldQueue
         Redis::set('email-verification-' . $this->customer->id, $verfication_code);
         Redis::expire('email-verification-' . $this->customer->id, 30 * 60);
         Mail::send('emails.email-verification', ['customer' => $this->customer, 'code' => $verfication_code], function ($m) {
-            $m->from('yourEmail@domain.com', 'Sheba.xyz');
             $m->to($this->customer->email)->subject('Email Verification');
         });
     }

@@ -100,7 +100,6 @@ class PasswordController extends Controller
         Redis::set($verfication_code, json_encode(['email' => $email]));
         Redis::expire($verfication_code, 600);
         Mail::send('emails.reset-password', ['code' => $verfication_code], function ($m) use ($email) {
-            $m->from('mail@sheba.xyz', 'Sheba.xyz');
             $m->to($email)->subject('Reset Password');
 
         });
