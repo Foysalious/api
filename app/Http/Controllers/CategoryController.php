@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\ScheduleSlot;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
 use App\Sheba\Queries\Category\StartPrice;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Dingo\Api\Routing\Helpers;
 use Redis;
@@ -149,6 +151,43 @@ class CategoryController extends Controller
             }
         } else {
             return api_response($request, null, 404);
+        }
+    }
+
+    public function getPartnersOfLocation($category, $location, Request $request)
+    {
+        try {
+            $category = Category::find($category);
+            $category->load(['partners' => function ($q) use ($location, $category) {
+                $q->verified()->with('handymanResources')->whereHas('locations', function ($query) use ($location) {
+                    $query->where('locations.id', (int)$location);
+                })->whereHas('categories', function ($query) use ($category) {
+                    $query->where('categories.id', $category->id)->where('category_partner.is_verified', 1);
+                });
+            }]);
+            $first = $this->getFirstValidSlot();
+            foreach ($category->partners as &$partner) {
+                if (!scheduler($partner)->isAvailable((Carbon::today())->format('Y-m-d'), explode('-', $first), $category->id)) {
+                    unset($partner);
+                }
+            }
+            $available_partners = $category->partners->count();
+            return api_response($request, $available_partners, 200, ['total_available_partners' => $available_partners, 'isAvailable' => count($available_partners) > 0 ? 1 : 0]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    private function getFirstValidSlot()
+    {
+        $slots = ScheduleSlot::all();
+        $current_time = Carbon::now();
+        foreach ($slots as $slot) {
+            $slot_start_time = Carbon::parse($slot->start);
+            $time_slot_key = $slot->start . '-' . $slot->end;
+            if ($slot_start_time > $current_time) {
+                return $time_slot_key;
+            }
         }
     }
 

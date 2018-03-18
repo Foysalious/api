@@ -317,6 +317,7 @@ $api->version('v1', function ($api) {
                 $api->get('', 'CategoryController@show');
                 $api->get('services', 'CategoryController@getServices');
                 $api->get('reviews', 'CategoryController@getReviews');
+                $api->get('locations/{location}/partners', 'CategoryController@getPartnersOfLocation');
             });
         });
         $api->group(['prefix' => 'locations'], function ($api) {

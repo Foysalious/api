@@ -109,9 +109,11 @@ class CategoryType extends GraphQlType
         if (!isset($args['location_id'])) {
             return null;
         }
-        $root->load(['partners' => function ($q) use ($args) {
+        $root->load(['partners' => function ($q) use ($args, $root) {
             $q->verified()->with('handymanResources')->whereHas('locations', function ($query) use ($args) {
                 $query->where('locations.id', (int)$args['location_id']);
+            })->whereHas('categories', function ($query) use ($root) {
+                $query->where('categories.id', $root->id)->where('category_partner.is_verified', 1);
             });
         }]);
         $first = $this->getFirstValidSlot();
