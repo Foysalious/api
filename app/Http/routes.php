@@ -3,15 +3,6 @@
 use App\Repositories\PushNotificationRepository;
 
 Route::get('/', function () {
-    $partner_order = App\Models\PartnerOrder::find(36826);
-    (new PushNotificationRepository())->send([
-        "title" => 'Resource extended time',
-        "message" => " has extended time for ",
-        "event_type" => 'PartnerOrder',
-        "event_id" => "$partner_order->id",
-        "action" => 'extend_time',
-        "version" => "v2"
-    ], env('MANAGER_TOPIC_NAME') . 3);
     return ['code' => 200, 'msg' => "Success. This project will hold the api's"];
 });
 $api = app('Dingo\Api\Routing\Router');
@@ -291,6 +282,10 @@ $api->version('v1', function ($api) {
 
     });
     $api->group(['prefix' => 'v2', 'namespace' => 'App\Http\Controllers'], function ($api) {
+        $api->group(['prefix' => 'complains'], function ($api) {
+            $api->get('/', 'ComplainController@get');
+            $api->post('/', 'ComplainController@addPromo');
+        });
         $api->post('password/email', 'Auth\PasswordController@sendResetPasswordEmail');
         $api->post('password/validate', 'Auth\PasswordController@validatePasswordResetCode');
         $api->post('password/reset', 'Auth\PasswordController@reset');
@@ -345,6 +340,7 @@ $api->version('v1', function ($api) {
                     $api->get('/', 'PromotionController@index');
                     $api->post('/', 'PromotionController@addPromo');
                 });
+
                 $api->group(['prefix' => 'delivery-addresses'], function ($api) {
                     $api->get('/', 'CustomerDeliveryAddressController@index');
                     $api->post('/', 'CustomerDeliveryAddressController@store');

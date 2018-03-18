@@ -7,6 +7,8 @@
   ],
   "license": "MIT",
   "type": "project",
+  "minimum-stability": "dev",
+  "prefer-stable": true,
   "require": {
     "php": ">=5.5.9",
     "laravel/framework": "5.2.*",
@@ -22,7 +24,8 @@
     "aws/aws-sdk-php": "^3.32",
     "sunra/php-simple-html-dom-parser": "1.5.2",
     "google/apiclient": "^2.2",
-    "folklore/graphql": "^1.0"
+    "folklore/graphql": "^1.0",
+    "sheba/dal": "dev-master"
   },
   "require-dev": {
     "fzaninotto/faker": "~1.4",
@@ -71,5 +74,15 @@
   },
   "config": {
     "preferred-install": "dist"
-  }
+  },
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://mac_pasha@bitbucket.org/startern/sheba_voucher.git"
+    },
+    {
+      "type": "vcs",
+      "url": "https://mac_pasha@bitbucket.org/startern/sheba_dal.git"
+    }
+  ]
 }

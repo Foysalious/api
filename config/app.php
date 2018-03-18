@@ -166,6 +166,7 @@ return [
         Folklore\GraphQL\ServiceProvider::class,
 
         App\Providers\CustomValidatorProvider::class,
+        Sheba\Dal\Providers\RepositoriesServiceProvider::class,
 
     ],
 
