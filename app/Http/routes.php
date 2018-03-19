@@ -344,6 +344,10 @@ $api->version('v1', function ($api) {
                 });
                 $api->group(['prefix' => 'orders'], function ($api) {
                     $api->post('/', 'OrderController@store');
+                    $api->get('/', 'CustomerOrderController@index');
+                    $api->group(['prefix' => '{order}'], function ($api) {
+
+                    });
                 });
                 $api->group(['prefix' => 'jobs'], function ($api) {
                     $api->get('/', 'JobController@index');
