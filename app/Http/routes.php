@@ -360,6 +360,10 @@ $api->version('v1', function ($api) {
                         $api->group(['prefix' => 'complains'], function ($api) {
                             $api->get('/', 'ComplainController@index');
                             $api->post('/', 'ComplainController@store');
+                            $api->group(['prefix' => '{complain}'], function ($api) {
+                                $api->post('/', 'ComplainController@postComment');
+                                $api->get('/', 'ComplainController@show');
+                            });
                         });
                         $api->group(['prefix' => 'rates'], function ($api) {
                             $api->get('/', 'RateController@index');
