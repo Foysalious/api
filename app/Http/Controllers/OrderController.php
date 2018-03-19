@@ -198,6 +198,7 @@ class OrderController extends Controller
             }
             return api_response($request, $order, 500);
         } catch (\Throwable $e) {
+            dd($e);
             return api_response($request, null, 500);
         }
     }
@@ -205,14 +206,26 @@ class OrderController extends Controller
 
     public function clearPayment(Request $request)
     {
-        $redis_key_name = 'portwallet-payment-' . $request->invoice;
-        $redis_key = Redis::get($redis_key_name);
-        if ($redis_key != null) {
-            if ($payment = (new OnlinePayment())->pay($redis_key, $request)) {
-                Redis::del($redis_key_name);
-                return api_response($request, $payment, 200);
+        try {
+            $redis_key_name = 'portwallet-payment-' . $request->invoice;
+            $redis_key = Redis::get($redis_key_name);
+            if ($redis_key) {
+                $data = json_decode($redis_key);
+                $amount = $data->amount;
+                $order = Order::find((int)$data->order_id);
+                if ($order != null) {
+                    if ((new OnlinePayment())->pay($order, $amount, $request)) {
+                        Redis::del($redis_key_name);
+                        $s_id = str_random(10);
+                        Redis::set($s_id, 'online');
+                        Redis::expire($s_id, 500);
+                        return redirect(env('SHEBA_FRONT_END_URL') . '/profile/orders?s_token=' . $s_id);
+                    }
+                }
             }
+            return api_response($request, null, 404);
+        } catch (\Throwable $exception) {
+            return api_response($request, null, 500);
         }
-        return api_response($request, null, 404);
     }
 }

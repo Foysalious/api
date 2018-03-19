@@ -57,17 +57,17 @@ class OnlinePayment
         }
     }
 
-    public function pay($online_payment_redis_key, $request)
+    public function pay(Order $order, $amount, $request)
     {
-        $online_payment_data = json_decode($online_payment_redis_key);
         $portwallet_response = $this->portwallet->ipnValidate(array(
-            'amount' => $online_payment_data->amount,
+            'amount' => $amount,
             'invoice' => $request->invoice,
             'currency' => "BDT"
         ));
         if ($portwallet_response->status == 200 && $portwallet_response->data->status == "ACCEPTED") {
-            return $this->createPartnerOrderPayment($online_payment_data->order_id, $portwallet_response, $request);
+            return $this->createPartnerOrderPayment($order->id, $portwallet_response, $request);
         }
+
         return null;
     }
 
