@@ -36,6 +36,7 @@ class OrderType extends GraphQlType
             'delivery_address' => ['type' => Type::string()],
             'delivery_name' => ['type' => Type::string()],
             'delivery_mobile' => ['type' => Type::string()],
+            'version' => ['type' => Type::string()],
             'closed_and_paid_at' => ['type' => Type::string()],
             'closed_and_paid_at_timestamp' => ['type' => Type::int()],
         ];
@@ -155,5 +156,10 @@ class OrderType extends GraphQlType
     protected function resolveClosedAndPaidAtTimestamp($root)
     {
         return $root->closed_and_paid_at ? $root->closed_and_paid_at->timestamp : null;
+    }
+
+    protected function resolveVersionField($root)
+    {
+        return $root->getVersion();
     }
 }
