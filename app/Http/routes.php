@@ -282,10 +282,6 @@ $api->version('v1', function ($api) {
 
     });
     $api->group(['prefix' => 'v2', 'namespace' => 'App\Http\Controllers'], function ($api) {
-        $api->group(['prefix' => 'complains'], function ($api) {
-            $api->get('/', 'ComplainController@get');
-            $api->post('/', 'ComplainController@addPromo');
-        });
         $api->post('password/email', 'Auth\PasswordController@sendResetPasswordEmail');
         $api->post('password/validate', 'Auth\PasswordController@validatePasswordResetCode');
         $api->post('password/reset', 'Auth\PasswordController@reset');
@@ -356,6 +352,10 @@ $api->version('v1', function ($api) {
                         $api->get('bills', 'JobController@getBills');
                         $api->get('logs', 'JobController@getLogs');
                         $api->post('reviews', 'ReviewController@store');
+                        $api->group(['prefix' => 'complains'], function ($api) {
+                            $api->get('/', 'ComplainController@index');
+                            $api->post('/', 'ComplainController@store');
+                        });
                         $api->group(['prefix' => 'rates'], function ($api) {
                             $api->get('/', 'RateController@index');
                             $api->post('/', 'RateController@store');

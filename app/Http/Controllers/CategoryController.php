@@ -172,7 +172,7 @@ class CategoryController extends Controller
                 }
             }
             $available_partners = $category->partners;
-            return api_response($request, $available_partners, 200, ['total_available_partners' => $available_partners, 'isAvailable' => count($available_partners) > 0 ? 1 : 0]);
+            return api_response($request, $available_partners, 200, ['total_available_partners' => $available_partners->count(), 'isAvailable' => count($available_partners) > 0 ? 1 : 0]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
