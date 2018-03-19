@@ -21,6 +21,12 @@ class PartnerType extends GraphQlType
             'id' => ['type' => Type::int()],
             'name' => ['type' => Type::string()],
             'logo' => ['type' => Type::string()],
+            'slug' => ['type' => Type::string()]
         ];
+    }
+
+    protected function resolveSlugField($root, $args)
+    {
+        return $root->sub_domain;
     }
 }
