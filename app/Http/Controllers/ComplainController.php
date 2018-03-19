@@ -8,21 +8,26 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Job;
+use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 use Sheba\Dal\Accessor\Contract as AccessorRepo;
 use Sheba\Dal\ComplainPreset\Contract as ComplainPresetRepo;
 
 use Illuminate\Http\Request;
+use Sheba\Dal\Complain\EloquentImplementation as ComplainRepo;
 
 class ComplainController extends Controller
 {
     private $accessorRepo;
     private $complainPresetRepo;
+    private $complainRepo;
 
-    public function __construct(AccessorRepo $accessorRepo, ComplainPresetRepo $complain_preset_repo)
+    public function __construct(ComplainRepo $complain, AccessorRepo $accessorRepo, ComplainPresetRepo $complain_preset_repo)
     {
         $this->accessorRepo = $accessorRepo;
         $this->complainPresetRepo = $complain_preset_repo;
+        $this->complainRepo = $complain;
     }
 
     public function index(Request $request)
@@ -51,14 +56,18 @@ class ComplainController extends Controller
         }
     }
 
-    public function store(Request $request)
+    public function store($job, Request $request)
     {
         try {
             $this->validate($request, [
-                'accessor' => 'required|numeric',
-                'complain'
+                'accessor_id' => 'required|numeric',
+                'complain_preset' => 'required|numeric',
+                'complain' => 'sometimes|string',
             ]);
-            $this->processData($request);
+            $job = $request->job;
+            $data = $this->processData($request, $job);
+            $complain = $this->complainRepo->create($data);
+            return api_response($request, $complain, 200, ['response' => $complain->preset->response]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -67,7 +76,7 @@ class ComplainController extends Controller
         }
     }
 
-    protected function processData(Request $request)
+    protected function processData(Request $request, Job $job)
     {
         $preset_id = (int)$request->complain_preset;
         $preset = $this->complainPresetRepo->find($preset_id);
@@ -76,13 +85,11 @@ class ComplainController extends Controller
         return [
             'complain' => $request->complain,
             'complain_preset_id' => $preset_id,
-            'source' => $request->complain_source,
             'follow_up_time' => $follow_up_time,
             'accessor_id' => $request->accessor_id,
-            'assigned_to_id' => empty($request->assigned_to_id) ? null : (int)$request->assigned_to_id,
             'job_id' => empty($request->job_id) ? null : $request->job_id,
-            'customer_id' => isset($request->customer_id) ? $request->customer_id : null,
-            'partner_id' => empty($request->partner_id) ? null : $request->partner_id
+            'customer_id' => isset($request->customer_id) ? $job->partnerOrder->order->customer_id : null,
+            'partner_id' => empty($request->partner_id) ? $job->partnerOrder->partner_id : $request->partner_id
         ];
     }
 }
