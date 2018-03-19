@@ -18,6 +18,7 @@ class JobType extends GraphQlType
             'id' => ['type' => Type::int()],
             'completed_at' => ['type' => Type::string()],
             'additional_information' => ['type' => Type::string()],
+            'price' => ['type' => Type::float()],
             'schedule_date' => ['type' => Type::string()],
             'preferred_time' => ['type' => Type::string()],
             'completed_at_timestamp' => ['type' => Type::float()],
@@ -26,6 +27,7 @@ class JobType extends GraphQlType
             'resource' => ['type' => GraphQL::type('Resource')],
             'services' => ['type' => Type::listOf(GraphQL::type('JobService'))],
             'materials' => ['type' => Type::listOf(GraphQL::type('JobMaterial'))],
+            'order' => ['type' => GraphQL::type('Order')],
         ];
     }
 
@@ -61,6 +63,19 @@ class JobType extends GraphQlType
     protected function resolveMaterialsField($root, $args)
     {
         return $root->usedMaterials;
+    }
+
+    protected function resolveOrderField($root, $args)
+    {
+        return $root->partnerOrder;
+    }
+
+    protected function resolvePriceField($root, $args)
+    {
+        if (isset($job['totalPrice'])) {
+            $root->calculate(true);
+        }
+        return (double)$root->totalPrice;
     }
 
 }
