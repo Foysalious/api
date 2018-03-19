@@ -119,6 +119,7 @@ class JobController extends Controller
             $bill['closed_and_paid_at'] = $partnerOrder->closed_and_paid_at;
             $bill['closed_and_paid_at_timestamp'] = $partnerOrder->closed_and_paid_at != null ? $partnerOrder->closed_and_paid_at->timestamp : null;
             $bill['status'] = $job->status;
+            $bill['invoice'] = $job->partnerOrder->invoice;
             return api_response($request, $bill, 200, ['bill' => $bill]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
@@ -203,7 +204,10 @@ class JobController extends Controller
                 }])->with(['review' => function ($query) {
                     $query->select('job_id', 'review_title', 'review', 'rating');
                 }])->where('id', $job->id)
-                    ->select('id', 'service_id', 'resource_id', DB::raw('DATE_FORMAT(schedule_date, "%M %d, %Y") as schedule_date'), DB::raw('DATE_FORMAT(delivered_date, "%M %d, %Y at %h:%i %p") as delivered_date'), 'created_at', 'preferred_time', 'service_name', 'service_quantity', 'service_variable_type', 'service_variables', 'job_additional_info', 'service_option', 'discount', 'status', 'service_unit_price', 'partner_order_id')
+                    ->select('id', 'service_id', 'resource_id', DB::raw('DATE_FORMAT(schedule_date, "%M %d, %Y") as schedule_date'),
+                        DB::raw('DATE_FORMAT(delivered_date, "%M %d, %Y at %h:%i %p") as delivered_date'), 'created_at', 'preferred_time',
+                        'service_name', 'service_quantity', 'service_variable_type', 'service_variables', 'job_additional_info', 'service_option', 'discount',
+                        'status', 'service_unit_price', 'partner_order_id')
                     ->first();
                 array_add($job, 'status_show', $this->job_statuses_show[array_search($job->status, $this->job_statuses)]);
 
