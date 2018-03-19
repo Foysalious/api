@@ -8,6 +8,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Validation\ValidationException;
 use Sheba\Dal\Accessor\Contract as AccessorRepo;
 use Sheba\Dal\ComplainPreset\Contract as ComplainPresetRepo;
 
@@ -27,7 +28,10 @@ class ComplainController extends Controller
     public function index(Request $request)
     {
         try {
-            $accessor = $this->accessorRepo->findByNameWithPublishedCategoryAndPreset('Customer');
+            $this->validate($request, [
+                'for' => 'required|in:customer,partner'
+            ]);
+            $accessor = $this->accessorRepo->findByNameWithPublishedCategoryAndPreset(ucwords($request->for));
             $final_complains = collect();
             $final_presets = collect();
             foreach ($accessor->complainPresets as $preset) {
@@ -38,7 +42,10 @@ class ComplainController extends Controller
                 $final->put('presets', $final_presets->where('category_id', $category->id)->values()->all());
                 $final_complains->push($final);
             }
-            return api_response($request, null, 200, ['complains' => $final_complains]);
+            return api_response($request, null, 200, ['complains' => $final_complains, 'accessor' => $accessor->id]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
@@ -46,7 +53,18 @@ class ComplainController extends Controller
 
     public function store(Request $request)
     {
-        $this->processData($request);
+        try {
+            $this->validate($request, [
+                'accessor' => 'required|numeric',
+                'complain'
+            ]);
+            $this->processData($request);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
     }
 
     protected function processData(Request $request)

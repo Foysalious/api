@@ -38,7 +38,7 @@ class CustomerFavoriteController extends Controller
     {
         try {
             if ($response = $this->save(json_decode($request->data), $request->customer)) {
-                return api_response($request, null, 200);
+                return api_response($request, 1, 200);
             } else {
                 return api_response($request, null, 500);
             }

@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CustomerFavorite;
 use App\Models\Job;
 use App\Repositories\JobCancelLogRepository;
 use App\Sheba\JobStatus;
 use function GuzzleHttp\Promise\all;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use DB;
 use Carbon\Carbon;
@@ -266,6 +268,32 @@ class JobController extends Controller
                 return api_response($request, true, 200);
             } else {
                 return api_response($request, $response, $response->code);
+            }
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function saveFavorites($customer, $job, Request $request)
+    {
+        try {
+            $job = $request->job;
+            try {
+                DB::transaction(function () use ($customer, $job) {
+                    $favorite = new CustomerFavorite(['category_id' => $job->category, 'name' => $job->category->name, 'additional_info' => $job->additional_info]);
+                    $customer->favorites()->save($favorite);
+                    foreach ($job->jobServices as $jobService) {
+                        $favorite->services()->attach($jobService->service_id, [
+                            'name' => $jobService->service->name, 'variable_type' => $jobService->variable_type,
+                            'variables' => $jobService->variable,
+                            'option' => $jobService->option,
+                            'quantity' => (double)$jobService->min_quantity
+                        ]);
+                    }
+                });
+                return api_response($request, 1, 200);
+            } catch (QueryException $e) {
+                return api_response($request, null, 500);
             }
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
