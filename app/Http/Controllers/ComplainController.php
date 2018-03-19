@@ -47,7 +47,7 @@ class ComplainController extends Controller
                 $final->put('presets', $final_presets->where('category_id', $category->id)->values()->all());
                 $final_complains->push($final);
             }
-            return api_response($request, null, 200, ['complains' => $final_complains, 'accessor' => $accessor->id]);
+            return api_response($request, null, 200, ['complains' => $final_complains, 'accessor_id' => $accessor->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
