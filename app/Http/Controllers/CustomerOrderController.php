@@ -76,6 +76,7 @@ class CustomerOrderController extends Controller
             'status_color' => constants('JOB_STATUSES_COLOR')[$job->status]['customer'],
             'partner_name' => $partnerOrder->partner->name,
             'rating' => $job->review != null ? $job->review->rating : null,
+            'price' => (double)$job->totalPrice,
             'order_code' => $partnerOrder->order->code(),
             'created_at' => $job->created_at->format('Y-m-d'),
             'created_at_timestamp' => $job->created_at->timestamp,
