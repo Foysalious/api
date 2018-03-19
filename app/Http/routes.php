@@ -346,6 +346,7 @@ $api->version('v1', function ($api) {
                     $api->post('/', 'OrderController@store');
                     $api->get('/', 'CustomerOrderController@index');
                     $api->group(['prefix' => '{order}'], function ($api) {
+                        $api->get('/', 'CustomerOrderController@show');
 
                     });
                 });
