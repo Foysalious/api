@@ -116,10 +116,11 @@ class JobController extends Controller
             $bill['services'] = $services;
             $bill['delivered_date'] = $job->delivered_date != null ? $job->delivered_date->format('Y-m-d') : null;
             $bill['delivered_date_timestamp'] = $job->delivered_date != null ? $job->delivered_date->timestamp : null;
-            $bill['closed_and_paid_at'] = $partnerOrder->closed_and_paid_at;
+            $bill['closed_and_paid_at'] = $partnerOrder->closed_and_paid_at->format('Y-m-d');
             $bill['closed_and_paid_at_timestamp'] = $partnerOrder->closed_and_paid_at != null ? $partnerOrder->closed_and_paid_at->timestamp : null;
             $bill['status'] = $job->status;
             $bill['invoice'] = $job->partnerOrder->invoice;
+            $bill['version'] = $job->partnerOrder->getVersion();
             return api_response($request, $bill, 200, ['bill' => $bill]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);

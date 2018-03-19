@@ -19,6 +19,7 @@ class JobType extends GraphQlType
             'completed_at' => ['type' => Type::string()],
             'additional_information' => ['type' => Type::string()],
             'price' => ['type' => Type::float()],
+            'status' => ['type' => Type::string()],
             'schedule_date' => ['type' => Type::string()],
             'preferred_time' => ['type' => Type::string()],
             'completed_at_timestamp' => ['type' => Type::float()],
