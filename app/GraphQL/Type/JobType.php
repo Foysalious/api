@@ -80,9 +80,9 @@ class JobType extends GraphQlType
         return (double)$root->totalPrice;
     }
 
-    protected function resolveComplainsField($root, $args)
+    protected function resolveComplainsField($root, $args,$fields)
     {
-        return $root->complains;
+        return $root->complains->where('accessor_id', 1);
     }
 
 
