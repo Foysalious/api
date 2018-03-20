@@ -24,7 +24,7 @@ class ComplainQuery extends Query
     public function args()
     {
         return [
-            'id' => ['name' => 'complain_id', 'type' => Type::int()],
+            'id' => ['name' => 'id', 'type' => Type::int()],
             'job_id' => ['name' => 'job_id', 'type' => Type::int()],
             'customer_id' => ['name' => 'customer_id', 'type' => Type::int()],
             'token' => ['name' => 'token', 'type' => Type::string()],
@@ -37,8 +37,13 @@ class ComplainQuery extends Query
             return null;
         }
         $customer = Customer::where([['id', $args['customer_id']], ['remember_token', $args['token']]])->first();
-        $accessor = Accessor::where('medel_name', get_class($customer))->first();
-        $complain = Complain::where(['id', $args['id'], ['accessor_id', $accessor->id], ['customer_id', $args['customer_id']]])->first();
+        $accessor = Accessor::where('model_name', get_class($customer))->first();
+        $complain = Complain::where(
+            [
+                ['id',$args['id']],
+                ['customer_id',$args['customer_id']],
+                ['accessor_id',$accessor->id],
+            ])->first();
         return $complain;
     }
 

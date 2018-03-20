@@ -16,7 +16,8 @@ class ComplainPresetType extends GraphQlType
     public function fields()
     {
         return [
-            'id' => ['type' => Type::int()]
+            'id' => ['type' => Type::int()],
+            'name' => ['type' => Type::string()]
         ];
     }
 }

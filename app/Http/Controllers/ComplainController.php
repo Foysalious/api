@@ -95,7 +95,7 @@ class ComplainController extends Controller
                 $comment['commentator_name'] = $comment->commentator->name;
                 $comment['commentator_picture'] = $comment->commentator->profile_pic;
             } else {
-                $comment['commentator_name'] = $comment->commentator->profilename;
+                $comment['commentator_name'] = $comment->commentator->profile->name;
                 $comment['commentator_picture'] = $comment->commentator->profile->pro_pic;
             }
             removeRelationsAndFields($comment);

@@ -190,6 +190,7 @@ return [
         'App\GraphQL\Type\JobType',
         'App\GraphQL\Type\ComplainType',
         'App\GraphQL\Type\ComplainPresetType',
+        'App\GraphQL\Type\CommentType',
         'App\GraphQL\Type\JobMaterialType',
         'App\GraphQL\Type\JobServiceType',
         'App\GraphQL\Type\ResourceType',
