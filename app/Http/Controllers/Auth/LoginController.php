@@ -8,6 +8,7 @@ use App\Models\Resource;
 use App\Repositories\CustomerRepository;
 use App\Repositories\ProfileRepository;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Validator;
 use App\Http\Controllers\Controller;
@@ -90,22 +91,31 @@ class LoginController extends Controller
 
     public function login(Request $request)
     {
-        if ($msg = $this->_validateLoginRequest($request)) {
-            return response()->json(['code' => 500, 'msg' => $msg]);
-        }
-        $profile = $this->profileRepository->ifExist($request->email, 'email');
-        if ($profile == false) {
-            $profile = $this->profileRepository->ifExist($this->formatMobile($request->email), 'mobile');
-        }
-        if ($profile != false) {
-            if (Hash::check($request->input('password'), $profile->password)) {
-                $info = $this->profileRepository->getProfileInfo($this->profileRepository->getAvatar($request->from), $profile, $request);
-                if ($info != false) {
-                    return response()->json(['code' => 200, 'info' => $info]);
+        try {
+            $this->validate($request, [
+                'email' => 'required',
+                'password' => 'required',
+                'from' => 'required|string|in:' . implode(',', constants('FROM'))
+            ]);
+            $profile = $this->profileRepository->ifExist($request->email, 'email');
+            if ($profile == false) {
+                $profile = $this->profileRepository->ifExist(formatMobile($request->email), 'mobile');
+            }
+            if ($profile != false) {
+                if (Hash::check($request->input('password'), $profile->password)) {
+                    $info = $this->profileRepository->getProfileInfo($this->profileRepository->getAvatar($request->from), $profile, $request);
+                    if ($info != null) {
+                        return api_response($request, $info, 200, ['info' => $info]);
+                    }
                 }
             }
+            return api_response($request, null, 404);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
         }
-        return response()->json(['code' => 404, 'msg' => 'Not found!']);
     }
 
     private function formatMobile($mobile)
@@ -122,66 +132,11 @@ class LoginController extends Controller
         }
     }
 
-    /**
-     * Customer login with facebook kit
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function loginWithKit(Request $request)
-    {
-        $code_data = $this->fbKit->authenticateKit($request->input('code'));
-        //login the customer if corresponding mobile exists
-        if ($customer = $this->customer->ifExist($code_data['mobile'], 'mobile')) {
-            //generate token based on customer
-            $token = JWTAuth::fromUser($customer);
-            // return success with token
-            return response()->json([
-                'msg' => 'Login with mobile successful', 'code' => 200, 'token' => $token,
-                'remember_token' => $customer->remember_token, 'customer' => $customer->id, 'customer_img' => $customer->pro_pic
-            ]);
-        } else {
-            return response()->json(['msg' => 'mobile doesn\'t exist', 'code' => 404]);
-        }
-
-    }
-
-    public function checkForAuthentication(Request $request)
-    {
-        $key = Redis::get($request->input('access_token'));
-        //key exists
-        if ($key != null) {
-            $info = json_decode($key);
-            if ($info->avatar == 'customer') {
-                $customer = Customer::find($info->id);
-                $token = JWTAuth::fromUser($customer);
-                Redis::del($request->input('access_token'));
-                if ($customer->profile_id == $info->profile_id) {
-                    return response()->json([
-                        'msg' => 'successful', 'code' => 200, 'token' => $token,
-                        'remember_token' => $customer->remember_token, 'customer' => $customer->id, 'customer_img' => $customer->pro_pic
-                    ]);
-                }
-            } else if ($info->avatar == 'resource') {
-                $resource = Resource::find($info->id);
-                Redis::del($request->input('access_token'));
-                if ($resource->profile_id == $info->profile_id) {
-                    return response()->json([
-                        'msg' => 'successful', 'code' => 200, 'resource' => $resource->id
-                    ]);
-                }
-            }
-        } else {
-            return response()->json(['msg' => 'not found', 'code' => 404]);
-        }
-    }
-
     private function _validateLoginRequest($request)
     {
         $from = implode(',', constants('FROM'));
         $validator = Validator::make($request->all(), [
-            'from' => "required|in:$from",
-            'email' => 'required',
-            'password' => 'required'
+
         ], ['in' => 'from value is invalid!']);
         return $validator->fails() ? $validator->errors()->all()[0] : false;
     }

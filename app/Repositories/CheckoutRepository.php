@@ -156,8 +156,7 @@ class CheckoutRepository
                         $job->department_id = isset($service->department_id) ? $service->department_id : '';
                         $job->service_unit_price = (float)$service->partner->prices;
                         if (isset($service->partner->discount_id)) {
-//                            $discount = PartnerServiceDiscount::find($service->partner->discount_id);
-                            $discount = $service->partner->discount;
+                            $discount = PartnerServiceDiscount::find($service->partner->discount_id);
                             $job->discount = $this->discountRepository
                                 ->getServiceDiscountAmount($discount, $service->partner->prices, $service->quantity);
                             $job->sheba_contribution = $discount->sheba_contribution;

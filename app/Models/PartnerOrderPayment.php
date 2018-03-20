@@ -11,4 +11,5 @@ class PartnerOrderPayment extends Model
     {
         return $this->belongsTo(PartnerOrder::class);
     }
+
 }

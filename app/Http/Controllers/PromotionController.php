@@ -11,11 +11,30 @@ use Sheba\Voucher\VoucherSuggester;
 
 class PromotionController extends Controller
 {
+    public function index($customer, Request $request)
+    {
+        try {
+            $customer = $request->customer->load(['orders', 'promotions' => function ($q) {
+                $q->valid()->select('id', 'voucher_id', 'customer_id', 'valid_till')->with(['voucher' => function ($q) {
+                    $q->select('id', 'code', 'amount', 'title', 'is_amount_percentage', 'cap', 'max_order');
+                }]);
+            }]);
+            foreach ($customer->promotions as &$promotion) {
+                $promotion['valid_till_timestamp'] = $promotion->valid_till->timestamp;
+                $promotion['usage_left'] = (int)$promotion->voucher->max_order - $customer->orders->where('voucher_id', $promotion->voucher->id)->count();
+            }
+            return $customer->promotions->count() > 0 ? api_response($request, $customer->promotions, 200, ['promotions' => $customer->promotions]) : api_response($request, $customer->promotions, 404);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+
+    }
+
     public function addPromo($customer, Request $request)
     {
         $promotion = new PromotionList($request->customer);
         list($promotion, $msg) = $promotion->add($request->promo);
-        return $promotion != false ? response()->json(['code' => 200, 'promotion' => $promotion]) : response()->json(['code' => 404, 'msg' => $msg]);
+        return $promotion != false ? api_response($request, $promotion, 200, ['promotion' => $promotion]) : api_response($request, null, 404);
     }
 
     public function getPromo($customer)

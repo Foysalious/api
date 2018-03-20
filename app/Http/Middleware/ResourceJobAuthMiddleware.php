@@ -17,7 +17,7 @@ class ResourceJobAuthMiddleware
     public function handle($request, Closure $next)
     {
         $resource = $request->resource;
-        $job = Job::select('id', 'status', 'resource_id', 'partner_order_id')->where('id', $request->job)->first();
+        $job = Job::where('id', $request->job)->first();
         if (!$job) {
             return api_response($request, null, 404);
         }

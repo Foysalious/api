@@ -4,7 +4,6 @@ namespace App\Repositories;
 
 
 use App\Models\Partner;
-use Illuminate\Database\QueryException;
 
 class PartnerRepository
 {
@@ -44,10 +43,10 @@ class PartnerRepository
         return $this->partner->resources;
     }
 
-    public function jobs(Array $statuses)
+    public function jobs(Array $statuses, $offset, $limit)
     {
-        $this->partner->load(['jobs' => function ($q) use ($statuses) {
-            $q->info()->status($statuses)->with(['usedMaterials' => function ($q) {
+        $this->partner->load(['jobs' => function ($q) use ($statuses, $offset, $limit) {
+            $q->info()->status($statuses)->skip($offset)->take($limit)->orderBy('id', 'desc')->with(['category', 'usedMaterials' => function ($q) {
                 $q->select('id', 'job_id', 'material_name', 'material_price');
             }, 'resource.profile', 'review', 'partner_order' => function ($q) {
                 $q->with(['order' => function ($q) {
@@ -69,5 +68,9 @@ class PartnerRepository
         }
     }
 
+    public function hasAppropriateCreditLimit()
+    {
+        return (double)$this->partner->wallet >= (double)$this->partner->walletSetting->min_wallet_threshold;
+    }
 }
 

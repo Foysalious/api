@@ -25,4 +25,14 @@ class Location extends Model
         return $this->hasMany(CustomOrder::class);
     }
 
+    public function scopePublished($query)
+    {
+        return $query->where('publication_status', 1);
+    }
+
+    public function scopeHasGeoInformation($query)
+    {
+        return $query->where('geo_informations', '<>', null);
+    }
+
 }

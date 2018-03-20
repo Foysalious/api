@@ -19,6 +19,7 @@ class CorsMiddleWare {
             "http://localhost:8080",
             "http://dev-sheba.xyz",
             "http://admin.dev-sheba.xyz",
+            "http://admin.sheba.test"
         ];
         if(in_array($request->server('HTTP_ORIGIN'), $domains)) {
             return Response::json($domains);

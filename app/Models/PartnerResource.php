@@ -9,9 +9,9 @@ class PartnerResource extends Model
         'id'
     ];
 
-    public function details()
+    public function resource()
     {
-        return $this->belongsToMany(Resource::class);
+        return $this->belongsTo(Resource::class);
     }
 
     public function partners()

@@ -5,8 +5,8 @@ namespace App\Repositories;
 
 use App\Models\PartnerService;
 use App\Models\Service;
+use App\Sheba\Partner\v1\PartnerAvailable;
 use Carbon\Carbon;
-use Sheba\Partner\PartnerAvailable;
 
 class ServiceRepository
 {
@@ -285,7 +285,6 @@ class ServiceRepository
             if (array_search('reviews', $scope) !== false) {
                 $this->reviewRepository->getGeneralReviewInformation($service);
             }
-            array_forget($service, 'variables');
             $this->removeRelationsFromModel($service, $service->getRelations());
         }
         return $services;

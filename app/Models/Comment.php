@@ -15,4 +15,9 @@ class Comment extends Model
     {
         return $this->morphTo();
     }
+
+    public function commentator()
+    {
+        return $this->morphTo();
+    }
 }

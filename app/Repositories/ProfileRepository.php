@@ -26,7 +26,7 @@ class ProfileRepository
     public function getIfExist($data, $queryColumn)
     {
         $profile = Profile::where($queryColumn, $data)->first();
-        return $profile != null ? $profile : false;
+        return $profile != null ? $profile : null;
     }
 
     public function store(array $data)

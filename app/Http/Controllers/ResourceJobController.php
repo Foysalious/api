@@ -6,6 +6,7 @@ use App\Models\Job;
 use App\Models\PartnerOrder;
 use App\Repositories\ResourceJobRepository;
 use App\Sheba\JobTime;
+use Carbon\Carbon;
 use Dingo\Api\Routing\Helpers;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -35,6 +36,18 @@ class ResourceJobController extends Controller
                 $jobs = $this->resourceJobRepository->addJobInformationForAPI($jobs);
                 if ($request->has('group_by')) {
                     $jobs = collect($jobs)->groupBy('schedule_date');
+                } elseif ($request->has('sort_by')) {
+                    $jobs = collect($jobs);
+                    $schedule_due_jobs = $jobs->filter(function ($job) {
+                        return (Carbon::parse($job->schedule_date) < Carbon::today() && $job->status == 'Schedule Due');
+                    })->values()->all();
+                    $todays_jobs = $jobs->filter(function ($job) {
+                        return (Carbon::parse($job->schedule_date))->format('Y-m-d') == (Carbon::today())->format('Y-m-d') && $job->status != 'Served';
+                    })->values()->all();
+                    $payment_due_jobs = $jobs->filter(function ($job) {
+                        return $job->isDue == 1 && $job->delivered_date != null;
+                    })->values()->all();
+                    return api_response($request, $jobs, 200, ['schedule_due' => $schedule_due_jobs, 'today' => $todays_jobs, 'payment_due' => $payment_due_jobs]);
                 }
                 return api_response($request, $jobs, 200, ['jobs' => $jobs]);
             } else {
@@ -53,12 +66,61 @@ class ResourceJobController extends Controller
             $job['can_process'] = false;
             $job['can_serve'] = false;
             $job['can_collect'] = false;
-            $jobs = $this->api->get('resources/' . $resource->id . '/jobs?remember_token=' . $resource->remember_token . '&limit=1');
+            $jobs = $this->api->get('v1/resources/' . $resource->id . '/jobs?remember_token=' . $resource->remember_token . '&limit=1');
             if ($jobs) {
                 $job = $this->resourceJobRepository->calculateActionsForThisJob($jobs[0], $job);
             }
             return api_response($request, $job, 200, ['job' => $job]);
         } catch (\Exception $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getBills($resource, $job, Request $request)
+    {
+        try {
+            $resource = $request->resource;
+            $job = $request->job->load(['partnerOrder.order', 'category', 'jobServices', 'usedMaterials' => function ($q) {
+                $q->select('job_material.id', 'job_material.material_name', 'material_price', 'job_id');
+            }]);
+            $job->calculate(true);
+            if (count($job->jobServices) == 0) {
+                $services = array();
+                array_push($services, array('name' => $job->category ? $job->category->name : null,
+                    'price' => (double)$job->servicePrice,
+                    'unit' => $job->service->unit,
+                    'quantity' => $job->service_quantity));
+            } else {
+                $services = array();
+                foreach ($job->jobServices as $jobService) {
+                    array_push($services, array(
+                        'name' => $jobService->job->category ? $jobService->job->category->name : null,
+                        'price' => (double)$jobService->unit_price * (double)$jobService->quantity,
+                        'unit' => $jobService->unit, 'quantity' => $jobService->quantity
+                    ));
+                }
+            }
+            $partnerOrder = $job->partnerOrder;
+            $partnerOrder->calculate(true);
+            $bill = collect();
+            $bill['total'] = (double)$partnerOrder->totalPrice;
+            $bill['paid'] = (double)$partnerOrder->paid;
+            $bill['due'] = (double)$partnerOrder->due;
+            $bill['total_material_price'] = (double)$job->materialPrice;
+            $bill['total_service_price'] = (double)$job->servicePrice;
+            $bill['discount'] = (double)$job->discount;
+            $bill['services'] = $services;
+            $bill['delivered_date'] = $job->delivered_date != null ? $job->delivered_date->format('Y-m-d') : null;
+            $bill['delivered_date_timestamp'] = $job->delivered_date != null ? $job->delivered_date->timestamp : null;
+            $bill['closed_and_paid_at'] = $partnerOrder->closed_and_paid_at ? $partnerOrder->closed_and_paid_at->format('Y-m-d') : null;
+            $bill['closed_and_paid_at_timestamp'] = $partnerOrder->closed_and_paid_at != null ? $partnerOrder->closed_and_paid_at->timestamp : null;
+            $bill['status'] = $job->status;
+            $bill['materials'] = $job->usedMaterials;
+            $bill['isPaid'] = $job->partnerOrder->closed_at_paid ? 1 : 0;
+            $bill['isDue'] = $job->partnerOrder->closed_at_paid == null ? 1 : 0;
+            $bill['job_code'] = $job->fullcode();
+            return api_response($request, $bill, 200, ['bill' => $bill]);
+        } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
     }
@@ -127,7 +189,7 @@ class ResourceJobController extends Controller
             if (count($jobs) != 0) {
                 $partner_order = $job->partner_order;
                 $partner_order->order;
-                $partner_order->calculate();
+                $partner_order->calculate(true);
                 $jobs = $this->resourceJobRepository->addJobInformationForAPI($jobs);
                 return api_response($request, $jobs, 200, ['jobs' => $jobs, 'total_price' => (double)$partner_order->totalPrice, 'paid' => (double)$partner_order->paid, 'due' => (double)$partner_order->due]);
             } else {
