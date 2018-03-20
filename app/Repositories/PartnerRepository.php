@@ -20,7 +20,7 @@ class PartnerRepository
     {
         $this->partner->load(['resources' => function ($q) use ($type, $verify) {
             $q->select('resources.id', 'profile_id', 'resource_type', 'resources.is_verified')->whereHas('partnerResources', function ($q) {
-                $q->where('')->has('categories');
+                $q->has('categories');
             })->with(['jobs' => function ($q) {
                 $q->info();
             }])->with('profile', 'reviews');
