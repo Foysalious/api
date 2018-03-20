@@ -70,7 +70,7 @@ class PartnerRepository
 
     public function hasAppropriateCreditLimit()
     {
-        return (double)$this->partner->wallet > (double)$this->partner->walletSetting->min_wallet_threshold;
+        return (double)$this->partner->wallet >= (double)$this->partner->walletSetting->min_wallet_threshold;
     }
 }
 
