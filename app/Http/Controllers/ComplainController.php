@@ -65,9 +65,14 @@ class ComplainController extends Controller
                     }]);
                 }])->with(['comments' => function ($q) {
                     $q->select('id', 'comment', 'commentable_type', 'commentable_id', 'commentator_id', 'commentator_type', 'created_at')
-                        ->with('commentator')->orderBy('id', 'desc');
+                        ->with(['commentator' => function ($q) {
+                            $q->select('id');
+                        }])->orderBy('id', 'desc');
                 }])->first();
             if ($complain) {
+                $comments = $this->formationComments($complain->comments);
+                removeRelationsAndFields($complain);
+                $complain['comments'] = $comments;
                 return api_response($request, null, 200, ['complain' => $complain]);
             } else {
                 return api_response($request, null, 404);
@@ -78,6 +83,17 @@ class ComplainController extends Controller
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
+    }
+
+    private function formationComments($comments)
+    {
+        foreach ($comments as &$comment) {
+            array_forget($comment, 'commentable_type');
+            array_forget($comment, 'commentable_id');
+            array_forget($comment, 'commentator_id');
+            $comment['commentator_type'] = strtolower(str_replace('App\Models\\', "", $comment->commentator_type));
+        }
+        return $comments;
     }
 
     public function store($customer, $job, Request $request)
