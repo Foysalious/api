@@ -109,15 +109,15 @@ class ComplainController extends Controller
         try {
             $customer = $request->customer;
             $comment = new Comment();
-            $comment->comment = $request->complain;
+            $comment->comment = $request->comment;
             $comment->commentable_type = "Sheba\\Dal\\Complain\\Model";
             $comment->commentable_id = $complain;
-            $comment->commentator_type = class_basename($customer);
+            $comment->commentator_type = get_class($customer);
             $comment->commentator_id = (int)$customer->id;
             if ($comment->save()) {
                 return api_response($request, $complain, 200);
             } else {
-                return response()->json(['code' => 500]);
+                return api_response($request, null, 500);
             }
         } catch (\Throwable $e) {
             return api_response($request, null, 500);

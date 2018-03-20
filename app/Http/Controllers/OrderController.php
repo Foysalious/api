@@ -192,7 +192,7 @@ class OrderController extends Controller
             if ($order) {
                 $link = null;
                 if ($request->payment_method == 'online') {
-                    $link = (new OnlinePayment())->generatePortWalletLink($order);
+                    $link = (new OnlinePayment())->generatePortWalletLink($order->partnerOrders[0], 1);
                 }
                 return api_response($request, $order, 200, ['link' => $link]);
             }
@@ -211,16 +211,13 @@ class OrderController extends Controller
             $redis_key = Redis::get($redis_key_name);
             if ($redis_key) {
                 $data = json_decode($redis_key);
-                $amount = $data->amount;
-                $order = Order::find((int)$data->order_id);
-                if ($order != null) {
-                    if ((new OnlinePayment())->pay($order, $amount, $request)) {
-                        Redis::del($redis_key_name);
-                        $s_id = str_random(10);
-                        Redis::set($s_id, 'online');
-                        Redis::expire($s_id, 500);
-                        return redirect(env('SHEBA_FRONT_END_URL') . '/profile/orders?s_token=' . $s_id);
-                    }
+                $response = (new OnlinePayment())->pay($data, $request);
+                dd($response);
+                if ($response['success']) {
+                    Redis::del($redis_key_name);
+                    return $response['redirect_link'];
+                } else {
+                    return env('SHEBA_FRONT_END_URL');
                 }
             }
             return api_response($request, null, 404);

@@ -79,12 +79,17 @@ class NotificationRepository
 
     public function forOnlinePayment($partner_order, $amount)
     {
-        $partner_order = ($partner_order instanceof PartnerOrder) ? $partner_order : PartnerOrder::find($partner_order);
-        $this->order = $partner_order->order;
-        $this->order = $partner_order->order;
-        $this->sender_id = $this->order->customer_id;
-        $this->sender_type = 'customer';
-        $this->_sendPaymentNotificationToCM($partner_order, $amount);
+        try {
+            $partner_order = ($partner_order instanceof PartnerOrder) ? $partner_order : PartnerOrder::find($partner_order);
+            $this->order = $partner_order->order;
+            $this->order = $partner_order->order;
+            $this->sender_id = $this->order->customer_id;
+            $this->sender_type = 'customer';
+            $this->_sendPaymentNotificationToCM($partner_order, $amount);
+            return true;
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 
     private function _sendPaymentNotificationToCM($partner_order, $amount)

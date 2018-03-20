@@ -7,7 +7,10 @@ use App\Library\PortWallet;
 use App\Models\Order;
 use App\Models\PartnerOrder;
 use App\Models\PartnerOrderPayment;
+use App\Repositories\NotificationRepository;
 use App\Sheba\UserRequestInformation;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 use Redis;
 use DB;
 
@@ -25,12 +28,12 @@ class OnlinePayment
         $this->portwallet->setMode(config('portwallet.app_payment_mode'));
     }
 
-    public function generatePortWalletLink(Order $order)
+    public function generatePortWalletLink(PartnerOrder $partnerOrder, $isAdvancedPayment = 0)
     {
         try {
-            $order->calculate(true);
+            $partnerOrder->calculate(true);
             $data = array();
-            $data['amount'] = $order->totalPrice;
+            $data['amount'] = $partnerOrder->due;
             $data['currency'] = "BDT";
             $data['product_name'] = "N/A";
             $data['product_description'] = "N/A";
@@ -47,7 +50,7 @@ class OnlinePayment
             if ($portwallet_response = $this->portwallet->generateInvoice($data)) {
                 if ($portwallet_response->status == 200) {
                     $redis_key = 'portwallet-payment-' . $portwallet_response->data->invoice_id;
-                    Redis::set($redis_key, json_encode(['order_id' => $order->id, 'amount' => $order->totalPrice]));
+                    Redis::set($redis_key, json_encode(['amount' => $partnerOrder->due, 'partner_order_id' => $partnerOrder->id, 'isAdvancedPayment' => $isAdvancedPayment]));
                     Redis::expire($redis_key, 7200);
                     return $this->appPaymentUrl . $portwallet_response->data->invoice_id;
                 }
@@ -57,39 +60,62 @@ class OnlinePayment
         }
     }
 
-    public function pay(Order $order, $amount, $request)
+    public function pay($data, $request)
     {
+        $partner_order_id = $data->partner_order_id;
+        $amount = $data->amount;
+        $isAdvancedPayment = (int)$data->isAdvancedPayment;
+
         $portwallet_response = $this->portwallet->ipnValidate(array(
             'amount' => $amount,
             'invoice' => $request->invoice,
             'currency' => "BDT"
         ));
         if ($portwallet_response->status == 200 && $portwallet_response->data->status == "ACCEPTED") {
-            return $this->createPartnerOrderPayment($order->id, $portwallet_response, $request);
+            $partnerOrder = PartnerOrder::find($partner_order_id);
+            if ($partnerOrder) {
+                $partnerOrder->calculate(true);
+                array_forget($partnerOrder, 'isCalculated');
+                if ($isAdvancedPayment) {
+                    $partner_order_payment = $this->createPartnerOrderPayment($partnerOrder, $amount, $portwallet_response, $request);
+                    if ($partner_order_payment) {
+                        return array('success' => 1, 'redirect_link' => $this->generateRedirectLink($partnerOrder, $isAdvancedPayment));
+                    } else {
+                        return array('success' => 0, 'redirect_link' => null,
+                            'type' => 'ADVANCED_PAYMENT_DB_ERROR', 'message' => "Your payment has successfully received but there was a system error. Our Order Manager will contact with you shortly");
+                    }
+                } else {
+                    $response = $this->clearSpPayment($partnerOrder, $amount);
+                    if ($response) {
+                        if ($response->code == 200) {
+                            $notification = (new NotificationRepository())->forOnlinePayment($partnerOrder->id, $amount);
+                            return array('success' => 1, 'redirect_link' => $this->generateRedirectLink($partnerOrder, $isAdvancedPayment));
+                        } else {
+                            return array('success' => 0, 'type' => 'DB_ERROR', 'message' => "Your payment has successfully received but there was a system error. Our Order Manager will contact with you shortly");
+                        }
+                    }
+                }
+            }
+            return array('success' => 0, 'type' => 'BILL_CLEAR_DB_ERROR', 'message' => "Your payment has successfully received but there was a system error. Our Order Manager will contact with you shortly");
         }
-
-        return null;
+        return array('success' => 0, 'type' => 'PORTWALLET_RESPONSE_ERROR', 'message' => "This is not a valid portwallet invoice id", 'redirect_link' => null);
     }
 
-    private function createPartnerOrderPayment($order_id, $portwallet_response, $request)
+    private function createPartnerOrderPayment(PartnerOrder $partnerOrder, $amount, $portwallet_response, $request)
     {
         try {
-            $order = Order::find($order_id);
             $partner_order_payment = new PartnerOrderPayment();
-            DB::transaction(function () use ($order, $partner_order_payment, $portwallet_response, $request) {
-                $partner_order = $order->partner_orders[0];
-                $partner_order->calculate(true);
-                array_forget($partner_order, 'isCalculated');
-                $partner_order->sheba_collection = $partner_order->totalPrice;
-                $partner_order->update();
-                $partner_order_payment->partner_order_id = $partner_order->id;
+            DB::transaction(function () use ($partnerOrder, $partner_order_payment, $portwallet_response, $request, $amount) {
+                $partnerOrder->sheba_collection = $amount;
+                $partnerOrder->update();
+                $partner_order_payment->partner_order_id = $partnerOrder->id;
                 $partner_order_payment->transaction_type = 'Debit';
                 $partner_order_payment->method = 'Online';
-                $partner_order_payment->amount = (double)$partner_order->sheba_collection;
+                $partner_order_payment->amount = (double)$partnerOrder->sheba_collection;
                 $partner_order_payment->log = 'advanced payment';
                 $partner_order_payment->collected_by = 'Sheba';
-                $partner_order_payment->created_by = $order->customer->id;
-                $partner_order_payment->created_by_name = 'Customer - ' . $order->customer->id;
+                $partner_order_payment->created_by = $partnerOrder->order->customer->id;
+                $partner_order_payment->created_by_name = 'Customer - ' . $partnerOrder->order->customer->id;
                 $partner_order_payment->transaction_detail = json_encode($portwallet_response);
                 $partner_order_payment->fill((new UserRequestInformation($request))->getInformationArray());
                 $partner_order_payment->save();
@@ -97,6 +123,37 @@ class OnlinePayment
             return $partner_order_payment;
         } catch (\Throwable $e) {
             return null;
+        }
+    }
+
+    public function clearSpPayment(PartnerOrder $partnerOrder, $amount)
+    {
+        try {
+            $client = new Client();
+            $res = $client->request('POST', env('SHEBA_BACKEND_URL') . '/api/partner-order/' . $partnerOrder->id . '/collect',
+                [
+                    'form_params' => [
+                        'customer_id' => $partnerOrder->order->customer->id,
+                        'remember_token' => $partnerOrder->order->customer->remember_token,
+                        'sheba_collection' => (double)$amount,
+                        'payment_method' => 'Online'
+                    ]
+                ]);
+            return json_decode($res->getBody());
+        } catch (RequestException $e) {
+            return false;
+        }
+    }
+
+    private function generateRedirectLink(PartnerOrder $partnerOrder, $isAdvancedPayment)
+    {
+        $s_id = str_random(10);
+        Redis::set($s_id, 'online');
+        Redis::expire($s_id, 500);
+        if ($isAdvancedPayment) {
+            return env('SHEBA_FRONT_END_URL') . '/profile/orders?s_token=' . $s_id;
+        } else {
+            return env('SHEBA_FRONT_END_URL') . '/jobs/' . $partnerOrder->jobs[0] . '?s_token=' . $s_id;
         }
     }
 }

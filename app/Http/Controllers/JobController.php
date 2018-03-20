@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CustomerFavorite;
 use App\Models\Job;
 use App\Repositories\JobCancelLogRepository;
+use App\Sheba\Checkout\OnlinePayment;
 use App\Sheba\JobStatus;
 use function GuzzleHttp\Promise\all;
 use Illuminate\Database\QueryException;
@@ -305,4 +306,13 @@ class JobController extends Controller
         }
     }
 
+    public function clearBills($customer, $job, Request $request)
+    {
+        try {
+            $link = (new OnlinePayment())->generatePortWalletLink($request->job->partnerOrder);
+            return api_response($request, $link, 200, ['link' => $link]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
 }
