@@ -55,7 +55,18 @@ class JobController extends Controller
     public function show($customer, $job, Request $request)
     {
         try {
-            $job = $request->job->load(['resource.profile', 'category', 'review', 'jobServices']);
+            $customer = $request->customer;
+            $job = $request->job->load(['resource.profile', 'category', 'review', 'jobServices', 'complains' => function ($q) use ($customer) {
+                $q->select('id', 'job_id', 'status', 'complain', 'complain_preset_id')
+//                    ->with(['preset' => function ($q) {
+//                    $q->select('id', 'name', 'category_id')->with(['complainCategory' => function ($q) {
+//                        $q->select('id', 'name');
+//                    }]);
+//                }])
+                ->whereHas('accessor', function ($query) use ($customer) {
+                    $query->where('accessors.model_name', get_class($customer));
+                });
+            }]);
             $job->calculate(true);
             $job_collection = collect();
             $job_collection->put('id', $job->id);
@@ -67,6 +78,7 @@ class JobController extends Controller
             $job_collection->put('delivery_mobile', $job->partnerOrder->order->delivery_mobile);
             $job_collection->put('additional_information', $job->job_additional_info);
             $job_collection->put('schedule_date', $job->schedule_date);
+            $job_collection->put('complains', $this->formatComplains($job->complains));
             $job_collection->put('preferred_time', $job->preferred_time);
             $job_collection->put('category_name', $job->category ? $job->category->name : null);
             $job_collection->put('partner_name', $job->partnerOrder->partner->name);
@@ -91,7 +103,12 @@ class JobController extends Controller
             return api_response($request, null, 500);
         }
     }
-
+    private function formatComplains($complains){
+        foreach ($complains as &$complain){
+            $complain['code']=$complain->code();
+        }
+        return $complains;
+    }
     public function getBills($customer, $job, Request $request)
     {
         try {

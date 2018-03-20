@@ -3,6 +3,7 @@
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\CiCalculator;
+use Sheba\Dal\Complain\Model as Complain;
 
 class Job extends Model
 {
@@ -225,7 +226,7 @@ class Job extends Model
 
     public function complains()
     {
-        return $this->morphMany(Complain::class, 'complainable');
+        return $this->hasMany(Complain::class);
     }
 
     public function hasStatus(Array $status)
