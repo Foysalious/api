@@ -96,7 +96,7 @@ class PartnerList
 
     private function addAvailability()
     {
-        $this->partners->load(['basicInformations', 'leaves']);
+        $this->partners->load(['workingHours', 'leaves']);
         $this->partners->each(function ($partner, $key) {
             $partner['is_available'] = (new PartnerAvailable($partner))->available($this->date, $this->time, $this->selected_services->first()->category_id);
         });
