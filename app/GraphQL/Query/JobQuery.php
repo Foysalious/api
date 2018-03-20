@@ -35,9 +35,11 @@ class JobQuery extends Query
             return null;
         }
         $job = Job::find($args['id']);
-        if ($args['customer_id'] !== $job->partnerOrder->order->customer_id) {
-            return null;
+        if ($job) {
+            if ($args['customer_id'] === $job->partnerOrder->order->customer_id) {
+                return $job;
+            }
         }
-        return $job;
+        return null;
     }
 }
