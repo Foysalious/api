@@ -30,6 +30,7 @@ class JobType extends GraphQlType
             'materials' => ['type' => Type::listOf(GraphQL::type('JobMaterial'))],
             'order' => ['type' => GraphQL::type('Order')],
             'complains' => ['type' => Type::listOf(GraphQL::type('Complain'))],
+            'hasComplain' => ['type' => Type::int()],
         ];
     }
 
@@ -80,9 +81,14 @@ class JobType extends GraphQlType
         return (double)$root->totalPrice;
     }
 
-    protected function resolveComplainsField($root, $args,$fields)
+    protected function resolveComplainsField($root, $args, $fields)
     {
         return $root->complains->where('accessor_id', 1);
+    }
+
+    protected function resolveHasComplainField($root, $args, $fields)
+    {
+        return $root->complains->count() > 0 ? 1 : 0;
     }
 
 
