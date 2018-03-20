@@ -55,10 +55,23 @@ class ComplainController extends Controller
     public function show($customer, $job, $complain, Request $request)
     {
         try {
-            $complain = Complain::where('id', $complain)->select('id', 'status', 'complain', 'accessor_id', 'job_id', 'customer_id', 'created_at')->with(['comments' => function ($q) {
-                $q->select('id', 'comment', 'commentable_type', 'commentable_id', 'created_at')->orderBy('id', 'desc');
-            }])->first();
-            return api_response($request, null, 200, ['complain' => $complain]);
+            $customer = $request->customer;
+            $complain = Complain::whereHas('accessor', function ($query) use ($customer) {
+                $query->where('accessors.model_name', get_class($customer));
+            })->where('id', $complain)->select('id', 'status', 'complain', 'accessor_id', 'job_id', 'customer_id', 'created_at', 'complain_preset_id')
+                ->with(['preset' => function ($q) {
+                    $q->select('id', 'name', 'category_id')->with(['complainCategory' => function ($q) {
+                        $q->select('id', 'name');
+                    }]);
+                }])->with(['comments' => function ($q) {
+                    $q->select('id', 'comment', 'commentable_type', 'commentable_id', 'commentator_id', 'commentator_type', 'created_at')
+                        ->with('commentator')->orderBy('id', 'desc');
+                }])->first();
+            if ($complain) {
+                return api_response($request, null, 200, ['complain' => $complain]);
+            } else {
+                return api_response($request, null, 404);
+            }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
