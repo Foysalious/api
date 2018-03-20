@@ -66,7 +66,7 @@ class ComplainController extends Controller
                 }])->with(['comments' => function ($q) {
                     $q->select('id', 'comment', 'commentable_type', 'commentable_id', 'commentator_id', 'commentator_type', 'created_at')
                         ->with(['commentator' => function ($q) {
-                            $q->select('id');
+                            $q->select('*');
                         }])->orderBy('id', 'desc');
                 }])->first();
             if ($complain) {
@@ -91,6 +91,14 @@ class ComplainController extends Controller
             array_forget($comment, 'commentable_id');
             array_forget($comment, 'commentator_id');
             $comment['commentator_type'] = strtolower(str_replace('App\Models\\', "", $comment->commentator_type));
+            if (class_basename($comment->commentator) == 'User') {
+                $comment['commentator_name'] = $comment->commentator->name;
+                $comment['commentator_picture'] = $comment->commentator->profile_pic;
+            } else {
+                $comment['commentator_name'] = $comment->commentator->profilename;
+                $comment['commentator_picture'] = $comment->commentator->profile->pro_pic;
+            }
+            removeRelationsAndFields($comment);
         }
         return $comments;
     }
