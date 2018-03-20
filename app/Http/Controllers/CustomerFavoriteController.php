@@ -67,7 +67,7 @@ class CustomerFavoriteController extends Controller
     {
         foreach ($services as $service_info) {
             $service = Service::published()->where('id', (int)$service_info->id)->first();
-            if ($service->parent_category == (int)$favorite->category_id) {
+            if ($service->category_id == (int)$favorite->category_id) {
                 $favorite->services()->attach($service->id, [
                     'name' => $service->name, 'variable_type' => $service->variable_type,
                     'variables' => $service->isOptions() ? $service->getVariablesOfOptionsService($service_info->option) : '[]',
@@ -118,7 +118,7 @@ class CustomerFavoriteController extends Controller
             if (isset($service_info->favorite_service)) {
                 $service = $customer_favorite->services()->where('customer_favourite_service.id', $service_info->favorite_service)->first();
                 if ($service) {
-                    if ($service->parent_category == (int)$customer_favorite->category_id) {
+                    if ($service->category_id == (int)$customer_favorite->category_id) {
                         $service->pivot->name = $service->name;
                         $service->pivot->variable_type = $service->variable_type;
                         $service->pivot->variables = $service->isOptions() ? $service->getVariablesOfOptionsService($service_info->option) : '[]';
