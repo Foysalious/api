@@ -49,6 +49,7 @@ class PartnerJobController extends Controller
                     $job['customer_name'] = $job->partner_order->order->customer ? $job->partner_order->order->customer->profile->name : null;
                     $job['resource_picture'] = $job->resource != null ? $job->resource->profile->pro_pic : null;
                     $job['resource_mobile'] = $job->resource != null ? $job->resource->profile->mobile : null;
+                    $job['preferred_time'] = $job->readable_preferred_time;
                     $job['rating'] = $job->review != null ? $job->review->rating : null;
                     $job['version'] = $job->getVersion();
                     if ($job->partner_order->closed_and_paid_at != null) {
