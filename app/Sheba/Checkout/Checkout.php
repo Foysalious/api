@@ -3,9 +3,11 @@
 namespace App\Sheba\Checkout;
 
 use App\Library\PortWallet;
+use App\Models\Affiliation;
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
+use App\Models\InfoCall;
 use App\Models\Job;
 use App\Models\JobService;
 use App\Models\Order;
@@ -21,6 +23,7 @@ use App\Repositories\PartnerServiceRepository;
 use App\Repositories\VoucherRepository;
 use Illuminate\Database\QueryException;
 use DB;
+use Illuminate\Http\Request;
 use Redis;
 
 class Checkout
@@ -71,6 +74,8 @@ class Checkout
         $data['time'] = $request->time;
         $data['crm_id'] = $request->crm;
         $data['category_answers'] = $request->category_answers;
+        $data['info_call_id'] = $this->_setInfoCallId($request);
+        $data['affiliation_id'] = $this->_setAffiliationId($request);
 
         if ($request->has('address')) {
             $data['address'] = $request->address;
@@ -221,6 +226,38 @@ class Checkout
             $variables = '[]';
         }
         return array($option, $variables);
+    }
+
+    private function _setInfoCallId(Request $request)
+    {
+        if ($request->has('info_call_id')) {
+            $info_call_id = $request->info_call_id;
+            if ($info_call_id != '' && $info_call_id != null) {
+                $info_call = InfoCall::find($info_call_id);
+                if ($info_call != null) {
+                    if ($info_call->order == null) {
+                        return $info_call_id;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private function _setAffiliationId(Request $request)
+    {
+        if ($request->has('affiliation_id')) {
+            $affiliation_id = $request->affiliation_id;
+            if ($affiliation_id != '' && $affiliation_id != null) {
+                $affiliation = Affiliation::find($affiliation_id);
+                if ($affiliation != null) {
+                    if ($affiliation->order == null) {
+                        return $affiliation_id;
+                    }
+                }
+            }
+        }
+        return null;
     }
 
 }

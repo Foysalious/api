@@ -35,7 +35,7 @@ class PartnerOrderController extends Controller
                 'filter' => 'sometimes|bail|required|string|in:ongoing,history'
             ]);
             $partner_order = $this->partnerOrderRepository->getOrderDetails($request);
-            $partner_order['version'] = 'v1';
+            $partner_order['version'] = $partner_order->getVersion();
             return api_response($request, $partner_order, 200, ['order' => $partner_order]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
