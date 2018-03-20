@@ -28,7 +28,8 @@ class JobType extends GraphQlType
             'resource' => ['type' => GraphQL::type('Resource')],
             'services' => ['type' => Type::listOf(GraphQL::type('JobService'))],
             'materials' => ['type' => Type::listOf(GraphQL::type('JobMaterial'))],
-            'order' => ['type' => GraphQL::type('Order')]
+            'order' => ['type' => GraphQL::type('Order')],
+            'complains' => ['type' => Type::listOf(GraphQL::type('Complain'))],
         ];
     }
 
@@ -78,5 +79,11 @@ class JobType extends GraphQlType
         }
         return (double)$root->totalPrice;
     }
+
+    protected function resolveComplainsField($root, $args)
+    {
+        return $root->complains;
+    }
+
 
 }

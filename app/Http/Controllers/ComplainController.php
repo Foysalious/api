@@ -127,9 +127,9 @@ class ComplainController extends Controller
             'complain_preset_id' => $preset_id,
             'follow_up_time' => $follow_up_time,
             'accessor_id' => $request->accessor_id,
-            'job_id' => empty($request->job_id) ? null : $request->job_id,
+            'job_id' => $request->has('job_id') ? $request->job_id : $job->id,
             'customer_id' => isset($request->customer_id) ? $request->customer_id : $job->partnerOrder->order->customer_id,
-            'partner_id' => empty($request->partner_id) ? $request->partner_id : $job->partnerOrder->partner_id
+            'partner_id' => empty($request->partner_id) ? $job->partnerOrder->partner_id : $request->partner_id
         ];
     }
 
