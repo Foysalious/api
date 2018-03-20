@@ -150,6 +150,8 @@ class Checkout
 
     private function createOrder(Order $order, $data)
     {
+        $order->info_call_id = $data['info_call_id'];
+        $order->affiliation_id = $data['affiliation_id'];
         $order->delivery_mobile = formatMobile($data['delivery_mobile']);
         $order->delivery_name = $data['delivery_name'];
         $order->sales_channel = $data['sales_channel'];
