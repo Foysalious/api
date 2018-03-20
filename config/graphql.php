@@ -131,7 +131,7 @@ return [
                 'customer' => 'App\GraphQL\Query\CustomerQuery',
                 'order' => 'App\GraphQL\Query\OrderQuery',
                 'job' => 'App\GraphQL\Query\JobQuery',
-                'job' => 'App\GraphQL\Query\ComplainQuery',
+                'complain' => 'App\GraphQL\Query\ComplainQuery',
                 'categories' => 'App\GraphQL\Query\CategoriesQuery',
                 'categoryGroups' => 'App\GraphQL\Query\CategoryGroupsQuery'
             ],
