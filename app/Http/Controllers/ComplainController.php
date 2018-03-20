@@ -71,7 +71,6 @@ class ComplainController extends Controller
                 }])->first();
             if ($complain) {
                 $comments = $this->formationComments($complain->comments);
-                removeRelationsAndFields($complain);
                 $complain['comments'] = $comments;
                 return api_response($request, null, 200, ['complain' => $complain]);
             } else {
