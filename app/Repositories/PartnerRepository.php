@@ -19,7 +19,9 @@ class PartnerRepository
     public function resources($type = null, $verify = null)
     {
         $this->partner->load(['resources' => function ($q) use ($type, $verify) {
-            $q->select('resources.id', 'profile_id', 'resource_type', 'resources.is_verified')->with(['jobs' => function ($q) {
+            $q->select('resources.id', 'profile_id', 'resource_type', 'resources.is_verified')->whereHas('partnerResources', function ($q) {
+                $q->has('categories');
+            })->with(['jobs' => function ($q) {
                 $q->info();
             }])->with('profile', 'reviews');
             if ($type) {

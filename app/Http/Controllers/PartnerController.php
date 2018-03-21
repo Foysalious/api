@@ -283,7 +283,8 @@ class PartnerController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            dd($e);
             return api_response($request, null, 500);
         }
     }

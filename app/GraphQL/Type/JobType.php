@@ -75,10 +75,9 @@ class JobType extends GraphQlType
 
     protected function resolvePriceField($root, $args)
     {
-        if (isset($job['totalPrice'])) {
-            $root->calculate(true);
-        }
-        return (double)$root->totalPrice;
+        $partnerOrder = $root->partnerOrder;
+        $partnerOrder->calculate(true);
+        return (double)$partnerOrder->totalPrice;
     }
 
     protected function resolveComplainsField($root, $args, $fields)
