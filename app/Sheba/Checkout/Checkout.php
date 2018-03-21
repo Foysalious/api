@@ -141,6 +141,7 @@ class Checkout
                 'sheba_contribution' => $discount->__get('sheba_contribution'),
                 'partner_contribution' => $discount->__get('partner_contribution'),
                 'discount_id' => $discount->__get('discount_id'),
+                'discount' => $discount->__get('discount'),
                 'discount_percentage' => $discount->__get('discount_percentage'),
                 'name' => $service->name,
                 'variable_type' => $service->variable_type,
