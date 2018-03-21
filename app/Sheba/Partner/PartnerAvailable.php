@@ -26,10 +26,10 @@ class PartnerAvailable
         if (!$this->_worksAtThisTime($preferred_time)) {
             return 0;
         }*/
-        if(!$this->_worksAtDayAndTime($date, $preferred_time)) {
+        if (!$this->_worksAtDayAndTime($date, $preferred_time)) {
             return 0;
         }
-        if (!scheduler($this->partner)->isAvailable($date, explode('-', $preferred_time), $category_id)) {
+        if (!scheduler($this->partner)->isAvailable($date, explode('-', $preferred_time)[0], $category_id)) {
             return 0;
         }
         return 1;
@@ -62,7 +62,7 @@ class PartnerAvailable
     {
         $day = Carbon::parse($date)->format('l');
         $working_day = $this->partner->workingHours->where('day', $day)->first();
-        if(!$working_day) return false;
+        if (!$working_day) return false;
         $start_time = Carbon::parse(explode('-', $time)[0]);
         return $start_time->gte(Carbon::parse($working_day->start_time))
             && $start_time->lte(Carbon::parse($working_day->end_time));

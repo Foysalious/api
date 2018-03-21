@@ -132,11 +132,17 @@ class PartnerJobController extends Controller
                 if (!$job_time->isValid) {
                     return api_response($request, null, 400, ['message' => $job_time->error_message]);
                 }
+                if (!scheduler(Resource::find((int)$job->resource_id))->isAvailable($request->schedule_date, explode('-', $request->preferred_time)[0], $job->category_id)) {
+                    return api_response($request, null, 403, ['message' => 'Resource is not available at this time. Please select different date time or change the resource']);
+                }
                 $request->merge(['resource' => $request->manager_resource]);
                 $response = $this->resourceJobRepository->reschedule($job->id, $request);
                 return api_response($request, $response, $response->code);
             }
             if ($request->has('resource_id')) {
+                if (!scheduler(Resource::find((int)$request->resource_id))->isAvailable($job->schedule_date, explode('-', $job->preferred_time), $job->category_id)) {
+                    return api_response($request, null, 403, ['message' => 'Resource is not available at this time. Please select different date time or change the resource']);
+                }
                 if ($request->partner->hasThisResource((int)$request->resource_id, 'Handyman') && $job->hasStatus(['Accepted', 'Schedule_Due', 'Process'])) {
                     $job = $this->assignResource($job, $request->resource_id, $request->manager_resource);
                     return api_response($request, $job, 200);
@@ -148,6 +154,7 @@ class PartnerJobController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             return api_response($request, null, 500);
         }
     }
