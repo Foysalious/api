@@ -109,6 +109,11 @@ class Partner extends Model
         return $this->hasOne(PartnerWalletSetting::class);
     }
 
+    public function workingHours()
+    {
+        return $this->hasMany(PartnerWorkingHour::class);
+    }
+
     public function dailyStats()
     {
         return $this->hasMany(PartnerDailyStat::class);
