@@ -211,15 +211,13 @@ class OrderController extends Controller
             if ($redis_key) {
                 $data = json_decode($redis_key);
                 $response = (new OnlinePayment())->pay($data, $request);
-                dd($response);
                 if ($response['success']) {
                     Redis::del($redis_key_name);
-                    return $response['redirect_link'];
+                    return redirect($response['redirect_link']);
                 } else {
-                    return env('SHEBA_FRONT_END_URL');
+                    return redirect(env('SHEBA_FRONT_END_URL'));
                 }
             }
-            return api_response($request, null, 404);
         } catch (\Throwable $exception) {
             return api_response($request, null, 500);
         }

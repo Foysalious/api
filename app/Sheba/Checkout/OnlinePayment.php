@@ -153,7 +153,7 @@ class OnlinePayment
         if ($isAdvancedPayment) {
             return env('SHEBA_FRONT_END_URL') . '/profile/orders?s_token=' . $s_id;
         } else {
-            return env('SHEBA_FRONT_END_URL') . '/jobs/' . $partnerOrder->jobs[0] . '?s_token=' . $s_id;
+            return env('SHEBA_FRONT_END_URL') . '/orders/' . $partnerOrder->jobs[0]->id . '/bill?s_token=' . $s_id;
         }
     }
 }
