@@ -156,9 +156,13 @@ class PartnerList
 
     private function sortByAvailability()
     {
-        $this->partners = $this->partners->sortByDesc(function ($partner, $key) {
-            return $partner->is_available;
+        $unavailable_partners = $this->partners->filter(function ($partner, $key) {
+            return $partner->is_available == 0;
         });
+        $available_partners = $this->partners->filter(function ($partner, $key) {
+            return $partner->is_available == 1;
+        });
+        $this->partners = $available_partners->merge($unavailable_partners);
     }
 
     private function sortByRatingDesc()
