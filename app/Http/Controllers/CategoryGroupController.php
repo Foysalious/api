@@ -66,16 +66,20 @@ class CategoryGroupController extends Controller
         $category_group = CategoryGroup::with(['categories' => function ($q) {
             $q->has('services', '>', 0);
         }])->where($column, $value)->select('id', 'name', 'banner')->first();
-        $setting = HomepageSetting::where([['item_type', 'App\\Models\\CategoryGroup'], ['item_id', $category_group->id]])->first();
-        $category_group['position_at_home'] = $setting ? $setting->order : null;
         if ($category_group != null) {
-            $categories = $category_group->categories->each(function ($category) use ($location) {
-                removeRelationsAndFields($category);
-            });
-            if (count($categories) > 0) {
-                $category_group['secondaries'] = $categories;
-                removeRelationsAndFields($category_group);
-                return $category_group;
+            $setting = HomepageSetting::where([['item_type', 'App\\Models\\CategoryGroup'], ['item_id', $category_group->id]])->first();
+            if ($setting != null) {
+                $category_group['position_at_home'] = $setting ? $setting->order : null;
+                if ($category_group != null) {
+                    $categories = $category_group->categories->each(function ($category) use ($location) {
+                        removeRelationsAndFields($category);
+                    });
+                    if (count($categories) > 0) {
+                        $category_group['secondaries'] = $categories;
+                        removeRelationsAndFields($category_group);
+                        return $category_group;
+                    }
+                }
             }
         }
         return null;
