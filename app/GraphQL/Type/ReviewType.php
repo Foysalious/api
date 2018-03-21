@@ -22,7 +22,8 @@ class ReviewType extends GraphQlType
             'customer' => ['type' => GraphQL::type('Customer')],
             'partner' => ['type' => GraphQL::type('Partner')],
             'category' => ['type' => GraphQL::type('Category')],
-            'job' => ['type' => GraphQL::type('Job')]
+            'job' => ['type' => GraphQL::type('Job')],
+            'compliments' => ['type' => Type::listOf(GraphQL::type('Compliment'))]
         ];
     }
 
@@ -36,5 +37,22 @@ class ReviewType extends GraphQlType
             }
         }
         return $root->review;
+    }
+
+    protected function resolveComplimentsField($root, $args)
+    {
+        $final = [];
+        if ($root->rates != null) {
+            $root->load(['rates' => function ($q) {
+                $q->with('answer');
+            }]);
+            foreach ($root->rates as $rate) {
+                if ($rate->rate_answer_id) {
+                    array_push($final, $rate->answer);
+                }
+            }
+            return $final;
+        }
+        return null;
     }
 }

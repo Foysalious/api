@@ -3,10 +3,8 @@
 namespace App\GraphQL\Type;
 
 use \Folklore\GraphQL\Support\Type as GraphQlType;
-use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use GraphQL;
-use Illuminate\Http\Request;
 
 class CustomerType extends GraphQlType
 {

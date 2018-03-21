@@ -188,6 +188,7 @@ return [
         'App\GraphQL\Type\PartnerType',
         'App\GraphQL\Type\OrderType',
         'App\GraphQL\Type\JobType',
+        'App\GraphQL\Type\ComplimentType',
         'App\GraphQL\Type\ComplainType',
         'App\GraphQL\Type\ComplainPresetType',
         'App\GraphQL\Type\CommentType',
