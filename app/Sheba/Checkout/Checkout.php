@@ -73,6 +73,7 @@ class Checkout
         $data['date'] = $request->date;
         $data['time'] = $request->time;
         $data['crm_id'] = $request->crm;
+        $data['additional_information'] = $request->additional_information;
         $data['category_answers'] = $request->category_answers;
         $data['info_call_id'] = $this->_setInfoCallId($request);
         $data['affiliation_id'] = $this->_setAffiliationId($request);
@@ -107,6 +108,7 @@ class Checkout
                     'preferred_time_start' => explode('-', $data['time'])[0],
                     'preferred_time_end' => explode('-', $data['time'])[1],
                     'crm_id' => $data['crm_id'],
+                    'job_additional_info' => $data['additional_information'],
                     'category_answers' => $data['category_answers'],
                     'commission_rate' => (Category::find(($selected_services->first())->category_id))->commission($partner_order->partner_id)
                 ]);
@@ -173,8 +175,7 @@ class Checkout
                     return $deliver_address->address;
                 }
             }
-        }
-        if (array_has($data, 'address')) {
+        } elseif (array_has($data, 'address')) {
             if ($data['address'] != '' || $data['address'] != null) {
                 $deliver_address = new CustomerDeliveryAddress();
                 $deliver_address->address = $data['address'];
