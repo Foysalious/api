@@ -27,7 +27,7 @@ class CustomerDeliveryAddressController extends Controller
         try {
             $customer = $request->customer;
             $delivery_address = new CustomerDeliveryAddress();
-            $delivery_address->address = $request->adress;
+            $delivery_address->address = $request->address;
             $delivery_address->name = $request->name;
             $delivery_address->customer_id = $customer->id;
             if ($delivery_address->save()) {

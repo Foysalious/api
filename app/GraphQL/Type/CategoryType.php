@@ -34,6 +34,9 @@ class CategoryType extends GraphQlType
             'children' => [
                 'type' => Type::listOf(GraphQL::type('Category'))
             ],
+            'parent' => [
+                'type' => GraphQL::type('Category')
+            ],
             'reviews' => [
                 'args' => [
                     'rating' => ['type' => Type::listOf(Type::int())],
@@ -79,6 +82,11 @@ class CategoryType extends GraphQlType
         } else {
             return null;
         }
+    }
+
+    protected function resolveParentField($root, $args)
+    {
+        return $root->parent;
     }
 
     protected function resolveReviewsField($root, $args)
