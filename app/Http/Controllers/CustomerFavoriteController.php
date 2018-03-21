@@ -20,12 +20,12 @@ class CustomerFavoriteController extends Controller
         }]);
         $favorites = $customer->favorites->each(function (&$favorite, $key) {
             $services = [];
+            $favorite['category_name'] = $favorite->category->name;
             $favorite->services->each(function ($service) use ($favorite, &$services) {
                 $pivot = $service->pivot;
                 $pivot['variables'] = json_decode($pivot['variables']);
                 $pivot['picture'] = $service->thumb;
                 $pivot['unit'] = $service->unit;
-                $pivot['category'] = $favorite->category;
                 array_push($services, $pivot);
             });
             removeRelationsAndFields($favorite);
