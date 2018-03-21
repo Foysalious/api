@@ -28,9 +28,13 @@ class ReviewType extends GraphQlType
 
     protected function resolveReviewField($root, $args)
     {
-        if ($root->rate != null) {
-
+        if ($root->rates != null) {
+            foreach ($root->rates as $rate) {
+                if ($rate->rate_answer_text) {
+                    return $rate->rate_answer_text;
+                }
+            }
         }
-        return null;
+        return $root->review;
     }
 }
