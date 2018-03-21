@@ -201,6 +201,8 @@ class PartnerList
             $total_service_price['original_price'] += $service['original_price'];
             $service['id'] = $selected_service->id;
             $service['option'] = $selected_service->option;
+            list($option, $variables) = $this->getVariableOptionOfService($selected_service, $selected_service->option);
+            $service['questions'] = json_decode($variables);
             array_push($services, $service);
         }
         array_add($partner, 'breakdown', $services);
@@ -219,5 +221,25 @@ class PartnerList
         $discount = new Discount($price, $selected_service->quantity);
         $discount->calculateServiceDiscount((PartnerService::find($service->pivot->id))->discount());
         return $discount;
+    }
+
+    private function getVariableOptionOfService(Service $service, Array $option)
+    {
+        if ($service->variable_type == 'Options') {
+            $variables = [];
+            $options = implode(',', $option);
+            foreach ((array)(json_decode($service->variables))->options as $key => $service_option) {
+                array_push($variables, [
+                    'question' => $service_option->question,
+                    'answer' => explode(',', $service_option->answers)[$option[$key]]
+                ]);
+            }
+            $option = '[' . $options . ']';
+            $variables = json_encode($variables);
+        } else {
+            $option = '[]';
+            $variables = '[]';
+        }
+        return array($option, $variables);
     }
 }

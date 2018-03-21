@@ -145,7 +145,7 @@ class Checkout
                 'name' => $service->name,
                 'variable_type' => $service->variable_type,
             );
-            list($service_data['option'], $service_data['variables']) = $this->getVariableOptionOfService($service, $service->pivot->prices, $selected_service->option);
+            list($service_data['option'], $service_data['variables']) = $this->getVariableOptionOfService($service, $selected_service->option);
             JobService::create($service_data);
         }
     }
@@ -211,7 +211,7 @@ class Checkout
         return $partner;
     }
 
-    private function getVariableOptionOfService(Service $service, $partner_service_prices, Array $option)
+    private function getVariableOptionOfService(Service $service, Array $option)
     {
         if ($service->variable_type == 'Options') {
             $variables = [];

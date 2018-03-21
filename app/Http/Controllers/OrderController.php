@@ -175,12 +175,16 @@ class OrderController extends Controller
 
     public function checkOrderValidity(Request $request)
     {
-        $key = Redis::get($request->input('s_token'));
-        if ($key != null) {
-            Redis::del($request->input('s_token'));
-            return response()->json(['msg' => 'successful', 'code' => 200]);
-        } else {
-            return response()->json(['msg' => 'not found', 'code' => 404]);
+        try {
+            $key = Redis::get($request->s_token);
+            if ($key != null) {
+                Redis::del($request->s_token);
+                return api_response($request, null, 200);
+            } else {
+                return api_response($request, null, 404);
+            }
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
         }
     }
 

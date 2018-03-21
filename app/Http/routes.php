@@ -345,6 +345,7 @@ $api->version('v1', function ($api) {
                 $api->group(['prefix' => 'orders'], function ($api) {
                     $api->post('/', 'OrderController@store');
                     $api->get('/', 'CustomerOrderController@index');
+                    $api->get('valid', 'OrderController@checkOrderValidity');
                     $api->group(['prefix' => '{order}'], function ($api) {
                         $api->get('/', 'CustomerOrderController@show');
 
