@@ -19,11 +19,18 @@ class ReviewType extends GraphQlType
             'id' => ['type' => Type::int()],
             'rating' => ['type' => Type::int()],
             'review' => ['type' => Type::string()],
-            'review_title' => ['type' => Type::string()],
             'customer' => ['type' => GraphQL::type('Customer')],
             'partner' => ['type' => GraphQL::type('Partner')],
             'category' => ['type' => GraphQL::type('Category')],
             'job' => ['type' => GraphQL::type('Job')]
         ];
+    }
+
+    protected function resolveReviewField($root, $args)
+    {
+        if ($root->rate != null) {
+
+        }
+        return null;
     }
 }

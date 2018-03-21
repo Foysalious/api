@@ -201,6 +201,7 @@ class PartnerList
             $total_service_price['original_price'] += $service['original_price'];
             $service['id'] = $selected_service->id;
             $service['option'] = $selected_service->option;
+            $service['quantity'] = $selected_service->quantity;
             list($option, $variables) = $this->getVariableOptionOfService($selected_service, $selected_service->option);
             $service['questions'] = json_decode($variables);
             array_push($services, $service);

@@ -41,8 +41,8 @@ class Review extends Model
         return $query->where('review', '<>', '');
     }
 
-    public function rate()
+    public function rates()
     {
-        return $this->hasOne(ReviewQuestionAnswer::class, 'review_id');
+        return $this->hasMany(ReviewQuestionAnswer::class, 'review_id');
     }
 }
