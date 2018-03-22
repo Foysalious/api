@@ -90,7 +90,7 @@ class CategoryController extends Controller
                 $children = $children->each(function (&$child) use ($location) {
                     removeRelationsAndFields($child);
                 });
-                $category = collect($category)->only(['name', 'banner']);
+                $category = collect($category)->only(['name', 'banner', 'app_banner']);
                 $category->put('secondaries', $children);
                 return api_response($request, $category->all(), 200, ['category' => $category->all()]);
             } else
@@ -211,7 +211,7 @@ class CategoryController extends Controller
                     }])->where('id', $category->id)->published()->first();
                     $services = $this->serviceRepository->addServiceInfo($this->serviceRepository->getPartnerServicesAndPartners($category->services, $location), $scope);
                 }
-                $category = collect($category)->only(['name', 'banner', 'parent_id']);
+                $category = collect($category)->only(['name', 'banner', 'parent_id', 'app_banner']);
                 $category['services'] = $this->serviceQuestionSet($services);
                 return api_response($request, null, 200, ['category' => $category]);
             } else {

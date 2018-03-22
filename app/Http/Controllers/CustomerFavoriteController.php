@@ -21,6 +21,7 @@ class CustomerFavoriteController extends Controller
         $favorites = $customer->favorites->each(function (&$favorite, $key) {
             $services = [];
             $favorite['category_name'] = $favorite->category->name;
+            $favorite['category_slug'] = $favorite->category->slug;
             $favorite->services->each(function ($service) use ($favorite, &$services) {
                 $pivot = $service->pivot;
                 $pivot['variables'] = json_decode($pivot['variables']);

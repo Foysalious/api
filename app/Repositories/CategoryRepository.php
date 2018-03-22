@@ -24,7 +24,7 @@ class CategoryRepository
                     $query->where('id', $location);
                 });
             }]);
-        }])->select('id', 'category_id', 'name', 'thumb', 'slug', 'min_quantity', 'short_description', 'description', 'variable_type', 'variables', 'faqs')
+        }])->select('id', 'category_id', 'name', 'thumb', 'banner', 'slug', 'min_quantity', 'short_description', 'description', 'variable_type', 'variables', 'faqs')
             ->where('publication_status', 1)->whereIn('category_id', $category_ids)->skip($offset)->take($limit)->get();
         $final_services = [];
         foreach ($services as $service) {
