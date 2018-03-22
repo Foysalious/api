@@ -59,7 +59,7 @@ class PartnerController extends Controller
             if ($partner == null)
                 return api_response($request, null, 404);
             $partner->load(['basicInformations', 'categories' => function ($q) {
-                $q->select('categories.id', 'name', 'thumb', 'icon')->where('category_partner.is_verified', 1);
+                $q->select('categories.id', 'name', 'thumb', 'icon', 'categories.slug')->where('category_partner.is_verified', 1);
             }, 'reviews', 'jobs' => function ($q) {
                 $q->with(['resource' => function ($q) {
                     $q->select('resources.id', 'profile_id')->with('profile');
