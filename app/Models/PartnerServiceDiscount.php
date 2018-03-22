@@ -5,7 +5,7 @@ use Illuminate\Database\Eloquent\Model;
 class PartnerServiceDiscount extends Model
 {
     protected $guarded = ['id'];
-    protected $casts = ['cap' => 'double'];
+    protected $casts = ['cap' => 'double', 'amount' => 'double'];
 
     public function partnerService()
     {
