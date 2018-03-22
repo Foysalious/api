@@ -85,7 +85,7 @@ class Checkout
             $data['address_id'] = $request->address_id;
         }
         $data['created_by'] = $created_by = $request->has('created_by') ? $request->created_by : $this->customer->id;
-        $data['created_by_name'] = $created_by_name = $request->has('created_by_name') ? $request->created_by_name : $this->customer->profile->name;
+        $data['created_by_name'] = $created_by_name = $request->has('created_by_name') ? $request->created_by_name : 'Customer - ' . $this->customer->profile->name;
         return $data;
     }
 
@@ -105,11 +105,13 @@ class Checkout
             }
             DB::transaction(function () use ($data, $selected_services, $partner, $order, $job_services) {
                 $order = $this->createOrder($order, $data);
+                $order = $this->getAuthor($order, $data);
                 $partner_order = PartnerOrder::create([
                     'created_by' => $data['created_by'], 'created_by_name' => $data['created_by_name'],
                     'order_id' => $order->id, 'partner_id' => $partner->id,
                     'payment_method' => $data['payment_method']
                 ]);
+                $partner_order = $this->getAuthor($partner_order, $data);
                 $job = Job::create([
                     'category_id' => ($selected_services->first())->category_id,
                     'partner_order_id' => $partner_order->id,
@@ -125,6 +127,7 @@ class Checkout
                     'sheba_contribution' => isset($data['sheba_contribution']) ? $data['sheba_contribution'] : 0,
                     'partner_contribution' => isset($data['partner_contribution']) ? $data['partner_contribution'] : 0,
                 ]);
+                $job = $this->getAuthor($job, $data);
                 $job->jobServices()->saveMany($job_services);
             });
         } catch (QueryException $e) {
@@ -313,5 +316,14 @@ class Checkout
         }
         return null;
     }
+
+    private function getAuthor($model, $data)
+    {
+        $model->created_by = $data['created_by'];
+        $model->created_by_name = $data['created_by_name'];
+        $model->update();
+        return $model;
+    }
+
 
 }
