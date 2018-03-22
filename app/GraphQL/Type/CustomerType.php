@@ -24,7 +24,9 @@ class CustomerType extends GraphQlType
             'gender' => ['type' => Type::string()],
             'birthday' => ['type' => Type::string()],
             'address' => ['type' => Type::string()],
+            'created_at_timestamp' => ['type' => Type::string()],
             'referral_code' => ['type' => Type::string()],
+            'user_hash' => ['type' => Type::string()],
             'addresses' => ['type' => Type::listOf(GraphQL::type('Address'))],
             'profile' => ['type' => GraphQL::type('Profile')],
             'orders' => [
@@ -37,7 +39,6 @@ class CustomerType extends GraphQlType
             ]
         ];
     }
-
 
     protected function resolveAddressesField($root, $args)
     {
@@ -79,9 +80,19 @@ class CustomerType extends GraphQlType
         return $root->profile->dob;
     }
 
+    protected function resolveUserHashField($root, $args)
+    {
+        return hash_hmac('sha256', $root->id, env('INTERCOM_SECRET_KEY'));
+    }
+
     protected function resolveReferralCodeField($root, $args)
     {
         return $root->referral->code;
+    }
+
+    protected function resolveCreatedAtTimestampField($root, $args)
+    {
+        return $root->created_at->timestamp;
     }
 
     protected function resolveOrdersField($root, $args)
