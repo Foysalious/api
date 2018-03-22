@@ -57,7 +57,7 @@ class CustomerFavoriteController extends Controller
         try {
             DB::transaction(function () use ($data, $customer) {
                 foreach ($data as $category) {
-                    $favorite = new CustomerFavorite(['category_id' => $category->category, 'name' => $category->name, 'additional_info' => $category->additional_info]);
+                    $favorite = new CustomerFavorite(['category_id' => (int)$category->category, 'name' => $category->name, 'additional_info' => $category->additional_info]);
                     $customer->favorites()->save($favorite);
                     $this->saveServices($favorite, $category->services);
                 }
