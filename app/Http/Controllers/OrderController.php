@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Library\PortWallet;
+use App\Models\Customer;
 use App\Models\Order;
 use App\Repositories\JobServiceRepository;
 use App\Repositories\OrderRepository;
@@ -195,6 +196,9 @@ class OrderController extends Controller
             $order = new Checkout($customer);
             $order = $order->placeOrder($request);
             if ($order) {
+                if ($order->voucher_id != null) {
+                    $this->updateVouchers($order, $customer);
+                }
                 $link = null;
                 if ($request->payment_method == 'online') {
                     $link = (new OnlinePayment())->generatePortWalletLink($order->partnerOrders[0], 1);
@@ -204,6 +208,30 @@ class OrderController extends Controller
             return api_response($request, $order, 500);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
+        }
+    }
+
+    private function updateVouchers($order, Customer $customer)
+    {
+        if ($order->voucher_id != null) {
+            $voucher = $order->voucher;
+            $this->updateVoucherInPromoList($customer, $voucher, $order);
+        }
+    }
+
+    private function updateVoucherInPromoList(Customer $customer, $voucher, $order)
+    {
+        $rules = json_decode($voucher->rules);
+        if (array_key_exists('nth_orders', $rules) && !array_key_exists('ignore_nth_orders_if_used', $rules)) {
+            $nth_orders = $rules->nth_orders;
+            if ($customer->orders->count() == max($nth_orders)) {
+                $customer->promotions()->where('voucher_id', $order->voucher_id)->update(['is_valid' => 0]);
+                return;
+            }
+        }
+        if ($voucher->usage($customer->id) == $voucher->max_order) {
+            $customer->promotions()->where('voucher_id', $order->voucher_id)->update(['is_valid' => 0]);
+            return;
         }
     }
 

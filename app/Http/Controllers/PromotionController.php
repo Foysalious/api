@@ -96,7 +96,9 @@ class PromotionController extends Controller
             $voucherSuggester->init($request->customer, $selected_services, $partner->id, (int)$request->location, $request->has('sales_channel') ? $request->sales_channel : 'Web');
             $promo = $voucherSuggester->suggest();
             if ($promo != null) {
-                return api_response($request, $promo, 200, ['amount' => (double)$promo['amount'], 'promo_code' => $promo['voucher']->code]);
+                return api_response($request, $promo, 200, ['voucher' => array(
+                    'amount' => (double)$promo['amount'], 'code' => $promo['voucher']->code
+                )]);
             } else {
                 return api_response($request, null, 404);
             }
