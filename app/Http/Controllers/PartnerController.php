@@ -51,7 +51,11 @@ class PartnerController extends Controller
     public function show($partner, Request $request)
     {
         try {
-            $partner = Partner::where([['id', (int)$partner], ['status', 'Verified']])->first();
+            $partner_request = $partner;
+            $partner = Partner::where([['id', (int)$partner_request], ['status', 'Verified']])->first();
+            if ($partner == null) {
+                $partner = Partner::where([['sub_domain', $partner_request], ['status', 'Verified']])->first();
+            }
             if ($partner == null)
                 return api_response($request, null, 404);
             $partner->load(['basicInformations', 'categories' => function ($q) {
