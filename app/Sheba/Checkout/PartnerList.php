@@ -197,6 +197,7 @@ class PartnerList
             $discount = $this->calculateDiscountForService($price, $selected_service, $service);
             $service = [];
             $service['discount'] = $discount->__get('discount');
+            $service['cap'] = $discount->__get('cap');
             $service['discounted_price'] = $discount->__get('discounted_price');
             $service['original_price'] = $discount->__get('original_price');
 

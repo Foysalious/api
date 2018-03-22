@@ -14,6 +14,7 @@ class Discount
     private $sheba_contribution = 0;
     private $partner_contribution = 0;
     private $discount_percentage = 0;
+    private $cap = null;
     private $discount_id = null;
 
     public function __construct($unit_price, $quantity = 1)
@@ -32,6 +33,7 @@ class Discount
     {
         if ($running_discount) {
             $this->discount_id = $running_discount->id;
+            $this->cap = $running_discount->cap;
             $this->sheba_contribution = (double)$running_discount->sheba_contribution;
             $this->partner_contribution = (double)$running_discount->partner_contribution;
             if ($running_discount->isPercentage()) {
