@@ -3,7 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\PartnerService;
 use App\Repositories\CartRepository;
+use App\Repositories\PartnerServiceRepository;
+use App\Sheba\Checkout\Discount;
+use App\Sheba\Checkout\PartnerList;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Sheba\Voucher\PromotionList;
@@ -61,6 +65,43 @@ class PromotionController extends Controller
             return response()->json(['code' => 200, 'amount' => (double)$promo['amount'], 'voucher_code' => $promo['voucher']->code]);
         } else {
             return response()->json(['code' => 404]);
+        }
+    }
+
+    public function applyPromotion($customer, Request $request, VoucherSuggester $voucherSuggester)
+    {
+        try {
+            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $request->location);
+            $partner_list->find($request->partner);
+            if ($partner_list->hasPartners) {
+                $partner = $partner_list->partners->first();
+                $selected_services = $partner_list->selected_services;
+                foreach ($selected_services as &$selected_service) {
+                    $service = $partner->services->where('id', $selected_service->id)->first();
+                    if ($service->isOptions()) {
+                        $price = (new PartnerServiceRepository())->getPriceOfOptionsService($service->pivot->prices, $selected_service->option);
+                    } else {
+                        $price = (double)$service->pivot->prices;
+                    }
+                    $discount = new Discount($price, $selected_service->quantity);
+                    $discount->calculateServiceDiscount((PartnerService::find($service->pivot->id))->discount());
+                    if ($discount->__get('hasDiscount')) {
+                        return api_response($request, null, 403);
+                    }
+                    $selected_service['price'] = $price;
+                }
+            } else {
+                return api_response($request, null, 400);
+            }
+            $voucherSuggester->init($request->customer, $selected_services, $partner->id, (int)$request->location, $request->has('sales_channel') ? $request->sales_channel : 'Web');
+            $promo = $voucherSuggester->suggest();
+            if ($promo != null) {
+                return api_response($request, $promo, 200, ['amount' => (double)$promo['amount'], 'promo_code' => $promo['voucher']->code]);
+            } else {
+                return api_response($request, null, 404);
+            }
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
         }
     }
 }

@@ -1,7 +1,4 @@
 <?php
-
-use App\Repositories\PushNotificationRepository;
-
 Route::get('/', function () {
     return ['code' => 200, 'msg' => "Success. This project will hold the api's"];
 });
@@ -346,6 +343,7 @@ $api->version('v1', function ($api) {
                     $api->post('/', 'OrderController@store');
                     $api->get('/', 'CustomerOrderController@index');
                     $api->get('valid', 'OrderController@checkOrderValidity');
+                    $api->post('promotions', 'PromotionController@applyPromotion');
                     $api->group(['prefix' => '{order}'], function ($api) {
                         $api->get('/', 'CustomerOrderController@show');
 

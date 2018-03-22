@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class Promotion extends Model
@@ -19,6 +20,6 @@ class Promotion extends Model
 
     public function scopeValid($query)
     {
-        return $query->where('is_valid', 1);
+        return $query->where('is_valid', 1)->where('valid_till', '>=', Carbon::now());
     }
 }

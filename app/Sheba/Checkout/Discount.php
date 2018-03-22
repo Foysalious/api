@@ -17,6 +17,7 @@ class Discount
     private $amount = 0;
     private $cap = null;
     private $discount_id = null;
+    private $hasDiscount = 0;
 
     public function __construct($unit_price, $quantity = 1)
     {
@@ -33,9 +34,10 @@ class Discount
     public function calculateServiceDiscount(PartnerServiceDiscount $running_discount = null)
     {
         if ($running_discount) {
+            $this->hasDiscount = 1;
             $this->discount_id = $running_discount->id;
-            $this->cap = $running_discount->cap;
-            $this->amount = $running_discount->amount;
+            $this->cap = (double)$running_discount->cap;
+            $this->amount = (double)$running_discount->amount;
             $this->sheba_contribution = (double)$running_discount->sheba_contribution;
             $this->partner_contribution = (double)$running_discount->partner_contribution;
             if ($running_discount->isPercentage()) {
@@ -53,6 +55,4 @@ class Discount
         }
         $this->discounted_price = $this->original_price - $this->discount;
     }
-
-
 }

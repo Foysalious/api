@@ -191,6 +191,7 @@ class OrderController extends Controller
     public function store($customer, Request $request)
     {
         try {
+            $customer = $request->customer;
             $order = new Checkout($customer);
             $order = $order->placeOrder($request);
             if ($order) {
@@ -226,4 +227,5 @@ class OrderController extends Controller
             return api_response($request, null, 500);
         }
     }
+
 }
