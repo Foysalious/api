@@ -6,7 +6,9 @@ use App\Library\PortWallet;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Repositories\JobServiceRepository;
+use App\Repositories\NotificationRepository;
 use App\Repositories\OrderRepository;
+use App\Repositories\SmsHandler;
 use App\Sheba\Checkout\Checkout;
 use App\Sheba\Checkout\OnlinePayment;
 use Illuminate\Http\Request;
@@ -203,6 +205,11 @@ class OrderController extends Controller
                 if ($request->payment_method == 'online') {
                     $link = (new OnlinePayment())->generatePortWalletLink($order->partnerOrders[0], 1);
                 }
+                $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
+                (new SmsHandler('order-created'))->send($customer->profile->mobile, [
+                    'order_code' => $order->code()
+                ]);
+                (new NotificationRepository())->send($order);
                 return api_response($request, $order, 200, ['link' => $link]);
             }
             return api_response($request, $order, 500);
