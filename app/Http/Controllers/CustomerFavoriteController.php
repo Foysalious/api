@@ -42,6 +42,12 @@ class CustomerFavoriteController extends Controller
     public function store($customer, Request $request)
     {
         try {
+            $data = json_decode($request->data);
+            foreach ($data as $category) {
+                if (count($category->services) == 0) {
+                    return api_response($request, null, 400);
+                }
+            }
             if ($response = $this->save(json_decode($request->data), $request->customer)) {
                 return api_response($request, 1, 200);
             } else {
@@ -55,16 +61,8 @@ class CustomerFavoriteController extends Controller
     private function save($data, $customer)
     {
         try {
-            foreach ($data as $category) {
-                if (count($category->services) == 0) {
-                    return false;
-                }
-            }
             DB::transaction(function () use ($data, $customer) {
                 foreach ($data as $category) {
-                    if (count($category->services) > 0) {
-                        DB::rollBack();
-                    }
                     $favorite = new CustomerFavorite(['category_id' => (int)$category->category, 'name' => $category->name, 'additional_info' => $category->additional_info]);
                     $customer->favorites()->save($favorite);
                     $this->saveServices($favorite, $category->services);
