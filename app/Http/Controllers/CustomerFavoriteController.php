@@ -56,7 +56,7 @@ class CustomerFavoriteController extends Controller
     {
         try {
             foreach ($data as $category) {
-                if (count($category->services) > 0) {
+                if (count($category->services) == 0) {
                     return false;
                 }
             }
