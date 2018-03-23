@@ -233,9 +233,13 @@ class OrderController extends Controller
 
     private function updateVouchers($order, Customer $customer)
     {
-        if ($order->voucher_id != null) {
-            $voucher = $order->voucher;
-            $this->updateVoucherInPromoList($customer, $voucher, $order);
+        try {
+            if ($order->voucher_id != null) {
+                $voucher = $order->voucher;
+                $this->updateVoucherInPromoList($customer, $voucher, $order);
+            }
+        } catch (\Throwable $e) {
+            return null;
         }
     }
 
