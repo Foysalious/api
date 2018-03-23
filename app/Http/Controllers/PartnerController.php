@@ -271,7 +271,8 @@ class PartnerController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'type' => 'sometimes|required|string',
-                'verified' => 'sometimes|required|boolean'
+                'verified' => 'sometimes|required|boolean',
+                'job_id' => 'sometimes|required|numeric',
             ]);
             if ($validator->fails()) {
                 $errors = $validator->errors()->all()[0];
@@ -281,14 +282,13 @@ class PartnerController extends Controller
             $partnerRepo = new PartnerRepository($request->partner);
             $type = $request->has('type') ? $request->type : null;
             $verified = $request->has('verified') ? $request->verified : null;
-            $resources = $partnerRepo->resources($type, $verified);
+            $resources = $partnerRepo->resources($type, $verified, $request->job_id);
             if (count($resources) > 0) {
                 return api_response($request, $resources, 200, ['resources' => array_slice($resources->sortBy('name')->values()->all(), $offset, $limit)]);
             } else {
                 return api_response($request, null, 404);
             }
         } catch (\Throwable $e) {
-            dd($e);
             return api_response($request, null, 500);
         }
     }
