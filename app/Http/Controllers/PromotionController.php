@@ -9,6 +9,7 @@ use App\Repositories\PartnerServiceRepository;
 use App\Sheba\Checkout\Discount;
 use App\Sheba\Checkout\PartnerList;
 use Carbon\Carbon;
+use function GuzzleHttp\Psr7\str;
 use Illuminate\Http\Request;
 use Sheba\Voucher\PromotionList;
 use Sheba\Voucher\VoucherSuggester;
@@ -26,9 +27,9 @@ class PromotionController extends Controller
             foreach ($customer->promotions as &$promotion) {
                 $promotion['valid_till_timestamp'] = $promotion->valid_till->timestamp;
                 if ((int)$promotion->voucher->max_order == 0) {
-                    $promotion['usage_left'] = '∞';
+                    $promotion['usage_left'] = 'Unlimited';
                 } else {
-                    $promotion['usage_left'] = (int)$promotion->voucher->max_order - $customer->orders->where('voucher_id', $promotion->voucher->id)->count();
+                    $promotion['usage_left'] = (string)((int)$promotion->voucher->max_order - $customer->orders->where('voucher_id', $promotion->voucher->id)->count());
                 }
             }
             return $customer->promotions->count() > 0 ? api_response($request, $customer->promotions, 200, ['promotions' => $customer->promotions]) : api_response($request, $customer->promotions, 404);

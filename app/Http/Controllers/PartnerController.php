@@ -58,7 +58,7 @@ class PartnerController extends Controller
             }
             if ($partner == null)
                 return api_response($request, null, 404);
-            $partner->load(['basicInformations', 'categories' => function ($q) {
+            $partner->load(['workingHours', 'categories' => function ($q) {
                 $q->select('categories.id', 'name', 'thumb', 'icon', 'categories.slug')->where('category_partner.is_verified', 1);
             }, 'reviews', 'jobs' => function ($q) {
                 $q->with(['resource' => function ($q) {
@@ -70,18 +70,16 @@ class PartnerController extends Controller
                 $q->where('partner_service.is_verified', 1);
             }, 'locations']);
             $locations = $partner->locations;
-            $basic_info = $partner->basicInformations;
             $info = collect($partner)->only(['id', 'name', 'mobile', 'description', 'email', 'verified_at', 'status', 'logo', 'address', 'created_at']);
-            $working_days = json_decode(collect($basic_info)->only('working_days')->get('working_days'));
             $working_info = [];
-            foreach ($working_days as $key => $value) {
+            foreach ($partner->workingHours as $workingHour) {
                 array_push($working_info, array(
-                    'day' => $value,
-                    'hour' => '10:00 AM - 8:00 PM'
+                    'day' => $workingHour->day,
+                    'hour' => (Carbon::parse($workingHour->star_time))->format('g:i A') . '-' . (Carbon::parse($workingHour->star_end))->format('g:i A')
                 ));
             }
             $info->put('working_days', $working_info);
-            $info->put('is_available', in_array((Carbon::today())->format('D') . 'day', $working_days) ? 1 : 0);
+            $info->put('is_available', in_array(Carbon::today()->format('D') . 'day', $working_info) ? 1 : 0);
             $info->put('total_locations', $locations->count());
             $info->put('total_services', $partner->services->count());
             $job_with_review = $partner->jobs->where('status', 'Served')->filter(function ($job) {
@@ -120,6 +118,7 @@ class PartnerController extends Controller
             $info->put('avg_rating', $this->reviewRepository->getAvgRating($partner->reviews));
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
+            dd($e);
             return api_response($request, null, 500);
         }
     }
