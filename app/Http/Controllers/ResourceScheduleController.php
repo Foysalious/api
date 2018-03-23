@@ -36,7 +36,8 @@ class ResourceScheduleController extends Controller
             "message" => $job->resource->profile->name . " has extended time for " . $job->fullCode(),
             "event_type" => 'PartnerOrder',
             "event_id" => "$job->partner_order->id",
-            "action" => 'extend_time'
+            "action" => 'extend_time',
+            "version" => $job->partner_order->getVersion(),
         ], env('MANAGER_TOPIC_NAME') . $job->partner_order->partner_id);
     }
 
