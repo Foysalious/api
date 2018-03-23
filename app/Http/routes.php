@@ -338,6 +338,7 @@ $api->version('v1', function ($api) {
                     $api->get('/', 'CustomerDeliveryAddressController@index');
                     $api->post('/', 'CustomerDeliveryAddressController@store');
                     $api->put('{delivery_address}', 'CustomerDeliveryAddressController@update');
+                    $api->delete('{delivery_address}', 'CustomerDeliveryAddressController@destroy');
                 });
                 $api->group(['prefix' => 'orders'], function ($api) {
                     $api->post('/', 'OrderController@store');

@@ -63,4 +63,17 @@ class CustomerDeliveryAddressController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function destroy($customer, $delivery_address, Request $request)
+    {
+        try {
+            $address = CustomerDeliveryAddress::where([['id', $delivery_address], ['customer_id', (int)$customer]])->first();
+            if ($address) {
+                $address->delete();
+                return api_response($request, null, 200);
+            }
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
 }
