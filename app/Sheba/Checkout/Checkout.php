@@ -60,7 +60,7 @@ class Checkout
             $data['category_id'] = $partner_list->selected_services->first()->category_id;
             $data = $this->getVoucherData($data['job_services'], $data, $partner);
             if ($order = $this->storeInDB($data, $partner_list->selected_services, $partner)) {
-                $profile = $this->customerRepository->updateProfileInfoWhilePlacingOrder($order);
+//                $profile = $this->customerRepository->updateProfileInfoWhilePlacingOrder($order);
             }
             return $order;
         }

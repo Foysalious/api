@@ -55,6 +55,11 @@ class CustomerFavoriteController extends Controller
     private function save($data, $customer)
     {
         try {
+            foreach ($data as $category) {
+                if (count($category->services) > 0) {
+                    return false;
+                }
+            }
             DB::transaction(function () use ($data, $customer) {
                 foreach ($data as $category) {
                     if (count($category->services) > 0) {
