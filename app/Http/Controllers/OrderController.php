@@ -197,10 +197,10 @@ class OrderController extends Controller
     {
         try {
             $this->validate($request, [
-                'location' => 'required|numeric',
+                'location' => 'required',
                 'services' => 'required|string',
                 'sales_channel' => 'required|string',
-                'partner' => 'required|numeric',
+                'partner' => 'required',
                 'remember_token' => 'required|string',
                 'name' => 'required|string',
                 'mobile' => 'required|string|mobile:bd',
@@ -219,11 +219,7 @@ class OrderController extends Controller
                 if ($request->payment_method == 'online') {
                     $link = (new OnlinePayment())->generatePortWalletLink($order->partnerOrders[0], 1);
                 }
-                $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
-                (new SmsHandler('order-created'))->send($customer->profile->mobile, [
-                    'order_code' => $order->code()
-                ]);
-                (new NotificationRepository())->send($order);
+                $this->sendNotifications($customer, $order);
                 return api_response($request, $order, 200, ['link' => $link]);
             }
             return api_response($request, $order, 500);
@@ -240,6 +236,19 @@ class OrderController extends Controller
         if ($order->voucher_id != null) {
             $voucher = $order->voucher;
             $this->updateVoucherInPromoList($customer, $voucher, $order);
+        }
+    }
+
+    private function sendNotifications($customer, $order)
+    {
+        try {
+            $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
+            (new SmsHandler('order-created'))->send($customer->profile->mobile, [
+                'order_code' => $order->code()
+            ]);
+            (new NotificationRepository())->send($order);
+        } catch (\Throwable $e) {
+            return null;
         }
     }
 
