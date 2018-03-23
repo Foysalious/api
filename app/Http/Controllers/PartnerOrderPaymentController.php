@@ -27,6 +27,7 @@ class PartnerOrderPaymentController extends Controller
                 })->when($date, function ($query) use ($date, $month, $year) {
                     return $query->where(DB::raw('DATE(partner_order_payments.created_at)'), (Carbon::createFromDate($year, $month, $date))->format('Y-m-d'));
                 })
+                ->with('partnerOrder')
                 ->where('partners.id', $partner->id)->orderBy('partner_order_payments.id', 'desc')
                 ->select('partner_order_payments.id', 'partner_order_payments.created_at', 'partner_order_payments.created_by', 'partner_order_payments.amount', 'log', 'method', DB::raw('partner_orders.id as partner_order_id'))
                 ->get();
@@ -50,7 +51,9 @@ class PartnerOrderPaymentController extends Controller
             $collection['resource_mobile'] = $profile->mobile;
             $collection['resource_picture'] = $profile->pro_pic;
             $collection['created_at_timestamp'] = $created_at_timestamp;
-            $collection['code'] = (PartnerOrder::find($collection->partner_order_id))->code();
+            $collection['code'] = $collection->partnerOrder->code();
+            $collection['version'] = $collection->partnerOrder->getVersion();
+            removeRelationsAndFields($collection);
         });
         return $collections;
     }

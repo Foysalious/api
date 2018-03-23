@@ -88,12 +88,12 @@ class PromotionController extends Controller
                     if ($discount->__get('hasDiscount')) {
                         return api_response($request, null, 403);
                     }
-                    $selected_service['price'] = $price;
+                    $service['price'] = $discount->__get('discounted_price');
                 }
             } else {
                 return api_response($request, null, 400);
             }
-            $voucherSuggester->init($request->customer, $selected_services, $partner->id, (int)$request->location, $request->has('sales_channel') ? $request->sales_channel : 'Web');
+            $voucherSuggester->init($request->customer, $selected_services, $partner->id, (int)$request->location, $price, $request->has('sales_channel') ? $request->sales_channel : 'Web');
             $promo = $voucherSuggester->suggest();
             if ($promo != null) {
                 return api_response($request, $promo, 200, ['voucher' => array(
@@ -103,6 +103,7 @@ class PromotionController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (\Throwable $e) {
+            dd($e);
             return api_response($request, null, 500);
         }
     }

@@ -56,6 +56,8 @@ class Checkout
             $request->merge(['customer' => $this->customer->id]);
             $data = $this->makeOrderData($request);
             $data['payment_method'] = $request->payment_method == 'cod' ? 'cash-on-delivery' : 'online';
+            $data['job_services'] = $this->createJobService($partner->services, $partner_list->selected_services, $data);
+            $data = $this->getVoucherData($data['job_services'], $data, $partner);
             if ($order = $this->storeInDB($data, $partner_list->selected_services, $partner)) {
                 $profile = $this->customerRepository->updateProfileInfoWhilePlacingOrder($order);
             }
@@ -93,17 +95,7 @@ class Checkout
     {
         $order = new Order;
         try {
-            $job_services = $this->createJobService($partner->services, $selected_services, $data);
-            $discounted_services = $job_services->filter(function ($job_service) {
-                return $job_service->discount_id != null;
-            })->count();
-            if ($discounted_services === 0 && $data['voucher'] != null) {
-                $order_amount = $job_services->map(function ($job_service) {
-                    return $job_service->unit_price * $job_service->quantity;
-                })->sum();
-                $data = $this->applyVoucher($partner->id, $order_amount, $data);
-            }
-            DB::transaction(function () use ($data, $selected_services, $partner, $order, $job_services) {
+            DB::transaction(function () use ($data, $selected_services, $partner, $order) {
                 $order = $this->createOrder($order, $data);
                 $order = $this->getAuthor($order, $data);
                 $partner_order = PartnerOrder::create([
@@ -128,7 +120,7 @@ class Checkout
                     'partner_contribution' => isset($data['partner_contribution']) ? $data['partner_contribution'] : 0,
                 ]);
                 $job = $this->getAuthor($job, $data);
-                $job->jobServices()->saveMany($job_services);
+                $job->jobServices()->saveMany($data['job_services']);
             });
         } catch (QueryException $e) {
             return false;
@@ -323,6 +315,21 @@ class Checkout
         $model->created_by_name = $data['created_by_name'];
         $model->update();
         return $model;
+    }
+
+    private function getVoucherData($job_services, $data, $partner)
+    {
+        $discounted_services = $job_services->filter(function ($job_service) {
+            return $job_service->discount_id != null;
+        })->count();
+
+        if ($discounted_services === 0 && $data['voucher'] != null) {
+            $order_amount = $job_services->map(function ($job_service) {
+                return $job_service->unit_price * $job_service->quantity;
+            })->sum();
+            $data = $this->applyVoucher($partner->id, $order_amount, $data);
+        }
+        return $data;
     }
 
 

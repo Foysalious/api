@@ -251,7 +251,7 @@ class OrderController extends Controller
                     return redirect(env('SHEBA_FRONT_END_URL'));
                 }
             }
-        } catch (\Throwable $exception) {
+        } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
     }
