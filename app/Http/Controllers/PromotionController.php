@@ -25,7 +25,11 @@ class PromotionController extends Controller
             }]);
             foreach ($customer->promotions as &$promotion) {
                 $promotion['valid_till_timestamp'] = $promotion->valid_till->timestamp;
-                $promotion['usage_left'] = (int)$promotion->voucher->max_order - $customer->orders->where('voucher_id', $promotion->voucher->id)->count();
+                if ((int)$promotion->voucher->max_order == 0) {
+                    $promotion['usage_left'] = '∞';
+                } else {
+                    $promotion['usage_left'] = (int)$promotion->voucher->max_order - $customer->orders->where('voucher_id', $promotion->voucher->id)->count();
+                }
             }
             return $customer->promotions->count() > 0 ? api_response($request, $customer->promotions, 200, ['promotions' => $customer->promotions]) : api_response($request, $customer->promotions, 404);
         } catch (\Throwable $e) {
