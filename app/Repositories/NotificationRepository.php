@@ -65,7 +65,8 @@ class NotificationRepository
                 'link' => env('SHEBA_PARTNER_END_URL') . '/' . $partner->sub_domain . '/order/' . $partner_order->id,
                 'type' => notificationType('Info'),
                 'event_type' => "App\Models\PartnerOrder",
-                'event_id' => $partner_order->id
+                'event_id' => $partner_order->id,
+                'version' => $partner_order->getVersion()
             ]);
             (new PushNotificationRepository())->send([
                 "title" => 'New Order',

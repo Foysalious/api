@@ -11,7 +11,9 @@ use App\Repositories\OrderRepository;
 use App\Repositories\SmsHandler;
 use App\Sheba\Checkout\Checkout;
 use App\Sheba\Checkout\OnlinePayment;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Redis;
 use DB;
 
@@ -194,6 +196,18 @@ class OrderController extends Controller
     public function store($customer, Request $request)
     {
         try {
+            $this->validate($request, [
+                'location' => 'required|numeric',
+                'services' => 'required|string',
+                'sales_channel' => 'required|string',
+                'partner' => 'required|numeric',
+                'remember_token' => 'required|string',
+                'name' => 'required|string',
+                'mobile' => 'required|string|mobile:bd',
+                'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
+                'time' => 'required|string',
+                'payment_method' => 'required|string|in:cod,online',
+            ], ['mobile' => 'Invalid mobile number!']);
             $customer = $request->customer;
             $order = new Checkout($customer);
             $order = $order->placeOrder($request);
@@ -213,6 +227,9 @@ class OrderController extends Controller
                 return api_response($request, $order, 200, ['link' => $link]);
             }
             return api_response($request, $order, 500);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
