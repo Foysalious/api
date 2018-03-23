@@ -57,6 +57,7 @@ class Checkout
             $data = $this->makeOrderData($request);
             $data['payment_method'] = $request->payment_method == 'cod' ? 'cash-on-delivery' : 'online';
             $data['job_services'] = $this->createJobService($partner->services, $partner_list->selected_services, $data);
+            $data['category_id'] = $partner_list->selected_services->first()->category_id;
             $data = $this->getVoucherData($data['job_services'], $data, $partner);
             if ($order = $this->storeInDB($data, $partner_list->selected_services, $partner)) {
                 $profile = $this->customerRepository->updateProfileInfoWhilePlacingOrder($order);
@@ -231,10 +232,10 @@ class Checkout
         return '';
     }
 
-    private function applyVoucher($partner, $order_amount, $data)
+    private function applyVoucher($partner, $category_id, $order_amount, $data)
     {
         $result = $this->voucherRepository
-            ->isValid($data['voucher'], null, $partner, (int)$data['location_id'], (int)$data['customer_id'], $order_amount, $data['sales_channel']);
+            ->isValid($data['voucher'], $category_id, $partner, (int)$data['location_id'], (int)$data['customer_id'], $order_amount, $data['sales_channel']);
         if ($result['is_valid']) {
             $data['discount'] = $this->calculateVoucherDiscountAmount($result, $order_amount);
             $data['sheba_contribution'] = $result['voucher']['sheba_contribution'];
@@ -327,7 +328,7 @@ class Checkout
             $order_amount = $job_services->map(function ($job_service) {
                 return $job_service->unit_price * $job_service->quantity;
             })->sum();
-            $data = $this->applyVoucher($partner->id, $order_amount, $data);
+            $data = $this->applyVoucher($partner->id, $data['category_id'], $order_amount, $data);
         }
         return $data;
     }
