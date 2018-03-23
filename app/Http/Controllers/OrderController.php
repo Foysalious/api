@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Library\PortWallet;
 use App\Models\Customer;
 use App\Models\Order;
+use App\Models\PartnerOrder;
 use App\Repositories\JobServiceRepository;
 use App\Repositories\NotificationRepository;
 use App\Repositories\OrderRepository;
@@ -281,13 +282,36 @@ class OrderController extends Controller
             if ($redis_key) {
                 $data = json_decode($redis_key);
                 $response = (new OnlinePayment())->pay($data, $request);
-                if ($response['success']) {
+                if ($response['type'] != 'PORTWALLET_RESPONSE_ERROR') {
+                    Redis::set('portwallet-payment-app-' . $request->invoice, json_encode(['amount' => $data['amount'],
+                        'partner_order_id' => $data['partner_order_id'], 'success' => $response['success'], 'isDue' => $response['isDue'],
+                        'message' => $response['message']]));
+                    Redis::expire('portwallet-payment-app' . $request->invoice, 3600);
                     Redis::del($redis_key_name);
-                    return redirect($response['redirect_link']);
-                } else {
-                    return redirect(env('SHEBA_FRONT_END_URL'));
+                    if ($response['success']) {
+                        return redirect($response['redirect_link']);
+                    }
+                }
+                return redirect(env('SHEBA_FRONT_END_URL'));
+            }
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function checkInvoiceValidity($customer, Request $request)
+    {
+        try {
+            $redis_key_name = 'portwallet-payment-app-' . $request->invoice;
+            $redis_key = Redis::get($redis_key_name);
+            if ($redis_key != null) {
+                $data = json_decode($redis_key);
+                $partnerOrder = PartnerOrder::find((int)$data['partner_order_id']);
+                if ($partnerOrder->order->customer_id == $customer) {
+                    return api_response($request, 1, 200, ['message' => $data['message']]);
                 }
             }
+            return api_response($request, null, 404);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }

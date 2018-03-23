@@ -79,26 +79,36 @@ class OnlinePayment
                 if ($isAdvancedPayment) {
                     $partner_order_payment = $this->createPartnerOrderPayment($partnerOrder, $amount, $portwallet_response, $request);
                     if ($partner_order_payment) {
-                        return array('success' => 1, 'redirect_link' => $this->generateRedirectLink($partnerOrder, $isAdvancedPayment));
+                        return array('success' => 1, 'isDue' => 0, 'message' => "Payment Successfully Received!", 'redirect_link' => $this->generateRedirectLink($partnerOrder, $isAdvancedPayment));
                     } else {
                         return array('success' => 0, 'redirect_link' => null,
-                            'type' => 'ADVANCED_PAYMENT_DB_ERROR', 'message' => "Your payment has successfully received but there was a system error. Our Order Manager will contact with you shortly");
+                            'type' => 'ADVANCED_PAYMENT_DB_ERROR', 'isDue' => 0, 'message' => "Your payment has successfully received but there was a system error. Our Order Manager will contact with you shortly");
                     }
                 } else {
                     $response = $this->clearSpPayment($partnerOrder, $amount);
                     if ($response) {
                         if ($response->code == 200) {
                             $notification = (new NotificationRepository())->forOnlinePayment($partnerOrder->id, $amount);
-                            return array('success' => 1, 'redirect_link' => $this->generateRedirectLink($partnerOrder, $isAdvancedPayment));
+                            return array('success' => 1, 'isDue' => 0, 'message' => "Payment Successfully Received!", 'redirect_link' => $this->generateRedirectLink($partnerOrder, $isAdvancedPayment));
                         } else {
-                            return array('success' => 0, 'type' => 'DB_ERROR', 'message' => "Your payment has successfully received but there was a system error. Our Order Manager will contact with you shortly");
+                            return array('success' => 0, 'isDue' => 0, 'type' => 'DB_ERROR', 'message' => "Your payment has successfully received but there was a system error. Our Order Manager will contact with you shortly");
                         }
                     }
                 }
             }
-            return array('success' => 0, 'type' => 'BILL_CLEAR_DB_ERROR', 'message' => "Your payment has successfully received but there was a system error. Our Order Manager will contact with you shortly");
+            return array('success' => 0, 'isDue' => 0, 'type' => 'BILL_CLEAR_DB_ERROR', 'message' => "Your payment has successfully received but there was a system error. Our Order Manager will contact with you shortly");
         }
-        return array('success' => 0, 'type' => 'PORTWALLET_RESPONSE_ERROR', 'message' => "This is not a valid portwallet invoice id", 'redirect_link' => null);
+        return array('success' => 0, 'isDue' => 1, 'type' => 'PORTWALLET_RESPONSE_ERROR', 'message' => "This is not a valid Portwallet Transaction ", 'redirect_link' => null);
+    }
+
+    public function ipnValidate($amount, $invoice)
+    {
+        $response = $this->portwallet->ipnValidate(array(
+            'amount' => $amount,
+            'invoice' => $invoice,
+            'currency' => "BDT"
+        ));
+        return $response->status == 200 && $response->data->status == "ACCEPTED";
     }
 
     private function createPartnerOrderPayment(PartnerOrder $partnerOrder, $amount, $portwallet_response, $request)
