@@ -88,7 +88,7 @@ class PromotionController extends Controller
                     if ($discount->__get('hasDiscount')) {
                         return api_response($request, null, 403);
                     }
-                    $service['price'] = $discount->__get('discounted_price');
+                    $selected_service['price'] = $discount->__get('discounted_price');
                 }
             } else {
                 return api_response($request, null, 400);
