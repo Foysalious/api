@@ -443,9 +443,23 @@ class CustomerController extends Controller
             array_add($notification, 'time', $notification->created_at->format('j M \\a\\t h:i A'));
             array_forget($notification, 'created_at');
             if ($notification->event_type == 'Job') {
-                array_add($notification, 'event_code', (Job::find($notification->event_id))->fullCode());
+                $code = null;
+                if ($notification->event_id) {
+                    $job = Job::find($notification->event_id);
+                    if ($job) {
+                        $code = $job->fullCode();
+                    }
+                }
+                array_add($notification, 'event_code', $code);
             } elseif ($notification->event_type == 'Order') {
-                array_add($notification, 'event_code', (Order::find($notification->event_id))->code());
+                $code = null;
+                if ($notification->event_id) {
+                    $order = Order::find($notification->event_id);
+                    if ($order) {
+                        $code = $order->code();
+                    }
+                }
+                array_add($notification, 'event_code', $code);
             }
             return $notification;
         });
