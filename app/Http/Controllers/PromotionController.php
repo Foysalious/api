@@ -81,6 +81,7 @@ class PromotionController extends Controller
             if ($partner_list->hasPartners) {
                 $partner = $partner_list->partners->first();
                 $selected_services = $partner_list->selected_services;
+                $order_amount = 0;
                 foreach ($selected_services as &$selected_service) {
                     $service = $partner->services->where('id', $selected_service->id)->first();
                     if ($service->isOptions()) {
@@ -93,12 +94,12 @@ class PromotionController extends Controller
                     if ($discount->__get('hasDiscount')) {
                         return api_response($request, null, 403);
                     }
-                    $selected_service['price'] = $discount->__get('discounted_price');
+                    $order_amount += $discount->__get('discounted_price');
                 }
             } else {
                 return api_response($request, null, 400);
             }
-            $voucherSuggester->init($request->customer, $selected_services, $partner->id, (int)$request->location, $price, $request->has('sales_channel') ? $request->sales_channel : 'Web');
+            $voucherSuggester->init($request->customer, $selected_services->first()->category_id, $partner->id, (int)$request->location, $order_amount, $request->has('sales_channel') ? $request->sales_channel : 'Web');
             $promo = $voucherSuggester->suggest();
             if ($promo != null) {
                 return api_response($request, $promo, 200, ['voucher' => array(

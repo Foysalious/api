@@ -203,7 +203,7 @@ class OrderController extends Controller
                 'sales_channel' => 'required|string',
                 'partner' => 'required',
                 'remember_token' => 'required|string',
-                'name' => 'required|string',
+//                'name' => 'required|string',
                 'mobile' => 'required|string|mobile:bd',
                 'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
                 'time' => 'required|string',
@@ -228,6 +228,7 @@ class OrderController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             return api_response($request, null, 500);
         }
     }
@@ -282,9 +283,9 @@ class OrderController extends Controller
             if ($redis_key) {
                 $data = json_decode($redis_key);
                 $response = (new OnlinePayment())->pay($data, $request);
-                if ($response['type'] != 'PORTWALLET_RESPONSE_ERROR') {
-                    Redis::set('portwallet-payment-app-' . $request->invoice, json_encode(['amount' => $data['amount'],
-                        'partner_order_id' => $data['partner_order_id'], 'success' => $response['success'], 'isDue' => $response['isDue'],
+                if ($response != null) {
+                    Redis::set('portwallet-payment-app-' . $request->invoice, json_encode(['amount' => $data->amount,
+                        'partner_order_id' => $data->partner_order_id, 'success' => $response['success'], 'isDue' => $response['isDue'],
                         'message' => $response['message']]));
                     Redis::expire('portwallet-payment-app' . $request->invoice, 3600);
                     Redis::del($redis_key_name);
@@ -306,9 +307,9 @@ class OrderController extends Controller
             $redis_key = Redis::get($redis_key_name);
             if ($redis_key != null) {
                 $data = json_decode($redis_key);
-                $partnerOrder = PartnerOrder::find((int)$data['partner_order_id']);
+                $partnerOrder = PartnerOrder::find((int)$data->partner_order_id);
                 if ($partnerOrder->order->customer_id == $customer) {
-                    return api_response($request, 1, 200, ['message' => $data['message']]);
+                    return api_response($request, 1, 200, ['message' => $data->message]);
                 }
             }
             return api_response($request, null, 404);

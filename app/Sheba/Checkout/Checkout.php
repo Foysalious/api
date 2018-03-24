@@ -11,40 +11,30 @@ use App\Models\InfoCall;
 use App\Models\Job;
 use App\Models\JobService;
 use App\Models\Order;
-use App\Models\Partner;
 use App\Models\PartnerOrder;
 use App\Models\PartnerService;
-use App\Models\PartnerServiceDiscount;
 use App\Models\Service;
+use App\Models\Voucher;
 use App\Repositories\CustomerRepository;
-use App\Repositories\DiscountRepository;
-use App\Repositories\JobServiceRepository;
-use App\Repositories\OrderRepository;
 use App\Repositories\PartnerServiceRepository;
 use App\Repositories\VoucherRepository;
 use Illuminate\Database\QueryException;
 use DB;
 use Illuminate\Http\Request;
 use Redis;
+use Sheba\Voucher\VoucherSuggester;
 
 class Checkout
 {
     private $customer;
-    private $orderRepository;
-    private $jobServiceRepository;
     private $customerRepository;
-    private $discountRepository;
     private $voucherRepository;
-    private $voucherApplied;
 
     public function __construct($customer)
     {
         $this->customer = $customer instanceof Customer ? $customer : Customer::find((int)$customer);
-        $this->orderRepository = new OrderRepository();
-        $this->jobServiceRepository = new JobServiceRepository();
         $this->customerRepository = new CustomerRepository();
         $this->voucherRepository = new VoucherRepository();
-        $this->discountRepository = new DiscountRepository();
     }
 
     public function placeOrder($request)
@@ -80,7 +70,6 @@ class Checkout
         $data['category_answers'] = $request->category_answers;
         $data['info_call_id'] = $this->_setInfoCallId($request);
         $data['affiliation_id'] = $this->_setAffiliationId($request);
-        $data['voucher'] = $request->has('voucher') ? $request->voucher : null;
         if ($request->has('address')) {
             $data['address'] = $request->address;
         }
@@ -127,37 +116,6 @@ class Checkout
             return false;
         }
         return $order;
-    }
-
-    private function saveJobServices(Job $job, $services, $selected_services, $data)
-    {
-        foreach ($selected_services as $selected_service) {
-            $service = $services->where('id', $selected_service->id)->first();
-            if ($service->isOptions()) {
-                $price = (new PartnerServiceRepository())->getPriceOfOptionsService($service->pivot->prices, $selected_service->option);
-            } else {
-                $price = (double)$service->pivot->prices;
-            }
-            $discount = new Discount($price, $selected_service->quantity);
-            $discount->calculateServiceDiscount((PartnerService::find($service->pivot->id))->discount());
-            $service_data = array(
-                'job_id' => $job->id,
-                'service_id' => $selected_service->id,
-                'quantity' => $selected_service->quantity,
-                'created_by' => $data['created_by'],
-                'created_by_name' => $data['created_by_name'],
-                'unit_price' => $price,
-                'sheba_contribution' => $discount->__get('sheba_contribution'),
-                'partner_contribution' => $discount->__get('partner_contribution'),
-                'discount_id' => $discount->__get('discount_id'),
-                'discount' => $discount->__get('discount'),
-                'discount_percentage' => $discount->__get('discount_percentage'),
-                'name' => $service->name,
-                'variable_type' => $service->variable_type,
-            );
-            list($service_data['option'], $service_data['variables']) = $this->getVariableOptionOfService($service, $selected_service->option);
-            JobService::create($service_data);
-        }
     }
 
     private function createJobService($services, $selected_services, $data)
@@ -232,32 +190,6 @@ class Checkout
         return '';
     }
 
-    private function applyVoucher($partner, $order_amount, $data)
-    {
-        $result = $this->voucherRepository
-            ->isValid($data['voucher'], $data['category_id'], $partner, (int)$data['location_id'], (int)$data['customer_id'], $order_amount, $data['sales_channel']);
-        if ($result['is_valid']) {
-            $data['discount'] = $this->calculateVoucherDiscountAmount($result, $order_amount);
-            $data['sheba_contribution'] = $result['voucher']['sheba_contribution'];
-            $data['partner_contribution'] = $result['voucher']['sheba_contribution'];
-            $data['voucher_id'] = $result['id'];
-        }
-        return $data;
-    }
-
-    private function calculateVoucherDiscountAmount($result, $order_amount)
-    {
-        if ($result['is_percentage']) {
-            $amount = ($order_amount * $result['amount']) / 100;
-            if ($result['voucher']->cap != null && $amount > $result['voucher']->cap) {
-                $amount = $result['voucher']->cap;
-            }
-            return $amount;
-        } else {
-            return $result['amount'];
-        }
-    }
-
     private function getVariableOptionOfService(Service $service, Array $option)
     {
         if ($service->variable_type == 'Options') {
@@ -310,6 +242,29 @@ class Checkout
         return null;
     }
 
+    private function getVoucherData($job_services, $data, $partner)
+    {
+        $discounted_services = $job_services->filter(function ($job_service) {
+            return $job_service->discount_id != null;
+        })->count();
+
+        if ($discounted_services === 0) {
+            $order_amount = $job_services->map(function ($job_service) {
+                return $job_service->unit_price * $job_service->quantity;
+            })->sum();
+            $voucherSuggester = new VoucherSuggester(app(Voucher::class), app(Customer::class));
+            $voucherSuggester->init($this->customer, $data['category_id'], $partner->id, $data['location_id'], $order_amount, $data['sales_channel']);
+            $result = $voucherSuggester->suggest();
+            if ($result != null) {
+                $data['discount'] = $result['amount'];
+                $data['sheba_contribution'] = $result['voucher']['sheba_contribution'];
+                $data['partner_contribution'] = $result['voucher']['sheba_contribution'];
+                $data['voucher_id'] = $result['id'];
+            }
+        }
+        return $data;
+    }
+
     private function getAuthor($model, $data)
     {
         $model->created_by = $data['created_by'];
@@ -317,21 +272,5 @@ class Checkout
         $model->update();
         return $model;
     }
-
-    private function getVoucherData($job_services, $data, $partner)
-    {
-        $discounted_services = $job_services->filter(function ($job_service) {
-            return $job_service->discount_id != null;
-        })->count();
-
-        if ($discounted_services === 0 && $data['voucher'] != null) {
-            $order_amount = $job_services->map(function ($job_service) {
-                return $job_service->unit_price * $job_service->quantity;
-            })->sum();
-            $data = $this->applyVoucher($partner->id, $order_amount, $data);
-        }
-        return $data;
-    }
-
 
 }

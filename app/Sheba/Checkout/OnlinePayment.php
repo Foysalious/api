@@ -98,7 +98,7 @@ class OnlinePayment
             }
             return array('success' => 0, 'isDue' => 0, 'type' => 'BILL_CLEAR_DB_ERROR', 'message' => "Your payment has successfully received but there was a system error. Our Order Manager will contact with you shortly");
         }
-        return array('success' => 0, 'isDue' => 1, 'type' => 'PORTWALLET_RESPONSE_ERROR', 'message' => "This is not a valid Portwallet Transaction ", 'redirect_link' => null);
+        return null;
     }
 
     public function ipnValidate($amount, $invoice)
