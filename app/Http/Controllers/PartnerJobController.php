@@ -140,7 +140,7 @@ class PartnerJobController extends Controller
                 return api_response($request, $response, $response->code);
             }
             if ($request->has('resource_id')) {
-                if (!scheduler(Resource::find((int)$request->resource_id))->isAvailable($job->schedule_date, explode('-', $job->preferred_time), $job->category_id)) {
+                if (!scheduler(Resource::find((int)$request->resource_id))->isAvailable($job->schedule_date, explode('-', $job->preferred_time)[0], $job->category_id)) {
                     return api_response($request, null, 403, ['message' => 'Resource is not available at this time. Please select different date time or change the resource']);
                 }
                 if ($request->partner->hasThisResource((int)$request->resource_id, 'Handyman') && $job->hasStatus(['Accepted', 'Schedule_Due', 'Process'])) {
@@ -153,7 +153,8 @@ class PartnerJobController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {;
+        } catch (\Throwable $e) {
+            ;
             return api_response($request, null, 500);
         }
     }
