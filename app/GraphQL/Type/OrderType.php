@@ -39,6 +39,9 @@ class OrderType extends GraphQlType
             'version' => ['type' => Type::string()],
             'closed_and_paid_at' => ['type' => Type::string()],
             'closed_and_paid_at_timestamp' => ['type' => Type::int()],
+            'completed_at' => ['type' => Type::string()],
+            'completed_at_timestamp' => ['type' => Type::string()],
+            'invoice' => ['type' => Type::string()]
         ];
     }
 
@@ -153,13 +156,28 @@ class OrderType extends GraphQlType
         return $root->closed_and_paid_at ? $root->closed_and_paid_at->format('Y-m-d') : null;
     }
 
-    protected function resolveClosedAndPaidAtTimestamp($root)
+    protected function resolveClosedAndPaidAtTimestampField($root)
     {
         return $root->closed_and_paid_at ? $root->closed_and_paid_at->timestamp : null;
+    }
+
+    protected function resolveCompletedAtField($root)
+    {
+        return $root->completed_at ? $root->completed_at->format('Y-m-d') : null;
+    }
+
+    protected function resolveCompletedAtTimestampField($root)
+    {
+        return $root->completed_at ? $root->completed_at->timestamp : null;
     }
 
     protected function resolveVersionField($root)
     {
         return $root->getVersion();
+    }
+
+    protected function resolveInvoiceField($root)
+    {
+        return $root->invoice;
     }
 }
