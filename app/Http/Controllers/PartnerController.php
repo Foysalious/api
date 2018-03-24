@@ -75,7 +75,7 @@ class PartnerController extends Controller
             foreach ($partner->workingHours as $workingHour) {
                 array_push($working_info, array(
                     'day' => $workingHour->day,
-                    'hour' => (Carbon::parse($workingHour->star_time))->format('g:i A') . '-' . (Carbon::parse($workingHour->star_end))->format('g:i A')
+                    'hour' => (Carbon::parse($workingHour->start_time))->format('g:i A') . '-' . (Carbon::parse($workingHour->start_end))->format('g:i A')
                 ));
             }
             $info->put('working_days', $working_info);
