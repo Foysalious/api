@@ -153,8 +153,7 @@ class PartnerJobController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            dd($e);
+        } catch (\Throwable $e) {;
             return api_response($request, null, 500);
         }
     }
