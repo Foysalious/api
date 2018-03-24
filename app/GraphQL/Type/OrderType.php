@@ -117,8 +117,8 @@ class OrderType extends GraphQlType
 
     protected function resolveStatusField($root)
     {
-        $root->order->calculate(true);
-        return $root->order->status;
+        $root->calculate(true);
+        return $root->jobs[0]->status;
     }
 
     protected function resolveScheduleDateField($root)
