@@ -38,7 +38,6 @@ class RateController extends Controller
     {
         try {
             $job = $request->job;
-            dd($customer, $resource);
             $review = $job->review;
             if ($review == null) {
                 return api_response($request, null, 403);
