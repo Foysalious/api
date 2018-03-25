@@ -258,7 +258,7 @@ class Checkout
             if ($result != null) {
                 $data['discount'] = $result['amount'];
                 $data['sheba_contribution'] = $result['voucher']['sheba_contribution'];
-                $data['partner_contribution'] = $result['voucher']['sheba_contribution'];
+                $data['partner_contribution'] = $result['voucher']['partner_contribution'];
                 $data['voucher_id'] = $result['id'];
             }
         }
