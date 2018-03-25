@@ -35,8 +35,8 @@ class OnlinePayment
             $data = array();
             $data['amount'] = $partnerOrder->due;
             $data['currency'] = "BDT";
-            $data['product_name'] = "N/A";
-            $data['product_description'] = "N/A";
+            $data['product_name'] = "Sheba Services";
+            $data['product_description'] = "Payment for Sheba";
             $data['name'] = "N/A";
             $data['email'] = "N/A";
             $data['phone'] = "N/A";
