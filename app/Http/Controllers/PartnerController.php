@@ -44,7 +44,9 @@ class PartnerController extends Controller
 
     public function index()
     {
-        $partners = Partner::select('id', 'name', 'sub_domain', 'logo')->where('status', 'Verified')->orderBy('name')->get();
+        $partners = Partner::select('id', 'name', 'sub_domain', 'logo')->whereHas('services', function ($q) {
+            $q->published();
+        })->has('resources', '>', 0)->where('status', 'Verified')->orderBy('name')->get();
         return response()->json(['partners' => $partners, 'code' => 200, 'msg' => 'successful']);
     }
 
