@@ -60,6 +60,9 @@ class Checkout
     {
         $data['location_id'] = $request->location;
         $data['customer_id'] = $request->customer;
+        if ($request->has('resource')) {
+            $data['resource_id'] = $request->resource;
+        };
         $data['delivery_mobile'] = $request->mobile;
         $data['delivery_name'] = $request->name;
         $data['sales_channel'] = $request->sales_channel;
@@ -108,6 +111,7 @@ class Checkout
                     'discount' => isset($data['discount']) ? $data['discount'] : 0,
                     'sheba_contribution' => isset($data['sheba_contribution']) ? $data['sheba_contribution'] : 0,
                     'partner_contribution' => isset($data['partner_contribution']) ? $data['partner_contribution'] : 0,
+                    'resource_id' => isset($data['resource_id']) ? $data['resource_id'] : null,
                 ]);
                 $job = $this->getAuthor($job, $data);
                 $job->jobServices()->saveMany($data['job_services']);
@@ -245,7 +249,7 @@ class Checkout
     private function getVoucherData($job_services, $data, $partner)
     {
         if (!$this->isVoucherAutoApplicable($job_services, $data)) return $data;
-        
+
         $order_amount = $job_services->map(function ($job_service) {
             return $job_service->unit_price * $job_service->quantity;
         })->sum();
@@ -269,8 +273,8 @@ class Checkout
     private function hasDiscountsOnServices($job_services)
     {
         return $discounted_services = $job_services->filter(function ($job_service) {
-            return $job_service->discount_id != null;
-        })->count() > 0;
+                return $job_service->discount_id != null;
+            })->count() > 0;
     }
 
     private function getAuthor($model, $data)
