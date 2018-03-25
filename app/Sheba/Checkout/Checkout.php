@@ -64,7 +64,9 @@ class Checkout
             $data['resource_id'] = $request->resource;
         };
         $data['delivery_mobile'] = $request->mobile;
-        $data['delivery_name'] = $request->name;
+        if ($request->has('delivery_name')) {
+            $data['delivery_name'] = $request->name;
+        }
         $data['sales_channel'] = $request->sales_channel;
         $data['date'] = $request->date;
         $data['time'] = $request->time;
@@ -159,7 +161,7 @@ class Checkout
         $order->info_call_id = $data['info_call_id'];
         $order->affiliation_id = $data['affiliation_id'];
         $order->delivery_mobile = formatMobile($data['delivery_mobile']);
-        $order->delivery_name = $data['delivery_name'];
+        $order->delivery_name = isset($data['delivery_name']) ? $data['delivery_name'] : null;
         $order->sales_channel = $data['sales_channel'];
         $order->location_id = $data['location_id'];
         $order->customer_id = $data['customer_id'];
