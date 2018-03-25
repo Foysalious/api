@@ -1,5 +1,7 @@
 <?php
 
+use Carbon\Carbon;
+
 if (!function_exists('setTrace')) {
 
     /**
@@ -172,7 +174,7 @@ if (!function_exists('calculatePagination')) {
     function calculatePagination($request)
     {
         $offset = $request->has('offset') ? $request->offset : 0;
-        $limit = $request->has('limit') ? $request->limit : 100;
+        $limit = $request->has('limit') ? $request->limit : 30;
         return array($offset, $limit);
     }
 }
@@ -224,6 +226,16 @@ if (!function_exists('floatValFormat')) {
     function floatValFormat($value)
     {
         return floatval(number_format($value, 2, '.', ''));
+    }
+}
+if (!function_exists('humanReadableShebaTime')) {
+    function humanReadableShebaTime($time)
+    {
+        if ($time === 'Anytime') {
+            return $time;
+        }
+        $time = explode('-', $time);
+        return (Carbon::parse($time[0]))->format('g:i A') . '-' . (Carbon::parse($time[1]))->format('g:i A');
     }
 }
 

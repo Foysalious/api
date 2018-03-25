@@ -3,6 +3,7 @@
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Voucher\VoucherCodeGenerator;
+use DB;
 
 class Partner extends Model
 {
@@ -41,6 +42,13 @@ class Partner extends Model
             ->withPivot($this->resourcePivotColumns);
     }
 
+    public function handymanResources()
+    {
+        return $this->belongsToMany(Resource::class)
+            ->where('resource_type', constants('RESOURCE_TYPES')['Handyman'])
+            ->withPivot($this->resourcePivotColumns);
+    }
+
     public function resources()
     {
         return $this->belongsToMany(Resource::class)->withPivot($this->resourcePivotColumns);
@@ -53,7 +61,7 @@ class Partner extends Model
 
     public function services()
     {
-        return $this->belongsToMany(Service::class);
+        return $this->belongsToMany(Service::class)->withPivot($this->servicePivotColumns);
     }
 
     public function locations()
@@ -86,6 +94,11 @@ class Partner extends Model
         return $this->hasManyThrough(Job::class, PartnerOrder::class);
     }
 
+    public function payments()
+    {
+        return $this->hasManyThrough(PartnerOrderPayment::class, PartnerOrder::class);
+    }
+
     public function partner_orders()
     {
         return $this->hasMany(PartnerOrder::class);
@@ -94,6 +107,11 @@ class Partner extends Model
     public function walletSetting()
     {
         return $this->hasOne(PartnerWalletSetting::class);
+    }
+
+    public function workingHours()
+    {
+        return $this->hasMany(PartnerWorkingHour::class);
     }
 
     public function dailyStats()
@@ -152,6 +170,11 @@ class Partner extends Model
         return $query->where('status', 'Verified');
     }
 
+    public function scopeVerified($query)
+    {
+        return $query->where('status', 'Verified');
+    }
+
     public function getContactNumber()
     {
         if ($operation_resource = $this->operationResources()->first())
@@ -191,9 +214,35 @@ class Partner extends Model
         return $this->withdrawalRequests()->currentWeek()->notCancelled()->first();
     }
 
+    public function onGoingJobs()
+    {
+        return $this->jobs()->whereIn('status', [constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Schedule_Due']])->count();
+    }
+
+    public function resourcesInCategory($category)
+    {
+        $category = $category instanceof Category ? $category->id : $category;
+        $partner_resource_ids = [];
+        $this->handymanResources->map(function ($resource) use (&$partner_resource_ids) {
+            $partner_resource_ids[$resource->pivot->id] = $resource;
+        });
+
+        $result = [];
+
+        collect(
+            DB::table('category_partner_resource')->select('partner_resource_id')
+                ->whereIn('partner_resource_id', array_keys($partner_resource_ids))
+                ->where('category_id', $category)
+                ->get()
+        )->pluck('partner_resource_id')->each(function ($partner_resource_id) use ($partner_resource_ids, &$result) {
+            $result[] = $partner_resource_ids[$partner_resource_id];
+        });
+
+        return collect($result);
+    }
+
     public function isCreditLimitExceed()
     {
         return (double)$this->wallet < (double)$this->walletSetting->min_wallet_threshold;
     }
-
 }

@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\PartnerOrder;
+use App\Sheba\JobTime;
 use Carbon\Carbon;
 
 class PartnerOrderRepository
@@ -28,12 +29,34 @@ class PartnerOrderRepository
         return $partner_order;
     }
 
+    public function getOrderDetailsV2($request)
+    {
+        $partner_order = $this->getInfo($this->loadAllRelatedRelationsV2($request->partner_order));
+        $jobs = $partner_order->jobs->each(function ($job) use ($partner_order) {
+            $job['partner_order'] = $partner_order;
+            $job = $this->partnerJobRepository->getJobInfo($job);
+            $services = [];
+            $job->jobServices->each(function ($job_service) use (&$services) {
+                array_push($services, $this->partnerJobRepository->getJobServiceInfo($job_service));
+            });
+            $job['category_name'] = $job->category ? $job->category->name : null;
+            removeRelationsAndFields($job);
+            $job['services'] = $services;
+            array_forget($job, 'partner_order');
+        })->values()->all();
+        removeRelationsAndFields($partner_order);
+        $partner_order['jobs'] = $jobs;
+        return $partner_order;
+    }
+
     public function getNewOrdersWithJobs($request)
     {
-        $jobs = (new PartnerRepository($request->partner))->jobs(array(constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']));
+        list($offset, $limit) = calculatePagination($request);
+        $jobs = (new PartnerRepository($request->partner))->jobs(array(constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']), $offset, $limit);
         $all_partner_orders = collect();
         $all_jobs = collect();
         foreach ($jobs->groupBy('partner_order_id') as $jobs) {
+            $jobs[0]->partner_order->calculate(true);
             $order = collect([
                 'customer_name' => $jobs[0]->partner_order->order->delivery_name,
                 'location_name' => $jobs[0]->partner_order->order->location->name,
@@ -41,10 +64,11 @@ class PartnerOrderRepository
                 'created_at_readable' => $jobs[0]->partner_order->created_at->diffForHumans(),
                 'code' => $jobs[0]->partner_order->code(),
                 'id' => $jobs[0]->partner_order->id,
-                'total_job' => count($jobs),
-                'jobs' => $jobs->each(function ($job) use ($all_jobs) {
-                    $all_jobs->push(removeRelationsAndFields($this->partnerJobRepository->getJobInfo($job)));
-                })
+                'total_price' => (double)$jobs[0]->partner_order->totalPrice,
+                'category_name' => $jobs[0]->category ? $jobs[0]->category->name : null,
+                'job_id' => $jobs[0]->id,
+                'schedule_date' => $jobs[0]->schedule_date,
+                'preferred_time' => $jobs[0]->readable_preferred_time
             ]);
             $all_partner_orders->push($order);
         }
@@ -60,11 +84,15 @@ class PartnerOrderRepository
         list($offset, $limit) = calculatePagination($request);
         $filter = $request->filter;
         $partner = $request->partner->load(['partner_orders' => function ($q) use ($filter, $orderBy, $field) {
-            $q->$filter()->orderBy($field, $orderBy)->with(['jobs.usedMaterials', 'order' => function ($q) {
+            $q->$filter()->orderBy($field, $orderBy)->with(['jobs' => function ($q) {
+                $q->with('usedMaterials', 'jobServices', 'category');
+            }, 'order' => function ($q) {
                 $q->with(['customer.profile', 'location']);
             }]);
         }]);
         return array_slice($partner->partner_orders->each(function ($partner_order, $key) {
+            $partner_order['version'] = $partner_order->is_v2 ? 'v2' : 'v1';
+            $partner_order['category_name'] = $partner_order->jobs[0]->category ? $partner_order->jobs[0]->category->name : null;
             removeRelationsAndFields($this->getInfo($partner_order));
         })->reject(function ($item, $key) {
             return $item->order_status == 'Open';
@@ -110,6 +138,15 @@ class PartnerOrderRepository
         }]);
     }
 
+    private function loadAllRelatedRelationsV2($partner_order)
+    {
+        return $partner_order->load(['order.location', 'jobs' => function ($q) {
+            $q->info()->with(['usedMaterials', 'resource.profile', 'jobServices' => function ($q) {
+                $q->with('service');
+            }]);
+        }]);
+    }
+
     public function getWeeklyBreakdown($partner_orders, $start_time, $end_time)
     {
         $week = collect();
@@ -150,10 +187,14 @@ class PartnerOrderRepository
 
     public function getInfo($partner_order)
     {
-        $partner_order->calculate();
+        $job = $partner_order->order->jobs->first();
+        $partner_order->calculate(true);
         $partner_order['code'] = $partner_order->code();
         $partner_order['customer_name'] = $partner_order->order->delivery_name;
         $partner_order['customer_mobile'] = $partner_order->order->delivery_mobile;
+        $partner_order['resource_picture'] = $job->resource ? $job->resource->profile->pro_pic : null;
+        $partner_order['resource_mobile'] = $job->resource ? $job->resource->profile->mobile : null;
+        $partner_order['rating'] = $job->review ? (double)$job->review->rating : null;
         $partner_order['address'] = $partner_order->order->delivery_address;
         $partner_order['location'] = $partner_order->order->location->name;
         $partner_order['total_price'] = (double)$partner_order->totalPrice;

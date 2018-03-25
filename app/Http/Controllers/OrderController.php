@@ -2,19 +2,32 @@
 
 namespace App\Http\Controllers;
 
+use App\Library\PortWallet;
 use App\Models\Customer;
+use App\Models\Order;
+use App\Models\PartnerOrder;
+use App\Repositories\JobServiceRepository;
+use App\Repositories\NotificationRepository;
 use App\Repositories\OrderRepository;
+use App\Repositories\SmsHandler;
+use App\Sheba\Checkout\Checkout;
+use App\Sheba\Checkout\OnlinePayment;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Redis;
+use DB;
 
 class OrderController extends Controller
 {
     private $orderRepository;
+    private $jobServiceRepository;
     private $job_statuses_show;
 
     public function __construct()
     {
         $this->orderRepository = new OrderRepository();
+        $this->jobServiceRepository = new JobServiceRepository();
         $this->job_statuses_show = config('constants.JOB_STATUSES_SHOW');
     }
 
@@ -55,7 +68,7 @@ class OrderController extends Controller
                             array_add($job, 'show', true);
                         }
                     }
-                    $job['code']=$job->fullCode();
+                    $job['code'] = $job->fullCode();
                     array_add($job, 'customer_charge', $job->grossPrice);
                     array_add($job, 'material_price', $job->materialPrice);
                     array_forget($job, 'partner_order');
@@ -168,12 +181,140 @@ class OrderController extends Controller
 
     public function checkOrderValidity(Request $request)
     {
-        $key = Redis::get($request->input('s_token'));
-        if ($key != null) {
-            Redis::del($request->input('s_token'));
-            return response()->json(['msg' => 'successful', 'code' => 200]);
-        } else {
-            return response()->json(['msg' => 'not found', 'code' => 404]);
+        try {
+            $key = Redis::get($request->s_token);
+            if ($key != null) {
+                Redis::del($request->s_token);
+                return api_response($request, null, 200);
+            } else {
+                return api_response($request, null, 404);
+            }
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
         }
     }
+
+    public function store($customer, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'location' => 'required',
+                'services' => 'required|string',
+                'sales_channel' => 'required|string',
+                'partner' => 'required',
+                'remember_token' => 'required|string',
+//                'name' => 'required|string',
+                'mobile' => 'required|string|mobile:bd',
+                'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
+                'time' => 'required|string',
+                'payment_method' => 'required|string|in:cod,online',
+            ], ['mobile' => 'Invalid mobile number!']);
+            $customer = $request->customer;
+            $order = new Checkout($customer);
+            $order = $order->placeOrder($request);
+            if ($order) {
+                if ($order->voucher_id != null) {
+                    $this->updateVouchers($order, $customer);
+                }
+                $link = null;
+                if ($request->payment_method == 'online') {
+                    $link = (new OnlinePayment())->generatePortWalletLink($order->partnerOrders[0], 1);
+                }
+                $this->sendNotifications($customer, $order);
+                return api_response($request, $order, 200, ['link' => $link]);
+            }
+            return api_response($request, $order, 500);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    private function updateVouchers($order, Customer $customer)
+    {
+        try {
+            if ($order->voucher_id != null) {
+                $voucher = $order->voucher;
+                $this->updateVoucherInPromoList($customer, $voucher, $order);
+            }
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    private function sendNotifications($customer, $order)
+    {
+        try {
+            $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
+            (new SmsHandler('order-created'))->send($customer->profile->mobile, [
+                'order_code' => $order->code()
+            ]);
+            (new NotificationRepository())->send($order);
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    private function updateVoucherInPromoList(Customer $customer, $voucher, $order)
+    {
+        $rules = json_decode($voucher->rules);
+        if (array_key_exists('nth_orders', $rules) && !array_key_exists('ignore_nth_orders_if_used', $rules)) {
+            $nth_orders = $rules->nth_orders;
+            if ($customer->orders->count() == max($nth_orders)) {
+                $customer->promotions()->where('voucher_id', $order->voucher_id)->update(['is_valid' => 0]);
+                return;
+            }
+        }
+        if ($voucher->usage($customer->id) == $voucher->max_order) {
+            $customer->promotions()->where('voucher_id', $order->voucher_id)->update(['is_valid' => 0]);
+            return;
+        }
+    }
+
+
+    public function clearPayment(Request $request)
+    {
+        try {
+            $redis_key_name = 'portwallet-payment-' . $request->invoice;
+            $redis_key = Redis::get($redis_key_name);
+            if ($redis_key) {
+                $data = json_decode($redis_key);
+                $response = (new OnlinePayment())->pay($data, $request);
+                if ($response != null) {
+                    Redis::set('portwallet-payment-app-' . $request->invoice, json_encode(['amount' => $data->amount,
+                        'partner_order_id' => $data->partner_order_id, 'success' => $response['success'], 'isDue' => $response['isDue'],
+                        'message' => $response['message']]));
+                    Redis::expire('portwallet-payment-app' . $request->invoice, 3600);
+                    Redis::del($redis_key_name);
+                    if ($response['success']) {
+                        return redirect($response['redirect_link']);
+                    }
+                }
+            }
+            return redirect(env('SHEBA_FRONT_END_URL'));
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function checkInvoiceValidity($customer, Request $request)
+    {
+        try {
+            $redis_key_name = 'portwallet-payment-app-' . $request->invoice;
+            $redis_key = Redis::get($redis_key_name);
+            if ($redis_key != null) {
+                $data = json_decode($redis_key);
+                $partnerOrder = PartnerOrder::find((int)$data->partner_order_id);
+                if ($partnerOrder->order->customer_id == $customer) {
+                    return api_response($request, 1, 200, ['message' => $data->message]);
+                }
+            }
+            return api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
 }

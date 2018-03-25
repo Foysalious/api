@@ -36,11 +36,46 @@ class Category extends Model
 
     public function children()
     {
-        return $this->hasMany(Category::class, 'parent_id')->has('services', '>', 0)->published()->select('id', 'name', 'thumb', 'banner');
+        return $this->hasMany(Category::class, 'parent_id')->has('services', '>', 0)->published();
     }
 
     public function services()
     {
         return $this->hasMany(Service::class)->published();
+    }
+
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    public function partners()
+    {
+        return $this->belongsToMany(Partner::class)->withPivot('commission');
+    }
+
+    public function partnerResources()
+    {
+        return $this->belongsToMany(PartnerResource::class);
+    }
+
+    public function isParent()
+    {
+        return $this->parent_id == null;
+    }
+
+    public function usps()
+    {
+        return $this->belongsToMany(Usp::class)->withPivot(['value']);
+    }
+
+    public function jobs()
+    {
+        return $this->hasMany(Job::class);
+    }
+
+    public function commission($partner_id)
+    {
+        return (double)($this->partners()->wherePivot('partner_id',$partner_id)->first())->pivot->commission;
     }
 }

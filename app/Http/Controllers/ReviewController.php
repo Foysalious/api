@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\Job;
+use App\Models\Rate;
 use App\Models\Review;
 use App\Repositories\ReviewRepository;
 use Illuminate\Http\Request;
 use Gate;
+use Illuminate\Validation\ValidationException;
 use Validator;
 
 class ReviewController extends Controller
@@ -98,6 +100,39 @@ class ReviewController extends Controller
             'job_id' => 'required_without:job|numeric'
         ]);
         return $validator->fails() ? $validator->errors()->all()[0] : false;
+    }
+
+    public function store($customer, $job, Request $request)
+    {
+        try {
+            $this->validate($request, ['rating' => 'required']);
+            $job = $request->job;
+            if ($job->status != 'Served') {
+                return api_response($request, null, 403);
+            }
+            $review = $job->review;
+            if ($review == null) {
+                $review = new Review();
+                $review->rating = $request->rating;
+                $review->job_id = $job->id;
+                $review->resource_id = $job->resource_id;
+                $review->partner_id = $job->partner_order->partner_id;
+                $review->category_id = $job->category_id;
+                $review->customer_id = $customer;
+                $review->save();
+
+            } else {
+                $review->rating = $request->rating;
+                $review->review = $request->review;
+                $review->update();
+            }
+            return api_response($request, $review, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
     }
 
 }

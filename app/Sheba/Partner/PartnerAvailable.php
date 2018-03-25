@@ -1,6 +1,6 @@
 <?php
 
-namespace Sheba\Partner;
+namespace App\Sheba\Partner;
 
 
 use App\Models\Partner;
@@ -15,20 +15,30 @@ class PartnerAvailable
         $this->partner = ($partner) instanceof Partner ? $partner : Partner::find($partner);
     }
 
-    public function available($data)
+    public function available($date, $preferred_time, $category_id)
     {
-        $date = array_key_exists('day', $data) ? $data['day'] : date('Y-m-d');
-        $time = array_key_exists('time', $data) ? $data['time'] : 'Anytime';
         if ($this->_partnerOnLeave($date)) {
-            return false;
+            return 0;
         }
-        if (!$this->_worksAtThisDay($date)) {
-            return false;
+        /*if (!$this->_worksAtThisDay($date)) {
+            return 0;
         }
-        if (!$this->_worksAtThisTime($date, $time)) {
-            return false;
+        if (!$this->_worksAtThisTime($preferred_time)) {
+            return 0;
+        }*/
+        if (!$this->_worksAtDayAndTime($date, $preferred_time)) {
+            return 0;
         }
-        return true;
+        if (!scheduler($this->partner)->isAvailable($date, explode('-', $preferred_time)[0], $category_id)) {
+            return 0;
+        }
+        return 1;
+    }
+
+    private function _partnerOnLeave($date)
+    {
+        $date = $date . ' ' . date('H:i:s');
+        return $this->partner->runningLeave($date) != null ? true : false;
     }
 
     private function _worksAtThisDay($date)
@@ -41,23 +51,21 @@ class PartnerAvailable
         return in_array($day, json_decode($this->partner->basicInformations->working_days));
     }
 
-    private function _partnerOnLeave($date)
+    private function _worksAtThisTime($preferred_time)
     {
-        $date = $date . ' ' . date('H:i:s');
-        return $this->partner->runningLeave($date) != null ? true : false;
+        $working_hours = json_decode($this->partner->basicInformations->working_hours);
+        $start_time = Carbon::parse(explode('-', $preferred_time)[0]);
+        return $start_time->gte(Carbon::parse($working_hours->day_start)) && $start_time->lte(Carbon::parse($working_hours->day_end));
     }
 
-    private function _worksAtThisTime($date, $time)
+    private function _worksAtDayAndTime($date, $time)
     {
-        //Means customer is available at anytime, no need to check partner working hours
-        if ($time == 'Anytime' && Carbon::parse($date)->gte(Carbon::today())) {
-            return true;
-        }
-        if (array_has(constants('JOB_PREFERRED_TIMES'), $time)) {
-            $working_hours = json_decode($this->partner->basicInformations->working_hours);
-            return $working_hours != null ? $this->_betweenWorkingHours($working_hours, constants('JOB_START_END_TIMES')[$time]) : false;
-        }
-        return false;
+        $day = Carbon::parse($date)->format('l');
+        $working_day = $this->partner->workingHours->where('day', $day)->first();
+        if (!$working_day) return false;
+        $start_time = Carbon::parse(explode('-', $time)[0]);
+        return $start_time->gte(Carbon::parse($working_day->start_time))
+            && $start_time->lte(Carbon::parse($working_day->end_time));
     }
 
     private function _betweenWorkingHours($working_hours, $times)

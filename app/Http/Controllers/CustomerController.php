@@ -9,36 +9,184 @@ use App\Models\CustomerDeliveryAddress;
 use App\Models\CustomerMobile;
 use App\Models\Job;
 use App\Models\Order;
-use App\Models\Voucher;
+use App\Models\Profile;
 use App\Repositories\CustomerRepository;
+use App\Repositories\FileRepository;
+use Carbon\Carbon;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
 use Cache;
-use App\Http\Controllers\FacebookAccountKit;
+use Illuminate\Validation\ValidationException;
 use Redis;
 #use Sheba\Voucher\ReferralCreator;
 use Sheba\Voucher\Creator\Referral;
 use Validator;
 use DB;
+use Hash;
 
 class CustomerController extends Controller
 {
     use DispatchesJobs;
     private $customer;
     private $fbKit;
+    private $fileRepository;
 
     public function __construct()
     {
         $this->customer = new CustomerRepository();
         $this->fbKit = new FacebookAccountKit();
+        $this->fileRepository = new FileRepository();
     }
 
-    /**
-     * Verify a customer's email with email verification code
-     * @param Customer $customer
-     * @param $code
-     * @return string
-     */
+    public function index($customer, Request $request)
+    {
+        try {
+            $customer = $request->customer->load(['profile' => function ($q) {
+                $q->select('id', 'name', 'password', 'address', DB::raw('pro_pic as picture'), 'gender', DB::raw('dob as birthday'), 'email', 'mobile');
+            }]);
+            $profile = $customer->profile;
+            $profile->password = ($profile->password) ? 1 : 0;
+            return api_response($request, $customer->profile, 200, ['profile' => $customer->profile]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function update($customer, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'field' => 'required|string|in:name,birthday,gender,address',
+                'value' => 'required|string'
+            ]);
+            $customer = $request->customer;
+            $field = $request->field;
+            $profile = $customer->profile;
+            if ($field == 'birthday') {
+                $this->validate($request, [
+                    'value' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
+                ]);
+                $profile->dob = $request->value;
+            } elseif ($field == 'gender') {
+                $this->validate($request, [
+                    'value' => 'required|string|in:Male,Female,Other',
+                ]);
+                $profile->gender = $request->value;
+            } else {
+                $this->validate($request, [
+                    'value' => 'required|string'
+                ]);
+                $profile->$field = trim($request->value);
+            }
+            $profile->update();
+            return api_response($request, 1, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function updateEmail($customer, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'email' => 'required|email|unique:profiles'
+            ]);
+            $profile = $request->customer->profile;
+            $profile->email = $request->email;
+            $profile->update();
+            return api_response($request, 1, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function updatePassword($customer, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'new_password' => 'required|string|min:6',
+                'old_password' => 'sometimes|string',
+            ]);
+            $profile = $request->customer->profile;
+            if ($profile->password) {
+                if (!Hash::check($request->old_password, $profile->password)) {
+                    return api_response($request, null, 403, ['message' => "Old password doesn't match"]);
+                }
+            }
+            $profile->password = bcrypt($request->new_password);
+            $profile->update();
+            return api_response($request, 1, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function updatePicture($customer, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'picture' => 'required|mimes:jpeg,png'
+            ]);
+            $profile = $request->customer->profile;
+            $photo = $request->file('picture');
+            if (basename($profile->pro_pic) != 'default.jpg') {
+                $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
+                $this->fileRepository->deleteFileFromCDN($filename);
+            }
+            $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id . '.' . $photo->extension();
+            $picture_link = $this->fileRepository->uploadToCDN($filename, $photo, 'images/profiles/');
+            if ($picture_link != false) {
+                $profile->pro_pic = $picture_link;
+                $profile->update();
+                return api_response($request, $profile, 200, ['picture' => $profile->pro_pic]);
+            } else {
+                return api_response($request, null, 500);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function updateMobile($customer, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'code' => 'required|string'
+            ]);
+            $code_data = $this->fbKit->authenticateKit($request->code);
+            if ($code_data) {
+                $mobile = formatMobile($code_data['mobile']);
+                $mobile_profile = Profile::where('mobile', $mobile)->first();
+                if ($mobile_profile == null) {
+                    $profile = $request->customer->profile;
+                    $profile->mobile = $mobile;
+                    $profile->mobile_verified = 1;
+                    $profile->update();
+                } else {
+                    return api_response($request, null, 403, ['message' => 'Mobile already exits!']);
+                }
+            }
+            return api_response($request, null, 409);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
     public function emailVerification(Customer $customer, $code)
     {
         $verification_code = Cache::get($customer->id . '-verification-email');
@@ -150,9 +298,13 @@ class CustomerController extends Controller
 
     public function getDeliveryInfo($customer, Request $request)
     {
-        $customer = $request->customer;
-        return response()->json(['msg' => 'successful', 'addresses' => $customer->delivery_addresses()->select('id', 'address')->get(),
-            'name' => $customer->profile->name, 'mobile' => $customer->profile->mobile, 'code' => 200]);
+        try {
+            $customer = $request->customer;
+            return api_response($request, null, 200, ['addresses' => $customer->delivery_addresses()->select('id', 'address')->get(),
+                'name' => $customer->profile->name, 'mobile' => $customer->profile->mobile]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
     }
 
     public function removeDeliveryAddress($customer, Request $request)
@@ -291,9 +443,23 @@ class CustomerController extends Controller
             array_add($notification, 'time', $notification->created_at->format('j M \\a\\t h:i A'));
             array_forget($notification, 'created_at');
             if ($notification->event_type == 'Job') {
-                array_add($notification, 'event_code', (Job::find($notification->event_id))->fullCode());
-            }elseif ($notification->event_type == 'Order'){
-                array_add($notification, 'event_code', (Order::find($notification->event_id))->code());
+                $code = null;
+                if ($notification->event_id) {
+                    $job = Job::find($notification->event_id);
+                    if ($job) {
+                        $code = $job->fullCode();
+                    }
+                }
+                array_add($notification, 'event_code', $code);
+            } elseif ($notification->event_type == 'Order') {
+                $code = null;
+                if ($notification->event_id) {
+                    $order = Order::find($notification->event_id);
+                    if ($order) {
+                        $code = $order->code();
+                    }
+                }
+                array_add($notification, 'event_code', $code);
             }
             return $notification;
         });

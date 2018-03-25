@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\PartnerService;
+use App\Models\PartnerServiceDiscount;
 
 class DiscountRepository
 {
@@ -15,6 +16,8 @@ class DiscountRepository
             //initially discount set to zero
             $partner_service['discount_price'] = 0;
             $partner_service['discounted_price'] = (double)$partner_service->prices;
+            $partner_service['cap'] = 0;
+            $partner_service['discount_id'] = null;
         } /**
          * partner service has discount
          */
@@ -34,7 +37,6 @@ class DiscountRepository
                 $partner_service['cap'] = 0;
                 $partner_service['discount_price'] = (double)$discount->amount;
                 $partner_service['discounted_price'] = (double)($partner_service->prices - $discount->amount);
-                $partner_service['discount_id'] = $discount->id;
             }
             if ($partner_service['discounted_price'] < 0) {
                 $partner_service['discounted_price'] = 0;
@@ -73,7 +75,7 @@ class DiscountRepository
         return $service_price < $discountValue ? $service_price : $discountValue;
     }
 
-    public function getServiceDiscountAmount($discount, $partnerPrice, $quantity)
+    public function getServiceDiscountAmount(PartnerServiceDiscount $discount, $partnerPrice, $quantity)
     {
         if ($discount->is_amount_percentage) {
             $amount = ((double)$partnerPrice * $quantity * $discount->amount) / 100;
@@ -86,4 +88,22 @@ class DiscountRepository
         }
     }
 
+    public function getServiceDiscountValues($discount, float $price, float $quantity)
+    {
+        $discount_price = 0;
+        $priceWithDiscount = $priceWithoutDiscount = $price * $quantity;
+        if ($discount) {
+            if ($discount->is_amount_percentage) {
+                $discount_price = ($price * $quantity * $discount->amount) / 100;
+                if ($discount->cap != 0 && $discount_price > $discount->cap) {
+                    $discount_price = $discount->cap;
+                }
+                $priceWithDiscount = ($price - $discount_price);
+            } else {
+                $discount_price = $this->validateDiscountValue($price * $quantity, $discount->amount * $quantity);
+                $priceWithDiscount = $price - $discount_price;
+            }
+        }
+        return array((double)$discount_price, (double)$priceWithDiscount, (double)$priceWithoutDiscount);
+    }
 }

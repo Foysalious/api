@@ -83,18 +83,20 @@ class Customer extends Authenticatable
 
     public function usedVouchers()
     {
-        return $this->orders()->where('voucher_id', '<>', null)->get()->map(function($order) { return $order->voucher; })->unique();
+        return $this->orders()->where('voucher_id', '<>', null)->get()->map(function ($order) {
+            return $order->voucher;
+        })->unique();
     }
 
 
     public function nthOrders(...$n)
     {
-        if(!count($n)) throw new \InvalidArgumentException('n is not valid.');
-        if(is_array($n[0])) $n = array_pop($n);
+        if (!count($n)) throw new \InvalidArgumentException('n is not valid.');
+        if (is_array($n[0])) $n = array_pop($n);
 
         $counter = 0;
 
-        return $this->orders()->orderBy('id')->get()->filter(function($order) use (&$counter, $n) {
+        return $this->orders()->orderBy('id')->get()->filter(function ($order) use (&$counter, $n) {
             $counter++;
             return in_array($counter, $n);
         });
@@ -119,5 +121,15 @@ class Customer extends Authenticatable
     public function notifications()
     {
         return $this->morphMany(Notification::class, 'notifiable');
+    }
+
+    public function favorites()
+    {
+        return $this->hasMany(CustomerFavorite::class);
+    }
+
+    public function partnerOrders()
+    {
+        return $this->hasManyThrough(PartnerOrder::class, Order::class);
     }
 }

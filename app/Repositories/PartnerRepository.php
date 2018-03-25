@@ -3,8 +3,8 @@
 namespace App\Repositories;
 
 
+use App\Models\Job;
 use App\Models\Partner;
-use Illuminate\Database\QueryException;
 
 class PartnerRepository
 {
@@ -17,10 +17,12 @@ class PartnerRepository
         $this->serviceRepo = new ServiceRepository();
     }
 
-    public function resources($type = null, $verify = null)
+    public function resources($type = null, $verify = null, $job_id = null)
     {
         $this->partner->load(['resources' => function ($q) use ($type, $verify) {
-            $q->select('resources.id', 'profile_id', 'resource_type', 'resources.is_verified')->with(['jobs' => function ($q) {
+            $q->select('resources.id', 'profile_id', 'resource_type', 'resources.is_verified')->whereHas('partnerResources', function ($q) {
+                $q->has('categories');
+            })->with(['jobs' => function ($q) {
                 $q->info();
             }])->with('profile', 'reviews');
             if ($type) {
@@ -30,24 +32,35 @@ class PartnerRepository
                 $q->verified();
             }
         }]);
-        foreach ($this->partner->resources as $resource) {
+        $final = collect();
+        if ($job_id != null) {
+            $job = Job::find((int)$job_id);
+        }
+        foreach ($this->partner->resources as &$resource) {
             $resource['ongoing'] = $resource->jobs->whereIn('status', [constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Schedule_Due']])->count();
             $resource['completed'] = $resource->jobs->where('status', constants('JOB_STATUSES')['Served'])->count();
             $resource['name'] = $resource->profile->name;
             $resource['mobile'] = $resource->profile->mobile;
             $resource['picture'] = $resource->profile->pro_pic;
             $avg_rating = $resource->reviews->avg('rating');
-            $resource['rating'] = $avg_rating != null ? $avg_rating : null;
+            $resource['rating'] = $avg_rating != null ? round($avg_rating, 2) : null;
             $resource['joined_at'] = $resource->pivot->created_at->timestamp;
-            $this->serviceRepo->removeRelationsFromModel($resource, $resource->getRelations());
+            $resource['is_available'] = 1;
+            if ($job_id != null) {
+                if (!scheduler($resource)->isAvailable($job->schedule_date, $job->preferred_time_start, $job->category_id)) {
+                    $resource['is_available'] = 0;
+                }
+            }
+            $final->push($resource);
+            removeRelationsAndFields($resource);
         }
-        return $this->partner->resources;
+        return $final;
     }
 
-    public function jobs(Array $statuses)
+    public function jobs(Array $statuses, $offset, $limit)
     {
-        $this->partner->load(['jobs' => function ($q) use ($statuses) {
-            $q->info()->status($statuses)->with(['usedMaterials' => function ($q) {
+        $this->partner->load(['jobs' => function ($q) use ($statuses, $offset, $limit) {
+            $q->info()->status($statuses)->skip($offset)->take($limit)->orderBy('id', 'desc')->with(['category', 'usedMaterials' => function ($q) {
                 $q->select('id', 'job_id', 'material_name', 'material_price');
             }, 'resource.profile', 'review', 'partner_order' => function ($q) {
                 $q->with(['order' => function ($q) {
@@ -69,5 +82,9 @@ class PartnerRepository
         }
     }
 
+    public function hasAppropriateCreditLimit()
+    {
+        return (double)$this->partner->wallet >= (double)$this->partner->walletSetting->min_wallet_threshold;
+    }
 }
 

@@ -37,7 +37,7 @@ class PartnerJobController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $partnerRepo = new PartnerRepository($request->partner);
             $statuses = $partnerRepo->resolveStatus($request->filter);
-            $jobs = $partnerRepo->jobs($statuses);
+            $jobs = $partnerRepo->jobs($statuses, $offset, $limit);
             if (count($jobs) > 0) {
                 $jobs = $jobs->sortByDesc('created_at');
                 $jobs = $jobs->each(function ($job) {
@@ -45,13 +45,20 @@ class PartnerJobController extends Controller
                     $job['service_unit_price'] = (double)$job->service_unit_price;
                     $job['discount'] = (double)$job->discount;
                     $job['code'] = $job->partner_order->order->code();
-                    $job['customer_name'] = $job->partner_order->order->customer->profile->name;
+                    $job['category_name'] = $job->category ? $job->category->name : null;
+                    $job['customer_name'] = $job->partner_order->order->customer ? $job->partner_order->order->customer->profile->name : null;
                     $job['resource_picture'] = $job->resource != null ? $job->resource->profile->pro_pic : null;
                     $job['resource_mobile'] = $job->resource != null ? $job->resource->profile->mobile : null;
+                    $job['preferred_time'] = humanReadableShebaTime($job->readable_preferred_time);
                     $job['rating'] = $job->review != null ? $job->review->rating : null;
+                    $job['version'] = $job->getVersion();
+                    if ($job->partner_order->closed_and_paid_at != null) {
+                        $job['completed_at_timestamp'] = $job->partner_order->closed_and_paid_at->timestamp;
+                    } else {
+                        $job['completed_at_timestamp'] = null;
+                    }
                     removeRelationsFromModel($job);
                 })->values()->all();
-                $jobs = array_slice($jobs, $offset, $limit);
                 return api_response($request, $jobs, 200, ['jobs' => $jobs]);
             } else {
                 return api_response($request, null, 404);
@@ -125,11 +132,17 @@ class PartnerJobController extends Controller
                 if (!$job_time->isValid) {
                     return api_response($request, null, 400, ['message' => $job_time->error_message]);
                 }
+                if (!scheduler(Resource::find((int)$job->resource_id))->isAvailable($request->schedule_date, explode('-', $request->preferred_time)[0], $job->category_id)) {
+                    return api_response($request, null, 403, ['message' => 'Resource is not available at this time. Please select different date time or change the resource']);
+                }
                 $request->merge(['resource' => $request->manager_resource]);
                 $response = $this->resourceJobRepository->reschedule($job->id, $request);
                 return api_response($request, $response, $response->code);
             }
             if ($request->has('resource_id')) {
+                if (!scheduler(Resource::find((int)$request->resource_id))->isAvailable($job->schedule_date, explode('-', $job->preferred_time)[0], $job->category_id)) {
+                    return api_response($request, null, 403, ['message' => 'Resource is not available at this time. Please select different date time or change the resource']);
+                }
                 if ($request->partner->hasThisResource((int)$request->resource_id, 'Handyman') && $job->hasStatus(['Accepted', 'Schedule_Due', 'Process'])) {
                     $job = $this->assignResource($job, $request->resource_id, $request->manager_resource);
                     return api_response($request, $job, 200);
@@ -141,6 +154,7 @@ class PartnerJobController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            ;
             return api_response($request, null, 500);
         }
     }
@@ -249,6 +263,7 @@ class PartnerJobController extends Controller
         $job->resource_id = $resource_id;
         $job->update();
         $this->jobUpdateLog($job->id, json_encode($updatedData), $manager_resource);
+        $this->resourceJobRepository->book($job, $manager_resource);
 
         (new PushNotificationRepository())->send([
             "title" => 'Resource has been assigned',

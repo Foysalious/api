@@ -12,13 +12,13 @@ trait ModificationFields
     private function isOfValidClass($obj)
     {
         $this->modifierModelName = substr(strrchr(get_class($obj), '\\'), 1);
-        return in_array($this->modifierModelName, ['Customer', 'Resource', 'Partner', 'User', 'Member', 'Affiliate', 'Profile']);
+        return in_array($this->modifierModelName, ['Customer', 'Resource', 'Partner', 'User', 'Member', 'Affiliate']);
     }
 
-    public function setModifier($entity, $is_flush = true)
+    public function setModifier($entity)
     {
         if($this->isOfValidClass($entity)) {
-            ($is_flush) ? Session::flash('modifier', $entity) : Session::put('modifier', $entity);
+            Session::flash('modifier', $entity);
         }
     }
 
@@ -117,16 +117,19 @@ trait ModificationFields
      */
     private function getData()
     {
-        $this->modifier = Session::has('modifier') ? Session::get('modifier') : Auth::user();
+        $this->modifier = Session::get('modifier');
 
         $id = 0;
         $name = "";
         $time = Carbon::now();
 
-        if($this->modifier && $this->isOfValidClass($this->modifier)) {
-            $user   = $this->modifier ? $this->modifier : Auth::user();
-            $id     = $user->id;
-            $name   = ($this->modifierModelName == "User") ? $user->department->name . ' - ' . $user->name : $this->modifierModelName . ' - ' . $this->modifier->name;
+        if($this->modifierModelName == "User" || Auth::user()) {
+            $user = Auth::user() ?: $this->modifier;
+            $id = $user->id;
+            $name = $user->department->name . ' - ' . $user->name;
+        } else if ($this->isOfValidClass($this->modifier)) {
+            $id = $this->modifier->id;
+            $name = $this->modifierModelName . '-' . $this->modifier->name;
         }
 
         return [$id, $name, $time];

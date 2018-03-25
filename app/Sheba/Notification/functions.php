@@ -91,3 +91,16 @@ if(!function_exists('findStartEndDateOfAMonth')) {
         }
     }
 }
+
+if (!function_exists('getSalesChannels')) {
+    /**
+     * Return Sales channel associative column (default to name).
+     *
+     * @param $key = The result column
+     * @return Array
+     */
+    function getSalesChannels($key = 'name')
+    {
+        return array_combine(array_keys(constants('SALES_CHANNELS')), array_column(constants('SALES_CHANNELS'), $key));
+    }
+}

@@ -2,29 +2,35 @@
 
 namespace App\Http\Controllers;
 
-
 use App\Models\Partner;
-use App\Models\PartnerOrder;
+use App\Models\PartnerTransaction;
+use App\Models\RateAnswer;
+use App\Models\Service;
+use App\Repositories\DiscountRepository;
 use App\Repositories\NotificationRepository;
 use App\Repositories\PartnerOrderRepository;
 use App\Repositories\PartnerRepository;
+use App\Repositories\PartnerServiceRepository;
 use App\Repositories\ResourceJobRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
+use App\Sheba\Checkout\PartnerList;
+use App\Sheba\Checkout\PartnerPrice;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-
 use DB;
+use Illuminate\Validation\ValidationException;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
-use Sheba\Charts\SalesGrowth;
 use Validator;
 
 class PartnerController extends Controller
 {
     private $serviceRepository;
+    private $partnerServiceRepository;
     private $reviewRepository;
     private $resourceJobRepository;
     private $partnerOrderRepository;
+    private $discountRepository;
 
     public function __construct()
     {
@@ -32,12 +38,91 @@ class PartnerController extends Controller
         $this->reviewRepository = new ReviewRepository();
         $this->resourceJobRepository = new ResourceJobRepository();
         $this->partnerOrderRepository = new PartnerOrderRepository();
+        $this->partnerServiceRepository = new PartnerServiceRepository();
+        $this->discountRepository = new DiscountRepository();
     }
 
     public function index()
     {
-        $partners = Partner::select('id', 'name', 'sub_domain', 'logo')->where('status', 'Verified')->orderBy('name')->get();
+        $partners = Partner::select('id', 'name', 'sub_domain', 'logo')->whereHas('services', function ($q) {
+            $q->published();
+        })->has('resources', '>', 0)->where('status', 'Verified')->orderBy('name')->get();
         return response()->json(['partners' => $partners, 'code' => 200, 'msg' => 'successful']);
+    }
+
+    public function show($partner, Request $request)
+    {
+        try {
+            $partner_request = $partner;
+            $partner = Partner::where([['id', (int)$partner_request], ['status', 'Verified']])->first();
+            if ($partner == null) {
+                $partner = Partner::where([['sub_domain', $partner_request], ['status', 'Verified']])->first();
+            }
+            if ($partner == null)
+                return api_response($request, null, 404);
+            $partner->load(['workingHours', 'categories' => function ($q) {
+                $q->select('categories.id', 'name', 'thumb', 'icon', 'categories.slug')->where('category_partner.is_verified', 1);
+            }, 'reviews', 'jobs' => function ($q) {
+                $q->with(['resource' => function ($q) {
+                    $q->select('resources.id', 'profile_id')->with('profile');
+                }, 'review' => function ($q) {
+                    $q->select('id', 'job_id', 'resource_id', 'rating', 'review');
+                }]);
+            }, 'services' => function ($q) {
+                $q->where('partner_service.is_verified', 1);
+            }, 'locations']);
+            $locations = $partner->locations;
+            $info = collect($partner)->only(['id', 'name', 'mobile', 'description', 'email', 'verified_at', 'status', 'logo', 'address', 'created_at']);
+            $working_info = [];
+            foreach ($partner->workingHours as $workingHour) {
+                array_push($working_info, array(
+                    'day' => $workingHour->day,
+                    'hour' => (Carbon::parse($workingHour->start_time))->format('g:i A') . '-' . (Carbon::parse($workingHour->start_end))->format('g:i A')
+                ));
+            }
+            $info->put('working_days', $working_info);
+            $info->put('is_available', in_array(Carbon::today()->format('D') . 'day', collect($working_info)->pluck('day')->toArray()) ? 1 : 0);
+            $info->put('total_locations', $locations->count());
+            $info->put('total_services', $partner->services->count());
+            $job_with_review = $partner->jobs->where('status', 'Served')->filter(function ($job) {
+                return $job->resource_id != null && $job->review != null;
+            });
+            $resource_jobs = $job_with_review->groupBy('resource_id');
+            $all_resources = collect();
+            foreach ($resource_jobs as $resource_job) {
+                $all_resources->push(collect([
+                    'name' => $resource_job[0]->resource->profile->name,
+                    'mobile' => $resource_job[0]->resource->profile->mobile,
+                    'picture' => $resource_job[0]->resource->profile->pro_pic,
+                    'total_rating' => $resource_job->count(),
+                    'avg_rating' => round($resource_job->avg('review.rating'), 2),
+                ]));
+            }
+            $all_resources = $all_resources->take(4);
+            $info->put('resources', $all_resources->values()->all());
+            $reviews = [];
+            $job_with_review->filter(function ($job) {
+                return $job->review->rating >= 4 && ($job->review->review != null || $job->review->review != '');
+            })->each(function ($job) use (&$reviews) {
+                array_push($reviews, $job->review);
+            });
+            $info->put('reviews', $reviews);
+            $info->put('categories', $partner->categories->each(function ($category) {
+                removeRelationsAndFields($category);
+            }));
+            $info->put('compliments', []);
+//            $compliments = RateAnswer::select('id', 'badge', 'answer')->inRandomOrder()->take(5)->get();
+//            $info->put('compliments', $compliments->each(function (&$compliment) {
+//                array_add($compliment, 'count', rand(5, 10));
+//            }));
+            $info->put('total_resources', $partner->resources->count());
+            $info->put('total_jobs', $partner->jobs->count());
+            $info->put('total_rating', $partner->reviews->count());
+            $info->put('avg_rating', $this->reviewRepository->getAvgRating($partner->reviews));
+            return api_response($request, $info, 200, ['info' => $info]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
     }
 
     public function getPartnerServices($partner, Request $request)
@@ -171,7 +256,6 @@ class PartnerController extends Controller
                 removeRelationsAndFields($partner);
             }
             $info = array(
-//                'rating' => $avg_rating ? round($avg_rating, 2) : 5,
                 'rating' => $avg_rating,
                 'total_reviews' => $reviews->count(),
                 'reviews' => array_slice($reviews->values()->all(), $offset, $limit),
@@ -188,7 +272,8 @@ class PartnerController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'type' => 'sometimes|required|string',
-                'verified' => 'sometimes|required|boolean'
+                'verified' => 'sometimes|required|boolean',
+                'job_id' => 'sometimes|required|numeric',
             ]);
             if ($validator->fails()) {
                 $errors = $validator->errors()->all()[0];
@@ -198,13 +283,16 @@ class PartnerController extends Controller
             $partnerRepo = new PartnerRepository($request->partner);
             $type = $request->has('type') ? $request->type : null;
             $verified = $request->has('verified') ? $request->verified : null;
-            $resources = $partnerRepo->resources($type, $verified);
+            $resources = $partnerRepo->resources($type, $verified, $request->job_id);
+            $resources = $resources->filter(function ($resource) {
+                return $resource->is_available == 1;
+            });
             if (count($resources) > 0) {
                 return api_response($request, $resources, 200, ['resources' => array_slice($resources->sortBy('name')->values()->all(), $offset, $limit)]);
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
     }
@@ -244,7 +332,7 @@ class PartnerController extends Controller
                 'assigned_resources' => $assigned_resource_ids->count(),
                 'unassigned_resources' => $unassigned_resource_ids->count(),
                 'balance' => (double)$partner->wallet,
-                'is_credit_limit_exceed' => $partner->isCreditLimitExceed() ? 1 : 0,
+                'is_credit_limit_exceed' => $partner->isCreditLimitExceed(),
                 'today' => $sales_stats->today->sale,
                 'week' => $sales_stats->week->sale,
                 'month' => $sales_stats->month->sale
@@ -273,7 +361,7 @@ class PartnerController extends Controller
         }
     }
 
-    public function show($partner, Request $request)
+    public function getInfo($partner, Request $request)
     {
         try {
             $partner = $request->partner->load(['basicInformations', 'reviews', 'services' => function ($q) {
@@ -309,6 +397,48 @@ class PartnerController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function findPartners(Request $request, $location)
+    {
+        try {
+            $this->validate($request, [
+                'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
+                'time' => 'required|string',
+                'services' => 'required|string',
+                'isAvailable' => 'sometimes|required'
+            ]);
+            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $location);
+            $partner_list->find();
+            if ($request->has('isAvailable')) {
+                $partners = $partner_list->partners;
+                $available_partners = $partners->filter(function ($partner) {
+                    return $partner->is_available == 1;
+                });
+                $is_available = count($available_partners) != 0 ? 1 : 0;
+                return api_response($request, $is_available, 200, ['is_available' => $is_available, 'available_partners' => count($available_partners)]);
+            }
+            if ($partner_list->hasPartners) {
+                $partner_list->addPricing();
+                $partner_list->addInfo();
+                $partner_list->calculateAverageRating();
+                $partner_list->calculateTotalRatings();
+                $partner_list->calculateOngoingJobs();
+                $partner_list->sortByShebaSelectedCriteria();
+                $partners = $partner_list->partners;
+                $partners->each(function ($partner, $key) {
+                    array_forget($partner, 'wallet');
+                    removeRelationsAndFields($partner);
+                });
+                return api_response($request, $partners, 200, ['partners' => $partners->values()->all()]);
+            }
+            return api_response($request, null, 404);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }

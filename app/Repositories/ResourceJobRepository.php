@@ -3,7 +3,9 @@
 namespace App\Repositories;
 
 
+use App\Models\Job;
 use App\Models\PartnerOrder;
+use App\Models\ResourceSchedule;
 use App\Sheba\UserRequestInformation;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -18,7 +20,11 @@ class ResourceJobRepository
     {
         $process_job = $jobs->where('status', 'Process');
         $process_job = $process_job->map(function ($item) {
-            return array_add($item, 'preferred_time_priority', constants('JOB_PREFERRED_TIMES_PRIORITY')[$item->preferred_time]);
+            if (in_array($item->preferred_time, constants('JOB_PREFERRED_TIMES'))) {
+                return array_add($item, 'preferred_time_priority', constants('JOB_PREFERRED_TIMES_PRIORITY')[$item->preferred_time]);
+            } else {
+                return array_add($item, 'preferred_time_priority', 500);
+            }
         });
         $process_job = $process_job->sortBy(function ($job) {
             return sprintf('%-12s%s', $job->schedule_date, $job->preferred_time_priority);
@@ -32,7 +38,11 @@ class ResourceJobRepository
             return $job->status != 'Process' && $job->status != 'Served';
         });
         $other_jobs = $other_jobs->map(function ($item) {
-            return array_add($item, 'preferred_time_priority', constants('JOB_PREFERRED_TIMES_PRIORITY')[$item->preferred_time]);
+            if (in_array($item->preferred_time, constants('JOB_PREFERRED_TIMES'))) {
+                return array_add($item, 'preferred_time_priority', constants('JOB_PREFERRED_TIMES_PRIORITY')[$item->preferred_time]);
+            } else {
+                return array_add($item, 'preferred_time_priority', 500);
+            }
         });
         $other_jobs = $other_jobs->sortBy(function ($job) {
             return sprintf('%-12s%s', $job->schedule_date, $job->preferred_time_priority);
@@ -44,7 +54,7 @@ class ResourceJobRepository
     public function getJobs($resource)
     {
         $resource->load(['jobs' => function ($q) {
-            $q->info()->validStatus()->tillNow()->with('partner_order.order', 'service');
+            $q->info()->validStatus()->tillNow()->with('category', 'partner_order.order', 'service');
         }]);
         return $resource->jobs;
     }
@@ -54,7 +64,7 @@ class ResourceJobRepository
         $final_last_jobs = [];
         foreach ($jobs as $job) {
             $partner_order = $job->partner_order;
-            $partner_order->calculate();
+            $partner_order->calculate(true);
             $all_jobs_of_this_partner_order = $job->partner_order->jobs;
             $cancel_status = constants('JOB_STATUSES_SHOW')['Cancelled']['sheba'];
             $partner_order_other_jobs = $all_jobs_of_this_partner_order->reject(function ($item, $key) use ($job, $cancel_status) {
@@ -82,16 +92,34 @@ class ResourceJobRepository
             $job['delivery_name'] = $job->partner_order->order->delivery_name;
             $job['delivery_mobile'] = $job->partner_order->order->delivery_mobile;
             $job['delivery_address'] = $job->partner_order->order->delivery_address;
+            $job['schedule_date_timestamp'] = (Carbon::parse($job->schedule_date))->timestamp;
             $job['service_unit_price'] = (double)$job->service_unit_price;
-            $job['service_unit'] = $job->service->unit;
-            $job['schedule_date'] = Carbon::parse($job->schedule_date)->format('jS M, Y');
+            $job['category_name'] = $job->category ? $job->category->name : null;
+            $job['preferred_time'] = $job->readable_preferred_time;
+            $job['service_unit'] = null;
+            if (count($job->jobServices) == 0) {
+                $services = collect();
+                $variables = json_decode($job->service_variables);
+                $services->push(array('name' => $job->service_name, 'variables' => $variables, 'unit' => $job->service->unit, 'quantity' => $job->service_quantity));
+            } else {
+                $services = collect();
+                foreach ($job->jobServices as $jobService) {
+                    $variables = json_decode($jobService->variables);
+                    $services->push(array('name' => $jobService->service->name, 'variables' => $variables, 'unit' => $jobService->unit, 'quantity' => $jobService->quantity));
+                }
+            }
+            $job['services'] = $services;
+            $job['schedule_date'] = Carbon::parse($job->schedule_date)->format('Y-m-d');
             $job['code'] = $job->fullCode();
-            $job->calculate();
+            $job->calculate(true);
             $job['total_price'] = (double)$job->grossPrice;
             $job['service_price'] = (double)$job->servicePrice;
             $job['material_price'] = (double)$job->materialPrice;
             $job['discount'] = (double)$job->discount;
+            $job['version'] = $job->getVersion();
             $job['service_unit_price'] = (double)$job->service_unit_price;
+            $job['isDue'] = $job->partner_order->closed_and_paid_at ? 0 : 1;
+            $job['missed_at'] = $job->status == 'Schedule Due' ? $job->schedule_date : null;
             $this->_stripUnwantedInformationForAPI($job);
         }
         return $jobs;
@@ -105,6 +133,8 @@ class ResourceJobRepository
         array_forget($job, 'service_id');
         array_forget($job, 'service');
         array_forget($job, 'usedMaterials');
+        array_forget($job, 'jobServices');
+        array_forget($job, 'category');
         return $job;
     }
 
@@ -176,7 +206,7 @@ class ResourceJobRepository
                 } else {
                     $job['can_collect'] = true;
                 }
-                $partner_order->calculate();
+                $partner_order->calculate(true);
                 $job['collect_money'] = (double)$partner_order->due;
                 array_forget($job, 'partner_order');
             }
@@ -192,8 +222,15 @@ class ResourceJobRepository
         return $job;
     }
 
-    public function assignResource()
+    public function book(Job $job, $created_by)
     {
-
+        $resource_schedule = new ResourceSchedule();
+        $resource_schedule->job_id = $job->id;
+        $resource_schedule->resource_id = $job->resource_id;
+        $resource_schedule->start = Carbon::parse(explode('-', $job->preferred_time)[0]);
+        $resource_schedule->end = Carbon::parse(explode('-', $job->preferred_time)[1]);
+        $resource_schedule->created_by = $created_by->id;
+        $resource_schedule->created_by_name = class_basename($created_by) . "-" . $created_by->profile->name;
+        $resource_schedule->save();
     }
 }
