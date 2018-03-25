@@ -79,7 +79,7 @@ class PartnerController extends Controller
                 ));
             }
             $info->put('working_days', $working_info);
-            $info->put('is_available', in_array(Carbon::today()->format('D') . 'day', $working_info) ? 1 : 0);
+            $info->put('is_available', in_array(Carbon::today()->format('D') . 'day', collect($working_info)->pluck('day')->toArray()) ? 1 : 0);
             $info->put('total_locations', $locations->count());
             $info->put('total_services', $partner->services->count());
             $job_with_review = $partner->jobs->where('status', 'Served')->filter(function ($job) {
