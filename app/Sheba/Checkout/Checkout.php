@@ -244,25 +244,33 @@ class Checkout
 
     private function getVoucherData($job_services, $data, $partner)
     {
-        $discounted_services = $job_services->filter(function ($job_service) {
-            return $job_service->discount_id != null;
-        })->count();
-
-        if ($discounted_services === 0) {
-            $order_amount = $job_services->map(function ($job_service) {
-                return $job_service->unit_price * $job_service->quantity;
-            })->sum();
-            $voucherSuggester = new VoucherSuggester(app(Voucher::class), app(Customer::class));
-            $voucherSuggester->init($this->customer, $data['category_id'], $partner->id, $data['location_id'], $order_amount, $data['sales_channel']);
-            $result = $voucherSuggester->suggest();
-            if ($result != null) {
-                $data['discount'] = $result['amount'];
-                $data['sheba_contribution'] = $result['voucher']['sheba_contribution'];
-                $data['partner_contribution'] = $result['voucher']['sheba_contribution'];
-                $data['voucher_id'] = $result['id'];
-            }
+        if (!$this->isVoucherAutoApplicable($job_services, $data)) return $data;
+        
+        $order_amount = $job_services->map(function ($job_service) {
+            return $job_service->unit_price * $job_service->quantity;
+        })->sum();
+        $voucherSuggester = new VoucherSuggester(app(Voucher::class), app(Customer::class));
+        $voucherSuggester->init($this->customer, $data['category_id'], $partner->id, $data['location_id'], $order_amount, $data['sales_channel']);
+        $result = $voucherSuggester->suggest();
+        if ($result != null) {
+            $data['discount'] = $result['amount'];
+            $data['sheba_contribution'] = $result['voucher']['sheba_contribution'];
+            $data['partner_contribution'] = $result['voucher']['partner_contribution'];
+            $data['voucher_id'] = $result['id'];
         }
         return $data;
+    }
+
+    private function isVoucherAutoApplicable($job_services, $data)
+    {
+        return !$this->hasDiscountsOnServices($job_services) && in_array($data['sales_channel'], ['Web', 'App']);
+    }
+
+    private function hasDiscountsOnServices($job_services)
+    {
+        return $discounted_services = $job_services->filter(function ($job_service) {
+            return $job_service->discount_id != null;
+        })->count() > 0;
     }
 
     private function getAuthor($model, $data)
