@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 
+use App\Models\CustomerReview;
 use App\Models\Rate;
 use App\Models\Review;
 use Illuminate\Http\Request;
@@ -38,25 +39,20 @@ class ResourceJobRateController extends Controller
     public function review($resource, $job, Request $request)
     {
         try {
-            $rates = Rate::where('type', 'customer_review')->get();
-            $max = $rates->max('value');
-            $min = $rates->min('value');
-            $this->validate($request, ['rating' => 'required|numeric|between:' . $min . ',' . $max]);
+            $this->validate($request, ['rating' => 'required|numeric']);
             $job = $request->job;
             if ($job->status != 'Served') {
                 return api_response($request, null, 403);
             }
-            $review = $job->review;
+            $review = $job->customerReview;
             if ($review == null) {
-                $review = new Review();
+                $review = new CustomerReview();
                 $review->rating = $request->rating;
                 $review->job_id = $job->id;
-                $review->resource_id = $resource;
-                $review->partner_id = $job->partner_order->partner_id;
-                $review->category_id = $job->category_id;
+                $review->reviewable_id = $resource;
+                $review->reviewable_type = "App\\Models\\Resource";
                 $review->customer_id = $job->order->customer_id;
                 $review->save();
-
             }
             return api_response($request, $review, 200);
         } catch (ValidationException $e) {

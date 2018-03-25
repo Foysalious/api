@@ -105,10 +105,7 @@ class ReviewController extends Controller
     public function store($customer, $job, Request $request)
     {
         try {
-            $rates = Rate::where('type', 'review')->get();
-            $max = $rates->max('value');
-            $min = $rates->min('value');
-            $this->validate($request, ['rating' => 'required|numeric|between:' . $min . ',' . $max]);
+            $this->validate($request, ['rating' => 'required']);
             $job = $request->job;
             if ($job->status != 'Served') {
                 return api_response($request, null, 403);

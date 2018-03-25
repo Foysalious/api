@@ -17,10 +17,9 @@ class RateController extends Controller
                 $q->select('id', 'question', 'type')->with(['answers' => function ($q) {
                     $q->select('id', 'answer', 'badge');
                 }]);
-            }])->select('id', 'name', 'icon', 'value')->get();
+            }])->select('id', 'name', 'icon', 'icon_off', 'value')->get();
             foreach ($rates as $rate) {
                 array_add($rate, 'height', 30);
-                array_add($rate, 'icon_not_selected', 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/sheba_xyz/rate2.png');
                 foreach ($rate->questions as $question) {
                     array_forget($question, 'pivot');
                     foreach ($question->answers as $answer) {
@@ -43,7 +42,7 @@ class RateController extends Controller
             if ($review == null) {
                 return api_response($request, null, 403);
             }
-            if ($review->rate != null) {
+            if ($review->rates != null) {
                 return api_response($request, null, 403);
             }
             $data = json_decode($request->data);
