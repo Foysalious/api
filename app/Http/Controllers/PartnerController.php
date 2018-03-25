@@ -108,10 +108,11 @@ class PartnerController extends Controller
             $info->put('categories', $partner->categories->each(function ($category) {
                 removeRelationsAndFields($category);
             }));
-            $compliments = RateAnswer::select('id', 'badge', 'answer')->inRandomOrder()->take(5)->get();
-            $info->put('compliments', $compliments->each(function (&$compliment) {
-                array_add($compliment, 'count', rand(5, 10));
-            }));
+            $info->put('compliments', []);
+//            $compliments = RateAnswer::select('id', 'badge', 'answer')->inRandomOrder()->take(5)->get();
+//            $info->put('compliments', $compliments->each(function (&$compliment) {
+//                array_add($compliment, 'count', rand(5, 10));
+//            }));
             $info->put('total_resources', $partner->resources->count());
             $info->put('total_jobs', $partner->jobs->count());
             $info->put('total_rating', $partner->reviews->count());
