@@ -119,6 +119,7 @@ class Checkout
                 $job->jobServices()->saveMany($data['job_services']);
             });
         } catch (QueryException $e) {
+            dd($e);
             return false;
         }
         return $order;
@@ -161,7 +162,7 @@ class Checkout
         $order->info_call_id = $data['info_call_id'];
         $order->affiliation_id = $data['affiliation_id'];
         $order->delivery_mobile = formatMobile($data['delivery_mobile']);
-        $order->delivery_name = isset($data['delivery_name']) ? $data['delivery_name'] : null;
+        $order->delivery_name = isset($data['delivery_name']) ? $data['delivery_name'] : '';
         $order->sales_channel = $data['sales_channel'];
         $order->location_id = $data['location_id'];
         $order->customer_id = $data['customer_id'];
