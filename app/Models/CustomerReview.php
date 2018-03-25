@@ -15,4 +15,9 @@ class CustomerReview extends Model
     {
         return $this->belongsTo(Job::class);
     }
+
+    public function rates()
+    {
+        return $this->hasMany(ReviewQuestionAnswer::class, 'review_id');
+    }
 }

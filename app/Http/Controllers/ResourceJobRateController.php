@@ -35,7 +35,7 @@ class ResourceJobRateController extends Controller
         }
     }
 
-    public function review($resource, $job, Request $request)
+    public function store($resource, $job, Request $request)
     {
         try {
             $this->validate($request, ['rating' => 'required|numeric']);
@@ -50,7 +50,7 @@ class ResourceJobRateController extends Controller
                 $review->job_id = $job->id;
                 $review->reviewable_id = $resource;
                 $review->reviewable_type = "App\\Models\\Resource";
-                $review->customer_id = $job->order->customer_id;
+                $review->customer_id = $job->partnerOrder->order->customer_id;
                 $review->save();
             }
             return api_response($request, $review, 200);
@@ -58,6 +58,7 @@ class ResourceJobRateController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             return api_response($request, null, 500);
         }
     }

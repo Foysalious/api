@@ -380,10 +380,10 @@ $api->version('v1', function ($api) {
                 $api->group(['prefix' => '{job}', 'middleware' => ['resource_job.auth']], function ($api) {
                     $api->get('bills', 'ResourceJobController@getBills');
                     $api->post('extends', 'ResourceScheduleController@extendTime');
-                    $api->post('reviews', 'ReviewController@store');
+                    $api->post('reviews', 'ResourceJobRateController@store');
                     $api->group(['prefix' => 'rates'], function ($api) {
                         $api->get('/', 'ResourceJobRateController@index');
-                        $api->post('/', 'RateController@store');
+                        $api->post('/', 'RateController@storeCustomerReview');
                     });
                 });
             });
