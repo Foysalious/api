@@ -21,7 +21,8 @@ class PartnerType extends GraphQlType
             'id' => ['type' => Type::int()],
             'name' => ['type' => Type::string()],
             'logo' => ['type' => Type::string()],
-            'slug' => ['type' => Type::string()]
+            'slug' => ['type' => Type::string()],
+            'locations' => ['type' => Type::listOf(GraphQL::type('Location'))]
         ];
     }
 

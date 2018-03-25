@@ -130,6 +130,7 @@ return [
                 'category' => 'App\GraphQL\Query\CategoryQuery',
                 'customer' => 'App\GraphQL\Query\CustomerQuery',
                 'order' => 'App\GraphQL\Query\OrderQuery',
+                'partner' => 'App\GraphQL\Query\PartnerQuery',
                 'job' => 'App\GraphQL\Query\JobQuery',
                 'complain' => 'App\GraphQL\Query\ComplainQuery',
                 'categories' => 'App\GraphQL\Query\CategoriesQuery',
