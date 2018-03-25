@@ -11,6 +11,7 @@ use App\Sheba\Checkout\PartnerList;
 use Carbon\Carbon;
 use function GuzzleHttp\Psr7\str;
 use Illuminate\Http\Request;
+//use Sheba\Voucher\PromotionList;
 use Sheba\Voucher\PromotionList;
 use Sheba\Voucher\VoucherSuggester;
 
@@ -41,9 +42,13 @@ class PromotionController extends Controller
 
     public function addPromo($customer, Request $request)
     {
-        $promotion = new PromotionList($request->customer);
-        list($promotion, $msg) = $promotion->add($request->promo);
-        return $promotion != false ? api_response($request, $promotion, 200, ['promotion' => $promotion]) : api_response($request, null, 404);
+        try {
+            $promotion = new PromotionList($request->customer);
+            list($promotion, $msg) = $promotion->add(ucwords($request->promo));
+            return $promotion != false ? api_response($request, $promotion, 200, ['promotion' => $promotion]) : api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
     }
 
     public function getPromo($customer)
