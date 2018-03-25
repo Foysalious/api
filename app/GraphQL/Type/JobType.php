@@ -22,6 +22,7 @@ class JobType extends GraphQlType
             'status' => ['type' => Type::string()],
             'schedule_date' => ['type' => Type::string()],
             'preferred_time' => ['type' => Type::string()],
+            'preferred_time_readable' => ['type' => Type::string()],
             'completed_at_timestamp' => ['type' => Type::float()],
             'category' => ['type' => GraphQL::type('Category')],
             'review' => ['type' => GraphQL::type('Review')],
@@ -88,6 +89,11 @@ class JobType extends GraphQlType
     protected function resolveHasComplainField($root, $args, $fields)
     {
         return $root->complains->count() > 0 ? 1 : 0;
+    }
+
+    private function resolvePreferredTimeReadableField($root, $args)
+    {
+        return humanReadableShebaTime($root->preferred_time);
     }
 
 

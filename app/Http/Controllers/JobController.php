@@ -63,9 +63,9 @@ class JobController extends Controller
 //                        $q->select('id', 'name');
 //                    }]);
 //                }])
-                ->whereHas('accessor', function ($query) use ($customer) {
-                    $query->where('accessors.model_name', get_class($customer));
-                });
+                    ->whereHas('accessor', function ($query) use ($customer) {
+                        $query->where('accessors.model_name', get_class($customer));
+                    });
             }]);
             $job->calculate(true);
             $job_collection = collect();
@@ -103,12 +103,15 @@ class JobController extends Controller
             return api_response($request, null, 500);
         }
     }
-    private function formatComplains($complains){
-        foreach ($complains as &$complain){
-            $complain['code']=$complain->code();
+
+    private function formatComplains($complains)
+    {
+        foreach ($complains as &$complain) {
+            $complain['code'] = $complain->code();
         }
         return $complains;
     }
+
     public function getBills($customer, $job, Request $request)
     {
         try {
@@ -186,7 +189,7 @@ class JobController extends Controller
                         'category_name' => $category->name,
                         'category_thumb' => $category->thumb,
                         'schedule_date' => $job->schedule_date ? $job->schedule_date : null,
-                        'preferred_time' => $job->preferred_time ? $job->preferred_time : null,
+                        'preferred_time' => $job->preferred_time ? humanReadableShebaTime($job->preferred_time) : null,
                         'status' => $job->status,
                         'status_color' => constants('JOB_STATUSES_COLOR')[$job->status]['customer'],
                         'partner_name' => $partnerOrder->partner->name,

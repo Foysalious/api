@@ -71,7 +71,7 @@ class CustomerOrderController extends Controller
             'category_name' => $category ? $category->name : null,
             'category_thumb' => $category ? $category->thumb : null,
             'schedule_date' => $job->schedule_date ? $job->schedule_date : null,
-            'preferred_time' => $job->preferred_time ? $job->preferred_time : null,
+            'preferred_time' => $job->preferred_time ? humanReadableShebaTime($job->preferred_time) : null,
             'status' => $job->status,
             'status_color' => constants('JOB_STATUSES_COLOR')[$job->status]['customer'],
             'partner_name' => $partnerOrder->partner->name,

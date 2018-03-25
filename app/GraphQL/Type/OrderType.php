@@ -128,12 +128,8 @@ class OrderType extends GraphQlType
 
     protected function resolveScheduleTimeField($root)
     {
-        $time = $root->jobs[0]->preferred_time;
-        if ($time === 'Anytime') {
-            return $time;
-        }
-        $time = explode('-', $time);
-        return (Carbon::parse($time[0]))->format('g:i A') . '-' . (Carbon::parse($time[1]))->format('g:i A');
+
+        return humanReadableShebaTime($root->jobs[0]->preferred_time);
     }
 
     protected function resolveDeliveryAddressField($root)
