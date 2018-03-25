@@ -30,6 +30,7 @@ class CategoryType extends GraphQlType
             'app_banner' => ['type' => Type::string()],
             'publication_status' => ['type' => Type::int()],
             'icon' => ['type' => Type::string()],
+            'icon_png' => ['type' => Type::string()],
             'questions' => ['type' => Type::int()],
             'children' => [
                 'type' => Type::listOf(GraphQL::type('Category'))
