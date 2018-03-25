@@ -27,11 +27,10 @@ class CategoryController extends Controller
     public function index(Request $request)
     {
         try {
-            $category_ids = [183, 185, 184, 1, 5, 73, 186, 3];
-            $categories = [];
+            $categories = Category::where('parent_id', null)->published()->select('id', 'name', 'slug', 'thumb', 'banner', 'parent_id')->get();
+            $final = [];
             $location = $request->location;
-            foreach ($category_ids as $category_id) {
-                $category = Category::where('id', $category_id)->select('id', 'name', 'thumb', 'banner', 'parent_id')->first();
+            foreach ($categories as $category) {
                 if ($request->has('with')) {
                     $with = $request->with;
                     if ($with == 'children') {
@@ -40,10 +39,9 @@ class CategoryController extends Controller
                         });
                     }
                 }
-                array_add($category, 'slug', str_slug($category->name, '-'));
-                array_push($categories, $category);
+                array_push($final, $category);
             }
-            return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories]) : api_response($request, $categories, 404);
+            return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $final]) : api_response($request, $final, 404);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
