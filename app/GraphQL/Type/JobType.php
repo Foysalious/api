@@ -91,9 +91,9 @@ class JobType extends GraphQlType
         return $root->complains->count() > 0 ? 1 : 0;
     }
 
-    private function resolvePreferredTimeReadableField($root, $args)
+    protected function resolvePreferredTimeReadableField($root, $args)
     {
-        return humanReadableShebaTime($root->preferred_time);
+        return $root->readable_preferred_time;
     }
 
 
