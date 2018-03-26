@@ -53,6 +53,21 @@ class Resource extends Model
         return $types;
     }
 
+    public function isOfTypesIn(Partner $partner, $types)
+    {
+        return boolval(count(array_intersect($types, $this->typeIn($partner))));
+    }
+
+    public function isManager(Partner $partner)
+    {
+        return $this->isOfTypesIn($partner, ["Admin", "Operation", "Owner"]);
+    }
+
+    public function isAdmin(Partner $partner)
+    {
+        return $this->isOfTypesIn($partner, ["Admin", "Owner"]);
+    }
+
     public function categoriesIn($partner)
     {
         $categories = collect();
@@ -63,11 +78,6 @@ class Resource extends Model
             }
         }
         return $categories->unique('id');
-    }
-
-    public function isManager(Partner $partner)
-    {
-        return boolval(count(array_intersect(constants('MANAGER'), $this->typeIn($partner))));
     }
 
     public function scopeVerified($query)
