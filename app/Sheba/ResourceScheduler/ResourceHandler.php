@@ -33,8 +33,8 @@ class ResourceHandler
     public function isAvailable($date, $time)
     {
         $date_time = Carbon::parse($date . ' ' . $time);
-        return $this->resourceSchedules->filterByDateTime($this->resource, $date_time)->count() == 0
-            && $this->resourceSchedules->filterStartAt($this->resource, $date_time)->count() == 0;
+        return $this->resourceSchedules->filterByDateTime($this->resource, $date_time)->count() == 0 &&
+            $this->resourceSchedules->filterStartAt($this->resource, $date_time)->count() == 0;
     }
 
     /**

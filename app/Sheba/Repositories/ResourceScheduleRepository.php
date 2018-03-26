@@ -30,6 +30,13 @@ class ResourceScheduleRepository extends BaseRepository
             ->get();
     }
 
+    public function filterStartAt(Resource $resource, Carbon $start)
+    {
+        return $this->resourceSchedule->where('start', '=', $start)
+            ->where('resource_id', $resource->id)
+            ->get();
+    }
+
     public function filterByDateTime(Resource $resource, Carbon $date_time)
     {
         return $this->resourceSchedule->where('start', '<', $date_time)
