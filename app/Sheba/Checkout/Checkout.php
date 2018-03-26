@@ -183,7 +183,8 @@ class Checkout
                     return $deliver_address->address;
                 }
             }
-        } elseif (array_has($data, 'address')) {
+        }
+        if (array_has($data, 'address')) {
             if ($data['address'] != '' || $data['address'] != null) {
                 $deliver_address = new CustomerDeliveryAddress();
                 $deliver_address->address = $data['address'];
