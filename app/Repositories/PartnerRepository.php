@@ -47,7 +47,7 @@ class PartnerRepository
             });
         }
 
-        return $resources->map(function ($resource) use ($job) {
+        return $resources->map(function ($resource) use ($job, $type) {
             $data = [];
             $data['id'] = $resource->id;
             $data['profile_id'] = $resource->profile_id;
@@ -59,6 +59,7 @@ class PartnerRepository
             $avg_rating = $resource->reviews->avg('rating');
             $data['rating'] = $avg_rating != null ? round($avg_rating, 2) : null;
             $data['joined_at'] = $resource->pivot->created_at->timestamp;
+            $data['resource_type'] = $type ?: $resource->pivot->resource_type;
             $data['is_available'] = 1;
             if (!empty($job)) {
                 if (!scheduler($resource)->isAvailable($job->schedule_date, $job->preferred_time_start, $job->category_id)) {
