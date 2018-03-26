@@ -1,6 +1,7 @@
 <?php
 
 namespace App\GraphQL\Type;
+
 use GraphQL;
 use \Folklore\GraphQL\Support\Type as GraphQlType;
 use GraphQL\Type\Definition\Type;
@@ -16,7 +17,13 @@ class UspType extends GraphQlType
     {
         return [
             'id' => ['type' => Type::int()],
-            'name' => ['type' => Type::string()]
+            'name' => ['type' => Type::string()],
+            'value' => ['type' => Type::string()],
         ];
+    }
+
+    protected function resolveValueField($root, $args)
+    {
+        return $root->pivot->value;
     }
 }
