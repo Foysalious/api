@@ -63,7 +63,9 @@ class PartnerController extends Controller
             $partner->load(['workingHours', 'categories' => function ($q) {
                 $q->select('categories.id', 'name', 'thumb', 'icon', 'categories.slug')->where('category_partner.is_verified', 1);
             }, 'reviews', 'jobs' => function ($q) {
-                $q->with(['resource' => function ($q) {
+                $q->whereHas('resource', function ($query) {
+                    $query->verified();
+                })->with(['resource' => function ($q) {
                     $q->select('resources.id', 'profile_id')->with('profile');
                 }, 'review' => function ($q) {
                     $q->select('id', 'job_id', 'resource_id', 'rating', 'review');
