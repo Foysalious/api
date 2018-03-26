@@ -19,8 +19,9 @@ class PartnerRepository
 
     public function resources($type = null, $verify = null, $job_id = null)
     {
-        $this->partner->load(['resources' => function ($q) use ($type, $verify) {
-            $q->select('resources.id', 'profile_id', 'resource_type', 'resources.is_verified')->whereHas('partnerResources', function ($q) {
+        /*$this->partner->load(['resources' => function ($q) use ($type, $verify) {
+            $q->select('resources.id', 'profile_id', 'resource_type', 'resources.is_verified')
+            ->whereHas('partnerResources', function ($q) {
                 $q->has('categories');
             })->with(['jobs' => function ($q) {
                 $q->info();
@@ -31,30 +32,42 @@ class PartnerRepository
             if ($verify) {
                 $q->verified();
             }
-        }]);
-        $final = collect();
+        }]);*/
+
+        $resources = $this->partner->resources()->with('profile', 'reviews', 'jobs');
+        if ($type) $resources->type($type);
+        if ($verify) $resources->verified();
+        $resources = $resources->get()->unique();
+
+        $job = null;
         if ($job_id != null) {
             $job = Job::find((int)$job_id);
+            $resources = $resources->filter(function ($resource) use ($job) {
+                return $resource->categoriesIn($this->partner)->pluck('id')->contains($job->category_id ? : $job->service->category_id);
+            });
         }
-        foreach ($this->partner->resources as &$resource) {
-            $resource['ongoing'] = $resource->jobs->whereIn('status', [constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Schedule_Due']])->count();
-            $resource['completed'] = $resource->jobs->where('status', constants('JOB_STATUSES')['Served'])->count();
-            $resource['name'] = $resource->profile->name;
-            $resource['mobile'] = $resource->profile->mobile;
-            $resource['picture'] = $resource->profile->pro_pic;
+
+        return $resources->map(function ($resource) use ($job) {
+            $data = [];
+            $data['id'] = $resource->id;
+            $data['profile_id'] = $resource->profile_id;
+            $data['ongoing'] = $resource->jobs->whereIn('status', [constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Schedule_Due']])->count();
+            $data['completed'] = $resource->jobs->where('status', constants('JOB_STATUSES')['Served'])->count();
+            $data['name'] = $resource->profile->name;
+            $data['mobile'] = $resource->profile->mobile;
+            $data['picture'] = $resource->profile->pro_pic;
             $avg_rating = $resource->reviews->avg('rating');
-            $resource['rating'] = $avg_rating != null ? round($avg_rating, 2) : null;
-            $resource['joined_at'] = $resource->pivot->created_at->timestamp;
-            $resource['is_available'] = 1;
-            if ($job_id != null) {
+            $data['rating'] = $avg_rating != null ? round($avg_rating, 2) : null;
+            $data['joined_at'] = $resource->pivot->created_at->timestamp;
+            $data['is_available'] = 1;
+            if (!empty($job)) {
                 if (!scheduler($resource)->isAvailable($job->schedule_date, $job->preferred_time_start, $job->category_id)) {
-                    $resource['is_available'] = 0;
+                    $data['is_available'] = 0;
                 }
             }
-            $final->push($resource);
-            removeRelationsAndFields($resource);
-        }
-        return $final;
+            removeRelationsAndFields($data);
+            return $data;
+        });
     }
 
     public function jobs(Array $statuses, $offset, $limit)
