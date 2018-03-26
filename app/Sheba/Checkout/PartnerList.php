@@ -73,7 +73,10 @@ class PartnerList
         if ($partner_id != null) {
             $query = $query->where('partners.id', $partner_id);
         }
-        return $query->get();
+        return $query->get()->load('resources')->map(function ($partner) {
+            $partner->contact_no = $partner->getContactNumber();
+            return $partner;
+        });
     }
 
     private function filterByOption($selected_option_services)
