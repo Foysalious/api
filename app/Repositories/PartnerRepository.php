@@ -62,7 +62,7 @@ class PartnerRepository
             $data['resource_type'] = $type ?: $resource->pivot->resource_type;
             $data['is_available'] = 1;
             if (!empty($job)) {
-                if (!scheduler($resource)->isAvailable($job->schedule_date, $job->preferred_time_start, $job->category_id)) {
+                if (!scheduler($resource)->isAvailable($job->schedule_date, $job->preferred_time_start)) {
                     $data['is_available'] = 0;
                 }
             }
