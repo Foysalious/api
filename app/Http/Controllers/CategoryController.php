@@ -59,7 +59,7 @@ class CategoryController extends Controller
             }, 'services' => function ($q) {
                 $q->published();
             }, 'usps' => function ($q) {
-                $q->select('usps.id', 'name');
+                $q->select('usps.id', 'name', 'category_usp.value');
             }, 'partnerResources' => function ($q) {
                 $q->whereHas('resource', function ($query) {
                     $query->verified();
