@@ -119,8 +119,8 @@ $api->version('v1', function ($api) {
             $api->get('{customer}/custom-order/{custom_order}/discussion', 'CustomOrderController@getCommentForDiscussion');
             $api->post('{customer}/custom-order/{custom_order}/discussion', 'CustomOrderController@postCommentOnDiscussion');
 
-            $api->post('{customer}/checkout/place-order', 'CheckoutController@placeOrder');
-            $api->post('{customer}/checkout/place-order-with-online-payment', 'CheckoutController@placeOrderWithPayment');
+//            $api->post('{customer}/checkout/place-order', 'CheckoutController@placeOrder');
+//            $api->post('{customer}/checkout/place-order-with-online-payment', 'CheckoutController@placeOrderWithPayment');
         });
         $api->group(['prefix' => 'customers/{customer}', 'middleware' => ['customer.auth']], function ($api) {
             $api->get('/', 'CustomerController@index');
