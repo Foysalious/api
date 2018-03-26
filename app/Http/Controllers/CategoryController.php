@@ -228,30 +228,12 @@ class CategoryController extends Controller
             $service['type'] = 'normal';
             if ($service->variable_type == 'Options') {
                 $questions = json_decode($service->variables)->options;
-                $slide = false;
                 foreach ($questions as &$question) {
                     $question = collect($question);
                     $question->put('input_type', $this->resolveInputTypeField($question->get('answers')));
-                    $screen = $this->resolveScreenField($question->get('question'));
-                    if ($screen == 'slide') {
-                        $slide = true;
-                    }
-                    if ($slide) {
-                        $question->put('screen', 'slide');
-                    } else {
-                        $question->put('screen', $screen);
-                    }
+                    $question->put('screen', count($questions) > 3 ? 'slide' : 'normal');
                     $explode_answers = explode(',', $question->get('answers'));
                     $question->put('answers', $explode_answers);
-                }
-                $questions = collect($questions);
-                $slide_questions = $questions->filter(function ($question) {
-                    return $question['screen'] == 'slide';
-                });
-                if (count($slide_questions) > 0) {
-                    $service['type'] = 'slide';
-                } else {
-                    $service['type'] = 'normal';
                 }
                 if (count($questions) == 1) {
                     $questions[0]->put('input_type', 'selectbox');

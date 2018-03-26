@@ -118,7 +118,14 @@ class OrderType extends GraphQlType
     protected function resolveStatusField($root)
     {
         $root->calculate(true);
-        return $root->jobs[0]->status;
+        $not_cancelled_jobs = $root->jobs->filter(function ($job) {
+            return $job->status != 'Cancelled';
+        });
+        if (count($not_cancelled_jobs) > 0) {
+            return $not_cancelled_jobs->first()->status;
+        } else {
+            return null;
+        }
     }
 
     protected function resolveScheduleDateField($root)

@@ -53,11 +53,14 @@ class ServiceType extends GraphQlType
     {
         if ($root->variable_type == 'Options') {
             $questions = (collect(json_decode($root->variables)->options))->pluck('question');
-            foreach ($questions as $question) {
-                if (strlen(trim($question)) >= 50) {
-                    return "slide";
-                }
+            if(count($questions)>3){
+                return "slide";
             }
+//            foreach ($questions as $question) {
+//                if (strlen(trim($question)) >= 50) {
+//                    return "slide";
+//                }
+//            }
         }
         return "normal";
     }
