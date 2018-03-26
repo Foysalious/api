@@ -22,13 +22,44 @@ class ResourceScheduleRepository extends BaseRepository
         return $this->resourceSchedule->where('resource_id', $resource->id)->get();
     }
 
-    public function filterByDateTime(Resource $resource, Carbon $date_time)
+    public function filterStartAndEndAt(Resource $resource, Carbon $start, Carbon $end)
     {
-        return $this->resourceSchedule->where('start', '<=', $date_time)
-            ->where('end', '>=', $date_time)
+        return $this->resourceSchedule->where('start', '=', $start)
+            ->where('end', '=', $end)
             ->where('resource_id', $resource->id)
             ->get();
+    }
 
+    public function filterByDateTime(Resource $resource, Carbon $date_time)
+    {
+        return $this->resourceSchedule->where('start', '<', $date_time)
+            ->where('end', '>', $date_time)
+            ->where('resource_id', $resource->id)
+            ->get();
+    }
+
+    public function filterStartBetween(Resource $resource, Carbon $start, Carbon $end)
+    {
+        return $this->resourceSchedule->where('start', '>', $start)
+            ->where('start', '<', $end)
+            ->where('resource_id', $resource->id)
+            ->get();
+    }
+
+    public function filterEndBetween(Resource $resource, Carbon $start, Carbon $end)
+    {
+        return $this->resourceSchedule->where('end', '>', $start)
+            ->where('end', '<', $end)
+            ->where('resource_id', $resource->id)
+            ->get();
+    }
+
+    public function filterByDate(Resource $resource, Carbon $date)
+    {
+        return $this->resourceSchedule->whereDate('start', '=', $date)
+            ->whereDate('end', '=', $date)
+            ->where('resource_id', $resource->id)
+            ->get();
     }
 
     public function saveAgainstJob(Job $job, $data)
@@ -43,11 +74,16 @@ class ResourceScheduleRepository extends BaseRepository
 
     public function updateAgainstJob(Job $job, $data)
     {
-        return $this->update($job->resourceSchedule, $data);
+        $this->update($job->resourceSchedule, $data);
     }
 
     public function update(ResourceSchedule $resource_schedule, $data)
     {
-        return $resource_schedule->update($this->withUpdateModificationField($data));
+        $resource_schedule->update($this->withUpdateModificationField($data));
+    }
+
+    public function destroy(ResourceSchedule $resource_schedule)
+    {
+        $resource_schedule->delete();
     }
 }
