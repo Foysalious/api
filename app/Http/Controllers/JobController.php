@@ -79,7 +79,7 @@ class JobController extends Controller
             $job_collection->put('additional_information', $job->job_additional_info);
             $job_collection->put('schedule_date', $job->schedule_date);
             $job_collection->put('complains', $this->formatComplains($job->complains));
-            $job_collection->put('preferred_time', $job->preferred_time);
+            $job_collection->put('preferred_time', $job->readable_preferred_time);
             $job_collection->put('category_name', $job->category ? $job->category->name : null);
             $job_collection->put('partner_name', $job->partnerOrder->partner->name);
             $job_collection->put('status', $job->status);
