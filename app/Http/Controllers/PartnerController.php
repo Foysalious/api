@@ -285,7 +285,7 @@ class PartnerController extends Controller
             $verified = $request->has('verified') ? $request->verified : null;
             $resources = $partnerRepo->resources($type, $verified, $request->job_id);
             $resources = $resources->filter(function ($resource) {
-                return $resource->is_available == 1;
+                return $resource['is_available'] == 1;
             });
             if (count($resources) > 0) {
                 return api_response($request, $resources, 200, ['resources' => array_slice($resources->sortBy('name')->values()->all(), $offset, $limit)]);
