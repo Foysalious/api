@@ -70,14 +70,14 @@ class Resource extends Model
 
     public function categoriesIn($partner)
     {
-        $categories = collect();
-        $partner_resources = ($this->partnerResources()->where('partner_id', $partner)->get())->load('categories');
-        foreach ($partner_resources as $partner_resource) {
-            foreach ($partner_resource->categories as $item) {
-                $categories->push($item);
+        $partner = $partner instanceof Partner ? $partner->id : $partner;
+        $categories = [];
+        foreach($this->partnerResources()->where('partner_id', $partner)->get() as $partner_resource) {
+            foreach($partner_resource->categories as $item) {
+                array_push($categories, $item);
             }
         }
-        return $categories->unique('id');
+        return collect($categories)->unique('id');
     }
 
     public function scopeVerified($query)
