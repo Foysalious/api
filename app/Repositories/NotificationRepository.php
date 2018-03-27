@@ -22,7 +22,7 @@ class NotificationRepository
     public function send($order)
     {
         $this->order = $order;
-        if ($this->order->sales_channel == 'Web') {
+        if (in_array($this->order->sales_channel, ['Web', 'App'])) {
             $this->sender_id = $this->order->customer_id;
             $this->sender_type = 'customer';
 
@@ -31,26 +31,24 @@ class NotificationRepository
             $this->sender_id = $this->order->created_by;
             $this->sender_type = 'user';
 
-            $this->sendNotificationToCRM($this->order->jobs); //REMOVE
+            $this->sendNotificationToCRM(); //REMOVE
         }
         $this->sendNotificationToPartner($this->order->partner_orders);
     }
 
-    private function sendNotificationToCRM($jobs)
+    private function sendNotificationToCRM()
     {
-        foreach ($jobs as $job) {
-            notify()->user($job->crm_id)->sender($this->sender_id, $this->sender_type)->send([
-                'title' => 'You have been assigned to a new job',
-                'link' => env('SHEBA_BACKEND_URL') . '/job/' . $job->id,
-                'type' => notificationType('Info')
-            ]);
-        }
+        notify()->user($this->order->jobs->first()->crm_id)->sender($this->sender_id, $this->sender_type)->send([
+            'title' => 'You have been assigned to a new order - ' . $this->order->code(),
+            'link' => env('SHEBA_BACKEND_URL') . '/order/' . $this->order->id,
+            'type' => notificationType('Info')
+        ]);
     }
 
     private function sendNotificationToBackEnd()
     {
         notify()->departments([5, 7])->sender($this->sender_id, $this->sender_type)->send([
-            'title' => 'New Order Placed From Front End',
+            'title' => 'New Order Placed From Front End - ' . $this->order->code(),
             'link' => env('SHEBA_BACKEND_URL') . '/order/' . $this->order->id,
             'type' => notificationType('Info')
         ]);
@@ -82,7 +80,6 @@ class NotificationRepository
     {
         try {
             $partner_order = ($partner_order instanceof PartnerOrder) ? $partner_order : PartnerOrder::find($partner_order);
-            $this->order = $partner_order->order;
             $this->order = $partner_order->order;
             $this->sender_id = $this->order->customer_id;
             $this->sender_type = 'customer';
