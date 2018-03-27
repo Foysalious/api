@@ -22,7 +22,7 @@ class NotificationRepository
     public function send($order)
     {
         $this->order = $order;
-        if ($this->order->sales_channel == 'Web') {
+        if (in_array($this->order->sales_channel, ['Web', 'App'])) {
             $this->sender_id = $this->order->customer_id;
             $this->sender_type = 'customer';
 
