@@ -2,6 +2,7 @@
 
 namespace App\GraphQL\Type;
 
+use Carbon\Carbon;
 use GraphQL;
 use \Folklore\GraphQL\Support\Type as GraphQlType;
 use GraphQL\Type\Definition\Type;
@@ -21,6 +22,7 @@ class JobType extends GraphQlType
             'price' => ['type' => Type::float()],
             'status' => ['type' => Type::string()],
             'schedule_date' => ['type' => Type::string()],
+            'schedule_date_timestamp' => ['type' => Type::int()],
             'preferred_time' => ['type' => Type::string()],
             'preferred_time_readable' => ['type' => Type::string()],
             'completed_at_timestamp' => ['type' => Type::float()],
@@ -50,6 +52,7 @@ class JobType extends GraphQlType
         if (count($root->jobServices) == 0) {
             return array(array(
                 'name' => $root->service_name, 'options' => $root->service_variables,
+                'unit' => $root->service->unit,
                 'quantity' => (float)$root->service_quantity, 'unit_price' => (float)$root->service_unit_price)
             );
         } else {
@@ -57,6 +60,7 @@ class JobType extends GraphQlType
             foreach ($root->jobServices as $jobService) {
                 array_push($services, array(
                         'name' => $jobService->service->name, 'options' => $jobService->variables,
+                        'unit' => $jobService->service->unit,
                         'quantity' => (float)$jobService->quantity, 'unit_price' => (float)$jobService->unit_price)
                 );
             }
@@ -94,6 +98,11 @@ class JobType extends GraphQlType
     protected function resolvePreferredTimeReadableField($root, $args)
     {
         return $root->readable_preferred_time;
+    }
+
+    protected function resolveScheduleDateTimestampField($root, $args)
+    {
+        return Carbon::parse($root->schedule_date)->timestamp;
     }
 
 

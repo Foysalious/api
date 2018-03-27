@@ -26,6 +26,7 @@ class OrderType extends GraphQlType
             'address' => ['type' => Type::string()],
             'status' => ['type' => Type::string()],
             'schedule_date' => ['type' => Type::string()],
+            'schedule_date_timestamp' => ['type' => Type::int()],
             'schedule_time' => ['type' => Type::string()],
             'location' => ['type' => GraphQL::type('Location')],
             'total_price' => ['type' => Type::float()],
@@ -131,6 +132,11 @@ class OrderType extends GraphQlType
     protected function resolveScheduleDateField($root)
     {
         return $root->jobs[0]->schedule_date;
+    }
+
+    protected function resolveScheduleDateTimestampField($root)
+    {
+        return Carbon::parse($root->jobs[0]->schedule_date)->timestamp;
     }
 
     protected function resolveScheduleTimeField($root)

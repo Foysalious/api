@@ -39,7 +39,9 @@ class CustomerOrderController extends Controller
             $job = ($partnerOrder->jobs->filter(function ($job) {
                 return $job->status !== 'Cancelled';
             }))->first();
-            $all_jobs->push($this->getJobInformation($job, $partnerOrder));
+            if ($job != null) {
+                $all_jobs->push($this->getJobInformation($job, $partnerOrder));
+            }
         }
         return $all_jobs;
     }
