@@ -275,7 +275,7 @@ class PartnerController extends Controller
 
     public function getResources($partner, Request $request)
     {
-        //try {
+        try {
             $validator = Validator::make($request->all(), [
                 'type' => 'sometimes|required|string',
                 'verified' => 'sometimes|required|boolean',
@@ -298,9 +298,9 @@ class PartnerController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        //} catch (\Throwable $e) {
-        //    return api_response($request, null, 500);
-        //}
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
     }
 
     public function getDashboardInfo($partner, Request $request)

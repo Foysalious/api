@@ -43,7 +43,7 @@ class PartnerRepository
         if ($job_id != null) {
             $job = Job::find((int)$job_id);
             $resources = $resources->filter(function ($resource) use ($job) {
-                return $resource->categoriesIn($this->partner)->pluck('id')->contains($job->category_id ?: $job->service->category_id);
+                return $resource->categoriesIn($this->partner->id)->pluck('id')->contains($job->category_id ?: $job->service->category_id);
             });
         }
 
