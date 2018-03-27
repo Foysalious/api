@@ -27,6 +27,7 @@ class OrderType extends GraphQlType
             'status' => ['type' => Type::string()],
             'schedule_date' => ['type' => Type::string()],
             'schedule_time' => ['type' => Type::string()],
+            'schedule_time_timestamp' => ['type' => Type::string()],
             'location' => ['type' => GraphQL::type('Location')],
             'total_price' => ['type' => Type::float()],
             'total_material_price' => ['type' => Type::float()],
@@ -137,6 +138,12 @@ class OrderType extends GraphQlType
     {
 
         return humanReadableShebaTime($root->jobs[0]->preferred_time);
+    }
+
+    protected function resolveScheduleTimeTimestampField($root)
+    {
+
+        return $root->jobs[0]->preferred_time->timestamp;
     }
 
     protected function resolveDeliveryAddressField($root)
