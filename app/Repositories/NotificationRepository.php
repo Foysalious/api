@@ -64,7 +64,7 @@ class NotificationRepository
                 'type' => notificationType('Info'),
                 'event_type' => "App\Models\PartnerOrder",
                 'event_id' => $partner_order->id,
-                'version' => $partner_order->getVersion()
+                //'version' => $partner_order->getVersion()
             ]);
             (new PushNotificationRepository())->send([
                 "title" => 'New Order',
