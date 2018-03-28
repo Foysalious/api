@@ -36,8 +36,12 @@ class PartnerRepository
 
         //$resources = $this->partner->resources()->with('profile', 'reviews', 'jobs');
         //if ($type) $resources->type($type);
-        //if ($verify) $resources->verified();
-        $resources = $this->partner->handymanResources()->verified()->get()->unique();
+        $resources = $this->partner->handymanResources()->get()->unique();
+        if ($verify != null) {
+            $resources = $resources->filter(function ($resource) use ($verify) {
+                return $resource->is_verified == $verify;
+            });
+        };
 
         $job = null;
         if ($job_id != null) {

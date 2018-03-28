@@ -288,11 +288,13 @@ class PartnerController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $partnerRepo = new PartnerRepository($request->partner);
             $type = $request->has('type') ? $request->type : null;
-            $verified = $request->has('verified') ? $request->verified : null;
+            $verified = $request->has('verified') ? (int)$request->verified : null;
             $resources = $partnerRepo->resources($type, $verified, $request->job_id);
-            $resources = $resources->filter(function ($resource) {
-                return $resource['is_available'] == 1;
-            });
+            if ($request->has('job_id')) {
+                $resources = $resources->filter(function ($resource) {
+                    return $resource['is_available'] == 1;
+                });
+            }
             if (count($resources) > 0) {
                 return api_response($request, $resources, 200, ['resources' => array_slice($resources->sortBy('name')->values()->all(), $offset, $limit)]);
             } else {
