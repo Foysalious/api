@@ -33,6 +33,7 @@ class ResourceHandler
     public function isAvailable($date, $time)
     {
         $date_time = Carbon::parse($date . ' ' . $time);
+
         return $this->resourceSchedules->filterByDateTime($this->resource, $date_time)->count() == 0 &&
             $this->resourceSchedules->filterStartAt($this->resource, $date_time)->count() == 0;
     }
@@ -113,6 +114,17 @@ class ResourceHandler
             'end' => $extended_time,
             'notify_at' => $this->getNotificationTime($extended_time, $this->getJobCategory($schedule->job))
         ]);
+    }
+
+    public function reSchedule(Job $job, $reschedule_data)
+    {
+        $schedule = $job->resourceSchedule;
+        if (empty($schedule)) return false;
+
+        $reschedule_data += [
+            'notify_at' => $this->getNotificationTime($reschedule_data['end'], $this->getJobCategory($job))
+        ];
+        $this->resourceSchedules->update($schedule, $reschedule_data);
     }
 
     private function getTimesFromJob(Job $job)
