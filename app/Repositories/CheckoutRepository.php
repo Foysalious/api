@@ -223,7 +223,6 @@ class CheckoutRepository
                 }
             });
         } catch (QueryException $e) {
-            dd($e);
             return false;
         }
         return $order;

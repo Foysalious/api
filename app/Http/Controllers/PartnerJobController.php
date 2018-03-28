@@ -87,7 +87,7 @@ class PartnerJobController extends Controller
                         $job = $this->assignResource($job, $request->resource_id, $request->manager_resource);
                         if ($job->crm_id != null) {
                             $order = $job->partnerOrder->order;
-                            (new NotificationRepository())->sendToCRM($job->crm_id, "Partner has accepted this job, ID-" . $order->fullCode(), $order);
+                            (new NotificationRepository())->sendToCRM($job->crm_id, "Partner has accepted this job, ID-" . $order->code(), $order);
                         }
                         return api_response($request, $job, 200);
                     }
