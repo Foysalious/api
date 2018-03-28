@@ -119,7 +119,6 @@ class Checkout
                 $job->jobServices()->saveMany($data['job_services']);
             });
         } catch (QueryException $e) {
-            dd($e);
             return false;
         }
         return $order;
