@@ -146,20 +146,24 @@ class RegistrationController extends Controller
 
     public function register(Request $request)
     {
-        if ($msg = $this->_validateRegistration($request)) {
-            return response()->json(['code' => 500, 'msg' => $msg]);
-        }
-        $profile = $this->profileRepository->ifExist($request->email, 'email');
-        if ($profile == false) {
-            $profile = $this->profileRepository->registerEmail($request);
-            $avatar = $this->profileRepository->getAvatar($request->from);
-            $this->profileRepository->registerAvatarByEmail($avatar, $request, $profile);
-            $info = $this->profileRepository->getProfileInfo($avatar, $profile);
-            if ($info != false) {
-                return response()->json(['code' => 200, 'info' => $info]);
+        try {
+            if ($msg = $this->_validateRegistration($request)) {
+                return api_response($request, null, 400, ['msg' => $msg, 'message' => $msg]);
             }
+            $profile = $this->profileRepository->ifExist($request->email, 'email');
+            if ($profile == false) {
+                $profile = $this->profileRepository->registerEmail($request);
+                $avatar = $this->profileRepository->getAvatar($request->from);
+                $this->profileRepository->registerAvatarByEmail($avatar, $request, $profile);
+                $info = $this->profileRepository->getProfileInfo($avatar, $profile);
+                if ($info != false) {
+                    return response()->json(['code' => 200, 'info' => $info]);
+                }
+            }
+            return api_response($request, null, 409, ['msg' => 'Already registered!', 'message' => 'Already registered!']);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
         }
-        return response()->json(['code' => 409, 'msg' => 'Already registered!']);
     }
 
     private function _validateRegistration($request)

@@ -285,7 +285,7 @@ class PartnerController extends Controller
                 $errors = $validator->errors()->all()[0];
                 return api_response($request, $errors, 400, ['message' => $errors]);
             }
-            list($offset, $limit) = calculatePagination($request);
+//            list($offset, $limit) = calculatePagination($request);
             $partnerRepo = new PartnerRepository($request->partner);
             $type = $request->has('type') ? $request->type : null;
             $verified = $request->has('verified') ? (int)$request->verified : null;
@@ -296,7 +296,7 @@ class PartnerController extends Controller
                 });
             }
             if (count($resources) > 0) {
-                return api_response($request, $resources, 200, ['resources' => array_slice($resources->sortBy('name')->values()->all(), $offset, $limit)]);
+                return api_response($request, $resources, 200, ['resources' => $resources->sortBy('name')->values()->all()]);
             } else {
                 return api_response($request, null, 404);
             }
