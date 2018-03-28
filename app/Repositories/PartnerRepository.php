@@ -60,6 +60,7 @@ class PartnerRepository
             $data['rating'] = $avg_rating != null ? round($avg_rating, 2) : null;
             $data['joined_at'] = $resource->pivot->created_at->timestamp;
             $data['resource_type'] = $type ?: $resource->pivot->resource_type;
+            $data['is_verified'] = $resource->is_verified;
             $data['is_available'] = 1;
             if (!empty($job)) {
                 if (!scheduler($resource)->isAvailable($job->schedule_date, $job->preferred_time_start)) {
