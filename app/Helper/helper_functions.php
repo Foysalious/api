@@ -110,6 +110,7 @@ if (!function_exists('formatMobileAux')) {
     function formatMobileAux($mobile)
     {
         $mobile = str_replace(" ", "", $mobile);
+        $mobile = str_replace("-", "", $mobile);
         if ($mobile[0] == "0") {
             $mobile = "+88" . $mobile;
         }

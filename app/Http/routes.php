@@ -348,7 +348,6 @@ $api->version('v1', function ($api) {
                     $api->post('promotions', 'PromotionController@applyPromotion');
                     $api->group(['prefix' => '{order}'], function ($api) {
                         $api->get('/', 'CustomerOrderController@show');
-
                     });
                 });
                 $api->group(['prefix' => 'jobs'], function ($api) {
