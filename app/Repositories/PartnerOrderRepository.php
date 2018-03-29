@@ -171,7 +171,8 @@ class PartnerOrderRepository
         } elseif ($request->has('filter')) {
             return $this->resolveStatus($request->filter);
         } else {
-            return constants('JOB_STATUSES');
+            return array(constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded'],
+                constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Served']);
         }
     }
 
@@ -182,13 +183,12 @@ class PartnerOrderRepository
         } elseif ($filter == 'history') {
             return constants('JOB_STATUSES');
         }
-        return array(constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded'],
-            constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Served']);
     }
 
     public function getInfo($partner_order)
     {
-        $job = $partner_order->order->jobs->first();
+        $job = $partner_order->jobs->whereIn('status', array(constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded'],
+            constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Served']))->first();
         $partner_order->calculate(true);
         $partner_order['code'] = $partner_order->code();
         $partner_order['customer_name'] = $partner_order->order->delivery_name;
