@@ -41,6 +41,7 @@ class PartnerOrderController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -59,6 +60,7 @@ class PartnerOrderController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -73,6 +75,7 @@ class PartnerOrderController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -87,6 +90,7 @@ class PartnerOrderController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -126,6 +130,7 @@ class PartnerOrderController extends Controller
             });
             return api_response($request, $partner_order, 200, ['order' => $partner_order]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -168,6 +173,7 @@ class PartnerOrderController extends Controller
             );
             return api_response($request, $partner_order, 200, ['order' => $partner_order]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -189,6 +195,7 @@ class PartnerOrderController extends Controller
             });
             return api_response($request, $dates, 200, ['logs' => $dates]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -216,6 +223,7 @@ class PartnerOrderController extends Controller
             }
             return api_response($request, $logs, 404);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -228,6 +236,7 @@ class PartnerOrderController extends Controller
             $comment = (new CommentRepository('Job', $partner_order->jobs->pluck('id')->first(), $manager_resource))->store($request->comment, true);
             return $comment ? api_response($request, $comment, 200) : api_response($request, $comment, 500);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }

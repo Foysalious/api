@@ -54,7 +54,8 @@ class ResourceJobController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -72,7 +73,8 @@ class ResourceJobController extends Controller
                 $job = $this->resourceJobRepository->calculateActionsForThisJob($jobs[0], $job);
             }
             return api_response($request, $job, 200, ['job' => $job]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -122,6 +124,7 @@ class ResourceJobController extends Controller
             $bill['job_code'] = $job->fullcode();
             return api_response($request, $bill, 200, ['bill' => $bill]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -154,7 +157,8 @@ class ResourceJobController extends Controller
                 }
             }
             return api_response($request, null, 400);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -174,7 +178,8 @@ class ResourceJobController extends Controller
                 return api_response($request, $response, $response->code);
             }
             return api_response($request, null, 500);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -199,7 +204,8 @@ class ResourceJobController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }

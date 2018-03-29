@@ -67,6 +67,7 @@ class PartnerJobController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -100,6 +101,7 @@ class PartnerJobController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -114,6 +116,7 @@ class PartnerJobController extends Controller
             }
             return api_response($request, null, 500);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -155,7 +158,7 @@ class PartnerJobController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            ;
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -174,6 +177,7 @@ class PartnerJobController extends Controller
             }
             return api_response($request, $job, 404);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -198,12 +202,14 @@ class PartnerJobController extends Controller
                 });
                 return api_response($request, $material, 200);
             } catch (QueryException $e) {
+                app('sentry')->captureException($e);
                 return api_response($request, null, 500);
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -230,6 +236,7 @@ class PartnerJobController extends Controller
                     });
                     return api_response($request, $material, 200);
                 } catch (QueryException $e) {
+                    app('sentry')->captureException($e);
                     return api_response($request, null, 500);
                 }
             }
@@ -238,6 +245,7 @@ class PartnerJobController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
