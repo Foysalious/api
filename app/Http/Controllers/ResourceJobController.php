@@ -143,7 +143,7 @@ class ResourceJobController extends Controller
                 $job_time = new JobTime($request->schedule_date, $request->preferred_time);
                 $job_time->validate();
                 if ($job_time->isValid) {
-                    if (!scheduler($job->resource)->isAvailable($job->schedule_date, $job->preferred_time_start, $job->category_id)) {
+                    if (!scheduler($job->resource)->isAvailableForCategory($request->schedule_date, explode('-', $request->preferred_time)[0], $job->category)) {
                         return api_response($request, null, 403, ['message' => 'Resource is not available at this time. Please select different date time or change the resource']);
                     }
                     $response = $this->resourceJobRepository->reschedule($job->id, $request);
