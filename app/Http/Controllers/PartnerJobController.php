@@ -7,6 +7,7 @@ use App\Models\JobMaterial;
 use App\Models\JobUpdateLog;
 use App\Models\Resource;
 use App\Repositories\NotificationRepository;
+use App\Repositories\PartnerOrderRepository;
 use App\Repositories\PartnerRepository;
 use App\Repositories\PushNotificationRepository;
 use App\Repositories\ResourceJobRepository;
@@ -34,12 +35,41 @@ class PartnerJobController extends Controller
             $this->validate($request, [
                 'filter' => 'required|string|in:new,ongoing,history'
             ]);
-            list($offset, $limit) = calculatePagination($request);
-            $partnerRepo = new PartnerRepository($request->partner);
-            $statuses = $partnerRepo->resolveStatus($request->filter);
-            $jobs = $partnerRepo->jobs($statuses, $offset, $limit);
+            $filter = $request->filter;
+            $partner = $request->partner->load(['partnerOrders' => function ($q) use ($filter, $request) {
+                $q->$filter()->with(['order' => function ($q) {
+                    $q->with('location', 'customer.profile');
+                }])->with(['jobs' => function ($q) use ($filter, $request) {
+                    $q->info()->whereIn('status', (new PartnerOrderRepository())->getStatusFromRequest($request))->orderBy('id', 'desc')->with(['category', 'usedMaterials' => function ($q) {
+                        $q->select('id', 'job_id', 'material_name', 'material_price');
+                    }, 'resource.profile', 'review']);
+                }]);
+            }]);
+            $jobs = collect();
+            foreach ($partner->partnerOrders as $partnerOrder) {
+                foreach ($partnerOrder->jobs as $job) {
+                    $job['location'] = $job->partner_order->order->location->name;
+                    $job['service_unit_price'] = (double)$job->service_unit_price;
+                    $job['discount'] = (double)$job->discount;
+                    $job['code'] = $job->partner_order->order->code();
+                    $job['category_name'] = $job->category ? $job->category->name : null;
+                    $job['customer_name'] = $job->partner_order->order->customer ? $job->partner_order->order->customer->profile->name : null;
+                    $job['resource_picture'] = $job->resource != null ? $job->resource->profile->pro_pic : null;
+                    $job['resource_mobile'] = $job->resource != null ? $job->resource->profile->mobile : null;
+                    $job['preferred_time'] = humanReadableShebaTime($job->readable_preferred_time);
+                    $job['rating'] = $job->review != null ? $job->review->rating : null;
+                    $job['version'] = $job->getVersion();
+                    if ($job->partner_order->closed_and_paid_at != null) {
+                        $job['completed_at_timestamp'] = $job->partner_order->closed_and_paid_at->timestamp;
+                    } else {
+                        $job['completed_at_timestamp'] = null;
+                    }
+                    removeRelationsFromModel($job);
+                    $jobs->push($job);
+                }
+            }
             if (count($jobs) > 0) {
-                $jobs = $jobs->sortByDesc('created_at');
+                $jobs = $jobs->sortByDesc('id');
                 $jobs = $jobs->each(function ($job) {
                     $job['location'] = $job->partner_order->order->location->name;
                     $job['service_unit_price'] = (double)$job->service_unit_price;
@@ -143,6 +173,8 @@ class PartnerJobController extends Controller
                 $response = $this->resourceJobRepository->reschedule($job->id, $request);
                 if ($response) {
                     return api_response($request, $response, $response->code);
+                } else {
+                    return api_response($request, null, 500);
                 }
             }
             if ($request->has('resource_id')) {
