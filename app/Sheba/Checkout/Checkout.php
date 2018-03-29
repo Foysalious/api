@@ -119,6 +119,7 @@ class Checkout
                 $job->jobServices()->saveMany($data['job_services']);
             });
         } catch (QueryException $e) {
+            app('sentry')->captureException($e);
             return false;
         }
         return $order;
