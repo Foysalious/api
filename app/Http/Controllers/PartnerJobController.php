@@ -141,7 +141,9 @@ class PartnerJobController extends Controller
                 }
                 $request->merge(['resource' => $request->manager_resource]);
                 $response = $this->resourceJobRepository->reschedule($job->id, $request);
-                return api_response($request, $response, $response->code);
+                if ($response) {
+                    return api_response($request, $response, $response->code);
+                }
             }
             if ($request->has('resource_id')) {
                 if (!scheduler(Resource::find((int)$request->resource_id))->isAvailable($job->schedule_date, explode('-', $job->preferred_time)[0], $job->category_id)) {

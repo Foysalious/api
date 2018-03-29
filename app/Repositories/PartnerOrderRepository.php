@@ -32,7 +32,7 @@ class PartnerOrderRepository
     public function getOrderDetailsV2($request)
     {
         $partner_order = $this->getInfo($this->loadAllRelatedRelationsV2($request->partner_order));
-        $jobs = $partner_order->jobs->each(function ($job) use ($partner_order) {
+        $jobs = $partner_order->jobs->whereIn('status', $this->getStatusFromRequest($request))->each(function ($job) use ($partner_order) {
             $job['partner_order'] = $partner_order;
             $job = $this->partnerJobRepository->getJobInfo($job);
             $services = [];
@@ -164,7 +164,7 @@ class PartnerOrderRepository
         return $week;
     }
 
-    private function getStatusFromRequest($request)
+    public function getStatusFromRequest($request)
     {
         if ($request->has('status')) {
             return explode(',', $request->status);
@@ -182,7 +182,8 @@ class PartnerOrderRepository
         } elseif ($filter == 'history') {
             return constants('JOB_STATUSES');
         }
-        return constants('JOB_STATUSES');
+        return array(constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded'],
+            constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Served']);
     }
 
     public function getInfo($partner_order)

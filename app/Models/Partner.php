@@ -103,6 +103,10 @@ class Partner extends Model
     {
         return $this->hasMany(PartnerOrder::class);
     }
+    public function partnerOrders()
+    {
+        return $this->hasMany(PartnerOrder::class);
+    }
 
     public function walletSetting()
     {
