@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\CalculatePapAffiliateId;
 use App\Library\PortWallet;
 use App\Models\Customer;
 use App\Models\Order;
@@ -217,6 +218,9 @@ class OrderController extends Controller
             if ($order) {
                 if ($order->voucher_id != null) {
                     $this->updateVouchers($order, $customer);
+                }
+                if ($order->pap_visitor_id != null) {
+                    $this->dispatch(new CalculatePapAffiliateId($order));
                 }
                 $link = null;
                 if ($request->payment_method == 'online') {

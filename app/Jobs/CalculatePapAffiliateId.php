@@ -20,7 +20,9 @@ class CalculatePapAffiliateId extends Job implements ShouldQueue
 
     public function handle()
     {
-        $this->order->pap_affiliate_id = (new Pap())->getAffiliateId($this->order->pap_visitor_id);
-        $this->order->update();
+        if ($this->attempts() <= 5) {
+            $this->order->pap_affiliate_id = (new Pap())->getAffiliateId($this->order->pap_visitor_id);
+            $this->order->update();
+        }
     }
 }
