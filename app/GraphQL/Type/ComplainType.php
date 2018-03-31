@@ -50,7 +50,9 @@ class ComplainType extends GraphQlType
     protected function resolveCommentsField($root)
     {
         $root->load(['comments' => function ($q) {
-            $q->with('commentator');
+            $q->whereHas('accessors', function ($q) {
+                $q->where('name', 'Customer');
+            })->with('commentator');
         }]);
         return $root->comments;
     }
