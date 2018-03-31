@@ -85,7 +85,7 @@ class PartnerOrderRepository
         $filter = $request->filter;
         $partner = $request->partner->load(['partner_orders' => function ($q) use ($filter, $orderBy, $field) {
             $q->$filter()->orderBy($field, $orderBy)->with(['jobs' => function ($q) {
-                $q->with('usedMaterials', 'jobServices', 'category');
+                $q->with('usedMaterials', 'jobServices', 'category', 'resource.profile', 'reviews');
             }, 'order' => function ($q) {
                 $q->with(['customer.profile', 'location']);
             }]);
@@ -134,7 +134,9 @@ class PartnerOrderRepository
     private function loadAllRelatedRelations($partner_order)
     {
         return $partner_order->load(['order.location', 'jobs' => function ($q) {
-            $q->info()->orderBy('schedule_date')->with(['usedMaterials', 'resource.profile']);
+            $q->info()->orderBy('schedule_date')->with(['usedMaterials', 'resource.profile', 'reviews' => function ($q) {
+                $q->with('customer.profile');
+            }]);
         }]);
     }
 

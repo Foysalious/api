@@ -242,7 +242,7 @@ class PartnerOrder extends Model
 
     public function scopeHistory($query)
     {
-        return $query->where('closed_and_paid_at', '<>', null);
+        return $query->where([['closed_and_paid_at', '<>', null], ['cancelled_at', null]]);
     }
 
     public function stageChangeLogs()
