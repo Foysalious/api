@@ -37,7 +37,7 @@ class PartnerList
         foreach ($services as $service) {
             $selected_service = Service::select('id', 'name', 'category_id', 'min_quantity', 'variable_type', 'variables')->where('id', $service->id)->publishedForAll()->first();
             $selected_service['option'] = $service->option;
-            $selected_service['quantity'] = $service->quantity;
+            $selected_service['quantity'] = isset($service->quantity) ? $service->quantity : $selected_service->min_quantity;
             $selected_services->push($selected_service);
         }
         return $selected_services;

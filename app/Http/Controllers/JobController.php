@@ -67,7 +67,7 @@ class JobController extends Controller
                         $query->where('accessors.model_name', get_class($customer));
                     });
             }]);
-            $job->calculate(true);
+            $job->partnerOrder->calculate(true);
             $job_collection = collect();
             $job_collection->put('id', $job->id);
             $job_collection->put('resource_name', $job->resource ? $job->resource->profile->name : null);
@@ -85,7 +85,8 @@ class JobController extends Controller
             $job_collection->put('status', $job->status);
             $job_collection->put('rating', $job->review != null ? $job->review->rating : null);
             $job_collection->put('review', $job->review != null ? $job->review->review : null);
-            $job_collection->put('price', (double)$job->totalPrice);
+            $job_collection->put('price', (double)$job->partnerOrder->totalPrice);
+            $job_collection->put('isDue', (double)$job->partnerOrder->due > 0 ? 1 : 0);
             if (count($job->jobServices) == 0) {
                 $services = collect();
                 $variables = json_decode($job->service_variables);
@@ -100,6 +101,7 @@ class JobController extends Controller
             $job_collection->put('services', $services);
             return api_response($request, $job_collection, 200, ['job' => $job_collection]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }

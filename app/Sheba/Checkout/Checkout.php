@@ -81,6 +81,7 @@ class Checkout
         if ($request->has('address_id')) {
             $data['address_id'] = $request->address_id;
         }
+        $data['pap_visitor_id'] = $request->has('pap_visitor_id') ? $request->pap_visitor_id : null;
         $data['created_by'] = $created_by = $request->has('created_by') ? $request->created_by : $this->customer->id;
         $data['created_by_name'] = $created_by_name = $request->has('created_by_name') ? $request->created_by_name : 'Customer - ' . $this->customer->profile->name;
         return $data;
@@ -167,6 +168,7 @@ class Checkout
         $order->location_id = $data['location_id'];
         $order->customer_id = $data['customer_id'];
         $order->voucher_id = isset($data['voucher_id']) ? $data['voucher_id'] : null;
+        $order->pap_visitor_id = $data['pap_visitor_id'];
         $order->created_by = $data['created_by'];
         $order->created_by_name = $data['created_by_name'];
         $order->delivery_address = $this->getDeliveryAddress($data);
