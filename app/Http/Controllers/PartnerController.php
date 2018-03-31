@@ -327,10 +327,10 @@ class PartnerController extends Controller
             $sales_stats = (new PartnerSalesStatistics($request->partner))->calculate();
             $info = array(
                 'todays_jobs' => $jobs->filter(function ($job, $key) {
-                    return $job->schedule_date == Carbon::now()->toDateString() && $job->status != constants('JOB_STATUSES')['Served'];
+                    return $job->schedule_date == Carbon::now()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined']);
                 })->count(),
                 'tomorrows_jobs' => $jobs->filter(function ($job, $key) {
-                    return $job->schedule_date == Carbon::tomorrow()->toDateString() && $job->status != constants('JOB_STATUSES')['Served'];
+                    return $job->schedule_date == Carbon::tomorrow()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined']);
                 })->count(),
                 'accepted_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Accepted'])->count(),
                 'schedule_due_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Schedule_Due'])->count(),

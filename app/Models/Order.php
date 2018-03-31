@@ -93,7 +93,7 @@ class Order extends Model
 
     public function getVersion()
     {
-        return $this->id > env('LAST_ORDER_ID_V1') ? 'v2' : 'v1';
+        return $this->id > (int)env('LAST_ORDER_ID_V1') ? 'v2' : 'v1';
     }
 
     public function department()
