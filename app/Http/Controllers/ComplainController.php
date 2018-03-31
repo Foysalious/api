@@ -65,7 +65,9 @@ class ComplainController extends Controller
                     }]);
                 }])->with(['comments' => function ($q) {
                     $q->select('id', 'comment', 'commentable_type', 'commentable_id', 'commentator_id', 'commentator_type', 'created_at')
-                        ->with(['commentator' => function ($q) {
+                        ->whereHas('accessors', function ($q) {
+                            $q->where('name', 'Customer');
+                        })->with(['commentator' => function ($q) {
                             $q->select('*');
                         }])->orderBy('id', 'desc');
                 }])->first();
