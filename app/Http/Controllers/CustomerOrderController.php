@@ -24,9 +24,11 @@ class CustomerOrderController extends Controller
             $all_jobs = $this->getInformation($customer->partnerOrders)->sortByDesc('created_at');
             return count($all_jobs) > 0 ? api_response($request, $all_jobs, 200, ['orders' => $all_jobs->values()->all()]) : api_response($request, null, 404);
         } catch (ValidationException $e) {
+            app('sentry')->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -62,6 +64,7 @@ class CustomerOrderController extends Controller
             $partner_order['jobs'] = $final;
             return api_response($request, $partner_order, 200, ['orders' => $partner_order]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
