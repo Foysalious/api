@@ -78,11 +78,11 @@
   "repositories": [
     {
       "type": "vcs",
-      "url": "https://shafiq_startern@bitbucket.org/startern/sheba_voucher.git"
+      "url": "https://arnabrahman@bitbucket.org/startern/sheba_voucher.git"
     },
     {
       "type": "vcs",
-      "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git"
+      "url": "https://arnabrahman@bitbucket.org/startern/sheba_dal.git"
     }
   ]
 }

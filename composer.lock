@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "64be6b8d7e6ac8b680bcdc56853c2e88",
-    "content-hash": "c690b2d3c7fdda68ad0ea220a4b4ee92",
+    "hash": "ab9d53873672a4c234c1bbfd697aca49",
+    "content-hash": "67a4ec95165a2190667229c2d8bbce4a",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -2637,7 +2637,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
+                "url": "https://arnabrahman@bitbucket.org/startern/sheba_dal.git",
                 "reference": "11118c1bb60bccb0f247dcf9624a44150e408d13"
             },
             "require": {
@@ -2669,7 +2669,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_voucher.git",
+                "url": "https://arnabrahman@bitbucket.org/startern/sheba_voucher.git",
                 "reference": "554bb22e9b1ee0944f8e0dcee9c5ad7d18aa1285"
             },
             "require": {
