@@ -161,7 +161,6 @@ return [
         Sentry\SentryLaravel\SentryLaravelServiceProvider::class,
         Jenssegers\Mongodb\MongodbServiceProvider::class,
         LaravelFCM\FCMServiceProvider::class,
-        Intervention\Image\ImageServiceProvider::class,
         Clockwork\Support\Laravel\ClockworkServiceProvider::class,
         Folklore\GraphQL\ServiceProvider::class,
 
@@ -218,7 +217,6 @@ return [
         'Sentry' => Sentry\SentryLaravel\SentryFacade::class,
         'FCM'      => LaravelFCM\Facades\FCM::class,
         'FCMGroup' => LaravelFCM\Facades\FCMGroup::class,
-        'Image' => Intervention\Image\Facades\Image::class,
         'Clockwork' => Clockwork\Support\Laravel\Facade::class,
         'GraphQL' => Folklore\GraphQL\Support\Facades\GraphQL::class
     ],
