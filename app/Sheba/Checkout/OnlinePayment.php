@@ -132,6 +132,7 @@ class OnlinePayment
             });
             return $partner_order_payment;
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return null;
         }
     }
@@ -152,6 +153,7 @@ class OnlinePayment
                 ]);
             return json_decode($res->getBody());
         } catch (RequestException $e) {
+            app('sentry')->captureException($e);
             return false;
         }
     }
