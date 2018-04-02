@@ -85,7 +85,7 @@ class OnlinePayment
                             'type' => 'ADVANCED_PAYMENT_DB_ERROR', 'isDue' => 0, 'message' => "Your payment has successfully received but there was a system error. Our Order Manager will contact with you shortly");
                     }
                 } else {
-                    $response = $this->clearSpPayment($partnerOrder, $amount);
+                    $response = $this->clearSpPayment($partnerOrder, $amount, array_merge((new UserRequestInformation($request))->getInformationArray(), ['transaction_detail' => json_encode($portwallet_response)]));
                     if ($response) {
                         if ($response->code == 200) {
                             $notification = (new NotificationRepository())->forOnlinePayment($partnerOrder->id, $amount);
@@ -125,7 +125,7 @@ class OnlinePayment
                 $partner_order_payment->log = 'advanced payment';
                 $partner_order_payment->collected_by = 'Sheba';
                 $partner_order_payment->created_by = $partnerOrder->order->customer->id;
-                $partner_order_payment->created_by_name = 'Customer - ' . $partnerOrder->order->customer->id;
+                $partner_order_payment->created_by_name = 'Customer - ' . $partnerOrder->order->customer->profile->name;
                 $partner_order_payment->transaction_detail = json_encode($portwallet_response);
                 $partner_order_payment->fill((new UserRequestInformation($request))->getInformationArray());
                 $partner_order_payment->save();
@@ -136,18 +136,19 @@ class OnlinePayment
         }
     }
 
-    public function clearSpPayment(PartnerOrder $partnerOrder, $amount)
+    public function clearSpPayment(PartnerOrder $partnerOrder, $amount, $response)
     {
         try {
             $client = new Client();
             $res = $client->request('POST', env('SHEBA_BACKEND_URL') . '/api/partner-order/' . $partnerOrder->id . '/collect',
                 [
-                    'form_params' => [
+                    'form_params' => array_merge([
                         'customer_id' => $partnerOrder->order->customer->id,
                         'remember_token' => $partnerOrder->order->customer->remember_token,
                         'sheba_collection' => (double)$amount,
-                        'payment_method' => 'Online'
-                    ]
+                        'payment_method' => 'Online',
+                        'created_by_type' => 'App\Models\Customer',
+                    ], $response)
                 ]);
             return json_decode($res->getBody());
         } catch (RequestException $e) {
