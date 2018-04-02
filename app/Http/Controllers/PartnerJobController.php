@@ -298,15 +298,21 @@ class PartnerJobController extends Controller
 
     private function assignResource(Job $job, $resource_id, Resource $manager_resource)
     {
+        $old_resource = $job->resource_id;
+        $new_resource = ( int)$resource_id;
         $updatedData = [
             'msg' => 'Resource Change',
-            'old_resource_id' => $job->resource_id,
-            'new_resource_id' => (int)$resource_id
+            'old_resource_id' => $old_resource,
+            'new_resource_id' => $new_resource
         ];
         $job->resource_id = $resource_id;
         $job->update();
+        if (empty($old_resource)) {
+            scheduler($job->resource)->book($job);
+        } else {
+            scheduler($job->resource)->reAssign($job);
+        }
         $this->jobUpdateLog($job->id, json_encode($updatedData), $manager_resource);
-        scheduler($job->resource)->book($job);
 
         (new PushNotificationRepository())->send([
             "title" => 'Resource has been assigned',
