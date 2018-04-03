@@ -50,6 +50,9 @@ class Checkout
             $data['category_id'] = $partner_list->selected_services->first()->category_id;
             $data = $this->getVoucherData($data['job_services'], $data, $partner);
             if ($order = $this->storeInDB($data, $partner_list->selected_services, $partner)) {
+                if (isset($data['email'])) {
+                    $profile = $this->updateProfile($order->customer, $data['email']);
+                }
 //                $profile = $this->customerRepository->updateProfileInfoWhilePlacingOrder($order);
             }
             return $order;
@@ -80,6 +83,9 @@ class Checkout
         }
         if ($request->has('address_id')) {
             $data['address_id'] = $request->address_id;
+        }
+        if ($request->has('email')) {
+            $data['email'] = $request->email;
         }
         $data['pap_visitor_id'] = $request->has('pap_visitor_id') ? $request->pap_visitor_id : null;
         $data['created_by'] = $created_by = $request->has('created_by') ? $request->created_by : $this->customer->id;
@@ -289,6 +295,21 @@ class Checkout
         $model->created_by_name = $data['created_by_name'];
         $model->update();
         return $model;
+    }
+
+    private function updateProfile($customer, $email)
+    {
+        try {
+            $profile = $customer->profile;
+            if (empty($profile->email)) {
+                $profile->email = $email;
+                $profile->update();
+            }
+            return $profile;
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return null;
+        }
     }
 
 }
