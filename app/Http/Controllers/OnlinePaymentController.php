@@ -45,7 +45,7 @@ class OnlinePaymentController extends Controller
             $transaction_id = $request->tran_id;
             $transaction = Redis::get($transaction_id);
             $transaction = json_decode($transaction);
-            return redirect((new OnlinePayment())->generateRedirectLink(PartnerOrder::find((int)$transaction->partner_order_id), (int)$transaction->isAdvancedPayment));
+            return redirect(strtok((new OnlinePayment())->generateRedirectLink(PartnerOrder::find((int)$transaction->partner_order_id), (int)$transaction->isAdvancedPayment), '?'));
         } else {
             return redirect(env('SHEBA_FRONT_END_URL'));
         }

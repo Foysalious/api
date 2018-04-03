@@ -172,11 +172,10 @@ class OnlinePayment
         }
     }
 
-    public function generateSSLLink(Order $order, $isAdvancedPayment = 0)
+    public function generateSSLLink(PartnerOrder $partnerOrder, $isAdvancedPayment = 0)
     {
-        $partnerOrder = $order->partnerOrders[0];
         $partnerOrder->calculate(true);
-        $transaction_id = "SHEBA_ORDER_" . $order->id . "_" . uniqid();
+        $transaction_id = "SHEBA_ORDER_" . $partnerOrder->order->id . "_" . uniqid();
         $data = array();
         $data['store_id'] = config('ssl.store_id');
         $data['store_passwd'] = config('ssl.store_password');
@@ -187,9 +186,9 @@ class OnlinePayment
         $data['cancel_url'] = config('ssl.cancel_url');
         $data['emi_option'] = 0;
         $data['tran_id'] = $transaction_id;
-        $data['cus_name'] = $order->customer->profile->name;
-        $data['cus_email'] = $order->customer->profile->email;
-        $data['cus_phone'] = $order->customer->profile->mobile;
+        $data['cus_name'] = $partnerOrder->order->customer->profile->name;
+        $data['cus_email'] = $partnerOrder->order->customer->profile->email;
+        $data['cus_phone'] = $partnerOrder->order->customer->profile->mobile;
         $result = $this->getSslSession($data);
         if ($result) {
             if ($result->status == "SUCCESS") {
