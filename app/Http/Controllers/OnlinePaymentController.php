@@ -13,41 +13,51 @@ class OnlinePaymentController extends Controller
 {
     public function success(Request $request)
     {
-        if ($this->sslIpnHashValidation($request)) {
-            if ($result = $this->validateOrder($request)) {
-                $transaction_id = $request->tran_id;
-                $transaction = Redis::get($transaction_id);
-                $transaction = json_decode($transaction);
-                if ($result->status == "VALID" || $result->status == "VALIDATED") {
-                    $online_payment = new OnlinePayment();
-                    $result = $online_payment->clearPayment($transaction, $result, $request);
-                    if ($result) {
-                        $transaction->success = 1;
-                        Redis::set($transaction_id, json_encode($transaction));
-                        Redis::expire($transaction_id, 7200);
-                        return redirect($result);
-                    } else {
-                        $transaction->message = $online_payment->message;
-                        Redis::set($transaction_id, json_encode($transaction));
-                        Redis::expire($transaction_id, 7200);
-                        return redirect(env('SHEBA_FRONT_END_URL'));
+        try {
+            if ($this->sslIpnHashValidation($request)) {
+                if ($result = $this->validateOrder($request)) {
+                    $transaction_id = $request->tran_id;
+                    $transaction = Redis::get($transaction_id);
+                    $transaction = json_decode($transaction);
+                    if ($result->status == "VALID" || $result->status == "VALIDATED") {
+                        $online_payment = new OnlinePayment();
+                        $result = $online_payment->clearPayment($transaction, $result, $request);
+                        if ($result) {
+                            $transaction->success = 1;
+                            Redis::set($transaction_id, json_encode($transaction));
+                            Redis::expire($transaction_id, 7200);
+                            return redirect($result);
+                        } else {
+                            $transaction->message = $online_payment->message;
+                            Redis::set($transaction_id, json_encode($transaction));
+                            Redis::expire($transaction_id, 7200);
+                            return redirect(env('SHEBA_FRONT_END_URL'));
+                        }
                     }
                 }
+                return redirect(env('SHEBA_FRONT_END_URL'));
             }
-            return redirect(env('SHEBA_FRONT_END_URL'));
+            return api_response($request, null, 400);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
         }
-        return api_response($request, null, 400);
     }
 
     public function fail(Request $request)
     {
-        if ($this->sslIpnHashValidation($request)) {
-            $transaction_id = $request->tran_id;
-            $transaction = Redis::get($transaction_id);
-            $transaction = json_decode($transaction);
-            return redirect(strtok((new OnlinePayment())->generateRedirectLink(PartnerOrder::find((int)$transaction->partner_order_id), (int)$transaction->isAdvancedPayment), '?'));
-        } else {
-            return redirect(env('SHEBA_FRONT_END_URL'));
+        try {
+            if ($this->sslIpnHashValidation($request)) {
+                $transaction_id = $request->tran_id;
+                $transaction = Redis::get($transaction_id);
+                $transaction = json_decode($transaction);
+                return redirect(strtok((new OnlinePayment())->generateRedirectLink(PartnerOrder::find((int)$transaction->partner_order_id), (int)$transaction->isAdvancedPayment), '?'));
+            } else {
+                return redirect(env('SHEBA_FRONT_END_URL'));
+            }
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
         }
     }
 
