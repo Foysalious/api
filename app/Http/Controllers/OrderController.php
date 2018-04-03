@@ -224,7 +224,7 @@ class OrderController extends Controller
                 }
                 $link = null;
                 if ($request->payment_method == 'online') {
-                    $link = (new OnlinePayment())->generatePortWalletLink($order->partnerOrders[0], 1);
+                    $link = (new OnlinePayment())->generateSSLLink($order, 1);
                 }
                 $this->sendNotifications($customer, $order);
                 return api_response($request, $order, 200, ['link' => $link]);

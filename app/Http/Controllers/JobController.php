@@ -331,7 +331,7 @@ class JobController extends Controller
     public function clearBills($customer, $job, Request $request)
     {
         try {
-            $link = (new OnlinePayment())->generatePortWalletLink($request->job->partnerOrder);
+            $link = (new OnlinePayment())->generateSSLLink($request->job->partnerOrder->order);
             return api_response($request, $link, 200, ['link' => $link]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
