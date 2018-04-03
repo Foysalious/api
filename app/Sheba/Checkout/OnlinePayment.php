@@ -160,7 +160,7 @@ class OnlinePayment
         }
     }
 
-    private function generateRedirectLink(PartnerOrder $partnerOrder, $isAdvancedPayment)
+    public function generateRedirectLink(PartnerOrder $partnerOrder, $isAdvancedPayment)
     {
         $s_id = str_random(10);
         Redis::set($s_id, 'online');

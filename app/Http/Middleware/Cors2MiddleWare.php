@@ -45,7 +45,9 @@ class Cors2MiddleWare
             "https://admin.sheba.xyz",
             "https://partners.sheba.xyz",
             "http://admin.sheba.new",
-            "http://accounts.sheba.test"
+            "http://accounts.sheba.test",
+            "https://sandbox.sslcommerz.com",
+            "https://securepay.sslcommerz.com",
         ];
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Credentials'] = 'true';

@@ -27,8 +27,8 @@ class OnlinePaymentController extends Controller
                         Redis::expire($transaction_id, 7200);
                         return redirect($result);
                     } else {
-                        $transaction->message=$online_payment->message;
-                        Redis::set($transaction_id,  json_encode($transaction));
+                        $transaction->message = $online_payment->message;
+                        Redis::set($transaction_id, json_encode($transaction));
                         Redis::expire($transaction_id, 7200);
                         return redirect(env('SHEBA_FRONT_END_URL'));
                     }
@@ -37,6 +37,18 @@ class OnlinePaymentController extends Controller
             return redirect(env('SHEBA_FRONT_END_URL'));
         }
         return api_response($request, null, 400);
+    }
+
+    public function fail(Request $request)
+    {
+        if ($this->sslIpnHashValidation($request)) {
+            $transaction_id = $request->tran_id;
+            $transaction = Redis::get($transaction_id);
+            $transaction = json_decode($transaction);
+            return redirect((new OnlinePayment())->generateRedirectLink(PartnerOrder::find((int)$transaction->partner_order_id), (int)$transaction->isAdvancedPayment));
+        } else {
+            return redirect(env('SHEBA_FRONT_END_URL'));
+        }
     }
 
     private function sslIpnHashValidation($request)
