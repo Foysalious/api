@@ -117,7 +117,21 @@ class ComplainController extends Controller
             $job = $request->job;
             $data = $this->processData($request, $job);
             $complain = $this->complainRepo->create($data);
-            return api_response($request, $complain, 200, ['response' => $complain->preset->response]);
+            if ($response = $complain->preset->response) {
+                $user = User::where('email', 'bot@sheba.xyz')->first();
+                Comment::create([
+                    'comment' => $response,
+                    'commentable_type' => 'Sheba\Dal\Complain\Model',
+                    'commentable_id' => $complain->id,
+                    'commentator_type' => 'App\Models\User',
+                    'commentator_id' => $user->id,
+                    'created_by' => $user->id,
+                    'created_by_name' => $user->name,
+                    'updated_by' => $user->id,
+                    'updated_by_name' => $user->name
+                ])->accessors()->sync(['accessor_id' => $complain->accessor_id]);
+            }
+            return api_response($request, $complain, 200, ['response' => $response]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -154,6 +168,7 @@ class ComplainController extends Controller
             $comment->commentator_type = get_class($customer);
             $comment->commentator_id = (int)$customer->id;
             if ($comment->save()) {
+                $comment->accessors()->attach(1);
                 return api_response($request, $complain, 200);
             } else {
                 return api_response($request, null, 500);
