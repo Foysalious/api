@@ -288,7 +288,7 @@ $api->version('v1', function ($api) {
             $api->group(['prefix' => 'payments'], function ($api) {
                 $api->post('success', 'OnlinePaymentController@success');
                 $api->post('fail', 'OnlinePaymentController@fail');
-                $api->post('cancel', 'OnlinePaymentController@cancel');
+                $api->post('cancel', 'OnlinePaymentController@fail');
             });
         });
         $api->group(['prefix' => 'login'], function ($api) {

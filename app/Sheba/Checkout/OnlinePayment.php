@@ -128,7 +128,7 @@ class OnlinePayment
                 $partner_order_payment->created_by = $partnerOrder->order->customer->id;
                 $partner_order_payment->created_by_type = "App\Models\Customer";
                 $partner_order_payment->created_by_name = 'Customer - ' . $partnerOrder->order->customer->profile->name;
-                $partner_order_payment->transaction_detail = json_encode($portwallet_response);
+                $partner_order_payment->transaction_detail = $this->formatTransactionData($portwallet_response);
                 $partner_order_payment->fill((new UserRequestInformation($request))->getInformationArray());
                 $partner_order_payment->save();
             });
@@ -220,6 +220,10 @@ class OnlinePayment
         $isAdvancedPayment = (int)$transaction->isAdvancedPayment;
         $amount = (double)$transaction->amount;
         if ($partnerOrder) {
+            if ($amount != (double)$payment_gateway_response->amount) {
+                $this->message = "Amount not match";
+                return null;
+            }
             $partnerOrder->calculate(true);
             array_forget($partnerOrder, 'isCalculated');
             if ($partnerOrder->due == 0) {
@@ -238,7 +242,7 @@ class OnlinePayment
                     return null;
                 }
             } else {
-                $response = $this->clearSpPayment($partnerOrder, $amount, array_merge((new UserRequestInformation($request))->getInformationArray(), ['transaction_detail' => json_encode($payment_gateway_response)]));
+                $response = $this->clearSpPayment($partnerOrder, $amount, array_merge((new UserRequestInformation($request))->getInformationArray(), ['transaction_detail' => $this->formatTransactionData($payment_gateway_response)]));
                 if ($response) {
                     if ($response->code == 200) {
                         $this->message = "Payment Successfully Received!";
@@ -253,5 +257,14 @@ class OnlinePayment
         }
         $this->message = "Order not found!";
         return null;
+    }
+
+    private function formatTransactionData($payment_response)
+    {
+        return json_encode(array(
+            'transaction_id' => $payment_response->tran_id,
+            'gateway' => "sslcommerz",
+            'details' => $payment_response
+        ));
     }
 }
