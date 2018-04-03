@@ -285,6 +285,11 @@ $api->version('v1', function ($api) {
         $api->post('password/reset', 'Auth\PasswordController@reset');
         $api->group(['prefix' => 'orders'], function ($api) {
             $api->get('online', 'OrderController@clearPayment');
+            $api->group(['prefix' => 'payments'], function ($api) {
+                $api->post('success', 'OnlinePaymentController@success');
+                $api->post('fail', 'OnlinePaymentController@fail');
+                $api->post('cancel', 'OnlinePaymentController@cancel');
+            });
         });
         $api->group(['prefix' => 'login'], function ($api) {
             $api->post('gmail', 'Auth\GoogleController@login');
