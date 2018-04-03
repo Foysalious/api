@@ -206,6 +206,7 @@ class OrderController extends Controller
                 'remember_token' => 'required|string',
 //                'name' => 'required|string',
                 'mobile' => 'required|string|mobile:bd',
+                'email' => 'sometimes|email',
                 'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
                 'time' => 'required|string',
                 'payment_method' => 'required|string|in:cod,online',
@@ -224,13 +225,14 @@ class OrderController extends Controller
                 }
                 $link = null;
                 if ($request->payment_method == 'online') {
-                    $link = (new OnlinePayment())->generatePortWalletLink($order->partnerOrders[0], 1);
+                    $link = (new OnlinePayment())->generateSSLLink($order->partnerOrders[0], 1);
                 }
                 $this->sendNotifications($customer, $order);
                 return api_response($request, $order, 200, ['link' => $link]);
             }
             return api_response($request, $order, 500);
         } catch (ValidationException $e) {
+            app('sentry')->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {

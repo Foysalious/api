@@ -2,14 +2,52 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PartnerOrder;
+use App\Sheba\Checkout\OnlinePayment;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
+use Redis;
 
 class OnlinePaymentController extends Controller
 {
     public function success(Request $request)
     {
         if ($this->sslIpnHashValidation($request)) {
-            return api_response($request, 1, 200, ['data' => $request->all()]);
+            if ($result = $this->validateOrder($request)) {
+                $transaction_id = $request->tran_id;
+                $transaction = Redis::get($transaction_id);
+                $transaction = json_decode($transaction);
+                if ($result->status == "VALID" || $result->status == "VALIDATED") {
+                    $online_payment = new OnlinePayment();
+                    $result = $online_payment->clearPayment($transaction, $result, $request);
+                    if ($result) {
+                        $transaction->success = 1;
+                        Redis::set($transaction_id, json_encode($transaction));
+                        Redis::expire($transaction_id, 7200);
+                        return redirect($result);
+                    } else {
+                        $transaction->message = $online_payment->message;
+                        Redis::set($transaction_id, json_encode($transaction));
+                        Redis::expire($transaction_id, 7200);
+                        return redirect(env('SHEBA_FRONT_END_URL'));
+                    }
+                }
+            }
+            return redirect(env('SHEBA_FRONT_END_URL'));
+        }
+        return api_response($request, null, 400);
+    }
+
+    public function fail(Request $request)
+    {
+        if ($this->sslIpnHashValidation($request)) {
+            $transaction_id = $request->tran_id;
+            $transaction = Redis::get($transaction_id);
+            $transaction = json_decode($transaction);
+            return redirect(strtok((new OnlinePayment())->generateRedirectLink(PartnerOrder::find((int)$transaction->partner_order_id), (int)$transaction->isAdvancedPayment), '?'));
+        } else {
+            return redirect(env('SHEBA_FRONT_END_URL'));
         }
     }
 
@@ -39,6 +77,22 @@ class OnlinePaymentController extends Controller
             }
         } else {
             return false;
+        }
+    }
+
+    private function validateOrder($request)
+    {
+        try {
+            $client = new Client();
+            $result = $client->request('GET', config('ssl.order_validation_url'), ['query' => [
+                'val_id' => $request->val_id,
+                'store_id' => config('ssl.store_id'),
+                'store_passwd' => config('ssl.store_password'),
+            ]]);
+            return json_decode($result->getBody());
+        } catch (RequestException $e) {
+            app('sentry')->captureException($e);
+            return null;
         }
     }
 }

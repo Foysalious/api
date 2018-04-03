@@ -19,6 +19,7 @@ class OnlinePayment
     private $appBaseUrl;
     private $appPaymentUrl;
     private $portwallet;
+    public $message = '';
 
     public function __construct()
     {
@@ -125,8 +126,9 @@ class OnlinePayment
                 $partner_order_payment->log = 'advanced payment';
                 $partner_order_payment->collected_by = 'Sheba';
                 $partner_order_payment->created_by = $partnerOrder->order->customer->id;
+                $partner_order_payment->created_by_type = "App\Models\Customer";
                 $partner_order_payment->created_by_name = 'Customer - ' . $partnerOrder->order->customer->profile->name;
-                $partner_order_payment->transaction_detail = json_encode($portwallet_response);
+                $partner_order_payment->transaction_detail = $this->formatTransactionData($portwallet_response);
                 $partner_order_payment->fill((new UserRequestInformation($request))->getInformationArray());
                 $partner_order_payment->save();
             });
@@ -158,7 +160,7 @@ class OnlinePayment
         }
     }
 
-    private function generateRedirectLink(PartnerOrder $partnerOrder, $isAdvancedPayment)
+    public function generateRedirectLink(PartnerOrder $partnerOrder, $isAdvancedPayment)
     {
         $s_id = str_random(10);
         Redis::set($s_id, 'online');
@@ -168,5 +170,100 @@ class OnlinePayment
         } else {
             return env('SHEBA_FRONT_END_URL') . '/orders/' . $partnerOrder->jobs[0]->id . '/bill?s_token=' . $s_id;
         }
+    }
+
+    public function generateSSLLink(PartnerOrder $partnerOrder, $isAdvancedPayment = 0)
+    {
+        $partnerOrder->calculate(true);
+        $transaction_id = "SHEBA_ORDER_" . $partnerOrder->order->id . "_" . uniqid();
+        $data = array();
+        $data['store_id'] = config('ssl.store_id');
+        $data['store_passwd'] = config('ssl.store_password');
+        $data['total_amount'] = (double)$partnerOrder->due;
+        $data['currency'] = "BDT";
+        $data['success_url'] = config('ssl.success_url');
+        $data['fail_url'] = config('ssl.fail_url');
+        $data['cancel_url'] = config('ssl.cancel_url');
+        $data['emi_option'] = 0;
+        $data['tran_id'] = $transaction_id;
+        $data['cus_name'] = $partnerOrder->order->customer->profile->name;
+        $data['cus_email'] = $partnerOrder->order->customer->profile->email;
+        $data['cus_phone'] = $partnerOrder->order->customer->profile->mobile;
+        $result = $this->getSslSession($data);
+        if ($result) {
+            if ($result->status == "SUCCESS") {
+                Redis::set($transaction_id, json_encode(['amount' => $partnerOrder->due, 'partner_order_id' => $partnerOrder->id,
+                    'isAdvancedPayment' => $isAdvancedPayment, 'success' => 0, 'message' => $this->message]));
+                Redis::expire($transaction_id, 7200);
+                return $result->GatewayPageURL;
+            }
+        }
+        return null;
+    }
+
+    public function getSslSession($data)
+    {
+        try {
+            $client = new Client();
+            $result = $client->request('POST', config('ssl.session_url'), ['form_params' => $data]);
+            return json_decode($result->getBody());
+        } catch (RequestException $e) {
+            app('sentry')->captureException($e);
+            return null;
+        }
+    }
+
+    public function clearPayment($transaction, $payment_gateway_response, $request)
+    {
+        $partnerOrder = PartnerOrder::find($transaction->partner_order_id);
+        $isAdvancedPayment = (int)$transaction->isAdvancedPayment;
+        $amount = (double)$transaction->amount;
+        if ($partnerOrder) {
+            if ($amount != (double)$payment_gateway_response->amount) {
+                $this->message = "Amount not match";
+                return null;
+            }
+            $partnerOrder->calculate(true);
+            array_forget($partnerOrder, 'isCalculated');
+            if ($partnerOrder->due == 0) {
+                $notification = (new NotificationRepository())->forOnlinePayment($partnerOrder->id, $amount);
+                $this->message = "Payment Successfully Received!";
+                return $this->generateRedirectLink($partnerOrder, $isAdvancedPayment);
+            }
+            if ($isAdvancedPayment) {
+                $partner_order_payment = $this->createPartnerOrderPayment($partnerOrder, $amount, $payment_gateway_response, $request);
+                if ($partner_order_payment) {
+                    $notification = (new NotificationRepository())->forOnlinePayment($partnerOrder->id, $amount);
+                    $this->message = "Payment Successfully Received!";
+                    return $this->generateRedirectLink($partnerOrder, $isAdvancedPayment);
+                } else {
+                    $this->message = "Your payment has successfully received but there was a system error. Our Order Manager will contact with you shortly";
+                    return null;
+                }
+            } else {
+                $response = $this->clearSpPayment($partnerOrder, $amount, array_merge((new UserRequestInformation($request))->getInformationArray(), ['transaction_detail' => $this->formatTransactionData($payment_gateway_response)]));
+                if ($response) {
+                    if ($response->code == 200) {
+                        $this->message = "Payment Successfully Received!";
+                        $notification = (new NotificationRepository())->forOnlinePayment($partnerOrder->id, $amount);
+                        return $this->generateRedirectLink($partnerOrder, $isAdvancedPayment);
+                    } else {
+                        $this->message = "Your payment has successfully received but there was a system error. Our Order Manager will contact with you shortly";
+                        return null;
+                    }
+                }
+            }
+        }
+        $this->message = "Order not found!";
+        return null;
+    }
+
+    private function formatTransactionData($payment_response)
+    {
+        return json_encode(array(
+            'transaction_id' => $payment_response->tran_id,
+            'gateway' => "sslcommerz",
+            'details' => $payment_response
+        ));
     }
 }
