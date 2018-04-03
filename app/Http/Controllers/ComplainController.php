@@ -168,6 +168,7 @@ class ComplainController extends Controller
             $comment->commentator_type = get_class($customer);
             $comment->commentator_id = (int)$customer->id;
             if ($comment->save()) {
+                $comment->accessors()->attach(1);
                 return api_response($request, $complain, 200);
             } else {
                 return api_response($request, null, 500);
