@@ -55,7 +55,13 @@ class ResourceJobRepository
     public function getJobs($resource)
     {
         $resource->load(['jobs' => function ($q) {
-            $q->info()->validStatus()->tillNow()->with('category', 'partner_order.order', 'service');
+            $q->info()->validStatus()->tillNow()->with(['category', 'partner_order' => function ($q) {
+                $q->with(['order', 'jobs' => function ($q) {
+                    $q->with('service', 'jobServices', 'usedMaterials');
+                }]);
+            }, 'service', 'jobServices' => function ($q) {
+                $q->with('service');
+            }, 'usedMaterials']);
         }]);
         return $resource->jobs;
     }
