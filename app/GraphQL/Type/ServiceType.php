@@ -26,6 +26,7 @@ class ServiceType extends GraphQlType
             'min_quantity' => ['type' => Type::float()],
             'publication_status' => ['type' => Type::int(), 'description' => 'Indicates if service is published or not; 1 or 0'],
             'thumb' => ['type' => Type::string()],
+            'app_thumb' => ['type' => Type::string()],
             'banner' => ['type' => Type::string()],
             'screen' => ['type' => Type::string()],
             'faqs' => ['type' => Type::string(), 'description' => 'Frequently asked questions for this service'],
