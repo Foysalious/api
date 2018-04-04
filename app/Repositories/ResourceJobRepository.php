@@ -225,24 +225,4 @@ class ResourceJobRepository
         }
         return $job;
     }
-
-    public function book(Job $job, $created_by)
-    {
-        $resource_schedule = new ResourceSchedule();
-        $resource_schedule->job_id = $job->id;
-        $resource_schedule->resource_id = $job->resource_id;
-        $resource_schedule->start = Carbon::parse(explode('-', $job->preferred_time)[0]);
-        $resource_schedule->end = Carbon::parse(explode('-', $job->preferred_time)[1]);
-        $resource_schedule->notify_at = $this->getNotificationTime($resource_schedule->end, $job->category);
-        $resource_schedule->created_by = $created_by->id;
-        $resource_schedule->created_by_name = class_basename($created_by) . "-" . $created_by->profile->name;
-        $resource_schedule->updated_by = $created_by->id;
-        $resource_schedule->updated_by_name = class_basename($created_by) . "-" . $created_by->profile->name;
-        $resource_schedule->save();
-    }
-
-    private function getNotificationTime(Carbon $end, Category $category)
-    {
-        return $end->copy()->subMinutes($category->notification_before_min);
-    }
 }

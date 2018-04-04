@@ -40,6 +40,7 @@ class ResourceController extends Controller
             removeRelationsAndFields($resource);
             return api_response($request, $resource, 200, ['resource' => $resource]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -71,6 +72,7 @@ class ResourceController extends Controller
             );
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
