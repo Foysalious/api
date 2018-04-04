@@ -71,7 +71,7 @@ class JobLogs
             if (in_array($status_change->to_status, ['Declined', 'Accepted'])) {
                 $log = 'Your Order has been ' . $status_change->to_status . ' by ' . explode('-', $status_change->created_by_name)[1];
             } else {
-                $log = 'Your Order status has been changed from ' . $status_change->from_status . ' to ' . $status_change->to_status . 'by ' . $status_change->created_by_name;
+                $log = 'Your Order status has been changed from ' . $status_change->from_status . ' to ' . $status_change->to_status . ' by ' . $status_change->created_by_name;
             }
             $this->statusChangeLogs->push((object)[
                 'created_at' => $status_change->created_at,

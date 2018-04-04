@@ -127,6 +127,7 @@ class PartnerController extends Controller
             $info->put('avg_rating', $this->reviewRepository->getAvgRating($partner->reviews));
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -269,6 +270,7 @@ class PartnerController extends Controller
             );
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -301,6 +303,7 @@ class PartnerController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -347,6 +350,7 @@ class PartnerController extends Controller
             );
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -365,6 +369,7 @@ class PartnerController extends Controller
             $info = array('today' => $sales_stats->today->sale, 'week' => $sales_stats->week->sale, 'month' => $sales_stats->month->sale, 'year' => $sales_stats->year->sale, 'total' => $sales_stats->lifetime->sale);
             return api_response($request, $info, 200, ['info' => $info, 'breakdown' => $breakdown, 'orders' => $partner_orders]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -391,6 +396,7 @@ class PartnerController extends Controller
             $info->put('wallet', $partner->wallet);
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -406,6 +412,7 @@ class PartnerController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
