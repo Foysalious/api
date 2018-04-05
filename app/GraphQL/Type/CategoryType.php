@@ -133,7 +133,7 @@ class CategoryType extends GraphQlType
         }]);
         $first = $this->getFirstValidSlot();
         foreach ($root->partners as $partner) {
-            if (!scheduler($partner)->isAvailable((Carbon::today())->format('Y-m-d'), explode('-', $first), $root->id)) {
+            if (!((scheduler($partner)->isAvailable((Carbon::today())->format('Y-m-d'), explode('-', $first)[0], $root->id)))->get('is_available')) {
                 unset($partner);
             }
         }

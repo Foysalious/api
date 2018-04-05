@@ -12,7 +12,7 @@ class Partner extends Model
     ];
     protected $casts = ['wallet' => 'double'];
 
-    protected $resourcePivotColumns = ['designation', 'department', 'resource_type', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
+    protected $resourcePivotColumns = ['id', 'designation', 'department', 'resource_type', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
     protected $categoryPivotColumns = ['id', 'experience', 'response_time_min', 'response_time_max', 'commission', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
     protected $servicePivotColumns = ['id', 'description', 'options', 'prices', 'is_published', 'discount', 'discount_start_date', 'discount_start_date', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
 
@@ -103,6 +103,7 @@ class Partner extends Model
     {
         return $this->hasMany(PartnerOrder::class);
     }
+
     public function partnerOrders()
     {
         return $this->hasMany(PartnerOrder::class);
