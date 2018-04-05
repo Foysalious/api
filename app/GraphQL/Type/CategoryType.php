@@ -52,7 +52,9 @@ class CategoryType extends GraphQlType
                 'type' => Type::listOf(GraphQL::type('Service'))
             ],
             'usps' => ['type' => Type::listOf(GraphQL::type('Usp'))],
-            'total_partners' => ['type' => Type::int(), 'description' => 'Total partner count of Category'],
+            'total_partners' => [
+                'args' => ['location_id' => ['type' => Type::int()]],
+                'type' => Type::int(), 'description' => 'Total partner count of Category'],
             'total_available_partners' => [
                 'args' => ['location_id' => ['type' => Type::int()]],
                 'type' => Type::int(),
@@ -106,10 +108,16 @@ class CategoryType extends GraphQlType
 
     protected function resolveTotalPartnersField($root, $args)
     {
-        $root->load(['partners' => function ($q) {
+        $root->load(['partners' => function ($q) use ($args) {
             $q->verified();
+            if (isset($args['location_id'])) {
+                if ($args['location_id']) {
+                    $q->whereHas('locations', function ($q) use ($args) {
+                        $q->where('locations.id', (int)$args['location_id']);
+                    });
+                }
+            }
         }]);
-
         return $root->partners->count();
     }
 
@@ -119,10 +127,8 @@ class CategoryType extends GraphQlType
             return null;
         }
         $root->load(['partners' => function ($q) use ($args, $root) {
-            $q->verified()->with('handymanResources')->whereHas('locations', function ($query) use ($args) {
+            $q->verified()->with('handymanResources')->where('category_partner.is_verified', 1)->whereHas('locations', function ($query) use ($args) {
                 $query->where('locations.id', (int)$args['location_id']);
-            })->whereHas('categories', function ($query) use ($root) {
-                $query->where('categories.id', $root->id)->where('category_partner.is_verified', 1);
             });
         }]);
         $first = $this->getFirstValidSlot();

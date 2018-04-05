@@ -32,7 +32,7 @@ class PartnerOrderRepository
     public function getOrderDetailsV2($request)
     {
         $partner_order = $this->getInfo($this->loadAllRelatedRelationsV2($request->partner_order));
-        $jobs = $partner_order->jobs->whereIn('status', $this->getStatusFromRequest($request))->each(function ($job) use ($partner_order) {
+        $jobs = $partner_order->jobs->each(function ($job) use ($partner_order) {
             $job['partner_order'] = $partner_order;
             $job = $this->partnerJobRepository->getJobInfo($job);
             $services = [];
@@ -174,6 +174,7 @@ class PartnerOrderRepository
             return $this->resolveStatus($request->filter);
         } else {
             return array(constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded'],
+                constants('JOB_STATUSES')['Declined'], constants('JOB_STATUSES')['Cancelled'],
                 constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Served']);
         }
     }
@@ -189,8 +190,12 @@ class PartnerOrderRepository
 
     public function getInfo($partner_order)
     {
-        $job = $partner_order->jobs->whereIn('status', array(constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded'],
-            constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Served']))->first();
+        if ($partner_order->jobs->count() > 1) {
+            $job = $partner_order->jobs->whereIn('status', array(constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded'],
+                constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Served']))->first();
+        } else {
+            $job = $partner_order->jobs->first();
+        }
         $partner_order->calculate(true);
         $partner_order['code'] = $partner_order->code();
         $partner_order['customer_name'] = $partner_order->order->delivery_name;

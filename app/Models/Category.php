@@ -51,7 +51,7 @@ class Category extends Model
 
     public function partners()
     {
-        return $this->belongsToMany(Partner::class)->withPivot('commission');
+        return $this->belongsToMany(Partner::class)->withPivot(['commission', 'is_verified']);
     }
 
     public function partnerResources()
@@ -76,6 +76,6 @@ class Category extends Model
 
     public function commission($partner_id)
     {
-        return (double)($this->partners()->wherePivot('partner_id',$partner_id)->first())->pivot->commission;
+        return (double)($this->partners()->wherePivot('partner_id', $partner_id)->first())->pivot->commission;
     }
 }
