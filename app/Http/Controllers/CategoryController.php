@@ -156,22 +156,15 @@ class CategoryController extends Controller
     {
         try {
             $category = Category::find($category);
-            $category->load(['partners' => function ($q) use ($location, $category) {
-                $q->verified()->with('handymanResources')->whereHas('locations', function ($query) use ($location) {
-                    $query->where('locations.id', (int)$location);
-                })->whereHas('categories', function ($query) use ($category) {
-                    $query->where('categories.id', $category->id)->where('category_partner.is_verified', 1);
+            $category->load(['partners' => function ($q) use ($location) {
+                $q->verified()->whereHas('locations', function ($q) use ($location) {
+                    $q->where('locations.id', (int)$location);
                 });
             }]);
-            $first = $this->getFirstValidSlot();
-            foreach ($category->partners as &$partner) {
-                if (!scheduler($partner)->isAvailable((Carbon::today())->format('Y-m-d'), explode('-', $first), $category->id)) {
-                    unset($partner);
-                }
-            }
             $available_partners = $category->partners;
             return api_response($request, $available_partners, 200, ['total_available_partners' => $available_partners->count(), 'isAvailable' => count($available_partners) > 0 ? 1 : 0]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }

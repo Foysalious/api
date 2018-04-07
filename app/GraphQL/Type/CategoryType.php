@@ -109,7 +109,7 @@ class CategoryType extends GraphQlType
     protected function resolveTotalPartnersField($root, $args)
     {
         $root->load(['partners' => function ($q) use ($args) {
-            $q->verified();
+            $q->verified()->where('category_partner.is_verified', 1);
             if (isset($args['location_id'])) {
                 if ($args['location_id']) {
                     $q->whereHas('locations', function ($q) use ($args) {
