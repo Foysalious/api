@@ -37,10 +37,10 @@ class ServiceRequestController extends Controller
                     $service_request->customer_email = $request->has('customer_email') ? $request->customer_email : null;
                 }
                 $service_request->category_id = $request->category;
-                if ($request->category_id == null) {
+                if (empty($request->category_id)) {
                     $service_request->category_name = $request->has('category_name') ? $request->category_name : null;
                 }
-                if ($request->location_id == null) {
+                if (empty($request->location_id)) {
                     $service_request->location_name = $request->has('location_name') ? $request->location_name : null;
                 }
                 $service_request->location_id = $request->location;

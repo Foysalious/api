@@ -7,7 +7,6 @@ use App\Models\Job;
 use App\Repositories\JobCancelLogRepository;
 use App\Sheba\Checkout\OnlinePayment;
 use App\Sheba\JobStatus;
-use function GuzzleHttp\Promise\all;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use DB;
@@ -146,6 +145,7 @@ class JobController extends Controller
             $bill['version'] = $job->partnerOrder->getVersion();
             return api_response($request, $bill, 200, ['bill' => $bill]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -160,6 +160,7 @@ class JobController extends Controller
             });
             return count($dates) > 0 ? api_response($request, $dates, 200, ['logs' => $dates->values()->all()]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -324,6 +325,7 @@ class JobController extends Controller
                 return api_response($request, null, 500);
             }
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -334,6 +336,7 @@ class JobController extends Controller
             $link = (new OnlinePayment())->generateSSLLink($request->job->partnerOrder);
             return api_response($request, $link, 200, ['link' => $link]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
