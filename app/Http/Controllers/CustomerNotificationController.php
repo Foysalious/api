@@ -12,7 +12,7 @@ class CustomerNotificationController extends Controller
     {
         try {
             $customer = $request->customer;
-            $notifications = collect($request->notifications);
+            $notifications = collect($request->notification);
             $notifications = $notifications->map(function ($notification) {
                 return (int)$notification;
             })->toArray();
