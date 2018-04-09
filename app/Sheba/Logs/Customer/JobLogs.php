@@ -137,9 +137,14 @@ class JobLogs
 
     private function newResourceChangeLog($update_log, $decoded_log)
     {
-        $resource = Resource::find((int)$decoded_log['new_resource_id']);
+        if ($decoded_log['old_resource_id'] == null) {
+            $resource = Resource::find((int)$decoded_log['new_resource_id']);
+            $log = ($resource ? $resource->profile->name : '(Deleted Resource)') . " has been assigned as your resource.";
+        } else {
+            $log = "Your Order resource has been changed from " . (Resource::find((int)$decoded_log['old_resource_id']))->profile->name . " to " . (Resource::find((int)$decoded_log['new_resource_id']))->profile->name;
+        }
         $this->generalLogs->push((object)[
-            "log" => ($resource ? $resource->profile->name : '(Deleted Resource)') . " has been assigned as your resource.",
+            "log" => $log,
             "created_at" => $update_log->created_at,
             "created_by_name" => $update_log->created_by_name
         ]);

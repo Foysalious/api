@@ -54,16 +54,20 @@ class JobType extends GraphQlType
                 'id' => $root->service->id,
                 'name' => $root->service_name, 'options' => $root->service_variables,
                 'unit' => $root->service->unit,
-                'quantity' => (float)$root->service_quantity, 'unit_price' => (float)$root->service_unit_price)
+                'quantity' => (float)$root->service_quantity, 'unit_price' => (float)$root->service_unit_price),
+                'option' => $root->service_option
             );
         } else {
             $services = [];
             foreach ($root->jobServices as $jobService) {
                 array_push($services, array(
-                        'id' => $jobService->service->id,
-                        'name' => $jobService->service->name, 'options' => $jobService->variables,
-                        'unit' => $jobService->service->unit,
-                        'quantity' => (float)$jobService->quantity, 'unit_price' => (float)$jobService->unit_price)
+                    'id' => $jobService->service->id,
+                    'name' => $jobService->service->name,
+                    'options' => $jobService->variables,
+                    'option'=>$jobService->option,
+                    'unit' => $jobService->service->unit,
+                    'quantity' => (float)$jobService->quantity, 'unit_price' => (float)$jobService->unit_price)
+
                 );
             }
             return $services;
