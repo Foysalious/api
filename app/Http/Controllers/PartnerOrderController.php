@@ -233,7 +233,7 @@ class PartnerOrderController extends Controller
         try {
             $partner_order = $request->partner_order;
             $manager_resource = $request->manager_resource;
-            $comment = (new CommentRepository('Job', $partner_order->jobs->pluck('id')->first(), $manager_resource))->store($request->comment, true);
+            $comment = (new CommentRepository('Job', $partner_order->jobs->pluck('id')->first(), $manager_resource))->store($request->comment);
             return $comment ? api_response($request, $comment, 200) : api_response($request, $comment, 500);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

@@ -2,9 +2,9 @@
 
 namespace App\Repositories;
 
-
 use App\Models\Comment;
 use Illuminate\Database\QueryException;
+use Sheba\Dal\Accessor\Model as Accessor;
 
 class CommentRepository
 {
@@ -20,7 +20,7 @@ class CommentRepository
         $this->created_by = $created_by;
     }
 
-    public function store($comment, bool $visible)
+    public function store($comment)
     {
         $comment = new Comment(['comment' => $comment]);
         try {
@@ -29,9 +29,10 @@ class CommentRepository
             $comment->commentator_type = $this->model_name . class_basename($this->created_by);
             $comment->commentator_id = $comment->created_by = $this->created_by->id;
             $comment->created_by_name = 'Resource -' . $this->created_by->profile->name;
-            $comment->is_visible = $visible ? 1 : 0;
             $comment->save();
+            $comment->accessors()->attach((Accessor::where('model_name', $comment->commentator_type))->first()->id);
         } catch (QueryException $e) {
+            app('sentry')->captureException($e);
             return false;
         }
         return $comment;
