@@ -16,6 +16,7 @@ class JobServiceType extends GraphQlType
     {
         return [
             'name' => ['type' => Type::string()],
+            'id' => ['type' => Type::int()],
             'options' => ['type' => Type::string()],
             'unit' => ['type' => Type::string()],
             'unit_price' => ['type' => Type::float()],

@@ -2,6 +2,7 @@
 
 use App\Models\Job;
 use App\Models\Resource;
+use Carbon\Carbon;
 
 class JobLogs
 {
@@ -60,7 +61,7 @@ class JobLogs
                 'created_at' => $comment->created_at,
                 'created_by_name' => $comment->created_by_name,
                 'comment' => $comment->comment,
-                'log' => explode('-', $comment->created_by_name)[1] . ' has commented',
+                'log' => explode('-', $comment->created_by_name)[1] . ' has commented' . ".",
             ]);
         }
     }
@@ -69,9 +70,15 @@ class JobLogs
     {
         foreach ($status_changes as $status_change) {
             if (in_array($status_change->to_status, ['Declined', 'Accepted'])) {
-                $log = 'Your Order has been ' . $status_change->to_status . ' by ' . explode('-', $status_change->created_by_name)[1];
+                $log = 'Your Order has been ' . $status_change->to_status . ' by ' . explode('-', $status_change->created_by_name)[1] . ".";
+            } elseif ($status_change->to_status == "Schedule Due") {
+                $log = 'Your Order status has been changed from ' . $status_change->from_status . ' to ' . $status_change->to_status . ".";
+            } elseif ($status_change->to_status == "Process") {
+                $log = 'Your Order has been started Processing';
+            } elseif ($status_change->to_status == "Served") {
+                $log = 'Your Order has been Served Successfully';
             } else {
-                $log = 'Your Order status has been changed from ' . $status_change->from_status . ' to ' . $status_change->to_status . ' by ' . $status_change->created_by_name;
+                $log = 'Your Order status has been changed from ' . $status_change->from_status . ' to ' . $status_change->to_status . ' by ' . $status_change->created_by_name . ".";
             }
             $this->statusChangeLogs->push((object)[
                 'created_at' => $status_change->created_at,
@@ -122,7 +129,7 @@ class JobLogs
         } else if ($this->isAdditionalInfoChangeLog($decoded_log)) {
             $this->newAdditionalInfoChangeLog($update_log, $decoded_log);
         } else if ($this->isCMChangeLog($decoded_log)) {
-            $this->newCMChangeLog($update_log, $decoded_log);
+//            $this->newCMChangeLog($update_log, $decoded_log);
         } else if ($this->isPartnerChangeLog($decoded_log)) {
             $this->newPartnerChangeLog($update_log, $decoded_log);
         }
@@ -132,7 +139,7 @@ class JobLogs
     {
         $resource = Resource::find((int)$decoded_log['new_resource_id']);
         $this->generalLogs->push((object)[
-            "log" => ($resource ? $resource->profile->name : '(Deleted Resource)') . " was assigned as Resource.",
+            "log" => ($resource ? $resource->profile->name : '(Deleted Resource)') . " has been assigned as your resource.",
             "created_at" => $update_log->created_at,
             "created_by_name" => $update_log->created_by_name
         ]);
@@ -159,7 +166,7 @@ class JobLogs
     private function newPartnerChangeLog($update_log, $decoded_log)
     {
         $this->generalLogs->push((object)[
-            "log" => $decoded_log['msg'],
+            "log" => $decoded_log['msg'] . ".",
             "created_at" => $update_log->created_at,
             "created_by_name" => $update_log->created_by_name
         ]);
@@ -167,10 +174,9 @@ class JobLogs
 
     private function newScheduleChangeLog($update_log, $decoded_log)
     {
-        $field = ucwords(str_replace('_', ' ', array_keys($decoded_log)[0]));
-        $value = array_values($decoded_log)[0];
         $this->scheduleChangeLogs->push((object)[
-            "log" => $field . " was set to " . $value,
+            "log" => "Your Order Schedule has been changed from " . (Carbon::parse(array_values($decoded_log)[1]))->format('j M, Y') . " " . array_values($decoded_log)[3] .
+                " to " . (Carbon::parse(array_values($decoded_log)[0]))->format('j M, Y') . " " . array_values($decoded_log)[2] . ".",
             "created_at" => $update_log->created_at,
             "created_by_name" => $update_log->created_by_name
         ]);

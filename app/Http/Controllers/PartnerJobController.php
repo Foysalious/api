@@ -69,26 +69,6 @@ class PartnerJobController extends Controller
                 }
             }
             if (count($jobs) > 0) {
-//                $jobs = $jobs->sortByDesc('id');
-//                $jobs = $jobs->each(function ($job) {
-//                    $job['location'] = $job->partner_order->order->location->name;
-//                    $job['service_unit_price'] = (double)$job->service_unit_price;
-//                    $job['discount'] = (double)$job->discount;
-//                    $job['code'] = $job->partner_order->order->code();
-//                    $job['category_name'] = $job->category ? $job->category->name : null;
-//                    $job['customer_name'] = $job->partner_order->order->customer ? $job->partner_order->order->customer->profile->name : null;
-//                    $job['resource_picture'] = $job->resource != null ? $job->resource->profile->pro_pic : null;
-//                    $job['resource_mobile'] = $job->resource != null ? $job->resource->profile->mobile : null;
-//                    $job['preferred_time'] = humanReadableShebaTime($job->readable_preferred_time);
-//                    $job['rating'] = $job->review != null ? $job->review->rating : null;
-//                    $job['version'] = $job->getVersion();
-//                    if ($job->partner_order->closed_and_paid_at != null) {
-//                        $job['completed_at_timestamp'] = $job->partner_order->closed_and_paid_at->timestamp;
-//                    } else {
-//                        $job['completed_at_timestamp'] = null;
-//                    }
-//                    removeRelationsFromModel($job);
-//                })->values()->all();
                 return api_response($request, $jobs, 200, ['jobs' => $jobs->sortByDesc('schedule_date')->values()->all()]);
             } else {
                 return api_response($request, null, 404);

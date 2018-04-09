@@ -51,6 +51,7 @@ class JobType extends GraphQlType
     {
         if (count($root->jobServices) == 0) {
             return array(array(
+                'id' => $root->service->id,
                 'name' => $root->service_name, 'options' => $root->service_variables,
                 'unit' => $root->service->unit,
                 'quantity' => (float)$root->service_quantity, 'unit_price' => (float)$root->service_unit_price)
@@ -59,6 +60,7 @@ class JobType extends GraphQlType
             $services = [];
             foreach ($root->jobServices as $jobService) {
                 array_push($services, array(
+                        'id' => $jobService->service->id,
                         'name' => $jobService->service->name, 'options' => $jobService->variables,
                         'unit' => $jobService->service->unit,
                         'quantity' => (float)$jobService->quantity, 'unit_price' => (float)$jobService->unit_price)
