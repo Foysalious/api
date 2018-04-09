@@ -232,7 +232,9 @@ class OrderController extends Controller
             }
             return api_response($request, $order, 500);
         } catch (ValidationException $e) {
-            app('sentry')->captureException($e);
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all()]);
+            $sentry->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
