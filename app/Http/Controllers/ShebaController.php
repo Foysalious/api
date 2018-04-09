@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Validator;
+use DB;
 
 class ShebaController extends Controller
 {
@@ -90,7 +91,10 @@ class ShebaController extends Controller
             $this->validate($request, [
                 'for' => 'sometimes|required|string|in:app',
             ]);
-            $slots = ScheduleSlot::all();
+            $slots = ScheduleSlot::where([
+                ['start', '>=', DB::raw("CAST('09:00:00' As time)")],
+                ['end', '<=', DB::raw("CAST('21:00:00' As time)")],
+                ])->get();
             if ($request->has('for')) {
                 $sheba_slots = $this->getShebaSlots($slots);
                 return api_response($request, $sheba_slots, 200, ['times' => $sheba_slots]);
@@ -113,6 +117,7 @@ class ShebaController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             return api_response($request, null, 500);
         }
     }
