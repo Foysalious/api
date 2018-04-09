@@ -48,9 +48,13 @@ class FacebookController extends Controller
             }
             return api_response($request, null, 403);
         } catch (ValidationException $e) {
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all()]);
+            $sentry->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -97,9 +101,13 @@ class FacebookController extends Controller
             }
             return api_response($request, null, 403);
         } catch (ValidationException $e) {
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all()]);
+            $sentry->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -145,9 +153,13 @@ class FacebookController extends Controller
             }
             return api_response($request, null, 404);
         } catch (ValidationException $e) {
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all()]);
+            $sentry->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -182,7 +194,8 @@ class FacebookController extends Controller
                 }
             }
             return response()->json(['code' => 404, 'msg' => 'Not found!']);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }

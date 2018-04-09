@@ -50,9 +50,13 @@ class RegistrationController extends Controller
             }
             return api_response($request, null, 403);
         } catch (ValidationException $e) {
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all()]);
+            $sentry->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -162,6 +166,7 @@ class RegistrationController extends Controller
             }
             return api_response($request, null, 409, ['msg' => 'Already registered!', 'message' => 'Already registered!']);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }

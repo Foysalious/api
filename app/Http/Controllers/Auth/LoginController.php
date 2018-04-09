@@ -31,64 +31,6 @@ class LoginController extends Controller
         $this->customer = new CustomerRepository();
         $this->profileRepository = new ProfileRepository();
     }
-
-    /**
-     * Login method for Customer
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-//    public function login(Request $request)
-//    {
-//        /*
-//        * Remember me
-//        */
-//        If ($request->has('remember_token')) {
-//            $customer = Customer::where('remember_token', $request->input('remember_token'))->first();
-//            //remember_token is valid for a customer
-//            if ($customer) {
-//                //create token for that user
-//                $token = JWTAuth::fromUser($customer);
-//                // all good so return the token
-//                return response()->json(compact('token'));
-//            }
-//        }
-//
-//        /*
-//         *
-//         * Normal login for customer
-//         *
-//         */
-//        $credentials = $request->only('email', 'password');
-//        try {
-//            // verify email credentials and create a token for the user
-//            if (!$token = JWTAuth::attempt($credentials)) {
-//                //email verification failed. Now check for mobile verification
-//                if (!$mobileToken = $this->customer->attemptByMobile($credentials)) {
-//                    return response()->json(['msg' => 'invalid_credentials', 'code' => 404]);
-//                }
-//            }
-//        } catch (JWTException $e) {
-//            // something went wrong whilst attempting to encode the token
-//            return response()->json(['error' => 'could_not_create_token'], 500);
-//        }
-//        //get the customer
-//
-//        // when email is provided for login
-//        if ($token) {
-//            $customer = Customer::where('email', $request->input('email'))->first();
-//        } // when mobile is provided for login
-//        else {
-//            $customer = Customer::where('mobile', $request->input('email'))->first();
-//            $token = $mobileToken;
-//        }
-//        // all good so return the token
-//        return response()->json([
-//            'msg' => 'Login successful', 'code' => 200, 'token' => $token, 'remember_token' => $customer->remember_token,
-//            'customer' => $customer->id, 'customer_img' => $customer->pro_pic
-//        ]);
-//    }
-
     public function login(Request $request)
     {
         try {
@@ -111,9 +53,13 @@ class LoginController extends Controller
             }
             return api_response($request, null, 404);
         } catch (ValidationException $e) {
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all()]);
+            $sentry->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
