@@ -271,4 +271,9 @@ class Job extends Model
         return $this->preferred_time;
     }
 
+    public function customerComplains()
+    {
+        return $this->complains->where('accessor_id', 1);
+    }
+
 }

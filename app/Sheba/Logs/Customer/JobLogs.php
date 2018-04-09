@@ -43,7 +43,8 @@ class JobLogs
             'schedule_change' => $this->scheduleChangeLogs,
             'price_change' => $this->formatLogInPriceChangeLogs($this->priceChangeLogs),
             'status_change' => $this->statusChangeLogs,
-            'comments' => $this->comments
+            'comments' => $this->comments,
+            'complains' => $this->formatComplainLogs($this->job->customerComplains())
         ];
     }
 
@@ -52,6 +53,29 @@ class JobLogs
         return $priceChangeLogs->each(function ($item, $key) {
             $item->log = $item->log . ' from ' . $item->from . ' to ' . $item->to;
         });
+    }
+
+    private function formatComplainLogs($complains)
+    {
+        $collection = collect();
+        foreach ($complains as $complain) {
+            $logs = $complain->logs;
+            foreach ($logs as $log) {
+                if ($log->field == 'status') {
+                    if($log->to=='Observation'){
+                        $temp=" against Order is in ";
+                    }else{
+                        $temp=" against Order is ";
+                    }
+                    $collection->push((object)[
+                        'log' => 'Your Complain ' . $complain->code() . $temp . $log->to . '.',
+                        'created_at' => $log->created_at
+                    ]);
+                }
+            }
+
+        }
+        return $collection;
     }
 
     private function getComments($comments)
@@ -72,11 +96,11 @@ class JobLogs
             if (in_array($status_change->to_status, ['Declined', 'Accepted'])) {
                 $log = 'Your Order has been ' . $status_change->to_status . ' by ' . explode('-', $status_change->created_by_name)[1] . ".";
             } elseif ($status_change->to_status == "Schedule Due") {
-                $log = 'Your Order status has been changed from ' . $status_change->from_status . ' to ' . $status_change->to_status . ".";
+                $log = 'Your Order Status has been changed from ' . $status_change->from_status . ' to ' . $status_change->to_status . ".";
             } elseif ($status_change->to_status == "Process") {
-                $log = 'Your Order has been started Processing';
+                $log = 'Your Order has been started Processing.';
             } elseif ($status_change->to_status == "Served") {
-                $log = 'Your Order has been Served Successfully';
+                $log = 'Your Order has been Served Successfully.';
             } else {
                 $log = 'Your Order status has been changed from ' . $status_change->from_status . ' to ' . $status_change->to_status . ' by ' . $status_change->created_by_name . ".";
             }
@@ -141,7 +165,7 @@ class JobLogs
             $resource = Resource::find((int)$decoded_log['new_resource_id']);
             $log = ($resource ? $resource->profile->name : '(Deleted Resource)') . " has been assigned as your resource.";
         } else {
-            $log = "Your Order resource has been changed from " . (Resource::find((int)$decoded_log['old_resource_id']))->profile->name . " to " . (Resource::find((int)$decoded_log['new_resource_id']))->profile->name;
+            $log = "Your Order Resource has been changed from " . (Resource::find((int)$decoded_log['old_resource_id']))->profile->name . " to " . (Resource::find((int)$decoded_log['new_resource_id']))->profile->name;
         }
         $this->generalLogs->push((object)[
             "log" => $log,
@@ -180,8 +204,8 @@ class JobLogs
     private function newScheduleChangeLog($update_log, $decoded_log)
     {
         $this->scheduleChangeLogs->push((object)[
-            "log" => "Your Order Schedule has been changed from " . (Carbon::parse(array_values($decoded_log)[1]))->format('j M, Y') . " " . array_values($decoded_log)[3] .
-                " to " . (Carbon::parse(array_values($decoded_log)[0]))->format('j M, Y') . " " . array_values($decoded_log)[2] . ".",
+            "log" => "Your Order Schedule has been changed from " . (Carbon::parse(array_values($decoded_log)[1]))->format('jS F, Y') . " " . array_values($decoded_log)[3] .
+                " to " . (Carbon::parse(array_values($decoded_log)[0]))->format('jS F, Y') . " " . array_values($decoded_log)[2] . ".",
             "created_at" => $update_log->created_at,
             "created_by_name" => $update_log->created_by_name
         ]);
@@ -190,11 +214,10 @@ class JobLogs
     private function newPriceChangeLog($update_log, $decoded_log)
     {
         if ($decoded_log['msg'] == "Service Price Updated") {
-            if ($decoded_log['old_service_unit_price'] != $decoded_log['new_service_unit_price']) {
+            if ((double)$decoded_log['old_service_unit_price'] != (double)$decoded_log['new_service_unit_price']) {
                 $this->newUnitPriceChangeLog($update_log, $decoded_log);
             }
-
-            if ($decoded_log['old_service_quantity'] != $decoded_log['new_service_quantity']) {
+            if ((double)$decoded_log['old_service_quantity'] != (double)$decoded_log['new_service_quantity']) {
                 $this->newQuantityChangeLog($update_log, $decoded_log);
             }
         } else if ($decoded_log['msg'] == "Discount Cost Updated") {
@@ -220,7 +243,7 @@ class JobLogs
     private function newQuantityChangeLog($update_log, $decoded_log)
     {
         $this->priceChangeLogs->push((object)[
-            "log" => "Service Quantity Updated",
+            "log" => "Your Order Service " . $decoded_log['service_name'] . " quantity changed ",
             "from" => $decoded_log['old_service_quantity'],
             "to" => $decoded_log['new_service_quantity'],
             "created_at" => $update_log->created_at,
@@ -231,9 +254,9 @@ class JobLogs
     private function newDiscountChangeLog($update_log, $decoded_log)
     {
         $this->priceChangeLogs->push((object)[
-            "log" => "Discount Updated",
-            "from" => $decoded_log['old_discount_cost'],
-            "to" => $decoded_log['new_discount_cost'],
+            "log" => "Your Order Discount has been changed ",
+            "from" => (double)$decoded_log['old_discount_cost'],
+            "to" => (double)$decoded_log['new_discount_cost'],
             "created_at" => $update_log->created_at,
             "created_by_name" => $update_log->created_by_name
         ]);
