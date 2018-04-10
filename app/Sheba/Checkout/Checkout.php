@@ -120,6 +120,7 @@ class Checkout
                     'discount' => isset($data['discount']) ? $data['discount'] : 0,
                     'sheba_contribution' => isset($data['sheba_contribution']) ? $data['sheba_contribution'] : 0,
                     'partner_contribution' => isset($data['partner_contribution']) ? $data['partner_contribution'] : 0,
+                    'discount_percentage' => isset($data['discount_percentage']) ? $data['discount_percentage'] : 0,
                     'resource_id' => isset($data['resource_id']) ? $data['resource_id'] : null,
                 ]);
                 $job = $this->getAuthor($job, $data);
@@ -271,6 +272,9 @@ class Checkout
         if ($result != null) {
             $data['discount'] = $result['amount'];
             $data['sheba_contribution'] = $result['voucher']['sheba_contribution'];
+            if ($result['voucher']['is_amount_percentage']) {
+                $data['discount_percentage'] = $result['amount'];
+            }
             $data['partner_contribution'] = $result['voucher']['partner_contribution'];
             $data['voucher_id'] = $result['id'];
         }
