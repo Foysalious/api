@@ -31,6 +31,7 @@ class LoginController extends Controller
         $this->customer = new CustomerRepository();
         $this->profileRepository = new ProfileRepository();
     }
+
     public function login(Request $request)
     {
         try {
@@ -53,10 +54,10 @@ class LoginController extends Controller
             }
             return api_response($request, null, 404);
         } catch (ValidationException $e) {
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all()]);
-            $sentry->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
