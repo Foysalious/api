@@ -62,10 +62,10 @@ class JobLogs
             $logs = $complain->logs;
             foreach ($logs as $log) {
                 if ($log->field == 'status') {
-                    if($log->to=='Observation'){
-                        $temp=" against Order is in ";
-                    }else{
-                        $temp=" against Order is ";
+                    if ($log->to == 'Observation') {
+                        $temp = " against Order is in ";
+                    } else {
+                        $temp = " against Order is ";
                     }
                     $collection->push((object)[
                         'log' => 'Your Complain ' . $complain->code() . $temp . $log->to . '.',
@@ -203,12 +203,16 @@ class JobLogs
 
     private function newScheduleChangeLog($update_log, $decoded_log)
     {
-        $this->scheduleChangeLogs->push((object)[
-            "log" => "Your Order Schedule has been changed from " . (Carbon::parse(array_values($decoded_log)[1]))->format('jS F, Y') . " " . array_values($decoded_log)[3] .
-                " to " . (Carbon::parse(array_values($decoded_log)[0]))->format('jS F, Y') . " " . array_values($decoded_log)[2] . ".",
-            "created_at" => $update_log->created_at,
-            "created_by_name" => $update_log->created_by_name
-        ]);
+        try {
+            $this->scheduleChangeLogs->push((object)[
+                "log" => "Your Order Schedule has been changed from " . (Carbon::parse(array_values($decoded_log)[1]))->format('jS F, Y') . " " . array_values($decoded_log)[3] .
+                    " to " . (Carbon::parse(array_values($decoded_log)[0]))->format('jS F, Y') . " " . array_values($decoded_log)[2] . ".",
+                "created_at" => $update_log->created_at,
+                "created_by_name" => $update_log->created_by_name
+            ]);
+        } catch (\Throwable $e) {
+
+        }
     }
 
     private function newPriceChangeLog($update_log, $decoded_log)
