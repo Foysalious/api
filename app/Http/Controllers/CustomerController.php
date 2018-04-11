@@ -436,37 +436,41 @@ class CustomerController extends Controller
 
     public function getNotifications($customer, Request $request)
     {
-        $customer = $request->customer;
-        $notifications = ($customer->notifications()->select('id', 'title', 'event_type', 'event_id', 'type', 'is_seen', 'created_at')->orderBy('id','desc')->limit(20)->get());
-        $notifications->map(function ($notification) {
-            $notification->event_type = str_replace('App\Models\\', "", $notification->event_type);
-            array_add($notification, 'time', $notification->created_at->format('j M \\a\\t h:i A'));
-            array_forget($notification, 'created_at');
-            if ($notification->event_type == 'Job') {
-                $code = null;
-                if ($notification->event_id) {
-                    $job = Job::find($notification->event_id);
-                    if ($job) {
-                        $code = $job->fullCode();
+        try {
+            $customer = $request->customer;
+            $notifications = ($customer->notifications()->select('id', 'title', 'event_type', 'event_id', 'type', 'is_seen', 'created_at')->orderBy('id', 'desc')->limit(20)->get());
+            $notifications->map(function ($notification) {
+                $notification->event_type = str_replace('App\Models\\', "", $notification->event_type);
+                array_add($notification, 'time', $notification->created_at->format('j M \\a\\t h:i A'));
+                array_forget($notification, 'created_at');
+                if ($notification->event_type == 'Job') {
+                    $code = null;
+                    if ($notification->event_id) {
+                        $job = Job::find($notification->event_id);
+                        if ($job) {
+                            $code = $job->fullCode();
+                        }
                     }
-                }
-                array_add($notification, 'event_code', $code);
-            } elseif ($notification->event_type == 'Order') {
-                $code = null;
-                if ($notification->event_id) {
-                    $order = Order::find($notification->event_id);
-                    if ($order) {
-                        $code = $order->code();
+                    array_add($notification, 'event_code', $code);
+                } elseif ($notification->event_type == 'Order') {
+                    $code = null;
+                    if ($notification->event_id) {
+                        $order = Order::find($notification->event_id);
+                        if ($order) {
+                            $code = $order->code();
+                        }
                     }
+                    array_add($notification, 'event_code', $code);
                 }
-                array_add($notification, 'event_code', $code);
+                return $notification;
+            });
+            if (count($notifications) != 0) {
+                return api_response($request, $notifications, 200, ['notifications' => $notifications->values()->all()]);
+            } else {
+                return api_response($request, null, 404);
             }
-            return $notification;
-        });
-        if (count($notifications) != 0) {
-            return api_response($request, $notifications, 200, ['notifications' => $notifications->values()->all()]);
-        } else {
-            return api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
         }
     }
 }
