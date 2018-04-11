@@ -273,7 +273,7 @@ class Checkout
             $data['discount'] = $result['amount'];
             $data['sheba_contribution'] = $result['voucher']['sheba_contribution'];
             if ($result['voucher']['is_amount_percentage']) {
-                $data['discount_percentage'] = $result['amount'];
+                $data['discount_percentage'] = $result['voucher']['amount'];
             }
             $data['partner_contribution'] = $result['voucher']['partner_contribution'];
             $data['voucher_id'] = $result['id'];
