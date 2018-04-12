@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
 use Validator;
 
 class CareerController extends Controller
@@ -16,26 +17,27 @@ class CareerController extends Controller
     public function apply(Request $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
+            $this->validate($request, [
                 'email' => 'required|email',
                 'file' => 'required|file',
                 'cover' => 'required|file'
             ]);
-            if ($validator->fails()) {
-                return response()->json(['msg' => 'validation fail!', 'code' => 500]);
-            }
             $cv = $request->file('file');
             $cover = $request->file('cover');
 
             Mail::raw($request->input('description'), function ($m) use ($request, $cv, $cover) {
-                $m->from($request->input('email'), $request->input('name'));
+                $m->from($request->email, $request->name);
                 $m->to('career@sheba.xyz');
                 $m->subject($request->input('jobTitle'));
-                $m->attachData(file_get_contents($cv), 'Resume - ' . $request->input('name') . '.' . $cv->extension());
-                $m->attachData(file_get_contents($cover), 'Cover letter - ' . $request->input('name') . '.' . $cover->extension());
+                $m->attachData(file_get_contents($cv), 'Resume - ' . $request->name . '.' . $cv->extension());
+                $m->attachData(file_get_contents($cover), 'Cover letter - ' . $request->name . '.' . $cover->extension());
             });
-            return response()->json(['msg' => 'ok', 'code' => 200]);
+            return api_response($request, 1, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }

@@ -53,7 +53,7 @@ class Cors2MiddleWare
         $headers['Access-Control-Allow-Credentials'] = 'true';
         $headers['Access-Control-Allow-Methods'] = 'POST, GET, PUT, DELETE';
         $headers['Access-Control-Allow-Headers'] = 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With';
-        $headers['Access-Control-Allow-Origin'] = $request->server('HTTP_ORIGIN');
+        $headers['Access-Control-Allow-Origin'] = '*';
         if (!in_array($request->server('HTTP_ORIGIN'), $domains)) {
             return response()->json(['message' => 'Unauthorized', 'code' => 401])->withHeaders($headers);
         }
