@@ -453,9 +453,11 @@ class CustomerController extends Controller
                     }
                     array_add($notification, 'event_code', $code);
                 } elseif ($notification->event_type == 'Order') {
+                    $notification->event_type = "Job";
                     $code = null;
                     if ($notification->event_id) {
                         $order = Order::find($notification->event_id);
+                        $notification->event_id = $order->partnerOrders[0]->jobs[0]->id;
                         if ($order) {
                             $code = $order->code();
                         }
