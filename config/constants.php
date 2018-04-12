@@ -35,7 +35,7 @@ return [
         'Process' => ['sheba' => 'Process', 'partner' => 'Process', 'customer' => '#5c9ded'],
         'Served' => ['sheba' => 'Served', 'partner' => 'Served', 'customer' => '#42cb6f'],
         'Cancelled' => ['sheba' => 'Served', 'partner' => 'Served', 'customer' => '#42cb6f'],
-        'Declined' => ['sheba' => 'Served', 'partner' => 'Served', 'customer' => '#42cb6f']
+        'Declined' => ['sheba' => 'Served', 'partner' => 'Served', 'customer' => '#fcce54']
     ],
     'PARTNER_ORDER_STATUSES' => [
         'Open' => 'Open',
