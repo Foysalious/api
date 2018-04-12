@@ -116,15 +116,17 @@ class JobController extends Controller
     public function getBills($customer, $job, Request $request)
     {
         try {
-            $job = $request->job->load(['partnerOrder.order', 'category', 'jobServices']);
+            $job = $request->job->load(['partnerOrder.order', 'category', 'service', 'jobServices' => function ($q) {
+                $q->with('service');
+            }]);
             $job->calculate(true);
             if (count($job->jobServices) == 0) {
                 $services = array();
-                array_push($services, array('name' => $job->category ? $job->category->name : null, 'price' => (double)$job->servicePrice));
+                array_push($services, array('name' => $job->service != null ? $job->service->name : null, 'price' => (double)$job->servicePrice));
             } else {
                 $services = array();
                 foreach ($job->jobServices as $jobService) {
-                    array_push($services, array('name' => $jobService->job->category ? $jobService->job->category->name : null, 'price' => (double)$jobService->unit_price * (double)$jobService->quantity));
+                    array_push($services, array('name' => $jobService->service != null ? $jobService->service->name : null, 'price' => (double)$jobService->unit_price * (double)$jobService->quantity));
                 }
             }
             $partnerOrder = $job->partnerOrder;
