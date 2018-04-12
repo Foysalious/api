@@ -306,6 +306,7 @@ class OrderController extends Controller
             }
             return redirect(env('SHEBA_FRONT_END_URL'));
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -324,6 +325,7 @@ class OrderController extends Controller
             }
             return api_response($request, null, 404);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
