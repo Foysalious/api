@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Comment;
+use App\Models\User;
 use Sheba\Dal\Complain\Model as Complain;
 use App\Models\Job;
 use Carbon\Carbon;
