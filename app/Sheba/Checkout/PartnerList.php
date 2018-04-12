@@ -104,6 +104,9 @@ class PartnerList
         $this->partners->each(function ($partner, $key) {
             $partner['is_available'] = (new PartnerAvailable($partner))->available($this->date, $this->time, $this->selected_services->first()->category_id);
         });
+        if ($this->partners->where('is_available', 1)->count() > 0) {
+            $this->rejectShebaHelpDesk();
+        }
     }
 
     public function addPricing()
@@ -254,5 +257,16 @@ class PartnerList
             $variables = '[]';
         }
         return array($option, $variables);
+    }
+
+    private function rejectShebaHelpDesk()
+    {
+        try {
+            $this->partners = $this->partners->reject(function ($partner) {
+                return $partner->id == 1809;
+            });
+        } catch (\Throwable $e) {
+
+        }
     }
 }
