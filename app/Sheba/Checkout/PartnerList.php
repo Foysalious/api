@@ -104,7 +104,8 @@ class PartnerList
         $this->partners->each(function ($partner, $key) {
             $partner['is_available'] = (new PartnerAvailable($partner))->available($this->date, $this->time, $this->selected_services->first()->category_id);
         });
-        if ($this->partners->where('is_available', 1)->count() > 0) {
+        $available_partners = $this->partners->where('is_available', 1);
+        if ($available_partners->count() > 1) {
             $this->rejectShebaHelpDesk();
         }
     }
