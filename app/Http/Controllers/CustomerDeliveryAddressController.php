@@ -18,6 +18,7 @@ class CustomerDeliveryAddressController extends Controller
             $addresses = $customer->delivery_addresses()->select('id', 'address')->get();
             return api_response($request, null, 200, ['addresses' => $addresses, 'name' => $customer->profile->name, 'mobile' => $customer->profile->mobile]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -26,6 +27,9 @@ class CustomerDeliveryAddressController extends Controller
     {
         try {
             $customer = $request->customer;
+            if ($customer->delivery_addresses->where('address', $request->address)->first() !== null) {
+                return api_response($request, null, 400, ['message' => "There is already a similar address exits!"]);
+            }
             $delivery_address = new CustomerDeliveryAddress();
             $delivery_address->address = $request->address;
             $delivery_address->name = $request->name;
@@ -36,6 +40,7 @@ class CustomerDeliveryAddressController extends Controller
                 return api_response($request, null, 500);
             }
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -53,13 +58,20 @@ class CustomerDeliveryAddressController extends Controller
             if ($delivery_address->customer_id != $customer) {
                 return api_response($request, null, 403);
             }
+            if ($delivery_address->customer->delivery_addresses->where('address', $request->address)->first() !== null) {
+                return api_response($request, null, 400, ['message' => "There is already a similar address exits!"]);
+            }
             $delivery_address->address = $request->address;
             $delivery_address->update();
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -73,6 +85,7 @@ class CustomerDeliveryAddressController extends Controller
                 return api_response($request, null, 200);
             }
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
