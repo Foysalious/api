@@ -171,15 +171,13 @@ class JobController extends Controller
     private function formatLogs($job_logs, $all_logs)
     {
         foreach ($job_logs as $key => $job_log) {
-            if ($key != 'comments') {
-                foreach ($job_log as $log) {
-                    $collect = collect($log);
-                    $collect->put('created_at', $log->created_at->toDateString());
-                    $collect->put('timestamp', $log->created_at->timestamp);
-                    $collect->put('type', $key);
-                    $collect->put('color_code', '#02adfc');
-                    $all_logs->push($collect);
-                }
+            foreach ($job_log as $log) {
+                $collect = collect($log);
+                $collect->put('created_at', $log->created_at->toDateString());
+                $collect->put('timestamp', $log->created_at->timestamp);
+                $collect->put('type', $key);
+                $collect->put('color_code', '#02adfc');
+                $all_logs->push($collect);
             }
         }
     }
