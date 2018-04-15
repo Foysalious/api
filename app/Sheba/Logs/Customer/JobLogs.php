@@ -92,18 +92,23 @@ class JobLogs
 
     private function statusChangeLogs($status_changes)
     {
-        foreach ($status_changes as $status_change) {
+        foreach ($status_changes->unique('to_status') as $status_change) {
+            if (in_array($status_change->to_status, ['Declined', 'Schedule Due', 'Not Responded'])) continue;
             if (in_array($status_change->to_status, ['Declined', 'Accepted'])) {
-                $log = 'Your Order has been ' . $status_change->to_status . ' by ' . explode('-', $status_change->created_by_name)[1] . ".";
+                //$log = 'Your Order has been ' . $status_change->to_status . ' by ' . explode('-', $status_change->created_by_name)[1] . ".";
+                $log = 'Your Order has been ' . $status_change->to_status;
             } elseif ($status_change->to_status == "Schedule Due") {
                 $log = 'Your Order Status has been changed from ' . $status_change->from_status . ' to ' . $status_change->to_status . ".";
             } elseif ($status_change->to_status == "Process") {
-                $log = 'Your Order has been started Processing.';
+                $log = 'Order is In Process.';
             } elseif ($status_change->to_status == "Served") {
-                $log = 'Your Order has been Served Successfully.';
+                $log = 'Order has been Served Successfully.';
+            } elseif ($status_change->to_status == "Cancelled") {
+                $log = 'Order is cancelled.';
             } else {
                 $log = 'Your Order status has been changed from ' . $status_change->from_status . ' to ' . $status_change->to_status . ' by ' . $status_change->created_by_name . ".";
             }
+
             $this->statusChangeLogs->push((object)[
                 'created_at' => $status_change->created_at,
                 'created_by_name' => $status_change->created_by_name,
@@ -163,9 +168,9 @@ class JobLogs
     {
         if ($decoded_log['old_resource_id'] == null) {
             $resource = Resource::find((int)$decoded_log['new_resource_id']);
-            $log = ($resource ? $resource->profile->name : '(Deleted Resource)') . " has been assigned as your resource.";
+            $log = ($resource ? $resource->profile->name : '(Deleted Resource)') . " has been assigned to serve the order.";
         } else {
-            $log = "Your Order Resource has been changed from " . (Resource::find((int)$decoded_log['old_resource_id']))->profile->name . " to " . (Resource::find((int)$decoded_log['new_resource_id']))->profile->name;
+            $log = (Resource::find((int)$decoded_log['new_resource_id']))->profile->name . " has been reassigned to serve the order instead of " . (Resource::find((int)$decoded_log['old_resource_id']))->profile->name;
         }
         $this->generalLogs->push((object)[
             "log" => $log,
