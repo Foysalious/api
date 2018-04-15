@@ -77,7 +77,7 @@ class JobController extends Controller
             $job_collection->put('delivery_mobile', $job->partnerOrder->order->delivery_mobile);
             $job_collection->put('additional_information', $job->job_additional_info);
             $job_collection->put('schedule_date', $job->schedule_date);
-            $job_collection->put('schedule_date_readable', (Carbon::parse($job->schedule_date))->fomrat('j M \\a\\t h:i A'));
+            $job_collection->put('schedule_date_readable',  (Carbon::parse($job->schedule_date))->format('jS F, Y'));
             $job_collection->put('complains', $this->formatComplains($job->complains));
             $job_collection->put('preferred_time', $job->readable_preferred_time);
             $job_collection->put('category_name', $job->category ? $job->category->name : null);
