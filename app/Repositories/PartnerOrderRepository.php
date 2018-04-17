@@ -57,6 +57,17 @@ class PartnerOrderRepository
         $all_jobs = collect();
         foreach ($jobs->groupBy('partner_order_id') as $jobs) {
             $jobs[0]->partner_order->calculate(true);
+            $job = $jobs[0];
+            $services = collect();
+            if (count($job->jobServices) == 0) {
+                $variables = json_decode($job->service_variables);
+                $services->push(array('name' => $job->service_name, 'variables' => $variables, 'quantity' => (double)$job->quantity));
+            } else {
+                foreach ($job->jobServices as $jobService) {
+                    $variables = json_decode($jobService->variables);
+                    $services->push(array('name' => $jobService->service->name, 'variables' => $variables, 'quantity' => (double)$jobService->quantity));
+                }
+            }
             $order = collect([
                 'customer_name' => $jobs[0]->partner_order->order->delivery_name,
                 'location_name' => $jobs[0]->partner_order->order->location->name,
@@ -65,10 +76,12 @@ class PartnerOrderRepository
                 'code' => $jobs[0]->partner_order->code(),
                 'id' => $jobs[0]->partner_order->id,
                 'total_price' => (double)$jobs[0]->partner_order->totalPrice,
+                'discount' => (double)$jobs[0]->partner_order->totalDiscount,
                 'category_name' => $jobs[0]->category ? $jobs[0]->category->name : null,
                 'job_id' => $jobs[0]->id,
                 'schedule_date' => $jobs[0]->schedule_date,
-                'preferred_time' => $jobs[0]->readable_preferred_time
+                'preferred_time' => $jobs[0]->readable_preferred_time,
+                'services' => $services
             ]);
             $all_partner_orders->push($order);
         }
