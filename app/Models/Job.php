@@ -79,6 +79,7 @@ class Job extends Model
 
     public function calculate($price_only = false)
     {
+        //$this->commissionRate = $this->partnerOrder->partner->categories()->find($this->service->category->id)->pivot->commission;
         $costRate = 1 - ($this->commission_rate / 100);
 
         $this->servicePrice = formatTaka(($this->service_unit_price * $this->service_quantity) + $this->calculateServicePrice());
@@ -86,23 +87,33 @@ class Job extends Model
         $this->materialPrice = formatTaka($this->calculateMaterialPrice());
         $this->materialCost = formatTaka($this->materialPrice * $costRate);
         $this->totalCostWithoutDiscount = formatTaka($this->serviceCost + $this->materialCost);
-        $this->totalPriceWithoutVat = formatTaka($this->servicePrice + $this->materialPrice);
+        $this->totalPriceWithoutVat = formatTaka($this->servicePrice + $this->materialPrice + $this->delivery_charge);
         //$this->totalPrice = formatTaka($this->totalPriceWithoutVat + $this->vat); // later
         $this->totalPrice = formatTaka($this->totalPriceWithoutVat);
-        $this->discount = $this->discount + $this->calculateServiceDiscount();
+        $this_discount = $this->isCalculated ? Job::find($this->id)->discount : $this->discount;
+        $this->ownDiscount = $this_discount;
+        $this->ownShebaContribution = $this->sheba_contribution;
+        $this->ownPartnerContribution = $this->partner_contribution;
+        $this->serviceDiscounts = $this->calculateServiceDiscount();
+        $this->discount = $this_discount + $this->serviceDiscounts;
         $this->grossPrice = ($this->totalPrice > $this->discount) ? formatTaka($this->totalPrice - $this->discount) : 0;
         $this->service_unit_price = formatTaka($this->service_unit_price);
-        $this->discountContributionSheba = formatTaka((($this->discount * $this->sheba_contribution) / 100) + $this->calculateDiscountContributionSheba());
-        $this->discountContributionPartner = formatTaka((($this->discount * $this->partner_contribution) / 100) + $this->calculateDiscountContributionPartner());
+        $this->ownDiscountContributionSheba = formatTaka(($this->ownDiscount * $this->ownShebaContribution) / 100);
+        $this->ownDiscountContributionPartner = formatTaka(($this->ownDiscount * $this->ownPartnerContribution) / 100);
+        $this->serviceDiscountContributionSheba = $this->calculateServiceDiscountContributionSheba();
+        $this->serviceDiscountContributionPartner = $this->calculateServiceDiscountContributionPartner();
+        $this->discountContributionSheba = formatTaka($this->ownDiscountContributionSheba + $this->serviceDiscountContributionSheba);
+        $this->discountContributionPartner = formatTaka($this->ownDiscountContributionPartner + $this->serviceDiscountContributionPartner);
         $this->totalCost = $this->totalCostWithoutDiscount - $this->discountContributionPartner;
         $this->grossCost = formatTaka($this->totalCost);
         $this->profit = formatTaka($this->grossPrice - $this->totalCost);
         $this->margin = ($this->totalPrice != 0) ? (($this->grossPrice - $this->totalCost) * 100) / $this->totalPrice : 0;
         $this->margin = formatTaka($this->margin);
-        if (!$price_only) {
+        if(!$price_only) {
             $this->calculateComplexityIndex();
         }
         $this->isInWarranty = $this->isInWarranty();
+        $this->isCalculated = true;
         return $this;
     }
 
@@ -124,7 +135,7 @@ class Job extends Model
         return $total_discount_price;
     }
 
-    private function calculateDiscountContributionSheba()
+    private function calculateServiceDiscountContributionSheba()
     {
         $total_sheba_discount_contribution_price = 0;
         foreach ($this->jobServices as $jobService) {
@@ -133,7 +144,7 @@ class Job extends Model
         return $total_sheba_discount_contribution_price / 100;
     }
 
-    private function calculateDiscountContributionPartner()
+    private function calculateServiceDiscountContributionPartner()
     {
         $total_partner_discount_contribution_price = 0;
         foreach ($this->jobServices as $jobService) {
@@ -142,9 +153,9 @@ class Job extends Model
         return $total_partner_discount_contribution_price / 100;
     }
 
-    private function isInWarranty()
+    public function isInWarranty()
     {
-        if ($this->status != $this->jobStatuses["Served"] || !$this->delivered_date) return false;
+        if($this->status != $this->jobStatuses["Served"] || !$this->delivered_date) return false;
         return Carbon::now()->between($this->delivered_date, $this->delivered_date->addDays($this->warranty));
     }
 
@@ -154,6 +165,14 @@ class Job extends Model
         return $this;
     }
 
+    public function getCategoryAnswersAttribute($category_answers)
+    {
+        return json_decode($category_answers, true);
+    }
+
+    /**
+     * @return mixed
+     */
     private function calculateMaterialPrice()
     {
         $total_material_price = 0;

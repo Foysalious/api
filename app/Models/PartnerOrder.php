@@ -97,6 +97,23 @@ class PartnerOrder extends Model
         return $this->_formatAllToTaka();
     }
 
+    public function getTotalShebaCollectionAttribute()
+    {
+        return $this->getTotalCollection('Sheba');
+    }
+
+    public function getTotalSpCollectionAttribute()
+    {
+        return $this->getTotalCollection('Partner');
+    }
+
+    private function getTotalCollection($of = null)
+    {
+        $payments = $this->payments;
+        if (!empty($payments)) $payments = $payments->where('collected_by', $of);
+        return $payments->sum('amount');
+    }
+
     private function _setPaymentStatus()
     {
         $this->paymentStatus = ($this->due) ? "Due" : "Paid";
@@ -216,9 +233,14 @@ class PartnerOrder extends Model
             $this->totalJobs++;
         }
         $this->_setStatus();*/
-        StatusCalculator::initialize();
-        $this->status = StatusCalculator::calculate($this);
+        $this->status = $this->getStatus();
         return $this;
+    }
+
+    public function getStatus()
+    {
+        StatusCalculator::initialize();
+        return StatusCalculator::calculate($this);
     }
 
     public function scopeClosedAt($query, Carbon $date)
