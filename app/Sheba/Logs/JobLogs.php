@@ -2,6 +2,7 @@
 
 use App\Models\Job;
 use App\Models\Resource;
+use Illuminate\Support\Str;
 
 class JobLogs
 {
@@ -36,7 +37,9 @@ class JobLogs
         }
         $this->materialLogs($this->job->materialLogs);
         $this->statusChangeLogs($this->job->statusChangeLog);
-        $this->getComments($this->job->comments->where('is_visible', 1));
+        $this->getComments($this->job->comments->load('accessors')->filter(function ($comment) {
+            return $comment->accessors->pluck('model_name')->contains('App\\Models\\Resource');
+        }));
         return [
             'general' => $this->generalLogs,
             'schedule_change' => $this->scheduleChangeLogs,
@@ -56,11 +59,12 @@ class JobLogs
     private function getComments($comments)
     {
         foreach ($comments as $comment) {
+            $commentator = Str::contains($comment->created_by_name, '-') ? explode('-', $comment->created_by_name)[1] : $comment->created_by_name;
             $this->comments->push((object)[
                 'created_at' => $comment->created_at,
                 'created_by_name' => $comment->created_by_name,
                 'comment' => $comment->comment,
-                'log' => explode('-', $comment->created_by_name)[1] . ' has commented',
+                'log' =>  "$commentator has commented - $comment->comment",
             ]);
         }
     }
@@ -71,7 +75,7 @@ class JobLogs
             $this->statusChangeLogs->push((object)[
                 'created_at' => $status_change->created_at,
                 'created_by_name' => $status_change->created_by_name,
-                'log' => 'Job '.$this->job->fullCode(). ' status has changed from ' . $status_change->from_status . ' to ' . $status_change->to_status,
+                'log' => 'Job ' . $this->job->fullCode() . ' status has changed from ' . $status_change->from_status . ' to ' . $status_change->to_status,
             ]);
         }
     }
