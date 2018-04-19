@@ -19,23 +19,6 @@ class PartnerRepository
 
     public function resources($type = null, $verify = null, $job_id = null)
     {
-        /*$this->partner->load(['resources' => function ($q) use ($type, $verify) {
-            $q->select('resources.id', 'profile_id', 'resource_type', 'resources.is_verified')
-            ->whereHas('partnerResources', function ($q) {
-                $q->has('categories');
-            })->with(['jobs' => function ($q) {
-                $q->info();
-            }])->with('profile', 'reviews');
-            if ($type) {
-                $q->type($type);
-            }
-            if ($verify) {
-                $q->verified();
-            }
-        }]);*/
-
-        //$resources = $this->partner->resources()->with('profile', 'reviews', 'jobs');
-        //if ($type) $resources->type($type);
         $resources = $this->partner->handymanResources()->get()->unique();
         if ($verify !== null) {
             $resources = $resources->filter(function ($resource) use ($verify) {
@@ -67,13 +50,21 @@ class PartnerRepository
             $data['resource_type'] = $type ?: $resource->pivot->resource_type;
             $data['is_verified'] = $resource->is_verified;
             $data['is_available'] = 1;
+            $data['booked_jobs'] = [];
             $data['is_tagged'] = $resource->is_tagged;
             if (!empty($job)) {
-                if (!scheduler($resource)->isAvailable($job->schedule_date, $job->preferred_time_start)) {
+                $resource_scheduler = scheduler($resource);
+                if (!$resource_scheduler->isAvailable($job->schedule_date, $job->preferred_time_start)) {
                     $data['is_available'] = 0;
+                    foreach ($resource_scheduler->getBookedJobs() as $job) {
+                        array_push($data['booked_jobs'], array(
+                            'job_id' => $job->id,
+                            'partner_order_id' => $job->partnerOrder->id,
+                            'code' => $job->partnerOrder->order->code()
+                        ));
+                    }
                 }
             }
-            //removeRelationsAndFields($data);
             return $data;
         });
     }
