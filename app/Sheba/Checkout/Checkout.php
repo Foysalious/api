@@ -211,7 +211,6 @@ class Checkout
     {
         if ($service->variable_type == 'Options') {
             $variables = [];
-            $options = implode(',', $option);
             foreach ((array)(json_decode($service->variables))->options as $key => $service_option) {
                 array_push($variables, [
                     'title' => isset($service_option->title) ? $service_option->title : null,
@@ -219,6 +218,7 @@ class Checkout
                     'answer' => explode(',', $service_option->answers)[$option[$key]]
                 ]);
             }
+            $options = implode(',', $option);
             $option = '[' . $options . ']';
             $variables = json_encode($variables);
         } else {
