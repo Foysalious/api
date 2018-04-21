@@ -42,7 +42,7 @@ class ResourceHandler
 
     public function getBookedJobs()
     {
-        $jobs=collect();
+        $jobs = collect();
         foreach ($this->bookedSchedules->load('job') as $schedule) {
             $jobs->push($schedule->job);
         }
@@ -65,11 +65,8 @@ class ResourceHandler
         $schedules_at_end = $this->resourceSchedules->filterByDateTime($this->resource, $end_time);
         $schedules_at_start_end = $this->resourceSchedules->filterStartAndEndAt($this->resource, $start_time, $end_time);
         #dump($start_time, $end_time, $schedules_start_between, $schedules_end_between, $schedules_at_start, $schedules_at_end);
-        return $schedules_start_between->count() == 0
-            && $schedules_end_between->count() == 0
-            && $schedules_at_start->count() == 0
-            && $schedules_at_end->count() == 0
-            && $schedules_at_start_end->count() == 0;
+        $this->bookedSchedules = ((($schedules_start_between->merge($schedules_end_between))->merge($schedules_at_start))->merge($schedules_at_end))->merge($schedules_at_start_end);
+        return $this->bookedSchedules->count() == 0;
     }
 
     /**

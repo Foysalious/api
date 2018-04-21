@@ -49,12 +49,12 @@ class PartnerRepository
             $data['joined_at'] = $resource->pivot->created_at->timestamp;
             $data['resource_type'] = $type ?: $resource->pivot->resource_type;
             $data['is_verified'] = $resource->is_verified;
-            $data['is_available'] = 1;
+            $data['is_available'] = $resource->is_tagged;
             $data['booked_jobs'] = [];
             $data['is_tagged'] = $resource->is_tagged;
             if (!empty($job)) {
                 $resource_scheduler = scheduler($resource);
-                if (!$resource_scheduler->isAvailable($job->schedule_date, $job->preferred_time_start)) {
+                if (!$resource_scheduler->isAvailableForCategory($job->schedule_date, $job->preferred_time_start, $job->category)) {
                     $data['is_available'] = 0;
                     foreach ($resource_scheduler->getBookedJobs() as $job) {
                         array_push($data['booked_jobs'], array(

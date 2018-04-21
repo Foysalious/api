@@ -23,7 +23,6 @@ class PartnerTrainingController extends Controller
             }
             return api_response($request, null, 400, ['message' => 'Invalid login credential']);
         } catch (\Throwable $e) {
-            dd($e);
             return api_response($request, null, 500);
         }
     }
