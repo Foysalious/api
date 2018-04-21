@@ -72,6 +72,11 @@ class PartnerJobController extends Controller
                 }
             }
             if (count($jobs) > 0) {
+                if ($filter == 'ongoing') {
+                    $jobs = $jobs->sortByDesc('schedule_date');
+                } else {
+                    $jobs = $jobs->sortByDesc('id');
+                }
                 list($offset, $limit) = calculatePagination($request);
                 $jobs = $jobs->splice($offset, $limit);
                 $resources = collect();
@@ -81,7 +86,7 @@ class PartnerJobController extends Controller
                         'name' => $resource->first()->resource_name
                     ));
                 }
-                return api_response($request, $jobs, 200, ['jobs' => $jobs->sortByDesc('schedule_date')->values()->all(), 'resources' => $resources]);
+                return api_response($request, $jobs, 200, ['jobs' => $jobs, 'resources' => $resources]);
             } else {
                 return api_response($request, null, 404);
             }
