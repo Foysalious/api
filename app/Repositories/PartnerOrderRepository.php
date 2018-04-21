@@ -229,7 +229,7 @@ class PartnerOrderRepository
         $partner_order['finance_collection'] = (double)$partner_order->finance_collection;
         $partner_order['discount'] = (double)$partner_order->discount;
         $partner_order['total_jobs'] = count($partner_order->jobs);
-        $partner_order['order_status'] = $partner_order->status;
+        $partner_order['order_status'] = $job->status;
         return $partner_order;
     }
 
