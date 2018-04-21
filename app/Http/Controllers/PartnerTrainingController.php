@@ -35,10 +35,11 @@ class PartnerTrainingController extends Controller
         $user_mobile = substr($profile->mobile, 1);
 
         $repto_base_url = env('REPTO_TRAINING_URL');
+        $repto_username = env('REPTO_USERNAME');
         $client_name = env('REPTO_CLIENT_NAME');
         $access_key = env('REPTO_ACCESS_KEY');
 
-        $url = "$repto_base_url/pathao_login?name=$user_name&email=$user_email&phone=$user_mobile&client_name=$client_name&access_key=$access_key";
+        $url = "$repto_base_url/$repto_username?name=$user_name&email=$user_email&phone=$user_mobile&client_name=$client_name&access_key=$access_key";
         try {
             $client = new Client();
             $res = $client->request('GET', $url);
