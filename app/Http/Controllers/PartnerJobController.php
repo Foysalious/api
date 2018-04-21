@@ -62,8 +62,10 @@ class PartnerJobController extends Controller
                     $job['version'] = $partnerOrder->order->getVersion();
                     if ($partnerOrder->closed_and_paid_at != null) {
                         $job['completed_at_timestamp'] = $partnerOrder->closed_and_paid_at->timestamp;
+                        $job['closed_and_paid_at'] = $partnerOrder->closed_and_paid_at;
                     } else {
                         $job['completed_at_timestamp'] = null;
+                        $job['closed_and_paid_at'] = null;
                     }
                     removeRelationsFromModel($job);
                     $jobs->push($job);
