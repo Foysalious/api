@@ -211,13 +211,14 @@ class Checkout
     {
         if ($service->variable_type == 'Options') {
             $variables = [];
-            $options = implode(',', $option);
             foreach ((array)(json_decode($service->variables))->options as $key => $service_option) {
                 array_push($variables, [
+                    'title' => isset($service_option->title) ? $service_option->title : null,
                     'question' => $service_option->question,
                     'answer' => explode(',', $service_option->answers)[$option[$key]]
                 ]);
             }
+            $options = implode(',', $option);
             $option = '[' . $options . ']';
             $variables = json_encode($variables);
         } else {
@@ -261,24 +262,29 @@ class Checkout
 
     private function getVoucherData($job_services, $data, $partner)
     {
-        if (!$this->isVoucherAutoApplicable($job_services, $data)) return $data;
+        try {
+            if (!$this->isVoucherAutoApplicable($job_services, $data)) return $data;
 
-        $order_amount = $job_services->map(function ($job_service) {
-            return $job_service->unit_price * $job_service->quantity;
-        })->sum();
-        $voucherSuggester = new VoucherSuggester(app(Voucher::class), app(Customer::class));
-        $voucherSuggester->init($this->customer, $data['category_id'], $partner->id, $data['location_id'], $order_amount, $data['sales_channel']);
-        $result = $voucherSuggester->suggest();
-        if ($result != null) {
-            $data['discount'] = $result['amount'];
-            $data['sheba_contribution'] = $result['voucher']['sheba_contribution'];
-            if ($result['voucher']['is_amount_percentage']) {
-                $data['discount_percentage'] = $result['voucher']['amount'];
+            $order_amount = $job_services->map(function ($job_service) {
+                return $job_service->unit_price * $job_service->quantity;
+            })->sum();
+            $voucherSuggester = new VoucherSuggester(app(Voucher::class), app(Customer::class));
+            $voucherSuggester->init($this->customer, $data['category_id'], $partner->id, $data['location_id'], $order_amount, $data['sales_channel']);
+            $result = $voucherSuggester->suggest();
+            if ($result != null) {
+                $data['discount'] = $result['amount'];
+                $data['sheba_contribution'] = $result['voucher']['sheba_contribution'];
+                if ($result['voucher']['is_amount_percentage']) {
+                    $data['discount_percentage'] = $result['voucher']['amount'];
+                }
+                $data['partner_contribution'] = $result['voucher']['partner_contribution'];
+                $data['voucher_id'] = $result['id'];
             }
-            $data['partner_contribution'] = $result['voucher']['partner_contribution'];
-            $data['voucher_id'] = $result['id'];
+            return $data;
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return $data;
         }
-        return $data;
     }
 
     private function isVoucherAutoApplicable($job_services, $data)

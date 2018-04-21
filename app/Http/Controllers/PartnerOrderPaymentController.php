@@ -50,6 +50,7 @@ class PartnerOrderPaymentController extends Controller
             $collection['resource_name'] = $profile->name;
             $collection['resource_mobile'] = $profile->mobile;
             $collection['resource_picture'] = $profile->pro_pic;
+            $collection['resource_id'] = $collection->created_by;
             $collection['created_at_timestamp'] = $created_at_timestamp;
             $collection['code'] = $collection->partnerOrder->code();
             $collection['version'] = $collection->partnerOrder->getVersion();
