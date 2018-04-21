@@ -70,6 +70,8 @@ class PartnerJobController extends Controller
                 }
             }
             if (count($jobs) > 0) {
+                list($offset, $limit) = calculatePagination($request);
+                $jobs = $jobs->splice($offset, $limit);
                 $resources = collect();
                 foreach ($jobs->groupBy('resource_id') as $key => $resource) {
                     $resources->push(array(
