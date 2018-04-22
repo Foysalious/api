@@ -22,17 +22,17 @@ class ScheduleTimeController extends Controller
                 ['start', '>=', DB::raw("CAST('09:00:00' As time)")],
                 ['end', '<=', DB::raw("CAST('21:00:00' As time)")],
             ])->get();
-            if ($request->has('for')) {
-                $sheba_slots = $this->getShebaSlots($slots);
-                return api_response($request, $sheba_slots, 200, ['times' => $sheba_slots]);
-            }
-            $time_slots = $valid_time_slots = [];
             $current_time = Carbon::now();
             if ($request->has('category')) {
                 $category = Category::where('id', (int)$request->category)->first();
                 if (!$category) $category = Category::where('slug', $request->category)->first();
                 $current_time = $current_time->addMinutes($category->preparation_time_minutes);
             }
+            if ($request->has('for')) {
+                $sheba_slots = $this->getShebaSlots($slots, $current_time);
+                return api_response($request, $sheba_slots, 200, ['times' => $sheba_slots]);
+            }
+            $time_slots = $valid_time_slots = [];
             foreach ($slots as $slot) {
                 $slot_start_time = Carbon::parse($slot->start);
                 $slot_end_time = Carbon::parse($slot->end);
@@ -54,10 +54,9 @@ class ScheduleTimeController extends Controller
         }
     }
 
-    private function getShebaSlots($slots)
+    private function getShebaSlots($slots, $current_time)
     {
         $sheba_slots = [];
-        $current_time = Carbon::now();
         foreach ($slots as $slot) {
             $slot_start_time = Carbon::parse($slot->start);
             $slot_end_time = Carbon::parse($slot->end);
