@@ -418,10 +418,12 @@ class PartnerController extends Controller
                 'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
                 'time' => 'required|string',
                 'services' => 'required|string',
-                'isAvailable' => 'sometimes|required'
+                'isAvailable' => 'sometimes|required',
+                'partner' => 'sometimes|required',
             ]);
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $location);
-            $partner_list->find();
+            $partner = $request->has('partner') ? $request->partner : null;
+            $partner_list->find($partner);
             if ($request->has('isAvailable')) {
                 $partners = $partner_list->partners;
                 $available_partners = $partners->filter(function ($partner) {
