@@ -163,7 +163,7 @@ class PartnerJobController extends Controller
                 if (!$job_time->isValid) {
                     return api_response($request, null, 400, ['message' => $job_time->error_message]);
                 }
-                if (!scheduler(Resource::find((int)$job->resource_id))->isAvailable($request->schedule_date, explode('-', $request->preferred_time)[0], $job->category_id)) {
+                if (!scheduler(Resource::find((int)$job->resource_id))->isAvailableForCategory($request->schedule_date, explode('-', $request->preferred_time)[0], $job->category)) {
                     return api_response($request, null, 403, ['message' => 'Resource is not available at this time. Please select different date time or change the resource']);
                 }
                 $request->merge(['resource' => $request->manager_resource]);
@@ -175,7 +175,7 @@ class PartnerJobController extends Controller
                 }
             }
             if ($request->has('resource_id')) {
-                if (!scheduler(Resource::find((int)$request->resource_id))->isAvailable($job->schedule_date, explode('-', $job->preferred_time)[0], $job->category_id)) {
+                if (!scheduler(Resource::find((int)$request->resource_id))->isAvailableForCategory($job->schedule_date, explode('-', $job->preferred_time)[0], $job->category)) {
                     return api_response($request, null, 403, ['message' => 'Resource is not available at this time. Please select different date time or change the resource']);
                 }
                 if ($request->partner->hasThisResource((int)$request->resource_id, 'Handyman') && $job->hasStatus(['Accepted', 'Schedule_Due', 'Process'])) {
