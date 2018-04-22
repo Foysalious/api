@@ -55,7 +55,7 @@ class PartnerRepository
             $data['is_available'] = $resource->is_tagged;
             $data['booked_jobs'] = [];
             $data['is_tagged'] = $resource->is_tagged;
-            $data['total_tagged_categories'] = $resource->total_tagged_categories;
+            $data['total_tagged_categories'] = isset($resource->total_tagged_categories) ? count($resource->total_tagged_categories) : count($resource->categoriesIn($this->partner->id));
             if (!empty($job)) {
                 $resource_scheduler = scheduler($resource);
                 if (!$resource_scheduler->isAvailableForCategory($job->schedule_date, $job->preferred_time_start, $job->category)) {
