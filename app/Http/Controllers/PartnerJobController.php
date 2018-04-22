@@ -56,7 +56,7 @@ class PartnerJobController extends Controller
                     $job['customer_name'] = $partnerOrder->order->customer ? $partnerOrder->order->customer->profile->name : null;
                     $job['resource_picture'] = $job->resource != null ? $job->resource->profile->pro_pic : null;
                     $job['resource_mobile'] = $job->resource != null ? $job->resource->profile->mobile : null;
-                    $job['resource_name'] = $job->resource != null ? $job->resource->profile->name : null;
+                    $job['resource_name'] = $job->resource != null ? $job->resource->profile->name : '';
                     $job['preferred_time'] = humanReadableShebaTime($job->readable_preferred_time);
                     $job['rating'] = $job->review != null ? $job->review->rating : null;
                     $job['version'] = $partnerOrder->order->getVersion();
@@ -81,10 +81,12 @@ class PartnerJobController extends Controller
                 $jobs = $jobs->splice($offset, $limit);
                 $resources = collect();
                 foreach ($jobs->groupBy('resource_id') as $key => $resource) {
-                    $resources->push(array(
-                        'id' => (int)$key,
-                        'name' => $resource->first()->resource_name
-                    ));
+                    if (!empty($key)) {
+                        $resources->push(array(
+                            'id' => (int)$key,
+                            'name' => $resource->first()->resource_name
+                        ));
+                    }
                 }
                 return api_response($request, $jobs, 200, ['jobs' => $jobs, 'resources' => $resources]);
             } else {
