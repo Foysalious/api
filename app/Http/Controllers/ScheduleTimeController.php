@@ -29,7 +29,8 @@ class ScheduleTimeController extends Controller
             $time_slots = $valid_time_slots = [];
             $current_time = Carbon::now();
             if ($request->has('category')) {
-                $category = Category::find((int)$request->category);
+                $category = Category::where('id', (int)$request->category)->first();
+                if (!$category) $category = Category::where('slug', $request->category)->first();
                 $current_time = $current_time->addMinutes($category->preparation_time_minutes);
             }
             foreach ($slots as $slot) {
