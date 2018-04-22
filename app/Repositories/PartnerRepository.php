@@ -30,8 +30,11 @@ class PartnerRepository
         if ($job_id != null) {
             $job = Job::find((int)$job_id);
             $resources = $resources->map(function ($resource) use ($job) {
-                $is_tagged = $resource->categoriesIn($this->partner->id)->pluck('id')->contains($job->category_id ?: $job->service->category_id);
-                return array_add($resource, 'is_tagged', $is_tagged ? 1 : 0);
+                $resource_categories = $resource->categoriesIn($this->partner->id);
+                $is_tagged = $resource_categories->pluck('id')->contains($job->category_id ?: $job->service->category_id);
+                array_add($resource, 'is_tagged', $is_tagged ? 1 : 0);
+                array_add($resource, 'total_tagged_categories', count($resource_categories));
+                return $resource;
             });
         }
 
@@ -52,6 +55,7 @@ class PartnerRepository
             $data['is_available'] = $resource->is_tagged;
             $data['booked_jobs'] = [];
             $data['is_tagged'] = $resource->is_tagged;
+            $data['total_tagged_categories'] = $resource->total_tagged_categories;
             if (!empty($job)) {
                 $resource_scheduler = scheduler($resource);
                 if (!$resource_scheduler->isAvailableForCategory($job->schedule_date, $job->preferred_time_start, $job->category)) {
