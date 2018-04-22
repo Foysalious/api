@@ -1,6 +1,6 @@
 <?php
 Route::get('/', function () {
-    return ['code' => 200, 'msg' => "Success. This project will hold the api's"];
+    return ['code' => 200, 'message' => "Success. This project will hold the api's"];
 });
 $api = app('Dingo\Api\Routing\Router');
 
@@ -297,7 +297,7 @@ $api->version('v1', function ($api) {
         $api->group(['prefix' => 'register'], function ($api) {
             $api->post('gmail', 'Auth\GoogleController@register');
         });
-        $api->get('times', 'ShebaController@getTimeSlots');
+        $api->get('times', 'ScheduleTimeController@index');
         $api->get('settings', 'HomePageSettingController@index');
         $api->get('home-grids', 'HomeGridController@index');
         $api->group(['prefix' => 'category-groups'], function ($api) {
