@@ -142,7 +142,14 @@ class PartnerController extends Controller
             $services = $partner->services()->select('services.id', 'services.category_id', 'name', 'variable_type', 'services.min_quantity', 'services.variables')->published()->get();
             $services->each(function (&$service) {
                 if ($service->variable_type == 'Options') {
-                    $service['questions'] = json_decode($service->variables)->options;
+                    $final = collect();
+                    foreach (json_decode($service->variables)->options as $option) {
+                        $final->push(array(
+                            'question' => $option->question,
+                            'answers' => explode(',', $option->answers)
+                        ));
+                    }
+                    $service['questions'] = $final;
                 } else {
                     $service['questions'] = [];
                 }
