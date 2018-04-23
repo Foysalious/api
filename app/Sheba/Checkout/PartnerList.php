@@ -45,7 +45,7 @@ class PartnerList
 
     public function find($partner_id = null)
     {
-        $this->partners = $this->findPartnersByServiceAndLocation($partner_id);
+        $this->partners = $this->findPartnersByServiceAndLocation((int)$partner_id);
         $this->partners->load(['services' => function ($q) {
             $q->whereIn('service_id', $this->selected_services->pluck('id')->unique());
         }]);

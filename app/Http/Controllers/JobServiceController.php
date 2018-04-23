@@ -3,46 +3,39 @@
 namespace App\Http\Controllers;
 
 use App\Models\Job;
-use App\Models\JobService;
 use App\Models\PartnerService;
-use App\Models\Service;
-use App\Repositories\DiscountRepository;
 use App\Repositories\JobServiceRepository;
-use App\Repositories\PartnerServiceRepository;
-use App\Sheba\Checkout\Discount;
+use App\Sheba\Checkout\PartnerList;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 class JobServiceController extends Controller
 {
-    private $discountRepository;
     private $jobServiceRepository;
-    private $partnerServiceRepository;
 
     public function __construct()
     {
-        $this->discountRepository = new DiscountRepository();
         $this->jobServiceRepository = new JobServiceRepository();
-        $this->partnerServiceRepository = new PartnerServiceRepository();
     }
 
-    public function store(Request $request)
+    public function store($partner,Request $request)
     {
         try {
             $this->validate($request, [
                 'services' => 'required|string',
-                'partner' => 'required',
                 'remember_token' => 'required|string',
-                'job' => 'required|numeric'
             ]);
-            $job = Job::find((int)$request->job);
-            $partner_service = PartnerService::where([['partner_id', $job->partner_order->partner_id], ['service_id', (int)$request->service]])->first();
-            $data = $request->only(['quantity', 'additional_info', 'created_by', 'created_by_name', 'option']);
-            $data['job_id'] = $request->job;
-            $data['service_id'] = $request->service;
-            if ($job_service = $this->jobServiceRepository->save($partner_service, $data)) {
-                return api_response($request, $job_service, 200);
+            $partner_order = $request->partner_order;
+            if ($partner_order->jobs->count() > 1) {
+                $job = $partner_order->jobs->whereIn('status', array(constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded'],
+                    constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process']))->first();
+            } else {
+                $job = $partner_order->jobs->first();
             }
+            $partner_list = new PartnerList(json_decode($request->services), $job->schedule_date, $job->preferred_time_start . '-' . $job->preferred_time_end, $job->partnerOrder->order->location);
+//            if ($job_service = $this->jobServiceRepository->save($partner_service, $data)) {
+//                return api_response($request, $job_service, 200);
+//            }
             return api_response($request, null, 500);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

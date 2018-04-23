@@ -324,7 +324,7 @@ $api->version('v1', function ($api) {
         $api->group(['prefix' => 'partners'], function ($api) {
             $api->group(['prefix' => '{partner}'], function ($api) {
                 $api->get('/', 'PartnerController@show');
-                $api->get('services', 'PartnerController@getPartnerServices');
+                $api->get('services', 'PartnerController@getServices');
             });
         });
         $api->group(['prefix' => 'customers'], function ($api) {
@@ -402,6 +402,7 @@ $api->version('v1', function ($api) {
                 $api->group(['prefix' => '{order}', 'middleware' => ['partner_order.auth']], function ($api) {
                     $api->get('/', 'PartnerOrderController@showV2');
                     $api->get('bills', 'PartnerOrderController@getBillsV2');
+                    $api->post('services', 'PartnerOrderController@addService');
                 });
             });
             $api->group(['prefix' => 'jobs'], function ($api) {
