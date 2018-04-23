@@ -40,7 +40,7 @@ class ProfileRepository
         return $profile;
     }
 
-    public function update($profile, array $data)
+    public function updateIfNull($profile, array $data)
     {
         foreach ($data as $key => $value) {
             if (empty($profile->$key) || $profile->$key == null) {

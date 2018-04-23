@@ -2,21 +2,22 @@
 
 namespace App\Http\Controllers\Auth;
 
-
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\FacebookAccountKit;
-use App\Http\Requests\Request;
 use App\Models\Partner;
+use App\Models\PartnerBasicInformation;
+use App\Models\PartnerWalletSetting;
 use App\Repositories\ProfileRepository;
+use Illuminate\Database\QueryException;
+use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Voucher\Creator\Referral;
+use DB;
 
 class PartnerRegistrationController extends Controller
 {
     private $fbKit;
     private $profileRepository;
-    private $facebookRepository;
-
 
     public function __construct()
     {
@@ -32,24 +33,22 @@ class PartnerRegistrationController extends Controller
                 'name' => 'required',
                 'company_name' => 'required',
             ]);
-            if ($code_data = $this->fbKit->authenticateKit($request->code)) {
-                return api_response($request, null, 401, ['message' => 'AccountKit authorization failed']);
-            }
+            $code_data = $this->fbKit->authenticateKit($request->code);
+            if (!$code_data) return api_response($request, null, 401, ['message' => 'AccountKit authorization failed']);
             $mobile = formatMobile($code_data['mobile']);
             if ($profile = $this->profileRepository->ifExist($mobile, 'mobile')) {
-                if ($profile->resource == null) {
-                    $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
-                }
+                $resource = $profile->resource;
+                if (!$resource) $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
             } else {
                 $profile = $this->profileRepository->registerMobile(array_merge($request->all(), ['mobile' => $mobile]));
                 $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
             }
-            if (empty($profile->name)) {
-                $profile->name = $request->name;
-                $profile->update();
-                $resource = $profile->resource;
+            $profile = $this->profileRepository->updateIfNull($profile, ['name' => $request->name]);
+            if ($partner = $this->createPartner($resource, ['name' => $request->company_name])) {
+                return api_response($request, null, 200);
+            } else {
+                return api_response($request, null, 500);
             }
-            $this->createPartner($resource, ['name' => $request->company_name]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
@@ -73,23 +72,30 @@ class PartnerRegistrationController extends Controller
             "created_by" => $resource->id,
             "created_by_name" => "Resource - " . $resource->profile->name
         ];
-        $partner = Partner::create(array_merge($data, $by));
-        $partner->resources()->attach($resource->id, array_merge($by, ['resource_type' => 'Admin']));
-        $partner->basicInformations()->save(array_merge($by, ['is_verified' => 0]));
-        //(new ReferralCreator($partner))->create(); //Create referrel code
-        (new Referral($partner));
-        $this->walletSetting($partner);
-
+        $partner = new Partner();
+        try {
+            DB::transaction(function () use ($resource, $data, $by, $partner) {
+                $partner = $partner->fill(array_merge($data, $by));
+                $partner->save();
+                $partner->resources()->attach($resource->id, array_merge($by, ['resource_type' => 'Admin']));
+                $partner->basicInformations()->save(new PartnerBasicInformation(array_merge($by, ['is_verified' => 0])));
+                (new Referral($partner));
+                $this->walletSetting($partner, $by);
+            });
+        } catch (QueryException $e) {
+            app('sentry')->captureException($e);
+            return null;
+        }
         return $partner;
     }
 
-    private function walletSetting($partner)
+    private function walletSetting($partner, $by)
     {
         $data = [
             'partner_id' => $partner->id,
             'security_money' => 5000,
         ];
-        PartnerWalletSetting::create($this->withCreateModificationField($data));
+        PartnerWalletSetting::create(array_merge($data, $by));
     }
 
     private function guessSubDomain($name)
@@ -106,11 +112,5 @@ class PartnerRegistrationController extends Controller
 
         return $name;
     }
-
-    public function created(Partner $partner)
-    {
-        return view('partner.created', compact('partner'));
-    }
-
 
 }

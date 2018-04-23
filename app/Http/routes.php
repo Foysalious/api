@@ -296,6 +296,7 @@ $api->version('v1', function ($api) {
         });
         $api->group(['prefix' => 'register'], function ($api) {
             $api->post('gmail', 'Auth\GoogleController@register');
+            $api->post('kit/partner', 'Auth\PartnerRegistrationController@register');
         });
         $api->get('times', 'ScheduleTimeController@index');
         $api->get('settings', 'HomePageSettingController@index');
