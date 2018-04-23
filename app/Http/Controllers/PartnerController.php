@@ -132,32 +132,27 @@ class PartnerController extends Controller
         }
     }
 
-    public function getPartnerServices($partner, Request $request)
+    public function getServices($partner, Request $request)
     {
         try {
-            $partner = Partner::find($partner);
-            if ($partner == null) {
-                return api_response($request, null, 404);
-            }
-            $services = $partner->services()->select('services.id', 'services.category_id', 'name', 'variable_type', 'services.min_quantity', 'services.variables')->published()->get();
-            $services->each(function (&$service) {
-                if ($service->variable_type == 'Options') {
-                    $final = collect();
-                    foreach (json_decode($service->variables)->options as $option) {
-                        $final->push(array(
-                            'question' => $option->question,
-                            'answers' => explode(',', $option->answers)
-                        ));
-                    }
-                    $service['questions'] = $final;
+            if ($partner = Partner::find((int)$partner)) {
+                $services = $partner->services()->select('services.id', 'name', 'variable_type', 'services.min_quantity', 'services.variables')->published()->get();
+                if (count($services) > 0) {
+                    $services->each(function (&$service) {
+                        if ($service->variable_type == 'Options') {
+                            $variables = json_decode($service->variables);
+                            $service['questions'] = $this->formatServiceQuestions($variables->options);
+                            $service['option_prices'] = $this->formatOptionWithPrice(json_decode($service->pivot->prices));
+                        } else {
+                            $service['questions'] = [];
+                        }
+                        array_forget($service, 'variables');
+                        removeRelationsAndFields($service);
+                    });
+                    return api_response($request, null, 200, ['services' => $services]);
                 } else {
-                    $service['questions'] = [];
+                    return api_response($request, null, 404);
                 }
-                array_forget($service, 'variables');
-                removeRelationsAndFields($service);
-            });
-            if (count($services) > 0) {
-                return api_response($request, null, 200, ['services' => $services]);
             } else {
                 return api_response($request, null, 404);
             }
@@ -165,6 +160,34 @@ class PartnerController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function formatServiceQuestions($options)
+    {
+        $questions = collect();
+        foreach ($options as $option) {
+            $questions->push(array(
+                'question' => $option->question,
+                'answers' => explode(',', $option->answers)
+            ));
+        }
+        return $questions;
+    }
+
+    private function formatOptionWithPrice($prices)
+    {
+        $options = collect();
+        foreach ($prices as $key => $price) {
+            $options->push(
+                array(
+                    'option' => collect(explode(',', $key))->map(function ($key) {
+                        return (int)$key;
+                    }),
+                    'price' => (double)$price
+                )
+            );
+        }
+        return $options;
     }
 
     public function getReviews($partner)

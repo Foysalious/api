@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Resource;
 use App\Repositories\CommentRepository;
+use App\Repositories\JobServiceRepository;
 use App\Repositories\PartnerJobRepository;
 use App\Repositories\PartnerOrderRepository;
 use App\Repositories\PartnerRepository;
 use App\Repositories\ResourceJobRepository;
+use App\Sheba\Checkout\PartnerList;
 use App\Sheba\Logs\OrderLogs;
 use App\Sheba\Logs\PartnerOrderLogs;
 use Carbon\Carbon;
@@ -255,6 +257,41 @@ class PartnerOrderController extends Controller
                 $collect->put('type', $key);
                 $all_logs->push($collect);
             }
+        }
+    }
+
+    public function addService($partner, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'services' => 'required|string',
+                'remember_token' => 'required|string',
+                'partner' => 'required'
+            ]);
+            $partner_order = $request->partner_order;
+            $manager_resource = $request->manager_resource;
+            $job = $partner_order->jobs->whereIn('status', array(constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded'],
+                constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process']))->first();
+            if ($job == null) return api_response($request, null, 403);
+            $partner_list = new PartnerList(json_decode($request->services), $job->schedule_date, $job->preferred_time_start . '-' . $job->preferred_time_end, $partner_order->order->location_id);
+            $partner_list->find($request->partner->id);
+            if ($partner_list->hasPartners) {
+                $partner = $partner_list->partners->first();
+                $jobService_repo = new JobServiceRepository();
+                $job_services = $jobService_repo->createJobService($partner->services, $partner_list->selected_services, ['created_by' => $manager_resource->id, 'created_by_name' => $manager_resource->profile->name]);
+                if (!$jobService_repo->existInJob($job, $job_services)) {
+                    $job->jobServices()->saveMany($job_services);
+                    return api_response($request, null, 200);
+                } else {
+                    return api_response($request, null, 403, ['message' => 'You can not add service that is already added!']);
+                }
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            dd($e);
+            return api_response($request, null, 500);
         }
     }
 }

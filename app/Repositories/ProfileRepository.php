@@ -40,7 +40,7 @@ class ProfileRepository
         return $profile;
     }
 
-    public function update($profile, array $data)
+    public function updateIfNull($profile, array $data)
     {
         foreach ($data as $key => $value) {
             if (empty($profile->$key) || $profile->$key == null) {
@@ -51,20 +51,10 @@ class ProfileRepository
         return $profile;
     }
 
-    /**
-     * Check if user already exists
-     * @param $data
-     * @param $queryColumn
-     * @return bool
-     */
     public function ifExist($data, $queryColumn)
     {
         $user = Profile::where($queryColumn, $data)->first();
-        if ($user != null) {
-            return $user;
-        } else {
-            return false;
-        }
+        return $user != null ? $user : false;
     }
 
     public function registerEmail($request)
@@ -274,14 +264,7 @@ class ProfileRepository
         }
     }
 
-    /**
-     * Avatar registration by Kit
-     * @param $avatar
-     * @param $request
-     * @param $user
-     * @return mixed
-     */
-    public function registerAvatarByKit($avatar, $request, $user)
+    public function registerAvatarByKit($avatar, $user)
     {
         if ($avatar == 'customer') {
             $customer = Customer::create([
