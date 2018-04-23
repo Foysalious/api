@@ -30,13 +30,10 @@ class JobServiceController extends Controller
     {
         try {
             $this->validate($request, [
-                'job' => 'required|numeric',
-                'service' => 'required|numeric',
-                'quantity' => 'required:min:1',
-                'option' => 'required|array',
-                'created_by' => 'required|numeric',
-                'created_by_name' => 'required|string',
-                'additional_info' => 'sometimes|required|string'
+                'services' => 'required|string',
+                'partner' => 'required',
+                'remember_token' => 'required|string',
+                'job' => 'required|numeric'
             ]);
             $job = Job::find((int)$request->job);
             $partner_service = PartnerService::where([['partner_id', $job->partner_order->partner_id], ['service_id', (int)$request->service]])->first();
