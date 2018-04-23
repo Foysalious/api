@@ -135,21 +135,24 @@ class PartnerController extends Controller
     public function getServices($partner, Request $request)
     {
         try {
-            if ($partner = Partner::find($partner)) {
-                return api_response($request, null, 404);
-            }
-            $services = $partner->services()->select('services.id', 'name', 'variable_type', 'services.min_quantity', 'services.variables')->published()->get();
-            if (count($services) > 0) {
-                $services->each(function (&$service) {
-                    if ($service->variable_type == 'Options') {
-                        $service['questions'] = $this->formatServiceQuestions(json_decode($service->variables)->options);
-                    } else {
-                        $service['questions'] = [];
-                    }
-                    array_forget($service, 'variables');
-                    removeRelationsAndFields($service);
-                });
-                return api_response($request, null, 200, ['services' => $services]);
+            if ($partner = Partner::find((int)$partner)) {
+                $services = $partner->services()->select('services.id', 'name', 'variable_type', 'services.min_quantity', 'services.variables')->published()->get();
+                if (count($services) > 0) {
+                    $services->each(function (&$service) {
+                        if ($service->variable_type == 'Options') {
+                            $variables = json_decode($service->variables);
+                            $service['questions'] = $this->formatServiceQuestions($variables->options);
+                            $service['option_prices'] = $this->formatOptionWithPrice(json_decode($service->pivot->prices));
+                        } else {
+                            $service['questions'] = [];
+                        }
+                        array_forget($service, 'variables');
+                        removeRelationsAndFields($service);
+                    });
+                    return api_response($request, null, 200, ['services' => $services]);
+                } else {
+                    return api_response($request, null, 404);
+                }
             } else {
                 return api_response($request, null, 404);
             }
@@ -169,6 +172,22 @@ class PartnerController extends Controller
             ));
         }
         return $questions;
+    }
+
+    private function formatOptionWithPrice($prices)
+    {
+        $options = collect();
+        foreach ($prices as $key => $price) {
+            $options->push(
+                array(
+                    'option' => collect(explode(',', $key))->map(function ($key) {
+                        return (int)$key;
+                    }),
+                    'price' => (double)$price
+                )
+            );
+        }
+        return $options;
     }
 
     public function getReviews($partner)

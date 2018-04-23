@@ -141,10 +141,10 @@ class FacebookController extends Controller
             if ($profile == false) {
                 array_add($request, 'mobile', $code_data['mobile']);
                 $profile = $this->profileRepository->registerMobile($request->all());
-                $this->profileRepository->registerAvatarByKit($from, $request, $profile);
+                $this->profileRepository->registerAvatarByKit($from, $profile);
             }
             if ($profile->$from == null) {
-                $this->profileRepository->registerAvatarByKit($from, $request, $profile);
+                $this->profileRepository->registerAvatarByKit($from, $profile);
                 $profile = Profile::find($profile->id);
             }
             $info = $this->profileRepository->getProfileInfo($from, $profile, $request);
