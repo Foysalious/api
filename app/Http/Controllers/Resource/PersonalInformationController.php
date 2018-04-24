@@ -29,7 +29,9 @@ class PersonalInformationController extends Controller
                 'gender' => $profile->gender,
                 'birthday' => $profile->dob,
                 'address' => $profile->address,
+                'picture' => $profile->pro_pic,
                 'nid_no' => $resource->nid_no,
+                'nid_image' => $resource->nid_image,
             );
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
@@ -50,16 +52,14 @@ class PersonalInformationController extends Controller
                 'birthday' => 'sometimes|required|date_format:Y-m-d|before:' . date('Y-m-d'),
                 'address' => 'sometimes|required|string',
                 'picture' => 'sometimes|required|file',
-
             ]);
             $resource = $request->resource;
             $profile = $resource->profile;
             if ($request->hasFile('picture')) {
                 $picture = $request->file('picture');
-                $pro_pic = $this->fileRepository->uploadToCDN($this->makeProfilePicName($profile, $picture), $picture, 'images/profiles/');
+                $profile->pro_pic = $this->fileRepository->uploadToCDN($this->makeProfilePicName($profile, $picture), $picture, 'images/profiles/');
             }
-            $this->mergeFrontAndBackNID($profile, $request->file('nid_front'), $request->file('nid_back'));
-            $profile->update(array_merge($request->only(['name', 'gender', 'address']), ['dob' => $request->birthday, ['pro_pic' => $pro_pic]]));
+            $profile->update(array_merge($request->only(['name', 'gender', 'address']), ['dob' => $request->birthday]));
             $nid_image_link = $this->mergeFrontAndBackNID($profile, $request->file('nid_front'), $request->file('nid_back'));
             $resource->update(['nid_no' => $request->nid_no, 'nid_image' => $nid_image_link]);
             return api_response($request, null, 200);
