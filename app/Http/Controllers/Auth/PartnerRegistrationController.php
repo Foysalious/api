@@ -29,9 +29,9 @@ class PartnerRegistrationController extends Controller
     {
         try {
             $this->validate($request, [
-                'code' => "required",
-                'name' => 'required',
-                'company_name' => 'required',
+                'code' => "required|string",
+                'name' => 'required|string',
+                'company_name' => 'required|string',
             ]);
             $code_data = $this->fbKit->authenticateKit($request->code);
             if (!$code_data) return api_response($request, null, 401, ['message' => 'AccountKit authorization failed']);
@@ -45,7 +45,8 @@ class PartnerRegistrationController extends Controller
             }
             $profile = $this->profileRepository->updateIfNull($profile, ['name' => $request->name]);
             if ($partner = $this->createPartner($resource, ['name' => $request->company_name])) {
-                return api_response($request, null, 200);
+                $info = $this->profileRepository->getProfileInfo('resource', $profile);
+                return api_response($request, null, 200, ['info' => array_merge($info, ['partner' => collect($partner)->only('id', 'name', 'status')])]);
             } else {
                 return api_response($request, null, 500);
             }
@@ -64,15 +65,14 @@ class PartnerRegistrationController extends Controller
 
     private function createPartner($resource, $data)
     {
-        $data = [
-            "name" => $data['name'],
-            "sub_domain" => $this->guessSubDomain($data['name'])
-        ];
-        $by = [
-            "created_by" => $resource->id,
-            "created_by_name" => "Resource - " . $resource->profile->name
-        ];
+        $data = ["name" => $data['name'], "sub_domain" => $this->guessSubDomain($data['name'])];
+        $by = ["created_by" => $resource->id, "created_by_name" => "Resource - " . $resource->profile->name];
         $partner = new Partner();
+        return $this->store($resource, $data, $by, $partner);
+    }
+
+    private function store($resource, $data, $by, $partner)
+    {
         try {
             DB::transaction(function () use ($resource, $data, $by, $partner) {
                 $partner = $partner->fill(array_merge($data, $by));
@@ -86,16 +86,7 @@ class PartnerRegistrationController extends Controller
             app('sentry')->captureException($e);
             return null;
         }
-        return $partner;
-    }
-
-    private function walletSetting($partner, $by)
-    {
-        $data = [
-            'partner_id' => $partner->id,
-            'security_money' => 5000,
-        ];
-        PartnerWalletSetting::create(array_merge($data, $by));
+        return Partner::find($partner->id);
     }
 
     private function guessSubDomain($name)
@@ -103,14 +94,19 @@ class PartnerRegistrationController extends Controller
         $blacklist = ["google", "facebook", "microsoft", "sheba", "sheba.xyz"];
         $base_name = $name = preg_replace('/-$/', '', substr(strtolower(clean($name)), 0, 15));
         $already_used = Partner::select('sub_domain')->lists('sub_domain')->toArray();
-
         $counter = 0;
         while (in_array($name, array_merge($blacklist, $already_used))) {
             $name = $base_name . $counter;
             $counter++;
         }
-
         return $name;
     }
+
+    private function walletSetting($partner, $by)
+    {
+        $data = ['partner_id' => $partner->id, 'security_money' => 5000];
+        PartnerWalletSetting::create(array_merge(['partner_id' => $partner->id, 'security_money' => 5000], $by));
+    }
+
 
 }
