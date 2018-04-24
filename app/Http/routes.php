@@ -327,7 +327,7 @@ $api->version('v1', function ($api) {
         $api->group(['prefix' => 'partners'], function ($api) {
             $api->group(['prefix' => '{partner}'], function ($api) {
                 $api->get('/', 'PartnerController@show');
-                $api->get('services', 'PartnerController@getServices');
+                $api->get('categories/{category}/services', 'PartnerController@getServices');
             });
         });
         $api->group(['prefix' => 'customers'], function ($api) {

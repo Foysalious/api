@@ -132,19 +132,21 @@ class PartnerController extends Controller
         }
     }
 
-    public function getServices($partner, Request $request)
+    public function getServices($partner, $category, Request $request)
     {
         try {
             if ($partner = Partner::find((int)$partner)) {
-                $services = $partner->services()->select('services.id', 'name', 'variable_type', 'services.min_quantity', 'services.variables')->published()->get();
+                $services = $partner->services()->select('services.id', 'name', 'variable_type', 'services.min_quantity', 'services.variables')
+                    ->where('category_id', $request->category)->published()->get();
                 if (count($services) > 0) {
                     $services->each(function (&$service) {
+                        $variables = json_decode($service->variables);
                         if ($service->variable_type == 'Options') {
-                            $variables = json_decode($service->variables);
                             $service['questions'] = $this->formatServiceQuestions($variables->options);
                             $service['option_prices'] = $this->formatOptionWithPrice(json_decode($service->pivot->prices));
                         } else {
-                            $service['questions'] = [];
+                            $service['questions'] = $service['option_prices'] = [];
+                            $service['price'] = (double)$variables->price;
                         }
                         array_forget($service, 'variables');
                         removeRelationsAndFields($service);
