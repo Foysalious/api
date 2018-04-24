@@ -386,6 +386,8 @@ $api->version('v1', function ($api) {
             });
         });
         $api->group(['prefix' => 'resources/{resource}', 'middleware' => ['resource.auth']], function ($api) {
+            $api->get('/', 'Resource\PersonalInformationController@index');
+            $api->post('/', 'Resource\PersonalInformationController@store');
             $api->group(['prefix' => 'jobs'], function ($api) {
                 $api->group(['prefix' => '{job}', 'middleware' => ['resource_job.auth']], function ($api) {
                     $api->get('bills', 'ResourceJobController@getBills');

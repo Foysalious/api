@@ -15,7 +15,6 @@ use DB;
 use Auth;
 use Mockery\Exception;
 use PhpParser\Node\Expr\Array_;
-#use Sheba\Voucher\ReferralCreator;
 use Sheba\ModificationFields;
 use Sheba\Voucher\Creator\Referral;
 
@@ -110,11 +109,6 @@ class ProfileRepository
         return null;
     }
 
-    /**
-     * Facebook Registration
-     * @param $info
-     * @return Profile
-     */
     public function registerFacebook($info)
     {
         $profile = new Profile();
@@ -139,13 +133,6 @@ class ProfileRepository
         return env('S3_URL') . $folder . $filename;
     }
 
-    /**
-     * Avatar registration by Facebook
-     * @param $avatar
-     * @param $request
-     * @param $user
-     * @return mixed
-     */
     public function registerAvatarByFacebook($avatar, $request, $user)
     {
         if ($avatar == 'customer') {
@@ -154,8 +141,6 @@ class ProfileRepository
                 'profile_id' => $user->id
             ]);
             $customer = Customer::find($customer->id);
-            #$referral_creator = new ReferralCreator($customer);
-            #$referral_creator->create();
             $this->setModifier($customer);
             new Referral($customer);
 
@@ -217,11 +202,6 @@ class ProfileRepository
         return $promo->save();
     }
 
-    /**
-     * Mobile Registration
-     * @param $info
-     * @return mixed
-     */
     public function registerMobile($info)
     {
         $profile = Profile::create([
@@ -239,11 +219,8 @@ class ProfileRepository
             $customer->profile_id = $profile->id;
             $customer->remember_token = str_random(255);
             $customer->save();
-            #$referral_creator = new ReferralCreator($customer);
-            #$referral_creator->create();
             $this->setModifier($customer);
             new Referral($customer);
-
             if ($request->has('referral_code')) {
                 $this->updateCustomerOwnVoucherNReferral($customer, $request->referral_code);
             }
@@ -272,14 +249,8 @@ class ProfileRepository
                 'profile_id' => $user->id
             ]);
             $customer = Customer::find($customer->id);
-            #$referral_creator = new ReferralCreator($customer);
-            #$referral_creator->create();
             $this->setModifier($customer);
             new Referral($customer);
-
-//            if ($request->has('referral_code')) {
-//                $this->updateCustomerOwnVoucherNReferral($customer, $request->referral_code);
-//            }
         } elseif ($avatar == 'resource') {
             $resource = new Resource();
             $resource->profile_id = $user->id;
@@ -296,13 +267,6 @@ class ProfileRepository
         }
     }
 
-    /**
-     * Avatar registration By Email
-     * @param $avatar
-     * @param $request
-     * @param $user
-     * @return mixed
-     */
     public function registerAvatarByEmail($avatar, $request, $user)
     {
         if ($avatar == 'customer') {
@@ -311,11 +275,8 @@ class ProfileRepository
                 'profile_id' => $user->id
             ]);
             $customer = Customer::find($customer->id);
-            #$referral_creator = new ReferralCreator($customer);
-            #$referral_creator->create();
             $this->setModifier($customer);
             new Referral($customer);
-
             if ($request->has('referral_code')) {
                 $this->updateCustomerOwnVoucherNReferral($customer, $request->referral_code);
             }
@@ -337,4 +298,5 @@ class ProfileRepository
     {
         return constants('AVATAR')[$from];
     }
+
 }
