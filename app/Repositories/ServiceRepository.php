@@ -316,20 +316,6 @@ class ServiceRepository
                 $query->where('id', $location);
             });
         }]);
-        return $services->load(['partnerServices' => function ($q) use ($location) {
-            $q->published()
-                ->with(['partner' => function ($q) use ($location) {
-                    $q->published()->whereHas('locations', function ($query) use ($location) {
-                        $query->where('id', $location);
-                    });
-                }])
-                ->with(['discounts' => function ($q) {
-                    $q->where([
-                        ['start_date', '<=', Carbon::now()],
-                        ['end_date', '>=', Carbon::now()]
-                    ])->first();
-                }]);
-        }]);
     }
 
     public function getpartnerServicePartnerDiscount($services, $location)

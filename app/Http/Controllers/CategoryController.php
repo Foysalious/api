@@ -204,7 +204,7 @@ class CategoryController extends Controller
                             'short_description', 'description', 'banner', 'faqs', 'variables', 'variable_type', 'min_quantity')->published()->skip($offset)->take($limit);
                     }])->where('id', $category->id)->published()->first();
                     $services = $this->serviceRepository->getPartnerServicesAndPartners($category->services, $location)->each(function ($service) {
-                        list($service['min_price'], $service['max_price']) = $this->getPriceRange($service);
+                        list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
                         removeRelationsAndFields($service);
                     });
                 }
@@ -215,7 +215,7 @@ class CategoryController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (\Throwable $e) {
-            dd($e);
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
