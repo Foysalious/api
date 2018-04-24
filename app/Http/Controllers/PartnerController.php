@@ -144,9 +144,10 @@ class PartnerController extends Controller
                         if ($service->variable_type == 'Options') {
                             $service['questions'] = $this->formatServiceQuestions($variables->options);
                             $service['option_prices'] = $this->formatOptionWithPrice(json_decode($service->pivot->prices));
+                            $service['fixed_price'] = null;
                         } else {
                             $service['questions'] = $service['option_prices'] = [];
-                            $service['price'] = (double)$variables->price;
+                            $service['fixed_price'] = (double)$variables->price;
                         }
                         array_forget($service, 'variables');
                         removeRelationsAndFields($service);
