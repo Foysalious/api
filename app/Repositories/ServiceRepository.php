@@ -95,8 +95,8 @@ class ServiceRepository
                 ['is_published', 1]
             ])->whereHas('locations', function ($query) use ($location) {
                 $query->where('id', $location);
-            })->whereHas('categories', function ($query) use ($location,$service) {
-                $query->where('categories.id', $service->category_id)->where('is_verified',1);
+            })->whereHas('categories', function ($query) use ($location, $service) {
+                $query->where('categories.id', $service->category_id)->where('is_verified', 1);
             })->get();
     }
 
@@ -311,7 +311,12 @@ class ServiceRepository
 
     public function getPartnerServicesAndPartners($services, $location)
     {
-        return $services->load(['reviews', 'partnerServices' => function ($q) use ($location) {
+        return $services->load(['partners' => function ($q) use ($location) {
+            $q->published()->whereHas('locations', function ($query) use ($location) {
+                $query->where('id', $location);
+            });
+        }]);
+        return $services->load(['partnerServices' => function ($q) use ($location) {
             $q->published()
                 ->with(['partner' => function ($q) use ($location) {
                     $q->published()->whereHas('locations', function ($query) use ($location) {

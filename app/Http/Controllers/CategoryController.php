@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\ScheduleSlot;
+use App\Models\Service;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
 use App\Sheba\Queries\Category\StartPrice;
@@ -202,7 +203,10 @@ class CategoryController extends Controller
                         $q->select('id', 'category_id', 'unit', 'name', 'thumb', 'app_thumb', 'app_banner',
                             'short_description', 'description', 'banner', 'faqs', 'variables', 'variable_type', 'min_quantity')->published()->skip($offset)->take($limit);
                     }])->where('id', $category->id)->published()->first();
-                    $services = $this->serviceRepository->addServiceInfo($this->serviceRepository->getPartnerServicesAndPartners($category->services, $location), $scope);
+                    $services = $this->serviceRepository->getPartnerServicesAndPartners($category->services, $location)->each(function ($service) {
+                        list($service['min_price'], $service['max_price']) = $this->getPriceRange($service);
+                        removeRelationsAndFields($service);
+                    });
                 }
                 $category = collect($category)->only(['name', 'banner', 'parent_id', 'app_banner']);
                 $category['services'] = $this->serviceQuestionSet($services);
@@ -211,8 +215,26 @@ class CategoryController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (\Throwable $e) {
+            dd($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function getPriceRange(Service $service)
+    {
+        $max_price = [];
+        $min_price = [];
+        if ($service->partners->isEmpty()) {
+            return array(0, 0);
+        }
+        foreach ($service->partners as $partner) {
+            $prices = (array)json_decode($partner->pivot->prices);
+            $max = max($prices);
+            $min = min($prices);
+            array_push($max_price, $max);
+            array_push($min_price, $min);
+        }
+        return array((double)max($max_price) * $service->min_quantity, (double)min($min_price) * $service->min_quantity);
     }
 
     private function serviceQuestionSet($services)
