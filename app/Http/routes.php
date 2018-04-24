@@ -189,6 +189,8 @@ $api->version('v1', function ($api) {
                 $api->get('/', 'PartnerTransactionController@index');
             });
 
+            $api->post('/pay-sheba', 'PartnerTransactionController@payToSheba');
+
             $api->group(['prefix' => 'graphs'], function ($api) {
                 $api->get('orders', 'GraphController@getOrdersGraph');
                 $api->get('sales', 'GraphController@getSalesGraph');
