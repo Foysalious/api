@@ -28,7 +28,7 @@ class CategoryController extends Controller
     public function index(Request $request)
     {
         try {
-            $categories = Category::where('parent_id', null)->published()->select('id', 'name', 'slug', 'thumb', 'banner', 'parent_id')->get();
+            $categories = Category::where('parent_id', null)->published()->select('id', 'name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'parent_id')->get();
             $final = [];
             $location = $request->location;
             foreach ($categories as $category) {
@@ -44,6 +44,7 @@ class CategoryController extends Controller
             }
             return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $final]) : api_response($request, $final, 404);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
