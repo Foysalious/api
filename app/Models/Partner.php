@@ -250,4 +250,8 @@ class Partner extends Model
     {
         return (double)$this->wallet < (double)$this->walletSetting->min_wallet_threshold;
     }
+    public function bankInformations()
+    {
+        return $this->hasOne(PartnerBankInformation::class);
+    }
 }

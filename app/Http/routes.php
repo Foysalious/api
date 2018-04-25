@@ -405,6 +405,7 @@ $api->version('v1', function ($api) {
         $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
             $api->get('operations', 'Partner\OperationController@index');
             $api->post('operations', 'Partner\OperationController@store');
+            $api->get('completion', 'Partner\ProfileCompletionController@getProfileCompletion');
             $api->get('collections', 'PartnerOrderPaymentController@index');
             $api->get('training', 'PartnerTrainingController@redirect');
             $api->group(['prefix' => 'orders'], function ($api) {

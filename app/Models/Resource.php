@@ -70,6 +70,7 @@ class Resource extends Model
 
     public function categoriesIn($partner)
     {
+        $partner = $partner instanceof Partner ? $partner->id : $partner;
         $categories = collect();
         $partner_resources = ($this->partnerResources()->where('partner_id', $partner)->get())->load('categories');
         foreach ($partner_resources as $partner_resource) {
@@ -93,5 +94,10 @@ class Resource extends Model
     public function resourceSchedules()
     {
         return $this->hasMany(ResourceSchedule::class);
+    }
+
+    public function categories()
+    {
+        return $this->belongsToMany(Category::class);
     }
 }
