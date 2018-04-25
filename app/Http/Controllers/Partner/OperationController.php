@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\Controller;
+use App\Models\PartnerWorkingHour;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use DB;
 
 class OperationController extends Controller
 {
@@ -16,10 +18,10 @@ class OperationController extends Controller
             }, 'categories' => function ($q) {
                 $q->select('categories.id', 'categories.name', 'partner_id');
             }, 'basicInformations']);
+            $working_hours = $partner->workingHours()->select('id', 'partner_id', 'day', 'start_time', 'end_time')->get();
             $final = collect($partner)->only(['id', 'name']);
             $final->put('address', $partner->basicInformations->address);
-            $final->put('working_days', json_decode($partner->basicInformations->working_days));
-            $final->put('working_hours', json_decode($partner->basicInformations->working_hours));
+            $final->put('working_schedule', $working_hours);
             $final->put('locations', $partner->locations->each(function ($location) {
                 removeRelationsAndFields($location);
             }));
@@ -38,16 +40,12 @@ class OperationController extends Controller
         try {
             $this->validate($request, [
                 'address' => "string",
-                'locations' => "required|array",
-                'categories' => "required|array",
-                'working_days' => "required|array",
-                'working_hours' => "required|string",
+                'locations' => "required",
+                'categories' => "required",
+                'working_schedule' => "required",
             ]);
             $partner = $request->partner;
-            $partner->locations->sync($request->locations);
-            $partner->categories->sync($request->categories);
-            $partner->basicInformation()->update(['working_days' => json_encode($request->working_days), 'working_hours' => $request->working_hours, 'address' => $request->address]);
-            return api_response($request, $partner, 200);
+            return $this->saveInDatabase($partner, $request) ? api_response($request, $partner, 200) : api_response($request, $partner, 500);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
@@ -57,6 +55,29 @@ class OperationController extends Controller
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
+        }
+    }
+
+    private function saveInDatabase($partner, Request $request)
+    {
+        try {
+            DB::transaction(function () use ($request, $partner) {
+                $partner->locations()->sync(json_decode($request->locations));
+                $partner->categories()->sync(json_decode($request->categories));
+                $partner->basicInformations()->update(['address' => $request->address]);
+                $partner->workingHours()->delete();
+                foreach (json_decode($request->working_schedule) as $working_schedule) {
+                    $partner->workingHours()->save(new PartnerWorkingHour([
+                        'day' => $working_schedule->day,
+                        'start_time' => $working_schedule->start_time,
+                        'end_time' => $working_schedule->end_time
+                    ]));
+                }
+            });
+            return true;
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return null;
         }
     }
 }
