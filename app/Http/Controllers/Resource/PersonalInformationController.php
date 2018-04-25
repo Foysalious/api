@@ -47,11 +47,11 @@ class PersonalInformationController extends Controller
                 'nid_no' => "required|string",
                 'nid_back' => 'required|file',
                 'nid_front' => 'required|file',
-                'name' => "sometimes|required|string",
-                'gender' => 'sometimes|required|string|in:Male,Female,Other',
-                'birthday' => 'sometimes|required|date_format:Y-m-d|before:' . date('Y-m-d'),
-                'address' => 'sometimes|required|string',
-                'picture' => 'sometimes|required|file',
+                'name' => "string",
+                'gender' => 'string|in:Male,Female,Other',
+                'birthday' => 'date_format:Y-m-d|before:' . date('Y-m-d'),
+                'address' => 'string',
+                'picture' => 'file',
             ]);
             $resource = $request->resource;
             $profile = $resource->profile;
@@ -70,7 +70,6 @@ class PersonalInformationController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
