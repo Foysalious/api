@@ -191,8 +191,6 @@ $api->version('v1', function ($api) {
                 $api->get('/', 'PartnerTransactionController@index');
             });
 
-            $api->post('/pay-sheba', 'PartnerTransactionController@payToSheba');
-
             $api->group(['prefix' => 'graphs'], function ($api) {
                 $api->get('orders', 'GraphController@getOrdersGraph');
                 $api->get('sales', 'GraphController@getSalesGraph');
@@ -408,6 +406,7 @@ $api->version('v1', function ($api) {
             $api->get('completion', 'Partner\ProfileCompletionController@getProfileCompletion');
             $api->get('collections', 'PartnerOrderPaymentController@index');
             $api->get('training', 'PartnerTrainingController@redirect');
+            $api->post('/pay-sheba', 'PartnerTransactionController@payToSheba');
             $api->group(['prefix' => 'orders'], function ($api) {
                 $api->group(['prefix' => '{order}', 'middleware' => ['partner_order.auth']], function ($api) {
                     $api->get('/', 'PartnerOrderController@showV2');
