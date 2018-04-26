@@ -69,6 +69,6 @@ class FileRepository
         } catch (S3Exception $e) {
             return false;
         }
-        return env('S3_URL') . $folder . './' . $filename;
+        return env('S3_URL') . $folder . '/' . $filename;
     }
 }
