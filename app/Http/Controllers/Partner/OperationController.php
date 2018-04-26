@@ -41,7 +41,6 @@ class OperationController extends Controller
             $this->validate($request, [
                 'address' => "string",
                 'locations' => "required",
-                'categories' => "required",
                 'working_schedule' => "required",
             ]);
             $partner = $request->partner;
@@ -63,7 +62,6 @@ class OperationController extends Controller
         try {
             DB::transaction(function () use ($request, $partner) {
                 $partner->locations()->sync(json_decode($request->locations));
-                $partner->categories()->sync(json_decode($request->categories));
                 $partner->basicInformations()->update(['address' => $request->address]);
                 $partner->workingHours()->delete();
                 foreach (json_decode($request->working_schedule) as $working_schedule) {
