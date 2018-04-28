@@ -47,7 +47,6 @@ class PartnerRegistrationController extends Controller
             $profile = $this->profileRepository->updateIfNull($profile, ['name' => $request->name]);
             if ($resource->partnerResources->count() > 0) return api_response($request, null, 403, ['message' => 'You already have a company!']);
             if ($partner = $this->createPartner($resource, ['name' => $request->company_name])) {
-                Sms::send_single_message($mobile, "Welcome To Sheba.xyz");
                 $info = $this->profileRepository->getProfileInfo('resource', $profile);
                 return api_response($request, null, 200, ['info' => array_merge($info, ['partner' => collect($partner)->only('id', 'name', 'sub_domain', 'status')])]);
             } else {
@@ -71,7 +70,9 @@ class PartnerRegistrationController extends Controller
         $data = ["name" => $data['name'], "sub_domain" => $this->guessSubDomain($data['name'])];
         $by = ["created_by" => $resource->id, "created_by_name" => "Resource - " . $resource->profile->name];
         $partner = new Partner();
-        return $this->store($resource, $data, $by, $partner);
+        $partner = $this->store($resource, $data, $by, $partner);
+        if ($partner) Sms::send_single_message($resource->profile->mobile, "Welcome To Sheba.xyz");
+        return;
     }
 
     private function store($resource, $data, $by, $partner)
