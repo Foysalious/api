@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\FacebookAccountKit;
+use App\Library\Sms;
 use App\Models\Partner;
 use App\Models\PartnerBasicInformation;
 use App\Models\PartnerWalletSetting;
@@ -35,7 +36,7 @@ class PartnerRegistrationController extends Controller
             ]);
             $code_data = $this->fbKit->authenticateKit($request->code);
             if (!$code_data) return api_response($request, null, 401, ['message' => 'AccountKit authorization failed']);
-            $mobile = formatMobile($code_data['mobile']);;
+            $mobile = formatMobile($code_data['mobile']);
             if ($profile = $this->profileRepository->ifExist($mobile, 'mobile')) {
                 $resource = $profile->resource;
                 if (!$resource) $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
@@ -44,7 +45,9 @@ class PartnerRegistrationController extends Controller
                 $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
             }
             $profile = $this->profileRepository->updateIfNull($profile, ['name' => $request->name]);
+            if ($resource->partnerResources->count() > 0) return api_response($request, null, 403, ['message' => 'You already have a company!']);
             if ($partner = $this->createPartner($resource, ['name' => $request->company_name])) {
+                Sms::send_single_message($mobile, "Welcome To Sheba.xyz");
                 $info = $this->profileRepository->getProfileInfo('resource', $profile);
                 return api_response($request, null, 200, ['info' => array_merge($info, ['partner' => collect($partner)->only('id', 'name', 'sub_domain', 'status')])]);
             } else {
