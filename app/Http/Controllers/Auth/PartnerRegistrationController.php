@@ -35,7 +35,7 @@ class PartnerRegistrationController extends Controller
             ]);
             $code_data = $this->fbKit->authenticateKit($request->code);
             if (!$code_data) return api_response($request, null, 401, ['message' => 'AccountKit authorization failed']);
-            $mobile = formatMobile($code_data['mobile']);
+            $mobile = formatMobile($code_data['mobile']);;
             if ($profile = $this->profileRepository->ifExist($mobile, 'mobile')) {
                 $resource = $profile->resource;
                 if (!$resource) $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
@@ -45,8 +45,8 @@ class PartnerRegistrationController extends Controller
             }
             $profile = $this->profileRepository->updateIfNull($profile, ['name' => $request->name]);
             if ($partner = $this->createPartner($resource, ['name' => $request->company_name])) {
-                $info = $this->profileRepository->getProfileInfo('resource', $profile);
-                return api_response($request, null, 200, ['info' => array_merge($info, ['partner' => collect($partner)->only('id', 'name', 'status')])]);
+                $info = $this->profileRepository->getProfileInfo('resource', $profile, $request);
+                return api_response($request, null, 200, ['info' => $info]);
             } else {
                 return api_response($request, null, 500);
             }
