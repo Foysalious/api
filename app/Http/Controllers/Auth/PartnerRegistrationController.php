@@ -45,8 +45,8 @@ class PartnerRegistrationController extends Controller
             }
             $profile = $this->profileRepository->updateIfNull($profile, ['name' => $request->name]);
             if ($partner = $this->createPartner($resource, ['name' => $request->company_name])) {
-                $info = $this->profileRepository->getProfileInfo('resource', $profile, $request);
-                return api_response($request, null, 200, ['info' => $info]);
+                $info = $this->profileRepository->getProfileInfo('resource', $profile);
+                return api_response($request, null, 200, ['info' => array_merge($info, ['partner' => collect($partner)->only('id', 'name', 'sub_domain', 'status')])]);
             } else {
                 return api_response($request, null, 500);
             }
