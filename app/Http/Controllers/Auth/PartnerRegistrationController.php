@@ -72,7 +72,7 @@ class PartnerRegistrationController extends Controller
         $partner = new Partner();
         $partner = $this->store($resource, $data, $by, $partner);
         if ($partner) Sms::send_single_message($resource->profile->mobile, "আপনি সফল ভাবে Sheba.xyz তে রেজিস্ট্রেশান সম্পন্ন করেছেন। কাজ শুরু করার জন্য অনুগ্রহ করে আপনার প্রোফাইলটি সম্পন্ন করুন।");
-        return;
+        return $partner;
     }
 
     private function store($resource, $data, $by, $partner)
