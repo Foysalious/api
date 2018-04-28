@@ -98,7 +98,7 @@ class JobLogs
     private function statusChangeLogs($status_changes)
     {
         foreach ($status_changes->unique('to_status') as $status_change) {
-            if (in_array($status_change->to_status, ['Declined', 'Schedule Due', 'Not Responded'])) continue;
+            if (in_array($status_change->to_status, ['Declined', 'Schedule Due', 'Not Responded', 'Serve Due'])) continue;
             if (in_array($status_change->to_status, ['Declined', 'Accepted'])) {
                 //$log = 'Your Order has been ' . $status_change->to_status . ' by ' . explode('-', $status_change->created_by_name)[1] . ".";
                 $log = 'Your Order has been ' . $status_change->to_status;
