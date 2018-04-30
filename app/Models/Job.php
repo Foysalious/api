@@ -241,7 +241,7 @@ class Job extends Model
 
     public function scopeValidStatus($query)
     {
-        return $query->whereIn('status', ['Accepted', 'Served', 'Process', 'Schedule Due']);
+        return $query->whereIn('status', ['Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due']);
     }
 
     public function scopeTillNow($query)
