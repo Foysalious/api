@@ -19,7 +19,7 @@ class ResourceJobRepository
 
     public function rearrange($jobs)
     {
-        $process_job = $jobs->where('status', 'Process');
+        $process_job = $jobs->whereIn('status', ['Process', 'Serve Due']);
         $process_job = $process_job->map(function ($item) {
             if (in_array($item->preferred_time, constants('JOB_PREFERRED_TIMES'))) {
                 return array_add($item, 'preferred_time_priority', constants('JOB_PREFERRED_TIMES_PRIORITY')[$item->preferred_time]);
@@ -36,7 +36,7 @@ class ResourceJobRepository
             return $job->partner_order->payment_method != 'bad-debt';
         })->values()->all();
         $other_jobs = $jobs->filter(function ($job) {
-            return $job->status != 'Process' && $job->status != 'Served';
+            return $job->status != 'Process' && $job->status != 'Served' &&  && $job->status != 'Serve Due';
         });
         $other_jobs = $other_jobs->map(function ($item) {
             if (in_array($item->preferred_time, constants('JOB_PREFERRED_TIMES'))) {
@@ -220,12 +220,12 @@ class ResourceJobRepository
                 $job['collect_money'] = (double)$partner_order->due;
                 array_forget($job, 'partner_order');
             }
-        } elseif ($job->status == 'Process') {
+        } elseif ($job->status == 'Process' || $job->status == 'Serve Due') {
             if ($first_job_from_list->status == 'Process' && $job->id == $first_job_from_list->id) {
                 $job['can_serve'] = true;
             }
         } else {
-            if ($first_job_from_list->status != 'Process' && $first_job_from_list->status != 'Served') {
+            if ($first_job_from_list->status != 'Process' && $first_job_from_list->status != 'Serve Due' && $first_job_from_list->status != 'Served') {
                 $job['can_process'] = true;
             }
         }
