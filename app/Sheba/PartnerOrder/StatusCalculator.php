@@ -7,7 +7,7 @@ class StatusCalculator
     public static $totalJobs;
     public static $jobStatuses;
     public static $statuses;
-    public static $jobStatusCounter;
+    public static $jobStatusCounter = [];
 
     public static function initialize()
     {
@@ -41,16 +41,9 @@ class StatusCalculator
 
     private static function initializeStatusCounter()
     {
-        self::$jobStatusCounter = [
-            self::$jobStatuses['Pending'] => 0,
-            self::$jobStatuses['Accepted'] => 0,
-            self::$jobStatuses['Declined'] => 0,
-            self::$jobStatuses['Not_Responded'] => 0,
-            self::$jobStatuses['Schedule_Due'] => 0,
-            self::$jobStatuses['Process'] => 0,
-            self::$jobStatuses['Served'] => 0,
-            self::$jobStatuses['Cancelled'] => 0
-        ];
+        foreach (self::$jobStatuses as $status) {
+            self::$jobStatusCounter[$status] = 0;
+        }
     }
 
     /**

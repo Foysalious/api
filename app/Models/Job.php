@@ -26,6 +26,17 @@ class Job extends Model
     public $discountContributionPartner;
     public $profit;
     public $margin;
+    public $isCalculated;
+    public $ownDiscount;
+    public $ownShebaContribution;
+    public $ownPartnerContribution;
+    public $serviceDiscounts;
+    public $ownDiscountContributionSheba;
+    public $ownDiscountContributionPartner;
+    public $serviceDiscountContributionSheba;
+    public $serviceDiscountContributionPartner;
+    public $complexityIndex;
+    public $isInWarranty;
 
     public function service()
     {

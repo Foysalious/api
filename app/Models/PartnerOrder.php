@@ -34,6 +34,7 @@ class PartnerOrder extends Model
     public $totalPartnerDiscount;
     public $totalShebaDiscount;
     public $totalCostWithoutDiscount;
+    public $isCalculated;
 
     protected $guarded = ['id'];
     protected $dates = ['closed_at', 'closed_and_paid_at'];

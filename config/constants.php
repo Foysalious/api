@@ -14,6 +14,7 @@ return [
         'Not_Responded' => 'Not Responded',
         'Schedule_Due' => 'Schedule Due',
         'Process' => 'Process',
+        'Serve_Due' => 'Serve Due',
         'Served' => 'Served',
         'Cancelled' => 'Cancelled'
     ],
@@ -24,6 +25,7 @@ return [
         'Not_Responded' => ['sheba' => 'Not Responded', 'partner' => 'Not Responded', 'customer' => 'Response Delay'],
         'Schedule_Due' => ['sheba' => 'Schedule Due', 'partner' => 'Schedule Due', 'customer' => 'Behind Schedule'],
         'Process' => ['sheba' => 'Process', 'partner' => 'Process', 'customer' => 'On Going'],
+        'Serve_Due' => ['sheba' => 'Process', 'partner' => 'Process', 'customer' => 'On Going'],
         'Served' => ['sheba' => 'Served', 'partner' => 'Served', 'customer' => 'Served'],
         'Cancelled' => ['sheba' => 'Cancelled', 'partner' => 'Cancelled', 'customer' => 'Cancelled']
     ],
@@ -34,6 +36,7 @@ return [
         'Schedule Due' => ['sheba' => 'Schedule Due', 'partner' => 'Schedule Due', 'customer' => '#fcce54'],
         'Process' => ['sheba' => 'Process', 'partner' => 'Process', 'customer' => '#5c9ded'],
         'Served' => ['sheba' => 'Served', 'partner' => 'Served', 'customer' => '#42cb6f'],
+        'Serve Due' => ['sheba' => 'Served', 'partner' => 'Served', 'customer' => '#42cb6f'],
         'Cancelled' => ['sheba' => 'Served', 'partner' => 'Served', 'customer' => '#42cb6f'],
         'Declined' => ['sheba' => 'Served', 'partner' => 'Served', 'customer' => '#fcce54']
     ],
