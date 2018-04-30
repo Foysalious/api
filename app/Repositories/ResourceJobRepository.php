@@ -221,7 +221,7 @@ class ResourceJobRepository
                 array_forget($job, 'partner_order');
             }
         } elseif ($job->status == 'Process' || $job->status == 'Serve Due') {
-            if ($first_job_from_list->status == 'Process' && $first_job_from_list->status == 'Serve Due' && $job->id == $first_job_from_list->id) {
+            if (($first_job_from_list->status == 'Process' || $first_job_from_list->status == 'Serve Due') && $job->id == $first_job_from_list->id) {
                 $job['can_serve'] = true;
             }
         } else {
