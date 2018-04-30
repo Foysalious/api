@@ -36,7 +36,7 @@ class ResourceJobRepository
             return $job->partner_order->payment_method != 'bad-debt';
         })->values()->all();
         $other_jobs = $jobs->filter(function ($job) {
-            return $job->status != 'Process' && $job->status != 'Served' &&  && $job->status != 'Serve Due';
+            return $job->status != 'Process' && $job->status != 'Served' && $job->status != 'Serve Due';
         });
         $other_jobs = $other_jobs->map(function ($item) {
             if (in_array($item->preferred_time, constants('JOB_PREFERRED_TIMES'))) {
