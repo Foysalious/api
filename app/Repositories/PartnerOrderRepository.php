@@ -188,14 +188,14 @@ class PartnerOrderRepository
         } else {
             return array(constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded'],
                 constants('JOB_STATUSES')['Declined'], constants('JOB_STATUSES')['Cancelled'],
-                constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Served']);
+                constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Serve_Due'], constants('JOB_STATUSES')['Served']);
         }
     }
 
     private function resolveStatus($filter)
     {
         if ($filter == 'ongoing') {
-            return array(constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Served']);
+            return array(constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Serve_Due'], constants('JOB_STATUSES')['Served']);
         } elseif ($filter == 'history') {
             return constants('JOB_STATUSES');
         }
@@ -205,7 +205,7 @@ class PartnerOrderRepository
     {
         if ($partner_order->jobs->count() > 1) {
             $job = $partner_order->jobs->whereIn('status', array(constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded'],
-                constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Served']))->first();
+                constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Serve_Due'], constants('JOB_STATUSES')['Served']))->first();
         } else {
             $job = $partner_order->jobs->first();
         }
