@@ -68,9 +68,9 @@ class PersonalInformationController extends Controller
             } else {
                 $mobile = formatMobile($request->mobile);
                 $profile = Profile::where('mobile', $mobile)->first();
-                if (!$profile) {
-                    $profile = Profile::create(array_merge($by, ['mobile' => $mobile]));
-                }
+                if (!$profile) $profile = Profile::create(array_merge($by, ['mobile' => $mobile]));
+                $resource = $profile->resource;
+                if ($resource) return api_response($request, null, 403, ['message' => 'There is already a resource exists at this number!']);
                 $resource = Resource::create(array_merge($by, ['remember_token' => str_random(255), 'profile_id' => $profile->id]));
                 $resource = $this->updateInformation($request, $profile, $resource);
                 $this->createPartnerResource($partner, $resource, $pivot_columns);
@@ -145,8 +145,10 @@ class PersonalInformationController extends Controller
             $profile->pro_pic = $this->fileRepository->uploadToCDN($this->makeProfilePicName($profile, $picture), $picture, 'images/profiles/');
         }
         $profile->update(array_merge($request->only(['name', 'gender', 'address']), ['dob' => $request->birthday]));
-        $nid_image_link = $this->mergeFrontAndBackNID($profile, $request->file('nid_front'), $request->file('nid_back'));
-        $resource->update(['nid_no' => $request->nid_no, 'nid_image' => $nid_image_link]);
+        $resource->nid_no = $request->nid_no;
+        if ($request->hasFile('nid_front') && $request->hasFile('nid_back'))
+            $resource->nid_image = $this->mergeFrontAndBackNID($profile, $request->file('nid_front'), $request->file('nid_back'));
+        $resource->update();
         return $resource;
     }
 
