@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Resource;
 
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
+use App\Models\Profile;
 use App\Models\Resource;
 use App\Repositories\FileRepository;
 use Carbon\Carbon;
@@ -46,24 +47,33 @@ class PersonalInformationController extends Controller
     {
         try {
             $this->validate($request, [
-                'nid_no' => 'string',
-                'nid_back' => 'file',
-                'nid_front' => 'file',
+                'nid_no' => 'required_without:resource|string',
+                'nid_back' => 'required_without:resource|file',
+                'nid_front' => 'required_without:resource|file',
                 'name' => 'string',
                 'gender' => 'string|in:Male,Female,Other',
                 'birthday' => 'date_format:Y-m-d|before:' . date('Y-m-d'),
                 'address' => 'string',
-                'picture' => 'file',
-                'resource' => 'numeric'
+                'picture' => 'required_without:resource|file',
+                'resource' => 'numeric',
+                'mobile' => 'required_without:resource|string|mobile:bd'
             ]);
             $partner = $request->partner;
+            $manager_resource = $request->manager_resource;
+            $by = ["created_by" => $manager_resource->id, "created_by_name" => "Resource - " . $manager_resource->profile->name];
+            $pivot_columns = array_merge($by, ['resource_type' => "Handyman"]);
             if ($request->has('resource')) {
                 $resource = Resource::find((int)$request->resource);
-                $this->cloneResource($partner, $resource, 'Handyman');
+                $this->createPartnerResource($partner, $resource, $pivot_columns);
             } else {
-                $resource = $request->resource;
-                $profile = $resource->profile;
+                $mobile = formatMobile($request->mobile);
+                $profile = Profile::where('mobile', $mobile)->first();
+                if (!$profile) {
+                    $profile = Profile::create(array_merge($by, ['mobile' => $mobile]));
+                }
+                $resource = Resource::create(array_merge($by, ['remember_token' => str_random(255), 'profile_id' => $profile->id]));
                 $resource = $this->updateInformation($request, $profile, $resource);
+                $this->createPartnerResource($partner, $resource, $pivot_columns);
             }
             return api_response($request, $resource, 200);
         } catch (ValidationException $e) {
@@ -78,9 +88,9 @@ class PersonalInformationController extends Controller
         }
     }
 
-    private function cloneResource(Partner $partner, Resource $resource, $type)
+    private function createPartnerResource(Partner $partner, Resource $resource, $pivot_columns)
     {
-
+        $partner->resources()->attach($resource->id, $pivot_columns);
     }
 
     public function update($resource, Request $request)
