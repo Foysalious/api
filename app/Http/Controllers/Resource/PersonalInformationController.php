@@ -63,6 +63,9 @@ class PersonalInformationController extends Controller
             $by = ["created_by" => $manager_resource->id, "created_by_name" => "Resource - " . $manager_resource->profile->name];
             $pivot_columns = array_merge($by, ['resource_type' => "Handyman"]);
             if ($request->has('resource')) {
+                if ($partner->hasThisResource((int)$request->resource, 'Handyman')) {
+                    return api_response($request, null, 403, ['message' => 'The resource is already added with you!']);
+                }
                 $resource = Resource::find((int)$request->resource);
                 $this->createPartnerResource($partner, $resource, $pivot_columns);
             } else {
