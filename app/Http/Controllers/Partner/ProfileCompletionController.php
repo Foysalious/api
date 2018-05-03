@@ -38,6 +38,8 @@ class ProfileCompletionController extends Controller
                 'operational' => $this->isOperationalInformationGiven($partner),
                 'service' => count($partner->services) > 0 ? 1 : 0,
                 'resource' => $this->isResourceInformationGiven($partner),
+                'status' => $partner->status,
+                'is_verified' => $partner->status == "Verified" ? 1 : 0
             ]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
