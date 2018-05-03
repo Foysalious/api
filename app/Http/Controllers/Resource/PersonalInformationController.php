@@ -156,7 +156,7 @@ class PersonalInformationController extends Controller
         return $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id . '.' . $photo->extension();
     }
 
-    private function updateInformation(Request $request, $profile, $resource)
+    private function updateInformation(Request $request, Profile $profile, $resource)
     {
         if ($request->hasFile('picture')) {
             $picture = $request->file('picture');
@@ -164,8 +164,14 @@ class PersonalInformationController extends Controller
         }
         if ($request->has('mobile')) {
             $profile->mobile = $request->mobile;
-        }
-        $profile->update(array_merge($request->only(['name', 'gender', 'address']), ['dob' => $request->birthday]));
+        };
+        if ($request->has('name')) {
+            $profile->name = $request->name;
+        };
+        if ($request->has('address')) {
+            $profile->address = $request->address;
+        };
+        $profile->update();
         $resource->nid_no = $request->nid_no;
         if ($request->hasFile('nid_front') && $request->hasFile('nid_back'))
             $resource->nid_image = $this->mergeFrontAndBackNID($profile, $request->file('nid_front'), $request->file('nid_back'));

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\PartnerWorkingHour;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -83,10 +84,51 @@ class OperationController extends Controller
     {
         try {
             $this->validate($request, [
-                'categories' => "string"
+                'categories' => "required|string"
             ]);
+            $manager_resource = $request->manager_resource;
+            $by = ["created_by" => $manager_resource->id, "created_by_name" => "Resource - " . $manager_resource->profile->name];
+            $categories = json_decode($request->categories);
+            $categories = Category::whereIn('id', $categories)->get();
+            $categories->load('services');
+            $services = [];
+            $category_partners = $categories->pluck('id')->toArray();
+            foreach ($categories as $category) {
+                $cat[$category->id] = array_merge(['response_time_min' => 60, 'response_time_max' => 120, 'commission' => $category->min_commission], $by);
+                $category_partners = $category_partners + $cat;
+                foreach ($category->services as $service) {
+                    array_push($services, $service->id);
+                    if ($service->variable_type == 'Fixed') {
+                        $options = null;
+                        $price = json_decode($service->variables)->price;
+                    } else {
+                        $options = '';
+                        foreach (json_decode($service->variables)->options as $key => $option) {
+                            $input = explode(',', $option->answers);
+                            $output = implode(',', array_map(
+                                function ($value, $key) {
+                                    return sprintf("%s", $key);
+                                }, $input, array_keys($input)
+                            ));
+                            $output = '[' . $output . '],';
+                            $options .= $output;
+                        }
+                        $options = '[' . substr($options, 0, -1) . ']';
+                        $price = ($service->variable_type == 'Options') ? json_encode(json_decode($service->variables)->prices) : "Custom";
+                    }
+                    $services[$service->id] = array_merge($by, [
+                        'description' => $service->description,
+                        'options' => $options,
+                        'prices' => $price,
+                        'is_published' => 1
+                    ]);
+                }
+            }
             $partner = $request->partner;
-            $partner->categories()->sync(json_decode($request->categories));
+            DB::transaction(function () use ($partner, $category_partners, $services) {
+                $partner->categories()->sync($category_partners);
+                $partner->services()->sync($services);
+            });
             return api_response($request, $partner, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -95,8 +137,11 @@ class OperationController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
+
+
 }
