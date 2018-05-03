@@ -78,4 +78,25 @@ class OperationController extends Controller
             return null;
         }
     }
+
+    public function saveCategories($partner, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'categories' => "string"
+            ]);
+            $partner = $request->partner;
+            $partner->categories()->sync(json_decode($request->categories));
+            return api_response($request, $partner, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }
