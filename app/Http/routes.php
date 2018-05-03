@@ -404,6 +404,13 @@ $api->version('v1', function ($api) {
             $api->get('operations', 'Partner\OperationController@index');
             $api->post('operations', 'Partner\OperationController@store');
             $api->post('categories', 'Partner\OperationController@saveCategories');
+            $api->group(['prefix' => 'resources'], function ($api) {
+                $api->post('/', 'Resource\PersonalInformationController@store');
+                $api->group(['prefix' => '{resource}', 'middleware' => ['partner_resource.auth']], function ($api) {
+                    $api->get('/', 'Resource\PersonalInformationController@index');
+                    $api->post('/', 'Resource\PersonalInformationController@update');
+                });
+            });
             $api->get('completion', 'Partner\ProfileCompletionController@getProfileCompletion');
             $api->get('collections', 'PartnerOrderPaymentController@index');
             $api->get('training', 'PartnerTrainingController@redirect');

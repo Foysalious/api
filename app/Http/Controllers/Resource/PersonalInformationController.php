@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Resource;
 
 
 use App\Http\Controllers\Controller;
+use App\Models\Partner;
+use App\Models\Resource;
 use App\Repositories\FileRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -40,14 +42,55 @@ class PersonalInformationController extends Controller
         }
     }
 
-    public function store($resource, Request $request)
+    public function store(Request $request)
     {
         try {
             $this->validate($request, [
-                'nid_no' => "required|string",
-                'nid_back' => 'required|file',
-                'nid_front' => 'required|file',
-                'name' => "string",
+                'nid_no' => 'string',
+                'nid_back' => 'file',
+                'nid_front' => 'file',
+                'name' => 'string',
+                'gender' => 'string|in:Male,Female,Other',
+                'birthday' => 'date_format:Y-m-d|before:' . date('Y-m-d'),
+                'address' => 'string',
+                'picture' => 'file',
+                'resource' => 'numeric'
+            ]);
+            $partner = $request->partner;
+            if ($request->has('resource')) {
+                $resource = Resource::find((int)$request->resource);
+                $this->cloneResource($partner, $resource, 'Handyman');
+            } else {
+                $resource = $request->resource;
+                $profile = $resource->profile;
+                $resource = $this->updateInformation($request, $profile, $resource);
+            }
+            return api_response($request, $resource, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    private function cloneResource(Partner $partner, Resource $resource, $type)
+    {
+
+    }
+
+    public function update($resource, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'nid_no' => 'string',
+                'nid_back' => 'file',
+                'nid_front' => 'file',
+                'name' => 'string',
                 'gender' => 'string|in:Male,Female,Other',
                 'birthday' => 'date_format:Y-m-d|before:' . date('Y-m-d'),
                 'address' => 'string',
@@ -55,14 +98,8 @@ class PersonalInformationController extends Controller
             ]);
             $resource = $request->resource;
             $profile = $resource->profile;
-            if ($request->hasFile('picture')) {
-                $picture = $request->file('picture');
-                $profile->pro_pic = $this->fileRepository->uploadToCDN($this->makeProfilePicName($profile, $picture), $picture, 'images/profiles/');
-            }
-            $profile->update(array_merge($request->only(['name', 'gender', 'address']), ['dob' => $request->birthday]));
-            $nid_image_link = $this->mergeFrontAndBackNID($profile, $request->file('nid_front'), $request->file('nid_back'));
-            $resource->update(['nid_no' => $request->nid_no, 'nid_image' => $nid_image_link]);
-            return api_response($request, null, 200);
+            $resource = $this->updateInformation($request, $profile, $resource);
+            return api_response($request, $resource, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
@@ -89,6 +126,18 @@ class PersonalInformationController extends Controller
     private function makeProfilePicName($profile, $photo)
     {
         return $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id . '.' . $photo->extension();
+    }
+
+    private function updateInformation(Request $request, $profile, $resource)
+    {
+        if ($request->hasFile('picture')) {
+            $picture = $request->file('picture');
+            $profile->pro_pic = $this->fileRepository->uploadToCDN($this->makeProfilePicName($profile, $picture), $picture, 'images/profiles/');
+        }
+        $profile->update(array_merge($request->only(['name', 'gender', 'address']), ['dob' => $request->birthday]));
+        $nid_image_link = $this->mergeFrontAndBackNID($profile, $request->file('nid_front'), $request->file('nid_back'));
+        $resource->update(['nid_no' => $request->nid_no, 'nid_image' => $nid_image_link]);
+        return $resource;
     }
 
 }
