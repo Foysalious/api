@@ -17,9 +17,9 @@ class ResourceRepository
     public function getPartner($avatar)
     {
         $partners = $this->resource->partners->unique();
-        foreach ($partners as $partner){
+        foreach ($partners as $partner) {
             if ($avatar->isManager($partner)) {
-                return collect($partner)->only(['id', 'name', 'sub_domain', 'mobile', 'email']);
+                return collect($partner)->only(['id', 'name', 'sub_domain', 'mobile', 'email', 'status']);
             }
         }
         return null;
