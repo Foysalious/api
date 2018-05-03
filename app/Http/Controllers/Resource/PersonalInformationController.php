@@ -108,9 +108,23 @@ class PersonalInformationController extends Controller
                 'birthday' => 'date_format:Y-m-d|before:' . date('Y-m-d'),
                 'address' => 'string',
                 'picture' => 'file',
+                'mobile' => 'string|mobile:bd'
             ]);
             $resource = $request->resource;
             $profile = $resource->profile;
+            if ($request->has('mobile')) {
+                $mobile = formatMobile($request->mobile);
+                if ($profile->mobile != $mobile) {
+                    $mobile_profile = Profile::where('mobile', $mobile)->first();
+                    if ($mobile_profile) {
+                        return api_response($request, null, 403, ['message' => 'There is already a resource exists at this number!']);
+                    } else {
+                        $request->merge(['mobile' => $mobile]);
+                    }
+                } else {
+                    array_forget($request, 'mobile');
+                }
+            }
             $resource = $this->updateInformation($request, $profile, $resource);
             return api_response($request, $resource, 200);
         } catch (ValidationException $e) {
@@ -120,6 +134,7 @@ class PersonalInformationController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -146,6 +161,9 @@ class PersonalInformationController extends Controller
         if ($request->hasFile('picture')) {
             $picture = $request->file('picture');
             $profile->pro_pic = $this->fileRepository->uploadToCDN($this->makeProfilePicName($profile, $picture), $picture, 'images/profiles/');
+        }
+        if ($request->has('mobile')) {
+            $profile->mobile = $request->mobile;
         }
         $profile->update(array_merge($request->only(['name', 'gender', 'address']), ['dob' => $request->birthday]));
         $resource->nid_no = $request->nid_no;
