@@ -48,7 +48,7 @@ class PartnerTransactionController extends Controller
                 'amount' => 'required|numeric|min:1',
                 'transaction_id' => 'required',
                 'account' => 'required',
-                'type' => 'required|in:bkash,rocket',
+                'type' => 'required|in:bkash,rocket,mock',
             ]);
             $payment_validator = PartnerPaymentValidatorFactory::make($request->all());
             if ($error = $payment_validator->hasError()) {
