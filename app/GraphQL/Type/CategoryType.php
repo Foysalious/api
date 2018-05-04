@@ -75,13 +75,18 @@ class CategoryType extends GraphQlType
                 $q->whereIn('id', $args['id']);
             }
         }]);
-        return $root->services;
+
+        if ($services = $root->services) {
+            return $services->sortBy('order');
+        } else {
+            return null;
+        }
     }
 
     protected function resolveChildrenField($root, $args)
     {
         if ($root->isParent()) {
-            return $root->children;
+            return $root->children->sortBy('order');
         } else {
             return null;
         }
