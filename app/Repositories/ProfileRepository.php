@@ -97,10 +97,7 @@ class ProfileRepository
                     if ($request->from == env('SHEBA_RESOURCE_APP')) {
                         $info['partners'] = $avatar->partners->unique('partner_id')->count();
                     } elseif ($request->from == env('SHEBA_MANGER_APP')) {
-                        $info['resource_types'] = null;
-                        if ($info['partner'] = (new ResourceRepository($avatar))->getPartner($avatar)) {
-                            $info['resource_types'] = $avatar->typeIn($info['partner']['id']);
-                        }
+                        $info['partner'] = (new ResourceRepository($avatar))->getPartner($avatar);
                     }
                 }
             }

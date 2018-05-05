@@ -19,7 +19,9 @@ class ResourceRepository
         $partners = $this->resource->partners->unique();
         foreach ($partners as $partner) {
             if ($avatar->isManager($partner)) {
-                return collect($partner)->only(['id', 'name', 'sub_domain', 'mobile', 'email', 'status']);
+                $partner = collect($partner)->only(['id', 'name', 'sub_domain', 'mobile', 'email', 'status']);
+                $partner->put('is_verified', $partner->get('status') == 'Verified' ? 1 : 0);
+                return $partner;
             }
         }
         return null;
