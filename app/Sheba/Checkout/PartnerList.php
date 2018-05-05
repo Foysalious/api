@@ -2,14 +2,17 @@
 
 namespace App\Sheba\Checkout;
 
+use App\Models\Location;
 use App\Models\Partner;
 use App\Models\PartnerService;
 use App\Models\PartnerServiceDiscount;
+use App\Models\ScheduleSlot;
 use App\Models\Service;
 use App\Repositories\PartnerRepository;
 use App\Repositories\PartnerServiceRepository;
 use App\Repositories\ReviewRepository;
 use App\Sheba\Partner\PartnerAvailable;
+use Carbon\Carbon;
 use DB;
 
 class PartnerList
@@ -21,6 +24,7 @@ class PartnerList
     private $date;
     private $time;
     private $partnerServiceRepository;
+    public $message = '';
 
     public function __construct($services, $date, $time, $location)
     {
@@ -37,10 +41,37 @@ class PartnerList
         foreach ($services as $service) {
             $selected_service = Service::select('id', 'name', 'category_id', 'min_quantity', 'variable_type', 'variables')->where('id', $service->id)->publishedForAll()->first();
             $selected_service['option'] = $service->option;
-            $selected_service['quantity'] = isset($service->quantity) ? $service->quantity : $selected_service->min_quantity;
+            $selected_service['quantity'] = $this->getSelectedServiceQuantity($service, (double)$selected_service->min_quantity);
             $selected_services->push($selected_service);
         }
         return $selected_services;
+    }
+
+    public function isValid()
+    {
+        $category_ids = $this->selected_services->pluck('category_id')->unique()->toArray();
+        $location = Location::find($this->location);
+        if (count($category_ids) > 1) {
+            $this->message = "Only one category should be selected";
+            return 0;
+        } elseif ($location) {
+            if (!$location->publication_status) {
+                $this->message = "Selected location is not published";
+                return 0;
+            }
+        } elseif (Carbon::parse($this->date) < Carbon::today()) {
+            $this->message = "Selected Date is not valid";
+            return 0;
+        } elseif (!$this->isValidTime()) {
+            $this->message = "Selected Time is not valid";
+            return 0;
+        }
+        return 1;
+    }
+
+    private function isValidTime()
+    {
+        return Carbon::parse(explode('-', $this->time)[0])->gte(Carbon::now()) ? 1 : 0;
     }
 
     public function find($partner_id = null)
@@ -268,6 +299,16 @@ class PartnerList
             });
         } catch (\Throwable $e) {
 
+        }
+    }
+
+    private function getSelectedServiceQuantity($service, $min_quantity)
+    {
+        if (isset($service->quantity)) {
+            $quantity = (double)$service->quantity;
+            return $quantity >= $min_quantity ? $quantity : $min_quantity;
+        } else {
+            return $min_quantity;
         }
     }
 }
