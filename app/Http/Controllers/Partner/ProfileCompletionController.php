@@ -36,7 +36,7 @@ class ProfileCompletionController extends Controller
             return api_response($request, $complete, 200, ['completion' => $complete,
                 'personal' => $this->isPersonalInformationGiven($manager_resource),
                 'operational' => $this->isOperationalInformationGiven($partner),
-                'service' => count($partner->services) > 0 ? 1 : 0,
+                'service' => $this->isServiceInformationGiven($partner),
                 'resource' => $this->isResourceInformationGiven($partner),
                 'status' => $partner->status,
                 'is_verified' => $partner->status == "Verified" ? 1 : 0
@@ -49,16 +49,21 @@ class ProfileCompletionController extends Controller
 
     private function isPersonalInformationGiven($resource)
     {
-        return !empty($resource->nid_no) && empty($resource->nid_image) ? 1 : 0;
+        return !empty($resource->nid_no) && !empty($resource->nid_image) && !empty($resource->profile->pro_pic) && !empty($resource->profile->name) ? 1 : 0;
     }
 
     private function isOperationalInformationGiven($partner)
     {
-        return count($partner->workingHours) > 0 && count($partner->locations) > 0 && count($partner->categories) > 0 ? 1 : 0;
+        return count($partner->workingHours) > 0 && count($partner->locations) > 0 ? 1 : 0;
     }
 
     private function isResourceInformationGiven($partner)
     {
         return count($partner->admins) > 0 && count($partner->handymanResources) > 0 ? 1 : 0;
+    }
+
+    private function isServiceInformationGiven($partner)
+    {
+        return count($partner->services) > 0 && count($partner->categories) > 0 ? 1 : 0;
     }
 }
