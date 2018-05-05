@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\PartnerResource;
 use App\Models\PartnerWorkingHour;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -91,42 +92,15 @@ class OperationController extends Controller
             $categories = json_decode($request->categories);
             $categories = Category::whereIn('id', $categories)->get();
             $categories->load('services');
-            $services = [];
-            $category_partners = $categories->pluck('id')->toArray();
-            foreach ($categories as $category) {
-                $cat[$category->id] = array_merge(['response_time_min' => 60, 'response_time_max' => 120, 'commission' => $category->min_commission], $by);
-                $category_partners = $category_partners + $cat;
-                foreach ($category->services as $service) {
-                    array_push($services, $service->id);
-                    if ($service->variable_type == 'Fixed') {
-                        $options = null;
-                        $price = json_decode($service->variables)->price;
-                    } else {
-                        $options = '';
-                        foreach (json_decode($service->variables)->options as $key => $option) {
-                            $input = explode(',', $option->answers);
-                            $output = implode(',', array_map(
-                                function ($value, $key) {
-                                    return sprintf("%s", $key);
-                                }, $input, array_keys($input)
-                            ));
-                            $output = '[' . $output . '],';
-                            $options .= $output;
-                        }
-                        $options = '[' . substr($options, 0, -1) . ']';
-                        $price = ($service->variable_type == 'Options') ? json_encode(json_decode($service->variables)->prices) : "Custom";
-                    }
-                    $services[$service->id] = array_merge($by, [
-                        'description' => $service->description,
-                        'options' => $options,
-                        'prices' => $price,
-                        'is_published' => 1
-                    ]);
-                }
-            }
+            list($services, $category_partners) = $this->makeCategoryPartnerWithServices($categories, $by);
             $partner = $request->partner;
             DB::transaction(function () use ($partner, $category_partners, $services) {
                 $partner->categories()->sync($category_partners);
+                $partner_resources = PartnerResource::whereIn('id', $partner->handymanResources->pluck('pivot.id')->toArray())->get();
+                $category_ids = $partner->categories->pluck('id')->toArray();
+                $partner_resources->each(function ($partner_resource) use ($category_ids) {
+                    $partner_resource->categories()->sync($category_ids);
+                });
                 $partner->services()->sync($services);
             });
             return api_response($request, $partner, 200);
@@ -140,6 +114,45 @@ class OperationController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function makeCategoryPartnerWithServices($categories, $by)
+    {
+        $services = [];
+        $category_partners = $categories->pluck('id')->toArray();
+        foreach ($categories as $category) {
+            $cat = [];
+            $cat[$category->id] = array_merge(['response_time_min' => 60, 'response_time_max' => 120, 'commission' => $category->min_commission], $by);
+            $category_partners = $category_partners + $cat;
+            foreach ($category->services as $service) {
+                array_push($services, $service->id);
+                if ($service->variable_type == 'Fixed') {
+                    $options = null;
+                    $price = json_decode($service->variables)->price;
+                } else {
+                    $options = '';
+                    foreach (json_decode($service->variables)->options as $key => $option) {
+                        $input = explode(',', $option->answers);
+                        $output = implode(',', array_map(
+                            function ($value, $key) {
+                                return sprintf("%s", $key);
+                            }, $input, array_keys($input)
+                        ));
+                        $output = '[' . $output . '],';
+                        $options .= $output;
+                    }
+                    $options = '[' . substr($options, 0, -1) . ']';
+                    $price = ($service->variable_type == 'Options') ? json_encode(json_decode($service->variables)->prices) : "Custom";
+                }
+                $services[$service->id] = array_merge($by, [
+                    'description' => $service->description,
+                    'options' => $options,
+                    'prices' => $price,
+                    'is_published' => 1
+                ]);
+            }
+        }
+        return array($services, $category_partners);
     }
 
 

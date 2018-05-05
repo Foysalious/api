@@ -15,4 +15,9 @@ class CategoryPartner extends Model
     {
         return $this->belongsTo(Partner::class);
     }
+
+    public function resources()
+    {
+        return $this->belongsTo(CategoryPartner::class);
+    }
 }
