@@ -93,13 +93,8 @@ class ProfileRepository
                 $info['referrer_id'] = $avatar->referrer_id;
             } elseif ($from == 'resource') {
                 $info['is_verified'] = $avatar->is_verified;
-                if ($request) {
-                    if ($request->from == env('SHEBA_RESOURCE_APP')) {
-                        $info['partners'] = $avatar->partners->unique('partner_id')->count();
-                    } elseif ($request->from == env('SHEBA_MANGER_APP')) {
-                        $info['partner'] = (new ResourceRepository($avatar))->getPartner($avatar);
-                    }
-                }
+                $info['partners'] = $avatar->partners->unique('partner_id')->count();
+                $info['partner'] = (new ResourceRepository($avatar))->getPartner($avatar);
             }
             return $info;
         }
