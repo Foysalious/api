@@ -216,6 +216,9 @@ class OrderController extends Controller
             $customer = $request->customer;
             $validation = new Validation();
             if (!$validation->isValid($request)) {
+                $sentry = app('sentry');
+                $sentry->user_context(['request' => $request->all(), 'message' => $validation->message]);
+                $sentry->captureException(new \Exception($validation->message));
                 return api_response($request, $validation->message, 400, ['message' => $validation->message]);
             }
             $order = new Checkout($customer);

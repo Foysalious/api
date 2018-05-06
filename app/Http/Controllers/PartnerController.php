@@ -421,6 +421,9 @@ class PartnerController extends Controller
             ]);
             $validation = new Validation();
             if (!$validation->isValid($request)) {
+                $sentry = app('sentry');
+                $sentry->user_context(['request' => $request->all(), 'message' => $validation->message]);
+                $sentry->captureException(new \Exception($validation->message));
                 return api_response($request, $validation->message, 400, ['message' => $validation->message]);
             }
             $partner = $request->has('partner') ? $request->partner : null;
