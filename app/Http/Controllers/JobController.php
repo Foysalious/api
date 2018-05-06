@@ -77,7 +77,7 @@ class JobController extends Controller
             $job_collection->put('delivery_mobile', $job->partnerOrder->order->delivery_mobile);
             $job_collection->put('additional_information', $job->job_additional_info);
             $job_collection->put('schedule_date', $job->schedule_date);
-            $job_collection->put('schedule_date_readable',  (Carbon::parse($job->schedule_date))->format('jS F, Y'));
+            $job_collection->put('schedule_date_readable', (Carbon::parse($job->schedule_date))->format('jS F, Y'));
             $job_collection->put('complains', $this->formatComplains($job->complains));
             $job_collection->put('preferred_time', $job->readable_preferred_time);
             $job_collection->put('category_name', $job->category ? $job->category->name : null);
@@ -87,15 +87,16 @@ class JobController extends Controller
             $job_collection->put('review', $job->review != null ? $job->review->review : null);
             $job_collection->put('price', (double)$job->partnerOrder->totalPrice);
             $job_collection->put('isDue', (double)$job->partnerOrder->due > 0 ? 1 : 0);
+            $job_collection->put('order_code', $job->partnerOrder->order->code());
             if (count($job->jobServices) == 0) {
                 $services = collect();
                 $variables = json_decode($job->service_variables);
-                $services->push(array('name' => $job->service_name, 'variables' => $variables));
+                $services->push(array('name' => $job->service_name, 'variables' => $variables, 'quantity' => $job->service_quantity));
             } else {
                 $services = collect();
                 foreach ($job->jobServices as $jobService) {
                     $variables = json_decode($jobService->variables);
-                    $services->push(array('name' => $jobService->service->name, 'variables' => $variables));
+                    $services->push(array('name' => $jobService->service->name, 'variables' => $variables, 'quantity' => $jobService->quantity));
                 }
             }
             $job_collection->put('services', $services);
