@@ -10,6 +10,7 @@ class BKashTransactionValidator implements TransactionValidator
     private $username;
     private $password;
     private $merchantNumber = "01799444000";
+    private $amount;
 
     public function __construct(BKashTransaction $transaction)
     {
@@ -38,6 +39,14 @@ class BKashTransactionValidator implements TransactionValidator
         if (formatMobile($res->transaction->sender) != formatMobile($this->trx->account)) {
             return "Your bKash account number don't match with transaction ids account number";
         }
+        $this->amount = (double)$res->transaction->amount;
         return false;
+    }
+
+    public function __get($property)
+    {
+        if (property_exists($this, $property)) {
+            return $this->$property;
+        }
     }
 }

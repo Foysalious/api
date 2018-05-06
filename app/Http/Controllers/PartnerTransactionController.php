@@ -54,6 +54,8 @@ class PartnerTransactionController extends Controller
             if ($error = $payment_validator->hasError()) {
                 return api_response($request, null, 400, ['message' => $error]);
             }
+            $request->merge(['transaction_amount' => $payment_validator->amount]);
+            dd($request->all());
             if ($res = $this->reconcile($request)) {
                 if ($res->code != 200) return api_response($request, null, 500, ['message' => $res->msg]);
             } else {
@@ -78,7 +80,6 @@ class PartnerTransactionController extends Controller
             $expires_at = Carbon::now()->addMinutes(2);
             $cache_name = "partner_" . $request->partner->id . "_payment_reconcile_token";
             \Cache::store('redis')->put($cache_name, $payment_token = Str::random(32), $expires_at);
-
             $client = new Client();
             $reconcile_url = env('SHEBA_BACKEND_URL') . '/api/partner/reconcile-collection';
             $res = json_decode($client->request('POST', $reconcile_url, [
@@ -86,7 +87,7 @@ class PartnerTransactionController extends Controller
                     'resource_id' => $request->manager_resource->id,
                     'remember_token' => $request->manager_resource->remember_token,
                     'partner_id' => $request->partner->id,
-                    'amount' => $request->amount,
+                    'amount' => $request->transaction_amount,
                     'payment_token' => $payment_token,
                     'transaction_details' => json_encode([
                         'gateway' => $request->type,
@@ -95,7 +96,7 @@ class PartnerTransactionController extends Controller
                         ],
                         'transaction' => [
                             'id' => $request->transaction_id,
-                            'amount' => $request->amount
+                            'amount' => $request->transaction_amount
                         ],
                     ]),
                 ]
