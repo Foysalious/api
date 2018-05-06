@@ -14,11 +14,11 @@ class PartnerPaymentValidatorFactory
     public static function make($data)
     {
         if($data['type'] == "bkash") {
-            $trx = new BKashTransaction($data['transaction_id'], $data['account'], $data['amount']);
+            $trx = new BKashTransaction($data['transaction_id']);
             return new BKashTransactionValidator($trx);
         }
         if($data['type'] == "mock") {
-            $trx = new MockTransaction($data['transaction_id'], $data['account'], $data['amount']);
+            $trx = new MockTransaction($data['transaction_id']);
             return new MockTransactionValidator($trx);
         }
         throw new \InvalidArgumentException("Invalid transaction type.");

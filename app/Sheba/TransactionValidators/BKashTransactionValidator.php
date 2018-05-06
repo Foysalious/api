@@ -36,9 +36,6 @@ class BKashTransactionValidator implements TransactionValidator
         if ($res->transaction->trxStatus != BKashTransactionCodes::getSuccessfulCode()) {
             return BKashTransactionCodes::messages()[$res->transaction->trxStatus];
         }
-        if (formatMobile($res->transaction->sender) != formatMobile($this->trx->account)) {
-            return "Your bKash account number don't match with transaction ids account number";
-        }
         $this->amount = (double)$res->transaction->amount;
         return false;
     }

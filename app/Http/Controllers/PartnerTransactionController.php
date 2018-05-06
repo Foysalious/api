@@ -45,9 +45,7 @@ class PartnerTransactionController extends Controller
     {
         try {
             $this->validate($request, [
-                'amount' => 'required|numeric|min:1',
                 'transaction_id' => 'required',
-                'account' => 'required',
                 'type' => 'required|in:bkash,rocket,mock',
             ]);
             $payment_validator = PartnerPaymentValidatorFactory::make($request->all());

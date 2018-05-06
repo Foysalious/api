@@ -6,11 +6,9 @@ class BKashTransaction
     private $account;
     private $amount;
 
-    public function __construct($transaction_id, $account, $amount)
+    public function __construct($transaction_id)
     {
         $this->id = $transaction_id;
-        $this->account = $account;
-        $this->amount = $amount;
     }
 
     public function __get($property)
