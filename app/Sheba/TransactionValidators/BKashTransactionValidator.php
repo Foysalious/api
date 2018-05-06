@@ -9,6 +9,7 @@ class BKashTransactionValidator implements TransactionValidator
     private $endpoint = "https://www.bkashcluster.com:9081/dreamwave/merchant/trxcheck/sendmsg";
     private $username;
     private $password;
+    private $merchantNumber = "01799444000";
 
     public function __construct(BKashTransaction $transaction)
     {
@@ -21,7 +22,7 @@ class BKashTransactionValidator implements TransactionValidator
     {
         return $this->endpoint
             . "?user=$this->username&pass=$this->password"
-            . "&msisdn=" . $this->trx->account
+            . "&msisdn=" . $this->merchantNumber
             . "&trxid=" . $this->trx->id;
     }
 
@@ -31,11 +32,12 @@ class BKashTransactionValidator implements TransactionValidator
         $res = json_decode($client->request('GET', $this->getValidationUrl(), [
             'headers' => ['Content-Type' => 'application/json']
         ])->getBody());
-
-        if($res->transaction->trxStatus != BKashTransactionCodes::getSuccessfulCode()) {
+        if ($res->transaction->trxStatus != BKashTransactionCodes::getSuccessfulCode()) {
             return BKashTransactionCodes::messages()[$res->transaction->trxStatus];
         }
-
+        if (formatMobile($res->transaction->sender) != formatMobile($this->trx->account)) {
+            return "Your bKash account number don't match with transaction ids account number";
+        }
         return false;
     }
 }

@@ -32,7 +32,7 @@ class ProfileCompletionController extends Controller
             if (!empty($partner->basicInformations->registration_no)) $complete_count++;
             if (!empty($partner->basicInformations->establishment_year)) $complete_count++;
             if (!empty($partner->basicInformations->trade_license)) $complete_count++;
-            $complete = round(($complete_count / 15) * 100);
+            $complete = round((($complete_count / 15) * 100), 0);
             return api_response($request, $complete, 200, ['completion' => $complete,
                 'personal' => $this->isPersonalInformationGiven($manager_resource),
                 'operational' => $this->isOperationalInformationGiven($partner),
