@@ -124,10 +124,10 @@ class OperationController extends Controller
             $cat = [];
             $cat[$category->id] = array_merge(['response_time_min' => 60, 'response_time_max' => 120, 'commission' => $category->min_commission], $by);
             $category_partners = $category_partners + $cat;
-            $cat_services = $category->load(['services' => function ($q) {
+            $category->load(['services' => function ($q) {
                 $q->publishedForAll();
             }]);
-            foreach ($cat_services as $service) {
+            foreach ($category->services as $service) {
                 array_push($services, $service->id);
                 if ($service->variable_type == 'Fixed') {
                     $options = null;
