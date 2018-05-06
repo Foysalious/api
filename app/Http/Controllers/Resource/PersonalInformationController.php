@@ -57,7 +57,7 @@ class PersonalInformationController extends Controller
                 'picture' => 'required_without:resource|file',
                 'resource' => 'numeric',
                 'mobile' => 'required_without:resource|string|mobile:bd'
-            ]);
+            ], ['mobile' => 'Invalid mobile number!']);
             $partner = $request->partner;
             $manager_resource = $request->manager_resource;
             $by = ["created_by" => $manager_resource->id, "created_by_name" => "Resource - " . $manager_resource->profile->name];
@@ -109,7 +109,7 @@ class PersonalInformationController extends Controller
                 'address' => 'string',
                 'picture' => 'file',
                 'mobile' => 'string|mobile:bd'
-            ]);
+            ], ['mobile' => 'Invalid mobile number!']);
             $resource = $request->resource;
             $profile = $resource->profile;
             if ($request->has('mobile')) {
