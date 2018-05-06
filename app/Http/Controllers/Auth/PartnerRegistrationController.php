@@ -8,6 +8,7 @@ use App\Library\Sms;
 use App\Models\Partner;
 use App\Models\PartnerBasicInformation;
 use App\Models\PartnerWalletSetting;
+use App\Models\Profile;
 use App\Repositories\ProfileRepository;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -47,7 +48,7 @@ class PartnerRegistrationController extends Controller
             $profile = $this->profileRepository->updateIfNull($profile, ['name' => $request->name]);
             if ($resource->partnerResources->count() > 0) return api_response($request, null, 403, ['message' => 'You already have a company!']);
             if ($partner = $this->createPartner($resource, ['name' => $request->company_name])) {
-                $info = $this->profileRepository->getProfileInfo('resource', $profile);
+                $info = $this->profileRepository->getProfileInfo('resource', Profile::find($profile->id));
                 return api_response($request, null, 200, ['info' => $info]);
             } else {
                 return api_response($request, null, 500);
