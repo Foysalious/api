@@ -45,7 +45,7 @@ class PartnerTransactionController extends Controller
     {
         try {
             $this->validate($request, [
-                'transaction_id' => 'required',
+                'transaction_id' => 'required|string',
                 'type' => 'required|in:bkash,rocket,mock',
             ]);
             $payment_validator = PartnerPaymentValidatorFactory::make($request->all());
@@ -53,6 +53,7 @@ class PartnerTransactionController extends Controller
                 return api_response($request, null, 400, ['message' => $error]);
             }
             $request->merge(['transaction_amount' => $payment_validator->amount]);
+            $request->merge(['transaction_account' => $payment_validator->sender]);
             if ($res = $this->reconcile($request)) {
                 if ($res->code != 200) return api_response($request, null, 500, ['message' => $res->msg]);
             } else {
@@ -89,7 +90,7 @@ class PartnerTransactionController extends Controller
                     'transaction_details' => json_encode([
                         'gateway' => $request->type,
                         'account' => [
-                            'number' => $request->account
+                            'number' => $request->transaction_account
                         ],
                         'transaction' => [
                             'id' => $request->transaction_id,

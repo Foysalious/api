@@ -11,6 +11,7 @@ class BKashTransactionValidator implements TransactionValidator
     private $password;
     private $merchantNumber = "01799444000";
     private $amount;
+    private $sender;
 
     public function __construct(BKashTransaction $transaction)
     {
@@ -37,6 +38,7 @@ class BKashTransactionValidator implements TransactionValidator
             return BKashTransactionCodes::messages()[$res->transaction->trxStatus];
         }
         $this->amount = (double)$res->transaction->amount;
+        $this->sender = $res->transaction->sender;
         return false;
     }
 
