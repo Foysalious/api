@@ -69,7 +69,9 @@ class CategoryController extends Controller
             }]);
             array_add($category, 'total_partners', $category->partners->count());
             array_add($category, 'total_experts', $category->partnerResources->count());
-            array_add($category, 'total_services', $category->services->count());
+            array_add($category, 'total_services', $category->load(['services' => function ($q) {
+                $q->published();
+            }])->count());
             array_add($category, 'selling_points', $category->usps->each(function ($usp) {
                 removeRelationsAndFields($usp);
             }));
@@ -204,7 +206,9 @@ class CategoryController extends Controller
                         $q->select('id', 'category_id', 'unit', 'name', 'thumb', 'app_thumb', 'app_banner',
                             'short_description', 'description', 'banner', 'faqs', 'variables', 'variable_type', 'min_quantity')->published()->skip($offset)->take($limit);
                     }])->where('id', $category->id)->published()->first();
-                    $services = $this->serviceRepository->getPartnerServicesAndPartners($category->services, $location)->each(function ($service) {
+                    $services = $this->serviceRepository->getPartnerServicesAndPartners($category->load(['services' => function ($q) {
+                        $q->published();
+                    }]), $location)->each(function ($service) {
                         list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
                         removeRelationsAndFields($service);
                     });
