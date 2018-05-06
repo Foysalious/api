@@ -2,17 +2,13 @@
 
 namespace App\Sheba\Checkout;
 
-use App\Models\Location;
 use App\Models\Partner;
 use App\Models\PartnerService;
-use App\Models\PartnerServiceDiscount;
-use App\Models\ScheduleSlot;
 use App\Models\Service;
 use App\Repositories\PartnerRepository;
 use App\Repositories\PartnerServiceRepository;
 use App\Repositories\ReviewRepository;
 use App\Sheba\Partner\PartnerAvailable;
-use Carbon\Carbon;
 use DB;
 
 class PartnerList
@@ -24,7 +20,6 @@ class PartnerList
     private $date;
     private $time;
     private $partnerServiceRepository;
-    public $message = '';
 
     public function __construct($services, $date, $time, $location)
     {
@@ -47,31 +42,14 @@ class PartnerList
         return $selected_services;
     }
 
-    public function isValid()
+    private function getSelectedServiceQuantity($service, $min_quantity)
     {
-        $category_ids = $this->selected_services->pluck('category_id')->unique()->toArray();
-        $location = Location::find($this->location);
-        if (count($category_ids) > 1) {
-            $this->message = "Only one category should be selected";
-            return 0;
-        } elseif ($location) {
-            if (!$location->publication_status) {
-                $this->message = "Selected location is not published";
-                return 0;
-            }
-        } elseif (Carbon::parse($this->date) < Carbon::today()) {
-            $this->message = "Selected Date is not valid";
-            return 0;
-        } elseif (!$this->isValidTime()) {
-            $this->message = "Selected Time is not valid";
-            return 0;
+        if (isset($service->quantity)) {
+            $quantity = (double)$service->quantity;
+            return $quantity >= $min_quantity ? $quantity : $min_quantity;
+        } else {
+            return $min_quantity;
         }
-        return 1;
-    }
-
-    private function isValidTime()
-    {
-        return Carbon::parse(explode('-', $this->time)[0])->gte(Carbon::now()) ? 1 : 0;
     }
 
     public function find($partner_id = null)
@@ -101,11 +79,13 @@ class PartnerList
                 $q->published();
             })->select(DB::raw('count(*) as c'))->whereIn('services.id', $service_ids)->where([['partner_service.is_published', 1], ['partner_service.is_verified', 1]])->publishedForAll()
                 ->groupBy('partner_id')->havingRaw('c=' . count($service_ids));
-        })->published()->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet');
+        })->with(['resources' => function ($q) {
+            $q->with('profile');
+        }])->published()->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet');
         if ($partner_id != null) {
             $query = $query->where('partners.id', $partner_id);
         }
-        return $query->get()->load('resources')->map(function ($partner) {
+        return $query->get()->map(function ($partner) {
             $partner->contact_no = $partner->getContactNumber();
             return $partner;
         });
@@ -302,13 +282,4 @@ class PartnerList
         }
     }
 
-    private function getSelectedServiceQuantity($service, $min_quantity)
-    {
-        if (isset($service->quantity)) {
-            $quantity = (double)$service->quantity;
-            return $quantity >= $min_quantity ? $quantity : $min_quantity;
-        } else {
-            return $min_quantity;
-        }
-    }
 }

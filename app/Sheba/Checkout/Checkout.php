@@ -51,9 +51,8 @@ class Checkout
             $data = $this->getVoucherData($data['job_services'], $data, $partner);
             if ($order = $this->storeInDB($data, $partner_list->selected_services, $partner)) {
                 if (isset($data['email'])) {
-                    $profile = $this->updateProfile($order->customer, $data['email']);
+                    $this->updateProfile($order->customer, $data['email']);
                 }
-//                $profile = $this->customerRepository->updateProfileInfoWhilePlacingOrder($order);
             }
             return $order;
         }
@@ -307,7 +306,7 @@ class Checkout
         return $model;
     }
 
-    private function updateProfile($customer, $email)
+    private function updateProfile(Customer $customer, $email)
     {
         try {
             $profile = $customer->profile;

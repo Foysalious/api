@@ -13,6 +13,7 @@ use App\Repositories\OrderRepository;
 use App\Repositories\SmsHandler;
 use App\Sheba\Checkout\Checkout;
 use App\Sheba\Checkout\OnlinePayment;
+use App\Sheba\Checkout\Validation;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -204,7 +205,6 @@ class OrderController extends Controller
                 'sales_channel' => 'required|string',
                 'partner' => 'required',
                 'remember_token' => 'required|string',
-//                'name' => 'required|string',
                 'mobile' => 'required|string|mobile:bd',
                 'email' => 'sometimes|email',
                 'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
@@ -214,6 +214,10 @@ class OrderController extends Controller
                 'address_id' => 'required_without:address',
             ], ['mobile' => 'Invalid mobile number!']);
             $customer = $request->customer;
+            $validation = new Validation();
+            if (!$validation->isValid($request)) {
+                return api_response($request, $validation->message, 400, ['message' => $validation->message]);
+            }
             $order = new Checkout($customer);
             $order = $order->placeOrder($request);
             if ($order) {

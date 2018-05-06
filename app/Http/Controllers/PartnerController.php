@@ -16,6 +16,7 @@ use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
 use App\Sheba\Checkout\PartnerList;
 use App\Sheba\Checkout\PartnerPrice;
+use App\Sheba\Checkout\Validation;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use DB;
@@ -418,35 +419,36 @@ class PartnerController extends Controller
                 'isAvailable' => 'sometimes|required',
                 'partner' => 'sometimes|required',
             ]);
+            $validation = new Validation();
+            if (!$validation->isValid($request)) {
+                return api_response($request, $validation->message, 400, ['message' => $validation->message]);
+            }
             $partner = $request->has('partner') ? $request->partner : null;
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $location);
-            if ($partner_list->isValid()) {
-                $partner_list->find($partner);
-                if ($request->has('isAvailable')) {
-                    $partners = $partner_list->partners;
-                    $available_partners = $partners->filter(function ($partner) {
-                        return $partner->is_available == 1;
-                    });
-                    $is_available = count($available_partners) != 0 ? 1 : 0;
-                    return api_response($request, $is_available, 200, ['is_available' => $is_available, 'available_partners' => count($available_partners)]);
-                }
-                if ($partner_list->hasPartners) {
-                    $partner_list->addPricing();
-                    $partner_list->addInfo();
-                    $partner_list->calculateAverageRating();
-                    $partner_list->calculateTotalRatings();
-                    $partner_list->calculateOngoingJobs();
-                    $partner_list->sortByShebaSelectedCriteria();
-                    $partners = $partner_list->partners;
-                    $partners->each(function ($partner, $key) {
-                        array_forget($partner, 'wallet');
-                        removeRelationsAndFields($partner);
-                    });
-                    return api_response($request, $partners, 200, ['partners' => $partners->values()->all()]);
-                }
-                return api_response($request, null, 404);
+            $partner_list->find($partner);
+            if ($request->has('isAvailable')) {
+                $partners = $partner_list->partners;
+                $available_partners = $partners->filter(function ($partner) {
+                    return $partner->is_available == 1;
+                });
+                $is_available = count($available_partners) != 0 ? 1 : 0;
+                return api_response($request, $is_available, 200, ['is_available' => $is_available, 'available_partners' => count($available_partners)]);
             }
-            return api_response($request, $partner_list->message, 400, ['message' => $partner_list->message]);
+            if ($partner_list->hasPartners) {
+                $partner_list->addPricing();
+                $partner_list->addInfo();
+                $partner_list->calculateAverageRating();
+                $partner_list->calculateTotalRatings();
+                $partner_list->calculateOngoingJobs();
+                $partner_list->sortByShebaSelectedCriteria();
+                $partners = $partner_list->partners;
+                $partners->each(function ($partner, $key) {
+                    array_forget($partner, 'wallet');
+                    removeRelationsAndFields($partner);
+                });
+                return api_response($request, $partners, 200, ['partners' => $partners->values()->all()]);
+            }
+            return api_response($request, null, 404);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
