@@ -1,5 +1,6 @@
 <?php namespace Sheba\TransactionValidators;
 
+use Carbon\Carbon;
 use GuzzleHttp\Client;
 use Sheba\Transactions\BKashTransaction;
 
@@ -36,6 +37,9 @@ class BKashTransactionValidator implements TransactionValidator
         ])->getBody());
         if ($res->transaction->trxStatus != BKashTransactionCodes::getSuccessfulCode()) {
             return BKashTransactionCodes::messages()[$res->transaction->trxStatus];
+        }
+        if (Carbon::parse($res->transaction->trxTimestamp) < Carbon::parse("2018-05-07")) {
+            return "Invalid Transaction date";
         }
         $this->amount = (double)$res->transaction->amount;
         $this->sender = $res->transaction->sender;
