@@ -270,8 +270,7 @@ class PartnerOrderController extends Controller
             ]);
             $partner_order = $request->partner_order;
             $manager_resource = $request->manager_resource;
-            $job = $partner_order->jobs->whereIn('status', array(constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded'],
-                constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process']))->first();
+            $job = $partner_order->jobs->whereIn('status', array(constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Serve_Due'], constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process']))->first();
             if ($job == null) return api_response($request, null, 403);
             $partner_list = new PartnerList(json_decode($request->services), $job->schedule_date, $job->preferred_time_start . '-' . $job->preferred_time_end, $partner_order->order->location_id);
             $partner_list->find($request->partner->id);
