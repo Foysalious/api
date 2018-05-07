@@ -309,7 +309,7 @@ class PartnerController extends Controller
                 constants('JOB_STATUSES')['Schedule_Due'],
                 constants('JOB_STATUSES')['Process'],
                 constants('JOB_STATUSES')['Served'],
-                constants('JOB_STATUSES')['Serve_DUE'],
+                constants('JOB_STATUSES')['Serve_Due'],
             );
             $partner->load(['walletSetting', 'resources' => function ($q) {
                 $q->verified()->type('Handyman');
