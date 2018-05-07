@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 
 use App\Models\PartnerOrder;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -78,6 +79,7 @@ class CustomerOrderController extends Controller
             'category_name' => $category ? $category->name : null,
             'category_thumb' => $category ? $category->thumb : null,
             'schedule_date' => $job->schedule_date ? $job->schedule_date : null,
+            'schedule_date_readable' => (Carbon::parse($job->schedule_date))->format('jS F, Y'),
             'preferred_time' => $job->preferred_time ? humanReadableShebaTime($job->preferred_time) : null,
             'status' => $job->status,
             'status_color' => constants('JOB_STATUSES_COLOR')[$job->status]['customer'],
@@ -85,7 +87,7 @@ class CustomerOrderController extends Controller
             'rating' => $job->review != null ? $job->review->rating : null,
             'price' => (double)$partnerOrder->totalPrice,
             'order_code' => $partnerOrder->order->code(),
-            'created_at' => $partnerOrder->created_at->format('Y-m-d'),
+            'created_at' => $partnerOrder->created_at->format('j M \\a\\t h:i A'),
             'created_at_timestamp' => $partnerOrder->created_at->timestamp,
             'version' => $partnerOrder->getVersion()
         ));
