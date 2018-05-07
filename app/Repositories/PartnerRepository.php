@@ -42,7 +42,7 @@ class PartnerRepository
             $data = [];
             $data['id'] = $resource->id;
             $data['profile_id'] = $resource->profile_id;
-            $data['ongoing'] = $resource->jobs->whereIn('status', [constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Schedule_Due']])->count();
+            $data['ongoing'] = $resource->jobs->whereIn('status', [constants('JOB_STATUSES')['Serve_Due'],constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Schedule_Due']])->count();
             $data['completed'] = $resource->jobs->where('status', constants('JOB_STATUSES')['Served'])->count();
             $data['name'] = $resource->profile->name;
             $data['mobile'] = $resource->profile->mobile;
@@ -92,7 +92,7 @@ class PartnerRepository
         if ($status == 'new') {
             return array(constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']);
         } elseif ($status == 'ongoing') {
-            return array(constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Schedule_Due']);
+            return array(constants('JOB_STATUSES')['Serve_Due'],constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Schedule_Due']);
         } elseif ($status == 'history') {
             return array(constants('JOB_STATUSES')['Served']);
         }
