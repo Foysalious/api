@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Resource;
 
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
+use App\Models\PartnerResource;
 use App\Models\Profile;
 use App\Models\Resource;
 use App\Repositories\FileRepository;
@@ -69,10 +70,14 @@ class PersonalInformationController extends Controller
                     return api_response($request, null, 403, ['message' => 'The resource is already added with you!']);
                 }
                 $resource = Resource::find((int)$request->resource);
-                $this->createPartnerResource($partner, $resource, $pivot_columns);
+                if ($this->createPartnerResource($partner, $resource, $pivot_columns))
+                    return api_response($request, $resource, 200);
+                else
+                    return api_response($request, null, 500);
             } else {
                 try {
-                    DB::transaction(function () use ($request, $by, $partner, $pivot_columns) {
+                    $resource = '';
+                    DB::transaction(function () use ($request, $by, $partner, $pivot_columns, $resource) {
                         $mobile = formatMobile($request->mobile);
                         $profile = Profile::where('mobile', $mobile)->first();
                         if (!$profile) $profile = Profile::create(array_merge($by, ['mobile' => $mobile]));
@@ -82,12 +87,12 @@ class PersonalInformationController extends Controller
                         $resource = $this->updateInformation($request, $profile, $resource);
                         $this->createPartnerResource($partner, $resource, $pivot_columns);
                     });
+                    return api_response($request, $resource, 200);
                 } catch (QueryException $e) {
                     app('sentry')->captureException($e);
                     return api_response($request, null, 500);
                 }
             }
-            return api_response($request, $resource, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
@@ -102,7 +107,20 @@ class PersonalInformationController extends Controller
 
     private function createPartnerResource(Partner $partner, Resource $resource, $pivot_columns)
     {
-        $partner->resources()->attach($resource->id, $pivot_columns);
+        try {
+            DB::transaction(function () use ($partner, $resource, $pivot_columns) {
+                $partner->resources()->attach($resource->id, $pivot_columns);
+                $partner_resources = PartnerResource::whereIn('id', $partner->handymanResources->pluck('pivot.id')->toArray())->get();
+                $category_ids = $partner->categories->pluck('id')->toArray();
+                $partner_resources->each(function ($partner_resource) use ($category_ids) {
+                    $partner_resource->categories()->sync($category_ids);
+                });
+            });
+            return true;
+        } catch (QueryException $e) {
+            app('sentry')->captureException($e);
+            return null;
+        }
     }
 
     public function update($resource, Request $request)
