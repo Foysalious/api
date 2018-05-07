@@ -271,25 +271,31 @@ class PartnerOrderController extends Controller
             $partner_order = $request->partner_order;
             $manager_resource = $request->manager_resource;
             $job = $partner_order->jobs->whereIn('status', array(constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Serve_Due'], constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process']))->first();
-            if ($job == null) return api_response($request, null, 403);
+            if ($job == null) return api_response($request, null, 403, ['message' => "No valid job exists"]);
             $partner_list = new PartnerList(json_decode($request->services), $job->schedule_date, $job->preferred_time_start . '-' . $job->preferred_time_end, $partner_order->order->location_id);
-            $partner_list->find($request->partner->id);
-            if ($partner_list->hasPartners) {
-                $partner = $partner_list->partners->first();
-                $jobService_repo = new JobServiceRepository();
-                $job_services = $jobService_repo->createJobService($partner->services, $partner_list->selected_services, ['created_by' => $manager_resource->id, 'created_by_name' => $manager_resource->profile->name]);
-                if (!$jobService_repo->existInJob($job, $job_services)) {
-                    $job->jobServices()->saveMany($job_services);
-                    return api_response($request, null, 200);
-                } else {
-                    return api_response($request, null, 403, ['message' => 'You can not add service that is already added!']);
-                }
+            $partners = collect();
+            $partners->push($request->partner->load(['services' => function ($q) use ($partner_list) {
+                $q->whereIn('service_id', $partner_list->selected_services->pluck('id')->unique());
+            }]));
+            $partner_list->partners = $partners;
+            $partner_list->addPricing();
+            $partner = $partner_list->partners->first();
+            $jobService_repo = new JobServiceRepository();
+            $job_services = $jobService_repo->createJobService($partner->services, $partner_list->selected_services, ['created_by' => $manager_resource->id, 'created_by_name' => $manager_resource->profile->name]);
+            if (!$jobService_repo->existInJob($job, $job_services)) {
+                $job->jobServices()->saveMany($job_services);
+                return api_response($request, null, 200);
+            } else {
+                return api_response($request, null, 403, ['message' => 'You can not add service that is already added!']);
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }

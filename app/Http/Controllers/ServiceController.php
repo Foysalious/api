@@ -46,6 +46,49 @@ class ServiceController extends Controller
         }
     }
 
+    public function get($service, Request $request)
+    {
+        try {
+            $service = Service::where('id', $service)
+                ->select('id', 'name', 'unit', 'category_id', 'description', 'thumb', 'slug', 'min_quantity', 'banner', 'faqs', 'variable_type', 'variables')
+                ->publishedForAll()
+                ->first();
+            if ($service == null)
+                return api_response($request, null, 404);
+            if ($service->variable_type == 'Options') {
+                $service['first_option'] = $this->serviceRepository->getFirstOption($service);
+            }
+            $scope = [];
+            if ($request->has('scope')) {
+                $scope = $this->serviceRepository->getServiceScope($request->scope);
+            }
+            if (in_array('discount', $scope) || in_array('start_price', $scope)) {
+                $service = $this->serviceRepository->getpartnerServicePartnerDiscount($service, $request->location);
+            }
+            if (in_array('reviews', $scope)) {
+                $service->load('reviews');
+            }
+            $variables = json_decode($service->variables);
+            unset($variables->max_prices);
+            unset($variables->min_prices);
+            unset($variables->prices);
+            $services = [];
+            array_push($services, $service);
+            $service = $this->serviceRepository->addServiceInfo($services, $scope)[0];
+            $service['variables'] = $variables;
+            $category = Category::with(['parent' => function ($query) {
+                $query->select('id', 'name');
+            }])->where('id', $service->category_id)->select('id', 'name', 'parent_id')->first();
+            array_add($service, 'category_name', $category->name);
+            array_add($service, 'master_category_id', $category->parent->id);
+            array_add($service, 'master_category_name', $category->parent->name);
+            return api_response($request, $service, 200, ['service' => $service]);
+        } catch (\Exception $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+
     public function checkForValidity($service, Request $request)
     {
         $service = Service::where('id', $service)->published()->first();
