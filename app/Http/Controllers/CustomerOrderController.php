@@ -87,7 +87,7 @@ class CustomerOrderController extends Controller
             'rating' => $job->review != null ? $job->review->rating : null,
             'price' => (double)$partnerOrder->totalPrice,
             'order_code' => $partnerOrder->order->code(),
-            'created_at' => $partnerOrder->created_at->format('j M \\a\\t h:i A'),
+            'created_at' => $partnerOrder->created_at->format('Y-m-d'),
             'created_at_timestamp' => $partnerOrder->created_at->timestamp,
             'version' => $partnerOrder->getVersion()
         ));
