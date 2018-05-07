@@ -223,19 +223,22 @@ class CategoryController extends Controller
 
     private function getPriceRange(Service $service)
     {
-        $max_price = [];
-        $min_price = [];
-        if ($service->partners->isEmpty()) {
+        try {
+            $max_price = [];
+            $min_price = [];
+            if ($service->partners->count() == 0) return array(0, 0);
+            foreach ($service->partners as $partner) {
+                $prices = (array)json_decode($partner->pivot->prices);
+                $max = max($prices);
+                $min = min($prices);
+                array_push($max_price, $max);
+                array_push($min_price, $min);
+            }
+            return array((double)max($max_price) * $service->min_quantity, (double)min($min_price) * $service->min_quantity);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return array(0, 0);
         }
-        foreach ($service->partners as $partner) {
-            $prices = (array)json_decode($partner->pivot->prices);
-            $max = max($prices);
-            $min = min($prices);
-            array_push($max_price, $max);
-            array_push($min_price, $min);
-        }
-        return array((double)max($max_price) * $service->min_quantity, (double)min($min_price) * $service->min_quantity);
     }
 
     private function serviceQuestionSet($services)

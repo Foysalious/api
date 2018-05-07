@@ -52,8 +52,7 @@ class PartnerTransactionController extends Controller
             if ($error = $payment_validator->hasError()) {
                 return api_response($request, null, 400, ['message' => $error]);
             }
-            $request->merge(['transaction_amount' => $payment_validator->amount]);
-            $request->merge(['transaction_account' => $payment_validator->sender]);
+            $request->merge(['transaction_amount' => $payment_validator->amount, 'transaction_account' => $payment_validator->sender]);
             if ($res = $this->reconcile($request)) {
                 if ($res->code != 200) return api_response($request, null, 500, ['message' => $res->msg]);
             } else {
