@@ -9,9 +9,11 @@ use App\Models\Profile;
 use App\Models\Resource;
 use App\Repositories\FileRepository;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Intervention\Image\Facades\Image;
+use DB;
 
 class PersonalInformationController extends Controller
 {
@@ -69,14 +71,21 @@ class PersonalInformationController extends Controller
                 $resource = Resource::find((int)$request->resource);
                 $this->createPartnerResource($partner, $resource, $pivot_columns);
             } else {
-                $mobile = formatMobile($request->mobile);
-                $profile = Profile::where('mobile', $mobile)->first();
-                if (!$profile) $profile = Profile::create(array_merge($by, ['mobile' => $mobile]));
-                $resource = $profile->resource;
-                if ($resource) return api_response($request, null, 403, ['message' => 'There is already a resource exists at this number!']);
-                $resource = Resource::create(array_merge($by, ['remember_token' => str_random(255), 'profile_id' => $profile->id]));
-                $resource = $this->updateInformation($request, $profile, $resource);
-                $this->createPartnerResource($partner, $resource, $pivot_columns);
+                try {
+                    DB::transaction(function () use ($request, $by, $partner, $pivot_columns) {
+                        $mobile = formatMobile($request->mobile);
+                        $profile = Profile::where('mobile', $mobile)->first();
+                        if (!$profile) $profile = Profile::create(array_merge($by, ['mobile' => $mobile]));
+                        $resource = $profile->resource;
+                        if ($resource) return api_response($request, null, 403, ['message' => 'There is already a resource exists at this number!']);
+                        $resource = Resource::create(array_merge($by, ['remember_token' => str_random(255), 'profile_id' => $profile->id]));
+                        $resource = $this->updateInformation($request, $profile, $resource);
+                        $this->createPartnerResource($partner, $resource, $pivot_columns);
+                    });
+                } catch (QueryException $e) {
+                    app('sentry')->captureException($e);
+                    return api_response($request, null, 500);
+                }
             }
             return api_response($request, $resource, 200);
         } catch (ValidationException $e) {
@@ -134,7 +143,6 @@ class PersonalInformationController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -162,15 +170,9 @@ class PersonalInformationController extends Controller
             $picture = $request->file('picture');
             $profile->pro_pic = $this->fileRepository->uploadToCDN($this->makeProfilePicName($profile, $picture), $picture, 'images/profiles/');
         }
-        if ($request->has('mobile')) {
-            $profile->mobile = $request->mobile;
-        };
-        if ($request->has('name')) {
-            $profile->name = $request->name;
-        };
-        if ($request->has('address')) {
-            $profile->address = $request->address;
-        };
+        if ($request->has('mobile')) $profile->mobile = formatMobile($request->mobile);
+        if ($request->has('name')) $profile->name = $request->name;
+        if ($request->has('address')) $profile->address = $request->address;
         $profile->update();
         $resource->nid_no = $request->nid_no;
         if ($request->hasFile('nid_front') && $request->hasFile('nid_back'))
