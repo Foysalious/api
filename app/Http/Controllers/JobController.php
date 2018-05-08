@@ -57,11 +57,6 @@ class JobController extends Controller
             $customer = $request->customer;
             $job = $request->job->load(['resource.profile', 'category', 'review', 'jobServices', 'complains' => function ($q) use ($customer) {
                 $q->select('id', 'job_id', 'status', 'complain', 'complain_preset_id')
-//                    ->with(['preset' => function ($q) {
-//                    $q->select('id', 'name', 'category_id')->with(['complainCategory' => function ($q) {
-//                        $q->select('id', 'name');
-//                    }]);
-//                }])
                     ->whereHas('accessor', function ($query) use ($customer) {
                         $query->where('accessors.model_name', get_class($customer));
                     });
