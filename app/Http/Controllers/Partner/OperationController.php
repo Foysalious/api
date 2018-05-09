@@ -119,11 +119,9 @@ class OperationController extends Controller
     private function makeCategoryPartnerWithServices($categories, $by)
     {
         $services = [];
-        $category_partners = $categories->pluck('id')->toArray();
+        $category_partners = [];
         foreach ($categories as $category) {
-            $cat = [];
-            $cat[$category->id] = array_merge(['response_time_min' => 60, 'response_time_max' => 120, 'commission' => $category->min_commission], $by);
-            $category_partners = $category_partners + $cat;
+            array_push($category_partners, array_merge(['response_time_min' => 60, 'response_time_max' => 120, 'commission' => $category->min_commission, 'category_id' => $category->id], $by));
             $category->load(['services' => function ($q) {
                 $q->publishedForAll();
             }]);
