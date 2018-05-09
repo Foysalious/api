@@ -28,21 +28,23 @@ class CategoryController extends Controller
     public function index(Request $request)
     {
         try {
-            $categories = Category::where('parent_id', null)->published()->select('id', 'name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'parent_id')->get();
-            $final = [];
-            $location = $request->location;
-            foreach ($categories as $category) {
-                if ($request->has('with')) {
-                    $with = $request->with;
-                    if ($with == 'children') {
-                        $category->children->each(function (&$child) use ($location) {
-                            removeRelationsAndFields($child);
-                        });
-                    }
+            $categories = Category::where('parent_id', null)->published()->orderBy('order')->select('id', 'name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id');
+            if ($request->has('with')) {
+                if ($request->with == 'children') {
+                    $categories->with(['children' => function ($q) {
+                        $q->orderBy('order');
+                    }]);
                 }
-                array_push($final, $category);
             }
-            return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $final]) : api_response($request, $final, 404);
+            $categories = $categories->get();
+            foreach ($categories as &$category) {
+                if ($category->children) {
+                    $category->children->sortBy('order')->each(function (&$child) {
+                        removeRelationsAndFields($child);
+                    });
+                }
+            }
+            return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -197,12 +199,12 @@ class CategoryController extends Controller
                     $scope = $this->serviceRepository->getServiceScope($request->scope);
                 }
                 if ($category->parent_id == null) {
-                    $services = $this->categoryRepository->getServicesOfCategory($category->children->pluck('id'), $location, $offset, $limit);
+                    $services = $this->categoryRepository->getServicesOfCategory($category->children->orderBy('order')->pluck('id'), $location, $offset, $limit);
                     $services = $this->serviceRepository->addServiceInfo($services, $scope);
                 } else {
                     $category = Category::with(['services' => function ($q) use ($offset, $limit) {
                         $q->select('id', 'category_id', 'unit', 'name', 'thumb', 'app_thumb', 'app_banner',
-                            'short_description', 'description', 'banner', 'faqs', 'variables', 'variable_type', 'min_quantity')->published()->skip($offset)->take($limit);
+                            'short_description', 'description', 'banner', 'faqs', 'variables', 'variable_type', 'min_quantity')->published()->orderBy('order')->skip($offset)->take($limit);
                     }])->where('id', $category->id)->published()->first();
                     $services = $this->serviceRepository->getPartnerServicesAndPartners($category->services, $location)->each(function ($service) {
                         list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);

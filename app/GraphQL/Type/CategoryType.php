@@ -70,17 +70,12 @@ class CategoryType extends GraphQlType
     protected function resolveServicesField($root, $args)
     {
         $root->load(['services' => function ($q) use ($args) {
-            $q->published();
+            $q->published()->orderBy('order');
             if (isset($args['id'])) {
                 $q->whereIn('id', $args['id']);
             }
         }]);
-
-        if ($services = $root->services) {
-            return $services->sortBy('order');
-        } else {
-            return null;
-        }
+        return $root->services ? $root->services : null;
     }
 
     protected function resolveChildrenField($root, $args)
