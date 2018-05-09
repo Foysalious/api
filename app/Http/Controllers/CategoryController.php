@@ -202,7 +202,7 @@ class CategoryController extends Controller
                     $scope = $this->serviceRepository->getServiceScope($request->scope);
                 }
                 if ($category->parent_id == null) {
-                    $services = $this->categoryRepository->getServicesOfCategory($category->children->orderBy('order')->pluck('id'), $location, $offset, $limit);
+                    $services = $this->categoryRepository->getServicesOfCategory($category->children->sortBy('order')->pluck('id'), $location, $offset, $limit);
                     $services = $this->serviceRepository->addServiceInfo($services, $scope);
                 } else {
                     $category = Category::with(['services' => function ($q) use ($offset, $limit) {
