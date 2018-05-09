@@ -28,9 +28,11 @@ class CategoryController extends Controller
     public function index(Request $request)
     {
         try {
+            $with = '';
             $categories = Category::where('parent_id', null)->published()->orderBy('order')->select('id', 'name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id');
             if ($request->has('with')) {
-                if ($request->with == 'children') {
+                $with = $request->with;
+                if ($with == 'children') {
                     $categories->with(['children' => function ($q) {
                         $q->orderBy('order');
                     }]);
@@ -38,7 +40,7 @@ class CategoryController extends Controller
             }
             $categories = $categories->get();
             foreach ($categories as &$category) {
-                if ($category->children) {
+                if ($with == 'children') {
                     $category->children->sortBy('order')->each(function (&$child) {
                         removeRelationsAndFields($child);
                     });
@@ -93,11 +95,12 @@ class CategoryController extends Controller
                     removeRelationsAndFields($child);
                 });
                 $category = collect($category)->only(['name', 'banner', 'app_banner']);
-                $category->put('secondaries', $children);
+                $category->put('secondaries', $children->sortBy('order')->values()->all());
                 return api_response($request, $category->all(), 200, ['category' => $category->all()]);
             } else
                 return api_response($request, null, 404);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
