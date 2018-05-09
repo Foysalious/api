@@ -128,7 +128,6 @@ class OperationController extends Controller
                 $q->publishedForAll();
             }]);
             foreach ($category->services as $service) {
-                array_push($services, $service->id);
                 if ($service->variable_type == 'Fixed') {
                     $options = null;
                     $price = json_decode($service->variables)->price;
@@ -147,12 +146,13 @@ class OperationController extends Controller
                     $options = '[' . substr($options, 0, -1) . ']';
                     $price = ($service->variable_type == 'Options') ? json_encode(json_decode($service->variables)->prices) : "Custom";
                 }
-                $services[$service->id] = array_merge($by, [
+                array_push($services, array_merge($by, [
                     'description' => $service->description,
                     'options' => $options,
                     'prices' => $price,
-                    'is_published' => 1
-                ]);
+                    'is_published' => 1,
+                    'service_id' => $service->id
+                ]));
             }
         }
         return array($services, $category_partners);
