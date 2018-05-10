@@ -231,19 +231,31 @@ class CategoryController extends Controller
         try {
             $category = Category::find($category);
             $category->load(['reviews' => function ($q) {
-                $q->select('id', 'category_id', 'customer_id', 'rating', 'review', 'review_title')->notEmptyReview()->whereIn('rating', [4, 5])->with(['customer' => function ($q) {
+                $q->select('id', 'category_id', 'customer_id', 'rating', 'review', 'review_title')->whereIn('rating', [4, 5])->orderBy('created_at', 'desc')->with(['rates', 'customer' => function ($q) {
                     $q->with(['profile' => function ($q) {
                         $q->select('id', 'name', 'pro_pic');
                     }]);
                 }]);
             }]);
             $reviews = $category->reviews;
-            foreach ($reviews as $review) {
+            $final = [];
+            foreach ($reviews as &$review) {
+                if (count($review->rates) > 0) {
+                    foreach ($review->rates as $rate) {
+                        if (!empty($rate->rate_answer_text)) {
+                            $review->review = $rate->rate_answer_text;
+                            break;
+                        }
+                    }
+                }
                 $review['customer_name'] = $review->customer ? $review->customer->profile->name : null;
                 $review['customer_picture'] = $review->customer ? $review->customer->profile->pro_pic : null;
                 removeRelationsAndFields($review);
+                if (!empty($review->review)) {
+                    array_push($final, $review);
+                }
             }
-            return count($reviews) > 0 ? api_response($request, $category, 200, ['reviews' => $reviews]) : api_response($request, null, 404);
+            return count($final) > 0 ? api_response($request, $final, 200, ['reviews' => $final]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

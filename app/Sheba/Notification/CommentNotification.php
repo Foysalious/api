@@ -50,7 +50,6 @@ class CommentNotification
 
     private function Complain(Complain $complain)
     {
-        // dd($complain->job);
         // $this->Job($complain->job);
         notify()->department(13)->send([
             'title' => $this->authUser . " commented on complain " . $complain->id,

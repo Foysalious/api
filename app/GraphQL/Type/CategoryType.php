@@ -98,12 +98,25 @@ class CategoryType extends GraphQlType
             if (isset($args['rating'])) {
                 $q->whereIn('rating', $args['rating']);
             }
-            if (isset($args['isEmptyReview'])) {
-                $q->isEmptyReview();
-            }
-            $q->with('customer.profile', 'partner');
+            $q->with('customer.profile', 'partner', 'rates');
         }]);
-        return $root->reviews->sortByDesc('id');
+        $final = collect();
+        $reviews = $root->reviews;
+        foreach ($reviews as &$review) {
+            if (count($review->rates) > 0) {
+                foreach ($review->rates as $rate) {
+                    if (!empty($rate->rate_answer_text)) {
+                        $review->review = $rate->rate_answer_text;
+                        break;
+                    }
+                }
+            }
+            if (!empty($review->review)) {
+                $final->push($review);
+            }
+        }
+        $root->reviews = $final->sortByDesc('id');
+        return $root->reviews;
     }
 
     protected function resolveTotalPartnersField($root, $args)
