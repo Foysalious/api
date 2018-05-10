@@ -80,6 +80,7 @@ class CategoryController extends Controller
             removeRelationsAndFields($category);
             return api_response($request, $category, 200, ['category' => $category]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -114,51 +115,6 @@ class CategoryController extends Controller
         return response()->json(['msg' => 'not found', 'code' => 404]);
     }
 
-    public function getSecondaryServices($category, Request $request)
-    {
-        if ($category = $this->api->get('v1/categories/' . $category . '/secondaries')) {
-            try {
-                $secondaries = $category['secondaries'];
-                list($offset, $limit) = calculatePagination($request);
-                $location = $request->location != '' ? $request->location : 4;
-//                $service_limit = $request->service_limit != '' ? $request->service_limit : 4;
-                $scope = [];
-                if ($request->has('scope')) {
-                    $scope = $this->serviceRepository->getServiceScope($request->scope);
-                }
-                $secondaries->load(['services' => function ($q) {
-                    $q->select('id', 'category_id', 'name', 'thumb', 'banner', 'slug', 'variable_type', 'variables', 'min_quantity');
-                }]);
-                $secondaries = $secondaries->splice($offset, $limit)->all();
-                $category['secondaries'] = $secondaries;
-                if (count($secondaries) != 0) {
-                    foreach ($secondaries as $secondary) {
-                        $secondary['slug'] = str_slug($secondary->name, '-');
-                        $services = $secondary->services;
-                        if ($request->has('service_limit')) {
-                            $services = $services->take($request->service_limit);
-                        }
-                        if (in_array('discount', $scope) || in_array('start_price', $scope)) {
-                            $services = $this->serviceRepository->getpartnerServicePartnerDiscount($services, $location);
-                        }
-                        if (in_array('reviews', $scope)) {
-                            $services->load('reviews');
-                        }
-                        array_forget($secondary, 'services');
-                        $secondary['services'] = $this->serviceRepository->addServiceInfo($services, $scope);
-                    }
-                    return api_response($request, $category, 200, ['category' => $category]);
-                } else {
-                    return api_response($request, null, 404);
-                }
-            } catch (\Exception $e) {
-                return api_response($request, null, 500);
-            }
-        } else {
-            return api_response($request, null, 404);
-        }
-    }
-
     public function getPartnersOfLocation($category, $location, Request $request)
     {
         try {
@@ -174,19 +130,6 @@ class CategoryController extends Controller
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
-        }
-    }
-
-    private function getFirstValidSlot()
-    {
-        $slots = ScheduleSlot::all();
-        $current_time = Carbon::now();
-        foreach ($slots as $slot) {
-            $slot_start_time = Carbon::parse($slot->start);
-            $time_slot_key = $slot->start . '-' . $slot->end;
-            if ($slot_start_time > $current_time) {
-                return $time_slot_key;
-            }
         }
     }
 
@@ -302,6 +245,7 @@ class CategoryController extends Controller
             }
             return count($reviews) > 0 ? api_response($request, $category, 200, ['reviews' => $reviews]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
