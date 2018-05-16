@@ -39,7 +39,7 @@ class JobType extends GraphQlType
 
     protected function resolveCompletedAtField($root, $args)
     {
-        return $root->delivered_date ? $root->delivered_date->format('M jS,Y') : null;
+        return $root->delivered_date ? $root->delivered_date->format('M jS, Y') : null;
     }
 
     protected function resolveCompletedAtTimestampField($root, $args)

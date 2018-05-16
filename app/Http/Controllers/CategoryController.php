@@ -231,11 +231,7 @@ class CategoryController extends Controller
         try {
             $category = Category::find($category);
             $category->load(['reviews' => function ($q) {
-                $q->select('id', 'category_id', 'customer_id', 'rating', 'review', 'review_title')->whereIn('rating', [4, 5])->orderBy('created_at', 'desc')->with(['rates', 'customer' => function ($q) {
-                    $q->with(['profile' => function ($q) {
-                        $q->select('id', 'name', 'pro_pic');
-                    }]);
-                }]);
+                $q->select('id', 'category_id', 'customer_id', 'rating', 'review', 'review_title')->whereIn('rating', [4, 5])->orderBy('created_at', 'desc')->with(['rates', 'customer.profile']);
             }]);
             $reviews = $category->reviews;
             $final = [];
