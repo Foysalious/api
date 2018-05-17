@@ -43,14 +43,17 @@ class ResourceJobRateController extends Controller
             if ($job->status != 'Served') {
                 return api_response($request, null, 403);
             }
+            $resource = $request->resource;
             $review = $job->customerReview;
             if ($review == null) {
                 $review = new CustomerReview();
                 $review->rating = $request->rating;
                 $review->job_id = $job->id;
-                $review->reviewable_id = $resource;
+                $review->reviewable_id = $resource->id;
                 $review->reviewable_type = "App\\Models\\Resource";
                 $review->customer_id = $job->partnerOrder->order->customer_id;
+                $review->created_by = $resource->id;
+                $review->created_by_name = "Resource - " . $resource->profile->name;
                 $review->save();
             }
             return api_response($request, $review, 200);
