@@ -111,7 +111,7 @@ class RateController extends Controller
     private function initializeReviewQuestionAnswer($review, $rate_id, $qa)
     {
         $review_answer = new ReviewQuestionAnswer();
-        $review_answer->review_type = "App\\Models\\Review";
+        $review_answer->review_type = "App\\Models\\" . class_basename($review);
         $review_answer->review_id = $review->id;
         $review_answer->rate_id = (int)$rate_id;
         $review_answer->rate_question_id = $qa->question;
