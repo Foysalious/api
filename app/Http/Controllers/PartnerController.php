@@ -232,7 +232,7 @@ class PartnerController extends Controller
             }
             list($offset, $limit) = calculatePagination($request);
             $partner = $request->partner->load(['reviews' => function ($q) use ($request) {
-                $q->with(['job.partner_order.partner', 'resource.profile', 'service', 'rates']);
+                $q->with(['job.partner_order.partner', 'resource.profile', 'category', 'rates']);
                 if ($request->has('service_id')) {
                     $q->where('service_id', $request->service_id);
                 }

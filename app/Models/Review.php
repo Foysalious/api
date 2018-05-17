@@ -10,6 +10,10 @@ class Review extends Model
     {
         return $this->belongsTo(Service::class);
     }
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
 
     public function partner()
     {
