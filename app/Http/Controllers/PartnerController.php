@@ -232,7 +232,7 @@ class PartnerController extends Controller
             }
             list($offset, $limit) = calculatePagination($request);
             $partner = $request->partner->load(['reviews' => function ($q) use ($request) {
-                $q->with(['job.partner_order.partner', 'resource.profile', 'service']);
+                $q->with(['job.partner_order.partner', 'resource.profile', 'service', 'rates']);
                 if ($request->has('service_id')) {
                     $q->where('service_id', $request->service_id);
                 }
@@ -247,15 +247,27 @@ class PartnerController extends Controller
                 $breakdown = $this->reviewRepository->getReviewBreakdown($reviews);
                 $partner = $this->reviewRepository->getGeneralReviewInformation($partner);
                 $avg_rating = $this->reviewRepository->getAvgRating($reviews);
-                $reviews = $reviews->filter(function ($item, $key) {
-                    return $item->review != '' || $item->review != null;
-                })->each(function ($review, $key) {
+                $final = collect();
+                foreach ($reviews as &$review) {
+                    if (count($review->rates) > 0) {
+                        foreach ($review->rates as $rate) {
+                            if (!empty($rate->rate_answer_text)) {
+                                $review->review = $rate->rate_answer_text;
+                                break;
+                            }
+                        }
+                    }
+                    if (!empty($review->review)) {
+                        $final->push($review);
+                    }
+                }
+                $reviews = $final->each(function ($review, $key) {
                     $review['order_id'] = $review->job->partner_order->id;
                     $review['order_code'] = $review->job->partner_order->code();
                     $review['partner'] = $review->job->partner_order->partner->name;
                     $review['resource_name'] = ($review->resource) ? $review->resource->profile->name : null;
                     $review['resource_pic'] = ($review->resource) ? $review->resource->profile->pro_pic : null;
-                    $review['service_name'] = $review->service->name;
+                    $review['service_name'] = $review->category ? $review->category->name : null;
                     removeRelationsAndFields($review);
                 })->sortByDesc('created_at');
                 removeRelationsAndFields($partner);
@@ -268,6 +280,7 @@ class PartnerController extends Controller
             );
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
