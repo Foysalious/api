@@ -79,7 +79,22 @@ class JobController extends Controller
             $job_collection->put('partner_name', $job->partnerOrder->partner->name);
             $job_collection->put('status', $job->status);
             $job_collection->put('rating', $job->review != null ? $job->review->rating : null);
-            $job_collection->put('review', $job->review != null ? $job->review->review : null);
+            $cus_review = null;
+            if ($review = $job->review) {
+                if (!empty($review->review)) {
+                    $cus_review = $review->review;
+                } else {
+                    if (count($review->rates) > 0) {
+                        foreach ($review->rates as $rate) {
+                            if (!empty($rate->rate_answer_text)) {
+                                $cus_review = $rate->rate_answer_text;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            $job_collection->put('review', $cus_review);
             $job_collection->put('price', (double)$job->partnerOrder->totalPrice);
             $job_collection->put('isDue', (double)$job->partnerOrder->due > 0 ? 1 : 0);
             $job_collection->put('order_code', $job->partnerOrder->order->code());
