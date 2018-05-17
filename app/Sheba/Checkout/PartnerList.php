@@ -9,6 +9,7 @@ use App\Repositories\PartnerRepository;
 use App\Repositories\PartnerServiceRepository;
 use App\Repositories\ReviewRepository;
 use App\Sheba\Partner\PartnerAvailable;
+use Carbon\Carbon;
 use DB;
 
 class PartnerList
@@ -57,6 +58,8 @@ class PartnerList
         $this->partners = $this->findPartnersByServiceAndLocation((int)$partner_id);
         $this->partners->load(['services' => function ($q) {
             $q->whereIn('service_id', $this->selected_services->pluck('id')->unique());
+        }, 'categories' => function ($q) {
+            $q->where('categories.id', $this->selected_services->pluck('category_id')->unique()->first());
         }]);
         $selected_option_services = $this->selected_services->where('variable_type', 'Options');
         $this->filterByOption($selected_option_services);
@@ -112,13 +115,24 @@ class PartnerList
     private function addAvailability()
     {
         $this->partners->load(['workingHours', 'leaves']);
-        $this->partners->each(function ($partner, $key) {
-            $partner['is_available'] = (new PartnerAvailable($partner))->available($this->date, $this->time, $this->selected_services->first()->category_id);
+        $category_id = $this->selected_services->first()->category_id;
+        $this->partners->each(function ($partner) use ($category_id) {
+            $partner['is_available'] = $this->isWithinPreparationTime($partner, $category_id) && (new PartnerAvailable($partner))->available($this->date, $this->time, $category_id) ? 1 : 0;
         });
         $available_partners = $this->partners->where('is_available', 1);
         if ($available_partners->count() > 1) {
             $this->rejectShebaHelpDesk();
         }
+    }
+
+    public function isWithinPreparationTime($partner, $category_id)
+    {
+        $category_preparation_time_minutes = $partner->categories->where('id', $category_id)->first()->preparation_time_minutes;
+        if ($category_preparation_time_minutes == 0) return 1;
+        $start_time = Carbon::parse($this->date . explode('-', $this->time)[0]);
+        $end_time = Carbon::parse($this->date . explode('-', $this->time)[1]);
+        $preparation_time = Carbon::createFromTime(Carbon::now()->hour)->addMinute(61)->addMinute($category_preparation_time_minutes);
+        return $preparation_time->lte($start_time) || $preparation_time->between($start_time, $end_time) ? 1 : 0;
     }
 
     public function addPricing()
