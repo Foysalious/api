@@ -127,7 +127,7 @@ class PartnerList
 
     public function isWithinPreparationTime($partner, $category_id)
     {
-        $category_preparation_time_minutes = $partner->categories->where('id', $category_id)->first()->preparation_time_minutes;
+        $category_preparation_time_minutes = $partner->categories->where('id', $category_id)->first()->pivot->preparation_time_minutes;
         if ($category_preparation_time_minutes == 0) return 1;
         $start_time = Carbon::parse($this->date . explode('-', $this->time)[0]);
         $end_time = Carbon::parse($this->date . explode('-', $this->time)[1]);
