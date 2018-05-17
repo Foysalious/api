@@ -111,6 +111,7 @@ class ReviewController extends Controller
                 return api_response($request, null, 403);
             }
             $review = $job->review;
+            $customer = $request->customer;
             if ($review == null) {
                 $review = new Review();
                 $review->rating = $request->rating;
@@ -118,12 +119,16 @@ class ReviewController extends Controller
                 $review->resource_id = $job->resource_id;
                 $review->partner_id = $job->partner_order->partner_id;
                 $review->category_id = $job->category_id;
-                $review->customer_id = $customer;
+                $review->customer_id = $customer->id;
+                $review->created_by = $customer->id;
+                $review->created_by_name = "Customer - " . $customer->profile->name;
                 $review->save();
 
             } else {
                 $review->rating = $request->rating;
                 $review->review = $request->review;
+                $review->updated_by = $customer->id;
+                $review->updated_by_name = "Customer - " . $customer->profile->name;
                 $review->update();
             }
             return api_response($request, $review, 200);
