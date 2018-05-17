@@ -30,6 +30,7 @@ class RateController extends Controller
             $rates = $rates->sortBy('value')->values()->all();
             return api_response($request, $rates, 200, ['rates' => $rates, 'rate_message' => 'Rate this job']);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -63,10 +64,8 @@ class RateController extends Controller
                 }
             }
             return api_response($request, 1, 200);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -100,10 +99,8 @@ class RateController extends Controller
                 }
             }
             return api_response($request, 1, 200);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
