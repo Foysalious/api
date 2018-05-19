@@ -100,7 +100,7 @@ class CategoryType extends GraphQlType
             if (isset($args['rating'])) {
                 $q->whereIn('rating', $args['rating']);
             }
-            $q->with('customer.profile', 'partner', 'rates');
+            $q->with('customer.profile', 'job', 'partner', 'rates');
         }]);
         return $root->reviews->each(function ($review) {
             $review->review = $review->calculated_review;
