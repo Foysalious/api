@@ -10,6 +10,7 @@ class Review extends Model
     {
         return $this->belongsTo(Service::class);
     }
+
     public function category()
     {
         return $this->belongsTo(Category::class);
@@ -48,5 +49,19 @@ class Review extends Model
     public function rates()
     {
         return $this->hasMany(ReviewQuestionAnswer::class, 'review_id');
+    }
+
+    public function getCalculatedReviewAttribute()
+    {
+        if (!empty($this->review)) {
+            return $this->review;
+        } elseif (count($this->rates) > 0) {
+            foreach ($this->rates as $rate) {
+                if (!empty($rate->rate_answer_text)) {
+                    return $rate->rate_answer_text;
+                }
+            }
+        }
+        return "";
     }
 }

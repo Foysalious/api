@@ -247,21 +247,11 @@ class PartnerController extends Controller
                 $breakdown = $this->reviewRepository->getReviewBreakdown($reviews);
                 $partner = $this->reviewRepository->getGeneralReviewInformation($partner);
                 $avg_rating = $this->reviewRepository->getAvgRating($reviews);
-                $final = collect();
-                foreach ($reviews as &$review) {
-                    if (count($review->rates) > 0) {
-                        foreach ($review->rates as $rate) {
-                            if (!empty($rate->rate_answer_text)) {
-                                $review->review = $rate->rate_answer_text;
-                                break;
-                            }
-                        }
-                    }
-                    if (!empty($review->review)) {
-                        $final->push($review);
-                    }
-                }
-                $reviews = $final->each(function ($review, $key) {
+                $reviews = $reviews->each(function ($review) {
+                    $review->review = $review->calculated_review;
+                })->filter(function ($review) {
+                    return !empty($review->review);
+                })->each(function ($review, $key) {
                     $review['order_id'] = $review->job->partner_order->id;
                     $review['order_code'] = $review->job->partner_order->code();
                     $review['partner'] = $review->job->partner_order->partner->name;

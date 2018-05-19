@@ -233,25 +233,15 @@ class CategoryController extends Controller
             $category->load(['reviews' => function ($q) {
                 $q->select('id', 'category_id', 'customer_id', 'rating', 'review', 'review_title')->whereIn('rating', [4, 5])->orderBy('created_at', 'desc')->with(['rates', 'customer.profile']);
             }]);
-            $reviews = $category->reviews;
-            $final = [];
-            foreach ($reviews as &$review) {
-                if (count($review->rates) > 0) {
-                    foreach ($review->rates as $rate) {
-                        if (!empty($rate->rate_answer_text)) {
-                            $review->review = $rate->rate_answer_text;
-                            break;
-                        }
-                    }
-                }
+            $reviews = $category->reviews->each(function ($review) {
+                $review->review = $review->calculated_review;
                 $review['customer_name'] = $review->customer ? $review->customer->profile->name : null;
                 $review['customer_picture'] = $review->customer ? $review->customer->profile->pro_pic : null;
                 removeRelationsAndFields($review);
-                if (!empty($review->review)) {
-                    array_push($final, $review);
-                }
-            }
-            return count($final) > 0 ? api_response($request, $final, 200, ['reviews' => $final]) : api_response($request, null, 404);
+            })->filter(function ($review) {
+                return !empty($review->review);
+            })->sortByDesc('id')->values()->all();
+            return count($reviews) > 0 ? api_response($request, $reviews, 200, ['reviews' => $reviews]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

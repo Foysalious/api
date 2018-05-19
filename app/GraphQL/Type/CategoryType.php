@@ -102,23 +102,11 @@ class CategoryType extends GraphQlType
             }
             $q->with('customer.profile', 'partner', 'rates');
         }]);
-        $final = collect();
-        $reviews = $root->reviews;
-        foreach ($reviews as &$review) {
-            if (count($review->rates) > 0) {
-                foreach ($review->rates as $rate) {
-                    if (!empty($rate->rate_answer_text)) {
-                        $review->review = $rate->rate_answer_text;
-                        break;
-                    }
-                }
-            }
-            if (!empty($review->review)) {
-                $final->push($review);
-            }
-        }
-        $root->reviews = $final->sortByDesc('id');
-        return $root->reviews;
+        return $root->reviews->each(function ($review) {
+            $review->review = $review->calculated_review;
+        })->filter(function ($review) {
+            return !empty($review->review);
+        })->sortByDesc('id');
     }
 
     protected function resolveTotalPartnersField($root, $args)
