@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use App\CarRentalJobDetail;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\CiCalculator;
@@ -46,6 +47,11 @@ class Job extends Model
     public function jobServices()
     {
         return $this->hasMany(JobService::class);
+    }
+
+    public function carRentalJobDetail()
+    {
+        return $this->hasOne(CarRentalJobDetail::class);
     }
 
     public function resource()
