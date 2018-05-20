@@ -72,6 +72,15 @@ class ResourceJobController extends Controller
             if ($jobs) {
                 $job = $this->resourceJobRepository->calculateActionsForThisJob($jobs[0], $job);
             }
+
+            $job['pick_up_address']     = $job->carRentalJobDetail ? $job->carRentalJobDetail->pick_up_address : null;
+            $job['destination_address'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->destination_address : null;
+            $job['drop_off_date']       = $job->carRentalJobDetail ? Carbon::parse($job->carRentalJobDetail->drop_off_date)->format('jS F, Y') : null;
+            $job['drop_off_time']       = $job->carRentalJobDetail ? Carbon::parse($job->carRentalJobDetail->drop_off_time)->format('g:i A') : null;
+            $job['estimated_distance']  = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_distance : null;
+            $job['estimated_time']      = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_time : null;
+            array_forget($job, 'carRentalJobDetail');
+
             return api_response($request, $job, 200, ['job' => $job]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
