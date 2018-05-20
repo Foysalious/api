@@ -235,6 +235,7 @@ class PartnerList
             $service['is_percentage'] = $discount->__get('discount_percentage');
             $service['discounted_price'] = $discount->__get('discounted_price');
             $service['original_price'] = $discount->__get('original_price');
+            $service['unit_price'] = $discount->__get('unit_price');
 
             $total_service_price['discount'] += $service['discount'];
             $total_service_price['discounted_price'] += $service['discounted_price'];
@@ -243,6 +244,7 @@ class PartnerList
             $service['name'] = $selected_service->name;
             $service['option'] = $selected_service->option;
             $service['quantity'] = $selected_service->quantity;
+            $service['unit'] = $selected_service->unit;
             list($option, $variables) = $this->getVariableOptionOfService($selected_service, $selected_service->option);
             $service['questions'] = json_decode($variables);
             array_push($services, $service);
