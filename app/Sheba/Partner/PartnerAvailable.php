@@ -29,8 +29,13 @@ class PartnerAvailable
         if (!$this->_worksAtDayAndTime($date, $preferred_time)) {
             return 0;
         }
-        if (!((scheduler($this->partner)->isAvailable($date, explode('-', $preferred_time)[0], $category_id)))->get('is_available')) {
-            return 0;
+        $rent_car_ids = collect(explode(',', env('RENT_CAR_IDS')))->map(function ($id) {
+            return (int)$id;
+        })->toArray();
+        if (!in_array($category_id, $rent_car_ids)) {
+            if (!((scheduler($this->partner)->isAvailable($date, explode('-', $preferred_time)[0], $category_id)))->get('is_available')) {
+                return 0;
+            }
         }
         return 1;
     }
