@@ -26,7 +26,7 @@ abstract class SalesStatsBeforeToday
 
     public function get()
     {
-        if(!$this->getFromRedis()) {
+        if (!$this->getFromRedis()) {
             $this->saveToRedis();
         }
         return $this;
@@ -44,15 +44,15 @@ abstract class SalesStatsBeforeToday
         $year_start = $startEndDate['start_time'];
         $year_end = $startEndDate['end_time'];
         $this->yearTimeFrame = [$year_start, $year_end];
-        Carbon::setWeekStartsAt(Carbon::SATURDAY);
-        Carbon::setWeekEndsAt(Carbon::FRIDAY);
+        Carbon::setWeekStartsAt(Carbon::SUNDAY);
+        Carbon::setWeekEndsAt(Carbon::SATURDAY);
         $this->weekTimeFrame = [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()];
     }
 
     private function getFromRedis()
     {
         $data = Cache::store('redis')->get($this->redisCacheName);
-        if($this->redisHasProperData($data)) {
+        if ($this->redisHasProperData($data)) {
             $this->week = $data->week;
             $this->month = $data->month;
             $this->year = $data->year;
@@ -73,5 +73,6 @@ abstract class SalesStatsBeforeToday
     }
 
     abstract protected function calculateFromDB();
+
     abstract protected function sumDataForATimeFrame(SalesStat $timeFrameData, Collection $data);
 }
