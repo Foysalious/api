@@ -214,8 +214,8 @@ class OrderController extends Controller
                 'address_id' => 'required_without:address',
             ], ['mobile' => 'Invalid mobile number!']);
             $customer = $request->customer;
-            $validation = new Validation();
-            if (!$validation->isValid($request)) {
+            $validation = new Validation($request);
+            if (!$validation->isValid()) {
                 $sentry = app('sentry');
                 $sentry->user_context(['request' => $request->all(), 'message' => $validation->message]);
                 $sentry->captureException(new \Exception($validation->message));

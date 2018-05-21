@@ -11,6 +11,8 @@ use App\Repositories\ReviewRepository;
 use App\Sheba\Partner\PartnerAvailable;
 use Carbon\Carbon;
 use DB;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 
 class PartnerList
 {
@@ -21,12 +23,16 @@ class PartnerList
     private $date;
     private $time;
     private $partnerServiceRepository;
+    private $rentCarServicesId;
 
     public function __construct($services, $date, $time, $location)
     {
         $this->location = (int)$location;
         $this->date = $date;
         $this->time = $time;
+        $this->rentCarServicesId = collect(explode(',', env('RENT_CAR_SERVICE_IDS')))->map(function ($id) {
+            return (int)$id;
+        })->toArray();
         $this->selected_services = $this->getSelectedServices($services);
         $this->partnerServiceRepository = new PartnerServiceRepository();
     }
@@ -35,9 +41,30 @@ class PartnerList
     {
         $selected_services = collect();
         foreach ($services as $service) {
-            $selected_service = Service::select('id', 'name', 'category_id', 'min_quantity', 'variable_type', 'variables')->where('id', $service->id)->publishedForAll()->first();
+            $selected_service = Service::select('id', 'name', 'unit', 'category_id', 'min_quantity', 'variable_type', 'variables')->where('id', $service->id)->publishedForAll()->first();
             $selected_service['option'] = $service->option;
-            $selected_service['quantity'] = $this->getSelectedServiceQuantity($service, (double)$selected_service->min_quantity);
+            $selected_service['pick_up_location_id'] = isset($service->pick_up_location_id) ? $service->pick_up_location_id : null;
+            $selected_service['pick_up_location_type'] = isset($service->pick_up_location_type) ? $service->pick_up_location_type : null;
+            $selected_service['destination_location_id'] = isset($service->destination_location_id) ? $service->destination_location_id : null;
+            $selected_service['destination_location_type'] = isset($service->destination_location_type) ? $service->destination_location_type : null;
+            $selected_service['drop_off_date'] = isset($service->drop_off_date) ? $service->drop_off_date : null;
+            $selected_service['drop_off_time'] = isset($service->drop_off_time) ? $service->drop_off_time : null;
+            if (in_array($selected_service->id, $this->rentCarServicesId)) {
+                $model = "App\\Models\\" . $service->pick_up_location_type;
+                $origin = $model::find($service->pick_up_location_id);
+                $selected_service['pick_up_address_geo'] = json_encode(array('lat' => $origin->lat, 'lng' => $origin->lng));
+                $selected_service['pick_up_address'] = $origin->name;
+                $model = "App\\Models\\" . $service->destination_location_type;
+                $destination = $model::find($service->destination_location_id);
+                $selected_service['destination_address'] = $origin->name;
+                $selected_service['destination_address_geo'] = json_encode(array('lat' => $destination->lat, 'lng' => $destination->lng));
+                $data = $this->getDistanceCalculationResult($origin->lat . ',' . $origin->lng, $destination->lat . ',' . $destination->lng);
+                $selected_service['quantity'] = (double)($data->rows[0]->elements[0]->distance->value) / 1000;
+                $selected_service['estimated_distance'] = $selected_service['quantity'];
+                $selected_service['estimated_time'] = (double)($data->rows[0]->elements[0]->duration->value) / 60;
+            } else {
+                $selected_service['quantity'] = $this->getSelectedServiceQuantity($service, (double)$selected_service->min_quantity);
+            }
             $selected_services->push($selected_service);
         }
         return $selected_services;
@@ -50,6 +77,21 @@ class PartnerList
             return $quantity >= $min_quantity ? $quantity : $min_quantity;
         } else {
             return $min_quantity;
+        }
+    }
+
+
+    private function getDistanceCalculationResult($origin, $destination)
+    {
+        $client = new Client();
+        try {
+            $res = $client->request('GET', 'https://maps.googleapis.com/maps/api/distancematrix/json',
+                [
+                    'query' => ['origins' => $origin, 'destinations' => $destination, 'key' => env('GOOGLE_DISTANCEMATRIX_KEY'), 'mode' => 'driving']
+                ]);
+            return json_decode($res->getBody());
+        } catch (RequestException $e) {
+            return null;
         }
     }
 

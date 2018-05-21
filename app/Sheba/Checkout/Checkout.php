@@ -2,6 +2,7 @@
 
 namespace App\Sheba\Checkout;
 
+use App\CarRentalJobDetail;
 use App\Library\PortWallet;
 use App\Models\Affiliation;
 use App\Models\Category;
@@ -47,6 +48,7 @@ class Checkout
             $data = $this->makeOrderData($request);
             $data['payment_method'] = $request->payment_method == 'cod' ? 'cash-on-delivery' : 'online';
             $data['job_services'] = $this->createJobService($partner->services, $partner_list->selected_services, $data);
+            $data['car_rental_job_detail'] = $this->createCarRentalDetail($partner_list->selected_services->first(), $data);
             $data['category_id'] = $partner_list->selected_services->first()->category_id;
             $data = $this->getVoucherData($data['job_services'], $data, $partner);
             if ($order = $this->storeInDB($data, $partner_list->selected_services, $partner)) {
@@ -124,12 +126,32 @@ class Checkout
                 ]);
                 $job = $this->getAuthor($job, $data);
                 $job->jobServices()->saveMany($data['job_services']);
+                $data['car_rental_job_detail']->job_id = $job->id;
+                $data['car_rental_job_detail']->save();
             });
         } catch (QueryException $e) {
             app('sentry')->captureException($e);
             return false;
         }
         return $order;
+    }
+
+    private function createCarRentalDetail($service, $data)
+    {
+        $car_rental_detail = new CarRentalJobDetail();
+        $car_rental_detail->pick_up_location_id = $service->pick_up_location_id;
+        $car_rental_detail->pick_up_location_type = $service->pick_up_location_type;
+        $car_rental_detail->pick_up_address_geo = $service->pick_up_address_geo;
+        $car_rental_detail->pick_up_address = $service->pick_up_address;
+        $car_rental_detail->destination_location_id = $service->destination_location_id;
+        $car_rental_detail->destination_location_type = $service->destination_location_type;
+        $car_rental_detail->destination_address_geo = $service->destination_address_geo;
+        $car_rental_detail->destination_address = $service->destination_address;
+        $car_rental_detail->drop_off_date = $service->drop_off_date;
+        $car_rental_detail->drop_off_time = $service->drop_off_time;
+        $car_rental_detail->estimated_distance = $service->estimated_distance;
+        $car_rental_detail->estimated_time = $service->estimated_time;
+        return $car_rental_detail;
     }
 
     private function createJobService($services, $selected_services, $data)

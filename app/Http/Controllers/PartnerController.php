@@ -422,8 +422,8 @@ class PartnerController extends Controller
                 'isAvailable' => 'sometimes|required',
                 'partner' => 'sometimes|required',
             ]);
-            $validation = new Validation();
-            if (!$validation->isValid($request)) {
+            $validation = new Validation($request);
+            if (!$validation->isValid()) {
                 $sentry = app('sentry');
                 $sentry->user_context(['request' => $request->all(), 'message' => $validation->message]);
                 $sentry->captureException(new \Exception($validation->message));
