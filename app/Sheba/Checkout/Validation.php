@@ -29,7 +29,7 @@ class Validation
         if (count($category_id) > 1) {
             $this->message = "Only one category should be selected";
             return 0;
-        } elseif (!in_array($category_id[0], $this->rentCarId)) {
+        } elseif (in_array($category_id[0], $this->rentCarId)) {
             if (count($selected_services) > 1) {
                 $this->message = "Multiple services selected for rent a car";
                 return 0;

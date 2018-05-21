@@ -126,8 +126,13 @@ class Checkout
                 ]);
                 $job = $this->getAuthor($job, $data);
                 $job->jobServices()->saveMany($data['job_services']);
-                $data['car_rental_job_detail']->job_id = $job->id;
-                $data['car_rental_job_detail']->save();
+                $rent_car_ids = collect(explode(',', env('RENT_CAR_IDS')))->map(function ($id) {
+                    return (int)$id;
+                })->toArray();
+                if (in_array(($selected_services->first())->category_id, $rent_car_ids)) {
+                    $data['car_rental_job_detail']->job_id = $job->id;
+                    $data['car_rental_job_detail']->save();
+                }
             });
         } catch (QueryException $e) {
             app('sentry')->captureException($e);
