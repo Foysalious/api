@@ -85,12 +85,12 @@ class JobController extends Controller
             $job_collection->put('isDue', (double)$job->partnerOrder->due > 0 ? 1 : 0);
             $job_collection->put('order_code', $job->partnerOrder->order->code());
 
-            $job_collection->put('pick_up_address', $job->carRentalJobDetail->pick_up_address);
-            $job_collection->put('destination_address', $job->carRentalJobDetail->destination_address);
-            $job_collection->put('drop_off_date', (Carbon::parse($job->carRentalJobDetail->drop_off_date)->format('jS F, Y')));
-            $job_collection->put('drop_off_time', (Carbon::parse($job->carRentalJobDetail->drop_off_time)->format('g:i A')));
-            $job_collection->put('estimated_distance', $job->carRentalJobDetail->estimated_distance);
-            $job_collection->put('estimated_time', $job->carRentalJobDetail->estimated_time);
+            $job_collection->put('pick_up_address', $job->carRentalJobDetail ? $job->carRentalJobDetail->pick_up_address : null);
+            $job_collection->put('destination_address', $job->carRentalJobDetail ? $job->carRentalJobDetail->destination_address : null);
+            $job_collection->put('drop_off_date', $job->carRentalJobDetail ? (Carbon::parse($job->carRentalJobDetail->drop_off_date)->format('jS F, Y')) : null);
+            $job_collection->put('drop_off_time', $job->carRentalJobDetail ? (Carbon::parse($job->carRentalJobDetail->drop_off_time)->format('g:i A')) : null);
+            $job_collection->put('estimated_distance', $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_distance : null);
+            $job_collection->put('estimated_time', $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_time : null);
 
             if (count($job->jobServices) == 0) {
                 $services = collect();
