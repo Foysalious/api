@@ -50,7 +50,7 @@ class Validation
 
     private function isValidDate($date)
     {
-        return Carbon::parse($date) < Carbon::today();
+        return Carbon::parse($date) >= Carbon::today();
     }
 
     private function isValidTime($time)
