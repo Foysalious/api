@@ -55,7 +55,7 @@ class Validation
 
     private function isValidTime($time)
     {
-        return Carbon::parse(explode('-', $time)[0])->gte(Carbon::now()) ? 1 : 0;
+        return Carbon::parse($this->request->date . explode('-', $time)[0])->gte(Carbon::now()) ? 1 : 0;
     }
 
     private function getSelectedServices($services)
