@@ -3,7 +3,6 @@
 namespace App\Sheba\Checkout;
 
 use App\CarRentalJobDetail;
-use App\Library\PortWallet;
 use App\Models\Affiliation;
 use App\Models\Category;
 use App\Models\Customer;
@@ -22,7 +21,6 @@ use App\Repositories\VoucherRepository;
 use Illuminate\Database\QueryException;
 use DB;
 use Illuminate\Http\Request;
-use Redis;
 use Sheba\Voucher\VoucherSuggester;
 
 class Checkout
@@ -44,11 +42,13 @@ class Checkout
         $partner_list->find($request->partner);
         if ($partner_list->hasPartners) {
             $partner = $partner_list->partners->first();
-            $request->merge(['customer' => $this->customer->id]);
             $data = $this->makeOrderData($request);
             $data['payment_method'] = $request->payment_method == 'cod' ? 'cash-on-delivery' : 'online';
             $data['job_services'] = $this->createJobService($partner->services, $partner_list->selected_services, $data);
-            $data['car_rental_job_detail'] = $this->createCarRentalDetail($partner_list->selected_services->first(), $data);
+            $rent_car_ids = array_map('intval', explode(',', env('RENT_CAR_IDS')));
+            if (in_array(($partner_list->selected_services->first())->category_id, $rent_car_ids)) {
+                $data['car_rental_job_detail'] = $this->createCarRentalDetail($partner_list->selected_services->first(), $data);
+            }
             $data['category_id'] = $partner_list->selected_services->first()->category_id;
             $data = $this->getVoucherData($data['job_services'], $data, $partner);
             if ($order = $this->storeInDB($data, $partner_list->selected_services, $partner)) {
@@ -63,7 +63,7 @@ class Checkout
     private function makeOrderData($request)
     {
         $data['location_id'] = $request->location;
-        $data['customer_id'] = $request->customer;
+        $data['customer_id'] = $this->customer->id;
         if ($request->has('resource')) {
             $data['resource_id'] = $request->resource;
         };
@@ -126,10 +126,7 @@ class Checkout
                 ]);
                 $job = $this->getAuthor($job, $data);
                 $job->jobServices()->saveMany($data['job_services']);
-                $rent_car_ids = collect(explode(',', env('RENT_CAR_IDS')))->map(function ($id) {
-                    return (int)$id;
-                })->toArray();
-                if (in_array(($selected_services->first())->category_id, $rent_car_ids)) {
+                if (isset($data['car_rental_job_detail'])) {
                     $data['car_rental_job_detail']->job_id = $job->id;
                     $data['car_rental_job_detail']->save();
                 }

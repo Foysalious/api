@@ -30,9 +30,7 @@ class PartnerList
         $this->location = (int)$location;
         $this->date = $date;
         $this->time = $time;
-        $this->rentCarServicesId = collect(explode(',', env('RENT_CAR_SERVICE_IDS')))->map(function ($id) {
-            return (int)$id;
-        })->toArray();
+        $this->rentCarServicesId = array_map('intval', explode(',', env('RENT_CAR_SERVICE_IDS')));
         $this->selected_services = $this->getSelectedServices($services);
         $this->partnerServiceRepository = new PartnerServiceRepository();
     }
@@ -41,15 +39,15 @@ class PartnerList
     {
         $selected_services = collect();
         foreach ($services as $service) {
-            $selected_service = Service::select('id', 'name', 'unit', 'category_id', 'min_quantity', 'variable_type', 'variables')->where('id', $service->id)->publishedForAll()->first();
+            $selected_service = Service::where('id', $service->id)->publishedForAll()->first();
             $selected_service['option'] = $service->option;
-            $selected_service['pick_up_location_id'] = isset($service->pick_up_location_id) ? $service->pick_up_location_id : null;
-            $selected_service['pick_up_location_type'] = isset($service->pick_up_location_type) ? $service->pick_up_location_type : null;
-            $selected_service['destination_location_id'] = isset($service->destination_location_id) ? $service->destination_location_id : null;
-            $selected_service['destination_location_type'] = isset($service->destination_location_type) ? $service->destination_location_type : null;
-            $selected_service['drop_off_date'] = isset($service->drop_off_date) ? $service->drop_off_date : null;
-            $selected_service['drop_off_time'] = isset($service->drop_off_time) ? $service->drop_off_time : null;
             if (in_array($selected_service->id, $this->rentCarServicesId)) {
+                $selected_service['pick_up_location_id'] = isset($service->pick_up_location_id) ? $service->pick_up_location_id : null;
+                $selected_service['pick_up_location_type'] = isset($service->pick_up_location_type) ? $service->pick_up_location_type : null;
+                $selected_service['destination_location_id'] = isset($service->destination_location_id) ? $service->destination_location_id : null;
+                $selected_service['destination_location_type'] = isset($service->destination_location_type) ? $service->destination_location_type : null;
+                $selected_service['drop_off_date'] = isset($service->drop_off_date) ? $service->drop_off_date : null;
+                $selected_service['drop_off_time'] = isset($service->drop_off_time) ? $service->drop_off_time : null;
                 $model = "App\\Models\\" . $service->pick_up_location_type;
                 $origin = $model::find($service->pick_up_location_id);
                 $selected_service['pick_up_address_geo'] = json_encode(array('lat' => $origin->lat, 'lng' => $origin->lng));
