@@ -175,8 +175,10 @@ class CategoryController extends Controller
             $max_price = [];
             $min_price = [];
             if ($service->partners->count() == 0) return array(0, 0);
-            foreach ($service->partners as $partner) {
-                $prices = (array)json_decode($partner->pivot->prices);
+            foreach ($service->partners->where('status', 'Verified') as $partner) {
+                $partner_service = $partner->pivot;
+                if(!($partner_service->is_verified && $partner_service->is_published)) continue;
+                $prices = (array)json_decode($partner_service->prices);
                 $max = max($prices);
                 $min = min($prices);
                 array_push($max_price, $max);
