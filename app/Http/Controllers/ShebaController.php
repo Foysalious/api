@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\SendFaqEmail;
+use App\Models\AppVersion;
 use App\Models\Job;
 use App\Models\OfferShowcase;
 use App\Models\Resource;
@@ -145,6 +146,16 @@ class ShebaController extends Controller
     public function getVersions(Request $request)
     {
         try {
+            if ($request->has('version') && $request->has('app')) {
+                $version = (int)$request->version;
+                $app = $request->app;
+                $versions = AppVersion::where('tag', $app)->where('version_code', '>', $version)->get();
+                $data = array(
+                    'has_update' => count($versions) > 0 ? 1 : 0,
+                    'is_critical' => count($versions->where('is_critical', 1)) > 0 ? 1 : 0
+                );
+                return api_response($request, $data, 200, ['data' => $data]);
+            }
             $apps = json_decode(Redis::get('app_versions'));
             if ($apps == null) {
                 $apps = $this->scrapeAppVersionsAndStoreInRedis();

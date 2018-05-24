@@ -48,7 +48,7 @@ class Review extends Model
 
     public function rates()
     {
-        return $this->hasMany(ReviewQuestionAnswer::class, 'review_id');
+        return $this->morphMany(ReviewQuestionAnswer::class, 'review');
     }
 
     public function getCalculatedReviewAttribute()
