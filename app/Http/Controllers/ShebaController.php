@@ -145,6 +145,15 @@ class ShebaController extends Controller
     public function getVersions(Request $request)
     {
         try {
+            if ($request->has('version') && $request->has('app')) {
+                $version = (int)$request->version;
+                $app = $request->app;
+
+                return api_response($request, 1, 200, ['data' => array(
+                    'has_update' => 1,
+                    'is_critical' => 1
+                )]);
+            }
             $apps = json_decode(Redis::get('app_versions'));
             if ($apps == null) {
                 $apps = $this->scrapeAppVersionsAndStoreInRedis();
