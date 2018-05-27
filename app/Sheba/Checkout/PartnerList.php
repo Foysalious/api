@@ -192,6 +192,7 @@ class PartnerList
         }]);
         foreach ($this->partners as $partner) {
             $partner['total_jobs'] = $partner->jobs->count();
+            $partner['total_jobs_of_category'] = $partner->jobs->where('category_id', $this->selected_services->pluck('category_id')->unique()->first())->count();
         }
     }
 

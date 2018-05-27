@@ -29,12 +29,15 @@ class JobController extends Controller
     {
         try {
             $this->validate($request, [
-                'filter' => 'required|string|in:ongoing,history'
+                'filter' => 'sometimes|string|in:ongoing,history'
             ]);
-            $filter = $request->filter;
+            $filter = $request->has('filter') ? $request->filter : null;
             $customer = $request->customer->load(['orders' => function ($q) use ($filter) {
                 $q->with(['partnerOrders' => function ($q) use ($filter) {
-                    $q->$filter()->with(['partner', 'jobs' => function ($q) {
+                    if ($filter) {
+                        $q->$filter();
+                    }
+                    $q->with(['partner', 'jobs' => function ($q) {
                         $q->with(['resource.profile', 'category', 'review']);
                     }]);
                 }]);
@@ -47,6 +50,7 @@ class JobController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -61,7 +65,7 @@ class JobController extends Controller
                         $query->where('accessors.model_name', get_class($customer));
                     });
             }]);
-            
+
             $job->partnerOrder->calculate(true);
             $job_collection = collect();
             $job_collection->put('id', $job->id);
