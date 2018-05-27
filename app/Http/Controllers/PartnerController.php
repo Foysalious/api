@@ -3,9 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Partner;
-use App\Models\PartnerTransaction;
-use App\Models\RateAnswer;
-use App\Models\Service;
+use App\Models\PartnerResource;
 use App\Repositories\DiscountRepository;
 use App\Repositories\NotificationRepository;
 use App\Repositories\PartnerOrderRepository;
@@ -93,13 +91,16 @@ class PartnerController extends Controller
             $resource_jobs = $job_with_review->groupBy('resource_id');
             $all_resources = collect();
             foreach ($resource_jobs as $resource_job) {
-                $all_resources->push(collect([
-                    'name' => $resource_job[0]->resource->profile->name,
-                    'mobile' => $resource_job[0]->resource->profile->mobile,
-                    'picture' => $resource_job[0]->resource->profile->pro_pic,
-                    'total_rating' => $resource_job->count(),
-                    'avg_rating' => round($resource_job->avg('review.rating'), 2),
-                ]));
+                if ($partner_resource = PartnerResource::where('partner_id', $partner->id)->where('resource_id', $resource_job[0]->resource_id)->first()) {
+                    $all_resources->push(collect([
+                        'name' => $resource_job[0]->resource->profile->name,
+                        'mobile' => $resource_job[0]->resource->profile->mobile,
+                        'picture' => $resource_job[0]->resource->profile->pro_pic,
+                        'total_rating' => $resource_job->count(),
+                        'avg_rating' => round($resource_job->avg('review.rating'), 2),
+                    ]));
+                }
+
             }
             $all_resources = $all_resources->take(4);
             $info->put('resources', $all_resources->values()->all());
