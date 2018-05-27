@@ -199,6 +199,7 @@ class OrderController extends Controller
     public function store($customer, Request $request)
     {
         try {
+            $request->merge(['mobile' => trim($request->mobile)]);
             $this->validate($request, [
                 'location' => 'required',
                 'services' => 'required|string',

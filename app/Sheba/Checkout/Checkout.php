@@ -67,7 +67,7 @@ class Checkout
         if ($request->has('resource')) {
             $data['resource_id'] = $request->resource;
         };
-        $data['delivery_mobile'] = $request->mobile;
+        $data['delivery_mobile'] = formatMobile(trim($request->mobile));
         if ($request->has('name')) {
             $data['delivery_name'] = $request->name;
         }
