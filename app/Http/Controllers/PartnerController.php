@@ -91,7 +91,7 @@ class PartnerController extends Controller
             $resource_jobs = $job_with_review->groupBy('resource_id');
             $all_resources = collect();
             foreach ($resource_jobs as $resource_job) {
-                if ($partner_resource = PartnerResource::where('partner_id', $partner->id)->where('resource_id', $resource_job[0]->resource_id)->first()) {
+                if ($partner_resource = PartnerResource::where('partner_id', $partner->id)->where('resource_id', $resource_job[0]->resource_id)->first() && $resource_job[0]->resource->is_verified) {
                     $all_resources->push(collect([
                         'name' => $resource_job[0]->resource->profile->name,
                         'mobile' => $resource_job[0]->resource->profile->mobile,
@@ -100,7 +100,6 @@ class PartnerController extends Controller
                         'avg_rating' => round($resource_job->avg('review.rating'), 2),
                     ]));
                 }
-
             }
             $all_resources = $all_resources->take(4);
             $info->put('resources', $all_resources->values()->all());
@@ -118,11 +117,7 @@ class PartnerController extends Controller
             $info->put('categories', $partner->categories->each(function ($category) {
                 removeRelationsAndFields($category);
             }));
-            $info->put('compliments', []);
-//            $compliments = RateAnswer::select('id', 'badge', 'answer')->inRandomOrder()->take(5)->get();
-//            $info->put('compliments', $compliments->each(function (&$compliment) {
-//                array_add($compliment, 'count', rand(5, 10));
-//            }));
+            $info->put('compliments', []);;
             $info->put('total_resources', $partner->resources->count());
             $info->put('total_jobs', $partner->jobs->count());
             $info->put('total_rating', $partner->reviews->count());
