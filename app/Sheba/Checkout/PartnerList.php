@@ -43,18 +43,18 @@ class PartnerList
             $selected_service['option'] = $service->option;
             $selected_service['pick_up_location_id'] = isset($service->pick_up_location_id) ? $service->pick_up_location_id : null;
             $selected_service['pick_up_location_type'] = isset($service->pick_up_location_type) ? $service->pick_up_location_type : null;
+            $selected_service['pick_up_address'] = isset($service->pick_up_address) ? $service->pick_up_address : null;
             $selected_service['destination_location_id'] = isset($service->destination_location_id) ? $service->destination_location_id : null;
             $selected_service['destination_location_type'] = isset($service->destination_location_type) ? $service->destination_location_type : null;
+            $selected_service['destination_address'] = isset($service->destination_address) ? $service->destination_address : null;
             $selected_service['drop_off_date'] = isset($service->drop_off_date) ? $service->drop_off_date : null;
             $selected_service['drop_off_time'] = isset($service->drop_off_time) ? $service->drop_off_time : null;
             if (in_array($selected_service->id, $this->rentCarServicesId)) {
                 $model = "App\\Models\\" . $service->pick_up_location_type;
                 $origin = $model::find($service->pick_up_location_id);
                 $selected_service['pick_up_address_geo'] = json_encode(array('lat' => $origin->lat, 'lng' => $origin->lng));
-                $selected_service['pick_up_address'] = $origin->name;
                 $model = "App\\Models\\" . $service->destination_location_type;
                 $destination = $model::find($service->destination_location_id);
-                $selected_service['destination_address'] = $origin->name;
                 $selected_service['destination_address_geo'] = json_encode(array('lat' => $destination->lat, 'lng' => $destination->lng));
                 $data = $this->getDistanceCalculationResult($origin->lat . ',' . $origin->lng, $destination->lat . ',' . $destination->lng);
                 $selected_service['quantity'] = (double)($data->rows[0]->elements[0]->distance->value) / 1000;
