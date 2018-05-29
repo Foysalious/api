@@ -177,7 +177,7 @@ class CategoryController extends Controller
             if ($service->partners->count() == 0) return array(0, 0);
             foreach ($service->partners->where('status', 'Verified') as $partner) {
                 $partner_service = $partner->pivot;
-                if(!($partner_service->is_verified && $partner_service->is_published)) continue;
+                if (!($partner_service->is_verified && $partner_service->is_published)) continue;
                 $prices = (array)json_decode($partner_service->prices);
                 $max = max($prices);
                 $min = min($prices);
@@ -232,6 +232,7 @@ class CategoryController extends Controller
     {
         try {
             $category = Category::find($category);
+            if (!$category) return api_response($request, null, 404);
             $category->load(['reviews' => function ($q) {
                 $q->select('id', 'category_id', 'customer_id', 'rating', 'review', 'review_title')->whereIn('rating', [4, 5])->orderBy('created_at', 'desc')->with(['rates', 'customer.profile']);
             }]);
