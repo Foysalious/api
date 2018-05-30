@@ -22,6 +22,8 @@ class JobType extends GraphQlType
             'price' => ['type' => Type::float()],
             'status' => ['type' => Type::string()],
             'pickup_address' => ['type' => Type::string()],
+            'pickup_area' => ['type' => Type::string()],
+            'destination_area' => ['type' => Type::string()],
             'destination_address' => ['type' => Type::string()],
             'schedule_date' => ['type' => Type::string()],
             'schedule_date_timestamp' => ['type' => Type::int()],
@@ -121,6 +123,32 @@ class JobType extends GraphQlType
     protected function resolveDestinationAddressField($root)
     {
         return $root->carRentalJobDetail ? $root->carRentalJobDetail->destination_address : null;
+    }
+
+    protected function resolvePickupAreaField($root)
+    {
+        if ($root->carRentalJobDetail) {
+            if ($root->carRentalJobDetail->pick_up_location_id) {
+                $model_name = $root->carRentalJobDetail->pick_up_location_type;
+                $model = $model_name::find((int)$root->carRentalJobDetail->pick_up_location_id);
+                return $model->name;
+            }
+        } else {
+            return null;
+        }
+    }
+
+    protected function resolveDestinationAreaField($root)
+    {
+        if ($root->carRentalJobDetail) {
+            if ($root->carRentalJobDetail->destination_id) {
+                $model_name = $root->carRentalJobDetail->destination_type;
+                $model = $model_name::find((int)$root->carRentalJobDetail->destination_id);
+                return $model->name;
+            }
+        } else {
+            return null;
+        }
     }
 
 }
