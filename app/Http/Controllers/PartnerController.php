@@ -101,7 +101,7 @@ class PartnerController extends Controller
                     ]));
                 }
             }
-            $all_resources = $all_resources->take(4);
+            $all_resources = $all_resources->sortByDesc('avg_rating')->take(4);
             $info->put('resources', $all_resources->values()->all());
             $reviews = [];
             $job_with_review->filter(function ($job) {
