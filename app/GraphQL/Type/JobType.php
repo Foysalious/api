@@ -129,9 +129,7 @@ class JobType extends GraphQlType
     {
         if ($root->carRentalJobDetail) {
             if ($root->carRentalJobDetail->pick_up_location_id) {
-                $model_name = $root->carRentalJobDetail->pick_up_location_type;
-                $model = $model_name::find((int)$root->carRentalJobDetail->pick_up_location_id);
-                return $model->name;
+                return $root->carRentalJobDetail->pickUpLocation->name;
             }
         } else {
             return null;
@@ -142,9 +140,7 @@ class JobType extends GraphQlType
     {
         if ($root->carRentalJobDetail) {
             if ($root->carRentalJobDetail->destination_id) {
-                $model_name = $root->carRentalJobDetail->destination_type;
-                $model = $model_name::find((int)$root->carRentalJobDetail->destination_id);
-                return $model->name;
+                return $root->carRentalJobDetail->destinationLocation->name;
             }
         } else {
             return null;

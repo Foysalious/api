@@ -65,7 +65,7 @@ class PartnerController extends Controller
                 $q->whereHas('resource', function ($query) {
                     $query->verified();
                 })->with(['resource' => function ($q) {
-                    $q->select('resources.id', 'profile_id')->with('profile');
+                    $q->select('resources.id', 'profile_id', 'is_verified')->with('profile');
                 }, 'review' => function ($q) {
                     $q->select('id', 'job_id', 'resource_id', 'customer_id', 'rating', 'review')->with('customer.profile');
                 }]);

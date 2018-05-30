@@ -13,4 +13,14 @@ class CarRentalJobDetail extends Model
     {
         return $this->belongsTo(Job::class);
     }
+
+    public function pickUpLocation()
+    {
+        return $this->morphTo();
+    }
+
+    public function destinationLocation()
+    {
+        return $this->morphTo();
+    }
 }
