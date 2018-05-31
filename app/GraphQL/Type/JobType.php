@@ -139,7 +139,7 @@ class JobType extends GraphQlType
     protected function resolveDestinationAreaField($root)
     {
         if ($root->carRentalJobDetail) {
-            if ($root->carRentalJobDetail->destination_id) {
+            if ($root->carRentalJobDetail->destination_location_id) {
                 return $root->carRentalJobDetail->destinationLocation->name;
             }
         } else {
