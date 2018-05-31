@@ -1,6 +1,5 @@
 <?php namespace App\Models;
 
-use App\CarRentalJobDetail;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\CiCalculator;
@@ -126,7 +125,7 @@ class Job extends Model
         $this->profit = formatTaka($this->grossPrice - $this->totalCost);
         $this->margin = ($this->totalPrice != 0) ? (($this->grossPrice - $this->totalCost) * 100) / $this->totalPrice : 0;
         $this->margin = formatTaka($this->margin);
-        if(!$price_only) {
+        if (!$price_only) {
             $this->calculateComplexityIndex();
         }
         $this->isInWarranty = $this->isInWarranty();
@@ -172,7 +171,7 @@ class Job extends Model
 
     public function isInWarranty()
     {
-        if($this->status != $this->jobStatuses["Served"] || !$this->delivered_date) return false;
+        if ($this->status != $this->jobStatuses["Served"] || !$this->delivered_date) return false;
         return Carbon::now()->between($this->delivered_date, $this->delivered_date->addDays($this->warranty));
     }
 

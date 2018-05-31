@@ -1,8 +1,7 @@
 <?php
 
-namespace App;
+namespace App\Models;
 
-use App\Jobs\Job;
 use Illuminate\Database\Eloquent\Model;
 
 class CarRentalJobDetail extends Model
