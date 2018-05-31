@@ -2,8 +2,8 @@
 
 namespace App\Sheba\Checkout;
 
-use App\CarRentalJobDetail;
 use App\Models\Affiliation;
+use App\Models\CarRentalJobDetail;
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
