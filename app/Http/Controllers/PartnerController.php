@@ -330,6 +330,7 @@ class PartnerController extends Controller
                 'schedule_due_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Schedule_Due'])->count(),
                 'process_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Process'])->count(),
                 'served_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Served'])->count(),
+                'serve_due_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Serve_Due'])->count(),
                 'total_resources' => $resource_ids->count(),
                 'assigned_resources' => $assigned_resource_ids->count(),
                 'unassigned_resources' => $unassigned_resource_ids->count(),
