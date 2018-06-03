@@ -309,10 +309,13 @@ class PartnerController extends Controller
                 constants('JOB_STATUSES')['Served'],
                 constants('JOB_STATUSES')['Serve_Due'],
             );
+
             $partner->load(['walletSetting', 'resources' => function ($q) {
                 $q->verified()->type('Handyman');
             }, 'jobs' => function ($q) use ($statuses) {
                 $q->info()->status($statuses)->with('resource');
+            },'orders' => function ($q){
+                $q->ongoing();
             }]);
             $jobs = $partner->jobs;
             $resource_ids = $partner->resources->pluck('id')->unique();
@@ -331,6 +334,7 @@ class PartnerController extends Controller
                 'process_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Process'])->count(),
                 'served_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Served'])->count(),
                 'serve_due_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Serve_Due'])->count(),
+                'total_ongoing_order' => $partner->orders->count(),
                 'total_resources' => $resource_ids->count(),
                 'assigned_resources' => $assigned_resource_ids->count(),
                 'unassigned_resources' => $unassigned_resource_ids->count(),
