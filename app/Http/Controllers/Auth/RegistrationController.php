@@ -35,12 +35,13 @@ class RegistrationController extends Controller
         try {
             $from = implode(',', constants('FROM'));
 
-            $this->validate($request, ['name' => 'required', 'email' => 'required|email|unique:profiles', 'password' => 'required|min:6', 'kit_code' => 'required|string', 'from' => "required|in:$from"]);
+            $this->validate($request, ['email' => 'required|email|unique:profiles', 'password' => 'required|min:6', 'kit_code' => 'required|string', 'from' => "required|in:$from"]);
+            $name = trim($request->first_name .' '. $request->last_name);
             if ($kit_data = $this->fbKit->authenticateKit($request->kit_code)) {
                 $from = $this->profileRepository->getAvatar($request->from);
                 $profile = $this->profileRepository->ifExist(formatMobile($kit_data['mobile']), 'mobile');
                 if (!$profile) {
-                    $profile = $this->profileRepository->store(['mobile' => formatMobile($kit_data['mobile']), 'mobile_verified' => 1, 'name' => $request->name, 'email' => $request->email, 'password' => bcrypt($request->password)]);
+                    $profile = $this->profileRepository->store(['mobile' => formatMobile($kit_data['mobile']), 'mobile_verified' => 1, 'name' => $name, 'email' => $request->email, 'password' => bcrypt($request->password)]);
                 } else {
                     return api_response($request, null, 400, ['message' => 'Mobile already exists! Please login']);
 //                    $this->profileRepository->update($profile, ['email' => $request->email]);
@@ -49,7 +50,6 @@ class RegistrationController extends Controller
                 $info = $this->profileRepository->getProfileInfo($from, Profile::find($profile->id), $request);
                 return $info ? api_response($request, $info, 200, ['info' => $info]) : api_response($request, null, 404);
             }
-
             return api_response($request, null, 403);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
