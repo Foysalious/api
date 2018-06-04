@@ -24,6 +24,7 @@ class CategoryGroupsQuery extends Query
     {
         return [
             'id' => ['name' => 'id', 'type' => Type::listOf(Type::int())],
+            'for' => ['name' => 'for', 'type' => Type::string()],
         ];
     }
 
@@ -34,8 +35,12 @@ class CategoryGroupsQuery extends Query
             if (isset($args['id'])) {
                 $query->whereIn('id', $args['id']);
             }
+            if (isset($args['for'])) {
+                $for = 'publishedFor' . ucwords($args['for']);
+                $query->$for();
+            }
         };
-        $category_group = $category_group->where($where)->get();
+        $category_group = $category_group->where($where)->orderBy('order', 'asc')->get();
         return $category_group ? $category_group : null;
     }
 }

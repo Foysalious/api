@@ -9,9 +9,7 @@ use App\Repositories\PartnerServiceRepository;
 use App\Sheba\Checkout\Discount;
 use App\Sheba\Checkout\PartnerList;
 use Carbon\Carbon;
-use function GuzzleHttp\Psr7\str;
 use Illuminate\Http\Request;
-//use Sheba\Voucher\PromotionList;
 use Sheba\Voucher\PromotionList;
 use Sheba\Voucher\VoucherSuggester;
 
@@ -35,6 +33,7 @@ class PromotionController extends Controller
             }
             return $customer->promotions->count() > 0 ? api_response($request, $customer->promotions, 200, ['promotions' => $customer->promotions]) : api_response($request, $customer->promotions, 404);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
 
@@ -45,8 +44,9 @@ class PromotionController extends Controller
         try {
             $promotion = new PromotionList($request->customer);
             list($promotion, $msg) = $promotion->add(ucwords($request->promo));
-            return $promotion != false ? api_response($request, $promotion, 200, ['promotion' => $promotion]) : api_response($request, null, 404);
+            return $promotion != false ? api_response($request, $promotion, 200, ['promotion' => $promotion]) : api_response($request, null, 404, ['message' => $msg]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
