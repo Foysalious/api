@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Affiliate;
+use App\Models\AffiliateTransaction;
 use App\Models\Affiliation;
 use App\Repositories\NotificationRepository;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Validator;
 use DB;
@@ -72,31 +74,41 @@ class AffiliationController extends Controller
 
     public function create($affiliate, Request $request)
     {
-        $request->merge(['mobile' => formatMobile($request->mobile)]);
-        if ($msg = $this->_validateCreateRequest($request)) {
-            return response()->json(['code' => 500, 'msg' => $msg]);
-        }
-        $affiliate = Affiliate::find($affiliate);
-        if ($affiliate != null) {
-            if ($affiliate->profile->mobile == $request->mobile) {
-                return response()->json(['code' => 501, 'msg' => "You can't refer yourself!"]);
+        try {
+            $request->merge(['mobile' => formatMobile($request->mobile)]);
+            if ($msg = $this->_validateCreateRequest($request)) {
+                return response()->json(['code' => 500, 'msg' => $msg]);
             }
-            if ($affiliate->verification_status != 'verified' || $affiliate->is_suspended == 1) {
-                return response()->json(['code' => 502, 'msg' => "You're not verified!"]);
-            }
-            $affiliation = new Affiliation();
-            $affiliation->affiliate_id = $affiliate->id;
-            $affiliation->customer_name = $request->name;
-            $affiliation->customer_mobile = $request->mobile;
-            $affiliation->service = $request->service;
-            if ($affiliation->save()) {
-                (new NotificationRepository())->forAffiliation($affiliate, $affiliation);
-                return response()->json(['code' => 200]);
+            $affiliate = Affiliate::find($affiliate);
+            if ($affiliate != null) {
+                if ($affiliate->profile->mobile == $request->mobile) {
+                    return response()->json(['code' => 501, 'msg' => "You can't refer yourself!"]);
+                }
+                if ($affiliate->verification_status != 'verified' || $affiliate->is_suspended == 1) {
+                    return response()->json(['code' => 502, 'msg' => "You're not verified!"]);
+                }
+                $affiliation = new Affiliation();
+                try {
+                    DB::transaction(function () use ($request, $affiliate, $affiliation) {
+                        $this->affiliationStore($request, $affiliate, $affiliation);
+                        $this->affiliateWalletUpdate($affiliate);
+                        $this->affiliateTransaction($affiliate, $affiliation);
+                    });
+                } catch (QueryException $q) {
+                    $affiliation = null;
+                }
+                if ($affiliation != null) {
+                    (new NotificationRepository())->forAffiliation($affiliate, $affiliation);
+                    return api_response($request, 1, 200, ['massage'=> ['en' => 'Your refer have been submitted. You received 2TK bonus add in your wallet.', 'bd' => 'আপনার রেফারেন্সটি গ্রহন করা হয়েছে । আপনার ওয়ালেট ২ টাকা বোনাস যোগ করা হয়েছে।']]);
+                } else {
+                    return api_response($request, null, 500);
+                }
             } else {
-                return response()->json(['code' => 404]);
+                return api_response($request, null, 404);
             }
-        } else {
-            return response()->json(['code' => 404]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
         }
     }
 
@@ -106,6 +118,32 @@ class AffiliationController extends Controller
             'mobile' => 'required|string|mobile:bd',
         ], ['mobile' => 'Invalid mobile number!']);
         return $validator->fails() ? $validator->errors()->all()[0] : false;
+    }
+
+    private function affiliationStore($request, $affiliate, $affiliation)
+    {
+        $affiliation->affiliate_id = $affiliate->id;
+        $affiliation->customer_name = $request->name;
+        $affiliation->customer_mobile = $request->mobile;
+        $affiliation->service = $request->service;
+        $affiliation->save();
+    }
+
+    private function affiliateWalletUpdate($affiliate)
+    {
+        $affiliate->wallet += 2;
+        $affiliate->update();
+    }
+
+    private function affiliateTransaction($affiliate, $affiliation)
+    {
+        $affiliate_transaction = new AffiliateTransaction();
+        $affiliate_transaction->affiliate_id = $affiliate->id;
+        $affiliate_transaction->affiliation_id = $affiliation->id;
+        $affiliate_transaction->type = "Credit";
+        $affiliate_transaction->log = "You have received 2 tk";
+        $affiliate_transaction->amount = 2;
+        $affiliate_transaction->save();
     }
 
 }
