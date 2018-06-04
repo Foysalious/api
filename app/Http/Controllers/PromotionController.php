@@ -43,7 +43,7 @@ class PromotionController extends Controller
     {
         try {
             $promotion = new PromotionList($request->customer);
-            list($promotion, $msg) = $promotion->add(ucwords($request->promo));
+            list($promotion, $msg) = $promotion->add(strtoupper($request->promo));
             return $promotion != false ? api_response($request, $promotion, 200, ['promotion' => $promotion]) : api_response($request, null, 404, ['message' => $msg]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
