@@ -79,13 +79,10 @@ class AffiliationController extends Controller
             if ($msg = $this->_validateCreateRequest($request)) {
                 return response()->json(['code' => 500, 'msg' => $msg]);
             }
-            $affiliate = Affiliate::find($affiliate);
+            $affiliate = Affiliate::where('id', $affiliate)->where('verification_status', 'verified')->orwhere('is_suspended', 0)->first();
             if ($affiliate != null) {
                 if ($affiliate->profile->mobile == $request->mobile) {
                     return response()->json(['code' => 501, 'msg' => "You can't refer yourself!"]);
-                }
-                if ($affiliate->verification_status != 'verified' || $affiliate->is_suspended == 1) {
-                    return response()->json(['code' => 502, 'msg' => "You're not verified!"]);
                 }
                 $affiliation = new Affiliation();
                 try {
