@@ -318,6 +318,11 @@ class PartnerController extends Controller
                 $q->ongoing();
             }]);
             $jobs = $partner->jobs;
+            $total_ongoing_order = 0;
+            foreach ($partner->orders as $partnerOrder)
+            {
+              $total_ongoing_order += $partnerOrder->jobs->whereIn('status', ['Accepted','Schedule Due','Process','Serve Due','Served'])->count();
+            }
             $resource_ids = $partner->resources->pluck('id')->unique();
             $assigned_resource_ids = $jobs->whereIn('status', [constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Schedule_Due']])->pluck('resource_id')->unique();
             $unassigned_resource_ids = $resource_ids->diff($assigned_resource_ids);
@@ -334,7 +339,8 @@ class PartnerController extends Controller
                 'process_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Process'])->count(),
                 'served_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Served'])->count(),
                 'serve_due_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Serve_Due'])->count(),
-                'total_ongoing_order' => $partner->orders->count(),
+                'total_ongoing_order' => $total_ongoing_order,
+                'total_open_complain' => 10,
                 'total_resources' => $resource_ids->count(),
                 'assigned_resources' => $assigned_resource_ids->count(),
                 'unassigned_resources' => $unassigned_resource_ids->count(),
