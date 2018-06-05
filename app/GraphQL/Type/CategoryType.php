@@ -105,7 +105,7 @@ class CategoryType extends GraphQlType
         return $root->reviews->each(function ($review) {
             $review->review = $review->calculated_review;
         })->filter(function ($review) {
-            return (!empty($review->review) && $review->rating == 5);
+            return (!empty($review->review));
         })->unique('customer_id')->sortByDesc('id');
     }
 
