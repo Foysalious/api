@@ -242,8 +242,8 @@ class CategoryController extends Controller
                 $review['customer_picture'] = $review->customer ? $review->customer->profile->pro_pic : null;
                 removeRelationsAndFields($review);
             })->filter(function ($review) {
-                return !empty($review->review);
-            })->sortByDesc('id')->values()->all();
+                return (!empty($review->review) && $review->rating == 5);
+            })->unique('customer_id')->sortByDesc('id')->values()->all();
             return count($reviews) > 0 ? api_response($request, $reviews, 200, ['reviews' => $reviews]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

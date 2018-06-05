@@ -105,8 +105,8 @@ class CategoryType extends GraphQlType
         return $root->reviews->each(function ($review) {
             $review->review = $review->calculated_review;
         })->filter(function ($review) {
-            return !empty($review->review);
-        })->sortByDesc('id');
+            return (!empty($review->review) && $review->rating == 5);
+        })->unique('customer_id')->sortByDesc('id');
     }
 
     protected function resolveTotalPartnersField($root, $args)
