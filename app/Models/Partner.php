@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Carbon\Carbon;
+use Sheba\Dal\Complain\Model as Complain;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Voucher\VoucherCodeGenerator;
 use DB;
@@ -92,6 +93,11 @@ class Partner extends Model
     public function jobs()
     {
         return $this->hasManyThrough(Job::class, PartnerOrder::class);
+    }
+
+    public function complains()
+    {
+        return $this->hasMany(Complain::class);
     }
 
     public function payments()
