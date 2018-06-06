@@ -1,9 +1,11 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Jenssegers\Mongodb\Eloquent\HybridRelations;
 
 class Location extends Model
 {
+    use HybridRelations;
     protected $fillable = [
         'name',
         'city_id',
@@ -33,6 +35,11 @@ class Location extends Model
     public function scopeHasGeoInformation($query)
     {
         return $query->where('geo_informations', '<>', null);
+    }
+
+    public function hyperLocal()
+    {
+        return $this->hasOne(HyperLocal::class);
     }
 
 }

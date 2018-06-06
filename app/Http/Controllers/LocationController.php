@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\City;
+use App\Models\HyperLocal;
 use App\Models\Location;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -15,8 +17,37 @@ use Sheba\Location\Distance\DistanceStrategy;
 
 class LocationController extends Controller
 {
-    public function getAllLocations()
+    public function index(Request $request)
     {
+        try {
+            $cities = City::whereHas('locations', function ($q) {
+                $q->published();
+            })->with(['locations' => function ($q) {
+                $q->select('id', 'city_id', 'name', 'geo_informations');
+            }])->select('id', 'name')->get();
+            foreach ($cities as $city) {
+                foreach ($city->locations as &$location) {
+                    if ($location->geo_informations) {
+                        $geo = json_decode($location->geo_informations);
+                        $location->center = isset($geo->center) ? $geo->center : null;
+                        array_forget($location, 'geo_informations');
+                    }
+                }
+            }
+            if (count($cities) > 0) {
+                return api_response($request, $cities, 200, ['cities' => $cities]);
+            } else {
+                return api_response($request, null, 404);
+            }
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getAllLocations(Request $request)
+    {
+
         $locations = Location::select('id', 'name')->where([
             ['name', 'NOT LIKE', '%Rest%'],
             ['publication_status', 1]
@@ -38,30 +69,45 @@ class LocationController extends Controller
                 'lat' => 'required|numeric',
                 'lng' => 'required|numeric',
             ]);
-            $current = new Coords($request->lat, $request->lng);
-            $locations = Location::whereNotNull('geo_informations')->published()->get();
-            $to = $locations->map(function ($location) {
-                $geo = json_decode($location->geo_informations);
-                return new Coords(floatval($geo->lat), floatval($geo->lng), $location->id);
-            })->toArray();
-            $distance = (new Distance(DistanceStrategy::$VINCENTY))->matrix();
-            $results = $distance->from([$current])->to($to)->sortedDistance()[0];
-            $final = collect();
-            foreach ($results as $key => $result) {
-                $location = $locations->where('id', $key)->first();
-                if ($result <= (double)json_decode($location->geo_informations)->radius * 1000) {
-                    $final->push($location);
-                    break;
-                }
+            $hyper_local = HyperLocal::where('location', 'geoIntersects', [
+                '$geometry' => [
+                    'type' => 'Point',
+                    'coordinates' => [(double)$request->lng, (double)$request->lat],
+                ],
+            ])->with('location')->first();
+            if ($hyper_local) {
+                return api_response($request, $hyper_local->location, 200, ['location' => collect($hyper_local->location)->only(['id', 'name'])]);
+            } else {
+                return api_response($request, null, 404);
             }
-            if ($final->count() == 0) {
-                $final->push($locations->where('id', array_keys($results)[0])->first());
-            }
-            return api_response($request, $final->first(), 200, ['location' => collect($final->first())->only(['id', 'name'])]);
+//            $current = new Coords($request->lat, $request->lng);
+//            $to = $hyper_locals->filter(function ($hyper_local) {
+//                return $hyper_local->location->publication_status == 1;
+//            })->map(function ($hyper_local) {
+//                $geo = json_decode($hyper_local->location->geo_informations);
+//                return new Coords(floatval($geo->lat), floatval($geo->lng), $hyper_local->location->id);
+//            })->toArray();
+//            dd($to);
+//            $distance = (new Distance(DistanceStrategy::$VINCENTY))->matrix();
+//            $results = $distance->from([$current])->to($to)->sortedDistance()[0];
+//            $final = collect();
+//            foreach ($results as $key => $result) {
+//                dd($result);
+//                $location = $locations->where('id', $key)->first();
+//                if ($result <= (double)json_decode($location->geo_informations)->radius * 1000) {
+//                    $final->push($location);
+//                    break;
+//                }
+//            }
+//            if ($final->count() == 0) {
+//                $final->push($locations->where('id', array_keys($results)[0])->first());
+//            }
+//            return api_response($request, $final->first(), 200, ['location' => collect($final->first())->only(['id', 'name'])]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
