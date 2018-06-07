@@ -37,6 +37,9 @@ class CategoryType extends GraphQlType
             'children' => [
                 'type' => Type::listOf(GraphQL::type('Category'))
             ],
+            'partners' => [
+                'type' => Type::listOf(GraphQL::type('Partner'))
+            ],
             'parent' => [
                 'type' => GraphQL::type('Category')
             ],
@@ -186,6 +189,16 @@ class CategoryType extends GraphQlType
     {
         $root->load('usps');
         return $root->usps;
+    }
+
+    protected function resolvePartnersField($root, $args)
+    {
+        $root->load(['partners' => function ($q) {
+            $q->where('category_partner.is_verified', 1)->with(['jobs', 'reviews', 'resources' => function ($q) {
+                $q->verified();
+            }])->verified();
+        }]);
+        return $root->partners;
     }
 
     private function getFirstValidSlot()

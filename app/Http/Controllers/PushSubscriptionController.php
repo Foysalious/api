@@ -1,0 +1,34 @@
+<?php
+
+namespace App\Http\Controllers;
+
+
+use App\Models\PushSubscription;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+
+class PushSubscriptionController extends Controller
+{
+
+    public function store(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'subscriber_type' => 'required|string|in:customer',
+                'device' => 'required|string',
+            ]);
+            $push_sub = new PushSubscription();
+            $push_sub->subscriber_type = "App\\Models\\" . ucwords($request->subscriber_type);
+            $push_sub->device = $request->device;
+            $push_sub->subscriber_id = $request->has('subscriber_id') ? $request->subscriber_id : null;
+            $push_sub->save();
+            return api_response($request, 1, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+}

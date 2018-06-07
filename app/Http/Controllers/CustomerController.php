@@ -48,6 +48,7 @@ class CustomerController extends Controller
             $profile->password = ($profile->password) ? 1 : 0;
             return api_response($request, $customer->profile, 200, ['profile' => $customer->profile]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -84,6 +85,7 @@ class CustomerController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -91,10 +93,10 @@ class CustomerController extends Controller
     public function updateEmail($customer, Request $request)
     {
         try {
-            $this->validate($request, [
-                'email' => 'required|email|unique:profiles'
-            ]);
             $profile = $request->customer->profile;
+            $this->validate($request, [
+                'email' => 'required|email|unique:profiles,email,' . $profile->id
+            ]);
             $profile->email = $request->email;
             $profile->update();
             return api_response($request, 1, 200);
@@ -102,6 +104,7 @@ class CustomerController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -126,6 +129,7 @@ class CustomerController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -155,6 +159,7 @@ class CustomerController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -183,6 +188,7 @@ class CustomerController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
