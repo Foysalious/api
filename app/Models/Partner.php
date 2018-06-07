@@ -260,4 +260,5 @@ class Partner extends Model
     {
         return $this->hasOne(PartnerBankInformation::class);
     }
+
 }

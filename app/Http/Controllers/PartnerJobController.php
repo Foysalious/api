@@ -57,6 +57,7 @@ class PartnerJobController extends Controller
                     $job['resource_picture'] = $job->resource != null ? $job->resource->profile->pro_pic : null;
                     $job['resource_mobile'] = $job->resource != null ? $job->resource->profile->mobile : null;
                     $job['resource_name'] = $job->resource != null ? $job->resource->profile->name : '';
+                    $job['schedule_timestamp'] = Carbon::parse($job->schedule_date . ' ' . explode('-', $job->preferred_time)[0])->timestamp;
                     $job['preferred_time'] = humanReadableShebaTime($job->readable_preferred_time);
                     $job['rating'] = $job->review != null ? $job->review->rating : null;
                     $job['version'] = $partnerOrder->order->getVersion();
@@ -73,7 +74,17 @@ class PartnerJobController extends Controller
             }
             if (count($jobs) > 0) {
                 if ($filter == 'ongoing') {
-                    $jobs = $jobs->sortByDesc('schedule_date');
+                    $group_by_jobs = $jobs->groupBy('schedule_date')->sortByDesc(function ($item, $key) {
+                        return $key;
+                    });
+                    $final = collect();
+                    foreach ($group_by_jobs as $key => $jobs) {
+                        $jobs = $jobs->sortBy('schedule_timestamp');
+                        foreach ($jobs as $job) {
+                            $final->push($job);
+                        }
+                    }
+                    $jobs = $final;
                 } else {
                     $jobs = $jobs->sortByDesc('id');
                 }
@@ -96,6 +107,7 @@ class PartnerJobController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
