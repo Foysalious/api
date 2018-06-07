@@ -34,6 +34,7 @@ class PartnerRegistrationController extends Controller
                 'code' => "required|string",
                 'name' => 'required|string',
                 'company_name' => 'required|string',
+                'from' => 'required|string|in:' . implode(',', constants('FROM'))
             ]);
             $code_data = $this->fbKit->authenticateKit($request->code);
             if (!$code_data) return api_response($request, null, 401, ['message' => 'AccountKit authorization failed']);
@@ -47,7 +48,10 @@ class PartnerRegistrationController extends Controller
             }
             $profile = $this->profileRepository->updateIfNull($profile, ['name' => $request->name]);
             if ($resource->partnerResources->count() > 0) return api_response($request, null, 403, ['message' => 'You already have a company!']);
-            if ($partner = $this->createPartner($resource, ['name' => $request->company_name])) {
+            $data = ['name' => $request->company_name];
+            if ($request->from == 'manager-app') $data['registration_channel'] = constants('PARTNER_ACQUISITION_CHANNEL')['App'];
+            elseif ($request->from == 'manager-web') $data['registration_channel'] = constants('PARTNER_ACQUISITION_CHANNEL')['Web'];
+            if ($partner = $this->createPartner($resource, $data)) {
                 $info = $this->profileRepository->getProfileInfo('resource', Profile::find($profile->id));
                 return api_response($request, null, 200, ['info' => $info]);
             } else {
@@ -68,7 +72,7 @@ class PartnerRegistrationController extends Controller
 
     private function createPartner($resource, $data)
     {
-        $data = ["name" => $data['name'], "sub_domain" => $this->guessSubDomain($data['name'])];
+        $data = ["name" => $data['name'], "sub_domain" => $this->guessSubDomain($data['name']), "registration_channel" => $data['registration_channel']];
         $by = ["created_by" => $resource->id, "created_by_name" => "Resource - " . $resource->profile->name];
         $partner = new Partner();
         $partner = $this->store($resource, $data, $by, $partner);

@@ -284,6 +284,12 @@ return [
         'customer-app',
         'affiliation-app',
         'manager-app',
+        'manager-web'
+    ],
+    'PARTNER_ACQUISITION_CHANNEL' => [
+        'PM'    => 'PM',
+        'Web'   => 'Web',
+        'App'   => 'App'
     ],
     'AFFILIATION_REWARD_MONEY' => 10,
     'API_RESPONSE_CODES' => [
