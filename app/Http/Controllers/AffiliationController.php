@@ -80,7 +80,9 @@ class AffiliationController extends Controller
             if ($msg = $this->_validateCreateRequest($request)) {
                 return response()->json(['code' => 500, 'msg' => $msg]);
             }
-            $affiliate = Affiliate::where('id', $affiliate)->where('verification_status', 'verified')->orwhere('is_suspended', 0)->first();
+            $affiliate = Affiliate::where([
+                ['id', $affiliate], ['verification_status', 'verified'], ['is_suspended', 0]
+            ])->first();
             if ($affiliate != null) {
                 if ($affiliate->profile->mobile == $request->mobile) {
                     return response()->json(['code' => 501, 'msg' => "You can't refer yourself!"]);
@@ -90,7 +92,7 @@ class AffiliationController extends Controller
                 try {
                     DB::transaction(function () use ($request, $affiliate, $affiliation, $affiliation_counter) {
                         $this->affiliationStore($request, $affiliate, $affiliation);
-                        if ($affiliation_counter < 20){
+                        if ($affiliation_counter < 20) {
                             $this->affiliateWalletUpdate($affiliate);
                             $this->affiliateTransaction($affiliate, $affiliation);
                         }
@@ -104,7 +106,7 @@ class AffiliationController extends Controller
                     $message = ['en' => 'Your refer have been submitted. You received 2TK bonus add in your wallet.', 'bd' => 'আপনার রেফারেন্সটি গ্রহন করা হয়েছে । আপনার ওয়ালেট ২ টাকা বোনাস যোগ করা হয়েছে।'];
                     if ($affiliation_counter >= 20)
                         $message = ['en' => 'Your referral limit already exceeded please try again tomorrow.', 'bd' => 'দুঃখিত! আপনার সর্বোচ্চ রেফার সংখ্যা অতিক্রম করেছে। অনুগ্রহ করে আগামিকাল চেষ্টা করুন।'];
-                    return api_response($request, 1, 200, ['massage'=> $message]);
+                    return api_response($request, 1, 200, ['massage' => $message]);
                 } else {
                     return api_response($request, null, 500);
                 }
