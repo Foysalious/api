@@ -107,9 +107,18 @@ class PromotionController extends Controller
             $voucherSuggester->init($request->customer, $selected_services->first()->category_id, $partner->id, (int)$request->location, $order_amount, $request->has('sales_channel') ? $request->sales_channel : 'Web');
             $promo = $voucherSuggester->suggest();
             if ($promo != null) {
-                return api_response($request, $promo, 200, ['voucher' => array(
-                    'amount' => (double)$promo['amount'], 'code' => $promo['voucher']->code
-                )]);
+                $valid_promos = $voucherSuggester->validPromos;
+                $applied_voucher = array(
+                    'amount' => (double)$promo['amount'], 'code' => $promo['voucher']->code, 'id' => $promo['voucher']->id
+                );
+                $promotions = [];
+                foreach ($valid_promos as $promotion) {
+                    $auto_applied = $promotion['voucher']->id == $promo['voucher']->id ? 1 : 0;
+                    array_push($promotions, array(
+                        'amount' => (double)$promotion['amount'], 'code' => $promotion['voucher']->code, 'id' => $promotion['voucher']->id, 'auto_applied' => $auto_applied
+                    ));
+                }
+                return api_response($request, $promo, 200, ['voucher' => $applied_voucher, 'valid_vocuhers' => $promotions]);
             } else {
                 return api_response($request, null, 404);
             }
