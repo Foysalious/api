@@ -51,74 +51,43 @@ class PromotionController extends Controller
         }
     }
 
-    public function getPromo($customer)
+    public function addPromotion($customer, Request $request)
     {
-        $customer = Customer::with(['promotions' => function ($q) {
-            $q->select('id', 'voucher_id', 'customer_id', 'valid_till')->where([
-                ['valid_till', '>=', Carbon::now()],
-                ['is_valid', 1]
-            ])->with(['voucher' => function ($q) {
-                $q->select('id', 'code', 'amount', 'title', 'is_amount_percentage', 'cap');
-            }]);
-        }])->select('id')->where('id', $customer)->first();
-        return $customer != null ? response()->json(['code' => 200, 'promotions' => $customer->promotions]) : response()->json(['code' => 404]);
+        try {
+            $customer = $request->customer;
+            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $request->location);
+            $order_amount = $this->calculateOrderAmount($partner_list, $request->partner);
+            if (!$order_amount) return api_response($request, null, 403);
+            $result = voucher($request->code)
+                ->check($partner_list->selected_services->first()->category_id, $request->partner, $request->location, $customer, $order_amount, $request->sales_channel)
+                ->reveal();
+            if ($result['is_valid']) {
+                $voucher = $result['voucher'];
+                $promotion = new PromotionList($request->customer);
+                list($promotion, $msg) = $promotion->add($result['voucher']);
+                $promo = array('amount' => (double)$result['amount'], 'code' => $voucher->code, 'id' => $voucher->id, 'title' => $voucher->title);
+                if ($promotion) return api_response($request, 1, 200, ['promotion' => $promo]);
+                else return api_response($request, null, 403, ['message' => $msg]);
+            } else {
+                return api_response($request, null, 403);
+            }
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 
-    public function suggestPromo($customer, Request $request, VoucherSuggester $voucherSuggester)
-    {
-        if ((new CartRepository())->hasDiscount(json_decode($request->cart)->items)) {
-            return api_response($request, null, 404, ['result' => 'Discount available for service!']);
-        }
-        $voucherSuggester->init($request->customer, $request->cart, $request->location, $request->has('sales_channel') ? $request->sales_channel : 'Web');
-        $promo = $voucherSuggester->suggest();
-        if ($promo != null) {
-            return response()->json(['code' => 200, 'amount' => (double)$promo['amount'], 'voucher_code' => $promo['voucher']->code]);
-        } else {
-            return response()->json(['code' => 404]);
-        }
-    }
-
-    public function applyPromotion($customer, Request $request, VoucherSuggester $voucherSuggester)
+    public function autoApplyPromotion($customer, Request $request, VoucherSuggester $voucherSuggester)
     {
         try {
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $request->location);
-            $partner_list->find($request->partner);
-            if ($partner_list->hasPartners) {
-                $partner = $partner_list->partners->first();
-                $selected_services = $partner_list->selected_services;
-                $order_amount = 0;
-                foreach ($selected_services as &$selected_service) {
-                    $service = $partner->services->where('id', $selected_service->id)->first();
-                    if ($service->isOptions()) {
-                        $price = (new PartnerServiceRepository())->getPriceOfOptionsService($service->pivot->prices, $selected_service->option);
-                    } else {
-                        $price = (double)$service->pivot->prices;
-                    }
-                    $discount = new Discount($price, $selected_service->quantity);
-                    $discount->calculateServiceDiscount((PartnerService::find($service->pivot->id))->discount());
-                    if ($discount->__get('hasDiscount')) {
-                        return api_response($request, null, 403);
-                    }
-                    $order_amount += $discount->__get('discounted_price');
-                }
-            } else {
-                return api_response($request, null, 400);
-            }
-            $voucherSuggester->init($request->customer, $selected_services->first()->category_id, $partner->id, (int)$request->location, $order_amount, $request->has('sales_channel') ? $request->sales_channel : 'Web');
-            $promo = $voucherSuggester->suggest();
-            if ($promo != null) {
-                $valid_promos = $voucherSuggester->validPromos;
-                $applied_voucher = array(
-                    'amount' => (double)$promo['amount'], 'code' => $promo['voucher']->code, 'id' => $promo['voucher']->id
-                );
-                $promotions = [];
-                foreach ($valid_promos as $promotion) {
-                    $auto_applied = $promotion['voucher']->id == $promo['voucher']->id ? 1 : 0;
-                    array_push($promotions, array(
-                        'amount' => (double)$promotion['amount'], 'code' => $promotion['voucher']->code, 'id' => $promotion['voucher']->id, 'auto_applied' => $auto_applied
-                    ));
-                }
-                return api_response($request, $promo, 200, ['voucher' => $applied_voucher, 'valid_vocuhers' => $promotions]);
+            $order_amount = $this->calculateOrderAmount($partner_list, $request->partner);
+            if (!$order_amount) return api_response($request, null, 403);
+            $voucherSuggester->init($request->customer, $partner_list->selected_services->first()->category_id, $request->partner, (int)$request->location, $order_amount, $request->sales_channel);
+            if ($promo = $voucherSuggester->suggest()) {
+                $applied_voucher = array('amount' => (double)$promo['amount'], 'code' => $promo['voucher']->code, 'id' => $promo['voucher']->id);
+                $valid_promos = $this->sortPromotionsByWeight($voucherSuggester->validPromos);
+                return api_response($request, $promo, 200, ['voucher' => $applied_voucher, 'valid_promotions' => $valid_promos]);
             } else {
                 return api_response($request, null, 404);
             }
@@ -126,5 +95,44 @@ class PromotionController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function calculateOrderAmount(PartnerList $partner_list, $partner)
+    {
+        $partner_list->find($partner);
+        if ($partner_list->hasPartners) {
+            $partner = $partner_list->partners->first();
+            $order_amount = 0;
+            foreach ($partner_list->selected_services as $selected_service) {
+                $service = $partner->services->where('id', $selected_service->id)->first();
+                if ($service->isOptions()) {
+                    $price = (new PartnerServiceRepository())->getPriceOfOptionsService($service->pivot->prices, $selected_service->option);
+                } else {
+                    $price = (double)$service->pivot->prices;
+                }
+                $discount = new Discount($price, $selected_service->quantity);
+                $discount->calculateServiceDiscount((PartnerService::find($service->pivot->id))->discount());
+                if ($discount->__get('hasDiscount')) return null;
+                $order_amount += $discount->__get('discounted_price');
+            }
+            return $order_amount;
+        } else {
+            return null;
+        }
+    }
+
+    private function sortPromotionsByWeight($valid_promos)
+    {
+        return $valid_promos->map(function ($promotion) {
+            $promo = [];
+            $promo['id'] = $promotion['voucher']->id;
+            $promo['title'] = $promotion['voucher']->title;
+            $promo['amount'] = (double)$promotion['amount'];
+            $promo['code'] = $promotion['voucher']->code;
+            $promo['priority'] = round($promotion['weight'], 4);
+            return $promo;
+        })->sortByDesc(function ($promotion) {
+            return $promotion['priority'];
+        })->values()->all();
     }
 }
