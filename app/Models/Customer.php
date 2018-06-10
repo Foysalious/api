@@ -123,6 +123,11 @@ class Customer extends Authenticatable
         return $this->morphMany(Notification::class, 'notifiable');
     }
 
+    public function pushSubscriptions()
+    {
+        return $this->morphMany(PushSubscription::class, 'subscriber');
+    }
+
     public function favorites()
     {
         return $this->hasMany(CustomerFavorite::class);

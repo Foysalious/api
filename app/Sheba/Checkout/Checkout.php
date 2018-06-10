@@ -47,7 +47,7 @@ class Checkout
             $data['job_services'] = $this->createJobService($partner->services, $partner_list->selected_services, $data);
             $rent_car_ids = array_map('intval', explode(',', env('RENT_CAR_IDS')));
             if (in_array(($partner_list->selected_services->first())->category_id, $rent_car_ids)) {
-                $data['car_rental_job_detail'] = $this->createCarRentalDetail($partner_list->selected_services->first(), $data);
+                $data['car_rental_job_detail'] = $this->createCarRentalDetail($partner_list->selected_services->first());
             }
             $data['category_id'] = $partner_list->selected_services->first()->category_id;
             $data = $this->getVoucherData($data['job_services'], $data, $partner);
@@ -87,6 +87,9 @@ class Checkout
         }
         if ($request->has('email')) {
             $data['email'] = $request->email;
+        }
+        if ($request->has('voucher')) {
+            $data['voucher_id'] = $request->voucher;
         }
         $data['pap_visitor_id'] = $request->has('pap_visitor_id') ? $request->pap_visitor_id : null;
         $data['created_by'] = $created_by = $request->has('created_by') ? $request->created_by : $this->customer->id;
@@ -291,16 +294,25 @@ class Checkout
             $order_amount = $job_services->map(function ($job_service) {
                 return $job_service->unit_price * $job_service->quantity;
             })->sum();
-            $voucherSuggester = new VoucherSuggester(app(Voucher::class), app(Customer::class));
-            $voucherSuggester->init($this->customer, $data['category_id'], $partner->id, $data['location_id'], $order_amount, $data['sales_channel']);
-            $result = $voucherSuggester->suggest();
-            if ($result != null) {
-                $data['discount'] = $result['amount'];
-                $data['sheba_contribution'] = $result['voucher']['sheba_contribution'];
+            $valid = 0;
+            if (isset($data['voucher_id'])) {
+                $result = voucher($data['voucher_id'])
+                    ->check($data['category_id'], $partner->id, $data['location_id'], $data['customer_id'], $order_amount, $data['sales_channel'])
+                    ->reveal();
+                if ($result['is_valid']) $valid = 1;
+            } else {
+                $voucherSuggester = new VoucherSuggester(app(Voucher::class), app(Customer::class));
+                $voucherSuggester->init($this->customer, $data['category_id'], $partner->id, $data['location_id'], $order_amount, $data['sales_channel']);
+                $result = $voucherSuggester->suggest();
+                if ($result) $valid = 1;
+            }
+            if ($valid) {
+                $data['discount'] = (double)$result['amount'];
+                $data['sheba_contribution'] = (double)$result['voucher']['sheba_contribution'];
                 if ($result['voucher']['is_amount_percentage']) {
-                    $data['discount_percentage'] = $result['voucher']['amount'];
+                    $data['discount_percentage'] = (double)$result['voucher']['amount'];
                 }
-                $data['partner_contribution'] = $result['voucher']['partner_contribution'];
+                $data['partner_contribution'] = (double)$result['voucher']['partner_contribution'];
                 $data['voucher_id'] = $result['id'];
             }
             return $data;

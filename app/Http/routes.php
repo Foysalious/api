@@ -358,7 +358,8 @@ $api->version('v1', function ($api) {
                     $api->get('/', 'CustomerOrderController@index');
                     $api->get('valid', 'OrderController@checkOrderValidity');
                     $api->get('payment/valid', 'OrderController@checkInvoiceValidity');
-                    $api->post('promotions', 'PromotionController@applyPromotion');
+                    $api->post('promotions', 'PromotionController@autoApplyPromotion');
+                    $api->post('promotions/add', 'PromotionController@addPromotion');
                     $api->group(['prefix' => '{order}'], function ($api) {
                         $api->get('/', 'CustomerOrderController@show');
                     });
