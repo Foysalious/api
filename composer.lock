@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "d33667c0c82189c040fc311e0523025f",
+    "hash": "cca7a48a6c29fc6aa375a39af772a617",
     "content-hash": "fc729cb39ef981f3ba865c9afe5b01d5",
     "packages": [
         {
@@ -285,7 +285,7 @@
                 "shasum": ""
             },
             "require": {
-                "doctrine/annotations": "1.4.0",
+                "doctrine/annotations": "~1.2",
                 "illuminate/filesystem": "^5.1",
                 "illuminate/support": "^5.1",
                 "php": ">=5.5.9",
@@ -375,7 +375,7 @@
             },
             "require": {
                 "doctrine/lexer": "1.*",
-                "php": "^7.1"
+                "php": "^5.6 || ^7.0"
             },
             "require-dev": {
                 "doctrine/cache": "1.*",
@@ -384,7 +384,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "1.5.x-dev"
+                    "dev-master": "1.4.x-dev"
                 }
             },
             "autoload": {
@@ -425,7 +425,7 @@
                 "docblock",
                 "parser"
             ],
-            "time": "2017-07-22 10:58:02"
+            "time": "2017-02-24 16:22:25"
         },
         {
             "name": "doctrine/inflector",
@@ -2708,7 +2708,7 @@
             "source": {
                 "type": "git",
                 "url": "https://arnabrahman@bitbucket.org/startern/sheba_dal.git",
-                "reference": "cbf37e57fa6b5aa95734847f8147be1624a0d0ca"
+                "reference": "be5f463877713d44b5aa2b9e495c5d316ee58777"
             },
             "require": {
                 "php": ">=5.4"
@@ -2732,7 +2732,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2018-06-10 18:15:22"
+            "time": "2018-06-10 21:57:44"
         },
         {
             "name": "sheba/voucher",
@@ -3469,7 +3469,7 @@
                 "symfony/config": "<2.8"
             },
             "require-dev": {
-                "doctrine/annotations": "1.4.0",
+                "doctrine/annotations": "~1.0",
                 "doctrine/common": "~2.2",
                 "psr/log": "~1.0",
                 "symfony/config": "~2.8|~3.0",
