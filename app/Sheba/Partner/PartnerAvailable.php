@@ -3,6 +3,7 @@
 namespace App\Sheba\Partner;
 
 
+use App\Models\Category;
 use App\Models\Partner;
 use Carbon\Carbon;
 
@@ -25,7 +26,7 @@ class PartnerAvailable
         }
         $rent_car_ids = array_map('intval', explode(',', env('RENT_CAR_IDS')));
         if (!in_array($category_id, $rent_car_ids)) {
-            if (!((scheduler($this->partner)->isAvailable($date, explode('-', $preferred_time)[0], $category_id)))->get('is_available')) {
+            if (!((scheduler($this->partner)->isAvailableForCategory($date, explode('-', $preferred_time)[0], Category::find((int)$category_id))))->get('is_available')) {
                 return 0;
             }
         }
