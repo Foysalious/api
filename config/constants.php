@@ -292,6 +292,7 @@ return [
         'App'   => 'App'
     ],
     'AFFILIATION_REWARD_MONEY' => 10,
+    'AFFILIATION_REGISTRATION_BONUS' => 50,
     'API_RESPONSE_CODES' => [
         200 => ['message' => 'Successful', 'code' => 200],
         400 => ['message' => 'Bad request', 'code' => 400],

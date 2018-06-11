@@ -265,11 +265,12 @@ class ProfileRepository
 
     private function addAffiliateBonus(Affiliate $affiliate)
     {
-        $affiliate_bonus_amount = 50;
+        $affiliate_bonus_amount = constants('AFFILIATION_REGISTRATION_BONUS');
 
         DB::transaction(function () use ($affiliate, $affiliate_bonus_amount) {
             $affiliate->update([
-                'wallet' => $affiliate_bonus_amount
+                'wallet'            => $affiliate_bonus_amount,
+                'acquisition_cost'  => $affiliate_bonus_amount
             ]);
 
             AffiliateTransaction::create([
