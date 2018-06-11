@@ -68,10 +68,15 @@ class AffiliateController extends Controller
     {
         try {
             $affiliate = Affiliate::find($affiliate);
-            dd($affiliate);
-//            return api_response($request, 200);
+            $info = [
+                'wallet' => (double)$affiliate->wallet,
+                'total_income' => (double)$affiliate->transactions->sum('amount'),
+                'total_service_referred' => $affiliate->affiliations->count(),
+                'total_sp_referred' => $affiliate->partnerAffiliations->count(),
+                'last_updated' => Carbon::parse($affiliate->updated_at)->format('dS F,g:i A')
+            ];
+            return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
-            dd("error");
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
