@@ -321,6 +321,18 @@ return [
         "resource_app" => "https://play.google.com/store/apps/details?id=xyz.sheba.resource",
         "manager_app" => "https://play.google.com/store/apps/details?id=xyz.sheba.managerapp"
     ],
-    'MANAGER_TOPIC_NAME' => env('MANAGER_TOPIC_NAME')
-
+    'MANAGER_TOPIC_NAME' => env('MANAGER_TOPIC_NAME'),
+    'PARTNER_AFFILIATIONS_STATUSES' => [
+        'pending'    => 'Pending',
+        'rejected'   => 'Rejected',
+        'successful' => 'Successful'
+    ],
+    'PARTNER_AFFILIATIONS_REJECT_REASONS' => [
+        'fake'                  => 'False Reference',
+        'no_response'           => 'No Response',
+        'not_interested'        => 'Not Interested',
+        'not_capable'           => 'Not Capable',
+        'service_unavailable'   => 'Service Unavailable'
+    ],
+    'PARTNER_AFFILIATIONS_FAKE_REJECT_REASONS' => ['fake'],
 ];
