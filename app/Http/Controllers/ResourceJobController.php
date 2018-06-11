@@ -12,6 +12,7 @@ use Dingo\Api\Routing\Helpers;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Validator;
 use App\Http\Requests;
 use DB;
@@ -73,12 +74,12 @@ class ResourceJobController extends Controller
                 $job = $this->resourceJobRepository->calculateActionsForThisJob($jobs[0], $job);
             }
 
-            $job['pick_up_address']     = $job->carRentalJobDetail ? $job->carRentalJobDetail->pick_up_address : null;
+            $job['pick_up_address'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->pick_up_address : null;
             $job['destination_address'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->destination_address : null;
-            $job['drop_off_date']       = $job->carRentalJobDetail ? Carbon::parse($job->carRentalJobDetail->drop_off_date)->format('jS F, Y') : null;
-            $job['drop_off_time']       = $job->carRentalJobDetail ? Carbon::parse($job->carRentalJobDetail->drop_off_time)->format('g:i A') : null;
-            $job['estimated_distance']  = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_distance : null;
-            $job['estimated_time']      = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_time : null;
+            $job['drop_off_date'] = $job->carRentalJobDetail ? Carbon::parse($job->carRentalJobDetail->drop_off_date)->format('jS F, Y') : null;
+            $job['drop_off_time'] = $job->carRentalJobDetail ? Carbon::parse($job->carRentalJobDetail->drop_off_time)->format('g:i A') : null;
+            $job['estimated_distance'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_distance : null;
+            $job['estimated_time'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_time : null;
             array_forget($job, 'carRentalJobDetail');
 
             return api_response($request, $job, 200, ['job' => $job]);
@@ -175,18 +176,17 @@ class ResourceJobController extends Controller
     public function collect($resource, $job, Request $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
-                'amount' => 'required|numeric',
-            ]);
-            if ($validator->fails()) {
-                return api_response($request, null, 500, ['message' => $validator->errors()->all()[0]]);
-            }
+            $this->validate($request, ['amount' => 'required|numeric']);
             $partner_order = $request->job->partner_order;
             $response = $this->resourceJobRepository->collectMoney($partner_order, $request);
-            if ($response) {
-                return api_response($request, $response, $response->code);
-            }
+            if ($response) return api_response($request, $response, $response->code);
             return api_response($request, null, 500);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

@@ -421,6 +421,7 @@ $api->version('v1', function ($api) {
                     $api->get('/', 'PartnerOrderController@showV2');
                     $api->get('bills', 'PartnerOrderController@getBillsV2');
                     $api->post('services', 'PartnerOrderController@addService');
+                    $api->post('collect', 'PartnerOrderController@collectMoney');
                 });
             });
             $api->group(['prefix' => 'jobs'], function ($api) {
