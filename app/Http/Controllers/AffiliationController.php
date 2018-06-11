@@ -15,6 +15,13 @@ use DB;
 
 class AffiliationController extends Controller
 {
+    private $acquisitionMoney;
+
+    public function __construct()
+    {
+        $this->acquisitionMoney = constants('AFFILIATION_ACQUISITION_MONEY');
+    }
+
     public function newIndex($affiliate, Request $request)
     {
         list($offset, $limit) = calculatePagination($request);
@@ -115,14 +122,6 @@ class AffiliationController extends Controller
         }
     }
 
-    private function _validateCreateRequest($request)
-    {
-        $validator = Validator::make($request->all(), [
-            'mobile' => 'required|string|mobile:bd',
-        ], ['mobile' => 'Invalid mobile number!']);
-        return $validator->fails() ? $validator->errors()->all()[0] : false;
-    }
-
     private function affiliationStore($request, $affiliate, $affiliation)
     {
         $affiliation->affiliate_id = $affiliate->id;
@@ -135,7 +134,7 @@ class AffiliationController extends Controller
 
     private function affiliateWalletUpdate($affiliate)
     {
-        $affiliate->wallet += 2;
+        $affiliate->wallet += $this->acquisitionMoney;
         $affiliate->update();
     }
 
@@ -145,9 +144,8 @@ class AffiliationController extends Controller
         $affiliate_transaction->affiliate_id = $affiliate->id;
         $affiliate_transaction->affiliation_id = $affiliation->id;
         $affiliate_transaction->type = "Credit";
-        $affiliate_transaction->log = "You have earned 2 tk for giving reference and reference id is ".$affiliation->id;
-        $affiliate_transaction->amount = 2;
+        $affiliate_transaction->log = "Earned $this->acquisitionMoney tk for giving reference id: $affiliation->id";
+        $affiliate_transaction->amount = $this->acquisitionMoney;
         $affiliate_transaction->save();
     }
-
 }
