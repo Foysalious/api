@@ -262,6 +262,7 @@ $api->version('v1', function ($api) {
 
             $api->get('wallet', 'AffiliateController@getWallet');
             $api->get('status', 'AffiliateController@getStatus');
+            $api->get('dashboard', 'AffiliateController@getDashboardInfo');
             $api->get('affiliations', 'AffiliationController@newIndex');
             $api->post('affiliations', 'AffiliationController@create');
             $api->get('transactions', 'AffiliateController@getTransactions');

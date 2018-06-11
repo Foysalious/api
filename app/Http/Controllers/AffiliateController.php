@@ -64,6 +64,19 @@ class AffiliateController extends Controller
         return $affiliate != null ? response()->json(['code' => 200, 'affiliate' => $affiliate]) : response()->json(['code' => 404, 'msg' => 'Not found!']);
     }
 
+    public function getDashboardInfo($affiliate, Request $request)
+    {
+        try {
+            $affiliate = Affiliate::find($affiliate);
+            dd($affiliate);
+//            return api_response($request, 200);
+        } catch (\Throwable $e) {
+            dd("error");
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     public function updateProfilePic(Request $request)
     {
         if ($msg = $this->_validateImage($request)) {
