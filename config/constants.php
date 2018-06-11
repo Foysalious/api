@@ -293,6 +293,7 @@ return [
     ],
     'AFFILIATION_REWARD_MONEY' => 10,
     'AFFILIATION_REGISTRATION_BONUS' => 50,
+    'AFFILIATION_ACQUISITION_MONEY' => 2,
     'API_RESPONSE_CODES' => [
         200 => ['message' => 'Successful', 'code' => 200],
         400 => ['message' => 'Bad request', 'code' => 400],
@@ -321,6 +322,8 @@ return [
         "resource_app" => "https://play.google.com/store/apps/details?id=xyz.sheba.resource",
         "manager_app" => "https://play.google.com/store/apps/details?id=xyz.sheba.managerapp"
     ],
+    'MANAGER_TOPIC_NAME' => env('MANAGER_TOPIC_NAME'),
+
     'MANAGER_TOPIC_NAME' => env('MANAGER_TOPIC_NAME'),
     'PARTNER_AFFILIATIONS_STATUSES' => [
         'pending'    => 'Pending',

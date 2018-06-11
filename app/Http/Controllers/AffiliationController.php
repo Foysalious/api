@@ -9,11 +9,19 @@ use App\Repositories\NotificationRepository;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Validator;
 use DB;
 
 class AffiliationController extends Controller
 {
+    private $acquisitionMoney;
+
+    public function __construct()
+    {
+        $this->acquisitionMoney = constants('AFFILIATION_ACQUISITION_MONEY');
+    }
+
     public function newIndex($affiliate, Request $request)
     {
         list($offset, $limit) = calculatePagination($request);
@@ -76,55 +84,42 @@ class AffiliationController extends Controller
     public function create($affiliate, Request $request)
     {
         try {
-            $request->merge(['mobile' => formatMobile($request->mobile)]);
-            if ($msg = $this->_validateCreateRequest($request)) {
-                return response()->json(['code' => 500, 'msg' => $msg]);
-            }
-            $affiliate = Affiliate::where([
-                ['id', $affiliate], ['verification_status', 'verified'], ['is_suspended', 0]
-            ])->first();
-            if ($affiliate != null) {
+            $request->merge(['mobile' => formatMobile(trim($request->mobile))]);
+            $this->validate($request, ['mobile' => 'required|string|mobile:bd'], ['mobile' => 'Invalid mobile number!']);
+            if ($affiliate = Affiliate::where([['id', $affiliate], ['verification_status', 'verified'], ['is_suspended', 0]])->first()) {
                 if ($affiliate->profile->mobile == $request->mobile) {
-                    return response()->json(['code' => 501, 'msg' => "You can't refer yourself!"]);
+                    return response()->json(['code' => 501, 'msg' => "You can't refer to yourself!"]);
                 }
-                $affiliation = new Affiliation();
-                $affiliation_counter = $affiliation->where('affiliate_id', $affiliate->id)->where('created_at', '>=', Carbon::today())->count();
-                try {
-                    DB::transaction(function () use ($request, $affiliate, $affiliation, $affiliation_counter) {
-                        $this->affiliationStore($request, $affiliate, $affiliation);
-                        if ($affiliation_counter < 20) {
+                $affiliation_counter = Affiliation::where('affiliate_id', $affiliate->id)->where('created_at', '>=', Carbon::today())->count();
+                if ($affiliation_counter < 20) {
+                    $affiliation = new Affiliation();
+                    try {
+                        DB::transaction(function () use ($request, $affiliate, $affiliation) {
+                            $this->affiliationStore($request, $affiliate, $affiliation);
                             $this->affiliateWalletUpdate($affiliate);
                             $this->affiliateTransaction($affiliate, $affiliation);
-                        }
-                    });
-                } catch (QueryException $q) {
-                    $affiliation = null;
-                }
-                if ($affiliation != null) {
+                        });
+                    } catch (QueryException $e) {
+                        app('sentry')->captureException($e);
+                        return api_response($request, null, 500);
+                    }
                     (new NotificationRepository())->forAffiliation($affiliate, $affiliation);
-
-                    $message = ['en' => 'Your refer have been submitted. You received 2TK bonus add in your wallet.', 'bd' => 'আপনার রেফারেন্সটি গ্রহন করা হয়েছে । আপনার ওয়ালেট ২ টাকা বোনাস যোগ করা হয়েছে।'];
-                    if ($affiliation_counter >= 20)
-                        $message = ['en' => 'Your referral limit already exceeded please try again tomorrow.', 'bd' => 'দুঃখিত! আপনার সর্বোচ্চ রেফার সংখ্যা অতিক্রম করেছে। অনুগ্রহ করে আগামিকাল চেষ্টা করুন।'];
+                    $message = ['en' => 'Your refer have been submitted. You received 2TK bonus add in your wallet.', 'bd' => 'আপনার রেফারেন্সটি গ্রহন করা হয়েছে । আপনার ওয়ালেটে ২ টাকা বোনাস যোগ করা হয়েছে।'];
                     return api_response($request, 1, 200, ['massage' => $message]);
                 } else {
-                    return api_response($request, null, 500);
+                    $message = ['en' => 'Your referral limit already exceeded please try again tomorrow.', 'bd' => 'দুঃখিত! আপনার সর্বোচ্চ রেফার সংখ্যা অতিক্রম করেছে। অনুগ্রহ করে আগামিকাল চেষ্টা করুন।'];
+                    return api_response($request, null, 403, ['massage' => $message]);
                 }
             } else {
-                return api_response($request, null, 404);
+                return api_response($request, null, 502);
             }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-    }
-
-    private function _validateCreateRequest($request)
-    {
-        $validator = Validator::make($request->all(), [
-            'mobile' => 'required|string|mobile:bd',
-        ], ['mobile' => 'Invalid mobile number!']);
-        return $validator->fails() ? $validator->errors()->all()[0] : false;
     }
 
     private function affiliationStore($request, $affiliate, $affiliation)
@@ -133,12 +128,13 @@ class AffiliationController extends Controller
         $affiliation->customer_name = $request->name;
         $affiliation->customer_mobile = $request->mobile;
         $affiliation->service = $request->service;
+
         $affiliation->save();
     }
 
     private function affiliateWalletUpdate($affiliate)
     {
-        $affiliate->wallet += 2;
+        $affiliate->wallet += $this->acquisitionMoney;
         $affiliate->update();
     }
 
@@ -148,9 +144,8 @@ class AffiliationController extends Controller
         $affiliate_transaction->affiliate_id = $affiliate->id;
         $affiliate_transaction->affiliation_id = $affiliation->id;
         $affiliate_transaction->type = "Credit";
-        $affiliate_transaction->log = "You have received 2 tk";
-        $affiliate_transaction->amount = 2;
+        $affiliate_transaction->log = "Earned $this->acquisitionMoney tk for giving reference id: $affiliation->id";
+        $affiliate_transaction->amount = $this->acquisitionMoney;
         $affiliate_transaction->save();
     }
-
 }

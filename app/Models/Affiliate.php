@@ -26,6 +26,11 @@ class Affiliate extends Model
         return $this->belongsTo(Location::class);
     }
 
+    public function partnerAffiliations()
+    {
+        return $this->hasMany(PartnerAffiliation::class);
+    }
+
     public function suspensions()
     {
         return $this->hasMany(AffiliateSuspension::class);

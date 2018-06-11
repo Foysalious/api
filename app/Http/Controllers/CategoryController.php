@@ -186,7 +186,6 @@ class CategoryController extends Controller
             }
             return array((double)max($max_price) * $service->min_quantity, (double)min($min_price) * $service->min_quantity);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
             return array(0, 0);
         }
     }

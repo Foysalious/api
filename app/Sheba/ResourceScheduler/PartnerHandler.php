@@ -16,19 +16,15 @@ class PartnerHandler
         $is_available = false;
         $available_resources = collect([]);
         $unavailable_resources = collect([]);
-        $rent_car_ids = array_map('intval', explode(',', env('RENT_CAR_IDS')));
-        if (!in_array($category, $rent_car_ids)) {
-            $this->partner->resourcesInCategory($category)->each(function ($resource) use ($date, $time, &$is_available, &$available_resources, &$unavailable_resources) {
-                if (scheduler($resource)->isAvailable($date, $time)) {
-                    $available_resources->push($resource);
-                    $is_available = true;
-                } else {
-                    $unavailable_resources->push($resource);
-                }
-            });
-        } else {
-            $is_available = 1;
-        }
+
+        $this->partner->resourcesInCategory($category)->each(function ($resource) use ($date, $time, &$is_available, &$available_resources, &$unavailable_resources) {
+            if (scheduler($resource)->isAvailable($date, $time)) {
+                $available_resources->push($resource);
+                $is_available = true;
+            } else {
+                $unavailable_resources->push($resource);
+            }
+        });
 
         return collect([
             'is_available' => $is_available,

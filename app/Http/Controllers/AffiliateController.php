@@ -64,6 +64,24 @@ class AffiliateController extends Controller
         return $affiliate != null ? response()->json(['code' => 200, 'affiliate' => $affiliate]) : response()->json(['code' => 404, 'msg' => 'Not found!']);
     }
 
+    public function getDashboardInfo($affiliate, Request $request)
+    {
+        try {
+            $affiliate = Affiliate::find($affiliate);
+            $info = [
+                'wallet' => (double)$affiliate->wallet,
+                'total_income' => (double)$affiliate->transactions->sum('amount'),
+                'total_service_referred' => $affiliate->affiliations->count(),
+                'total_sp_referred' => $affiliate->partnerAffiliations->count(),
+                'last_updated' => Carbon::parse($affiliate->updated_at)->format('dS F,g:i A')
+            ];
+            return api_response($request, $info, 200, ['info' => $info]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     public function updateProfilePic(Request $request)
     {
         if ($msg = $this->_validateImage($request)) {
