@@ -299,4 +299,21 @@ class PartnerOrderController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+
+    public function collectMoney($partner, Request $request)
+    {
+        try {
+            $this->validate($request, ['amount' => 'required|numeric']);
+            $partner_order = $request->partner_order;
+            $request->merge(['resource' => $request->manager_resource]);
+            $response = (new ResourceJobRepository())->collectMoney($partner_order, $request);
+            if ($response) return api_response($request, $response, $response->code);
+            return api_response($request, null, 500);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
 }
