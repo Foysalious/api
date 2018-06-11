@@ -36,4 +36,9 @@ class PartnerAffiliation extends Model
     {
         return constants('PARTNER_AFFILIATION_PARTNER_ORDER_BENCHMARK');
     }
+
+    public function transactions()
+    {
+        return $this->morphMany(AffiliateTransaction::class, 'affiliation');
+    }
 }
