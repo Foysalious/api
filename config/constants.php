@@ -323,8 +323,6 @@ return [
         "manager_app" => "https://play.google.com/store/apps/details?id=xyz.sheba.managerapp"
     ],
     'MANAGER_TOPIC_NAME' => env('MANAGER_TOPIC_NAME'),
-
-    'MANAGER_TOPIC_NAME' => env('MANAGER_TOPIC_NAME'),
     'PARTNER_AFFILIATIONS_STATUSES' => [
         'pending'    => 'Pending',
         'rejected'   => 'Rejected',
