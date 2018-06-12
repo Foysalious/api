@@ -2,9 +2,12 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\ProfileTrait;
 
 class Affiliate extends Model
 {
+    use ProfileTrait;
+
     protected $guarded = ['id'];
     protected $dates = ['last_suspended_at'];
 
@@ -21,6 +24,11 @@ class Affiliate extends Model
     public function location()
     {
         return $this->belongsTo(Location::class);
+    }
+
+    public function partnerAffiliations()
+    {
+        return $this->hasMany(PartnerAffiliation::class);
     }
 
     public function suspensions()

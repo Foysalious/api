@@ -254,6 +254,8 @@ $api->version('v1', function ($api) {
             $api->get('status', 'AffiliateController@getStatus');
             $api->get('affiliations', 'AffiliationController@index');
             $api->post('affiliations', 'AffiliationController@create');
+            $api->post('partner-affiliates', 'PartnerAffiliationController@store');
+            $api->get('partner-affiliates', 'PartnerAffiliationController@index');
         });
         $api->group(['prefix' => 'affiliates/{affiliate}', 'middleware' => ['affiliate.auth']], function ($api) {
             $api->post('edit', 'AffiliateController@edit');
@@ -262,6 +264,7 @@ $api->version('v1', function ($api) {
 
             $api->get('wallet', 'AffiliateController@getWallet');
             $api->get('status', 'AffiliateController@getStatus');
+            $api->get('dashboard', 'AffiliateController@getDashboardInfo');
             $api->get('affiliations', 'AffiliationController@newIndex');
             $api->post('affiliations', 'AffiliationController@create');
             $api->get('transactions', 'AffiliateController@getTransactions');
