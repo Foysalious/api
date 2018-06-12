@@ -13,6 +13,9 @@ use Carbon\Carbon;
 use DB;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use Sheba\Location\Coords;
+use Sheba\Location\Distance\Distance;
+use Sheba\Location\Distance\DistanceStrategy;
 
 class PartnerList
 {
@@ -27,7 +30,7 @@ class PartnerList
 
     public function __construct($services, $date, $time, $location)
     {
-        $this->location = (int)$location;
+        $this->location = $location;
         $this->date = $date;
         $this->time = $time;
         $this->rentCarServicesId = array_map('intval', explode(',', env('RENT_CAR_SERVICE_IDS')));
@@ -95,7 +98,7 @@ class PartnerList
 
     public function find($partner_id = null)
     {
-        $this->partners = $this->findPartnersByServiceAndLocation((int)$partner_id);
+        $this->partners = is_int($this->location) ? $this->findPartnersByServiceAndLocation((int)$partner_id) : $this->findPartnersByServiceAndGeo((int)$partner_id);
         $this->partners->load(['services' => function ($q) {
             $q->whereIn('service_id', $this->selected_services->pluck('id')->unique());
         }, 'categories' => function ($q) {
@@ -111,12 +114,19 @@ class PartnerList
 
     private function findPartnersByServiceAndLocation($partner_id = null)
     {
+        $this->partners = $this->findPartnersByService($partner_id);
+        $this->partners->load('locations');
+        return $this->partners->filter(function ($partner) {
+            return $partner->locations->where('id', $this->location)->count() > 0;
+        });
+    }
+
+    private function findPartnersByService($partner_id = null)
+    {
         $service_ids = $this->selected_services->pluck('id')->unique();
         $category_ids = $this->selected_services->pluck('category_id')->unique()->toArray();
         $query = Partner::WhereHas('categories', function ($q) use ($category_ids) {
             $q->whereIn('categories.id', $category_ids)->where('category_partner.is_verified', 1);
-        })->whereHas('locations', function ($query) {
-            $query->where('locations.id', (int)$this->location);
         })->whereHas('services', function ($query) use ($service_ids) {
             $query->whereHas('category', function ($q) {
                 $q->published();
@@ -124,13 +134,30 @@ class PartnerList
                 ->groupBy('partner_id')->havingRaw('c=' . count($service_ids));
         })->with(['resources' => function ($q) {
             $q->with('profile');
-        }])->published()->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet');
+        }])->published()->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet', 'partners.geo_informations');
         if ($partner_id != null) {
             $query = $query->where('partners.id', $partner_id);
         }
         return $query->get()->map(function ($partner) {
             $partner->contact_no = $partner->getContactNumber();
             return $partner;
+        });
+    }
+
+    private function findPartnersByServiceAndGeo($partner_id = null)
+    {
+        $this->partners = $this->findPartnersByService($partner_id)->filter(function ($partner) {
+            return $partner->geo_informations != null;
+        });
+        $current = new Coords($this->location['lat'], $this->location['lng']);
+        $to = $this->partners->map(function ($partner) {
+            $geo = json_decode($partner->geo_informations);
+            return new Coords(floatval($geo->lat), floatval($geo->lng), $partner->id);
+        })->toArray();
+        $distance = (new Distance(DistanceStrategy::$VINCENTY))->matrix();
+        $results = $distance->from([$current])->to($to)->sortedDistance()[0];
+        return $this->partners->filter(function ($partner) use ($results) {
+            return $results[$partner->id] <= (double)json_decode($partner->geo_informations)->radius * 1000;
         });
     }
 

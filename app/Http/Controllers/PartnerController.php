@@ -437,7 +437,7 @@ class PartnerController extends Controller
                 return api_response($request, $validation->message, 400, ['message' => $validation->message]);
             }
             $partner = $request->has('partner') ? $request->partner : null;
-            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $location);
+            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$location);
             $partner_list->find($partner);
             if ($request->has('isAvailable')) {
                 $partners = $partner_list->partners;

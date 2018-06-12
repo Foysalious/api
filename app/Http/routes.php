@@ -156,36 +156,6 @@ $api->version('v1', function ($api) {
             $api->get('{partner}/services', 'PartnerController@getPartnerServices');
             $api->get('{partner}/reviews', 'PartnerController@getReviews');
         });
-        $api->group(['prefix' => 'customer', 'middleware' => ['customer.auth']], function ($api) {
-            $api->get('{customer}', 'CustomerController@getCustomerInfo');
-            $api->post('{customer}/edit', 'CustomerController@editInfo');
-            $api->get('{customer}/general-info', 'CustomerController@getCustomerGeneralInfo');
-            $api->get('{customer}/intercom-info', 'CustomerController@getIntercomInfo');
-            $api->get('{customer}/checkout-info', 'CustomerController@getDeliveryInfo');
-            $api->get('{customer}/order-list', 'OrderController@getNotClosedOrderInfo');
-            $api->get('{customer}/order-history', 'OrderController@getClosedOrderInfo');
-            $api->get('{customer}/cancel-order-list', 'OrderController@getCancelledOrders');
-            $api->get('{customer}/referral', 'CustomerController@getReferral');
-            $api->post('{customer}/send-referral-request-email', 'CustomerController@sendReferralRequestEmail');
-            $api->get('{customer}/promo', 'PromotionController@getPromo');
-            $api->post('{customer}/promo', 'PromotionController@addPromo');
-            $api->post('{customer}/suggest-promo', 'PromotionController@suggestPromo');
-
-            $api->post('{customer}/sp-payment', 'CheckoutController@spPayment');
-            $api->post('{customer}/order-valid', 'OrderController@checkOrderValidity');
-            $api->post('{customer}/modify-review', 'ReviewController@modifyReview');
-            $api->get('{customer}/job/{job}', 'JobController@getInfo');
-            $api->post('{customer}/{job}/cancel', 'JobController@cancelJob');
-
-            $api->post('{customer}/ask-quotation', 'CustomOrderController@askForQuotation');
-            $api->get('{customer}/custom-order', 'CustomOrderController@getCustomOrders');
-            $api->get('{customer}/custom-order/{custom_order}/quotation', 'CustomOrderController@getCustomOrderQuotation');
-            $api->get('{customer}/custom-order/{custom_order}/discussion', 'CustomOrderController@getCommentForDiscussion');
-            $api->post('{customer}/custom-order/{custom_order}/discussion', 'CustomOrderController@postCommentOnDiscussion');
-
-//            $api->post('{customer}/checkout/place-order', 'CheckoutController@placeOrder');
-//            $api->post('{customer}/checkout/place-order-with-online-payment', 'CheckoutController@placeOrderWithPayment');
-        });
         $api->group(['prefix' => 'customers/{customer}', 'middleware' => ['customer.auth']], function ($api) {
             $api->get('/', 'CustomerController@index');
             $api->group(['prefix' => 'edit'], function ($api) {
@@ -343,7 +313,8 @@ $api->version('v1', function ($api) {
 
     });
     $api->group(['prefix' => 'v2', 'namespace' => 'App\Http\Controllers'], function ($api) {
-        $api->get('locations','LocationController@index');
+        $api->get('locations', 'LocationController@index');
+        $api->get('partners', 'PartnerLocationController@getPartners');
         $api->post('service-requests', 'ServiceRequestController@store');
         $api->post('password/email', 'Auth\PasswordController@sendResetPasswordEmail');
         $api->post('password/validate', 'Auth\PasswordController@validatePasswordResetCode');
