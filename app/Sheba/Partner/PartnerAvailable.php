@@ -2,8 +2,6 @@
 
 namespace App\Sheba\Partner;
 
-
-use App\Models\Category;
 use App\Models\Partner;
 use Carbon\Carbon;
 
