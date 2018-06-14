@@ -36,10 +36,12 @@ class PartnerAffiliationCreateValidator
     private function isOngoingLead(Request $request)
     {
         $partner_affiliation = PartnerAffiliation::where('resource_mobile', formatMobile($request->resource_mobile))
-            ->whereIn('status', [PartnerAffiliationStatuses::$successful, PartnerAffiliationStatuses::$pending])
-            ->orWhere(function ($q) {
-                $q->whereIn('reject_reason', PartnerAffiliationRejectReasons::fake())
-                    ->where('status', PartnerAffiliationStatuses::$rejected);
+            ->where(function ($q) {
+                $q->whereIn('status', [PartnerAffiliationStatuses::$successful, PartnerAffiliationStatuses::$pending])
+                    ->orWhere(function ($q) {
+                        $q->whereIn('reject_reason', PartnerAffiliationRejectReasons::fake())
+                            ->where('status', PartnerAffiliationStatuses::$rejected);
+                    });
             })->first();
         if ($partner_affiliation) return ['code' => 400, 'msg' => 'Invalid resource number'];
         return false;
