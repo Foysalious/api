@@ -277,6 +277,8 @@ class PartnerList
             $service['discounted_price'] = $discount->__get('discounted_price');
             $service['original_price'] = $discount->__get('original_price');
             $service['unit_price'] = $discount->__get('unit_price');
+            $service['sheba_contribution'] = $discount->__get('sheba_contribution');
+            $service['partner_contribution'] = $discount->__get('partner_contribution');
 
             $total_service_price['discount'] += $service['discount'];
             $total_service_price['discounted_price'] += $service['discounted_price'];

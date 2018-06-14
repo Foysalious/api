@@ -1,5 +1,6 @@
 <?php namespace Sheba\ResourceScheduler;
 
+use App\Models\Category;
 use App\Models\Partner;
 
 class PartnerHandler
@@ -17,8 +18,8 @@ class PartnerHandler
         $available_resources = collect([]);
         $unavailable_resources = collect([]);
 
-        $this->partner->resourcesInCategory($category)->each(function ($resource) use ($date, $time, &$is_available, &$available_resources, &$unavailable_resources) {
-            if (scheduler($resource)->isAvailable($date, $time)) {
+        $this->partner->resourcesInCategory($category)->each(function ($resource) use ($date, $time, &$is_available, &$available_resources, &$unavailable_resources, $category) {
+            if (scheduler($resource)->isAvailableForCategory($date, $time, Category::find($category))) {
                 $available_resources->push($resource);
                 $is_available = true;
             } else {
