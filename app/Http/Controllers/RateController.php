@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Rate;
 use App\Models\ReviewQuestionAnswer;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use DB;
 
 class RateController extends Controller
 {
@@ -40,30 +42,9 @@ class RateController extends Controller
         try {
             $job = $request->job;
             $review = $job->review;
-            if ($review == null) {
-                return api_response($request, null, 403);
-            }
-            if (count($review->rates) > 0) {
-                return api_response($request, null, 403);
-            }
-            $data = json_decode($request->data);
-            $quesAns = $data->quesAns;
-            $quesAnsText = $data->quesAnsText;
-            if (count($quesAns) > 0) {
-                foreach ($quesAns as $qa) {
-                    $review_answer = $this->initializeReviewQuestionAnswer($review, $request->rate, $qa);
-                    $review_answer->rate_answer_id = $qa->answer;
-                    $review_answer->save();
-                }
-            }
-            if (count($quesAnsText) > 0) {
-                foreach ($quesAnsText as $qa) {
-                    $review_answer = $this->initializeReviewQuestionAnswer($review, $request->rate, $qa);
-                    $review_answer->rate_answer_text = $qa->answer;
-                    $review_answer->save();
-                }
-            }
-            return api_response($request, 1, 200);
+            if ($review == null) return api_response($request, null, 403, ['message' => 'First you have to give a rating.']);
+            if ($this->storeReviews($request, $review)) return api_response($request, 1, 200);
+            else return api_response($request, null, 500);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -75,30 +56,9 @@ class RateController extends Controller
         try {
             $job = $request->job;
             $review = $job->customerReview;
-            if ($review == null) {
-                return api_response($request, null, 403);
-            }
-            if (count($review->rates) > 0) {
-                return api_response($request, null, 403);
-            }
-            $data = json_decode($request->data);
-            $quesAns = $data->quesAns;
-            $quesAnsText = $data->quesAnsText;
-            if (count($quesAns) > 0) {
-                foreach ($quesAns as $qa) {
-                    $review_answer = $this->initializeReviewQuestionAnswer($review, $request->rate, $qa);
-                    $review_answer->rate_answer_id = $qa->answer;
-                    $review_answer->save();
-                }
-            }
-            if (count($quesAnsText) > 0) {
-                foreach ($quesAnsText as $qa) {
-                    $review_answer = $this->initializeReviewQuestionAnswer($review, $request->rate, $qa);
-                    $review_answer->rate_answer_text = $qa->answer;
-                    $review_answer->save();
-                }
-            }
-            return api_response($request, 1, 200);
+            if ($review == null) return api_response($request, null, 403, ['message' => 'First you have to give a rating.']);
+            if ($this->storeReviews($request, $review)) return api_response($request, 1, 200);
+            else return api_response($request, null, 500);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -113,5 +73,35 @@ class RateController extends Controller
         $review_answer->rate_id = (int)$rate_id;
         $review_answer->rate_question_id = $qa->question;
         return $review_answer;
+    }
+
+    private function storeReviews(Request $request, $review)
+    {
+        $data = json_decode($request->data);
+        try {
+            DB::transaction(function () use ($data, $review, $request) {
+                $quesAns = $data->quesAns;
+                $quesAnsText = $data->quesAnsText;
+                $old_review_answer_ids = $review->rates->pluck('id')->toArray();
+                if (count($quesAns) > 0) {
+                    foreach ($quesAns as $qa) {
+                        $review_answer = $this->initializeReviewQuestionAnswer($review, $request->rate, $qa);
+                        $review_answer->rate_answer_id = $qa->answer;
+                        $review_answer->save();
+                    }
+                }
+                if (count($quesAnsText) > 0) {
+                    foreach ($quesAnsText as $qa) {
+                        $review_answer = $this->initializeReviewQuestionAnswer($review, $request->rate, $qa);
+                        $review_answer->rate_answer_text = $qa->answer;
+                        $review_answer->save();
+                    }
+                }
+                ReviewQuestionAnswer::whereIn('id', $old_review_answer_ids)->delete();
+            });
+        } catch (QueryException $e) {
+            return null;
+        }
+        return true;
     }
 }

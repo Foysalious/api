@@ -18,6 +18,8 @@ class ComplimentType extends GraphQlType
         return [
             'name' => ['type' => Type::string()],
             'badge' => ['type' => Type::string()],
+            'question_id' => ['type' => Type::int()],
+            'answer_id' => ['type' => Type::int()]
         ];
     }
 
@@ -29,5 +31,15 @@ class ComplimentType extends GraphQlType
     public function resolveBadgeField($root)
     {
         return $root->badge;
+    }
+
+    public function resolveQuestionIdField($root)
+    {
+        return $root->rate_question_id;
+    }
+
+    public function resolveAnswerIdField($root)
+    {
+        return $root->rate_answer_id;
     }
 }
