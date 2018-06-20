@@ -17,18 +17,18 @@ class PartnerAffiliationCreateValidator
 
     private function hasNecessaryFields(Request $request)
     {
-        if (!$request->has('resource_mobile')) return ['code' => 400, 'msg' => 'Resource mobile does not found'];
-        if (!$request->has('resource_name')) return ['code' => 400, 'msg' => 'Resource name does not found'];
-        if (!$request->has('company_name')) return ['code' => 400, 'msg' => 'Company name does not found'];
+        if (!$request->has('resource_mobile')) return ['code' => 400, 'msg' => ['en' => 'Resource mobile does not found', 'bd' => 'Resource mobile does not found']];
+        if (!$request->has('resource_name')) return ['code' => 400, 'msg' => ['en' => 'Resource name does not found', 'bd' => 'Resource name does not found']];
+        if (!$request->has('company_name')) return ['code' => 400, 'msg' => ['en' => 'Company name does not found', 'bd' => 'Company name does not found']];
         return false;
     }
 
     private function isResourceExist(Request $request)
     {
-        if (!BangladeshiMobileValidator::validate($request->resource_mobile)) return ['code' => 400, 'msg' => 'Number format does not match'];
+        if (!BangladeshiMobileValidator::validate($request->resource_mobile)) return ['code' => 400, 'msg' => ['en' => 'Number format does not match', 'bd' => 'Number format does not match']];
         $profile = Profile::where('mobile', formatMobile($request->resource_mobile))->first();
         if($profile) {
-            if ($profile->resource) return ['code' => 400, 'msg' => 'Partner already exist'];
+            if ($profile->resource) return ['code' => 400, 'msg' => ['en' => 'Partner already exist', 'bd' => 'Partner already exist']];
         }
         return false;
     }
@@ -43,7 +43,7 @@ class PartnerAffiliationCreateValidator
                             ->where('status', PartnerAffiliationStatuses::$rejected);
                     });
             })->first();
-        if ($partner_affiliation) return ['code' => 400, 'msg' => 'Invalid resource number'];
+        if ($partner_affiliation) return ['code' => 400, 'msg' => ['en' => 'Invalid resource number', 'bd' => 'Invalid resource number']];
         return false;
     }
 }
