@@ -36,13 +36,7 @@ class PartnerWithdrawalRequestController extends Controller
     public function store($partner, Request $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
-                'amount' => 'required|numeric'
-            ]);
-            if ($validator->fails()) {
-                $errors = $validator->errors()->all()[0];
-                return api_response($request, $errors, 400, ['message' => $errors]);
-            }
+            $this->validate($request, ['amount' => 'required|numeric']);
             $partner = $request->partner;
             $activePartnerWithdrawalRequest = $partner->withdrawalRequests()->currentWeek()->notCancelled()->first();
             $valid_maximum_requested_amount = (double)$partner->wallet - (double)$partner->walletSetting->security_money;
@@ -73,13 +67,7 @@ class PartnerWithdrawalRequestController extends Controller
     public function update($partner, $withdrawals, Request $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
-                'status' => 'required|in:cancelled'
-            ]);
-            if ($validator->fails()) {
-                $errors = $validator->errors()->all()[0];
-                return api_response($request, $errors, 400, ['message' => $errors]);
-            }
+            $this->validate($request, ['status' => 'required|in:cancelled']);
             $partner = $request->partner;
             $partnerWithdrawalRequest = PartnerWithdrawalRequest::find($withdrawals);
             if ($partner->id == $partnerWithdrawalRequest->partner_id && $partnerWithdrawalRequest->status == constants('PARTNER_WITHDRAWAL_REQUEST_STATUSES')['pending']) {
