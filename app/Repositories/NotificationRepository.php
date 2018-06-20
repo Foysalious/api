@@ -117,6 +117,15 @@ class NotificationRepository
         ]);
     }
 
+    public function forPartnerAffiliation($affiliate, $partner_affiliation)
+    {
+        notify()->department(7)->send([
+            'title' => 'New SP Referral Arrived from ' . $affiliate->profile->mobile,
+            'link' => env('SHEBA_BACKEND_URL') . '/partner-affiliation/' . $partner_affiliation->id,
+            'type' => notificationType('Info')
+        ]);
+    }
+
     public function getManagerNotifications($model, $offset, $limit)
     {
         $notifications = $model->notifications()->select('id', 'title', 'event_type', 'event_id', 'type', 'is_seen', 'created_at')->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();

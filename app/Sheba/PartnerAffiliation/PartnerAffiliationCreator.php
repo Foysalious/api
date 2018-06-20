@@ -1,6 +1,7 @@
 <?php namespace Sheba\PartnerAffiliation;
 
 use App\Models\PartnerAffiliation;
+use App\Repositories\NotificationRepository;
 use App\Repositories\SmsHandler;
 use Sheba\ModificationFields;
 
@@ -12,6 +13,7 @@ class PartnerAffiliationCreator
     {
         $partner_affiliation_data = $this->partnerAffiliationCreateData($data);
         $partner_affiliation = PartnerAffiliation::create($partner_affiliation_data);
+        (new NotificationRepository())->forPartnerAffiliation($partner_affiliation->affiliate, $partner_affiliation);
         $this->sendSms($data);
         return $partner_affiliation;
     }
