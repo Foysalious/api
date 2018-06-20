@@ -27,6 +27,7 @@ class PartnerWithdrawalRequestController extends Controller
                 return api_response($request, null, 404, ['can_withdraw' => $can_withdraw, 'status' => $status, 'wallet' => $request->partner->wallet]);
             }
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -57,6 +58,7 @@ class PartnerWithdrawalRequestController extends Controller
             ]));
             return api_response($request, $new_withdrawal, 200);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -84,6 +86,7 @@ class PartnerWithdrawalRequestController extends Controller
                 return api_response($request, '', 403, ['result' => 'You can not update this withdraw request']);
             }
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -95,6 +98,7 @@ class PartnerWithdrawalRequestController extends Controller
             list($can_withdraw, $status) = $this->canWithdraw($partner);
             return api_response($request, $status, 200, ['status' => $status, 'can_withdraw' => $can_withdraw]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
