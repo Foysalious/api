@@ -48,6 +48,9 @@ class ReviewType extends GraphQlType
             }]);
             foreach ($root->rates as $rate) {
                 if ($rate->rate_answer_id) {
+                    $answer = $rate->answer;
+                    array_add($answer, 'rate_question_id', $rate->rate_question_id);
+                    array_add($answer, 'rate_answer_id', $rate->rate_answer_id);
                     array_push($final, $rate->answer);
                 }
             }

@@ -33,9 +33,19 @@ class ResourceJobController extends Controller
             $jobs = $this->resourceJobRepository->getJobs($request->resource);
             $jobs = $this->resourceJobRepository->rearrange($jobs);
             list($offset, $limit) = calculatePagination($request);
-            $jobs = array_slice($jobs, $offset, $limit);
             if (count($jobs) != 0) {
                 $jobs = $this->resourceJobRepository->addJobInformationForAPI($jobs);
+                $group_by_jobs = collect($jobs)->groupBy('schedule_date')->sortBy(function ($item, $key) {
+                    return $key;
+                });
+                $final = collect();
+                foreach ($group_by_jobs as $key => $jobs) {
+                    $jobs = $jobs->sortBy('schedule_timestamp');
+                    foreach ($jobs as $job) {
+                        $final->push($job);
+                    }
+                }
+                $jobs = $final;
                 if ($request->has('group_by')) {
                     $jobs = collect($jobs)->groupBy('schedule_date');
                 } elseif ($request->has('sort_by')) {
@@ -51,6 +61,7 @@ class ResourceJobController extends Controller
                     })->values()->all();
                     return api_response($request, $jobs, 200, ['schedule_due' => $schedule_due_jobs, 'today' => $todays_jobs, 'payment_due' => $payment_due_jobs]);
                 }
+                $jobs = $jobs->splice($offset,$limit);
                 return api_response($request, $jobs, 200, ['jobs' => $jobs]);
             } else {
                 return api_response($request, null, 404);
@@ -73,7 +84,6 @@ class ResourceJobController extends Controller
             if ($jobs) {
                 $job = $this->resourceJobRepository->calculateActionsForThisJob($jobs[0], $job);
             }
-
             $job['pick_up_address'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->pick_up_address : null;
             $job['destination_address'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->destination_address : null;
             $job['drop_off_date'] = $job->carRentalJobDetail ? Carbon::parse($job->carRentalJobDetail->drop_off_date)->format('jS F, Y') : null;
@@ -81,7 +91,7 @@ class ResourceJobController extends Controller
             $job['estimated_distance'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_distance : null;
             $job['estimated_time'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_time : null;
             array_forget($job, 'carRentalJobDetail');
-
+            removeRelationsAndFields($job);
             return api_response($request, $job, 200, ['job' => $job]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

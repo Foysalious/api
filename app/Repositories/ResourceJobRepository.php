@@ -19,15 +19,15 @@ class ResourceJobRepository
 
     public function rearrange($jobs)
     {
-        $process_job = $jobs->whereIn('status', ['Process', 'Serve Due']);
-        $process_job = $process_job->map(function ($item) {
+        $process_jobs = $jobs->whereIn('status', ['Process', 'Serve Due']);
+        $process_jobs = $process_jobs->map(function ($item) {
             if (in_array($item->preferred_time, constants('JOB_PREFERRED_TIMES'))) {
                 return array_add($item, 'preferred_time_priority', constants('JOB_PREFERRED_TIMES_PRIORITY')[$item->preferred_time]);
             } else {
                 return array_add($item, 'preferred_time_priority', 500);
             }
         });
-        $process_job = $process_job->sortBy(function ($job) {
+        $process_jobs = $process_jobs->sortBy(function ($job) {
             return sprintf('%-12s%s', $job->schedule_date, $job->preferred_time_priority);
         })->values()->all();
 
@@ -48,7 +48,7 @@ class ResourceJobRepository
         $other_jobs = $other_jobs->sortBy(function ($job) {
             return sprintf('%-12s%s', $job->schedule_date, $job->preferred_time_priority);
         })->values()->all();
-        $jobs = array_merge($served_jobs, array_merge($process_job, $other_jobs));
+        $jobs = array_merge($served_jobs, array_merge($process_jobs, $other_jobs));
         return $jobs;
     }
 
@@ -100,6 +100,7 @@ class ResourceJobRepository
             $job['delivery_mobile'] = $job->partner_order->order->delivery_mobile;
             $job['delivery_address'] = $job->partner_order->order->delivery_address;
             $job['schedule_date_timestamp'] = (Carbon::parse($job->schedule_date))->timestamp;
+            $job['schedule_timestamp'] = Carbon::parse($job->schedule_date . ' ' . explode('-', $job->preferred_time)[0])->timestamp;
             $job['service_unit_price'] = (double)$job->service_unit_price;
             $job['category_name'] = $job->category ? $job->category->name : null;
             $job['preferred_time'] = $job->readable_preferred_time;
