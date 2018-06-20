@@ -124,7 +124,6 @@ class ReviewController extends Controller
 
             } else {
                 $review->rating = $request->rating;
-                $review->review = $request->review;
                 $review->updated_by = $customer->id;
                 $review->updated_by_name = "Customer - " . $customer->profile->name;
                 $review->update();
