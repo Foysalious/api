@@ -7,6 +7,7 @@ use App\Models\Partner;
 use App\Models\PartnerWithdrawalRequest;
 use App\Sheba\UserRequestInformation;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Validator;
 
 class PartnerWithdrawalRequestController extends Controller
@@ -57,6 +58,12 @@ class PartnerWithdrawalRequestController extends Controller
                 'created_by_name' => 'Resource - ' . $request->manager_resource->profile->name,
             ]));
             return api_response($request, $new_withdrawal, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -85,6 +92,12 @@ class PartnerWithdrawalRequestController extends Controller
             } else {
                 return api_response($request, '', 403, ['result' => 'You can not update this withdraw request']);
             }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
