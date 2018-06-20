@@ -71,13 +71,12 @@ class ResourceJobRepository
         $final_last_jobs = [];
         foreach ($jobs as $job) {
             $partner_order = $job->partner_order;
-            $partner_order->calculate(true);
             $all_jobs_of_this_partner_order = $job->partner_order->jobs;
             $cancel_status = constants('JOB_STATUSES_SHOW')['Cancelled']['sheba'];
             $partner_order_other_jobs = $all_jobs_of_this_partner_order->reject(function ($item, $key) use ($job, $cancel_status) {
                 return $item->id == $job->id || $item->status == $cancel_status;
             });
-            if ((double)$partner_order->due > 0) {
+            if ($partner_order->closed_and_paid_at == null) {
                 if ($partner_order_other_jobs->count() == 0) {
                     array_push($final_last_jobs, $job);
                 } //all other jobs are served. Then check if job is the last job of partner order
