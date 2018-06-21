@@ -74,7 +74,7 @@ class PartnerJobController extends Controller
             }
             if (count($jobs) > 0) {
                 if ($filter == 'ongoing') {
-                    $group_by_jobs = $jobs->groupBy('schedule_date')->sortByDesc(function ($item, $key) {
+                    $group_by_jobs = $jobs->groupBy('schedule_date')->sortBy(function ($item, $key) {
                         return $key;
                     });
                     $final = collect();
