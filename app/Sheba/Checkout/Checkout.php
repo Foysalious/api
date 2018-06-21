@@ -145,11 +145,11 @@ class Checkout
     {
         $car_rental_detail = new CarRentalJobDetail();
         $car_rental_detail->pick_up_location_id = $service->pick_up_location_id;
-        $car_rental_detail->pick_up_location_type = "App\\Models\\" . $service->pick_up_location_type;
+        $car_rental_detail->pick_up_location_type = $service->pick_up_location_type ? "App\\Models\\" . $service->pick_up_location_type : null;
         $car_rental_detail->pick_up_address_geo = $service->pick_up_address_geo;
         $car_rental_detail->pick_up_address = $service->pick_up_address;
         $car_rental_detail->destination_location_id = $service->destination_location_id;
-        $car_rental_detail->destination_location_type = "App\\Models\\" . $service->destination_location_type;
+        $car_rental_detail->destination_location_type = $service->destination_location_type ? "App\\Models\\" . $service->destination_location_type : null;
         $car_rental_detail->destination_address_geo = $service->destination_address_geo;
         $car_rental_detail->destination_address = $service->destination_address;
         $car_rental_detail->drop_off_date = $service->drop_off_date;

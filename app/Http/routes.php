@@ -285,6 +285,7 @@ $api->version('v1', function ($api) {
     });
     $api->group(['prefix' => 'v2', 'namespace' => 'App\Http\Controllers'], function ($api) {
         $api->post('subscription', 'PushSubscriptionController@store');
+        $api->get('car-rental-info', 'ShebaController@sendCarRentalInfo');
         $api->post('service-requests', 'ServiceRequestController@store');
         $api->post('password/email', 'Auth\PasswordController@sendResetPasswordEmail');
         $api->post('password/validate', 'Auth\PasswordController@validatePasswordResetCode');
