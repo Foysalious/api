@@ -234,7 +234,7 @@ class Partner extends Model
     {
         $category = $category instanceof Category ? $category->id : $category;
         $partner_resource_ids = [];
-        $this->handymanResources->map(function ($resource) use (&$partner_resource_ids) {
+        $this->handymanResources()->verified()->get()->map(function ($resource) use (&$partner_resource_ids) {
             $partner_resource_ids[$resource->pivot->id] = $resource;
         });
 
