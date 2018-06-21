@@ -43,7 +43,7 @@ class PartnerAffiliationCreateValidator
                             ->where('status', PartnerAffiliationStatuses::$rejected);
                     });
             })->first();
-        if ($partner_affiliation) return ['code' => 400, 'msg' => ['en' => 'Invalid resource number', 'bd' => 'Invalid resource number']];
+        if ($partner_affiliation) return ['code' => 400, 'msg' => ['en' => 'Partner already referred', 'bd' => 'Partner already referred']];
         return false;
     }
 }
