@@ -28,6 +28,7 @@ class Checkout
     private $customer;
     private $customerRepository;
     private $voucherRepository;
+    private $orderData;
 
     public function __construct($customer)
     {
@@ -94,6 +95,7 @@ class Checkout
         $data['pap_visitor_id'] = $request->has('pap_visitor_id') ? $request->pap_visitor_id : null;
         $data['created_by'] = $created_by = $request->has('created_by') ? $request->created_by : $this->customer->id;
         $data['created_by_name'] = $created_by_name = $request->has('created_by_name') ? $request->created_by_name : 'Customer - ' . $this->customer->profile->name;
+        $this->orderData = $data;
         return $data;
     }
 
@@ -156,6 +158,8 @@ class Checkout
         $car_rental_detail->drop_off_time = $service->drop_off_time;
         $car_rental_detail->estimated_distance = $service->estimated_distance;
         $car_rental_detail->estimated_time = $service->estimated_time;
+        $car_rental_detail->created_by = $this->orderData['created_by'];
+        $car_rental_detail->created_by_name = $this->orderData['created_by_name'];
         return $car_rental_detail;
     }
 
