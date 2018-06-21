@@ -192,7 +192,7 @@ class PartnerJobController extends Controller
                 if (!scheduler(Resource::find((int)$request->resource_id))->isAvailableForCategory($job->schedule_date, explode('-', $job->preferred_time)[0], $job->category)) {
                     return api_response($request, null, 403, ['message' => 'Resource is not available at this time. Please select different date time or change the resource']);
                 }
-                if ($request->partner->hasThisResource((int)$request->resource_id, 'Handyman') && $job->hasStatus(['Accepted', 'Schedule_Due', 'Process'])) {
+                if ($request->partner->hasThisResource((int)$request->resource_id, 'Handyman') && $job->hasStatus(['Accepted', 'Schedule_Due', 'Process', 'Serve_Due'])) {
                     $job = $this->assignResource($job, $request->resource_id, $request->manager_resource);
                     return api_response($request, $job, 200);
                 }
