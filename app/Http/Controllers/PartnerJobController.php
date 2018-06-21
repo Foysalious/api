@@ -57,7 +57,7 @@ class PartnerJobController extends Controller
                     $job['resource_picture'] = $job->resource != null ? $job->resource->profile->pro_pic : null;
                     $job['resource_mobile'] = $job->resource != null ? $job->resource->profile->mobile : null;
                     $job['resource_name'] = $job->resource != null ? $job->resource->profile->name : '';
-                    $job['schedule_timestamp'] = Carbon::parse($job->schedule_date . ' ' . explode('-', $job->preferred_time)[0])->timestamp;
+                    $job['schedule_timestamp'] = $partnerOrder->getVersion() == 'v2' ? Carbon::parse($job->schedule_date . ' ' . explode('-', $job->preferred_time)[0])->timestamp : Carbon::parse($job->schedule_date)->timestamp;
                     $job['preferred_time'] = humanReadableShebaTime($job->readable_preferred_time);
                     $job['rating'] = $job->review != null ? $job->review->rating : null;
                     $job['version'] = $partnerOrder->order->getVersion();
@@ -74,7 +74,7 @@ class PartnerJobController extends Controller
             }
             if (count($jobs) > 0) {
                 if ($filter == 'ongoing') {
-                    $group_by_jobs = $jobs->groupBy('schedule_date')->sortByDesc(function ($item, $key) {
+                    $group_by_jobs = $jobs->groupBy('schedule_date')->sortBy(function ($item, $key) {
                         return $key;
                     });
                     $final = collect();
@@ -107,7 +107,6 @@ class PartnerJobController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -192,7 +191,7 @@ class PartnerJobController extends Controller
                 if (!scheduler(Resource::find((int)$request->resource_id))->isAvailableForCategory($job->schedule_date, explode('-', $job->preferred_time)[0], $job->category)) {
                     return api_response($request, null, 403, ['message' => 'Resource is not available at this time. Please select different date time or change the resource']);
                 }
-                if ($request->partner->hasThisResource((int)$request->resource_id, 'Handyman') && $job->hasStatus(['Accepted', 'Schedule_Due', 'Process'])) {
+                if ($request->partner->hasThisResource((int)$request->resource_id, 'Handyman') && $job->hasStatus(['Accepted', 'Schedule_Due', 'Process', 'Serve_Due'])) {
                     $job = $this->assignResource($job, $request->resource_id, $request->manager_resource);
                     return api_response($request, $job, 200);
                 }

@@ -112,7 +112,7 @@ class ResourceJobRepository
                 $services = collect();
                 foreach ($job->jobServices as $jobService) {
                     $variables = json_decode($jobService->variables);
-                    $services->push(array('name' => $jobService->service->name, 'variables' => $variables, 'unit' => $jobService->unit, 'quantity' => $jobService->quantity));
+                    $services->push(array('name' => $jobService->formatServiceName(), 'variables' => $variables, 'unit' => $jobService->unit, 'quantity' => $jobService->quantity));
                 }
             }
             $job['services'] = $services;
