@@ -104,7 +104,7 @@ class JobController extends Controller
                 $services = collect();
                 foreach ($job->jobServices as $jobService) {
                     $variables = json_decode($jobService->variables);
-                    $services->push(array('name' => $jobService->service->name, 'variables' => $variables, 'quantity' => $jobService->quantity));
+                    $services->push(array('name' => $jobService->formatServiceName(), 'variables' => $variables, 'quantity' => $jobService->quantity));
                 }
             }
             $job_collection->put('services', $services);
