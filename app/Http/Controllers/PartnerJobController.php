@@ -57,7 +57,7 @@ class PartnerJobController extends Controller
                     $job['resource_picture'] = $job->resource != null ? $job->resource->profile->pro_pic : null;
                     $job['resource_mobile'] = $job->resource != null ? $job->resource->profile->mobile : null;
                     $job['resource_name'] = $job->resource != null ? $job->resource->profile->name : '';
-                    $job['schedule_timestamp'] = Carbon::parse($job->schedule_date . ' ' . explode('-', $job->preferred_time)[0])->timestamp;
+                    $job['schedule_timestamp'] = $partnerOrder->getVersion() == 'v2' ? Carbon::parse($job->schedule_date . ' ' . explode('-', $job->preferred_time)[0])->timestamp : Carbon::parse($job->schedule_date)->timestamp;
                     $job['preferred_time'] = humanReadableShebaTime($job->readable_preferred_time);
                     $job['rating'] = $job->review != null ? $job->review->rating : null;
                     $job['version'] = $partnerOrder->order->getVersion();
