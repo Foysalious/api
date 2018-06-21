@@ -41,8 +41,9 @@ class PartnerWithdrawalRequestController extends Controller
             $activePartnerWithdrawalRequest = $partner->withdrawalRequests()->currentWeek()->notCancelled()->first();
             $valid_maximum_requested_amount = (double)$partner->wallet - (double)$partner->walletSetting->security_money;
             if ($activePartnerWithdrawalRequest || ($request->amount > $valid_maximum_requested_amount)) {
-                $result = 'You are not eligible for sending withdraw request.';
-                return api_response($request, $result, 403, ['result' => $result]);
+                if ($activePartnerWithdrawalRequest) $message = "You have already sent a Withdrawal Request";
+                else $message = "You don't have sufficient balance";
+                return api_response($request, null, 403, ['message' => $message]);
             }
             $new_withdrawal = PartnerWithdrawalRequest::create(array_merge((new UserRequestInformation($request))->getInformationArray(), [
                 'partner_id' => $partner->id,
