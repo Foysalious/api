@@ -308,7 +308,13 @@ class PartnerOrderController extends Controller
             $partner_order = $request->partner_order;
             $request->merge(['resource' => $request->manager_resource]);
             $response = (new ResourceJobRepository())->collectMoney($partner_order, $request);
-            if ($response) return api_response($request, $response, $response->code);
+            if ($response) {
+                if ($response->code == 200) {
+                    return api_response($request, $response, 200, ['message' => $request->amount . 'Tk have been successfully collected.']);
+                } else {
+                    return api_response($request, $response, $response->code);
+                }
+            }
             return api_response($request, null, 500);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
