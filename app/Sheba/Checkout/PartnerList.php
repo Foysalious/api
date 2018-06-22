@@ -44,7 +44,7 @@ class PartnerList
             $selected_service['pick_up_location_id'] = isset($service->pick_up_location_id) ? $service->pick_up_location_id : null;
             $selected_service['pick_up_location_type'] = isset($service->pick_up_location_type) ? $service->pick_up_location_type : null;
             $selected_service['pick_up_address'] = isset($service->pick_up_address) ? $service->pick_up_address : null;
-            if ($selected_service->category_id == (int)env('RENT_CAR_OUTSIDE_ID')) {
+            if ($selected_service->category_id != (int)env('RENT_CAR_OUTSIDE_ID')) {
                 $selected_service['destination_location_id'] = null;
                 $selected_service['destination_location_type'] = null;
                 $selected_service['destination_address'] = null;
