@@ -61,7 +61,7 @@ class ResourceJobController extends Controller
                     })->values()->all();
                     return api_response($request, $jobs, 200, ['schedule_due' => $schedule_due_jobs, 'today' => $todays_jobs, 'payment_due' => $payment_due_jobs]);
                 }
-                $jobs = $jobs->splice($offset,$limit);
+                $jobs = $jobs->splice($offset, $limit);
                 return api_response($request, $jobs, 200, ['jobs' => $jobs]);
             } else {
                 return api_response($request, null, 404);
@@ -119,7 +119,7 @@ class ResourceJobController extends Controller
                     array_push($services, array(
                         'name' => $jobService->job->category ? $jobService->job->category->name : null,
                         'price' => (double)$jobService->unit_price * (double)$jobService->quantity,
-                        'unit' => $jobService->unit, 'quantity' => $jobService->quantity
+                        'unit' => $jobService->service->unit, 'quantity' => $jobService->quantity
                     ));
                 }
             }
