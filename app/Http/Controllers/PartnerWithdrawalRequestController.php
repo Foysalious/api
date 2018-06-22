@@ -115,7 +115,7 @@ class PartnerWithdrawalRequestController extends Controller
             $status = 'You don\'t have sufficient balance on your wallet. So you can\'t send a withdraw request.';
             $can_withdraw = false;
         } elseif ($is_wallet_has_sufficient_balance && $activePartnerWithdrawalRequest) {
-            $status = 'You have already sent a Withdrawal Request';
+            $status = 'We have received your withdrawal request, Please wait for approval.';
             $can_withdraw = false;
         }
         return array($can_withdraw, $status);
