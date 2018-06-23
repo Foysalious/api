@@ -75,6 +75,7 @@ class ResourceJobController extends Controller
     public function show($resource, $job, Request $request)
     {
         try {
+            $resource = $request->resource;
             $job = $request->job;
             $job['can_process'] = false;
             $job['can_serve'] = false;
