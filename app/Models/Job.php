@@ -311,4 +311,9 @@ class Job extends Model
         return $this->complains->where('accessor_id', 1);
     }
 
+    public function isRentCar()
+    {
+        return in_array($this->category_id, array_map('intval', explode(',', env('RENT_CAR_IDS')))) ? 1 : 0;
+    }
+
 }
