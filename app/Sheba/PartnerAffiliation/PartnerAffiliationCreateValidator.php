@@ -28,7 +28,7 @@ class PartnerAffiliationCreateValidator
         if (!BangladeshiMobileValidator::validate($request->resource_mobile)) return ['code' => 400, 'msg' => ['en' => 'Number format does not match', 'bd' => 'Number format does not match']];
         $profile = Profile::where('mobile', formatMobile($request->resource_mobile))->first();
         if($profile) {
-            if ($profile->resource) return ['code' => 400, 'msg' => ['en' => 'Partner already exist', 'bd' => 'Partner already exist']];
+            if ($profile->resource) return ['code' => 400, 'msg' => ['en' => 'Sorry! your referral number already exists.', 'bd' => 'Sorry! your referral number already exists.']];
         }
         return false;
     }
@@ -43,7 +43,7 @@ class PartnerAffiliationCreateValidator
                             ->where('status', PartnerAffiliationStatuses::$rejected);
                     });
             })->first();
-        if ($partner_affiliation) return ['code' => 400, 'msg' => ['en' => 'Partner already referred', 'bd' => 'Partner already referred']];
+        if ($partner_affiliation) return ['code' => 400, 'msg' => ['en' => 'Sorry! your referral number already referred', 'bd' => 'Sorry! your referral number already referred']];
         return false;
     }
 }
