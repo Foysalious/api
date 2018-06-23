@@ -2707,7 +2707,7 @@
             "source": {
                 "type": "git",
                 "url": "https://arnabrahman@bitbucket.org/startern/sheba_dal.git",
-                "reference": "deb6cb65dc4e9dcc0297a2cdc71474953a957653"
+                "reference": "53cc82aa2f9427d2ecd57bd094140afb6706f078"
             },
             "require": {
                 "php": ">=5.4"
@@ -2731,7 +2731,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2018-06-23T15:12:16+00:00"
+            "time": "2018-06-23T20:46:11+00:00"
         },
         {
             "name": "sheba/voucher",
