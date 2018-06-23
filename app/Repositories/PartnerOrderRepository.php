@@ -241,6 +241,7 @@ class PartnerOrderRepository
         $partner_order['discount'] = (double)$partner_order->discount;
         $partner_order['total_jobs'] = count($partner_order->jobs);
         $partner_order['order_status'] = $job->status;
+        $partner_order['isRentCar'] = $job->isRentCar();
         return $partner_order;
     }
 
