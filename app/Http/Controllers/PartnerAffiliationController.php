@@ -24,6 +24,14 @@ class PartnerAffiliationController extends Controller
         $partner_affiliations = PartnerAffiliation::with(['transactions' => function ($q) {
             $q->where('type', 'Credit');
         }])->where('affiliate_id', $request->affiliate->id)->get();
+
+        if (!$partner_affiliations->count()) return api_response($request, null, 404, ['affiliations' => []]);
+
+        return api_response($request, null, 200, ['affiliations' => $this->preparePartnerAffiliationData($partner_affiliations)]);
+    }
+
+    private function preparePartnerAffiliationData($partner_affiliations)
+    {
         $data = [];
         foreach ($partner_affiliations as $partner_affiliation) {
             $data[] = [
@@ -39,7 +47,6 @@ class PartnerAffiliationController extends Controller
                 'earning_amount'    => $partner_affiliation->transactions->sum('amount')
             ];
         }
-
-        return api_response($request, null, 200, ['affiliations' => $data]);
+        return $data;
     }
 }
