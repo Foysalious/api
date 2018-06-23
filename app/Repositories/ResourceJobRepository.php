@@ -223,9 +223,12 @@ class ResourceJobRepository
                 } else {
                     $job['can_collect'] = true;
                 }
-                $partner_order->calculate(true);
-                $job['collect_money'] = (double)$partner_order->due;
-                array_forget($job, 'partner_order');
+                if ($partner_order->closed_and_paid_at == null) {
+                    $partner_order->calculate(true);
+                    $job['collect_money'] = (double)$partner_order->due;
+                } else {
+                    $job['collect_money'] = 0;
+                }
             }
         } elseif ($job->status == 'Process' || $job->status == 'Serve Due') {
             if (($first_job_from_list->status == 'Process' || $first_job_from_list->status == 'Serve Due') && $job->id == $first_job_from_list->id) {

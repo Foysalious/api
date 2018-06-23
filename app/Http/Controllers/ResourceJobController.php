@@ -45,7 +45,7 @@ class ResourceJobController extends Controller
                         $final->push($job);
                     }
                 }
-                $jobs = $final;
+                $jobs = $final->where('status', 'Served')->merge($final->where('status', '<>', 'Served'));
                 if ($request->has('group_by')) {
                     $jobs = collect($jobs)->groupBy('schedule_date');
                 } elseif ($request->has('sort_by')) {
@@ -79,9 +79,12 @@ class ResourceJobController extends Controller
             $job['can_process'] = false;
             $job['can_serve'] = false;
             $job['can_collect'] = false;
-            $job = $this->resourceJobRepository->calculateJobActions($job);
+            $jobs = $this->api->get('v1/resources/' . $resource->id . '/jobs?remember_token=' . $resource->remember_token . '&limit=1');
+            if ($jobs) {
+                $job = $this->resourceJobRepository->calculateActionsForThisJob($jobs[0], $job);
+            }
             removeRelationsAndFields($job);
-            $job=array(
+            $job = array(
                 'id' => $job->id,
                 'status' => $job->status,
                 'resource_id' => $job->resource_id,
