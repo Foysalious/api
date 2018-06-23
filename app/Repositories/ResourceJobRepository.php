@@ -135,6 +135,7 @@ class ResourceJobRepository
             $job['estimated_time'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_time : null;
             $job['isRentCar'] = $job->isRentCar();
             $this->_stripUnwantedInformationForAPI($job);
+            removeRelationsAndFields($job);
         }
         return $jobs;
     }

@@ -45,7 +45,10 @@ class ResourceJobController extends Controller
                         $final->push($job);
                     }
                 }
-                $jobs = $final->where('status', 'Served')->merge($final->where('status', '<>', 'Served'));
+                $other_jobs = $final->reject(function ($job) {
+                    return $job->status == 'Served';
+                });
+                $jobs = $final->where('status', 'Served')->merge($other_jobs);
                 if ($request->has('group_by')) {
                     $jobs = collect($jobs)->groupBy('schedule_date');
                 } elseif ($request->has('sort_by')) {
