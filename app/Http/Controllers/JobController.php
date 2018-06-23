@@ -87,8 +87,8 @@ class JobController extends Controller
             $job_collection->put('review', $job->review ? $job->review->calculated_review : null);
             $job_collection->put('price', (double)$job->partnerOrder->totalPrice);
             $job_collection->put('isDue', (double)$job->partnerOrder->due > 0 ? 1 : 0);
+            $job_collection->put('isRentCar', $job->isRentCar());
             $job_collection->put('order_code', $job->partnerOrder->order->code());
-
             $job_collection->put('pick_up_address', $job->carRentalJobDetail ? $job->carRentalJobDetail->pick_up_address : null);
             $job_collection->put('destination_address', $job->carRentalJobDetail ? $job->carRentalJobDetail->destination_address : null);
             $job_collection->put('drop_off_date', $job->carRentalJobDetail ? (Carbon::parse($job->carRentalJobDetail->drop_off_date)->format('jS F, Y')) : null);
