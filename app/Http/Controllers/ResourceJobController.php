@@ -75,23 +75,22 @@ class ResourceJobController extends Controller
     public function show($resource, $job, Request $request)
     {
         try {
-            $resource = $request->resource;
             $job = $request->job;
             $job['can_process'] = false;
             $job['can_serve'] = false;
             $job['can_collect'] = false;
-            $jobs = $this->api->get('v1/resources/' . $resource->id . '/jobs?remember_token=' . $resource->remember_token . '&limit=1');
-            if ($jobs) {
-                $job = $this->resourceJobRepository->calculateActionsForThisJob($jobs[0], $job);
-            }
-            $job['pick_up_address'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->pick_up_address : null;
-            $job['destination_address'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->destination_address : null;
-            $job['drop_off_date'] = $job->carRentalJobDetail ? Carbon::parse($job->carRentalJobDetail->drop_off_date)->format('jS F, Y') : null;
-            $job['drop_off_time'] = $job->carRentalJobDetail ? Carbon::parse($job->carRentalJobDetail->drop_off_time)->format('g:i A') : null;
-            $job['estimated_distance'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_distance : null;
-            $job['estimated_time'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_time : null;
-            array_forget($job, 'carRentalJobDetail');
+            $job = $this->resourceJobRepository->calculateJobActions($job);
             removeRelationsAndFields($job);
+            $job=array(
+                'id' => $job->id,
+                'status' => $job->status,
+                'resource_id' => $job->resource_id,
+                'partner_order_id' => $job->partner_order_id,
+                'can_process' => $job->can_process,
+                'can_serve' => $job->can_serve,
+                'can_collect' => $job->can_collect,
+                'collect_money' => $job->collect_money,
+            );
             return api_response($request, $job, 200, ['job' => $job]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

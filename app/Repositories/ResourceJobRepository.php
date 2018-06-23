@@ -127,6 +127,13 @@ class ResourceJobRepository
             $job['service_unit_price'] = (double)$job->service_unit_price;
             $job['isDue'] = $job->partner_order->closed_and_paid_at ? 0 : 1;
             $job['missed_at'] = $job->status == 'Schedule Due' ? $job->schedule_date : null;
+            $job['pick_up_address'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->pick_up_address : null;
+            $job['destination_address'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->destination_address : null;
+            $job['drop_off_date'] = $job->carRentalJobDetail ? Carbon::parse($job->carRentalJobDetail->drop_off_date)->format('jS F, Y') : null;
+            $job['drop_off_time'] = $job->carRentalJobDetail ? Carbon::parse($job->carRentalJobDetail->drop_off_time)->format('g:i A') : null;
+            $job['estimated_distance'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_distance : null;
+            $job['estimated_time'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_time : null;
+            $job['isRentCar'] = $job->isRentCar();
             $this->_stripUnwantedInformationForAPI($job);
         }
         return $jobs;
@@ -228,6 +235,25 @@ class ResourceJobRepository
             if ($first_job_from_list->status != 'Process' && $first_job_from_list->status != 'Serve Due' && $first_job_from_list->status != 'Served') {
                 $job['can_process'] = true;
             }
+        }
+        return $job;
+    }
+
+    public function calculateJobActions($job)
+    {
+        $partner_order = $job->partner_order;
+        if ($job->status == 'Served') {
+            if ($partner_order->closed_and_paid_at == null) {
+                $partner_order->calculate(true);
+                $job['collect_money'] = (double)$partner_order->due;
+            } else {
+                $job['collect_money'] = 0;
+            }
+            $job['can_collect'] = $partner_order->payment_method != 'bad-debt';
+        } elseif ($job->status == 'Process' || $job->status == 'Serve Due') {
+            $job['can_serve'] = true;
+        } else {
+            $job['can_process'] = true;
         }
         return $job;
     }
