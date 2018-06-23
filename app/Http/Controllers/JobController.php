@@ -29,12 +29,15 @@ class JobController extends Controller
     {
         try {
             $this->validate($request, [
-                'filter' => 'required|string|in:ongoing,history'
+                'filter' => 'sometimes|string|in:ongoing,history'
             ]);
-            $filter = $request->filter;
+            $filter = $request->has('filter') ? $request->filter : null;
             $customer = $request->customer->load(['orders' => function ($q) use ($filter) {
                 $q->with(['partnerOrders' => function ($q) use ($filter) {
-                    $q->$filter()->with(['partner', 'jobs' => function ($q) {
+                    if ($filter) {
+                        $q->$filter();
+                    }
+                    $q->with(['partner', 'jobs' => function ($q) {
                         $q->with(['resource.profile', 'category', 'review']);
                     }]);
                 }]);
@@ -47,6 +50,7 @@ class JobController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -55,12 +59,13 @@ class JobController extends Controller
     {
         try {
             $customer = $request->customer;
-            $job = $request->job->load(['resource.profile', 'category', 'review', 'jobServices', 'complains' => function ($q) use ($customer) {
+            $job = $request->job->load(['resource.profile', 'carRentalJobDetail', 'category', 'review', 'jobServices', 'complains' => function ($q) use ($customer) {
                 $q->select('id', 'job_id', 'status', 'complain', 'complain_preset_id')
                     ->whereHas('accessor', function ($query) use ($customer) {
                         $query->where('accessors.model_name', get_class($customer));
                     });
             }]);
+
             $job->partnerOrder->calculate(true);
             $job_collection = collect();
             $job_collection->put('id', $job->id);
@@ -82,16 +87,24 @@ class JobController extends Controller
             $job_collection->put('review', $job->review ? $job->review->calculated_review : null);
             $job_collection->put('price', (double)$job->partnerOrder->totalPrice);
             $job_collection->put('isDue', (double)$job->partnerOrder->due > 0 ? 1 : 0);
+            $job_collection->put('isRentCar', $job->isRentCar());
             $job_collection->put('order_code', $job->partnerOrder->order->code());
+            $job_collection->put('pick_up_address', $job->carRentalJobDetail ? $job->carRentalJobDetail->pick_up_address : null);
+            $job_collection->put('destination_address', $job->carRentalJobDetail ? $job->carRentalJobDetail->destination_address : null);
+            $job_collection->put('drop_off_date', $job->carRentalJobDetail ? (Carbon::parse($job->carRentalJobDetail->drop_off_date)->format('jS F, Y')) : null);
+            $job_collection->put('drop_off_time', $job->carRentalJobDetail ? (Carbon::parse($job->carRentalJobDetail->drop_off_time)->format('g:i A')) : null);
+            $job_collection->put('estimated_distance', $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_distance : null);
+            $job_collection->put('estimated_time', $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_time : null);
+
             if (count($job->jobServices) == 0) {
                 $services = collect();
                 $variables = json_decode($job->service_variables);
-                $services->push(array('name' => $job->service_name, 'variables' => $variables, 'quantity' => $job->service_quantity));
+                $services->push(array('name' => $job->service_name, 'variables' => $variables, 'quantity' => $job->service_quantity, 'unit' => $job->service->unit));
             } else {
                 $services = collect();
                 foreach ($job->jobServices as $jobService) {
                     $variables = json_decode($jobService->variables);
-                    $services->push(array('name' => $jobService->service->name, 'variables' => $variables, 'quantity' => $jobService->quantity));
+                    $services->push(array('name' => $jobService->formatServiceName(), 'variables' => $variables, 'unit' => $jobService->service->unit, 'quantity' => $jobService->quantity));
                 }
             }
             $job_collection->put('services', $services);

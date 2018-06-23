@@ -20,6 +20,7 @@ class PartnerRepository
     public function resources($type = null, $verify = null, $job_id = null)
     {
         $resources = $this->partner->handymanResources()->get()->unique();
+        $resources->load('jobs', 'profile', 'reviews');
         if ($verify !== null) {
             $resources = $resources->filter(function ($resource) use ($verify) {
                 return $resource->is_verified == $verify;
@@ -42,7 +43,8 @@ class PartnerRepository
             $data = [];
             $data['id'] = $resource->id;
             $data['profile_id'] = $resource->profile_id;
-            $data['ongoing'] = $resource->jobs->whereIn('status', [constants('JOB_STATUSES')['Serve_Due'],constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Schedule_Due']])->count();
+            $ongoing_jobs = $resource->jobs->whereIn('status', [constants('JOB_STATUSES')['Serve_Due'], constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Schedule_Due']]);
+            $data['ongoing'] = $ongoing_jobs->count();
             $data['completed'] = $resource->jobs->where('status', constants('JOB_STATUSES')['Served'])->count();
             $data['name'] = $resource->profile->name;
             $data['mobile'] = $resource->profile->mobile;
@@ -57,15 +59,25 @@ class PartnerRepository
             $data['is_tagged'] = $resource->is_tagged;
             $data['total_tagged_categories'] = isset($resource->total_tagged_categories) ? count($resource->total_tagged_categories) : count($resource->categoriesIn($this->partner->id));
             if (!empty($job)) {
-                $resource_scheduler = scheduler($resource);
-                if (!$resource_scheduler->isAvailableForCategory($job->schedule_date, $job->preferred_time_start, $job->category)) {
-                    $data['is_available'] = 0;
-                    foreach ($resource_scheduler->getBookedJobs() as $job) {
+                if (in_array($job->category_id, array_map('intval', explode(',', env('RENT_CAR_IDS'))))) {
+                    foreach ($ongoing_jobs->where('resource_id', $resource->id)->where('category_id', $job->category_id) as $job) {
                         array_push($data['booked_jobs'], array(
                             'job_id' => $job->id,
                             'partner_order_id' => $job->partnerOrder->id,
                             'code' => $job->partnerOrder->order->code()
                         ));
+                    }
+                } else {
+                    $resource_scheduler = scheduler($resource);
+                    if (!$resource_scheduler->isAvailableForCategory($job->schedule_date, $job->preferred_time_start, $job->category)) {
+                        $data['is_available'] = 0;
+                        foreach ($resource_scheduler->getBookedJobs() as $job) {
+                            array_push($data['booked_jobs'], array(
+                                'job_id' => $job->id,
+                                'partner_order_id' => $job->partnerOrder->id,
+                                'code' => $job->partnerOrder->order->code()
+                            ));
+                        }
                     }
                 }
             }
@@ -92,7 +104,7 @@ class PartnerRepository
         if ($status == 'new') {
             return array(constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']);
         } elseif ($status == 'ongoing') {
-            return array(constants('JOB_STATUSES')['Serve_Due'],constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Schedule_Due']);
+            return array(constants('JOB_STATUSES')['Serve_Due'], constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Schedule_Due']);
         } elseif ($status == 'history') {
             return array(constants('JOB_STATUSES')['Served']);
         }

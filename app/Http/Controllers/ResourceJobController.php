@@ -12,6 +12,7 @@ use Dingo\Api\Routing\Helpers;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Validator;
 use App\Http\Requests;
 use DB;
@@ -32,9 +33,22 @@ class ResourceJobController extends Controller
             $jobs = $this->resourceJobRepository->getJobs($request->resource);
             $jobs = $this->resourceJobRepository->rearrange($jobs);
             list($offset, $limit) = calculatePagination($request);
-            $jobs = array_slice($jobs, $offset, $limit);
             if (count($jobs) != 0) {
                 $jobs = $this->resourceJobRepository->addJobInformationForAPI($jobs);
+                $group_by_jobs = collect($jobs)->groupBy('schedule_date')->sortBy(function ($item, $key) {
+                    return $key;
+                });
+                $final = collect();
+                foreach ($group_by_jobs as $key => $jobs) {
+                    $jobs = $jobs->sortBy('schedule_timestamp');
+                    foreach ($jobs as $job) {
+                        $final->push($job);
+                    }
+                }
+                $other_jobs = $final->reject(function ($job) {
+                    return $job->status == 'Served';
+                });
+                $jobs = $final->where('status', 'Served')->merge($other_jobs);
                 if ($request->has('group_by')) {
                     $jobs = collect($jobs)->groupBy('schedule_date');
                 } elseif ($request->has('sort_by')) {
@@ -50,6 +64,7 @@ class ResourceJobController extends Controller
                     })->values()->all();
                     return api_response($request, $jobs, 200, ['schedule_due' => $schedule_due_jobs, 'today' => $todays_jobs, 'payment_due' => $payment_due_jobs]);
                 }
+                $jobs = $jobs->splice($offset, $limit);
                 return api_response($request, $jobs, 200, ['jobs' => $jobs]);
             } else {
                 return api_response($request, null, 404);
@@ -72,6 +87,17 @@ class ResourceJobController extends Controller
             if ($jobs) {
                 $job = $this->resourceJobRepository->calculateActionsForThisJob($jobs[0], $job);
             }
+            removeRelationsAndFields($job);
+            $job = array(
+                'id' => $job->id,
+                'status' => $job->status,
+                'resource_id' => $job->resource_id,
+                'partner_order_id' => $job->partner_order_id,
+                'can_process' => $job->can_process,
+                'can_serve' => $job->can_serve,
+                'can_collect' => $job->can_collect,
+                'collect_money' => $job->collect_money,
+            );
             return api_response($request, $job, 200, ['job' => $job]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -99,7 +125,7 @@ class ResourceJobController extends Controller
                     array_push($services, array(
                         'name' => $jobService->job->category ? $jobService->job->category->name : null,
                         'price' => (double)$jobService->unit_price * (double)$jobService->quantity,
-                        'unit' => $jobService->unit, 'quantity' => $jobService->quantity
+                        'unit' => $jobService->service->unit, 'quantity' => $jobService->quantity
                     ));
                 }
             }
@@ -166,18 +192,17 @@ class ResourceJobController extends Controller
     public function collect($resource, $job, Request $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
-                'amount' => 'required|numeric',
-            ]);
-            if ($validator->fails()) {
-                return api_response($request, null, 500, ['message' => $validator->errors()->all()[0]]);
-            }
+            $this->validate($request, ['amount' => 'required|numeric']);
             $partner_order = $request->job->partner_order;
             $response = $this->resourceJobRepository->collectMoney($partner_order, $request);
-            if ($response) {
-                return api_response($request, $response, $response->code);
-            }
+            if ($response) return api_response($request, $response, $response->code);
             return api_response($request, null, 500);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

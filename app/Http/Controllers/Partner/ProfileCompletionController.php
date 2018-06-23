@@ -49,7 +49,7 @@ class ProfileCompletionController extends Controller
 
     private function isPersonalInformationGiven($resource)
     {
-        return !empty($resource->nid_no) && !empty($resource->nid_image) && !empty($resource->profile->pro_pic) && !empty($resource->profile->name) ? 1 : 0;
+        return !empty($resource->nid_no) && !empty($resource->nid_image) && basename($resource->profile->pro_pic) != 'default.jpg' && !empty($resource->profile->name) ? 1 : 0;
     }
 
     private function isOperationalInformationGiven($partner)

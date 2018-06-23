@@ -29,6 +29,7 @@ class ServiceType extends GraphQlType
             'app_thumb' => ['type' => Type::string()],
             'banner' => ['type' => Type::string()],
             'screen' => ['type' => Type::string()],
+            'start_price' => ['type' => Type::float()],
             'faqs' => ['type' => Type::string(), 'description' => 'Frequently asked questions for this service'],
             'type' => ['type' => Type::string(), 'description' => 'Available types: Fixed,Options,Custom'],
             'options' => ['type' => Type::listOf(GraphQL::type('ServiceQuestion')), 'description' => 'Q&A of service, can be null'],
@@ -54,16 +55,29 @@ class ServiceType extends GraphQlType
     {
         if ($root->variable_type == 'Options') {
             $questions = (collect(json_decode($root->variables)->options))->pluck('question');
-            if(count($questions)>3){
+            if (count($questions) > 3) {
                 return "slide";
             }
-//            foreach ($questions as $question) {
-//                if (strlen(trim($question)) >= 50) {
-//                    return "slide";
-//                }
-//            }
         }
         return "normal";
+    }
+
+    public function resolveStartPriceField($root)
+    {
+        try {
+            $price = [];
+            if ($root->partners->where('status', 'Verified')->count() == 0) return 0;
+            foreach ($root->partners->where('status', 'Verified') as $partner) {
+                $partner_service = $partner->pivot;
+                if (!($partner_service->is_verified && $partner_service->is_published)) continue;
+                $prices = (array)json_decode($partner_service->prices);
+                array_push($price, min($prices));
+            }
+            return (double)min($price) * (double)$root->min_quantity;
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return 0;
+        }
     }
 
 }

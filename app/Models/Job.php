@@ -48,6 +48,11 @@ class Job extends Model
         return $this->hasMany(JobService::class);
     }
 
+    public function carRentalJobDetail()
+    {
+        return $this->hasOne(CarRentalJobDetail::class);
+    }
+
     public function resource()
     {
         return $this->belongsTo(Resource::class);
@@ -120,7 +125,7 @@ class Job extends Model
         $this->profit = formatTaka($this->grossPrice - $this->totalCost);
         $this->margin = ($this->totalPrice != 0) ? (($this->grossPrice - $this->totalCost) * 100) / $this->totalPrice : 0;
         $this->margin = formatTaka($this->margin);
-        if(!$price_only) {
+        if (!$price_only) {
             $this->calculateComplexityIndex();
         }
         $this->isInWarranty = $this->isInWarranty();
@@ -166,7 +171,7 @@ class Job extends Model
 
     public function isInWarranty()
     {
-        if($this->status != $this->jobStatuses["Served"] || !$this->delivered_date) return false;
+        if ($this->status != $this->jobStatuses["Served"] || !$this->delivered_date) return false;
         return Carbon::now()->between($this->delivered_date, $this->delivered_date->addDays($this->warranty));
     }
 
@@ -304,6 +309,11 @@ class Job extends Model
     public function customerComplains()
     {
         return $this->complains->where('accessor_id', 1);
+    }
+
+    public function isRentCar()
+    {
+        return in_array($this->category_id, array_map('intval', explode(',', env('RENT_CAR_IDS')))) ? 1 : 0;
     }
 
 }

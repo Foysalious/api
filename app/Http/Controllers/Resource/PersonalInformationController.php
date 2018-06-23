@@ -50,7 +50,7 @@ class PersonalInformationController extends Controller
     {
         try {
             $this->validate($request, [
-                'nid_no' => 'required_without:resource|string',
+                'nid_no' => 'required_without:resource|string|unique:resources',
                 'nid_back' => 'required_without:resource|file',
                 'nid_front' => 'required_without:resource|file',
                 'name' => 'string',

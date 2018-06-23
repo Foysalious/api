@@ -42,4 +42,14 @@ class HomePageSettingController extends Controller
     {
         return 'publishedFor' . ucwords($for);
     }
+
+    public function getCar(Request $request)
+    {
+        try {
+            $settings = json_decode(\Illuminate\Support\Facades\Redis::get('car_settings'));
+            return api_response($request, $settings, 200, ['settings' => $settings]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
 }

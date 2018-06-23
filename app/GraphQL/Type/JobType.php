@@ -21,6 +21,10 @@ class JobType extends GraphQlType
             'additional_information' => ['type' => Type::string()],
             'price' => ['type' => Type::float()],
             'status' => ['type' => Type::string()],
+            'pickup_address' => ['type' => Type::string()],
+            'pickup_area' => ['type' => Type::string()],
+            'destination_area' => ['type' => Type::string()],
+            'destination_address' => ['type' => Type::string()],
             'schedule_date' => ['type' => Type::string()],
             'schedule_date_timestamp' => ['type' => Type::int()],
             'preferred_time' => ['type' => Type::string()],
@@ -61,12 +65,12 @@ class JobType extends GraphQlType
             $services = [];
             foreach ($root->jobServices as $jobService) {
                 array_push($services, array(
-                    'id' => $jobService->service->id,
-                    'name' => $jobService->service->name,
-                    'options' => $jobService->variables,
-                    'option'=>$jobService->option,
-                    'unit' => $jobService->service->unit,
-                    'quantity' => (float)$jobService->quantity, 'unit_price' => (float)$jobService->unit_price)
+                        'id' => $jobService->service->id,
+                        'name' => $jobService->service->name,
+                        'options' => $jobService->variables,
+                        'option' => $jobService->option,
+                        'unit' => $jobService->service->unit,
+                        'quantity' => (float)$jobService->quantity, 'unit_price' => (float)$jobService->unit_price)
 
                 );
             }
@@ -111,5 +115,36 @@ class JobType extends GraphQlType
         return Carbon::parse($root->schedule_date)->timestamp;
     }
 
+    protected function resolvePickupAddressField($root)
+    {
+        return $root->carRentalJobDetail ? $root->carRentalJobDetail->pick_up_address : null;
+    }
+
+    protected function resolveDestinationAddressField($root)
+    {
+        return $root->carRentalJobDetail ? $root->carRentalJobDetail->destination_address : null;
+    }
+
+    protected function resolvePickupAreaField($root)
+    {
+        if ($root->carRentalJobDetail) {
+            if ($root->carRentalJobDetail->pick_up_location_id) {
+                return $root->carRentalJobDetail->pickUpLocation->name;
+            }
+        } else {
+            return null;
+        }
+    }
+
+    protected function resolveDestinationAreaField($root)
+    {
+        if ($root->carRentalJobDetail) {
+            if ($root->carRentalJobDetail->destination_location_id) {
+                return $root->carRentalJobDetail->destinationLocation->name;
+            }
+        } else {
+            return null;
+        }
+    }
 
 }

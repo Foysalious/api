@@ -107,9 +107,7 @@ class ReviewController extends Controller
         try {
             $this->validate($request, ['rating' => 'required']);
             $job = $request->job;
-            if ($job->status != 'Served') {
-                return api_response($request, null, 403);
-            }
+            if ($job->status != 'Served') return api_response($request, null, 403, ['message' => 'Your Order hasn\'t been closed yet.']);
             $review = $job->review;
             $customer = $request->customer;
             if ($review == null) {
@@ -126,14 +124,17 @@ class ReviewController extends Controller
 
             } else {
                 $review->rating = $request->rating;
-                $review->review = $request->review;
                 $review->updated_by = $customer->id;
                 $review->updated_by_name = "Customer - " . $customer->profile->name;
                 $review->update();
+                $review->rates()->delete();
             }
             return api_response($request, $review, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

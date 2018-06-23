@@ -36,13 +36,25 @@ class PartnerOrderRepository
             $job['partner_order'] = $partner_order;
             $job = $this->partnerJobRepository->getJobInfo($job);
             $services = [];
-            $job->jobServices->each(function ($job_service) use (&$services) {
-                array_push($services, $this->partnerJobRepository->getJobServiceInfo($job_service));
+            $job->jobServices->each(function ($job_service) use (&$services, $job) {
+                $info = $this->partnerJobRepository->getJobServiceInfo($job_service);
+                $info['name'] = $job_service->formatServiceName();
+                $info['unit'] = $job_service->service->unit;
+                array_push($services, $info);
             });
+
             $job['category_name'] = $job->category ? $job->category->name : null;
             removeRelationsAndFields($job);
             $job['services'] = $services;
-            array_forget($job, 'partner_order');
+
+            $job['pick_up_address'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->pick_up_address : null;
+            $job['destination_address'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->destination_address : null;
+            $job['drop_off_date'] = $job->carRentalJobDetail ? Carbon::parse($job->carRentalJobDetail->drop_off_date)->format('jS F, Y') : null;
+            $job['drop_off_time'] = $job->carRentalJobDetail ? Carbon::parse($job->carRentalJobDetail->drop_off_time)->format('g:i A') : null;
+            $job['estimated_distance'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_distance : null;
+            $job['estimated_time'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_time : null;
+
+            array_forget($job, ['partner_order', 'carRentalJobDetail']);
         })->values()->all();
         removeRelationsAndFields($partner_order);
         $partner_order['jobs'] = $jobs;
@@ -156,7 +168,7 @@ class PartnerOrderRepository
     private function loadAllRelatedRelationsV2($partner_order)
     {
         return $partner_order->load(['order.location', 'jobs' => function ($q) {
-            $q->info()->with(['usedMaterials', 'resource.profile', 'jobServices' => function ($q) {
+            $q->info()->with(['usedMaterials', 'carRentalJobDetail', 'resource.profile', 'jobServices' => function ($q) {
                 $q->with('service');
             }]);
         }]);
@@ -230,6 +242,7 @@ class PartnerOrderRepository
         $partner_order['discount'] = (double)$partner_order->discount;
         $partner_order['total_jobs'] = count($partner_order->jobs);
         $partner_order['order_status'] = $job->status;
+        $partner_order['isRentCar'] = $job->isRentCar();
         return $partner_order;
     }
 

@@ -11,6 +11,8 @@ use App\Repositories\ReviewRepository;
 use App\Sheba\Partner\PartnerAvailable;
 use Carbon\Carbon;
 use DB;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 
 class PartnerList
 {
@@ -21,12 +23,14 @@ class PartnerList
     private $date;
     private $time;
     private $partnerServiceRepository;
+    private $rentCarServicesId;
 
     public function __construct($services, $date, $time, $location)
     {
         $this->location = (int)$location;
         $this->date = $date;
         $this->time = $time;
+        $this->rentCarServicesId = array_map('intval', explode(',', env('RENT_CAR_SERVICE_IDS')));
         $this->selected_services = $this->getSelectedServices($services);
         $this->partnerServiceRepository = new PartnerServiceRepository();
     }
@@ -35,9 +39,39 @@ class PartnerList
     {
         $selected_services = collect();
         foreach ($services as $service) {
-            $selected_service = Service::select('id', 'name', 'category_id', 'min_quantity', 'variable_type', 'variables')->where('id', $service->id)->publishedForAll()->first();
+            $selected_service = Service::where('id', $service->id)->publishedForAll()->first();
             $selected_service['option'] = $service->option;
-            $selected_service['quantity'] = $this->getSelectedServiceQuantity($service, (double)$selected_service->min_quantity);
+            $selected_service['pick_up_location_id'] = isset($service->pick_up_location_id) ? $service->pick_up_location_id : null;
+            $selected_service['pick_up_location_type'] = isset($service->pick_up_location_type) ? $service->pick_up_location_type : null;
+            $selected_service['pick_up_address'] = isset($service->pick_up_address) ? $service->pick_up_address : null;
+            if ($selected_service->category_id != (int)env('RENT_CAR_OUTSIDE_ID')) {
+                $selected_service['destination_location_id'] = null;
+                $selected_service['destination_location_type'] = null;
+                $selected_service['destination_address'] = null;
+                $selected_service['drop_off_date'] = null;
+                $selected_service['drop_off_time'] = null;
+            } else {
+                $selected_service['destination_location_id'] = isset($service->destination_location_id) ? $service->destination_location_id : null;
+                $selected_service['destination_location_type'] = isset($service->destination_location_type) ? $service->destination_location_type : null;
+                $selected_service['destination_address'] = isset($service->destination_address) ? $service->destination_address : null;
+                $selected_service['drop_off_date'] = isset($service->drop_off_date) ? $service->drop_off_date : null;
+                $selected_service['drop_off_time'] = isset($service->drop_off_time) ? $service->drop_off_time : null;
+            }
+
+            if (in_array($selected_service->id, $this->rentCarServicesId)) {
+                $model = "App\\Models\\" . $service->pick_up_location_type;
+                $origin = $model::find($service->pick_up_location_id);
+                $selected_service['pick_up_address_geo'] = json_encode(array('lat' => $origin->lat, 'lng' => $origin->lng));
+                $model = "App\\Models\\" . $service->destination_location_type;
+                $destination = $model::find($service->destination_location_id);
+                $selected_service['destination_address_geo'] = json_encode(array('lat' => $destination->lat, 'lng' => $destination->lng));
+                $data = $this->getDistanceCalculationResult($origin->lat . ',' . $origin->lng, $destination->lat . ',' . $destination->lng);
+                $selected_service['quantity'] = (double)($data->rows[0]->elements[0]->distance->value) / 1000;
+                $selected_service['estimated_distance'] = $selected_service['quantity'];
+                $selected_service['estimated_time'] = (double)($data->rows[0]->elements[0]->duration->value) / 60;
+            } else {
+                $selected_service['quantity'] = $this->getSelectedServiceQuantity($service, (double)$selected_service->min_quantity);
+            }
             $selected_services->push($selected_service);
         }
         return $selected_services;
@@ -50,6 +84,21 @@ class PartnerList
             return $quantity >= $min_quantity ? $quantity : $min_quantity;
         } else {
             return $min_quantity;
+        }
+    }
+
+
+    private function getDistanceCalculationResult($origin, $destination)
+    {
+        $client = new Client();
+        try {
+            $res = $client->request('GET', 'https://maps.googleapis.com/maps/api/distancematrix/json',
+                [
+                    'query' => ['origins' => $origin, 'destinations' => $destination, 'key' => env('GOOGLE_DISTANCEMATRIX_KEY'), 'mode' => 'driving']
+                ]);
+            return json_decode($res->getBody());
+        } catch (RequestException $e) {
+            return null;
         }
     }
 
@@ -152,6 +201,7 @@ class PartnerList
         }]);
         foreach ($this->partners as $partner) {
             $partner['total_jobs'] = $partner->jobs->count();
+            $partner['total_jobs_of_category'] = $partner->jobs->where('category_id', $this->selected_services->pluck('category_id')->unique()->first())->count();
         }
     }
 
@@ -235,6 +285,9 @@ class PartnerList
             $service['is_percentage'] = $discount->__get('discount_percentage');
             $service['discounted_price'] = $discount->__get('discounted_price');
             $service['original_price'] = $discount->__get('original_price');
+            $service['unit_price'] = $discount->__get('unit_price');
+            $service['sheba_contribution'] = $discount->__get('sheba_contribution');
+            $service['partner_contribution'] = $discount->__get('partner_contribution');
 
             $total_service_price['discount'] += $service['discount'];
             $total_service_price['discounted_price'] += $service['discounted_price'];
@@ -243,6 +296,7 @@ class PartnerList
             $service['name'] = $selected_service->name;
             $service['option'] = $selected_service->option;
             $service['quantity'] = $selected_service->quantity;
+            $service['unit'] = $selected_service->unit;
             list($option, $variables) = $this->getVariableOptionOfService($selected_service, $selected_service->option);
             $service['questions'] = json_decode($variables);
             array_push($services, $service);

@@ -254,6 +254,8 @@ $api->version('v1', function ($api) {
             $api->get('status', 'AffiliateController@getStatus');
             $api->get('affiliations', 'AffiliationController@index');
             $api->post('affiliations', 'AffiliationController@create');
+            $api->post('partner-affiliates', 'PartnerAffiliationController@store');
+            $api->get('partner-affiliates', 'PartnerAffiliationController@index');
         });
         $api->group(['prefix' => 'affiliates/{affiliate}', 'middleware' => ['affiliate.auth']], function ($api) {
             $api->post('edit', 'AffiliateController@edit');
@@ -262,6 +264,7 @@ $api->version('v1', function ($api) {
 
             $api->get('wallet', 'AffiliateController@getWallet');
             $api->get('status', 'AffiliateController@getStatus');
+            $api->get('dashboard', 'AffiliateController@getDashboardInfo');
             $api->get('affiliations', 'AffiliationController@newIndex');
             $api->post('affiliations', 'AffiliationController@create');
             $api->get('transactions', 'AffiliateController@getTransactions');
@@ -281,6 +284,8 @@ $api->version('v1', function ($api) {
 
     });
     $api->group(['prefix' => 'v2', 'namespace' => 'App\Http\Controllers'], function ($api) {
+        $api->post('subscription', 'PushSubscriptionController@store');
+        $api->get('car-rental-info', 'ShebaController@sendCarRentalInfo');
         $api->post('service-requests', 'ServiceRequestController@store');
         $api->post('password/email', 'Auth\PasswordController@sendResetPasswordEmail');
         $api->post('password/validate', 'Auth\PasswordController@validatePasswordResetCode');
@@ -302,6 +307,7 @@ $api->version('v1', function ($api) {
         });
         $api->get('times', 'ScheduleTimeController@index');
         $api->get('settings', 'HomePageSettingController@index');
+        $api->get('settings/car', 'HomePageSettingController@getCar');
         $api->get('home-grids', 'HomeGridController@index');
         $api->group(['prefix' => 'category-groups'], function ($api) {
             $api->get('', 'CategoryGroupController@index');
@@ -356,7 +362,8 @@ $api->version('v1', function ($api) {
                     $api->get('/', 'CustomerOrderController@index');
                     $api->get('valid', 'OrderController@checkOrderValidity');
                     $api->get('payment/valid', 'OrderController@checkInvoiceValidity');
-                    $api->post('promotions', 'PromotionController@applyPromotion');
+                    $api->post('promotions', 'PromotionController@autoApplyPromotion');
+                    $api->post('promotions/add', 'PromotionController@addPromotion');
                     $api->group(['prefix' => '{order}'], function ($api) {
                         $api->get('/', 'CustomerOrderController@show');
                     });
@@ -418,6 +425,7 @@ $api->version('v1', function ($api) {
                     $api->get('/', 'PartnerOrderController@showV2');
                     $api->get('bills', 'PartnerOrderController@getBillsV2');
                     $api->post('services', 'PartnerOrderController@addService');
+                    $api->post('collect', 'PartnerOrderController@collectMoney');
                 });
             });
             $api->group(['prefix' => 'jobs'], function ($api) {

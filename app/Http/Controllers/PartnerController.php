@@ -3,9 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Partner;
-use App\Models\PartnerTransaction;
-use App\Models\RateAnswer;
-use App\Models\Service;
+use App\Models\PartnerResource;
 use App\Repositories\DiscountRepository;
 use App\Repositories\NotificationRepository;
 use App\Repositories\PartnerOrderRepository;
@@ -67,7 +65,7 @@ class PartnerController extends Controller
                 $q->whereHas('resource', function ($query) {
                     $query->verified();
                 })->with(['resource' => function ($q) {
-                    $q->select('resources.id', 'profile_id')->with('profile');
+                    $q->select('resources.id', 'profile_id', 'is_verified')->with('profile');
                 }, 'review' => function ($q) {
                     $q->select('id', 'job_id', 'resource_id', 'customer_id', 'rating', 'review')->with('customer.profile');
                 }]);
@@ -93,15 +91,17 @@ class PartnerController extends Controller
             $resource_jobs = $job_with_review->groupBy('resource_id');
             $all_resources = collect();
             foreach ($resource_jobs as $resource_job) {
-                $all_resources->push(collect([
-                    'name' => $resource_job[0]->resource->profile->name,
-                    'mobile' => $resource_job[0]->resource->profile->mobile,
-                    'picture' => $resource_job[0]->resource->profile->pro_pic,
-                    'total_rating' => $resource_job->count(),
-                    'avg_rating' => round($resource_job->avg('review.rating'), 2),
-                ]));
+                if ($partner_resource = PartnerResource::where('partner_id', $partner->id)->where('resource_id', $resource_job[0]->resource_id)->first() && $resource_job[0]->resource->is_verified) {
+                    $all_resources->push(collect([
+                        'name' => $resource_job[0]->resource->profile->name,
+                        'mobile' => $resource_job[0]->resource->profile->mobile,
+                        'picture' => $resource_job[0]->resource->profile->pro_pic,
+                        'total_rating' => $resource_job->count(),
+                        'avg_rating' => round($resource_job->avg('review.rating'), 2),
+                    ]));
+                }
             }
-            $all_resources = $all_resources->take(4);
+            $all_resources = $all_resources->sortByDesc('avg_rating')->take(4);
             $info->put('resources', $all_resources->values()->all());
             $reviews = [];
             $job_with_review->filter(function ($job) {
@@ -117,11 +117,7 @@ class PartnerController extends Controller
             $info->put('categories', $partner->categories->each(function ($category) {
                 removeRelationsAndFields($category);
             }));
-            $info->put('compliments', []);
-//            $compliments = RateAnswer::select('id', 'badge', 'answer')->inRandomOrder()->take(5)->get();
-//            $info->put('compliments', $compliments->each(function (&$compliment) {
-//                array_add($compliment, 'count', rand(5, 10));
-//            }));
+            $info->put('compliments', []);;
             $info->put('total_resources', $partner->resources->count());
             $info->put('total_jobs', $partner->jobs->count());
             $info->put('total_rating', $partner->reviews->count());
@@ -313,12 +309,20 @@ class PartnerController extends Controller
                 constants('JOB_STATUSES')['Served'],
                 constants('JOB_STATUSES')['Serve_Due'],
             );
+
             $partner->load(['walletSetting', 'resources' => function ($q) {
                 $q->verified()->type('Handyman');
             }, 'jobs' => function ($q) use ($statuses) {
                 $q->info()->status($statuses)->with('resource');
+            },'orders' => function ($q){
+                $q->ongoing();
             }]);
             $jobs = $partner->jobs;
+            $total_ongoing_order = 0;
+            foreach ($partner->orders as $partnerOrder)
+            {
+              $total_ongoing_order += $partnerOrder->jobs->whereIn('status', ['Accepted','Schedule Due','Process','Serve Due','Served'])->count();
+            }
             $resource_ids = $partner->resources->pluck('id')->unique();
             $assigned_resource_ids = $jobs->whereIn('status', [constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Schedule_Due']])->pluck('resource_id')->unique();
             $unassigned_resource_ids = $resource_ids->diff($assigned_resource_ids);
@@ -334,6 +338,9 @@ class PartnerController extends Controller
                 'schedule_due_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Schedule_Due'])->count(),
                 'process_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Process'])->count(),
                 'served_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Served'])->count(),
+                'serve_due_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Serve_Due'])->count(),
+                'total_ongoing_orders' => $total_ongoing_order,
+                'total_open_complains' => $partner->complains->whereIn('status', ['Observation', 'Open'])->where('accessor_id', 1)->count(),
                 'total_resources' => $resource_ids->count(),
                 'assigned_resources' => $assigned_resource_ids->count(),
                 'unassigned_resources' => $unassigned_resource_ids->count(),
@@ -422,8 +429,8 @@ class PartnerController extends Controller
                 'isAvailable' => 'sometimes|required',
                 'partner' => 'sometimes|required',
             ]);
-            $validation = new Validation();
-            if (!$validation->isValid($request)) {
+            $validation = new Validation($request);
+            if (!$validation->isValid()) {
                 $sentry = app('sentry');
                 $sentry->user_context(['request' => $request->all(), 'message' => $validation->message]);
                 $sentry->captureException(new \Exception($validation->message));

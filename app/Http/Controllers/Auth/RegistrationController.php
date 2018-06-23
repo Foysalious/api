@@ -34,12 +34,14 @@ class RegistrationController extends Controller
     {
         try {
             $from = implode(',', constants('FROM'));
+
             $this->validate($request, ['email' => 'required|email|unique:profiles', 'password' => 'required|min:6', 'kit_code' => 'required|string', 'from' => "required|in:$from"]);
+            $name = trim($request->first_name .' '. $request->last_name);
             if ($kit_data = $this->fbKit->authenticateKit($request->kit_code)) {
                 $from = $this->profileRepository->getAvatar($request->from);
                 $profile = $this->profileRepository->ifExist(formatMobile($kit_data['mobile']), 'mobile');
                 if (!$profile) {
-                    $profile = $this->profileRepository->store(['mobile' => formatMobile($kit_data['mobile']), 'mobile_verified' => 1, 'email' => $request->email, 'password' => bcrypt($request->password)]);
+                    $profile = $this->profileRepository->store(['mobile' => formatMobile($kit_data['mobile']), 'mobile_verified' => 1, 'name' => $name, 'email' => $request->email, 'password' => bcrypt($request->password)]);
                 } else {
                     return api_response($request, null, 400, ['message' => 'Mobile already exists! Please login']);
 //                    $this->profileRepository->update($profile, ['email' => $request->email]);
@@ -55,7 +57,7 @@ class RegistrationController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (\Throwable $e){
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

@@ -24,7 +24,7 @@ class Affiliation extends Model
 
     public function transactions()
     {
-        return $this->hasMany(AffiliateTransaction::class);
+        return $this->morphMany(AffiliateTransaction::class, 'affiliation');
     }
 
     public function scopeSuccessful($query)

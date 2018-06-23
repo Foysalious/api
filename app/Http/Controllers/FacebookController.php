@@ -83,15 +83,12 @@ class FacebookController extends Controller
                             });
                         } else {
                             return api_response($request, null, 400, ['message' => 'Email already exists! Please login']);
-//                            $profile = $this->profileRepository->update($profile, array_merge($fb_profile_info, ['mobile' => $kit_data['mobile'], 'mobile_verified' => 1]));
                         }
                     } else {
                         return api_response($request, null, 400, ['message' => 'Mobile already exists! Please login']);
-//                        $profile = $this->profileRepository->update($profile, $fb_profile_info);
                     }
                 } else {
                     return api_response($request, null, 400, ['message' => 'Facebook already exists! Please login']);
-//                    $profile = $this->profileRepository->update($profile, ['mobile' => $kit_data['mobile'], 'mobile_verified' => 1]);
                 }
                 if ($profile->$from == null) {
                     $this->profileRepository->registerAvatar($from, $request, $profile);

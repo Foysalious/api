@@ -148,5 +148,4 @@ class AffiliationController extends Controller
         $affiliate_transaction->amount = $this->acquisitionMoney;
         $affiliate_transaction->save();
     }
-
 }

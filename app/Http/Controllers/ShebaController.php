@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Jobs\SendFaqEmail;
 use App\Models\AppVersion;
+use App\Models\Category;
 use App\Models\Job;
 use App\Models\OfferShowcase;
 use App\Models\Resource;
@@ -186,5 +187,17 @@ class ShebaController extends Controller
         }
         Redis::set('app_versions', json_encode($final));
         return $final;
+    }
+
+    public function sendCarRentalInfo(Request $request)
+    {
+        try {
+            $ids = array_map('intval', explode(',', env('RENT_CAR_IDS')));
+            $categories = Category::whereIn('id', $ids)->select('id', 'name', 'parent_id')->get();
+            return api_response($request, $categories, 200, ['info' => $categories]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 }

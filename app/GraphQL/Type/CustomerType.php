@@ -105,9 +105,6 @@ class CustomerType extends GraphQlType
                 $filter = $args['filter'];
             }
         }
-        if ($filter === null) {
-            return null;
-        }
         if (isset($args['offset']) && isset($args['limit'])) {
             $offset = $args['offset'];
             $limit = $args['limit'];
@@ -115,7 +112,10 @@ class CustomerType extends GraphQlType
             list($offset, $limit) = calculatePagination(\request());
         }
         $root->load(['partnerOrders' => function ($q) use ($filter, $offset, $limit) {
-            $q->$filter()->skip($offset)->take($limit)->orderBy('id', 'desc')->with(['partner', 'order' => function ($q) {
+            if ($filter) {
+                $q->$filter();
+            }
+            $q->skip($offset)->take($limit)->orderBy('id', 'desc')->with(['partner', 'order' => function ($q) {
                 $q->with('location', 'customer');
             }, 'jobs' => function ($q) {
                 $q->with(['category', 'usedMaterials', 'jobServices']);

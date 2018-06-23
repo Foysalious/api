@@ -284,8 +284,15 @@ return [
         'customer-app',
         'affiliation-app',
         'manager-app',
+        'manager-web'
+    ],
+    'PARTNER_ACQUISITION_CHANNEL' => [
+        'PM'    => 'PM',
+        'Web'   => 'Web',
+        'App'   => 'App'
     ],
     'AFFILIATION_REWARD_MONEY' => 10,
+    'AFFILIATION_REGISTRATION_BONUS' => 50,
     'AFFILIATION_ACQUISITION_MONEY' => 2,
     'API_RESPONSE_CODES' => [
         200 => ['message' => 'Successful', 'code' => 200],
@@ -316,5 +323,17 @@ return [
         "manager_app" => "https://play.google.com/store/apps/details?id=xyz.sheba.managerapp"
     ],
     'MANAGER_TOPIC_NAME' => env('MANAGER_TOPIC_NAME'),
-
+    'PARTNER_AFFILIATIONS_STATUSES' => [
+        'pending'    => 'Pending',
+        'rejected'   => 'Rejected',
+        'successful' => 'Successful'
+    ],
+    'PARTNER_AFFILIATIONS_REJECT_REASONS' => [
+        'fake'                  => 'False Reference',
+        'no_response'           => 'No Response',
+        'not_interested'        => 'Not Interested',
+        'not_capable'           => 'Not Capable',
+        'service_unavailable'   => 'Service Unavailable'
+    ],
+    'PARTNER_AFFILIATIONS_FAKE_REJECT_REASONS' => ['fake'],
 ];
