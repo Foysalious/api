@@ -17,9 +17,9 @@ class PartnerAffiliationCreateValidator
 
     private function hasNecessaryFields(Request $request)
     {
-        if (!$request->has('resource_mobile')) return ['code' => 400, 'msg' => ['en' => 'Resource mobile does not found', 'bd' => 'Resource mobile does not found']];
-        if (!$request->has('resource_name')) return ['code' => 400, 'msg' => ['en' => 'Resource name does not found', 'bd' => 'Resource name does not found']];
-        if (!$request->has('company_name')) return ['code' => 400, 'msg' => ['en' => 'Company name does not found', 'bd' => 'Company name does not found']];
+        if (!$request->has('resource_mobile')) return ['code' => 400, 'msg' => ['en' => 'Mobile number is mandatory', 'bd' => 'মোবাইল নং প্রদান করা আবর্শক']];
+        if (!$request->has('resource_name')) return ['code' => 400, 'msg' => ['en' => 'Name is mandatory', 'bd' => 'নাম প্রদান আবর্শক']];
+        if (!$request->has('company_name')) return ['code' => 400, 'msg' => ['en' => 'Company name is mandatory', 'bd' => 'কোম্পানি নাম প্রদান আবর্শক']];
         return false;
     }
 
@@ -28,7 +28,7 @@ class PartnerAffiliationCreateValidator
         if (!BangladeshiMobileValidator::validate($request->resource_mobile)) return ['code' => 400, 'msg' => ['en' => 'Number format does not match', 'bd' => 'Number format does not match']];
         $profile = Profile::where('mobile', formatMobile($request->resource_mobile))->first();
         if($profile) {
-            if ($profile->resource) return ['code' => 400, 'msg' => ['en' => 'Sorry! your referral number already exists.', 'bd' => 'Sorry! your referral number already exists.']];
+            if ($profile->resource) return ['code' => 400, 'msg' => ['en' => 'Sorry! your referral number already exists.', 'bd' => 'দুঃখিত !!! আপনার রেফার ক্রিত নাম্বারটি সেবাতে নিবন্ধিত।']];
         }
         return false;
     }
@@ -43,7 +43,7 @@ class PartnerAffiliationCreateValidator
                             ->where('status', PartnerAffiliationStatuses::$rejected);
                     });
             })->first();
-        if ($partner_affiliation) return ['code' => 400, 'msg' => ['en' => 'Sorry! your referral number already referred', 'bd' => 'Sorry! your referral number already referred']];
+        if ($partner_affiliation) return ['code' => 400, 'msg' => ['en' => 'Sorry! your referral number already referred', 'bd' => 'দুঃখিত !!! আপনার রেফার ক্রিত নাম্বারটি সেবাতে নিবন্ধিত।']];
         return false;
     }
 }
