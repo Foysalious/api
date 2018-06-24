@@ -11,23 +11,33 @@ class PartnerAffiliationController extends Controller
 {
     public function store(Request $request)
     {
-        if ($error = (new PartnerAffiliationCreateValidator)->validate($request)) return api_response($request, null, $error['code'], ["msg" => $error['msg']]);
+        try {
+            if ($error = (new PartnerAffiliationCreateValidator)->validate($request)) return api_response($request, null, $error['code'], ["msg" => $error['msg']]);
 
-        (new PartnerAffiliationCreator)->create($request->all());
+            (new PartnerAffiliationCreator)->create($request->all());
 
-        $message = ['en' => 'Your refer have been submitted.', 'bd' => 'আপনার রেফারেন্সটি গ্রহন করা হয়েছে ।'];
-        return api_response($request, null, 200, ["msg" => $message]);
+            $message = ['en' => 'Your refer have been submitted.', 'bd' => 'আপনার রেফারেন্সটি গ্রহন করা হয়েছে ।'];
+            return api_response($request, null, 200, ["msg" => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 
     public function index(Request $request)
     {
-        $partner_affiliations = PartnerAffiliation::with(['transactions' => function ($q) {
-            $q->where('type', 'Credit');
-        }])->where('affiliate_id', $request->affiliate->id)->get();
+        try {
+            $partner_affiliations = PartnerAffiliation::with(['transactions' => function ($q) {
+                $q->where('type', 'Credit');
+            }])->where('affiliate_id', $request->affiliate->id)->get();
 
-        if (!$partner_affiliations->count()) return api_response($request, null, 404, ['affiliations' => []]);
+            if (!$partner_affiliations->count()) return api_response($request, null, 404, ['affiliations' => []]);
 
-        return api_response($request, null, 200, ['affiliations' => $this->preparePartnerAffiliationData($partner_affiliations)]);
+            return api_response($request, null, 200, ['affiliations' => $this->preparePartnerAffiliationData($partner_affiliations)]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 
     private function preparePartnerAffiliationData($partner_affiliations)
@@ -35,16 +45,16 @@ class PartnerAffiliationController extends Controller
         $data = [];
         foreach ($partner_affiliations as $partner_affiliation) {
             $data[] = [
-                'id'                => $partner_affiliation->id,
-                'affiliate_id'      => $partner_affiliation->affiliate_id,
-                'company_name'      => $partner_affiliation->company_name,
-                'resource_name'     => $partner_affiliation->resource_name,
-                'resource_mobile'   => $partner_affiliation->resource_mobile,
-                'status'            => $partner_affiliation->status,
-                'is_fake'           => ($partner_affiliation->reject_reason == PartnerAffiliationRejectReasons::fake()),
-                'reject_reason'     => $partner_affiliation->reject_reason,
-                'referred_date'     => $partner_affiliation->created_at->format('Y-m-d'),
-                'earning_amount'    => $partner_affiliation->transactions->sum('amount')
+                'id' => $partner_affiliation->id,
+                'affiliate_id' => $partner_affiliation->affiliate_id,
+                'company_name' => $partner_affiliation->company_name,
+                'resource_name' => $partner_affiliation->resource_name,
+                'resource_mobile' => $partner_affiliation->resource_mobile,
+                'status' => $partner_affiliation->status,
+                'is_fake' => ($partner_affiliation->reject_reason == PartnerAffiliationRejectReasons::fake()),
+                'reject_reason' => $partner_affiliation->reject_reason,
+                'referred_date' => $partner_affiliation->created_at->format('Y-m-d'),
+                'earning_amount' => $partner_affiliation->transactions->sum('amount')
             ];
         }
         return $data;

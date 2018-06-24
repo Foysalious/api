@@ -22,16 +22,16 @@ class PartnerAffiliationCreator
     {
         $this->setModifier($data['affiliate']);
         return $this->withBothModificationFields([
-            'affiliate_id'      => $data['affiliate']->id,
-            'resource_mobile'   => formatMobile($data['resource_mobile']),
-            'resource_name'     => $data['resource_name'],
-            'company_name'      => $data['company_name']
+            'affiliate_id' => $data['affiliate']->id,
+            'resource_mobile' => formatMobile($data['resource_mobile']),
+            'resource_name' => $data['resource_name'],
+            'company_name' => $data['company_name']
         ]);
     }
 
     private function sendSms($data)
     {
-        $affiliate = $data['affiliate']->name ? : $data['affiliate']->mobile;
+        $affiliate = $data['affiliate']->profile->name ?: $data['affiliate']->profile->name;
         (new SmsHandler('partner-affiliation-create'))->send($data['resource_mobile'], [
             'affiliate' => $affiliate
         ]);
