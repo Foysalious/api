@@ -99,7 +99,7 @@ class ResourceJobRepository
             $job['delivery_mobile'] = $job->partner_order->order->delivery_mobile;
             $job['delivery_address'] = $job->partner_order->order->delivery_address;
             $job['schedule_date_timestamp'] = (Carbon::parse($job->schedule_date))->timestamp;
-            $job['schedule_timestamp'] = Carbon::parse($job->schedule_date . ' ' . explode('-', $job->preferred_time)[0])->timestamp;
+            $job['schedule_timestamp'] = $job->partner_order->getVersion() == 'v2' ? Carbon::parse($job->schedule_date . ' ' . explode('-', $job->preferred_time)[0])->timestamp : Carbon::parse($job->schedule_date)->timestamp;
             $job['service_unit_price'] = (double)$job->service_unit_price;
             $job['category_name'] = $job->category ? $job->category->name : null;
             $job['preferred_time'] = $job->readable_preferred_time;
