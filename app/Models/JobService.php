@@ -30,6 +30,8 @@ class JobService extends Model
             } else {
                 return $this->name . ' | From ' . $job->carRentalJobDetail->pickUpLocation->name;
             }
+        } else {
+            return $this->service->name;
         }
     }
 }
