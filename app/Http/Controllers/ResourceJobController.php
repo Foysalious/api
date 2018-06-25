@@ -2,20 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Job;
-use App\Models\PartnerOrder;
-use App\Models\Resource;
 use App\Repositories\ResourceJobRepository;
 use App\Sheba\JobTime;
 use Carbon\Carbon;
+use DB;
 use Dingo\Api\Routing\Helpers;
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Validator;
-use App\Http\Requests;
-use DB;
 
 class ResourceJobController extends Controller
 {
@@ -83,9 +77,18 @@ class ResourceJobController extends Controller
             $job['can_process'] = false;
             $job['can_serve'] = false;
             $job['can_collect'] = false;
+            $job['collect_money'] = 0;
             $jobs = $this->api->get('v1/resources/' . $resource->id . '/jobs?remember_token=' . $resource->remember_token . '&limit=1');
             if ($jobs) {
-                $job = $this->resourceJobRepository->calculateActionsForThisJob($jobs[0], $job);
+                $first_job_from_list = $jobs[0];
+                if ($job->id == $first_job_from_list->id) {
+                    $job = $this->resourceJobRepository->calculateActionsForThisJob($job);
+                    $partner_order = $job->partner_order;
+                    if ($partner_order->closed_and_paid_at == null) {
+                        $partner_order->calculate(true);
+                        $job['collect_money'] = $partner_order->due;
+                    }
+                }
             }
             removeRelationsAndFields($job);
             $job = array(
@@ -96,7 +99,7 @@ class ResourceJobController extends Controller
                 'can_process' => $job->can_process,
                 'can_serve' => $job->can_serve,
                 'can_collect' => $job->can_collect,
-                'collect_money' => $job->collect_money,
+                'collect_money' => (double)$job->collect_money,
             );
             return api_response($request, $job, 200, ['job' => $job]);
         } catch (\Throwable $e) {

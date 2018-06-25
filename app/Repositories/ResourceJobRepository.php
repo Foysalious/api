@@ -3,15 +3,12 @@
 namespace App\Repositories;
 
 
-use App\Models\Category;
-use App\Models\Job;
 use App\Models\PartnerOrder;
-use App\Models\ResourceSchedule;
 use App\Sheba\UserRequestInformation;
+use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
-use Carbon\Carbon;
 
 class ResourceJobRepository
 {
@@ -55,7 +52,7 @@ class ResourceJobRepository
     public function getJobs($resource)
     {
         $resource->load(['jobs' => function ($q) {
-            $q->info()->validStatus()->tillNow()->with(['category', 'partner_order' => function ($q) {
+            $q->info()->validStatus()->tillNow()->with(['category', 'carRentalJobDetail', 'partner_order' => function ($q) {
                 $q->with(['order', 'jobs' => function ($q) {
                     $q->with('service', 'jobServices', 'usedMaterials');
                 }]);
@@ -112,7 +109,7 @@ class ResourceJobRepository
                 $services = collect();
                 foreach ($job->jobServices as $jobService) {
                     $variables = json_decode($jobService->variables);
-                    $services->push(array('name' => $jobService->formatServiceName(), 'variables' => $variables, 'unit' => $jobService->service->unit, 'quantity' => $jobService->quantity));
+                    $services->push(array('name' => $jobService->formatServiceName($job), 'variables' => $variables, 'unit' => $jobService->service->unit, 'quantity' => $jobService->quantity));
                 }
             }
             $job['services'] = $services;
@@ -134,23 +131,9 @@ class ResourceJobRepository
             $job['estimated_distance'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_distance : null;
             $job['estimated_time'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_time : null;
             $job['isRentCar'] = $job->isRentCar();
-            $this->_stripUnwantedInformationForAPI($job);
             removeRelationsAndFields($job);
         }
         return $jobs;
-    }
-
-    private function _stripUnwantedInformationForAPI($job)
-    {
-        array_forget($job, 'partner_order');
-        array_forget($job, 'partner_order_id');
-        array_forget($job, 'resource_id');
-        array_forget($job, 'service_id');
-        array_forget($job, 'service');
-        array_forget($job, 'usedMaterials');
-        array_forget($job, 'jobServices');
-        array_forget($job, 'category');
-        return $job;
     }
 
     public function changeStatus($job, $request)
@@ -214,46 +197,10 @@ class ResourceJobRepository
         }
     }
 
-    public function calculateActionsForThisJob($first_job_from_list, $job)
+    public function calculateActionsForThisJob($job)
     {
         if ($job->status == 'Served') {
-            if ($first_job_from_list->status == 'Served' && $job->id == $first_job_from_list->id) {
-                $partner_order = $job->partner_order;
-                if ($partner_order->payment_method == 'bad-debt') {
-                    $job['can_collect'] = false;
-                } else {
-                    $job['can_collect'] = true;
-                }
-                if ($partner_order->closed_and_paid_at == null) {
-                    $partner_order->calculate(true);
-                    $job['collect_money'] = (double)$partner_order->due;
-                } else {
-                    $job['collect_money'] = 0;
-                }
-            }
-        } elseif ($job->status == 'Process' || $job->status == 'Serve Due') {
-            if (($first_job_from_list->status == 'Process' || $first_job_from_list->status == 'Serve Due') && $job->id == $first_job_from_list->id) {
-                $job['can_serve'] = true;
-            }
-        } else {
-            if ($first_job_from_list->status != 'Process' && $first_job_from_list->status != 'Serve Due' && $first_job_from_list->status != 'Served' && $job->id == $first_job_from_list->id) {
-                $job['can_process'] = true;
-            }
-        }
-        return $job;
-    }
-
-    public function calculateJobActions($job)
-    {
-        $partner_order = $job->partner_order;
-        if ($job->status == 'Served') {
-            if ($partner_order->closed_and_paid_at == null) {
-                $partner_order->calculate(true);
-                $job['collect_money'] = (double)$partner_order->due;
-            } else {
-                $job['collect_money'] = 0;
-            }
-            $job['can_collect'] = $partner_order->payment_method != 'bad-debt';
+            $job['can_collect'] = $job->partner_order->payment_method != 'bad-debt';
         } elseif ($job->status == 'Process' || $job->status == 'Serve Due') {
             $job['can_serve'] = true;
         } else {
