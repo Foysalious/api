@@ -104,12 +104,12 @@ class ResourceJobRepository
             if (count($job->jobServices) == 0) {
                 $services = collect();
                 $variables = json_decode($job->service_variables);
-                $services->push(array('name' => $job->service_name, 'variables' => $variables, 'unit' => $job->service->unit, 'quantity' => $job->service_quantity));
+                $services->push(array('name' => $job->service_name, 'variables' => $variables, 'unit' => $job->service ? $job->service->unit : null, 'quantity' => $job->service_quantity));
             } else {
                 $services = collect();
                 foreach ($job->jobServices as $jobService) {
                     $variables = json_decode($jobService->variables);
-                    $services->push(array('name' => $jobService->formatServiceName($job), 'variables' => $variables, 'unit' => $jobService->service->unit, 'quantity' => $jobService->quantity));
+                    $services->push(array('name' => $jobService->formatServiceName($job), 'variables' => $variables, 'unit' => $jobService->service ? $jobService->service->unit : null, 'quantity' => $jobService->quantity));
                 }
             }
             $job['services'] = $services;
