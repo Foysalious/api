@@ -84,7 +84,7 @@ class AffiliationController extends Controller
     public function create($affiliate, Request $request)
     {
         try {
-            $request->merge(['mobile' => formatMobile(trim($request->mobile))]);
+            $request->merge(['mobile' => formatMobile(trim(str_replace(' ','', $request->mobile)))]);
             $this->validate($request, ['mobile' => 'required|string|mobile:bd'], ['mobile' => 'Invalid mobile number!']);
             if ($affiliate = Affiliate::where([['id', $affiliate], ['verification_status', 'verified'], ['is_suspended', 0]])->first()) {
                 if ($affiliate->profile->mobile == $request->mobile) {
