@@ -82,6 +82,7 @@ class CustomerOrderController extends Controller
             'schedule_date_readable' => (Carbon::parse($job->schedule_date))->format('jS F, Y'),
             'preferred_time' => $job->preferred_time ? humanReadableShebaTime($job->preferred_time) : null,
             'status' => $job->status,
+            'isRentCar' => $job->isRentCar(),
             'status_color' => constants('JOB_STATUSES_COLOR')[$job->status]['customer'],
             'partner_name' => $partnerOrder->partner->name,
             'rating' => $job->review != null ? $job->review->rating : null,

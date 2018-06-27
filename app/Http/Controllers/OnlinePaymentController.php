@@ -25,7 +25,7 @@ class OnlinePaymentController extends Controller
                         if ($result) {
                             $transaction->success = 1;
                             Redis::set($transaction_id, json_encode($transaction));
-                            Redis::expire($transaction_id, 7200);
+                            Redis::expire($transaction_id, 604800);
                             return redirect($result);
                         } else {
                             $transaction->message = $online_payment->message;

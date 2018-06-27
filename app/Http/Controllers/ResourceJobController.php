@@ -2,20 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Job;
-use App\Models\PartnerOrder;
-use App\Models\Resource;
 use App\Repositories\ResourceJobRepository;
 use App\Sheba\JobTime;
 use Carbon\Carbon;
+use DB;
 use Dingo\Api\Routing\Helpers;
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Validator;
-use App\Http\Requests;
-use DB;
 
 class ResourceJobController extends Controller
 {
@@ -45,7 +39,10 @@ class ResourceJobController extends Controller
                         $final->push($job);
                     }
                 }
-                $jobs = $final;
+                $other_jobs = $final->reject(function ($job) {
+                    return $job->status == 'Served';
+                });
+                $jobs = $final->where('status', 'Served')->merge($other_jobs);
                 if ($request->has('group_by')) {
                     $jobs = collect($jobs)->groupBy('schedule_date');
                 } elseif ($request->has('sort_by')) {
@@ -80,18 +77,30 @@ class ResourceJobController extends Controller
             $job['can_process'] = false;
             $job['can_serve'] = false;
             $job['can_collect'] = false;
+            $job['collect_money'] = 0;
             $jobs = $this->api->get('v1/resources/' . $resource->id . '/jobs?remember_token=' . $resource->remember_token . '&limit=1');
             if ($jobs) {
-                $job = $this->resourceJobRepository->calculateActionsForThisJob($jobs[0], $job);
+                $first_job_from_list = $jobs[0];
+                if ($job->id == $first_job_from_list->id) {
+                    $job = $this->resourceJobRepository->calculateActionsForThisJob($job);
+                    $partner_order = $job->partner_order;
+                    if ($partner_order->closed_and_paid_at == null) {
+                        $partner_order->calculate(true);
+                        $job['collect_money'] = $partner_order->due;
+                    }
+                }
             }
-            $job['pick_up_address'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->pick_up_address : null;
-            $job['destination_address'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->destination_address : null;
-            $job['drop_off_date'] = $job->carRentalJobDetail ? Carbon::parse($job->carRentalJobDetail->drop_off_date)->format('jS F, Y') : null;
-            $job['drop_off_time'] = $job->carRentalJobDetail ? Carbon::parse($job->carRentalJobDetail->drop_off_time)->format('g:i A') : null;
-            $job['estimated_distance'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_distance : null;
-            $job['estimated_time'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_time : null;
-            array_forget($job, 'carRentalJobDetail');
             removeRelationsAndFields($job);
+            $job = array(
+                'id' => $job->id,
+                'status' => $job->status,
+                'resource_id' => $job->resource_id,
+                'partner_order_id' => $job->partner_order_id,
+                'can_process' => $job->can_process,
+                'can_serve' => $job->can_serve,
+                'can_collect' => $job->can_collect,
+                'collect_money' => (double)$job->collect_money,
+            );
             return api_response($request, $job, 200, ['job' => $job]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

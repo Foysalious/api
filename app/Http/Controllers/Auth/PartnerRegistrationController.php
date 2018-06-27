@@ -35,7 +35,7 @@ class PartnerRegistrationController extends Controller
                 'code' => "required|string",
                 'name' => 'required|string',
                 'company_name' => 'required|string',
-                'from' => 'required|string|in:' . implode(',', constants('FROM'))
+                'from' => 'string|in:' . implode(',', constants('FROM'))
             ]);
             $code_data = $this->fbKit->authenticateKit($request->code);
             if (!$code_data) return api_response($request, null, 401, ['message' => 'AccountKit authorization failed']);
@@ -50,8 +50,12 @@ class PartnerRegistrationController extends Controller
             $profile = $this->profileRepository->updateIfNull($profile, ['name' => $request->name]);
             if ($resource->partnerResources->count() > 0) return api_response($request, null, 403, ['message' => 'You already have a company!']);
             $data = ['name' => $request->company_name];
-            if ($request->from == 'manager-app') $data['registration_channel'] = constants('PARTNER_ACQUISITION_CHANNEL')['App'];
-            elseif ($request->from == 'manager-web') $data['registration_channel'] = constants('PARTNER_ACQUISITION_CHANNEL')['Web'];
+            if ($request->has('from')) {
+                if ($request->from == 'manager-app') $data['registration_channel'] = constants('PARTNER_ACQUISITION_CHANNEL')['App'];
+                elseif ($request->from == 'manager-web') $data['registration_channel'] = constants('PARTNER_ACQUISITION_CHANNEL')['Web'];
+            } else {
+                $data['registration_channel'] = constants('PARTNER_ACQUISITION_CHANNEL')['App'];
+            }
             if ($partner = $this->createPartner($resource, $data)) {
                 $info = $this->profileRepository->getProfileInfo('resource', Profile::find($profile->id));
                 return api_response($request, null, 200, ['info' => $info]);

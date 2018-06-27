@@ -87,8 +87,8 @@ class JobController extends Controller
             $job_collection->put('review', $job->review ? $job->review->calculated_review : null);
             $job_collection->put('price', (double)$job->partnerOrder->totalPrice);
             $job_collection->put('isDue', (double)$job->partnerOrder->due > 0 ? 1 : 0);
+            $job_collection->put('isRentCar', $job->isRentCar());
             $job_collection->put('order_code', $job->partnerOrder->order->code());
-
             $job_collection->put('pick_up_address', $job->carRentalJobDetail ? $job->carRentalJobDetail->pick_up_address : null);
             $job_collection->put('destination_address', $job->carRentalJobDetail ? $job->carRentalJobDetail->destination_address : null);
             $job_collection->put('drop_off_date', $job->carRentalJobDetail ? (Carbon::parse($job->carRentalJobDetail->drop_off_date)->format('jS F, Y')) : null);
@@ -99,12 +99,12 @@ class JobController extends Controller
             if (count($job->jobServices) == 0) {
                 $services = collect();
                 $variables = json_decode($job->service_variables);
-                $services->push(array('name' => $job->service_name, 'variables' => $variables, 'quantity' => $job->service_quantity));
+                $services->push(array('name' => $job->service_name, 'variables' => $variables, 'quantity' => $job->service_quantity, 'unit' => $job->service->unit));
             } else {
                 $services = collect();
                 foreach ($job->jobServices as $jobService) {
                     $variables = json_decode($jobService->variables);
-                    $services->push(array('name' => $jobService->formatServiceName(), 'variables' => $variables, 'quantity' => $jobService->quantity));
+                    $services->push(array('name' => $jobService->formatServiceName($job), 'variables' => $variables, 'unit' => $jobService->service->unit, 'quantity' => $jobService->quantity));
                 }
             }
             $job_collection->put('services', $services);

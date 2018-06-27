@@ -21,15 +21,16 @@ class JobService extends Model
         return $this->belongsTo(Service::class);
     }
 
-    public function formatServiceName()
+    public function formatServiceName($job)
     {
-        $job = $this->job;
         if (in_array($job->category_id, array_map('intval', explode(',', env('RENT_CAR_IDS'))))) {
             if ($job->carRentalJobDetail->destinationLocation) {
                 return $this->name . ' | ' . $job->carRentalJobDetail->pickUpLocation->name . ' to ' . $job->carRentalJobDetail->destinationLocation->name;
             } else {
-                return $this->name . ' from ' . $job->carRentalJobDetail->pickUpLocation->name;
+                return $this->name . ' | From ' . $job->carRentalJobDetail->pickUpLocation->name;
             }
+        } else {
+            return $this->service->name;
         }
     }
 }

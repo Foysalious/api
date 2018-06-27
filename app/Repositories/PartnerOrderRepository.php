@@ -38,7 +38,8 @@ class PartnerOrderRepository
             $services = [];
             $job->jobServices->each(function ($job_service) use (&$services, $job) {
                 $info = $this->partnerJobRepository->getJobServiceInfo($job_service);
-                $info['name'] = $job_service->formatServiceName();
+                $info['name'] = $job_service->formatServiceName($job);
+                $info['unit'] = $job_service->service->unit;
                 array_push($services, $info);
             });
 
