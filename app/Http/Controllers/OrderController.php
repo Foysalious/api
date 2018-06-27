@@ -6,6 +6,7 @@ use App\Jobs\CalculatePapAffiliateId;
 use App\Library\PortWallet;
 use App\Models\Customer;
 use App\Models\Order;
+use App\Models\Partner;
 use App\Models\PartnerOrder;
 use App\Repositories\JobServiceRepository;
 use App\Repositories\NotificationRepository;
@@ -214,6 +215,8 @@ class OrderController extends Controller
                 'address' => 'required_without:address_id',
                 'address_id' => 'required_without:address',
             ], ['mobile' => 'Invalid mobile number!']);
+
+//            $partner = Partner::findOrFail($request->partner);
             $customer = $request->customer;
             $validation = new Validation($request);
             if (!$validation->isValid()) {
@@ -267,8 +270,13 @@ class OrderController extends Controller
     {
         try {
             $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
+            $partner = $order->partnerOrders->first()->partner;
+
             (new SmsHandler('order-created'))->send($customer->profile->mobile, [
                 'order_code' => $order->code()
+            ]);
+            (new SmsHandler('partner-order-create'))->send($partner->getContactNumber(), [
+                'partner-order' => $order->code()
             ]);
             (new NotificationRepository())->send($order);
         } catch (\Throwable $e) {
