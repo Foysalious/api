@@ -276,7 +276,7 @@ class OrderController extends Controller
                 'order_code' => $order->code()
             ]);
             (new SmsHandler('partner-order-create'))->send($partner->getContactNumber(), [
-                'partner-order' => $order->code()
+                'order_code' => $order->code(), 'partner_name' => $partner->name
             ]);
             (new NotificationRepository())->send($order);
         } catch (\Throwable $e) {
