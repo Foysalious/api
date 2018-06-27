@@ -365,10 +365,12 @@ $api->version('v1', function ($api) {
                 $api->get('categories/{category}/services', 'PartnerController@getServices');
             });
         });
+        
         $api->group(['prefix' => 'customers'], function ($api) {
             $api->group(['prefix' => '{customer}', 'middleware' => ['customer.auth']], function ($api) {
                 $api->get('checkout-info', 'CustomerController@getDeliveryInfo');
                 $api->put('notifications', 'CustomerNotificationController@update');
+                $api->get('location-with-address', 'CustomerLocationController@getLocationWithAddress');
                 $api->group(['prefix' => 'favorites'], function ($api) {
                     $api->get('/', 'CustomerFavoriteController@index');
                     $api->post('/', 'CustomerFavoriteController@store');
@@ -385,6 +387,7 @@ $api->version('v1', function ($api) {
                     $api->post('/', 'CustomerDeliveryAddressController@store');
                     $api->put('{delivery_address}', 'CustomerDeliveryAddressController@update');
                     $api->delete('{delivery_address}', 'CustomerDeliveryAddressController@destroy');
+
                 });
                 $api->group(['prefix' => 'orders'], function ($api) {
                     $api->post('/', 'OrderController@store');
