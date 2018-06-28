@@ -201,7 +201,9 @@ class Checkout
         $order->pap_visitor_id = $data['pap_visitor_id'];
         $order->created_by = $data['created_by'];
         $order->created_by_name = $data['created_by_name'];
-        $order->delivery_address = $this->getDeliveryAddress($data);
+        $customer_delivery_address = $this->getDeliveryAddress($data);
+        $order->delivery_address = $customer_delivery_address != null ? $customer_delivery_address->address : null;
+        $order->delivery_address_id = $customer_delivery_address != null ? $customer_delivery_address->id : null;
         $order->save();
         return $order;
     }
@@ -212,7 +214,7 @@ class Checkout
             if ($data['address_id'] != '' || $data['address_id'] != null) {
                 $deliver_address = CustomerDeliveryAddress::find($data['address_id']);
                 if ($deliver_address) {
-                    return $deliver_address->address;
+                    return $deliver_address;
                 }
             }
         }
@@ -224,10 +226,10 @@ class Checkout
                 $deliver_address->created_by = $data['created_by'];
                 $deliver_address->created_by = $data['created_by_name'];
                 $deliver_address->save();
-                return $data['address'];
+                return $deliver_address;
             }
         }
-        return '';
+        return null;
     }
 
     private function getVariableOptionOfService(Service $service, Array $option)
