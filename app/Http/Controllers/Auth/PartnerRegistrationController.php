@@ -33,7 +33,6 @@ class PartnerRegistrationController extends Controller
         try {
             $this->validate($request, [
                 'code' => "required|string",
-                'name' => 'required|string',
                 'company_name' => 'required|string',
                 'from' => 'string|in:' . implode(',', constants('FROM'))
             ]);
@@ -47,7 +46,6 @@ class PartnerRegistrationController extends Controller
                 $profile = $this->profileRepository->registerMobile(array_merge($request->all(), ['mobile' => $mobile]));
                 $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
             }
-            $profile = $this->profileRepository->updateIfNull($profile, ['name' => $request->name]);
             if ($resource->partnerResources->count() > 0) return api_response($request, null, 403, ['message' => 'You already have a company!']);
             $data = ['name' => $request->company_name];
             if ($request->has('from')) {
