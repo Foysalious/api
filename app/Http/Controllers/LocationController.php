@@ -69,12 +69,7 @@ class LocationController extends Controller
                 'lat' => 'required|numeric',
                 'lng' => 'required|numeric',
             ]);
-            $hyper_local = HyperLocal::where('location', 'geoIntersects', [
-                '$geometry' => [
-                    'type' => 'Point',
-                    'coordinates' => [(double)$request->lng, (double)$request->lat],
-                ],
-            ])->with('location')->first();
+            $hyper_local = HyperLocal::insidePolygon($request->lat, $request->lng)->with('location')->first();
             if ($hyper_local) {
                 return api_response($request, $hyper_local->location, 200, ['location' => collect($hyper_local->location)->only(['id', 'name'])]);
             } else {

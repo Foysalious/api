@@ -212,6 +212,24 @@ if (!function_exists('removeRelationsAndFields')) {
     }
 }
 
+if (!function_exists('createAuthor')) {
+    function createAuthor($model, $author)
+    {
+        $model->created_by = $author->id;
+        $model->created_by_name = class_basename($author) . " - " . ($author->profile != null ? $author->profile->name : $author->name);
+        return $model;
+    }
+}
+
+if (!function_exists('updateAuthor')) {
+    function updateAuthor($model, $author)
+    {
+        $model->updated_by = $author->id;
+        $model->updated_by_name = class_basename($author) . " - " . ($author->profile != null ? $author->profile->name : $author->name);
+        return $model;
+    }
+}
+
 if (!function_exists('getValidationErrorMessage')) {
     function getValidationErrorMessage($errors)
     {

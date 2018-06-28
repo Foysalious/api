@@ -13,4 +13,14 @@ class HyperLocal extends Eloquent
     {
         return $this->belongsTo(Location::class);
     }
+
+    public function scopeInsidePolygon($query, $lat, $lng)
+    {
+        return $query->where('geometry', 'geoIntersects', [
+            '$geometry' => [
+                'type' => 'Point',
+                'coordinates' => [(double)$lng, (double)$lat],
+            ],
+        ]);
+    }
 }
