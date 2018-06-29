@@ -329,6 +329,7 @@ $api->version('v1', function ($api) {
         });
         $api->group(['prefix' => 'job_service'], function ($api) {
             $api->post('/', 'JobServiceController@store');
+            $api->post('{job_service}/update', 'JobServiceController@update')->middleware('manager.auth');
         });
         $api->group(['prefix' => 'partners'], function ($api) {
             $api->group(['prefix' => '{partner}'], function ($api) {
