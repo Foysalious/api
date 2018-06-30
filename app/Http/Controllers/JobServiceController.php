@@ -61,53 +61,50 @@ class JobServiceController extends Controller
         }
     }
 
-    public function update(JobService $job_service, Request $request)
+    public function update($partner, $job_service, Request $request)
     {
-        DB::beginTransaction();
+        $job_service = JobService::find($job_service);
         try {
-            $invalid_job_statuses = [constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Declined'], constants('JOB_STATUSES')['Not_Responded'], constants('JOB_STATUSES')['Served'], constants('JOB_STATUSES')['Cancelled']];
-            $job_service_old = clone $job_service;
-            $old_job = clone $job_service_old->job;
-            $old_job = $old_job->calculate(true);
+            DB::transaction(function () use ($job_service, $request) {
+                $invalid_job_statuses = [constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Declined'], constants('JOB_STATUSES')['Not_Responded'], constants('JOB_STATUSES')['Served'], constants('JOB_STATUSES')['Cancelled']];
+                $job_service_old = clone $job_service;
+                $old_job = clone $job_service_old->job;
+                $old_job = $old_job->calculate(true);
 
-            $request->merge(['status' => $old_job->status]);
-            $this->validate($request, [
-                'status'        => 'required|not_in:'.implode(',', $invalid_job_statuses),
-                'quantity'      => 'required|integer|min:1',
-                'unit_price'    => 'required|numeric|min:0.01',
-                'discount'      => 'required|numeric|min:0.00'
-            ], ['status.not_in' => 'You cannot update this job.']);
+                $request->merge(['status' => $old_job->status]);
+                $this->validate($request, [
+                    'status'        => 'required|not_in:'.implode(',', $invalid_job_statuses),
+                    'quantity'      => 'required|numeric|min:1',
+                    'unit_price'    => 'required|numeric|min:0.01',
+                    'discount'      => 'required|numeric|min:0.00'
+                ], ['status.not_in' => $old_job->status . ' job cannot be updated']);
 
-            if ($error = $this->hasPricingError($job_service, $old_job, $request))
-                return api_response($request, $error, 400, ['message' => $error]);
-            $data = $this->getJobServicePriceUpdateData($job_service, $request);
+                if ($error = $this->hasPricingError($job_service, $old_job, $request))
+                    return api_response($request, $error, 400, ['message' => $error]);
+                $data = $this->getJobServicePriceUpdateData($job_service, $request);
 
-            $this->setModifier($request->manager_resource);
+                $this->setModifier($request->manager_resource);
 
-            $job_service->update(array_merge($data, [
-                'updated_by'        => $this->modifier_id,
-                'updated_by_name'   => $this->modifier_name,
-                'updated_at'        => $this->time
-            ]));
-            $this->saveServicePriceUpdateLog($job_service_old, $request);
-            $job = $job_service->job;
-            $job = $job->calculate(true);
-            notify()->customer($job->partnerOrder->order->customer)
-                ->send($this->priceChangedNotificationData($job, $old_job->grossPrice));
-
+                $job_service->update(array_merge($data, [
+                    'updated_by'        => $this->modifier_id,
+                    'updated_by_name'   => $this->modifier_name,
+                    'updated_at'        => $this->time
+                ]));
+                $this->saveServicePriceUpdateLog($job_service_old, $request);
+                $job = $job_service->job;
+                $job = $job->calculate(true);
+                notify()->customer($job->partnerOrder->order->customer)
+                    ->send($this->priceChangedNotificationData($job, $old_job->grossPrice));
+            });
         } catch (ValidationException $e) {
+            app('sentry')->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Exception $exception){
-            dd($exception);
-            DB::rollback();
+            app('sentry')->captureException($exception);
             return api_response($request, null, 500);
         }
-        DB::commit();
-        return api_response($request, null, 200, [
-            'job' => json_decode($job->toJson()),
-            'partner_order' => json_decode($job->partnerOrder->calculate(true)->toJson())
-        ]);
+        return api_response($request, null, 200, ['message' => 'Successful']);
     }
 
     private function hasPricingError(JobService $job_service, Job $job, Request $request)
