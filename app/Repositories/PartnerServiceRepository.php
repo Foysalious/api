@@ -34,6 +34,11 @@ class PartnerServiceRepository
     {
         return $this->getPriceOfThisOption($prices, implode(',', $selected_option));
     }
+    public function getMinimumPriceOfOptionsService($prices, $selected_option)
+    {
+        return $this->getPriceOfThisOption($prices, implode(',', $selected_option));
+    }
+
 
     private function getPriceOfThisOption($prices, $option)
     {

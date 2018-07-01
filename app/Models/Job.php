@@ -137,7 +137,7 @@ class Job extends Model
     {
         $total_service_price = 0;
         foreach ($this->jobServices as $jobService) {
-            $total_service_price += $jobService->unit_price * $jobService->quantity;
+            $total_service_price += ($jobService->min_price > ($jobService->unit_price * $jobService->quantity) ? $jobService->min_price : ($jobService->unit_price * $jobService->quantity));
         }
         return $total_service_price;
     }

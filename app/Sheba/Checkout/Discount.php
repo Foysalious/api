@@ -7,6 +7,7 @@ use App\Models\PartnerServiceDiscount;
 class Discount
 {
     private $discount = 0;
+    private $min_price = 0;
     private $discounted_price;
     private $unit_price;
     private $quantity;
@@ -19,11 +20,12 @@ class Discount
     private $discount_id = null;
     private $hasDiscount = 0;
 
-    public function __construct($unit_price, $quantity = 1)
+    public function __construct($unit_price, $quantity = 1, $min_price)
     {
         $this->unit_price = (double)$unit_price;
         $this->quantity = (double)$quantity;
-        $this->original_price = $this->unit_price * $this->quantity;
+        $this->min_price = (double)$min_price;
+        $this->original_price = ($this->unit_price * $this->quantity) < $min_price ? $min_price : ($this->unit_price * $this->quantity);
     }
 
     public function __get($name)

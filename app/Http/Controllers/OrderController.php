@@ -216,7 +216,6 @@ class OrderController extends Controller
                 'address_id' => 'required_without:address',
             ], ['mobile' => 'Invalid mobile number!']);
 
-//            $partner = Partner::findOrFail($request->partner);
             $customer = $request->customer;
             $validation = new Validation($request);
             if (!$validation->isValid()) {

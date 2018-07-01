@@ -274,10 +274,13 @@ class PartnerList
             $service = $partner->services->where('id', $selected_service->id)->first();
             if ($service->isOptions()) {
                 $price = $this->partnerServiceRepository->getPriceOfOptionsService($service->pivot->prices, $selected_service->option);
+                $min_price = empty($service->pivot->min_prices) ? 0 : $this->partnerServiceRepository->getMinimumPriceOfOptionsService($service->pivot->min_prices, $selected_service->option);
             } else {
                 $price = (double)$service->pivot->prices;
+                $min_price = (double)$service->pivot->min_prices;
             }
-            $discount = $this->calculateDiscountForService($price, $selected_service, $service);
+            $discount = new Discount($price, $selected_service->quantity,$min_price);
+            $discount->calculateServiceDiscount((PartnerService::find($service->pivot->id))->discount());
             $service = [];
             $service['discount'] = $discount->__get('discount');
             $service['cap'] = $discount->__get('cap');
@@ -285,6 +288,7 @@ class PartnerList
             $service['is_percentage'] = $discount->__get('discount_percentage');
             $service['discounted_price'] = $discount->__get('discounted_price');
             $service['original_price'] = $discount->__get('original_price');
+            $service['min_price'] = $discount->__get('min_price');
             $service['unit_price'] = $discount->__get('unit_price');
             $service['sheba_contribution'] = $discount->__get('sheba_contribution');
             $service['partner_contribution'] = $discount->__get('partner_contribution');
@@ -310,13 +314,6 @@ class PartnerList
         if (count($this->partners) > 0) {
             $this->hasPartners = true;
         }
-    }
-
-    private function calculateDiscountForService($price, $selected_service, $service)
-    {
-        $discount = new Discount($price, $selected_service->quantity);
-        $discount->calculateServiceDiscount((PartnerService::find($service->pivot->id))->discount());
-        return $discount;
     }
 
     private function getVariableOptionOfService(Service $service, Array $option)

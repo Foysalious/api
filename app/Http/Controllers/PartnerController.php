@@ -314,14 +314,13 @@ class PartnerController extends Controller
                 $q->verified()->type('Handyman');
             }, 'jobs' => function ($q) use ($statuses) {
                 $q->info()->status($statuses)->with('resource');
-            },'orders' => function ($q){
+            }, 'orders' => function ($q) {
                 $q->ongoing();
             }]);
             $jobs = $partner->jobs;
             $total_ongoing_order = 0;
-            foreach ($partner->orders as $partnerOrder)
-            {
-              $total_ongoing_order += $partnerOrder->jobs->whereIn('status', ['Accepted','Schedule Due','Process','Serve Due','Served'])->count();
+            foreach ($partner->orders as $partnerOrder) {
+                $total_ongoing_order += $partnerOrder->jobs->whereIn('status', ['Accepted', 'Schedule Due', 'Process', 'Serve Due', 'Served'])->count();
             }
             $resource_ids = $partner->resources->pluck('id')->unique();
             $assigned_resource_ids = $jobs->whereIn('status', [constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Schedule_Due']])->pluck('resource_id')->unique();

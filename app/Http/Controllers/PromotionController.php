@@ -107,8 +107,10 @@ class PromotionController extends Controller
                 $service = $partner->services->where('id', $selected_service->id)->first();
                 if ($service->isOptions()) {
                     $price = (new PartnerServiceRepository())->getPriceOfOptionsService($service->pivot->prices, $selected_service->option);
+                    $min_price = empty($service->pivot->min_prices) ? 0 : (new PartnerServiceRepository())->getMinimumPriceOfOptionsService($service->pivot->min_prices, $selected_service->option);
                 } else {
                     $price = (double)$service->pivot->prices;
+                    $min_price = (double)$service->pivot->min_prices;
                 }
                 $discount = new Discount($price, $selected_service->quantity);
                 $discount->calculateServiceDiscount((PartnerService::find($service->pivot->id))->discount());
