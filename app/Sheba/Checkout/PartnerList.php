@@ -266,7 +266,8 @@ class PartnerList
         $total_service_price = [
             'discount' => 0,
             'discounted_price' => 0,
-            'original_price' => 0
+            'original_price' => 0,
+            'is_min_price_applied' => 0,
         ];
         $services = [];
         foreach ($this->selected_services as $selected_service) {
@@ -291,7 +292,9 @@ class PartnerList
             $service['unit_price'] = $discount->__get('unit_price');
             $service['sheba_contribution'] = $discount->__get('sheba_contribution');
             $service['partner_contribution'] = $discount->__get('partner_contribution');
-
+            if ($discount->__get('original_price') == $discount->__get('min_price')) {
+                $total_service_price['is_min_price_applied'] = 1;
+            }
             $total_service_price['discount'] += $service['discount'];
             $total_service_price['discounted_price'] += $service['discounted_price'];
             $total_service_price['original_price'] += $service['original_price'];
