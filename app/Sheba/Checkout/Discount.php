@@ -45,7 +45,7 @@ class Discount
             $this->partner_contribution = (double)$running_discount->partner_contribution;
             if ($running_discount->isPercentage()) {
                 $this->discount_percentage = 1;
-                $this->discount = ($this->unit_price * $this->quantity * $running_discount->amount) / 100;
+                $this->discount = ($this->original_price * $running_discount->amount) / 100;
                 if ($running_discount->hasCap() && $this->discount > $running_discount->cap) {
                     $this->discount = $running_discount->cap;
                 }
