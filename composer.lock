@@ -425,7 +425,7 @@
                 "docblock",
                 "parser"
             ],
-            "time": "2017-07-22 10:58:02"
+            "time": "2017-02-24 16:22:25"
         },
         {
             "name": "doctrine/inflector",
@@ -2708,7 +2708,7 @@
             "source": {
                 "type": "git",
                 "url": "https://arnabrahman@bitbucket.org/startern/sheba_dal.git",
-                "reference": "eea8346ed04a30b823124d16889657d49c44148d"
+                "reference": "f8d66dc4bf915d79f2c3078d6d80f820a4c64dd5"
             },
             "require": {
                 "php": ">=5.4"
@@ -2732,7 +2732,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2018-06-27 06:20:03"
+            "time": "2018-07-02 08:05:28"
         },
         {
             "name": "sheba/voucher",
