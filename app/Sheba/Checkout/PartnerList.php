@@ -57,7 +57,6 @@ class PartnerList
                 $selected_service['drop_off_date'] = isset($service->drop_off_date) ? $service->drop_off_date : null;
                 $selected_service['drop_off_time'] = isset($service->drop_off_time) ? $service->drop_off_time : null;
             }
-
             if (in_array($selected_service->id, $this->rentCarServicesId)) {
                 $model = "App\\Models\\" . $service->pick_up_location_type;
                 $origin = $model::find($service->pick_up_location_id);
@@ -187,7 +186,7 @@ class PartnerList
     public function addPricing()
     {
         foreach ($this->partners as $partner) {
-            $pricing = $this->calculateServicePricingAndBreakdowntoPartner($partner);
+            $pricing = $this->calculateServicePricingAndBreakdownOfPartner($partner);
             foreach ($pricing as $key => $value) {
                 $partner[$key] = $value;
             }
@@ -262,7 +261,7 @@ class PartnerList
         });
     }
 
-    private function calculateServicePricingAndBreakdowntoPartner($partner)
+    private function calculateServicePricingAndBreakdownOfPartner($partner)
     {
         $total_service_price = [
             'discount' => 0,
@@ -279,7 +278,7 @@ class PartnerList
                 $price = (double)$service->pivot->prices;
                 $min_price = (double)$service->pivot->min_prices;
             }
-            $discount = new Discount($price, $selected_service->quantity,$min_price);
+            $discount = new Discount($price, $selected_service->quantity, $min_price);
             $discount->calculateServiceDiscount((PartnerService::find($service->pivot->id))->discount());
             $service = [];
             $service['discount'] = $discount->__get('discount');

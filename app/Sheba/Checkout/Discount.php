@@ -20,12 +20,13 @@ class Discount
     private $discount_id = null;
     private $hasDiscount = 0;
 
-    public function __construct($unit_price, $quantity = 1, $min_price)
+    public function __construct($unit_price, $quantity = 1, $min_price = 0)
     {
         $this->unit_price = (double)$unit_price;
         $this->quantity = (double)$quantity;
         $this->min_price = (double)$min_price;
-        $this->original_price = ($this->unit_price * $this->quantity) < $min_price ? $min_price : ($this->unit_price * $this->quantity);
+        $total = $this->unit_price * $this->quantity;
+        $this->original_price = $total < $min_price ? $min_price : $total;
     }
 
     public function __get($name)

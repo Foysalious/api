@@ -112,7 +112,7 @@ class PromotionController extends Controller
                     $price = (double)$service->pivot->prices;
                     $min_price = (double)$service->pivot->min_prices;
                 }
-                $discount = new Discount($price, $selected_service->quantity);
+                $discount = new Discount($price, $selected_service->quantity, $min_price);
                 $discount->calculateServiceDiscount((PartnerService::find($service->pivot->id))->discount());
                 if ($discount->__get('hasDiscount')) return null;
                 $order_amount += $discount->__get('discounted_price');
