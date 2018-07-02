@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\PartnerService;
+use App\Models\Promotion;
 use App\Repositories\CartRepository;
 use App\Repositories\PartnerServiceRepository;
 use App\Sheba\Checkout\Discount;
@@ -44,7 +45,14 @@ class PromotionController extends Controller
         try {
             $promotion = new PromotionList($request->customer);
             list($promotion, $msg) = $promotion->add(strtoupper($request->promo));
-            return $promotion != false ? api_response($request, $promotion, 200, ['promotion' => $promotion]) : api_response($request, null, 404, ['message' => $msg]);
+            if ($promotion) {
+                $promotion = Promotion::with(['voucher' => function ($q) {
+                    $q->select('id', 'code', 'amount', 'title', 'is_amount_percentage', 'cap');
+                }])->select('id', 'voucher_id', 'customer_id', 'valid_till')->where('id', $promotion->id)->first();
+                return api_response($request, $promotion, 200, ['promotion' => $promotion]);
+            } else {
+                return api_response($request, null, 404, ['message' => $msg]);
+            }
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
