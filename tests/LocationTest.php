@@ -5,11 +5,10 @@ class LocationTest extends TestCase
 {
     public function testGetLocations()
     {
-        dd( $this->json('GET', '/v1/locations'));
         $this->json('GET', '/v1/locations')->seeJsonStructure([
             'code',
             'locations' => [
-                ['id', 'name']
+                '*' => ['id', 'name']
             ],
             'msg'
         ]);
