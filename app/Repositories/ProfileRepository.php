@@ -44,7 +44,7 @@ class ProfileRepository
     public function updateIfNull($profile, array $data)
     {
         foreach ($data as $key => $value) {
-            if (empty($profile->$key) || $profile->$key == null) {
+            if (empty($profile->$key) || $profile->$key == null || !$profile->$key) {
                 $profile->$key = $value;
             }
         }
@@ -269,15 +269,15 @@ class ProfileRepository
 
         DB::transaction(function () use ($affiliate, $affiliate_bonus_amount) {
             $affiliate->update([
-                'wallet'            => $affiliate_bonus_amount,
-                'acquisition_cost'  => $affiliate_bonus_amount
+                'wallet' => $affiliate_bonus_amount,
+                'acquisition_cost' => $affiliate_bonus_amount
             ]);
 
             AffiliateTransaction::create([
-                'affiliate_id'  => $affiliate->id,
-                'type'          => 'Credit',
-                'log'           => "Affiliate earned $affiliate_bonus_amount tk for registration",
-                'amount'        => $affiliate_bonus_amount
+                'affiliate_id' => $affiliate->id,
+                'type' => 'Credit',
+                'log' => "Affiliate earned $affiliate_bonus_amount tk for registration",
+                'amount' => $affiliate_bonus_amount
             ]);
         });
 

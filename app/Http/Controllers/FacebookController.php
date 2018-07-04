@@ -43,7 +43,7 @@ class FacebookController extends Controller
                     $info = $this->profileRepository->getProfileInfo($from, Profile::find($profile->id), $request);
                     return $info ? api_response($request, $info, 200, ['info' => $info]) : api_response($request, null, 404);
                 } else {
-                    return api_response($request, null, 400, ['message' => 'Facebook account not registered! Please register']);
+                    return api_response($request, null, 400, ['message' => 'Google account not registered! Please register']);
                 }
             }
             return api_response($request, null, 403);
@@ -207,13 +207,4 @@ class FacebookController extends Controller
         return $validator->fails() ? $validator->errors()->all()[0] : false;
     }
 
-    private function _validateKitRequest($request)
-    {
-        $from = implode(',', constants('FROM'));
-        $validator = Validator::make($request->all(), [
-            'from' => "required|in:$from",
-            'code' => "required"
-        ], ['in' => 'from value is invalid!']);
-        return $validator->fails() ? $validator->errors()->all()[0] : false;
-    }
 }
