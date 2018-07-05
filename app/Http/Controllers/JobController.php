@@ -132,11 +132,22 @@ class JobController extends Controller
             $job->calculate(true);
             if (count($job->jobServices) == 0) {
                 $services = array();
-                array_push($services, array('name' => $job->service != null ? $job->service->name : null, 'price' => (double)$job->servicePrice));
+                array_push($services, array(
+                    'name' => $job->service != null ? $job->service->name : null,
+                    'price' => (double)$job->servicePrice,
+                    'min_price' => 0, 'is_min_price_applied' => 0
+                ));
             } else {
                 $services = array();
                 foreach ($job->jobServices as $jobService) {
-                    array_push($services, array('name' => $jobService->service != null ? $jobService->service->name : null, 'price' => (double)$jobService->unit_price * (double)$jobService->quantity));
+                    $total = (double)$jobService->unit_price * (double)$jobService->quantity;
+                    $min_price = (double)$jobService->min_price;
+                    array_push($services, array(
+                        'name' => $jobService->service != null ? $jobService->service->name : null,
+                        'price' => $total,
+                        'min_price' => $min_price,
+                        'is_min_price_applied' => $min_price > $total ? 1 : 0
+                    ));
                 }
             }
             $partnerOrder = $job->partnerOrder;
