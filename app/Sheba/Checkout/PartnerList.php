@@ -292,6 +292,7 @@ class PartnerList
             $service['unit_price'] = $discount->__get('unit_price');
             $service['sheba_contribution'] = $discount->__get('sheba_contribution');
             $service['partner_contribution'] = $discount->__get('partner_contribution');
+            $service['is_min_price_applied'] = $discount->__get('original_price') == $discount->__get('min_price') ? 1 : 0;
             if ($discount->__get('original_price') == $discount->__get('min_price')) {
                 $total_service_price['is_min_price_applied'] = 1;
             }
