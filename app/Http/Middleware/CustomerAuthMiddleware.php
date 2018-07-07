@@ -28,8 +28,9 @@ class CustomerAuthMiddleware
                     return response()->json(['msg' => 'unauthorized', 'code' => 409]);
                 }
             }
+        } else {
+            return api_response($request, null, 409, ['message' => 'Token is missing']);
         }
-        return response()->json(['msg' => 'unauthorized', 'code' => 409]);
         try {
             if (!$user = JWTAuth::parseToken()->authenticate()) {
                 return response()->json(['user_not_found'], 404);

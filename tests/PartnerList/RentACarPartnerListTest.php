@@ -1,6 +1,6 @@
 <?php
 
-class RentACarTest extends TestCase
+class RentACarPartnerListTest extends TestCase
 {
     private $list;
 
