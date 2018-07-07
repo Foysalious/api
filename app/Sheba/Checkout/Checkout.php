@@ -90,7 +90,7 @@ class Checkout
             $data['email'] = $request->email;
         }
         if ($request->has('voucher')) {
-            $data['voucher_id'] = $request->voucher;
+            $data['voucher'] = $request->voucher;
         }
         $data['pap_visitor_id'] = $request->has('pap_visitor_id') ? $request->pap_visitor_id : null;
         $data['created_by'] = $created_by = $request->has('created_by') ? $request->created_by : $this->customer->id;
@@ -302,8 +302,8 @@ class Checkout
                 return $job_service->unit_price * $job_service->quantity;
             })->sum();
             $valid = 0;
-            if (isset($data['voucher_id'])) {
-                $result = voucher($data['voucher_id'])
+            if (isset($data['voucher'])) {
+                $result = voucher($data['voucher'])
                     ->check($data['category_id'], $partner->id, $data['location_id'], $data['customer_id'], $order_amount, $data['sales_channel'])
                     ->reveal();
                 if ($result['is_valid']) $valid = 1;
