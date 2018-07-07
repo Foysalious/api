@@ -75,7 +75,7 @@ class JobServiceController extends Controller
                 'status'        => 'required|not_in:'.implode(',', $invalid_job_statuses),
                 'quantity'      => 'required|numeric|min:1',
                 'unit_price'    => 'required|numeric|min:0.01',
-                'discount'      => 'required|numeric|min:0.00'
+                'discount'      => 'required|numeric|min:0.01'
             ], ['status.not_in' => $old_job->status . ' job cannot be updated']);
             if ($error = $this->hasPricingError($job_service, $old_job, $request)) {
                 return api_response($request, null, 400, ['message' => $error]);
@@ -88,8 +88,8 @@ class JobServiceController extends Controller
             ]);
             $this->setModifier($request->manager_resource);
 
-            DB::transaction(function () use ($job_service, $request, $job_service_old, $old_job) {
-                $job_service->update();
+            DB::transaction(function () use ($job_service, $request, $job_service_old, $old_job, $data) {
+                $job_service->update($data);
                 $this->saveServicePriceUpdateLog($job_service_old, $request);
                 $job = $job_service->job;
                 $job = $job->calculate(true);
@@ -103,6 +103,7 @@ class JobServiceController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Exception $exception){
+            dd($exception);
             app('sentry')->captureException($exception);
             return api_response($request, null, 500);
         }
