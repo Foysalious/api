@@ -131,6 +131,8 @@ class ResourceJobRepository
             $job['estimated_distance'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_distance : null;
             $job['estimated_time'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_time : null;
             $job['isRentCar'] = $job->isRentCar();
+            $job['sheba_contribution'] = (double)$job->sheba_contribution;
+            $job['partner_contribution'] = (double)$job->partner_contribution;
             removeRelationsAndFields($job);
         }
         return $jobs;
