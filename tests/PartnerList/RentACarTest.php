@@ -1,6 +1,6 @@
 <?php
 
-class RentACarPartnerListTest extends TestCase
+class RentACarTest extends TestCase
 {
     private $list;
 
@@ -173,6 +173,52 @@ class RentACarPartnerListTest extends TestCase
                 array(
                     'id' => $round_trip_service['id'],
                     'quantity' => $round_trip_service['min_quantity'],
+                    'pick_up_location_id' => $pick_up_location['id'],
+                    'pick_up_location_type' => $pick_up_location['type'],
+                    'pick_up_location_address' => str_random(20),
+                    'pick_up_area' => $pick_up_location['name'],
+                    'destination_location_id' => $destination_location['id'],
+                    'destination_location_type' => $destination_location['type'],
+                    'destination_location_address' => str_random(20),
+                    'destination_area' => $destination_location['name'],
+                    'option' => [array_rand($answers)]
+                )
+            ]),
+            'date' => date('Y-m-d'),
+            'time' => key($valid_times)
+
+        ])->seeJsonStructure($this->list);
+    }
+
+    public function testBodyRent()
+    {
+        $client = new GuzzleHttp\Client([
+            'base_uri' => $this->baseUrl
+        ]);
+        $response = $client->get('/v2/settings/car');
+        $this->assertEquals(200, $response->getStatusCode());
+        $settings = json_decode($response->getBody(), true)['settings'];
+        $locations = collect($settings['locations']);
+
+        $times = $client->get('/v2/times');
+        $this->assertEquals(200, $times->getStatusCode());
+        $valid_times = json_decode($times->getBody(), true)['valid_times'];
+        $pick_up_locations = $locations->filter(function ($location) {
+            return (int)$location['is_available_for_pickup'] == 1;
+        });
+        $pick_up_location = $pick_up_locations->random(1);
+        $destination_locations = $locations->filter(function ($location) use ($pick_up_location) {
+            return $pick_up_location['district_id'] != $location['district_id'];
+        });
+        $destination_location = $destination_locations->random(1);
+
+        $body_rent_service = $settings['sub_cats']['outside_city']['services']['body_rent'];
+        $answers = $body_rent_service['questions'][0]['answers'];
+        $this->json('GET', '/v2/locations/11/partners', [
+            'services' => json_encode([
+                array(
+                    'id' => $body_rent_service['id'],
+                    'quantity' => $body_rent_service['min_quantity'],
                     'pick_up_location_id' => $pick_up_location['id'],
                     'pick_up_location_type' => $pick_up_location['type'],
                     'pick_up_location_address' => str_random(20),
