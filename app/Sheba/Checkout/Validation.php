@@ -21,7 +21,15 @@ class Validation
 
     public function isValid()
     {
+        if (empty($this->request->services)) {
+            $this->message = "Please select a service";
+            return 0;
+        }
         $selected_services = $this->getSelectedServices(json_decode($this->request->services));
+        if ($selected_services->count() == 0) {
+            $this->message = "Selected service is not valid";
+            return 0;
+        }
         $category_id = $selected_services->pluck('category_id')->unique()->toArray();
         $location = Location::where('id', (int)$this->request->location)->published()->first();
         if (!$location) {
@@ -32,9 +40,6 @@ class Validation
             return 0;
         } elseif (!$this->isValidTime($this->request->time)) {
             $this->message = "Selected Time is not valid";
-            return 0;
-        } elseif (count($selected_services) == 0) {
-            $this->message = "Selected service is not valid";
             return 0;
         } elseif (count($category_id) > 1) {
             $this->message = "You can select only one category";

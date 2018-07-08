@@ -105,6 +105,9 @@ class PartnerJobController extends Controller
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -139,6 +142,9 @@ class PartnerJobController extends Controller
             return api_response($request, null, 403);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -168,7 +174,7 @@ class PartnerJobController extends Controller
             $this->validate($request, [
                 'schedule_date' => 'sometimes|required|date|after:' . Carbon::yesterday(),
                 'preferred_time' => 'required_with:schedule_date|string',
-                'resource_id' => 'required_without_all:schedule_date,preferred_time|not_in:' . $job->resource_id,
+                'resource_id' => 'string',
             ]);
             if ($request->has('schedule_date') && $request->has('preferred_time')) {
                 $job_time = new JobTime($request->day, $request->time);
@@ -188,6 +194,7 @@ class PartnerJobController extends Controller
                 }
             }
             if ($request->has('resource_id')) {
+                if ((int)$job->resource_id == (int)$request->resource_id) return api_response($request, null, 403, ['message' => 'অর্ডারটিতে এই রিসোর্স এসাইন করা রয়েছে']);
                 if (!scheduler(Resource::find((int)$request->resource_id))->isAvailableForCategory($job->schedule_date, explode('-', $job->preferred_time)[0], $job->category)) {
                     return api_response($request, null, 403, ['message' => 'Resource is not available at this time. Please select different date time or change the resource']);
                 }
@@ -200,6 +207,9 @@ class PartnerJobController extends Controller
             return api_response($request, null, 500);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -251,6 +261,9 @@ class PartnerJobController extends Controller
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -287,6 +300,9 @@ class PartnerJobController extends Controller
             return api_response($request, null, 404);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
