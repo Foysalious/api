@@ -99,11 +99,12 @@ class JobServiceController extends Controller
 
             return api_response($request, null, 200, ['message' => 'Successful']);
         } catch (ValidationException $e) {
-            app('sentry')->captureException($e);
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all()]);
+            $sentry->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Exception $exception){
-            dd($exception);
+        } catch (\Throwable $exception){
             app('sentry')->captureException($exception);
             return api_response($request, null, 500);
         }
