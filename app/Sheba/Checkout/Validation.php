@@ -21,11 +21,12 @@ class Validation
 
     public function isValid()
     {
-        if (empty($this->request->services)) {
+        $selected_services = json_decode($this->request->services);
+        if (empty($selected_services)) {
             $this->message = "Please select a service";
             return 0;
         }
-        $selected_services = $this->getSelectedServices(json_decode($this->request->services));
+        $selected_services = $this->getSelectedServices($selected_services);
         if ($selected_services->count() == 0) {
             $this->message = "Selected service is not valid";
             return 0;
