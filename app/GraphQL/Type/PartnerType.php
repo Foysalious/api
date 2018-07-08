@@ -36,16 +36,16 @@ class PartnerType extends GraphQlType
 
     protected function resolveTotalJobsField($root, $args)
     {
-        return $root->jobs->where('status', 'Served')->count();
+        return $root->jobs->first() ? $root->jobs->first()->total_jobs : 0;
     }
 
     protected function resolveAvgRatingField($root, $args)
     {
-        return round($root->reviews->avg('rating'), 2);
+        return $root->reviews->first() ? round($root->reviews->first()->avg_rating, 2) : 0;
     }
 
     protected function resolveTotalResourcesField($root, $args)
     {
-        return $root->resources->count();
+        return $root->resources->first() ? $root->resources->first()->total_resources : 0;
     }
 }
