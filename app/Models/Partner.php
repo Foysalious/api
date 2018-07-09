@@ -262,4 +262,9 @@ class Partner extends Model
         return $this->hasOne(PartnerBankInformation::class);
     }
 
+    public function package()
+    {
+        return $this->belongsTo(PartnerPackage::class);
+    }
+
 }
