@@ -438,7 +438,7 @@ $api->version('v1', function ($api) {
                 });
             });
             $api->post('job_service/{job_service}/update', 'JobServiceController@update');
-            $api->get('get-resource', 'ResourceController@getResourceData');
+            $api->get('get-profile', 'ResourceController@getResourceData');
         });
     });
 
