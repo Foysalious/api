@@ -73,6 +73,11 @@ return [
         'Declined' => 'Declined',
         'Halt' => 'Halt'
     ],
+    'CANCEL_REQUEST_STATUSES' => [
+        'Pending' => 'Pending',
+        'Approved' => 'Approved',
+        'Disapproved' => 'Disapproved'
+    ],
     'FLAG_TYPE' => [
         'Idea' => 'Idea',
         'Assignment' => 'Assignment',
@@ -287,9 +292,9 @@ return [
         'manager-web'
     ],
     'PARTNER_ACQUISITION_CHANNEL' => [
-        'PM'    => 'PM',
-        'Web'   => 'Web',
-        'App'   => 'App'
+        'PM' => 'PM',
+        'Web' => 'Web',
+        'App' => 'App'
     ],
     'AFFILIATION_REWARD_MONEY' => 10,
     'AFFILIATION_REGISTRATION_BONUS' => 50,
@@ -324,16 +329,16 @@ return [
     ],
     'MANAGER_TOPIC_NAME' => env('MANAGER_TOPIC_NAME'),
     'PARTNER_AFFILIATIONS_STATUSES' => [
-        'pending'    => 'Pending',
-        'rejected'   => 'Rejected',
+        'pending' => 'Pending',
+        'rejected' => 'Rejected',
         'successful' => 'Successful'
     ],
     'PARTNER_AFFILIATIONS_REJECT_REASONS' => [
-        'fake'                  => 'False Reference',
-        'no_response'           => 'No Response',
-        'not_interested'        => 'Not Interested',
-        'not_capable'           => 'Not Capable',
-        'service_unavailable'   => 'Service Unavailable'
+        'fake' => 'False Reference',
+        'no_response' => 'No Response',
+        'not_interested' => 'Not Interested',
+        'not_capable' => 'Not Capable',
+        'service_unavailable' => 'Service Unavailable'
     ],
     'PARTNER_AFFILIATIONS_FAKE_REJECT_REASONS' => ['fake'],
 ];

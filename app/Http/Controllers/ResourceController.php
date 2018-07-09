@@ -5,16 +5,19 @@ namespace App\Http\Controllers;
 
 
 use App\Models\PartnerResource;
+use App\Repositories\ProfileRepository;
 use App\Repositories\ReviewRepository;
 use Illuminate\Http\Request;
 
 class ResourceController extends Controller
 {
     private $reviewRepository;
+    private $profileRepo;
 
     public function __construct()
     {
         $this->reviewRepository = new ReviewRepository();
+        $this->profileRepo = new ProfileRepository();
     }
 
     public function show($partner, $resource, Request $request)
@@ -71,6 +74,23 @@ class ResourceController extends Controller
                 'breakdown' => $breakdown
             );
             return api_response($request, $info, 200, ['info' => $info]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getResourceData(Request $request)
+    {
+        try{
+            if ($request->has('mobile')) {
+                $profile = $this->profileRepo->getIfExist(formatMobile(trim($request->mobile)), 'mobile');
+                if ($profile) {
+                    if ($profile->resource) return api_response($request, null, 400, ['message' => 'Resource Already Exist']);
+                    return api_response($request, null, 200, ['profile' => $profile]);
+                }
+                return api_response($request, null, 404);
+            } else return api_response($request, null, 400, ['message' => 'Mobile field required']);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
