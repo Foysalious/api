@@ -8,6 +8,7 @@ use App\Models\PartnerResource;
 use App\Repositories\ProfileRepository;
 use App\Repositories\ReviewRepository;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class ResourceController extends Controller
 {
@@ -83,14 +84,23 @@ class ResourceController extends Controller
     public function getResourceData(Request $request)
     {
         try{
-            if ($request->has('mobile')) {
-                $profile = $this->profileRepo->getIfExist(formatMobile(trim($request->mobile)), 'mobile');
-                if ($profile) {
-                    if ($profile->resource) return api_response($request, null, 400, ['message' => 'Resource Already Exist']);
-                    return api_response($request, null, 200, ['profile' => $profile]);
-                }
-                return api_response($request, null, 404);
-            } else return api_response($request, null, 400, ['message' => 'Mobile field required']);
+            $request->merge(['mobile' => trim($request->mobile)]);
+            $this->validate($request, [
+                'mobile' => 'required|string|mobile:bd',
+            ], ['mobile' => 'Invalid mobile number!']);
+
+            $profile = $this->profileRepo->getIfExist(formatMobile($request->mobile), 'mobile');
+            if ($profile) {
+                if ($profile->resource) return api_response($request, null, 400, ['message' => 'Resource Already Exist']);
+                return api_response($request, null, 200, ['profile' => $profile]);
+            }
+            return api_response($request, null, 404);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
