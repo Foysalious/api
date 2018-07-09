@@ -435,6 +435,7 @@ $api->version('v1', function ($api) {
                     $api->group(['prefix' => 'materials'], function ($api) {
                         $api->get('/', 'PartnerJobController@getMaterials');
                     });
+                    $api->post('/cancel', 'PartnerCancelRequestController@store');
                 });
             });
             $api->post('job_service/{job_service}/update', 'JobServiceController@update');
