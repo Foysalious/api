@@ -269,6 +269,11 @@ class Job extends Model
         return $this->hasMany(Complain::class);
     }
 
+    public function cancelRequests()
+    {
+        return $this->hasMany(JobCancelRequest::class);
+    }
+
     public function hasStatus(Array $status)
     {
         foreach ($status as $key => $value) {

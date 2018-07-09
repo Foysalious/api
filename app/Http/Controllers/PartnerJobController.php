@@ -40,14 +40,16 @@ class PartnerJobController extends Controller
                 $q->$filter()->with(['order' => function ($q) {
                     $q->with('location', 'customer.profile');
                 }])->with(['jobs' => function ($q) use ($filter, $request) {
-                    $q->info()->whereIn('status', (new PartnerOrderRepository())->getStatusFromRequest($request))->orderBy('id', 'desc')->with(['category', 'usedMaterials' => function ($q) {
+                    $q->info()->whereIn('status', (new PartnerOrderRepository())->getStatusFromRequest($request))->orderBy('id', 'desc')->with(['cancelRequests', 'category', 'usedMaterials' => function ($q) {
                         $q->select('id', 'job_id', 'material_name', 'material_price');
                     }, 'resource.profile', 'review']);
                 }]);
             }]);
             $jobs = collect();
+            $rejected_jobs = collect();
             foreach ($partner->partnerOrders as $partnerOrder) {
                 foreach ($partnerOrder->jobs as $job) {
+                    if ($job->cancelRequests->where('status', 'Pending')->count() > 0) continue;
                     $job['location'] = $partnerOrder->order->location->name;
                     $job['service_unit_price'] = (double)$job->service_unit_price;
                     $job['discount'] = (double)$job->discount;
@@ -67,6 +69,15 @@ class PartnerJobController extends Controller
                     } else {
                         $job['completed_at_timestamp'] = null;
                         $job['closed_and_paid_at'] = null;
+                    }
+                    $job['is_cancel_request_rejected'] = 0;
+                    if ($job->cancelRequests->count() > 0) {
+                        if ($job->cancelRequests->last()->status == constants('CANCEL_REQUEST_STATUSES')['Disapproved']) {
+                            $job['is_cancel_request_rejected'] = 1;
+                            removeRelationsFromModel($job);
+                            $rejected_jobs->push($job);
+                            continue;
+                        }
                     }
                     removeRelationsFromModel($job);
                     $jobs->push($job);
@@ -89,6 +100,7 @@ class PartnerJobController extends Controller
                     $jobs = $jobs->sortByDesc('id');
                 }
                 list($offset, $limit) = calculatePagination($request);
+                $jobs = $rejected_jobs->merge($jobs);
                 $jobs = $jobs->splice($offset, $limit);
                 $resources = collect();
                 foreach ($jobs->groupBy('resource_id') as $key => $resource) {
