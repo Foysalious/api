@@ -82,13 +82,18 @@ class ResourceController extends Controller
 
     public function getResourceData(Request $request)
     {
-        if ($request->has('mobile')) {
-            $profile = $this->profileRepo->getIfExist(formatMobileAux($request->mobile), 'mobile');
-            if ($profile) {
-                if ($profile->resource) return response(['code' => 400, 'message' => 'Resource Already Exist']);
-                return response(['code' => 200, 'profile' => $profile]);
-            }
-            return response(['code' => 404, 'message' => '']);
-        } else return response(['code' => 404, 'message' => '']);
+        try{
+            if ($request->has('mobile')) {
+                $profile = $this->profileRepo->getIfExist(formatMobile(trim($request->mobile)), 'mobile');
+                if ($profile) {
+                    if ($profile->resource) return api_response($request, null, 400, ['message' => 'Resource Already Exist']);
+                    return api_response($request, null, 200, ['profile' => $profile]);
+                }
+                return api_response($request, null, 404);
+            } else return api_response($request, null, 400, ['message' => 'Mobile field required']);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 }
