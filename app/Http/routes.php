@@ -440,6 +440,7 @@ $api->version('v1', function ($api) {
                         $api->get('reasons', 'PartnerCancelRequestController@cancelReasons');
                     });
                 });
+                $api->get('/cancel-request', 'PartnerJobController@cancelRequests');
             });
             $api->post('job_service/{job_service}/update', 'JobServiceController@update');
             $api->get('get-profile', 'ResourceController@getResourceData');
