@@ -28,7 +28,7 @@ class Validation
         }
         $selected_services = $this->getSelectedServices($selected_services);
         if ($selected_services->count() == 0) {
-            $this->message = "Selected service is not valid";
+            $this->message = "Please select a service";
             return 0;
         }
         $category_id = $selected_services->pluck('category_id')->unique()->toArray();
@@ -37,10 +37,10 @@ class Validation
             $this->message = "Selected location is not valid";
             return 0;
         } elseif (!$this->isValidDate($this->request->date)) {
-            $this->message = "Selected Date is not valid";
+            $this->message = "Selected date is not valid";
             return 0;
         } elseif (!$this->isValidTime($this->request->time)) {
-            $this->message = "Selected Time is not valid";
+            $this->message = "Selected time is not valid";
             return 0;
         } elseif (count($category_id) > 1) {
             $this->message = "You can select only one category";
