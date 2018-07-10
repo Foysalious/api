@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class PartnerServiceDiscount extends Model
@@ -42,5 +43,11 @@ class PartnerServiceDiscount extends Model
     public function hasCap()
     {
         return $this->cap > 0;
+    }
+
+    public function scopeRunning($query)
+    {
+        $now = Carbon::now();
+        return $query->where([['end_date', '>=', $now], ['start_date', '<=', $now]]);
     }
 }

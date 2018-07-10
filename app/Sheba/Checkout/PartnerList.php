@@ -4,6 +4,7 @@ namespace App\Sheba\Checkout;
 
 use App\Models\Partner;
 use App\Models\PartnerService;
+use App\Models\PartnerServiceDiscount;
 use App\Models\Service;
 use App\Repositories\PartnerRepository;
 use App\Repositories\PartnerServiceRepository;
@@ -280,7 +281,7 @@ class PartnerList
                 $min_price = (double)$service->pivot->min_prices;
             }
             $discount = new Discount($price, $selected_service->quantity, $min_price);
-            $discount->calculateServiceDiscount((PartnerService::find($service->pivot->id))->discount());
+            $discount->calculateServiceDiscount(PartnerServiceDiscount::where('partner_service_id', $service->pivot->id)->running()->first());
             $service = [];
             $service['discount'] = $discount->__get('discount');
             $service['cap'] = $discount->__get('cap');
