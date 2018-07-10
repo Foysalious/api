@@ -28,40 +28,48 @@ class AffiliateController extends Controller
 
     public function edit($affiliate, Request $request)
     {
-        $except_fields = [];
-        if ($request->has('bkash_no')) {
-            $mobile = formatMobile(ltrim($request->bkash_no));
-            $request->merge(['bkash_no' => $mobile]);
-        } else {
-            $except_fields = ['bkash_no'];
+        try {
+            $except_fields = [];
+            if ($request->has('bkash_no')) {
+                $mobile = formatMobile(ltrim($request->bkash_no));
+                $request->merge(['bkash_no' => $mobile]);
+            } else {
+                $except_fields = ['bkash_no'];
+            }
+            $validation_fields = count($except_fields) > 0 ? $request->except($except_fields) : $request->all();
+            if ($msg = $this->_validateEdit($validation_fields)) {
+                return response()->json(['code' => 500, 'msg' => $msg]);
+            }
+            $affiliate = Affiliate::find($affiliate);
+            if ($request->has('name')) {
+                $profile = $affiliate->profile;
+                $profile->name = $request->name;
+                $profile->update();
+            }
+            if ($request->has('bkash_no')) {
+                $banking_info = $affiliate->banking_info;
+                $banking_info->bKash = $mobile;
+                $affiliate->banking_info = json_encode($banking_info);
+            }
+            if ($request->has('geolocation')) {
+                $affiliate->geolocation = $request->geolocation;
+            }
+            return $affiliate->update() ? response()->json(['code' => 200]) : response()->json(['code' => 404]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
         }
-        $validation_fields = count($except_fields) > 0 ? $request->except($except_fields) : $request->all();
-        if ($msg = $this->_validateEdit($validation_fields)) {
-            return response()->json(['code' => 500, 'msg' => $msg]);
-        }
-        $affiliate = Affiliate::find($affiliate);
-        if ($request->has('name')) {
-            $profile = $affiliate->profile;
-            $profile->name = $request->name;
-            $profile->update();
-        }
-        if ($request->has('bkash_no')) {
-            $banking_info = $affiliate->banking_info;
-            $banking_info->bKash = $mobile;
-            $affiliate->banking_info = json_encode($banking_info);
-        }
-        if ($request->has('geolocation')) {
-            //                $location = json_decode($request->geolocation);
-//                $this->locationRepository->getLocationFromLatLng($location->lat . ',' . $location->lng);
-            $affiliate->geolocation = $request->geolocation;
-        }
-        return $affiliate->update() ? response()->json(['code' => 200]) : response()->json(['code' => 404]);
     }
 
     public function getStatus($affiliate, Request $request)
     {
-        $affiliate = Affiliate::where('id', $affiliate)->select('verification_status', 'is_suspended', 'ambassador_code', 'is_ambassador')->first();
-        return $affiliate != null ? response()->json(['code' => 200, 'affiliate' => $affiliate]) : response()->json(['code' => 404, 'msg' => 'Not found!']);
+        try {
+            $affiliate = Affiliate::where('id', $affiliate)->select('verification_status', 'is_suspended', 'ambassador_code', 'is_ambassador')->first();
+            return $affiliate != null ? response()->json(['code' => 200, 'affiliate' => $affiliate]) : response()->json(['code' => 404, 'msg' => 'Not found!']);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 
     public function getDashboardInfo($affiliate, Request $request)
@@ -70,7 +78,7 @@ class AffiliateController extends Controller
             $affiliate = Affiliate::find($affiliate);
             $info = [
                 'wallet' => (double)$affiliate->wallet,
-                'total_income' => (double)$affiliate->transactions->sum('amount'),
+                'total_income' => (double)$affiliate->transactions->where('type', 'Credit')->sum('amount'),
                 'total_service_referred' => $affiliate->affiliations->count(),
                 'total_sp_referred' => $affiliate->partnerAffiliations->count(),
                 'last_updated' => Carbon::parse($affiliate->updated_at)->format('dS F,g:i A')
@@ -84,19 +92,24 @@ class AffiliateController extends Controller
 
     public function updateProfilePic(Request $request)
     {
-        if ($msg = $this->_validateImage($request)) {
-            return response()->json(['code' => 500, 'msg' => $msg]);
+        try {
+            if ($msg = $this->_validateImage($request)) {
+                return response()->json(['code' => 500, 'msg' => $msg]);
+            }
+            $photo = $request->file('photo');
+            $profile = ($request->affiliate)->profile;
+            if (basename($profile->pro_pic) != 'default.jpg') {
+                $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
+                $this->fileRepository->deleteFileFromCDN($filename);
+            }
+            $filename = $profile->id . '_profile_image_' . Carbon::now()->timestamp . '.' . $photo->extension();
+            $profile->pro_pic = $this->fileRepository->uploadToCDN($filename, $request->file('photo'), 'images/profiles/');
+            return $profile->update() ? response()->json(['code' => 200, 'picture' => $profile->pro_pic]) : response()->json(['code' => 404]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
         }
-        $photo = $request->file('photo');
-        $profile = ($request->affiliate)->profile;
-//        if (strpos($profile->pro_pic, 'images/customer/avatar/default.jpg') == false) {
-        if (basename($profile->pro_pic) != 'default.jpg') {
-            $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
-            $this->fileRepository->deleteFileFromCDN($filename);
-        }
-        $filename = $profile->id . '_profile_image_' . Carbon::now()->timestamp . '.' . $photo->extension();
-        $profile->pro_pic = $this->fileRepository->uploadToCDN($filename, $request->file('photo'), 'images/profiles/');
-        return $profile->update() ? response()->json(['code' => 200, 'picture' => $profile->pro_pic]) : response()->json(['code' => 404]);
+
     }
 
     public function getWallet($affiliate, Request $request)
@@ -132,7 +145,8 @@ class AffiliateController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -165,7 +179,8 @@ class AffiliateController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -200,7 +215,8 @@ class AffiliateController extends Controller
                 }
             }
             return api_response($request, null, 404);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -217,7 +233,8 @@ class AffiliateController extends Controller
                 array_forget($profile, 'pro_pic');
                 return api_response($request, $profile, 200, ['info' => $profile]);
             }
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -254,7 +271,8 @@ class AffiliateController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -271,7 +289,8 @@ class AffiliateController extends Controller
             $info->put('earning_amount', $affiliate->agents->sum('total_gifted_amount'));
             $info->put('total_refer', $affiliate->agents->sum('total_gifted_number'));
             return api_response($request, $info, 200, ['info' => $info->all()]);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -291,7 +310,8 @@ class AffiliateController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -312,6 +332,7 @@ class AffiliateController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }

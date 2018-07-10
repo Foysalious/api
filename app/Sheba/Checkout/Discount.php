@@ -15,6 +15,7 @@ class Discount
     private $sheba_contribution = 0;
     private $partner_contribution = 0;
     private $discount_percentage = 0;
+    private $isDiscountPercentage = 0;
     private $amount = 0;
     private $cap = null;
     private $discount_id = null;
@@ -44,7 +45,8 @@ class Discount
             $this->sheba_contribution = (double)$running_discount->sheba_contribution;
             $this->partner_contribution = (double)$running_discount->partner_contribution;
             if ($running_discount->isPercentage()) {
-                $this->discount_percentage = 1;
+                $this->discount_percentage = $running_discount->amount;
+                $this->isDiscountPercentage = 1;
                 $this->discount = ($this->original_price * $running_discount->amount) / 100;
                 if ($running_discount->hasCap() && $this->discount > $running_discount->cap) {
                     $this->discount = $running_discount->cap;

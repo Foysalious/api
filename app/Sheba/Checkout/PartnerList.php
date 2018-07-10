@@ -285,7 +285,7 @@ class PartnerList
             $service['discount'] = $discount->__get('discount');
             $service['cap'] = $discount->__get('cap');
             $service['amount'] = $discount->__get('amount');
-            $service['is_percentage'] = $discount->__get('discount_percentage');
+            $service['is_percentage'] = $discount->__get('isDiscountPercentage');
             $service['discounted_price'] = $discount->__get('discounted_price');
             $service['original_price'] = $discount->__get('original_price');
             $service['min_price'] = $discount->__get('min_price');
