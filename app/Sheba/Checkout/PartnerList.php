@@ -138,9 +138,19 @@ class PartnerList
             $query = $query->where('partners.id', $partner_id);
         }
         return $query->get()->map(function ($partner) {
-            $partner->contact_no = $partner->getContactNumber();
+            $partner->contact_no = $this->getContactNumber($partner);
             return $partner;
         });
+    }
+
+    private function getContactNumber($partner)
+    {
+        if ($operation_resource = $partner->resources->where('pivot.resource_type', constants('RESOURCE_TYPES')['Operation'])->first()) {
+            return $operation_resource->profile->mobile;
+        } elseif ($admin_resource = $partner->resources->where('pivot.resource_type', constants('RESOURCE_TYPES')['Admin'])->first()) {
+            return $admin_resource->profile->mobile;
+        }
+        return null;
     }
 
     private function filterByOption($selected_option_services)
@@ -226,7 +236,7 @@ class PartnerList
     public function calculateOngoingJobs()
     {
         foreach ($this->partners as $partner) {
-            $partner['ongoing_jobs'] = $partner->onGoingJobs();
+            $partner['ongoing_jobs'] = $partner->jobs->whereIn('status', ['Accepted', 'Schedule Due', 'Process', 'Serve Due'])->count();
         }
     }
 
