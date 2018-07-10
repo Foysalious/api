@@ -35,6 +35,7 @@ class Checkout
         $this->customer = $customer instanceof Customer ? $customer : Customer::find((int)$customer);
         $this->customerRepository = new CustomerRepository();
         $this->voucherRepository = new VoucherRepository();
+        $this->partnerServiceRepository = new PartnerServiceRepository();
     }
 
     public function placeOrder($request)
@@ -169,13 +170,13 @@ class Checkout
         foreach ($selected_services as $selected_service) {
             $service = $services->where('id', $selected_service->id)->first();
             if ($service->isOptions()) {
-                $price = (new PartnerServiceRepository())->getPriceOfOptionsService($service->pivot->prices, $selected_service->option);
-                $min_price = empty($service->pivot->min_prices) ? 0 :  (new PartnerServiceRepository())->getMinimumPriceOfOptionsService($service->pivot->min_prices, $selected_service->option);
+                $price = $this->partnerServiceRepository->getPriceOfOptionsService($service->pivot->prices, $selected_service->option);
+                $min_price = empty($service->pivot->min_prices) ? 0 : $this->partnerServiceRepository->getMinimumPriceOfOptionsService($service->pivot->min_prices, $selected_service->option);
             } else {
                 $price = (double)$service->pivot->prices;
                 $min_price = (double)$service->pivot->min_prices;
             }
-            $discount = new Discount($price, $selected_service->quantity,$min_price);
+            $discount = new Discount($price, $selected_service->quantity, $min_price);
             $discount->calculateServiceDiscount((PartnerService::find($service->pivot->id))->discount());
             $service_data = array(
                 'service_id' => $selected_service->id,
