@@ -57,7 +57,7 @@ class PersonalInformationController extends Controller
                 'gender' => 'string|in:Male,Female,Other',
                 'birthday' => 'date_format:Y-m-d|before:' . date('Y-m-d'),
                 'address' => 'string',
-                'picture' => 'required_without:resource|file',
+                'picture' => 'file',
                 'resource' => 'numeric',
                 'mobile' => 'required_without:resource|string|mobile:bd'
             ], ['mobile' => 'Invalid mobile number!']);

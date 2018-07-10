@@ -368,5 +368,36 @@ class PartnerJobController extends Controller
         return $job;
     }
 
-
+    public function cancelRequests($partner, Request $request)
+    {
+        try {
+            $partner = $request->partner->load(['partnerOrders' => function ($q) use ($request) {
+                $q->with(['order' => function ($q) {
+                    $q->with('location', 'customer.profile');
+                }])->with(['jobs' => function ($q) use ($request) {
+                    $q->info()->whereHas('cancelRequests', function ($query) {
+                        $query->where('status', 'Pending');
+                    })->whereIn('status', (new PartnerOrderRepository())->getStatusFromRequest($request))->orderBy('id', 'desc')->with(['cancelRequests', 'category']);
+                }]);
+            }]);
+            $jobs = collect();
+            foreach ($partner->partnerOrders as $partnerOrder) {
+                foreach ($partnerOrder->jobs as $job) {
+                    $job['location'] = $partnerOrder->order->location->name;
+                    $job['code'] = $partnerOrder->order->code();
+                    $job['category_name'] = $job->category ? $job->category->name : null;
+                    $job['customer_name'] = $partnerOrder->order->customer ? $partnerOrder->order->customer->profile->name : null;
+                    $job['schedule_timestamp'] = $partnerOrder->getVersion() == 'v2' ? Carbon::parse($job->schedule_date . ' ' . explode('-', $job->preferred_time)[0])->timestamp : Carbon::parse($job->schedule_date)->timestamp;
+                    $job['preferred_time'] = humanReadableShebaTime($job->readable_preferred_time);
+                    $job['version'] = $partnerOrder->order->getVersion();
+                    removeRelationsFromModel($job);
+                    $jobs->push($job);
+                }
+            }
+            return api_response($request, $jobs, 200, ['jobs' => $jobs]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }

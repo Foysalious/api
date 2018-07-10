@@ -435,8 +435,12 @@ $api->version('v1', function ($api) {
                     $api->group(['prefix' => 'materials'], function ($api) {
                         $api->get('/', 'PartnerJobController@getMaterials');
                     });
-                    $api->post('/cancel', 'PartnerCancelRequestController@store');
+                    $api->group(['prefix' => 'cancel-requests'], function ($api){
+                        $api->post('/', 'PartnerCancelRequestController@store');
+                        $api->get('reasons', 'PartnerCancelRequestController@cancelReasons');
+                    });
                 });
+                $api->get('/cancel-request', 'PartnerJobController@cancelRequests');
             });
             $api->post('job_service/{job_service}/update', 'JobServiceController@update');
             $api->get('get-profile', 'ResourceController@getResourceData');
