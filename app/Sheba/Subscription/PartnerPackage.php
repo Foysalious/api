@@ -8,20 +8,20 @@ use App\Models\PartnerSubscriptionPackage;
 class PartnerPackage implements Package
 {
     private $package;
+    private $partner;
 
-    public function __construct(PartnerSubscriptionPackage $package)
+    public function __construct(PartnerSubscriptionPackage $package, Partner $partner)
     {
         $this->package = ($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package);
+        $this->partner = $partner;
 
     }
 
     public function subscribe()
     {
-        // TODO: Implement subscribe() method.
     }
 
     public function unsubscribe()
     {
-        // TODO: Implement unsubscribe() method.
     }
 }
