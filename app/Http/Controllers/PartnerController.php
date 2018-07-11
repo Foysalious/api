@@ -456,6 +456,7 @@ class PartnerController extends Controller
                 $partners = $partner_list->partners;
                 $partners->each(function ($partner, $key) {
                     array_forget($partner, 'wallet');
+                    array_forget($partner, 'package_id');
                     removeRelationsAndFields($partner);
                 });
                 return api_response($request, $partners, 200, ['partners' => $partners->values()->all()]);
