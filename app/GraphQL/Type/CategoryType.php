@@ -6,6 +6,7 @@ use App\Models\ScheduleSlot;
 use Carbon\Carbon;
 use GraphQL;
 use \Folklore\GraphQL\Support\Type as GraphQlType;
+use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use Redis;
 use DB;
@@ -73,10 +74,16 @@ class CategoryType extends GraphQlType
         ];
     }
 
-    protected function resolveServicesField($root, $args)
+    protected function resolveServicesField($root, $args, $context, ResolveInfo $info)
     {
-        $root->load(['services' => function ($q) use ($args) {
+        $fields = $info->getFieldSelection(1);
+        $root->load(['services' => function ($q) use ($args, $fields) {
             $q->published()->orderBy('order');
+            if (in_array('start_price', $fields)) {
+                $q->with(['partners' => function ($q) {
+                    $q->verified()->where([['partner_service.is_published', 1], ['partner_service.is_verified', 1]]);
+                }]);
+            }
             if (isset($args['id'])) {
                 $q->whereIn('id', $args['id']);
             }
