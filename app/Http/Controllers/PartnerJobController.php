@@ -394,6 +394,8 @@ class PartnerJobController extends Controller
                     $jobs->push($job);
                 }
             }
+            if ($jobs->isEmpty()) return api_response($request, null, 404);
+
             return api_response($request, $jobs, 200, ['jobs' => $jobs]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
