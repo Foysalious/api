@@ -263,9 +263,9 @@ class Partner extends Model
         return $this->hasOne(PartnerBankInformation::class);
     }
 
-    public function subscribe($package)
+    public function subscribe($package, $billing_ype)
     {
-        $this->subscriber()->getPackage($package)->subscribe();
+        $this->subscriber()->getPackage($package)->subscribe($billing_ype);
     }
 
     private function subscriber()

@@ -17,8 +17,11 @@ class PartnerPackage implements Package
 
     }
 
-    public function subscribe()
+    public function subscribe($type)
     {
+        $this->partner->package_id = $this->package->id;
+        $this->partner->billing_type = $type;
+        $this->partner->update();
     }
 
     public function unsubscribe()
