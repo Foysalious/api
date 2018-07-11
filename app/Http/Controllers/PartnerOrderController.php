@@ -154,6 +154,7 @@ class PartnerOrderController extends Controller
                         array_push($services, array(
                             'name' => $jobService->service ? $jobService->service->name : null,
                             'quantity' => (double)$jobService->quantity,
+                            'discount' => (double)$jobService->discount,
                             'sheba_contribution' => (double)$jobService->sheba_contribution,
                             'partner_contribution' => (double)$jobService->partner_contribution,
                             'price' => (double)$jobService->unit_price * (double)$jobService->quantity));
