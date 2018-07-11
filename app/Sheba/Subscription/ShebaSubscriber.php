@@ -9,4 +9,5 @@ abstract class ShebaSubscriber
 
     public abstract function getPackages();
 
+    public abstract function upgrade(Package $package);
 }

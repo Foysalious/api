@@ -8,7 +8,7 @@ use App\Library\Sms;
 use App\Models\Partner;
 use App\Models\PartnerAffiliation;
 use App\Models\PartnerBasicInformation;
-use App\Models\PartnerPackage;
+use App\Models\PartnerSubscriptionPackage;
 use App\Models\PartnerWalletSetting;
 use App\Models\Profile;
 use App\Repositories\ProfileRepository;
@@ -80,7 +80,7 @@ class PartnerRegistrationController extends Controller
         } else {
             $data['registration_channel'] = constants('PARTNER_ACQUISITION_CHANNEL')['App'];
         }
-        $data['package_id'] = $request->has('package_id') ? $request->package_id : PartnerPackage::first()->id;
+        $data['package_id'] = $request->has('package_id') ? $request->package_id : PartnerSubscriptionPackage::first()->id;
         $data['billing_type'] = $request->has('billing_type') ? $request->billing_type : 'monthly';
         return $data;
     }

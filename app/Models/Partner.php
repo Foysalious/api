@@ -13,7 +13,6 @@ class Partner extends Model
         'id',
     ];
     protected $casts = ['wallet' => 'double'];
-
     protected $resourcePivotColumns = ['id', 'designation', 'department', 'resource_type', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
     protected $categoryPivotColumns = ['id', 'experience', 'preparation_time_minutes', 'response_time_min', 'response_time_max', 'commission', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
     protected $servicePivotColumns = ['id', 'description', 'options', 'prices', 'min_prices', 'is_published', 'discount', 'discount_start_date', 'discount_start_date', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
@@ -263,14 +262,28 @@ class Partner extends Model
         return $this->hasOne(PartnerBankInformation::class);
     }
 
-    public function subscribe($package, $billing_ype)
+    public function subscription()
     {
-        $this->subscriber()->getPackage($package)->subscribe($billing_ype);
+        return $this->belongsTo(PartnerSubscriptionPackage::class, 'package_id');
+    }
+
+    public function subscriptionDiscount()
+    {
+        return $this->belongsTo(PartnerSubscriptionPackageDiscount::class, 'discount_id');
+    }
+
+    public function subscribe($package, $billing_type)
+    {
+        $this->subscriber()->getPackage($package)->subscribe($billing_type);
+    }
+
+    public function runSubscriptionBillingCycle()
+    {
+        $this->subscriber()->runBillingCycle();
     }
 
     private function subscriber()
     {
         return new PartnerSubscriber($this);
     }
-
 }
