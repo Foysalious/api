@@ -6,9 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class PartnerTransaction extends Model
 {
-    public $timestamps = true;
+    public $timestamps = false;
 
-    public function partner_order(){
+    public function partner_order()
+    {
         return $this->belongsTo(PartnerOrder::class);
     }
 }

@@ -133,7 +133,7 @@ class PartnerList
                 ->groupBy('partner_id')->havingRaw('c=' . count($service_ids));
         })->with(['resources' => function ($q) {
             $q->with('profile');
-        }])->published()->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet');
+        }])->published()->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet', 'partners.package_id');
         if ($partner_id != null) {
             $query = $query->where('partners.id', $partner_id);
         }
