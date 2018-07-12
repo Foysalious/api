@@ -439,6 +439,9 @@ $api->version('v1', function ($api) {
             });
             $api->post('job_service/{job_service}/update', 'JobServiceController@update');
         });
+        $api->group(['prefix' => 'subscription/{partner}'], function ($api) {
+            $api->get('partners', 'Partner\PartnerSubscriptionController@index');
+        });
     });
 
 });
