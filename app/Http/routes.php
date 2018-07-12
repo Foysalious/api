@@ -335,7 +335,7 @@ $api->version('v1', function ($api) {
                 $api->get('/', 'PartnerController@show');
                 $api->get('categories/{category}/services', 'PartnerController@getServices');
                 $api->get('subscriptions', 'Partner\PartnerSubscriptionController@index');
-                $api->post('subscriptions', 'Partner\PartnerSubscriptionController@index');
+                $api->post('subscriptions', 'Partner\PartnerSubscriptionController@store');
             });
         });
         $api->group(['prefix' => 'customers'], function ($api) {
