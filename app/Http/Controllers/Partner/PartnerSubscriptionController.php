@@ -34,17 +34,20 @@ class PartnerSubscriptionController extends Controller
             ]);
 
             if (is_null($partner->package_id)) {
-                $partner->update([
-                    'package_id' => $request->package_id,
-                    'billing_cycle' => $request->billing_cycle
-                ]);
+                $partner->subscribe($request->package_id, $request->billing_cycle);
             }
 
             return api_response($request, null, 200);
 
-        } catch (ValidationException $e) {
+        }  catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
         }
     }
 }
