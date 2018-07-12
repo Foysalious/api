@@ -12,6 +12,7 @@ class Partner extends Model
     protected $guarded = [
         'id',
     ];
+    protected $dates = ['last_billed_date', 'billing_start_date'];
     protected $casts = ['wallet' => 'double'];
     protected $resourcePivotColumns = ['id', 'designation', 'department', 'resource_type', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
     protected $categoryPivotColumns = ['id', 'experience', 'preparation_time_minutes', 'response_time_min', 'response_time_max', 'commission', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
