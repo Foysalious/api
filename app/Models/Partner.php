@@ -1,6 +1,6 @@
 <?php namespace App\Models;
 
-use App\Sheba\Subscription\PartnerSubscriber;
+use App\Sheba\Subscription\Partner\PartnerSubscriber;
 use Carbon\Carbon;
 use Sheba\Dal\Complain\Model as Complain;
 use Illuminate\Database\Eloquent\Model;
@@ -277,9 +277,14 @@ class Partner extends Model
         $this->subscriber()->getPackage($package)->subscribe($billing_type);
     }
 
-    public function runSubscriptionBillingCycle()
+    public function runSubscriptionBilling()
     {
-        $this->subscriber()->runBillingCycle();
+        $this->subscriber()->getBilling()->runSubscriptionBilling();
+    }
+
+    public function runUpfrontSubscriptionBilling()
+    {
+        $this->subscriber()->getBilling()->runUpfrontBilling();
     }
 
     private function subscriber()
