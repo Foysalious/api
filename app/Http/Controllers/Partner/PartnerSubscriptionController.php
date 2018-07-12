@@ -16,10 +16,10 @@ class PartnerSubscriptionController extends Controller
                 $package['rules'] = $this->calculateDiscount(json_decode($package->rules, 1), $package);
                 $package['is_subscribed'] = (int) ($partner->package_id == $package->id);
                 $package['usps'] = $package->usps ? json_decode($package->usps) : [];
+                array_forget($package,'discount');
             }
             return api_response($request, null, 200, ['subscription_package' => $partner_subscription_packages]);
         } catch (\Throwable $e) {
-            dd($e->getMessage());
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -53,6 +53,36 @@ class PartnerSubscriptionController extends Controller
 
     private function calculateDiscount($rules, PartnerSubscriptionPackage $package)
     {
-        dd(1);
+        $rules['fee']['monthly']['original_price'] = $rules['fee']['monthly']['value'];
+        $rules['fee']['monthly']['discount'] = $this->discountPrice($package, 'monthly');
+        $monthly_discounted_price = $rules['fee']['monthly']['original_price'] - $rules['fee']['monthly']['discount'];
+        $rules['fee']['monthly']['discounted_price'] = $monthly_discounted_price > 0 ? $monthly_discounted_price : 0;
+
+        $rules['fee']['yearly']['original_price'] = $rules['fee']['yearly']['value'];
+        $rules['fee']['yearly']['discount'] = $this->discountPrice($package, 'yearly');
+        $yearly_discounted_price = $rules['fee']['yearly']['original_price'] - $rules['fee']['yearly']['discount'];
+        $rules['fee']['yearly']['discounted_price'] = $yearly_discounted_price > 0 ? $yearly_discounted_price : 0;
+
+        array_forget($rules, ['fee.monthly.value', 'fee.yearly.value']);
+
+        return $rules;
+    }
+
+    private function discountPrice(PartnerSubscriptionPackage $package, $billing_type)
+    {
+        if ($package->discount) {
+            $partner_subcription_discount = $package->discount->filter(function($discount) use ($billing_type){
+                return $discount->billing_type == $billing_type;
+            })->first();
+
+            if ($partner_subcription_discount) {
+                if (!$partner_subcription_discount->is_percentage) return (float) $partner_subcription_discount->amount;
+                else {
+                    return (float) $package->originalPrice($billing_type) * $partner_subcription_discount->amount;
+                }
+            }
+            return 0;
+        }
+        return 0;
     }
 }
