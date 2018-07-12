@@ -16,7 +16,7 @@ class PartnerSubscriptionPackage extends Model
 
     public function discount()
     {
-        return $this->belongsTo(PartnerSubscriptionPackageDiscount::class, 'id', 'package_id');
+        return $this->hasMany(PartnerSubscriptionPackageDiscount::class, 'package_id', 'id');
     }
 
     public function scopeValidDiscount()
@@ -25,5 +25,10 @@ class PartnerSubscriptionPackage extends Model
             return $query->where('start_date', '<=', Carbon::now())
                 ->where('end_date', '>=', Carbon::now());
         }]);
+    }
+
+    public function originalPrice($billing_type = 'monthly')
+    {
+        return json_decode($this->rules, 1)['fee'][$billing_type]['value'];
     }
 }
