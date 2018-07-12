@@ -39,7 +39,8 @@ class ProfileCompletionController extends Controller
                 'service' => $this->isServiceInformationGiven($partner),
                 'resource' => $this->isResourceInformationGiven($partner),
                 'status' => $partner->status,
-                'is_verified' => $partner->status == "Verified" ? 1 : 0
+                'is_verified' => (int) ($partner->status == "Verified"),
+                'business_plan' => (int) (!is_null($partner->package_id))
             ]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
