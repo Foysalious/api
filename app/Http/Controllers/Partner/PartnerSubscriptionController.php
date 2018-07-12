@@ -14,6 +14,7 @@ class PartnerSubscriptionController extends Controller
             $partner_subscription_packages = PartnerSubscriptionPackage::select('id', 'name', 'tagline', 'rules', 'usps', 'badge')->get();
 
             foreach ($partner_subscription_packages as $package) {
+                $package['rules'] = json_decode($package->rules, 1);
                 $package['is_subscribed'] = (int) ($partner->package_id == $package->id);
             }
             return api_response($request, null, 200, ['subscription_package' => $partner_subscription_packages]);
