@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Sheba\Subscription;
+namespace Sheba\Subscription;
 
 
 abstract class ShebaSubscriber
@@ -10,4 +10,6 @@ abstract class ShebaSubscriber
     public abstract function getPackages();
 
     public abstract function upgrade(Package $package);
+
+    public abstract function getBilling();
 }

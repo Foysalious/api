@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Sheba\Subscription\Partner;
+namespace Sheba\Subscription\Partner;
 
 use App\Models\Partner;
-use App\Sheba\Subscription\Package;
+use Sheba\Subscription\Package;
 
 class PartnerPackage implements Package
 {

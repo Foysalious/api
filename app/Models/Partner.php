@@ -1,6 +1,6 @@
 <?php namespace App\Models;
 
-use App\Sheba\Subscription\Partner\PartnerSubscriber;
+use Sheba\Subscription\Partner\PartnerSubscriber;
 use Carbon\Carbon;
 use Sheba\Dal\Complain\Model as Complain;
 use Illuminate\Database\Eloquent\Model;
@@ -290,5 +290,10 @@ class Partner extends Model
     private function subscriber()
     {
         return new PartnerSubscriber($this);
+    }
+
+    public function periodicBillingHandler()
+    {
+        return $this->subscriber()->periodicHandler();
     }
 }

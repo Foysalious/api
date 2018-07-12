@@ -1,70 +1,52 @@
 <?php
 
-namespace App\Sheba\Subscription\Partner;
+namespace Sheba\Subscription\Partner;
 
 use App\Models\Partner;
-use App\Models\PartnerTransaction;
 use Carbon\Carbon;
 use DB;
+use Sheba\PartnerWallet\PartnerTransactionHandler;
 
 class PartnerSubscriptionBilling
 {
     private $partner;
+    private $runningCycleNumber;
+    private $partnerTransactionHandler;
+    private $today;
 
     public function __construct(Partner $partner)
     {
         $this->partner = $partner;
+        $this->partnerTransactionHandler = new PartnerTransactionHandler($this->partner);
+        $this->today = Carbon::today();
     }
 
     public function runSubscriptionBilling()
     {
-        $package_price = $this->getPackagePrice();
-        $day_difference = Carbon::today()->diffInDays(Carbon::parse($this->partner->billing_start_date));
-        $days = $this->getBillingTypeDays();
-        $running_billing_cycle_no = $this->calculateRunningBillingCycleNumber($day_difference, $days);
-        $discount = $this->calculateSubscriptionDiscount($running_billing_cycle_no, $package_price);
-        $package_price -= $discount;
-        DB::transaction(function () use ($package_price) {
-            $this->deductWallet($package_price);
-            $this->createWalletDeductLog($package_price);
-            $this->setLastBillingDate(date('Y-m-d'));
-        });
+        $this->runningCycleNumber = $this->calculateRunningBillingCycleNumber();
+        $this->billingDatabaseTransactions();
     }
 
-    private function getBillingTypeDays()
+    private function calculateRunningBillingCycleNumber()
     {
         if ($this->partner->billing_type == "monthly") {
-            return 30;
+            $diff = $this->today->month - $this->partner->billing_start_date->month;
+            return ($diff < 0 ? $diff + 12 : $diff) + 1;
+
         } elseif ($this->partner->billing_type == "yearly") {
-            return 365;
+            return ($this->today->year - $this->partner->billing_start_date->year) + 1;
         }
     }
 
-    public function hasBillingCycleEnded($day_difference, $days)
-    {
-        return ($day_difference - 1) % $days == 0 ? 1 : 0;
-    }
-
-    private function calculateRunningBillingCycleNumber($day_difference, $days)
-    {
-        return ceil($day_difference / $days);
-    }
-
-    private function setLastBillingDate($date)
-    {
-        $this->partner->last_billed_date = $date;
-        $this->partner->update();
-    }
-
-    public function runUpfrontBilling()
+    private function billingDatabaseTransactions()
     {
         $package_price = $this->getPackagePrice();
-        $discount = $this->calculateSubscriptionDiscount(1, $package_price);
+        $discount = $this->calculateSubscriptionDiscount($this->runningCycleNumber, $package_price);
         $package_price -= $discount;
         DB::transaction(function () use ($package_price) {
-            $this->deductWallet($package_price);
-            $this->createWalletDeductLog($package_price);
-            $this->setBillingStartDate(date('Y-m-d'));
+            $this->partnerTransactionHandler->debit($package_price, $package_price . ' BDT has been deducted for subscription package');
+            $this->partner->last_billed_date = $this->today;
+            $this->partner->update();
         });
     }
 
@@ -74,6 +56,13 @@ class PartnerSubscriptionBilling
         $billing_type = $this->partner->billing_type;
         $package_price = (double)json_decode($partner_subscription->rules)->fee->$billing_type->value;
         return $package_price;
+    }
+
+    public function runUpfrontBilling()
+    {
+        $this->runningCycleNumber = 1;
+        $this->partner->billing_start_date = $this->today;
+        $this->billingDatabaseTransactions();
     }
 
 
@@ -92,28 +81,4 @@ class PartnerSubscriptionBilling
         }
         return 0;
     }
-
-    private function deductWallet($amount)
-    {
-        $this->partner->wallet -= $amount;
-        $this->partner->update();
-    }
-
-    private function createWalletDeductLog($amount)
-    {
-        $partner_transaction = new PartnerTransaction();
-        $partner_transaction->partner_id = $this->partner->id;
-        $partner_transaction->amount = $amount;
-        $partner_transaction->type = "Debit";
-        $partner_transaction->log = "$amount BDT has been deducted for subscription package";
-        $partner_transaction->created_at = Carbon::now();
-        $partner_transaction->save();
-    }
-
-    private function setBillingStartDate($date)
-    {
-        $this->partner->billing_start_date = $date;
-        $this->partner->update();
-    }
-
 }

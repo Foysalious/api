@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Sheba\Subscription;
+namespace Sheba\Subscription;
 
 
 interface Package

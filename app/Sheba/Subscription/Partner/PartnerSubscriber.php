@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Sheba\Subscription\Partner;
+namespace Sheba\Subscription\Partner;
 
 use App\Models\Partner;
 use App\Models\PartnerSubscriptionPackage;
-use App\Sheba\Subscription\Package;
-use App\Sheba\Subscription\ShebaSubscriber;
+use Sheba\Subscription\Package;
+use Sheba\Subscription\ShebaSubscriber;
 
 class PartnerSubscriber extends ShebaSubscriber
 {
@@ -34,5 +34,10 @@ class PartnerSubscriber extends ShebaSubscriber
     public function getBilling()
     {
         return (new PartnerSubscriptionBilling($this->partner));
+    }
+
+    public function periodicHandler()
+    {
+        return (new PeriodicBillingHandler($this->partner));
     }
 }
