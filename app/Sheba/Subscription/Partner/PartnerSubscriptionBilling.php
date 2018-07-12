@@ -106,13 +106,7 @@ class PartnerSubscriptionBilling
         $partner_transaction->amount = $amount;
         $partner_transaction->type = "Debit";
         $partner_transaction->log = "$amount BDT has been deducted for subscription package";
-        $partner_transaction->save();
-
-        $partner_transaction = new PartnerTransaction();
-        $partner_transaction->partner_id = $this->partner->id;
-        $partner_transaction->amount = $amount;
-        $partner_transaction->type = "Credit";
-        $partner_transaction->log = "$amount BDT has been credited for subscription package";
+        $partner_transaction->created_at = Carbon::now();
         $partner_transaction->save();
     }
 
