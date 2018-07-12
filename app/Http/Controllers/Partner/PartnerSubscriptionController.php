@@ -11,15 +11,15 @@ class PartnerSubscriptionController extends Controller
     public function index(Partner $partner, Request $request)
     {
         try {
-            $partner_subscription_packages = PartnerSubscriptionPackage::select('id', 'name', 'tagline', 'rules', 'usps', 'badge')->get();
-
+            $partner_subscription_packages = PartnerSubscriptionPackage::validDiscount()->select('id', 'name', 'tagline', 'rules', 'usps', 'badge')->get();
             foreach ($partner_subscription_packages as $package) {
-                $package['rules'] = json_decode($package->rules, 1);
+                $package['rules'] = $this->calculateDiscount(json_decode($package->rules, 1), $package);
                 $package['is_subscribed'] = (int) ($partner->package_id == $package->id);
                 $package['usps'] = $package->usps ? json_decode($package->usps) : [];
             }
             return api_response($request, null, 200, ['subscription_package' => $partner_subscription_packages]);
         } catch (\Throwable $e) {
+            dd($e->getMessage());
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -49,5 +49,10 @@ class PartnerSubscriptionController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function calculateDiscount($rules, PartnerSubscriptionPackage $package)
+    {
+        dd(1);
     }
 }

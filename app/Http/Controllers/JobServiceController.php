@@ -97,7 +97,7 @@ class JobServiceController extends Controller
                     ->send($this->priceChangedNotificationData($job, $old_job->grossPrice));
             });
 
-            return api_response($request, null, 200, ['message' => 'Successful']);
+            return api_response($request, null, 200, ['message' => "$request->discount Tk have been successfully discounted."]);
         } catch (ValidationException $e) {
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);
