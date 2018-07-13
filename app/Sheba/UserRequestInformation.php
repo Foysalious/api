@@ -1,7 +1,4 @@
-<?php
-
-namespace App\Sheba;
-
+<?php namespace App\Sheba;
 
 use Illuminate\Http\Request;
 
