@@ -295,7 +295,7 @@ class Partner extends Model
 
     public function periodicBillingHandler()
     {
-        return $this->subscriber()->periodicHandler();
+        return $this->subscriber()->periodicBillingHandler();
     }
 
     public function getCommissionAttribute()
