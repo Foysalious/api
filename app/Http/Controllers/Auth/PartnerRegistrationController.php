@@ -35,9 +35,7 @@ class PartnerRegistrationController extends Controller
             $this->validate($request, [
                 'code' => "required|string",
                 'company_name' => 'required|string',
-                'from' => 'string|in:' . implode(',', constants('FROM')),
-                'package_id' => 'exists:partner_subscription_packages,id',
-                'billing_type' => 'in:monthly,yearly'
+                'from' => 'string|in:' . implode(',', constants('FROM'))
             ]);
 
             $code_data = $this->fbKit->authenticateKit($request->code);
@@ -80,8 +78,6 @@ class PartnerRegistrationController extends Controller
         } else {
             $data['registration_channel'] = constants('PARTNER_ACQUISITION_CHANNEL')['App'];
         }
-        $data['package_id'] = $request->has('package_id') ? $request->package_id : PartnerSubscriptionPackage::first()->id;
-        $data['billing_type'] = $request->has('billing_type') ? $request->billing_type : 'monthly';
         return $data;
     }
 
@@ -128,7 +124,6 @@ class PartnerRegistrationController extends Controller
                 $partner->basicInformations()->save(new PartnerBasicInformation(array_merge($by, ['is_verified' => 0])));
                 (new Referral($partner));
                 $this->walletSetting($partner, $by);
-                $partner->subscribe($data['package_id'], $data['billing_type']);
             });
         } catch (QueryException $e) {
             app('sentry')->captureException($e);

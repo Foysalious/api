@@ -71,7 +71,8 @@ class NotificationRepository
                 "message" => 'New Order Placed ID ' . $partner_order->code(),
                 "event_type" => 'PartnerOrder',
                 "event_id" => $partner_order->id,
-                "link" => "new_order"
+                "link" => "new_order",
+                "sound" => "notification_sound"
             ], constants('MANAGER_TOPIC_NAME') . $partner_order->partner_id);
         }
     }
