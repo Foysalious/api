@@ -70,7 +70,7 @@ class AffiliateController extends Controller
             $affiliate = Affiliate::find($affiliate);
             $info = [
                 'wallet' => (double)$affiliate->wallet,
-                'total_income' => (double)$affiliate->transactions->sum('amount'),
+                'total_income' => (double)$affiliate->transactions->where('type', 'Credit')->sum('amount'),
                 'total_service_referred' => $affiliate->affiliations->count(),
                 'total_sp_referred' => $affiliate->partnerAffiliations->count(),
                 'last_updated' => Carbon::parse($affiliate->updated_at)->format('dS F,g:i A')
