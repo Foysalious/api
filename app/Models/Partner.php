@@ -297,4 +297,9 @@ class Partner extends Model
     {
         return $this->subscriber()->periodicHandler();
     }
+
+    public function getCommissionAttribute()
+    {
+        return (double)json_decode($this->subscription->rules)->commission->value;
+    }
 }

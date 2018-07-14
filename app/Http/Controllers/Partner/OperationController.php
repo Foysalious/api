@@ -123,7 +123,7 @@ class OperationController extends Controller
         $category_partners = [];
         foreach ($categories as $category) {
             array_push($category_partners, array_merge(['response_time_min' => 60, 'response_time_max' => 120,
-                'commission' => json_decode($partner->subscription->rules, true)['commission']['value'], 'category_id' => $category->id], $by));
+                'commission' => $partner->commission, 'category_id' => $category->id], $by));
             $category->load(['services' => function ($q) {
                 $q->publishedForAll();
             }]);
