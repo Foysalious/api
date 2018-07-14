@@ -28,7 +28,7 @@ class ManagerAuthMiddleware
                     return api_response($request, null, 403, ["Forbidden. You're not a manager of this partner."]);
                 }
             } else {
-                return api_response($request, null, 404);
+                return api_response($request, null, 404, ['Partner or Resource not found.']);
             }
         } else {
             return api_response($request, null, 400, ["Authentication token is missing from the request."]);
