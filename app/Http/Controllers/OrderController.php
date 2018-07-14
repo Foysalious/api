@@ -237,7 +237,7 @@ class OrderController extends Controller
                 if ($request->payment_method == 'online') {
                     $link = (new OnlinePayment())->generateSSLLink($order->partnerOrders[0], 1);
                 }
-                if ((bool)env('SEND_ORDER_CREATE_NOTIFICATIONS')) $this->sendNotifications($customer, $order);
+                $this->sendNotifications($customer, $order);
                 return api_response($request, $order, 200, ['link' => $link, 'job_id' => $order->jobs->first()->id, 'order_code' => $order->code()]);
             }
             return api_response($request, $order, 500);
@@ -270,13 +270,14 @@ class OrderController extends Controller
         try {
             $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
             $partner = $order->partnerOrders->first()->partner;
-
-            (new SmsHandler('order-created'))->send($customer->profile->mobile, [
-                'order_code' => $order->code()
-            ]);
-            (new SmsHandler('order-created-to-partner'))->send($partner->getContactNumber(), [
-                'order_code' => $order->code(), 'partner_name' => $partner->name
-            ]);
+            if ((bool)env('SEND_ORDER_CREATE_SMS')) {
+                (new SmsHandler('order-created'))->send($customer->profile->mobile, [
+                    'order_code' => $order->code()
+                ]);
+                (new SmsHandler('order-created-to-partner'))->send($partner->getContactNumber(), [
+                    'order_code' => $order->code(), 'partner_name' => $partner->name
+                ]);
+            }
             (new NotificationRepository())->send($order);
         } catch (\Throwable $e) {
             return null;
