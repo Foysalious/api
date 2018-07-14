@@ -11,7 +11,7 @@ class PartnerSubscriptionController extends Controller
     public function index(Partner $partner, Request $request)
     {
         try {
-            $partner_subscription_packages = PartnerSubscriptionPackage::validDiscount()->select('id', 'name', 'tagline', 'rules', 'usps', 'badge')->get();
+            $partner_subscription_packages = PartnerSubscriptionPackage::validDiscount()->select('id', 'name', 'show_name', 'tagline', 'rules', 'usps', 'badge')->get();
             foreach ($partner_subscription_packages as $package) {
                 $package['rules'] = $this->calculateDiscount(json_decode($package->rules, 1), $package);
                 $package['is_subscribed'] = (int) ($partner->package_id == $package->id);
