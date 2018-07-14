@@ -40,4 +40,28 @@ class PartnerSubscriber extends ShebaSubscriber
     {
         return (new PeriodicBillingHandler($this->partner));
     }
+
+    public function canCreateResource($type)
+    {
+        if ($type == "Handyman") {
+            return $this->partner->handymanResources()->count() < $this->resourceCap();
+        } else {
+            return true;
+        }
+    }
+
+    public function rules()
+    {
+        return json_decode($this->partner->subscription->rules);
+    }
+
+    public function resourceCap()
+    {
+        return (int)$this->rules()->resource_cap->value;
+    }
+
+    public function commission()
+    {
+        return (double)$this->rules()->commission->value;
+    }
 }

@@ -15,9 +15,12 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Intervention\Image\Facades\Image;
 use DB;
+use Sheba\ModificationFields;
+use Sheba\Resource\PartnerResourceCreator;
 
 class PersonalInformationController extends Controller
 {
+    use ModificationFields;
     private $fileRepository;
 
     public function __construct()
@@ -46,52 +49,52 @@ class PersonalInformationController extends Controller
         }
     }
 
-    public function store(Request $request)
+    public function store(Request $request, PartnerResourceCreator $partnerResourceCreator)
     {
         try {
+            $request->merge(['mobile' => trim($request->mobile)]);
             $this->validate($request, [
-                'nid_no' => 'required_without:resource|string|unique:resources',
+                'nid_no' => 'required_without:resource|string',
                 'nid_back' => 'required_without:resource|file',
                 'nid_front' => 'required_without:resource|file',
                 'name' => 'string',
-                'gender' => 'string|in:Male,Female,Other',
-                'birthday' => 'date_format:Y-m-d|before:' . date('Y-m-d'),
                 'address' => 'string',
                 'picture' => 'file',
                 'resource' => 'numeric',
                 'mobile' => 'required_without:resource|string|mobile:bd'
             ], ['mobile' => 'Invalid mobile number!']);
             $partner = $request->partner;
-            $manager_resource = $request->manager_resource;
-            $by = ["created_by" => $manager_resource->id, "created_by_name" => "Resource - " . $manager_resource->profile->name];
-            $pivot_columns = array_merge($by, ['resource_type' => "Handyman"]);
+            $this->setModifier($request->manager_resource);
             if ($request->has('resource')) {
-                if ($partner->hasThisResource((int)$request->resource, 'Handyman')) {
-                    return api_response($request, null, 403, ['message' => 'The resource is already added with you!']);
-                }
                 $resource = Resource::find((int)$request->resource);
-                if ($this->createPartnerResource($partner, $resource, $pivot_columns))
-                    return api_response($request, $resource, 200);
-                else
-                    return api_response($request, null, 500);
-            } else {
-                try {
-                    $resource = '';
-                    DB::transaction(function () use ($request, $by, $partner, $pivot_columns, $resource) {
-                        $mobile = formatMobile($request->mobile);
-                        $profile = Profile::where('mobile', $mobile)->first();
-                        if (!$profile) $profile = Profile::create(array_merge($by, ['mobile' => $mobile]));
-                        $resource = $profile->resource;
-                        if ($resource) return api_response($request, null, 403, ['message' => 'There is already a resource exists at this number!']);
-                        $resource = Resource::create(array_merge($by, ['remember_token' => str_random(255), 'profile_id' => $profile->id]));
-                        $resource = $this->updateInformation($request, $profile, $resource);
-                        $this->createPartnerResource($partner, $resource, $pivot_columns);
-                    });
-                    return api_response($request, $resource, 200);
-                } catch (QueryException $e) {
-                    app('sentry')->captureException($e);
-                    return api_response($request, null, 500);
+                $partnerResourceCreator->setPartner($partner);
+                $partnerResourceCreator->setData(array(
+                    'resource_types' => ['Handyman'],
+                    'category_ids' => $partner->categories->pluck('id')->toArray()
+                ));
+                $partnerResourceCreator->setResource($resource);
+                if ($error = $partnerResourceCreator->hasError()) {
+                    return api_response($request, 1, 400, ['message' => $error['msg']]);
                 }
+                $partnerResourceCreator->create();
+                return api_response($request, 1, 200);
+            } else {
+                $partnerResourceCreator->setPartner($partner);
+                $partnerResourceCreator->setData(array(
+                    'mobile' => $request->mobile,
+                    'name' => $request->name,
+                    'address' => $request->address,
+                    'profile_image' => $request->file('picture'),
+                    'category_ids' => $partner->categories->pluck('id')->toArray(),
+                    'resource_types' => ['Handyman'],
+                    'nid_no' => $request->nid_no,
+                    'nid_image' => $this->mergeFrontAndBackNID($request->file('nid_front'), $request->file('nid_back'))
+                ));
+                if ($error = $partnerResourceCreator->hasError()) {
+                    return api_response($request, 1, 400, ['message' => $error['msg']]);
+                }
+                $partnerResourceCreator->create();
+                return api_response($request, 1, 200);
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -100,28 +103,12 @@ class PersonalInformationController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
-    private function createPartnerResource(Partner $partner, Resource $resource, $pivot_columns)
-    {
-        try {
-            DB::transaction(function () use ($partner, $resource, $pivot_columns) {
-                $partner->resources()->attach($resource->id, $pivot_columns);
-                $partner_resources = PartnerResource::whereIn('id', $partner->handymanResources->pluck('pivot.id')->toArray())->get();
-                $category_ids = $partner->categories->pluck('id')->toArray();
-                $partner_resources->each(function ($partner_resource) use ($category_ids) {
-                    $partner_resource->categories()->sync($category_ids);
-                });
-            });
-            return true;
-        } catch (QueryException $e) {
-            app('sentry')->captureException($e);
-            return null;
-        }
-    }
 
     public function update($resource, Request $request)
     {
@@ -166,7 +153,7 @@ class PersonalInformationController extends Controller
         }
     }
 
-    private function mergeFrontAndBackNID($profile, $front, $back)
+    private function mergeFrontAndBackNID($front, $back)
     {
         $img1 = Image::make($front);
         $img2 = Image::make($back);
@@ -174,7 +161,7 @@ class PersonalInformationController extends Controller
         $canvas->insert($img1, 'top-left');
         $canvas->insert($img2, 'top-right');
         $canvas->encode('png');
-        return $this->fileRepository->uploadImageToCDN('images/resources/nid', Carbon::now()->timestamp . '_' . str_slug($profile->name, '_') . '.png', $canvas);
+        return $canvas;
     }
 
     private function makeProfilePicName($profile, $photo)
@@ -193,8 +180,10 @@ class PersonalInformationController extends Controller
         if ($request->has('address')) $profile->address = $request->address;
         $profile->update();
         $resource->nid_no = $request->nid_no;
-        if ($request->hasFile('nid_front') && $request->hasFile('nid_back'))
-            $resource->nid_image = $this->mergeFrontAndBackNID($profile, $request->file('nid_front'), $request->file('nid_back'));
+        if ($request->hasFile('nid_front') && $request->hasFile('nid_back')) {
+            $canvas = $resource->nid_image = $this->mergeFrontAndBackNID($request->file('nid_front'), $request->file('nid_back'));
+            return $this->fileRepository->uploadImageToCDN('images/resources/nid', Carbon::now()->timestamp . '_' . str_slug($profile->name, '_') . '.png', $canvas);
+        }
         $resource->update();
         return $resource;
     }

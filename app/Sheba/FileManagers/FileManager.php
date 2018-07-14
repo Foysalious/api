@@ -1,5 +1,6 @@
 <?php namespace Sheba\FileManagers;
 
+use Intervention\Image\Image;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 trait FileManager
@@ -15,7 +16,9 @@ trait FileManager
 
     private function getExtension($file)
     {
-        return ($file instanceof UploadedFile) ? ("." . $file->getClientOriginalExtension()) : getBase64FileExtension($file);
+        if($file instanceof UploadedFile) return "." . $file->getClientOriginalExtension();
+        if($file instanceof Image) return "." . explode('/', $file->mime())[1];
+        return getBase64FileExtension($file);
     }
 
     protected function makeBanner($file, $name)
@@ -42,7 +45,7 @@ trait FileManager
     protected function makeAppThumb($file, $name)
     {
         $filename = $this->uniqueFileName($file, $name);
-        $file = (new Thumb($file))->make();
+        $file = (new AppThumb($file))->make();
         return [ $file, $filename ];
     }
 
@@ -57,6 +60,27 @@ trait FileManager
     {
         $filename = $this->uniqueFileName($file, $name);
         $file = (new Slide($file))->make();
+        return [ $file, $filename ];
+    }
+
+    protected function makeAppSlide($file, $name)
+    {
+        $filename = $this->uniqueFileName($file, $name);
+        $file = (new AppSlide($file))->make();
+        return [ $file, $filename ];
+    }
+
+    protected function makePushNotificationIcon($file, $name)
+    {
+        $filename = $this->uniqueFileName($file, $name);
+        $file = (new PushIcon($file))->make();
+        return [ $file, $filename ];
+    }
+
+    protected function makePushNotificationImage($file, $name)
+    {
+        $filename = $this->uniqueFileName($file, $name);
+        $file = (new PushImage($file))->make();
         return [ $file, $filename ];
     }
 }

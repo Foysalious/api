@@ -23,7 +23,6 @@ class ResourceRepository extends BaseRepository
      */
     public function store(Request $request)
     {
-        dd($request->all());
         $data = array_merge($request->all(), $this->_saveImage($request));
         $data['mobile'] = formatMobileAux($data['mobile']);
         $resource_data = $this->resourceDataFormat($data);
@@ -37,7 +36,6 @@ class ResourceRepository extends BaseRepository
 
     public function save($data)
     {
-        $data = array_except($data, ['mobile', 'name', 'email', 'address', 'has_profile', 'profile_image']);
         return Resource::create($this->withBothModificationFields($data));
     }
 

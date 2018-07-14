@@ -41,10 +41,10 @@ class ProfileRepository extends BaseRepository
     {
         $mobile = $mobile ? formatMobileAux($mobile) : null;
         $mobile = BangladeshiMobileValidator::validate($mobile) ? $mobile : null;
-        $email  = filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : null;
+        $email = filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : null;
 
         $profile = Profile::query();
-        if(!$mobile && !$email) {
+        if (!$mobile && !$email) {
             return ['code' => 400];
         } elseif ($mobile && $email) {
             $profile = $profile->where('mobile', $mobile)->orWhere('email', $email);
@@ -84,7 +84,7 @@ class ProfileRepository extends BaseRepository
      */
     public function checkExistingEmail($email)
     {
-        $email  = filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : null;
+        $email = filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : null;
         if (!$email) return null;
         return Profile::where('email', $email)->first();
     }
@@ -97,24 +97,17 @@ class ProfileRepository extends BaseRepository
      */
     private function profileDataFormat($data)
     {
-        if (isset($data['_token'])) {
-            $profile_data = [
-                'name'      =>  $data['name'],
-                'mobile'    =>  $data['mobile'] ? : null,
-                'email'     =>  $data['email'] ? : null,
-                'remember_token'  =>  $data['_token'],
-                'address'   =>  $data['address']
-            ];
+        $profile_data = $data;
+        if (isset($data['profile_image'])) {
+            $profile_data['pro_pic'] = $data['profile_image'];
+        }
 
-            if (isset($data['profile_image'])){
-                $profile_data = array_add($profile_data, 'pro_pic', $data['profile_image']);
-            }
+        if (isset($data['_token'])) {
+            $profile_data['remember_token'] = $data['_token'];
+
         } else {
-            $profile_data = [
-                'name'      =>  $data['resource_name'],
-                'mobile'    =>  $data['mobile'] ? : null,
-                'remember_token' => str_random(255)
-            ];
+            $profile_data['name'] = isset($data['resource_name']) ? $data['resource_name'] : $data['name'];
+            $profile_data['remember_token'] = str_random(255);
         }
 
         return $profile_data;

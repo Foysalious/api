@@ -22,21 +22,6 @@ if (!function_exists('setTrace')) {
     }
 }
 
-if (!function_exists('clean')) {
-    /**
-     * Clean a string from all special characters.
-     *
-     * @param String $string
-     * @return App\Models\Partner
-     */
-    function clean($string)
-    {
-        $string = str_replace(' ', '-', $string); // Replaces all spaces with hyphens.
-        $string = preg_replace('/[^A-Za-z0-9\-]/', '', $string); // Removes special chars.
-        return preg_replace('/-+/', '-', $string); // Replaces multiple hyphens with single one.
-    }
-}
-
 if (!function_exists('constants')) {
     /**
      * Get the constant from config constants file.
@@ -265,3 +250,18 @@ if (!function_exists('humanReadableShebaTime')) {
     }
 }
 
+if (!function_exists('clean')) {
+    function clean($string, $separator = "-", $keep = [])
+    {
+        $string = str_replace(' ', $separator, $string); // Replaces all spaces with hyphens.
+        $keep_only = "/[^A-Za-z0-9";
+        foreach ($keep as $item) {
+            $keep_only .= "$item";
+        }
+        $keep_only .= (($separator == '-') ? '\-' : "_");
+        $keep_only .= "]/";
+
+        $string = preg_replace($keep_only, '', $string); // Removes special chars.
+        return preg_replace("/$separator+/", $separator, $string); // Replaces multiple hyphens with single one.
+    }
+}

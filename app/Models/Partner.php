@@ -300,6 +300,11 @@ class Partner extends Model
 
     public function getCommissionAttribute()
     {
-        return (double)json_decode($this->subscription->rules)->commission->value;
+        return $this->subscriber()->commission();
+    }
+
+    public function canCreateResource($type)
+    {
+        return $this->subscriber()->canCreateResource($type);
     }
 }

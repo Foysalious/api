@@ -43,10 +43,10 @@ class PartnerResourceCreator
 
     public function hasError()
     {
-        if($error = $this->resourceCreator->hasError()) {
+        if ($error = $this->resourceCreator->hasError()) {
             return $error;
         }
-        if(!$this->partner->canCreateResource($this->data['resource_types'])) {
+        if (!$this->partner->canCreateResource($this->data['resource_types'])) {
             return ['code' => 421, 'msg' => 'Resource cap reached.'];
         }
 
@@ -55,11 +55,10 @@ class PartnerResourceCreator
 
     public function create()
     {
-        if(empty($this->resource)) $this->resource = $this->resourceCreator->create();
+        if (empty($this->resource)) $this->resource = $this->resourceCreator->create();
         $this->associatePartnerResource();
         $this->setResourceCategories();
         $this->notifyPMTeam($this->resource);
-
     }
 
 
@@ -100,8 +99,8 @@ class PartnerResourceCreator
     {
         return [
             "title" => $this->partner->name . " updated $resource->name profile. Mobile: " . $resource->profile->mobile,
-            "link"  => config('sheba.admin_url') . "partners/" . $this->partner->id . "#tab_2",
-            "type"  => notificationType('Warning')
+            "link" => config('sheba.admin_url') . "partners/" . $this->partner->id . "#tab_2",
+            "type" => notificationType('Warning')
         ];
     }
 

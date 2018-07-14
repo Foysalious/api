@@ -3,6 +3,7 @@
 use App\Models\Profile;
 use App\Models\Resource;
 use Illuminate\Http\UploadedFile;
+use Intervention\Image\Image;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\Repositories\ProfileRepository;
@@ -30,7 +31,7 @@ class ResourceCreator
 
     public function hasError()
     {
-        if($error = $this->hasProfileError()) {
+        if ($error = $this->hasProfileError()) {
             return [
                 'code' => 421,
                 'msg' => array_values($error)[0],
@@ -44,8 +45,10 @@ class ResourceCreator
     {
         $mobile_profile = $this->profiles->checkExistingMobile($this->data['mobile']);
         if ($mobile_profile && $mobile_profile->resource) return ['mobile' => 'Mobile already exists'];
-        $email_profile  = $this->profiles->checkExistingEmail($this->data['email']);
-        if ($email_profile && $email_profile->resource) return ['email' => 'Email already exists'];
+        if (isset($this->data['email'])) {
+            $email_profile = $this->profiles->checkExistingEmail($this->data['email']);
+            if ($email_profile && $email_profile->resource) return ['email' => 'Email already exists'];
+        }
         return false;
     }
 
@@ -65,8 +68,8 @@ class ResourceCreator
 
     private function saveImages()
     {
-        if($this->hasFile('profile_image')) $this->data['profile_image'] = $this->saveProfileImage();
-        if($this->hasFile('nid_image')) $this->data['nid_image'] = $this->saveNIdImage();
+        if ($this->hasFile('profile_image')) $this->data['profile_image'] = $this->saveProfileImage();
+        if ($this->hasFile('nid_image')) $this->data['nid_image'] = $this->saveNIdImage();
     }
 
     /**
@@ -93,8 +96,8 @@ class ResourceCreator
 
     private function attachProfile()
     {
-        $profile = $this->profiles->checkExistingProfile($this->data['mobile'], $this->data['email']);
-        if(!($profile instanceof Profile)) $profile = $this->profiles->store($this->data);
+        $profile = $this->profiles->checkExistingProfile($this->data['mobile'], isset($this->data['email']) ? $this->data['email'] : null);
+        if (!($profile instanceof Profile)) $profile = $this->profiles->store($this->data);
         else $this->profiles->update($profile, $this->data);
         $this->data['profile_id'] = $profile->id;
     }
@@ -102,15 +105,20 @@ class ResourceCreator
     private function format()
     {
         $this->data['spouse_name'] = isset($this->data['spouse_name']) ? $this->data['spouse_name'] : null;
-        $this->data['nid_no']      = isset($this->data['nid_no']) ? $this->data['nid_no'] : null;
-        $this->data['nid_image']   = isset($this->data['nid_image']) ? $this->data['nid_image'] : null;
-        $this->data['is_trained']  = isset($this->data['is_trained']) ? $this->data['is_trained'] : 0;
+        $this->data['nid_no'] = isset($this->data['nid_no']) ? $this->data['nid_no'] : null;
+        $this->data['nid_image'] = isset($this->data['nid_image']) ? $this->data['nid_image'] : null;
+        $this->data['is_trained'] = isset($this->data['is_trained']) ? $this->data['is_trained'] : 0;
     }
 
     private function hasFile($filename)
     {
         return array_key_exists($filename, $this->data)
-            && $this->data[$filename] instanceof UploadedFile
-            && $this->data[$filename]->getPath() != '';
+            && (
+                $this->data[$filename] instanceof Image
+                || (
+                    $this->data[$filename] instanceof UploadedFile
+                    && $this->data[$filename]->getPath() != ''
+                )
+            );
     }
 }
