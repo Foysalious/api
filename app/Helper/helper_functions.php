@@ -179,7 +179,32 @@ if (!function_exists('calculatePagination')) {
         return array($offset, $limit);
     }
 }
+if (!function_exists('createAuthorWithType')) {
+    function createAuthorWithType($author)
+    {
+        $data = createAuthor($author);
+        $data['created_by_type'] = "App\Models\\" . class_basename($author);
+        return $data;
+    }
+}
+if (!function_exists('createAuthor')) {
+    function createAuthor($author)
+    {
+        $data = [];
+        $data['created_by'] = $author->id;
+        $data['created_by_name'] = class_basename($author) . " - " . ($author->profile != null ? $author->profile->name : $author->name);
+        return $data;
+    }
+}
 
+if (!function_exists('updateAuthor')) {
+    function updateAuthor($model, $author)
+    {
+        $model->updated_by = $author->id;
+        $model->updated_by_name = class_basename($author) . " - " . ($author->profile != null ? $author->profile->name : $author->name);
+        return $model;
+    }
+}
 if (!function_exists('removeRelationsFromModel')) {
 
     function removeRelationsFromModel($model)

@@ -134,4 +134,9 @@ trait ModificationFields
 
         return [$id, $name, $time];
     }
+
+    public function getModifierType()
+    {
+        return "App\\Models\\" . class_basename(Session::get('modifier'));
+    }
 }
