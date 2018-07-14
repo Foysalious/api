@@ -21,6 +21,13 @@ class PartnerSubscriptionBilling
         $this->today = Carbon::today();
     }
 
+    public function runUpfrontBilling()
+    {
+        $this->runningCycleNumber = 1;
+        $this->partner->billing_start_date = $this->today;
+        $this->billingDatabaseTransactions();
+    }
+
     public function runSubscriptionBilling()
     {
         $this->runningCycleNumber = $this->calculateRunningBillingCycleNumber();
@@ -57,14 +64,6 @@ class PartnerSubscriptionBilling
         $package_price = (double)json_decode($partner_subscription->rules)->fee->$billing_type->value;
         return $package_price;
     }
-
-    public function runUpfrontBilling()
-    {
-        $this->runningCycleNumber = 1;
-        $this->partner->billing_start_date = $this->today;
-        $this->billingDatabaseTransactions();
-    }
-
 
     private function calculateSubscriptionDiscount($running_bill_cycle_no, $package_price)
     {

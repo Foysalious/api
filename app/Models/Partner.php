@@ -295,6 +295,11 @@ class Partner extends Model
 
     public function periodicBillingHandler()
     {
-        return $this->subscriber()->periodicHandler();
+        return $this->subscriber()->periodicBillingHandler();
+    }
+
+    public function getCommissionAttribute()
+    {
+        return (double)json_decode($this->subscription->rules)->commission->value;
     }
 }

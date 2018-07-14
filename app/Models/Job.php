@@ -321,4 +321,8 @@ class Job extends Model
         return in_array($this->category_id, array_map('intval', explode(',', env('RENT_CAR_IDS')))) ? 1 : 0;
     }
 
+    public function isClosed()
+    {
+        return in_array($this->status, ["Served", "Cancelled"]);
+    }
 }

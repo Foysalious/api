@@ -28,27 +28,26 @@ class ProfileAuthMiddleware
     {
         if ($request->has('remember_token')) {
             if ($request->has('from')) {
-                try {
-                    $from = $this->profileRepo->getAvatar($request->from);
-                    $avatar = null;
-                    if ($from == 'customer') {
-                        $avatar = Customer::where('remember_token', $request->input('remember_token'))->first();
-                    } elseif ($from == 'affiliate') {
-                        $avatar = Affiliate::where('remember_token', $request->input('remember_token'))->first();
+                $from = $this->profileRepo->getAvatar($request->from);
+                $avatar = null;
+                if ($from == 'customer') {
+                    $avatar = Customer::where('remember_token', $request->input('remember_token'))->first();
+                } elseif ($from == 'affiliate') {
+                    $avatar = Affiliate::where('remember_token', $request->input('remember_token'))->first();
+                }
+                if ($avatar != null) {
+                    if ($avatar->id == $request->id) {
+                        $request->merge(['profile' => $avatar->profile]);
+                        return $next($request);
+                    } else {
+                        return api_response($request, null, 403, ["You're not authorized to access this user."]);
                     }
-                    if ($avatar != null) {
-                        if ($avatar->id == $request->id) {
-                            $request->merge(['profile' => $avatar->profile]);
-                            return $next($request);
-                        } else {
-                            return response()->json(['msg' => 'unauthorized', 'code' => 409]);
-                        }
-                    }
-                } catch (ErrorException $e) {
-                    return response()->json(['msg' => 'unauthorized', 'code' => 409]);
+                } else {
+                    return api_response($request, null, 404, ["User not found."]);
                 }
             }
+        } else {
+            return api_response($request, null, 400, ["Authentication token is missing from the request."]);
         }
-        return response()->json(['msg' => 'unauthorized', 'code' => 409]);
     }
 }

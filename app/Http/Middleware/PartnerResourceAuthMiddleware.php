@@ -19,10 +19,10 @@ class PartnerResourceAuthMiddleware
         $partner = $request->partner;
         $resource = Resource::where('id', $request->route('resource'))->first();
         if (!$resource) {
-            return api_response($request, null, 404);
+            return api_response($request, null, 404, ["User not found."]);
         }
         if (count($resource->partners->where('id', $partner->id)) == 0) {
-            return api_response($request, null, 403);
+            return api_response($request, null, 403, ["Forbidden. You're not a resource of this partner."]);
         }
         $request->merge(['resource' => $resource]);
         return $next($request);

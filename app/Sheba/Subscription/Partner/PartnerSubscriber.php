@@ -36,7 +36,7 @@ class PartnerSubscriber extends ShebaSubscriber
         return (new PartnerSubscriptionBilling($this->partner));
     }
 
-    public function periodicHandler()
+    public function periodicBillingHandler()
     {
         return (new PeriodicBillingHandler($this->partner));
     }
