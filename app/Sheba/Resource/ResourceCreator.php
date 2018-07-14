@@ -59,6 +59,7 @@ class ResourceCreator
         $this->format();
         $this->attachProfile();
         $this->data['remember_token'] = str_random(255);
+        $this->data = array_except($this->data, ['mobile', 'name', 'email', 'address', 'has_profile', 'profile_image', 'resource_types', 'category_ids']);
         return $this->resources->save($this->data);
     }
 
