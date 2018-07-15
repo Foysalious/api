@@ -8,15 +8,17 @@ use App\Http\Controllers\Controller;
 
 class PartnerSubscriptionController extends Controller
 {
-    public function index(Partner $partner, Request $request)
+    public function index($partner, Request $request)
     {
         try {
+            $partner = $request->partner;
             $partner_subscription_packages = PartnerSubscriptionPackage::validDiscount()->select('id', 'name', 'show_name', 'tagline', 'rules', 'usps', 'badge')->get();
             foreach ($partner_subscription_packages as $package) {
                 $package['rules'] = $this->calculateDiscount(json_decode($package->rules, 1), $package);
-                $package['is_subscribed'] = (int)($partner->package_id == $package->id);
+                $package['is_subscribed'] = (int)($partner->package_id == $package->id) ? 1 : 0;
                 $package['usps'] = $package->usps ? json_decode($package->usps) : [];
                 array_forget($package, 'discount');
+                removeRelationsAndFields($package);
             }
             return api_response($request, null, 200, ['subscription_package' => $partner_subscription_packages]);
         } catch (\Throwable $e) {
@@ -25,14 +27,14 @@ class PartnerSubscriptionController extends Controller
         }
     }
 
-    public function store(Partner $partner, Request $request)
+    public function store($partner, Request $request)
     {
         try {
             $this->validate($request, [
-                'package_id' => 'required|exists:partner_subscription_packages,id',
-                'billing_cycle' => 'required|in:monthly,yearly'
+                'package_id' => 'required|numeric|exists:partner_subscription_packages,id',
+                'billing_cycle' => 'required|string|in:monthly,yearly'
             ]);
-            $partner->subscribe($request->package_id, $request->billing_cycle);
+            $request->partner->subscribe($request->package_id, $request->billing_cycle);
             return api_response($request, null, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
