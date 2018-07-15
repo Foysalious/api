@@ -334,8 +334,6 @@ $api->version('v1', function ($api) {
             $api->group(['prefix' => '{partner}'], function ($api) {
                 $api->get('/', 'PartnerController@show');
                 $api->get('categories/{category}/services', 'PartnerController@getServices');
-                $api->get('subscriptions', 'Partner\PartnerSubscriptionController@index');
-                $api->post('subscriptions', 'Partner\PartnerSubscriptionController@store');
             });
         });
         $api->group(['prefix' => 'customers'], function ($api) {
@@ -411,6 +409,10 @@ $api->version('v1', function ($api) {
             $api->get('operations', 'Partner\OperationController@index');
             $api->post('operations', 'Partner\OperationController@store');
             $api->post('categories', 'Partner\OperationController@saveCategories');
+            $api->group(['prefix' => 'subscriptions'], function ($api) {
+                $api->get('/', 'Partner\PartnerSubscriptionController@index');
+                $api->post('/', 'Partner\PartnerSubscriptionController@store');
+            });
             $api->group(['prefix' => 'resources'], function ($api) {
                 $api->post('/', 'Resource\PersonalInformationController@store');
                 $api->group(['prefix' => '{resource}', 'middleware' => ['partner_resource.auth']], function ($api) {
@@ -437,7 +439,7 @@ $api->version('v1', function ($api) {
                     $api->group(['prefix' => 'materials'], function ($api) {
                         $api->get('/', 'PartnerJobController@getMaterials');
                     });
-                    $api->group(['prefix' => 'cancel-requests'], function ($api){
+                    $api->group(['prefix' => 'cancel-requests'], function ($api) {
                         $api->post('/', 'PartnerCancelRequestController@store');
                         $api->get('reasons', 'PartnerCancelRequestController@cancelReasons');
                     });
