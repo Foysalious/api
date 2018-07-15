@@ -302,6 +302,11 @@ class Job extends Model
         return $this->hasOne(ResourceSchedule::class);
     }
 
+    public function resourceScheduleSlot()
+    {
+        return $this->hasMany(ResourceSchedule::class);
+    }
+
     public function getReadablePreferredTimeAttribute()
     {
         if ($this->preferred_time !== 'Anytime') {
