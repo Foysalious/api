@@ -14,9 +14,9 @@ class PartnerSubscriptionController extends Controller
             $partner_subscription_packages = PartnerSubscriptionPackage::validDiscount()->select('id', 'name', 'show_name', 'tagline', 'rules', 'usps', 'badge')->get();
             foreach ($partner_subscription_packages as $package) {
                 $package['rules'] = $this->calculateDiscount(json_decode($package->rules, 1), $package);
-                $package['is_subscribed'] = (int) ($partner->package_id == $package->id);
+                $package['is_subscribed'] = (int)($partner->package_id == $package->id);
                 $package['usps'] = $package->usps ? json_decode($package->usps) : [];
-                array_forget($package,'discount');
+                array_forget($package, 'discount');
             }
             return api_response($request, null, 200, ['subscription_package' => $partner_subscription_packages]);
         } catch (\Throwable $e) {
@@ -27,19 +27,14 @@ class PartnerSubscriptionController extends Controller
 
     public function store(Partner $partner, Request $request)
     {
-        try{
+        try {
             $this->validate($request, [
-                'package_id'    => 'required|exists:partner_subscription_packages,id',
+                'package_id' => 'required|exists:partner_subscription_packages,id',
                 'billing_cycle' => 'required|in:monthly,yearly'
             ]);
-
-            if (is_null($partner->package_id)) {
-                $partner->subscribe($request->package_id, $request->billing_cycle);
-            }
-
+            $partner->subscribe($request->package_id, $request->billing_cycle);
             return api_response($request, null, 200);
-
-        }  catch (ValidationException $e) {
+        } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
@@ -71,14 +66,14 @@ class PartnerSubscriptionController extends Controller
     private function discountPrice(PartnerSubscriptionPackage $package, $billing_type)
     {
         if ($package->discount) {
-            $partner_subcription_discount = $package->discount->filter(function($discount) use ($billing_type){
+            $partner_subcription_discount = $package->discount->filter(function ($discount) use ($billing_type) {
                 return $discount->billing_type == $billing_type;
             })->first();
 
             if ($partner_subcription_discount) {
-                if (!$partner_subcription_discount->is_percentage) return (float) $partner_subcription_discount->amount;
+                if (!$partner_subcription_discount->is_percentage) return (float)$partner_subcription_discount->amount;
                 else {
-                    return (float) $package->originalPrice($billing_type) * $partner_subcription_discount->amount;
+                    return (float)$package->originalPrice($billing_type) * $partner_subcription_discount->amount;
                 }
             }
             return 0;
