@@ -275,7 +275,7 @@ class Partner extends Model
 
     public function subscribe($package, $billing_type)
     {
-        $package = ($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package);
+        $package = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->partner->subscription;
         $this->subscriber()->getPackage($package)->subscribe($billing_type);
     }
 

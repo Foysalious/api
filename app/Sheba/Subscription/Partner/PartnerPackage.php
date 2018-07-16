@@ -3,6 +3,7 @@
 namespace Sheba\Subscription\Partner;
 
 use App\Models\Partner;
+use App\Models\PartnerSubscriptionPackage;
 use Sheba\Subscription\Package;
 
 class PartnerPackage implements Package
@@ -10,7 +11,7 @@ class PartnerPackage implements Package
     private $package;
     private $partner;
 
-    public function __construct(PartnerPackage $package, Partner $partner)
+    public function __construct(PartnerSubscriptionPackage $package, Partner $partner)
     {
         $this->package = $package;
         $this->partner = $partner;

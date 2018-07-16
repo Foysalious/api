@@ -1,6 +1,5 @@
 <?php namespace App\Http\Controllers\Partner;
 
-use App\Models\Partner;
 use App\Models\PartnerSubscriptionPackage;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
