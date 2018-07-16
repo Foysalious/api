@@ -23,13 +23,13 @@ class ResourceAuthMiddleware
                     $request->merge(['resource' => $resource]);
                     return $next($request);
                 } else {
-                    return api_response($request, null, 403, ["You're not authorized to access this user."]);
+                    return api_response($request, null, 403, ["message" => "You're not authorized to access this user."]);
                 }
             } else {
-                return api_response($request, null, 404, ["User not found."]);
+                return api_response($request, null, 404, ["message" => "User not found."]);
             }
         } else {
-            return api_response($request, null, 400, ["Authentication token is missing from the request."]);
+            return api_response($request, null, 400, ["message" => "Authentication token is missing from the request."]);
         }
     }
 }

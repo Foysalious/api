@@ -19,10 +19,10 @@ class ResourceJobAuthMiddleware
         $resource = $request->resource;
         $job = Job::where('id', $request->job)->first();
         if (!$job) {
-            return api_response($request, null, 404, ["Order not found."]);
+            return api_response($request, null, 404, ["message" => "Order not found."]);
         }
         if ($job->resource_id != $resource->id) {
-            return api_response($request, null, 403, ["You're not authorized to access this order."]);
+            return api_response($request, null, 403, ["message" => "You're not authorized to access this order."]);
         }
         $request->merge(['job' => $job]);
         return $next($request);

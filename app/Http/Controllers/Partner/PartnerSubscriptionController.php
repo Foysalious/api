@@ -17,7 +17,6 @@ class PartnerSubscriptionController extends Controller
                 $package['rules'] = $this->calculateDiscount(json_decode($package->rules, 1), $package);
                 $package['is_subscribed'] = (int)($partner->package_id == $package->id) ? 1 : 0;
                 $package['usps'] = $package->usps ? json_decode($package->usps) : [];
-                array_forget($package, 'discount');
                 removeRelationsAndFields($package);
             }
             return api_response($request, null, 200, ['subscription_package' => $partner_subscription_packages]);
