@@ -33,7 +33,7 @@ class PartnerSubscriptionController extends Controller
                 'package_id' => 'required|numeric|exists:partner_subscription_packages,id',
                 'billing_cycle' => 'required|string|in:monthly,yearly'
             ]);
-            $request->partner->subscribe($request->package_id, $request->billing_cycle);
+            $request->partner->subscribe((int)$request->package_id, $request->billing_cycle);
             return api_response($request, null, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
