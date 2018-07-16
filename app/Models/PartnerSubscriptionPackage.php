@@ -16,21 +16,44 @@ class PartnerSubscriptionPackage extends Model implements SubscriptionPackage
         return $this->belongsTo(Partner::class);
     }
 
-    public function discount()
+    public function discounts()
     {
         return $this->hasMany(PartnerSubscriptionPackageDiscount::class, 'package_id', 'id');
     }
 
-    public function scopeValidDiscount()
+    public function scopeValidDiscounts()
     {
-        return $this->with(['discount' => function($query) {
-            return $query->where('start_date', '<=', Carbon::now())
-                ->where('end_date', '>=', Carbon::now());
+        return $this->with(['discounts' => function ($query) {
+            return $query->valid();
         }]);
     }
 
     public function originalPrice($billing_type = 'monthly')
     {
-        return json_decode($this->rules, 1)['fee'][$billing_type]['value'];
+        return (double)json_decode($this->rules, 1)['fee'][$billing_type]['value'];
+    }
+
+    public function discountPrice($billing_type = 'monthly', $billing_cycle = 1)
+    {
+        $running_discount = $this->runningDiscount($billing_type);
+        if ($running_discount) {
+            if (in_array($billing_cycle, $running_discount->applicable_billing_cycles)) {
+                if ((int)$running_discount->is_percentage) {
+                    return $this->originalPrice($billing_type) * $running_discount->amount;
+                } else {
+                    $running_discount->amount;
+                }
+            }
+        } else {
+            return 0;
+        }
+    }
+
+    public function runningDiscount($billing_type = 'monthly')
+    {
+        $this->load(['discounts' => function ($q) use ($billing_type) {
+            $q->valid()->type($billing_type);
+        }]);
+        return $this->discounts ? $this->discounts->first() : null;
     }
 }

@@ -11,7 +11,7 @@ class PartnerSubscriptionController extends Controller
     {
         try {
             $partner = $request->partner;
-            $partner_subscription_packages = PartnerSubscriptionPackage::validDiscount()->select('id', 'name', 'show_name', 'tagline', 'rules', 'usps', 'badge')->get();
+            $partner_subscription_packages = PartnerSubscriptionPackage::validDiscounts()->select('id', 'name', 'show_name', 'tagline', 'rules', 'usps', 'badge')->get();
             foreach ($partner_subscription_packages as $package) {
                 $package['rules'] = $this->calculateDiscount(json_decode($package->rules, 1), $package);
                 $package['is_subscribed'] = (int)($partner->package_id == $package->id) ? 1 : 0;
@@ -65,8 +65,8 @@ class PartnerSubscriptionController extends Controller
 
     private function discountPrice(PartnerSubscriptionPackage $package, $billing_type)
     {
-        if ($package->discount) {
-            $partner_subcription_discount = $package->discount->filter(function ($discount) use ($billing_type) {
+        if ($package->discounts) {
+            $partner_subcription_discount = $package->discounts->filter(function ($discount) use ($billing_type) {
                 return $discount->billing_type == $billing_type;
             })->first();
 

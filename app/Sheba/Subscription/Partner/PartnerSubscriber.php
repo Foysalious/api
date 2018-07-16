@@ -29,6 +29,7 @@ class PartnerSubscriber extends ShebaSubscriber
 
     public function upgrade(SubscriptionPackage $package)
     {
+        $this->getBilling()->runUpgradeBilling($package);
     }
 
     public function getBilling()
