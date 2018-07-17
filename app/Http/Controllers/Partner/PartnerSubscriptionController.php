@@ -11,11 +11,11 @@ class PartnerSubscriptionController extends Controller
     {
         try {
             $partner = $request->partner;
-            $partner_subscription_packages = PartnerSubscriptionPackage::validDiscounts()->select('id', 'name', 'show_name', 'tagline', 'rules', 'usps', 'badge')->get();
+            $partner_subscription_packages = PartnerSubscriptionPackage::validDiscounts()->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'rules', 'usps', 'badge')->get();
             foreach ($partner_subscription_packages as $package) {
                 $package['rules'] = $this->calculateDiscount(json_decode($package->rules, 1), $package);
                 $package['is_subscribed'] = (int)($partner->package_id == $package->id) ? 1 : 0;
-                $package['usps'] = $package->usps ? json_decode($package->usps) : [];
+                $package['usps'] = $package->usps ? json_decode($package->usps) : ['usp' => [], 'usp_bn' => []];
                 removeRelationsAndFields($package);
             }
             return api_response($request, null, 200, ['subscription_package' => $partner_subscription_packages]);
