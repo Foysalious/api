@@ -330,4 +330,12 @@ class Job extends Model
     {
         return in_array($this->status, ["Served", "Cancelled"]);
     }
+
+    public function isCancelRequestPending()
+    {
+        if ($cancel_request = $this->cancelRequests->last())
+            return $cancel_request->status == constants('CANCEL_REQUEST_STATUSES')['Pending'];
+
+        return false;
+    }
 }
