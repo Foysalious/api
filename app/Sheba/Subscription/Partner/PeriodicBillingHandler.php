@@ -3,6 +3,7 @@
 namespace Sheba\Subscription\Partner;
 
 use App\Models\Partner;
+use Carbon\Carbon;
 
 class PeriodicBillingHandler
 {
@@ -22,7 +23,11 @@ class PeriodicBillingHandler
     {
         $last_billed_date = $this->partner->last_billed_date;
         if ($this->partner->billing_type == "monthly") {
-            $new_bill_date = $last_billed_date->copy()->addMonthNoOverflow(1);
+            if ($last_billed_date->isSameDay(new Carbon('last day of this month'))) {
+                $new_bill_date = new Carbon('last day of next month');
+            } else {
+                $new_bill_date = $last_billed_date->copy()->addMonthNoOverflow(1);
+            }
             return $new_bill_date->isToday();
         } elseif ($this->partner->billing_type == "yearly") {
             $new_bill_date = $last_billed_date->copy()->addYear(1);
