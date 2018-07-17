@@ -97,6 +97,6 @@ class PartnerSubscriptionBilling
 
     private function getSubscriptionTag()
     {
-        return Tag::where('name', 'subscription_fee')->where('taggable_type', 'App\\Models\\PartnerTransaction')->first();
+        return Tag::where('name', '%Subscription fee%')->where('taggable_type', 'App\\Models\\PartnerTransaction')->first();
     }
 }
