@@ -64,7 +64,7 @@ class PartnerSubscriptionBilling
 
     private function getSubscribedPackageDiscountedPrice()
     {
-        $original_price = $this->partner->subscription->originalPricePerDay($this->partner->billing_type);
+        $original_price = $this->partner->subscription->originalPrice($this->partner->billing_type);
         $discount = $this->calculateSubscribedPackageDiscount($this->runningCycleNumber, $original_price);
         return $original_price - $discount;
     }
@@ -97,6 +97,6 @@ class PartnerSubscriptionBilling
 
     private function getSubscriptionTag()
     {
-        return Tag::where('name', '%Subscription fee%')->where('taggable_type', 'App\\Models\\PartnerTransaction')->first();
+        return Tag::where('name', 'like', '%Subscription fee%')->where('taggable_type', 'App\\Models\\PartnerTransaction')->first();
     }
 }
