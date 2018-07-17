@@ -38,25 +38,18 @@ class PartnerSubscriptionBilling
         $this->billingDatabaseTransactions($package_price);
     }
 
-    public function runUpgradeBilling(PartnerSubscriptionPackage $package)
+    public function runUpgradeBilling(PartnerSubscriptionPackage $old_package, PartnerSubscriptionPackage $new_package)
     {
         $billing_type = $this->partner->billing_type;
-        $upgrade_package_price = $package->originalPrice($billing_type);
-        $upgrade_package_discount = $package->discountPrice($billing_type);
         $dayDiff = $this->partner->last_billed_date->diffInDays($this->today) + 1;
-        $used_credit = $this->getSubscribedPackagePricePerDay() * $dayDiff;
+        $used_credit = $old_package->originalPricePerDay() * $dayDiff;
         $remaining_credit = $this->partner->last_billed_amount - $used_credit;
         $remaining_credit = $remaining_credit < 0 ? 0 : $remaining_credit;
-        $package_price = ($upgrade_package_price - $upgrade_package_discount) - $remaining_credit;
+        $package_price = ($new_package->originalPrice($billing_type) - $new_package->discountPrice($billing_type)) - $remaining_credit;
         $this->partner->billing_start_date = $this->today;
         $this->billingDatabaseTransactions($package_price);
     }
 
-    private function getSubscribedPackagePricePerDay()
-    {
-        $day = $this->partner->billing_type == 'monthly' ? 30 : 365;
-        return $this->getSubscribedPackagePrice() / $day;
-    }
 
     private function calculateRunningBillingCycleNumber()
     {
@@ -71,9 +64,9 @@ class PartnerSubscriptionBilling
 
     private function getSubscribedPackageDiscountedPrice()
     {
-        $package_price = $this->getSubscribedPackagePrice();
-        $discount = $this->calculateSubscribedPackageDiscount($this->runningCycleNumber, $package_price);
-        return $package_price - $discount;
+        $original_price = $this->partner->subscription->originalPricePerDay($this->partner->billing_type);
+        $discount = $this->calculateSubscribedPackageDiscount($this->runningCycleNumber, $original_price);
+        return $original_price - $discount;
     }
 
     private function billingDatabaseTransactions($package_price)
@@ -86,22 +79,14 @@ class PartnerSubscriptionBilling
         });
     }
 
-    private function getSubscribedPackagePrice()
-    {
-        $partner_subscription = $this->partner->subscription;
-        $billing_type = $this->partner->billing_type;
-        $package_price = (double)json_decode($partner_subscription->rules)->fee->$billing_type->value;
-        return $package_price;
-    }
-
-    private function calculateSubscribedPackageDiscount($running_bill_cycle_no, $package_price)
+    private function calculateSubscribedPackageDiscount($running_bill_cycle_no, $original_price)
     {
         if ($this->partner->discount_id) {
             $subscription_discount = $this->partner->subscriptionDiscount;
             $discount_billing_cycles = json_decode($subscription_discount->applicable_billing_cycles);
             if (in_array($running_bill_cycle_no, $discount_billing_cycles)) {
                 if ($subscription_discount->is_percentage) {
-                    return $package_price * ($subscription_discount->amount / 100);
+                    return $original_price * ($subscription_discount->amount / 100);
                 } else {
                     return (double)$subscription_discount->amount;
                 }

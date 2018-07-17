@@ -8,7 +8,7 @@ class PartnerSubscriptionPackageDiscount extends Model
     protected $guarded = ['id'];
     protected $table = 'partner_subscription_discounts';
     protected $dates = ['start_date', 'end_date'];
-    protected $casts = ['amount' => 'double', 'is_percentage' => 'double'];
+    protected $casts = ['amount' => 'double', 'is_percentage' => 'int'];
     public $timestamps = false;
 
     public function package()

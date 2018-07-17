@@ -35,18 +35,20 @@ class PartnerSubscriptionPackage extends Model implements SubscriptionPackage
 
     public function discountPrice($billing_type = 'monthly', $billing_cycle = 1)
     {
-        $running_discount = $this->runningDiscount($billing_type);
-        if ($running_discount) {
+        if ($running_discount = $this->runningDiscount($billing_type)) {
             if (in_array($billing_cycle, $running_discount->applicable_billing_cycles)) {
-                if ((int)$running_discount->is_percentage) {
-                    return $this->originalPrice($billing_type) * $running_discount->amount;
-                } else {
-                    $running_discount->amount;
-                }
+                if ($running_discount->is_percentage) return $this->originalPrice($billing_type) * $running_discount->amount;
+                else $running_discount->amount;
             }
         } else {
             return 0;
         }
+    }
+
+    public function originalPricePerDay($billing_type = 'monthly')
+    {
+        $day = $billing_type == 'monthly' ? 30 : 365;
+        return $this->originalPrice() / $day;
     }
 
     public function runningDiscount($billing_type = 'monthly')
@@ -56,4 +58,5 @@ class PartnerSubscriptionPackage extends Model implements SubscriptionPackage
         }]);
         return $this->discounts ? $this->discounts->first() : null;
     }
+
 }

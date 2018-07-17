@@ -3,10 +3,9 @@
 namespace Sheba\Subscription\Partner;
 
 use App\Models\Partner;
-use App\Models\PartnerSubscriptionPackage;
-use Sheba\Subscription\Package;
 use Sheba\Subscription\ShebaSubscriber;
 use Sheba\Subscription\SubscriptionPackage;
+use DB;
 
 class PartnerSubscriber extends ShebaSubscriber
 {
@@ -29,7 +28,12 @@ class PartnerSubscriber extends ShebaSubscriber
 
     public function upgrade(SubscriptionPackage $package)
     {
-        $this->getBilling()->runUpgradeBilling($package);
+        $old_package = $this->partner->subscription;
+        DB::transaction(function () use ($old_package, $package) {
+            $this->getPackage($package)->subscribe($this->partner->billing_type);
+            $this->getBilling()->runUpgradeBilling($old_package, $package);
+        });
+
     }
 
     public function getBilling()
@@ -44,11 +48,7 @@ class PartnerSubscriber extends ShebaSubscriber
 
     public function canCreateResource($type)
     {
-        if ($type == "Handyman") {
-            return $this->partner->handymanResources()->count() < $this->resourceCap();
-        } else {
-            return true;
-        }
+        return $type == "Handyman" ? $this->partner->handymanResources()->count() < $this->resourceCap() : true;
     }
 
     public function rules()
