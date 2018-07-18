@@ -80,6 +80,9 @@ class JobServiceController extends Controller
             if ($error = $this->hasPricingError($job_service, $old_job, $request)) {
                 return api_response($request, null, 400, ['message' => $error]);
             }
+            if ($old_job->isCancelRequestPending()) {
+                return api_response($request, null, 400, ['message' => 'Unprocessable job. Cancel request pending.']);
+            }
             $data = $this->getJobServicePriceUpdateData($job_service, $request);
             array_merge($data, [
                 'updated_by'        => $this->modifier_id,
