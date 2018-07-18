@@ -23,7 +23,8 @@ class PeriodicBillingHandler
     {
         $last_billed_date = $this->partner->last_billed_date;
         if ($this->partner->billing_type == "monthly") {
-            if ($last_billed_date->isSameDay(new Carbon('last day of this month'))) {
+            $end_of_that_month = $last_billed_date->copy()->endOfMonth();
+            if ($last_billed_date->isSameDay($end_of_that_month)) {
                 $new_bill_date = new Carbon('last day of next month');
             } else {
                 $new_bill_date = $last_billed_date->copy()->addMonthNoOverflow(1);

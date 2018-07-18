@@ -2,8 +2,13 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Location\Distance\DistanceStrategy;
+use Sheba\TopUp\Robi;
+use Sheba\TopUp\TopUp;
+use Sheba\TopUp\OperatorAgent;
+use Sheba\TopUp\TopUpVendor;
 
-class Affiliate extends Model
+class Affiliate extends Model implements OperatorAgent
 {
     protected $guarded = ['id'];
     protected $dates = ['last_suspended_at'];
@@ -98,5 +103,16 @@ class Affiliate extends Model
     public function isAmbassador()
     {
         return $this->is_ambassador == 1;
+    }
+
+    public function recharge($operator_name, $mobile_number)
+    {
+        return $this->getTopUp($operator_name)->recharge($mobile_number);
+    }
+
+    private function getTopUp($operator_name)
+    {
+        if ($operator_name == TopUpVendor::$ROBI || $operator_name == TopUpVendor::$AIRTEL)
+            return new TopUp($this, new Robi());
     }
 }

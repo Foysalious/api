@@ -6,9 +6,11 @@ namespace Sheba\TopUp;
 class TopUp
 {
     private $operator;
+    private $agent;
 
-    public function __construct(Operator $operator)
+    public function __construct(OperatorAgent $agent, Operator $operator)
     {
+        $this->agent = $agent;
         $this->operator = $operator;
     }
 
@@ -17,9 +19,9 @@ class TopUp
         $this->operator = $operator;
     }
 
-    public function recharge($to, $from)
+    public function recharge($msisdn)
     {
-        $this->operator->recharge($to, $from);
+        $this->operator->recharge($msisdn);
     }
 
 }
