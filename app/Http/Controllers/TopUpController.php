@@ -15,7 +15,6 @@ class TopUpController extends Controller
             }
             return api_response($request, $vendors, 200, ['vendors' => $vendors]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
