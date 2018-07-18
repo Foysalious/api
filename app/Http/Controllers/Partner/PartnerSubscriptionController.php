@@ -16,11 +16,14 @@ class PartnerSubscriptionController extends Controller
                 $package['rules'] = $this->calculateDiscount(json_decode($package->rules, 1), $package);
                 $package['is_subscribed'] = (int)($partner->package_id == $package->id) ? 1 : 0;
                 $package['usps'] = $package->usps ? json_decode($package->usps) : ['usp' => [], 'usp_bn' => []];
-                $package['monthly_tag'] = 'বাৎসরিক প্ল্যানে ২০% সেভ করুন ';
-                $package['yearly_tag'] = 'বাৎসরিক প্ল্যানে ২০% সেভ করুন ';
                 removeRelationsAndFields($package);
             }
-            return api_response($request, null, 200, ['subscription_package' => $partner_subscription_packages]);
+            $data = [
+                'subscription_package'  => $partner_subscription_packages,
+                'monthly_tag'           => 'বাৎসরিক প্ল্যানে ২০% সেভ করুন ',
+                'yearly_tag'            => 'বাৎসরিক প্ল্যানে ২০% সেভ করুন '
+            ];
+            return api_response($request, null, 200, $data);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
