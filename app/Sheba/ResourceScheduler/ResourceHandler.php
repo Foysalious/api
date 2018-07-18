@@ -14,6 +14,8 @@ class ResourceHandler
     /** @var Resource */
     private $resource;
 
+    private $bookedSchedules;
+
     /**
      * Handler constructor.
      * @param ResourceScheduleRepository $resource_schedules
@@ -35,7 +37,7 @@ class ResourceHandler
         $date_time = Carbon::parse($date . ' ' . $time);
 
         return $this->resourceSchedules->filterByDateTime($this->resource, $date_time)->count() == 0 &&
-               $this->resourceSchedules->filterStartAt($this->resource, $date_time)->count() == 0;
+            $this->resourceSchedules->filterStartAt($this->resource, $date_time)->count() == 0;
     }
 
     /**
@@ -74,11 +76,17 @@ class ResourceHandler
         $schedules_at_end = $this->resourceSchedules->filterByDateTime($this->resource, $end_time);
         $schedules_at_start_end = $this->resourceSchedules->filterStartAndEndAt($this->resource, $start_time, $end_time);
         #dump($start_time, $end_time, $schedules_start_between, $schedules_end_between, $schedules_at_start, $schedules_at_end, $schedules_at_start_end);
-        return $schedules_start_between->count() == 0
-            && $schedules_end_between->count() == 0
-            && $schedules_at_start->count() == 0
-            && $schedules_at_end->count() == 0
-            && $schedules_at_start_end->count() == 0;
+        $this->bookedSchedules = $schedules_start_between->merge($schedules_end_between)->merge($schedules_at_start)->merge($schedules_at_end)->merge($schedules_at_start_end);
+        return $this->bookedSchedules->count() == 0;
+    }
+
+    public function getBookedJobs()
+    {
+        $jobs = collect();
+        foreach ($this->bookedSchedules->load('job') as $schedule) {
+            $jobs->push($schedule->job);
+        }
+        return $jobs;
     }
 
     /**
@@ -87,7 +95,7 @@ class ResourceHandler
     public function book(Job $job)
     {
         $category = $this->getJobCategory($job);
-        if(!$category->book_resource_minutes) return;
+        if (!$category->book_resource_minutes) return;
 
         $this->resourceSchedules->saveAgainstJob($job, $this->getBookingData($job));
     }
@@ -98,7 +106,7 @@ class ResourceHandler
     public function release(Job $job)
     {
         $schedule = $job->resourceScheduleSlot->where('resource_id', $this->resource->id)->first();
-        if($schedule && $schedule->end->gt(Carbon::now())) {
+        if ($schedule && $schedule->end->gt(Carbon::now())) {
             $this->resourceSchedules->update($schedule, ['end' => Carbon::now()]);
         }
     }
@@ -148,7 +156,7 @@ class ResourceHandler
         }
 
         $category = $this->getJobCategory($job);
-        if(!$category->book_resource_minutes) return;
+        if (!$category->book_resource_minutes) return;
 
         $end = $reschedule_data['start']->copy()->addMinutes($category->book_resource_minutes);
         $reschedule_data += [
@@ -165,8 +173,8 @@ class ResourceHandler
         $end = $start->copy()->addMinutes($category->book_resource_minutes);
 
         return [
-            'start'     => $start,
-            'end'       => $end,
+            'start' => $start,
+            'end' => $end,
             'notify_at' => $this->getNotificationTime($end, $category)
         ];
     }
@@ -178,7 +186,7 @@ class ResourceHandler
 
     private function getJobCategory(Job $job)
     {
-        return $job->category_id ? $job->category: $job->service->category;
+        return $job->category_id ? $job->category : $job->service->category;
     }
 
     private function getNotificationTime(Carbon $end, Category $category)

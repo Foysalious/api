@@ -4,5 +4,5 @@ namespace Sheba\TopUp;
 
 interface Operator
 {
-    public function recharge();
+    public function recharge($to, $from);
 }

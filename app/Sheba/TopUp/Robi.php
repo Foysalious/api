@@ -3,11 +3,18 @@
 namespace Sheba\TopUp;
 
 
+use GuzzleHttp\Psr7\Request;
+
 class Robi implements Operator
 {
 
-    public function recharge()
+    public function recharge($to, $from)
     {
-        // TODO: Implement recharge() method.
+        $request = new Request(
+            'POST',
+            $uri,
+            ['Content-Type' => 'text/xml; charset=UTF8'],
+            $xml
+        );
     }
 }
