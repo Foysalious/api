@@ -307,6 +307,7 @@ $api->version('v1', function ($api) {
         });
         $api->get('times', 'ScheduleTimeController@index');
         $api->get('settings', 'HomePageSettingController@index');
+        $api->get('settings/top_up', 'TopUpController@getVendor');
         $api->get('settings/car', 'HomePageSettingController@getCar');
         $api->get('home-grids', 'HomeGridController@index');
         $api->group(['prefix' => 'category-groups'], function ($api) {
