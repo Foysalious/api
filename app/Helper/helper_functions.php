@@ -265,3 +265,20 @@ if (!function_exists('clean')) {
         return preg_replace("/$separator+/", $separator, $string); // Replaces multiple hyphens with single one.
     }
 }
+
+if (!function_exists('ordinal')) {
+    /**
+     * Ordinal numbers refer to a position in a series.
+     *
+     * @param $number = any natural number
+     * @return String
+     */
+    function ordinal($number)
+    {
+        $ends = array('th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th');
+        if ((($number % 100) >= 11) && (($number % 100) <= 13))
+            return $number . 'th';
+        else
+            return $number . $ends[$number % 10];
+    }
+}
