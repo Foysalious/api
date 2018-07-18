@@ -68,7 +68,7 @@ class NotificationRepository
             ]);
             (new PushNotificationRepository())->send([
                 "title" => 'New Order',
-                "message" => 'New Order Placed ID ' . $partner_order->code(),
+                "message" => "প্রিয় $partner->name আপনার একটি নতুন অর্ডার রয়েছে " . $partner_order->code() . ", অনুগ্রহ করে ম্যানেজার অ্যাপ থেকে অর্ডারটি একসেপ্ট করুন",
                 "event_type" => 'PartnerOrder',
                 "event_id" => $partner_order->id,
                 "link" => "new_order",
