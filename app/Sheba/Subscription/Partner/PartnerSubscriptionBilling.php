@@ -56,7 +56,7 @@ class PartnerSubscriptionBilling
         if ($this->partner->billing_type == "monthly") {
             $diff = $this->today->month - $this->partner->billing_start_date->month;
             $yearDiff = ($this->today->year - $this->partner->billing_start_date->year);
-            return ($diff < 0 ? $diff + ($yearDiff * 12) : $diff) + 1;
+            return $diff + ($yearDiff * 12) + 1;
         } elseif ($this->partner->billing_type == "yearly") {
             return ($this->today->year - $this->partner->billing_start_date->year) + 1;
         }
