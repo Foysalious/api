@@ -2,7 +2,8 @@
 
 use Illuminate\Database\Eloquent\Model;
 
-class Thana extends Model
+class TopUpVendor extends Model
 {
     protected $guarded = ['id'];
+    protected $table = 'topup_vendors';
 }
