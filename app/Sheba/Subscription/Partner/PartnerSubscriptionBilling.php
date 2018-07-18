@@ -84,7 +84,7 @@ class PartnerSubscriptionBilling
         if ($this->partner->discount_id) {
             $subscription_discount = $this->partner->subscriptionDiscount;
             $discount_billing_cycles = json_decode($subscription_discount->applicable_billing_cycles);
-            if (in_array($running_bill_cycle_no, $discount_billing_cycles)) {
+            if (empty($discount_billing_cycles) || in_array($running_bill_cycle_no, $discount_billing_cycles)) {
                 if ($subscription_discount->is_percentage) {
                     return $original_price * ($subscription_discount->amount / 100);
                 } else {
