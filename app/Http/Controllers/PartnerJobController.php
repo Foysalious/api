@@ -74,10 +74,12 @@ class PartnerJobController extends Controller
                     if ($job->cancelRequests->count() > 0) {
                         if ($job->cancelRequests->last()->status == constants('CANCEL_REQUEST_STATUSES')['Disapproved']) {
                             $job['is_cancel_request_rejected'] = 1;
-                            removeRelationsFromModel($job);
-                            $rejected_jobs->push($job);
-                            continue;
                         }
+                    }
+                    if ($job->resource_id == null) {
+                        $rejected_jobs->push($job);
+                        removeRelationsFromModel($job);
+                        continue;
                     }
                     removeRelationsFromModel($job);
                     $jobs->push($job);
