@@ -3,6 +3,8 @@
 namespace Sheba\TopUp;
 
 
+use App\Models\TopUpOrder;
+
 class TopUp
 {
     private $operator;
@@ -19,9 +21,17 @@ class TopUp
         $this->operator = $operator;
     }
 
-    public function recharge($msisdn)
+    public function recharge($mobile_number)
     {
-        $this->operator->recharge($msisdn);
+        $this->operator->recharge($mobile_number);
+    }
+
+    private function placeTopUpOrder()
+    {
+        $topUpOrder = new TopUpOrder();
+        $topUpOrder->agent_type = "App\\Models\\" . class_basename($this->agent);
+        $topUpOrder->agent_id = $this->agent->id;
+        $topUpOrder->payee_mobile = $this->agent->id;
     }
 
 }
