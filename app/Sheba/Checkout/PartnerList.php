@@ -139,6 +139,7 @@ class PartnerList
         }
         return $query->get()->map(function ($partner) {
             $partner->contact_no = $this->getContactNumber($partner);
+            $partner['partner_type'] = $partner->subscription->name;
             return $partner;
         });
     }

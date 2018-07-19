@@ -19,4 +19,9 @@ class TopUpController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function topUp(Request $request)
+    {
+        dd($request->all());
+    }
 }
