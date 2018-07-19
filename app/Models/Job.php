@@ -338,4 +338,15 @@ class Job extends Model
 
         return false;
     }
+
+    public function scopeOngoing($query)
+    {
+        return $query->whereIn('status',
+            array(
+                constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Schedule_Due'],
+                constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Serve_Due'],
+                constants('JOB_STATUSES')['Served']
+            )
+        );
+    }
 }

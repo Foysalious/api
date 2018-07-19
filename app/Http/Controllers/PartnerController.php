@@ -20,6 +20,7 @@ use Illuminate\Http\Request;
 use DB;
 use Illuminate\Validation\ValidationException;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
+use Sheba\Manager\JobList;
 use Validator;
 
 class PartnerController extends Controller
@@ -309,19 +310,12 @@ class PartnerController extends Controller
                 constants('JOB_STATUSES')['Served'],
                 constants('JOB_STATUSES')['Serve_Due'],
             );
-
             $partner->load(['walletSetting', 'resources' => function ($q) {
                 $q->verified()->type('Handyman');
             }, 'jobs' => function ($q) use ($statuses) {
                 $q->info()->status($statuses)->with('resource');
-            }, 'orders' => function ($q) {
-                $q->ongoing();
             }]);
             $jobs = $partner->jobs;
-            $total_ongoing_order = 0;
-            foreach ($partner->orders as $partnerOrder) {
-                $total_ongoing_order += $partnerOrder->jobs->whereIn('status', ['Accepted', 'Schedule Due', 'Process', 'Serve Due', 'Served'])->count();
-            }
             $resource_ids = $partner->resources->pluck('id')->unique();
             $assigned_resource_ids = $jobs->whereIn('status', [constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Schedule_Due']])->pluck('resource_id')->unique();
             $unassigned_resource_ids = $resource_ids->diff($assigned_resource_ids);
@@ -338,7 +332,7 @@ class PartnerController extends Controller
                 'process_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Process'])->count(),
                 'served_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Served'])->count(),
                 'serve_due_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Serve_Due'])->count(),
-                'total_ongoing_orders' => $total_ongoing_order,
+                'total_ongoing_orders' => (new JobList($partner))->ongoingJobs()->count(),
                 'total_open_complains' => $partner->complains->whereIn('status', ['Observation', 'Open'])->where('accessor_id', 1)->count(),
                 'total_resources' => $resource_ids->count(),
                 'assigned_resources' => $assigned_resource_ids->count(),
