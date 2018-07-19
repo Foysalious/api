@@ -51,7 +51,7 @@ class JobList
             if ($job->resource_id == null) $jobs_without_resource->push($job);
             else $jobs_with_resource->push($job);
         }
-        $group_by_jobs = $final_jobs->groupBy('schedule_date')->sortBy(function ($item, $key) {
+        $group_by_jobs = $jobs_with_resource->groupBy('schedule_date')->sortBy(function ($item, $key) {
             return $key;
         });
         foreach ($group_by_jobs as $key => $jobs) {

@@ -313,9 +313,13 @@ class PartnerController extends Controller
             $partner->load(['walletSetting', 'resources' => function ($q) {
                 $q->verified()->type('Handyman');
             }, 'jobs' => function ($q) use ($statuses) {
-                $q->info()->status($statuses)->with('resource');
+                $q->info()->status($statuses)->with(['resource', 'cancelRequests' => function ($q) {
+                    $q->where('status', 'Pending');
+                }]);
             }]);
-            $jobs = $partner->jobs;
+            $jobs = $partner->jobs->reject(function ($job) {
+                return $job->cancelRequests->count() > 0;
+            });
             $resource_ids = $partner->resources->pluck('id')->unique();
             $assigned_resource_ids = $jobs->whereIn('status', [constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Schedule_Due']])->pluck('resource_id')->unique();
             $unassigned_resource_ids = $resource_ids->diff($assigned_resource_ids);
@@ -345,6 +349,7 @@ class PartnerController extends Controller
             );
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
