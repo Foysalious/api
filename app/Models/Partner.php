@@ -310,8 +310,8 @@ class Partner extends Model
         return $this->subscriber()->commission();
     }
 
-    public function canCreateResource($type)
+    public function canCreateResource(Array $types)
     {
-        return $this->subscriber()->canCreateResource($type);
+        return $this->subscriber()->canCreateResource($types);
     }
 }
