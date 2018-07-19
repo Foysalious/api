@@ -202,11 +202,7 @@ class PartnerJobController extends Controller
                 }
                 $request->merge(['resource' => $request->manager_resource]);
                 $response = $this->resourceJobRepository->reschedule($job->id, $request);
-                if ($response) {
-                    return api_response($request, $response, $response->code);
-                } else {
-                    return api_response($request, null, 500);
-                }
+                return $response ? api_response($request, $response, $response->code) : api_response($request, null, 500);
             }
             if ($request->has('resource_id')) {
                 if ((int)$job->resource_id == (int)$request->resource_id) return api_response($request, null, 403, ['message' => 'অর্ডারটিতে এই রিসোর্স এসাইন করা রয়েছে']);

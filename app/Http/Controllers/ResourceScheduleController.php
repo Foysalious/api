@@ -25,6 +25,7 @@ class ResourceScheduleController extends Controller
                 return api_response($request, null, 403, ['message' => 'Schedule class']);
             }
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
