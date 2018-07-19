@@ -90,10 +90,12 @@ class PartnerRegistrationController extends Controller
     private function createPartner($resource, $data)
     {
         $data = [
-            "name" => $data['name'],
-            "sub_domain" => $this->guessSubDomain($data['name']),
-            "registration_channel" => $data['registration_channel'],
-            'affiliation_id' => $this->partnerAffiliation($resource->profile->mobile)
+            "name"                  => $data['name'],
+            "sub_domain"            => $this->guessSubDomain($data['name']),
+            "registration_channel"  => $data['registration_channel'],
+            "affiliation_id"        => $this->partnerAffiliation($resource->profile->mobile),
+            "billing_type"          => $data['billing_type'],
+            "package_id"            => $data['package_id']
         ];
         $by = ["created_by" => $resource->id, "created_by_name" => "Resource - " . $resource->profile->name];
         $partner = new Partner();
