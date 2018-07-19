@@ -5,5 +5,7 @@ namespace Sheba\TopUp;
 
 interface OperatorAgent
 {
-    public function recharge($operator_name, $mobile_number);
+    public function doRecharge($vendor_id, $mobile_number, $amount, $type);
+
+    public function topUpTransaction($amount, $log);
 }

@@ -106,9 +106,25 @@ class Affiliate extends Model implements OperatorAgent
         return $this->is_ambassador == 1;
     }
 
-    public function recharge($vendor_id, $mobile_number)
+    public function doRecharge($vendor_id, $mobile_number, $amount, $type)
     {
-        return $this->getTopUp($vendor_id)->recharge($mobile_number);
+        return $this->getTopUp($vendor_id)->recharge($mobile_number, $amount, $type);
+    }
+
+    public function topUpTransaction($amount, $log)
+    {
+        $this->debitWallet($amount, $log);
+    }
+
+    public function debitWallet($amount, $log)
+    {
+        $this->update(['wallet' => $this->wallet - $amount]);
+        $this->walletTransaction(['amount' => $amount, 'type' => 'Debit', 'log' => $log]);
+    }
+
+    public function walletTransaction($data)
+    {
+        $this->transactions()->save(new AffiliateTransaction(array_merge($data, createAuthor($this))));
     }
 
     private function getTopUp($vendor_id)

@@ -5,6 +5,7 @@ namespace Sheba\TopUp;
 
 class TopUpVendor
 {
-    public static $ROBI = "robi";
-    public static $AIRTEL = "airtel";
+    public static $MOCK = 1;
+    public static $ROBI = 2;
+    public static $AIRTEL = 2;
 }
