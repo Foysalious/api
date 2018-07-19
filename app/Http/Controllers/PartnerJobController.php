@@ -135,7 +135,9 @@ class PartnerJobController extends Controller
                 'resource_id' => 'required|int'
             ]);
             $job = $request->job;
-            if ($request->partner->hasThisResource((int)$request->resource_id, 'Handyman') && $job->hasStatus(['Pending', 'Not_Responded'])) {
+            $hasThisResource = $request->partner->hasThisResource((int)$request->resource_id, 'Handyman');
+            $jobHasValidStatus = $job->hasStatus(['Pending', 'Not_Responded']);
+            if ($hasThisResource && $jobHasValidStatus) {
                 $request->merge(['remember_token' => $request->manager_resource->remember_token, 'status' => 'Accepted', 'resource' => $request->manager_resource]);
                 $response = $this->resourceJobRepository->changeStatus($job->id, $request);
                 if ($response) {
@@ -151,7 +153,8 @@ class PartnerJobController extends Controller
                 }
                 return api_response($request, null, 500);
             }
-            return api_response($request, null, 403);
+            $message = $hasThisResource ? "Resource doesn't belong to you" : $job->status . "job cannot be accepted.";
+            return api_response($request, null, 403, ['message' => $message]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
