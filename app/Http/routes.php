@@ -450,6 +450,9 @@ $api->version('v1', function ($api) {
             $api->post('job_service/{job_service}/update', 'JobServiceController@update');
             $api->get('get-profile', 'ResourceController@getResourceData');
         });
+        $api->group(['prefix' => 'affiliate/{affiliate}', 'middleware' => ['affiliate.auth']], function ($api) {
+            $api->post('top-up', 'TopUpController@topUp');
+        });
     });
 
 });
