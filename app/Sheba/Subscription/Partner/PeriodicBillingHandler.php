@@ -8,10 +8,12 @@ use Carbon\Carbon;
 class PeriodicBillingHandler
 {
     private $partner;
+    private $today;
 
     public function __construct(Partner $partner)
     {
         $this->partner = $partner;
+        $this->today = Carbon::today();
     }
 
     public function run()
@@ -23,18 +25,20 @@ class PeriodicBillingHandler
     {
         $last_billed_date = $this->partner->last_billed_date;
         if ($this->partner->billing_type == "monthly") {
-            $end_of_that_month = $last_billed_date->copy()->endOfMonth();
-            if ($last_billed_date->isSameDay($end_of_that_month)) {
-                $new_bill_date = new Carbon('last day of next month');
+            if ($this->partner->billing_start_date->day <= $this->today->daysInMonth) {
+                $new_bill_date = Carbon::createFromDate($this->today->year, $this->today->month, $this->partner->billing_start_date->day);
             } else {
-                $new_bill_date = $last_billed_date->copy()->addMonthNoOverflow(1);
+                $new_bill_date = $this->today->copy()->endOfMonth();
             }
-            return $new_bill_date->isToday();
+            return $new_bill_date->isSameDay($this->today);
+
         } elseif ($this->partner->billing_type == "yearly") {
             $new_bill_date = $last_billed_date->copy()->addYear(1);
+            /** @var $new_bill_date Carbon */
             if ($last_billed_date->isLeapYear() && $new_bill_date->month == 3 && $new_bill_date->day == 1) $new_bill_date->subDay(1);
             if ($new_bill_date->isLeapYear() && $last_billed_date->month == 2 && $last_billed_date->day == 28) $new_bill_date->addDay(1);
-            return $new_bill_date->isToday();
+            //return $new_bill_date->isToday();
+            return $new_bill_date->isSameDay($this->today);
         }
     }
 }
