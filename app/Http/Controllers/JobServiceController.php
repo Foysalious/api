@@ -118,8 +118,6 @@ class JobServiceController extends Controller
 
     private function hasPricingError(JobService $job_service, Job $job, Request $request)
     {
-        http_response_code(500);
-
         if (floatval($job->discount) > ($request->quantity * $request->unit_price)) {
             return "Service Total Price can't be smaller than discount.";
         }
