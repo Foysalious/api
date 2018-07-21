@@ -177,11 +177,11 @@ class PersonalInformationController extends Controller
         if ($request->has('mobile')) $profile->mobile = formatMobile($request->mobile);
         if ($request->has('name')) $profile->name = $request->name;
         if ($request->has('address')) $profile->address = $request->address;
+        if ($request->has('nid_no')) $resource->nid_no = $request->nid_no;
         $profile->update();
-        $resource->nid_no = $request->nid_no;
         if ($request->hasFile('nid_front') && $request->hasFile('nid_back')) {
-            $canvas = $resource->nid_image = $this->mergeFrontAndBackNID($request->file('nid_front'), $request->file('nid_back'));
-            return $this->fileRepository->uploadImageToCDN('images/resources/nid', Carbon::now()->timestamp . '_' . str_slug($profile->name, '_') . '.png', $canvas);
+            $canvas = $this->mergeFrontAndBackNID($request->file('nid_front'), $request->file('nid_back'));
+            $resource->nid_image = $this->fileRepository->uploadImageToCDN('images/resources/nid', Carbon::now()->timestamp . '_' . str_slug($profile->name, '_') . '.png', $canvas);
         }
         $resource->update();
         return $resource;
