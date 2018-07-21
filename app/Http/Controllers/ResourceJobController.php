@@ -198,7 +198,7 @@ class ResourceJobController extends Controller
             $this->validate($request, ['amount' => 'required|numeric']);
             $partner_order = $request->job->partner_order;
             $response = $this->resourceJobRepository->collectMoney($partner_order, $request);
-            if ($response) return api_response($request, $response, $response->code);
+            if ($response) return api_response($request, $response, $response->code, ['message' => $response->msg]);
             return api_response($request, null, 500);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
