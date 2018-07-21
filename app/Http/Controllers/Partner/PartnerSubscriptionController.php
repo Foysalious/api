@@ -15,6 +15,7 @@ class PartnerSubscriptionController extends Controller
             foreach ($partner_subscription_packages as $package) {
                 $package['rules'] = $this->calculateDiscount(json_decode($package->rules, 1), $package);
                 $package['is_subscribed'] = (int)($partner->package_id == $package->id);
+                $package['subscription_type'] = ($partner->package_id == $package->id) ? $partner->billing_type : null;
                 $package['usps'] = $package->usps ? json_decode($package->usps) : ['usp' => [], 'usp_bn' => []];
                 removeRelationsAndFields($package);
             }
