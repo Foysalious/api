@@ -8,7 +8,6 @@ use App\Models\JobUpdateLog;
 use App\Models\Resource;
 use App\Repositories\NotificationRepository;
 use App\Repositories\PartnerOrderRepository;
-use App\Repositories\PartnerRepository;
 use App\Repositories\PushNotificationRepository;
 use App\Repositories\ResourceJobRepository;
 use App\Sheba\JobTime;
@@ -76,13 +75,12 @@ class PartnerJobController extends Controller
                             $job['is_cancel_request_rejected'] = 1;
                         }
                     }
+                    removeRelationsFromModel($job);
                     if ($job->resource_id == null) {
                         $rejected_jobs->push($job);
-                        removeRelationsFromModel($job);
-                        continue;
+                    } else {
+                        $jobs->push($job);
                     }
-                    removeRelationsFromModel($job);
-                    $jobs->push($job);
                 }
             }
             if (count($jobs) > 0) {
