@@ -74,10 +74,12 @@ class PartnerJobController extends Controller
                     if ($job->cancelRequests->count() > 0) {
                         if ($job->cancelRequests->last()->status == constants('CANCEL_REQUEST_STATUSES')['Disapproved']) {
                             $job['is_cancel_request_rejected'] = 1;
-                            removeRelationsFromModel($job);
-                            $rejected_jobs->push($job);
-                            continue;
                         }
+                    }
+                    if ($job->resource_id == null) {
+                        $rejected_jobs->push($job);
+                        removeRelationsFromModel($job);
+                        continue;
                     }
                     removeRelationsFromModel($job);
                     $jobs->push($job);
@@ -153,7 +155,7 @@ class PartnerJobController extends Controller
                 }
                 return api_response($request, null, 500);
             }
-            $message = $hasThisResource ? "Resource doesn't belong to you" : $job->status . "job cannot be accepted.";
+            $message = !$hasThisResource ? "Resource doesn't work for you" : $job->status . "job cannot be accepted.";
             return api_response($request, null, 403, ['message' => $message]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -351,20 +353,29 @@ class PartnerJobController extends Controller
         }
         $this->jobUpdateLog($job->id, json_encode($updatedData), $manager_resource);
 
-        (new PushNotificationRepository())->send([
-            "title" => 'Resource has been assigned',
-            "message" => $job->resource->profile->name . " has been added as a resource for your job.",
-            "event_type" => 'Job',
-            "event_id" => $job->id
-        ], 'customer_' . $job->partner_order->order->customer->id);
-
-        (new PushNotificationRepository())->send([
-            "title" => 'Assigned to a new job',
-            "message" => 'You have been assigned to a new job. Job ID: ' . $job->fullCode(),
-            "event_type" => 'Job',
-            "event_id" => $job->id
-        ], 'resource_' . $job->resource_id);
+        $this->sendAssignResourcePushNotifications($job);
         return $job;
+    }
+
+    private function sendAssignResourcePushNotifications(Job $job)
+    {
+        try {
+            (new PushNotificationRepository())->send([
+                "title" => 'Resource has been assigned',
+                "message" => $job->resource->profile->name . " has been added as a resource for your job.",
+                "event_type" => 'Job',
+                "event_id" => $job->id
+            ], 'customer_' . $job->partner_order->order->customer->id);
+
+            (new PushNotificationRepository())->send([
+                "title" => 'Assigned to a new job',
+                "message" => 'You have been assigned to a new job. Job ID: ' . $job->fullCode(),
+                "event_type" => 'Job',
+                "event_id" => $job->id
+            ], 'resource_' . $job->resource_id);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+        }
     }
 
     public function cancelRequests($partner, Request $request)
@@ -401,4 +412,5 @@ class PartnerJobController extends Controller
             return api_response($request, null, 500);
         }
     }
+
 }

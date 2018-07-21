@@ -43,7 +43,7 @@ class PartnerResourceCreator
 
     public function hasError()
     {
-        if ($error = $this->resourceCreator->hasError()) {
+        if (empty($this->resource) && $error = $this->resourceCreator->hasError()) {
             return $error;
         }
         if (!$this->partner->canCreateResource($this->data['resource_types'])) {
