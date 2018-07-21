@@ -28,10 +28,15 @@ class TopUpController extends Controller
                 'mobile'            => 'required|string|mobile:bd',
                 'connection_type'   => 'required|in:prepaid,postpaid',
                 'vendor_id'         => 'required|exists:topup_vendors,id',
-                'amount'            => 'required|min:10|integer'
+                'amount'            => 'required|min:10|numeric'
             ]);
-            $request->affiliate->doRecharge($request->vendor_id, $request->mobile, $request->amount, $request->connection_type);
-            return api_response($request, null, 200);
+
+            if ($request->affiliate->wallet >= (double) $request->amount) {
+                $request->affiliate->doRecharge($request->vendor_id, $request->mobile, $request->amount, $request->connection_type);
+                return api_response($request, null, 200);
+            } else {
+                return api_response($request, null, 403, ['message' => "You don't have sufficient balance to recharge."]);
+            }
         }catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');

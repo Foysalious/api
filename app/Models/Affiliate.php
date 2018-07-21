@@ -13,7 +13,7 @@ class Affiliate extends Model implements OperatorAgent
 {
     protected $guarded = ['id'];
     protected $dates = ['last_suspended_at'];
-
+    protected $casts = ['wallet' => 'double'];
     public function profile()
     {
         return $this->belongsTo(Profile::class);
