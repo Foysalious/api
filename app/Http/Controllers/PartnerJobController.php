@@ -367,9 +367,9 @@ class PartnerJobController extends Controller
 
             (new PushNotificationRepository())->send([
                 "title" => 'Assigned to a new job',
-                "message" => 'You have been assigned to a new job. Job ID: ' . $job->fullCode(),
-                "event_type" => 'Job',
-                "event_id" => $job->id
+                "message" => 'You have been assigned to a new job. Job ID: ' . $job->partnerOrder->order->code(),
+                "event_type" => 'PartnerOrder',
+                "event_id" => $job->partnerOrder->id
             ], env('RESOURCE_TOPIC_NAME') . $job->resource_id);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
