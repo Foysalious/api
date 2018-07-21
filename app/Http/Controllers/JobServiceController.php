@@ -128,7 +128,7 @@ class JobServiceController extends Controller
             if ($job->totalPrice < $job->discount - $job_service->discount + $request->discount) {
                 return "Service Discount can't be greater than total price";
             }
-            if ($job->partner_order->calculate(true)->due < (float) $request->discount) {
+            if ($job->partner_order->calculate(true)->due < (floatval($request->discount) - floatval($job_service->discount))) {
                 return "Discount can't be greater than due";
             }
         }
