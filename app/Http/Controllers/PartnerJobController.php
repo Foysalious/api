@@ -363,14 +363,14 @@ class PartnerJobController extends Controller
                 "message" => $job->resource->profile->name . " has been added as a resource for your job.",
                 "event_type" => 'Job',
                 "event_id" => $job->id
-            ], 'customer_' . $job->partner_order->order->customer->id);
+            ], env('CUSTOMER_TOPIC_NAME') . $job->partner_order->order->customer->id);
 
             (new PushNotificationRepository())->send([
                 "title" => 'Assigned to a new job',
                 "message" => 'You have been assigned to a new job. Job ID: ' . $job->fullCode(),
                 "event_type" => 'Job',
                 "event_id" => $job->id
-            ], 'resource_' . $job->resource_id);
+            ], env('RESOURCE_TOPIC_NAME') . $job->resource_id);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
         }
