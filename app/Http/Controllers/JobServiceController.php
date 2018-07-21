@@ -188,12 +188,13 @@ class JobServiceController extends Controller
 
     private function priceChangedNotificationData(Job $job, $old_job_price)
     {
+        $order = $job->partnerOrder->order;
         return [
-            "title" => "Job: " . $job->fullCode() . " Price changed. Old Price: " . $old_job_price .", New Price: " . $job->grossPrice,
-            "link"  => url("job/" . $job->id),
+            "title" => "Order: " . $order->code() . " Price changed. Old Price: " . $old_job_price .", New Price: " . $job->grossPrice,
+            "link"  => env('SHEBA_FRONT_END_URL') . "/orders/" . $order->id,
             "type"  => notificationType('Info'),
-            "event_type" => 'App\Models\Job',
-            "event_id"   => $job->id
+            "event_type" => 'App\Models\Order',
+            "event_id"   => $order->id
         ];
     }
 }
