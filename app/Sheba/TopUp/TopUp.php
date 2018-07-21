@@ -10,12 +10,14 @@ class TopUp
 {
     use ModificationFields;
     private $operator;
+    private $vendor;
     private $agent;
 
     public function __construct(OperatorAgent $agent, Operator $operator)
     {
         $this->agent = $agent;
         $this->operator = $operator;
+        $this->vendor = $this->operator->getVendor();
     }
 
     public function setOperator(Operator $operator)
@@ -28,6 +30,8 @@ class TopUp
         $this->operator->recharge($mobile_number, $amount, $type);
         $this->placeTopUpOrder($mobile_number, $amount);
         $this->agent->topUpTransaction($amount, $amount . " has been send to this number " . $mobile_number);
+        $this->deductVendorAmount($amount);
+
     }
 
     private function placeTopUpOrder($mobile_number, $amount)
@@ -38,13 +42,18 @@ class TopUp
         $topUpOrder->payee_mobile = $mobile_number;
         $topUpOrder->amount = $amount;
         $topUpOrder->status = "Successful";
-        $vendor = $this->operator->getVendor();
-        $topUpOrder->vendor_id = $vendor->id;
-        $topUpOrder->sheba_commission = ($amount * $vendor->sheba_commission) / 100;
-        $topUpOrder->agent_commission = ($amount * $vendor->agent_commission) / 100;
+        $topUpOrder->vendor_id = $this->vendor->id;
+        $topUpOrder->sheba_commission = ($amount * $this->vendor->sheba_commission) / 100;
+        $topUpOrder->agent_commission = ($amount * $this->vendor->agent_commission) / 100;
         $this->setModifier($this->agent);
         $this->withBothModificationFields($topUpOrder);
         $topUpOrder->save();
+    }
+
+    private function deductVendorAmount($amount)
+    {
+        $this->vendor->amount -= $amount;
+        $this->vendor->update();
     }
 
 }
