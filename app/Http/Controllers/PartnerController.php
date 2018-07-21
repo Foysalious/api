@@ -390,6 +390,7 @@ class PartnerController extends Controller
             $info->put('working_hour_starts', $working_hours->day_start);
             $info->put('working_hour_ends', $working_hours->day_end);
             $info->put('locations', $locations->pluck('name'));
+            $info->put('subscription', $partner->subscription()->select('id', 'show_name', 'show_name_bn', 'badge')->first());
             $info->put('total_locations', $locations->count());
             $info->put('total_services', $partner->services->count());
             $info->put('total_resources', $partner->resources->count());
