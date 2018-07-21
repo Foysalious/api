@@ -45,7 +45,7 @@ class PartnerJobController extends Controller
                 }]);
             }]);
             $jobs = collect();
-            $rejected_jobs = collect();
+            $jobs_with_resource = collect();
             foreach ($partner->partnerOrders as $partnerOrder) {
                 foreach ($partnerOrder->jobs as $job) {
                     if ($job->cancelRequests->where('status', 'Pending')->count() > 0) continue;
@@ -77,13 +77,13 @@ class PartnerJobController extends Controller
                     }
                     removeRelationsFromModel($job);
                     if ($job->resource_id == null) {
-                        $rejected_jobs->push($job);
+                        $jobs_with_resource->push($job);
                     } else {
                         $jobs->push($job);
                     }
                 }
             }
-            if (count($jobs) > 0) {
+            if (count($jobs) > 0 || count($jobs_with_resource) > 0) {
                 if ($filter == 'ongoing') {
                     $group_by_jobs = $jobs->groupBy('schedule_date')->sortBy(function ($item, $key) {
                         return $key;
@@ -100,7 +100,7 @@ class PartnerJobController extends Controller
                     $jobs = $jobs->sortByDesc('id');
                 }
                 list($offset, $limit) = calculatePagination($request);
-                $jobs = $rejected_jobs->merge($jobs);
+                $jobs = $jobs_with_resource->merge($jobs);
                 $jobs = $jobs->splice($offset, $limit);
                 $resources = collect();
                 foreach ($jobs->groupBy('resource_id') as $key => $resource) {
