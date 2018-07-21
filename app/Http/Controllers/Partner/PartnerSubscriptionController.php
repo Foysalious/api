@@ -82,7 +82,7 @@ class PartnerSubscriptionController extends Controller
             if ($partner_subcription_discount) {
                 if (!$partner_subcription_discount->is_percentage) return (float)$partner_subcription_discount->amount;
                 else {
-                    return (float)$package->originalPrice($billing_type) * $partner_subcription_discount->amount;
+                    return (float)$package->originalPrice($billing_type) * ($partner_subcription_discount->amount/100);
                 }
             }
             return 0;
