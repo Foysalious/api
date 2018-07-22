@@ -9,7 +9,7 @@ class CancelRequestRepository extends BaseRepository
 {
     public function create($data)
     {
-        $data = $this->withBothModificationFields($this->withRequestIdentificationData($data));
+        $data = $this->withCreateModificationField($this->withRequestIdentificationData($data));
         JobCancelRequest::create($data);
     }
 
