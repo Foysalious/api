@@ -46,7 +46,7 @@ class TopUp
         $topUpOrder->sheba_commission = ($amount * $this->vendor->sheba_commission) / 100;
         $topUpOrder->agent_commission = ($amount * $this->vendor->agent_commission) / 100;
         $this->setModifier($this->agent);
-        $this->withBothModificationFields($topUpOrder);
+        $this->withCreateModificationField($topUpOrder);
         $topUpOrder->save();
     }
 
