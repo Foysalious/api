@@ -95,12 +95,12 @@ class PartnerJobController extends Controller
                             $final->push($job);
                         }
                     }
-                    $jobs = $final;
+                    $jobs = $jobs_with_resource->merge($final);
                 } else {
+                    $jobs = $jobs_with_resource->merge($jobs);
                     $jobs = $jobs->sortByDesc('id');
                 }
                 list($offset, $limit) = calculatePagination($request);
-                $jobs = $jobs_with_resource->merge($jobs);
                 $jobs = $jobs->splice($offset, $limit);
                 $resources = collect();
                 foreach ($jobs->groupBy('resource_id') as $key => $resource) {
