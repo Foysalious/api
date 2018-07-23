@@ -30,7 +30,8 @@ class PartnerTransactionController extends Controller
             })->sortByDesc('id');
             if ($request->has('month') && $request->has('year')) {
                 $transactions = $transactions->filter(function ($transaction, $key) use ($request) {
-                    return ($transaction->created_at->month == $request->month) && ($transaction->created_at->year == $request->year);
+                    $created_at = Carbon::parse($transaction->created_at);
+                    return ($created_at->month == $request->month && $created_at->year == $request->year);
                 });
             }
             $transactions = array_slice($transactions->values()->all(), $offset, $limit);
