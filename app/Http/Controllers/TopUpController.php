@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\Affiliate;
 use App\Models\TopUpVendor;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -10,16 +11,16 @@ class TopUpController extends Controller
     {
         try {
             $vendors = TopUpVendor::select('id', 'name', 'is_published', 'agent_commission')->get();
-            $error_message = "Currently, we’re supporting ";
+            $error_message = "Currently, we’re supporting";
             foreach ($vendors as $vendor) {
                 $asset_name = strtolower(trim(preg_replace('/\s+/', '_', $vendor->name)));
                 array_add($vendor, 'asset', $asset_name);
-                if ($vendor->is_published) $error_message .= $vendor->name . ',';
+                if ($vendor->is_published) $error_message .= ',' . $vendor->name;
             }
             $regular_expression = array(
                 'typing' => "^(018|18|016|16)",
                 'from_contact' => "^(?:\+?88)?01[16|8]\d{8}$",
-                'error_message' => rtrim($error_message, ",") . '.'
+                'error_message' => $error_message . '.'
             );
             return api_response($request, $vendors, 200, ['vendors' => $vendors, 'regex' => $regular_expression]);
         } catch (\Throwable $e) {
@@ -37,9 +38,9 @@ class TopUpController extends Controller
                 'vendor_id' => 'required|exists:topup_vendors,id',
                 'amount' => 'required|min:10|numeric'
             ]);
-
-            if ($request->affiliate->wallet >= (double)$request->amount) {
-                $request->affiliate->doRecharge($request->vendor_id, $request->mobile, $request->amount, $request->connection_type);
+            $affiliate = $request->affiliate;
+            if ($affiliate->wallet >= (double)$request->amount) {
+                $affiliate->doRecharge($request->vendor_id, $request->mobile, $request->amount, $request->connection_type);
                 return api_response($request, null, 200);
             } else {
                 return api_response($request, null, 403, ['message' => "You don't have sufficient balance to recharge."]);

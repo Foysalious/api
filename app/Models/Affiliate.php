@@ -13,7 +13,8 @@ class Affiliate extends Model implements OperatorAgent
 {
     protected $guarded = ['id'];
     protected $dates = ['last_suspended_at'];
-    protected $casts = ['wallet' => 'double'];
+    protected $casts = ['wallet' => 'double', 'is_ambassador' => 'int'];
+
     public function profile()
     {
         return $this->belongsTo(Profile::class);
@@ -99,11 +100,6 @@ class Affiliate extends Model implements OperatorAgent
     {
         $vouchers = $this->vouchers;
         return $vouchers ? $vouchers->first() : null;
-    }
-
-    public function isAmbassador()
-    {
-        return $this->is_ambassador == 1;
     }
 
     public function doRecharge($vendor_id, $mobile_number, $amount, $type)
