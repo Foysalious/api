@@ -10,11 +10,18 @@ class TopUpController extends Controller
     {
         try {
             $vendors = TopUpVendor::select('id', 'name', 'is_published', 'agent_commission')->get();
+            $error_message = "Currently, we’re supporting ";
             foreach ($vendors as $vendor) {
                 $asset_name = strtolower(trim(preg_replace('/\s+/', '_', $vendor->name)));
                 array_add($vendor, 'asset', $asset_name);
+                if ($vendor->is_published) $error_message .= $vendor->name . ',';
             }
-            return api_response($request, $vendors, 200, ['vendors' => $vendors]);
+            $regular_expression = array(
+                'typing' => "^(018|18|016|16)",
+                'from_contact' => "^(?:\+?88)?01[16|8]\d{8}$",
+                'error_message' => rtrim($error_message, ",") . '.'
+            );
+            return api_response($request, $vendors, 200, ['vendors' => $vendors, 'regex' => $regular_expression]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
