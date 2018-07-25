@@ -29,9 +29,15 @@ class TopUp
     {
         $this->operator->recharge($mobile_number, $amount, $type);
         $this->placeTopUpOrder($mobile_number, $amount);
-        $this->agent->topUpTransaction($amount, $amount . " has been send to this number " . $mobile_number);
+        $amount_after_commission = $amount - $this->calculateCommission($amount);
+        $this->agent->topUpTransaction($amount_after_commission, $amount . " has been send to this number " . $mobile_number);
         $this->deductVendorAmount($amount);
 
+    }
+
+    private function calculateCommission($amount)
+    {
+        return (double) $amount * (double) ($this->vendor->agent_commission/100);
     }
 
     private function placeTopUpOrder($mobile_number, $amount)
