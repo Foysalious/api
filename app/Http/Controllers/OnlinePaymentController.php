@@ -25,20 +25,20 @@ class OnlinePaymentController extends Controller
                         if ($result) {
                             $transaction->success = 1;
                             Redis::set($transaction_id, json_encode($transaction));
-                            Redis::expire($transaction_id, 604800);
+                            Redis::expire($transaction_id, 7200);
                             return redirect($result);
                         } else {
                             $transaction->message = $online_payment->message;
                             $transaction->result = $result;
                             Redis::set($transaction_id, json_encode($transaction));
-                            Redis::expire($transaction_id, 2592000);
+                            Redis::expire($transaction_id, 7200);
                             return redirect(env('SHEBA_FRONT_END_URL'));
                         }
                     } else {
                         $transaction->message = "Result status invalid";
                         $transaction->result = $result;
                         Redis::set($transaction_id, json_encode($transaction));
-                        Redis::expire($transaction_id, 2592000);
+                        Redis::expire($transaction_id, 7200);
                         return redirect(env('SHEBA_FRONT_END_URL'));
                     }
                 }
