@@ -328,7 +328,7 @@ class PartnerJobController extends Controller
             'log' => $log,
             'created_by' => $created_by->id,
             'created_by_name' => class_basename($created_by) . "-" . $created_by->profile->name,
-            'created_by_type' => 'App/Models/' . class_basename($created_by)
+            'created_by_type' => 'App\\Models\\' . class_basename($created_by)
         ];
         JobUpdateLog::create(array_merge((new UserRequestInformation(\request()))->getInformationArray(), $logData));
     }
