@@ -13,7 +13,7 @@ class PartnerAffiliationCreator
     {
         $partner_affiliation_data = $this->partnerAffiliationCreateData($data);
         $partner_affiliation = PartnerAffiliation::create($partner_affiliation_data);
-        (new NotificationRepository())->forPartnerAffiliation($partner_affiliation->affiliate, $partner_affiliation);
+        $this->sendNotification($partner_affiliation);
         $this->sendSms($data);
         return $partner_affiliation;
     }
@@ -29,11 +29,25 @@ class PartnerAffiliationCreator
         ]);
     }
 
+    private function sendNotification($partner_affiliation)
+    {
+        try {
+            (new NotificationRepository())->forPartnerAffiliation($partner_affiliation->affiliate, $partner_affiliation);
+        } catch (\Throwable $e) {
+
+        }
+    }
+
     private function sendSms($data)
     {
-        $affiliate = $data['affiliate']->profile->name ?: $data['affiliate']->profile->name;
-        (new SmsHandler('partner-affiliation-create'))->send($data['resource_mobile'], [
-            'affiliate' => $affiliate
-        ]);
+        try {
+            $affiliate = $data['affiliate']->profile->name ?: $data['affiliate']->profile->name;
+            (new SmsHandler('partner-affiliation-create'))->send($data['resource_mobile'], [
+                'affiliate' => $affiliate
+            ]);
+        } catch (\Throwable $e) {
+
+        }
+
     }
 }
