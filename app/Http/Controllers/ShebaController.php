@@ -207,7 +207,8 @@ class ShebaController extends Controller
             $butcher_Service = Service::where('slug', 'butcher-service')->first();
 
             $butcher_info = [
-                'id' => $butcher_Service->id
+                'id' => $butcher_Service->id,
+                'price_info' => $butcher_Service->variables
             ];
 
             return api_response($request, $butcher_info, 200, ['info' => $butcher_info]);
