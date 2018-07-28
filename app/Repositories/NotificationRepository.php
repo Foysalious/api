@@ -13,11 +13,11 @@ class NotificationRepository
     private $sender_id;
     private $sender_type;
 
-//    public function __construct($order)
-//    {
-//        $this->order = $order;
-//        $this->send();
-//    }
+    /*public function __construct($order)
+    {
+        $this->order = $order;
+        $this->send();
+    }*/
 
     public function send($order)
     {
@@ -26,12 +26,12 @@ class NotificationRepository
             $this->sender_id = $this->order->customer_id;
             $this->sender_type = 'customer';
 
-            $this->sendNotificationToBackEnd();
+            //$this->sendNotificationToBackEnd();
         } else {
             $this->sender_id = $this->order->created_by;
             $this->sender_type = 'user';
 
-            $this->sendNotificationToCRM(); //REMOVE
+            //$this->sendNotificationToCRM(); //REMOVE
         }
         $this->sendNotificationToPartner($this->order->partner_orders);
     }
@@ -68,10 +68,11 @@ class NotificationRepository
             ]);
             (new PushNotificationRepository())->send([
                 "title" => 'New Order',
-                "message" => 'New Order Placed ID ' . $partner_order->code(),
+                "message" => "প্রিয় $partner->name আপনার একটি নতুন অর্ডার রয়েছে " . $partner_order->code() . ", অনুগ্রহ করে ম্যানেজার অ্যাপ থেকে অর্ডারটি একসেপ্ট করুন",
                 "event_type" => 'PartnerOrder',
                 "event_id" => $partner_order->id,
-                "link" => "new_order"
+                "link" => "new_order",
+                "sound" => "notification_sound"
             ], constants('MANAGER_TOPIC_NAME') . $partner_order->partner_id);
         }
     }
@@ -161,11 +162,15 @@ class NotificationRepository
 
     public function sendToCRM($cm_id, $title, $model)
     {
-        notify()->user($cm_id)->send([
-            'title' => $title,
-            'link' => env('SHEBA_BACKEND_URL') . '/' . strtolower(class_basename($model)) . '/' . $model->id,
-            'type' => notificationType('Info')
-        ]);
+        try {
+            notify()->user($cm_id)->send([
+                'title' => $title,
+                'link' => env('SHEBA_BACKEND_URL') . '/' . strtolower(class_basename($model)) . '/' . $model->id,
+                'type' => notificationType('Info')
+            ]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+        }
     }
 
 }

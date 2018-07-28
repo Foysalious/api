@@ -27,6 +27,7 @@
     "folklore/graphql": "^1.0",
     "sheba/dal": "dev-master",
     "sheba/voucher": "dev-master",
+    "sheba/notification": "dev-master",
     "intervention/image": "^2.4"
   },
   "require-dev": {
@@ -43,9 +44,9 @@
     ],
     "files": [
       "app/Helper/helper_functions.php",
-      "app/Sheba/Notification/functions.php",
       "app/Sheba/Pap/PapApi.class.php",
-      "app/Sheba/ResourceScheduler/functions.php"
+      "app/Sheba/ResourceScheduler/functions.php",
+      "app/Sheba/FileManagers/functions.php"
     ],
     "psr-4": {
       "App\\": "app/",
@@ -84,6 +85,10 @@
     {
       "type": "vcs",
       "url": "https://arnabrahman@bitbucket.org/startern/sheba_dal.git"
+    },
+    {
+      "type": "vcs",
+      "url": "https://shafiq_startern@bitbucket.org/startern/sheba_notification.git"
     }
   ]
 }

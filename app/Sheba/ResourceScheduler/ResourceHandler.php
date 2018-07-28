@@ -27,7 +27,6 @@ class ResourceHandler
         $this->resource = $resource;
     }
 
-
     /**
      * @param $date
      * @param $time
@@ -36,17 +35,29 @@ class ResourceHandler
     public function isAvailable($date, $time)
     {
         $date_time = Carbon::parse($date . ' ' . $time);
-        $this->bookedSchedules = $this->resourceSchedules->filterByDateTime($this->resource, $date_time)->merge($this->resourceSchedules->filterStartAt($this->resource, $date_time));
-        return $this->bookedSchedules->count() == 0;
+
+        return $this->resourceSchedules->filterByDateTime($this->resource, $date_time)->count() == 0 &&
+            $this->resourceSchedules->filterStartAt($this->resource, $date_time)->count() == 0;
     }
 
-    public function getBookedJobs()
+    /**
+     * @param $date
+     * @param $time
+     * @param Category $category
+     * @return mixed
+     */
+    public function reasonForNotAvailable($date, $time, Category $category)
     {
-        $jobs = collect();
-        foreach ($this->bookedSchedules->load('job') as $schedule) {
-            $jobs->push($schedule->job);
-        }
-        return $jobs;
+        $start_time = Carbon::parse($date . ' ' . $time);
+        $end_time = Carbon::parse($date . ' ' . $time)->addMinutes($category->book_resource_minutes);
+
+        $schedules_start_between = $this->resourceSchedules->filterStartBetween($this->resource, $start_time, $end_time);
+        $schedules_end_between = $this->resourceSchedules->filterEndBetween($this->resource, $start_time, $end_time);
+        $schedules_at_start = $this->resourceSchedules->filterByDateTime($this->resource, $start_time);
+        $schedules_at_end = $this->resourceSchedules->filterByDateTime($this->resource, $end_time);
+        $schedules_at_start_end = $this->resourceSchedules->filterStartAndEndAt($this->resource, $start_time, $end_time);
+
+        return $schedules_start_between->merge($schedules_end_between)->merge($schedules_at_start)->merge($schedules_at_end)->merge($schedules_at_start_end);
     }
 
     /**
@@ -64,9 +75,18 @@ class ResourceHandler
         $schedules_at_start = $this->resourceSchedules->filterByDateTime($this->resource, $start_time);
         $schedules_at_end = $this->resourceSchedules->filterByDateTime($this->resource, $end_time);
         $schedules_at_start_end = $this->resourceSchedules->filterStartAndEndAt($this->resource, $start_time, $end_time);
-        #dump($start_time, $end_time, $schedules_start_between, $schedules_end_between, $schedules_at_start, $schedules_at_end);
-        $this->bookedSchedules = ((($schedules_start_between->merge($schedules_end_between))->merge($schedules_at_start))->merge($schedules_at_end))->merge($schedules_at_start_end);
+        #dump($start_time, $end_time, $schedules_start_between, $schedules_end_between, $schedules_at_start, $schedules_at_end, $schedules_at_start_end);
+        $this->bookedSchedules = $schedules_start_between->merge($schedules_end_between)->merge($schedules_at_start)->merge($schedules_at_end)->merge($schedules_at_start_end);
         return $this->bookedSchedules->count() == 0;
+    }
+
+    public function getBookedJobs()
+    {
+        $jobs = collect();
+        foreach ($this->bookedSchedules->load('job') as $schedule) {
+            $jobs->push($schedule->job);
+        }
+        return $jobs;
     }
 
     /**
@@ -85,8 +105,8 @@ class ResourceHandler
      */
     public function release(Job $job)
     {
-        $schedule = $job->resourceSchedule;
-        if ($schedule && $schedule->end->lt(Carbon::now())) {
+        $schedule = $job->resourceScheduleSlot->where('resource_id', $this->resource->id)->first();
+        if ($schedule && $schedule->end->gt(Carbon::now())) {
             $this->resourceSchedules->update($schedule, ['end' => Carbon::now()]);
         }
     }
@@ -96,8 +116,11 @@ class ResourceHandler
      */
     public function reAssign(Job $job)
     {
-        $category = $this->getJobCategory($job);
-        if (!$category->book_resource_minutes) return;
+        $schedule = $job->resourceSchedule;
+        if (empty($schedule)) {
+            $this->book($job);
+            return;
+        }
 
         $this->resourceSchedules->updateAgainstJob($job, $this->getBookingData($job));
     }
@@ -126,11 +149,19 @@ class ResourceHandler
 
     public function reSchedule(Job $job, $reschedule_data)
     {
-        $schedule = $job->resourceSchedule;
-        if (empty($schedule)) return false;
+        $schedule = $job->resourceScheduleSlot->where('resource_id', $this->resource->id)->first();
+        if (empty($schedule)) {
+            $this->book($job);
+            return;
+        }
 
+        $category = $this->getJobCategory($job);
+        if (!$category->book_resource_minutes) return;
+
+        $end = $reschedule_data['start']->copy()->addMinutes($category->book_resource_minutes);
         $reschedule_data += [
-            'notify_at' => $this->getNotificationTime($reschedule_data['end'], $this->getJobCategory($job))
+            'end' => $end,
+            'notify_at' => $this->getNotificationTime($end, $category)
         ];
         $this->resourceSchedules->update($schedule, $reschedule_data);
     }

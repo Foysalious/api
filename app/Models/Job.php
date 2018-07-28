@@ -302,6 +302,11 @@ class Job extends Model
         return $this->hasOne(ResourceSchedule::class);
     }
 
+    public function resourceScheduleSlot()
+    {
+        return $this->hasMany(ResourceSchedule::class);
+    }
+
     public function getReadablePreferredTimeAttribute()
     {
         if ($this->preferred_time !== 'Anytime') {
@@ -321,4 +326,27 @@ class Job extends Model
         return in_array($this->category_id, array_map('intval', explode(',', env('RENT_CAR_IDS')))) ? 1 : 0;
     }
 
+    public function isClosed()
+    {
+        return in_array($this->status, ["Served", "Cancelled"]);
+    }
+
+    public function isCancelRequestPending()
+    {
+        if ($cancel_request = $this->cancelRequests->last())
+            return $cancel_request->status == constants('CANCEL_REQUEST_STATUSES')['Pending'];
+
+        return false;
+    }
+
+    public function scopeOngoing($query)
+    {
+        return $query->whereIn('status',
+            array(
+                constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Schedule_Due'],
+                constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Serve_Due'],
+                constants('JOB_STATUSES')['Served']
+            )
+        );
+    }
 }

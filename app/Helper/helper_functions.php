@@ -22,21 +22,6 @@ if (!function_exists('setTrace')) {
     }
 }
 
-if (!function_exists('clean')) {
-    /**
-     * Clean a string from all special characters.
-     *
-     * @param String $string
-     * @return App\Models\Partner
-     */
-    function clean($string)
-    {
-        $string = str_replace(' ', '-', $string); // Replaces all spaces with hyphens.
-        $string = preg_replace('/[^A-Za-z0-9\-]/', '', $string); // Removes special chars.
-        return preg_replace('/-+/', '-', $string); // Replaces multiple hyphens with single one.
-    }
-}
-
 if (!function_exists('constants')) {
     /**
      * Get the constant from config constants file.
@@ -179,7 +164,32 @@ if (!function_exists('calculatePagination')) {
         return array($offset, $limit);
     }
 }
+if (!function_exists('createAuthorWithType')) {
+    function createAuthorWithType($author)
+    {
+        $data = createAuthor($author);
+        $data['created_by_type'] = "App\Models\\" . class_basename($author);
+        return $data;
+    }
+}
+if (!function_exists('createAuthor')) {
+    function createAuthor($author)
+    {
+        $data = [];
+        $data['created_by'] = $author->id;
+        $data['created_by_name'] = class_basename($author) . " - " . ($author->profile != null ? $author->profile->name : $author->name);
+        return $data;
+    }
+}
 
+if (!function_exists('updateAuthor')) {
+    function updateAuthor($model, $author)
+    {
+        $model->updated_by = $author->id;
+        $model->updated_by_name = class_basename($author) . " - " . ($author->profile != null ? $author->profile->name : $author->name);
+        return $model;
+    }
+}
 if (!function_exists('removeRelationsFromModel')) {
 
     function removeRelationsFromModel($model)
@@ -240,3 +250,58 @@ if (!function_exists('humanReadableShebaTime')) {
     }
 }
 
+if (!function_exists('clean')) {
+    function clean($string, $separator = "-", $keep = [])
+    {
+        $string = str_replace(' ', $separator, $string); // Replaces all spaces with hyphens.
+        $keep_only = "/[^A-Za-z0-9";
+        foreach ($keep as $item) {
+            $keep_only .= "$item";
+        }
+        $keep_only .= (($separator == '-') ? '\-' : "_");
+        $keep_only .= "]/";
+
+        $string = preg_replace($keep_only, '', $string); // Removes special chars.
+        return preg_replace("/$separator+/", $separator, $string); // Replaces multiple hyphens with single one.
+    }
+}
+
+if (!function_exists('ordinal')) {
+    /**
+     * Ordinal numbers refer to a position in a series.
+     *
+     * @param $number = any natural number
+     * @return String
+     */
+    function ordinal($number)
+    {
+        $ends = array('th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th');
+        if ((($number % 100) >= 11) && (($number % 100) <= 13))
+            return $number . 'th';
+        else
+            return $number . $ends[$number % 10];
+    }
+}
+
+if (!function_exists('findStartEndDateOfAMonth')) {
+    /**
+     * @param $month
+     * @param $year
+     * @return array
+     */
+    function findStartEndDateOfAMonth($month = null, $year = null)
+    {
+        if ($month == 0 && $year != 0) {
+            $start_time = \Carbon\Carbon::now()->year($year)->month(1)->day(1)->hour(0)->minute(0)->second(0);
+            $end_time = \Carbon\Carbon::now()->year($year)->month(12)->day(31)->hour(23)->minute(59)->second(59);
+            return ['start_time' => $start_time, 'end_time' => $end_time, 'days_in_month' => 31];
+        } else {
+            if (empty($month)) $month = \Carbon\Carbon::now()->month;
+            if (empty($year)) $year = \Carbon\Carbon::now()->year;
+            $days_in_month = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+            $start_time = \Carbon\Carbon::now()->year($year)->month($month)->day(1)->hour(0)->minute(0)->second(0);
+            $end_time = \Carbon\Carbon::now()->year($year)->month($month)->day($days_in_month)->hour(23)->minute(59)->second(59);
+            return ['start_time' => $start_time, 'end_time' => $end_time, 'days_in_month' => $days_in_month];
+        }
+    }
+}

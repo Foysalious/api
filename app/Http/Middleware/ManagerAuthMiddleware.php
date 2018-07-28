@@ -24,10 +24,14 @@ class ManagerAuthMiddleware
                 if ($manager_resource->isManager($partner)) {
                     $request->merge(['manager_resource' => $manager_resource, 'partner' => $partner]);
                     return $next($request);
+                } else {
+                    return api_response($request, null, 403, ["message" => "Forbidden. You're not a manager of this partner."]);
                 }
+            } else {
+                return api_response($request, null, 404, ["message" => 'Partner or Resource not found.']);
             }
-            return api_response($request, null, 403);
+        } else {
+            return api_response($request, null, 400, ["message" => "Authentication token is missing from the request."]);
         }
-        return api_response($request, null, 401);
     }
 }

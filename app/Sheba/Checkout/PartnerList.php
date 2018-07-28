@@ -131,14 +131,15 @@ class PartnerList
                 $q->published();
             })->select(DB::raw('count(*) as c'))->whereIn('services.id', $service_ids)->where([['partner_service.is_published', 1], ['partner_service.is_verified', 1]])->publishedForAll()
                 ->groupBy('partner_id')->havingRaw('c=' . count($service_ids));
-        })->with(['resources' => function ($q) {
+        })->with(['subscription', 'resources' => function ($q) {
             $q->with('profile');
-        }])->published()->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet');
+        }])->published()->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet', 'partners.package_id');
         if ($partner_id != null) {
             $query = $query->where('partners.id', $partner_id);
         }
         return $query->get()->map(function ($partner) {
             $partner->contact_no = $this->getContactNumber($partner);
+            $partner['subscription_type'] = $partner->subscription ? $partner->subscription->name : null;
             return $partner;
         });
     }

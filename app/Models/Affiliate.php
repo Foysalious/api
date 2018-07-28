@@ -2,11 +2,20 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Location\Distance\DistanceStrategy;
+use Sheba\TopUp\Mock;
+use Sheba\TopUp\Robi;
+use Sheba\TopUp\TopUp;
+use Sheba\TopUp\OperatorAgent;
+use Sheba\TopUp\TopUpVendor;
+use Sheba\TopUpTrait;
 
-class Affiliate extends Model
+class Affiliate extends Model implements OperatorAgent
 {
+    use TopUpTrait;
     protected $guarded = ['id'];
     protected $dates = ['last_suspended_at'];
+    protected $casts = ['wallet' => 'double', 'is_ambassador' => 'int'];
 
     public function profile()
     {
@@ -95,8 +104,21 @@ class Affiliate extends Model
         return $vouchers ? $vouchers->first() : null;
     }
 
-    public function isAmbassador()
+    public function topUpTransaction($amount, $log)
     {
-        return $this->is_ambassador == 1;
+        $this->debitWallet($amount, $log);
+        $this->walletTransaction(['amount' => $amount, 'type' => 'Debit', 'log' => $log]);
     }
+
+    public function debitWallet($amount, $log)
+    {
+        $this->update(['wallet' => $this->wallet - $amount]);
+    }
+
+    public function walletTransaction($data)
+    {
+        $this->transactions()->save(new AffiliateTransaction(array_merge($data, createAuthor($this))));
+    }
+
+
 }

@@ -308,6 +308,7 @@ $api->version('v1', function ($api) {
         });
         $api->get('times', 'ScheduleTimeController@index');
         $api->get('settings', 'HomePageSettingController@index');
+        $api->get('settings/top-up', 'TopUpController@getVendor');
         $api->get('settings/car', 'HomePageSettingController@getCar');
         $api->get('home-grids', 'HomeGridController@index');
         $api->group(['prefix' => 'category-groups'], function ($api) {
@@ -410,6 +411,10 @@ $api->version('v1', function ($api) {
             $api->get('operations', 'Partner\OperationController@index');
             $api->post('operations', 'Partner\OperationController@store');
             $api->post('categories', 'Partner\OperationController@saveCategories');
+            $api->group(['prefix' => 'subscriptions'], function ($api) {
+                $api->get('/', 'Partner\PartnerSubscriptionController@index');
+                $api->post('/', 'Partner\PartnerSubscriptionController@store');
+            });
             $api->group(['prefix' => 'resources'], function ($api) {
                 $api->post('/', 'Resource\PersonalInformationController@store');
                 $api->group(['prefix' => '{resource}', 'middleware' => ['partner_resource.auth']], function ($api) {
@@ -436,7 +441,7 @@ $api->version('v1', function ($api) {
                     $api->group(['prefix' => 'materials'], function ($api) {
                         $api->get('/', 'PartnerJobController@getMaterials');
                     });
-                    $api->group(['prefix' => 'cancel-requests'], function ($api){
+                    $api->group(['prefix' => 'cancel-requests'], function ($api) {
                         $api->post('/', 'PartnerCancelRequestController@store');
                         $api->get('reasons', 'PartnerCancelRequestController@cancelReasons');
                     });
@@ -445,6 +450,9 @@ $api->version('v1', function ($api) {
             });
             $api->post('job_service/{job_service}/update', 'JobServiceController@update');
             $api->get('get-profile', 'ResourceController@getResourceData');
+        });
+        $api->group(['prefix' => 'affiliates/{affiliate}', 'middleware' => ['affiliate.auth']], function ($api) {
+            $api->post('top-up', 'TopUpController@topUp');
         });
     });
 

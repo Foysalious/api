@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\Partner;
 use App\Models\PartnerResource;
 use App\Models\PartnerWorkingHour;
 use Illuminate\Http\Request;
@@ -92,8 +93,8 @@ class OperationController extends Controller
             $categories = json_decode($request->categories);
             $categories = Category::whereIn('id', $categories)->get();
             $categories->load('services');
-            list($services, $category_partners) = $this->makeCategoryPartnerWithServices($categories, $by);
             $partner = $request->partner;
+            list($services, $category_partners) = $this->makeCategoryPartnerWithServices($partner, $categories, $by);
             DB::transaction(function () use ($partner, $category_partners, $services) {
                 $partner->categories()->sync($category_partners);
                 $partner_resources = PartnerResource::whereIn('id', $partner->handymanResources->pluck('pivot.id')->toArray())->get();
@@ -116,12 +117,13 @@ class OperationController extends Controller
         }
     }
 
-    private function makeCategoryPartnerWithServices($categories, $by)
+    private function makeCategoryPartnerWithServices(Partner $partner, $categories, $by)
     {
         $services = [];
         $category_partners = [];
         foreach ($categories as $category) {
-            array_push($category_partners, array_merge(['response_time_min' => 60, 'response_time_max' => 120, 'commission' => $category->min_commission, 'category_id' => $category->id], $by));
+            array_push($category_partners, array_merge(['response_time_min' => 60, 'response_time_max' => 120,
+                'commission' => $partner->commission, 'category_id' => $category->id], $by));
             $category->load(['services' => function ($q) {
                 $q->publishedForAll();
             }]);

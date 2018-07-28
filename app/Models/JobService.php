@@ -23,7 +23,7 @@ class JobService extends Model
 
     public function formatServiceName($job)
     {
-        if (in_array($job->category_id, array_map('intval', explode(',', env('RENT_CAR_IDS'))))) {
+        if (in_array($job->category_id, array_map('intval', explode(',', env('RENT_CAR_IDS')))) && $job->carRentalJobDetail) {
             if ($job->carRentalJobDetail->destinationLocation) {
                 return $this->name . ' | ' . $job->carRentalJobDetail->pickUpLocation->name . ' to ' . $job->carRentalJobDetail->destinationLocation->name;
             } else {

@@ -82,13 +82,14 @@ return [
      * Config for GraphiQL (see (https://github.com/graphql/graphiql).
      * To disable GraphiQL, set this to null
      */
-    'graphiql' => [
-        'routes' => '/graphiql/{graphql_schema?}',
-        'controller' => \Folklore\GraphQL\GraphQLController::class . '@graphiql',
-        'middleware' => [],
-        'view' => 'graphql::graphiql',
-        'composer' => \Folklore\GraphQL\View\GraphiQLComposer::class,
-    ],
+//    'graphiql' => [
+//        'routes' => '/graphiql/{graphql_schema?}',
+//        'controller' => \Folklore\GraphQL\GraphQLController::class . '@graphiql',
+//        'middleware' => [],
+//        'view' => 'graphql::graphiql',
+//        'composer' => \Folklore\GraphQL\View\GraphiQLComposer::class,
+//    ],
+    'graphiql' => null,
 
     /*
      * The name of the default schema used when no arguments are provided

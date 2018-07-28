@@ -20,6 +20,7 @@ use Illuminate\Http\Request;
 use DB;
 use Illuminate\Validation\ValidationException;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
+use Sheba\Manager\JobList;
 use Validator;
 
 class PartnerController extends Controller
@@ -309,19 +310,16 @@ class PartnerController extends Controller
                 constants('JOB_STATUSES')['Served'],
                 constants('JOB_STATUSES')['Serve_Due'],
             );
-
             $partner->load(['walletSetting', 'resources' => function ($q) {
                 $q->verified()->type('Handyman');
             }, 'jobs' => function ($q) use ($statuses) {
-                $q->info()->status($statuses)->with('resource');
-            }, 'orders' => function ($q) {
-                $q->ongoing();
+                $q->info()->status($statuses)->with(['resource', 'cancelRequests' => function ($q) {
+                    $q->where('status', 'Pending');
+                }]);
             }]);
-            $jobs = $partner->jobs;
-            $total_ongoing_order = 0;
-            foreach ($partner->orders as $partnerOrder) {
-                $total_ongoing_order += $partnerOrder->jobs->whereIn('status', ['Accepted', 'Schedule Due', 'Process', 'Serve Due', 'Served'])->count();
-            }
+            $jobs = $partner->jobs->reject(function ($job) {
+                return $job->cancelRequests->count() > 0;
+            });
             $resource_ids = $partner->resources->pluck('id')->unique();
             $assigned_resource_ids = $jobs->whereIn('status', [constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Schedule_Due']])->pluck('resource_id')->unique();
             $unassigned_resource_ids = $resource_ids->diff($assigned_resource_ids);
@@ -338,7 +336,7 @@ class PartnerController extends Controller
                 'process_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Process'])->count(),
                 'served_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Served'])->count(),
                 'serve_due_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Serve_Due'])->count(),
-                'total_ongoing_orders' => $total_ongoing_order,
+                'total_ongoing_orders' => (new JobList($partner))->ongoing()->count(),
                 'total_open_complains' => $partner->complains->whereIn('status', ['Observation', 'Open'])->where('accessor_id', 1)->count(),
                 'total_resources' => $resource_ids->count(),
                 'assigned_resources' => $assigned_resource_ids->count(),
@@ -351,6 +349,7 @@ class PartnerController extends Controller
             );
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -391,6 +390,7 @@ class PartnerController extends Controller
             $info->put('working_hour_starts', $working_hours->day_start);
             $info->put('working_hour_ends', $working_hours->day_end);
             $info->put('locations', $locations->pluck('name'));
+            $info->put('subscription', $partner->subscription()->select('id', 'name', 'show_name', 'show_name_bn', 'badge')->first());
             $info->put('total_locations', $locations->count());
             $info->put('total_services', $partner->services->count());
             $info->put('total_resources', $partner->resources->count());
@@ -456,6 +456,7 @@ class PartnerController extends Controller
                 $partners = $partner_list->partners;
                 $partners->each(function ($partner, $key) {
                     array_forget($partner, 'wallet');
+                    array_forget($partner, 'package_id');
                     removeRelationsAndFields($partner);
                 });
                 return api_response($request, $partners, 200, ['partners' => $partners->values()->all()]);

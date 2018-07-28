@@ -13,10 +13,10 @@ class CustomerJobAuthMiddleware
         $customer = $request->customer;
         $job = Job::with('partner_order.order')->find((int)$request->job);
         if (!$job) {
-            return api_response($request, null, 404);
+            return api_response($request, null, 404, ["message" => "Order not found."]);
         }
         if ($job->partner_order->order->customer_id != $customer->id) {
-            return api_response($request, null, 403);
+            return api_response($request, null, 403, ["message" => "You're not authorized to access this order."]);
         }
         $request->merge(['job' => $job]);
         return $next($request);

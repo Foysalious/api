@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Sheba\Subscription\Partner\PartnerSubscriber;
 use Carbon\Carbon;
 use Sheba\Dal\Complain\Model as Complain;
 use Illuminate\Database\Eloquent\Model;
@@ -11,8 +12,8 @@ class Partner extends Model
     protected $guarded = [
         'id',
     ];
-    protected $casts = ['wallet' => 'double'];
-
+    protected $dates = ['last_billed_date', 'billing_start_date'];
+    protected $casts = ['wallet' => 'double', 'last_billed_amount' => 'double'];
     protected $resourcePivotColumns = ['id', 'designation', 'department', 'resource_type', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
     protected $categoryPivotColumns = ['id', 'experience', 'preparation_time_minutes', 'response_time_min', 'response_time_max', 'commission', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
     protected $servicePivotColumns = ['id', 'description', 'options', 'prices', 'min_prices', 'is_published', 'discount', 'discount_start_date', 'discount_start_date', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
@@ -262,4 +263,55 @@ class Partner extends Model
         return $this->hasOne(PartnerBankInformation::class);
     }
 
+    public function subscription()
+    {
+        return $this->belongsTo(PartnerSubscriptionPackage::class, 'package_id');
+    }
+
+    public function subscriptionDiscount()
+    {
+        return $this->belongsTo(PartnerSubscriptionPackageDiscount::class, 'discount_id');
+    }
+
+    public function subscribe($package, $billing_type)
+    {
+        $package = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->partner->subscription;
+        $this->subscriber()->getPackage($package)->subscribe($billing_type);
+    }
+
+    public function subscriptionUpgrade($package)
+    {
+        $package = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->partner->subscription;
+        $this->subscriber()->upgrade($package);
+    }
+
+    public function runSubscriptionBilling()
+    {
+        $this->subscriber()->getBilling()->runSubscriptionBilling();
+    }
+
+    public function runUpfrontSubscriptionBilling()
+    {
+        $this->subscriber()->getBilling()->runUpfrontBilling();
+    }
+
+    private function subscriber()
+    {
+        return new PartnerSubscriber($this);
+    }
+
+    public function periodicBillingHandler()
+    {
+        return $this->subscriber()->periodicBillingHandler();
+    }
+
+    public function getCommissionAttribute()
+    {
+        return $this->subscriber()->commission();
+    }
+
+    public function canCreateResource(Array $types)
+    {
+        return $this->subscriber()->canCreateResource($types);
+    }
 }
