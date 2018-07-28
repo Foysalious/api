@@ -454,7 +454,7 @@ $api->version('v1', function ($api) {
         $api->group(['prefix' => 'affiliates/{affiliate}', 'middleware' => ['affiliate.auth']], function ($api) {
             $api->get('dashboard', 'AffiliateController@getDashboardInfo');
             $api->get('partner-affiliates', 'PartnerAffiliationController@index');
-            $api->get('dashboard', 'AffiliateController@getDashboardInfo');
+            $api->post('partner-affiliates', 'PartnerAffiliationController@store');
             $api->post('top-up', 'TopUpController@topUp');
         });
     });
