@@ -6,7 +6,6 @@ use App\Models\Job;
 use App\Models\JobMaterial;
 use App\Models\JobUpdateLog;
 use App\Models\Resource;
-use App\Repositories\NotificationRepository;
 use App\Repositories\PartnerOrderRepository;
 use App\Repositories\PushNotificationRepository;
 use App\Repositories\ResourceJobRepository;
@@ -17,7 +16,6 @@ use DB;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Validator;
 
 class PartnerJobController extends Controller
 {
@@ -143,10 +141,6 @@ class PartnerJobController extends Controller
                 if ($response) {
                     if ($response->code == 200) {
                         $job = $this->assignResource($job, $request->resource_id, $request->manager_resource);
-                        /*if ($job->crm_id != null) {
-                            $order = $job->partnerOrder->order;
-                            (new NotificationRepository())->sendToCRM($job->crm_id, "Partner has accepted this job, ID-" . $order->code(), $order);
-                        }*/
                         return api_response($request, $job, 200);
                     }
                     return api_response($request, $response, $response->code);
@@ -396,15 +390,13 @@ class PartnerJobController extends Controller
                     $job['category_name'] = $job->category ? $job->category->name : null;
                     $job['customer_name'] = $partnerOrder->order->customer ? $partnerOrder->order->customer->profile->name : null;
                     $job['schedule_timestamp'] = $partnerOrder->getVersion() == 'v2' ? Carbon::parse($job->schedule_date . ' ' . explode('-', $job->preferred_time)[0])->timestamp : Carbon::parse($job->schedule_date)->timestamp;
-                    $job['preferred_time'] = humanReadableShebaTime($job->readable_preferred_time);
+                    $job['preferred_time'] = humanReadableShebaTime($job->preferred_time);
                     $job['version'] = $partnerOrder->order->getVersion();
                     removeRelationsFromModel($job);
                     $jobs->push($job);
                 }
             }
-            if ($jobs->isEmpty()) return api_response($request, null, 404);
-
-            return api_response($request, $jobs, 200, ['jobs' => $jobs]);
+            return count($jobs) == 0 ? api_response($request, null, 404) : api_response($request, $jobs, 200, ['jobs' => $jobs]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
