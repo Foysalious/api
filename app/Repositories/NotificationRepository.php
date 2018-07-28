@@ -123,7 +123,9 @@ class NotificationRepository
         notify()->department(7)->send([
             'title' => 'New SP Referral Arrived from ' . $affiliate->profile->mobile,
             'link' => env('SHEBA_BACKEND_URL') . '/partner-affiliation/' . $partner_affiliation->id,
-            'type' => notificationType('Info')
+            'type' => notificationType('Info'),
+            'event_type' => "App\\Models\\" . class_basename($affiliate),
+            'event_id' => $partner_affiliation->id
         ]);
     }
 
