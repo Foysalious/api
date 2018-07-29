@@ -3,7 +3,6 @@
 namespace App\Sheba\Checkout;
 
 use App\Models\Partner;
-use App\Models\PartnerService;
 use App\Models\PartnerServiceDiscount;
 use App\Models\Service;
 use App\Repositories\PartnerRepository;

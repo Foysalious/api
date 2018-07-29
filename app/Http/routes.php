@@ -335,6 +335,7 @@ $api->version('v1', function ($api) {
         $api->group(['prefix' => 'partners'], function ($api) {
             $api->group(['prefix' => '{partner}'], function ($api) {
                 $api->get('/', 'PartnerController@show');
+                $api->get('locations', 'PartnerController@getLocations');
                 $api->get('categories/{category}/services', 'PartnerController@getServices');
             });
         });

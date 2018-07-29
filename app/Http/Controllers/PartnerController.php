@@ -474,4 +474,21 @@ class PartnerController extends Controller
         }
     }
 
+    public function getLocations($partner, Request $request)
+    {
+        try {
+            $partner = Partner::find($partner);
+            if ($partner) {
+                $locations = collect();
+                foreach ($partner->locations as $location) {
+                    $locations->push(array('id' => $location->id, 'name' => $location->name));
+                }
+                if (count($locations) > 0) return api_response($request, $locations, 200, ['locations' => $locations]);
+            }
+            return api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }
