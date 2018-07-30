@@ -120,5 +120,8 @@ class Affiliate extends Model implements OperatorAgent
         $this->transactions()->save(new AffiliateTransaction(array_merge($data, createAuthor($this))));
     }
 
-
+    public function isAmbassador()
+    {
+        return $this->is_ambassador == 1;
+    }
 }
