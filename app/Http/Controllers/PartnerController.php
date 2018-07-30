@@ -491,4 +491,27 @@ class PartnerController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function getCategories($partner, Request $request)
+    {
+        try {
+            $partner = Partner::with(['categories' => function ($query) {
+                return $query->published()->wherePivot('is_verified', 1);
+            }])->find($partner);
+            if ($partner) {
+                $categories = collect();
+                foreach ($partner->categories as $category) {
+                    $categories->push([
+                        'id'        => $category->id,
+                        'name'      => $category->name,
+                        'app_thumb' => $category->app_thumb]);
+                }
+                if (count($categories) > 0) return api_response($request, $categories, 200, ['categories' => $categories]);
+            }
+            return api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }

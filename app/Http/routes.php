@@ -336,6 +336,7 @@ $api->version('v1', function ($api) {
             $api->group(['prefix' => '{partner}'], function ($api) {
                 $api->get('/', 'PartnerController@show');
                 $api->get('locations', 'PartnerController@getLocations');
+                $api->get('categories', 'PartnerController@getCategories');
                 $api->get('categories/{category}/services', 'PartnerController@getServices');
             });
         });
@@ -459,5 +460,4 @@ $api->version('v1', function ($api) {
             $api->post('top-up', 'TopUpController@topUp');
         });
     });
-
 });
