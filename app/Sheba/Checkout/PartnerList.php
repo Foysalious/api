@@ -193,7 +193,7 @@ class PartnerList
     private function addAvailability()
     {
         $this->partners->load(['workingHours', 'leaves']);
-        $category = $this->selected_services->first()->category;
+        $category = $this->selectedCategory;
         $this->partners->each(function ($partner) use ($category) {
             $partner['is_available'] = $this->isWithinPreparationTime($partner, $category->id) && (new PartnerAvailable($partner))->available($this->date, $this->time, $category) ? 1 : 0;
         });
@@ -226,7 +226,11 @@ class PartnerList
     public function addInfo()
     {
         $this->partners->load(['jobs' => function ($q) {
-            $q->select('jobs.id', 'jobs.partner_order_id', 'status', 'category_id')->validStatus();
+                $q->selectRaw("count(case when status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then status end) as total_jobs")
+                ->selectRaw("count(case when status in ('Accepted', 'Schedule Due', 'Process', 'Serve Due') then status end) as ongoing_jobs")
+                ->selectRaw("count(case when category_id=" . $this->selectedCategory->id . " and status='Served' then category_id end) as total_jobs_of_category")
+                ->groupBy('partner_id');
+//            $q->select('jobs.id', 'jobs.partner_order_id', 'status', 'category_id')->validStatus();
         }, 'subscription' => function ($q) {
             $q->select('id', 'name');
         }, 'resources' => function ($q) {
@@ -235,9 +239,14 @@ class PartnerList
             }]);
         }]);
         foreach ($this->partners as $partner) {
-            $partner['total_jobs'] = $partner->jobs->count();
-            $partner['ongoing_jobs'] = $partner->jobs->whereIn('status', ['Accepted', 'Schedule Due', 'Process', 'Serve Due'])->count();
-            $partner['total_jobs_of_category'] = $partner->jobs->where('category_id', $this->selected_services->pluck('category_id')->unique()->first())->count();
+            $partner['total_jobs'] = $partner->jobs->first()->total_jobs;
+            $partner['ongoing_jobs'] =  $partner->jobs->first()->ongoing_jobs;
+            $partner['total_jobs_of_category'] =  $partner->jobs->first()->total_jobs_of_category;
+
+//            $partner['total_jobs'] = $partner->jobs->count();
+//            $partner['total_jobs_of_category'] = $partner->jobs->where('category_id', $this->selected_services->pluck('category_id')->unique()->first())->count();
+//            $partner['ongoing_jobs'] = $partner->jobs->whereIn('status', ['Accepted', 'Schedule Due', 'Process', 'Serve Due'])->count();
+
             $partner['contact_no'] = $this->getContactNumber($partner);
             $partner['subscription_type'] = $partner->subscription ? $partner->subscription->name : null;
         }
