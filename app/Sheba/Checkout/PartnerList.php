@@ -228,7 +228,7 @@ class PartnerList
         $this->partners->load(['jobs' => function ($q) {
             $q->selectRaw("count(case when status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then status end) as total_jobs")
                 ->selectRaw("count(case when status in ('Accepted', 'Schedule Due', 'Process', 'Serve Due') then status end) as ongoing_jobs")
-                ->selectRaw("count(case when category_id=" . $this->selectedCategory->id . " and status='Served' then category_id end) as total_jobs_of_category")
+                ->selectRaw("count(case when category_id=" . $this->selectedCategory->id . " and status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then category_id end) as total_jobs_of_category")
                 ->groupBy('partner_id');
         }, 'subscription' => function ($q) {
             $q->select('id', 'name');
