@@ -349,7 +349,6 @@ class PartnerController extends Controller
             );
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -492,6 +491,7 @@ class PartnerController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -524,15 +524,35 @@ class PartnerController extends Controller
             if ($partner) {
                 $categories = collect();
                 foreach ($partner->categories as $category) {
+                    $services = $partner->services()->select('services.id', 'name', 'variable_type', 'services.min_quantity', 'services.variables')
+                        ->where('category_id', $category->id)->published()->get();
+                    if (count($services) > 0) {
+                        $services->each(function (&$service) {
+                            $variables = json_decode($service->variables);
+                            if ($service->variable_type == 'Options') {
+                                $service['questions'] = $this->formatServiceQuestions($variables->options);
+                                $service['option_prices'] = $this->formatOptionWithPrice(json_decode($service->pivot->prices));
+                                $service['fixed_price'] = null;
+                            } else {
+                                $service['questions'] = $service['option_prices'] = [];
+                                $service['fixed_price'] = (double)$variables->price;
+                            }
+                            array_forget($service, 'variables');
+                            removeRelationsAndFields($service);
+                        });
+                    }
                     $categories->push([
-                        'id'        => $category->id,
-                        'name'      => $category->name,
-                        'app_thumb' => $category->app_thumb]);
+                        'id' => $category->id,
+                        'name' => $category->name,
+                        'app_thumb' => $category->app_thumb,
+                        'services' => $services
+                    ]);
                 }
                 if (count($categories) > 0) return api_response($request, $categories, 200, ['categories' => $categories]);
             }
             return api_response($request, null, 404);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
