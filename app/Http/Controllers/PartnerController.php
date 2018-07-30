@@ -437,7 +437,7 @@ class PartnerController extends Controller
                 return api_response($request, $validation->message, 400, ['message' => $validation->message]);
             }
             $time_elapsed_secs = microtime(true) - $start;
-            dump("validation: " . $time_elapsed_secs);
+//            dump("validation: " . $time_elapsed_secs);
 
             $partner = $request->has('partner') ? $request->partner : null;
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $location);
@@ -454,27 +454,27 @@ class PartnerController extends Controller
                 $start = microtime(true);
                 $partner_list->addPricing();
                 $time_elapsed_secs = microtime(true) - $start;
-                dump("partner pricing: " . $time_elapsed_secs * 1000);
+                //dump("partner pricing: " . $time_elapsed_secs * 1000);
 
                 $start = microtime(true);
                 $partner_list->addInfo();
                 $time_elapsed_secs = microtime(true) - $start;
-                dump("total_jobs,total_jobs_of_cat,ongoing_jobs,contact_no,subscription info: " . $time_elapsed_secs * 1000);
+                //dump("total_jobs,total_jobs_of_cat,ongoing_jobs,contact_no,subscription info: " . $time_elapsed_secs * 1000);
 
                 $start = microtime(true);
                 $partner_list->calculateAverageRating();
                 $time_elapsed_secs = microtime(true) - $start;
-                dump("avg rating: " . $time_elapsed_secs * 1000);
+                //dump("avg rating: " . $time_elapsed_secs * 1000);
 
                 $start = microtime(true);
                 $partner_list->calculateTotalRatings();
                 $time_elapsed_secs = microtime(true) - $start;
-                dump("total rating count: " . $time_elapsed_secs * 1000);
+                //dump("total rating count: " . $time_elapsed_secs * 1000);
 
                 $start = microtime(true);
                 $partner_list->sortByShebaSelectedCriteria();
                 $time_elapsed_secs = microtime(true) - $start;
-                dump("sort by sheba criteria: " . $time_elapsed_secs * 1000);
+                //dump("sort by sheba criteria: " . $time_elapsed_secs * 1000);
 
                 $partners = $partner_list->partners;
                 $partners->each(function ($partner, $key) {
@@ -492,7 +492,6 @@ class PartnerController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
