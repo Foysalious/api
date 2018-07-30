@@ -19,26 +19,27 @@ class PartnerHandler
         $is_available = false;
         $available_resources = collect([]);
         $unavailable_resources = collect([]);
-        $category = Category::find($category);
+        $category = $category instanceof Category ? $category : Category::find($category);
 
-        $this->partner->resourcesInCategory($category)->each(function ($resource) use ($date, $time, &$is_available, &$available_resources, &$unavailable_resources, $category) {
-            if (scheduler($resource)->isAvailableForCategory($date, $time, $category)) {
-                $available_resources->push($resource);
-                $is_available = true;
-            } else {
-                $unavailable_resources->push($resource);
-            }
-        });
-        return collect([
-            'is_available' => $is_available,
-            'available_resources' => $available_resources,
-            'unavailable_resources' => $unavailable_resources
-        ]);
+//        $this->partner->resourcesInCategory($category)->each(function ($resource) use ($date, $time, &$is_available, &$available_resources, &$unavailable_resources, $category) {
+//            if (scheduler($resource)->isAvailableForCategory($date, $time, $category)) {
+//                $available_resources->push($resource);
+//                $is_available = true;
+//            } else {
+//                $unavailable_resources->push($resource);
+//            }
+//        });
+//        return collect([
+//            'is_available' => $is_available,
+//            'available_resources' => $available_resources,
+//            'unavailable_resources' => $unavailable_resources
+//        ]);
 
-        $resource_id = $this->partner->resourcesInCategory($category)->pluck('id')->toArray();
+        $resource_ids = $this->partner->resourcesInCategory($category)->pluck('id')->unique()->toArray();
         $start_time = Carbon::parse($date . ' ' . $time);
         $end_time = Carbon::parse($date . ' ' . $time)->addMinutes($category->book_resource_minutes);
-        $booked_resources = ResourceSchedule::startBetween($start_time, $end_time)->orWhere(function ($q) use ($start_time, $end_time) {
+
+        $booked_schedules = ResourceSchedule::startBetween($start_time, $end_time)->orWhere(function ($q) use ($start_time, $end_time) {
             $q->endBetween($start_time, $end_time);
         })->orWhere(function ($q) use ($start_time) {
             $q->byDateTime($start_time);
@@ -46,10 +47,10 @@ class PartnerHandler
             $q->byDateTime($end_time);
         })->orWhere(function ($q) use ($start_time, $end_time) {
             $q->startAndEndAt($start_time, $end_time);
-        })->whereIn('resource_id', $resource_id)->get();
+        })->whereIn('resource_id', $resource_ids)->select('id', 'resource_id', 'job_id', 'start', 'end')->get();
 
         return collect([
-            'is_available' => $resource_id > $booked_resources->count() ? 1 : 0
+            'is_available' => count($resource_ids) > $booked_schedules->pluck('resource_id')->unique()->count() ? 1 : 0
         ]);
     }
 }

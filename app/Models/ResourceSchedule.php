@@ -23,11 +23,6 @@ class ResourceSchedule extends Model
         return $this->hasMany(ResourceScheduleLog::class);
     }
 
-    public function scopeStartAndEndAt($query, Carbon $start, Carbon $end)
-    {
-        return $query->where([['start', $start], ['end', $end]]);
-    }
-
     public function scopeStartBetween($query, Carbon $start, Carbon $end)
     {
         return $query->where([['start', '>', $start], ['start', '<', $end]]);
@@ -41,5 +36,10 @@ class ResourceSchedule extends Model
     public function scopeByDateTime($query, Carbon $date_time)
     {
         return $query->where([['start', '<', $date_time], ['end', '>', $date_time]]);
+    }
+
+    public function scopeStartAndEndAt($query, Carbon $start, Carbon $end)
+    {
+        return $query->where([['start', $start], ['end', $end]]);
     }
 }

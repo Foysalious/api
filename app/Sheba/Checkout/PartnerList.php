@@ -2,6 +2,7 @@
 
 namespace App\Sheba\Checkout;
 
+use App\Models\Category;
 use App\Models\Partner;
 use App\Models\PartnerServiceDiscount;
 use App\Models\Service;
@@ -31,7 +32,11 @@ class PartnerList
         $this->date = $date;
         $this->time = $time;
         $this->rentCarServicesId = array_map('intval', explode(',', env('RENT_CAR_SERVICE_IDS')));
+        $start = microtime(true);
         $this->selected_services = $this->getSelectedServices($services);
+        $this->selectedCategory = Category::find($this->selected_services->first()->category_id);
+        $time_elapsed_secs = microtime(true) - $start;
+//        dump("add selected service info: " . $time_elapsed_secs * 1000);
         $this->partnerServiceRepository = new PartnerServiceRepository();
     }
 
@@ -103,18 +108,36 @@ class PartnerList
 
     public function find($partner_id = null)
     {
+        $start = microtime(true);
         $this->partners = $this->findPartnersByServiceAndLocation((int)$partner_id);
+        $time_elapsed_secs = microtime(true) - $start;
+        // dump("filter partner by service,location,category: " . $time_elapsed_secs * 1000);
+
+        $start = microtime(true);
         $this->partners->load(['services' => function ($q) {
             $q->whereIn('service_id', $this->selected_services->pluck('id')->unique());
         }, 'categories' => function ($q) {
             $q->where('categories.id', $this->selected_services->pluck('category_id')->unique()->first());
         }]);
+        $time_elapsed_secs = microtime(true) - $start;
+        //dump("load partner service and category: " . $time_elapsed_secs * 1000);
+
+        $start = microtime(true);
         $selected_option_services = $this->selected_services->where('variable_type', 'Options');
         $this->filterByOption($selected_option_services);
-        $this->filterByCreditLimit();
-        $this->addAvailability();
-        $this->calculateHasPartner();
+        $time_elapsed_secs = microtime(true) - $start;
+        //dump("filter partner by option: " . $time_elapsed_secs * 1000);
 
+        $start = microtime(true);
+        $this->filterByCreditLimit();
+        $time_elapsed_secs = microtime(true) - $start;
+        //dump("filter partner by credit: " . $time_elapsed_secs * 1000);
+
+        $start = microtime(true);
+        $this->addAvailability();
+        $time_elapsed_secs = microtime(true) - $start;
+        //dump("filter partner by availability: " . $time_elapsed_secs * 1000);
+        $this->calculateHasPartner();
     }
 
     private function findPartnersByServiceAndLocation($partner_id = null)
@@ -130,17 +153,11 @@ class PartnerList
                 $q->published();
             })->select(DB::raw('count(*) as c'))->whereIn('services.id', $service_ids)->where([['partner_service.is_published', 1], ['partner_service.is_verified', 1]])->publishedForAll()
                 ->groupBy('partner_id')->havingRaw('c=' . count($service_ids));
-        })->with(['subscription', 'resources' => function ($q) {
-            $q->with('profile');
-        }])->published()->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet', 'partners.package_id');
+        })->published()->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet', 'partners.package_id');
         if ($partner_id != null) {
             $query = $query->where('partners.id', $partner_id);
         }
-        return $query->get()->map(function ($partner) {
-            $partner->contact_no = $this->getContactNumber($partner);
-            $partner['subscription_type'] = $partner->subscription ? $partner->subscription->name : null;
-            return $partner;
-        });
+        return $query->get();
     }
 
     private function getContactNumber($partner)
@@ -165,7 +182,9 @@ class PartnerList
 
     private function filterByCreditLimit()
     {
-        $this->partners->load('walletSetting');
+        $this->partners->load(['walletSetting' => function ($q) {
+            $q->select('id', 'partner_id', 'min_wallet_threshold');
+        }]);
         $this->partners = $this->partners->filter(function ($partner, $key) {
             return ((new PartnerRepository($partner)))->hasAppropriateCreditLimit();
         });
@@ -174,9 +193,9 @@ class PartnerList
     private function addAvailability()
     {
         $this->partners->load(['workingHours', 'leaves']);
-        $category_id = $this->selected_services->first()->category_id;
-        $this->partners->each(function ($partner) use ($category_id) {
-            $partner['is_available'] = $this->isWithinPreparationTime($partner, $category_id) && (new PartnerAvailable($partner))->available($this->date, $this->time, $category_id) ? 1 : 0;
+        $category = $this->selectedCategory;
+        $this->partners->each(function ($partner) use ($category) {
+            $partner['is_available'] = $this->isWithinPreparationTime($partner, $category->id) && (new PartnerAvailable($partner))->available($this->date, $this->time, $category) ? 1 : 0;
         });
         $available_partners = $this->partners->where('is_available', 1);
         if ($available_partners->count() > 1) {
@@ -207,17 +226,31 @@ class PartnerList
     public function addInfo()
     {
         $this->partners->load(['jobs' => function ($q) {
-            $q->validStatus();
+            $q->selectRaw("count(case when status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then status end) as total_jobs")
+                ->selectRaw("count(case when status in ('Accepted', 'Schedule Due', 'Process', 'Serve Due') then status end) as ongoing_jobs")
+                ->selectRaw("count(case when category_id=" . $this->selectedCategory->id . " and status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then category_id end) as total_jobs_of_category")
+                ->groupBy('partner_id');
+        }, 'subscription' => function ($q) {
+            $q->select('id', 'name');
+        }, 'resources' => function ($q) {
+            $q->select('resources.id', 'profile_id')->with(['profile' => function ($q) {
+                $q->select('profiles.id', 'mobile');
+            }]);
         }]);
         foreach ($this->partners as $partner) {
-            $partner['total_jobs'] = $partner->jobs->count();
-            $partner['total_jobs_of_category'] = $partner->jobs->where('category_id', $this->selected_services->pluck('category_id')->unique()->first())->count();
+            $partner['total_jobs'] = $partner->jobs->first()->total_jobs;
+            $partner['ongoing_jobs'] = $partner->jobs->first()->ongoing_jobs;
+            $partner['total_jobs_of_category'] = $partner->jobs->first()->total_jobs_of_category;
+            $partner['contact_no'] = $this->getContactNumber($partner);
+            $partner['subscription_type'] = $partner->subscription ? $partner->subscription->name : null;
         }
     }
 
     public function calculateAverageRating()
     {
-        $this->partners->load('reviews');
+        $this->partners->load(['reviews' => function ($q) {
+            $q->select('reviews.id', 'rating', 'category_id', 'partner_id');
+        }]);
         foreach ($this->partners as $partner) {
             $partner['rating'] = (new ReviewRepository())->getAvgRating($partner->reviews);
         }
@@ -230,13 +263,6 @@ class PartnerList
             $partner['total_five_star_ratings'] = count($partner->reviews->filter(function ($review) {
                 return $review->rating == 5;
             }));
-        }
-    }
-
-    public function calculateOngoingJobs()
-    {
-        foreach ($this->partners as $partner) {
-            $partner['ongoing_jobs'] = $partner->jobs->whereIn('status', ['Accepted', 'Schedule Due', 'Process', 'Serve Due'])->count();
         }
     }
 
