@@ -421,6 +421,7 @@ class PartnerController extends Controller
     public function findPartners(Request $request, $location)
     {
         try {
+            $start = microtime(true);
             $this->validate($request, [
                 'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
                 'time' => 'required|string',
@@ -435,6 +436,9 @@ class PartnerController extends Controller
                 $sentry->captureException(new \Exception($validation->message));
                 return api_response($request, $validation->message, 400, ['message' => $validation->message]);
             }
+            $time_elapsed_secs = microtime(true) - $start;
+//            dump("validation: " . $time_elapsed_secs);
+
             $partner = $request->has('partner') ? $request->partner : null;
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $location);
             $partner_list->find($partner);
@@ -447,12 +451,31 @@ class PartnerController extends Controller
                 return api_response($request, $is_available, 200, ['is_available' => $is_available, 'available_partners' => count($available_partners)]);
             }
             if ($partner_list->hasPartners) {
+                $start = microtime(true);
                 $partner_list->addPricing();
+                $time_elapsed_secs = microtime(true) - $start;
+                //dump("partner pricing: " . $time_elapsed_secs * 1000);
+
+                $start = microtime(true);
                 $partner_list->addInfo();
+                $time_elapsed_secs = microtime(true) - $start;
+                //dump("total_jobs,total_jobs_of_cat,ongoing_jobs,contact_no,subscription info: " . $time_elapsed_secs * 1000);
+
+                $start = microtime(true);
                 $partner_list->calculateAverageRating();
+                $time_elapsed_secs = microtime(true) - $start;
+                //dump("avg rating: " . $time_elapsed_secs * 1000);
+
+                $start = microtime(true);
                 $partner_list->calculateTotalRatings();
-                $partner_list->calculateOngoingJobs();
+                $time_elapsed_secs = microtime(true) - $start;
+                //dump("total rating count: " . $time_elapsed_secs * 1000);
+
+                $start = microtime(true);
                 $partner_list->sortByShebaSelectedCriteria();
+                $time_elapsed_secs = microtime(true) - $start;
+                //dump("sort by sheba criteria: " . $time_elapsed_secs * 1000);
+
                 $partners = $partner_list->partners;
                 $partners->each(function ($partner, $key) {
                     array_forget($partner, 'wallet');
