@@ -314,4 +314,9 @@ class Partner extends Model
     {
         return $this->subscriber()->canCreateResource($types);
     }
+
+    public function affiliation()
+    {
+        return $this->belongsTo(PartnerAffiliation::class, 'affiliation_id');
+    }
 }

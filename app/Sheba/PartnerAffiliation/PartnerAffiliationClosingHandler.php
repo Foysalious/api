@@ -1,9 +1,7 @@
 <?php namespace Sheba\PartnerAffiliation;
 
 use App\Models\PartnerAffiliation;
-use Sheba\Bondhu\AffiliateEarning;
 use Sheba\Repositories\PartnerAffiliationRepository;
-use Sheba\Repositories\PartnerRepository;
 use Sheba\PartnerAffiliation\PartnerAffiliationStatuses as Statuses;
 
 class PartnerAffiliationClosingHandler
@@ -14,27 +12,22 @@ class PartnerAffiliationClosingHandler
     private $partner;
 
     private $repo;
-    private $partnerRepo;
-    private $affiliateEarnings;
+    private $rewardHandler;
 
-    private $reward;
     private $orderBenchmark;
 
-    public function __construct(PartnerAffiliationRepository $repo, PartnerRepository $partner_repo, AffiliateEarning $affiliate_earning)
+    public function __construct(PartnerAffiliationRepository $repo, RewardHandler $rewardHandler)
     {
         $this->repo = $repo;
-        $this->partnerRepo = $partner_repo;
-        $this->affiliateEarnings = $affiliate_earning;
-        $this->reward = PartnerAffiliation::reward();
         $this->orderBenchmark = PartnerAffiliation::partnerOrderBenchmark();
+        $this->rewardHandler = $rewardHandler;
     }
 
     public function complete()
     {
         if(!$this->validate()) return;
         $this->updateAffiliationStatus();
-        $this->updateAffiliateIncome();
-        $this->updatePartnerAcquisitionCost();
+        $this->rewardHandler->setPartner($this->partner)->setAffiliation($this->affiliation)->orderCompleted();
     }
 
     private function validate()
@@ -45,15 +38,5 @@ class PartnerAffiliationClosingHandler
     private function updateAffiliationStatus()
     {
         $this->repo->update($this->affiliation, ['status' => Statuses::$successful]);
-    }
-
-    private function updateAffiliateIncome()
-    {
-        $this->affiliateEarnings->partnerAffiliation($this->affiliation, $this->reward);
-    }
-
-    private function updatePartnerAcquisitionCost()
-    {
-        $this->partnerRepo->update($this->partner, ['acquisition_cost' => $this->reward]);
     }
 }
