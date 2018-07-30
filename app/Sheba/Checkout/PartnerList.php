@@ -2,6 +2,7 @@
 
 namespace App\Sheba\Checkout;
 
+use App\Models\Category;
 use App\Models\Partner;
 use App\Models\PartnerServiceDiscount;
 use App\Models\Service;
@@ -33,6 +34,7 @@ class PartnerList
         $this->rentCarServicesId = array_map('intval', explode(',', env('RENT_CAR_SERVICE_IDS')));
         $start = microtime(true);
         $this->selected_services = $this->getSelectedServices($services);
+        $this->selectedCategory = Category::find($this->selected_services->first()->category_id);
         $time_elapsed_secs = microtime(true) - $start;
         dump("add selected service info: " . $time_elapsed_secs * 1000);
         $this->partnerServiceRepository = new PartnerServiceRepository();
@@ -42,7 +44,7 @@ class PartnerList
     {
         $selected_services = collect();
         foreach ($services as $service) {
-            $selected_service = Service::where('id', $service->id)->publishedForAll()->with('category')->first();
+            $selected_service = Service::where('id', $service->id)->publishedForAll()->first();
             $selected_service['option'] = $service->option;
             $selected_service['pick_up_location_id'] = isset($service->pick_up_location_id) ? $service->pick_up_location_id : null;
             $selected_service['pick_up_location_type'] = isset($service->pick_up_location_type) ? $service->pick_up_location_type : null;
