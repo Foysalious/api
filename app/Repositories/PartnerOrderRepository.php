@@ -43,8 +43,8 @@ class PartnerOrderRepository
                 $info['discount'] = (double)$job_service->discount;
                 $info['sheba_contribution'] = (double)$job_service->sheba_contribution;
                 $info['partner_contribution'] = (double)$job_service->partner_contribution;
-                $info['sheba_contribution_amount'] = round(($info['discount'] * (double)$job_service->sheba_contribution) / 100, 2);
-                $info['partner_contribution_amount'] = round(($info['discount'] * (double)$job_service->partner_contribution) / 100, 2);
+                $info['sheba_contribution_amount'] = round(($info['discount'] * $info['sheba_contribution']) / 100, 2);
+                $info['partner_contribution_amount'] = round(($info['discount'] * $info['partner_contribution']) / 100, 2);
                 array_push($services, $info);
             });
 
