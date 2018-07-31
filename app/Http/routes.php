@@ -353,6 +353,7 @@ $api->version('v1', function ($api) {
                 $api->group(['prefix' => 'promotions'], function ($api) {
                     $api->get('/', 'PromotionController@index');
                     $api->post('/', 'PromotionController@addPromo');
+                    $api->get('applicable', 'PromotionController@getApplicablePromotions');
                 });
 
                 $api->group(['prefix' => 'delivery-addresses'], function ($api) {

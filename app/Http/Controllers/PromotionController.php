@@ -11,6 +11,7 @@ use App\Sheba\Checkout\Discount;
 use App\Sheba\Checkout\PartnerList;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Sheba\Voucher\PromotionList;
 use Sheba\Voucher\VoucherSuggester;
 
@@ -38,6 +39,58 @@ class PromotionController extends Controller
             return api_response($request, null, 500);
         }
 
+    }
+
+    public function getApplicablePromotions($customer, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'category' => 'required|numeric',
+                'location' => 'required|numeric',
+                'sales_channel' => 'required|string'
+            ]);
+            /** @var Customer $customer */
+            $customer = $request->customer->load(['promotions' => function ($q) {
+                $q->select('id', 'voucher_id', 'customer_id', 'is_valid', 'valid_till')->valid()->with(['voucher' => function ($q) {
+                    $q->select('id', 'code', 'amount', 'is_amount_percentage', 'cap', 'rules', 'start_date', 'end_date', 'is_referral', 'max_order', 'max_customer');
+                }]);
+            }]);
+            $valid_promos = collect();
+            foreach ($customer->promotions as $promotion) {
+                $result = voucher($promotion->voucher->code)
+                    ->check($request->category, null, $request->location, $customer, null, $request->sales_channel)
+                    ->reveal();
+                if ($result['is_valid']) $valid_promos->push($promotion->voucher);
+            }
+            if ($valid_promos->count() == 0) return api_response($request, null, 404);
+            $valid_promos = $valid_promos->unique();
+            $applicable_promo = $valid_promos->filter(function ($promo) {
+                return (int)$promo->is_amount_percentage == 1 && (double)$promo->cap == 0;
+            })->sortByDesc('amount')->first();
+            if (!$applicable_promo) {
+                $valid_promos = $valid_promos->each(function (&$promo) {
+                    $cap = (double)$promo->cap;
+                    if ($cap > 0) $promo['applicable_amount'] = $cap;
+                    else $promo['applicable_amount'] = (double)$promo->amount;
+                });
+                $applicable_promo = $valid_promos->sortByDesc('applicable_amount')->first();
+            }
+            $applicable_promo['order_amount'] = null;
+            if ($applicable_promo->rules != '[]') {
+                $rules = json_decode($applicable_promo->rules);
+                if (isset($rules->order_amount)) $applicable_promo['order_amount'] = (double)$rules->order_amount;
+            }
+            return api_response($request, $applicable_promo, 200, ['promo' => collect($applicable_promo)->only(['id', 'amount', 'code', 'is_amount_percentage', 'cap', 'order_amount', 'applicable_amount'])]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 
     public function addPromo($customer, Request $request)
