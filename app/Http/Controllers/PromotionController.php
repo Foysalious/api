@@ -80,7 +80,9 @@ class PromotionController extends Controller
                 $rules = json_decode($applicable_promo->rules);
                 if (isset($rules->order_amount)) $applicable_promo['order_amount'] = (double)$rules->order_amount;
             }
-            return api_response($request, $applicable_promo, 200, ['promo' => collect($applicable_promo)->only(['id', 'amount', 'code', 'is_amount_percentage', 'cap', 'order_amount', 'applicable_amount'])]);
+            $applicable_promo['msg'] = '';
+            $this->makeApplicablePromoMsg($applicable_promo);
+            return api_response($request, $applicable_promo, 200, ['promo' => collect($applicable_promo)->only(['id', 'amount', 'code', 'is_amount_percentage', 'cap', 'order_amount', 'applicable_amount', 'msg'])]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
@@ -91,6 +93,23 @@ class PromotionController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function makeApplicablePromoMsg(&$applicable_promo)
+    {
+        $applicable_promo['msg'] = "You can save ";
+        if($applicable_promo['is_amount_percentage']) {
+            $applicable_promo['msg'] .= $applicable_promo['amount'] . '%';
+            if($applicable_promo['cap']) {
+                $applicable_promo['msg'] .= '(Upto ' . $applicable_promo['cap'] . 'BDT)';
+            }
+        } else {
+            $applicable_promo['msg'] .= $applicable_promo['amount'] . 'BDT';
+        }
+        if($applicable_promo['order_amount']) {
+            $applicable_promo['msg'] .= ' on order above ' . $applicable_promo['order_amount'] . 'BDT';
+        }
+        $applicable_promo['msg'] .= " at checkout.";
     }
 
     public function addPromo($customer, Request $request)
