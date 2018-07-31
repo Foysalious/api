@@ -319,4 +319,9 @@ class Partner extends Model
     {
         return $this->belongsTo(PartnerAffiliation::class, 'affiliation_id');
     }
+
+    public function hasAppropriateCreditLimit()
+    {
+        return (double)$this->wallet >= (double)$this->walletSetting->min_wallet_threshold;
+    }
 }

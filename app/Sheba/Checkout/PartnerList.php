@@ -114,10 +114,15 @@ class PartnerList
         // dump("filter partner by service,location,category: " . $time_elapsed_secs * 1000);
 
         $start = microtime(true);
+        $this->filterByCreditLimit();
+        $time_elapsed_secs = microtime(true) - $start;
+        //dump("filter partner by credit: " . $time_elapsed_secs * 1000);
+
+        $start = microtime(true);
         $this->partners->load(['services' => function ($q) {
             $q->whereIn('service_id', $this->selected_services->pluck('id')->unique());
         }, 'categories' => function ($q) {
-            $q->where('categories.id', $this->selected_services->pluck('category_id')->unique()->first());
+            $q->where('categories.id', $this->selectedCategory->id);
         }]);
         $time_elapsed_secs = microtime(true) - $start;
         //dump("load partner service and category: " . $time_elapsed_secs * 1000);
@@ -127,11 +132,6 @@ class PartnerList
         $this->filterByOption($selected_option_services);
         $time_elapsed_secs = microtime(true) - $start;
         //dump("filter partner by option: " . $time_elapsed_secs * 1000);
-
-        $start = microtime(true);
-        $this->filterByCreditLimit();
-        $time_elapsed_secs = microtime(true) - $start;
-        //dump("filter partner by credit: " . $time_elapsed_secs * 1000);
 
         $start = microtime(true);
         $this->addAvailability();
@@ -186,16 +186,16 @@ class PartnerList
             $q->select('id', 'partner_id', 'min_wallet_threshold');
         }]);
         $this->partners = $this->partners->filter(function ($partner, $key) {
-            return ((new PartnerRepository($partner)))->hasAppropriateCreditLimit();
+            /** @var Partner $partner */
+            return $partner->hasAppropriateCreditLimit();
         });
     }
 
     private function addAvailability()
     {
         $this->partners->load(['workingHours', 'leaves']);
-        $category = $this->selectedCategory;
-        $this->partners->each(function ($partner) use ($category) {
-            $partner['is_available'] = $this->isWithinPreparationTime($partner, $category->id) && (new PartnerAvailable($partner))->available($this->date, $this->time, $category) ? 1 : 0;
+        $this->partners->each(function ($partner) {
+            $partner['is_available'] = $this->isWithinPreparationTime($partner) && (new PartnerAvailable($partner))->available($this->date, $this->time, $this->selectedCategory) ? 1 : 0;
         });
         $available_partners = $this->partners->where('is_available', 1);
         if ($available_partners->count() > 1) {
@@ -203,9 +203,9 @@ class PartnerList
         }
     }
 
-    public function isWithinPreparationTime($partner, $category_id)
+    public function isWithinPreparationTime($partner)
     {
-        $category_preparation_time_minutes = $partner->categories->where('id', $category_id)->first()->pivot->preparation_time_minutes;
+        $category_preparation_time_minutes = $partner->categories->where('id', $this->selectedCategory->id)->first()->pivot->preparation_time_minutes;
         if ($category_preparation_time_minutes == 0) return 1;
         $start_time = Carbon::parse($this->date . explode('-', $this->time)[0]);
         $end_time = Carbon::parse($this->date . explode('-', $this->time)[1]);
