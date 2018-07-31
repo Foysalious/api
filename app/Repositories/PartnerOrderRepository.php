@@ -40,9 +40,11 @@ class PartnerOrderRepository
                 $info = $this->partnerJobRepository->getJobServiceInfo($job_service);
                 $info['name'] = $job_service->formatServiceName($job);
                 $info['unit'] = $job_service->service->unit;
+                $info['discount'] = (double)$job_service->discount;
                 $info['sheba_contribution'] = (double)$job_service->sheba_contribution;
                 $info['partner_contribution'] = (double)$job_service->partner_contribution;
-                $info['discount'] = (double)$job_service->discount;
+                $info['sheba_contribution_amount'] = round(($info['discount'] * (double)$job_service->sheba_contribution) / 100, 2);
+                $info['partner_contribution_amount'] = round(($info['discount'] * (double)$job_service->partner_contribution) / 100, 2);
                 array_push($services, $info);
             });
 
