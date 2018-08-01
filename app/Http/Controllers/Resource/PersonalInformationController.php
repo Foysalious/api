@@ -54,7 +54,7 @@ class PersonalInformationController extends Controller
         try {
             $request->merge(['mobile' => trim($request->mobile)]);
             $this->validate($request, [
-                'nid_no' => 'required_without:resource|string',
+                'nid_no' => 'required_without:resource|string|unique:resources,nid_no',
                 'nid_back' => 'required_without:resource|file',
                 'nid_front' => 'required_without:resource|file',
                 'name' => 'string',
@@ -62,7 +62,7 @@ class PersonalInformationController extends Controller
                 'picture' => 'file',
                 'resource' => 'numeric',
                 'mobile' => 'required_without:resource|string|mobile:bd'
-            ], ['mobile' => 'Invalid mobile number!']);
+            ], ['mobile' => 'Invalid mobile number!', 'unique' => 'Duplicate Nid No!']);
             $partner = $request->partner;
             $this->setModifier($request->manager_resource);
             if ($request->has('resource')) {
@@ -112,8 +112,10 @@ class PersonalInformationController extends Controller
     public function update($resource, Request $request)
     {
         try {
+            $resource = $request->resource;
+            $profile = $resource->profile;
             $this->validate($request, [
-                'nid_no' => 'string',
+                'nid_no' => 'string|unique:resources,nid_no,' . $resource->id,
                 'nid_back' => 'file',
                 'nid_front' => 'file',
                 'name' => 'string',
@@ -122,9 +124,7 @@ class PersonalInformationController extends Controller
                 'address' => 'string',
                 'picture' => 'file',
                 'mobile' => 'string|mobile:bd'
-            ], ['mobile' => 'Invalid mobile number!']);
-            $resource = $request->resource;
-            $profile = $resource->profile;
+            ], ['mobile' => 'Invalid mobile number!', 'unique' => 'Duplicate Nid No!']);
             if ($request->has('mobile')) {
                 $mobile = formatMobile($request->mobile);
                 if ($profile->mobile != $mobile) {
