@@ -66,8 +66,7 @@ class SearchController extends Controller
             $mobile = formatMobile($request->mobile);
             $type = $request->type;
             if ($profile = Profile::where('mobile', $mobile)->first()) {
-                $avatar = $profile->$type;
-                if ($avatar) {
+                if ($avatar = $profile->$type) {
                     $user = array(
                         'id' => $avatar->id,
                         'name' => $avatar->profile->name,
@@ -76,7 +75,7 @@ class SearchController extends Controller
                         'address' => $avatar->profile->address,
                         'remember_token' => $avatar->remember_token
                     );
-                    return api_response($request, $user, 200, ["$type" => $user]);
+                    return api_response($request, $user, 200, ["user" => $user]);
                 }
             }
             return api_response($request, null, 404);

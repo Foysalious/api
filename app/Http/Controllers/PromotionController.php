@@ -98,17 +98,17 @@ class PromotionController extends Controller
     {
         $applicable_promo['msg'] = "You can save ";
         if ($applicable_promo['is_amount_percentage']) {
-            $applicable_promo['msg'] .= $applicable_promo['amount'] . '%';
+            $applicable_promo['msg'] .= "<b>" . $applicable_promo['amount'] . "</b>" . '%';
             if ($applicable_promo['cap']) {
-                $applicable_promo['msg'] .= '(Upto ' . $applicable_promo['cap'] . 'BDT)';
+                $applicable_promo['msg'] .= '(Upto ' . "<b>" . $applicable_promo['cap'] . "</b>" . ' BDT)';
             }
         } else {
-            $applicable_promo['msg'] .= $applicable_promo['amount'] . 'BDT';
+            $applicable_promo['msg'] .= "<b>" . $applicable_promo['amount'] . "</b>" . 'BDT';
         }
         if ($applicable_promo['order_amount']) {
             $applicable_promo['msg'] .= ' on order above ' . $applicable_promo['order_amount'] . 'BDT';
         }
-        $applicable_promo['msg'] .= " at checkout.";
+        $applicable_promo['msg'] .= " at checkout";
     }
 
     public function addPromo($customer, Request $request)
