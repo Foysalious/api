@@ -10,6 +10,7 @@ use App\Models\Service;
 use App\Repositories\InvitationRepository;
 use App\Repositories\ServiceRepository;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class SearchController extends Controller
 {
@@ -48,29 +49,50 @@ class SearchController extends Controller
                 $location = $request->has('location') ? $request->location : 4;
                 $services = $this->serviceRepository->getpartnerServicePartnerDiscount($services, $location);
                 $services = $this->serviceRepository->addServiceInfo($services, ['start_price', 'reviews']);
-//                foreach ($services as $service) {
-//                    array_add($service, 'slug_service', str_slug($service->name));
-//                    //if service has no partners
-//                    if ($service->partners->isEmpty()) {
-//                        array_add($service, 'review', 0);
-//                        array_add($service, 'rating', 0);
-//                        array_add($service, 'start_price', 0);
-//                        array_add($service, 'end_price', 0);
-//                        continue;
-//                    }
-//                    $service = $this->serviceRepository->getStartPrice($service, $request->location);
-//                    // review count of this partner for this service
-//                    $review = $service->reviews()->where('review', '<>', '')->count('review');
-//                    //avg rating of the partner for this service
-//                    $rating = $service->reviews()->avg('rating');
-//                    array_add($service, 'review', $review);
-//                    array_add($service, 'rating', $rating);
-//                    array_forget($service, 'partners');
-//                }
             }
             return api_response($request, null, 200, ['services' => $services]);
         } else
             return api_response($request, null, 404);
+
+    }
+
+    public function search(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'mobile' => 'required',
+                'type' => 'required|in:customer,resource',
+            ]);
+            $mobile = formatMobile($request->mobile);
+            $type = $request->type;
+            if ($profile = Profile::where('mobile', $mobile)->first()) {
+                $avatar = $profile->$type;
+                $user = array(
+                    'id' => $avatar->id,
+                    'name' => $avatar->profile->name,
+                    'mobile' => $avatar->profile->mobile,
+                    'email' => $avatar->profile->email,
+                    'address' => $avatar->profile->address,
+                    'remember_token' => $avatar->remember_token
+                );
+                return api_response($request, $user, 200, ["$type" => $user]);
+            } else {
+                return api_response($request, null, 404);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    private function getType($type_class_name)
+    {
 
     }
 
@@ -80,7 +102,7 @@ class SearchController extends Controller
         if ($request->searchBy == 'business') {
             $profile = $this->getProfile('email', $search, $request->business);
             if (count($profile) == 0) {
-                $profile = $this->getProfile('mobile', $this->formatMobile($search), $request->business);
+                $profile = $this->getProfile('mobile', formatMobile($search), $request->business);
             }
             if (count($profile) != 0) {
                 if ($profile->member != null) {
@@ -101,7 +123,7 @@ class SearchController extends Controller
         } elseif ($request->searchBy == 'member') {
             $business = $this->getBusiness('email', $search, $member);
             if (count($business) == 0) {
-                $business = $this->getBusiness('phone', $this->formatMobile($search), $member);
+                $business = $this->getBusiness('phone', formatMobile($search), $member);
             }
             if (count($business->members) != 0) {
                 return response()->json(['msg' => 'already a member', 'code' => 409]);
@@ -142,18 +164,4 @@ class SearchController extends Controller
         }])->where($field, $search)->select('id', 'name', 'logo', 'email', 'phone')->first();
     }
 
-
-    private function formatMobile($mobile)
-    {
-        // mobile starts with '+88'
-        if (preg_match("/^(\+88)/", $mobile)) {
-            return $mobile;
-        } // when mobile starts with '88' replace it with '+880'
-        elseif (preg_match("/^(88)/", $mobile)) {
-            return preg_replace('/^88/', '+88', $mobile);
-        } // real mobile no add '+880' at the start
-        else {
-            return '+88' . $mobile;
-        }
-    }
 }

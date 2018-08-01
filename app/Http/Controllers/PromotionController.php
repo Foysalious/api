@@ -68,12 +68,11 @@ class PromotionController extends Controller
                 return (int)$promo->is_amount_percentage == 1 && (double)$promo->cap == 0;
             })->sortByDesc('amount')->first();
             if (!$applicable_promo) {
-                $valid_promos = $valid_promos->each(function (&$promo) {
+                $applicable_promo = $valid_promos->each(function (&$promo) {
                     $cap = (double)$promo->cap;
                     if ($cap > 0) $promo['applicable_amount'] = $cap;
                     else $promo['applicable_amount'] = (double)$promo->amount;
-                });
-                $applicable_promo = $valid_promos->sortByDesc('applicable_amount')->first();
+                })->sortByDesc('applicable_amount')->first();
             }
             $applicable_promo['order_amount'] = null;
             if ($applicable_promo->rules != '[]') {
@@ -98,15 +97,15 @@ class PromotionController extends Controller
     private function makeApplicablePromoMsg(&$applicable_promo)
     {
         $applicable_promo['msg'] = "You can save ";
-        if($applicable_promo['is_amount_percentage']) {
+        if ($applicable_promo['is_amount_percentage']) {
             $applicable_promo['msg'] .= $applicable_promo['amount'] . '%';
-            if($applicable_promo['cap']) {
+            if ($applicable_promo['cap']) {
                 $applicable_promo['msg'] .= '(Upto ' . $applicable_promo['cap'] . 'BDT)';
             }
         } else {
             $applicable_promo['msg'] .= $applicable_promo['amount'] . 'BDT';
         }
-        if($applicable_promo['order_amount']) {
+        if ($applicable_promo['order_amount']) {
             $applicable_promo['msg'] .= ' on order above ' . $applicable_promo['order_amount'] . 'BDT';
         }
         $applicable_promo['msg'] .= " at checkout.";

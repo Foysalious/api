@@ -414,6 +414,7 @@ $api->version('v1', function ($api) {
             $api->get('operations', 'Partner\OperationController@index');
             $api->post('operations', 'Partner\OperationController@store');
             $api->post('categories', 'Partner\OperationController@saveCategories');
+            $api->get('search', 'SearchController@search');
             $api->group(['prefix' => 'subscriptions'], function ($api) {
                 $api->get('/', 'Partner\PartnerSubscriptionController@index');
                 $api->post('/', 'Partner\PartnerSubscriptionController@store');
