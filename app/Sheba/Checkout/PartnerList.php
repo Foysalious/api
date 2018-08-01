@@ -189,8 +189,8 @@ class PartnerList
     {
         $category_preparation_time_minutes = $partner->categories->where('id', $category_id)->first()->pivot->preparation_time_minutes;
         if ($category_preparation_time_minutes == 0) return 1;
-        $start_time = Carbon::parse($this->date . explode('-', $this->time)[0]);
-        $end_time = Carbon::parse($this->date . explode('-', $this->time)[1]);
+        $start_time = Carbon::parse($this->date . ' ' . explode('-', $this->time)[0]);
+        $end_time = Carbon::parse($this->date . ' ' . explode('-', $this->time)[1]);
         $preparation_time = Carbon::createFromTime(Carbon::now()->hour)->addMinute(61)->addMinute($category_preparation_time_minutes);
         return $preparation_time->lte($start_time) || $preparation_time->between($start_time, $end_time) ? 1 : 0;
     }
