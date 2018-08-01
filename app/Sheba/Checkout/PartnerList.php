@@ -268,22 +268,18 @@ class PartnerList
 
     public function sortByShebaSelectedCriteria()
     {
-        $partners = collect();
-        $this->partners->keyBy('discounted_price')->sortBy(function ($item, $key) {
-            return $key;
-        })->each(function ($item, $discounted_price_key) use ($partners) {
-            $this->partners->filter(function ($item, $key) use ($discounted_price_key) {
-                return $item->discounted_price == $discounted_price_key;
-            })->sortByDesc(function ($partner, $key) {
-                return $partner->rating;
-            })->each(function ($partner) use ($partners) {
-                $partners->push($partner);
+        $final = collect();
+        $prices = $this->partners->unique('discounted_price')->pluck('discounted_price')->sort();
+        $prices->each(function ($price) use ($final) {
+            $this->partners->filter(function ($item) use ($price, $final) {
+                return $item->discounted_price == $price;
+            })->sortByDesc('rating')->each(function ($partner) use ($final) {
+                $final->push($partner);
             });
         });
-
-        $this->partners = $partners;
-//        $this->sortByRatingDesc();
+        $this->partners = $final->unique();
 //        $this->sortByLowestPrice();
+//        $this->sortByRatingDesc();
         $this->sortByAvailability();
     }
 
