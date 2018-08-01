@@ -85,10 +85,9 @@ class ResourceController extends Controller
     {
         try {
             $mobile = formatMobile($request->mobile);
-            $profile = $this->profileRepo->getIfExist($mobile, 'mobile');
-            if ($profile) {
-                if ($profile->resource) return api_response($request, null, 400, ['message' => 'Resource Already Exist']);
-                return api_response($request, null, 200, ['profile' => $profile]);
+            if ($profile = $this->profileRepo->getIfExist($mobile, 'mobile')) {
+                if ($profile->resource) return api_response($request, null, 400, ['message' => 'Resource already Exist']);
+                return api_response($request, null, 200, ['profile' => collect($profile)->only(['id', 'name', 'mobile', 'address', 'pro_pic', 'email'])]);
             }
             return api_response($request, null, 404);
         } catch (\Throwable $e) {

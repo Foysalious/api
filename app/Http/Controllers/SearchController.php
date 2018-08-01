@@ -67,18 +67,19 @@ class SearchController extends Controller
             $type = $request->type;
             if ($profile = Profile::where('mobile', $mobile)->first()) {
                 $avatar = $profile->$type;
-                $user = array(
-                    'id' => $avatar->id,
-                    'name' => $avatar->profile->name,
-                    'mobile' => $avatar->profile->mobile,
-                    'email' => $avatar->profile->email,
-                    'address' => $avatar->profile->address,
-                    'remember_token' => $avatar->remember_token
-                );
-                return api_response($request, $user, 200, ["$type" => $user]);
-            } else {
-                return api_response($request, null, 404);
+                if ($avatar) {
+                    $user = array(
+                        'id' => $avatar->id,
+                        'name' => $avatar->profile->name,
+                        'mobile' => $avatar->profile->mobile,
+                        'email' => $avatar->profile->email,
+                        'address' => $avatar->profile->address,
+                        'remember_token' => $avatar->remember_token
+                    );
+                    return api_response($request, $user, 200, ["$type" => $user]);
+                }
             }
+            return api_response($request, null, 404);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
@@ -89,11 +90,6 @@ class SearchController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-    }
-
-    private function getType($type_class_name)
-    {
-
     }
 
     public function searchBusinessOrMember($member, Request $request)
