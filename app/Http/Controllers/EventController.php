@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use App\Sheba\UserRequestInformation;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\ModificationFields;
@@ -17,21 +18,16 @@ class EventController extends Controller
     {
         try {
             $this->validate($request, [
-                'name' => 'required|string',
+                'tag' => 'required|string',
                 'value' => 'required|string',
                 'user_id' => 'numeric',
                 'user_type' => 'string|in:customer,resource'
             ]);
             $event = new Event();
-            $event->tag = $request->name;
+            $event->tag = $request->tag;
             $event->value = $request->value;
-            if ($request->has('user_id') && $request->has('user_type')) {
-                $class_name = "App\\Models\\" . ucfirst($request->user_type);
-                $user = $class_name::find((int)$request->user_id);
-                $this->setModifier($user);
-                $this->withCreateModificationField($event);
-                $event->created_by_type = $class_name;
-            }
+            $event = $this->setUserInformation($request, $event);
+            $event->created_at = Carbon::now();
             $event->fill((new UserRequestInformation($request))->getInformationArray());
             $event->save();
             return api_response($request, $event, 200);
@@ -45,5 +41,17 @@ class EventController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function setUserInformation(Request $request, $event)
+    {
+        if ($request->has('user_id') && $request->has('user_type')) {
+            $class_name = "App\\Models\\" . ucfirst($request->user_type);
+            $user = $class_name::find((int)$request->user_id);
+            $this->setModifier($user);
+            $this->withCreateModificationField($event);
+            $event->created_by_type = $class_name;
+        }
+        return $event;
     }
 }
