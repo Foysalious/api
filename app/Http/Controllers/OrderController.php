@@ -76,8 +76,12 @@ class OrderController extends Controller
                 $link = $request->payment_method == 'online' ? (new OnlinePayment())->generateSSLLink($order->partnerOrders[0], 1) : null;
                 $this->sendNotifications($customer, $order);
                 return api_response($request, $order, 200, ['link' => $link, 'job_id' => $order->jobs->first()->id, 'order_code' => $order->code()]);
+            } else {
+                $sentry = app('sentry');
+                $sentry->user_context(['request' => $request->all()]);
+                app('sentry')->captureException(new \Exception("Order Placement Error."));
+                return api_response($request, $order, 500);
             }
-            return api_response($request, $order, 500);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
