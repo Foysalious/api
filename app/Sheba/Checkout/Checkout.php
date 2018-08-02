@@ -62,8 +62,8 @@ class Checkout
         } else {
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);
-            app('sentry')->captureException(new \Exception("Partner is not eligible for this order."));
-            return api_response($request, null, 400);
+            app('sentry')->captureException(new \Exception("Partner not found"));
+            return null;
         }
     }
 
