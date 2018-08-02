@@ -6,7 +6,6 @@ use App\Models\Category;
 use App\Models\Partner;
 use App\Models\PartnerServiceDiscount;
 use App\Models\Service;
-use App\Repositories\PartnerRepository;
 use App\Repositories\PartnerServiceRepository;
 use App\Repositories\ReviewRepository;
 use App\Sheba\Partner\PartnerAvailable;
@@ -32,6 +31,7 @@ class PartnerList
         $this->date = $date;
         $this->time = $time;
         $this->rentCarServicesId = array_map('intval', explode(',', env('RENT_CAR_SERVICE_IDS')));
+        $this->rentCarCategoryIds = array_map('intval', explode(',', env('RENT_CAR_IDS')));
         $start = microtime(true);
         $this->selected_services = $this->getSelectedServices($services);
         $this->selectedCategory = Category::find($this->selected_services->first()->category_id);
@@ -126,7 +126,6 @@ class PartnerList
         }]);
         $time_elapsed_secs = microtime(true) - $start;
         //dump("load partner service and category: " . $time_elapsed_secs * 1000);
-
         $start = microtime(true);
         $selected_option_services = $this->selected_services->where('variable_type', 'Options');
         $this->filterByOption($selected_option_services);
@@ -225,10 +224,14 @@ class PartnerList
 
     public function addInfo()
     {
-        $this->partners->load(['jobs' => function ($q) {
+        $category_ids = (string)$this->selectedCategory->id;
+        if (in_array($this->selectedCategory->id, $this->rentCarCategoryIds)) {
+            $category_ids = $this->selectedCategory->id == (int)env('RENT_CAR_OUTSIDE_ID') ? $category_ids . ",40" : $category_ids . ",38";
+        }
+        $this->partners->load(['jobs' => function ($q) use ($category_ids) {
             $q->selectRaw("count(case when status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then status end) as total_jobs")
                 ->selectRaw("count(case when status in ('Accepted', 'Schedule Due', 'Process', 'Serve Due') then status end) as ongoing_jobs")
-                ->selectRaw("count(case when category_id=" . $this->selectedCategory->id . " and status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then category_id end) as total_jobs_of_category")
+                ->selectRaw("count(case when category_id in(" . $category_ids . ") and status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then category_id end) as total_jobs_of_category")
                 ->groupBy('partner_id');
         }, 'subscription' => function ($q) {
             $q->select('id', 'name');

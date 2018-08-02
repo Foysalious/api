@@ -26,8 +26,7 @@ class EventController extends Controller
             $event = new Event();
             $event->tag = $request->tag;
             $event->value = $request->value;
-            $event = $this->setUserInformation($request, $event);
-            $event->created_at = Carbon::now();
+            $event = $this->setCreatedInformation($request, $event);
             $event->fill((new UserRequestInformation($request))->getInformationArray());
             $event->save();
             return api_response($request, $event, 200);
@@ -43,7 +42,7 @@ class EventController extends Controller
         }
     }
 
-    private function setUserInformation(Request $request, $event)
+    private function setCreatedInformation(Request $request, $event)
     {
         if ($request->has('user_id') && $request->has('user_type')) {
             $class_name = "App\\Models\\" . ucfirst($request->user_type);
@@ -51,6 +50,8 @@ class EventController extends Controller
             $this->setModifier($user);
             $this->withCreateModificationField($event);
             $event->created_by_type = $class_name;
+        } else {
+            $event->created_at = Carbon::now();
         }
         return $event;
     }
