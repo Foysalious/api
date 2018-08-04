@@ -209,6 +209,8 @@ class ShebaController extends Controller
                 $butcher_info = [
                     'id' => $butcher_service->id,
                     'name' => $butcher_service->name,
+                    'unit' => $butcher_service->unit,
+                    'min_quantity' => (double)$butcher_service->min_quantity,
                     'price_info' => json_decode($butcher_service->variables),
                 ];
                 return api_response($request, $butcher_info, 200, ['info' => $butcher_info]);
