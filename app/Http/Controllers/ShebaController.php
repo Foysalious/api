@@ -212,6 +212,7 @@ class ShebaController extends Controller
                     'unit' => $butcher_service->unit,
                     'min_quantity' => (double)$butcher_service->min_quantity,
                     'price_info' => json_decode($butcher_service->variables),
+                    'date' => "2018-08-21"
                 ];
                 return api_response($request, $butcher_info, 200, ['info' => $butcher_info]);
             } else {
