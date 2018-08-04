@@ -194,7 +194,7 @@ class OnlinePayment
             if ($result->status == "SUCCESS") {
                 Redis::set($transaction_id, json_encode(['amount' => $partnerOrder->due, 'partner_order_id' => $partnerOrder->id,
                     'isAdvancedPayment' => $isAdvancedPayment, 'success' => 0, 'message' => $this->message]));
-                Redis::expire($transaction_id, 604800);
+                Redis::expire($transaction_id, 7200);
                 return $result->GatewayPageURL;
             }
         }

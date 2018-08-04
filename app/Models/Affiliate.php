@@ -8,12 +8,15 @@ use Sheba\TopUp\Robi;
 use Sheba\TopUp\TopUp;
 use Sheba\TopUp\OperatorAgent;
 use Sheba\TopUp\TopUpVendor;
+use Sheba\TopUpTrait;
 
 class Affiliate extends Model implements OperatorAgent
 {
+    use TopUpTrait;
     protected $guarded = ['id'];
     protected $dates = ['last_suspended_at'];
-    protected $casts = ['wallet' => 'double'];
+    protected $casts = ['wallet' => 'double', 'is_ambassador' => 'int'];
+
     public function profile()
     {
         return $this->belongsTo(Profile::class);
@@ -101,25 +104,15 @@ class Affiliate extends Model implements OperatorAgent
         return $vouchers ? $vouchers->first() : null;
     }
 
-    public function isAmbassador()
-    {
-        return $this->is_ambassador == 1;
-    }
-
-    public function doRecharge($vendor_id, $mobile_number, $amount, $type)
-    {
-        return $this->getTopUp($vendor_id)->recharge($mobile_number, $amount, $type);
-    }
-
     public function topUpTransaction($amount, $log)
     {
         $this->debitWallet($amount, $log);
+        $this->walletTransaction(['amount' => $amount, 'type' => 'Debit', 'log' => $log]);
     }
 
     public function debitWallet($amount, $log)
     {
         $this->update(['wallet' => $this->wallet - $amount]);
-        $this->walletTransaction(['amount' => $amount, 'type' => 'Debit', 'log' => $log]);
     }
 
     public function walletTransaction($data)
@@ -127,12 +120,8 @@ class Affiliate extends Model implements OperatorAgent
         $this->transactions()->save(new AffiliateTransaction(array_merge($data, createAuthor($this))));
     }
 
-    private function getTopUp($vendor_id)
+    public function isAmbassador()
     {
-        if ($vendor_id == 1)
-            return new TopUp($this, new Mock());
-        elseif ($vendor_id == 2) {
-            return new TopUp($this, new Robi());
-        }
+        return $this->is_ambassador == 1;
     }
 }

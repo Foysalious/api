@@ -24,7 +24,7 @@ class ResourceRepository extends BaseRepository
     public function store(Request $request)
     {
         $data = array_merge($request->all(), $this->_saveImage($request));
-        $data['mobile'] = formatMobileAux($data['mobile']);
+        $data['mobile'] = formatMobile($data['mobile']);
         $resource_data = $this->resourceDataFormat($data);
         $profile = $this->profileRepo->checkExistingProfile($request->mobile, $request->email);
         if(!($profile instanceof Profile)) $profile = $this->profileRepo->store($data);

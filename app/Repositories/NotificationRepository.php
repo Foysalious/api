@@ -13,11 +13,11 @@ class NotificationRepository
     private $sender_id;
     private $sender_type;
 
-//    public function __construct($order)
-//    {
-//        $this->order = $order;
-//        $this->send();
-//    }
+    /*public function __construct($order)
+    {
+        $this->order = $order;
+        $this->send();
+    }*/
 
     public function send($order)
     {
@@ -26,12 +26,12 @@ class NotificationRepository
             $this->sender_id = $this->order->customer_id;
             $this->sender_type = 'customer';
 
-            $this->sendNotificationToBackEnd();
+            //$this->sendNotificationToBackEnd();
         } else {
             $this->sender_id = $this->order->created_by;
             $this->sender_type = 'user';
 
-            $this->sendNotificationToCRM(); //REMOVE
+            //$this->sendNotificationToCRM(); //REMOVE
         }
         $this->sendNotificationToPartner($this->order->partner_orders);
     }
@@ -102,11 +102,15 @@ class NotificationRepository
 
     public function forAffiliateRegistration($affiliate)
     {
-        notify()->departments([3, 8])->send([
-            'title' => 'New Affiliate Registration from ' . $affiliate->profile->mobile,
-            'link' => env('SHEBA_BACKEND_URL') . '/affiliate/' . $affiliate->id,
-            'type' => notificationType('Info')
-        ]);
+        try {
+            notify()->departments([3, 8])->send([
+                'title' => 'New Affiliate Registration from ' . $affiliate->profile->mobile,
+                'link' => env('SHEBA_BACKEND_URL') . '/affiliate/' . $affiliate->id,
+                'type' => notificationType('Info')
+            ]);
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     public function forAffiliation($affiliate, $affiliation)

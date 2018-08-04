@@ -349,7 +349,6 @@ class PartnerController extends Controller
             );
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -421,6 +420,7 @@ class PartnerController extends Controller
     public function findPartners(Request $request, $location)
     {
         try {
+            $start = microtime(true);
             $this->validate($request, [
                 'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
                 'time' => 'required|string',
@@ -435,6 +435,9 @@ class PartnerController extends Controller
                 $sentry->captureException(new \Exception($validation->message));
                 return api_response($request, $validation->message, 400, ['message' => $validation->message]);
             }
+            $time_elapsed_secs = microtime(true) - $start;
+//            dump("validation: " . $time_elapsed_secs);
+
             $partner = $request->has('partner') ? $request->partner : null;
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $location);
             $partner_list->find($partner);
@@ -447,12 +450,31 @@ class PartnerController extends Controller
                 return api_response($request, $is_available, 200, ['is_available' => $is_available, 'available_partners' => count($available_partners)]);
             }
             if ($partner_list->hasPartners) {
+                $start = microtime(true);
                 $partner_list->addPricing();
+                $time_elapsed_secs = microtime(true) - $start;
+                //dump("partner pricing: " . $time_elapsed_secs * 1000);
+
+                $start = microtime(true);
                 $partner_list->addInfo();
+                $time_elapsed_secs = microtime(true) - $start;
+                //dump("total_jobs,total_jobs_of_cat,ongoing_jobs,contact_no,subscription info: " . $time_elapsed_secs * 1000);
+
+                $start = microtime(true);
                 $partner_list->calculateAverageRating();
+                $time_elapsed_secs = microtime(true) - $start;
+                //dump("avg rating: " . $time_elapsed_secs * 1000);
+
+                $start = microtime(true);
                 $partner_list->calculateTotalRatings();
-                $partner_list->calculateOngoingJobs();
+                $time_elapsed_secs = microtime(true) - $start;
+                //dump("total rating count: " . $time_elapsed_secs * 1000);
+
+                $start = microtime(true);
                 $partner_list->sortByShebaSelectedCriteria();
+                $time_elapsed_secs = microtime(true) - $start;
+                //dump("sort by sheba criteria: " . $time_elapsed_secs * 1000);
+
                 $partners = $partner_list->partners;
                 $partners->each(function ($partner, $key) {
                     array_forget($partner, 'wallet');
@@ -474,4 +496,63 @@ class PartnerController extends Controller
         }
     }
 
+    public function getLocations($partner, Request $request)
+    {
+        try {
+            $partner = Partner::find($partner);
+            if ($partner) {
+                $locations = collect();
+                foreach ($partner->locations as $location) {
+                    $locations->push(array('id' => $location->id, 'name' => $location->name));
+                }
+                if (count($locations) > 0) return api_response($request, $locations, 200, ['locations' => $locations]);
+            }
+            return api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getCategories($partner, Request $request)
+    {
+        try {
+            $partner = Partner::with(['categories' => function ($query) {
+                return $query->published()->wherePivot('is_verified', 1);
+            }])->find($partner);
+            if ($partner) {
+                $categories = collect();
+                foreach ($partner->categories as $category) {
+                    $services = $partner->services()->select('services.id', 'name', 'variable_type', 'services.min_quantity', 'services.variables')
+                        ->where('category_id', $category->id)->published()->get();
+                    if (count($services) > 0) {
+                        $services->each(function (&$service) {
+                            $variables = json_decode($service->variables);
+                            if ($service->variable_type == 'Options') {
+                                $service['questions'] = $this->formatServiceQuestions($variables->options);
+                                $service['option_prices'] = $this->formatOptionWithPrice(json_decode($service->pivot->prices));
+                                $service['fixed_price'] = null;
+                            } else {
+                                $service['questions'] = $service['option_prices'] = [];
+                                $service['fixed_price'] = (double)$variables->price;
+                            }
+                            array_forget($service, 'variables');
+                            removeRelationsAndFields($service);
+                        });
+                    }
+                    $categories->push([
+                        'id' => $category->id,
+                        'name' => $category->name,
+                        'app_thumb' => $category->app_thumb,
+                        'services' => $services
+                    ]);
+                }
+                if (count($categories) > 0) return api_response($request, $categories, 200, ['categories' => $categories]);
+            }
+            return api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }

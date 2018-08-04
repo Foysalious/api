@@ -286,10 +286,12 @@ $api->version('v1', function ($api) {
     $api->group(['prefix' => 'v2', 'namespace' => 'App\Http\Controllers'], function ($api) {
         $api->post('subscription', 'PushSubscriptionController@store');
         $api->get('car-rental-info', 'ShebaController@sendCarRentalInfo');
+        $api->get('butcher-info', 'ShebaController@sendButcherInfo');
         $api->post('service-requests', 'ServiceRequestController@store');
         $api->post('password/email', 'Auth\PasswordController@sendResetPasswordEmail');
         $api->post('password/validate', 'Auth\PasswordController@validatePasswordResetCode');
         $api->post('password/reset', 'Auth\PasswordController@reset');
+        $api->post('events', 'EventController@store');
         $api->group(['prefix' => 'orders'], function ($api) {
             $api->get('online', 'OrderController@clearPayment');
             $api->group(['prefix' => 'payments'], function ($api) {
@@ -307,7 +309,7 @@ $api->version('v1', function ($api) {
         });
         $api->get('times', 'ScheduleTimeController@index');
         $api->get('settings', 'HomePageSettingController@index');
-        $api->get('settings/top_up', 'TopUpController@getVendor');
+        $api->get('settings/top-up', 'TopUpController@getVendor');
         $api->get('settings/car', 'HomePageSettingController@getCar');
         $api->get('home-grids', 'HomeGridController@index');
         $api->group(['prefix' => 'category-groups'], function ($api) {
@@ -334,6 +336,8 @@ $api->version('v1', function ($api) {
         $api->group(['prefix' => 'partners'], function ($api) {
             $api->group(['prefix' => '{partner}'], function ($api) {
                 $api->get('/', 'PartnerController@show');
+                $api->get('locations', 'PartnerController@getLocations');
+                $api->get('categories', 'PartnerController@getCategories');
                 $api->get('categories/{category}/services', 'PartnerController@getServices');
             });
         });
@@ -350,6 +354,7 @@ $api->version('v1', function ($api) {
                 $api->group(['prefix' => 'promotions'], function ($api) {
                     $api->get('/', 'PromotionController@index');
                     $api->post('/', 'PromotionController@addPromo');
+                    $api->get('applicable', 'PromotionController@getApplicablePromotions');
                 });
 
                 $api->group(['prefix' => 'delivery-addresses'], function ($api) {
@@ -410,6 +415,7 @@ $api->version('v1', function ($api) {
             $api->get('operations', 'Partner\OperationController@index');
             $api->post('operations', 'Partner\OperationController@store');
             $api->post('categories', 'Partner\OperationController@saveCategories');
+            $api->get('search', 'SearchController@search');
             $api->group(['prefix' => 'subscriptions'], function ($api) {
                 $api->get('/', 'Partner\PartnerSubscriptionController@index');
                 $api->post('/', 'Partner\PartnerSubscriptionController@store');
@@ -450,9 +456,11 @@ $api->version('v1', function ($api) {
             $api->post('job_service/{job_service}/update', 'JobServiceController@update');
             $api->get('get-profile', 'ResourceController@getResourceData');
         });
-        $api->group(['prefix' => 'affiliate/{affiliate}', 'middleware' => ['affiliate.auth']], function ($api) {
+        $api->group(['prefix' => 'affiliates/{affiliate}', 'middleware' => ['affiliate.auth']], function ($api) {
+            $api->get('dashboard', 'AffiliateController@getDashboardInfo');
+            $api->get('partner-affiliates', 'PartnerAffiliationController@index');
+            $api->post('partner-affiliates', 'PartnerAffiliationController@store');
             $api->post('top-up', 'TopUpController@topUp');
         });
     });
-
 });

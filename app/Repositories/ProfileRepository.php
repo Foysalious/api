@@ -86,7 +86,7 @@ class ProfileRepository
                 $info['bKash'] = $avatar->banking_info->bKash;
                 $info['verification_status'] = $avatar->verification_status;
                 $info['is_suspended'] = $avatar->is_suspended;
-                $info['ambassador_code'] = $avatar->isAmbassador() ? $avatar->referral->code : null;
+                $info['ambassador_code'] = $avatar->is_ambassador ? $avatar->referral->code : null;
                 $info['is_ambassador'] = $avatar->is_ambassador;
             } elseif ($from == 'customer') {
                 $info['referral'] = $avatar->referral->code;
