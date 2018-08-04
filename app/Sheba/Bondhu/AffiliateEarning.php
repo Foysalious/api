@@ -17,16 +17,16 @@ class AffiliateEarning implements PartnerAffiliationEarning
     public function partnerAffiliation(PartnerAffiliation $affiliation, $reward)
     {
         $affiliate = $affiliation->affiliate;
+        $ambassador_reward = floatval($reward) * (floatval(constants('PARTNER_AFFILIATION_AMBASSADOR_COMMISSION'))/100);
+        $affiliate_reward = $reward - $ambassador_reward;
         if ($affiliate->isAmbassador() || !$affiliate->ambassador_id) {
-            $log = "Earned $reward tk for sp reference: " . $affiliation->partner->name . " (#$affiliation->id)";
-            $this->creditWalletForPartnerAffiliation($affiliation, $reward, $affiliate, $log);
+            $log = "Earned $affiliate_reward tk for sp reference: " . $affiliation->partner->name . " (#$affiliation->id)";
+            $this->creditWalletForPartnerAffiliation($affiliation, $affiliate_reward, $affiliate, $log);
         } else {
             $ambassador = $affiliate->ambassador;
-            $ambassador_reward = floatval($reward) * (floatval(constants('PARTNER_AFFILIATION_AMBASSADOR_COMMISSION'))/100);
-            $log = "Earned $ambassador_reward tk for sp reference by affiliate: " . $affiliation->partner->name . " (#$affiliation->id)";
+            $log = "Earned $ambassador_reward tk for sp reference by affiliate: " . $affiliate->name . " (#$affiliation->id)";
             $this->creditWalletForPartnerAffiliation($affiliation, $ambassador_reward, $ambassador, $log);
 
-            $affiliate_reward = $reward - $ambassador_reward;
             $log = "Earned $affiliate_reward tk for sp reference: " . $affiliation->partner->name . " (#$affiliation->id)";
             $this->creditWalletForPartnerAffiliation($affiliation, $affiliate_reward, $affiliate, $log);
         }
