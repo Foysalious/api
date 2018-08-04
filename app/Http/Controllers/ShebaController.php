@@ -208,6 +208,7 @@ class ShebaController extends Controller
 
             $butcher_info = [
                 'id' => $butcher_Service->id,
+                'category_id' => $butcher_Service->category_id,
                 'name' => $butcher_Service->name,
                 'price_info' => $butcher_Service->variables,
             ];
