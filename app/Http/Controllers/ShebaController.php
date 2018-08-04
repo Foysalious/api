@@ -204,15 +204,21 @@ class ShebaController extends Controller
     public function sendButcherInfo(Request $request)
     {
         try {
-            $butcher_Service = Service::where('slug', 'butcher-service')->first();
-
-            $butcher_info = [
-                'id' => $butcher_Service->id,
-                'name' => $butcher_Service->name,
-                'price_info' => $butcher_Service->variables,
-            ];
-
-            return api_response($request, $butcher_info, 200, ['info' => $butcher_info]);
+            $butcher_service = Service::find((int)env('BUTCHER_SERVICE_ID'));
+            if ($butcher_service) {
+                $butcher_info = [
+                    'id' => $butcher_service->id,
+                    'category_id' => $butcher_service->category_id,
+                    'name' => $butcher_service->name,
+                    'unit' => $butcher_service->unit,
+                    'min_quantity' => (double)$butcher_service->min_quantity,
+                    'price_info' => json_decode($butcher_service->variables),
+                    'date' => "2018-08-21"
+                ];
+                return api_response($request, $butcher_info, 200, ['info' => $butcher_info]);
+            } else {
+                return api_response($request, null, 404);
+            }
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

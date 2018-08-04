@@ -291,6 +291,7 @@ $api->version('v1', function ($api) {
         $api->post('password/email', 'Auth\PasswordController@sendResetPasswordEmail');
         $api->post('password/validate', 'Auth\PasswordController@validatePasswordResetCode');
         $api->post('password/reset', 'Auth\PasswordController@reset');
+        $api->post('events', 'EventController@store');
         $api->group(['prefix' => 'orders'], function ($api) {
             $api->get('online', 'OrderController@clearPayment');
             $api->group(['prefix' => 'payments'], function ($api) {
@@ -353,6 +354,7 @@ $api->version('v1', function ($api) {
                 $api->group(['prefix' => 'promotions'], function ($api) {
                     $api->get('/', 'PromotionController@index');
                     $api->post('/', 'PromotionController@addPromo');
+                    $api->get('applicable', 'PromotionController@getApplicablePromotions');
                 });
 
                 $api->group(['prefix' => 'delivery-addresses'], function ($api) {
@@ -413,6 +415,7 @@ $api->version('v1', function ($api) {
             $api->get('operations', 'Partner\OperationController@index');
             $api->post('operations', 'Partner\OperationController@store');
             $api->post('categories', 'Partner\OperationController@saveCategories');
+            $api->get('search', 'SearchController@search');
             $api->group(['prefix' => 'subscriptions'], function ($api) {
                 $api->get('/', 'Partner\PartnerSubscriptionController@index');
                 $api->post('/', 'Partner\PartnerSubscriptionController@store');

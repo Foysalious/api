@@ -4,7 +4,7 @@ class BangladeshiMobileValidator
 {
     public static function validate($number)
     {
-        if(self::isBangladeshiNumberFormat(formatMobileAux($number)))
+        if(self::isBangladeshiNumberFormat(formatMobile($number)))
             return true;
 
         return false;

@@ -112,6 +112,8 @@ if (!function_exists('formatMobile')) {
      */
     function formatMobile($number)
     {
+        $number = str_replace(" ", "", $number);
+        $number = str_replace("-", "", $number);
         // mobile starts with '+88'
         if (preg_match("/^(\+88)/", $number)) {
             return $number;

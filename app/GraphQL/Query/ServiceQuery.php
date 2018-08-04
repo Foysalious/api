@@ -36,7 +36,7 @@ class ServiceQuery extends Query
                     $service->with('category');
                 }
             }
-            return $service->published()->where('id', $args['id'])->first();
+            return $service->publishedForAll()->where('id', $args['id'])->first();
         } else {
             return null;
         }

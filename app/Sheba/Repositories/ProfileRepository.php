@@ -39,7 +39,7 @@ class ProfileRepository extends BaseRepository
      */
     public function checkExistingProfile($mobile, $email)
     {
-        $mobile = $mobile ? formatMobileAux($mobile) : null;
+        $mobile = $mobile ? formatMobile($mobile) : null;
         $mobile = BangladeshiMobileValidator::validate($mobile) ? $mobile : null;
         $email = filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : null;
 

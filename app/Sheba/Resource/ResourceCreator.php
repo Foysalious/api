@@ -58,7 +58,7 @@ class ResourceCreator
     public function create()
     {
         $this->saveImages();
-        $this->data['mobile'] = formatMobileAux($this->data['mobile']);
+        $this->data['mobile'] = formatMobile($this->data['mobile']);
         $this->format();
         $this->attachProfile();
         $this->data['remember_token'] = str_random(255);

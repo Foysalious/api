@@ -59,6 +59,11 @@ class Checkout
                 }
             }
             return $order;
+        } else {
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all()]);
+            app('sentry')->captureException(new \Exception("Partner not found"));
+            return null;
         }
     }
 
