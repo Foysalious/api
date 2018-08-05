@@ -54,7 +54,7 @@ class PartnerAffiliationController extends Controller
                 'is_fake' => ($partner_affiliation->reject_reason == PartnerAffiliationRejectReasons::fake()),
                 'reject_reason' => $partner_affiliation->reject_reason,
                 'referred_date' => $partner_affiliation->created_at->format('Y-m-d'),
-                'earning_amount' => $partner_affiliation->transactions->sum('amount')
+                'earning_amount' => $partner_affiliation->transactions->where('affiliate_id', request('affiliate')->id)->sum('amount')
             ];
         }
         return $data;
