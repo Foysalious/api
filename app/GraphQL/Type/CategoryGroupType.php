@@ -27,6 +27,7 @@ class CategoryGroupType extends GraphQlType
             'is_published_for_app' => ['type' => Type::int()],
             'is_published_for_web' => ['type' => Type::int()],
             'icon' => ['type' => Type::string()],
+            'icon_png' => ['type' => Type::string()],
             'categories' => ['type' => Type::listOf(GraphQL::type('Category'))],
             'updated_at_timestamp' => ['type' => Type::int(), 'description' => 'Timestamp when any of the row information has been last updated']
         ];
@@ -34,6 +35,9 @@ class CategoryGroupType extends GraphQlType
 
     public function resolveCategoriesField($root)
     {
+        $root->load(['categories' => function ($q) {
+            $q->orderBy('id', 'desc');
+        }]);
         return $root->categories;
     }
 
