@@ -2771,7 +2771,7 @@
             "source": {
                 "type": "git",
                 "url": "https://arnabrahman@bitbucket.org/startern/sheba_voucher.git",
-                "reference": "793c42b95191348a58c1c865cc7224c0e483966f"
+                "reference": "b2e51ee1feb633dd96fb3de5d92448ebabf6e105"
             },
             "require": {
                 "php": ">=5.4"
@@ -2795,7 +2795,7 @@
                 }
             ],
             "description": "Voucher for Sheba.",
-            "time": "2018-07-31T08:31:30+00:00"
+            "time": "2018-08-06T06:30:25+00:00"
         },
         {
             "name": "sunra/php-simple-html-dom-parser",
