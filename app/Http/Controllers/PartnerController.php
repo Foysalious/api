@@ -436,7 +436,7 @@ class PartnerController extends Controller
                 return api_response($request, $validation->message, 400, ['message' => $validation->message]);
             }
             $time_elapsed_secs = microtime(true) - $start;
-//            dump("validation: " . $time_elapsed_secs);
+            //dump("validation: " . $time_elapsed_secs);
 
             $partner = $request->has('partner') ? $request->partner : null;
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $location);
