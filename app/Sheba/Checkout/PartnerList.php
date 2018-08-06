@@ -281,8 +281,6 @@ class PartnerList
             });
         });
         $this->partners = $final->unique();
-//        $this->sortByLowestPrice();
-//        $this->sortByRatingDesc();
         $this->sortByAvailability();
     }
 
