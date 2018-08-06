@@ -70,7 +70,14 @@ class PartnerOrderController extends Controller
     public function newOrders($partner, Request $request)
     {
         try {
-            $this->validate($request, ['sort' => 'sometimes|required|string|in:created_at,created_at:asc,created_at:desc,schedule_date,schedule_date:asc,schedule_date:desc']);
+            $this->validate($request, ['sort' => 'sometimes|required|string|in:created_at,created_at:asc,created_at:desc,schedule_date,schedule_date:asc,schedule_date:desc', 'getCount' => 'sometimes|required|numeric|in:1']);
+            if ($request->has('getCount')) {
+                $partner = $request->partner->load(['jobs' => function ($q) {
+                    $q->status(array(constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']))->select('jobs.id', 'jobs.status', 'jobs.partner_order_id');
+                }]);
+                $partner_orders = $partner->jobs->groupBy('partner_order_id');
+                return api_response($request, $partner_orders->count(), 200, ['total_new_orders' => $partner_orders->count()]);
+            }
             $orders = $this->partnerOrderRepository->getNewOrdersWithJobs($request);
             return count($orders) > 0 ? api_response($request, $orders, 200, ['orders' => $orders]) : api_response($request, null, 404);
         } catch (ValidationException $e) {
