@@ -184,6 +184,7 @@ class PartnerJobController extends Controller
                 'schedule_date' => 'sometimes|required|date|after:' . Carbon::yesterday(),
                 'preferred_time' => 'required_with:schedule_date|string',
                 'resource_id' => 'string',
+                'status' => 'sometimes|required'
             ]);
             if ($request->has('schedule_date') && $request->has('preferred_time')) {
                 $job_time = new JobTime($request->day, $request->time);
@@ -208,6 +209,11 @@ class PartnerJobController extends Controller
                     return api_response($request, $job, 200);
                 }
                 return api_response($request, null, 403);
+            }
+            if ($request->has('status')) {
+                if ($response = $this->resourceJobRepository->changeStatus($job->id, $request)) {
+                    return api_response($request, $response, $response->code);
+                }
             }
             return api_response($request, null, 500);
         } catch (ValidationException $e) {
