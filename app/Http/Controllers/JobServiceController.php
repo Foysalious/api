@@ -197,4 +197,9 @@ class JobServiceController extends Controller
             "event_id" => $order->id
         ];
     }
+
+    public function destroy(Request $request)
+    {
+        return api_response($request, null, 200);
+    }
 }
