@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Sheba\Checkout;
+<?php namespace App\Sheba\Checkout;
 
 use App\Models\Affiliation;
 use App\Models\CarRentalJobDetail;
@@ -18,6 +16,7 @@ use App\Models\Voucher;
 use App\Repositories\CustomerRepository;
 use App\Repositories\PartnerServiceRepository;
 use App\Repositories\VoucherRepository;
+use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use DB;
 use Illuminate\Http\Request;
@@ -181,6 +180,14 @@ class Checkout
                 $price = (double)$service->pivot->prices;
                 $min_price = (double)$service->pivot->min_prices;
             }
+
+            $surcharge_amount = null;
+            if ($selected_service->is_surcharges_applicable) {
+                $schedule_date_time = Carbon::parse($data['date'] . ' ' . explode('-', $data['time'])[0]);
+                $surcharge_amount = $this->partnerServiceRepository->getSurchargePriceOfService($service->pivot, $schedule_date_time);
+                $price = $price + ($price * $surcharge_amount / 100);
+            }
+
             $discount = new Discount($price, $selected_service->quantity, $min_price);
             $discount->calculateServiceDiscount((PartnerService::find($service->pivot->id))->discount());
             $service_data = array(
@@ -197,7 +204,9 @@ class Checkout
                 'discount_percentage' => $discount->__get('discount_percentage'),
                 'name' => $service->name,
                 'variable_type' => $service->variable_type,
+                'surcharge_percentage' => $surcharge_amount
             );
+
             list($service_data['option'], $service_data['variables']) = $this->getVariableOptionOfService($service, $selected_service->option);
             $job_services->push(new JobService($service_data));
         }
@@ -369,5 +378,4 @@ class Checkout
             return null;
         }
     }
-
 }
