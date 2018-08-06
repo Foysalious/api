@@ -1,10 +1,9 @@
-<?php
-
-namespace App\Repositories;
-
+<?php namespace App\Repositories;
 
 use App\Models\PartnerService;
+use App\Models\PartnerServiceSurcharge;
 use App\Models\Service;
+use Carbon\Carbon;
 
 class PartnerServiceRepository
 {
@@ -34,11 +33,11 @@ class PartnerServiceRepository
     {
         return $this->getPriceOfThisOption($prices, implode(',', $selected_option));
     }
+
     public function getMinimumPriceOfOptionsService($prices, $selected_option)
     {
         return $this->getPriceOfThisOption($prices, implode(',', $selected_option));
     }
-
 
     private function getPriceOfThisOption($prices, $option)
     {
@@ -84,4 +83,11 @@ class PartnerServiceRepository
         return array($unit_price, $option, $variables);
     }
 
+    public function getSurchargePriceOfService($partner_service, Carbon $schedule_date_time)
+    {
+        $surcharge = PartnerServiceSurcharge::where('partner_service_id', $partner_service->id)->runningAt($schedule_date_time)->first();
+        if ($surcharge) return $surcharge->amount;
+
+        return 0;
+    }
 }

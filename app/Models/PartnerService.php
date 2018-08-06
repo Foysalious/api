@@ -53,4 +53,23 @@ class PartnerService extends Model
             ['is_verified', 1]
         ]);
     }
+
+    public function surcharges()
+    {
+        return $this->hasMany(PartnerServiceSurcharge::class, 'partner_service_id');
+    }
+
+    public function runningSurcharges()
+    {
+        return $this->surcharges()->where(function ($query) {
+            $now = Carbon::now();
+            $query->where('start_date', '<=', $now);
+            $query->where('end_date', '>=', $now);
+        })->get();
+    }
+
+    public function surcharge()
+    {
+        return $this->runningSurcharges()->first();
+    }
 }
