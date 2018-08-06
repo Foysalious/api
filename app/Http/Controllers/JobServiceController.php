@@ -30,11 +30,11 @@ class JobServiceController extends Controller
     private function setModifier($modifier)
     {
         $this->modifier_id = $modifier->id;
-        $this->modifier_name = substr(strrchr(get_class($modifier), '\\'), 1). ' - ' . $modifier->profile->name;
+        $this->modifier_name = substr(strrchr(get_class($modifier), '\\'), 1) . ' - ' . $modifier->profile->name;
         $this->time = Carbon::now();
     }
 
-    public function store($partner,Request $request)
+    public function store($partner, Request $request)
     {
         try {
             $this->validate($request, [
@@ -72,10 +72,10 @@ class JobServiceController extends Controller
 
             $request->merge(['status' => $old_job->status]);
             $this->validate($request, [
-                'status'        => 'required|not_in:'.implode(',', $invalid_job_statuses),
-                'quantity'      => 'required|numeric|min:1',
-                'unit_price'    => 'required|numeric|min:0.01',
-                'discount'      => 'numeric|min:0.01'
+                'status' => 'required|not_in:' . implode(',', $invalid_job_statuses),
+                'quantity' => 'required|numeric|min:1',
+                'unit_price' => 'required|numeric|min:0.01',
+                'discount' => 'numeric|min:0.01'
             ], ['status.not_in' => $old_job->status . ' job cannot be updated']);
             if ($error = $this->hasPricingError($job_service, $old_job, $request)) {
                 return api_response($request, null, 400, ['message' => $error]);
@@ -85,9 +85,9 @@ class JobServiceController extends Controller
             }
             $data = $this->getJobServicePriceUpdateData($job_service, $request);
             array_merge($data, [
-                'updated_by'        => $this->modifier_id,
-                'updated_by_name'   => $this->modifier_name,
-                'updated_at'        => $this->time
+                'updated_by' => $this->modifier_id,
+                'updated_by_name' => $this->modifier_name,
+                'updated_at' => $this->time
             ]);
             $this->setModifier($request->manager_resource);
 
@@ -105,12 +105,12 @@ class JobServiceController extends Controller
 
             return api_response($request, null, 200, ['message' => $message]);
         } catch (ValidationException $e) {
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all()]);
-            $sentry->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $exception){
+        } catch (\Throwable $exception) {
             app('sentry')->captureException($exception);
             return api_response($request, null, 500);
         }
@@ -123,7 +123,7 @@ class JobServiceController extends Controller
         }
         if ($request->has('discount')) {
             if (($job_service->discount != $request->discount) && $job->serviceDiscountContributionSheba > (float)$request->discount) {
-                return "Service Discount can't be smaller than ". $job->serviceDiscountContributionSheba;
+                return "Service Discount can't be smaller than " . $job->serviceDiscountContributionSheba;
             }
             if ($job->totalPrice < $job->discount - $job_service->discount + $request->discount) {
                 return "Service Discount can't be greater than total price";
@@ -137,7 +137,7 @@ class JobServiceController extends Controller
     private function getJobServicePriceUpdateData(JobService $job_service, Request $request)
     {
         $data = [
-            'quantity'   => (float)$request->quantity,
+            'quantity' => (float)$request->quantity,
             'unit_price' => (float)$request->unit_price
         ];
         if ($request->has('discount') && (float)$request->discount != $job_service->discount) $data['discount'] = (float)$request->discount;
@@ -149,8 +149,8 @@ class JobServiceController extends Controller
     {
         if (isset($data['discount'])) {
             $data['discount_percentage'] = '0.00';
-            $sheba_contribution_bdt = (float)$job_service->discount * ((float)$job_service->sheba_contribution/100);
-            $data['sheba_contribution'] = (float) number_format($sheba_contribution_bdt/$data['discount']*100, 2);
+            $sheba_contribution_bdt = (float)$job_service->discount * ((float)$job_service->sheba_contribution / 100);
+            $data['sheba_contribution'] = (float)number_format($sheba_contribution_bdt / $data['discount'] * 100, 2);
             $data['partner_contribution'] = 100 - $data['sheba_contribution'];
         } elseif ($job_service->discount_percentage && $job_service->discount_percentage != "0.00") {
             $data['discount'] = ($data['unit_price'] * $data['quantity'] * $job_service->discount_percentage) / 100;
@@ -162,10 +162,10 @@ class JobServiceController extends Controller
         $updated_data = [
             'msg' => 'Service Price Updated',
             'old_service_unit_price' => $job_service->unit_price,
-            'old_service_quantity'   => $job_service->quantity,
+            'old_service_quantity' => $job_service->quantity,
             'new_service_unit_price' => $request->unit_price,
-            'new_service_quantity'   => $request->quantity,
-            'service_name'           => $job_service->name
+            'new_service_quantity' => $request->quantity,
+            'service_name' => $job_service->name
         ];
         $this->jobUpdateLog($job_service->job->id, json_encode($updated_data));
     }
@@ -174,15 +174,15 @@ class JobServiceController extends Controller
     {
         $log_data = [
             'job_id' => $job_id,
-            'log'    => $log
+            'log' => $log
         ];
         JobUpdateLog::create(array_merge((new UserRequestInformation(\request()))->getInformationArray(), $log_data, [
-            'created_by'        => $this->modifier_id,
-            'created_by_name'   => $this->modifier_name,
-            'created_at'        => $this->time,
-            'updated_by'        => $this->modifier_id,
-            'updated_by_name'   => $this->modifier_name,
-            'updated_at'        => $this->time,
+            'created_by' => $this->modifier_id,
+            'created_by_name' => $this->modifier_name,
+            'created_at' => $this->time,
+            'updated_by' => $this->modifier_id,
+            'updated_by_name' => $this->modifier_name,
+            'updated_at' => $this->time,
         ]));
     }
 
@@ -190,11 +190,11 @@ class JobServiceController extends Controller
     {
         $order = $job->partnerOrder->order;
         return [
-            "title" => "Order: " . $order->code() . " Price changed. Old Price: " . $old_job_price .", New Price: " . $job->grossPrice,
-            "link"  => env('SHEBA_FRONT_END_URL') . "/orders/" . $order->id,
-            "type"  => notificationType('Info'),
+            "title" => "Order: " . $order->code() . " Price changed. Old Price: " . $old_job_price . ", New Price: " . $job->grossPrice,
+            "link" => env('SHEBA_FRONT_END_URL') . "/orders/" . $order->id,
+            "type" => notificationType('Info'),
             "event_type" => 'App\Models\Order',
-            "event_id"   => $order->id
+            "event_id" => $order->id
         ];
     }
 }

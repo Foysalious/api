@@ -365,7 +365,6 @@ class Checkout
             }
             return $profile;
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
             return null;
         }
     }
