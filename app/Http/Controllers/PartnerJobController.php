@@ -143,7 +143,7 @@ class PartnerJobController extends Controller
                         $job = $this->assignResource($job, $request->resource_id, $request->manager_resource);
                         return api_response($request, $job, 200);
                     }
-                    return api_response($request, $response, $response->code);
+                    return api_response($request, $response, $response->code, ['message' => $response->msg]);
                 }
                 return api_response($request, null, 500);
             }
