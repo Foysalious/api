@@ -359,6 +359,7 @@ class PartnerList
             array_push($services, $service);
         }
         array_add($partner, 'breakdown', $services);
+        $total_service_price['discount'] = (int)$total_service_price['discount'];
         return $total_service_price;
     }
 
