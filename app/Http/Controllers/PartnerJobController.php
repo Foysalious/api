@@ -211,6 +211,7 @@ class PartnerJobController extends Controller
                 return api_response($request, null, 403);
             }
             if ($request->has('status')) {
+                $request->merge(['remember_token' => $request->manager_resource->remember_token, 'status' => $request->status, 'resource' => $request->manager_resource]);
                 if ($response = $this->resourceJobRepository->changeStatus($job->id, $request)) {
                     return api_response($request, $response, $response->code);
                 }
