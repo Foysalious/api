@@ -20,10 +20,12 @@ use Illuminate\Validation\ValidationException;
 class PartnerJobController extends Controller
 {
     private $resourceJobRepository;
+    private $jobStatuses;
 
     public function __construct()
     {
         $this->resourceJobRepository = new ResourceJobRepository();
+        $this->jobStatuses = constants('JOB_STATUSES');
     }
 
     public function index($partner, Request $request)
@@ -56,7 +58,7 @@ class PartnerJobController extends Controller
                     $job['resource_picture'] = $job->resource != null ? $job->resource->profile->pro_pic : null;
                     $job['resource_mobile'] = $job->resource != null ? $job->resource->profile->mobile : null;
                     $job['resource_name'] = $job->resource != null ? $job->resource->profile->name : '';
-                    $job['schedule_timestamp'] = $job->preferred_time_start ? Carbon::parse($job->schedule_date . ' ' . $job->preferred_time->timestamp) : Carbon::parse($job->schedule_date)->timestamp;
+                    $job['schedule_timestamp'] = $job->preferred_time_start ? Carbon::parse($job->schedule_date . ' ' . $job->preferred_time_start)->timestamp : Carbon::parse($job->schedule_date)->timestamp;
                     $job['preferred_time'] = humanReadableShebaTime($job->preferred_time);
                     $job['rating'] = $job->review != null ? $job->review->rating : null;
                     $job['version'] = $partnerOrder->order->getVersion();
@@ -143,7 +145,7 @@ class PartnerJobController extends Controller
                         $job = $this->assignResource($job, $request->resource_id, $request->manager_resource);
                         return api_response($request, $job, 200);
                     }
-                    return api_response($request, $response, $response->code);
+                    return api_response($request, $response, $response->code, ['message' => $response->msg]);
                 }
                 return api_response($request, null, 500);
             }
@@ -180,11 +182,15 @@ class PartnerJobController extends Controller
     {
         try {
             $job = $request->job;
+            $statuses = 'start,end';
+            foreach (constants('JOB_STATUSES') as $key => $value) {
+                $statuses .= ',$value';
+            }
             $this->validate($request, [
                 'schedule_date' => 'sometimes|required|date|after:' . Carbon::yesterday(),
                 'preferred_time' => 'required_with:schedule_date|string',
                 'resource_id' => 'string',
-                'status' => 'sometimes|required'
+                'status' => 'sometimes|required|in:' . $statuses
             ]);
             if ($request->has('schedule_date') && $request->has('preferred_time')) {
                 $job_time = new JobTime($request->day, $request->time);
@@ -211,8 +217,14 @@ class PartnerJobController extends Controller
                 return api_response($request, null, 403);
             }
             if ($request->has('status')) {
-                if ($response = $this->resourceJobRepository->changeStatus($job->id, $request)) {
-                    return api_response($request, $response, $response->code);
+                $new_status = $request->status;
+                if ($new_status === 'start') $new_status = $this->jobStatuses['Process'];
+                elseif ($new_status === 'end') $new_status = $this->jobStatuses['Served'];
+                if ($new_status == "Served" && (double)$job->partnerOrder->calculate(true)->due > 0) {
+                    return api_response($request, null, 403, ['message' => "Please collect money to end this job."]);
+                }
+                if ($response = (new \Sheba\Repositories\ResourceJobRepository($request->manager_resource))->changeJobStatus($job, $new_status)) {
+                    return api_response($request, $response, $response->code, ['message' => $response->msg]);
                 }
             }
             return api_response($request, null, 500);

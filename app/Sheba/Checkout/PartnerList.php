@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Sheba\Checkout;
+<?php namespace App\Sheba\Checkout;
 
 use App\Models\Category;
 use App\Models\Partner;
@@ -36,7 +34,7 @@ class PartnerList
         $this->selected_services = $this->getSelectedServices($services);
         $this->selectedCategory = Category::find($this->selected_services->first()->category_id);
         $time_elapsed_secs = microtime(true) - $start;
-//        dump("add selected service info: " . $time_elapsed_secs * 1000);
+        //dump("add selected service info: " . $time_elapsed_secs * 1000);
         $this->partnerServiceRepository = new PartnerServiceRepository();
     }
 
@@ -90,7 +88,6 @@ class PartnerList
             return $min_quantity;
         }
     }
-
 
     private function getDistanceCalculationResult($origin, $destination)
     {
@@ -327,6 +324,14 @@ class PartnerList
                 $price = (double)$service->pivot->prices;
                 $min_price = (double)$service->pivot->min_prices;
             }
+
+            if ($selected_service->is_surcharges_applicable) {
+                $schedule_date_time = Carbon::parse($this->date . ' ' . explode('-', $this->time)[0]);
+                $surcharge_amount = $this->partnerServiceRepository->getSurchargePriceOfService($service->pivot, $schedule_date_time);
+                $price = $price + ($price * $surcharge_amount / 100);
+                $service['is_surcharge_applied'] = ($surcharge_amount > 0) ? 1 : 0;
+            }
+
             $discount = new Discount($price, $selected_service->quantity, $min_price);
             $discount->calculateServiceDiscount(PartnerServiceDiscount::where('partner_service_id', $service->pivot->id)->running()->first());
             $service = [];
@@ -394,9 +399,6 @@ class PartnerList
             $this->partners = $this->partners->reject(function ($partner) {
                 return $partner->id == 1809;
             });
-        } catch (\Throwable $e) {
-
-        }
+        } catch (\Throwable $e) {}
     }
-
 }
