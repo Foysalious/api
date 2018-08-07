@@ -180,11 +180,15 @@ class PartnerJobController extends Controller
     {
         try {
             $job = $request->job;
+            $statuses = 'start,end';
+            foreach (constants('JOB_STATUSES') as $key => $value) {
+                $statuses .= ',$value';
+            }
             $this->validate($request, [
                 'schedule_date' => 'sometimes|required|date|after:' . Carbon::yesterday(),
                 'preferred_time' => 'required_with:schedule_date|string',
                 'resource_id' => 'string',
-                'status' => 'sometimes|required'
+                'status' => 'sometimes|required|in:' . $statuses
             ]);
             if ($request->has('schedule_date') && $request->has('preferred_time')) {
                 $job_time = new JobTime($request->day, $request->time);
@@ -211,9 +215,8 @@ class PartnerJobController extends Controller
                 return api_response($request, null, 403);
             }
             if ($request->has('status')) {
-                $request->merge(['remember_token' => $request->manager_resource->remember_token, 'status' => $request->status, 'resource' => $request->manager_resource]);
-                if ($response = $this->resourceJobRepository->changeStatus($job->id, $request)) {
-                    return api_response($request, $response, $response->code);
+                if ($response = (new \Sheba\Repositories\ResourceJobRepository($request->manager_resource))->changeJobStatus($job, $request->status)) {
+                    return api_response($request, $response, $response->code, ['message' => $response->msg]);
                 }
             }
             return api_response($request, null, 500);
@@ -224,6 +227,7 @@ class PartnerJobController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
