@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\PartnerOrder;
@@ -137,7 +135,6 @@ class OrderController extends Controller
         }
     }
 
-
     public function clearPayment(Request $request)
     {
         try {
@@ -182,5 +179,4 @@ class OrderController extends Controller
             return api_response($request, null, 500);
         }
     }
-
 }
