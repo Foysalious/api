@@ -115,7 +115,7 @@ class ComplainController extends Controller
         return $comments;
     }
 
-    public function store($customer, $job, Request $request)
+    public function storeForCustomer($customer, $job, Request $request)
     {
         try {
             $this->validate($request, [
@@ -151,6 +151,11 @@ class ComplainController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function storeForPartner($partner, Request $request)
+    {
+        dd($partner, $request->all());
     }
 
     protected function processData(Request $request, Job $job)

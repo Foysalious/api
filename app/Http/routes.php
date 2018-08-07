@@ -381,7 +381,7 @@ $api->version('v1', function ($api) {
                         $api->post('reviews', 'ReviewController@store');
                         $api->group(['prefix' => 'complains'], function ($api) {
                             $api->get('/', 'ComplainController@index');
-                            $api->post('/', 'ComplainController@store');
+                            $api->post('/', 'ComplainController@storeForCustomer');
                             $api->group(['prefix' => '{complain}'], function ($api) {
                                 $api->post('/', 'ComplainController@postComment');
                                 $api->get('/', 'ComplainController@show');
@@ -453,6 +453,10 @@ $api->version('v1', function ($api) {
             $api->group(['prefix' => 'job_service/{job_service}'], function ($api) {
                 $api->post('/update', 'JobServiceController@update');
                 $api->delete('/', 'JobServiceController@destroy');
+            });
+            $api->group(['prefix' => 'complains'], function ($api) {
+                $api->get('/', 'ComplainController@index');
+                $api->post('/', 'ComplainController@storeForPartner');
             });
             $api->get('get-profile', 'ResourceController@getResourceData');
         });
