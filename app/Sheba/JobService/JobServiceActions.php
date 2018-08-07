@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Sheba\Jobs\Discount;
 use Sheba\ModificationFields;
 use Sheba\RequestIdentification;
+use Illuminate\Http\Request;
 
 class JobServiceActions
 {
@@ -20,6 +21,11 @@ class JobServiceActions
     public function add()
     {
         dd(5);
+    }
+
+    public function update(JobService $job_service, Request $request)
+    {
+
     }
 
     public function delete(JobService $job_service)

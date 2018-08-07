@@ -4,7 +4,6 @@ use App\Models\Job;
 use App\Models\JobService;
 use App\Models\JobUpdateLog;
 use App\Repositories\JobServiceRepository;
-use App\Sheba\Checkout\PartnerList;
 use App\Sheba\UserRequestInformation;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -12,7 +11,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Sheba\JobService\JobServiceActions;
 use Sheba\ModificationFields;
-use Sheba\RequestIdentification;
 
 class JobServiceController extends Controller
 {
