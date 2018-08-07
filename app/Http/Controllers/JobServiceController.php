@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Sheba\JobService\JobServiceActions;
 use Sheba\ModificationFields;
 use Sheba\RequestIdentification;
 
@@ -198,8 +199,15 @@ class JobServiceController extends Controller
         ];
     }
 
-    public function destroy(Request $request)
+    public function destroy($partner, $job_service, Request $request)
     {
-        return api_response($request, null, 200);
+        try {
+            $job_service = JobService::find($job_service);
+            $response = (new JobServiceActions)->delete($job_service);
+            if ($response['code'] == 400) return api_response($response, null, 421, ['message' => $response['msg']]);
+        } catch (\Throwable $exception) {
+            app('sentry')->captureException($exception);
+            return api_response($request, null, 500);
+        }
     }
 }

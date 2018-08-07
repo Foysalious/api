@@ -453,8 +453,10 @@ $api->version('v1', function ($api) {
                 });
                 $api->get('/cancel-request', 'PartnerJobController@cancelRequests');
             });
-            $api->post('job_service/{job_service}/update', 'JobServiceController@update');
-            $api->delete('job_service/{job_service}', 'JobServiceController@destroy');
+            $api->group(['prefix' => 'job_service/{job_service}'], function ($api) {
+                $api->post('/update', 'JobServiceController@update');
+                $api->delete('/', 'JobServiceController@destroy');
+            });
             $api->get('get-profile', 'ResourceController@getResourceData');
         });
         $api->group(['prefix' => 'affiliates/{affiliate}', 'middleware' => ['affiliate.auth']], function ($api) {
