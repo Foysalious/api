@@ -132,10 +132,10 @@ class PartnerOrderController extends Controller
             } else {
                 $partner_order['overdue'] = null;
             }
-            removeRelationsFromModel($partner_order);
-            removeSelectedFieldsFromModel($partner_order);
+            removeRelationsAndFields($partner_order);
             $partner_order['jobs'] = $jobs->each(function ($item) {
-                removeRelationsFromModel($item);
+                removeRelationsAndFields($item);
+                array_forget($item, 'partner_order');
             });
             return api_response($request, $partner_order, 200, ['order' => $partner_order]);
         } catch (\Throwable $e) {
