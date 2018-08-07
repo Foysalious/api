@@ -172,7 +172,6 @@ class PartnerOrderController extends Controller
                 'id' => $partner_order->id,
                 'total_material_price' => (double)$partner_order->totalMaterialPrice,
                 'total_price' => (double)$partner_order->totalPrice,
-                'discount' => (double)$partner_order->totalDiscount,
                 'paid' => (double)$partner_order->paid,
                 'due' => (double)$partner_order->due,
                 'invoice' => $partner_order->invoice,
@@ -181,7 +180,11 @@ class PartnerOrderController extends Controller
                 'service' => $services,
                 'is_paid' => (double)$partner_order->due == 0,
                 'is_due' => (double)$partner_order->due > 0,
-                'is_closed' => $partner_order->closed_at != null
+                'is_closed' => $partner_order->closed_at != null,
+                'total_bill' => (double)$partner_order->totalServicePrice,
+                'discount' => (double)$partner_order->totalDiscount,
+                'total_sheba_discount_amount' => (double)$partner_order->totalShebaDiscount,
+                'total_partner_discount_amount' => (double)$partner_order->totalPartnerDiscount,
             );
             return api_response($request, $partner_order, 200, ['order' => $partner_order]);
         } catch (\Throwable $e) {
