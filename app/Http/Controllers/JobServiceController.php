@@ -175,7 +175,7 @@ class JobServiceController extends Controller
     {
         try {
             $job_service = JobService::find($job_service);
-            if (!$job_service) return api_response($request, null, 400, ['message' => "Job service not found"]);
+            if (!$job_service) return api_response($request, null, 404, ['message' => "Service not found"]);
             $response = (new JobServiceActions)->delete($job_service);
             if ($response['code'] == 400) return api_response($request, null, 400, ['message' => $response['msg']]);
             elseif ($response['code'] == 200) return api_response($request, null, 200);
