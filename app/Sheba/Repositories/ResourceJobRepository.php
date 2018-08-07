@@ -17,14 +17,11 @@ class ResourceJobRepository extends BaseRepository
     {
         parent::__construct();
         $this->resource = $resource;
-        $this->jobStatuses = constants('JOB_STATUSES');
         $this->setModifier($resource);
     }
 
     public function changeJobStatus(Job $job, $new_status)
     {
-        if ($new_status === 'start') $new_status = $this->jobStatuses['Process'];
-        elseif ($new_status === 'end') $new_status = $this->jobStatuses['Served'];
         $form_data = $this->withRequestIdentificationData(array_merge(['status' => $new_status], $this->getResourceInfo()));
         $url = config('sheba.admin_url') . '/api/job/' . $job->id . '/change-status';
         try {

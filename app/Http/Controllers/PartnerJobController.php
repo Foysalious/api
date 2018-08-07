@@ -20,10 +20,12 @@ use Illuminate\Validation\ValidationException;
 class PartnerJobController extends Controller
 {
     private $resourceJobRepository;
+    private $jobStatuses;
 
     public function __construct()
     {
         $this->resourceJobRepository = new ResourceJobRepository();
+        $this->jobStatuses = constants('JOB_STATUSES');
     }
 
     public function index($partner, Request $request)
@@ -215,7 +217,13 @@ class PartnerJobController extends Controller
                 return api_response($request, null, 403);
             }
             if ($request->has('status')) {
-                if ($response = (new \Sheba\Repositories\ResourceJobRepository($request->manager_resource))->changeJobStatus($job, $request->status)) {
+                $new_status = $request->status;
+                if ($new_status === 'start') $new_status = $this->jobStatuses['Process'];
+                elseif ($new_status === 'end') $new_status = $this->jobStatuses['Served'];
+                if ($new_status == "Served" && (double)$job->partnerOrder->calculate(true)->due > 0) {
+                    return api_response($request, null, 403, ['message' => "Please collect money to end this job."]);
+                }
+                if ($response = (new \Sheba\Repositories\ResourceJobRepository($request->manager_resource))->changeJobStatus($job, $new_status)) {
                     return api_response($request, $response, $response->code, ['message' => $response->msg]);
                 }
             }
@@ -227,7 +235,6 @@ class PartnerJobController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
