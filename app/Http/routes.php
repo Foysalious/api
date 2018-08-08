@@ -457,6 +457,7 @@ $api->version('v1', function ($api) {
             $api->group(['prefix' => 'complains'], function ($api) {
                 $api->get('/', 'ComplainController@index');
                 $api->post('/', 'ComplainController@storeForPartner');
+                $api->get('/list', 'ComplainController@complainList');
                 $api->group(['prefix' => '{complain}'], function ($api) {
                     $api->post('/', 'ComplainController@postPartnerComment');
                     $api->get('/', 'ComplainController@showPartnerComplain');

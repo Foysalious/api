@@ -289,4 +289,34 @@ class ComplainController extends Controller
         }
     }
 
+    public function complainList(Request $request)
+    {
+        try {
+            $accessor = null;
+            if ($request->has('created_by')) {
+                if (ucwords($request->created_by) == 'Partner') $accessor = "Partner";
+                else $accessor = "Customer";
+            }
+
+            $complains = $this->complainRepo->partnerComplainList($request->partner->id, $accessor, $request->has('not_resolved'));
+            $formated_complains = collect();
+            foreach ($complains as $complain) {
+                $order_code = 'N/S';
+                if ($complain->job) $order_code = $complain->job->partnerOrder->order->code();
+                $formated_complains->push([
+                    'id'    => $complain->id,
+                    'complain_code' => $complain->code(),
+                    'order_code' => $order_code,
+                    'complain_category' => $complain->preset->complainCategory->name,
+                    'status'    => $complain->status,
+                    'created_at'    => $complain->created_at->format('jS F, Y')
+                ]);
+            }
+            return api_response($request, $formated_complains, 200, ['complains' => $formated_complains]);
+        }
+        catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }
