@@ -84,25 +84,16 @@ class AffiliationController extends Controller
     public function create($affiliate, Request $request)
     {
         try {
-            $request->merge(['mobile' => formatMobile(trim(str_replace(' ','', $request->mobile)))]);
+            $request->merge(['mobile' => formatMobile($request->mobile)]);
             $this->validate($request, ['mobile' => 'required|string|mobile:bd'], ['mobile' => 'Invalid mobile number!']);
-            if ($affiliate = Affiliate::where([['id', $affiliate], ['verification_status', 'verified'], ['is_suspended', 0]])->first()) {
-                if ($affiliate->profile->mobile == $request->mobile) {
-                    return response()->json(['code' => 501, 'msg' => "You can't refer to yourself!"]);
-                }
+            if ($affiliate = Affiliate::find($affiliate)) {
+                if ($affiliate->verification_status != 'verified') return api_response($request, null, 403, ['message' => "Sorry, you're not verified."]);
+                if (!$affiliate->is_suspended) return api_response($request, null, 403, ['message' => "Sorry, you're suspended."]);
+                if ($affiliate->profile->mobile == $request->mobile) return response()->json(['code' => 501, 'msg' => "You can't refer to yourself!"]);
                 $affiliation_counter = Affiliation::where('affiliate_id', $affiliate->id)->where('created_at', '>=', Carbon::today())->count();
                 if ($affiliation_counter < 20) {
-                    $affiliation = new Affiliation();
-                    try {
-                        DB::transaction(function () use ($request, $affiliate, $affiliation) {
-                            $this->affiliationStore($request, $affiliate, $affiliation);
-                            $this->affiliateWalletUpdate($affiliate);
-                            $this->affiliateTransaction($affiliate, $affiliation);
-                        });
-                    } catch (QueryException $e) {
-                        app('sentry')->captureException($e);
-                        return api_response($request, null, 500);
-                    }
+                    $affiliation = $this->affiliationDatabaseTransaction($affiliate, $request);
+                    if (!$affiliation) return api_response($request, null, 500);
                     (new NotificationRepository())->forAffiliation($affiliate, $affiliation);
                     $message = ['en' => 'Your refer have been submitted. You received 2TK bonus add in your wallet.', 'bd' => 'আপনার রেফারেন্সটি গ্রহন করা হয়েছে । আপনার ওয়ালেটে ২ টাকা বোনাস যোগ করা হয়েছে।'];
                     return api_response($request, 1, 200, ['massage' => $message]);
@@ -111,7 +102,7 @@ class AffiliationController extends Controller
                     return api_response($request, null, 403, ['massage' => $message]);
                 }
             } else {
-                return api_response($request, null, 502);
+                return api_response($request, null, 404);
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -122,13 +113,28 @@ class AffiliationController extends Controller
         }
     }
 
+    private function affiliationDatabaseTransaction(Affiliate $affiliate, Request $request)
+    {
+        $affiliation = new Affiliation();
+        try {
+            DB::transaction(function () use ($request, $affiliate, $affiliation) {
+                $this->affiliationStore($request, $affiliate, $affiliation);
+                $this->affiliateWalletUpdate($affiliate);
+                $this->affiliateTransaction($affiliate, $affiliation);
+            });
+        } catch (QueryException $e) {
+            app('sentry')->captureException($e);
+            return null;
+        }
+        return $affiliation;
+    }
+
     private function affiliationStore($request, $affiliate, $affiliation)
     {
         $affiliation->affiliate_id = $affiliate->id;
         $affiliation->customer_name = $request->name;
         $affiliation->customer_mobile = $request->mobile;
         $affiliation->service = $request->service;
-
         $affiliation->save();
     }
 
