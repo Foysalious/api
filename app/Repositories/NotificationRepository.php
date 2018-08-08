@@ -115,11 +115,15 @@ class NotificationRepository
 
     public function forAffiliation($affiliate, $affiliation)
     {
-        notify()->department(7)->send([
-            'title' => 'New Affiliation Arrived from ' . $affiliate->profile->mobile,
-            'link' => env('SHEBA_BACKEND_URL') . '/affiliation/' . $affiliation->id,
-            'type' => notificationType('Info')
-        ]);
+        try {
+            notify()->department(7)->send([
+                'title' => 'New Affiliation Arrived from ' . $affiliate->profile->mobile,
+                'link' => env('SHEBA_BACKEND_URL') . '/affiliation/' . $affiliation->id,
+                'type' => notificationType('Info')
+            ]);
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     public function forPartnerAffiliation($affiliate, $partner_affiliation)
