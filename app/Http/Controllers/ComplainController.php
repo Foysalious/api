@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Comment;
 use App\Models\User;
 use Sheba\Dal\Complain\Model as Complain;
+use Sheba\Dal\Accessor\Model as Accessor;
 use App\Models\Job;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
@@ -234,25 +235,49 @@ class ComplainController extends Controller
         ];
     }
 
-    public function postComment($customer, $job, $complain, Request $request)
+    public function postCustomerComment($customer, $job, $complain, Request $request)
     {
         try {
             $customer = $request->customer;
-            $comment = new Comment();
-            $comment->comment = $request->comment;
-            $comment->commentable_type = "Sheba\\Dal\\Complain\\Model";
-            $comment->commentable_id = $complain;
-            $comment->commentator_type = get_class($customer);
-            $comment->commentator_id = (int)$customer->id;
-            if ($comment->save()) {
-                $comment->accessors()->attach(1);
-                return api_response($request, $complain, 200);
-            } else {
-                return api_response($request, null, 500);
-            }
+            $response = $this->postComment($request, $complain, $customer);
+            if ($response['code'] == 200) return api_response($request, $response['complain'], 200);
+            else return api_response($request, null, 500);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
+        }
+    }
+
+    public function postPartnerComment($partner, $complain, Request $request)
+    {
+        try {
+            $partner = $request->manager_resource;
+            $response = $this->postComment($request, $complain, $partner);
+            if ($response['code'] == 200) return api_response($request, $response['complain'], 200);
+            else return api_response($request, null, 500);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    protected function postComment(Request $request, $complain, $accessor)
+    {
+        $comment = new Comment();
+        $comment->comment = $request->comment;
+        $comment->commentable_type = "Sheba\\Dal\\Complain\\Model";
+        $comment->commentable_id = $complain;
+        $comment->commentator_type = get_class($accessor);
+        $comment->commentator_id = (int)$accessor->id;
+        if ($comment->save()) {
+            $accessor_id = Accessor::where('model_name', get_class($accessor))->first()->id;
+            $comment->accessors()->attach($accessor_id);
+            return [
+                'code' => 200,
+                'complain' => $complain
+            ];
+        } else {
+            return ['code' => 500];
         }
     }
 
