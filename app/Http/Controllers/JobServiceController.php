@@ -69,8 +69,12 @@ class JobServiceController extends Controller
                 $this->saveServicePriceUpdateLog($job_service_old, $request);
                 $job = $job_service->job;
                 $job = $job->calculate(true);
-                notify()->customer($job->partnerOrder->order->customer)
-                    ->send($this->priceChangedNotificationData($job, $old_job->grossPrice));
+                try {
+                    notify()->customer($job->partnerOrder->order->customer)
+                        ->send($this->priceChangedNotificationData($job, $old_job->grossPrice));
+                } catch (\Throwable $exception) {
+
+                }
             });
 
             if ($request->has('discount')) $message = "$request->discount Tk have been successfully discounted.";
