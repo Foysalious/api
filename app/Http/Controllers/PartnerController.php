@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Job;
 use App\Models\Partner;
 use App\Models\PartnerResource;
 use App\Repositories\DiscountRepository;
@@ -275,24 +276,39 @@ class PartnerController extends Controller
     public function getResources($partner, Request $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
+            $this->validate($request, [
                 'type' => 'sometimes|required|string',
-                'verified' => 'sometimes|required|boolean',
-                'job_id' => 'sometimes|required|numeric',
+                'verified' => 'sometimes|required',
+                'job_id' => 'sometimes|required|numeric|exists:jobs,id',
+                'category_id' => 'sometimes|required|numeric',
+                'date' => 'sometimes|required|date',
+                'time' => 'sometimes|required',
             ]);
-            if ($validator->fails()) {
-                $errors = $validator->errors()->all()[0];
-                return api_response($request, $errors, 400, ['message' => $errors]);
-            }
             $partnerRepo = new PartnerRepository($request->partner);
-            $type = $request->has('type') ? $request->type : null;
             $verified = $request->has('verified') ? (int)$request->verified : null;
-            $resources = $partnerRepo->resources($type, $verified, $request->job_id);
+            $category_id = $date = $preferred_time = null;
+            if ($request->has('job_id')) {
+                $job = Job::find((int)$request->job_id);
+                $category_id = $job->category_id;
+                $date = $job->schedule_date;
+                $preferred_time = $job->preferred_time;
+            } else if ($request->has('category_id') && $request->has('date') && $request->has('time')) {
+                $category_id = $request->category_id;
+                $date = $request->date;
+                $preferred_time = $request->time;
+            }
+            $resources = $partnerRepo->handymanResources($verified, $category_id, $date, $preferred_time);
             if (count($resources) > 0) {
                 return api_response($request, $resources, 200, ['resources' => $resources->sortBy('name')->values()->all()]);
             } else {
                 return api_response($request, null, 404);
             }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

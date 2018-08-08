@@ -15,7 +15,7 @@ class Affiliate extends Model implements OperatorAgent
     use TopUpTrait;
     protected $guarded = ['id'];
     protected $dates = ['last_suspended_at'];
-    protected $casts = ['wallet' => 'double', 'is_ambassador' => 'int'];
+    protected $casts = ['wallet' => 'double', 'is_ambassador' => 'int', 'is_suspended' => 'int'];
 
     public function profile()
     {
