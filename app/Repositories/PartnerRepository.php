@@ -4,7 +4,6 @@ namespace App\Repositories;
 
 
 use App\Models\Category;
-use App\Models\Job;
 use App\Models\Partner;
 
 class PartnerRepository
@@ -70,7 +69,7 @@ class PartnerRepository
                     }
                 } else {
                     $resource_scheduler = scheduler($resource);
-                    if (!$resource_scheduler->isAvailableForCategory($date, explode($preferred_time, '-')[0], $category)) {
+                    if (!$resource_scheduler->isAvailableForCategory($date, explode( '-',$preferred_time)[0], $category)) {
                         $data['is_available'] = 0;
                         foreach ($resource_scheduler->getBookedJobs() as $job) {
                             array_push($data['booked_jobs'], array(
