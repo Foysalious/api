@@ -14,6 +14,7 @@ use Sheba\Dal\ComplainPreset\Contract as ComplainPresetRepo;
 
 use Illuminate\Http\Request;
 use Sheba\Dal\Complain\EloquentImplementation as ComplainRepo;
+use Sheba\Notification\CommentNotification;
 
 class ComplainController extends Controller
 {
@@ -147,6 +148,8 @@ class ComplainController extends Controller
             $data = $this->processCommonData($request);
             $data = array_merge($data, $this->processJobData($request, $request->job));
             $complain = $this->complainRepo->create($data);
+            // (new ComplainNotification($complain))->notifyOnCreate();
+            // Auto Response have handled in notification package.
             $response = $this->autoResponse($complain);
 
             return api_response($request, $complain, 200, ['response' => $response]);
@@ -177,6 +180,8 @@ class ComplainController extends Controller
             $data = $this->processCommonData($request);
             if ($request->job) $data = array_merge($data, $this->processJobData($request, $job));
             $complain = $this->complainRepo->create($data);
+            // (new ComplainNotificationPartner($complain))->notifyQcAndCrmOnCreate();
+            // Auto Response have handled in notification package.
             $response = $this->autoResponse($complain);
 
             return api_response($request, $complain, 200, ['response' => $response]);
@@ -192,6 +197,8 @@ class ComplainController extends Controller
         }
     }
 
+    // Auto Response have handled in notification package.
+    // So this function have to delete, when notification package is fixed.
     protected function autoResponse(Complain $complain)
     {
         if ($response = $complain->preset->response) {
@@ -272,6 +279,7 @@ class ComplainController extends Controller
         if ($comment->save()) {
             $accessor_id = Accessor::where('model_name', get_class($accessor))->first()->id;
             $comment->accessors()->attach($accessor_id);
+            // (new CommentNotification())->send($complain);
             return [
                 'code' => 200,
                 'complain' => $complain
