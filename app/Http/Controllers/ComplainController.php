@@ -57,25 +57,11 @@ class ComplainController extends Controller
         }
     }
 
-    public function show($customer, $job, $complain, Request $request)
+    public function showCustomerComplain($customer, $job, $complain, Request $request)
     {
         try {
             $customer = $request->customer;
-            $complain = Complain::whereHas('accessor', function ($query) use ($customer) {
-                $query->where('accessors.model_name', get_class($customer));
-            })->where('id', $complain)->select('id', 'status', 'complain', 'accessor_id', 'job_id', 'customer_id', 'created_at', 'complain_preset_id')
-                ->with(['preset' => function ($q) {
-                    $q->select('id', 'name', 'category_id')->with(['complainCategory' => function ($q) {
-                        $q->select('id', 'name');
-                    }]);
-                }])->with(['comments' => function ($q) {
-                    $q->select('id', 'comment', 'commentable_type', 'commentable_id', 'commentator_id', 'commentator_type', 'created_at')
-                        ->whereHas('accessors', function ($q) {
-                            $q->where('name', 'Customer');
-                        })->with(['commentator' => function ($q) {
-                            $q->select('*');
-                        }])->orderBy('id', 'desc');
-                }])->first();
+            $complain = $this->getComplain($complain, $customer);
             if ($complain) {
                 $comments = $this->formationComments($complain->comments);
                 $complain['comments'] = $comments;
@@ -84,16 +70,50 @@ class ComplainController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function showPartnerComplain($partner, $complain, Request $request)
+    {
+        try {
+            $partner = $request->manager_resource;
+            $complain = $this->getComplain($complain, $partner);
+
+            if ($complain) {
+                $comments = $this->formationComments($complain->comments);
+                $complain['comments'] = $comments;
+                $complain['code'] = $complain->code();
+                return api_response($request, null, 200, ['complain' => $complain]);
+            } else {
+                return api_response($request, null, 404);
+            }
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    protected function getComplain($complain, $accessor)
+    {
+        $complain = Complain::whereHas('accessor', function ($query) use ($accessor) {
+            $query->where('accessors.model_name', get_class($accessor));
+        })->where('id', $complain)->select('id', 'status', 'complain', 'accessor_id', 'job_id', 'customer_id', 'created_at', 'complain_preset_id')
+            ->with(['preset' => function ($q) {
+                $q->select('id', 'name', 'category_id')->with(['complainCategory' => function ($q) {
+                    $q->select('id', 'name');
+                }]);
+            }])->with(['comments' => function ($q) use ($accessor) {
+                $q->select('id', 'comment', 'commentable_type', 'commentable_id', 'commentator_id', 'commentator_type', 'created_at')
+                    ->whereHas('accessors', function ($q) use ($accessor) {
+                        $q->where('model_name', get_class($accessor));
+                    })->with(['commentator' => function ($q) {
+                        $q->select('*');
+                    }])->orderBy('id', 'desc');
+            }])->first();
+        return $complain;
     }
 
     private function formationComments($comments)

@@ -384,7 +384,7 @@ $api->version('v1', function ($api) {
                             $api->post('/', 'ComplainController@storeForCustomer');
                             $api->group(['prefix' => '{complain}'], function ($api) {
                                 $api->post('/', 'ComplainController@postComment');
-                                $api->get('/', 'ComplainController@show');
+                                $api->get('/', 'ComplainController@showCustomerComplain');
                             });
                         });
                         $api->group(['prefix' => 'rates'], function ($api) {
@@ -457,6 +457,10 @@ $api->version('v1', function ($api) {
             $api->group(['prefix' => 'complains'], function ($api) {
                 $api->get('/', 'ComplainController@index');
                 $api->post('/', 'ComplainController@storeForPartner');
+                $api->group(['prefix' => '{complain}'], function ($api) {
+//                    $api->post('/', 'ComplainController@postComment');
+                    $api->get('/', 'ComplainController@showPartnerComplain');
+                });
             });
             $api->get('get-profile', 'ResourceController@getResourceData');
         });
