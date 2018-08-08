@@ -123,23 +123,11 @@ class ComplainController extends Controller
                 'complain_preset' => 'required|numeric',
                 'complain' => 'sometimes|string',
             ]);
-            $job = $request->job;
-            $data = $this->processData($request, $job);
+            $data = $this->processCommonData($request);
+            $data = array_merge($data, $this->processJobData($request, $request->job));
             $complain = $this->complainRepo->create($data);
-            if ($response = $complain->preset->response) {
-                $user = User::where('email', 'bot@sheba.xyz')->first();
-                Comment::create([
-                    'comment' => $response,
-                    'commentable_type' => 'Sheba\Dal\Complain\Model',
-                    'commentable_id' => $complain->id,
-                    'commentator_type' => 'App\Models\User',
-                    'commentator_id' => $user->id,
-                    'created_by' => $user->id,
-                    'created_by_name' => $user->name,
-                    'updated_by' => $user->id,
-                    'updated_by_name' => $user->name
-                ])->accessors()->sync(['accessor_id' => $complain->accessor_id]);
-            }
+            $response = $this->autoResponse($complain);
+
             return api_response($request, $complain, 200, ['response' => $response]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -155,10 +143,55 @@ class ComplainController extends Controller
 
     public function storeForPartner($partner, Request $request)
     {
-        dd($partner, $request->all());
+        try {
+            $this->validate($request, [
+                'accessor_id' => 'required|numeric',
+                'complain_preset' => 'required|numeric',
+                'complain' => 'sometimes|string',
+            ]);
+            if ($request->job) {
+                $job = Job::find((int) $request->job);
+                if (!$job || $job->partnerOrder->partner_id != (int) $partner) return api_response($request, null, 403, ['message' => "This is not your Job"]);
+            }
+            $data = $this->processCommonData($request);
+            if ($request->job) $data = array_merge($data, $this->processJobData($request, $job));
+            $complain = $this->complainRepo->create($data);
+            $response = $this->autoResponse($complain);
+
+            return api_response($request, $complain, 200, ['response' => $response]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 
-    protected function processData(Request $request, Job $job)
+    protected function autoResponse(Complain $complain)
+    {
+        if ($response = $complain->preset->response) {
+            $user = User::where('email', 'bot@sheba.xyz')->first();
+            Comment::create([
+                'comment' => $response,
+                'commentable_type' => 'Sheba\Dal\Complain\Model',
+                'commentable_id' => $complain->id,
+                'commentator_type' => 'App\Models\User',
+                'commentator_id' => $user->id,
+                'created_by' => $user->id,
+                'created_by_name' => $user->name,
+                'updated_by' => $user->id,
+                'updated_by_name' => $user->name
+            ])->accessors()->sync(['accessor_id' => $complain->accessor_id]);
+
+            return $response;
+        }
+    }
+
+    protected function processCommonData(Request $request)
     {
         $preset_id = (int)$request->complain_preset;
         $preset = $this->complainPresetRepo->find($preset_id);
@@ -168,7 +201,13 @@ class ComplainController extends Controller
             'complain' => $request->complain,
             'complain_preset_id' => $preset_id,
             'follow_up_time' => $follow_up_time,
-            'accessor_id' => $request->accessor_id,
+            'accessor_id' => $request->accessor_id
+        ];
+    }
+
+    protected function processJobData(Request $request, Job $job)
+    {
+        return [
             'job_id' => $request->has('job_id') ? $request->job_id : $job->id,
             'customer_id' => isset($request->customer_id) ? $request->customer_id : $job->partnerOrder->order->customer_id,
             'partner_id' => empty($request->partner_id) ? $job->partnerOrder->partner_id : $request->partner_id
