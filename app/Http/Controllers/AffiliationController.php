@@ -86,23 +86,20 @@ class AffiliationController extends Controller
         try {
             $request->merge(['mobile' => formatMobile($request->mobile)]);
             $this->validate($request, ['mobile' => 'required|string|mobile:bd'], ['mobile' => 'Invalid mobile number!']);
-            if ($affiliate = Affiliate::find($affiliate)) {
-                if ($affiliate->verification_status != 'verified') return api_response($request, null, 403, ['message' => "Sorry, you're not verified."]);
-                if (!$affiliate->is_suspended) return api_response($request, null, 403, ['message' => "Sorry, you're suspended."]);
-                if ($affiliate->profile->mobile == $request->mobile) return response()->json(['code' => 501, 'msg' => "You can't refer to yourself!"]);
-                $affiliation_counter = Affiliation::where('affiliate_id', $affiliate->id)->where('created_at', '>=', Carbon::today())->count();
-                if ($affiliation_counter < 20) {
-                    $affiliation = $this->affiliationDatabaseTransaction($affiliate, $request);
-                    if (!$affiliation) return api_response($request, null, 500);
-                    (new NotificationRepository())->forAffiliation($affiliate, $affiliation);
-                    $message = ['en' => 'Your refer have been submitted. You received 2TK bonus add in your wallet.', 'bd' => 'আপনার রেফারেন্সটি গ্রহন করা হয়েছে । আপনার ওয়ালেটে ২ টাকা বোনাস যোগ করা হয়েছে।'];
-                    return api_response($request, 1, 200, ['massage' => $message]);
-                } else {
-                    $message = ['en' => 'Your referral limit already exceeded please try again tomorrow.', 'bd' => 'দুঃখিত! আপনার সর্বোচ্চ রেফার সংখ্যা অতিক্রম করেছে। অনুগ্রহ করে আগামিকাল চেষ্টা করুন।'];
-                    return api_response($request, null, 403, ['massage' => $message]);
-                }
+            $affiliate = $request->affiliate;
+            if ($affiliate->verification_status != 'verified') return api_response($request, null, 403, ['message' => "Sorry, you're not verified."]);
+            if (!$affiliate->is_suspended) return api_response($request, null, 403, ['message' => "Sorry, you're suspended."]);
+            if ($affiliate->profile->mobile == $request->mobile) return response()->json(['code' => 501, 'msg' => "You can't refer to yourself!"]);
+            $affiliation_counter = Affiliation::where([['affiliate_id', $affiliate->id], ['created_at', '>=', Carbon::today()]])->count();
+            if ($affiliation_counter < 20) {
+                $affiliation = $this->affiliationDatabaseTransaction($affiliate, $request);
+                if (!$affiliation) return api_response($request, null, 500);
+                (new NotificationRepository())->forAffiliation($affiliate, $affiliation);
+                $message = ['en' => 'Your refer have been submitted. You received 2TK bonus add in your wallet.', 'bd' => 'আপনার রেফারেন্সটি গ্রহন করা হয়েছে । আপনার ওয়ালেটে ২ টাকা বোনাস যোগ করা হয়েছে।'];
+                return api_response($request, 1, 200, ['massage' => $message]);
             } else {
-                return api_response($request, null, 404);
+                $message = ['en' => 'Your referral limit already exceeded please try again tomorrow.', 'bd' => 'দুঃখিত! আপনার সর্বোচ্চ রেফার সংখ্যা অতিক্রম করেছে। অনুগ্রহ করে আগামিকাল চেষ্টা করুন।'];
+                return api_response($request, null, 403, ['massage' => $message]);
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
