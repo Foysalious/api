@@ -458,9 +458,11 @@ $api->version('v1', function ($api) {
                 $api->get('/', 'ComplainController@index');
                 $api->post('/', 'ComplainController@storeForPartner');
                 $api->get('/list', 'ComplainController@complainList');
+                $api->get('/resolved-category', 'ComplainController@resolvedCategory');
                 $api->group(['prefix' => '{complain}'], function ($api) {
                     $api->post('/', 'ComplainController@postPartnerComment');
                     $api->get('/', 'ComplainController@showPartnerComplain');
+                    $api->post('/status', 'ComplainController@updateStatus');
                 });
             });
             $api->get('get-profile', 'ResourceController@getResourceData');

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Comment;
 use App\Models\User;
+use Sheba\Complains\ComplainStatusChanger;
 use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Dal\Accessor\Model as Accessor;
 use App\Models\Job;
@@ -14,10 +15,12 @@ use Sheba\Dal\ComplainPreset\Contract as ComplainPresetRepo;
 
 use Illuminate\Http\Request;
 use Sheba\Dal\Complain\EloquentImplementation as ComplainRepo;
+use Sheba\ModificationFields;
 use Sheba\Notification\CommentNotification;
 
 class ComplainController extends Controller
 {
+    use ModificationFields;
     private $accessorRepo;
     private $complainPresetRepo;
     private $complainRepo;
@@ -145,8 +148,11 @@ class ComplainController extends Controller
                 'complain_preset' => 'required|numeric',
                 'complain' => 'sometimes|string',
             ]);
+            $this->setModifier($request->customer);
             $data = $this->processCommonData($request);
             $data = array_merge($data, $this->processJobData($request, $request->job));
+            $data = $this->withCreateModificationField($data);
+
             $complain = $this->complainRepo->create($data);
             // (new ComplainNotification($complain))->notifyOnCreate();
             // Auto Response have handled in notification package.
@@ -177,8 +183,11 @@ class ComplainController extends Controller
                 $job = Job::find((int) $request->job);
                 if (!$job || $job->partnerOrder->partner_id != (int) $partner) return api_response($request, null, 403, ['message' => "This is not your Job"]);
             }
+            $this->setModifier($request->manager_resource);
             $data = $this->processCommonData($request);
             if ($request->job) $data = array_merge($data, $this->processJobData($request, $job));
+            $data = $this->withCreateModificationField($data);
+
             $complain = $this->complainRepo->create($data);
             // (new ComplainNotificationPartner($complain))->notifyQcAndCrmOnCreate();
             // Auto Response have handled in notification package.
@@ -318,5 +327,35 @@ class ComplainController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function updateStatus($partner, $complain, Request $request, ComplainStatusChanger $status_changer)
+    {
+        try {
+            $this->validate($request, [
+                'status' => 'required|string',
+                'resolved_category' => 'sometimes|string',
+            ]);
+            $complain = Complain::find($complain);
+            $status_changer->setComplain($complain)->setData($request->all());
+            if($error = $status_changer->hasError()) return api_response($request, $error, 400, ['message' => $error]);
+            $status_changer->setModifierForModificationFiled($request->manager_resource)->change();
+            return api_response($request, null, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function resolvedCategory(Request $request)
+    {
+        $resolved_category = constants('COMPLAIN_RESOLVE_CATEGORIES');
+        return api_response($request, $resolved_category, 200, ['resolved_category' => $resolved_category]);
     }
 }

@@ -348,5 +348,16 @@ return [
         'verified'          => 10,
         'order_completed'   => 70
     ],
-    'PARTNER_AFFILIATION_AMBASSADOR_COMMISSION' => 30
+    'PARTNER_AFFILIATION_AMBASSADOR_COMMISSION' => 30,
+    'COMPLAIN_STATUSES' => [
+        'Open' => 'Open',
+        'Observation' => 'Observation',
+        'Resolved' => 'Resolved'
+    ],
+    'COMPLAIN_RESOLVE_CATEGORIES' => [
+        'service_provided' => 'Service Provided',
+        'sp_compensated' => 'SP Compensated',
+        'promo_provided' => 'Promo Code Provided',
+        'development' => 'Development'
+    ],
 ];
