@@ -466,5 +466,6 @@ $api->version('v1', function ($api) {
             $api->post('partner-affiliates', 'PartnerAffiliationController@store');
             $api->post('top-up', 'TopUpController@topUp');
         });
+        $api->get('updates', 'UpdateController@getUpdates');
     });
 });
