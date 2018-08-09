@@ -226,8 +226,7 @@ class PartnerJobController extends Controller
                     return api_response($request, null, 403, ['message' => "Please " . $action . " money to end this job."]);
                 }
                 if ($response = (new \Sheba\Repositories\ResourceJobRepository($request->manager_resource))->changeJobStatus($job, $new_status)) {
-                    $message = $response->code == 200 ? "Your Order has been " . $new_status . 'ed.' : $response->msg;
-                    return api_response($request, $response, $response->code, ['message' => $message]);
+                    return api_response($request, $response, $response->code, ['message' => $response->msg]);
                 }
             }
             return api_response($request, null, 500);
