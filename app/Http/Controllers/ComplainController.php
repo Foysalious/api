@@ -17,6 +17,8 @@ use Illuminate\Http\Request;
 use Sheba\Dal\Complain\EloquentImplementation as ComplainRepo;
 use Sheba\ModificationFields;
 use Sheba\Notification\CommentNotification;
+use Sheba\Notification\ComplainNotification;
+use Sheba\Notification\ComplainNotificationPartner;
 
 class ComplainController extends Controller
 {
@@ -154,9 +156,8 @@ class ComplainController extends Controller
             $data = $this->withCreateModificationField($data);
 
             $complain = $this->complainRepo->create($data);
-            // (new ComplainNotification($complain))->notifyOnCreate();
-            // Auto Response have handled in notification package.
-            $response = $this->autoResponse($complain);
+            (new ComplainNotification($complain))->notifyOnCreate();
+            $response = $complain->preset->response;
 
             return api_response($request, $complain, 200, ['response' => $response]);
         } catch (ValidationException $e) {
@@ -189,9 +190,8 @@ class ComplainController extends Controller
             $data = $this->withCreateModificationField($data);
 
             $complain = $this->complainRepo->create($data);
-            // (new ComplainNotificationPartner($complain))->notifyQcAndCrmOnCreate();
-            // Auto Response have handled in notification package.
-            $response = $this->autoResponse($complain);
+            (new ComplainNotificationPartner($complain))->notifyQcAndCrmOnCreate();
+            $response = $complain->preset->response;
 
             return api_response($request, $complain, 200, ['response' => $response]);
         } catch (ValidationException $e) {
@@ -203,28 +203,6 @@ class ComplainController extends Controller
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
-        }
-    }
-
-    // Auto Response have handled in notification package.
-    // So this function have to delete, when notification package is fixed.
-    protected function autoResponse(Complain $complain)
-    {
-        if ($response = $complain->preset->response) {
-            $user = User::where('email', 'bot@sheba.xyz')->first();
-            Comment::create([
-                'comment' => $response,
-                'commentable_type' => 'Sheba\Dal\Complain\Model',
-                'commentable_id' => $complain->id,
-                'commentator_type' => 'App\Models\User',
-                'commentator_id' => $user->id,
-                'created_by' => $user->id,
-                'created_by_name' => $user->name,
-                'updated_by' => $user->id,
-                'updated_by_name' => $user->name
-            ])->accessors()->sync(['accessor_id' => $complain->accessor_id]);
-
-            return $response;
         }
     }
 
@@ -279,6 +257,7 @@ class ComplainController extends Controller
 
     protected function postComment(Request $request, $complain, $accessor)
     {
+        $this->setModifier($accessor);
         $comment = new Comment();
         $comment->comment = $request->comment;
         $comment->commentable_type = "Sheba\\Dal\\Complain\\Model";
@@ -288,7 +267,7 @@ class ComplainController extends Controller
         if ($comment->save()) {
             $accessor_id = Accessor::where('model_name', get_class($accessor))->first()->id;
             $comment->accessors()->attach($accessor_id);
-            // (new CommentNotification())->send($complain);
+            (new CommentNotification())->send($this->complainRepo->find($complain));
             return [
                 'code' => 200,
                 'complain' => $complain
@@ -304,10 +283,10 @@ class ComplainController extends Controller
             $accessor = null;
             if ($request->has('created_by')) {
                 if (ucwords($request->created_by) == 'Partner') $accessor = "Partner";
-                else $accessor = "Customer";
+                elseif (ucwords($request->created_by) == 'Customer') $accessor = "Customer";
             }
 
-            $complains = $this->complainRepo->partnerComplainList($request->partner->id, $accessor, $request->has('not_resolved'));
+            $complains = $this->complainRepo->partnerComplainList($request->partner->id, $accessor, ($request->has('not_resolved') && $request->not_resolved));
             $formated_complains = collect();
             foreach ($complains as $complain) {
                 $order_code = 'N/S';
@@ -336,7 +315,8 @@ class ComplainController extends Controller
                 'status' => 'required|string',
                 'resolved_category' => 'sometimes|string',
             ]);
-            $complain = Complain::find($complain);
+            $this->setModifier($request->manager_resource);
+            $complain = $this->complainRepo->find($complain);
             $status_changer->setComplain($complain)->setData($request->all());
             if($error = $status_changer->hasError()) return api_response($request, $error, 400, ['message' => $error]);
             $status_changer->setModifierForModificationFiled($request->manager_resource)->change();
