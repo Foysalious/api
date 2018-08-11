@@ -3,6 +3,7 @@
 namespace App\Sheba\Checkout;
 
 use App\Models\Location;
+use App\Models\ScheduleSlot;
 use App\Models\Service;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -61,7 +62,15 @@ class Validation
 
     private function isValidTime($time)
     {
-        return Carbon::parse($this->request->date . explode('-', $time)[0])->gte(Carbon::now()) ? 1 : 0;
+        $slots = ScheduleSlot::shebaSlots()->get();
+        $exits = false;
+        foreach ($slots as $slot) {
+            if ($time == $slot->start . '-' . $slot->end) {
+                $exits = true;
+                break;
+            }
+        }
+        return $exits && Carbon::parse($this->request->date . explode('-', $time)[0])->gte(Carbon::now()) ? 1 : 0;
     }
 
     private function getSelectedServices($services)
