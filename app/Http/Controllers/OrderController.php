@@ -58,6 +58,7 @@ class OrderController extends Controller
                 'payment_method' => 'required|string|in:cod,online',
                 'address' => 'required_without:address_id',
                 'address_id' => 'required_without:address',
+                'resource' => 'sometimes|numeric',
             ], ['mobile' => 'Invalid mobile number!']);
             $customer = $request->customer;
             $validation = new Validation($request);

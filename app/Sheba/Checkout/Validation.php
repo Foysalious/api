@@ -64,8 +64,10 @@ class Validation
     {
         $slots = ScheduleSlot::shebaSlots()->get();
         $exits = false;
+        $start_time = trim(explode('-', $time)[0]);
+        $end_time = trim(explode('-', $time)[1]);
         foreach ($slots as $slot) {
-            if ($time == $slot->start . '-' . $slot->end) {
+            if ($start_time == $slot->start && $end_time == $slot->end) {
                 $exits = true;
                 break;
             }
