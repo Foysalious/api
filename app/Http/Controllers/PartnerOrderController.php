@@ -153,14 +153,18 @@ class PartnerOrderController extends Controller
                 if (count($job->jobServices) == 0) {
                     $services = array();
                     array_push($services, array(
-                        'name' => $job->service_name,
-                        'quantity' => (double)$job->quantity, 'price' => (double)$job->servicePrice));
+                            'name' => $job->service_name,
+                            'quantity' => (double)$job->quantity,
+                            'unit' => $job->service->unit,
+                            'price' => (double)$job->servicePrice)
+                    );
                 } else {
                     $services = array();
                     foreach ($job->jobServices as $jobService) {
                         array_push($services, array(
                             'name' => $jobService->service ? $jobService->service->name : null,
                             'quantity' => (double)$jobService->quantity,
+                            'unit' => $jobService->service ? $jobService->service->unit : null,
                             'discount' => (double)$jobService->discount,
                             'sheba_contribution' => (double)$jobService->sheba_contribution,
                             'partner_contribution' => (double)$jobService->partner_contribution,
