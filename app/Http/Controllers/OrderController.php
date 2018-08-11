@@ -44,7 +44,7 @@ class OrderController extends Controller
     public function store($customer, Request $request)
     {
         try {
-            $request->merge(['mobile' => trim($request->mobile)]);
+            $request->merge(['mobile' => formatMobile($request->mobile)]);
             $this->validate($request, [
                 'location' => 'required',
                 'services' => 'required|string',
@@ -109,9 +109,11 @@ class OrderController extends Controller
                 (new SmsHandler('order-created'))->send($customer->profile->mobile, [
                     'order_code' => $order->code()
                 ]);
-                (new SmsHandler('order-created-to-partner'))->send($partner->getContactNumber(), [
-                    'order_code' => $order->code(), 'partner_name' => $partner->name
-                ]);
+                if (!$order->jobs->first()->resource_id) {
+                    (new SmsHandler('order-created-to-partner'))->send($partner->getContactNumber(), [
+                        'order_code' => $order->code(), 'partner_name' => $partner->name
+                    ]);
+                }
             }
             (new NotificationRepository())->send($order);
         } catch (\Throwable $e) {

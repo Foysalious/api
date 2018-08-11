@@ -51,7 +51,7 @@ class PartnerOrderRepository
             $job['category_name'] = $job->category ? $job->category->name : null;
             removeRelationsAndFields($job);
             $job['services'] = $services;
-
+            $job['preferred_time'] = humanReadableShebaTime($job->preferred_time);
             $job['pick_up_address'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->pick_up_address : null;
             $job['destination_address'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->destination_address : null;
             $job['drop_off_date'] = $job->carRentalJobDetail ? Carbon::parse($job->carRentalJobDetail->drop_off_date)->format('jS F, Y') : null;

@@ -12,6 +12,7 @@ use App\Models\Order;
 use App\Models\Profile;
 use App\Repositories\CustomerRepository;
 use App\Repositories\FileRepository;
+use App\Repositories\ProfileRepository;
 use Carbon\Carbon;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
@@ -30,12 +31,14 @@ class CustomerController extends Controller
     private $customer;
     private $fbKit;
     private $fileRepository;
+    private $profileRepository;
 
     public function __construct()
     {
         $this->customer = new CustomerRepository();
         $this->fbKit = new FacebookAccountKit();
         $this->fileRepository = new FileRepository();
+        $this->profileRepository = new ProfileRepository();
     }
 
     public function index($customer, Request $request)
@@ -478,6 +481,29 @@ class CustomerController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function store(Request $request)
+    {
+        try {
+            $request->merge(['mobile' => formatMobile($request->mobile)]);
+            $this->validate($request, [
+                'mobile' => 'required|string|mobile:bd|unique:profiles,mobile',
+                'name' => 'required|string'
+            ], ['mobile' => 'Invalid mobile number!']);
+            $profile = $this->profileRepository->store(['mobile' => $request->mobile, 'name' => $request->name]);
+            $customer = new Customer();
+            $customer->remember_token = str_random(255);
+            $customer->profile_id = $profile->id;
+            $customer->save();
+            return api_response($request, $customer, 200, ['customer' => array('id' => $customer->id, 'remember_token' => $customer->remember_token)]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }

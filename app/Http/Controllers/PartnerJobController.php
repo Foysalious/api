@@ -221,13 +221,12 @@ class PartnerJobController extends Controller
                 if ($new_status === 'start') $new_status = $this->jobStatuses['Process'];
                 elseif ($new_status === 'end') $new_status = $this->jobStatuses['Served'];
                 $due = (double)$job->partnerOrder->calculate(true)->due;
-                if ($new_status == "Served") {
+                if ($new_status == "Served" && ($due > 0 || $due < 0)) {
                     $action = $due > 0 ? "collect" : "refund";
                     return api_response($request, null, 403, ['message' => "Please " . $action . " money to end this job."]);
                 }
                 if ($response = (new \Sheba\Repositories\ResourceJobRepository($request->manager_resource))->changeJobStatus($job, $new_status)) {
-                    $message = $response->code == 200 ? "Your Order has successfully started." : $response->msg;
-                    return api_response($request, $response, $response->code, ['message' => $message]);
+                    return api_response($request, $response, $response->code, ['message' => $response->msg]);
                 }
             }
             return api_response($request, null, 500);
