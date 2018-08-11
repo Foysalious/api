@@ -109,7 +109,7 @@ class OrderController extends Controller
                 (new SmsHandler('order-created'))->send($customer->profile->mobile, [
                     'order_code' => $order->code()
                 ]);
-                if ($order->jobs->first()->resource_id) {
+                if (!$order->jobs->first()->resource_id) {
                     (new SmsHandler('order-created-to-partner'))->send($partner->getContactNumber(), [
                         'order_code' => $order->code(), 'partner_name' => $partner->name
                     ]);

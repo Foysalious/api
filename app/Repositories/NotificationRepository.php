@@ -33,7 +33,7 @@ class NotificationRepository
 
             //$this->sendNotificationToCRM(); //REMOVE
         }
-        if ($this->order->jobs->first()->resource_id) $this->sendNotificationToPartner($this->order->partner_orders);
+        if (!$this->order->jobs->first()->resource_id) $this->sendNotificationToPartner($this->order->partner_orders);
     }
 
     private function sendNotificationToCRM()
