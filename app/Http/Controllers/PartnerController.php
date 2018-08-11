@@ -32,6 +32,7 @@ class PartnerController extends Controller
     private $resourceJobRepository;
     private $partnerOrderRepository;
     private $discountRepository;
+    private $rentCarCategoryIds;
 
     public function __construct()
     {
@@ -41,6 +42,7 @@ class PartnerController extends Controller
         $this->partnerOrderRepository = new PartnerOrderRepository();
         $this->partnerServiceRepository = new PartnerServiceRepository();
         $this->discountRepository = new DiscountRepository();
+        $this->rentCarCategoryIds = array_map('intval', explode(',', env('RENT_CAR_IDS')));
     }
 
     public function index()
@@ -563,10 +565,19 @@ class PartnerController extends Controller
                         'services' => $services
                     ]);
                 }
-                if (count($categories) > 0) return api_response($request, $categories, 200, ['categories' => $categories]);
+                if (count($categories) > 0) {
+                    $hasCarRental = $categories->filter(function ($category) {
+                        return in_array($category['id'], $this->rentCarCategoryIds);
+                    })->count() > 0 ? 1 : 0;
+                    $hasOthers = $categories->filter(function ($category) {
+                        return !in_array($category['id'], $this->rentCarCategoryIds);
+                    })->count() > 0 ? 1 : 0;
+                    return api_response($request, $categories, 200, ['categories' => $categories, 'has_car_rental' => $hasCarRental, 'has_others' => $hasOthers]);
+                }
             }
             return api_response($request, null, 404);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
