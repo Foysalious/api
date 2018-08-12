@@ -2739,7 +2739,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_notification.git",
-                "reference": "3250cc7a94946d86f3c2974a375f8c15a7e2ca20"
+                "reference": "b55313fbe77e86e3ab73fe069dd8b67c00292ff2"
             },
             "require": {
                 "php": ">=5.4"
@@ -2763,7 +2763,7 @@
                 }
             ],
             "description": "Sheba notifications.",
-            "time": "2018-08-11T06:09:31+00:00"
+            "time": "2018-08-12T10:34:26+00:00"
         },
         {
             "name": "sheba/voucher",
