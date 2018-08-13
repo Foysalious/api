@@ -152,6 +152,8 @@ class ShebaController extends Controller
                 $app = $request->app;
                 $versions = AppVersion::where('tag', $app)->where('version_code', '>', $version)->get();
                 $data = array(
+                    'title' => !$versions->isEmpty() ? $versions->last()->title : null,
+                    'body' => !$versions->isEmpty() ? $versions->last()->body  : null,
                     'has_update' => count($versions) > 0 ? 1 : 0,
                     'is_critical' => count($versions->where('is_critical', 1)) > 0 ? 1 : 0
                 );
