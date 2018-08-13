@@ -16,7 +16,7 @@ class SettingsController extends Controller
             $customer = $request->customer;
             $customer->load(['partnerOrders' => function ($q) {
                 $q->select('partner_orders.id', 'order_id', 'closed_and_paid_at', 'partner_orders.partner_id')
-                    ->where([['closed_and_paid_at', '<>', null], ['closed_at', '>=', Carbon::today()->subDays(60)]])
+                    ->where([['closed_at', '<>', null], ['closed_at', '>=', Carbon::today()->subDays(60)]])
                     ->whereHas('jobs', function ($q) {
                         $q->has('review', 0);
                     })->with(['partner' => function ($q) {
