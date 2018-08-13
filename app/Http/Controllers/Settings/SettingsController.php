@@ -34,7 +34,7 @@ class SettingsController extends Controller
                 $q->select('customer_reviews.id', 'customer_reviews.customer_id', 'customer_reviews.rating');
             }]);
             $info = null;
-            if ($customer->partnerOrders) {
+            if ($customer->partnerOrders->count() > 0) {
                 $job = $customer->partnerOrders->first()->jobs->first();
                 $info['id'] = $job->id;
                 $info['resource_name'] = trim($job->resource->profile->name);
@@ -44,7 +44,7 @@ class SettingsController extends Controller
             }
             $settings = Redis::get('customer-review-settings');
             $settings = $settings ? json_decode($settings) : null;
-            return api_response($request, $job, 200,
+            return api_response($request, $info, 200,
                 ['job' => $info, 'customer' => ['rating' => $customer->customerReviews->sum('rating')], 'settings' => $settings]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
