@@ -16,7 +16,7 @@ class SettingsController extends Controller
             $customer = $request->customer;
             $customer->load(['partnerOrders' => function ($q) {
                 $q->select('partner_orders.id', 'order_id', 'closed_and_paid_at', 'partner_orders.partner_id')
-                    ->where([['closed_and_paid_at', '<>', null], ['closed_at', '>=', Carbon::today()->subDays(600)]])
+                    ->where([['closed_and_paid_at', '<>', null], ['closed_at', '>=', Carbon::today()->subDays(60)]])
                     ->whereHas('jobs', function ($q) {
                         $q->has('review', 0);
                     })->with(['partner' => function ($q) {
@@ -37,17 +37,16 @@ class SettingsController extends Controller
             if ($customer->partnerOrders) {
                 $job = $customer->partnerOrders->first()->jobs->first();
                 $info['id'] = $job->id;
-                $info['resource_name'] = $job->resource->profile->name;
+                $info['resource_name'] = trim($job->resource->profile->name);
                 $info['resource_picture'] = $job->resource->profile->pro_pic;
                 $info['partner_name'] = $customer->partnerOrders->first()->partner->name;
-                $info['category_name'] = $job->category->name;
+                $info['category_name'] = trim($job->category->name);
             }
             $settings = Redis::get('customer-review-settings');
             $settings = $settings ? json_decode($settings) : null;
             return api_response($request, $job, 200,
                 ['job' => $info, 'customer' => ['rating' => $customer->customerReviews->sum('rating')], 'settings' => $settings]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
