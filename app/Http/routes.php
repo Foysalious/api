@@ -341,6 +341,7 @@ $api->version('v1', function ($api) {
         $api->group(['prefix' => 'customers'], function ($api) {
             $api->group(['prefix' => '{customer}', 'middleware' => ['customer.auth']], function ($api) {
                 $api->get('checkout-info', 'CustomerController@getDeliveryInfo');
+                $api->get('settings/review', 'Settings\SettingsController@getCustomerReviewSettings');
                 $api->put('notifications', 'CustomerNotificationController@update');
                 $api->group(['prefix' => 'favorites'], function ($api) {
                     $api->get('/', 'CustomerFavoriteController@index');
