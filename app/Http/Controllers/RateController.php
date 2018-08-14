@@ -27,6 +27,7 @@ class RateController extends Controller
                     $question['is_compliment'] = ($rate->value == 5) ? 1 : 0;
                     array_forget($question, 'pivot');
                     foreach ($question->answers as $answer) {
+                        $answer['asset'] = 'badge';
                         array_forget($answer, 'pivot');
                     }
                 }
