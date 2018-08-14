@@ -89,9 +89,12 @@ class RateController extends Controller
                 $old_review_answer_ids = $review->rates->pluck('id')->toArray();
                 if (count($quesAns) > 0) {
                     foreach ($quesAns as $qa) {
-                        $review_answer = $this->initializeReviewQuestionAnswer($review, $request->rate, $qa);
-                        $review_answer->rate_answer_id = $qa->answer;
-                        $review_answer->save();
+                        $answers = is_array($qa->answer) ? $qa->answer : [$qa->answer];
+                        foreach ($answers as $answer) {
+                            $review_answer = $this->initializeReviewQuestionAnswer($review, $request->rate, $qa);
+                            $review_answer->rate_answer_id = $answer;
+                            $review_answer->save();
+                        }
                     }
                 }
                 if (count($quesAnsText) > 0) {
