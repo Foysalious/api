@@ -154,6 +154,7 @@ class ShebaController extends Controller
                 $data = array(
                     'title' => !$versions->isEmpty() ? $versions->last()->title : null,
                     'body' => !$versions->isEmpty() ? $versions->last()->body  : null,
+                    'image_link' => !$versions->isEmpty() ? $versions->last()->image_link  : null,
                     'has_update' => count($versions) > 0 ? 1 : 0,
                     'is_critical' => count($versions->where('is_critical', 1)) > 0 ? 1 : 0
                 );
