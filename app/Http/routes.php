@@ -284,8 +284,7 @@ $api->version('v1', function ($api) {
 
     });
     $api->group(['prefix' => 'v2', 'namespace' => 'App\Http\Controllers'], function ($api) {
-        $api->post('bkash/create','BkashController@create');
-        $api->post('bkash/execute','BkashController@execute');
+        $api->get('bkash/paymentID/{paymentID}', 'BkashController@getPaymentInfo');
         $api->post('subscription', 'PushSubscriptionController@store');
         $api->get('car-rental-info', 'ShebaController@sendCarRentalInfo');
         $api->get('butcher-info', 'ShebaController@sendButcherInfo');
@@ -345,6 +344,10 @@ $api->version('v1', function ($api) {
                 $api->get('checkout-info', 'CustomerController@getDeliveryInfo');
                 $api->get('settings/review', 'Settings\SettingsController@getCustomerReviewSettings');
                 $api->put('notifications', 'CustomerNotificationController@update');
+                $api->group(['prefix' => 'bkash'], function ($api) {
+                    $api->post('create', 'BkashController@create');
+                    $api->post('execute', 'BkashController@execute');
+                });
                 $api->group(['prefix' => 'favorites'], function ($api) {
                     $api->get('/', 'CustomerFavoriteController@index');
                     $api->post('/', 'CustomerFavoriteController@store');
