@@ -19,7 +19,8 @@ class BkashController extends Controller
     public function create($customer, Request $request)
     {
         try {
-            $payment = new Payment((Job::find((int)$request->job_id))->partnerOrder->order, new Bkash());
+            $job = $request->job;
+            $payment = new Payment($job->partnerOrder->order, new Bkash());
             $result = [];
             $query = parse_url($payment->generateLink(1))['query'];
             parse_str($query, $result);
@@ -28,6 +29,7 @@ class BkashController extends Controller
             $payment_info = json_decode($payment_info);
             return api_response($request, $result, 200, ['data' => $payment_info]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

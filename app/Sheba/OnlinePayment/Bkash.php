@@ -22,6 +22,7 @@ class Bkash implements PaymentGateway
         $data->customer_id = $order->customer->id;
         $data->remember_token = $order->customer->remember_token;
         $data->partner_order_id = $order->partnerOrders[0]->id;
+        $data->job_id = $order->partnerOrders[0]->jobs[0]->id;
         Redis::set($key_name, json_encode($data));
         Redis::expire($key_name, 2 * 60 * 60);
         return config('sheba.front_url') . '/bkash?paymentID=' . $key_name;
