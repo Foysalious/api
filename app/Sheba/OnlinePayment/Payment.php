@@ -32,7 +32,7 @@ class Payment
         $payment_info = Redis::get("$request->paymentID");
         $payment_info = json_decode($payment_info);
         $result_data = $this->paymentGateway->success($request);
-        if (!isset($result_data->errorCode)) {
+        if ($result_data && !isset($result_data->errorCode)) {
             $payment_info->trxID = $result_data->trxID;
             $payment_info->transactionStatus = $result_data->transactionStatus;
             if ($this->createPartnerOrderPayment(PartnerOrder::find($payment_info->partner_order_id), $payment_info->amount, $payment_info, $request)) {

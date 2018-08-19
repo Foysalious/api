@@ -16,7 +16,7 @@ class SettingsController extends Controller
             $customer = $request->customer;
             $customer->load(['partnerOrders' => function ($q) {
                 $q->select('partner_orders.id', 'order_id', 'closed_at', 'partner_orders.partner_id')
-                    ->where([['closed_at', '<>', null], ['closed_at', '>=', Carbon::today()->subDays(60)]])
+                    ->where([['closed_at', '<>', null], ['closed_at', '>=', Carbon::today()->subDays(600)]])
                     ->whereHas('jobs', function ($q) {
                         $q->has('review', 0);
                     })->with(['partner' => function ($q) {
@@ -37,9 +37,9 @@ class SettingsController extends Controller
             if ($customer->partnerOrders->count() > 0) {
                 $job = $customer->partnerOrders->first()->jobs->first();
                 $info['id'] = $job->id;
-                $info['resource_name'] = trim($job->resource->profile->name);
-                $info['resource_picture'] = $job->resource->profile->pro_pic;
-                $info['partner_name'] = $customer->partnerOrders->first()->partner->name;
+                $info['resource_name'] = trim($job->resource ? $job->resource->profile->name : null);
+                $info['resource_picture'] = $job->resource ? $job->resource->profile->pro_pic : null;
+                $info['partner_name'] = trim($customer->partnerOrders->first()->partner->name);
                 $info['category_name'] = trim($job->category->name);
             }
             $settings = Redis::get('customer-review-settings');

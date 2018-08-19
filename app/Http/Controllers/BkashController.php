@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Job;
 use App\Models\PartnerOrder;
 use Illuminate\Http\Request;
 use Redis;
@@ -11,10 +10,6 @@ use Sheba\OnlinePayment\Payment;
 
 class BkashController extends Controller
 {
-    private $appKey = "5tunt4masn6pv2hnvte1sb5n3j";
-    private $appSecret = "1vggbqd4hqk9g96o9rrrp2jftvek578v7d2bnerim12a87dbrrka";
-    private $username = "sandboxTestUser";
-    private $password = "hWD@8vtzw0";
 
     public function create($customer, Request $request)
     {
@@ -29,7 +24,6 @@ class BkashController extends Controller
             $payment_info = json_decode($payment_info);
             return api_response($request, $result, 200, ['data' => $payment_info]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -50,37 +44,6 @@ class BkashController extends Controller
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
-        }
-    }
-
-    private function grantToken()
-    {
-        try {
-            $post_token = array(
-                'app_key' => $this->appKey,
-                'app_secret' => $this->appSecret
-            );
-            $url = curl_init('https://checkout.sandbox.bka.sh/v1.0.0-beta/checkout/token/grant');
-            $post_token = json_encode($post_token);
-            $header = array(
-                'Content-Type:application/json',
-                'password:' . $this->password,
-                'username:' . $this->username);
-            curl_setopt($url, CURLOPT_HTTPHEADER, $header);
-            curl_setopt($url, CURLOPT_CUSTOMREQUEST, "POST");
-            curl_setopt($url, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($url, CURLOPT_POSTFIELDS, $post_token);
-            curl_setopt($url, CURLOPT_FOLLOWLOCATION, 1);
-            $result_data = curl_exec($url);
-            curl_close($url);
-            $data = json_decode($result_data, true);
-            $token = $data['id_token'];
-            Redis::set('BKASH_TOKEN', $token);
-            Redis::expire('BKASH_TOKEN', (int)$data['expires_in'] - 100);
-            return $token;
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return null;
         }
     }
 
