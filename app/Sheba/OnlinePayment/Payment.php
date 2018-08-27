@@ -7,6 +7,8 @@ use App\Models\Order;
 use App\Models\PartnerOrder;
 use App\Models\PartnerOrderPayment;
 use App\Sheba\UserRequestInformation;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
 use Redis;
 use DB;
@@ -35,7 +37,14 @@ class Payment
         if ($result_data && !isset($result_data->errorCode)) {
             $payment_info->trxID = $result_data->trxID;
             $payment_info->transactionStatus = $result_data->transactionStatus;
-            if ($this->createPartnerOrderPayment(PartnerOrder::find($payment_info->partner_order_id), $payment_info->amount, $payment_info, $request)) {
+            $partnerOrder = PartnerOrder::find($payment_info->partner_order_id);
+            if ($payment_info->isAdvancedPayment) {
+                $payment_clear = $this->createPartnerOrderPayment($partnerOrder, $payment_info->amount, $payment_info, $request);
+            } else {
+                $response = array_merge((new UserRequestInformation($request))->getInformationArray(), ['transaction_detail' => json_encode($payment_info)]);
+                $payment_clear = $this->clearSpPayment($partnerOrder, $payment_info->amount, $response);
+            }
+            if ($payment_clear) {
                 Redis::del("$request->paymentID");
                 return true;
             }
@@ -67,6 +76,27 @@ class Payment
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return null;
+        }
+    }
+
+    public function clearSpPayment(PartnerOrder $partnerOrder, $amount, $response)
+    {
+        try {
+            $client = new Client();
+            $res = $client->request('POST', config('sheba.admin_url') . '/api/partner-order/' . $partnerOrder->id . '/collect',
+                [
+                    'form_params' => array_merge([
+                        'customer_id' => $partnerOrder->order->customer->id,
+                        'remember_token' => $partnerOrder->order->customer->remember_token,
+                        'sheba_collection' => (double)$amount,
+                        'payment_method' => 'Online',
+                        'created_by_type' => 'App\Models\Customer',
+                    ], $response)
+                ]);
+            return json_decode($res->getBody());
+        } catch (RequestException $e) {
+            app('sentry')->captureException($e);
+            return false;
         }
     }
 }

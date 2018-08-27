@@ -13,6 +13,8 @@ use DB;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 use Sheba\Logs\Customer\JobLogs;
+use Sheba\OnlinePayment\Bkash;
+use Sheba\OnlinePayment\Payment;
 
 class JobController extends Controller
 {
@@ -356,7 +358,14 @@ class JobController extends Controller
     public function clearBills($customer, $job, Request $request)
     {
         try {
-            $link = (new OnlinePayment())->generateSSLLink($request->job->partnerOrder);
+            $this->validate($request, [
+                'payment_method' => 'sometimes'
+            ]);
+            if ($request->payment_method == 'bkash') {
+                $link = (new Payment($request->job->partnerOrder->order, new Bkash()))->generateLink(0);
+            } else {
+                $link = (new OnlinePayment())->generateSSLLink($request->job->partnerOrder);
+            }
             return api_response($request, $link, 200, ['link' => $link]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

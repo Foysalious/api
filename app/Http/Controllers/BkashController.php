@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\PartnerOrder;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Redis;
 use Sheba\OnlinePayment\Bkash;
 use Sheba\OnlinePayment\Payment;
@@ -14,15 +15,25 @@ class BkashController extends Controller
     public function create($customer, Request $request)
     {
         try {
+            $this->validate($request, [
+                'job' => 'required|numeric',
+                'isAdvanced' => 'required|numeric|in:0,1'
+            ]);
             $job = $request->job;
             $payment = new Payment($job->partnerOrder->order, new Bkash());
             $result = [];
-            $query = parse_url($payment->generateLink(1))['query'];
+            $query = parse_url($payment->generateLink((int)$request->isAdvanced))['query'];
             parse_str($query, $result);
             $key_name = $result['paymentID'];
             $payment_info = Redis::get("$key_name");
             $payment_info = json_decode($payment_info);
             return api_response($request, $result, 200, ['data' => $payment_info]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
