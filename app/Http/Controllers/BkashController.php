@@ -16,8 +16,8 @@ class BkashController extends Controller
     {
         try {
             $this->validate($request, [
-                'job' => 'required|numeric',
-                'isAdvanced' => 'required|numeric|in:0,1'
+                'job' => 'required',
+                'isAdvanced' => 'required|in:0,1'
             ]);
             $job = $request->job;
             $payment = new Payment($job->partnerOrder->order, new Bkash());
