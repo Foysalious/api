@@ -2,31 +2,30 @@
 
 namespace Sheba\OnlinePayment;
 
-
-use App\Models\Order;
 use App\Models\PartnerOrder;
 use App\Models\PartnerOrderPayment;
 use App\Sheba\UserRequestInformation;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Redis;
 use DB;
 
 class Payment
 {
-    private $order;
+    private $partnerOrder;
     private $paymentGateway;
 
-    public function __construct(Order $order, PaymentGateway $paymentGateway)
+    public function __construct(PartnerOrder $partnerOrder, PaymentGateway $paymentGateway)
     {
-        $this->order = $order;
+        $this->partnerOrder = $partnerOrder;
         $this->paymentGateway = $paymentGateway;
     }
 
     public function generateLink($isAdvancePayment)
     {
-        return $this->paymentGateway->generateLink($this->order, $isAdvancePayment);
+        return $this->paymentGateway->generateLink($this->partnerOrder, (int)$isAdvancePayment);
     }
 
     public function success(Request $request)
@@ -52,31 +51,31 @@ class Payment
         return false;
     }
 
-    private function createPartnerOrderPayment(PartnerOrder $partner_order, $amount, $gateway_response, $request)
+    private function createPartnerOrderPayment(PartnerOrder $partnerOrder, $amount, $gateway_response, $request)
     {
+        $partner_order_payment = new PartnerOrderPayment();
         try {
-            $partner_order_payment = new PartnerOrderPayment();
-            DB::transaction(function () use ($partner_order, $partner_order_payment, $gateway_response, $amount, $request) {
-                $partner_order->sheba_collection = $amount;
-                $partner_order->update();
-                $partner_order_payment->partner_order_id = $partner_order->id;
+            DB::transaction(function () use ($partnerOrder, $partner_order_payment, $gateway_response, $amount, $request) {
+                $partnerOrder->sheba_collection = $amount;
+                $partnerOrder->update();
+                $partner_order_payment->partner_order_id = $partnerOrder->id;
                 $partner_order_payment->transaction_type = 'Debit';
                 $partner_order_payment->method = 'bkash';
-                $partner_order_payment->amount = (double)$partner_order->sheba_collection;
+                $partner_order_payment->amount = (double)$partnerOrder->sheba_collection;
                 $partner_order_payment->log = 'advanced payment';
                 $partner_order_payment->collected_by = 'Sheba';
-                $partner_order_payment->created_by = $partner_order->order->customer_id;
+                $partner_order_payment->created_by = $partnerOrder->order->customer_id;
                 $partner_order_payment->created_by_type = "App\Models\Customer";
-                $partner_order_payment->created_by_name = 'Customer - ' . $partner_order->order->customer->profile->name;
+                $partner_order_payment->created_by_name = 'Customer - ' . $partnerOrder->order->customer->profile->name;
                 $partner_order_payment->transaction_detail = $this->paymentGateway->formatTransactionData($gateway_response);
                 $partner_order_payment->fill((new UserRequestInformation($request))->getInformationArray());
                 $partner_order_payment->save();
             });
-            return $partner_order_payment;
-        } catch (\Throwable $e) {
+        } catch (QueryException $e) {
             app('sentry')->captureException($e);
             return null;
         }
+        return $partner_order_payment;
     }
 
     public function clearSpPayment(PartnerOrder $partnerOrder, $amount, $response)

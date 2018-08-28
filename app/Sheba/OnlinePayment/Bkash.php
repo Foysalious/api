@@ -3,7 +3,7 @@
 
 namespace Sheba\OnlinePayment;
 
-use App\Models\Order;
+use App\Models\PartnerOrder;
 use Illuminate\Http\Request;
 use Redis;
 
@@ -24,24 +24,23 @@ class Bkash implements PaymentGateway
         $this->url = config('bkash.url');
     }
 
-    public function generateLink(Order $order, $isAdvancedPayment)
+    public function generateLink(PartnerOrder $partnerOrder, $isAdvancedPayment)
     {
-        $data = $this->create($order);
+        $data = $this->create($partnerOrder);
         $key_name = $data->paymentID;
-        $data->customer_id = $order->customer->id;
-        $data->remember_token = $order->customer->remember_token;
-        $data->partner_order_id = $order->partnerOrders[0]->id;
-        $data->job_id = $order->partnerOrders[0]->jobs[0]->id;
+        $data->customer_id = $partnerOrder->order->customer->id;
+        $data->remember_token = $partnerOrder->order->customer->remember_token;
+        $data->partner_order_id = $partnerOrder->id;
+        $data->job_id = $partnerOrder->jobs[0]->id;
         $data->isAdvancedPayment = $isAdvancedPayment;
         Redis::set($key_name, json_encode($data));
         Redis::expire($key_name, 2 * 60 * 60);
         return config('sheba.front_url') . '/bkash?paymentID=' . $key_name;
     }
 
-    private function create(Order $order)
+    private function create(PartnerOrder $partnerOrder)
     {
         try {
-            $partnerOrder = $order->partnerOrders[0];
             $partnerOrder->calculate(true);
             $token = Redis::get('BKASH_TOKEN');
             $token = $token ? $token : $this->grantToken();

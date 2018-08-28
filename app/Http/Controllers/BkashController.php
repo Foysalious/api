@@ -20,7 +20,7 @@ class BkashController extends Controller
                 'isAdvanced' => 'required|in:0,1'
             ]);
             $job = $request->job;
-            $payment = new Payment($job->partnerOrder->order, new Bkash());
+            $payment = new Payment($job->partnerOrder, new Bkash());
             $result = [];
             $query = parse_url($payment->generateLink((int)$request->isAdvanced))['query'];
             parse_str($query, $result);
