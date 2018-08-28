@@ -290,8 +290,8 @@ class ComplainController extends Controller
             foreach ($complains as $complain) {
                 $order_code = 'N/A';
                 $customer_name = 'N/A';
-                $customer_profile_picture = 'N/A';
-                $schedule_date_and_time = 'N/A';
+                $customer_profile_picture = null;
+                $schedule_date_and_time = null;
                 $job_category = 'N/A';
                 $job_location = 'N/A';
                 $resource_name = 'N/A';
@@ -309,6 +309,7 @@ class ComplainController extends Controller
                 $formated_complains->push([
                     'id'    => $complain->id,
                     'complain_code' => $complain->code(),
+                    'complain'  => $complain->complain,
                     'order_code' => $order_code,
                     'customer_name' => $customer_name,
                     'customer_profile_picture' => $customer_profile_picture,
