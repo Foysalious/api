@@ -2708,7 +2708,7 @@
             "source": {
                 "type": "git",
                 "url": "https://arnabrahman@bitbucket.org/startern/sheba_dal.git",
-                "reference": "fb555473cde82ec2a1db35a01fc60e598dba6816"
+                "reference": "9e8bc8935a40242155bd114d055a9de656e46c21"
             },
             "require": {
                 "php": ">=5.4"
@@ -2732,7 +2732,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2018-08-27 10:51:17"
+            "time": "2018-08-28 13:53:32"
         },
         {
             "name": "sheba/notification",
