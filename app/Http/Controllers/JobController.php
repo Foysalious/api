@@ -362,7 +362,7 @@ class JobController extends Controller
                 'payment_method' => 'sometimes'
             ]);
             if ($request->payment_method == 'bkash') {
-                $link = (new Payment($request->job->partnerOrder->order, new Bkash()))->generateLink(0);
+                $link = (new Payment($request->job->partnerOrder, new Bkash()))->generateLink(0);
             } else {
                 $link = (new OnlinePayment())->generateSSLLink($request->job->partnerOrder);
             }
