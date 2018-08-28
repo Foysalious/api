@@ -288,12 +288,34 @@ class ComplainController extends Controller
             $complains = $this->complainRepo->partnerComplainList($request->partner->id, $accessor, ($request->has('not_resolved') && $request->not_resolved));
             $formated_complains = collect();
             foreach ($complains as $complain) {
-                $order_code = 'N/S';
-                if ($complain->job) $order_code = $complain->job->partnerOrder->order->code();
+                $order_code = 'N/A';
+                $customer_name = 'N/A';
+                $customer_profile_picture = 'N/A';
+                $schedule_date_and_time = 'N/A';
+                $job_category = 'N/A';
+                $job_location = 'N/A';
+                $resource_name = 'N/A';
+                if ($complain->job)  {
+                    $order = $complain->job->partnerOrder->order;
+                    $customer_profile = $order->customer->profile;
+                    $order_code = $order->code();
+                    $customer_name = $customer_profile->name;
+                    $customer_profile_picture = $customer_profile->pro_pic;
+                    $schedule_date_and_time = humanReadableShebaTime($complain->job->preferred_time). ', ' .Carbon::parse($complain->job->schedule_date)->toFormattedDateString();
+                    $job_category = $complain->job->category->name;
+                    $job_location = $order->location->name;
+                    $resource_name = $complain->job->resource ? $complain->job->resource->profile->name : 'N/A';
+                }
                 $formated_complains->push([
                     'id'    => $complain->id,
                     'complain_code' => $complain->code(),
                     'order_code' => $order_code,
+                    'customer_name' => $customer_name,
+                    'customer_profile_picture' => $customer_profile_picture,
+                    'schedule_date_and_time' => $schedule_date_and_time,
+                    'category' => $job_category,
+                    'location' => $job_location,
+                    'resource'  => $resource_name,
                     'complain_category' => $complain->preset->complainCategory->name,
                     'status'    => $complain->status,
                     'created_at'    => $complain->created_at->format('jS F, Y')
