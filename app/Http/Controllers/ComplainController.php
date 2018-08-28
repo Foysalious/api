@@ -69,6 +69,7 @@ class ComplainController extends Controller
         try {
             $customer = $request->customer;
             $complain = $this->getComplain($complain, $customer);
+
             if ($complain) {
                 $comments = $this->formationComments($complain->comments);
                 $complain['comments'] = $comments;
@@ -105,9 +106,7 @@ class ComplainController extends Controller
 
     protected function getComplain($complain, $accessor)
     {
-        $complain = Complain::whereHas('accessor', function ($query) use ($accessor) {
-            $query->where('accessors.model_name', get_class($accessor));
-        })->where('id', $complain)->select('id', 'status', 'complain', 'accessor_id', 'job_id', 'customer_id', 'created_at', 'complain_preset_id')
+        $complain = Complain::where('id', $complain)->select('id', 'status', 'complain', 'accessor_id', 'job_id', 'customer_id', 'created_at', 'complain_preset_id')
             ->with(['preset' => function ($q) {
                 $q->select('id', 'name', 'category_id')->with(['complainCategory' => function ($q) {
                     $q->select('id', 'name');
