@@ -76,7 +76,7 @@ class OrderController extends Controller
                 if ($order->voucher_id) $this->updateVouchers($order, $customer);
                 $link = null;
                 if ($request->payment_method == 'bkash') {
-                    $link = (new Payment($order, new Bkash()))->generateLink(1);
+                    $link = (new Payment($order->partnerOrders[0], new Bkash()))->generateLink(1);
                 } elseif ($request->payment_method == 'online') {
                     $link = (new OnlinePayment())->generateSSLLink($order->partnerOrders[0], 1);
                 }
