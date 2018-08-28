@@ -46,7 +46,7 @@ class BkashController extends Controller
             $payment_info = Redis::get("$request->paymentID");
             $payment_info = json_decode($payment_info);
             $partnerOrder = PartnerOrder::find((int)$payment_info->partner_order_id);
-            $payment = new Payment($partnerOrder->order, new Bkash());
+            $payment = new Payment($partnerOrder, new Bkash());
             if ($payment->success($request)) {
                 return api_response($request, 1, 200);
             } else {
