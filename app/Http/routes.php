@@ -423,6 +423,7 @@ $api->version('v1', function ($api) {
             $api->group(['prefix' => 'subscriptions'], function ($api) {
                 $api->get('/', 'Partner\PartnerSubscriptionController@index');
                 $api->post('/', 'Partner\PartnerSubscriptionController@store');
+                $api->post('/upgrade', 'Partner\PartnerSubscriptionController@update');
             });
             $api->group(['prefix' => 'resources'], function ($api) {
                 $api->post('/', 'Resource\PersonalInformationController@store');
