@@ -53,6 +53,30 @@ class PartnerSubscriptionController extends Controller
         }
     }
 
+    public function update(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'package_id' => 'required|numeric|exists:partner_subscription_packages,id',
+                // 'billing_cycle' => 'required|string|in:monthly,yearly'
+            ]);
+            if ($request->package_id == $request->partner->package_id)
+                return api_response($request, null, 400, ['message' => "You can't upgrade to the same package"]);
+
+            $request->partner->subscriptionUpgrade((int)$request->package_id);
+            return api_response($request, null, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     private function calculateDiscount($rules, PartnerSubscriptionPackage $package)
     {
         $rules['fee']['monthly']['original_price'] = $rules['fee']['monthly']['value'];
