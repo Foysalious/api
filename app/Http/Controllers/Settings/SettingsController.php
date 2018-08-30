@@ -16,13 +16,11 @@ class SettingsController extends Controller
             $customer = $request->customer;
             $customer->load(['partnerOrders' => function ($q) {
                 $q->select('partner_orders.id', 'order_id', 'closed_at', 'partner_orders.partner_id')
-                    ->where([['closed_at', '<>', null], ['closed_at', '>=', Carbon::today()->subDays(600)]])
-                    ->whereHas('jobs', function ($q) {
-                        $q->has('review', 0);
-                    })->with(['partner' => function ($q) {
+                    ->where([['closed_at', '<>', null], ['cancelled_at', '<>', null], ['partner_orders.created_at', '>=', Carbon::today()->subDays(30)]])
+                    ->with(['partner' => function ($q) {
                         $q->select('partners.id', 'partners.name');
                     }, 'jobs' => function ($q) {
-                        $q->select('jobs.id', 'partner_order_id', 'resource_id', 'category_id')->with(['category' => function ($q) {
+                        $q->select('jobs.id', 'partner_order_id', 'resource_id', 'category_id')->with(['review', 'category' => function ($q) {
                             $q->select('categories.id', 'categories.name');
                         }, 'resource' => function ($q) {
                             $q->select('resources.id', 'resources.profile_id')->with(['profile' => function ($q) {
@@ -34,12 +32,13 @@ class SettingsController extends Controller
                 $q->select('customer_reviews.id', 'customer_reviews.customer_id', 'customer_reviews.rating');
             }]);
             $info = null;
-            if ($customer->partnerOrders->count() > 0) {
-                $job = $customer->partnerOrders->first()->jobs->first();
+            $partner_order = $customer->partnerOrders->first();
+            $job = $partner_order ? $partner_order->jobs->first() : null;
+            if ($job && $job->review == null) {
                 $info['id'] = $job->id;
                 $info['resource_name'] = trim($job->resource ? $job->resource->profile->name : null);
                 $info['resource_picture'] = $job->resource ? $job->resource->profile->pro_pic : null;
-                $info['partner_name'] = trim($customer->partnerOrders->first()->partner->name);
+                $info['partner_name'] = trim($partner_order->partner->name);
                 $info['category_name'] = trim($job->category->name);
             }
             $settings = Redis::get('customer-review-settings');

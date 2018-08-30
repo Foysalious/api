@@ -17,7 +17,7 @@ class RateController extends Controller
         try {
             $rates = Rate::where('type', 'review')->with(['questions' => function ($q) {
                 $q->select('id', 'question', 'type')->with(['answers' => function ($q) {
-                    $q->select('id', 'answer', 'badge');
+                    $q->select('id', 'answer', 'asset', 'badge');
                 }]);
             }])->select('id', 'name', 'icon', 'icon_off', 'value')->get();
             foreach ($rates as $rate) {
@@ -27,7 +27,6 @@ class RateController extends Controller
                     $question['is_compliment'] = ($rate->value == 5) ? 1 : 0;
                     array_forget($question, 'pivot');
                     foreach ($question->answers as $answer) {
-                        $answer['asset'] = 'badge';
                         array_forget($answer, 'pivot');
                     }
                 }
