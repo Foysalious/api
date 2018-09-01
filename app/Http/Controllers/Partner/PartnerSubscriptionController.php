@@ -53,6 +53,29 @@ class PartnerSubscriptionController extends Controller
         }
     }
 
+    public function update(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'package_id' => 'required|numeric|exists:partner_subscription_packages,id',
+                'billing_cycle' => 'sometimes|string|in:monthly,yearly'
+            ]);
+            $partner = $request->partner;
+            if ((int)$request->package_id < (int)$partner->package_id) return api_response($request, null, 403, ['message' => "You can't downgrade your subscription."]);
+            $partner->subscriptionUpgrade((int)$request->package_id);
+            return api_response($request, null, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     private function calculateDiscount($rules, PartnerSubscriptionPackage $package)
     {
         $rules['fee']['monthly']['original_price'] = $rules['fee']['monthly']['value'];
@@ -82,7 +105,7 @@ class PartnerSubscriptionController extends Controller
             if ($partner_subcription_discount) {
                 if (!$partner_subcription_discount->is_percentage) return (float)$partner_subcription_discount->amount;
                 else {
-                    return (float)$package->originalPrice($billing_type) * ($partner_subcription_discount->amount/100);
+                    return (float)$package->originalPrice($billing_type) * ($partner_subcription_discount->amount / 100);
                 }
             }
             return 0;
@@ -126,6 +149,6 @@ class PartnerSubscriptionController extends Controller
         foreach ($cycles as $cycle) {
             $message[] = ordinal($cycle);
         }
-        return implode(',', $message). " Billing Cycle";
+        return implode(',', $message) . " Billing Cycle";
     }
 }

@@ -14,6 +14,8 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Redis;
 use DB;
+use Sheba\OnlinePayment\Bkash;
+use Sheba\OnlinePayment\Payment;
 
 class OrderController extends Controller
 {
@@ -72,7 +74,12 @@ class OrderController extends Controller
             $order = $order->placeOrder($request);
             if ($order) {
                 if ($order->voucher_id) $this->updateVouchers($order, $customer);
-                $link = $request->payment_method == 'online' ? (new OnlinePayment())->generateSSLLink($order->partnerOrders[0], 1) : null;
+                $link = null;
+                if ($request->payment_method == 'bkash') {
+                    $link = (new Payment($order->partnerOrders[0], new Bkash()))->generateLink(1);
+                } elseif ($request->payment_method == 'online') {
+                    $link = (new OnlinePayment())->generateSSLLink($order->partnerOrders[0], 1);
+                }
                 $this->sendNotifications($customer, $order);
                 return api_response($request, $order, 200, ['link' => $link, 'job_id' => $order->jobs->first()->id, 'order_code' => $order->code()]);
             }

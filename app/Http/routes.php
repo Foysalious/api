@@ -284,6 +284,7 @@ $api->version('v1', function ($api) {
 
     });
     $api->group(['prefix' => 'v2', 'namespace' => 'App\Http\Controllers'], function ($api) {
+        $api->get('bkash/paymentID/{paymentID}', 'BkashController@getPaymentInfo');
         $api->post('subscription', 'PushSubscriptionController@store');
         $api->get('car-rental-info', 'ShebaController@sendCarRentalInfo');
         $api->get('butcher-info', 'ShebaController@sendButcherInfo');
@@ -341,7 +342,12 @@ $api->version('v1', function ($api) {
         $api->group(['prefix' => 'customers'], function ($api) {
             $api->group(['prefix' => '{customer}', 'middleware' => ['customer.auth']], function ($api) {
                 $api->get('checkout-info', 'CustomerController@getDeliveryInfo');
+                $api->get('settings/review', 'Settings\SettingsController@getCustomerReviewSettings');
                 $api->put('notifications', 'CustomerNotificationController@update');
+                $api->group(['prefix' => 'bkash'], function ($api) {
+                    $api->post('create', 'BkashController@create')->middleware('customer_job.auth');
+                    $api->post('execute', 'BkashController@execute');
+                });
                 $api->group(['prefix' => 'favorites'], function ($api) {
                     $api->get('/', 'CustomerFavoriteController@index');
                     $api->post('/', 'CustomerFavoriteController@store');
@@ -417,6 +423,7 @@ $api->version('v1', function ($api) {
             $api->group(['prefix' => 'subscriptions'], function ($api) {
                 $api->get('/', 'Partner\PartnerSubscriptionController@index');
                 $api->post('/', 'Partner\PartnerSubscriptionController@store');
+                $api->post('/upgrade', 'Partner\PartnerSubscriptionController@update');
             });
             $api->group(['prefix' => 'resources'], function ($api) {
                 $api->post('/', 'Resource\PersonalInformationController@store');

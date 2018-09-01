@@ -60,6 +60,8 @@ class PartnerOrderRepository
             $job['estimated_time'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_time : null;
 
             array_forget($job, ['partner_order', 'carRentalJobDetail']);
+
+            $job['complains'] = app('Sheba\Dal\Complain\EloquentImplementation')->jobWiseComplainInfo($job->id);
         })->values()->all();
         removeRelationsAndFields($partner_order);
         $partner_order['jobs'] = $jobs;

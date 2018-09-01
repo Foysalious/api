@@ -40,6 +40,7 @@ class Cors2MiddleWare
             null,
             "null",
             "chrome-extension://fhbjgbiflinjbdggehcddcbncdddomop",
+            "file://",
             "http://admin.sheba.test",
             "http://partners.sheba.test",
             "http://partners.sheba.new",

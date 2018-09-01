@@ -69,6 +69,7 @@ class ComplainController extends Controller
         try {
             $customer = $request->customer;
             $complain = $this->getComplain($complain, $customer);
+
             if ($complain) {
                 $comments = $this->formationComments($complain->comments);
                 $complain['comments'] = $comments;
@@ -105,9 +106,7 @@ class ComplainController extends Controller
 
     protected function getComplain($complain, $accessor)
     {
-        $complain = Complain::whereHas('accessor', function ($query) use ($accessor) {
-            $query->where('accessors.model_name', get_class($accessor));
-        })->where('id', $complain)->select('id', 'status', 'complain', 'accessor_id', 'job_id', 'customer_id', 'created_at', 'complain_preset_id')
+        $complain = Complain::where('id', $complain)->select('id', 'status', 'complain', 'accessor_id', 'job_id', 'customer_id', 'created_at', 'complain_preset_id')
             ->with(['preset' => function ($q) {
                 $q->select('id', 'name', 'category_id')->with(['complainCategory' => function ($q) {
                     $q->select('id', 'name');
@@ -289,12 +288,38 @@ class ComplainController extends Controller
             $complains = $this->complainRepo->partnerComplainList($request->partner->id, $accessor, ($request->has('not_resolved') && $request->not_resolved));
             $formated_complains = collect();
             foreach ($complains as $complain) {
-                $order_code = 'N/S';
-                if ($complain->job) $order_code = $complain->job->partnerOrder->order->code();
+                $order_code = 'N/A';
+                $customer_name = 'N/A';
+                $customer_profile_picture = null;
+                $schedule_date_and_time = null;
+                $job_category = 'N/A';
+                $job_location = 'N/A';
+                $resource_name = 'N/A';
+                $order_id = null;
+                if ($complain->job)  {
+                    $order = $complain->job->partnerOrder->order;
+                    $customer_profile = $order->customer->profile;
+                    $order_code = $order->code();
+                    $customer_name = $customer_profile->name;
+                    $customer_profile_picture = $customer_profile->pro_pic;
+                    $schedule_date_and_time = humanReadableShebaTime($complain->job->preferred_time). ', ' .Carbon::parse($complain->job->schedule_date)->toFormattedDateString();
+                    $job_category = $complain->job->category->name;
+                    $job_location = $order->location->name;
+                    $resource_name = $complain->job->resource ? $complain->job->resource->profile->name : 'N/A';
+                    $order_id = $order->id;
+                }
                 $formated_complains->push([
                     'id'    => $complain->id,
                     'complain_code' => $complain->code(),
+                    'complain'  => $complain->complain,
                     'order_code' => $order_code,
+                    'order_id'  => $order_id,
+                    'customer_name' => $customer_name,
+                    'customer_profile_picture' => $customer_profile_picture,
+                    'schedule_date_and_time' => $schedule_date_and_time,
+                    'category' => $job_category,
+                    'location' => $job_location,
+                    'resource'  => $resource_name,
                     'complain_category' => $complain->preset->complainCategory->name,
                     'status'    => $complain->status,
                     'created_at'    => $complain->created_at->format('jS F, Y')

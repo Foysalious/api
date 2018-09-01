@@ -7,8 +7,8 @@ use App\Models\Rate;
 use App\Models\ReviewQuestionAnswer;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 use DB;
+use Redis;
 
 class RateController extends Controller
 {
@@ -17,12 +17,14 @@ class RateController extends Controller
         try {
             $rates = Rate::where('type', 'review')->with(['questions' => function ($q) {
                 $q->select('id', 'question', 'type')->with(['answers' => function ($q) {
-                    $q->select('id', 'answer', 'badge');
+                    $q->select('id', 'answer', 'asset', 'badge');
                 }]);
             }])->select('id', 'name', 'icon', 'icon_off', 'value')->get();
             foreach ($rates as $rate) {
-                array_add($rate, 'height', 30);
+                $rate['asset'] = 'star';
+                $rate['height'] = 30;
                 foreach ($rate->questions as $question) {
+                    $question['is_compliment'] = ($rate->value == 5) ? 1 : 0;
                     array_forget($question, 'pivot');
                     foreach ($question->answers as $answer) {
                         array_forget($answer, 'pivot');
@@ -30,6 +32,7 @@ class RateController extends Controller
                 }
             }
             $rates = $rates->sortBy('value')->values()->all();
+            Redis::set('customer-review-settings', json_encode($rates));
             return api_response($request, $rates, 200, ['rates' => $rates, 'rate_message' => 'Rate this job']);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -85,9 +88,12 @@ class RateController extends Controller
                 $old_review_answer_ids = $review->rates->pluck('id')->toArray();
                 if (count($quesAns) > 0) {
                     foreach ($quesAns as $qa) {
-                        $review_answer = $this->initializeReviewQuestionAnswer($review, $request->rate, $qa);
-                        $review_answer->rate_answer_id = $qa->answer;
-                        $review_answer->save();
+                        $answers = is_array($qa->answer) ? $qa->answer : [$qa->answer];
+                        foreach ($answers as $answer) {
+                            $review_answer = $this->initializeReviewQuestionAnswer($review, $request->rate, $qa);
+                            $review_answer->rate_answer_id = $answer;
+                            $review_answer->save();
+                        }
                     }
                 }
                 if (count($quesAnsText) > 0) {
