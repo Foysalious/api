@@ -26,11 +26,11 @@ class PartnerSubscriber extends ShebaSubscriber
         // return $model collection;
     }
 
-    public function upgrade(SubscriptionPackage $package, $billing_type)
+    public function upgrade(SubscriptionPackage $package)
     {
         $old_package = $this->partner->subscription;
-        DB::transaction(function () use ($old_package, $package, $billing_type) {
-            $this->getPackage($package)->subscribe($billing_type);
+        DB::transaction(function () use ($old_package, $package) {
+            $this->getPackage($package)->subscribe($this->partner->billing_type);
             $this->getBilling()->runUpgradeBilling($old_package, $package);
         });
 

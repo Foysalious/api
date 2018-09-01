@@ -279,10 +279,10 @@ class Partner extends Model
         $this->subscriber()->getPackage($package)->subscribe($billing_type);
     }
 
-    public function subscriptionUpgrade($package, $billing_type)
+    public function subscriptionUpgrade($package)
     {
         $package = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->partner->subscription;
-        $this->subscriber()->upgrade($package, $billing_type);
+        $this->subscriber()->upgrade($package);
     }
 
     public function runSubscriptionBilling()
