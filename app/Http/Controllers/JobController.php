@@ -358,14 +358,15 @@ class JobController extends Controller
     public function clearBills($customer, $job, Request $request)
     {
         try {
-            $this->validate($request, [
-                'payment_method' => 'sometimes'
-            ]);
-            if ($request->payment_method == 'bkash') {
-                $link = (new Payment($request->job->partnerOrder, new Bkash()))->generateLink(0);
-            } else {
-                $link = (new OnlinePayment())->generateSSLLink($request->job->partnerOrder);
-            }
+//            $this->validate($request, [
+//                'payment_method' => 'sometimes'
+//            ]);
+            $link = (new OnlinePayment())->generateSSLLink($request->job->partnerOrder);
+//            if ($request->payment_method == 'bkash') {
+//                $link = (new Payment($request->job->partnerOrder, new Bkash()))->generateLink(0);
+//            } else {
+//                $link = (new OnlinePayment())->generateSSLLink($request->job->partnerOrder);
+//            }
             return api_response($request, $link, 200, ['link' => $link]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
