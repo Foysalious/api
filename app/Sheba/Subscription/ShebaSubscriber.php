@@ -9,7 +9,7 @@ abstract class ShebaSubscriber
 
     public abstract function getPackages();
 
-    public abstract function upgrade(SubscriptionPackage $package);
+    public abstract function upgrade(SubscriptionPackage $package, $billing_type);
 
     public abstract function getBilling();
 }
