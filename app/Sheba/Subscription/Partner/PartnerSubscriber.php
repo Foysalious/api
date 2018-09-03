@@ -29,11 +29,18 @@ class PartnerSubscriber extends ShebaSubscriber
     public function upgrade(SubscriptionPackage $package)
     {
         $old_package = $this->partner->subscription;
-        DB::transaction(function () use ($old_package, $package) {
-            $this->getPackage($package)->subscribe($this->partner->billing_type);
-            $this->getBilling()->runUpgradeBilling($old_package, $package);
+        $old_billing_type = $this->partner->billing_type;
+        $new_billing_type = $this->partner->requested_billing_type ? $this->partner->requested_billing_type : $old_billing_type;
+        DB::transaction(function () use ($old_package, $package, $old_billing_type, $new_billing_type) {
+            $this->getPackage($package)->subscribe($new_billing_type);
+            $this->getBilling()->runUpgradeBilling($old_package, $package, $old_billing_type, $new_billing_type);
         });
+    }
 
+    public function upgradeRequest($billing_type)
+    {
+        $this->partner->requested_billing_type = $billing_type;
+        $this->partner->update();
     }
 
     public function getBilling()

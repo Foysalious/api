@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\Partner;
 
+use App\Models\Partner;
 use App\Models\PartnerSubscriptionPackage;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -56,14 +57,21 @@ class PartnerSubscriptionController extends Controller
     public function update(Request $request)
     {
         try {
+            /** @var Partner $partner */
+            $partner = $request->partner;
             $this->validate($request, [
                 'package_id' => 'required|numeric|exists:partner_subscription_packages,id',
-                'billing_cycle' => 'sometimes|string|in:monthly,yearly'
+                'billing_type' => 'sometimes|string|in:monthly,yearly'
             ]);
-            $partner = $request->partner;
-            if ((int)$request->package_id < (int)$partner->package_id) return api_response($request, null, 403, ['message' => "You can't downgrade your subscription."]);
-            $partner->subscriptionUpgrade((int)$request->package_id);
-            return api_response($request, null, 200);
+            if ((int)$request->package_id > (int)$partner->package_id) {
+                $partner->subscriptionUpgrade((int)$request->package_id);
+                return api_response($request, 1, 200);
+            } elseif ((int)$request->package_id == (int)$partner->package_id && $request->billing_type != $partner->billing_type) {
+                $partner->subscriptionUpgradeRequest($request->billing_type);
+                return api_response($request, 1, 200, ['message' => "Your package will be upgraded after finishing your existing cycle."]);
+            } else {
+                return api_response($request, null, 403, ['message' => "You can't downgrade your subscription."]);
+            }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');

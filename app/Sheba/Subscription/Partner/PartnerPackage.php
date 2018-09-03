@@ -21,8 +21,9 @@ class PartnerPackage implements Package
     {
         $this->partner->package_id = $this->package->id;
         $this->partner->billing_type = $billing_type;
-        $running_discount = $this->package->runningDiscount();
+        $running_discount = $this->package->runningDiscount($billing_type);
         $this->partner->discount_id = $running_discount ? $running_discount->id : null;
+        $this->partner->requested_billing_type = null;
         $this->partner->update();
     }
 

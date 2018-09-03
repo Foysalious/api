@@ -501,7 +501,7 @@ class PartnerController extends Controller
                 });
                 return api_response($request, $partners, 200, ['partners' => $partners->values()->all()]);
             }
-            return api_response($request, null, 404);
+            return api_response($request, null, 404,['message'=>'No partner found.']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
