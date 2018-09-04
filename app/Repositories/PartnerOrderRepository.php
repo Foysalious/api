@@ -62,6 +62,23 @@ class PartnerOrderRepository
             array_forget($job, ['partner_order', 'carRentalJobDetail']);
 
             $job['complains'] = app('Sheba\Dal\Complain\EloquentImplementation')->jobWiseComplainInfo($job->id);
+            if (!$job['complains']->isEmpty()) {
+                $order = $job->partnerOrder->order;
+                $complain_additional_info = [
+                    'order_code' => $order->code(),
+                    'order_id'  => $order->id,
+                    'customer_name' => $order->customer->profile->name,
+                    'customer_profile_picture' => $order->customer->profile->pro_pic,
+                    'schedule_date_and_time' => humanReadableShebaTime($job->preferred_time). ', ' .Carbon::parse($job->schedule_date)->toFormattedDateString(),
+                    'category' => $job->category->name,
+                    'location' => $order->location->name,
+                    'resource' => $job->resource ? $job->resource->name : 'N/A',
+                ];
+
+                foreach ($job['complains'] as $key => $complain) {
+                    $job['complains'][$key] = array_merge($complain, $complain_additional_info);
+                }
+            }
         })->values()->all();
         removeRelationsAndFields($partner_order);
         $partner_order['jobs'] = $jobs;
