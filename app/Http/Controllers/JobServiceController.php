@@ -35,7 +35,7 @@ class JobServiceController extends Controller
                 'status' => 'required|not_in:' . implode(',', $invalid_job_statuses),
                 'quantity' => 'required|numeric|min:1',
                 'unit_price' => 'required|numeric|min:0.01',
-                'discount' => 'numeric|min:0.01'
+                'discount' => 'numeric|min:0.00'
             ], ['status.not_in' => $old_job->status . ' job cannot be updated']);
             if ($error = $this->hasPricingError($job_service, $old_job, $request)) {
                 return api_response($request, null, 400, ['message' => $error]);
