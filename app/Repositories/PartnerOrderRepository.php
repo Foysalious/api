@@ -72,7 +72,7 @@ class PartnerOrderRepository
                     'schedule_date_and_time' => humanReadableShebaTime($job->preferred_time). ', ' .Carbon::parse($job->schedule_date)->toFormattedDateString(),
                     'category' => $job->category->name,
                     'location' => $order->location->name,
-                    'resource' => $job->resource ? $job->resource->name : 'N/A',
+                    'resource' => $job->resource ? $job->resource->profile->name : 'N/A',
                 ];
 
                 foreach ($job['complains'] as $key => $complain) {
