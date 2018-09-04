@@ -1,7 +1,4 @@
-<?php
-
-namespace Sheba\PayCharge;
-
+<?php namespace Sheba\PayCharge;
 
 use Sheba\PayCharge\Methods\Bkash;
 use Sheba\PayCharge\Methods\Cod;

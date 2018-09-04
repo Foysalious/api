@@ -1,8 +1,4 @@
-<?php
-
-
-namespace Sheba\PayCharge;
-
+<?php namespace Sheba\PayCharge;
 
 class PayChargable
 {

@@ -1,11 +1,8 @@
-<?php
-namespace Sheba\PayCharge\Methods;
-
+<?php namespace Sheba\PayCharge\Methods;
 
 class Portwallet implements PayChargeMethod
 {
-
-    public function init()
+    public function init(PayChargable $payChargable)
     {
         // TODO: Implement init() method.
     }

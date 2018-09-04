@@ -1,7 +1,4 @@
-<?php
-
-namespace Sheba\PayCharge\Adapters;
-
+<?php namespace Sheba\PayCharge\Adapters;
 
 use Sheba\PayCharge\PayChargable;
 

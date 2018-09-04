@@ -7,5 +7,5 @@ use Sheba\PayCharge\PayChargable;
 
 abstract class PayChargeComplete
 {
-    public abstract function complete(PayChargable $pay_chargable);
+    public abstract function complete(PayChargable $pay_chargable,$method_response);
 }

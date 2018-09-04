@@ -1,11 +1,7 @@
-<?php
-
-namespace Sheba\PayCharge\Methods;
-
+<?php namespace Sheba\PayCharge\Methods;
 
 class Ssl implements PayChargeMethod
 {
-
     public function init()
     {
         // TODO: Implement init() method.

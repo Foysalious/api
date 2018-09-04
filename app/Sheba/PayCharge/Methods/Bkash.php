@@ -1,12 +1,9 @@
-<?php
-
-
-namespace Sheba\PayCharge\Methods;
-
+<?php namespace Sheba\PayCharge\Methods;
 
 use Carbon\Carbon;
 use Sheba\PayCharge\PayChargable;
 use Cache;
+use Redis;
 
 class Bkash implements PayChargeMethod
 {
@@ -32,19 +29,30 @@ class Bkash implements PayChargeMethod
             $payment_info = array(
                 'transaction_id' => $payment_id,
                 'link' => config('sheba.front_url') . '/bkash?paymentID=' . $payment_id,
+                'method_info' => $data,
                 'pay_chargable' => serialize($payChargable)
             );
             Cache::store('redis')->put("paycharge::$payment_id", json_encode($payment_info), Carbon::tomorrow());
-            array_forget($payment, 'pay_chargable');
+            array_forget($payment_info, 'pay_chargable');
             return $payment_info;
         } else {
             return null;
         }
     }
 
-    public function validate()
+    public function validate($payment)
     {
-        // TODO: Implement validate() method.
+        try {
+            $result_data = $this->execute($payment->transaction_id);
+            $pay_chargable = unserialize($payment->pay_chargable);
+            if ($result_data->transactionStatus = "Completed" && (double)$result_data->amount == (double)$pay_chargable->amount) {
+                return $result_data;
+            } else {
+                return null;
+            }
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     private function create(PayChargable $payChargable)
@@ -107,17 +115,22 @@ class Bkash implements PayChargeMethod
         }
     }
 
-    public function success(Request $request)
+    public function execute($paymentID)
     {
         try {
-            $payment_info = Redis::get("$request->paymentID");
-            $payment_info = json_decode($payment_info);
-            $result_data = $this->execute($request->paymentID);
-            if ($result_data->transactionStatus = "Completed" && (double)$result_data->amount == (double)$payment_info->amount) {
-                return $result_data;
-            } else {
-                return null;
-            }
+            $token = Redis::get('BKASH_TOKEN');
+            $token = $token ? $token : $this->grantToken();
+            $url = curl_init($this->url . '/checkout/payment/execute/' . $paymentID);
+            $header = array(
+                'authorization:' . $token,
+                'x-app-key:' . $this->appKey);
+            curl_setopt($url, CURLOPT_HTTPHEADER, $header);
+            curl_setopt($url, CURLOPT_CUSTOMREQUEST, "POST");
+            curl_setopt($url, CURLOPT_RETURNTRANSFER, true);
+            $result_data = curl_exec($url);
+            $result_data = json_decode($result_data);
+            curl_close($url);
+            return $result_data;
         } catch (\Throwable $e) {
             return null;
         }

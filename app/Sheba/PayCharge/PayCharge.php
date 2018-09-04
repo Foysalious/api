@@ -15,14 +15,15 @@ class PayCharge
 
     public function payCharge(PayChargable $payChargable)
     {
-         return $this->method->init($payChargable);
+        return $this->method->init($payChargable);
     }
 
     public function complete($payment)
     {
         $response = $this->method->validate($payment);
-        $class_name = "Sheba\\PayCharge\\Complete\\" . $payment->payable->completionClass;
+        $pay_chargable = unserialize($payment->pay_chargable);
+        $class_name = "Sheba\\PayCharge\\Complete\\" . $pay_chargable->completionClass;
         $complete_class = new $class_name();
-        $complete_class->complete($payment->payable, $response);
+        $complete_class->complete($pay_chargable, $response);
     }
 }

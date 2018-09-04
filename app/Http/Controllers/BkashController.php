@@ -8,6 +8,8 @@ use Illuminate\Validation\ValidationException;
 use Redis;
 use Sheba\OnlinePayment\Bkash;
 use Sheba\OnlinePayment\Payment;
+use Cache;
+use Sheba\PayCharge\PayCharge;
 
 class BkashController extends Controller
 {
@@ -43,16 +45,12 @@ class BkashController extends Controller
     public function execute(Request $request)
     {
         try {
-            $payment_info = Redis::get("$request->paymentID");
+            $payment_info = $data = Cache::store('redis')->get("paycharge::$request->paymentID");
             $payment_info = json_decode($payment_info);
-            $partnerOrder = PartnerOrder::find((int)$payment_info->partner_order_id);
-            $payment = new Payment($partnerOrder, new Bkash());
-            if ($payment->success($request)) {
-                return api_response($request, 1, 200);
-            } else {
-                return api_response($request, null, 500);
-            }
+            (new PayCharge('bkash'))->complete($payment_info);
+            return api_response($request, 1, 200);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -61,8 +59,8 @@ class BkashController extends Controller
     public function getPaymentInfo($paymentID, Request $request)
     {
         try {
-            $data = Redis::get("$paymentID");
-            return $data ? api_response($request, $data, 200, ['data' => json_decode($data)]) : api_response($request, null, 404);
+            $data = Cache::store('redis')->get("paycharge::$paymentID");
+            return $data ? api_response($request, $data, 200, ['data' => json_decode($data)->method_info]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
