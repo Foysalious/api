@@ -16,6 +16,8 @@ use Redis;
 use DB;
 use Sheba\OnlinePayment\Bkash;
 use Sheba\OnlinePayment\Payment;
+use Sheba\PayCharge\Adapters\OrderAdapter;
+use Sheba\PayCharge\PayCharge;
 
 class OrderController extends Controller
 {
@@ -57,7 +59,7 @@ class OrderController extends Controller
                 'email' => 'sometimes|email',
                 'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
                 'time' => 'required|string',
-                'payment_method' => 'required|string|in:cod,online',
+                'payment_method' => 'required|string|in:cod,online,bkash',
                 'address' => 'required_without:address_id',
                 'address_id' => 'required_without:address',
                 'resource' => 'sometimes|numeric',
@@ -74,14 +76,10 @@ class OrderController extends Controller
             $order = $order->placeOrder($request);
             if ($order) {
                 if ($order->voucher_id) $this->updateVouchers($order, $customer);
-                $link = null;
-                if ($request->payment_method == 'bkash') {
-                    $link = (new Payment($order->partnerOrders[0], new Bkash()))->generateLink(1);
-                } elseif ($request->payment_method == 'online') {
-                    $link = (new OnlinePayment())->generateSSLLink($order->partnerOrders[0], 1);
-                }
+                $order_adapter = new OrderAdapter($order->partnerOrders[0], 1);
+                $payment = (new PayCharge($request->payment_method))->payCharge($order_adapter->getPayable());
                 $this->sendNotifications($customer, $order);
-                return api_response($request, $order, 200, ['link' => $link, 'job_id' => $order->jobs->first()->id, 'order_code' => $order->code()]);
+                return api_response($request, $order, 200, ['link' => $payment['link'], 'job_id' => $order->jobs->first()->id, 'order_code' => $order->code(), 'payment' => $payment]);
             }
             return api_response($request, $order, 500);
         } catch (ValidationException $e) {
@@ -91,6 +89,7 @@ class OrderController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

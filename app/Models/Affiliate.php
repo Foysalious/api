@@ -2,7 +2,7 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
-use Sheba\Location\Distance\DistanceStrategy;
+use Sheba\Location\Distance\TransactionMethod;
 use Sheba\TopUp\Mock;
 use Sheba\TopUp\Robi;
 use Sheba\TopUp\TopUp;
