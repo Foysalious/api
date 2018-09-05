@@ -355,7 +355,7 @@ class PartnerController extends Controller
                 'served_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Served'])->count(),
                 'serve_due_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Serve_Due'])->count(),
                 'total_ongoing_orders' => (new JobList($partner))->ongoing()->count(),
-                'total_open_complains' => $partner->complains->whereIn('status', ['Observation', 'Open'])->where('accessor_id', 1)->count(),
+                'total_open_complains' => $partner->complains->whereIn('status', ['Observation', 'Open'])->count(),
                 'total_resources' => $resource_ids->count(),
                 'assigned_resources' => $assigned_resource_ids->count(),
                 'unassigned_resources' => $unassigned_resource_ids->count(),

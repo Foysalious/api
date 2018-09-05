@@ -65,11 +65,16 @@ class JobServiceActions
 
     private function getNewDiscount(JobService $job_service, &$data)
     {
-        if (isset($data['discount'])) {
+        if (isset($data['discount']) && $data['discount'] != 0) {
             $data['discount_percentage'] = '0.00';
             $sheba_contribution_bdt = (float)$job_service->discount * ((float)$job_service->sheba_contribution / 100);
             $data['sheba_contribution'] = (float)number_format($sheba_contribution_bdt / $data['discount'] * 100, 2);
             $data['partner_contribution'] = 100 - $data['sheba_contribution'];
+        } elseif (isset($data['discount']) && $data['discount'] == 0) {
+            $data['discount_percentage'] = '0.00';
+            $data['partner_contribution'] = 0;
+            $data['sheba_contribution'] = 0;
+
         } elseif ($job_service->discount_percentage && $job_service->discount_percentage != "0.00") {
             $data['discount'] = ($data['unit_price'] * $data['quantity'] * $job_service->discount_percentage) / 100;
         }

@@ -295,7 +295,7 @@ class ComplainController extends Controller
                 $job_category = 'N/A';
                 $job_location = 'N/A';
                 $resource_name = 'N/A';
-                $order_id = null;
+                $partner_order_id = null;
                 if ($complain->job)  {
                     $order = $complain->job->partnerOrder->order;
                     $customer_profile = $order->customer->profile;
@@ -306,14 +306,14 @@ class ComplainController extends Controller
                     $job_category = $complain->job->category->name;
                     $job_location = $order->location->name;
                     $resource_name = $complain->job->resource ? $complain->job->resource->profile->name : 'N/A';
-                    $order_id = $order->id;
+                    $partner_order_id = $complain->job->partnerOrder->id;
                 }
                 $formated_complains->push([
                     'id'    => $complain->id,
                     'complain_code' => $complain->code(),
                     'complain'  => $complain->complain,
                     'order_code' => $order_code,
-                    'order_id'  => $order_id,
+                    'order_id'  => $partner_order_id,
                     'customer_name' => $customer_name,
                     'customer_profile_picture' => $customer_profile_picture,
                     'schedule_date_and_time' => $schedule_date_and_time,
