@@ -61,7 +61,7 @@ class PartnerSubscriptionController extends Controller
             $partner = $request->partner;
             $this->validate($request, [
                 'package_id' => 'required|numeric|exists:partner_subscription_packages,id',
-                'billing_type' => 'sometimes|string|in:monthly,yearly'
+                'billing_type' => 'required|string|in:monthly,yearly'
             ]);
             if ((int)$request->package_id > (int)$partner->package_id) {
                 $partner->subscriptionUpgrade((int)$request->package_id);
