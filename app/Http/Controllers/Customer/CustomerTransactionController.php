@@ -34,7 +34,6 @@ class CustomerTransactionController extends Controller
             $transactions = array_slice($transactions->values()->all(), $offset, $limit);
             return count($transactions) > 0 ? api_response($request, $transactions, 200, ['transactions' => $transactions, 'balance' => $partner->wallet]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

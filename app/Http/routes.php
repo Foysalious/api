@@ -284,6 +284,7 @@ $api->version('v1', function ($api) {
 
     });
     $api->group(['prefix' => 'v2', 'namespace' => 'App\Http\Controllers'], function ($api) {
+        $api->post('paycharge/ssl/validate', 'SslController@validate');
         $api->get('bkash/paymentID/{paymentID}', 'BkashController@getPaymentInfo');
         $api->post('subscription', 'PushSubscriptionController@store');
         $api->get('car-rental-info', 'ShebaController@sendCarRentalInfo');

@@ -50,7 +50,6 @@ class BkashController extends Controller
             (new PayCharge('bkash'))->complete($payment_info);
             return api_response($request, 1, 200);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

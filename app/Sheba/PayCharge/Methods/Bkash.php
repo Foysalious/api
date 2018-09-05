@@ -26,13 +26,14 @@ class Bkash implements PayChargeMethod
     {
         if ($data = $this->create($payChargable)) {
             $payment_id = $data->paymentID;
+            $data->name = "bkash";
             $payment_info = array(
                 'transaction_id' => $payment_id,
                 'link' => config('sheba.front_url') . '/bkash?paymentID=' . $payment_id,
                 'method_info' => $data,
                 'pay_chargable' => serialize($payChargable)
             );
-            Cache::store('redis')->put("paycharge::$payment_id", json_encode($payment_info), Carbon::tomorrow());
+            Cache::store('redis')->put("paycharge::$data->merchantInvoiceNumber", json_encode($payment_info), Carbon::tomorrow());
             array_forget($payment_info, 'pay_chargable');
             return $payment_info;
         } else {
@@ -45,7 +46,7 @@ class Bkash implements PayChargeMethod
         try {
             $result_data = $this->execute($payment->transaction_id);
             $pay_chargable = unserialize($payment->pay_chargable);
-            if ($result_data->transactionStatus = "Completed" && (double)$result_data->amount == (double)$pay_chargable->amount) {
+            if ($result_data->transactionStatus == "Completed" && (double)$result_data->amount == (double)$pay_chargable->amount) {
                 return $result_data;
             } else {
                 return null;
@@ -53,6 +54,15 @@ class Bkash implements PayChargeMethod
         } catch (\Throwable $e) {
             return null;
         }
+    }
+
+    public function formatTransactionData($method_response)
+    {
+        return json_encode(array(
+            'transaction_id' => $method_response->trxID,
+            'gateway' => "bkash",
+            'details' => $method_response
+        ));
     }
 
     private function create(PayChargable $payChargable)
@@ -85,7 +95,7 @@ class Bkash implements PayChargeMethod
         }
     }
 
-    public function grantToken()
+    private function grantToken()
     {
         try {
             $post_token = array(
@@ -115,7 +125,7 @@ class Bkash implements PayChargeMethod
         }
     }
 
-    public function execute($paymentID)
+    private function execute($paymentID)
     {
         try {
             $token = Redis::get('BKASH_TOKEN');
