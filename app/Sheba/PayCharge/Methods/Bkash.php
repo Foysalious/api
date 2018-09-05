@@ -25,11 +25,10 @@ class Bkash implements PayChargeMethod
     public function init(PayChargable $payChargable)
     {
         if ($data = $this->create($payChargable)) {
-            $payment_id = $data->paymentID;
             $data->name = "bkash";
             $payment_info = array(
-                'transaction_id' => $payment_id,
-                'link' => config('sheba.front_url') . '/bkash?paymentID=' . $payment_id,
+                'transaction_id' => $data->merchantInvoiceNumber,
+                'link' => config('sheba.front_url') . '/bkash?paymentID=' . $data->merchantInvoiceNumber,
                 'method_info' => $data,
                 'pay_chargable' => serialize($payChargable)
             );
@@ -44,7 +43,7 @@ class Bkash implements PayChargeMethod
     public function validate($payment)
     {
         try {
-            $result_data = $this->execute($payment->transaction_id);
+            $result_data = $this->execute($payment->method_info->paymentID);
             $pay_chargable = unserialize($payment->pay_chargable);
             if ($result_data->transactionStatus == "Completed" && (double)$result_data->amount == (double)$pay_chargable->amount) {
                 return $result_data;
