@@ -7,8 +7,9 @@ class PayChargable
     private $amount;
     private $serviceName;
     private $completionClass;
-    private $user_id;
-    private $user_type;
+    private $userId;
+    private $userType;
+    private $redirectUrl;
 
     public function __get($name)
     {

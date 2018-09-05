@@ -38,7 +38,7 @@ class PayCharge
                 return false;
             }
         } else {
-            $this->message = "Paycharge validation failed";
+            $this->message = $this->method->message;
             return false;
         }
     }

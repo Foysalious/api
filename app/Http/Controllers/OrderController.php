@@ -77,9 +77,13 @@ class OrderController extends Controller
             if ($order) {
                 if ($order->voucher_id) $this->updateVouchers($order, $customer);
                 $order_adapter = new OrderAdapter($order->partnerOrders[0], 1);
-                $payment = (new PayCharge($request->payment_method))->payCharge($order_adapter->getPayable());
+                $payment = $link = null;
+                if ($request->payment_method !== 'cod') {
+                    $payment = (new PayCharge($request->payment_method))->payCharge($order_adapter->getPayable());
+                    $link = $payment['link'];
+                }
                 $this->sendNotifications($customer, $order);
-                return api_response($request, $order, 200, ['link' => $payment['link'], 'job_id' => $order->jobs->first()->id, 'order_code' => $order->code(), 'payment' => $payment]);
+                return api_response($request, $order, 200, ['link' => $link, 'job_id' => $order->jobs->first()->id, 'order_code' => $order->code(), 'payment' => $payment]);
             }
             return api_response($request, $order, 500);
         } catch (ValidationException $e) {

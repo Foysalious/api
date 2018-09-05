@@ -8,6 +8,7 @@ use Cache;
 
 class Ssl implements PayChargeMethod
 {
+    private $message;
     private $storeId;
     private $storePassword;
     private $sessionUrl;
@@ -26,6 +27,11 @@ class Ssl implements PayChargeMethod
         $this->orderValidationUrl = config('ssl.order_validation_url');
     }
 
+    public function __get($name)
+    {
+        return $this->$name;
+    }
+
     public function init(PayChargable $payChargable)
     {
         $invoice = "SHEBA_SSL_" . strtoupper($payChargable->type) . '_' . $payChargable->id . '_' . Carbon::now()->timestamp;
@@ -39,8 +45,8 @@ class Ssl implements PayChargeMethod
         $data['cancel_url'] = $this->cancelUrl;
         $data['emi_option'] = 0;
         $data['tran_id'] = $invoice;
-        $user = $payChargable->user_type;
-        $user = $user::find($payChargable->user_id);
+        $user = $payChargable->userType;
+        $user = $user::find($payChargable->userId);
         $data['cus_name'] = $user->profile->name;
         $data['cus_email'] = $user->profile->email;
         $data['cus_phone'] = $user->profile->mobile;
@@ -69,6 +75,7 @@ class Ssl implements PayChargeMethod
                 if ($result->status == "VALID" || $result->status == "VALIDATED") {
                     return $result;
                 } else {
+                    $this->message = 'Validation Failed. Response status is ' . $result->status;
                     return null;
                 }
             }

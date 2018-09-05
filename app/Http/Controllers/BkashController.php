@@ -47,8 +47,13 @@ class BkashController extends Controller
         try {
             $payment_info = $data = Cache::store('redis')->get("paycharge::$request->paymentID");
             $payment_info = json_decode($payment_info);
-            (new PayCharge('bkash'))->complete($payment_info);
-            return api_response($request, 1, 200);
+            $pay_charge = new PayCharge('bkash');
+            if ($pay_charge->complete($payment_info)) {
+                Cache::store('redis')->forget("paycharge::$request->paymentID");
+                return api_response($request, 1, 200);
+            } else {
+                return api_response($request, null, 500, ['message' => $pay_charge->message]);
+            }
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

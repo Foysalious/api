@@ -16,12 +16,12 @@ class OrderComplete extends PayChargeComplete
     {
         try {
             $client = new Client();
-            $partnerOrder = PartnerOrder::find((int)$pay_chargable);
-            $customer = Customer::find((int)$pay_chargable->user_id);
-            $res = $client->request('POST', config('ssl.admin_url') . '/api/partner-order/' . $partnerOrder->id . '/collect',
+            $partnerOrder = PartnerOrder::find((int)$pay_chargable->id);
+            $customer = Customer::find((int)$pay_chargable->userId);
+            $res = $client->request('POST', config('sheba.admin_url') . '/api/partner-order/' . $partnerOrder->id . '/collect',
                 [
                     'form_params' => array_merge([
-                        'customer_id' => $customer->customer->id,
+                        'customer_id' => $customer->id,
                         'remember_token' => $customer->remember_token,
                         'sheba_collection' => (double)$pay_chargable->amount,
                         'payment_method' => 'Online',

@@ -15,6 +15,8 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Logs\Customer\JobLogs;
 use Sheba\OnlinePayment\Bkash;
 use Sheba\OnlinePayment\Payment;
+use Sheba\PayCharge\Adapters\OrderAdapter;
+use Sheba\PayCharge\PayCharge;
 
 class JobController extends Controller
 {
@@ -358,16 +360,12 @@ class JobController extends Controller
     public function clearBills($customer, $job, Request $request)
     {
         try {
-//            $this->validate($request, [
-//                'payment_method' => 'sometimes'
-//            ]);
-            $link = (new OnlinePayment())->generateSSLLink($request->job->partnerOrder);
-//            if ($request->payment_method == 'bkash') {
-//                $link = (new Payment($request->job->partnerOrder, new Bkash()))->generateLink(0);
-//            } else {
-//                $link = (new OnlinePayment())->generateSSLLink($request->job->partnerOrder);
-//            }
-            return api_response($request, $link, 200, ['link' => $link]);
+            $this->validate($request, [
+                'payment_method' => 'sometimes|required"in:online,bkash'
+            ]);
+            $order_adapter = new OrderAdapter($request->job->partnerOrder);
+            $payment = (new PayCharge($request->has('payment_method') ? $request->payment_method : 'online'))->payCharge($order_adapter->getPayable());
+            return api_response($request, $payment, 200, ['link' => $payment['link'], 'payment' => $payment]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
