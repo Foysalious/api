@@ -65,7 +65,9 @@ class OperationController extends Controller
         try {
             DB::transaction(function () use ($request, $partner) {
                 $partner->locations()->sync(json_decode($request->locations));
-                $partner->update(['address' => $request->address]);
+                $partner_info = ['address' => $request->address];
+                if ($request->has('lat') && $request->has('lng')) $partner_info['geo_informations']  = json_encode(['lat' => $request->lat, 'lng' => $request->lng, 'radius' => "10"]);
+                $partner->update($partner_info);
                 $partner->workingHours()->delete();
                 foreach (json_decode($request->working_schedule) as $working_schedule) {
                     $partner->workingHours()->save(new PartnerWorkingHour([
