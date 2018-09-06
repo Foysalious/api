@@ -129,6 +129,7 @@ class ComplainController extends Controller
             array_forget($comment, 'commentable_id');
             array_forget($comment, 'commentator_id');
             $comment['commentator_type'] = strtolower(str_replace('App\Models\\', "", $comment->commentator_type));
+            $comment['prettified_date'] = $comment->created_at->format('D h:i A');
             if (class_basename($comment->commentator) == 'User') {
                 $comment['commentator_name'] = $comment->commentator->name;
                 $comment['commentator_picture'] = $comment->commentator->profile_pic;
