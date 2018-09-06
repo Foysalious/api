@@ -361,6 +361,7 @@ class PartnerController extends Controller
                 'unassigned_resources' => $unassigned_resource_ids->count(),
                 'balance' => (double)$partner->wallet,
                 'is_credit_limit_exceed' => $partner->isCreditLimitExceed(),
+                'geo_informations' => $partner->geo_informations,
                 'today' => $sales_stats->today->sale,
                 'week' => $sales_stats->week->sale,
                 'month' => $sales_stats->month->sale
