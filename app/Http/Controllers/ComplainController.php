@@ -117,7 +117,7 @@ class ComplainController extends Controller
                         $q->where('model_name', get_class($accessor));
                     })->with(['commentator' => function ($q) {
                         $q->select('*');
-                    }])->orderBy('id', 'desc');
+                    }])->orderBy('id', 'asc');
             }])->first();
         return $complain;
     }
