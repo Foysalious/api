@@ -59,4 +59,13 @@ class PartnerSubscriptionPackage extends Model implements SubscriptionPackage
         return $this->discounts ? $this->discounts->first() : null;
     }
 
+    private function rules()
+    {
+        return json_decode($this->rules);
+    }
+
+    public function getCommissionAttribute()
+    {
+        return $this->rules()->commission->value;
+    }
 }

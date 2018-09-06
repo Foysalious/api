@@ -45,6 +45,10 @@ class PartnerSubscriptionBilling
         $remaining_credit = $this->partner->last_billed_amount - $used_credit;
         $remaining_credit = $remaining_credit < 0 ? 0 : $remaining_credit;
         $package_price = ($new_package->originalPrice($new_billing_type) - $new_package->discountPrice($new_billing_type)) - $remaining_credit;
+        if ($package_price < 0) {
+            $this->refundRemainingCredit(abs($package_price));
+            $package_price = 0;
+        }
         $this->partner->billing_start_date = $this->today;
         $this->billingDatabaseTransactions($package_price);
     }
@@ -71,11 +75,18 @@ class PartnerSubscriptionBilling
     private function billingDatabaseTransactions($package_price)
     {
         DB::transaction(function () use ($package_price) {
+            $package_price = number_format($package_price, 2, '.', '');
             $this->partnerTransactionHandler->debit($package_price, $package_price . ' BDT has been deducted for subscription package', null, [$this->getSubscriptionTag()->id]);
             $this->partner->last_billed_date = $this->today;
             $this->partner->last_billed_amount = $package_price;
             $this->partner->update();
         });
+    }
+
+    private function refundRemainingCredit($refund_amount)
+    {
+        $refund_amount = number_format($refund_amount, 2, '.', '');
+        $this->partnerTransactionHandler->credit($refund_amount, $refund_amount . ' BDT has been refunded due to subscription package upgrade', null, [$this->getSubscriptionTag()->id]);
     }
 
     private function calculateSubscribedPackageDiscount($running_bill_cycle_no, $original_price)

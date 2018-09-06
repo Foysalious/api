@@ -63,12 +63,10 @@ class PartnerSubscriptionController extends Controller
                 'package_id' => 'required|numeric|exists:partner_subscription_packages,id',
                 'billing_type' => 'required|string|in:monthly,yearly'
             ]);
-            if ((int)$request->package_id > (int)$partner->package_id) {
-                $partner->subscriptionUpgrade((int)$request->package_id);
+            if (((int)$request->package_id > (int)$partner->package_id) ||
+                ((int)$request->package_id == (int)$partner->package_id && $request->billing_type != $partner->billing_type && $partner->billing_type == 'monthly')) {
+                $partner->subscriptionUpgrade((int)$request->package_id, $request->billing_type);
                 return api_response($request, 1, 200);
-            } elseif ((int)$request->package_id == (int)$partner->package_id && $request->billing_type != $partner->billing_type) {
-                $partner->subscriptionUpgradeRequest($request->billing_type);
-                return api_response($request, 1, 200, ['message' => "Your package will be upgraded after finishing your existing cycle."]);
             } else {
                 return api_response($request, null, 403, ['message' => "You can't downgrade your subscription."]);
             }
