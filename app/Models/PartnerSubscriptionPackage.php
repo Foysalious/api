@@ -36,7 +36,7 @@ class PartnerSubscriptionPackage extends Model implements SubscriptionPackage
     public function discountPrice($billing_type = 'monthly', $billing_cycle = 1)
     {
         if ($running_discount = $this->runningDiscount($billing_type)) {
-            if (in_array($billing_cycle, $running_discount->applicable_billing_cycles)) {
+            if (in_array($billing_cycle, json_decode($running_discount->applicable_billing_cycles))) {
                 if ($running_discount->is_percentage) return $this->originalPrice($billing_type) * $running_discount->amount;
                 else $running_discount->amount;
             }
