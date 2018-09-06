@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\CategoryGroup;
 use App\Models\HomepageSetting;
 use App\Sheba\Queries\Category\StartPrice;
@@ -23,7 +24,26 @@ class CategoryGroupController extends Controller
                 $categories = $this->getCategoryByColumn('name', $request->name, $location);
                 return $categories ? api_response($request, $categories, 200, ['category' => $categories]) : api_response($request, null, 404);
             }
+            $with = '';
             $categoryGroups = CategoryGroup::$for()->select('id', 'name', 'app_thumb', 'app_banner')->get();
+
+            if ($request->has('with')) {
+                $with = $request->with;
+                if ($with == 'categories') {
+                    $categoryGroups->load(['categories' => function ($query) {
+                        return $query;
+                    }]);
+                }
+            }
+
+            $categoryGroups = $categoryGroups->each(function ($category_group) {
+                $category_group->categories->each(function ($category) {
+                    removeRelationsAndFields($category);
+                });
+                $category_group->children = $category_group->categories;
+                unset($category_group->categories);
+            });
+
             return count($categoryGroups) > 0 ? api_response($request, $categoryGroups, 200, ['categories' => $categoryGroups]) : api_response($request, null, 404);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
