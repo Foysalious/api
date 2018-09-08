@@ -79,7 +79,7 @@ class OrderController extends Controller
                 $order_adapter = new OrderAdapter($order->partnerOrders[0], 1);
                 $payment = $link = null;
                 if ($request->payment_method !== 'cod') {
-                    $payment = (new PayCharge($request->payment_method))->payCharge($order_adapter->getPayable());
+                    $payment = (new PayCharge($request->payment_method))->init($order_adapter->getPayable());
                     $link = $payment['link'];
                 }
                 $this->sendNotifications($customer, $order);

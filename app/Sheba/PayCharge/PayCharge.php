@@ -19,7 +19,7 @@ class PayCharge
         return $this->$name;
     }
 
-    public function payCharge(PayChargable $payChargable)
+    public function init(PayChargable $payChargable)
     {
         return $this->method->init($payChargable);
     }

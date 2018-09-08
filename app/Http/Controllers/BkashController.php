@@ -55,6 +55,7 @@ class BkashController extends Controller
                 return api_response($request, null, 500, ['message' => $pay_charge->message]);
             }
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

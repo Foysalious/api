@@ -1,7 +1,18 @@
 <?php
 
 
+use Sheba\PayCharge\PayChargable;
+
 Route::get('/', function () {
+    $paycharge = new \Sheba\PayCharge\PayCharge('bkash');
+    $pay_chargable = new PayChargable();
+    $pay_chargable->type = 'recharge';
+    $pay_chargable->amount = 100;
+    $pay_chargable->completionClass = "RechargeComplete";
+    $pay_chargable->redirectUrl = "";
+    $pay_chargable->userId = 11;
+    $pay_chargable->userType = "App\\Models\\Customer";
+    dd($paycharge->init($pay_chargable));
     return ['code' => 200, 'message' => "Success. This project will hold the api's"];
 });
 $api = app('Dingo\Api\Routing\Router');

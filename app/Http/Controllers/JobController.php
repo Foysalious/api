@@ -364,7 +364,7 @@ class JobController extends Controller
                 'payment_method' => 'sometimes|required"in:online,bkash'
             ]);
             $order_adapter = new OrderAdapter($request->job->partnerOrder);
-            $payment = (new PayCharge($request->has('payment_method') ? $request->payment_method : 'online'))->payCharge($order_adapter->getPayable());
+            $payment = (new PayCharge($request->has('payment_method') ? $request->payment_method : 'online'))->init($order_adapter->getPayable());
             return api_response($request, $payment, 200, ['link' => $payment['link'], 'payment' => $payment]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

@@ -30,6 +30,7 @@ class Customer extends Authenticatable
     protected $hidden = [
         'password', 'remember_token',
     ];
+    protected $casts = ['wallet' => 'double'];
 
     public function mobiles()
     {
@@ -141,5 +142,20 @@ class Customer extends Authenticatable
     public function partnerOrders()
     {
         return $this->hasManyThrough(PartnerOrder::class, Order::class);
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(CustomerTransaction::class);
+    }
+
+    public function creditWallet($amount)
+    {
+        $this->update(['wallet' => $this->wallet + $amount]);
+    }
+
+    public function walletTransaction($data)
+    {
+        $this->transactions()->save(new CustomerTransaction($data));
     }
 }
