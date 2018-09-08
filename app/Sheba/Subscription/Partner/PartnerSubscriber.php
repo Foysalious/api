@@ -26,14 +26,25 @@ class PartnerSubscriber extends ShebaSubscriber
         // return $model collection;
     }
 
-    public function upgrade(SubscriptionPackage $package)
+    public function upgrade(SubscriptionPackage $package, $billing_type = null)
     {
         $old_package = $this->partner->subscription;
-        DB::transaction(function () use ($old_package, $package) {
-            $this->getPackage($package)->subscribe($this->partner->billing_type);
-            $this->getBilling()->runUpgradeBilling($old_package, $package);
-        });
+        $old_billing_type = $this->partner->billing_type;
+        $new_billing_type = $billing_type ? : $old_billing_type;
 
+        DB::transaction(function () use ($old_package, $package, $old_billing_type, $new_billing_type) {
+            $this->getPackage($package)->subscribe($new_billing_type);
+            $this->upgradeCommission($package->commission);
+            $this->getBilling()->runUpgradeBilling($old_package, $package, $old_billing_type, $new_billing_type);
+        });
+    }
+
+    public function upgradeCommission($commission)
+    {
+        foreach ($this->partner->categories as $category) {
+            $category->pivot->commission = $commission;
+            $category->pivot->update();
+        }
     }
 
     public function getBilling()
@@ -45,6 +56,7 @@ class PartnerSubscriber extends ShebaSubscriber
     {
         return (new PeriodicBillingHandler($this->partner));
     }
+
 
     public function canCreateResource($types)
     {

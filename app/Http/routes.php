@@ -399,6 +399,11 @@ $api->version('v1', function ($api) {
                         });
                     });
                 });
+
+                $api->group(['prefix' => 'transactions'], function ($api) {
+                    $api->get('/', 'Customer\CustomerTransactionController@index');
+                });
+
             });
         });
         $api->group(['prefix' => 'resources/{resource}', 'middleware' => ['resource.auth']], function ($api) {

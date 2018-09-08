@@ -263,6 +263,17 @@ class Partner extends Model
         return $this->hasOne(PartnerBankInformation::class);
     }
 
+
+    public function affiliation()
+    {
+        return $this->belongsTo(PartnerAffiliation::class, 'affiliation_id');
+    }
+
+    public function hasAppropriateCreditLimit()
+    {
+        return (double)$this->wallet >= (double)$this->walletSetting->min_wallet_threshold;
+    }
+
     public function subscription()
     {
         return $this->belongsTo(PartnerSubscriptionPackage::class, 'package_id');
@@ -279,10 +290,10 @@ class Partner extends Model
         $this->subscriber()->getPackage($package)->subscribe($billing_type);
     }
 
-    public function subscriptionUpgrade($package)
+    public function subscriptionUpgrade($package, $billing_type = null)
     {
         $package = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->partner->subscription;
-        $this->subscriber()->upgrade($package);
+        $this->subscriber()->upgrade($package, $billing_type);
     }
 
     public function runSubscriptionBilling()
@@ -313,15 +324,5 @@ class Partner extends Model
     public function canCreateResource(Array $types)
     {
         return $this->subscriber()->canCreateResource($types);
-    }
-
-    public function affiliation()
-    {
-        return $this->belongsTo(PartnerAffiliation::class, 'affiliation_id');
-    }
-
-    public function hasAppropriateCreditLimit()
-    {
-        return (double)$this->wallet >= (double)$this->walletSetting->min_wallet_threshold;
     }
 }

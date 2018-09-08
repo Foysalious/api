@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers\Partner;
+<?php namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
@@ -42,9 +40,9 @@ class OperationController extends Controller
     {
         try {
             $this->validate($request, [
-                'address' => "required|string",
-                'locations' => "required",
-                'working_schedule' => "required",
+                'address'           => "sometimes|required|string",
+                'locations'         => "sometimes|required",
+                'working_schedule'  => "sometimes|required",
             ]);
             $partner = $request->partner;
             return $this->saveInDatabase($partner, $request) ? api_response($request, $partner, 200) : api_response($request, $partner, 500);
@@ -64,17 +62,26 @@ class OperationController extends Controller
     {
         try {
             DB::transaction(function () use ($request, $partner) {
-                $partner->locations()->sync(json_decode($request->locations));
-                $partner->update(['address' => $request->address]);
-                $partner->workingHours()->delete();
-                foreach (json_decode($request->working_schedule) as $working_schedule) {
-                    $partner->workingHours()->save(new PartnerWorkingHour([
-                        'day' => $working_schedule->day,
-                        'start_time' => $working_schedule->start_time,
-                        'end_time' => $working_schedule->end_time
-                    ]));
+                $partner_info = [];
+                if ($request->has('locations')) $partner->locations()->sync(json_decode($request->locations));
+                if ($request->has('address')) $partner_info['address'] = $request->address;
+                if ($request->has('lat') && $request->has('lng')) {
+                    $partner_info['geo_informations'] = json_encode(['lat' => $request->lat, 'lng' => $request->lng, 'radius' => "10"]);
+                }
+                $partner->update($partner_info);
+
+                if ($request->has('working_schedule')) {
+                    $partner->workingHours()->delete();
+                    foreach (json_decode($request->working_schedule) as $working_schedule) {
+                        $partner->workingHours()->save(new PartnerWorkingHour([
+                            'day'        => $working_schedule->day,
+                            'start_time' => $working_schedule->start_time,
+                            'end_time'   => $working_schedule->end_time
+                        ]));
+                    }
                 }
             });
+
             return true;
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

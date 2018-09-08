@@ -117,7 +117,7 @@ class ComplainController extends Controller
                         $q->where('model_name', get_class($accessor));
                     })->with(['commentator' => function ($q) {
                         $q->select('*');
-                    }])->orderBy('id', 'desc');
+                    }])->orderBy('id', 'asc');
             }])->first();
         return $complain;
     }
@@ -129,6 +129,7 @@ class ComplainController extends Controller
             array_forget($comment, 'commentable_id');
             array_forget($comment, 'commentator_id');
             $comment['commentator_type'] = strtolower(str_replace('App\Models\\', "", $comment->commentator_type));
+            $comment['prettified_date'] = $comment->created_at->format('jS F, Y g:i A');
             if (class_basename($comment->commentator) == 'User') {
                 $comment['commentator_name'] = $comment->commentator->name;
                 $comment['commentator_picture'] = $comment->commentator->profile_pic;
@@ -180,8 +181,8 @@ class ComplainController extends Controller
                 'complain' => 'sometimes|string',
             ]);
             if ($request->job) {
-                $job = Job::find((int) $request->job);
-                if (!$job || $job->partnerOrder->partner_id != (int) $partner) return api_response($request, null, 403, ['message' => "This is not your Job"]);
+                $job = Job::find((int)$request->job);
+                if (!$job || $job->partnerOrder->partner_id != (int)$partner) return api_response($request, null, 403, ['message' => "This is not your Job"]);
             }
             $this->setModifier($request->manager_resource);
             $data = $this->processCommonData($request);
@@ -295,39 +296,38 @@ class ComplainController extends Controller
                 $job_category = 'N/A';
                 $job_location = 'N/A';
                 $resource_name = 'N/A';
-                $order_id = null;
-                if ($complain->job)  {
+                $partner_order_id = null;
+                if ($complain->job) {
                     $order = $complain->job->partnerOrder->order;
                     $customer_profile = $order->customer->profile;
                     $order_code = $order->code();
                     $customer_name = $customer_profile->name;
                     $customer_profile_picture = $customer_profile->pro_pic;
-                    $schedule_date_and_time = humanReadableShebaTime($complain->job->preferred_time). ', ' .Carbon::parse($complain->job->schedule_date)->toFormattedDateString();
+                    $schedule_date_and_time = humanReadableShebaTime($complain->job->preferred_time) . ', ' . Carbon::parse($complain->job->schedule_date)->toFormattedDateString();
                     $job_category = $complain->job->category->name;
                     $job_location = $order->location->name;
                     $resource_name = $complain->job->resource ? $complain->job->resource->profile->name : 'N/A';
-                    $order_id = $order->id;
+                    $partner_order_id = $complain->job->partnerOrder->id;
                 }
                 $formated_complains->push([
-                    'id'    => $complain->id,
+                    'id' => $complain->id,
                     'complain_code' => $complain->code(),
-                    'complain'  => $complain->complain,
+                    'complain' => $complain->complain,
                     'order_code' => $order_code,
-                    'order_id'  => $order_id,
+                    'order_id' => $partner_order_id,
                     'customer_name' => $customer_name,
                     'customer_profile_picture' => $customer_profile_picture,
                     'schedule_date_and_time' => $schedule_date_and_time,
                     'category' => $job_category,
                     'location' => $job_location,
-                    'resource'  => $resource_name,
+                    'resource' => $resource_name,
                     'complain_category' => $complain->preset->complainCategory->name,
-                    'status'    => $complain->status,
-                    'created_at'    => $complain->created_at->format('jS F, Y')
+                    'status' => $complain->status,
+                    'created_at' => $complain->created_at->format('jS F, Y')
                 ]);
             }
             return api_response($request, $formated_complains, 200, ['complains' => $formated_complains]);
-        }
-        catch (\Throwable $e) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -343,7 +343,7 @@ class ComplainController extends Controller
             $this->setModifier($request->manager_resource);
             $complain = $this->complainRepo->find($complain);
             $status_changer->setComplain($complain)->setData($request->all());
-            if($error = $status_changer->hasError()) return api_response($request, $error, 400, ['message' => $error]);
+            if ($error = $status_changer->hasError()) return api_response($request, $error, 400, ['message' => $error]);
             $status_changer->setModifierForModificationFiled($request->manager_resource)->change();
             return api_response($request, null, 200);
         } catch (ValidationException $e) {
