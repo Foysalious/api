@@ -66,10 +66,10 @@ class PartnerOrderRepository
                 $order = $job->partnerOrder->order;
                 $complain_additional_info = [
                     'order_code' => $order->code(),
-                    'order_id'  => $order->id,
+                    'order_id' => $order->id,
                     'customer_name' => $order->customer->profile->name,
                     'customer_profile_picture' => $order->customer->profile->pro_pic,
-                    'schedule_date_and_time' => humanReadableShebaTime($job->preferred_time). ', ' .Carbon::parse($job->schedule_date)->toFormattedDateString(),
+                    'schedule_date_and_time' => humanReadableShebaTime($job->preferred_time) . ', ' . Carbon::parse($job->schedule_date)->toFormattedDateString(),
                     'category' => $job->category->name,
                     'location' => $order->location->name,
                     'resource' => $job->resource ? $job->resource->profile->name : 'N/A',
@@ -259,9 +259,8 @@ class PartnerOrderRepository
         $partner_order['location'] = $partner_order->order->location->name;
         $partner_order['total_price'] = (double)$partner_order->totalPrice;
         $partner_order['due_amount'] = (double)$partner_order->due;
-        $partner_order['discount'] = (double)$partner_order->discount;
+        $partner_order['discount'] = (double)$partner_order->totalDiscount;
         $partner_order['sheba_collection'] = (double)$partner_order->sheba_collection;
-        $partner_order['partner_collection'] = (double)$partner_order->partner_collection;
         $partner_order['partner_collection'] = (double)$partner_order->partner_collection;
         $partner_order['finance_collection'] = (double)$partner_order->finance_collection;
         $partner_order['discount'] = (double)$partner_order->discount;
