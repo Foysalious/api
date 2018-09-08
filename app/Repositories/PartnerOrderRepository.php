@@ -82,6 +82,7 @@ class PartnerOrderRepository
         })->values()->all();
         removeRelationsAndFields($partner_order);
         $partner_order['jobs'] = $jobs;
+        
         return $partner_order;
     }
 
