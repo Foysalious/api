@@ -151,7 +151,8 @@ class Customer extends Authenticatable
 
     public function creditWallet($amount)
     {
-        $this->update(['wallet' => $this->wallet + $amount]);
+        $this->wallet += $amount;
+        $this->update();
     }
 
     public function walletTransaction($data)

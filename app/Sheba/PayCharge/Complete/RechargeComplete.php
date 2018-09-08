@@ -19,12 +19,13 @@ class RechargeComplete extends PayChargeComplete
                 $user->creditWallet($pay_chargable->amount);
                 $user->walletTransaction([
                     'amount' => $pay_chargable->amount, 'transaction_details' => $method_response,
-                    'type' => 'Credit', 'log' => "$pay_chargable->amount BDT has been recharged to your wallet."
+                    'type' => 'Credit', 'log' => "$pay_chargable->amount BDT has been recharged to your Sheba Credit."
                 ]);
             });
         } catch (QueryException $e) {
             app('sentry')->captureException($e);
             return null;
         }
+        return true;
     }
 }
