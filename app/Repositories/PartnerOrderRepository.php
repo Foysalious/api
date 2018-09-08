@@ -64,6 +64,7 @@ class PartnerOrderRepository
                 ];
 
                 foreach ($job['complains'] as $key => $complain) {
+                    $complain_additional_info['created_at'] = $complain['created_at']->format('jS F, Y');
                     $job['complains'][$key] = array_merge($complain, $complain_additional_info);
                 }
             }
