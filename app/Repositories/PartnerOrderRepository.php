@@ -49,18 +49,6 @@ class PartnerOrderRepository
             });
 
             $job['category_name'] = $job->category ? $job->category->name : null;
-            removeRelationsAndFields($job);
-            $job['services'] = $services;
-            $job['preferred_time'] = humanReadableShebaTime($job->preferred_time);
-            $job['pick_up_address'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->pick_up_address : null;
-            $job['destination_address'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->destination_address : null;
-            $job['drop_off_date'] = $job->carRentalJobDetail ? Carbon::parse($job->carRentalJobDetail->drop_off_date)->format('jS F, Y') : null;
-            $job['drop_off_time'] = $job->carRentalJobDetail ? Carbon::parse($job->carRentalJobDetail->drop_off_time)->format('g:i A') : null;
-            $job['estimated_distance'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_distance : null;
-            $job['estimated_time'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_time : null;
-
-            array_forget($job, ['partner_order', 'carRentalJobDetail']);
-
             $job['complains'] = app('Sheba\Dal\Complain\EloquentImplementation')->jobWiseComplainInfo($job->id);
             if (!$job['complains']->isEmpty()) {
                 $order = $job->partnerOrder->order;
@@ -79,6 +67,18 @@ class PartnerOrderRepository
                     $job['complains'][$key] = array_merge($complain, $complain_additional_info);
                 }
             }
+            removeRelationsAndFields($job);
+            $job['services'] = $services;
+            $job['preferred_time'] = humanReadableShebaTime($job->preferred_time);
+            $job['pick_up_address'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->pick_up_address : null;
+            $job['destination_address'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->destination_address : null;
+            $job['drop_off_date'] = $job->carRentalJobDetail ? Carbon::parse($job->carRentalJobDetail->drop_off_date)->format('jS F, Y') : null;
+            $job['drop_off_time'] = $job->carRentalJobDetail ? Carbon::parse($job->carRentalJobDetail->drop_off_time)->format('g:i A') : null;
+            $job['estimated_distance'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_distance : null;
+            $job['estimated_time'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_time : null;
+
+            array_forget($job, ['partner_order', 'carRentalJobDetail']);
+
         })->values()->all();
         removeRelationsAndFields($partner_order);
         $partner_order['jobs'] = $jobs;
