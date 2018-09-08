@@ -62,6 +62,8 @@ class PartnerOrderRepository
             array_forget($job, ['partner_order', 'carRentalJobDetail']);
 
             $job['complains'] = app('Sheba\Dal\Complain\EloquentImplementation')->jobWiseComplainInfo($job->id);
+        })->sortBy(function ($job) {
+            return $job->status == "Cancelled";
         })->values()->all();
         removeRelationsAndFields($partner_order);
         $partner_order['jobs'] = $jobs;
