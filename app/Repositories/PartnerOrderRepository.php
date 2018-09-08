@@ -83,7 +83,7 @@ class PartnerOrderRepository
         })->sortBy(function ($job) {
             return $job->status == "Cancelled";
         })->values()->all();
-        
+
         removeRelationsAndFields($partner_order);
         $partner_order['jobs'] = $jobs;
 
