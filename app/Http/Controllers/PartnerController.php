@@ -543,7 +543,7 @@ class PartnerController extends Controller
                 $categories = collect();
                 foreach ($partner->categories as $category) {
                     $services = $partner->services()->select('services.id', 'name', 'variable_type', 'services.min_quantity', 'services.variables')
-                        ->where('category_id', $category->id)->published()->get();
+                        ->where('category_id', $category->id)->wherePivot('is_published', 1)->wherePivot('is_verified', 1)->published()->get();
                     if (count($services) > 0) {
                         $services->each(function (&$service) {
                             $variables = json_decode($service->variables);

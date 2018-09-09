@@ -89,7 +89,7 @@ class ProfileRepository
                 $info['ambassador_code'] = $avatar->is_ambassador ? $avatar->referral->code : null;
                 $info['is_ambassador'] = $avatar->is_ambassador;
             } elseif ($from == 'customer') {
-                $info['referral'] = $avatar->referral->code;
+                $info['referral'] = $avatar->referral ? $avatar->referral->code : '';
                 $info['order_count'] = $avatar->orders->count();
                 $info['voucher_code'] = constants('APP_VOUCHER');
                 $info['referrer_id'] = $avatar->referrer_id;

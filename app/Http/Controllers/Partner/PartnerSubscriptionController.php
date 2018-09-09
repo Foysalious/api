@@ -65,12 +65,15 @@ class PartnerSubscriptionController extends Controller
             ]);
             if (((int)$request->package_id > (int)$partner->package_id) ||
                 ((int)$request->package_id == (int)$partner->package_id && $request->billing_type != $partner->billing_type && $partner->billing_type == 'monthly')) {
-                $partner->subscriptionUpgrade((int)$request->package_id, $request->billing_type);
+                if ($partner->billing_start_date && $partner->last_billed_date) {
+                    $partner->subscriptionUpgrade((int)$request->package_id, $request->billing_type);
+                } else {
+                    $partner->subscribe((int)$request->package_id, $request->billing_type);
+                }
                 return api_response($request, 1, 200);
             } elseif (((int)$request->package_id == (int)$partner->package_id) && $request->billing_type == $partner->billing_type) {
                 return api_response($request, null, 403, ['message' => "You can't select the same package"]);
-            }
-            else {
+            } else {
                 return api_response($request, null, 403, ['message' => "You can't downgrade your subscription."]);
             }
         } catch (ValidationException $e) {
