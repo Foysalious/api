@@ -200,6 +200,18 @@ return [
             'prefix' => 'D',
             'department' => 'SD'
         ],
+        'App' => [
+            'name' => 'App',
+            'short_name' => 'CC',
+            'prefix' => 'D',
+            'department' => 'SD'
+        ],
+        'App-iOS' => [
+            'name' => 'App-iOS',
+            'short_name' => 'CC',
+            'prefix' => 'D',
+            'department' => 'SD'
+        ],
         'Facebook' => [
             'name' => 'Facebook',
             'short_name' => 'CC',
