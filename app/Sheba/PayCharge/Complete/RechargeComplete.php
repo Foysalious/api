@@ -20,7 +20,7 @@ class RechargeComplete extends PayChargeComplete
             DB::transaction(function () use ($pay_chargable, $method_response, $user) {
                 $user->rechargeWallet($pay_chargable->amount, [
                     'amount' => $pay_chargable->amount, 'transaction_details' => $method_response,
-                    'type' => 'Credit', 'log' => "$pay_chargable->amount BDT has been recharged to your Sheba Credit."
+                    'type' => 'Credit', 'log' => "Credit Purchase."
                 ]);
             });
         } catch (QueryException $e) {

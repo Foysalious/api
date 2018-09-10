@@ -23,11 +23,12 @@ class CustomerTransactionController extends Controller
             if (count($transactions) > 0) {
                 $transactions->each(function ($transaction) {
                     if ($transaction->partnerOrder) {
-                        $transaction['service_name'] = $transaction->partnerOrder->jobs->first()->category->name;
+                        $transaction['category_name'] = $transaction->partnerOrder->jobs->first()->category->name;
+                        $transaction['log'] = $transaction['category_name'];
                         $transaction['transaction_type'] = "Service Purchase";
                         $transaction['order_code'] = $transaction->partnerOrder->order->code();
                     } else {
-                        $transaction['service_name'] = $transaction['transaction_type'] = $transaction['order_code'] = "";
+                        $transaction['category_name'] = $transaction['transaction_type'] = $transaction['order_code'] = "";
                     }
                     removeRelationsAndFields($transaction);
                 });
