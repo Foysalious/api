@@ -7,11 +7,9 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Contracts\Validation\ValidationException;
 use Illuminate\Http\Request;
-
-use App\Http\Requests;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
-use Sheba\Location\Distance\TransactionMethod;
+use Sheba\Location\Distance\DistanceStrategy;
 
 class LocationController extends Controller
 {
@@ -44,7 +42,7 @@ class LocationController extends Controller
                 $geo = json_decode($location->geo_informations);
                 return new Coords(floatval($geo->lat), floatval($geo->lng), $location->id);
             })->toArray();
-            $distance = (new Distance(TransactionMethod::$VINCENTY))->matrix();
+            $distance = (new Distance(DistanceStrategy::$VINCENTY))->matrix();
             $results = $distance->from([$current])->to($to)->sortedDistance()[0];
             $final = collect();
             foreach ($results as $key => $result) {

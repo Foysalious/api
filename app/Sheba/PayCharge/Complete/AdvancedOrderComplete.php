@@ -30,7 +30,7 @@ class AdvancedOrderComplete extends PayChargeComplete
                 $partner_order_payment->log = 'advanced payment';
                 $partner_order_payment->collected_by = 'Sheba';
                 $partner_order_payment->transaction_detail = $method_response;
-                $partner_order_payment->method = 'online';
+                $partner_order_payment->method = 'Online';
                 $this->setModifier(Customer::find($pay_chargable->userId));
                 $this->withCreateModificationField($partner_order_payment);
                 $partner_order_payment->fill((new RequestIdentification())->get());

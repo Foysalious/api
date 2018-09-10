@@ -26,6 +26,7 @@ class OrderComplete extends PayChargeComplete
                         'sheba_collection' => (double)$pay_chargable->amount,
                         'payment_method' => 'Online',
                         'created_by_type' => 'App\Models\Customer',
+                        'transaction_detail' => $method_response
                     ], (new RequestIdentification())->get())
                 ]);
             return json_decode($res->getBody());
