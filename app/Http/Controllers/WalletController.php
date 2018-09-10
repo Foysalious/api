@@ -93,4 +93,48 @@ class WalletController extends Controller
         }
     }
 
+    public function getFaq(Request $request)
+    {
+        try {
+            $faqs = array(
+                array(
+                    'question' => 'Will Service Provider pick me up from my location?',
+                    'answer' => 'Yes, Service provider will pick you up from your desired location.'
+                ),
+                array(
+                    'question' => 'Will Service Provider pick me up from my location?',
+                    'answer' => 'Yes, Service provider will pick you up from your desired location.'
+                ),
+                array(
+                    'question' => 'Will Service Provider pick me up from my location?',
+                    'answer' => 'Yes, Service provider will pick you up from your desired location.'
+                ),
+                array(
+                    'question' => 'Will Service Provider pick me up from my location?',
+                    'answer' => 'Yes, Service provider will pick you up from your desired location.'
+                ),
+                array(
+                    'question' => 'Will Service Provider pick me up from my location?',
+                    'answer' => 'Yes, Service provider will pick you up from your desired location.'
+                ),
+                array(
+                    'question' => 'Will Service Provider pick me up from my location?',
+                    'answer' => 'Yes, Service provider will pick you up from your desired location.'
+                ),
+                array(
+                    'question' => 'Will Service Provider pick me up from my location?',
+                    'answer' => 'Yes, Service provider will pick you up from your desired location.'
+                ),
+                array(
+                    'question' => 'Will Service Provider pick me up from my location?',
+                    'answer' => 'Yes, Service provider will pick you up from your desired location.'
+                ),
+            );
+            return api_response($request, $faqs, 200, ['faqs' => $faqs]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
 }
