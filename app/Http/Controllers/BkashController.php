@@ -41,19 +41,22 @@ class BkashController extends Controller
         }
     }
 
-    public function execute(Request $request)
+    public function validatePaycharge(Request $request)
     {
         try {
-            $payment_info = $data = Cache::store('redis')->get("paycharge::$request->paymentID");
-            $payment_info = json_decode($payment_info);
-            $pay_chargable = unserialize($payment_info->pay_chargable);
+            $this->validate($request, ['paymentID' => 'required']);
             $pay_charge = new PayCharge('bkash');
-            if ($pay_charge->complete($payment_info)) {
-                Cache::store('redis')->forget("paycharge::$request->paymentID");
-                return api_response($request, 1, 200, ['payment' => array('redirect_url' => $pay_chargable->redirectUrl)]);
+            if ($response = $pay_charge->complete($request->paymentID)) {
+                return api_response($request, 1, 200, ['payment' => array('redirect_url' => $response['redirect_url'])]);
             } else {
                 return api_response($request, null, 500, ['message' => $pay_charge->message]);
             }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

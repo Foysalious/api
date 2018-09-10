@@ -19,11 +19,11 @@ use Illuminate\Http\Request;
 use Cache;
 use Illuminate\Validation\ValidationException;
 use Redis;
-#use Sheba\Voucher\ReferralCreator;
 use Sheba\Voucher\Creator\Referral;
 use Validator;
 use DB;
 use Hash;
+
 
 class CustomerController extends Controller
 {
@@ -507,4 +507,5 @@ class CustomerController extends Controller
             return api_response($request, null, 500);
         }
     }
+
 }

@@ -3,6 +3,7 @@
 
 namespace Sheba\PayCharge;
 
+use Cache;
 
 class PayCharge
 {
@@ -24,15 +25,17 @@ class PayCharge
         return $this->method->init($payChargable);
     }
 
-    public function complete($payment)
+    public function complete($redis_key)
     {
-        $response = $this->method->validate($payment);
-        if ($response) {
+        $payment = Cache::store('redis')->get("paycharge::$redis_key");
+        $payment = json_decode($payment);
+        if ($response = $this->method->validate($payment)) {
             $pay_chargable = unserialize($payment->pay_chargable);
             $class_name = "Sheba\\PayCharge\\Complete\\" . $pay_chargable->completionClass;
             $complete_class = new $class_name();
             if ($complete_class->complete($pay_chargable, $this->method->formatTransactionData($response))) {
-                return true;
+                Cache::store('redis')->forget("paycharge::$redis_key");
+                return array('redirect_url' => $pay_chargable->redirectUrl);
             } else {
                 $this->message = "Paycharge completion failed";
                 return false;

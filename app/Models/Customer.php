@@ -163,6 +163,12 @@ class Customer extends Authenticatable implements Rechargable
         $this->update();
     }
 
+    public function debitWallet($amount)
+    {
+        $this->wallet -= $amount;
+        $this->update();
+    }
+
     public function walletTransaction($data)
     {
         $this->transactions()->save(new CustomerTransaction($data));

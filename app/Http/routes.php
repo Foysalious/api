@@ -286,8 +286,6 @@ $api->version('v1', function ($api) {
 
     });
     $api->group(['prefix' => 'v2', 'namespace' => 'App\Http\Controllers'], function ($api) {
-        $api->post('paycharge/ssl/validate', 'SslController@validatePaycharge');
-        $api->get('bkash/paymentID/{paymentID}', 'BkashController@getPaymentInfo');
         $api->post('subscription', 'PushSubscriptionController@store');
         $api->get('car-rental-info', 'ShebaController@sendCarRentalInfo');
         $api->get('butcher-info', 'ShebaController@sendButcherInfo');
@@ -296,7 +294,19 @@ $api->version('v1', function ($api) {
         $api->post('password/validate', 'Auth\PasswordController@validatePasswordResetCode');
         $api->post('password/reset', 'Auth\PasswordController@reset');
         $api->post('events', 'EventController@store');
-        $api->post('recharge', 'RechargeController@recharge');
+        $api->group(['prefix' => 'wallet'], function ($api) {
+            $api->post('recharge', 'WalletController@recharge');
+            $api->post('purchase', 'WalletController@purchase');
+            $api->post('validate', 'WalletController@validatePaycharge');
+        });
+        $api->group(['prefix' => 'ssl'], function ($api) {
+            $api->post('validate', 'SslController@validatePaycharge');
+        });
+
+        $api->group(['prefix' => 'bkash'], function ($api) {
+            $api->post('validate', 'BkashController@validatePaycharge');
+            $api->get('paymentID/{paymentID}', 'BkashController@getPaymentInfo');
+        });
         $api->group(['prefix' => 'orders'], function ($api) {
             $api->get('online', 'OrderController@clearPayment');
             $api->group(['prefix' => 'payments'], function ($api) {
@@ -403,7 +413,6 @@ $api->version('v1', function ($api) {
                         });
                     });
                 });
-
                 $api->group(['prefix' => 'transactions'], function ($api) {
                     $api->get('/', 'Customer\CustomerTransactionController@index');
                 });

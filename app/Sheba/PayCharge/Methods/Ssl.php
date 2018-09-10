@@ -85,11 +85,14 @@ class Ssl implements PayChargeMethod
 
     public function formatTransactionData($method_response)
     {
-        return json_encode(array(
-            'transaction_id' => $method_response->tran_id,
-            'gateway' => "ssl",
-            'details' => $method_response
-        ));
+        return array(
+            'name' => 'bkash',
+            'details' => array(
+                'transaction_id' => $method_response->tran_id,
+                'gateway' => "ssl",
+                'details' => $method_response
+            )
+        );
     }
 
     public function getSslSession($data)

@@ -29,8 +29,8 @@ class Bkash implements PayChargeMethod
             $payment_info = array(
                 'transaction_id' => $data->merchantInvoiceNumber,
                 'link' => config('sheba.front_url') . '/bkash?paymentID=' . $data->merchantInvoiceNumber,
-                'method_info' => $data,
-                'pay_chargable' => serialize($payChargable)
+                'pay_chargable' => serialize($payChargable),
+                'method_info' => $data
             );
             Cache::store('redis')->put("paycharge::$data->merchantInvoiceNumber", json_encode($payment_info), Carbon::tomorrow());
             array_forget($payment_info, 'pay_chargable');
@@ -57,11 +57,14 @@ class Bkash implements PayChargeMethod
 
     public function formatTransactionData($method_response)
     {
-        return json_encode(array(
-            'transaction_id' => $method_response->trxID,
-            'gateway' => "bkash",
-            'details' => $method_response
-        ));
+        return array(
+            'name' => 'bkash',
+            'details' => array(
+                'transaction_id' => $method_response->trxID,
+                'gateway' => "bkash",
+                'details' => $method_response,
+            )
+        );
     }
 
     private function create(PayChargable $payChargable)

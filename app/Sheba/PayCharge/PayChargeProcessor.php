@@ -4,6 +4,7 @@ use Sheba\PayCharge\Methods\Bkash;
 use Sheba\PayCharge\Methods\Cod;
 use Sheba\PayCharge\Methods\Portwallet;
 use Sheba\PayCharge\Methods\Ssl;
+use Sheba\PayCharge\Methods\Wallet;
 
 class PayChargeProcessor
 {
@@ -36,6 +37,8 @@ class PayChargeProcessor
                 return new Bkash();
             case 'online':
                 return new Ssl();
+            case 'wallet':
+                return new Wallet();
         }
     }
 }
