@@ -357,6 +357,7 @@ $api->version('v1', function ($api) {
             $api->group(['prefix' => '{customer}', 'middleware' => ['customer.auth']], function ($api) {
                 $api->get('checkout-info', 'CustomerController@getDeliveryInfo');
                 $api->get('settings/review', 'Settings\SettingsController@getCustomerReviewSettings');
+                $api->get('settings', 'Settings\SettingsController@getCustomerSettings');
                 $api->put('notifications', 'CustomerNotificationController@update');
                 $api->group(['prefix' => 'bkash'], function ($api) {
                     $api->post('create', 'BkashController@create')->middleware('customer_job.auth');

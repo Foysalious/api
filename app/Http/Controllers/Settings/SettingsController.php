@@ -12,7 +12,6 @@ class SettingsController extends Controller
 {
     public function getCustomerReviewSettings($customer, Request $request)
     {
-
         try {
             $customer = $request->customer;
             $customer->load(['partnerOrders' => function ($q) {
@@ -48,6 +47,19 @@ class SettingsController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
 
+    public function getCustomerSettings($customer, Request $request)
+    {
+        try {
+            $customer = $request->customer;
+            $settings = array(
+                'credit' => $customer->wallet
+            );
+            return api_response($request, $settings, 200, ['settings' => $settings]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 }
