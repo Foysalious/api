@@ -347,7 +347,7 @@ class Checkout
 
     private function isVoucherAutoApplicable($job_services, $data)
     {
-        return !$this->hasDiscountsOnServices($job_services) && in_array($data['sales_channel'], ['Web', 'App']);
+        return !$this->hasDiscountsOnServices($job_services) && in_array($data['sales_channel'], ['Web', 'App', 'App-iOS']);
     }
 
     private function hasDiscountsOnServices($job_services)
