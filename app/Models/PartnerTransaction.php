@@ -15,6 +15,11 @@ class PartnerTransaction extends Model
         return $this->belongsTo(PartnerOrder::class);
     }
 
+    public function partnerOrder()
+    {
+        return $this->belongsTo(PartnerOrder::class);
+    }
+
     public function tags()
     {
         return $this->morphToMany(Tag::class, 'taggable');

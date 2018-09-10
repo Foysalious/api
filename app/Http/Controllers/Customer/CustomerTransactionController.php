@@ -20,7 +20,21 @@ class CustomerTransactionController extends Controller
             $transactions = $partner->transactions();
             if ($request->has('type')) $transactions->where('type', ucwords($request->type));
             $transactions = $transactions->orderBy('id', 'desc')->skip($offset)->take($limit)->get();
-            return count($transactions) > 0 ? api_response($request, $transactions, 200, ['transactions' => $transactions, 'balance' => $partner->wallet]) : api_response($request, null, 404);
+            if (count($transactions) > 0) {
+                $transactions->each(function ($transaction) {
+                    if ($transaction->partnerOrder) {
+                        $transaction['service_name'] = $transaction->partnerOrder->jobs->first()->category->name;
+                        $transaction['transaction_type'] = "Service Purchase";
+                        $transaction['order_code'] = $transaction->partnerOrder->order->code();
+                    } else {
+                        $transaction['service_name'] = $transaction['transaction_type'] = $transaction['order_code'] = "";
+                    }
+                    removeRelationsAndFields($transaction);
+                });
+                return api_response($request, $transactions, 200, ['transactions' => $transactions, 'balance' => $partner->wallet]);
+            } else {
+                return api_response($request, null, 404);
+            }
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

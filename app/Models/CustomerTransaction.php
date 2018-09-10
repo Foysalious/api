@@ -17,4 +17,9 @@ class CustomerTransaction extends Model
         return $this->belongsTo(Customer::class);
     }
 
+    public function partnerOrder()
+    {
+        return $this->belongsTo(PartnerOrder::class);
+    }
+
 }
