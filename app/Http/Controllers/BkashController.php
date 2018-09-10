@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\PartnerOrder;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Redis;

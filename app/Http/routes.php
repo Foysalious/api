@@ -296,6 +296,7 @@ $api->version('v1', function ($api) {
         $api->post('password/validate', 'Auth\PasswordController@validatePasswordResetCode');
         $api->post('password/reset', 'Auth\PasswordController@reset');
         $api->post('events', 'EventController@store');
+        $api->post('recharge', 'RechargeController@recharge');
         $api->group(['prefix' => 'orders'], function ($api) {
             $api->get('online', 'OrderController@clearPayment');
             $api->group(['prefix' => 'payments'], function ($api) {

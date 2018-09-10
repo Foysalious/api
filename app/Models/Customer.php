@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
+use App\Sheba\PayCharge\Rechargable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Sheba\Voucher\VoucherCodeGenerator;
 
-class Customer extends Authenticatable
+class Customer extends Authenticatable implements Rechargable
 {
     protected $fillable = [
         'name',
@@ -147,6 +148,13 @@ class Customer extends Authenticatable
     public function transactions()
     {
         return $this->hasMany(CustomerTransaction::class);
+    }
+
+
+    public function rechargeWallet($amount, $data)
+    {
+        $this->creditWallet($amount);
+        $this->walletTransaction($data);
     }
 
     public function creditWallet($amount)
