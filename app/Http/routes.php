@@ -312,9 +312,9 @@ $api->version('v1', function ($api) {
         $api->group(['prefix' => 'orders'], function ($api) {
             $api->get('online', 'OrderController@clearPayment');
             $api->group(['prefix' => 'payments'], function ($api) {
-                $api->post('success', 'OnlinePaymentController@success');
-                $api->post('fail', 'OnlinePaymentController@fail');
-                $api->post('cancel', 'OnlinePaymentController@fail');
+                $api->post('success', 'SslController@validatePaycharge');
+                $api->post('fail', 'SslController@validatePaycharge');
+                $api->post('cancel', 'SslController@validatePaycharge');
             });
         });
         $api->group(['prefix' => 'login'], function ($api) {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 
+use App\Sheba\PayCharge\Rechargable;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\PayCharge\Adapters\PayChargable\RechargeAdapter;
@@ -62,6 +63,7 @@ class WalletController extends Controller
                 'remember_token' => 'required',
             ]);
             $class_name = "App\\Models\\" . ucwords($request->user_type);
+            /** @var Rechargable $user */
             $user = $class_name::where([['id', (int)$request->user_id], ['remember_token', $request->remember_token]])->first();
             if (!$user) return api_response($request, null, 404, ['message' => 'User Not found.']);
             $payment = Cache::store('redis')->get("paycharge::$request->transaction_id");
