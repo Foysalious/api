@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Sheba\PayCharge\Adapters\RechargeAdapter;
+use Sheba\PayCharge\Adapters\PayChargable\RechargeAdapter;
 use Sheba\PayCharge\PayCharge;
 use Cache;
 use DB;
