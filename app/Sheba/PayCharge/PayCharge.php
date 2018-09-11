@@ -46,7 +46,7 @@ class PayCharge
                 return false;
             }
         } else {
-            $this->message = $this->method->message;
+            $this->message = "Couldn't able to validate.";
             return false;
         }
     }
