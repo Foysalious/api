@@ -1,6 +1,6 @@
 <?php
 
-namespace Sheba\PayCharge\Adapters;
+namespace Sheba\PayCharge\Adapters\PayChargable;
 
 
 use App\Sheba\PayCharge\Rechargable;

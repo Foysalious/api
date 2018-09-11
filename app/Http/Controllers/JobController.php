@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\CustomerFavorite;
 use App\Models\Job;
 use App\Repositories\JobCancelLogRepository;
-use App\Sheba\Checkout\OnlinePayment;
 use App\Sheba\JobStatus;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -13,9 +12,7 @@ use DB;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 use Sheba\Logs\Customer\JobLogs;
-use Sheba\OnlinePayment\Bkash;
-use Sheba\OnlinePayment\Payment;
-use Sheba\PayCharge\Adapters\OrderAdapter;
+use Sheba\PayCharge\Adapters\PayChargable\OrderAdapter;
 use Sheba\PayCharge\PayCharge;
 
 class JobController extends Controller

@@ -3,6 +3,8 @@
 
 namespace Sheba\PayCharge;
 
+use App\Models\PartnerOrder;
+use App\Models\PartnerOrderPayment;
 use Cache;
 
 class PayCharge
@@ -27,22 +29,45 @@ class PayCharge
 
     public function complete($redis_key)
     {
-        $payment = Cache::store('redis')->get("paycharge::$redis_key");
-        $payment = json_decode($payment);
-        if ($response = $this->method->validate($payment)) {
-            $pay_chargable = unserialize($payment->pay_chargable);
+        $paycharge = Cache::store('redis')->get("paycharge::$redis_key");
+        $paycharge = json_decode($paycharge);
+        if ($response = $this->method->validate($paycharge)) {
+            $pay_chargable = unserialize($paycharge->pay_chargable);
             $class_name = "Sheba\\PayCharge\\Complete\\" . $pay_chargable->completionClass;
             $complete_class = new $class_name();
             if ($complete_class->complete($pay_chargable, $this->method->formatTransactionData($response))) {
                 Cache::store('redis')->forget("paycharge::$redis_key");
                 return array('redirect_url' => $pay_chargable->redirectUrl);
             } else {
-                $this->message = "Paycharge completion failed";
+                $this->message = "Your payment has been successfully received but there was a system error. Call 16516 for support.";
+                $sentry = app('sentry');
+                $sentry->user_context(['paycharge' => $paycharge, 'transaction' => $response, 'message' => 'Failed to save transaction in DB!']);
+                $sentry->captureException(new \Exception('Failed to save transaction in DB!'));
                 return false;
             }
         } else {
             $this->message = $this->method->message;
             return false;
         }
+    }
+
+    public function isComplete(PayCharged $pay_charged)
+    {
+        if ($pay_charged->type == 'recharge') {
+            $transactions = $pay_charged->user->transactions->sortBy('id', 'desc');
+            foreach ($transactions as $transaction) {
+                if ($transaction->transaction_detail) {
+                    $transaction_id = json_decode($transaction->transaction_detail)->transaction_id;
+                    if ($transaction_id == $pay_charged->transactionId) return true;
+                }
+            }
+        } elseif ($pay_charged->type == 'order') {
+            $partner_order_payment = PartnerOrderPayment::where('partner_order_id', $pay_charged->id)->first();
+            if ($partner_order_payment) {
+                $transaction_id = json_decode($partner_order_payment->transaction_detail)->transaction_id;
+                if ($transaction_id == $pay_charged->transactionId) return true;
+            }
+        }
+        return false;
     }
 }

@@ -1,7 +1,6 @@
 <?php
 
-namespace Sheba\PayCharge\Adapters;
-
+namespace Sheba\PayCharge\Adapters\PayChargable;
 
 use App\Models\PartnerOrder;
 use Sheba\PayCharge\PayChargable;
@@ -23,11 +22,11 @@ class OrderAdapter implements PayChargableAdapter
         $pay_chargable = new PayChargable();
         $pay_chargable->id = $this->partnerOrder->id;
         $pay_chargable->type = 'order';
+        $pay_chargable->userId = $this->partnerOrder->order->customer_id;
+        $pay_chargable->userType = "App\\Models\\Customer";
         $pay_chargable->amount = (double)$this->partnerOrder->due;
         $pay_chargable->completionClass = $this->isAdvancedPayment ? "AdvancedOrderComplete" : "OrderComplete";
         $pay_chargable->redirectUrl = config('sheba.front_url') . '/orders/' . $this->partnerOrder->jobs()->where('status', '<>', constants('JOB_STATUSES')['Cancelled'])->first()->id . '/bill';
-        $pay_chargable->userId = $this->partnerOrder->order->customer_id;
-        $pay_chargable->userType = "App\\Models\\Customer";
         return $pay_chargable;
     }
 }

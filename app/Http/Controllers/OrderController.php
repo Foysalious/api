@@ -14,9 +14,8 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Redis;
 use DB;
-use Sheba\OnlinePayment\Bkash;
-use Sheba\OnlinePayment\Payment;
-use Sheba\PayCharge\Adapters\OrderAdapter;
+
+use Sheba\PayCharge\Adapters\PayChargable\OrderAdapter;
 use Sheba\PayCharge\PayCharge;
 
 class OrderController extends Controller
@@ -76,9 +75,9 @@ class OrderController extends Controller
             $order = $order->placeOrder($request);
             if ($order) {
                 if ($order->voucher_id) $this->updateVouchers($order, $customer);
-                $order_adapter = new OrderAdapter($order->partnerOrders[0], 1);
                 $payment = $link = null;
                 if ($request->payment_method !== 'cod') {
+                    $order_adapter = new OrderAdapter($order->partnerOrders[0], 1);
                     $payment = (new PayCharge($request->payment_method))->init($order_adapter->getPayable());
                     $link = $payment['link'];
                 }

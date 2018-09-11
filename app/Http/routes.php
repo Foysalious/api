@@ -290,6 +290,7 @@ $api->version('v1', function ($api) {
         $api->get('car-rental-info', 'ShebaController@sendCarRentalInfo');
         $api->get('butcher-info', 'ShebaController@sendButcherInfo');
         $api->post('service-requests', 'ServiceRequestController@store');
+        $api->post('transactions/{transactionID}', 'ShebaController@checkTransactionStatus');
         $api->post('password/email', 'Auth\PasswordController@sendResetPasswordEmail');
         $api->post('password/validate', 'Auth\PasswordController@validatePasswordResetCode');
         $api->post('password/reset', 'Auth\PasswordController@reset');

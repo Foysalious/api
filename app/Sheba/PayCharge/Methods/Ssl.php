@@ -15,6 +15,7 @@ class Ssl implements PayChargeMethod
     private $successUrl;
     private $failUrl;
     private $cancelUrl;
+    private $orderValidationUrl;
 
     public function __construct()
     {
@@ -56,6 +57,8 @@ class Ssl implements PayChargeMethod
             $result->name = 'online';
             $payment_info = array(
                 'transaction_id' => $payment_id,
+                'id' => $payChargable->id,
+                'type' => $payChargable->type,
                 'pay_chargable' => serialize($payChargable),
                 'link' => $result->GatewayPageURL,
                 'method_info' => $result
@@ -86,7 +89,7 @@ class Ssl implements PayChargeMethod
     public function formatTransactionData($method_response)
     {
         return array(
-            'name' => 'bkash',
+            'name' => 'Online',
             'details' => array(
                 'transaction_id' => $method_response->tran_id,
                 'gateway' => "ssl",
@@ -119,7 +122,7 @@ class Ssl implements PayChargeMethod
                     }
                 }
             }
-            $new_data['store_passwd'] = md5(config('ssl.store_password'));
+            $new_data['store_passwd'] = md5($this->storePassword);
             ksort($new_data);
             $hash_string = "";
             foreach ($new_data as $key => $value) {
@@ -140,7 +143,7 @@ class Ssl implements PayChargeMethod
     {
         try {
             $client = new Client();
-            $result = $client->request('GET', config('ssl.order_validation_url'), ['query' => [
+            $result = $client->request('GET', $this->orderValidationUrl, ['query' => [
                 'val_id' => request('val_id'),
                 'store_id' => $this->storeId,
                 'store_passwd' => $this->storePassword,

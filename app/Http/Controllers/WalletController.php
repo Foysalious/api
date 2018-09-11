@@ -93,7 +93,7 @@ class WalletController extends Controller
         }
     }
 
-    public function getFaq(Request $request)
+    public function getFaqs(Request $request)
     {
         try {
             $faqs = array(

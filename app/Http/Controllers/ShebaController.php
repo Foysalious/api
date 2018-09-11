@@ -20,6 +20,10 @@ use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Validator;
 use DB;
+use Cache;
+use Sheba\PayCharge\Adapters\PayCharged\OrderAdapter;
+use Sheba\PayCharge\Adapters\PayCharged\RechargeAdapter;
+use Sheba\PayCharge\PayCharge;
 
 class ShebaController extends Controller
 {
@@ -153,10 +157,10 @@ class ShebaController extends Controller
                 $versions = AppVersion::where('tag', $app)->where('version_code', '>', $version)->get();
                 $data = array(
                     'title' => !$versions->isEmpty() ? $versions->last()->title : null,
-                    'body' => !$versions->isEmpty() ? $versions->last()->body  : null,
-                    'image_link' => !$versions->isEmpty() ? $versions->last()->image_link  : null,
-                    'height' => !$versions->isEmpty() ? $versions->last()->height  : null,
-                    'width' => !$versions->isEmpty() ? $versions->last()->width  : null,
+                    'body' => !$versions->isEmpty() ? $versions->last()->body : null,
+                    'image_link' => !$versions->isEmpty() ? $versions->last()->image_link : null,
+                    'height' => !$versions->isEmpty() ? $versions->last()->height : null,
+                    'width' => !$versions->isEmpty() ? $versions->last()->width : null,
                     'has_update' => count($versions) > 0 ? 1 : 0,
                     'is_critical' => count($versions->where('is_critical', 1)) > 0 ? 1 : 0
                 );
@@ -224,6 +228,43 @@ class ShebaController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function checkTransactionStatus(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'user_id' => 'required',
+                'user_type' => 'required|in:customer',
+                'transaction_id' => 'required',
+                'remember_token' => 'required',
+                'paycharge_type' => 'required|in:order,recharge',
+                'payment_method' => 'required|in:online,bkash',
+                'job_id' => 'sometimes|required',
+            ]);
+            $class_name = "App\\Models\\" . ucwords($request->user_type);
+            $user = $class_name::where([['id', (int)$request->user_id], ['remember_token', $request->remember_token]])->first();
+            if (!$user) return api_response($request, null, 404, ['message' => 'User Not found.']);
+            if ($request->paycharge_type == 'recharge') $pay_charged = (new RechargeAdapter($user, $request->transaction_id))->getPayCharged();
+            else {
+                $job = Job::find((int)$request->job_id);
+                $pay_charged = (new OrderAdapter($job->partnerOrder, $request->transaction_id))->getPayCharged();
+            }
+            if ((new PayCharge($request->payment_method))->isComplete($pay_charged)) {
+                return api_response($request, 1, 200);
+            } else {
+                return api_response($request, null, 404);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

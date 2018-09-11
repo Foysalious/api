@@ -1,8 +1,6 @@
 <?php
 
 namespace App\Http\Controllers;
-
-use Cache;
 use Illuminate\Http\Request;
 use Sheba\PayCharge\PayCharge;
 
@@ -20,4 +18,6 @@ class SslController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+
 }

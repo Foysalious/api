@@ -28,6 +28,8 @@ class Bkash implements PayChargeMethod
             $data->name = "bkash";
             $payment_info = array(
                 'transaction_id' => $data->merchantInvoiceNumber,
+                'id' => $payChargable->id,
+                'type' => $payChargable->type,
                 'link' => config('sheba.front_url') . '/bkash?paymentID=' . $data->merchantInvoiceNumber,
                 'pay_chargable' => serialize($payChargable),
                 'method_info' => $data

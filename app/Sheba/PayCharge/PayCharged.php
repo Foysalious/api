@@ -1,15 +1,16 @@
-<?php namespace Sheba\PayCharge;
+<?php
 
-class PayChargable extends PayCharged
+namespace Sheba\PayCharge;
+
+
+class PayCharged
 {
     private $id;
     private $type;
+    private $user;
     private $userId;
     private $userType;
-    private $redirectUrl;
-    private $amount;
-    private $serviceName;
-    private $completionClass;
+    private $transactionId;
 
     public function __get($name)
     {
