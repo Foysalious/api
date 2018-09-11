@@ -17,8 +17,7 @@ if (!function_exists('setTrace')) {
         print_r($data);
         echo "</pre><hr>";
 
-        if ($die)
-            exit;
+        if ($die) exit;
     }
 }
 
@@ -68,14 +67,10 @@ if (!function_exists('randomString')) {
         $numbers = "0123456789";
         $special_characters = "!@#$%^&*()_-+=}{][|:;.,/?";
         $characters = "";
-        if ($num)
-            $characters .= $numbers;
-        if ($alpha)
-            $characters .= $alphabets;
-        if ($spec_char)
-            $characters .= $special_characters;
-        if (!$num && !$alpha && !$spec_char)
-            $characters .= $numbers . $alphabets . $special_characters;
+        if ($num) $characters .= $numbers;
+        if ($alpha) $characters .= $alphabets;
+        if ($spec_char) $characters .= $special_characters;
+        if (!$num && !$alpha && !$spec_char) $characters .= $numbers . $alphabets . $special_characters;
         $rand_string = '';
         for ($i = 0; $i < $len; $i++) {
             $rand_string .= $characters[mt_rand(0, strlen($characters) - 1)];
@@ -166,6 +161,7 @@ if (!function_exists('calculatePagination')) {
         return array($offset, $limit);
     }
 }
+
 if (!function_exists('createAuthorWithType')) {
     function createAuthorWithType($author)
     {
@@ -174,6 +170,7 @@ if (!function_exists('createAuthorWithType')) {
         return $data;
     }
 }
+
 if (!function_exists('createAuthor')) {
     function createAuthor($author)
     {
@@ -192,6 +189,7 @@ if (!function_exists('updateAuthor')) {
         return $model;
     }
 }
+
 if (!function_exists('removeRelationsFromModel')) {
 
     function removeRelationsFromModel($model)
@@ -241,6 +239,7 @@ if (!function_exists('floatValFormat')) {
         return floatval(number_format($value, 2, '.', ''));
     }
 }
+
 if (!function_exists('humanReadableShebaTime')) {
     function humanReadableShebaTime($time)
     {
@@ -278,10 +277,8 @@ if (!function_exists('ordinal')) {
     function ordinal($number)
     {
         $ends = array('th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th');
-        if ((($number % 100) >= 11) && (($number % 100) <= 13))
-            return $number . 'th';
-        else
-            return $number . $ends[$number % 10];
+        if ((($number % 100) >= 11) && (($number % 100) <= 13)) return $number . 'th';
+        else return $number . $ends[$number % 10];
     }
 }
 
@@ -305,5 +302,19 @@ if (!function_exists('findStartEndDateOfAMonth')) {
             $end_time = \Carbon\Carbon::now()->year($year)->month($month)->day($days_in_month)->hour(23)->minute(59)->second(59);
             return ['start_time' => $start_time, 'end_time' => $end_time, 'days_in_month' => $days_in_month];
         }
+    }
+}
+
+if (!function_exists('en2bnNumber')) {
+    /**
+     * @param  $number
+     * @return string
+     */
+    function en2bnNumber($number)
+    {
+        $search_array = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
+        $replace_array = ["১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯", "০"];
+
+        return str_replace($search_array, $replace_array, $number);
     }
 }
