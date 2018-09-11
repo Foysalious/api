@@ -27,6 +27,7 @@ class CustomerType extends GraphQlType
             'created_at_timestamp' => ['type' => Type::string()],
             'referral_code' => ['type' => Type::string()],
             'user_hash' => ['type' => Type::string()],
+            'credit' => ['type' => Type::float()],
             'addresses' => ['type' => Type::listOf(GraphQL::type('Address'))],
             'profile' => ['type' => GraphQL::type('Profile')],
             'orders' => [
@@ -43,6 +44,11 @@ class CustomerType extends GraphQlType
     protected function resolveAddressesField($root, $args)
     {
         return $root->delivery_addresses;
+    }
+
+    protected function resolveCreditField($root, $args)
+    {
+        return $root->wallet;
     }
 
     protected function resolveAddressField($root, $args)
