@@ -56,8 +56,8 @@ class PayCharge
         if ($pay_charged->type == 'recharge') {
             $transactions = $pay_charged->user->transactions;
             foreach ($transactions as $transaction) {
-                if ($transaction->transaction_detail) {
-                    $transaction_id = json_decode($transaction->transaction_detail)->transaction_id;
+                if ($transaction->transaction_details) {
+                    $transaction_id = json_decode($transaction->transaction_details)->transaction_id;
                     if ($transaction_id == $pay_charged->transactionId) return true;
                 }
             }
