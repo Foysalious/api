@@ -23,7 +23,7 @@ class RechargeAdapter implements PayChargableAdapter
         $pay_chargable->type = 'recharge';
         $pay_chargable->amount = (double)$this->amount;
         $pay_chargable->completionClass = 'RechargeComplete';
-        $pay_chargable->redirectUrl = env('SHEBA_FRONT_END_URL') . '/ profile / wallet';
+        $pay_chargable->redirectUrl = env('SHEBA_FRONT_END_URL') . '/profile/wallet';
         $pay_chargable->userId = $this->user->id;
         $pay_chargable->userType = "App\\Models\\" . class_basename($this->user);
 

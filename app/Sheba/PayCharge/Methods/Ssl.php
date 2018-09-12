@@ -56,7 +56,7 @@ class Ssl implements PayChargeMethod
             $payment_id = $result->sessionkey;
             $result->name = 'online';
             $payment_info = array(
-                'transaction_id' => $payment_id,
+                'transaction_id' => $invoice,
                 'id' => $payChargable->id,
                 'type' => $payChargable->type,
                 'pay_chargable' => serialize($payChargable),
