@@ -54,7 +54,7 @@ class PayCharge
     public function isComplete(PayCharged $pay_charged)
     {
         if ($pay_charged->type == 'recharge') {
-            $transactions = $pay_charged->user->transactions->sortBy('id', 'desc');
+            $transactions = $pay_charged->user->transactions;
             foreach ($transactions as $transaction) {
                 if ($transaction->transaction_detail) {
                     $transaction_id = json_decode($transaction->transaction_detail)->transaction_id;

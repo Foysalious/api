@@ -234,13 +234,12 @@ class ShebaController extends Controller
         }
     }
 
-    public function checkTransactionStatus(Request $request)
+    public function checkTransactionStatus(Request $request, $transactionID)
     {
         try {
             $this->validate($request, [
                 'user_id' => 'required',
                 'user_type' => 'required|in:customer',
-                'transaction_id' => 'required',
                 'remember_token' => 'required',
                 'paycharge_type' => 'required|in:order,recharge',
                 'payment_method' => 'required|in:online,bkash',
@@ -249,10 +248,10 @@ class ShebaController extends Controller
             $class_name = "App\\Models\\" . ucwords($request->user_type);
             $user = $class_name::where([['id', (int)$request->user_id], ['remember_token', $request->remember_token]])->first();
             if (!$user) return api_response($request, null, 404, ['message' => 'User Not found.']);
-            if ($request->paycharge_type == 'recharge') $pay_charged = (new RechargeAdapter($user, $request->transaction_id))->getPayCharged();
+            if ($request->paycharge_type == 'recharge') $pay_charged = (new RechargeAdapter($user, $transactionID))->getPayCharged();
             else {
                 $job = Job::find((int)$request->job_id);
-                $pay_charged = (new OrderAdapter($job->partnerOrder, $request->transaction_id))->getPayCharged();
+                $pay_charged = (new OrderAdapter($job->partnerOrder, $transactionID))->getPayCharged();
             }
             if ((new PayCharge($request->payment_method))->isComplete($pay_charged)) {
                 return api_response($request, 1, 200);
