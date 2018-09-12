@@ -100,37 +100,41 @@ class WalletController extends Controller
         try {
             $faqs = array(
                 array(
-                    'question' => 'Will Service Provider pick me up from my location?',
-                    'answer' => 'Yes, Service provider will pick you up from your desired location.'
+                    'question' => '1. How can I recharge sheba credit?',
+                    'answer' => 'You can recharge your credit via your credit/debit card, mobile banking services like bkash/rocket. You will be asked to give proper information to confirm the payment. After completing the recharge, you will get a confirmation screen in the app.'
                 ),
                 array(
-                    'question' => 'Will Service Provider pick me up from my location?',
-                    'answer' => 'Yes, Service provider will pick you up from your desired location.'
+                    'question' => '2. Where i can use my sheba credit?',
+                    'answer' => 'Currently you can use your sheba credit while placing order. Soon you can use your sheba credit in many places.'
                 ),
                 array(
-                    'question' => 'Will Service Provider pick me up from my location?',
-                    'answer' => 'Yes, Service provider will pick you up from your desired location.'
+                    'question' => '3. Where i can check my current credit balance?',
+                    'answer' => 'You can check your credit balance by selecting credit from bottom menu and your current credit balance will be displayed there.'
                 ),
                 array(
-                    'question' => 'Will Service Provider pick me up from my location?',
-                    'answer' => 'Yes, Service provider will pick you up from your desired location.'
+                    'question' => '4. What is the value of each credit?',
+                    'answer' => 'The value of each credit is 1 BDT.'
                 ),
                 array(
-                    'question' => 'Will Service Provider pick me up from my location?',
-                    'answer' => 'Yes, Service provider will pick you up from your desired location.'
+                    'question' => '5. What is the minimum and maximum credit I can recharge? ',
+                    'answer' => 'The minimum sheba credit is 10 that you can recharge and there in no maximum.'
                 ),
                 array(
-                    'question' => 'Will Service Provider pick me up from my location?',
-                    'answer' => 'Yes, Service provider will pick you up from your desired location.'
+                    'question' => '6. What benefits I will get using sheba credit?',
+                    'answer' => 'You will get bonus credit if you purchase any service using sheba credit. Soon you will get more benefits from sheba credit.'
                 ),
                 array(
-                    'question' => 'Will Service Provider pick me up from my location?',
-                    'answer' => 'Yes, Service provider will pick you up from your desired location.'
+                    'question' => '7. Where i can check my credit transactions?',
+                    'answer' => 'You can check all of your credit transactions history with details in history page.'
                 ),
                 array(
-                    'question' => 'Will Service Provider pick me up from my location?',
-                    'answer' => 'Yes, Service provider will pick you up from your desired location.'
+                    'question' => '8. What if i completed recharge but my credit balance doesn’t update?',
+                    'answer' => 'For this type of issue, please send us a mail to info@sheba.xyz'
                 ),
+                array(
+                    'question' => '9. Is there any hidden charge?',
+                    'answer' => 'No.'
+                )
             );
             return api_response($request, $faqs, 200, ['faqs' => $faqs]);
         } catch (\Throwable $e) {
