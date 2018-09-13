@@ -27,6 +27,7 @@ class CustomerTransactionController extends Controller
                     $transaction['order_code'] = $transaction->partnerOrder->order->code();
                 } else {
                     $transaction['category_name'] = $transaction['transaction_type'] = $transaction['order_code'] = "";
+                    $transaction['transaction_type'] = $transaction['log'];
                 }
                 removeRelationsAndFields($transaction);
             });

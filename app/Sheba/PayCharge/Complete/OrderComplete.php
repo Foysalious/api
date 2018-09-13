@@ -12,6 +12,8 @@ use Sheba\RequestIdentification;
 
 class OrderComplete extends PayChargeComplete
 {
+    CONST CASHBACK_PERCENTAGE = 10;
+
     public function complete(PayChargable $pay_chargable, $method_response)
     {
         try {
@@ -29,7 +31,17 @@ class OrderComplete extends PayChargeComplete
                         'transaction_detail' => json_encode($method_response['details'])
                     ], (new RequestIdentification())->get())
                 ]);
-            return json_decode($res->getBody());
+            $response = json_decode($res->getBody());
+            if ($response->code == 200) {
+                if ($method_response['name'] == 'wallet') {
+                    $amount = (int)(($pay_chargable->amount * self::CASHBACK_PERCENTAGE) / 100);
+                    $customer->rechargeWallet($amount, [
+                        'amount' => $amount, 'transaction_details' => json_encode($method_response['details']),
+                        'type' => 'Credit', 'log' => 'Cash Back'
+                    ]);
+                }
+                return true;
+            } else return false;
         } catch (RequestException $e) {
             throw $e;
         }

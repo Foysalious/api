@@ -297,7 +297,6 @@ $api->version('v1', function ($api) {
         $api->post('events', 'EventController@store');
         $api->group(['prefix' => 'wallet'], function ($api) {
             $api->post('recharge', 'WalletController@recharge');
-            $api->post('claim', 'WalletController@claim');
             $api->post('purchase', 'WalletController@purchase');
             $api->post('validate', 'WalletController@validatePaycharge');
             $api->get('faqs', 'WalletController@getFaqs');

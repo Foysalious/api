@@ -15,6 +15,7 @@ use Sheba\RequestIdentification;
 class AdvancedOrderComplete extends PayChargeComplete
 {
     use ModificationFields;
+    CONST CASHBACK_PERCENTAGE = 10;
 
     public function complete(PayChargable $pay_chargable, $method_response)
     {
@@ -31,10 +32,19 @@ class AdvancedOrderComplete extends PayChargeComplete
                 $partner_order_payment->collected_by = 'Sheba';
                 $partner_order_payment->transaction_detail = json_encode($method_response['details']);
                 $partner_order_payment->method = $method_response['name'];
-                $this->setModifier(Customer::find($pay_chargable->userId));
+                /** @var Customer $customer */
+                $customer = Customer::find($pay_chargable->userId);
+                $this->setModifier($customer);
                 $this->withCreateModificationField($partner_order_payment);
                 $partner_order_payment->fill((new RequestIdentification())->get());
                 $partner_order_payment->save();
+                if ($method_response['name'] == 'wallet') {
+                    $amount = (int)(($pay_chargable->amount * self::CASHBACK_PERCENTAGE) / 100);
+                    $customer->rechargeWallet($amount, [
+                        'amount' => $amount, 'transaction_details' => json_encode($method_response['details']),
+                        'type' => 'Credit', 'log' => 'Cash Back'
+                    ]);
+                }
             });
         } catch (QueryException $e) {
             throw $e;
