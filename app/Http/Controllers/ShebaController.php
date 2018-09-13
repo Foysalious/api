@@ -254,10 +254,11 @@ class ShebaController extends Controller
                 $pay_charged = (new OrderAdapter($job->partnerOrder, $transactionID))->getPayCharged();
             }
             $paycharge = new PayCharge($request->payment_method);
-            if ($paycharge->isComplete($pay_charged)) {
-                return api_response($request, 1, 200);
-            } elseif ($paycharge->isCompleteByMethods($pay_charged)) {
-                return api_response($request, 1, 200, ['message' => 'System error']);
+            if ($response = $paycharge->isComplete($pay_charged)) {
+                return api_response($request, 1, 200, ['info' => array('amount' => $response->amount)]);
+            } elseif ($pay_charged = $paycharge->isCompleteByMethods($pay_charged)) {
+                return api_response($request, 1, 200, ['info' => array('amount' => $pay_charged->amount),
+                    'message' => 'Your payment has been received but there was a system error. It will take some time to update your order. Call 16516 for support.']);
             } else {
                 return api_response($request, null, 404);
             }
@@ -268,6 +269,7 @@ class ShebaController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

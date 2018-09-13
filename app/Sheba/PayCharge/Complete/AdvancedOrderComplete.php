@@ -38,7 +38,7 @@ class AdvancedOrderComplete extends PayChargeComplete
                 $this->withCreateModificationField($partner_order_payment);
                 $partner_order_payment->fill((new RequestIdentification())->get());
                 $partner_order_payment->save();
-                if ($method_response['name'] == 'wallet') {
+                if (strtolower($method_response['name']) == 'wallet') {
                     $amount = (int)(($pay_chargable->amount * self::CASHBACK_PERCENTAGE) / 100);
                     $customer->rechargeWallet($amount, [
                         'amount' => $amount, 'transaction_details' => json_encode($method_response['details']),

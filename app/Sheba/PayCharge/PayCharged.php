@@ -11,6 +11,7 @@ class PayCharged
     private $userId;
     private $userType;
     private $transactionId;
+    private $amount;
 
     public function __get($name)
     {

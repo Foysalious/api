@@ -33,7 +33,7 @@ class OrderComplete extends PayChargeComplete
                 ]);
             $response = json_decode($res->getBody());
             if ($response->code == 200) {
-                if ($method_response['name'] == 'wallet') {
+                if (strtolower($method_response['name']) == 'wallet') {
                     $amount = (int)(($pay_chargable->amount * self::CASHBACK_PERCENTAGE) / 100);
                     $customer->rechargeWallet($amount, [
                         'amount' => $amount, 'transaction_details' => json_encode($method_response['details']),
