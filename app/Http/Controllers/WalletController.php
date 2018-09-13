@@ -70,6 +70,7 @@ class WalletController extends Controller
             $payment = json_decode($payment);
             $pay_chargable = unserialize($payment->pay_chargable);
             if ($pay_chargable->userId == $user->id) {
+                if ((double)$user->wallet < (double)$pay_chargable->amount) return api_response($request, null, 400, ['message' => 'You don\'t have sufficient credit']);
                 DB::transaction(function () use ($pay_chargable, $user, $payment) {
                     $user->debitWallet($pay_chargable->amount);
                     $user->walletTransaction([
