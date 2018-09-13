@@ -47,9 +47,9 @@ class BkashController extends Controller
             $this->validate($request, ['paymentID' => 'required']);
             $pay_charge = new PayCharge('bkash');
             if ($response = $pay_charge->complete($request->paymentID)) {
-                return api_response($request, 1, 200, ['payment' => array('redirect_url' => $response['redirect_url'])]);
+                return api_response($request, 1, 200, ['payment' => array('redirect_url' => $response['redirect_url'] . '?invoice_id=' . $request->paymentID)]);
             } else {
-                return api_response($request, null, 500, ['message' => $pay_charge->message]);
+                return api_response($request, null, 400, ['message' => $pay_charge->message]);
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

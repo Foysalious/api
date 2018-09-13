@@ -31,8 +31,7 @@ class OrderComplete extends PayChargeComplete
                 ]);
             return json_decode($res->getBody());
         } catch (RequestException $e) {
-            app('sentry')->captureException($e);
-            return false;
+            throw $e;
         }
     }
 }

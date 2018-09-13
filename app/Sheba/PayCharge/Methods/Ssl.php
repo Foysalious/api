@@ -104,8 +104,7 @@ class Ssl implements PayChargeMethod
             $result = $client->request('POST', $this->sessionUrl, ['form_params' => $data]);
             return json_decode($result->getBody());
         } catch (RequestException $e) {
-            app('sentry')->captureException($e);
-            return null;
+            throw $e;
         }
     }
 
@@ -149,8 +148,7 @@ class Ssl implements PayChargeMethod
             ]]);
             return json_decode($result->getBody());
         } catch (RequestException $e) {
-            app('sentry')->captureException($e);
-            return null;
+            throw $e;
         }
     }
 }

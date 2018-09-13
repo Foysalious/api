@@ -37,8 +37,7 @@ class AdvancedOrderComplete extends PayChargeComplete
                 $partner_order_payment->save();
             });
         } catch (QueryException $e) {
-            app('sentry')->captureException($e);
-            return null;
+            throw $e;
         }
         return $partner_order_payment;
     }

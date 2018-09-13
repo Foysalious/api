@@ -37,12 +37,6 @@ class PayCharge
             if ($complete_class->complete($pay_chargable, $this->method->formatTransactionData($response))) {
                 Cache::store('redis')->forget("paycharge::$redis_key");
                 return array('redirect_url' => $pay_chargable->redirectUrl);
-            } else {
-                $this->message = "Your payment has been successfully received but there was a system error. Call 16516 for support.";
-                $sentry = app('sentry');
-                $sentry->user_context(['paycharge' => $paycharge, 'transaction' => $response, 'message' => 'Failed to save transaction in DB!']);
-                $sentry->captureException(new \Exception('Failed to save transaction in DB!'));
-                return false;
             }
         } else {
             $this->message = "Couldn't able to validate.";

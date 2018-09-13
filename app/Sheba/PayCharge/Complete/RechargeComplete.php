@@ -25,8 +25,7 @@ class RechargeComplete extends PayChargeComplete
                 ]);
             });
         } catch (QueryException $e) {
-            app('sentry')->captureException($e);
-            return null;
+            throw $e;
         }
         return true;
     }
