@@ -253,8 +253,11 @@ class ShebaController extends Controller
                 $job = Job::find((int)$request->job_id);
                 $pay_charged = (new OrderAdapter($job->partnerOrder, $transactionID))->getPayCharged();
             }
-            if ((new PayCharge($request->payment_method))->isComplete($pay_charged)) {
+            $paycharge = new PayCharge($request->payment_method);
+            if ($paycharge->isComplete($pay_charged)) {
                 return api_response($request, 1, 200);
+            } elseif ($paycharge->isCompleteByMethods($pay_charged)) {
+                return api_response($request, 1, 200, ['message' => 'System error']);
             } else {
                 return api_response($request, null, 404);
             }

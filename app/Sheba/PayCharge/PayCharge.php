@@ -5,6 +5,8 @@ namespace Sheba\PayCharge;
 
 use App\Models\PartnerOrderPayment;
 use Cache;
+use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 
 class PayCharge
 {
@@ -32,6 +34,7 @@ class PayCharge
         $paycharge = json_decode($paycharge);
         if ($response = $this->method->validate($paycharge)) {
             $pay_chargable = unserialize($paycharge->pay_chargable);
+            $paycharge = $this->updateTransactionRedis($redis_key, $paycharge, $response);
             $class_name = "Sheba\\PayCharge\\Complete\\" . $pay_chargable->completionClass;
             $complete_class = new $class_name();
             if ($complete_class->complete($pay_chargable, $this->method->formatTransactionData($response))) {
@@ -62,5 +65,24 @@ class PayCharge
             }
         }
         return false;
+    }
+
+    public function isCompleteByMethods(PayCharged $pay_charged)
+    {
+        $paycharge = Cache::store('redis')->get("paycharge::$pay_charged->transactionId");
+        if ($paycharge) {
+            $paycharge = json_decode($paycharge);
+            if (isset($paycharge->isPayChargeSuccess) && $paycharge->isPayChargeSuccess) return true;
+        }
+        return false;
+    }
+
+    private function updateTransactionRedis($redis_key, $paycharge, $response)
+    {
+        $paycharge->isPayChargeSuccess = 1;
+        $paycharge->payChargeResponse = $response;
+        Cache::store('redis')->forget("paycharge::$redis_key");
+        Cache::store('redis')->put("paycharge::$redis_key", json_encode($paycharge), Carbon::tomorrow());
+        return $paycharge;
     }
 }
