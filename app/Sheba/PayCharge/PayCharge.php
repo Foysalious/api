@@ -36,7 +36,7 @@ class PayCharge
             $complete_class = new $class_name();
             if ($complete_class->complete($pay_chargable, $this->method->formatTransactionData($response))) {
                 Cache::store('redis')->forget("paycharge::$redis_key");
-                return array('redirect_url' => $pay_chargable->redirectUrl . '?invoice_id=' . $redis_key);
+                return array('redirect_url' => $pay_chargable->redirectUrl);
             } else {
                 $this->message = "Your payment has been successfully received but there was a system error. Call 16516 for support.";
                 $sentry = app('sentry');
