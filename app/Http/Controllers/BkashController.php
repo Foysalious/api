@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Redis;
@@ -45,18 +46,25 @@ class BkashController extends Controller
     {
         try {
             $this->validate($request, ['paymentID' => 'required']);
+            $paycharge = Cache::store('redis')->get("paycharge::$request->paymentID");
+            if (!$paycharge) return redirect(config('sheba.front_url'));
+            $paycharge = json_decode($paycharge);
+            $pay_chargable = unserialize($paycharge->pay_chargable);
             $pay_charge = new PayCharge('bkash');
             if ($response = $pay_charge->complete($request->paymentID)) {
                 return api_response($request, 1, 200, ['payment' => array('redirect_url' => $response['redirect_url'] . '?invoice_id=' . $request->paymentID)]);
             } else {
-                return api_response($request, null, 400, ['message' => $pay_charge->message]);
+                return api_response($request, null, 400, ['message' => $pay_charge->message, 'payment' => array('redirect_url' => $response['redirect_url'] . '?invoice_id=' . $request->paymentID)]);
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
+            return api_response($request, $message, 400, ['message' => $message, 'payment' => array('redirect_url' => $response['redirect_url'] . '?invoice_id=' . $request->paymentID)]);
+        } catch (QueryException $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 200, ['message' => 'Your payment has been received but there was a system error. It will take some time to update your order. Call 16516 for support.', 'payment' => array('redirect_url' => $response['redirect_url'] . '?invoice_id=' . $request->paymentID)]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

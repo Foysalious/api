@@ -45,6 +45,7 @@ class Bkash implements PayChargeMethod
     public function validate($payment)
     {
         $result_data = $this->execute($payment->method_info->paymentID);
+        if (!isset($result_data->transactionStatus)) return false;
         $pay_chargable = unserialize($payment->pay_chargable);
         $is_completed = $result_data->transactionStatus == 'Completed';
         $is_same_amount = (double)$result_data->amount == (double)$pay_chargable->amount;
