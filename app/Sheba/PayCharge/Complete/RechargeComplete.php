@@ -21,7 +21,7 @@ class RechargeComplete extends PayChargeComplete
             DB::transaction(function () use ($pay_chargable, $method_response, $user) {
                 $user->rechargeWallet($pay_chargable->amount, [
                     'amount' => $pay_chargable->amount, 'transaction_details' => json_encode($method_response['details']),
-                    'type' => 'Credit', 'log' => "Credit Purchase.", 'created_at' => Carbon::now()
+                    'type' => 'Credit', 'log' => 'Credit Purchase'
                 ]);
             });
         } catch (QueryException $e) {

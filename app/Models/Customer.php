@@ -3,11 +3,14 @@
 namespace App\Models;
 
 use App\Sheba\PayCharge\Rechargable;
+use Carbon\Carbon;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Sheba\PayCharge\RechargeWallet;
 use Sheba\Voucher\VoucherCodeGenerator;
 
 class Customer extends Authenticatable implements Rechargable
 {
+    use RechargeWallet;
     protected $fillable = [
         'name',
         'mobile',
@@ -150,13 +153,6 @@ class Customer extends Authenticatable implements Rechargable
         return $this->hasMany(CustomerTransaction::class);
     }
 
-
-    public function rechargeWallet($amount, $data)
-    {
-        $this->creditWallet($amount);
-        $this->walletTransaction($data);
-    }
-
     public function creditWallet($amount)
     {
         $this->wallet += $amount;
@@ -169,8 +165,8 @@ class Customer extends Authenticatable implements Rechargable
         $this->update();
     }
 
-    public function walletTransaction($data)
+    public function walletTransaction($transaction_data)
     {
-        $this->transactions()->save(new CustomerTransaction($data));
+        $this->transactions()->save(new CustomerTransaction(array_merge($transaction_data, ['created_at' => Carbon::now()])));
     }
 }
