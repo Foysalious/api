@@ -17,10 +17,9 @@ class CustomerTransactionController extends Controller
             ]);
             list($offset, $limit) = calculatePagination($request);
             $customer = $request->customer;
-//            $customer = Partner::find(233);
             $transactions = $customer->transactions();
             if ($request->has('type')) $transactions->where('type', ucwords($request->type));
-            $transactions = $transactions->orderBy('id', 'desc')->skip($offset)->take($limit)->get();
+            $transactions = $transactions->select('id', 'customer_id', 'type', 'amount', 'log', 'created_at', 'partner_order_id')->orderBy('id', 'desc')->skip($offset)->take($limit)->get();
             $transactions->each(function ($transaction) {
                 if ($transaction->partnerOrder) {
                     $transaction['category_name'] = $transaction->partnerOrder->jobs->first()->category->name;
