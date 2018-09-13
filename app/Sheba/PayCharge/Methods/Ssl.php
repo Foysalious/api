@@ -53,7 +53,6 @@ class Ssl implements PayChargeMethod
         $data['cus_phone'] = $user->profile->mobile;
         $result = $this->getSslSession($data);
         if ($result && $result->status == 'SUCCESS') {
-            $payment_id = $result->sessionkey;
             $result->name = 'online';
             $payment_info = array(
                 'transaction_id' => $invoice,

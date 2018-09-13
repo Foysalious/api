@@ -5,7 +5,6 @@ namespace Sheba\PayCharge;
 
 use App\Models\PartnerOrderPayment;
 use Cache;
-USE Redis;
 
 class PayCharge
 {
@@ -36,8 +35,8 @@ class PayCharge
             $class_name = "Sheba\\PayCharge\\Complete\\" . $pay_chargable->completionClass;
             $complete_class = new $class_name();
             if ($complete_class->complete($pay_chargable, $this->method->formatTransactionData($response))) {
-                Redis::del("paycharge::$redis_key");
-                return array('redirect_url' => $pay_chargable->redirectUrl);
+                Cache::store('redis')->forget("paycharge::$redis_key");
+                return array('redirect_url' => $pay_chargable->redirectUrl . '?invoice_id=' . $redis_key);
             } else {
                 $this->message = "Your payment has been successfully received but there was a system error. Call 16516 for support.";
                 $sentry = app('sentry');
