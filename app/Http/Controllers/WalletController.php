@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 
 use App\Sheba\PayCharge\Rechargable;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\PayCharge\Adapters\PayChargable\RechargeAdapter;
@@ -77,7 +78,8 @@ class WalletController extends Controller
                         'amount' => $pay_chargable->amount,
                         'type' => 'Debit', 'log' => 'Service Purchase.',
                         'partner_order_id' => $pay_chargable->id,
-                        'transaction_details' => json_encode($payment->method_info)
+                        'transaction_details' => json_encode($payment->method_info),
+                        'created_at' => Carbon::now()
                     ]);
                 });
                 return api_response($request, $user, 200);
