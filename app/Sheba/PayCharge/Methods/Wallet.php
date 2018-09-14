@@ -4,11 +4,13 @@ namespace Sheba\PayCharge\Methods;
 
 
 use Carbon\Carbon;
+use Sheba\PayCharge\Adapters\Error\WalletErrorAdapter;
 use Sheba\PayCharge\PayChargable;
 use Cache;
 
 class Wallet implements PayChargeMethod
 {
+    private $error;
 
     public function init(PayChargable $payChargable)
     {
@@ -51,5 +53,10 @@ class Wallet implements PayChargeMethod
                 'details' => ''
             )
         );
+    }
+
+    public function getError(): MethodError
+    {
+        return (new WalletErrorAdapter($this->error))->getError();
     }
 }
