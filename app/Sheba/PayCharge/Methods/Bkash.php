@@ -1,6 +1,7 @@
 <?php namespace Sheba\PayCharge\Methods;
 
 use Carbon\Carbon;
+use Sheba\PayCharge\Adapters\Error\BkashErrorAdapter;
 use Sheba\PayCharge\PayChargable;
 use Cache;
 use Redis;
@@ -12,6 +13,7 @@ class Bkash implements PayChargeMethod
     private $username;
     private $password;
     private $url;
+    private $error = [];
 
     public function __construct()
     {
@@ -45,16 +47,15 @@ class Bkash implements PayChargeMethod
     public function validate($payment)
     {
         $result_data = $this->execute($payment->method_info->paymentID);
-        if (!isset($result_data->transactionStatus)) return false;
+        if (isset($result_data->errorMessage)) {
+            $this->error = $result_data;
+            return false;
+        }
         $pay_chargable = unserialize($payment->pay_chargable);
-        $is_completed = $result_data->transactionStatus == 'Completed';
-        $is_same_amount = (double)$result_data->amount == (double)$pay_chargable->amount;
-        if ($is_completed && $is_same_amount) {
+        if ($result_data->transactionStatus == 'Completed') {
             return $result_data;
         } else {
-            if (!$is_completed) $message = 'status is not completed';
-            elseif (!$is_same_amount) $message = ' amount doesn\'t match';
-            $error = new \InvalidArgumentException('Bkash validation error. Because ' . $message);
+            $error = new \InvalidArgumentException('Bkash validation error. Because status is not completed.');
             $error->result_data = $result_data;
             $error->paycharge = $pay_chargable;
             throw  $error;
@@ -71,6 +72,11 @@ class Bkash implements PayChargeMethod
                 'details' => $method_response,
             )
         );
+    }
+
+    public function getError(): MethodError
+    {
+        return (new BkashErrorAdapter($this->error))->getError();
     }
 
     private function create(PayChargable $payChargable)

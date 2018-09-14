@@ -34,7 +34,7 @@ class PayCharge
         $paycharge = json_decode($paycharge);
         if ($response = $this->method->validate($paycharge)) {
             $pay_chargable = unserialize($paycharge->pay_chargable);
-            $paycharge = $this->updateTransactionRedis($redis_key, $paycharge, $response);
+            $this->updateTransactionRedis($redis_key, $paycharge, $response);
             $class_name = "Sheba\\PayCharge\\Complete\\" . $pay_chargable->completionClass;
             $complete_class = new $class_name();
             if ($complete_class->complete($pay_chargable, $this->method->formatTransactionData($response))) {
@@ -42,7 +42,8 @@ class PayCharge
                 return array('redirect_url' => $pay_chargable->redirectUrl);
             }
         } else {
-            $this->message = "Couldn't able to validate.";
+            $error = $this->method->getError();
+            $this->message = 'Sorry, your ' . ucwords($paycharge->type) . ' payment has failed. Reason is ' . $error->message;
             return false;
         }
     }

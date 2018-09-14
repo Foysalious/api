@@ -19,6 +19,7 @@ class OrderComplete extends PayChargeComplete
         try {
             $client = new Client();
             $partnerOrder = PartnerOrder::find((int)$pay_chargable->id);
+            /** @var Customer $customer */
             $customer = Customer::find((int)$pay_chargable->userId);
             $res = $client->request('POST', config('sheba.admin_url') . '/api/partner-order/' . $partnerOrder->id . '/collect',
                 [

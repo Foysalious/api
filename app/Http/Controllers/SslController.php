@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Sheba\PayCharge\PayCharge;
@@ -27,6 +28,9 @@ class SslController extends Controller
             $pay_charge->complete($request->tran_id);
             return redirect($pay_chargable->redirectUrl . '?invoice_id=' . $request->tran_id);
         } catch (QueryException $e) {
+            app('sentry')->captureException($e);
+            return redirect($pay_chargable->redirectUrl . '?invoice_id=' . $request->tran_id);
+        } catch (RequestException $e) {
             app('sentry')->captureException($e);
             return redirect($pay_chargable->redirectUrl . '?invoice_id=' . $request->tran_id);
         } catch (\Throwable $e) {

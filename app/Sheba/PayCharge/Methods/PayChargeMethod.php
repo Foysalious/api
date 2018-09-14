@@ -9,4 +9,6 @@ interface PayChargeMethod
     public function validate($payment);
 
     public function formatTransactionData($method_response);
+
+    public function getError(): MethodError;
 }

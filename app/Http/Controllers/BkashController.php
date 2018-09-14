@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -63,6 +64,9 @@ class BkashController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message, 'payment' => array('redirect_url' => $response['redirect_url'] . '?invoice_id=' . $request->paymentID)]);
         } catch (QueryException $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 200, ['message' => 'Your payment has been received but there was a system error. It will take some time to update your order. Call 16516 for support.', 'payment' => array('redirect_url' => $response['redirect_url'] . '?invoice_id=' . $request->paymentID)]);
+        } catch (RequestException $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 200, ['message' => 'Your payment has been received but there was a system error. It will take some time to update your order. Call 16516 for support.', 'payment' => array('redirect_url' => $response['redirect_url'] . '?invoice_id=' . $request->paymentID)]);
         } catch (\Throwable $e) {

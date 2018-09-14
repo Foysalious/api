@@ -3,12 +3,14 @@
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use Sheba\PayCharge\Adapters\Error\SslErrorAdapter;
 use Sheba\PayCharge\PayChargable;
 use Cache;
 
 class Ssl implements PayChargeMethod
 {
     private $message;
+    private $error=[];
     private $storeId;
     private $storePassword;
     private $sessionUrl;
@@ -95,6 +97,11 @@ class Ssl implements PayChargeMethod
                 'details' => $method_response
             )
         );
+    }
+
+    public function getError(): MethodError
+    {
+        return (new SslErrorAdapter($this->error))->getError();
     }
 
     public function getSslSession($data)
