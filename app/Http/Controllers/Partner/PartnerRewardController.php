@@ -14,13 +14,27 @@ class PartnerRewardController extends Controller
     public function index(Request $request)
     {
         try {
-            $campaigns = Reward::with(['constraints', 'noConstraints'])
+            $partner=$request->partner;
+            $campaigns = Reward::with(['constraints', 'detail', 'noConstraints', 'constraints'])
                 ->where('end_time', '>=', Carbon::yesterday())
                 ->where('detail_type', 'App\Models\RewardCampaign')->get();
             $actions = Reward::with(['constraints', 'noConstraints'])
                 ->where('end_time', '>=', Carbon::yesterday())
                 ->where('detail_type', 'App\Models\RewardAction')->get();
             foreach ($campaigns as $campaign) {
+                $skip_types = [];
+                foreach ($campaign->noConstraints as $noConstraint) {
+                    array_push($skip_types, $noConstraint->constraint_type);
+                }
+                foreach ($campaign->constraints as $constraint) {
+                    if (in_array($constraint->constraint_type, $skip_types)) continue;
+                    else {
+                        if ($constraint->constraint_type == "App\Models\Category") {
+                        } elseif ($constraint->constraint_type == "App\Models\PartnerSubscriptionPackage") {
+//                            if($partner->package_id==$constraint->constraint_id)
+                        }
+                    }
+                }
                 $campaign['days_left'] = $campaign->end_time->diffInDays(Carbon::today());
                 removeSelectedFieldsFromModel($campaign);
             }
