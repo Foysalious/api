@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Partner;
 
 
 use App\Http\Controllers\Controller;
+use App\Models\Partner;
 use App\Models\Reward;
-use App\Models\RewardCampaign;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -14,40 +14,66 @@ class PartnerRewardController extends Controller
     public function index(Request $request)
     {
         try {
-            $partner=$request->partner;
-            $campaigns = Reward::with(['constraints', 'detail', 'noConstraints', 'constraints'])
+            $partner = $request->partner;
+            $rewards = Reward::with('constraints')
                 ->where('end_time', '>=', Carbon::yesterday())
-                ->where('detail_type', 'App\Models\RewardCampaign')->get();
-            $actions = Reward::with(['constraints', 'noConstraints'])
-                ->where('end_time', '>=', Carbon::yesterday())
-                ->where('detail_type', 'App\Models\RewardAction')->get();
-            foreach ($campaigns as $campaign) {
-                $skip_types = [];
-                foreach ($campaign->noConstraints as $noConstraint) {
-                    array_push($skip_types, $noConstraint->constraint_type);
-                }
-                foreach ($campaign->constraints as $constraint) {
-                    if (in_array($constraint->constraint_type, $skip_types)) continue;
-                    else {
-                        if ($constraint->constraint_type == "App\Models\Category") {
-                        } elseif ($constraint->constraint_type == "App\Models\PartnerSubscriptionPackage") {
-//                            if($partner->package_id==$constraint->constraint_id)
+                ->where('target_type', 'App\Models\Partner')
+                ->whereIn('detail_type', ['App\Models\RewardCampaign', 'App\Models\RewardAction'])
+                ->get();
+            $campaigns = $point_actions = $credit_actions = array();
+            foreach ($rewards as $reward) {
+                if (!$this->isValidReward($partner, $reward)) continue;
+                else {
+                    $reward['days_left'] = $reward->end_time->diffInDays(Carbon::today());
+                    removeRelationsAndFields($reward);
+                    if ($reward->detail_type == 'App\Models\RewardCampaign') array_push($campaigns, $reward);
+                    elseif ($reward->detail_type == 'App\Models\RewardAction') {
+                        if ($reward->where('type', 'Point')) {
+                            array_push($point_actions, $reward);
+                        } else {
+                            array_push($credit_actions, $reward);
                         }
                     }
                 }
-                $campaign['days_left'] = $campaign->end_time->diffInDays(Carbon::today());
-                removeSelectedFieldsFromModel($campaign);
             }
-            foreach ($actions as $action) {
-                removeSelectedFieldsFromModel($action);
-            }
-            $actions = array(
-                'point' => $actions->where('type', 'Point')->values()->all(),
-                'cash' => $actions->where('type', 'Cash')->values()->all(),
-            );
-            return api_response($request, $campaigns, 200, ['campaigns' => $campaigns, 'actions' => $actions]);
+            return api_response($request, $rewards, 200, ['campaigns' => $campaigns, 'actions' => array('point' => $point_actions, 'credit' => $credit_actions)]);
         } catch (\Throwable $e) {
+            dd($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function isValidReward(Partner $partner, $reward)
+    {
+        $category_pass = $package_pass = true;
+        $category_constraints = $reward->constraints->where('constraint_type', constants('REWARD_CONSTRAINTS')['category']);
+        $category_pass = $category_constraints->count() == 0;
+
+        $package_constraints = $reward->constraints->where('constraint_type', constants('REWARD_CONSTRAINTS')['partner_package']);
+        $package_pass = $package_constraints->count() == 0;
+
+        if (!$category_pass) $category_pass = $this->checkForCategory($partner, $category_constraints);
+        if (!$package_pass) $package_pass = $this->checkForPackage($partner, $package_constraints);
+        return $category_pass && $package_pass;
+    }
+
+    private function checkForCategory(Partner $partner, $category_constraints)
+    {
+        $partner->load(['categories' => function ($q) {
+            $q->where('categories.publication_status', 1)->wherePivot('is_verified', 1);
+        }]);
+        $partner_categories = $partner->categories->pluck('id')->unique()->toArray();
+        foreach ($category_constraints as $category_constraint) {
+            if (in_array($category_constraint->constraint_id, $partner_categories)) return true;
+        }
+        return false;
+    }
+
+    private function checkForPackage(Partner $partner, $package_constraints)
+    {
+        foreach ($package_constraints as $package_constraint) {
+            if ($partner->package_id == $package_constraint->constraint_id) return true;
+        }
+        return false;
     }
 }
