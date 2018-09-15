@@ -372,4 +372,20 @@ return [
         'promo_provided' => 'Promo Code Provided',
         'development' => 'Development'
     ],
+    'REWARD_TARGET_TYPE' => [
+        'Partner'   => 'App\Models\Partner',
+        'Customer'  => 'App\Models\Customer'
+    ],
+    'REWARD_DETAIL_TYPE' => [
+        'Campaign'  => 'App\Models\RewardCampaign',
+        'Action'    => 'App\Models\RewardAction'
+    ],
+    'REWARD_TYPE' => [
+        'Cash'  => 'Cash',
+        'Point' => 'Point'
+    ],
+    'CAMPAIGN_REWARD_TIMELINE_TYPE' => [
+        'Onetime'   => 'Onetime',
+        'Recurring' => 'Recurring'
+    ]
 ];

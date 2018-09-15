@@ -437,7 +437,6 @@ $api->version('v1', function ($api) {
         });
         $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
             $api->get('operations', 'Partner\OperationController@index');
-            $api->get('rewards', 'Partner\PartnerRewardController@index');
             $api->post('operations', 'Partner\OperationController@store');
             $api->post('register', 'CustomerController@store');
             $api->post('categories', 'Partner\OperationController@saveCategories');
@@ -494,6 +493,10 @@ $api->version('v1', function ($api) {
                     $api->get('/', 'ComplainController@showPartnerComplain');
                     $api->post('/status', 'ComplainController@updateStatus');
                 });
+            });
+            $api->group(['prefix' => 'rewards'], function ($api) {
+                $api->get('/', 'Partner\PartnerRewardController@index');
+                $api->get('/history', 'Partner\PartnerRewardController@history');
             });
             $api->get('get-profile', 'ResourceController@getResourceData');
         });
