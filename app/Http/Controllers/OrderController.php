@@ -58,7 +58,7 @@ class OrderController extends Controller
                 'email' => 'sometimes|email',
                 'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
                 'time' => 'required|string',
-                'payment_method' => 'required|string|in:cod,online,bkash,wallet',
+                'payment_method' => 'required|string|in:cod,online,wallet',
                 'address' => 'required_without:address_id',
                 'address_id' => 'required_without:address',
                 'resource' => 'sometimes|numeric',
