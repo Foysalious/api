@@ -12,7 +12,7 @@ use Sheba\RequestIdentification;
 
 class OrderComplete extends PayChargeComplete
 {
-    CONST CASHBACK_PERCENTAGE = 10;
+    CONST CASHBACK_PERCENTAGE = 1;
 
     public function complete(PayChargable $pay_chargable, $method_response)
     {

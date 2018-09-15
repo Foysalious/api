@@ -15,7 +15,7 @@ use Sheba\RequestIdentification;
 class AdvancedOrderComplete extends PayChargeComplete
 {
     use ModificationFields;
-    CONST CASHBACK_PERCENTAGE = 10;
+    CONST CASHBACK_PERCENTAGE = 1;
 
     public function complete(PayChargable $pay_chargable, $method_response)
     {
