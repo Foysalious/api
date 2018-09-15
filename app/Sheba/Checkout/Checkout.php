@@ -117,13 +117,15 @@ class Checkout
                     'payment_method' => $data['payment_method']
                 ]);
                 $partner_order = $this->getAuthor($partner_order, $data);
+                $preferred_time_start = (Carbon::parse(explode('-', $data['time'])[0]))->format('G:i:s');
+                $preferred_time_end = (Carbon::parse(explode('-', $data['time'])[1]))->format('G:i:s');
                 $job = Job::create([
                     'category_id' => ($selected_services->first())->category_id,
                     'partner_order_id' => $partner_order->id,
                     'schedule_date' => $data['date'],
-                    'preferred_time' => $data['time'],
-                    'preferred_time_start' => explode('-', $data['time'])[0],
-                    'preferred_time_end' => explode('-', $data['time'])[1],
+                    'preferred_time' => $preferred_time_start . '-' . $preferred_time_end,
+                    'preferred_time_start' => $preferred_time_start,
+                    'preferred_time_end' => $preferred_time_end,
                     'crm_id' => $data['crm_id'],
                     'job_additional_info' => $data['additional_information'],
                     'category_answers' => $data['category_answers'],
