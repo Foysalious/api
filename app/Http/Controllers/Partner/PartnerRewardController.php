@@ -27,6 +27,10 @@ class PartnerRewardController extends Controller
             foreach ($actions as $action) {
                 removeSelectedFieldsFromModel($action);
             }
+            $actions = array(
+                'point' => $actions->where('type', 'Point')->values()->all(),
+                'cash' => $actions->where('type', 'Cash')->values()->all(),
+            );
             return api_response($request, $campaigns, 200, ['campaigns' => $campaigns, 'actions' => $actions]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
