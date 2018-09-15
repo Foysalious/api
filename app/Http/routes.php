@@ -437,6 +437,7 @@ $api->version('v1', function ($api) {
         });
         $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
             $api->get('operations', 'Partner\OperationController@index');
+            $api->get('rewards', 'Partner\PartnerRewardController@index');
             $api->post('operations', 'Partner\OperationController@store');
             $api->post('register', 'CustomerController@store');
             $api->post('categories', 'Partner\OperationController@saveCategories');

@@ -364,7 +364,9 @@ class PartnerController extends Controller
                 'geo_informations' => $partner->geo_informations,
                 'today' => $sales_stats->today->sale,
                 'week' => $sales_stats->week->sale,
-                'month' => $sales_stats->month->sale
+                'month' => $sales_stats->month->sale,
+                'reward_point' => $partner->reward_point,
+                'has_reward_campaign' => 1
             );
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
@@ -502,7 +504,7 @@ class PartnerController extends Controller
                 });
                 return api_response($request, $partners, 200, ['partners' => $partners->values()->all()]);
             }
-            return api_response($request, null, 404,['message'=>'No partner found.']);
+            return api_response($request, null, 404, ['message' => 'No partner found.']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
