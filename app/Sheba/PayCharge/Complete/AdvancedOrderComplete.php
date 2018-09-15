@@ -39,7 +39,7 @@ class AdvancedOrderComplete extends PayChargeComplete
                 $partner_order_payment->fill((new RequestIdentification())->get());
                 $partner_order_payment->save();
                 if (strtolower($method_response['name']) == 'wallet') {
-                    $amount = (int)(($pay_chargable->amount * self::CASHBACK_PERCENTAGE) / 100);
+                    $amount = ($pay_chargable->amount * self::CASHBACK_PERCENTAGE) / 100;
                     $customer->rechargeWallet($amount, [
                         'amount' => $amount, 'transaction_details' => json_encode($method_response['details']),
                         'type' => 'Credit', 'log' => 'Bonus Sheba Credit'
