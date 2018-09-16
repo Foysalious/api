@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Partner;
 
-
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\Reward;
+use App\Models\RewardLog;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -16,8 +16,7 @@ class PartnerRewardController extends Controller
         try {
             $partner = $request->partner;
             $rewards = Reward::with('constraints')
-                ->where('end_time', '>=', Carbon::yesterday())
-                ->where('target_type', 'App\Models\Partner')
+                ->where([['end_time', '>=', Carbon::yesterday()], ['target_type', 'App\Models\Partner']])
                 ->whereIn('detail_type', ['App\Models\RewardCampaign', 'App\Models\RewardAction'])
                 ->get();
             $campaigns = $point_actions = $credit_actions = array();
@@ -28,17 +27,14 @@ class PartnerRewardController extends Controller
                     removeRelationsAndFields($reward);
                     if ($reward->detail_type == 'App\Models\RewardCampaign') array_push($campaigns, $reward);
                     elseif ($reward->detail_type == 'App\Models\RewardAction') {
-                        if ($reward->where('type', 'Point')) {
-                            array_push($point_actions, $reward);
-                        } else {
-                            array_push($credit_actions, $reward);
-                        }
+                        if ($reward->where('type', 'Point')) array_push($point_actions, $reward);
+                        else array_push($credit_actions, $reward);
                     }
                 }
             }
             return api_response($request, $rewards, 200, ['campaigns' => $campaigns, 'actions' => array('point' => $point_actions, 'credit' => $credit_actions)]);
         } catch (\Throwable $e) {
-            dd($e);
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -75,5 +71,33 @@ class PartnerRewardController extends Controller
             if ($partner->package_id == $package_constraint->constraint_id) return true;
         }
         return false;
+    }
+
+    public function history(Request $request)
+    {
+        try {
+            $start_date = $request->has('start_date') ? Carbon::parse($request->start_date) : Carbon::now();
+            $end_date = $request->has('end_date') ? Carbon::parse($request->end_date) : Carbon::now();
+            $reward_type = $request->has('reward_type') ? [ucfirst($request->reward_type)] : constants('REWARD_TYPE');
+
+            $reward_logs = RewardLog::whereHas('reward', function ($query) use ($reward_type) {
+                return $query->whereIn('type', $reward_type);
+            })
+                ->with(['reward' => function ($query) {
+                    return $query->select('id', 'name', 'type', 'amount');
+                }])
+                ->forPartner($request->partner->id)
+                ->rewardedAt([$start_date->startOfDay(), $end_date->endOfDay()])
+                ->select('id', 'reward_id', 'log', 'created_at');
+
+            if ($request->has('transaction_type')) {
+                $reward_logs = $reward_logs->where('transaction_type', $request->transaction_type);
+            }
+            $reward_logs = $reward_logs->get();
+
+            return api_response($request, null, 200, ['reward_history' => $reward_logs, 'gift_points' => $request->partner->reward_point]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
     }
 }

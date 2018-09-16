@@ -355,10 +355,10 @@ return [
     'PARTNER_AFFILIATIONS_FAKE_REJECT_REASONS' => ['fake'],
     'PARTNER_AFFILIATION_REWARD' => 200,
     'PARTNER_AFFILIATION_PARTNER_ORDER_BENCHMARK' => 1,
-    'PARTNER_AFFILIATION_REWARD_BREAKDOWN' => [
-        'on_boarded' => 20,
-        'verified' => 10,
-        'order_completed' => 70
+    'PARTNER_AFFILIATION_REWARD_BREAKDOWN'  => [
+        'on_boarded'        => 20,
+        'verified'          => 10,
+        'order_completed'   => 70
     ],
     'PARTNER_AFFILIATION_AMBASSADOR_COMMISSION' => 30,
     'COMPLAIN_STATUSES' => [
@@ -372,8 +372,24 @@ return [
         'promo_provided' => 'Promo Code Provided',
         'development' => 'Development'
     ],
+    'REWARD_TARGET_TYPE' => [
+        'Partner'   => 'App\Models\Partner',
+        'Customer'  => 'App\Models\Customer'
+    ],
+    'REWARD_DETAIL_TYPE' => [
+        'Campaign'  => 'App\Models\RewardCampaign',
+        'Action'    => 'App\Models\RewardAction'
+    ],
+    'REWARD_TYPE' => [
+        'Cash'  => 'Cash',
+        'Point' => 'Point'
+    ],
+    'CAMPAIGN_REWARD_TIMELINE_TYPE' => [
+        'Onetime'   => 'Onetime',
+        'Recurring' => 'Recurring'
+    ],
     'REWARD_CONSTRAINTS' => [
         'category' => 'App\Models\Category',
         'partner_package' => 'App\Models\PartnerSubscriptionPackage'
-    ],
+    ]
 ];
