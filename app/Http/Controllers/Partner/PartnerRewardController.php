@@ -27,12 +27,26 @@ class PartnerRewardController extends Controller
                     removeRelationsAndFields($reward);
                     if ($reward->detail_type == 'App\Models\RewardCampaign') array_push($campaigns, $reward);
                     elseif ($reward->detail_type == 'App\Models\RewardAction') {
-                        if ($reward->where('type', 'Point')) array_push($point_actions, $reward);
-                        else array_push($credit_actions, $reward);
+                        $reward->type == 'Point' ? array_push($point_actions, $reward) : array_push($credit_actions, $reward);
                     }
                 }
             }
             return api_response($request, $rewards, 200, ['campaigns' => $campaigns, 'actions' => array('point' => $point_actions, 'credit' => $credit_actions)]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function show($partner, $reward, Request $request)
+    {
+        try {
+            $partner = $request->partner;
+            $reward = Reward::find($reward);
+            return api_response($request, $reward, 200, ['info' => array(
+                'target' => 50,
+                'completed' => 25
+            )]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
