@@ -358,7 +358,7 @@ class JobController extends Controller
     {
         try {
             $this->validate($request, [
-                'payment_method' => 'sometimes|required|in:online,bkash'
+                'payment_method' => 'sometimes|required|in:online'
             ]);
             $order_adapter = new OrderAdapter($request->job->partnerOrder);
             $payment = (new PayCharge($request->has('payment_method') ? $request->payment_method : 'online'))->init($order_adapter->getPayable());

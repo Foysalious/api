@@ -15,7 +15,7 @@ use Sheba\RequestIdentification;
 class AdvancedOrderComplete extends PayChargeComplete
 {
     use ModificationFields;
-    CONST CASHBACK_PERCENTAGE = 10;
+    CONST CASHBACK_PERCENTAGE = 1;
 
     public function complete(PayChargable $pay_chargable, $method_response)
     {
@@ -39,10 +39,10 @@ class AdvancedOrderComplete extends PayChargeComplete
                 $partner_order_payment->fill((new RequestIdentification())->get());
                 $partner_order_payment->save();
                 if (strtolower($method_response['name']) == 'wallet') {
-                    $amount = (int)(($pay_chargable->amount * self::CASHBACK_PERCENTAGE) / 100);
+                    $amount = ($pay_chargable->amount * self::CASHBACK_PERCENTAGE) / 100;
                     $customer->rechargeWallet($amount, [
                         'amount' => $amount, 'transaction_details' => json_encode($method_response['details']),
-                        'type' => 'Credit', 'log' => 'Cash Back'
+                        'type' => 'Credit', 'log' => 'Bonus Sheba Credit'
                     ]);
                 }
             });
