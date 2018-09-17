@@ -496,8 +496,8 @@ $api->version('v1', function ($api) {
             });
             $api->group(['prefix' => 'rewards'], function ($api) {
                 $api->get('/', 'Partner\PartnerRewardController@index');
-                $api->get('{reward}', 'Partner\PartnerRewardController@show');
                 $api->get('/history', 'Partner\PartnerRewardController@history');
+                $api->get('/{reward}', 'Partner\PartnerRewardController@show');
                 $api->group(['prefix' => 'shop'], function($api) {
                     $api->get('/', 'RewardShopController@index');
                 });
