@@ -33,7 +33,8 @@ class RewardShopController extends Controller
                     'required_point' => 50000
                 ]
             ]);
-            return api_response($request, $products, 200, ['products' => $products]);
+
+            return api_response($request, $products, 200, ['products' => $products, 'gift_points' => $request->partner->reward_point]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
