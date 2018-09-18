@@ -23,7 +23,7 @@ class OrderHandler
             RewardShopOrder::create($this->withCreateModificationField($order_create_data));
 
             $user->decrement('reward_point', $product->point);
-            (new RewardPointLogRepository())->storeOutLog();
+            (new RewardPointLogRepository())->storeOutLog($user, $product->point, "$product->point Point Deducted for $product->name Purchase");
         });
     }
 
