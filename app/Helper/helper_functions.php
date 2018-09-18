@@ -200,9 +200,18 @@ if (!function_exists('removeRelationsFromModel')) {
     }
 }
 
+
+if (!function_exists('removeRelationsAndFields')) {
+    function removeRelationsAndFields($model, array $columns_to_remove = [])
+    {
+        removeRelationsFromModel($model);
+        $model = removeSelectedFieldsFromModel($model, $columns_to_remove);
+        return $model;
+    }
+}
 if (!function_exists('removeSelectedFieldsFromModel')) {
 
-    function removeSelectedFieldsFromModel($model)
+    function removeSelectedFieldsFromModel($model, array $columns_to_remove = [])
     {
         array_forget($model, 'created_by');
         array_forget($model, 'updated_by');
@@ -210,18 +219,12 @@ if (!function_exists('removeSelectedFieldsFromModel')) {
         array_forget($model, 'created_by_name');
         array_forget($model, 'updated_by_name');
         array_forget($model, 'remember_token');
-    }
-}
-
-if (!function_exists('removeRelationsAndFields')) {
-    function removeRelationsAndFields($model)
-    {
-        removeRelationsFromModel($model);
-        removeSelectedFieldsFromModel($model);
+        foreach ($columns_to_remove as $column) {
+            array_forget($model, $column);
+        }
         return $model;
     }
 }
-
 if (!function_exists('getValidationErrorMessage')) {
     function getValidationErrorMessage($errors)
     {

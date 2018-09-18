@@ -15,20 +15,17 @@ class PartnerRewardController extends Controller
     {
         try {
             $partner = $request->partner;
-            $rewards = Reward::ongoing()
-                ->whereIn('detail_type', ['App\Models\RewardCampaign', 'App\Models\RewardAction'])
-                ->with('constraints')
-                ->get();
             $campaigns = $point_actions = $credit_actions = array();
+            $rewards = Reward::ongoing()->forPartner()->with('constraints')->get();
+            $today = Carbon::today();
             foreach ($rewards as $reward) {
                 if (!$this->isValidReward($partner, $reward)) continue;
                 else {
-                    $reward['days_left'] = $reward->end_time->diffInDays(Carbon::today());
-                    removeRelationsAndFields($reward);
-                    if ($reward->detail_type == 'App\Models\RewardCampaign') array_push($campaigns, $reward);
-                    elseif ($reward->detail_type == 'App\Models\RewardAction') {
-                        $reward->type == 'Point' ? array_push($point_actions, $reward) : array_push($credit_actions, $reward);
-                    }
+                    $reward['days_left'] = $reward->end_time->diffInDays($today);
+                    removeRelationsAndFields($reward, ['target_type']);
+                    if ($reward->isCampaign()) array_push($campaigns, removeSelectedFieldsFromModel($reward, ['detail_type']));
+                    elseif ($reward->isAction() && $reward->type == 'Point') array_push($point_actions, removeSelectedFieldsFromModel($reward, ['detail_type']));
+                    else array_push($credit_actions, removeSelectedFieldsFromModel($reward, ['detail_type']));
                 }
             }
             return api_response($request, $rewards, 200, ['campaigns' => $campaigns, 'actions' => array('point' => $point_actions, 'credit' => $credit_actions)]);
@@ -55,7 +52,6 @@ class PartnerRewardController extends Controller
 
     private function isValidReward(Partner $partner, $reward)
     {
-        $category_pass = $package_pass = true;
         $category_constraints = $reward->constraints->where('constraint_type', constants('REWARD_CONSTRAINTS')['category']);
         $category_pass = $category_constraints->count() == 0;
 
