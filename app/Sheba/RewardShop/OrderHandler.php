@@ -5,6 +5,7 @@ use App\Models\RewardShopProduct;
 use Illuminate\Support\Facades\DB;
 use Sheba\ModificationFields;
 use Sheba\Repositories\RewardLogRepository;
+use Sheba\Repositories\RewardPointLogRepository;
 
 class OrderHandler
 {
@@ -22,7 +23,7 @@ class OrderHandler
             RewardShopOrder::create($this->withCreateModificationField($order_create_data));
 
             $user->decrement('reward_point', $product->point);
-            (new RewardLogRepository())->rewardOutLog(get_class($user), $user->id, $product->point." Points deducted for purchase ". $product->name);
+            (new RewardPointLogRepository())->storeOutLog();
         });
     }
 
