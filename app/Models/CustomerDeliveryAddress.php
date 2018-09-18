@@ -15,4 +15,9 @@ class CustomerDeliveryAddress extends Model
         return $this->belongsTo(Customer::class);
     }
 
+    public function location()
+    {
+        return $this->belongsTo(Location::class);
+    }
+
 }

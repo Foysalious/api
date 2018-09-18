@@ -42,4 +42,9 @@ class Location extends Model
         return $this->hasOne(HyperLocal::class);
     }
 
+    public function customer_delivery_addresses()
+    {
+        return $this->hasMany(CustomerDeliveryAddress::class);
+    }
+
 }
