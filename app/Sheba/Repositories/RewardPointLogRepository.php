@@ -9,6 +9,6 @@ class RewardPointLogRepository extends BaseRepository
 
     public function storeOutLog()
     {
-        dd(11);
+        
     }
 }
