@@ -61,7 +61,21 @@ class PartnerRewardShopController extends Controller
     public function history(Request $request)
     {
         try {
-            // $purchases = RewardShopOrder::where('')
+            $purchases = RewardShopOrder::creator($request->partner)
+                ->with('product')
+                ->get()
+                ->map(function ($order) {
+                    return [
+                        'id' => $order->id,
+                        'status' => $order->status,
+                        'point' => $order->reward_product_point,
+                        'purchased_at' => $order->created_at->toDateString(),
+                        'product_name' => $order->product->name,
+                        'product_description' => $order->product->description,
+                        'prodct_image' => $order->product->thumb
+                    ];
+                });
+            return api_response($request, $purchases, 200, ['orders' => $purchases]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
