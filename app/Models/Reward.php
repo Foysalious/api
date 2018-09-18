@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class Reward extends Model
@@ -23,4 +24,10 @@ class Reward extends Model
     {
         return $this->hasMany(RewardNoConstraint::class);
     }
+
+    public function scopeOngoing($query)
+    {
+        return $query->where([['start_time', '<=', Carbon::today()], ['end_time', '>=', Carbon::today()]]);
+    }
+
 }

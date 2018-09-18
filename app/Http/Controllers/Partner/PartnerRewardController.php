@@ -15,9 +15,9 @@ class PartnerRewardController extends Controller
     {
         try {
             $partner = $request->partner;
-            $rewards = Reward::with('constraints')
-                ->where([['end_time', '>=', Carbon::yesterday()], ['target_type', 'App\Models\Partner']])
+            $rewards = Reward::ongoing()
                 ->whereIn('detail_type', ['App\Models\RewardCampaign', 'App\Models\RewardAction'])
+                ->with('constraints')
                 ->get();
             $campaigns = $point_actions = $credit_actions = array();
             foreach ($rewards as $reward) {
