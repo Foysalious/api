@@ -110,4 +110,28 @@ class PartnerRewardController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function getFaqs(Request $request)
+    {
+        try {
+            $faqs = array(
+                array(
+                    'question' => 'গিফ্‌ট পয়েন্ট কি?',
+                    'answer' => 'সময়মত উৎকৃষ্ট মানের সার্ভিস প্রদান করে পেতে পারেন পুরস্কার, তাই হচ্ছে গিফ্‌ট পয়েন্ট।'
+                ),
+                array(
+                    'question' => 'কিভাবে গিফ্‌ট পয়েন্ট পাবেন?',
+                    'answer' => 'সার্ভিস এর মান উন্নয়নের জন্য বিভিন্ন সময়ে টার্গেট প্রদান করা হবে, টার্গেট পূরণ করে পাবেন গিফ্‌ট পয়েন্ট। '
+                ),
+                array(
+                    'question' => 'কিভাবে গিফ্‌ট পয়েন্ট ব্যবহার করবেন?',
+                    'answer' => 'ম্যানেজার অ্যাপ এর গিফ্‌ট সপ এ যেসকল পন্য দেখতে পাবেন সেগুলো সংগ্রহ করতে গিফ্‌ট পয়েন্ট ব্যবহার করবেন। '
+                )
+            );
+            return api_response($request, $faqs, 200, ['faqs' => $faqs]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }
