@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class Reward extends Model
@@ -22,5 +23,25 @@ class Reward extends Model
     public function noConstraints()
     {
         return $this->hasMany(RewardNoConstraint::class);
+    }
+
+    public function isCampaign()
+    {
+        return $this->detail_type == 'App\Models\RewardCampaign';
+    }
+
+    public function isAction()
+    {
+        return $this->detail_type == 'App\Models\RewardAction';
+    }
+
+    public function scopeOngoing($query)
+    {
+        return $query->where([['start_time', '<=', Carbon::today()], ['end_time', '>=', Carbon::today()]]);
+    }
+
+    public function scopeForPartner($query)
+    {
+        return $query->where('target_type', 'App\Models\Partner');
     }
 }

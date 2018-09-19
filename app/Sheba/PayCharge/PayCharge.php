@@ -43,7 +43,7 @@ class PayCharge
             }
         } else {
             $error = $this->method->getError();
-            $this->message = 'Sorry, your ' . ucwords($paycharge->type) . ' payment has failed. Reason is ' . $error->message;
+            $this->message = 'Sorry, your ' . ucwords($paycharge->type) . ' payment has failed. Due to ' . $error->message;
             return false;
         }
     }
