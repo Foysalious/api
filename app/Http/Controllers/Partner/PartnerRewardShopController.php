@@ -75,6 +75,7 @@ class PartnerRewardShopController extends Controller
         try {
             $purchases = RewardShopOrder::creator($request->partner)
                 ->with('product')
+                ->orderBy('id', 'desc')
                 ->get()
                 ->map(function ($order) {
                     return [
