@@ -8,6 +8,7 @@ use App\Models\Reward;
 use App\Models\RewardLog;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Sheba\Reward\EventInitiator;
 
 class PartnerRewardController extends Controller
 {
@@ -35,15 +36,22 @@ class PartnerRewardController extends Controller
         }
     }
 
-    public function show($partner, $reward, Request $request)
+    public function show($partner, $reward, Request $request, EventInitiator $event_initiator)
     {
         try {
             $partner = $request->partner;
-            $reward = Reward::find($reward);
-            return api_response($request, $reward, 200, ['info' => array(
-                'target' => 50,
-                'completed' => 25
-            )]);
+            $reward = Reward::with('detail')->find($reward);
+            $events = [];
+            foreach (json_decode($reward->detail->events) as $key => $event) {
+                $event = $event_initiator->setReward($reward)->setName($key)->setRule($event)->initiate();
+                $target_progress = $event->checkProgress($partner);
+                array_push($events, array(
+                    'tag' => $key,
+                    'target' => $target_progress->getTarget(),
+                    'completed' => $target_progress->getAchieved()
+                ));
+            }
+            return api_response($request, $reward, 200, ['info' => $events]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

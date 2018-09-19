@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Sheba\Reward\Rewardable;
 use Sheba\Subscription\Partner\PartnerSubscriber;
 use Carbon\Carbon;
 use Sheba\Dal\Complain\Model as Complain;
@@ -7,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Sheba\Voucher\VoucherCodeGenerator;
 use DB;
 
-class Partner extends Model
+class Partner extends Model implements Rewardable
 {
     protected $guarded = [
         'id',
