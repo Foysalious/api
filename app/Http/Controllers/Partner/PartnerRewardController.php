@@ -16,7 +16,7 @@ class PartnerRewardController extends Controller
         try {
             $partner = $request->partner;
             $campaigns = $point_actions = $credit_actions = array();
-            $rewards = Reward::ongoing()->forPartner()->with('constraints')->get();
+            $rewards = Reward::upcoming()->forPartner()->with('constraints')->get();
             $today = Carbon::today();
             foreach ($rewards as $reward) {
                 if (!$this->isValidReward($partner, $reward)) continue;

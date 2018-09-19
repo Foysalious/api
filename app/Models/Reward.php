@@ -40,6 +40,11 @@ class Reward extends Model
         return $query->where([['start_time', '<=', Carbon::today()], ['end_time', '>=', Carbon::today()]]);
     }
 
+    public function scopeUpcoming($query)
+    {
+        return $query->where('end_time', '>=', Carbon::today());
+    }
+
     public function scopeForPartner($query)
     {
         return $query->where('target_type', 'App\Models\Partner');
