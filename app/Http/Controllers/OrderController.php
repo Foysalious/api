@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\Order;
 use App\Models\PartnerOrder;
 use App\Repositories\JobServiceRepository;
 use App\Repositories\NotificationRepository;
@@ -58,7 +59,7 @@ class OrderController extends Controller
                 'email' => 'sometimes|email',
                 'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
                 'time' => 'required|string',
-                'payment_method' => 'required|string|in:cod,online,wallet,bkash',
+                'payment_method' => 'required|string|in:cod,online,wallet',
                 'address' => 'required_without:address_id',
                 'address_id' => 'required_without:address',
                 'resource' => 'sometimes|numeric',
@@ -77,9 +78,8 @@ class OrderController extends Controller
                 if ($order->voucher_id) $this->updateVouchers($order, $customer);
                 $payment = $link = null;
                 if ($request->payment_method !== 'cod') {
-                    $order_adapter = new OrderAdapter($order->partnerOrders[0], 1);
-                    $payment = (new PayCharge($request->payment_method))->init($order_adapter->getPayable());
-                    $link = $payment['link'];
+                    $payment = $this->getPayment($request->payment_method, $order);
+                    $link = $payment ? $payment['link'] : null;
                 }
                 $this->sendNotifications($customer, $order);
                 return api_response($request, $order, 200, ['link' => $link, 'job_id' => $order->jobs->first()->id, 'order_code' => $order->code(), 'payment' => $payment]);
@@ -188,6 +188,18 @@ class OrderController extends Controller
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
+        }
+    }
+
+    private function getPayment($payment_method, Order $order)
+    {
+        try {
+            $order_adapter = new OrderAdapter($order->partnerOrders[0], 1);
+            $payment = (new PayCharge($payment_method))->init($order_adapter->getPayable());
+            return $payment;
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return null;
         }
     }
 }
