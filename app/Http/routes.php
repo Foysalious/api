@@ -501,6 +501,7 @@ $api->version('v1', function ($api) {
                     $api->get('/', 'Partner\PartnerRewardShopController@index');
                     $api->get('/history', 'Partner\PartnerRewardShopController@history');
                     $api->post('/purchase', 'Partner\PartnerRewardShopController@purchase');
+                    $api->get('/purchasable', 'Partner\PartnerRewardShopController@purchasable');
                 });
                 $api->get('/{reward}', 'Partner\PartnerRewardController@show');
             });

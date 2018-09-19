@@ -58,6 +58,18 @@ class PartnerRewardShopController extends Controller
         }
     }
 
+    public function purchasable(Request $request)
+    {
+        try {
+            $purchasable_product_count = RewardShopProduct::where('point', '<=', $request->partner->reward_point)->count();
+            return api_response($request, $purchasable_product_count, 200, ['purchasable_product_count' => $purchasable_product_count]);
+
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     public function history(Request $request)
     {
         try {
