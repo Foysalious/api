@@ -84,7 +84,7 @@ class PartnerRewardShopController extends Controller
                         'purchased_at' => $order->created_at->toDateString(),
                         'product_name' => $order->product->name,
                         'product_description' => $order->product->description,
-                        'prodct_image' => $order->product->thumb
+                        'product_image' => $order->product->thumb
                     ];
                 });
             return api_response($request, $purchases, 200, ['orders' => $purchases]);
