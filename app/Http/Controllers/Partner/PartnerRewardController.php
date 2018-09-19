@@ -103,7 +103,7 @@ class PartnerRewardController extends Controller
             if ($request->has('transaction_type')) {
                 $reward_logs = $reward_logs->where('transaction_type', $request->transaction_type);
             }
-            $reward_logs = $reward_logs->get();
+            $reward_logs = $reward_logs->orderBy('id', 'desc')->get();
 
             return api_response($request, null, 200, ['reward_history' => $reward_logs, 'gift_points' => $request->partner->reward_point]);
         } catch (\Throwable $e) {
