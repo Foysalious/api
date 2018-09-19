@@ -100,9 +100,6 @@ class PartnerRewardController extends Controller
                 ->rewardedAt([$start_date->startOfDay(), $end_date->endOfDay()])
                 ->select('id', 'reward_id', 'log', 'created_at');
 
-            if ($request->has('transaction_type')) {
-                $reward_logs = $reward_logs->where('transaction_type', $request->transaction_type);
-            }
             $reward_logs = $reward_logs->orderBy('id', 'desc')->get();
 
             return api_response($request, null, 200, ['reward_history' => $reward_logs, 'gift_points' => $request->partner->reward_point]);
