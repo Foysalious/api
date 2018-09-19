@@ -354,6 +354,7 @@ $api->version('v1', function ($api) {
                 $api->get('categories', 'PartnerController@getCategories');
                 $api->get('categories/{category}/services', 'PartnerController@getServices');
             });
+            $api->get('rewards/faqs', 'Partner\PartnerRewardController@getFaqs');
         });
         $api->group(['prefix' => 'customers'], function ($api) {
             $api->group(['prefix' => '{customer}', 'middleware' => ['customer.auth']], function ($api) {
@@ -501,6 +502,7 @@ $api->version('v1', function ($api) {
                     $api->get('/', 'Partner\PartnerRewardShopController@index');
                     $api->get('/history', 'Partner\PartnerRewardShopController@history');
                     $api->post('/purchase', 'Partner\PartnerRewardShopController@purchase');
+                    $api->get('/purchasable', 'Partner\PartnerRewardShopController@purchasable');
                 });
                 $api->get('/{reward}', 'Partner\PartnerRewardController@show');
             });
