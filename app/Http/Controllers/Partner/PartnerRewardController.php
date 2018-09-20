@@ -8,6 +8,7 @@ use App\Models\Reward;
 use App\Models\RewardLog;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Sheba\Reward\CampaignEventInitiator;
 use Sheba\Reward\EventInitiator;
 
 class PartnerRewardController extends Controller
@@ -36,7 +37,7 @@ class PartnerRewardController extends Controller
         }
     }
 
-    public function show($partner, $reward, Request $request, EventInitiator $event_initiator)
+    public function show($partner, $reward, Request $request, CampaignEventInitiator $event_initiator)
     {
         try {
             $partner = $request->partner;
