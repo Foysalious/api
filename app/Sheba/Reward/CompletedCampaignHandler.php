@@ -30,6 +30,7 @@ class CompletedCampaignHandler
             ->where('detail_type', 'App\Models\RewardCampaign')
             ->get();
 
+
         $this->validRewards = $published_rewards->filter(function ($reward) {
             return $this->timeFrame->setReward($reward)->isValid();
         });

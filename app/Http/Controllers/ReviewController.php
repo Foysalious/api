@@ -10,6 +10,7 @@ use App\Repositories\ReviewRepository;
 use Illuminate\Http\Request;
 use Gate;
 use Illuminate\Validation\ValidationException;
+use Sheba\Reward\ActionRewardDispatcher;
 use Validator;
 
 class ReviewController extends Controller
@@ -102,7 +103,7 @@ class ReviewController extends Controller
         return $validator->fails() ? $validator->errors()->all()[0] : false;
     }
 
-    public function store($customer, $job, Request $request)
+    public function store($customer, $job, Request $request, ActionRewardDispatcher $dispatcher)
     {
         try {
             $this->validate($request, ['rating' => 'required']);
@@ -121,7 +122,7 @@ class ReviewController extends Controller
                 $review->created_by = $customer->id;
                 $review->created_by_name = "Customer - " . $customer->profile->name;
                 $review->save();
-
+                $dispatcher->run('rating', $job->partner_order->partner, $review);
             } else {
                 $review->rating = $request->rating;
                 $review->updated_by = $customer->id;

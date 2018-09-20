@@ -1,6 +1,12 @@
 <?php namespace Sheba\Reward;
 
+use App\Models\Customer;
+use App\Models\Partner;
 use App\Models\Reward;
+use Sheba\CustomerWallet\CustomerTransactionHandler;
+use Sheba\PartnerWallet\PartnerTransactionHandler;
+use Sheba\Repositories\CustomerRepository;
+use Sheba\Repositories\PartnerRepository;
 use Sheba\Repositories\RewardLogRepository;
 
 class DisburseHandler
@@ -19,12 +25,28 @@ class DisburseHandler
         return $this;
     }
 
+    /**
+     * @param Rewardable $rewardable
+     * @throws \Exception
+     */
     public function disburse(Rewardable $rewardable)
     {
         if ($this->isRewardCashType()) {
-            $rewardable->update(['wallet' => floatval($rewardable->wallet) + floatval($this->reward->amount)]);
+            $amount = $this->reward->amount;
+            $log = $amount . " BDT credited for ". $this->reward->name . " reward";
+
+            if ($rewardable instanceof Partner) {
+                (new PartnerTransactionHandler($rewardable))->credit($amount, $log);
+            } elseif ($rewardable instanceof Customer) {
+                (new CustomerTransactionHandler($rewardable))->credit($amount, $log);
+            }
         } elseif ($this->isRewardPointType()) {
-            $rewardable->update(['reward_point' => floatval($rewardable->reward_point) + floatval($this->reward->amount)]);
+            # $rewardable->update(['reward_point' => floatval($rewardable->reward_point) + floatval($this->reward->amount)]);
+            if ($rewardable instanceof Partner) {
+                (new PartnerRepository())->updateRewardPoint($rewardable, $this->reward->amount);
+            } elseif ($rewardable instanceof Customer) {
+                (new CustomerRepository())->credit($amount, $log);
+            }
         }
 
         $log = "Rewarded " . $this->reward->amount . " ". $this->reward->type;
