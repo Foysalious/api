@@ -321,3 +321,15 @@ if (!function_exists('en2bnNumber')) {
         return str_replace($search_array, $replace_array, $number);
     }
 }
+
+if (!function_exists('indexedArrayToAssociativ')) {
+    /**
+     * @param $key
+     * @param $value
+     * @return array
+     */
+    function indexedArrayToAssociative($key, $value)
+    {
+        return array_combine(array_values($key), array_values($value));
+    }
+}

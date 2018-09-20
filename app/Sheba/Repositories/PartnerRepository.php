@@ -71,15 +71,21 @@ class PartnerRepository extends BaseRepository
     {
         notify()->partner($partner)->send([
             "title" => $notification,
-            "link"  => config('sheba.partners_url') . $partner->sub_domain . "/finance",
-            "type"  => notificationType('Info'),
+            "link" => config('sheba.partners_url') . $partner->sub_domain . "/finance",
+            "type" => notificationType('Info'),
         ]);
 
         $topic = config('sheba.push_notification_topic_name.manager') . $partner->id;
         (new PushNotificationHandler())->send([
-            "title"      => 'ওয়ালেট ওয়ার্নিং!',
-            "message"    => $notification,
+            "title" => 'ওয়ালেট ওয়ার্নিং!',
+            "message" => $notification,
             "event_type" => 'WalletWarning'
         ], $topic);
+    }
+
+    public function updateRewardPoint(Partner $partner, $point)
+    {
+        $new_reward_point = $partner->reward_point + $point;
+        $this->update($partner, ['reward_point' => $new_reward_point]);
     }
 }

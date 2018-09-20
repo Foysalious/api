@@ -22,6 +22,7 @@ use DB;
 use Illuminate\Validation\ValidationException;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
 use Sheba\Manager\JobList;
+use Sheba\Reward\PartnerReward;
 use Validator;
 
 class PartnerController extends Controller
@@ -317,7 +318,7 @@ class PartnerController extends Controller
         }
     }
 
-    public function getDashboardInfo($partner, Request $request)
+    public function getDashboardInfo($partner, Request $request, PartnerReward $partner_reward)
     {
         try {
             $partner = $request->partner;
@@ -366,7 +367,7 @@ class PartnerController extends Controller
                 'week' => $sales_stats->week->sale,
                 'month' => $sales_stats->month->sale,
                 'reward_point' => $partner->reward_point,
-                'has_reward_campaign' => 1
+                'has_reward_campaign' => count($partner_reward->upcoming()) > 0 ? 1 : 0
             );
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {

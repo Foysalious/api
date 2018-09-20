@@ -12,5 +12,8 @@ return [
     'portal' => 'customer-portal',
 //    'revision' => file_get_contents(base_path()."/revision"),
     'order_code_start' => 8000,
-    'job_code_start' => 16000
+    'job_code_start' => 16000,
+    'portals' => [
+        'admin-portal', 'partner-portal', 'manager-app', 'customer-app', 'customer-portal', 'resource-portal', 'resource-app', 'bondhu-app', 'automatic'
+    ]
 ];
