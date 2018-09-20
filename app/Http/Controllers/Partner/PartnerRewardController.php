@@ -10,25 +10,23 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Sheba\Reward\CampaignEventInitiator;
 use Sheba\Reward\EventInitiator;
+use Sheba\Reward\PartnerReward;
 
 class PartnerRewardController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, PartnerReward $reward)
     {
         try {
             $partner = $request->partner;
             $campaigns = $point_actions = $credit_actions = array();
-            $rewards = Reward::upcoming()->forPartner()->with('constraints')->get();
+            $rewards = $reward->upcoming();
             $today = Carbon::today();
             foreach ($rewards as $reward) {
-                if (!$this->isValidReward($partner, $reward)) continue;
-                else {
-                    $reward['days_left'] = $reward->end_time->diffInDays($today);
-                    removeRelationsAndFields($reward, ['target_type']);
-                    if ($reward->isCampaign()) array_push($campaigns, removeSelectedFieldsFromModel($reward, ['detail_type']));
-                    elseif ($reward->isAction() && $reward->type == 'Point') array_push($point_actions, removeSelectedFieldsFromModel($reward, ['detail_type']));
-                    else array_push($credit_actions, removeSelectedFieldsFromModel($reward, ['detail_type']));
-                }
+                $reward['days_left'] = $reward->end_time->diffInDays($today);
+                removeRelationsAndFields($reward, ['target_type']);
+                if ($reward->isCampaign()) array_push($campaigns, removeSelectedFieldsFromModel($reward, ['detail_type']));
+                elseif ($reward->isAction() && $reward->type == 'Point') array_push($point_actions, removeSelectedFieldsFromModel($reward, ['detail_type']));
+                else array_push($credit_actions, removeSelectedFieldsFromModel($reward, ['detail_type']));
             }
             return api_response($request, $rewards, 200, ['campaigns' => $campaigns, 'actions' => array('point' => $point_actions, 'credit' => $credit_actions)]);
         } catch (\Throwable $e) {
@@ -36,6 +34,7 @@ class PartnerRewardController extends Controller
             return api_response($request, null, 500);
         }
     }
+
 
     public function show($partner, $reward, Request $request, CampaignEventInitiator $event_initiator)
     {
@@ -57,39 +56,6 @@ class PartnerRewardController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-    }
-
-    private function isValidReward(Partner $partner, $reward)
-    {
-        $category_constraints = $reward->constraints->where('constraint_type', constants('REWARD_CONSTRAINTS')['category']);
-        $category_pass = $category_constraints->count() == 0;
-
-        $package_constraints = $reward->constraints->where('constraint_type', constants('REWARD_CONSTRAINTS')['partner_package']);
-        $package_pass = $package_constraints->count() == 0;
-
-        if (!$category_pass) $category_pass = $this->checkForCategory($partner, $category_constraints);
-        if (!$package_pass) $package_pass = $this->checkForPackage($partner, $package_constraints);
-        return $category_pass && $package_pass;
-    }
-
-    private function checkForCategory(Partner $partner, $category_constraints)
-    {
-        $partner->load(['categories' => function ($q) {
-            $q->where('categories.publication_status', 1)->wherePivot('is_verified', 1);
-        }]);
-        $partner_categories = $partner->categories->pluck('id')->unique()->toArray();
-        foreach ($category_constraints as $category_constraint) {
-            if (in_array($category_constraint->constraint_id, $partner_categories)) return true;
-        }
-        return false;
-    }
-
-    private function checkForPackage(Partner $partner, $package_constraints)
-    {
-        foreach ($package_constraints as $package_constraint) {
-            if ($partner->package_id == $package_constraint->constraint_id) return true;
-        }
-        return false;
     }
 
     public function history(Request $request)
