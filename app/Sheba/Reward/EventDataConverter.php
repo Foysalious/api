@@ -16,7 +16,7 @@ class EventDataConverter
                         'event_class' => 'Sheba\Reward\Event\Partner\Action\Rating\Event',
                         'rule_class' => 'Sheba\Reward\Event\Partner\Action\Rating\Rule',
                         'parameters' => [
-                            'target' => [
+                            'rate' => [
                                 'type'  => 'number',
                                 'min'   => 0
                             ]

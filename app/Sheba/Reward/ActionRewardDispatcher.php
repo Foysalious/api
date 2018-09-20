@@ -5,6 +5,15 @@ use Carbon\Carbon;
 
 class ActionRewardDispatcher
 {
+    private $disburseHandler;
+    private $eventInitiator;
+
+    public function __construct(DisburseHandler $disburse_handler, ActionEventInitiator $event_initiator)
+    {
+        $this->disburseHandler = $disburse_handler;
+        $this->eventInitiator = $event_initiator;
+    }
+
     public function run($event, $rewardables, ...$params)
     {
         $published_rewards = Reward::with('detail')
@@ -16,10 +25,14 @@ class ActionRewardDispatcher
             ->get();
 
         foreach ($published_rewards as $reward) {
-            $event_class = (new EventDataConverter())->getClass($reward->target_type, $reward->detail_type, $event);
-            if ((new $event_class())->isEligible($reward->detail->event_rules, ...$params)) {
-                $rewarded_user = $rewardables[$reward->target_type];
-                $this->disburseRewardToUser($rewarded_user, $reward);
+
+            $event_name = $reward->detail->event_name;
+            $event_rule = json_decode($reward->detail->event_rules);
+            $event = $this->eventInitiator->setReward($reward)->setName($event_name)->setRule($event_rule)->initiate();
+
+            if ($event->isEligible($params)) {
+                // $rewarded_user = $rewardables[$reward->target_type];
+                // $this->disburseRewardToUser($rewarded_user, $reward);
             }
         }
     }

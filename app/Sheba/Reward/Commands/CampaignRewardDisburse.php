@@ -23,8 +23,6 @@ class CampaignRewardDisburse extends Command
      * Execute the console command.
      *
      * @param CompletedCampaignHandler $handler
-     * @throws \Sheba\Reward\Exception\RulesTypeMismatchException
-     * @throws \Sheba\Reward\Exception\RulesValueMismatchException
      */
     public function handle(CompletedCampaignHandler $handler)
     {

@@ -1,6 +1,8 @@
 <?php namespace Sheba\Reward\Event;
 
-abstract class Action
-{
+use Sheba\Reward\Event;
 
+abstract class Action extends Event
+{
+    abstract function isEligible(array $params);
 }

@@ -30,8 +30,8 @@ class Rule extends CampaignRule
 
     public function setValues()
     {
-        $this->excludedStatus->value = property_exists($this->rules, 'excluded_status') ? $this->rules->excluded_status : null;
-        $this->portal->value = property_exists($this->rules, 'portals') ? $this->rules->portals : null;
+        $this->excludedStatus->value = property_exists($this->rule, 'excluded_status') ? $this->rule->excluded_status : null;
+        $this->portal->value = property_exists($this->rule, 'portals') ? $this->rule->portals : null;
     }
 
     public function check(Builder $query)

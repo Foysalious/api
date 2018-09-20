@@ -1,9 +1,9 @@
 <?php namespace Sheba\Reward\Event\Partner\Campaign\OrderServed\Parameter;
 
 use Illuminate\Database\Eloquent\Builder;
-use Sheba\Reward\Event\EventParameter;
+use Sheba\Reward\Event\CampaignEventParameter;
 
-class Portal extends EventParameter
+class Portal extends CampaignEventParameter
 {
     public function validate()
     {

@@ -1,10 +1,10 @@
 <?php namespace Sheba\Reward\Event\Partner\Campaign\OrderServed\Parameter;
 
 use Illuminate\Database\Eloquent\Builder;
-use Sheba\Reward\Event\EventParameter;
+use Sheba\Reward\Event\CampaignEventParameter;
 use DB;
 
-class ExcludedStatus extends EventParameter
+class ExcludedStatus extends CampaignEventParameter
 {
 
     public function validate()

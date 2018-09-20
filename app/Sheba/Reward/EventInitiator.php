@@ -1,20 +1,21 @@
 <?php namespace Sheba\Reward;
 
 use App\Models\Reward;
+use Sheba\Reward\Event\Action;
 use Sheba\Reward\Event\Campaign;
 
-class EventInitiator
+abstract class EventInitiator
 {
-    private $reward;
-    private $timeFrame;
+    protected $reward;
+    /** @var Action | Campaign */
+    protected $event;
     private $eventName;
     private $eventRule;
     private $eventDataConverter;
 
-    public function __construct(TimeFrameCalculator $timeframe_calculator, EventDataConverter $event_data_converter)
+    public function __construct(EventDataConverter $event_data_converter)
     {
         $this->eventDataConverter = $event_data_converter;
-        $this->timeFrame = $timeframe_calculator;
     }
 
     public function setReward(Reward $reward)
@@ -36,19 +37,18 @@ class EventInitiator
     }
 
     /**
-     * @return Campaign
+     * @return Action|Campaign
      */
     public function initiate()
     {
         $event_class = $this->eventDataConverter->getEventClass($this->reward, $this->eventName);
         $rule_class = $this->eventDataConverter->getRuleClass($this->reward, $this->eventName);
-
-        $timeFrame = $this->timeFrame->setReward($this->reward)->get();
-
         $rule = new $rule_class($this->eventRule);
-        $event = new $event_class();
-        $event->setRule($rule)->setTimeFrame($timeFrame)->setReward($this->reward);
-
-        return $event;
+        $this->event = new $event_class();
+        $this->setupEvent();
+        $this->event->setRule($rule)->setReward($this->reward);
+        return $this->event;
     }
+
+    abstract protected function setupEvent();
 }

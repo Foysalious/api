@@ -1,36 +1,26 @@
 <?php namespace Sheba\Reward\Event;
 
 use Illuminate\Database\Eloquent\Builder;
-
 use Sheba\Reward\Exception\RulesValueMismatchException;
 
-abstract class CampaignRule
+abstract class CampaignRule extends Rule
 {
-    /** @var EventParameter | EventTarget */
+    /** @var CampaignEventParameter | EventTarget */
     public $target;
-    protected $rules;
 
     /**
      * CampaignRule constructor.
-     * @param $rules
+     * @param $rule
      * @throws RulesValueMismatchException
      */
-    public function __construct($rules)
+    public function __construct($rule)
     {
-        $this->rules = is_string($rules) ? json_decode($rules) : $rules;
-        if (!property_exists($this->rules, 'target')) throw new RulesValueMismatchException('Target must be present');
-        $this->makeParamClasses();
+        parent::__construct($rule);
+
+        if (!property_exists($this->rule, 'target')) throw new RulesValueMismatchException('Target must be present');
         $this->target->validate();
-        $this->validate();
-        $this->setValues();
-        $this->target->value = $this->rules->target;
+        $this->target->value = $this->rule->target;
     }
-
-    abstract public function validate();
-
-    abstract public function makeParamClasses();
-
-    abstract public function setValues();
 
     abstract public function check(Builder $query);
 

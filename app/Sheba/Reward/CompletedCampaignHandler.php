@@ -10,7 +10,7 @@ class CompletedCampaignHandler
     private $disburseHandler;
     private $eventInitiator;
 
-    public function __construct(DisburseHandler $disburse_handler, EventInitiator $event_initiator, TimeFrameCalculator $timeframe_calculator)
+    public function __construct(DisburseHandler $disburse_handler, CampaignEventInitiator $event_initiator, TimeFrameCalculator $timeframe_calculator)
     {
         $this->timeFrame = $timeframe_calculator;
         $this->disburseHandler = $disburse_handler;

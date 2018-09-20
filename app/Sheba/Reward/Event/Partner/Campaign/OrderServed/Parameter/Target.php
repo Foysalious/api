@@ -2,10 +2,10 @@
 
 use Illuminate\Database\Eloquent\Builder;
 
-use Sheba\Reward\Event\EventParameter;
+use Sheba\Reward\Event\CampaignEventParameter;
 use Sheba\Reward\Event\EventTarget;
 
-class Target extends EventParameter implements EventTarget
+class Target extends CampaignEventParameter implements EventTarget
 {
     private $achieved;
 
