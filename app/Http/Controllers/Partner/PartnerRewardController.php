@@ -41,6 +41,7 @@ class PartnerRewardController extends Controller
         try {
             $partner = $request->partner;
             $reward = Reward::with('detail')->find($reward);
+            if ($reward->isAction()) return api_response($request, null, 404, ['message' => 'This is a action reward. No details available']);
             $events = [];
             foreach (json_decode($reward->detail->events) as $key => $event) {
                 $event = $event_initiator->setReward($reward)->setName($key)->setRule($event)->initiate();
