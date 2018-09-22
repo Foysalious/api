@@ -18,14 +18,16 @@ class OrderHandler
      */
     public function create(RewardShopProduct $product, $user)
     {
-        DB::transaction(function () use ($user, $product) {
+        $order = null;
+
+        DB::transaction(function () use ($user, $product, &$order) {
             $order_create_data = [
                 'reward_product_id' => $product->id,
                 'order_creator_type' => get_class($user),
                 'order_creator_id' => $user->id,
                 'reward_product_point' => $product->point
             ];
-            RewardShopOrder::create($this->withCreateModificationField($order_create_data));
+            $order = RewardShopOrder::create($this->withCreateModificationField($order_create_data));
 
             $user->decrement('reward_point', $product->point);
             (new RewardPointLogRepository())->storeOutLog($user, $product->point, "$product->point Point Deducted for $product->name Purchase");
@@ -35,7 +37,7 @@ class OrderHandler
         if (get_class($user) == constants('REWARD_TARGET_TYPE')['Partner']) $user_name = $user->name;
         elseif (get_class($user) == constants('REWARD_TARGET_TYPE')['Customer']) $user_name = $user->profile->name;
 
-        $this->notifyPM("$user_name has placed a reward order.", env('SHEBA_BACKEND_URL'). '/reward-shop');
+        $this->notifyPM("$user_name has placed a reward order.", env('SHEBA_BACKEND_URL'). '/reward-shop/order', $order);
 
     }
 
@@ -58,14 +60,16 @@ class OrderHandler
      * @param null $link
      * @throws \Exception
      */
-    protected function notifyPM($title = 'New Reward Order Placed', $link = null)
+    protected function notifyPM($title = 'New Reward Order Placed', $link = null, $order)
     {
         $link = $link ? : env('SHEBA_BACKEND_URL');
 
         notify()->department(Department::where('name', 'PM')->first())->send([
             "title" => $title,
             "link" => $link,
-            "type" => notificationType('Info')
+            "type" => notificationType('Info'),
+            "event_type" => "App\\Models\\RewardShopOrder",
+            "event_id" => $order->id
         ]);
     }
 }
