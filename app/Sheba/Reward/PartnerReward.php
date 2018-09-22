@@ -30,22 +30,16 @@ class PartnerReward extends ShebaReward
 
     private function checkForCategory($category_constraints)
     {
-        $this->partner->load(['categories' => function ($q) {
-            $q->where('categories.publication_status', 1)->wherePivot('is_verified', 1);
-        }]);
-        $partner_categories = $this->partner->categories->pluck('id')->unique()->toArray();
-        foreach ($category_constraints as $category_constraint) {
-            if (in_array($category_constraint->constraint_id, $partner_categories)) return true;
+        $reward_categories = $category_constraints->pluck('constraint_id')->unique()->toArray();
+        foreach ($this->partner->categories as $category) {
+            if (in_array($category->id, $reward_categories)) return true;
         }
         return false;
     }
 
     private function checkForPackage($package_constraints)
     {
-        foreach ($package_constraints as $package_constraint) {
-            if ($this->partner->package_id == $package_constraint->constraint_id) return true;
-        }
-        return false;
+        return in_array($this->partner->package_id, $package_constraints->pluck('constraint_id')->unique()->toArray());
     }
 
     public function upcoming()
