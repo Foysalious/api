@@ -14,12 +14,12 @@ use Sheba\Reward\PartnerReward;
 
 class PartnerRewardController extends Controller
 {
-    public function index(Request $request, PartnerReward $reward)
+    public function index(Request $request)
     {
         try {
             $partner = $request->partner;
             $campaigns = $point_actions = $credit_actions = array();
-            $rewards = $reward->upcoming();
+            $rewards = (new PartnerReward($partner))->upcoming();
             $today = Carbon::today();
             foreach ($rewards as $reward) {
                 $reward['days_left'] = $reward->end_time->diffInDays($today);
