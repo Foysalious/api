@@ -1,6 +1,4 @@
-<?php
-
-namespace Sheba\Reward;
+<?php namespace Sheba\Reward;
 
 use App\Models\Customer;
 use App\Models\Partner;
@@ -35,7 +33,7 @@ class DisburseHandler
     {
         if ($this->isRewardCashType()) {
             $amount = $this->reward->amount;
-            $log = $amount . " BDT credited for " . $this->reward->name . " reward";
+            $log = $amount . " BDT credited for ". $this->reward->name . " reward";
 
             if ($rewardable instanceof Partner) {
                 (new PartnerTransactionHandler($rewardable))->credit($amount, $log);

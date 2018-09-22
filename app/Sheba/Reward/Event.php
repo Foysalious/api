@@ -7,7 +7,7 @@ use Sheba\Reward\Event\Rule;
 
 abstract class Event
 {
-    /** @var ShebaReward */
+    /** @var Reward */
     protected $reward;
     /** @var ActionRule | CampaignRule */
     protected $rule;
