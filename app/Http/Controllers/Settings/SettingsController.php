@@ -54,7 +54,8 @@ class SettingsController extends Controller
         try {
             $customer = $request->customer;
             $settings = array(
-                'credit' => $customer->wallet
+                'credit' => $customer->wallet,
+                'rating' => round($customer->customerReviews->avg('rating'), 2)
             );
             return api_response($request, $settings, 200, ['settings' => $settings]);
         } catch (\Throwable $e) {

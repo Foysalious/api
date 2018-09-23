@@ -20,8 +20,14 @@ class CustomerOrderController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $customer = $request->customer->load(['partnerOrders' => function ($q) use ($filter, $offset, $limit) {
                 if ($filter) $q->$filter();
-                $q->orderBy('id', 'desc')->skip($offset)->take($limit)->with(['partner.resources.profile', 'order', 'jobs' => function ($q) {
-                    $q->with(['resource.profile', 'jobServices', 'customerComplains', 'category', 'review', 'usedMaterials', 'complains']);
+                $q->orderBy('id', 'desc')->skip($offset)->take($limit)->with(['partner.resources.profile', 'order' => function ($q) {
+                    $q->select('id', 'sales_channel');
+                }, 'jobs' => function ($q) {
+                    $q->with(['resource.profile', 'jobServices', 'customerComplains', 'category' => function ($q) {
+                        $q->select('id', 'name');
+                    }, 'review' => function ($q) {
+                        $q->select('id', 'rating');
+                    }, 'usedMaterials']);
                 }]);
             }]);
             $all_jobs = $this->getInformation($customer->partnerOrders)->sortByDesc('id');
@@ -31,7 +37,6 @@ class CustomerOrderController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
