@@ -21,7 +21,7 @@ class CustomerOrderController extends Controller
             $customer = $request->customer->load(['partnerOrders' => function ($q) use ($filter, $offset, $limit) {
                 if ($filter) $q->$filter();
                 $q->orderBy('id', 'desc')->skip($offset)->take($limit)->with(['partner.resources.profile', 'order', 'jobs' => function ($q) {
-                    $q->with(['resource.profile', 'jobServices', 'category', 'review', 'usedMaterials']);
+                    $q->with(['resource.profile', 'jobServices', 'category', 'review', 'usedMaterials', 'complains']);
                 }]);
             }]);
             $all_jobs = $this->getInformation($customer->partnerOrders)->sortByDesc('id');
