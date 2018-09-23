@@ -269,6 +269,13 @@ class Job extends Model
         return $this->hasMany(Complain::class);
     }
 
+    public function customerComplains()
+    {
+        return $this->complains()->whereHas('accessor', function ($query) {
+            $query->where('model_name', Customer::class);
+        });
+    }
+
     public function cancelRequests()
     {
         return $this->hasMany(JobCancelRequest::class);
@@ -314,11 +321,6 @@ class Job extends Model
             return (Carbon::parse($time[0]))->format('g:i A') . '-' . (Carbon::parse($time[1]))->format('g:i A');
         }
         return $this->preferred_time;
-    }
-
-    public function customerComplains()
-    {
-        return $this->complains->where('accessor_id', 1);
     }
 
     public function isRentCar()

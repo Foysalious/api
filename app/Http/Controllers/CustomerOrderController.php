@@ -21,7 +21,7 @@ class CustomerOrderController extends Controller
             $customer = $request->customer->load(['partnerOrders' => function ($q) use ($filter, $offset, $limit) {
                 if ($filter) $q->$filter();
                 $q->orderBy('id', 'desc')->skip($offset)->take($limit)->with(['partner.resources.profile', 'order', 'jobs' => function ($q) {
-                    $q->with(['resource.profile', 'jobServices', 'category', 'review', 'usedMaterials', 'complains']);
+                    $q->with(['resource.profile', 'jobServices', 'customerComplains', 'category', 'review', 'usedMaterials', 'complains']);
                 }]);
             }]);
             $all_jobs = $this->getInformation($customer->partnerOrders)->sortByDesc('id');
@@ -103,7 +103,8 @@ class CustomerOrderController extends Controller
             'version' => $partnerOrder->getVersion(),
             'original_price' => (double)$partnerOrder->totalServicePrice,
             'discount' => (double)$partnerOrder->totalDiscount,
-            'discounted_price' => (double)$partnerOrder->totalPrice
+            'discounted_price' => (double)$partnerOrder->totalPrice,
+            'complain_count' => $job->customerComplains->count()
         ));
     }
 }
