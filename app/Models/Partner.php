@@ -197,6 +197,16 @@ class Partner extends Model implements Rewardable
         return null;
     }
 
+    public function getManagerMobile()
+    {
+        if ($operation_resource = $this->resources->where('pivot.resource_type', constants('RESOURCE_TYPES')['Operation'])->first()) {
+            return $operation_resource->profile->mobile;
+        } elseif ($admin_resource = $this->resources->where('pivot.resource_type', constants('RESOURCE_TYPES')['Admin'])->first()) {
+            return $admin_resource->profile->mobile;
+        }
+        return null;
+    }
+
     public function hasThisResource($resource_id, $type)
     {
         return $this->resources->where('id', (int)$resource_id)->where('pivot.resource_type', $type)->first() ? true : false;

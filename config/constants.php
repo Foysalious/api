@@ -19,14 +19,14 @@ return [
         'Cancelled' => 'Cancelled'
     ],
     'JOB_STATUSES_SHOW' => [
-        'Pending' => ['sheba' => 'Pending', 'partner' => 'Pending', 'customer' => 'Pending'],
-        'Accepted' => ['sheba' => 'Accepted', 'partner' => 'Accepted', 'customer' => 'Accepted'],
-        'Declined' => ['sheba' => 'Declined', 'partner' => 'Declined', 'customer' => 'Pending'],
-        'Not_Responded' => ['sheba' => 'Not Responded', 'partner' => 'Not Responded', 'customer' => 'Response Delay'],
-        'Schedule_Due' => ['sheba' => 'Schedule Due', 'partner' => 'Schedule Due', 'customer' => 'Behind Schedule'],
-        'Process' => ['sheba' => 'Process', 'partner' => 'Process', 'customer' => 'On Going'],
-        'Serve_Due' => ['sheba' => 'Process', 'partner' => 'Process', 'customer' => 'On Going'],
-        'Served' => ['sheba' => 'Served', 'partner' => 'Served', 'customer' => 'Served'],
+        'Pending' => ['sheba' => 'Pending', 'partner' => 'Pending', 'customer' => 'Order Placed'],
+        'Accepted' => ['sheba' => 'Accepted', 'partner' => 'Accepted', 'customer' => 'Order Confirmed'],
+        'Declined' => ['sheba' => 'Declined', 'partner' => 'Declined', 'customer' => 'Order Placed'],
+        'Not_Responded' => ['sheba' => 'Not Responded', 'partner' => 'Not Responded', 'customer' => 'Order Placed'],
+        'Schedule_Due' => ['sheba' => 'Schedule Due', 'partner' => 'Schedule Due', 'customer' => 'Order Confirmed'],
+        'Process' => ['sheba' => 'Process', 'partner' => 'Process', 'customer' => 'Service is in Process'],
+        'Serve_Due' => ['sheba' => 'Process', 'partner' => 'Process', 'customer' => 'Service is in Process'],
+        'Served' => ['sheba' => 'Served', 'partner' => 'Served', 'customer' => 'Order Completed'],
         'Cancelled' => ['sheba' => 'Cancelled', 'partner' => 'Cancelled', 'customer' => 'Cancelled']
     ],
     'JOB_STATUSES_COLOR' => [
@@ -355,10 +355,10 @@ return [
     'PARTNER_AFFILIATIONS_FAKE_REJECT_REASONS' => ['fake'],
     'PARTNER_AFFILIATION_REWARD' => 200,
     'PARTNER_AFFILIATION_PARTNER_ORDER_BENCHMARK' => 1,
-    'PARTNER_AFFILIATION_REWARD_BREAKDOWN'  => [
-        'on_boarded'        => 20,
-        'verified'          => 10,
-        'order_completed'   => 70
+    'PARTNER_AFFILIATION_REWARD_BREAKDOWN' => [
+        'on_boarded' => 20,
+        'verified' => 10,
+        'order_completed' => 70
     ],
     'PARTNER_AFFILIATION_AMBASSADOR_COMMISSION' => 30,
     'COMPLAIN_STATUSES' => [
@@ -373,19 +373,19 @@ return [
         'development' => 'Development'
     ],
     'REWARD_TARGET_TYPE' => [
-        'Partner'   => 'App\Models\Partner',
-        'Customer'  => 'App\Models\Customer'
+        'Partner' => 'App\Models\Partner',
+        'Customer' => 'App\Models\Customer'
     ],
     'REWARD_DETAIL_TYPE' => [
-        'Campaign'  => 'App\Models\RewardCampaign',
-        'Action'    => 'App\Models\RewardAction'
+        'Campaign' => 'App\Models\RewardCampaign',
+        'Action' => 'App\Models\RewardAction'
     ],
     'REWARD_TYPE' => [
-        'Cash'  => 'Cash',
+        'Cash' => 'Cash',
         'Point' => 'Point'
     ],
     'CAMPAIGN_REWARD_TIMELINE_TYPE' => [
-        'Onetime'   => 'Onetime',
+        'Onetime' => 'Onetime',
         'Recurring' => 'Recurring'
     ],
     'REWARD_CONSTRAINTS' => [
