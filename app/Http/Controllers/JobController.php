@@ -385,7 +385,8 @@ class JobController extends Controller
             $partner = Partner::find(3);
             $resource = Resource::find(289);
             $logs = array(
-                'order_placed' => array(
+                array(
+                    'status' => 'order_placed',
                     'log' => 'Order has been placed to ' . $partner->name . '.',
                     'partner' => array(
                         'name' => $partner->name,
@@ -393,31 +394,38 @@ class JobController extends Controller
                         'mobile' => $partner->getManagerMobile()
                     )
                 ),
-                'order_confirmed' => array(
+                array(
+                    'status' => 'order_confirmed',
                     'log' => 'Order has been confirmed.',
                 ),
-                'expert_assigned' => array(
+                array(
+                    'status' => 'expert_assigned',
                     'log' => 'An expert has been assigned to your order.',
                     'resource' => array(
                         'name' => $resource->profile->name,
                         'picture' => $resource->profile->pro_pic,
                         'mobile' => $resource->profile->mobile
-                    )
+                    ),
                 ),
-                'work_started' => array(
+                array(
+                    'status' => 'work_started',
                     'log' => 'Expert has started working from 9 PM.',
                 ),
-                'work_completed' => array(
+                array(
+                    'status' => 'work_completed',
                     'log' => 'Expert has completed your order at 9 PM,9 Oct.',
                 ),
-                'message' => array(
-                    'log' => 'Expert is working on your order',
-                    'type' => 'success'
+                array(
+                    'status' => 'message',
+                    'message' => [
+                        ['log' => 'Expert is working on your order', 'type' => 'success'],
+                        ['log' => 'Your order is behind schedule', 'type' => 'danger']
+                    ]
                 )
+
             );
             return api_response($request, $logs, 200, ['logs' => $logs]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
