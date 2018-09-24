@@ -9,9 +9,9 @@ return [
     'RESOURCE_TYPES' => ['Admin' => 'Admin', 'Operation' => 'Operation', 'Finance' => 'Finance', 'Handyman' => 'Handyman'],
     'JOB_STATUSES' => [
         'Pending' => 'Pending',
-        'Accepted' => 'Accepted',
-        'Declined' => 'Declined',
         'Not_Responded' => 'Not Responded',
+        'Declined' => 'Declined',
+        'Accepted' => 'Accepted',
         'Schedule_Due' => 'Schedule Due',
         'Process' => 'Process',
         'Serve_Due' => 'Serve Due',

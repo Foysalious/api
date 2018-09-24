@@ -351,4 +351,10 @@ class Job extends Model
             )
         );
     }
+
+    public function canCallExpert()
+    {
+        if (in_array($this->status, ['Accepted', 'Schedule Due', 'Process', 'Serve Due', 'Served'])) return Carbon::today()->gte(Carbon::parse($this->schedule_date));
+        else return false;
+    }
 }
