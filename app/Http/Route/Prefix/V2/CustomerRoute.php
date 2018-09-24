@@ -53,6 +53,7 @@ class CustomerRoute
                         $api->get('bills', 'JobController@getBills');
                         $api->get('bills/clear', 'JobController@clearBills');
                         $api->get('logs', 'JobController@getLogs');
+                        $api->get('logs/order', 'JobController@getOrderLogs');
                         $api->post('reviews', 'ReviewController@store');
                         $api->group(['prefix' => 'complains'], function ($api) {
                             $api->get('/', 'ComplainController@index');
