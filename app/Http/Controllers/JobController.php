@@ -395,7 +395,8 @@ class JobController extends Controller
                     'user' => array(
                         'name' => $partner->name,
                         'picture' => $partner->logo,
-                        'mobile' => $partner->getManagerMobile()
+                        'mobile' => $partner->getManagerMobile(),
+                        'type' => 'partner',
                     )
                 ),
                 array(
@@ -408,7 +409,8 @@ class JobController extends Controller
                     'user' => array(
                         'name' => $resource->profile->name,
                         'picture' => $resource->profile->pro_pic,
-                        'mobile' => $resource->profile->mobile
+                        'mobile' => $resource->profile->mobile,
+                        'type' => 'resource',
                     )
                 ),
                 array(
