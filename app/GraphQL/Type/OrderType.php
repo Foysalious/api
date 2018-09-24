@@ -30,7 +30,7 @@ class OrderType extends GraphQlType
             'schedule_time' => ['type' => Type::string()],
             'location' => ['type' => GraphQL::type('Location')],
             'original_price' => ['type' => Type::float()],
-            'total_price' => ['type' => Type::float()],
+            'discounted_price' => ['type' => Type::float()],
             'total_material_price' => ['type' => Type::float()],
             'total_discount' => ['type' => Type::float()],
             'paid' => ['type' => Type::float()],
@@ -83,7 +83,7 @@ class OrderType extends GraphQlType
         return (float)$root->due;
     }
 
-    protected function resolveTotalPriceField($root)
+    protected function resolveDiscountedPriceField($root)
     {
         if (!isset($root['totalPrice'])) {
             $root->calculate(true);
