@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\CustomerFavorite;
 use App\Models\Job;
+use App\Models\Partner;
+use App\Models\Resource;
 use App\Repositories\JobCancelLogRepository;
 use App\Sheba\JobStatus;
 use Illuminate\Database\QueryException;
@@ -370,6 +372,50 @@ class JobController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getOrderLogs($customer, Request $request)
+    {
+        try {
+            $partner = Partner::find(3);
+            $resource = Resource::find(289);
+            $logs = array(
+                'order_placed' => array(
+                    'log' => 'Order has been placed to ' . $partner->name . '.',
+                    'partner' => array(
+                        'name' => $partner->name,
+                        'picture' => $partner->logo,
+                        'mobile' => $partner->getManagerMobile()
+                    )
+                ),
+                'order_confirmed' => array(
+                    'log' => 'Order has been confirmed.',
+                ),
+                'expert_assigned' => array(
+                    'log' => 'An expert has been assigned to your order.',
+                    'resource' => array(
+                        'name' => $resource->profile->name,
+                        'picture' => $resource->profile->pro_pic,
+                        'mobile' => $resource->profile->mobile
+                    )
+                ),
+                'work_started' => array(
+                    'log' => 'Expert has started working from 9 PM.',
+                ),
+                'work_completed' => array(
+                    'log' => 'Expert has completed your order at 9 PM,9 Oct.',
+                ),
+                'message' => array(
+                    'log' => 'Expert is working on your order',
+                    'type' => 'success'
+                )
+            );
+            return api_response($request, $logs, 200, ['logs' => $logs]);
+        } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
