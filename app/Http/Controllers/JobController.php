@@ -156,6 +156,10 @@ class JobController extends Controller
             }
             $partnerOrder = $job->partnerOrder;
             $partnerOrder->calculate(true);
+            if ($partnerOrder->payment_method == 'Cash On Delivery' ||
+                $partnerOrder->payment_method == 'cash-on-delivery') $payment_method = 'cod';
+            else $payment_method = strtolower($partnerOrder->payment_method);
+
             $bill = collect();
             $bill['total'] = (double)$partnerOrder->totalPrice;
             $bill['paid'] = (double)$partnerOrder->paid;
@@ -167,7 +171,7 @@ class JobController extends Controller
             $bill['delivered_date_timestamp'] = $job->delivered_date != null ? $job->delivered_date->timestamp : null;
             $bill['closed_and_paid_at'] = $partnerOrder->closed_and_paid_at ? $partnerOrder->closed_and_paid_at->format('Y-m-d') : null;
             $bill['closed_and_paid_at_timestamp'] = $partnerOrder->closed_and_paid_at != null ? $partnerOrder->closed_and_paid_at->timestamp : null;
-            $bill['payment_method'] = $partnerOrder->payment_method;
+            $bill['payment_method'] = $payment_method;
             $bill['status'] = $job->status;
             $bill['invoice'] = $job->partnerOrder->invoice;
             $bill['version'] = $job->partnerOrder->getVersion();
