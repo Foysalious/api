@@ -392,7 +392,7 @@ class JobController extends Controller
                 array(
                     'status' => 'order_placed',
                     'log' => 'Order has been placed to ' . $partner->name . '.',
-                    'partner' => array(
+                    'user' => array(
                         'name' => $partner->name,
                         'picture' => $partner->logo,
                         'mobile' => $partner->getManagerMobile()
@@ -405,11 +405,11 @@ class JobController extends Controller
                 array(
                     'status' => 'expert_assigned',
                     'log' => 'An expert has been assigned to your order.',
-                    'resource' => array(
+                    'user' => array(
                         'name' => $resource->profile->name,
                         'picture' => $resource->profile->pro_pic,
                         'mobile' => $resource->profile->mobile
-                    ),
+                    )
                 ),
                 array(
                     'status' => 'work_started',
@@ -421,10 +421,8 @@ class JobController extends Controller
                 ),
                 array(
                     'status' => 'message',
-                    'message' => [
-                        ['log' => 'Expert is working on your order', 'type' => 'success'],
-                        ['log' => 'Your order is behind schedule', 'type' => 'danger']
-                    ]
+                    'log' => 'Expert is working on your order',
+                    'type' => 'success'
                 )
 
             );
