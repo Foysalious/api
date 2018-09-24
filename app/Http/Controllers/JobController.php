@@ -147,6 +147,7 @@ class JobController extends Controller
                     $min_price = (double)$jobService->min_price;
                     array_push($services, array(
                         'name' => $jobService->service != null ? $jobService->service->name : null,
+                        'quantity' => $jobService->quantity,
                         'price' => $total,
                         'min_price' => $min_price,
                         'is_min_price_applied' => $min_price > $total ? 1 : 0
@@ -166,6 +167,7 @@ class JobController extends Controller
             $bill['delivered_date_timestamp'] = $job->delivered_date != null ? $job->delivered_date->timestamp : null;
             $bill['closed_and_paid_at'] = $partnerOrder->closed_and_paid_at ? $partnerOrder->closed_and_paid_at->format('Y-m-d') : null;
             $bill['closed_and_paid_at_timestamp'] = $partnerOrder->closed_and_paid_at != null ? $partnerOrder->closed_and_paid_at->timestamp : null;
+            $bill['payment_method'] = $partnerOrder->payment_method;
             $bill['status'] = $job->status;
             $bill['invoice'] = $job->partnerOrder->invoice;
             $bill['version'] = $job->partnerOrder->getVersion();
