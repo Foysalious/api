@@ -88,6 +88,9 @@ class JobController extends Controller
             $job_collection->put('status', $job->status);
             $job_collection->put('rating', $job->review ? $job->review->rating : null);
             $job_collection->put('review', $job->review ? $job->review->calculated_review : null);
+            $job_collection->put('original_price', $job->partnerOrder->totalServicePrice);
+            $job_collection->put('discount', (double)$job->partnerOrder->totalDiscount);
+            $job_collection->put('payment_method', $this->formatPaymentMethod($job->partnerOrder->payment_method));
             $job_collection->put('price', (double)$job->partnerOrder->totalPrice);
             $job_collection->put('isDue', (double)$job->partnerOrder->due > 0 ? 1 : 0);
             $job_collection->put('isRentCar', $job->isRentCar());
@@ -156,9 +159,6 @@ class JobController extends Controller
             }
             $partnerOrder = $job->partnerOrder;
             $partnerOrder->calculate(true);
-            if ($partnerOrder->payment_method == 'Cash On Delivery' ||
-                $partnerOrder->payment_method == 'cash-on-delivery') $payment_method = 'cod';
-            else $payment_method = strtolower($partnerOrder->payment_method);
 
             $bill = collect();
             $bill['total'] = (double)$partnerOrder->totalPrice;
@@ -171,7 +171,7 @@ class JobController extends Controller
             $bill['delivered_date_timestamp'] = $job->delivered_date != null ? $job->delivered_date->timestamp : null;
             $bill['closed_and_paid_at'] = $partnerOrder->closed_and_paid_at ? $partnerOrder->closed_and_paid_at->format('Y-m-d') : null;
             $bill['closed_and_paid_at_timestamp'] = $partnerOrder->closed_and_paid_at != null ? $partnerOrder->closed_and_paid_at->timestamp : null;
-            $bill['payment_method'] = $payment_method;
+            $bill['payment_method'] = $this->formatPaymentMethod($partnerOrder->payment_method);
             $bill['status'] = $job->status;
             $bill['invoice'] = $job->partnerOrder->invoice;
             $bill['version'] = $job->partnerOrder->getVersion();
@@ -180,6 +180,13 @@ class JobController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function formatPaymentMethod($payment_method)
+    {
+        if ($payment_method == 'Cash On Delivery' ||
+            $payment_method == 'cash-on-delivery') return 'cod';
+        return strtolower($payment_method);
     }
 
     public function getLogs($customer, $job, Request $request)
