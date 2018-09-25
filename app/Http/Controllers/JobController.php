@@ -386,50 +386,8 @@ class JobController extends Controller
     public function getOrderLogs($customer, Request $request)
     {
         try {
-            $partner = Partner::find(3);
-            $resource = Resource::find(289);
             $job = $request->job;
-            $job_status=$job->status;
-            if($job_status=='')
-            $logs = array(
-                array(
-                    'status' => 'order_placed',
-                    'log' => 'Order has been placed to ' . $partner->name . '.',
-                    'user' => array(
-                        'name' => $partner->name,
-                        'picture' => $partner->logo,
-                        'mobile' => $partner->getManagerMobile(),
-                        'type' => 'partner',
-                    )
-                ),
-                array(
-                    'status' => 'order_confirmed',
-                    'log' => 'Order has been confirmed.',
-                ),
-                array(
-                    'status' => 'expert_assigned',
-                    'log' => 'An expert has been assigned to your order.',
-                    'user' => array(
-                        'name' => $resource->profile->name,
-                        'picture' => $resource->profile->pro_pic,
-                        'mobile' => $resource->profile->mobile,
-                        'type' => 'resource',
-                    )
-                ),
-                array(
-                    'status' => 'work_started',
-                    'log' => 'Expert has started working from 9 PM.',
-                ),
-                array(
-                    'status' => 'work_completed',
-                    'log' => 'Expert has completed your order at 9 PM,9 Oct.',
-                ),
-                array(
-                    'status' => 'message',
-                    'log' => 'Expert is working on your order',
-                    'type' => 'success'
-                )
-            );
+            $logs = (new JobLogs($job))->getorderStatusLogs();
             return api_response($request, $logs, 200, ['logs' => $logs]);
         } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);

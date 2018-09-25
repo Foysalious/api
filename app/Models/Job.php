@@ -219,7 +219,7 @@ class Job extends Model
         return $this->hasOne(JobPartnerChangeLog::class);
     }
 
-    public function statusChangeLog()
+    public function statusChangeLogs()
     {
         return $this->hasMany(JobStatusChangeLog::class);
     }

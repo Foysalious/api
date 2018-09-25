@@ -18,6 +18,17 @@ return [
         'Served' => 'Served',
         'Cancelled' => 'Cancelled'
     ],
+    'JOB_STATUS_SEQUENCE' => [
+        'Pending' => 1,
+        'Declined' => 1,
+        'Not Responded' => 1,
+        'Cancelled' => 0,
+        'Accepted' => 2,
+        'Schedule Due' => 3,
+        'Process' => 4,
+        'Serve Due' => 5,
+        'Served' => 6
+    ],
     'JOB_STATUSES_SHOW' => [
         'Pending' => ['sheba' => 'Pending', 'partner' => 'Pending', 'customer' => 'Order Placed'],
         'Declined' => ['sheba' => 'Declined', 'partner' => 'Declined', 'customer' => 'Order Placed'],

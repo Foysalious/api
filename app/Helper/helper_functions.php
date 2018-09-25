@@ -250,7 +250,7 @@ if (!function_exists('humanReadableShebaTime')) {
             return $time;
         }
         $time = explode('-', $time);
-        return (Carbon::parse($time[0]))->format('g:i A') . '-' . (Carbon::parse($time[1]))->format('g:i A');
+        return (Carbon::parse($time[0]))->format('g:i A') . (isset($time[1]) ? ('-' . (Carbon::parse($time[1]))->format('g:i A')) : '');
     }
 }
 
