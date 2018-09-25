@@ -23,7 +23,7 @@ class TopUpController extends Controller
                 'error_message' => $error_message . '.'
             );
             return api_response($request, $vendors, 200, ['vendors' => $vendors, 'regex' => $regular_expression]);
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -45,13 +45,13 @@ class TopUpController extends Controller
             } else {
                 return api_response($request, null, 403, ['message' => "You don't have sufficient balance to recharge."]);
             }
-        } catch (ValidationException $e) {
+        } catch ( ValidationException $e ) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
