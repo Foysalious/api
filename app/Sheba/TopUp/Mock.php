@@ -6,9 +6,12 @@ namespace Sheba\TopUp;
 class Mock implements Operator
 {
 
-    public function recharge($mobile_number, $amount, $type)
+    public function recharge($mobile_number, $amount, $type): TopUpResponse
     {
-        return true;
+        $topup_response = new TopUpResponse();
+        $topup_response->transactionId = str_random(10);
+        $topup_response->transactionDetails = 'Mock';
+        return $topup_response;
     }
 
     public function getVendor()

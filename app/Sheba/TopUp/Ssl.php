@@ -5,38 +5,74 @@ namespace Sheba\TopUp;
 use SoapClient;
 use SoapFault;
 use stdClass;
+use Symfony\Component\Routing\Exception\InvalidParameterException;
 
 class Ssl
 {
-    public function recharge($mobile_number, $amount, $type)
+    private $clientId;
+    private $clientPassword;
+    private $topUpUrl;
+
+    public function __construct()
+    {
+        $this->clientId = config('ssl.topup_client_id');
+        $this->clientPassword = config('ssl.topup_client_password');
+        $this->topUpUrl = config('ssl.topup_url');
+    }
+
+    /**
+     * @param $mobile_number
+     * @param $amount
+     * @param $type
+     * @return TopUpResponse
+     * @throws SoapFault
+     */
+    public function recharge($mobile_number, $amount, $type): TopUpResponse
     {
         try {
-            $wsdl_path = "http://vrtest.sslwireless.com/?wsdl";
-            ini_set("soap.wsdl_cache_enabled", "0"); // disabling WSDL cache
-            $client = new SoapClient($wsdl_path);
-            $client_id = 'vr_sslw';
-            $client_pass = 'ZmVyZG91cw==';
+            ini_set("soap.wsdl_cache_enabled", '0'); // disabling WSDL cache
+            $client = new SoapClient($this->topUpUrl);
             $guid = randomString(20, 1, 1);
-            $operator_id = 1;
-            $recipient_msisdn = $mobile_number;
+            $operator_id = $this->getOperatorId($mobile_number);
             $connection_type = $type;
             $sender_id = "redwan@sslwireless.com";
             $priority = 1;
             $s_url = "http://192.168.69.178:88/virtualrecharge/client/reply.php?s=1";
             $f_url = "http://192.168.69.178:88/virtualrecharge/client/reply.php?f=1";
             $calling_method = "POST";
-            $create_recharge_response = $client->CreateRecharge($client_id, $client_pass, $guid, $operator_id,
-                $recipient_msisdn, $amount, $connection_type, $sender_id, $priority, $s_url, $f_url, $calling_method);
+            $create_recharge_response = $client->CreateRecharge($this->clientId, $this->clientPassword, $guid, $operator_id,
+                $mobile_number, $amount, $connection_type, $sender_id, $priority, $s_url, $f_url, $calling_method);
             $vr_guid = $create_recharge_response->vr_guid;
             $recharge_response = new stdClass();
-            $recharge_response = $client->InitRecharge($client_id, $client_pass, $guid, $vr_guid);
+            $recharge_response = $client->InitRecharge($this->clientId, $this->clientPassword, $guid, $vr_guid);
             $recharge_response->guid = $guid;
-            return array(
-                'transaction_id' => $guid,
-                'transaction_details' => $recharge_response
-            );
+            if ($recharge_response->recharge_status == 200) {
+                $topup_response = new TopUpResponse();
+                $topup_response->transactionId = $guid;
+                $topup_response->transactionDetails = $recharge_response;
+                return $topup_response;
+            } else {
+                throw new \InvalidArgumentException('Invalid status for ssl topup');
+            }
+
         } catch ( SoapFault $exception ) {
-            return null;
+            throw $exception;
+        }
+    }
+
+    private function getOperatorId($mobile_number)
+    {
+        $mobile_number = formatMobile($mobile_number);
+        if (preg_match("/^(\+88017)/", $mobile_number)) {
+            return 1;
+        } elseif (preg_match("/^(\+88019)/", $mobile_number)) {
+            return 2;
+        } elseif (preg_match("/^(\+88018)/", $mobile_number)) {
+            return 3;
+        } elseif (preg_match("/^(\+88016)/", $mobile_number)) {
+            return 6;
+        } else {
+            throw new InvalidParameterException('Invalid Mobile for ssl topup.');
         }
     }
 }

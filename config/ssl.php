@@ -11,4 +11,7 @@ return [
     'cancel_url' => env('SHEBA_API_URL') . '/v2/orders/payments/cancel',
     'session_url' => env('SSL_SESSION_URL'),
     'order_validation_url' => env('SSL_ORDER_VALIDATION_URL'),
+    'topup_client_id' => env('SSL_TOPUP_CLIENT_ID'),
+    'topup_client_password' => env('SSL_TOPUP_CLIENT_PASSWORD'),
+    'topup_url' => env('SSL_TOPUP_URL'),
 ];
