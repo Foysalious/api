@@ -55,7 +55,8 @@ class SettingsController extends Controller
             $customer = $request->customer;
             $settings = array(
                 'credit' => $customer->wallet,
-                'rating' => round($customer->customerReviews->avg('rating'), 2)
+                'rating' => round($customer->customerReviews->avg('rating'), 2),
+                'pending_order' => $customer->partnerOrders->where('closed_and_paid_at', null)->where('cancelled_at', null)->count()
             );
             return api_response($request, $settings, 200, ['settings' => $settings]);
         } catch (\Throwable $e) {
