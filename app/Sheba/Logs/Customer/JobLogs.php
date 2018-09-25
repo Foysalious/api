@@ -61,7 +61,7 @@ class JobLogs
             );
         }
         if ($work_log = $this->formatWorkLog()) array_push($logs, $work_log);
-        if ($message_log = $this->formatOrderMessage()) array_push($logs, $message_log);
+        if ($message_log = $this->getOrderMessage()) array_push($logs, $message_log);
         return $logs;
     }
 
@@ -88,7 +88,7 @@ class JobLogs
         }
     }
 
-    private function formatOrderMessage()
+    public function getOrderMessage()
     {
         $job_status = $this->job->status;
         if (in_array($job_status, [constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']])) {
@@ -106,7 +106,7 @@ class JobLogs
         } elseif ($job_status == constants('JOB_STATUSES')['Schedule_Due']) {
             return array(
                 'status' => 'message',
-                'log' => 'Your order is supposed to be started by ' . humanReadableShebaTime($this->job->preferred_time_start) . '.Please, call Expert ' . $this->job->resource->profile->name . ' to confirm.',
+                'log' => 'Your order is supposed to be started by ' . humanReadableShebaTime($this->job->preferred_time_start) . '. Please, call Expert ' . $this->job->resource->profile->name . ' to confirm.',
                 'type' => 'danger'
             );
         } elseif (in_array($job_status, [constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Serve_Due']])) {

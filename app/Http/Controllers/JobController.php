@@ -231,7 +231,8 @@ class JobController extends Controller
                         'rating' => $job->review != null ? $job->review->rating : null,
                         'order_code' => $order->code(),
                         'created_at' => $job->created_at->format('Y-m-d'),
-                        'created_at_timestamp' => $job->created_at->timestamp
+                        'created_at_timestamp' => $job->created_at->timestamp,
+                        'message' => (new JobLogs($job))->getOrderMessage()
                     )));
                 }
             }
