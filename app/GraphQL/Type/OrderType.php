@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use GraphQL;
 use \Folklore\GraphQL\Support\Type as GraphQlType;
 use GraphQL\Type\Definition\Type;
+use Sheba\Logs\Customer\JobLogs;
 
 class OrderType extends GraphQlType
 {
@@ -30,7 +31,7 @@ class OrderType extends GraphQlType
             'schedule_time' => ['type' => Type::string()],
             'location' => ['type' => GraphQL::type('Location')],
             'original_price' => ['type' => Type::float()],
-            'total_price' => ['type' => Type::float()],
+            'discounted_price' => ['type' => Type::float()],
             'total_material_price' => ['type' => Type::float()],
             'total_discount' => ['type' => Type::float()],
             'paid' => ['type' => Type::float()],
@@ -43,7 +44,8 @@ class OrderType extends GraphQlType
             'closed_and_paid_at_timestamp' => ['type' => Type::int()],
             'completed_at' => ['type' => Type::string()],
             'completed_at_timestamp' => ['type' => Type::string()],
-            'invoice' => ['type' => Type::string()]
+            'invoice' => ['type' => Type::string()],
+            'message' => ['type' => GraphQL::type('OrderMessage')]
         ];
     }
 
@@ -83,7 +85,7 @@ class OrderType extends GraphQlType
         return (float)$root->due;
     }
 
-    protected function resolveTotalPriceField($root)
+    protected function resolveDiscountedPriceField($root)
     {
         if (!isset($root['totalPrice'])) {
             $root->calculate(true);
@@ -127,12 +129,23 @@ class OrderType extends GraphQlType
 
     protected function resolveStatusField($root)
     {
-        $root->calculate(true);
         $not_cancelled_jobs = $root->jobs->filter(function ($job) {
             return $job->status != 'Cancelled';
         });
         if (count($not_cancelled_jobs) > 0) {
             return $not_cancelled_jobs->first()->status;
+        } else {
+            return null;
+        }
+    }
+
+    protected function resolveMessageField($root)
+    {
+        $not_cancelled_jobs = $root->jobs->filter(function ($job) {
+            return $job->status != 'Cancelled';
+        });
+        if (count($not_cancelled_jobs) > 0) {
+            return (new JobLogs($not_cancelled_jobs->first()))->getOrderMessage();
         } else {
             return null;
         }

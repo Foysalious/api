@@ -49,10 +49,10 @@ class JobController extends Controller
                 return $order->partnerOrders->count() > 0;
             }))->sortByDesc('created_at');
             return count($all_jobs) > 0 ? api_response($request, $all_jobs, 200, ['orders' => $all_jobs->values()->all()]) : api_response($request, null, 404);
-        } catch (ValidationException $e) {
+        } catch ( ValidationException $e ) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -115,7 +115,7 @@ class JobController extends Controller
             }
             $job_collection->put('services', $services);
             return api_response($request, $job_collection, 200, ['job' => $job_collection]);
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -176,7 +176,7 @@ class JobController extends Controller
             $bill['invoice'] = $job->partnerOrder->invoice;
             $bill['version'] = $job->partnerOrder->getVersion();
             return api_response($request, $bill, 200, ['bill' => $bill]);
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -198,7 +198,7 @@ class JobController extends Controller
                 return $item->get('timestamp');
             });
             return count($dates) > 0 ? api_response($request, $dates, 200, ['logs' => $dates->values()->all()]) : api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -238,7 +238,8 @@ class JobController extends Controller
                         'rating' => $job->review != null ? $job->review->rating : null,
                         'order_code' => $order->code(),
                         'created_at' => $job->created_at->format('Y-m-d'),
-                        'created_at_timestamp' => $job->created_at->timestamp
+                        'created_at_timestamp' => $job->created_at->timestamp,
+                        'message' => (new JobLogs($job))->getOrderMessage()
                     )));
                 }
             }
@@ -337,7 +338,7 @@ class JobController extends Controller
             } else {
                 return api_response($request, $response, $response->code);
             }
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             return api_response($request, null, 500);
         }
     }
@@ -360,10 +361,10 @@ class JobController extends Controller
                     }
                 });
                 return api_response($request, 1, 200);
-            } catch (QueryException $e) {
+            } catch ( QueryException $e ) {
                 return api_response($request, null, 500);
             }
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -378,13 +379,13 @@ class JobController extends Controller
             $order_adapter = new OrderAdapter($request->job->partnerOrder);
             $payment = (new PayCharge($request->has('payment_method') ? $request->payment_method : 'online'))->init($order_adapter->getPayable());
             return api_response($request, $payment, 200, ['link' => $payment['link'], 'payment' => $payment]);
-        } catch (ValidationException $e) {
+        } catch ( ValidationException $e ) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -393,42 +394,10 @@ class JobController extends Controller
     public function getOrderLogs($customer, Request $request)
     {
         try {
-            $partner = Partner::find(3);
-            $resource = Resource::find(289);
-            $logs = array(
-                'order_placed' => array(
-                    'log' => 'Order has been placed to ' . $partner->name . '.',
-                    'partner' => array(
-                        'name' => $partner->name,
-                        'picture' => $partner->logo,
-                        'mobile' => $partner->getManagerMobile()
-                    )
-                ),
-                'order_confirmed' => array(
-                    'log' => 'Order has been confirmed.',
-                ),
-                'expert_assigned' => array(
-                    'log' => 'An expert has been assigned to your order.',
-                    'resource' => array(
-                        'name' => $resource->profile->name,
-                        'picture' => $resource->profile->pro_pic,
-                        'mobile' => $resource->profile->mobile
-                    )
-                ),
-                'work_started' => array(
-                    'log' => 'Expert has started working from 9 PM.',
-                ),
-                'work_completed' => array(
-                    'log' => 'Expert has completed your order at 9 PM,9 Oct.',
-                ),
-                'message' => array(
-                    'log' => 'Expert is working on your order',
-                    'type' => 'success'
-                )
-            );
+            $job = $request->job;
+            $logs = (new JobLogs($job))->getorderStatusLogs();
             return api_response($request, $logs, 200, ['logs' => $logs]);
-        } catch (\Throwable $e) {
-            dd($e);
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

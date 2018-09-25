@@ -219,7 +219,7 @@ class Job extends Model
         return $this->hasOne(JobPartnerChangeLog::class);
     }
 
-    public function statusChangeLog()
+    public function statusChangeLogs()
     {
         return $this->hasMany(JobStatusChangeLog::class);
     }
@@ -350,5 +350,11 @@ class Job extends Model
                 constants('JOB_STATUSES')['Served']
             )
         );
+    }
+
+    public function canCallExpert()
+    {
+        if (in_array($this->status, ['Accepted', 'Schedule Due', 'Process', 'Serve Due', 'Served'])) return Carbon::today()->gte(Carbon::parse($this->schedule_date));
+        else return false;
     }
 }

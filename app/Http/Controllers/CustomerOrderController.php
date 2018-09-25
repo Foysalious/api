@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 
+use App\Models\Job;
 use App\Models\PartnerOrder;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -78,10 +79,10 @@ class CustomerOrderController extends Controller
         }
     }
 
-    private function getJobInformation($job, $partnerOrder)
+    private function getJobInformation(Job $job, PartnerOrder $partnerOrder)
     {
         $category = $job->category;
-        $show_expert = Carbon::today()->gte(Carbon::parse($job->schedule_date));
+        $show_expert = $job->canCallExpert();
         return collect(array(
             'id' => $partnerOrder->id,
             'job_id' => $job->id,
