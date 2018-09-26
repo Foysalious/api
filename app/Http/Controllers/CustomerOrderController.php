@@ -49,9 +49,13 @@ class CustomerOrderController extends Controller
         $all_jobs = collect();
         foreach ($partnerOrders as $partnerOrder) {
             $partnerOrder->calculate(true);
-            $job = ($partnerOrder->jobs->filter(function ($job) {
-                return $job->status !== 'Cancelled';
-            }))->first();
+            if (!$partnerOrder->cancelled_at) {
+                $job = ($partnerOrder->jobs->filter(function ($job) {
+                    return $job->status !== 'Cancelled';
+                }))->first();
+            } else {
+                $job = $partnerOrder->jobs->first();
+            }
             if ($job != null) {
                 $all_jobs->push($this->getJobInformation($job, $partnerOrder));
             }
