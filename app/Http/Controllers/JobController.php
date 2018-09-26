@@ -206,7 +206,7 @@ class JobController extends Controller
     private function formatPaymentMethod($payment_method)
     {
         if ($payment_method == 'Cash On Delivery' ||
-            $payment_method == 'cash-on-delivery') return 'Cash';
+            $payment_method == 'cash-on-delivery') return 'cod';
         return strtolower($payment_method);
     }
 
