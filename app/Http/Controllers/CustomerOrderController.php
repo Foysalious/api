@@ -8,6 +8,7 @@ use App\Models\PartnerOrder;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Logs\Customer\JobLogs;
 
 class CustomerOrderController extends Controller
 {
@@ -110,7 +111,8 @@ class CustomerOrderController extends Controller
             'original_price' => (double)$partnerOrder->totalServicePrice,
             'discount' => (double)$partnerOrder->totalDiscount,
             'discounted_price' => (double)$partnerOrder->totalPrice,
-            'complain_count' => $job->customerComplains->count()
+            'complain_count' => $job->customerComplains->count(),
+            'message' => (new JobLogs($job))->getOrderMessage()
         ));
     }
 }
