@@ -83,6 +83,7 @@ class JobController extends Controller
             $job_collection->put('schedule_date_readable', (Carbon::parse($job->schedule_date))->format('jS F, Y'));
             $job_collection->put('complains', $this->formatComplains($job->complains));
             $job_collection->put('preferred_time', $job->readable_preferred_time);
+            $job_collection->put('category_id', $job->category ? $job->category->id : null);
             $job_collection->put('category_name', $job->category ? $job->category->name : null);
             $job_collection->put('partner_name', $job->partnerOrder->partner->name);
             $job_collection->put('status', $job->status);
