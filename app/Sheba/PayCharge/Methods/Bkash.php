@@ -65,10 +65,10 @@ class Bkash implements PayChargeMethod
     public function formatTransactionData($method_response)
     {
         return array(
-            'name' => 'bkash',
+            'name' => 'Bkash',
             'details' => array(
                 'transaction_id' => $method_response->trxID,
-                'gateway' => "bkash",
+                'gateway' => 'bkash',
                 'details' => $method_response,
             )
         );
