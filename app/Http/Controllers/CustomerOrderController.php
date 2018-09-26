@@ -28,7 +28,7 @@ class CustomerOrderController extends Controller
                     $q->with(['resource.profile', 'jobServices', 'customerComplains', 'category' => function ($q) {
                         $q->select('id', 'name');
                     }, 'review' => function ($q) {
-                        $q->select('id', 'rating');
+                        $q->select('id', 'rating', 'job_id');
                     }, 'usedMaterials']);
                 }]);
             }]);
