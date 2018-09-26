@@ -34,11 +34,11 @@ class CustomerOrderController extends Controller
             }]);
             $all_jobs = $this->getInformation($customer->partnerOrders)->sortByDesc('id');
             return count($all_jobs) > 0 ? api_response($request, $all_jobs, 200, ['orders' => $all_jobs->values()->all()]) : api_response($request, null, 404);
-        } catch (ValidationException $e) {
+        } catch ( ValidationException $e ) {
             app('sentry')->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -74,7 +74,7 @@ class CustomerOrderController extends Controller
             removeRelationsAndFields($partner_order);
             $partner_order['jobs'] = $final;
             return api_response($request, $partner_order, 200, ['orders' => $partner_order]);
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -84,12 +84,15 @@ class CustomerOrderController extends Controller
     {
         $category = $job->category;
         $show_expert = $job->canCallExpert();
+        $process_log = $job->statusChangeLogs->where('to_status', constants('JOB_STATUSES')['Process'])->first();
         return collect(array(
             'id' => $partnerOrder->id,
             'job_id' => $job->id,
             'category_name' => $category ? $category->name : null,
             'category_thumb' => $category ? $category->thumb : null,
             'schedule_date' => $job->schedule_date ? $job->schedule_date : null,
+            'served_date' => $job->delivered_date,
+            'process_date' => $process_log ? $process_log->created_at : null,
             'schedule_date_readable' => (Carbon::parse($job->schedule_date))->format('jS F, Y'),
             'preferred_time' => $job->preferred_time ? humanReadableShebaTime($job->preferred_time) : null,
             'readable_status' => constants('JOB_STATUSES_SHOW')[$job->status]['customer'],
