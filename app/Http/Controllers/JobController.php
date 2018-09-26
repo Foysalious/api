@@ -432,7 +432,7 @@ class JobController extends Controller
             ]);
             $status = $request->status;
             $faqs = [];
-            if (in_array($status, ['Pending', 'Not Responded', 'Declined'])) {
+            if (in_array($status, ['pending', 'not responded', 'declined'])) {
                 $faqs = array(
                     array(
                         'question' => 'When my order will be confirmed?',
@@ -459,7 +459,7 @@ class JobController extends Controller
                         'answer' => 'If you failed to catch service provider or expert by several call, you can create an issue or chat with us. '
                     )
                 );
-            } elseif (in_array($status, ['Accepted', 'Schedule Due', 'Process', 'Serve Due'])) {
+            } elseif (in_array($status, ['accepted', 'schedule due', 'process', 'serve due'])) {
                 $faqs = array(
                     array(
                         'question' => 'What if I want to reschedule the order?',
@@ -486,7 +486,7 @@ class JobController extends Controller
                         'answer' => 'If you failed to catch service provider or expert by several call, you can create an issue or chat with us.'
                     ),
                 );
-            } elseif (in_array($status, ['Served'])) {
+            } elseif (in_array($status, ['served'])) {
                 $faqs = array(
                     array(
                         'question' => 'What if expert asks for additional payment?',
