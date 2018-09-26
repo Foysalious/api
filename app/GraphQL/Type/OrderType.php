@@ -27,6 +27,8 @@ class OrderType extends GraphQlType
             'address' => ['type' => Type::string()],
             'status' => ['type' => Type::string()],
             'schedule_date' => ['type' => Type::string()],
+            'process_date' => ['type' => Type::string()],
+            'served_date' => ['type' => Type::string()],
             'schedule_date_timestamp' => ['type' => Type::int()],
             'schedule_time' => ['type' => Type::string()],
             'location' => ['type' => GraphQL::type('Location')],
@@ -129,31 +131,50 @@ class OrderType extends GraphQlType
 
     protected function resolveStatusField($root)
     {
-        $not_cancelled_jobs = $root->jobs->filter(function ($job) {
-            return $job->status != 'Cancelled';
-        });
-        if (count($not_cancelled_jobs) > 0) {
-            return $not_cancelled_jobs->first()->status;
-        } else {
-            return null;
-        }
+        $root->load(['jobs' => function ($q) {
+            $q->where('status', '<>', 'Cancelled');
+        }]);
+        $not_cancelled_job = $root->jobs->first();
+        return $not_cancelled_job ? $not_cancelled_job->status : null;
     }
 
     protected function resolveMessageField($root)
     {
-        $not_cancelled_jobs = $root->jobs->filter(function ($job) {
-            return $job->status != 'Cancelled';
-        });
-        if (count($not_cancelled_jobs) > 0) {
-            return (new JobLogs($not_cancelled_jobs->first()))->getOrderMessage();
-        } else {
-            return null;
-        }
+        $root->load(['jobs' => function ($q) {
+            $q->where('status', '<>', 'Cancelled');
+        }]);
+        $not_cancelled_job = $root->jobs->first();
+        return $not_cancelled_job ? (new JobLogs($not_cancelled_job))->getOrderMessage() : null;
     }
 
     protected function resolveScheduleDateField($root)
     {
         return $root->jobs[0]->schedule_date;
+    }
+
+    protected function resolveProcessDateField($root)
+    {
+        $root->load(['jobs' => function ($q) {
+            $q->where('status', '<>', 'Cancelled');
+        }]);
+        $not_cancelled_job = $root->jobs->first();
+        if ($not_cancelled_job && $not_cancelled_job->statusChangeLogs) {
+            $process_log = $not_cancelled_job->statusChangeLogs->where('to_status', constants('JOB_STATUSES')['Process'])->first();
+            if ($process_log) return $process_log->created_at->format('Y-m-d h:i:s');
+        }
+        return null;
+    }
+
+    protected function resolveServedDateField($root)
+    {
+        $root->load(['jobs' => function ($q) {
+            $q->where('status', '<>', 'Cancelled');
+        }]);
+        $not_cancelled_job = $root->jobs->first();
+        if ($not_cancelled_job && $not_cancelled_job->delivered_date) {
+            return $not_cancelled_job->delivered_date->format('Y-m-d h:i:s');
+        }
+        return null;
     }
 
     protected function resolveScheduleDateTimestampField($root)
