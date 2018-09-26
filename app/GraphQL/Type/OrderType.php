@@ -30,6 +30,7 @@ class OrderType extends GraphQlType
             'schedule_date' => ['type' => Type::string()],
             'process_date' => ['type' => Type::string()],
             'served_date' => ['type' => Type::string()],
+            'contact_number' => ['type' => Type::string()],
             'can_call_expert' => ['type' => Type::boolean()],
             'schedule_date_timestamp' => ['type' => Type::int()],
             'schedule_time' => ['type' => Type::string()],
@@ -162,6 +163,17 @@ class OrderType extends GraphQlType
         }
         $not_cancelled_job = $root->jobs->first();
         return $not_cancelled_job->canCallExpert();
+    }
+
+    protected function resolveContactNumberField($root, $args)
+    {
+        if (!$root->cancelled_at) {
+            $root->load(['jobs' => function ($q) {
+                $q->where('status', '<>', 'Cancelled');
+            }]);
+        }
+        $not_cancelled_job = $root->jobs->first();
+        return $not_cancelled_job->canCallExpert() ? $root->partner->getManagerMobile() : $not_cancelled_job->resource->profile->mobile;
     }
 
     protected function resolveMessageField($root)
