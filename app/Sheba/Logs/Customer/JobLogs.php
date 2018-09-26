@@ -98,21 +98,35 @@ class JobLogs
                 'type' => 'danger'
             );
         } elseif ($job_status == constants('JOB_STATUSES')['Accepted']) {
-            return array(
-                'status' => 'message',
-                'log' => 'Expert will arrive at your place between ' . humanReadableShebaTime($this->job->preferred_time) . ', ' . Carbon::parse($this->job->schedule_date)->format('M d'),
-                'type' => 'success'
-            );
+            if (Carbon::parse($this->job->schedule_date . ' ' . $this->job->preferred_time_start)->diffInMinutes(Carbon::now()) >= 30) {
+                return array(
+                    'status' => 'message',
+                    'log' => 'Your order is supposed to be started within ' . humanReadableShebaTime($this->job->preferred_time_start) . ' .' . ($this->job->resource ? 'Please call ' . $this->job->resource->profile->name . ' to confirm.' : ''),
+                    'type' => 'success'
+                );
+            } else {
+                return array(
+                    'status' => 'message',
+                    'log' => 'Expert will arrive at your place between ' . humanReadableShebaTime($this->job->preferred_time) . ', ' . Carbon::parse($this->job->schedule_date)->format('M d'),
+                    'type' => 'success'
+                );
+            }
         } elseif ($job_status == constants('JOB_STATUSES')['Schedule_Due']) {
             return array(
                 'status' => 'message',
-                'log' => 'Your order is supposed to be started by ' . humanReadableShebaTime($this->job->preferred_time_start) . '. Please, call Expert ' . $this->job->resource->profile->name . ' to confirm.',
+                'log' => 'Your order is supposed to be started by now. Please call the expert. For any kind of help call 16516.',
                 'type' => 'danger'
             );
         } elseif (in_array($job_status, [constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Serve_Due']])) {
             return array(
                 'status' => 'message',
                 'log' => 'Expert is working on your order.',
+                'type' => 'success'
+            );
+        } elseif ($job_status == constants('JOB_STATUSES')['Served']) {
+            return array(
+                'status' => 'message',
+                'log' => 'Please rate the expert based on your service experience.',
                 'type' => 'success'
             );
         } else {
