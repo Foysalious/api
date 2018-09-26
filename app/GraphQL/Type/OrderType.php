@@ -26,9 +26,11 @@ class OrderType extends GraphQlType
             'code' => ['type' => Type::string()],
             'address' => ['type' => Type::string()],
             'status' => ['type' => Type::string()],
+            'readable_status' => ['type' => Type::string()],
             'schedule_date' => ['type' => Type::string()],
             'process_date' => ['type' => Type::string()],
             'served_date' => ['type' => Type::string()],
+            'can_call_expert' => ['type' => Type::boolean()],
             'schedule_date_timestamp' => ['type' => Type::int()],
             'schedule_time' => ['type' => Type::string()],
             'location' => ['type' => GraphQL::type('Location')],
@@ -138,6 +140,28 @@ class OrderType extends GraphQlType
         }
         $not_cancelled_job = $root->jobs->first();
         return $not_cancelled_job ? $not_cancelled_job->status : null;
+    }
+
+    protected function resolveReadableStatusField($root)
+    {
+        if (!$root->cancelled_at) {
+            $root->load(['jobs' => function ($q) {
+                $q->where('status', '<>', 'Cancelled');
+            }]);
+        }
+        $not_cancelled_job = $root->jobs->first();
+        return $not_cancelled_job ? constants('JOB_STATUSES_SHOW')[$not_cancelled_job->status]['customer'] : null;
+    }
+
+    protected function resolveCanCallExpertField($root, $args)
+    {
+        if (!$root->cancelled_at) {
+            $root->load(['jobs' => function ($q) {
+                $q->where('status', '<>', 'Cancelled');
+            }]);
+        }
+        $not_cancelled_job = $root->jobs->first();
+        return $not_cancelled_job->canCallExpert();
     }
 
     protected function resolveMessageField($root)
