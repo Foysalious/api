@@ -101,7 +101,7 @@ class JobLogs
             if (Carbon::parse($this->job->schedule_date . ' ' . $this->job->preferred_time_start)->diffInMinutes(Carbon::now()) >= 30) {
                 return array(
                     'status' => 'message',
-                    'log' => 'Your order is supposed to be started within ' . humanReadableShebaTime($this->job->preferred_time_start) . ' .' . ($this->job->resource ? 'Please call ' . $this->job->resource->profile->name . ' to confirm.' : ''),
+                    'log' => 'Your order is supposed to be started within ' . humanReadableShebaTime($this->job->preferred_time_start) . '.' . ($this->job->resource ? 'Please call ' . $this->job->resource->profile->name . ' to confirm.' : ''),
                     'type' => 'success'
                 );
             } else {

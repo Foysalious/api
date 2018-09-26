@@ -430,7 +430,7 @@ class JobController extends Controller
             $this->validate($request, [
                 'status' => 'required'
             ]);
-            $status = $request->status;
+            $status = strtolower($request->status);
             $faqs = [];
             if (in_array($status, ['pending', 'not responded', 'declined'])) {
                 $faqs = array(
