@@ -1,11 +1,10 @@
 <?php
 
-namespace Sheba\TopUp;
+namespace Sheba\TopUp\Vendor\Internal;
 
+use Sheba\TopUp\TopUpResponse;
 use SoapClient;
 use SoapFault;
-use stdClass;
-use Symfony\Component\Routing\Exception\InvalidParameterException;
 
 class Ssl
 {
@@ -43,7 +42,6 @@ class Ssl
             $create_recharge_response = $client->CreateRecharge($this->clientId, $this->clientPassword, $guid, $operator_id,
                 $mobile_number, $amount, $connection_type, $sender_id, $priority, $s_url, $f_url, $calling_method);
             $vr_guid = $create_recharge_response->vr_guid;
-            $recharge_response = new stdClass();
             $recharge_response = $client->InitRecharge($this->clientId, $this->clientPassword, $guid, $vr_guid);
             $recharge_response->guid = $guid;
             if ($recharge_response->recharge_status == 200) {
@@ -72,7 +70,7 @@ class Ssl
         } elseif (preg_match("/^(\+88016)/", $mobile_number)) {
             return 6;
         } else {
-            throw new InvalidParameterException('Invalid Mobile for ssl topup.');
+            throw new \InvalidArgumentException('Invalid Mobile for ssl topup.');
         }
     }
 }

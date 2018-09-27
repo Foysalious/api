@@ -8,6 +8,7 @@ use App\Models\PartnerOrder;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Logs\Customer\JobLogs;
 
 class CustomerOrderController extends Controller
 {
@@ -27,17 +28,17 @@ class CustomerOrderController extends Controller
                     $q->with(['resource.profile', 'jobServices', 'customerComplains', 'category' => function ($q) {
                         $q->select('id', 'name');
                     }, 'review' => function ($q) {
-                        $q->select('id', 'rating');
+                        $q->select('id', 'rating', 'job_id');
                     }, 'usedMaterials']);
                 }]);
             }]);
             $all_jobs = $this->getInformation($customer->partnerOrders)->sortByDesc('id');
             return count($all_jobs) > 0 ? api_response($request, $all_jobs, 200, ['orders' => $all_jobs->values()->all()]) : api_response($request, null, 404);
-        } catch (ValidationException $e) {
+        } catch ( ValidationException $e ) {
             app('sentry')->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -48,9 +49,13 @@ class CustomerOrderController extends Controller
         $all_jobs = collect();
         foreach ($partnerOrders as $partnerOrder) {
             $partnerOrder->calculate(true);
-            $job = ($partnerOrder->jobs->filter(function ($job) {
-                return $job->status !== 'Cancelled';
-            }))->first();
+            if (!$partnerOrder->cancelled_at) {
+                $job = ($partnerOrder->jobs->filter(function ($job) {
+                    return $job->status !== 'Cancelled';
+                }))->first();
+            } else {
+                $job = $partnerOrder->jobs->first();
+            }
             if ($job != null) {
                 $all_jobs->push($this->getJobInformation($job, $partnerOrder));
             }
@@ -73,7 +78,7 @@ class CustomerOrderController extends Controller
             removeRelationsAndFields($partner_order);
             $partner_order['jobs'] = $final;
             return api_response($request, $partner_order, 200, ['orders' => $partner_order]);
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -83,12 +88,15 @@ class CustomerOrderController extends Controller
     {
         $category = $job->category;
         $show_expert = $job->canCallExpert();
+        $process_log = $job->statusChangeLogs->where('to_status', constants('JOB_STATUSES')['Process'])->first();
         return collect(array(
             'id' => $partnerOrder->id,
             'job_id' => $job->id,
             'category_name' => $category ? $category->name : null,
             'category_thumb' => $category ? $category->thumb : null,
             'schedule_date' => $job->schedule_date ? $job->schedule_date : null,
+            'served_date' => $job->delivered_date ? $job->delivered_date->format('Y-m-d h:i:s') : null,
+            'process_date' => $process_log ? $process_log->created_at->format('Y-m-d h:i:s') : null,
             'schedule_date_readable' => (Carbon::parse($job->schedule_date))->format('jS F, Y'),
             'preferred_time' => $job->preferred_time ? humanReadableShebaTime($job->preferred_time) : null,
             'readable_status' => constants('JOB_STATUSES_SHOW')[$job->status]['customer'],
@@ -111,7 +119,8 @@ class CustomerOrderController extends Controller
             'original_price' => (double)$partnerOrder->totalServicePrice,
             'discount' => (double)$partnerOrder->totalDiscount,
             'discounted_price' => (double)$partnerOrder->totalPrice,
-            'complain_count' => $job->customerComplains->count()
+            'complain_count' => $job->customerComplains->count(),
+            'message' => (new JobLogs($job))->getOrderMessage()
         ));
     }
 }

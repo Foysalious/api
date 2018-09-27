@@ -4,6 +4,8 @@ use App\Models\Affiliate;
 use App\Models\TopUpVendor;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\TopUp\TopUp;
+use Sheba\TopUp\Vendor\VendorFactory;
 
 class TopUpController extends Controller
 {
@@ -29,7 +31,7 @@ class TopUpController extends Controller
         }
     }
 
-    public function topUp(Request $request)
+    public function topUp(Request $request, VendorFactory $vendor, TopUp $top_up)
     {
         try {
             $this->validate($request, [
@@ -39,12 +41,13 @@ class TopUpController extends Controller
                 'amount' => 'required|min:10|numeric'
             ]);
             $affiliate = $request->affiliate;
-            if ($affiliate->wallet >= (double)$request->amount) {
-                $affiliate->doRecharge($request->vendor_id, $request->mobile, $request->amount, $request->connection_type);
-                return api_response($request, null, 200, ['message' => "Recharge Successful"]);
-            } else {
+            if ($affiliate->wallet < (double)$request->amount) {
                 return api_response($request, null, 403, ['message' => "You don't have sufficient balance to recharge."]);
             }
+
+            $vendor = $vendor->getById($request->vendor_id);
+            $top_up->setAgent($affiliate)->setVendor($vendor)->recharge($request->mobile, $request->amount, $request->connection_type);
+            return api_response($request, null, 200, ['message' => "Recharge Successful"]);
         } catch ( ValidationException $e ) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');

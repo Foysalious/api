@@ -44,7 +44,7 @@ class Checkout
         if ($partner_list->hasPartners) {
             $partner = $partner_list->partners->first();
             $data = $this->makeOrderData($request);
-            $data['payment_method'] = $request->payment_method == 'cod' ? 'cash-on-delivery' : 'online';
+            $data['payment_method'] = $request->payment_method == 'cod' ? 'cash-on-delivery' : ucwords($request->payment_method);
             $data['job_services'] = $this->createJobService($partner->services, $partner_list->selected_services, $data);
             $rent_car_ids = array_map('intval', explode(',', env('RENT_CAR_IDS')));
             if (in_array(($partner_list->selected_services->first())->category_id, $rent_car_ids)) {
@@ -144,7 +144,7 @@ class Checkout
                     $data['car_rental_job_detail']->save();
                 }
             });
-        } catch (QueryException $e) {
+        } catch ( QueryException $e ) {
             app('sentry')->captureException($e);
             return false;
         }
@@ -341,7 +341,7 @@ class Checkout
                 $data['voucher_id'] = $result['id'];
             }
             return $data;
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return $data;
         }
@@ -376,7 +376,7 @@ class Checkout
                 $profile->update();
             }
             return $profile;
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             return null;
         }
     }
