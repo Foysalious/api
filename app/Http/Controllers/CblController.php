@@ -9,7 +9,7 @@ use Sheba\PayCharge\PayCharge;
 use Cache;
 
 
-class CblController
+class CblController extends Controller
 {
     public function validate(Request $request)
     {
