@@ -25,7 +25,7 @@ class CustomerOrderController extends Controller
                 $q->orderBy('id', 'desc')->skip($offset)->take($limit)->with(['partner.resources.profile', 'order' => function ($q) {
                     $q->select('id', 'sales_channel');
                 }, 'jobs' => function ($q) {
-                    $q->with(['resource.profile', 'jobServices', 'customerComplains', 'category' => function ($q) {
+                    $q->with(['statusChangeLogs', 'resource.profile', 'jobServices', 'customerComplains', 'category' => function ($q) {
                         $q->select('id', 'name');
                     }, 'review' => function ($q) {
                         $q->select('id', 'rating', 'job_id');
@@ -39,6 +39,7 @@ class CustomerOrderController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch ( \Throwable $e ) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -97,6 +98,7 @@ class CustomerOrderController extends Controller
             'schedule_date' => $job->schedule_date ? $job->schedule_date : null,
             'served_date' => $job->delivered_date ? $job->delivered_date->format('Y-m-d h:i:s') : null,
             'process_date' => $process_log ? $process_log->created_at->format('Y-m-d h:i:s') : null,
+            'cancelled_date' => $partnerOrder->cancelled_at,
             'schedule_date_readable' => (Carbon::parse($job->schedule_date))->format('jS F, Y'),
             'preferred_time' => $job->preferred_time ? humanReadableShebaTime($job->preferred_time) : null,
             'readable_status' => constants('JOB_STATUSES_SHOW')[$job->status]['customer'],
@@ -112,7 +114,6 @@ class CustomerOrderController extends Controller
             'rating' => $job->review != null ? $job->review->rating : null,
             'price' => (double)$partnerOrder->totalPrice,
             'order_code' => $partnerOrder->order->code(),
-            'cancelled_at' => $partnerOrder->cancelled_at ? $partnerOrder->cancelled_at->format('Y-m-d') : null,
             'created_at' => $partnerOrder->created_at->format('Y-m-d'),
             'created_at_timestamp' => $partnerOrder->created_at->timestamp,
             'version' => $partnerOrder->getVersion(),
