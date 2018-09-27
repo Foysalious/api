@@ -71,7 +71,7 @@ class JobLogs
         if (in_array($job_status, [constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Serve_Due'], constants('JOB_STATUSES')['Served']])) {
             $status_change_log = $this->job->statusChangeLogs->where('to_status', $job_status)->first();
             if (!$status_change_log) return null;
-            $time = $status_change_log->created_at->format('h A, M d');
+            $time = $status_change_log->created_at->format('h:i A, M d');
             if (in_array($job_status, [constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Serve_Due']])) {
                 return [
                     'status' => 'work_started',
