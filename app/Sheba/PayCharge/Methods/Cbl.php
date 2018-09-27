@@ -36,7 +36,6 @@ class Cbl implements PayChargeMethod
      */
     public function init(PayChargable $pay_chargable)
     {
-        $invoice = "SHEBA_CBL_" . strtoupper($pay_chargable->type) . '_' . $pay_chargable->id . '_' . Carbon::now()->timestamp;
         $response = $this->postQW($this->makeOrderCreateData($pay_chargable));
 
         $order_id = $response->Response->Order->OrderID;
@@ -45,6 +44,7 @@ class Cbl implements PayChargeMethod
 
         if (!$order_id || !$session_id) return null;
 
+        $invoice = "SHEBA_CBL_" . $order_id . '_' . $session_id;
         $response->name = 'online';
         $payment_info = [
             'transaction_id' => $invoice,
@@ -64,20 +64,7 @@ class Cbl implements PayChargeMethod
 
     public function validate($payment)
     {
-        if(!request()->has('xmlmsg') || $xml = request()->get('xmlmsg') == '') {
-            $this->message = '';
-            return null;
-        }
-
-        $xml = simplexml_load_string($xml);
-        dd($xml);
-
-        if($xml->approval_code == '') {
-            $this->message = '';
-            return null;
-        }
-
-        return $xml;
+        dd($payment);
     }
 
     public function formatTransactionData($method_response)
