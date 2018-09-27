@@ -138,8 +138,8 @@ class WalletController extends Controller
         try {
             $faqs = array(
                 array(
-                    'question' => '1. How can I recharge Sheba Credit?',
-                    'answer' => 'You can recharge your Sheba Credit via your credit/debit card, mobile banking services like bKash/rocket. You will be asked to give proper information to confirm the payment. After completing the recharge, you will get a confirmation screen in the app.'
+                    'question' => '1. How can I purchase Sheba Credit?',
+                    'answer' => 'You can purchase your Sheba Credit via your credit/debit card, mobile banking services like bKash/rocket. You will be asked to give proper information to confirm the payment. After completing the purchase, you will get a confirmation screen in the app.'
                 ),
                 array(
                     'question' => '2. Where I can use my Sheba Credit?',
@@ -154,8 +154,8 @@ class WalletController extends Controller
                     'answer' => 'The value of each Sheba Credit is 1 BDT. '
                 ),
                 array(
-                    'question' => '5. What is the minimum and maximum credit I can recharge?',
-                    'answer' => 'The minimum Sheba Credit is 10 that you can recharge and the maximum Sheba Credit is 5000.'
+                    'question' => '5. What is the minimum and maximum credit I can purchase?',
+                    'answer' => 'The minimum Sheba Credit is 10 that you can purchase and the maximum Sheba Credit is 5000.'
                 ),
                 array(
                     'question' => '6. What benefits I will get using Sheba Credit?',
@@ -166,12 +166,12 @@ class WalletController extends Controller
                     'answer' => 'You can check all of your credit transactions history with details in history page.'
                 ),
                 array(
-                    'question' => '8. What if I completed recharge but my credit balance doesn’t update?',
+                    'question' => '8. What if I completed purchase but my credit balance doesn’t update?',
                     'answer' => 'For this type of issue, please send us a mail to info@sheba.xyz. After a few verifications, sheba.xyz will adjust the Sheba Credit balance.'
                 ),
                 array(
                     'question' => '9. Is there any hidden charge?',
-                    'answer' => 'Sheba Credit is completely free. There is no hidden charge. You don’t need to pay any additional charges to recharge or purchase any services.'
+                    'answer' => 'Sheba Credit is completely free. There is no hidden charge. You don’t need to pay any additional charges to purchase or purchase any services.'
                 )
             );
             return api_response($request, $faqs, 200, ['faqs' => $faqs]);

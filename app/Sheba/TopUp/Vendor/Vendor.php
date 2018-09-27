@@ -12,6 +12,7 @@ abstract class Vendor
     public function setModel(TopUpVendor $model)
     {
         $this->model = $model;
+        return $this;
     }
 
     public function getModel()
