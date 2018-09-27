@@ -11,10 +11,10 @@ use Cache;
 
 class CblController extends Controller
 {
-    public function validate(Request $request)
+    public function validateCblPGR(Request $request)
     {
         dd($request->all());
-        try {
+        /*try {
             $paycharge = Cache::store('redis')->get("paycharge::$request->tran_id");
             if (!$paycharge) return redirect(config('sheba.front_url'));
             $paycharge = json_decode($paycharge);
@@ -31,6 +31,6 @@ class CblController extends Controller
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
-        }
+        }*/
     }
 }

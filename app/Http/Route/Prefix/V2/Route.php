@@ -178,9 +178,9 @@ class Route
 
 
             $api->group(['prefix' => 'payment/cbl'], function ($api) {
-                $api->post('approved', 'CblController@validate');
-                $api->post('declined', 'CblController@validate');
-                $api->post('cancelled', 'CblController@validate');
+                $api->post('approved', 'CblController@validateCblPGR');
+                $api->post('declined', 'CblController@validateCblPGR');
+                $api->post('cancelled', 'CblController@validateCblPGR');
             });
         });
         return $api;
