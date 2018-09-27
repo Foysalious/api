@@ -40,6 +40,7 @@ class OrderType extends GraphQlType
             'total_material_price' => ['type' => Type::float()],
             'total_discount' => ['type' => Type::float()],
             'paid' => ['type' => Type::float()],
+            'payment_method' => ['type' => Type::string()],
             'due' => ['type' => Type::float()],
             'delivery_address' => ['type' => Type::string()],
             'delivery_name' => ['type' => Type::string()],
@@ -80,6 +81,12 @@ class OrderType extends GraphQlType
             $root->calculate(true);
         }
         return (float)$root->paid;
+    }
+
+    protected function resolvePaymentMethodField($root)
+    {
+        if ($root->payment_method == 'cash-on-delivery' || $root->payment_method == 'Cash On Delivery') return 'cod';
+        return strtolower($root->payment_method);
     }
 
     protected function resolveDueField($root)
