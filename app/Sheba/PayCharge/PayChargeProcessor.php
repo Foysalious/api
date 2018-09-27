@@ -1,8 +1,8 @@
 <?php namespace Sheba\PayCharge;
 
 use Sheba\PayCharge\Methods\Bkash;
+use Sheba\PayCharge\Methods\Cbl;
 use Sheba\PayCharge\Methods\Cod;
-use Sheba\PayCharge\Methods\Portwallet;
 use Sheba\PayCharge\Methods\Ssl;
 use Sheba\PayCharge\Methods\Wallet;
 
@@ -39,6 +39,8 @@ class PayChargeProcessor
                 return new Ssl();
             case 'wallet':
                 return new Wallet();
+            case 'cbl':
+                return new Cbl();
         }
     }
 }
