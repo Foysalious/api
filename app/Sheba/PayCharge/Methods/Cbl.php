@@ -16,7 +16,7 @@ class Cbl implements PayChargeMethod
     private $declineUrl;
 
     private $message;
-    private $error=[];
+    private $error = [];
 
     public function __construct()
     {
@@ -62,9 +62,22 @@ class Cbl implements PayChargeMethod
         return $payment_info;
     }
 
+    /**
+     * @param $payment
+     * @return null
+     * @throws \Exception
+     */
     public function validate($payment)
     {
-        dd($payment);
+        $xml= $this->postQW($this->makeOrderInfoData($payment));
+        $status = $xml->Response->Order->row->Orderstatus;
+        if (!$status) {
+            $this->message = 'Validation Failed. Response status is ' . $status;
+            return null;
+        }
+        $res = json_decode(json_encode($xml->Response));
+        $res->transaction_id = $payment->transaction_id;
+        return ;
     }
 
     public function formatTransactionData($method_response)
@@ -72,7 +85,7 @@ class Cbl implements PayChargeMethod
         return [
             'name' => 'Online',
             'details' => [
-                'transaction_id' => $method_response->tran_id,
+                'transaction_id' => $method_response->transaction_id,
                 'gateway' => "cbl",
                 'details' => $method_response
             ]
@@ -106,6 +119,25 @@ class Cbl implements PayChargeMethod
         $data.="<CancelURL>".htmlentities($this->cancelUrl)."</CancelURL>";
         $data.="<DeclineURL>".htmlentities($this->declineUrl)."</DeclineURL>";
         $data.="</Order></Request></TKKPG>";
+        return $data;
+    }
+
+    private function makeOrderInfoData($payment)
+    {
+        $data =  '<?xml version="1.0" encoding="UTF-8"?>';
+        $data .= "<TKKPG>";
+        $data .= "<Request>";
+        $data .= "<Operation>GetOrderInformation</Operation>";
+        $data .= "<Language>EN</Language>";
+        $data .= "<Order>";
+        $data .= "<Merchant>$this->merchantId</Merchant>";
+        $data .= "<OrderID>".$payment->order_id."</OrderID>";
+        $data .= "</Order>";
+        $data .= "<SessionID>".$payment->session_id."</SessionID>";
+        $data .= "<ShowParams>true</ShowParams>";
+        $data .= "<ShowOperations>false</ShowOperations>";
+        $data .= "<ClassicView>true</ClassicView>";
+        $data .= "</Request></TKKPG>";
         return $data;
     }
 
