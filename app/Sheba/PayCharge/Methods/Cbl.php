@@ -38,7 +38,6 @@ class Cbl implements PayChargeMethod
     {
         $invoice = "SHEBA_CBL_" . strtoupper($pay_chargable->type) . '_' . $pay_chargable->id . '_' . Carbon::now()->timestamp;
         $response = $this->postQW($this->makeOrderCreateData($pay_chargable));
-        dd($response);
 
         $order_id = $response->Response->Order->OrderID;
         $session_id = $response->Response->Order->SessionID;
