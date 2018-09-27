@@ -44,7 +44,6 @@ class TopUpController extends Controller
             if ($affiliate->wallet < (double)$request->amount) {
                 return api_response($request, null, 403, ['message' => "You don't have sufficient balance to recharge."]);
             }
-
             $vendor = $vendor->getById($request->vendor_id);
             $top_up->setAgent($affiliate)->setVendor($vendor)->recharge($request->mobile, $request->amount, $request->connection_type);
             return api_response($request, null, 200, ['message' => "Recharge Successful"]);
