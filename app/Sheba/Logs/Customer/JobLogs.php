@@ -91,6 +91,7 @@ class JobLogs
     public function getOrderMessage()
     {
         $job_status = $this->job->status;
+        $job_review = $this->job->review;
         if (in_array($job_status, [constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']])) {
             return array(
                 'status' => 'message',
@@ -123,7 +124,7 @@ class JobLogs
                 'log' => 'Expert is working on your order.',
                 'type' => 'success'
             );
-        } elseif ($job_status == constants('JOB_STATUSES')['Served']) {
+        } elseif ($job_status == constants('JOB_STATUSES')['Served'] && !$job_review) {
             return array(
                 'status' => 'message',
                 'log' => 'Please rate the expert based on your service experience.',
