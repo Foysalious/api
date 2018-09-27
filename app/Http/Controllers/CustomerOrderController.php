@@ -104,6 +104,7 @@ class CustomerOrderController extends Controller
             'rating' => $job->review != null ? $job->review->rating : null,
             'price' => (double)$partnerOrder->totalPrice,
             'order_code' => $partnerOrder->order->code(),
+            'cancelled_at' => $partnerOrder->cancelled_at ? $partnerOrder->cancelled_at->format('Y-m-d') : null,
             'created_at' => $partnerOrder->created_at->format('Y-m-d'),
             'created_at_timestamp' => $partnerOrder->created_at->timestamp,
             'version' => $partnerOrder->getVersion(),
