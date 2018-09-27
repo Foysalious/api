@@ -7,6 +7,7 @@ use App\Models\PartnerOrderPayment;
 use Cache;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
+use Sheba\PayCharge\Complete\PayChargeComplete;
 
 class PayCharge
 {
@@ -36,6 +37,7 @@ class PayCharge
             $pay_chargable = unserialize($paycharge->pay_chargable);
             $this->updateTransactionRedis($redis_key, $paycharge, $response);
             $class_name = "Sheba\\PayCharge\\Complete\\" . $pay_chargable->completionClass;
+            /** @var PayChargeComplete $complete_class */
             $complete_class = new $class_name();
             if ($complete_class->complete($pay_chargable, $this->method->formatTransactionData($response))) {
                 Cache::store('redis')->forget("paycharge::$redis_key");
