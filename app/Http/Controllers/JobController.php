@@ -182,7 +182,8 @@ class JobController extends Controller
             $partnerOrder->calculate(true);
 
             $bill = collect();
-            $bill['total'] = (double)$partnerOrder->totalPrice;
+            $bill['total'] = (double) $partnerOrder->totalPrice;
+            $bill['original_price'] = (double) $partnerOrder->jobPrices;
             $bill['paid'] = (double)$partnerOrder->paid;
             $bill['due'] = (double)$partnerOrder->due;
             $bill['material_price'] = (double)$job->materialPrice;
