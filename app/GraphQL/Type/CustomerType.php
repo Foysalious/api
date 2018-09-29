@@ -127,7 +127,19 @@ class CustomerType extends GraphQlType
                 $q->with(['category', 'usedMaterials', 'jobServices']);
             }]);
         }]);
-        return $root->partnerOrders;
+        $partnerOrders = $root->partnerOrders;
+        $final = [];
+        foreach ($partnerOrders->groupBy('order_id') as $order) {
+            $cancelled_partnerOrders = $order->filter(function ($o) {
+                return $o->cancelled_at != null;
+            })->sortByDesc('cancelled_at');
+            $not_cancelled_partnerOrders = $order->filter(function ($o) {
+                return $o->cancelled_at == null;
+            })->sortByDesc('id');
+            $partnerOrder = $not_cancelled_partnerOrders->count() == 0 ? $cancelled_partnerOrders->first() : $not_cancelled_partnerOrders->first();
+            array_push($final, $partnerOrder);
+        }
+        return $final;
     }
 
 }
