@@ -89,8 +89,8 @@ class JobController extends Controller
             $job_collection->put('status', $job->status);
             $job_collection->put('rating', $job->review ? $job->review->rating : null);
             $job_collection->put('review', $job->review ? $job->review->calculated_review : null);
-            $job_collection->put('original_price', $job->partnerOrder->totalServicePrice);
-            $job_collection->put('discount', (double)$job->partnerOrder->totalDiscount);
+            $job_collection->put('original_price', (double) $job->partnerOrder->jobPrices);
+            $job_collection->put('discount', (double) $job->partnerOrder->totalDiscount);
             $job_collection->put('payment_method', $this->formatPaymentMethod($job->partnerOrder->payment_method));
             $job_collection->put('price', (double)$job->partnerOrder->totalPrice);
             $job_collection->put('isDue', (double)$job->partnerOrder->due > 0 ? 1 : 0);
@@ -182,7 +182,8 @@ class JobController extends Controller
             $partnerOrder->calculate(true);
 
             $bill = collect();
-            $bill['total'] = (double)$partnerOrder->totalPrice;
+            $bill['total'] = (double) $partnerOrder->totalPrice;
+            $bill['original_price'] = (double) $partnerOrder->jobPrices;
             $bill['paid'] = (double)$partnerOrder->paid;
             $bill['due'] = (double)$partnerOrder->due;
             $bill['material_price'] = (double)$job->materialPrice;
@@ -499,6 +500,21 @@ class JobController extends Controller
                     array(
                         'question' => 'What can I do if I am not satisfied with the service quality?',
                         'answer' => 'You can rate your experience so that service provider will take action against the expert or you can create an issue from ‘Get Support’ option'
+                    )
+                );
+            } elseif (in_array($status, ['cancelled'])) {
+                $faqs = array(
+                    array(
+                        'question' => 'What if my order is mistakenly cancelled?',
+                        'answer' => 'In this case, you can directly chat with us informing about the issue. Our support management team will look after the issue.'
+                    ),
+                    array(
+                        'question' => 'What if someone asks me for cancellation fee?',
+                        'answer' => 'Currently we don’t have any cancellation fee. If any expert or service provider ask you for the cancellation fee, kindly message us from message section of the app.'
+                    ),
+                    array(
+                        'question' => 'What if I paid online and my order is cancelled?',
+                        'answer' => 'Our Support management team will look after this issue. They will investigate and refund at your account within 72 working hours.'
                     )
                 );
             }
