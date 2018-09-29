@@ -14,10 +14,7 @@ class SslController extends Controller
     {
         try {
             if (empty($request->headers->get('referer'))) {
-                $sentry = app('sentry');
-                $sentry->user_context(['request' => $request->headers->all()]);
                 $message = 'Referer not present in header';
-                $sentry->captureException(new \Exception($message));
                 return api_response($request, null, 400, ['message' => $message]);
             };
             $paycharge = Cache::store('redis')->get("paycharge::$request->tran_id");
@@ -27,13 +24,13 @@ class SslController extends Controller
             $pay_charge = new PayCharge('online');
             $pay_charge->complete($request->tran_id);
             return redirect($pay_chargable->redirectUrl . '?invoice_id=' . $request->tran_id);
-        } catch (QueryException $e) {
+        } catch ( QueryException $e ) {
             app('sentry')->captureException($e);
             return redirect($pay_chargable->redirectUrl . '?invoice_id=' . $request->tran_id);
-        } catch (RequestException $e) {
+        } catch ( RequestException $e ) {
             app('sentry')->captureException($e);
             return redirect($pay_chargable->redirectUrl . '?invoice_id=' . $request->tran_id);
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
