@@ -123,10 +123,10 @@ class OrderType extends GraphQlType
 
     protected function resolveOriginalPriceField($root)
     {
-        if (!isset($root['totalServicePrice'])) {
+        if (!isset($root['jobPrices'])) {
             $root->calculate(true);
         }
-        return (double)$root->totalServicePrice;
+        return (double)$root->jobPrices;
     }
 
     protected function resolveAddressField($root)

@@ -116,7 +116,7 @@ class CustomerOrderController extends Controller
             'created_at' => $partnerOrder->created_at->format('Y-m-d'),
             'created_at_timestamp' => $partnerOrder->created_at->timestamp,
             'version' => $partnerOrder->getVersion(),
-            'original_price' => (double)$partnerOrder->totalServicePrice,
+            'original_price' => (double)$partnerOrder->jobPrices,
             'discount' => (double)$partnerOrder->totalDiscount,
             'discounted_price' => (double)$partnerOrder->totalPrice,
             'complain_count' => $job->customerComplains->count(),
