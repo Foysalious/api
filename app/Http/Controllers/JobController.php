@@ -502,6 +502,21 @@ class JobController extends Controller
                         'answer' => 'You can rate your experience so that service provider will take action against the expert or you can create an issue from ‘Get Support’ option'
                     )
                 );
+            } elseif (in_array($status, ['cancelled'])) {
+                $faqs = array(
+                    array(
+                        'question' => 'What if my order is mistakenly cancelled?',
+                        'answer' => 'In this case, you can directly chat with us informing about the issue. Our support management team will look after the issue.'
+                    ),
+                    array(
+                        'question' => 'What if someone asks me for cancellation fee?',
+                        'answer' => 'Currently we don’t have any cancellation fee. If any expert or service provider ask you for the cancellation fee, kindly message us from message section of the app.'
+                    ),
+                    array(
+                        'question' => 'What if I paid online and my order is cancelled?',
+                        'answer' => 'Our Support management team will look after this issue. They will investigate and refund at your account within 72 working hours.'
+                    )
+                );
             }
             return api_response($request, $faqs, 200, ['faqs' => $faqs]);
         } catch ( ValidationException $e ) {
