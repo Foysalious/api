@@ -6,4 +6,5 @@ class PayChargeStrategy
     public static $BKASH = "bkash";
     public static $ONLINE = "online";
     public static $WALLET = "wallet";
+    public static $CBL = "cbl";
 }

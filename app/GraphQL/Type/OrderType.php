@@ -209,7 +209,7 @@ class OrderType extends GraphQlType
         $not_cancelled_job = $root->jobs->first();
         if ($not_cancelled_job && $not_cancelled_job->statusChangeLogs) {
             $process_log = $not_cancelled_job->statusChangeLogs->where('to_status', constants('JOB_STATUSES')['Process'])->first();
-            if ($process_log) return $process_log->created_at->format('Y-m-d h:i:s');
+            if ($process_log) return $process_log->created_at->format('Y-m-d H:i:s');
         }
         return null;
     }
@@ -223,7 +223,7 @@ class OrderType extends GraphQlType
         }
         $not_cancelled_job = $root->jobs->first();
         if ($not_cancelled_job && $not_cancelled_job->delivered_date) {
-            return $not_cancelled_job->delivered_date->format('Y-m-d h:i:s');
+            return $not_cancelled_job->delivered_date->format('Y-m-d H:i:s');
         }
         return null;
     }

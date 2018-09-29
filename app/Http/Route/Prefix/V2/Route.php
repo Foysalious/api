@@ -175,6 +175,13 @@ class Route
                 $api->post('top-up', 'TopUpController@topUp');
             });
             $api->get('updates', 'UpdateController@getUpdates');
+
+
+            $api->group(['prefix' => 'payment/cbl'], function ($api) {
+                $api->post('approved', 'CblController@validateCblPGR');
+                $api->post('declined', 'CblController@validateCblPGR');
+                $api->post('cancelled', 'CblController@validateCblPGR');
+            });
         });
         return $api;
     }
