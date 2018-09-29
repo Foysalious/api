@@ -89,8 +89,8 @@ class JobController extends Controller
             $job_collection->put('status', $job->status);
             $job_collection->put('rating', $job->review ? $job->review->rating : null);
             $job_collection->put('review', $job->review ? $job->review->calculated_review : null);
-            $job_collection->put('original_price', $job->partnerOrder->totalServicePrice);
-            $job_collection->put('discount', (double)$job->partnerOrder->totalDiscount);
+            $job_collection->put('original_price', (double) $job->partnerOrder->jobPrices);
+            $job_collection->put('discount', (double) $job->partnerOrder->totalDiscount);
             $job_collection->put('payment_method', $this->formatPaymentMethod($job->partnerOrder->payment_method));
             $job_collection->put('price', (double)$job->partnerOrder->totalPrice);
             $job_collection->put('isDue', (double)$job->partnerOrder->due > 0 ? 1 : 0);
