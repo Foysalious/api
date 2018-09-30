@@ -47,7 +47,14 @@ class CustomerOrderController extends Controller
     private function getInformation($partnerOrders)
     {
         $all_jobs = collect();
-        foreach ($partnerOrders as $partnerOrder) {
+        foreach ($partnerOrders->groupBy('order_id') as $order) {
+            $cancelled_partnerOrders = $order->filter(function ($o) {
+                return $o->cancelled_at != null;
+            })->sortByDesc('cancelled_at');
+            $not_cancelled_partnerOrders = $order->filter(function ($o) {
+                return $o->cancelled_at == null;
+            });
+            $partnerOrder = $not_cancelled_partnerOrders->count() == 0 ? $cancelled_partnerOrders->first() : $not_cancelled_partnerOrders->first();
             $partnerOrder->calculate(true);
             if (!$partnerOrder->cancelled_at) {
                 $job = ($partnerOrder->jobs->filter(function ($job) {
@@ -56,9 +63,7 @@ class CustomerOrderController extends Controller
             } else {
                 $job = $partnerOrder->jobs->first();
             }
-            if ($job != null) {
-                $all_jobs->push($this->getJobInformation($job, $partnerOrder));
-            }
+            if ($job != null) $all_jobs->push($this->getJobInformation($job, $partnerOrder));
         }
         return $all_jobs;
     }

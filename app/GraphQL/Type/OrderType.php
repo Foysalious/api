@@ -180,7 +180,7 @@ class OrderType extends GraphQlType
             }]);
         }
         $not_cancelled_job = $root->jobs->first();
-        return $not_cancelled_job->canCallExpert() ? $root->partner->getManagerMobile() : $not_cancelled_job->resource->profile->mobile;
+        return $not_cancelled_job->canCallExpert() ? ($not_cancelled_job->resource ? $not_cancelled_job->resource->profile->mobile : null) : $root->partner->getManagerMobile();
     }
 
     protected function resolveMessageField($root)
