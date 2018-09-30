@@ -98,7 +98,7 @@ class CustomerOrderController extends Controller
             'served_date' => $job->delivered_date ? $job->delivered_date->format('Y-m-d H:i:s') : null,
             'process_date' => $process_log ? $process_log->created_at->format('Y-m-d H:i:s') : null,
             'cancelled_date' => $partnerOrder->cancelled_at,
-            'schedule_date_readable' => (Carbon::parse($job->schedule_date))->format('jS F, Y'),
+            'schedule_date_readable' => (Carbon::parse($job->schedule_date))->format('M j, Y'),
             'preferred_time' => $job->preferred_time ? humanReadableShebaTime($job->preferred_time) : null,
             'readable_status' => constants('JOB_STATUSES_SHOW')[$job->status]['customer'],
             'status' => $job->status,
