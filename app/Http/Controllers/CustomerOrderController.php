@@ -20,19 +20,22 @@ class CustomerOrderController extends Controller
             ]);
             $filter = $request->filter;
             list($offset, $limit) = calculatePagination($request);
-            $customer = $request->customer->load(['partnerOrders' => function ($q) use ($filter, $offset, $limit) {
-                if ($filter) $q->$filter();
-                $q->orderBy('id', 'desc')->skip($offset)->take($limit)->with(['partner.resources.profile', 'order' => function ($q) {
-                    $q->select('id', 'sales_channel');
-                }, 'jobs' => function ($q) {
-                    $q->with(['statusChangeLogs', 'resource.profile', 'jobServices', 'customerComplains', 'category' => function ($q) {
-                        $q->select('id', 'name');
-                    }, 'review' => function ($q) {
-                        $q->select('id', 'rating', 'job_id');
-                    }, 'usedMaterials']);
-                }]);
+            $customer = $request->customer->load(['orders' => function ($q) use ($filter, $offset, $limit) {
+                $q->select('id', 'customer_id', 'location_id', 'sales_channel', 'delivery_name', 'delivery_mobile', 'delivery_address')->orderBy('id', 'desc')->skip($offset)->take($limit)
+                    ->with(['partnerOrders' => function ($q) use ($filter, $offset, $limit) {
+                        if ($filter) $q->$filter();
+                        $q->with(['partner.resources.profile', 'order' => function ($q) {
+                            $q->select('id', 'sales_channel');
+                        }, 'jobs' => function ($q) {
+                            $q->with(['statusChangeLogs', 'resource.profile', 'jobServices', 'customerComplains', 'category' => function ($q) {
+                                $q->select('id', 'name');
+                            }, 'review' => function ($q) {
+                                $q->select('id', 'rating', 'job_id');
+                            }, 'usedMaterials']);
+                        }]);
+                    }]);
             }]);
-            $all_jobs = $this->getInformation($customer->partnerOrders);
+            $all_jobs = $this->getInformation($customer->orders);
             $cancelled_served_jobs = $all_jobs->filter(function ($job) {
                 return $job['cancelled_date'] != null || $job['status'] == 'Served';
             });
@@ -49,14 +52,15 @@ class CustomerOrderController extends Controller
         }
     }
 
-    private function getInformation($partnerOrders)
+    private function getInformation($orders)
     {
         $all_jobs = collect();
-        foreach ($partnerOrders->groupBy('order_id') as $order) {
-            $cancelled_partnerOrders = $order->filter(function ($o) {
+        foreach ($orders as $order) {
+            $partnerOrders = $order->partnerOrders;
+            $cancelled_partnerOrders = $partnerOrders->filter(function ($o) {
                 return $o->cancelled_at != null;
             })->sortByDesc('cancelled_at');
-            $not_cancelled_partnerOrders = $order->filter(function ($o) {
+            $not_cancelled_partnerOrders = $partnerOrders->filter(function ($o) {
                 return $o->cancelled_at == null;
             });
             $partnerOrder = $not_cancelled_partnerOrders->count() == 0 ? $cancelled_partnerOrders->first() : $not_cancelled_partnerOrders->first();

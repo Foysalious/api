@@ -141,7 +141,7 @@ class OrderType extends GraphQlType
 
     protected function resolveStatusField($root)
     {
-        if (!$root->cancelled_at) {
+        if (!$root->cancelled_at && !$root->jobs) {
             $root->load(['jobs' => function ($q) {
                 $q->where('status', '<>', 'Cancelled');
             }]);
@@ -152,7 +152,7 @@ class OrderType extends GraphQlType
 
     protected function resolveReadableStatusField($root)
     {
-        if (!$root->cancelled_at) {
+        if (!$root->cancelled_at && !$root->jobs) {
             $root->load(['jobs' => function ($q) {
                 $q->where('status', '<>', 'Cancelled');
             }]);
@@ -163,7 +163,7 @@ class OrderType extends GraphQlType
 
     protected function resolveCanCallExpertField($root, $args)
     {
-        if (!$root->cancelled_at) {
+        if (!$root->cancelled_at && !$root->jobs) {
             $root->load(['jobs' => function ($q) {
                 $q->where('status', '<>', 'Cancelled');
             }]);
@@ -174,7 +174,7 @@ class OrderType extends GraphQlType
 
     protected function resolveContactNumberField($root, $args)
     {
-        if (!$root->cancelled_at) {
+        if (!$root->cancelled_at && !$root->jobs) {
             $root->load(['jobs' => function ($q) {
                 $q->where('status', '<>', 'Cancelled');
             }]);
@@ -185,7 +185,7 @@ class OrderType extends GraphQlType
 
     protected function resolveMessageField($root)
     {
-        if (!$root->cancelled_at) {
+        if (!$root->cancelled_at && !$root->jobs) {
             $root->load(['jobs' => function ($q) {
                 $q->where('status', '<>', 'Cancelled');
             }]);
@@ -201,9 +201,9 @@ class OrderType extends GraphQlType
 
     protected function resolveProcessDateField($root)
     {
-        if (!$root->cancelled_at) {
+        if (!$root->cancelled_at && !$root->jobs) {
             $root->load(['jobs' => function ($q) {
-                $q->where('status', '<>', 'Cancelled');
+                $q->with('statusChangeLogs')->where('status', '<>', 'Cancelled');
             }]);
         }
         $not_cancelled_job = $root->jobs->first();
@@ -216,7 +216,7 @@ class OrderType extends GraphQlType
 
     protected function resolveServedDateField($root)
     {
-        if (!$root->cancelled_at) {
+        if (!$root->cancelled_at && !$root->jobs) {
             $root->load(['jobs' => function ($q) {
                 $q->where('status', '<>', 'Cancelled');
             }]);
@@ -230,7 +230,7 @@ class OrderType extends GraphQlType
 
     protected function resolveScheduleDateTimestampField($root)
     {
-        if (!$root->cancelled_at) {
+        if (!$root->cancelled_at && !$root->jobs) {
             $root->load(['jobs' => function ($q) {
                 $q->where('status', '<>', 'Cancelled');
             }]);
@@ -241,7 +241,7 @@ class OrderType extends GraphQlType
 
     protected function resolveScheduleTimeField($root)
     {
-        if (!$root->cancelled_at) {
+        if (!$root->cancelled_at && !$root->jobs) {
             $root->load(['jobs' => function ($q) {
                 $q->where('status', '<>', 'Cancelled');
             }]);
