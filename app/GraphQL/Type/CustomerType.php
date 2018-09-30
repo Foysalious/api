@@ -139,6 +139,12 @@ class CustomerType extends GraphQlType
             $partnerOrder = $not_cancelled_partnerOrders->count() == 0 ? $cancelled_partnerOrders->first() : $not_cancelled_partnerOrders->first();
             array_push($final, $partnerOrder);
         }
+        $final = collect($final);
+        $cancelled_served_partnerOrders = $final->filter(function ($order) {
+            return $order->cancelled_at != null || $order->closed_at != null;
+        });
+        $others = $final->diff($cancelled_served_partnerOrders);
+        $final = $others->merge($cancelled_served_partnerOrders)->values()->all();
         return $final;
     }
 

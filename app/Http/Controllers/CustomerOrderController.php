@@ -32,7 +32,12 @@ class CustomerOrderController extends Controller
                     }, 'usedMaterials']);
                 }]);
             }]);
-            $all_jobs = $this->getInformation($customer->partnerOrders)->sortByDesc('id');
+            $all_jobs = $this->getInformation($customer->partnerOrders);
+            $cancelled_served_jobs = $all_jobs->filter(function ($job) {
+                return $job['cancelled_date'] != null || $job['status'] == 'Served';
+            });
+            $others = $all_jobs->diff($cancelled_served_jobs);
+            $all_jobs = $others->merge($cancelled_served_jobs);
             return count($all_jobs) > 0 ? api_response($request, $all_jobs, 200, ['orders' => $all_jobs->values()->all()]) : api_response($request, null, 404);
         } catch ( ValidationException $e ) {
             app('sentry')->captureException($e);
