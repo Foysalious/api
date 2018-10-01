@@ -99,7 +99,8 @@ class JobLogs
                 'type' => 'danger'
             );
         } elseif ($job_status == constants('JOB_STATUSES')['Accepted']) {
-            if (Carbon::parse($this->job->schedule_date . ' ' . $this->job->preferred_time_start)->diffInMinutes(Carbon::now()) >= 30) {
+            $thirty_min_before_scheduled_date_time = Carbon::parse($this->job->schedule_date . ' ' . $this->job->preferred_time_start)->subMinutes(30);
+            if (Carbon::now()->gte($thirty_min_before_scheduled_date_time)) {
                 return array(
                     'status' => 'message',
                     'log' => 'Your order is supposed to be started within ' . humanReadableShebaTime($this->job->preferred_time_start) . '.' . ($this->job->resource ? 'Please call ' . $this->job->resource->profile->name . ' to confirm.' : ''),
