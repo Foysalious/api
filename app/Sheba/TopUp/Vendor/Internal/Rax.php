@@ -2,6 +2,7 @@
 
 namespace Sheba\TopUp\Vendor\Internal;
 
+use GuzzleHttp\Client;
 use Sheba\TopUp\TopUpResponse;
 
 class Rax
@@ -9,14 +10,17 @@ class Rax
     private $url;
     private $pin;
     private $mId;
+    private $proxyUrl;
+    private $httpClient;
 
-    public function __construct()
+    public function __construct(Client $client)
     {
         $base_url = config('topup.robi.url');
         $login = config('topup.robi.login_id');
         $password = config('topup.robi.password');
         $this->url = "$base_url?LOGIN=$login&PASSWORD=$password&REQUEST_GATEWAY_CODE=EXTGW&REQUEST_GATEWAY_TYPE=EXTGW&SERVICE_PORT=190&SOURCE_TYPE=EXTGW";
-
+        $this->proxyUrl = config('topup.robi.proxy_url');
+        $this->httpClient = $client;
     }
 
     public function setPin($pin)
@@ -72,6 +76,16 @@ class Rax
 
     private function call($input)
     {
+        $this->proxyUrl;
+
+        $result = $this->client->request('POST', $this->proxyUrl, [
+            'form_params' => [
+                'url' => $this->url,
+                'input' => $input
+            ]
+        ]);
+        dd($result->getBody());
+
         $ch = curl_init();
         dd($input);
         curl_setopt($ch, CURLOPT_URL, $this->url);
