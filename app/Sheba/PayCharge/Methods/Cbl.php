@@ -78,7 +78,7 @@ class Cbl implements PayChargeMethod
         }
         $res = json_decode(json_encode($xml->Response));
         $res->transaction_id = $payment->transaction_id;
-        return;
+        return $res;
     }
 
     public function formatTransactionData($method_response)
