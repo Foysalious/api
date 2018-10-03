@@ -73,7 +73,6 @@ class Rax
     private function call($input)
     {
         $ch = curl_init();
-        dd($input);
         curl_setopt($ch, CURLOPT_URL, $this->url);
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: text/xml', 'Connection: close']);
         curl_setopt($ch, CURLOPT_POSTFIELDS, "xmlRequest=$input");

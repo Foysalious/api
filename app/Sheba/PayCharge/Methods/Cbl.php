@@ -38,9 +38,10 @@ class Cbl implements PayChargeMethod
     {
         $response = $this->postQW($this->makeOrderCreateData($pay_chargable));
 
-        $order_id = $response->Response->Order->OrderID;
-        $session_id = $response->Response->Order->SessionID;
-        $url = $response->Response->Order->URL;
+        $order_id = reset($response->Response->Order->OrderID);
+        $session_id = reset($response->Response->Order->SessionID);
+        $url = reset($response->Response->Order->URL);
+
 
         if (!$order_id || !$session_id) return null;
 
@@ -51,7 +52,7 @@ class Cbl implements PayChargeMethod
             'id' => $pay_chargable->id,
             'type' => $pay_chargable->type,
             'pay_chargable' => serialize($pay_chargable),
-            'link' => $url . "?ORDERID=" . $order_id. "&SESSIONID=" . $session_id . "",
+            'link' => $url . "?ORDERID=" . $order_id . "&SESSIONID=" . $session_id . "",
             'method_info' => $response,
             'order_id' => $order_id,
             'session_id' => $session_id
@@ -69,7 +70,7 @@ class Cbl implements PayChargeMethod
      */
     public function validate($payment)
     {
-        $xml= $this->postQW($this->makeOrderInfoData($payment));
+        $xml = $this->postQW($this->makeOrderInfoData($payment));
         $status = $xml->Response->Order->row->Orderstatus;
         if (!$status) {
             $this->message = 'Validation Failed. Response status is ' . $status;
@@ -77,7 +78,7 @@ class Cbl implements PayChargeMethod
         }
         $res = json_decode(json_encode($xml->Response));
         $res->transaction_id = $payment->transaction_id;
-        return ;
+        return;
     }
 
     public function formatTransactionData($method_response)
@@ -104,36 +105,36 @@ class Cbl implements PayChargeMethod
 
     private function makeOrderCreateData(PayChargable $pay_chargable)
     {
-        $data='<?xml version="1.0" encoding="UTF-8"?>';
-        $data.="<TKKPG>";
-        $data.="<Request>";
-        $data.="<Operation>CreateOrder</Operation>";
-        $data.="<Language>EN</Language>";
-        $data.="<Order>";
-        $data.="<OrderType>Purchase</OrderType>";
-        $data.="<Merchant>$this->merchantId</Merchant>";
-        $data.="<Amount>". $pay_chargable->amount * 100 ."</Amount>";
-        $data.="<Currency>050</Currency>";
-        $data.="<Description>blah blah blah</Description>";
-        $data.="<ApproveURL>".htmlentities($this->acceptUrl)."</ApproveURL>";
-        $data.="<CancelURL>".htmlentities($this->cancelUrl)."</CancelURL>";
-        $data.="<DeclineURL>".htmlentities($this->declineUrl)."</DeclineURL>";
-        $data.="</Order></Request></TKKPG>";
+        $data = '<?xml version="1.0" encoding="UTF-8"?>';
+        $data .= "<TKKPG>";
+        $data .= "<Request>";
+        $data .= "<Operation>CreateOrder</Operation>";
+        $data .= "<Language>EN</Language>";
+        $data .= "<Order>";
+        $data .= "<OrderType>Purchase</OrderType>";
+        $data .= "<Merchant>$this->merchantId</Merchant>";
+        $data .= "<Amount>" . $pay_chargable->amount * 100 . "</Amount>";
+        $data .= "<Currency>050</Currency>";
+        $data .= "<Description>blah blah blah</Description>";
+        $data .= "<ApproveURL>" . htmlentities($this->acceptUrl) . "</ApproveURL>";
+        $data .= "<CancelURL>" . htmlentities($this->cancelUrl) . "</CancelURL>";
+        $data .= "<DeclineURL>" . htmlentities($this->declineUrl) . "</DeclineURL>";
+        $data .= "</Order></Request></TKKPG>";
         return $data;
     }
 
     private function makeOrderInfoData($payment)
     {
-        $data =  '<?xml version="1.0" encoding="UTF-8"?>';
+        $data = '<?xml version="1.0" encoding="UTF-8"?>';
         $data .= "<TKKPG>";
         $data .= "<Request>";
         $data .= "<Operation>GetOrderInformation</Operation>";
         $data .= "<Language>EN</Language>";
         $data .= "<Order>";
         $data .= "<Merchant>$this->merchantId</Merchant>";
-        $data .= "<OrderID>".$payment->order_id."</OrderID>";
+        $data .= "<OrderID>" . $payment->order_id . "</OrderID>";
         $data .= "</Order>";
-        $data .= "<SessionID>".$payment->session_id."</SessionID>";
+        $data .= "<SessionID>" . $payment->session_id . "</SessionID>";
         $data .= "<ShowParams>true</ShowParams>";
         $data .= "<ShowOperations>false</ShowOperations>";
         $data .= "<ClassicView>true</ClassicView>";
@@ -146,7 +147,8 @@ class Cbl implements PayChargeMethod
      * @return \SimpleXMLElement
      * @throws \Exception
      */
-    private function postQW($data){
+    private function postQW($data)
+    {
         $path = '/Exec';
         $content = '';
 
@@ -154,14 +156,14 @@ class Cbl implements PayChargeMethod
         if (!$fp) throw new \Exception("$err_str ($err_no)");
 
         $headers = 'POST ' . $path . " HTTP/1.0\r\n";
-        $headers .= 'Host: '. $this->tunnelHost ."\r\n";
+        $headers .= 'Host: ' . $this->tunnelHost . "\r\n";
         $headers .= "Content-type: application/x-www-form-urlencoded\r\n";
         $headers .= 'Content-Length: ' . strlen($data) . "\r\n\r\n";
 
-        fwrite($fp, $headers.$data);
+        fwrite($fp, $headers . $data);
 
-        while ( !feof($fp) ){
-            $inStr= fgets($fp, 1024);
+        while (!feof($fp)) {
+            $inStr = fgets($fp, 1024);
             $content .= $inStr;
         }
         fclose($fp);
