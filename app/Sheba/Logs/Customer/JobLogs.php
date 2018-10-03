@@ -51,12 +51,12 @@ class JobLogs
                 [
                     'status' => 'expert_assigned',
                     'log' => 'An expert has been assigned to your order.',
-                    'user' => array(
+                    'user' => $resource ? array(
                         'name' => $resource->profile->name,
                         'picture' => $resource->profile->pro_pic,
                         'mobile' => $resource->profile->mobile,
                         'type' => 'resource',
-                    )
+                    ) : null
                 ]
             );
         }
