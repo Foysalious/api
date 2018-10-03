@@ -82,9 +82,12 @@ class PartnerSubscriptionController extends Controller
                     ]);
                     PartnerSubscriptionUpdateRequest::create($update_request_data);
 
-                    return api_response($request, 1, 200, ['message' => "Subscription Update Request Created Successfully"]);
+                    return api_response($request, 1, 200, ['message' => "আপনার সাবস্ক্রিপশন রিকোয়েস্ট টি সফল ভাবে গৃহীত হয়েছে"]);
                 }
-                return api_response($request, null, 403, ['message' => "You already have a pending request"]);
+                $partner_package = $partner->subscription;
+                $requested_package = PartnerSubscriptionPackage::find($request->package_id);
+
+                return api_response($request, null, 403, ['message' => "আপনি অলরেডি $partner_package->show_name_bn প্যাকেজে আছেন,$requested_package->show_name_bn প্যাকেজে যেতে অনুগ্রহ করে সেবার সাথে যোগাযোগ করুন"]);
             } elseif (((int)$request->package_id == (int)$partner->package_id) && $request->billing_type == $partner->billing_type) {
                 return api_response($request, null, 403, ['message' => "You can't select the same package"]);
             } else {
