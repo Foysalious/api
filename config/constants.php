@@ -402,5 +402,10 @@ return [
     'REWARD_CONSTRAINTS' => [
         'category' => 'App\Models\Category',
         'partner_package' => 'App\Models\PartnerSubscriptionPackage'
+    ],
+    'PARTNER_PACKAGE_UPDATE_STATUSES' => [
+        'Pending' => 'Pending',
+        'Approved' => 'Approved',
+        'Rejected' => 'Rejected'
     ]
 ];

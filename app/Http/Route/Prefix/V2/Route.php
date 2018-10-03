@@ -43,6 +43,13 @@ class Route
                     $api->post('cancel', 'SslController@validatePaycharge');
                 });
             });
+            $api->group(['prefix' => 'payments'], function ($api) {
+                $api->group(['prefix' => 'cbl'], function ($api) {
+                    $api->post('success', 'CblController@validateCblPGR');
+                    $api->post('fail', 'CblController@validateCblPGR');
+                    $api->post('cancel', 'CblController@validateCblPGR');
+                });
+            });
             $api->group(['prefix' => 'login'], function ($api) {
                 $api->post('gmail', 'Auth\GoogleController@login');
             });
@@ -176,12 +183,6 @@ class Route
             });
             $api->get('updates', 'UpdateController@getUpdates');
 
-
-            $api->group(['prefix' => 'payment/cbl'], function ($api) {
-                $api->post('approved', 'CblController@validateCblPGR');
-                $api->post('declined', 'CblController@validateCblPGR');
-                $api->post('cancelled', 'CblController@validateCblPGR');
-            });
         });
         return $api;
     }

@@ -336,4 +336,14 @@ class Partner extends Model implements Rewardable
     {
         return $this->subscriber()->canCreateResource($types);
     }
+
+    public function subscriptionUpdateRequest()
+    {
+        return $this->hasMany(PartnerSubscriptionUpdateRequest::class);
+    }
+
+    public function canRequestForSubscriptionUpdate()
+    {
+        return !(PartnerSubscriptionUpdateRequest::status(constants('PARTNER_PACKAGE_UPDATE_STATUSES')['Pending'])->partner($this->id)->count());
+    }
 }
