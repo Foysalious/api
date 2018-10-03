@@ -298,7 +298,9 @@ class Partner extends Model implements Rewardable
     public function subscribe($package, $billing_type)
     {
         $package = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->partner->subscription;
-        $this->subscriber()->getPackage($package)->subscribe($billing_type);
+        $discount = $package->runningDiscount($billing_type);
+        $discount_id = $discount ? $discount->id : null;
+        $this->subscriber()->getPackage($package)->subscribe($billing_type, $discount_id);
     }
 
     public function subscriptionUpgrade($package, $billing_type = null)
