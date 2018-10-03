@@ -6,9 +6,12 @@ use App\Models\PartnerSubscriptionUpdateRequest;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
+use Sheba\ModificationFields;
 
 class PartnerSubscriptionController extends Controller
 {
+    use ModificationFields;
+
     public function index($partner, Request $request)
     {
         try {
@@ -68,13 +71,17 @@ class PartnerSubscriptionController extends Controller
                 ((int)$request->package_id == (int)$partner->package_id && $request->billing_type != $partner->billing_type && $partner->billing_type == 'monthly')) {
 
                 if ($partner->canRequestForSubscriptionUpdate()) {
-                    PartnerSubscriptionUpdateRequest::create([
+
+                    $this->setModifier($request->manager_resource);
+                    $update_request_data = $this->withCreateModificationField([
                         'partner_id' => $partner->id,
                         'old_package_id' => $partner->package_id,
                         'new_package_id' => $request->package_id,
                         'old_billing_type' => $partner->billing_type,
                         'new_billing_type' => $request->billing_type
                     ]);
+                    PartnerSubscriptionUpdateRequest::create($update_request_data);
+
                     return api_response($request, 1, 200, ['message' => "Subscription Update Request Created Successfully"]);
                 }
                 return api_response($request, null, 403, ['message' => "You already have a pending request"]);
