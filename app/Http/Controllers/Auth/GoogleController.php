@@ -49,13 +49,13 @@ class GoogleController extends Controller
                 }
             }
             return api_response($request, null, 403);
-        } catch (ValidationException $e) {
+        } catch ( ValidationException $e ) {
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);
             $sentry->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -88,13 +88,13 @@ class GoogleController extends Controller
                 return $info ? api_response($request, $info, 200, ['info' => $info]) : api_response($request, null, 404);
             }
             return api_response($request, null, 403, ['message' => 'Authentication failed. Please try again.']);
-        } catch (ValidationException $e) {
+        } catch ( ValidationException $e ) {
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);
             $sentry->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -106,7 +106,7 @@ class GoogleController extends Controller
         try {
             $payload = $client->verifyIdToken($id_token);
             return $payload ? $payload : null;
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             return null;
         }
     }
@@ -116,6 +116,7 @@ class GoogleController extends Controller
         return array(
             'google_id' => $payload['sub'],
             'email' => $payload['email'],
+            'pro_pic' => $payload['picture'],
             'email_verified' => $payload['email_verified'] ? 1 : 0,
         );
     }
