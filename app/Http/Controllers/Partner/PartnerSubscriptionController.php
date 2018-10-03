@@ -2,6 +2,7 @@
 
 use App\Models\Partner;
 use App\Models\PartnerSubscriptionPackage;
+use App\Models\PartnerSubscriptionUpdateRequest;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
@@ -65,12 +66,18 @@ class PartnerSubscriptionController extends Controller
             ]);
             if (((int)$request->package_id > (int)$partner->package_id) ||
                 ((int)$request->package_id == (int)$partner->package_id && $request->billing_type != $partner->billing_type && $partner->billing_type == 'monthly')) {
-                if ($partner->billing_start_date && $partner->last_billed_date) {
-                    $partner->subscriptionUpgrade((int)$request->package_id, $request->billing_type);
-                } else {
-                    $partner->subscribe((int)$request->package_id, $request->billing_type);
+
+                if ($partner->canRequestForSubscriptionUpdate()) {
+                    PartnerSubscriptionUpdateRequest::create([
+                        'partner_id' => $partner->id,
+                        'old_package_id' => $partner->package_id,
+                        'new_package_id' => $request->package_id,
+                        'old_billing_type' => $partner->billing_type,
+                        'new_billing_type' => $request->billing_type
+                    ]);
+                    return api_response($request, 1, 200, ['message' => "Subscription Update Request Created Successfully"]);
                 }
-                return api_response($request, 1, 200);
+                return api_response($request, null, 403, ['message' => "You already have a pending request"]);
             } elseif (((int)$request->package_id == (int)$partner->package_id) && $request->billing_type == $partner->billing_type) {
                 return api_response($request, null, 403, ['message' => "You can't select the same package"]);
             } else {
