@@ -76,17 +76,16 @@ class Rax
 
     private function call($input)
     {
-        $this->proxyUrl;
-
-        $result = $this->client->request('POST', $this->proxyUrl, [
+        $result = $this->httpClient->request('POST', $this->proxyUrl, [
             'form_params' => [
                 'url' => $this->url,
                 'input' => $input
             ]
         ]);
-        dd($result->getBody());
 
-        $ch = curl_init();
+        return simplexml_load_string($result->getBody()->getContents());
+        
+        /*$ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $this->url);
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: text/xml', 'Connection: close']);
         curl_setopt($ch, CURLOPT_POSTFIELDS, "xmlRequest=$input");
@@ -95,7 +94,7 @@ class Rax
         $data = curl_exec($ch);
         $err = curl_error($ch);
         curl_close($ch);
-        return simplexml_load_string($data);
+        return simplexml_load_string($data);*/
     }
 
     private function calculateTypeParams($type)
