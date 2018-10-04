@@ -2,6 +2,7 @@
 
 return [
     'robi' =>  [
+        'proxy_url' => env('ROBI_PROXY_URL', 'http://proxy.dev-sheba.xyz/robi.php'),
         'url' => env('ROBI_TOPUP_URL', 'http://202.134.12.103:9898/pretups/C2SReceiver'),
         'login_id' => env('ROBI_TOPUP_LOGIN', 'pretups'),
         'password' => env('ROBI_TOPUP_PASSWORD', 'pretups123'),

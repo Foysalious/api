@@ -38,8 +38,23 @@ class PartnerSubscriptionPackage extends Model implements SubscriptionPackage
         if ($running_discount = $this->runningDiscount($billing_type)) {
             if (in_array($billing_cycle, json_decode($running_discount->applicable_billing_cycles))) {
                 if ($running_discount->is_percentage) return $this->originalPrice($billing_type) * $running_discount->amount;
-                else $running_discount->amount;
+                else return $running_discount->amount;
             }
+        } else {
+            return 0;
+        }
+    }
+
+    public function discountPriceFor($discount_id)
+    {
+        $this->load(['discounts' => function ($query) use ($discount_id){
+            return $query->where('id', $discount_id);
+        }]);
+
+        $discount = $this->discounts? $this->discounts->first() : null;
+        if ($discount) {
+            if ($discount->is_percentage) return $this->originalPrice($discount->billing_type) * $discount->amount;
+            else return $discount->amount;
         } else {
             return 0;
         }

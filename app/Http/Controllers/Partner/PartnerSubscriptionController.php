@@ -70,22 +70,24 @@ class PartnerSubscriptionController extends Controller
             if (((int)$request->package_id > (int)$partner->package_id) ||
                 ((int)$request->package_id == (int)$partner->package_id && $request->billing_type != $partner->billing_type && $partner->billing_type == 'monthly')) {
 
+                $requested_package = PartnerSubscriptionPackage::find($request->package_id);
                 if ($partner->canRequestForSubscriptionUpdate()) {
 
+                    $running_discount = $requested_package->runningDiscount($request->billing_type);
                     $this->setModifier($request->manager_resource);
                     $update_request_data = $this->withCreateModificationField([
                         'partner_id' => $partner->id,
                         'old_package_id' => $partner->package_id,
                         'new_package_id' => $request->package_id,
                         'old_billing_type' => $partner->billing_type,
-                        'new_billing_type' => $request->billing_type
+                        'new_billing_type' => $request->billing_type,
+                        'discount_id' => $running_discount ? $running_discount->id : null
                     ]);
                     PartnerSubscriptionUpdateRequest::create($update_request_data);
 
                     return api_response($request, 1, 200, ['message' => "আপনার সাবস্ক্রিপশন রিকোয়েস্টটি সফল ভাবে গৃহীত হয়েছে"]);
                 }
                 $partner_package = $partner->subscription;
-                $requested_package = PartnerSubscriptionPackage::find($request->package_id);
 
                 return api_response($request, null, 403, ['message' => "আপনি অলরেডি $partner_package->show_name_bn প্যাকেজে আছেন,$requested_package->show_name_bn প্যাকেজে যেতে অনুগ্রহ করে সেবার সাথে যোগাযোগ করুন"]);
             } elseif (((int)$request->package_id == (int)$partner->package_id) && $request->billing_type == $partner->billing_type) {

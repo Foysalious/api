@@ -17,11 +17,7 @@ class PeriodicBillingHandler
     public function run()
     {
         if ($this->hasBillingCycleEnded()) {
-            if ($this->partner->requested_billing_type) {
-                $this->partner->subscriptionUpgrade($this->partner->subscription);
-            } else {
-                $this->partner->runSubscriptionBilling();
-            }
+            $this->partner->runSubscriptionBilling();
         };
     }
 
