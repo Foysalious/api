@@ -73,7 +73,7 @@ class PartnerSubscriptionController extends Controller
                 $requested_package = PartnerSubscriptionPackage::find($request->package_id);
                 if (!$partner->last_billed_date) {
                     $partner->subscribe($requested_package, $request->billing_type);
-                    return api_response($request, 1, 200, ['message' => "You've successfully update to $requested_package->show_name"]);
+                    return api_response($request, 1, 200, ['message' => "আপনি সফল ভাবে $requested_package->show_name_bn প্যাকেজে সাবস্ক্রাইব করেছেন"]);
                 }
                 if ($partner->canRequestForSubscriptionUpdate() && $partner->last_billed_date) {
 
@@ -91,9 +91,8 @@ class PartnerSubscriptionController extends Controller
 
                     return api_response($request, 1, 200, ['message' => "আপনার সাবস্ক্রিপশন রিকোয়েস্টটি সফল ভাবে গৃহীত হয়েছে"]);
                 }
-                $partner_package = $partner->subscription;
-
-                return api_response($request, null, 403, ['message' => "আপনি অলরেডি $partner_package->show_name_bn প্যাকেজে আছেন,$requested_package->show_name_bn প্যাকেজে যেতে অনুগ্রহ করে সেবার সাথে যোগাযোগ করুন"]);
+                $last_update_request = $partner->lastSubscriptionUpdateRequest();
+                return api_response($request, null, 403, ['message' => "আপনি অলরেডি $last_update_request->show_name_bn প্যাকেজে রিকোয়েস্ট করেছেন, অনুগ্রহ করে ভেরিফাই হওয়ার জন্য অপেক্ষা করুন।"]);
             } elseif (((int)$request->package_id == (int)$partner->package_id) && $request->billing_type == $partner->billing_type) {
                 $partner_package = $partner->subscription;
                 return api_response($request, null, 403, ['message' => "আপনি অলরেডি $partner_package->show_name_bn প্যাকেজে আছেন"]);
