@@ -22,6 +22,7 @@ class Cors2MiddleWare
             "http://localhost:8081",
             "http://localhost:8082",
             "http://localhost:8083",
+            "http://localhost:8084",
             "http://103.26.139.148",
             "http://144.76.92.216",
             "https://developer.sslcommerz.com",
