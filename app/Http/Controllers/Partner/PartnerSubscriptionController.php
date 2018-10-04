@@ -91,8 +91,8 @@ class PartnerSubscriptionController extends Controller
 
                     return api_response($request, 1, 200, ['message' => "আপনার সাবস্ক্রিপশন রিকোয়েস্টটি সফল ভাবে গৃহীত হয়েছে"]);
                 }
-                $last_update_request = $partner->lastSubscriptionUpdateRequest();
-                return api_response($request, null, 403, ['message' => "আপনি অলরেডি $last_update_request->show_name_bn প্যাকেজে রিকোয়েস্ট করেছেন, অনুগ্রহ করে ভেরিফাই হওয়ার জন্য অপেক্ষা করুন।"]);
+                $last_requested_package = $partner->lastSubscriptionUpdateRequest()->newPackage->show_name_bn;
+                return api_response($request, null, 403, ['message' => "আপনি অলরেডি $last_requested_package প্যাকেজে রিকোয়েস্ট করেছেন, অনুগ্রহ করে ভেরিফাই হওয়ার জন্য অপেক্ষা করুন।"]);
             } elseif (((int)$request->package_id == (int)$partner->package_id) && $request->billing_type == $partner->billing_type) {
                 $partner_package = $partner->subscription;
                 return api_response($request, null, 403, ['message' => "আপনি অলরেডি $partner_package->show_name_bn প্যাকেজে আছেন"]);

@@ -351,6 +351,6 @@ class Partner extends Model implements Rewardable
 
     public function lastSubscriptionUpdateRequest()
     {
-        return PartnerSubscriptionUpdateRequest::status(constants('PARTNER_PACKAGE_UPDATE_STATUSES')['Pending'])->partner($this->id)->last();
+        return PartnerSubscriptionUpdateRequest::status(constants('PARTNER_PACKAGE_UPDATE_STATUSES')['Pending'])->partner($this->id)->get()->last();
     }
 }
