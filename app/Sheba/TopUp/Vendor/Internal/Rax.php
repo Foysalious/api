@@ -2,6 +2,7 @@
 
 namespace Sheba\TopUp\Vendor\Internal;
 
+use GuzzleHttp\Client;
 use Sheba\TopUp\TopUpResponse;
 
 class Rax
@@ -9,14 +10,17 @@ class Rax
     private $url;
     private $pin;
     private $mId;
+    private $proxyUrl;
+    private $httpClient;
 
-    public function __construct()
+    public function __construct(Client $client)
     {
         $base_url = config('topup.robi.url');
         $login = config('topup.robi.login_id');
         $password = config('topup.robi.password');
         $this->url = "$base_url?LOGIN=$login&PASSWORD=$password&REQUEST_GATEWAY_CODE=EXTGW&REQUEST_GATEWAY_TYPE=EXTGW&SERVICE_PORT=190&SOURCE_TYPE=EXTGW";
-
+        $this->proxyUrl = config('topup.robi.proxy_url');
+        $this->httpClient = $client;
     }
 
     public function setPin($pin)
@@ -72,8 +76,16 @@ class Rax
 
     private function call($input)
     {
-        $ch = curl_init();
-        dd($input);
+        $result = $this->httpClient->request('POST', $this->proxyUrl, [
+            'form_params' => [
+                'url' => $this->url,
+                'input' => $input
+            ]
+        ]);
+
+        return simplexml_load_string($result->getBody()->getContents());
+        
+        /*$ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $this->url);
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: text/xml', 'Connection: close']);
         curl_setopt($ch, CURLOPT_POSTFIELDS, "xmlRequest=$input");
@@ -82,7 +94,7 @@ class Rax
         $data = curl_exec($ch);
         $err = curl_error($ch);
         curl_close($ch);
-        return simplexml_load_string($data);
+        return simplexml_load_string($data);*/
     }
 
     private function calculateTypeParams($type)

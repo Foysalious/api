@@ -34,7 +34,7 @@ class TopUp
 
     public function recharge($mobile_number, $amount, $type)
     {
-        $mobile_number = formatMobile($mobile_number);
+        //$mobile_number = formatMobile($mobile_number);
         $response = $this->vendor->recharge($mobile_number, $amount, $type);
         DB::transaction(function () use ($response, $mobile_number, $amount) {
             $this->placeTopUpOrder($response, $mobile_number, $amount);
