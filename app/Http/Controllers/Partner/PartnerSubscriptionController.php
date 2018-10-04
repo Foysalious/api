@@ -71,7 +71,11 @@ class PartnerSubscriptionController extends Controller
                 ((int)$request->package_id == (int)$partner->package_id && $request->billing_type != $partner->billing_type && $partner->billing_type == 'monthly')) {
 
                 $requested_package = PartnerSubscriptionPackage::find($request->package_id);
-                if ($partner->canRequestForSubscriptionUpdate()) {
+                if (!$partner->last_billed_date) {
+                    $partner->subscribe($requested_package, $request->billing_type);
+                    return api_response($request, 1, 200, ['message' => "You've successfully update to $requested_package->show_name"]);
+                }
+                if ($partner->canRequestForSubscriptionUpdate() && $partner->last_billed_date) {
 
                     $running_discount = $requested_package->runningDiscount($request->billing_type);
                     $this->setModifier($request->manager_resource);

@@ -23,10 +23,20 @@ class PartnerPackage implements Package
         $this->partner->billing_type = $billing_type;
         $this->partner->discount_id = $discount_id;
         $this->partner->update();
+
+        $this->upgradeCommission($this->package->commission);
     }
 
     public function unsubscribe()
     {
 
+    }
+
+    public function upgradeCommission($commission)
+    {
+        foreach ($this->partner->categories as $category) {
+            $category->pivot->commission = $commission;
+            $category->pivot->update();
+        }
     }
 }
