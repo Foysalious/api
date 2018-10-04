@@ -38,13 +38,15 @@ class PartnerSubscriptionBilling
         $this->billingDatabaseTransactions($package_price);
     }
 
-    public function runUpgradeBilling(PartnerSubscriptionPackage $old_package, PartnerSubscriptionPackage $new_package, $old_billing_type, $new_billing_type)
+    public function runUpgradeBilling(PartnerSubscriptionPackage $old_package, PartnerSubscriptionPackage $new_package, $old_billing_type, $new_billing_type, $discount_id)
     {
         $dayDiff = $this->partner->last_billed_date->diffInDays($this->today) + 1;
         $used_credit = $old_package->originalPricePerDay($old_billing_type) * $dayDiff;
         $remaining_credit = $this->partner->last_billed_amount - $used_credit;
         $remaining_credit = $remaining_credit < 0 ? 0 : $remaining_credit;
-        $package_price = ($new_package->originalPrice($new_billing_type) - $new_package->discountPrice($new_billing_type)) - $remaining_credit;
+        $discount = 0;
+        if ($discount_id) $discount = $new_package->discountPriceFor($discount_id);
+        $package_price = ($new_package->originalPrice($new_billing_type) - $discount) - $remaining_credit;
         if ($package_price < 0) {
             $this->refundRemainingCredit(abs($package_price));
             $package_price = 0;

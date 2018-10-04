@@ -45,6 +45,21 @@ class PartnerSubscriptionPackage extends Model implements SubscriptionPackage
         }
     }
 
+    public function discountPriceFor($discount_id)
+    {
+        $this->load(['discounts' => function ($query) use ($discount_id){
+            return $query->where('id', $discount_id);
+        }]);
+
+        $discount = $this->discounts? $this->discounts->first() : null;
+        if ($discount) {
+            if ($discount->is_percentage) return $this->originalPrice($discount->billing_type) * $discount->amount;
+            else return $discount->amount;
+        } else {
+            return 0;
+        }
+    }
+
     public function originalPricePerDay($billing_type = 'monthly')
     {
         $day = $billing_type == 'monthly' ? 30 : 365;
