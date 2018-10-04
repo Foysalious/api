@@ -8,6 +8,7 @@ use App\Models\PartnerWorkingHour;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use DB;
+use Sheba\Partner\StatusChanger;
 
 class OperationController extends Controller
 {
@@ -79,6 +80,11 @@ class OperationController extends Controller
                             'end_time'   => $working_schedule->end_time
                         ]));
                     }
+                }
+
+                $status_changer = new StatusChanger($partner, ['status' => constants('PARTNER_STATUSES')['Waiting']]);
+                if (isPartnerReadyToVerified($partner)) {
+                    $status_changer->change();
                 }
             });
 

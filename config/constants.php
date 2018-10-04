@@ -3,7 +3,26 @@
 return [
     'HOTLINE' => '09639 - 444 000',
     'SERVICE_VARIABLE_TYPES' => ['Fixed' => 'Fixed', 'Options' => 'Options', 'Custom' => 'Custom'],
-    'PARTNER_STATUSES' => ['Verified' => 'Verified', 'Unverified' => 'Unverified', 'Paused' => 'Paused'],
+    'PARTNER_STATUSES' => [
+        'Verified'      => 'Verified',
+        'Unverified'    => 'Unverified',
+        'Paused'        => 'Paused',
+        'Closed'        => 'Closed',
+        'Blacklisted'   => 'Blacklisted',
+        'Waiting'       => 'Waiting',
+        'Onboarded'     => 'Onboarded',
+        'Rejected'      => 'Rejected'
+    ],
+    'PARTNER_STATUSES_SHOW' => [
+        'Verified'      => ['sheba' => 'Verified', 'partner' => 'Verified', 'customer' => 'Verified'],
+        'Unverified'    => ['sheba' => 'Inactive', 'partner' => 'Inactive', 'customer' => 'Inactive'],
+        'Paused'        => ['sheba' => 'Blocked', 'partner' => 'Blocked', 'customer' => 'Blocked'],
+        'Closed'        => ['sheba' => 'Closed', 'partner' => 'Closed', 'customer' => 'Closed'],
+        'Blacklisted'   => ['sheba' => 'Blacklisted', 'partner' => 'Blacklisted', 'customer' => 'Blacklisted'],
+        'Waiting'       => ['sheba' => 'Ready to verified', 'partner' => 'Ready to verified', 'customer' => 'Ready to verified'],
+        'Onboarded'     => ['sheba' => 'Onboarded', 'partner' => 'Onboarded', 'customer' => 'Onboarded'],
+        'Rejected'      => ['sheba' => 'Rejected', 'partner' => 'Rejected', 'customer' => 'Rejected']
+    ],
     'PARTNER_LEVELS' => ['Starter', 'Intermediate', 'Advanced'],
     'PARTNER_TYPES' => ['USP', 'NSP', 'ESP'],
     'RESOURCE_TYPES' => ['Admin' => 'Admin', 'Operation' => 'Operation', 'Finance' => 'Finance', 'Handyman' => 'Handyman'],

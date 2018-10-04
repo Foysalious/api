@@ -50,7 +50,8 @@
       "app/Helper/helper_functions.php",
       "app/Sheba/Pap/PapApi.class.php",
       "app/Sheba/ResourceScheduler/functions.php",
-      "app/Sheba/FileManagers/functions.php"
+      "app/Sheba/FileManagers/functions.php",
+      "app/Sheba/Partner/functions.php"
     ],
     "psr-4": {
       "App\\": "app/",

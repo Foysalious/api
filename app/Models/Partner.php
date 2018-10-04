@@ -353,4 +353,14 @@ class Partner extends Model implements Rewardable
     {
         return PartnerSubscriptionUpdateRequest::status(constants('PARTNER_PACKAGE_UPDATE_STATUSES')['Pending'])->partner($this->id)->get()->last();
     }
+
+    public function isFirstTimeVerified()
+    {
+        return $this->statusChangeLogs()->where('to', constants('PARTNER_STATUSES')['Verified'])->count() == 0;
+    }
+
+    public function statusChangeLogs()
+    {
+        return $this->hasMany(PartnerStatusChangeLog::class);
+    }
 }
