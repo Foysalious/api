@@ -116,6 +116,11 @@ class OperationController extends Controller
                     $partner_resource->categories()->sync($category_ids);
                 });
                 $partner->services()->sync($services);
+
+                $status_changer = new StatusChanger($partner, ['status' => constants('PARTNER_STATUSES')['Waiting']]);
+                if (isPartnerReadyToVerified($partner)) {
+                    $status_changer->change();
+                }
             });
             return api_response($request, $partner, 200);
         } catch (ValidationException $e) {
