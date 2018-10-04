@@ -16,6 +16,7 @@ use Illuminate\Validation\ValidationException;
 use Intervention\Image\Facades\Image;
 use DB;
 use Sheba\ModificationFields;
+use Sheba\Partner\StatusChanger;
 use Sheba\Resource\PartnerResourceCreator;
 
 class PersonalInformationController extends Controller
@@ -139,6 +140,12 @@ class PersonalInformationController extends Controller
                 }
             }
             $resource = $this->updateInformation($request, $profile, $resource);
+
+            $status_changer = new StatusChanger($request->partner, ['status' => constants('PARTNER_STATUSES')['Waiting']]);
+            if (isPartnerReadyToVerified($request->partner)) {
+                $status_changer->change();
+            }
+
             return api_response($request, $resource, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
