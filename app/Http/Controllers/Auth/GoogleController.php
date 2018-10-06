@@ -34,7 +34,7 @@ class GoogleController extends Controller
                 $profile_info = $this->extractProfileInformationFromPayload($payload);
                 if ($profile = $this->profileRepository->getIfExist($profile_info['email'], 'email')) {
                     $profile = $this->profileRepository->updateIfNull($profile, $profile_info);
-                    if (basename($profile->pro_pic) == 'default.jpg') {
+                    if ($profile_info['pro_pic'] && basename($profile->pro_pic) == 'default.jpg') {
                         $profile->pro_pic = $this->profileRepository->uploadImage($profile, $profile_info['pro_pic'], 'images/profiles/');
                         $profile->update();
                     }
@@ -116,7 +116,7 @@ class GoogleController extends Controller
         return array(
             'google_id' => $payload['sub'],
             'email' => $payload['email'],
-            'pro_pic' => $payload['picture'],
+            'pro_pic' => isset($payload['picture']) ? $payload['picture'] : null,
             'email_verified' => $payload['email_verified'] ? 1 : 0,
         );
     }

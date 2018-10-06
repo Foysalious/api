@@ -44,7 +44,7 @@ class PersonalInformationController extends Controller
                 'nid_image' => $resource->nid_image,
             );
             return api_response($request, $info, 200, ['info' => $info]);
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -103,13 +103,13 @@ class PersonalInformationController extends Controller
 
                 return api_response($request, 1, 200);
             }
-        } catch (ValidationException $e) {
+        } catch ( ValidationException $e ) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -153,13 +153,13 @@ class PersonalInformationController extends Controller
             }
 
             return api_response($request, $resource, 200);
-        } catch (ValidationException $e) {
+        } catch ( ValidationException $e ) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -167,11 +167,15 @@ class PersonalInformationController extends Controller
 
     private function mergeFrontAndBackNID($front, $back)
     {
+        $weight = 227;
+        $height = 155;
         $img1 = Image::make($front);
         $img2 = Image::make($back);
-        $canvas = Image::canvas($img1->width() + $img2->width(), max($img1->height(), $img2->height()));
-        $canvas->insert($img1, 'top-left');
-        $canvas->insert($img2, 'top-right');
+        $img1->resize($weight, $height);
+        $img2->resize($weight, $height);
+        $canvas = Image::canvas(251, 359, '#FCFEFF');
+        $canvas->insert($img1, 'top', 12, 17);
+        $canvas->insert($img2, 'top', 12, 34 + $height);
         $canvas->encode('png');
         return $canvas;
     }
