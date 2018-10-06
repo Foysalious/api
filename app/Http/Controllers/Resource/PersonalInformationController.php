@@ -76,6 +76,12 @@ class PersonalInformationController extends Controller
                     return api_response($request, 1, 400, ['message' => $error['msg']]);
                 }
                 $partnerResourceCreator->create();
+
+                if (isPartnerReadyToVerified($partner)) {
+                    $status_changer = new StatusChanger($partner, ['status' => constants('PARTNER_STATUSES')['Waiting']]);
+                    $status_changer->change();
+                }
+
                 return api_response($request, 1, 200);
             } else {
                 $partnerResourceCreator->setPartner($partner);
