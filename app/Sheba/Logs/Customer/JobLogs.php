@@ -47,18 +47,19 @@ class JobLogs
             array_push($logs, [
                 'status' => 'order_confirmed',
                 'log' => 'Order has been confirmed.',
-            ],
-                [
+            ]);
+            if ($resource) {
+                array_push($logs, [
                     'status' => 'expert_assigned',
                     'log' => 'An expert has been assigned to your order.',
-                    'user' => $resource ? array(
+                    'user' => array(
                         'name' => $resource->profile->name,
                         'picture' => $resource->profile->pro_pic,
                         'mobile' => $resource->profile->mobile,
                         'type' => 'resource',
-                    ) : null
-                ]
-            );
+                    )
+                ]);
+            }
         }
         if ($work_log = $this->formatWorkLog()) array_push($logs, $work_log);
         if ($message_log = $this->getOrderMessage()) array_push($logs, $message_log);
@@ -116,7 +117,7 @@ class JobLogs
         } elseif ($job_status == constants('JOB_STATUSES')['Schedule_Due']) {
             return array(
                 'status' => 'message',
-                'log' => 'Your order is supposed to be started by now. Please call the expert. For any kind of help call 16516.',
+                'log' => 'Your order is supposed to be started by now. Please call the ' . ($this->job->resource ? 'expert' : 'service provider') . '. For any kind of help call 16516.',
                 'type' => 'danger'
             );
         } elseif (in_array($job_status, [constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Serve_Due']])) {
