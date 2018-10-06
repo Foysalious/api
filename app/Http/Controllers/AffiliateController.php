@@ -3,12 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Affiliate;
+use App\Models\AffiliateTransaction;
 use App\Repositories\AffiliateRepository;
 use App\Repositories\FileRepository;
 use App\Repositories\LocationRepository;
-use App\Repositories\NotificationRepository;
 use Carbon\Carbon;
-use Exception;
 use Illuminate\Http\Request;
 use Validator;
 use DB;
@@ -55,7 +54,7 @@ class AffiliateController extends Controller
                 $affiliate->geolocation = $request->geolocation;
             }
             return $affiliate->update() ? response()->json(['code' => 200]) : response()->json(['code' => 404]);
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -66,7 +65,7 @@ class AffiliateController extends Controller
         try {
             $affiliate = Affiliate::where('id', $affiliate)->select('verification_status', 'is_suspended', 'ambassador_code', 'is_ambassador')->first();
             return $affiliate != null ? response()->json(['code' => 200, 'affiliate' => $affiliate]) : response()->json(['code' => 404, 'msg' => 'Not found!']);
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -84,7 +83,7 @@ class AffiliateController extends Controller
                 'last_updated' => Carbon::parse($affiliate->updated_at)->format('dS F,g:i A')
             ];
             return api_response($request, $info, 200, ['info' => $info]);
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -105,7 +104,7 @@ class AffiliateController extends Controller
             $filename = $profile->id . '_profile_image_' . Carbon::now()->timestamp . '.' . $photo->extension();
             $profile->pro_pic = $this->fileRepository->uploadToCDN($filename, $request->file('photo'), 'images/profiles/');
             return $profile->update() ? response()->json(['code' => 200, 'picture' => $profile->pro_pic]) : response()->json(['code' => 404]);
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -145,7 +144,7 @@ class AffiliateController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -179,7 +178,7 @@ class AffiliateController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -215,7 +214,7 @@ class AffiliateController extends Controller
                 }
             }
             return api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -233,7 +232,7 @@ class AffiliateController extends Controller
                 array_forget($profile, 'pro_pic');
                 return api_response($request, $profile, 200, ['info' => $profile]);
             }
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -243,35 +242,25 @@ class AffiliateController extends Controller
     {
         try {
             list($offset, $limit) = calculatePagination($request);
-            $affiliates = Affiliate::whereHas('transactions', function ($q) {
-                $q->where('type', 'Credit');
-            })->select('id', 'profile_id')->get();
-
-            $affiliates->load(['profile' => function ($q) {
-                $q->select('id', 'name', 'pro_pic');
-            }])->load(['affiliations' => function ($q) {
-                $q->where('status', 'successful');
-            }])->load(['transactions' => function ($q) {
-                $q->where('type', 'Credit');
-            }]);
-
-            foreach ($affiliates as $affiliate) {
-                $affiliate['earning_amount'] = $affiliate->transactions->sum('amount');
-                $affiliate['total_reference'] = $affiliate->affiliations->count();
-                $affiliate['name'] = $affiliate->profile->name;
-                $affiliate['picture'] = $affiliate->profile->pro_pic;
-                array_forget($affiliate, 'transactions');
-                array_forget($affiliate, 'affiliations');
-                array_forget($affiliate, 'profile');
-                array_forget($affiliate, 'profile_id');
+            $transactions = AffiliateTransaction::with(['affiliate' => function ($q) {
+                $q->with(['profile' => function ($q) {
+                    $q->select('id', 'name', 'pro_pic');
+                }, 'affiliations' => function ($q) {
+                    $q->selectRaw('count(*) as total_reference, affiliate_id')->where('status', 'successful')->groupBy('affiliate_id');
+                }]);
+            }])->selectRaw('sum(amount) as earning_amount, affiliate_id')
+                ->where('type', 'Credit')->groupBy('affiliate_id')->orderBy('earning_amount', 'desc')->skip($offset)->take($limit)->get();
+            $final = [];
+            foreach ($transactions as $transaction) {
+                $info['id'] = $transaction->affiliate->id;
+                $info['earning_amount'] = (double)$transaction->earning_amount;
+                $info['total_reference'] = $transaction->affiliate->affiliations->first()->total_reference;
+                $info['name'] = $transaction->affiliate->profile->name;
+                $info['picture'] = $transaction->affiliate->profile->pro_pic;
+                array_push($final, $info);
             }
-            $affiliates = $affiliates->sortByDesc('earning_amount')->splice($offset, $limit);
-            if (count($affiliates) != 0) {
-                return api_response($request, $affiliates, 200, ['affiliates' => $affiliates]);
-            } else {
-                return api_response($request, null, 404);
-            }
-        } catch (\Throwable $e) {
+            return count($final) != 0 ? api_response($request, $final, 200, ['affiliates' => $final]) : api_response($request, null, 404);
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -289,7 +278,7 @@ class AffiliateController extends Controller
             $info->put('earning_amount', $affiliate->agents->sum('total_gifted_amount'));
             $info->put('total_refer', $affiliate->agents->sum('total_gifted_number'));
             return api_response($request, $info, 200, ['info' => $info->all()]);
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -310,7 +299,7 @@ class AffiliateController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -331,7 +320,7 @@ class AffiliateController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
