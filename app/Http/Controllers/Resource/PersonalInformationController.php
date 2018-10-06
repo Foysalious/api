@@ -1,7 +1,4 @@
-<?php
-
-namespace App\Http\Controllers\Resource;
-
+<?php namespace App\Http\Controllers\Resource;
 
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
@@ -22,6 +19,7 @@ use Sheba\Resource\PartnerResourceCreator;
 class PersonalInformationController extends Controller
 {
     use ModificationFields;
+
     private $fileRepository;
 
     public function __construct()
@@ -96,8 +94,8 @@ class PersonalInformationController extends Controller
                 }
                 $partnerResourceCreator->create();
 
-                $status_changer = new StatusChanger($partner, ['status' => constants('PARTNER_STATUSES')['Waiting']]);
                 if (isPartnerReadyToVerified($partner)) {
+                    $status_changer = new StatusChanger($partner, ['status' => constants('PARTNER_STATUSES')['Waiting']]);
                     $status_changer->change();
                 }
 
@@ -114,7 +112,6 @@ class PersonalInformationController extends Controller
             return api_response($request, null, 500);
         }
     }
-
 
     public function update($resource, Request $request)
     {
@@ -203,5 +200,4 @@ class PersonalInformationController extends Controller
         $resource->update();
         return $resource;
     }
-
 }

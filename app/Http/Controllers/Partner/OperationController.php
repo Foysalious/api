@@ -82,8 +82,8 @@ class OperationController extends Controller
                     }
                 }
 
-                $status_changer = new StatusChanger($partner, ['status' => constants('PARTNER_STATUSES')['Waiting']]);
                 if (isPartnerReadyToVerified($partner)) {
+                    $status_changer = new StatusChanger($partner, ['status' => constants('PARTNER_STATUSES')['Waiting']]);
                     $status_changer->change();
                 }
             });
@@ -117,8 +117,8 @@ class OperationController extends Controller
                 });
                 $partner->services()->sync($services);
 
-                $status_changer = new StatusChanger($partner, ['status' => constants('PARTNER_STATUSES')['Waiting']]);
                 if (isPartnerReadyToVerified($partner)) {
+                    $status_changer = new StatusChanger($partner, ['status' => constants('PARTNER_STATUSES')['Waiting']]);
                     $status_changer->change();
                 }
             });
@@ -175,6 +175,4 @@ class OperationController extends Controller
         }
         return array($services, $category_partners);
     }
-
-
 }

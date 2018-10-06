@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use Sheba\ModificationFields;
+use Sheba\Partner\StatusChanger;
 
 class PartnerSubscriptionController extends Controller
 {
@@ -45,6 +46,12 @@ class PartnerSubscriptionController extends Controller
                 'billing_cycle' => 'required|string|in:monthly,yearly'
             ]);
             $request->partner->subscribe((int)$request->package_id, $request->billing_cycle);
+
+            if (isPartnerReadyToVerified($partner)) {
+                $status_changer = new StatusChanger($partner, ['status' => constants('PARTNER_STATUSES')['Waiting']]);
+                $status_changer->change();
+            }
+
             return api_response($request, null, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
