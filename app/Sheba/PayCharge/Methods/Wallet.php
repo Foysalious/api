@@ -17,12 +17,15 @@ class Wallet implements PayChargeMethod
         $invoice = "SHEBA_WALLET_" . strtoupper($payChargable->type) . '_' . $payChargable->id . '_' . Carbon::now()->timestamp;
         $payment_info = array(
             'transaction_id' => $invoice,
-            'link' => '',
+            'id' => $payChargable->id,
+            'type' => $payChargable->type,
             'pay_chargable' => serialize($payChargable),
-            'method_info' => array('transaction_id' => $invoice)
+            'link' => '',
+            'method_info' => array('transaction_id' => $invoice),
         );
         Cache::store('redis')->put("paycharge::$invoice", json_encode($payment_info), Carbon::tomorrow());
         array_forget($payment_info, 'pay_chargable');
+        array_forget($payment_info, 'method_info');
         return $payment_info;
     }
 
@@ -38,7 +41,7 @@ class Wallet implements PayChargeMethod
             } else {
                 return null;
             }
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             return null;
         }
     }

@@ -53,13 +53,15 @@ class PayCharge
     public function isComplete(PayCharged $pay_charged)
     {
         if ($pay_charged->type == 'recharge') {
-            $transactions = $pay_charged->user->transactions;
+            $transactions = $pay_charged->user->transactions()->orderBy('id', 'desc')->get();
             foreach ($transactions as $transaction) {
                 if ($transaction->transaction_details) {
-                    $transaction_id = json_decode($transaction->transaction_details)->transaction_id;
-                    if ($transaction_id == $pay_charged->transactionId) {
-                        $pay_charged->amount = $transaction->amount;
-                        return $pay_charged;
+                    $details = json_decode($transaction->transaction_details);
+                    if ($details && isset($details->transaction_id)) {
+                        if ($details->transaction_id == $pay_charged->transactionId) {
+                            $pay_charged->amount = $transaction->amount;
+                            return $pay_charged;
+                        }
                     }
                 }
             }
