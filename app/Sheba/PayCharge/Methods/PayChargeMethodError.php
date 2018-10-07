@@ -3,7 +3,7 @@
 namespace Sheba\PayCharge\Methods;
 
 
-class MethodError
+class PayChargeMethodError
 {
 
     private $code;

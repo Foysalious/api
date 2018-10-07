@@ -10,5 +10,5 @@ interface PayChargeMethod
 
     public function formatTransactionData($method_response);
 
-    public function getError(): MethodError;
+    public function getError(): PayChargeMethodError;
 }
