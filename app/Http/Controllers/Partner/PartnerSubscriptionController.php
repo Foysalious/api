@@ -48,7 +48,7 @@ class PartnerSubscriptionController extends Controller
             $request->partner->subscribe((int)$request->package_id, $request->billing_cycle);
 
             if (isPartnerReadyToVerified($partner)) {
-                $status_changer = new StatusChanger($partner, ['status' => constants('PARTNER_STATUSES')['Waiting']]);
+                $status_changer = new StatusChanger($request->partner, ['status' => constants('PARTNER_STATUSES')['Waiting']]);
                 $status_changer->change();
             }
 
