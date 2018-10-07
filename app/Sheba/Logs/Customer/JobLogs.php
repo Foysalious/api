@@ -104,8 +104,8 @@ class JobLogs
             if (Carbon::now()->gte($thirty_min_before_scheduled_date_time)) {
                 return array(
                     'status' => 'message',
-                    'log' => 'Your order is supposed to be started within ' . humanReadableShebaTime($this->job->preferred_time_start) . '.' . ($this->job->resource ? 'Please call ' . $this->job->resource->profile->name . ' to confirm.' : ''),
-                    'type' => 'success'
+                    'log' => 'Your order is supposed to be started within ' . humanReadableShebaTime($this->job->preferred_time_end) . '.' . ($this->job->resource ? 'Please call ' . $this->job->resource->profile->name . ' to confirm.' : ''),
+                    'type' => 'danger'
                 );
             } else {
                 return array(
