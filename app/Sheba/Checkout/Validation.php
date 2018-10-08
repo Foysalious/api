@@ -37,18 +37,22 @@ class Validation
         if (!$location) {
             $this->message = "Selected location is not valid";
             return 0;
-        } elseif (!$this->isValidDate($this->request->date)) {
-            $this->message = "Selected date is not valid";
-            return 0;
-        } elseif (!$this->isValidTime($this->request->time)) {
-            $this->message = "Selected time is not valid";
-            return 0;
         } elseif (count($category_id) > 1) {
             $this->message = "You can select only one category";
             return 0;
         } elseif (in_array($category_id[0], $this->rentCarIds)) {
             if (count($selected_services) > 1) {
                 $this->message = "You can select only one service for rent a car";
+                return 0;
+            }
+        }
+
+        if (!$this->request->has('availability') || !$this->request->availability) {
+            if (!$this->isValidDate($this->request->date) || is_null($this->request->date)) {
+                $this->message = "Selected date is not valid";
+                return 0;
+            } elseif (!$this->isValidTime($this->request->time) || is_null($this->request->time)) {
+                $this->message = "Selected time is not valid";
                 return 0;
             }
         }

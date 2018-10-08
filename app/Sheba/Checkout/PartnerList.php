@@ -22,6 +22,7 @@ class PartnerList
     private $time;
     private $partnerServiceRepository;
     private $rentCarServicesId;
+    private $availability;
 
     public function __construct($services, $date, $time, $location)
     {
@@ -36,6 +37,13 @@ class PartnerList
         $time_elapsed_secs = microtime(true) - $start;
         //dump("add selected service info: " . $time_elapsed_secs * 1000);
         $this->partnerServiceRepository = new PartnerServiceRepository();
+        $this->availability = 0;
+    }
+
+    public function setAvailability($availability)
+    {
+        $this->availability = $availability;
+        return  $this;
     }
 
     private function getSelectedServices($services)
@@ -130,7 +138,7 @@ class PartnerList
         //dump("filter partner by option: " . $time_elapsed_secs * 1000);
 
         $start = microtime(true);
-        $this->addAvailability();
+        if ($this->availability != 1) $this->addAvailability();
         $time_elapsed_secs = microtime(true) - $start;
         //dump("filter partner by availability: " . $time_elapsed_secs * 1000);
         $this->calculateHasPartner();
