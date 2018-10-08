@@ -2,6 +2,8 @@
 
 
 Route::get('/', function () {
+    $partner=\App\Models\Partner::find(233);
+    dd($partner->resourcesInCategory(144)->pluck('id')->unique()->toArray());
     return ['code' => 200, 'message' => "Success. This project will hold the api's"];
 });
 $api = app('Dingo\Api\Routing\Router');
