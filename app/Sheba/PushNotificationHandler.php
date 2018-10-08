@@ -8,7 +8,7 @@ use LaravelFCM\Message\Topics;
 
 class PushNotificationHandler
 {
-    public function send($notification_data, $topic)
+    public function send($notification_data, $topic, $channel = null, $sound = 'default')
     {
         $notificationBuilder = new PayloadNotificationBuilder($notification_data['title']);
         $notificationBuilder->setBody($notification_data['message'])->setSound('default');
@@ -21,7 +21,7 @@ class PushNotificationHandler
         $topic = (new Topics())->topic($topic);
 
         if(config('sheba.send_push_notifications')) {
-            FCM::sendToTopic($topic, null, null, $data);
+            FCM::sendToTopic($topic, null, $notification, $data);
         }
 
         //$topicResponse->isSuccess();
