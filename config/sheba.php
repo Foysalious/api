@@ -23,7 +23,8 @@ return [
     ],
     'push_notification_channel_name' => [
         'customer'  => 'customer_channel',
-        'manager'   => 'manager_channel'
+        'manager'   => 'manager_channel',
+        'resource'  => 'resource_channel'
     ],
     'push_notification_sound' => [
         'customer'  => 'default',
