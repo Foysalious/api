@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Affiliate;
 use App\Models\AffiliateTransaction;
+use App\Models\PartnerTransaction;
 use App\Repositories\AffiliateRepository;
 use App\Repositories\FileRepository;
 use App\Repositories\LocationRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Sheba\PartnerPayment\PartnerPaymentValidatorFactory;
 use Validator;
 use DB;
 
@@ -54,7 +56,7 @@ class AffiliateController extends Controller
                 $affiliate->geolocation = $request->geolocation;
             }
             return $affiliate->update() ? response()->json(['code' => 200]) : response()->json(['code' => 404]);
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -65,7 +67,7 @@ class AffiliateController extends Controller
         try {
             $affiliate = Affiliate::where('id', $affiliate)->select('verification_status', 'is_suspended', 'ambassador_code', 'is_ambassador')->first();
             return $affiliate != null ? response()->json(['code' => 200, 'affiliate' => $affiliate]) : response()->json(['code' => 404, 'msg' => 'Not found!']);
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -83,7 +85,7 @@ class AffiliateController extends Controller
                 'last_updated' => Carbon::parse($affiliate->updated_at)->format('dS F,g:i A')
             ];
             return api_response($request, $info, 200, ['info' => $info]);
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -104,7 +106,7 @@ class AffiliateController extends Controller
             $filename = $profile->id . '_profile_image_' . Carbon::now()->timestamp . '.' . $photo->extension();
             $profile->pro_pic = $this->fileRepository->uploadToCDN($filename, $request->file('photo'), 'images/profiles/');
             return $profile->update() ? response()->json(['code' => 200, 'picture' => $profile->pro_pic]) : response()->json(['code' => 404]);
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -144,7 +146,7 @@ class AffiliateController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -178,7 +180,7 @@ class AffiliateController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -214,7 +216,7 @@ class AffiliateController extends Controller
                 }
             }
             return api_response($request, null, 404);
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -232,7 +234,7 @@ class AffiliateController extends Controller
                 array_forget($profile, 'pro_pic');
                 return api_response($request, $profile, 200, ['info' => $profile]);
             }
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -260,7 +262,7 @@ class AffiliateController extends Controller
                 array_push($final, $info);
             }
             return count($final) != 0 ? api_response($request, $final, 200, ['affiliates' => $final]) : api_response($request, null, 404);
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -278,7 +280,7 @@ class AffiliateController extends Controller
             $info->put('earning_amount', $affiliate->agents->sum('total_gifted_amount'));
             $info->put('total_refer', $affiliate->agents->sum('total_gifted_number'));
             return api_response($request, $info, 200, ['info' => $info->all()]);
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -299,7 +301,7 @@ class AffiliateController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -320,10 +322,61 @@ class AffiliateController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function rechargeWallet($affiliate, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'transaction_id' => 'required|string',
+                'type' => 'required|in:bkash',
+            ]);
+            $payment_validator = PartnerPaymentValidatorFactory::make($request->all());
+            if ($error = $payment_validator->hasError()) return api_response($request, null, 400, ['message' => $error]);
+            $affiliate = $request->affiliate;
+            if ($this->ifTransactionAlreadyExists($request->transaction_id)) return api_response($request, null, 403, ['message' => 'Transaction id already exists']);
+            $this->recharge($affiliate, $payment_validator);
+            return api_response($request, null, 200, ['message' => "Moneybag refilled."]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    private function ifTransactionAlreadyExists($transaction_id)
+    {
+        return (AffiliateTransaction::where('transaction_details', 'like', "%$transaction_id%")->count() > 0) || (PartnerTransaction::where('transaction_details', 'like', "%$transaction_id%")->count() > 0);
+    }
+
+    private function recharge(Affiliate $affiliate, $payment_validator)
+    {
+        $data = $this->makeRechargeData($payment_validator);
+        $amount = $payment_validator->amount;
+        DB::transaction(function () use ($amount, $affiliate, $data) {
+            $affiliate->rechargeWallet($amount, $data);
+        });
+    }
+
+    private function makeRechargeData($payment_validator)
+    {
+        return [
+            'amount' => $payment_validator->amount,
+            'transaction_details' => json_encode(
+                [
+                    'name' => 'Bkash',
+                    'details' => [
+                        'transaction_id' => $payment_validator->response->transaction->trxId,
+                        'gateway' => 'bkash',
+                        'details' => $payment_validator->response
+                    ]
+                ]
+            ),
+            'type' => 'Credit', 'log' => 'Moneybag Refilled'
+        ];
     }
 
     private function _validateImage($request)
@@ -341,6 +394,4 @@ class AffiliateController extends Controller
         ], ['mobile' => 'Invalid bKash number!']);
         return $validator->fails() ? $validator->errors()->all()[0] : false;
     }
-
-
 }

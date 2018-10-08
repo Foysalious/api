@@ -3,13 +3,14 @@
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Location\Distance\TransactionMethod;
+use Sheba\PayCharge\Wallet;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
 
 class Affiliate extends Model implements TopUpAgent
 {
     use TopUpTrait;
-
+    use Wallet;
     protected $guarded = ['id'];
     protected $dates = ['last_suspended_at'];
     protected $casts = ['wallet' => 'double', 'is_ambassador' => 'int', 'is_suspended' => 'int'];
