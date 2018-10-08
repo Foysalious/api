@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Affiliate;
 use App\Models\AffiliateTransaction;
 use App\Models\PartnerTransaction;
+use App\Models\Service;
 use App\Repositories\AffiliateRepository;
 use App\Repositories\FileRepository;
 use App\Repositories\LocationRepository;
@@ -393,5 +394,24 @@ class AffiliateController extends Controller
             'bkash_no' => 'sometimes|required|string|mobile:bd',
         ], ['mobile' => 'Invalid bKash number!']);
         return $validator->fails() ? $validator->errors()->all()[0] : false;
+    }
+
+    public function getServicesInfo($affiliate, Request $request)
+    {
+        try {
+            list($offset, $limit) = calculatePagination($request);
+            $services = Service::PublishedForBondhu()->skip($offset)->take($limit)->get()->map(function($service) {
+                return [
+                    'id' => $service->id,
+                    'name' => $service->name,
+                    'bangla_name' => $service->bn_name,
+                    'image' => $service->app_thumb
+                ];
+            });
+            return api_response($request, $services, 200, ['services' => $services]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 }

@@ -10,6 +10,7 @@ class AffiliateRoute
         $api->group(['prefix' => 'affiliates/{affiliate}', 'middleware' => ['affiliate.auth']], function ($api) {
             $api->get('dashboard', 'AffiliateController@getDashboardInfo');
             $api->get('partner-affiliates', 'PartnerAffiliationController@index');
+            $api->get('services', 'AffiliateController@getServicesInfo');
             $api->post('partner-affiliates', 'PartnerAffiliationController@store');
             $api->post('top-up', 'TopUpController@topUp');
             $api->post('recharge', 'AffiliateController@rechargeWallet');
