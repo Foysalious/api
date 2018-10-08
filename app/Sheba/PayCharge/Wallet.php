@@ -3,6 +3,9 @@
 
 namespace Sheba\PayCharge;
 
+use App\Models\Affiliate;
+use App\Models\AffiliateTransaction;
+use App\Models\Customer;
 use App\Models\CustomerTransaction;
 use Carbon\Carbon;
 use DB;
@@ -31,8 +34,18 @@ trait Wallet
 
     public function walletTransaction($transaction_data)
     {
-        $this->transactions()->save(new CustomerTransaction(array_merge($transaction_data, ['created_at' => Carbon::now()])));
+        $data = array_merge($transaction_data, ['created_at' => Carbon::now()]);
+        $user_transaction = $this->getUserTransaction()->fill($data);
+        $this->transactions()->save($user_transaction);
     }
 
+    private function getUserTransaction()
+    {
+        if ($this instanceof Customer) {
+            return new CustomerTransaction();
+        } else if ($this instanceof Affiliate) {
+            return new AffiliateTransaction();
+        }
+    }
 
 }

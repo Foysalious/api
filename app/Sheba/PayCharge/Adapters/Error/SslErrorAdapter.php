@@ -3,7 +3,7 @@
 namespace Sheba\PayCharge\Adapters\Error;
 
 
-use Sheba\PayCharge\Methods\MethodError;
+use Sheba\PayCharge\Methods\PayChargeMethodError;
 
 class SslErrorAdapter implements MethodErrorAdapter
 {
@@ -14,9 +14,9 @@ class SslErrorAdapter implements MethodErrorAdapter
         $this->sslError = $ssl_error;
     }
 
-    public function getError(): MethodError
+    public function getError(): PayChargeMethodError
     {
-        $method_error = new MethodError();
+        $method_error = new PayChargeMethodError();
         $method_error->code = '';
         $method_error->message = '';
         return $method_error;

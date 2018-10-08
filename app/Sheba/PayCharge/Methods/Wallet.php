@@ -58,7 +58,7 @@ class Wallet implements PayChargeMethod
         );
     }
 
-    public function getError(): MethodError
+    public function getError(): PayChargeMethodError
     {
         return (new WalletErrorAdapter($this->error))->getError();
     }
