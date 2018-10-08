@@ -105,6 +105,10 @@ class PartnerSubscriptionController extends Controller
                 return api_response($request, null, 403, ['message' => "আপনি অলরেডি $partner_package->show_name_bn প্যাকেজে আছেন"]);
             } else {
                 $requested_package = PartnerSubscriptionPackage::find($request->package_id);
+                if (!$partner->last_billed_date) {
+                    $partner->subscribe($requested_package, $request->billing_type);
+                    return api_response($request, 1, 200, ['message' => "আপনি সফল ভাবে $requested_package->show_name_bn প্যাকেজে সাবস্ক্রাইব করেছেন"]);
+                }
                 return api_response($request, null, 403, ['message' => "$requested_package->show_name_bn প্যাকেজে যেতে অনুগ্রহ করে সেবার সাথে যোগাযোগ করুন"]);
             }
         } catch (ValidationException $e) {
