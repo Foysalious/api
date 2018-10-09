@@ -20,6 +20,7 @@ class CustomerTransactionController extends Controller
             if ($request->has('type')) $transactions->where('type', ucwords($request->type));
             $transactions = $transactions->select('id', 'customer_id', 'type', 'amount', 'log', 'created_at', 'partner_order_id')->orderBy('id', 'desc')->skip($offset)->take($limit)->get();
             $transactions->each(function ($transaction) {
+                $transaction['valid_till'] = '2018/12/12';
                 if ($transaction->partnerOrder) {
                     $transaction['category_name'] = $transaction->partnerOrder->jobs->first()->category->name;
                     $transaction['log'] = $transaction['category_name'];
@@ -31,7 +32,7 @@ class CustomerTransactionController extends Controller
                 }
                 removeRelationsAndFields($transaction);
             });
-            return api_response($request, $transactions, 200, ['transactions' => $transactions, 'balance' => $customer->wallet]);
+            return api_response($request, $transactions, 200, ['transactions' => $transactions, 'balance' => $customer->wallet, 'credit' => $customer->wallet / 2, 'bonus' => $customer->wallet / 2]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
