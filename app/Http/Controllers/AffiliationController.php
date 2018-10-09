@@ -96,8 +96,6 @@ class AffiliationController extends Controller
                 $affiliation = $this->affiliationDatabaseTransaction($affiliate, $request);
                 if (!$affiliation) return api_response($request, null, 500);
                 (new SmsHandler('affiliation-create-customer-notify'))->send($affiliation->customer_mobile, [
-                    'customer_name' => $affiliation->customer_name ? : '',
-                    'service_name' => $affiliation->service,
                     'affiliate_name' => $affiliate->profile->name
                 ]);
                 (new NotificationRepository())->forAffiliation($affiliate, $affiliation);
