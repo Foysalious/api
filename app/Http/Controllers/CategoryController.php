@@ -233,7 +233,7 @@ class CategoryController extends Controller
             $category = Category::find($category);
             if (!$category) return api_response($request, null, 404);
             $category->load(['reviews' => function ($q) {
-                $q->select('id', 'category_id', 'customer_id', 'rating', 'review', 'review_title', 'partner_id')->whereIn('rating', [4, 5])->orderBy('created_at', 'desc')->with(['rates', 'customer.profile']);
+                $q->select('id', 'category_id', 'customer_id', 'rating', 'review', 'review_title', 'partner_id')->whereIn('rating', [4, 5])->orderBy('created_at', 'desc')->with(['rates', 'customer.profile', 'partner']);
             }]);
             $reviews = $category->reviews->each(function ($review) {
                 $review->review = $review->calculated_review;
