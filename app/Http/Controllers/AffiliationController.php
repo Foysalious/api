@@ -6,6 +6,7 @@ use App\Models\Affiliate;
 use App\Models\AffiliateTransaction;
 use App\Models\Affiliation;
 use App\Repositories\NotificationRepository;
+use App\Repositories\SmsHandler;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -94,6 +95,11 @@ class AffiliationController extends Controller
             if ($affiliation_counter < 20) {
                 $affiliation = $this->affiliationDatabaseTransaction($affiliate, $request);
                 if (!$affiliation) return api_response($request, null, 500);
+                (new SmsHandler('affiliation-create-customer-notify'))->send($affiliation->customer_mobile, [
+                    'customer_name' => $affiliation->customer_name ? : '',
+                    'service_name' => $affiliation->service,
+                    'affiliate_name' => $affiliate->profile->name
+                ]);
                 (new NotificationRepository())->forAffiliation($affiliate, $affiliation);
                 $message = ['en' => 'Your refer have been submitted. You received 2TK bonus add in your wallet.', 'bd' => 'আপনার রেফারেন্সটি গ্রহন করা হয়েছে । আপনার ওয়ালেটে ২ টাকা বোনাস যোগ করা হয়েছে।'];
                 return api_response($request, 1, 200, ['massage' => $message]);
