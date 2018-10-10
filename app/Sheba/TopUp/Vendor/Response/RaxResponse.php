@@ -20,7 +20,7 @@ class RaxResponse extends TopUpResponse
     {
         $topup_response = new TopUpSuccessResponse();
         $topup_response->transactionId = $this->response->TXNID;
-        $topup_response->transactionDetails = json_encode($this->response);
+        $topup_response->transactionDetails = $this->response;
         return $topup_response;
     }
 
@@ -29,7 +29,7 @@ class RaxResponse extends TopUpResponse
         if ($this->hasSuccess()) throwException(new \Exception('Response has success'));
         $topup_error = new TopUpErrorResponse();
         $topup_error->errorCode = $this->response->TXNID;
-        $topup_error->errorMessage = $this->response->MESSAGE;
+        $topup_error->errorMessage = isset($this->response->MESSAGE) ? $this->response->MESSAGE : 'Message not given';
         return $topup_error;
     }
 

@@ -11,6 +11,8 @@ class Rax
     private $url;
     private $pin;
     private $mId;
+    private $loginId;
+    private $password;
     private $proxyUrl;
     private $httpClient;
 
@@ -22,6 +24,8 @@ class Rax
         $this->url = "$base_url?LOGIN=$login&PASSWORD=$password&REQUEST_GATEWAY_CODE=EXTGW&REQUEST_GATEWAY_TYPE=EXTGW&SERVICE_PORT=190&SOURCE_TYPE=EXTGW";
         $this->proxyUrl = config('topup.robi.proxy_url');
         $this->httpClient = $client;
+        $this->loginId = config('topup.robi.login_id');
+        $this->password = config('topup.robi.password');
     }
 
     public function setPin($pin)
@@ -51,8 +55,8 @@ class Rax
         $input .= '<EXTNWCODE>AK</EXTNWCODE>';
         $input .= "<MSISDN>$this->mId</MSISDN>";
         $input .= "<PIN>$this->pin</PIN>";
-        $input .= '<LOGINID></LOGINID>';
-        $input .= '<PASSWORD></PASSWORD>';
+        $input .= "<LOGINID>$this->loginId</LOGINID>";
+        $input .= "<PASSWORD>$this->password</PASSWORD>";
         $input .= '<EXTCODE></EXTCODE>';
         $input .= '<EXTREFNUM></EXTREFNUM>';
         $input .= "<MSISDN2>$mobile_number</MSISDN2>";
