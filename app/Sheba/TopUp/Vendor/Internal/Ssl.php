@@ -2,7 +2,6 @@
 
 namespace Sheba\TopUp\Vendor\Internal;
 
-use Sheba\TopUp\TopUpSuccessResponse;
 use Sheba\TopUp\Vendor\Response\SslResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 use SoapClient;
@@ -21,13 +20,6 @@ class Ssl
         $this->topUpUrl = config('ssl.topup_url');
     }
 
-    /**
-     * @param $mobile_number
-     * @param $amount
-     * @param $type
-     * @return TopUpResponse
-     * @throws SoapFault
-     */
     public function recharge($mobile_number, $amount, $type): TopUpResponse
     {
         try {

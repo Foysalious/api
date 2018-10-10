@@ -2,12 +2,10 @@
 
 namespace Sheba\TopUp\Vendor\Response;
 
-use Sheba\TopUp\TopUpErrorResponse;
-use Sheba\TopUp\TopUpSuccessResponse;
 
 class SslResponse extends TopUpResponse
 {
-    private $response;
+    protected $response;
 
     public function setResponse($response)
     {

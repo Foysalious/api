@@ -2,12 +2,9 @@
 
 namespace Sheba\TopUp\Vendor\Response;
 
-use Sheba\TopUp\TopUpErrorResponse;
-use Sheba\TopUp\TopUpSuccessResponse;
-
 class RaxResponse extends TopUpResponse
 {
-    private $response;
+    protected $response;
 
     public function setResponse($response)
     {

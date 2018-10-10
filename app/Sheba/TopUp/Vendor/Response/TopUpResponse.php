@@ -3,9 +3,6 @@
 namespace Sheba\TopUp\Vendor\Response;
 
 
-use Sheba\TopUp\TopUpErrorResponse;
-use Sheba\TopUp\TopUpSuccessResponse;
-
 abstract class TopUpResponse
 {
     protected $response;

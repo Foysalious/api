@@ -3,9 +3,8 @@
 namespace Sheba\TopUp\Vendor\Internal;
 
 use GuzzleHttp\Client;
-use Sheba\TopUp\TopUpErrorResponse;
-use Sheba\TopUp\TopUpSuccessResponse;
 use Sheba\TopUp\Vendor\Response\RaxResponse;
+use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
 class Rax
 {
@@ -37,7 +36,7 @@ class Rax
         return $this;
     }
 
-    public function recharge($mobile_number, $amount, $type)
+    public function recharge($mobile_number, $amount, $type): TopUpResponse
     {
         $response = $this->call($this->makeInputString(getOriginalMobileNumber($mobile_number), $amount, $type));
         $rax_response = new RaxResponse();
