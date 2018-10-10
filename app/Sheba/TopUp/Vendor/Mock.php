@@ -2,14 +2,11 @@
 
 namespace Sheba\TopUp\Vendor;
 
+use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
 class Mock extends Vendor
 {
-    public function recharge($mobile_number, $amount, $type):  TopUpResponse
+    public function recharge($mobile_number, $amount, $type): TopUpResponse
     {
-        $topup_response = new TopUpSuccessResponse();
-        $topup_response->transactionId = str_random(10);
-        $topup_response->transactionDetails = 'Mock';
-        return $topup_response;
     }
 }
