@@ -2,7 +2,6 @@
 
 namespace Sheba\TopUp\Vendor;
 
-use Sheba\TopUp\TopUpSuccessResponse;
 use Sheba\TopUp\Vendor\Internal\Rax;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 

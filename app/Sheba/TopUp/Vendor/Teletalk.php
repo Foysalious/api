@@ -2,8 +2,8 @@
 
 namespace Sheba\TopUp\Vendor;
 
-use Sheba\TopUp\TopUpSuccessResponse;
 use Sheba\TopUp\Vendor\Internal\Ssl;
+use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
 class Teletalk extends Vendor
 {
@@ -14,14 +14,7 @@ class Teletalk extends Vendor
         $this->ssl = $ssl;
     }
 
-    /**
-     * @param $mobile_number
-     * @param $amount
-     * @param $type
-     * @return TopUpSuccessResponse
-     * @throws \SoapFault
-     */
-    public function recharge($mobile_number, $amount, $type): TopUpSuccessResponse
+    public function recharge($mobile_number, $amount, $type): TopUpResponse
     {
         return $this->ssl->recharge($mobile_number, $amount, $type);
     }

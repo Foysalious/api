@@ -2,11 +2,10 @@
 
 namespace Sheba\TopUp;
 
-
 use App\Models\TopUpOrder;
-use Illuminate\Database\QueryException;
 use Sheba\ModificationFields;
 use DB;
+use Sheba\TopUp\Vendor\Response\TopUpSuccessResponse;
 use Sheba\TopUp\Vendor\Vendor;
 
 class TopUp

@@ -3,7 +3,6 @@
 namespace Sheba\TopUp\Vendor;
 
 use App\Models\TopUpVendor;
-use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
 abstract class Vendor
 {
