@@ -25,7 +25,8 @@ class ScheduleTimeController extends Controller
                 'limit' => 'sometimes|required|numeric:min:1'
             ]);
             if ($request->has('category') && $request->has('partner')) {
-                $dates = $partnerSchedule->setPartner($request->partner)->setCategory($request->category)->get($request->limit);
+                $dates = $partnerSchedule->setPartner($request->partner)->setCategory($request->category);
+                $dates = $request->has('limit') ? $dates->get($request->limit) : $dates->get();
                 return api_response($request, $dates, 200, ['dates' => $dates]);
             }
             $slots = ScheduleSlot::where([['start', '>=', DB::raw("CAST('" . self::SCHEDULE_START . "' As time)")], ['end', '<=', DB::raw("CAST('" . self::SCHEDULE_END . "' As time)")]])->get();
