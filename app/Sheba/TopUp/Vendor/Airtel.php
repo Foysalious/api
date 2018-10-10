@@ -2,8 +2,8 @@
 
 namespace Sheba\TopUp\Vendor;
 
-use Sheba\TopUp\TopUpResponse;
 use Sheba\TopUp\Vendor\Internal\Rax;
+use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
 class Airtel extends Vendor
 {

@@ -121,7 +121,29 @@ if (!function_exists('formatMobile')) {
         }
     }
 }
-
+if (!function_exists('getOriginalMobileNumber')) {
+    /**
+     * Format Mobile number with +88 .
+     *
+     * @param  $number
+     * @return string
+     */
+    function getOriginalMobileNumber($number)
+    {
+        $number = str_replace(" ", "", $number);
+        $number = str_replace("-", "", $number);
+        // mobile starts with '+88'
+        if (preg_match("/^(\+88)/", $number)) {
+            return substr($number, 3);
+        } // when mobile starts with '88' replace it with '+880'
+        elseif (preg_match("/^(88)/", $number)) {
+            return substr($number, 2);
+        } // real mobile no add '+880' at the start
+        else {
+            return $number;
+        }
+    }
+}
 if (!function_exists('isEmailValid')) {
     /**
      * Email formatting check.

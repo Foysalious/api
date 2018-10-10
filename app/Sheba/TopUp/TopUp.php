@@ -2,11 +2,10 @@
 
 namespace Sheba\TopUp;
 
-
 use App\Models\TopUpOrder;
-use Illuminate\Database\QueryException;
 use Sheba\ModificationFields;
 use DB;
+use Sheba\TopUp\Vendor\Response\TopUpSuccessResponse;
 use Sheba\TopUp\Vendor\Vendor;
 
 class TopUp
@@ -34,14 +33,20 @@ class TopUp
 
     public function recharge($mobile_number, $amount, $type)
     {
-        //$mobile_number = formatMobile($mobile_number);
+        $mobile_number = formatMobile($mobile_number);
         $response = $this->vendor->recharge($mobile_number, $amount, $type);
-        DB::transaction(function () use ($response, $mobile_number, $amount) {
-            $this->placeTopUpOrder($response, $mobile_number, $amount);
-            $amount_after_commission = $amount - $this->calculateCommission($amount);
-            $this->agent->topUpTransaction($amount_after_commission, $amount . " has been topped up to " . $mobile_number);
-            $this->deductVendorAmount($amount);
-        });
+        if ($response->hasSuccess()) {
+            $response = $response->getSuccess();
+            DB::transaction(function () use ($response, $mobile_number, $amount) {
+                $this->placeTopUpOrder($response, $mobile_number, $amount);
+                $amount_after_commission = $amount - $this->calculateCommission($amount);
+                $this->agent->topUpTransaction($amount_after_commission, $amount . " has been topped up to " . $mobile_number);
+                $this->deductVendorAmount($amount);
+            });
+            return true;
+        } else {
+            return null;
+        }
     }
 
     private function calculateCommission($amount)
@@ -49,7 +54,7 @@ class TopUp
         return (double)$amount * ($this->model->agent_commission / 100);
     }
 
-    private function placeTopUpOrder($response, $mobile_number, $amount)
+    private function placeTopUpOrder(TopUpSuccessResponse $response, $mobile_number, $amount)
     {
         $topUpOrder = new TopUpOrder();
         $topUpOrder->agent_type = "App\\Models\\" . class_basename($this->agent);

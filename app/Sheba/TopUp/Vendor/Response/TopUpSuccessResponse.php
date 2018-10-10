@@ -1,9 +1,9 @@
 <?php
 
-namespace Sheba\TopUp;
+namespace Sheba\TopUp\Vendor\Response;
 
 
-class TopUpResponse
+class TopUpSuccessResponse
 {
     private $transactionId;
     private $transactionDetails;

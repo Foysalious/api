@@ -3,8 +3,8 @@
 namespace Sheba\TopUp\Vendor;
 
 
-use Sheba\TopUp\TopUpResponse;
 use Sheba\TopUp\Vendor\Internal\Ssl;
+use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
 class Banglalink extends Vendor
 {

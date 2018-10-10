@@ -2,7 +2,8 @@
 
 namespace Sheba\TopUp\Vendor\Internal;
 
-use Sheba\TopUp\TopUpResponse;
+use Sheba\TopUp\Vendor\Response\SslResponse;
+use Sheba\TopUp\Vendor\Response\TopUpResponse;
 use SoapClient;
 use SoapFault;
 
@@ -44,16 +45,10 @@ class Ssl
             $vr_guid = $create_recharge_response->vr_guid;
             $recharge_response = $client->InitRecharge($this->clientId, $this->clientPassword, $guid, $vr_guid);
             $recharge_response->guid = $guid;
-            if ($recharge_response->recharge_status == 200) {
-                $topup_response = new TopUpResponse();
-                $topup_response->transactionId = $guid;
-                $topup_response->transactionDetails = $recharge_response;
-                return $topup_response;
-            } else {
-                throw new \InvalidArgumentException('Invalid status for ssl topup');
-            }
-
-        } catch ( SoapFault $exception ) {
+            $ssl_response = new SslResponse();
+            $ssl_response->setResponse($recharge_response);
+            return $ssl_response;
+        } catch (SoapFault $exception) {
             throw $exception;
         }
     }

@@ -3,7 +3,8 @@
 namespace Sheba\TopUp\Vendor\Internal;
 
 use GuzzleHttp\Client;
-use Sheba\TopUp\TopUpResponse;
+use Sheba\TopUp\Vendor\Response\RaxResponse;
+use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
 class Rax
 {
@@ -35,23 +36,12 @@ class Rax
         return $this;
     }
 
-    /**
-     * @param $mobile_number
-     * @param $amount
-     * @param $type
-     * @return TopUpResponse
-     */
     public function recharge($mobile_number, $amount, $type): TopUpResponse
     {
-        $response = $this->call($this->makeInputString($mobile_number, $amount, $type));
-        if ($response->TXNSTATUS == 200) {
-            $topup_response = new TopUpResponse();
-            $topup_response->transactionId = $response->TXNID;
-            $topup_response->transactionDetails = json_encode($response);
-            return $topup_response;
-        } else {
-            return null;
-        }
+        $response = $this->call($this->makeInputString(getOriginalMobileNumber($mobile_number), $amount, $type));
+        $rax_response = new RaxResponse();
+        $rax_response->setResponse($response);
+        return $rax_response;
     }
 
     private function makeInputString($mobile_number, $amount, $type)
@@ -84,7 +74,7 @@ class Rax
         ]);
 
         return simplexml_load_string($result->getBody()->getContents());
-        
+
         /*$ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $this->url);
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: text/xml', 'Connection: close']);
