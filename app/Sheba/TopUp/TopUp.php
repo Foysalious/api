@@ -43,6 +43,7 @@ class TopUp
                 $this->agent->topUpTransaction($amount_after_commission, $amount . " has been topped up to " . $mobile_number);
                 $this->deductVendorAmount($amount);
             });
+            return true;
         } else {
             return null;
         }
