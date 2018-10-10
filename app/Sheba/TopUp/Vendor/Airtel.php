@@ -2,7 +2,7 @@
 
 namespace Sheba\TopUp\Vendor;
 
-use Sheba\TopUp\TopUpResponse;
+use Sheba\TopUp\TopUpSuccessResponse;
 use Sheba\TopUp\Vendor\Internal\Rax;
 
 class Airtel extends Vendor
@@ -14,7 +14,7 @@ class Airtel extends Vendor
         $this->rax = $rax;
     }
 
-    public function recharge($mobile_number, $amount, $type): TopUpResponse
+    public function recharge($mobile_number, $amount, $type): TopUpSuccessResponse
     {
         $mid = config('topup.robi.airtel_mid');
         $pin = config('topup.robi.airtel_pin');

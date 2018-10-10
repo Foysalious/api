@@ -2,8 +2,9 @@
 
 namespace Sheba\TopUp\Vendor;
 
-use Sheba\TopUp\TopUpResponse;
+use Sheba\TopUp\TopUpSuccessResponse;
 use Sheba\TopUp\Vendor\Internal\Rax;
+use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
 class Robi extends Vendor
 {

@@ -2,7 +2,7 @@
 
 namespace Sheba\TopUp\Vendor;
 
-use Sheba\TopUp\TopUpResponse;
+use Sheba\TopUp\TopUpSuccessResponse;
 use Sheba\TopUp\Vendor\Internal\Ssl;
 
 class Gp extends Vendor
@@ -18,10 +18,10 @@ class Gp extends Vendor
      * @param $mobile_number
      * @param $amount
      * @param $type
-     * @return TopUpResponse
+     * @return TopUpSuccessResponse
      * @throws \SoapFault
      */
-    public function recharge($mobile_number, $amount, $type): TopUpResponse
+    public function recharge($mobile_number, $amount, $type): TopUpSuccessResponse
     {
         return $this->ssl->recharge($mobile_number, $amount, $type);
     }

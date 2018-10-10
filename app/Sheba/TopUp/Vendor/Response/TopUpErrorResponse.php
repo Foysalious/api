@@ -3,10 +3,10 @@
 namespace Sheba\TopUp;
 
 
-class TopUpResponse
+class TopUpErrorResponse
 {
-    private $transactionId;
-    private $transactionDetails;
+    private $errorCode;
+    private $errorMessage;
 
     public function __get($name)
     {
