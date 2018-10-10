@@ -121,7 +121,6 @@ if (!function_exists('formatMobile')) {
         }
     }
 }
-
 if (!function_exists('getOriginalMobileNumber')) {
     /**
      * Format Mobile number with +88 .
@@ -145,7 +144,6 @@ if (!function_exists('getOriginalMobileNumber')) {
         }
     }
 }
-
 if (!function_exists('isEmailValid')) {
     /**
      * Email formatting check.
