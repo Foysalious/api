@@ -19,7 +19,7 @@ class Rax
         $base_url = config('topup.robi.url');
         $login = config('topup.robi.login_id');
         $password = config('topup.robi.password');
-        $this->url = "$base_url?LOGIN=$login&PASSWORD=$password&REQUEST_GATEWAY_CODE=EXTGW&REQUEST_GATEWAY_TYPE=EXTGW&SERVICE_PORT=190&SOURCE_TYPE=EXTGW";
+        $this->url = "$base_url?LOGIN=$login&PASSWORD=$password&REQUEST_GATEWAY_CODE=SHEBAEXTGW&REQUEST_GATEWAY_TYPE=EXTGW&SERVICE_PORT=190&SOURCE_TYPE=EXTGW";
         $this->proxyUrl = config('topup.robi.proxy_url');
         $this->httpClient = $client;
     }
