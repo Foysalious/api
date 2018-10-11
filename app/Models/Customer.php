@@ -152,4 +152,10 @@ class Customer extends Authenticatable implements Rechargable
         return $this->hasMany(CustomerTransaction::class);
     }
 
+    public function bonuses()
+    {
+        return $this->morphMany(Bonus::class, 'user');
+    }
+
+
 }

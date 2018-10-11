@@ -122,4 +122,9 @@ class Affiliate extends Model implements TopUpAgent
     {
         return $this->is_ambassador == 1;
     }
+
+    public function bonuses()
+    {
+        return $this->morphMany(Bonus::class, 'user');
+    }
 }
