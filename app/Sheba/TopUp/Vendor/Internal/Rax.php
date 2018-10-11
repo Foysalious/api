@@ -59,8 +59,8 @@ class Rax
         $input .= "<AMOUNT>$amount</AMOUNT>";
         $input .= '<LANGUAGE1>1</LANGUAGE1>';
         $input .= '<LANGUAGE2>0</LANGUAGE2>';
-        $input .= '</COMMAND>';
         $input .= $this->calculateTypeParams($type);
+        $input .= '</COMMAND>';
         return $input;
     }
 

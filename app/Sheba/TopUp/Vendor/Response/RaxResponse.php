@@ -29,7 +29,7 @@ class RaxResponse extends TopUpResponse
         if ($this->hasSuccess()) throwException(new \Exception('Response has success'));
         $topup_error = new TopUpErrorResponse();
         $topup_error->errorCode = $this->response->TXNID;
-        $topup_error->errorMessage = isset($this->response->MESSAGE) ? $this->response->MESSAGE : 'Message not given';
+        $topup_error->errorMessage = isset($this->response->MESSAGE) ? $this->response->MESSAGE : 'Error message not given.';
         return $topup_error;
     }
 
