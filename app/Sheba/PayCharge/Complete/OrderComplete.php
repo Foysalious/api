@@ -1,7 +1,4 @@
-<?php
-
-namespace Sheba\PayCharge\Complete;
-
+<?php namespace Sheba\PayCharge\Complete;
 
 use App\Models\Customer;
 use App\Models\PartnerOrder;
@@ -9,6 +6,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Sheba\PayCharge\PayChargable;
 use Sheba\RequestIdentification;
+use Sheba\Reward\ActionRewardDispatcher;
 
 class OrderComplete extends PayChargeComplete
 {
@@ -35,11 +33,12 @@ class OrderComplete extends PayChargeComplete
             $response = json_decode($res->getBody());
             if ($response->code == 200) {
                 if (strtolower($method_response['name']) == 'wallet') {
-                    $amount = ($pay_chargable->amount * self::CASHBACK_PERCENTAGE) / 100;
-                    $customer->rechargeWallet($amount, [
-                        'amount' => $amount, 'transaction_details' => json_encode($method_response['details']),
-                        'type' => 'Credit', 'log' => 'Bonus Sheba Credit'
-                    ]);
+                    $partner_order_payment = $partnerOrder->payments->last();
+                    app(ActionRewardDispatcher::class)->run(
+                        'wallet_cashback',
+                        $customer,
+                        $partner_order_payment
+                    );
                 }
                 return true;
             } else return false;
