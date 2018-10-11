@@ -59,8 +59,8 @@ class Rax
         $input .= "<AMOUNT>$amount</AMOUNT>";
         $input .= '<LANGUAGE1>1</LANGUAGE1>';
         $input .= '<LANGUAGE2>0</LANGUAGE2>';
-        $input .= '</COMMAND>';
         $input .= $this->calculateTypeParams($type);
+        $input .= '</COMMAND>';
         return $input;
     }
 
@@ -90,5 +90,6 @@ class Rax
     private function calculateTypeParams($type)
     {
         return $type == 'prepaid' ? '<TYPE>EXRCTRFREQ</TYPE><SELECTOR>1</SELECTOR>' : '<TYPE>EXPPBREQ</TYPE><SELECTOR>2</SELECTOR>';
+        http://10.101.25.8:8092/pretups/C2SReceiver?SOURCE_TYPE=EXTGW&LOGIN=shebauser&SERVICE_PORT=190&REQUEST_GATEWAY_CODE=SHEBAEXTGW&PASSWORD=shebapass&REQUEST_GATEWAY_TYPE=EXTGW
     }
 }

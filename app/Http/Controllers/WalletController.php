@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 
+use App\Models\PartnerOrder;
 use App\Sheba\PayCharge\Rechargable;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -11,6 +12,7 @@ use Sheba\PayCharge\Adapters\PayChargable\RechargeAdapter;
 use Sheba\PayCharge\PayCharge;
 use Cache;
 use DB;
+use Sheba\ShebaBonusCredit;
 
 class WalletController extends Controller
 {
@@ -106,16 +108,19 @@ class WalletController extends Controller
             $payment = json_decode($payment);
             $pay_chargable = unserialize($payment->pay_chargable);
             if ($pay_chargable->userId == $user->id) {
-                if ((double)$user->wallet < (double)$pay_chargable->amount) return api_response($request, null, 400, ['message' => 'You don\'t have sufficient credit']);
+                if ((double)$user->shebaCredit() < (double)$pay_chargable->amount) return api_response($request, null, 400, ['message' => 'You don\'t have sufficient credit']);
                 DB::transaction(function () use ($pay_chargable, $user, $payment) {
-                    $user->debitWallet($pay_chargable->amount);
-                    $user->walletTransaction([
-                        'amount' => $pay_chargable->amount,
-                        'type' => 'Debit', 'log' => 'Service Purchase.',
-                        'partner_order_id' => $pay_chargable->id,
-                        'transaction_details' => json_encode($payment->method_info),
-                        'created_at' => Carbon::now()
-                    ]);
+                    $remaining = (new ShebaBonusCredit())->setUser($user)->setSpentModel(PartnerOrder::find($pay_chargable->id))->deduct($pay_chargable->amount);
+                    if ($remaining > 0) {
+                        $user->debitWallet($remaining);
+                        $user->walletTransaction([
+                            'amount' => $remaining,
+                            'type' => 'Debit', 'log' => 'Service Purchase.',
+                            'partner_order_id' => $pay_chargable->id,
+                            'transaction_details' => json_encode($payment->method_info),
+                            'created_at' => Carbon::now()
+                        ]);
+                    }
                 });
                 return api_response($request, $user, 200);
             } else {

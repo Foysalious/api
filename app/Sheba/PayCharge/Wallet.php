@@ -28,8 +28,6 @@ trait Wallet
 
     public function debitWallet($amount)
     {
-        $bonuses = $this->bonuses()->where('valid_till', '>=', Carbon::now())->orderBy('valid_till', 'asc')->get();
-        if($bonuses->count()>0)
         $this->wallet -= $amount;
         $this->update();
     }

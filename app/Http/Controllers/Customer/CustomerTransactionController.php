@@ -12,7 +12,7 @@ class CustomerTransactionController extends Controller
     {
         try {
             $this->validate($request, [
-                'type' => 'sometimes|required|in:credit,debit',
+                'type' => 'sometimes|required|in:credit,debit'
             ]);
             list($offset, $limit) = calculatePagination($request);
             $customer = $request->customer;

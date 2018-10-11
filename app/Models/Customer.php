@@ -157,5 +157,10 @@ class Customer extends Authenticatable implements Rechargable
         return $this->morphMany(Bonus::class, 'user');
     }
 
+    public function shebaCredit()
+    {
+        return $this->wallet - $this->bonuses()->where('status', 'valid')->sum('amount');
+    }
+
 
 }
