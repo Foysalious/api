@@ -41,7 +41,7 @@ class TopUp
                 $this->placeTopUpOrder($response, $mobile_number, $amount);
                 $amount_after_commission = $amount - $this->calculateCommission($amount);
                 $this->agent->topUpTransaction($amount_after_commission, $amount . " has been topped up to " . $mobile_number);
-                $this->deductVendorAmount($amount);
+                $this->vendor->deductAmount($amount);
             });
             return true;
         } else {
@@ -70,12 +70,6 @@ class TopUp
         $this->setModifier($this->agent);
         $this->withCreateModificationField($topUpOrder);
         $topUpOrder->save();
-    }
-
-    private function deductVendorAmount($amount)
-    {
-        $this->model->amount -= $amount;
-        $this->model->update();
     }
 
 }

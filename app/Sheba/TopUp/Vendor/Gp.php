@@ -25,4 +25,22 @@ class Gp extends Vendor
     {
         return $this->ssl->recharge($mobile_number, $amount, $type);
     }
+
+    /**
+     * @param $amount
+     * @throws \Exception
+     */
+    public function deductAmount($amount)
+    {
+        $this->model->amount -= $amount;
+        $this->model->update();
+
+        $vendor = new VendorFactory();
+        $bl = $vendor->getById(5);
+        $teletalk = $vendor->getById(6);
+        $teletalk->deductAmount($amount);
+        $bl->deductAmount($amount);
+
+    }
+
 }
