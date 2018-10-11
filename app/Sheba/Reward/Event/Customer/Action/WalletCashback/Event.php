@@ -1,5 +1,6 @@
 <?php namespace Sheba\Reward\Event\Customer\Action\WalletCashback;
 
+use App\Models\Job;
 use App\Models\PartnerOrderPayment;
 
 use Sheba\Reward\AmountCalculator;
@@ -18,9 +19,27 @@ class Event extends Action implements AmountCalculator
         return parent::setRule($rule);
     }
 
+    /**
+     * @return bool
+     */
     public function isEligible()
     {
-        return $this->rule->check($this->params);
+        return $this->rule->check($this->params) && $this->filterConstraints();
+    }
+
+    private function filterConstraints()
+    {
+        $job = Job::where('partner_order_id', $this->params[0]->partner_order_id)->first();
+
+        foreach ($this->reward->constraints->groupBy('constraint_type') as $key => $type) {
+            $ids = $type->pluck('constraint_id')->toArray();
+
+            if ($key == 'App\Models\Category') {
+                return in_array($job->category_id, $ids);
+            }
+        }
+
+        return true;
     }
 
     /**
