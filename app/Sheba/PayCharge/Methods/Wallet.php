@@ -36,12 +36,12 @@ class Wallet implements PayChargeMethod
             $class_name = $pay_chargable->userType;
             $user = $class_name::find($pay_chargable->userId);
             $transaction = $user->transactions()->where('partner_order_id', $pay_chargable->id)->first();
-            if ($transaction && $transaction->amount == $pay_chargable->amount && (json_decode($transaction->transaction_details))->transaction_id == $payment->transaction_id) {
+            if ($transaction && (json_decode($transaction->transaction_details))->transaction_id == $payment->transaction_id) {
                 return $payment->method_info;
             } else {
                 return null;
             }
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
             return null;
         }
     }
