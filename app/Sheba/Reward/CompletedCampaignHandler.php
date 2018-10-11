@@ -1,29 +1,39 @@
 <?php namespace Sheba\Reward;
 
 use App\Models\Reward;
+
 use Carbon\Carbon;
+
+use Sheba\Reward\Disburse\DisburseHandler;
+use Sheba\Reward\Helper\TimeFrameCalculator;
 
 class CompletedCampaignHandler
 {
     private $validRewards;
     private $timeFrame;
     private $disburseHandler;
-    private $eventInitiator;
 
-    public function __construct(DisburseHandler $disburse_handler, CampaignEventInitiator $event_initiator, TimeFrameCalculator $timeframe_calculator)
+    /**
+     * CompletedCampaignHandler constructor.
+     * @param DisburseHandler $disburse_handler
+     * @param TimeFrameCalculator $timeframe_calculator
+     */
+    public function __construct(DisburseHandler $disburse_handler, TimeFrameCalculator $timeframe_calculator)
     {
         $this->timeFrame = $timeframe_calculator;
         $this->disburseHandler = $disburse_handler;
-        $this->eventInitiator = $event_initiator;
     }
 
+    /**
+     * @throws \Exception
+     */
     public function run()
     {
-        $this->validRewardFinder();
+        $this->findAndSetValidReward();
         $this->campaignRulesCalculation();
     }
 
-    private function validRewardFinder()
+    private function findAndSetValidReward()
     {
         $published_rewards = Reward::with('detail', 'constraints.constraint')
             ->where('end_time', '>=', Carbon::yesterday())
@@ -36,14 +46,17 @@ class CompletedCampaignHandler
         });
     }
 
-    public function campaignRulesCalculation()
+    /**
+     * @throws \Exception
+     */
+    private function campaignRulesCalculation()
     {
         foreach ($this->validRewards as $reward) {
+            /** @var Reward $reward */
             $rewardable_users = null;
+            $events = $reward->setCampaignEvents()->campaignEvents;
 
-            foreach (json_decode($reward->detail->events) as $event_name => $event_rule) {
-                $event = $this->eventInitiator->setReward($reward)->setName($event_name)->setRule($event_rule)
-                    ->initiate($event_name, $event_rule);
+            foreach ($events as $event) {
                 $rewardable_users = $event->findRewardableUsers($rewardable_users);
             }
 
@@ -56,8 +69,9 @@ class CompletedCampaignHandler
     /**
      * @param $rewarded_users
      * @param $reward
+     * @throws \Exception
      */
-    public function disburseRewardToUser($rewarded_users, $reward)
+    private function disburseRewardToUser($rewarded_users, $reward)
     {
         foreach ($rewarded_users as $rewardable) {
             $this->disburseHandler->setReward($reward)->disburse($rewardable);

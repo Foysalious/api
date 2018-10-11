@@ -2,23 +2,27 @@
 
 use App\Models\Reward;
 use Carbon\Carbon;
+use Sheba\Reward\Disburse\DisburseHandler;
 
 class ActionRewardDispatcher
 {
     private $disburseHandler;
-    private $eventInitiator;
 
     /**
      * ActionRewardDispatcher constructor.
      * @param DisburseHandler $disburse_handler
-     * @param ActionEventInitiator $event_initiator
      */
-    public function __construct(DisburseHandler $disburse_handler, ActionEventInitiator $event_initiator)
+    public function __construct(DisburseHandler $disburse_handler)
     {
         $this->disburseHandler = $disburse_handler;
-        $this->eventInitiator = $event_initiator;
     }
 
+    /**
+     * @param $event
+     * @param Rewardable $rewardable
+     * @param mixed ...$params
+     * @throws \Exception
+     */
     public function run($event, Rewardable $rewardable, ...$params)
     {
         $published_rewards = Reward::with('detail')
@@ -27,14 +31,14 @@ class ActionRewardDispatcher
             ->where('reward_actions.event_name', $event)
             ->where('rewards.start_time', '<=', Carbon::now())
             ->where('rewards.end_time', '>=', Carbon::now())
+            ->select('rewards.*')
             ->get();
 
         foreach ($published_rewards as $reward) {
-            $event_name = $reward->detail->event_name;
-            $event_rule = json_decode($reward->detail->event_rules);
-            $event = $this->eventInitiator->setReward($reward)->setName($event_name)->setRule($event_rule)->initiate();
+            /** @var Reward $reward */
+            $event = $reward->setActionEvent($params)->actionEvent;
 
-            if ($event->isEligible($params)) {
+            if ($event->isEligible()) {
                 $this->disburseHandler->setReward($reward)->disburse($rewardable);
             }
         }

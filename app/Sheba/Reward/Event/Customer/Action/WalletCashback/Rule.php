@@ -1,29 +1,29 @@
-<?php namespace Sheba\Reward\Event\Partner\Action\Rating;
+<?php namespace Sheba\Reward\Event\Customer\Action\WalletCashback;
 
 use Sheba\Reward\Event\ActionRule;
-use Sheba\Reward\Event\Partner\Action\Rating\Parameter\Rate;
+use Sheba\Reward\Event\Customer\Action\WalletCashback\Parameter\Amount;
 
 class Rule extends ActionRule
 {
-    /** @var Rate*/
-    public $rate;
+    /** @var Amount */
+    public $amount;
 
     /**
      * @throws \Sheba\Reward\Exception\ParameterTypeMismatchException
      */
     public function validate()
     {
-        $this->rate->validate();
+        $this->amount->validate();
     }
 
     public function makeParamClasses()
     {
-        $this->rate = new Rate();
+        $this->amount = new Amount();
     }
 
     public function setValues()
     {
-        $this->rate->value = property_exists($this->rule, 'rate') ? (int) $this->rule->rate : null;
+        $this->amount->value = property_exists($this->rule, 'amount') ? (int)$this->rule->amount : null;
     }
 
     /**
@@ -33,6 +33,6 @@ class Rule extends ActionRule
      */
     public function check(array $params)
     {
-        return $this->rate->check($params);
+        return $this->amount->check($params);
     }
 }

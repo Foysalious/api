@@ -8,7 +8,7 @@ class Rate extends ActionEventParameter
 {
     public function validate()
     {
-        // TODO: Implement validate() method.
+         if (empty($this->value)) throw new ParameterTypeMismatchException("Rate can't be empty");
     }
 
     public function check(array $params)

@@ -2,18 +2,20 @@
 
 use Illuminate\Database\Eloquent\Builder;
 use Sheba\Reward\Event\CampaignEventParameter;
+use Sheba\Reward\Exception\ParameterTypeMismatchException;
 
 class Portal extends CampaignEventParameter
 {
     public function validate()
     {
-        // TODO: Implement validate() method.
+        if (empty($this->value) && !is_null($this->value))
+            throw new ParameterTypeMismatchException("Portal can't be empty");
     }
 
     public function check(Builder $query)
     {
         if ($this->value != null) {
-            $query->whereHas('statusChangeLogs', function ($q) {
+            $query->whereHas('statusChangeLog', function ($q) {
                 $q->where('to_status', 'Served')->whereIn('portal_name', $this->value);
             });
         }
