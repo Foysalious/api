@@ -80,9 +80,10 @@ class PartnerRepository extends BaseRepository
         $sound   = config('sheba.push_notification_sound.manager');
 
         (new PushNotificationHandler())->send([
-            "title" => 'ওয়ালেট ওয়ার্নিং!',
-            "message" => $notification,
-            "event_type" => 'WalletWarning'
+            "title"         => 'ওয়ালেট ওয়ার্নিং!',
+            "message"       => $notification,
+            "event_type"    => 'WalletWarning',
+            "sound"         => "notification_sound"
         ], $topic, $channel, $sound);
     }
 
