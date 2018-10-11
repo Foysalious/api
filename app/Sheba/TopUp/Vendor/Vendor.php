@@ -21,4 +21,10 @@ abstract class Vendor
     }
 
     abstract function recharge($mobile_number, $amount, $type): TopUpResponse;
+
+    public function deductAmount($amount)
+    {
+        $this->model->amount -= $amount;
+        $this->model->update();
+    }
 }

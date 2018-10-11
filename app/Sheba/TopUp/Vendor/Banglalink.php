@@ -26,4 +26,22 @@ class Banglalink extends Vendor
     {
         return $this->ssl->recharge($mobile_number, $amount, $type);
     }
+
+
+    /**
+     * @param $amount
+     * @throws \Exception
+     */
+    public function deductAmount($amount)
+    {
+        $this->model->amount -= $amount;
+        $this->model->update();
+
+        $vendor = new VendorFactory();
+        $gp = $vendor->getById(4);
+        $gp->deductAmount($amount);
+        $teletalk = $vendor->getById(6);
+        $teletalk->deductAmount($amount);
+
+    }
 }
