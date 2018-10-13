@@ -3,14 +3,17 @@
 namespace App\Http\Controllers;
 
 
+use App\Models\PartnerOrder;
 use App\Sheba\PayCharge\Rechargable;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\PayCharge\Adapters\PayChargable\RechargeAdapter;
 use Sheba\PayCharge\PayCharge;
 use Cache;
 use DB;
+use Sheba\ShebaBonusCredit;
 
 class WalletController extends Controller
 {
@@ -54,41 +57,6 @@ class WalletController extends Controller
         }
     }
 
-    public function claim(Request $request)
-    {
-        try {
-            $this->validate($request, [
-                'user_id' => 'required',
-                'user_type' => 'required|in:customer',
-                'remember_token' => 'required'
-            ]);
-            $claim_amount = 50;
-            $class_name = "App\\Models\\" . ucwords($request->user_type);
-            /** @var Rechargable $user */
-            $user = $class_name::where([['id', (int)$request->user_id], ['remember_token', $request->remember_token]])->first();
-            if (!$user) return api_response($request, null, 404, ['message' => 'User Not found.']);
-            if ($user->transactions->count() == 0) {
-                $user->rechargeWallet($claim_amount, [
-                    'log' => 'First time credit claim', 'amount' => $claim_amount,
-                    'transaction_details' => '', 'type' => 'Credit'
-                ]);
-                return api_response($request, null, 200);
-            } else {
-                return api_response($request, $user, 403, ['message' => 'You\'re not eligible to claim credit.']);
-            }
-
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
     public function purchase(Request $request)
     {
         try {
@@ -106,17 +74,25 @@ class WalletController extends Controller
             $payment = json_decode($payment);
             $pay_chargable = unserialize($payment->pay_chargable);
             if ($pay_chargable->userId == $user->id) {
-                if ((double)$user->wallet < (double)$pay_chargable->amount) return api_response($request, null, 400, ['message' => 'You don\'t have sufficient credit']);
-                DB::transaction(function () use ($pay_chargable, $user, $payment) {
-                    $user->debitWallet($pay_chargable->amount);
-                    $user->walletTransaction([
-                        'amount' => $pay_chargable->amount,
-                        'type' => 'Debit', 'log' => 'Service Purchase.',
-                        'partner_order_id' => $pay_chargable->id,
-                        'transaction_details' => json_encode($payment->method_info),
-                        'created_at' => Carbon::now()
-                    ]);
-                });
+                if ($user->shebaCredit() < $pay_chargable->amount) return api_response($request, null, 400, ['message' => 'You don\'t have sufficient credit']);
+                try {
+                    DB::transaction(function () use ($pay_chargable, $user, $payment) {
+                        $remaining = (new ShebaBonusCredit())->setUser($user)->setSpentModel(PartnerOrder::find($pay_chargable->id))->deduct($pay_chargable->amount);
+                        if ($remaining > 0) {
+                            $user->debitWallet($remaining);
+                            $user->walletTransaction([
+                                'amount' => $remaining,
+                                'type' => 'Debit', 'log' => 'Service Purchase.',
+                                'partner_order_id' => $pay_chargable->id,
+                                'transaction_details' => json_encode($payment->method_info),
+                                'created_at' => Carbon::now()
+                            ]);
+                        }
+                    });
+                } catch (QueryException $e) {
+                    app('sentry')->captureException($e);
+                    return api_response($request, null, 500);
+                }
                 return api_response($request, $user, 200);
             } else {
                 return api_response($request, $user, 404);

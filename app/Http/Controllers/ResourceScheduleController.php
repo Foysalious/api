@@ -1,12 +1,9 @@
-<?php
-
-namespace App\Http\Controllers;
-
+<?php namespace App\Http\Controllers;
 
 use App\Models\Job;
 use App\Models\ResourceSchedule;
-use App\Repositories\PushNotificationRepository;
 use Illuminate\Http\Request;
+use Sheba\PushNotificationHandler;
 
 class ResourceScheduleController extends Controller
 {
@@ -32,14 +29,17 @@ class ResourceScheduleController extends Controller
 
     private function sendNotificationToPartner(Job $job)
     {
-        (new PushNotificationRepository())->send([
+        $topic   = config('sheba.push_notification_topic_name.manager') . $job->partner_order->partner_id;
+        $channel = config('sheba.push_notification_channel_name.manager');
+        $sound   = config('sheba.push_notification_sound.manager');
+
+        (new PushNotificationHandler())->send([
             "title" => 'Resource extended time',
             "message" => $job->resource->profile->name . " has extended time for " . $job->fullCode(),
             "event_type" => 'PartnerOrder',
             "event_id" => (string)$job->partner_order->id,
             "action" => 'extend_time',
             "version" => $job->partner_order->getVersion(),
-        ], env('MANAGER_TOPIC_NAME') . $job->partner_order->partner_id);
+        ], $topic, $channel);
     }
-
 }

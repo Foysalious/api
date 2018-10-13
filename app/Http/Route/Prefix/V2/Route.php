@@ -175,12 +175,7 @@ class Route
                 });
                 $api->get('get-profile', 'ResourceController@getResourceData');
             });
-            $api->group(['prefix' => 'affiliates/{affiliate}', 'middleware' => ['affiliate.auth']], function ($api) {
-                $api->get('dashboard', 'AffiliateController@getDashboardInfo');
-                $api->get('partner-affiliates', 'PartnerAffiliationController@index');
-                $api->post('partner-affiliates', 'PartnerAffiliationController@store');
-                $api->post('top-up', 'TopUpController@topUp');
-            });
+            (new AffiliateRoute())->set($api);
             $api->get('updates', 'UpdateController@getUpdates');
 
         });

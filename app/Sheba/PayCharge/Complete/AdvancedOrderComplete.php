@@ -11,6 +11,7 @@ use Sheba\ModificationFields;
 use Sheba\PayCharge\PayChargable;
 use DB;
 use Sheba\RequestIdentification;
+use Sheba\Reward\ActionRewardDispatcher;
 
 class AdvancedOrderComplete extends PayChargeComplete
 {
@@ -39,11 +40,11 @@ class AdvancedOrderComplete extends PayChargeComplete
                 $partner_order_payment->fill((new RequestIdentification())->get());
                 $partner_order_payment->save();
                 if (strtolower($method_response['name']) == 'wallet') {
-                    $amount = ($pay_chargable->amount * self::CASHBACK_PERCENTAGE) / 100;
-                    $customer->rechargeWallet($amount, [
-                        'amount' => $amount, 'transaction_details' => json_encode($method_response['details']),
-                        'type' => 'Credit', 'log' => 'Bonus Sheba Credit'
-                    ]);
+                    app(ActionRewardDispatcher::class)->run(
+                        'wallet_cashback',
+                        $customer,
+                        $partner_order_payment
+                    );
                 }
             });
         } catch (QueryException $e) {

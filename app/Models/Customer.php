@@ -5,9 +5,10 @@ namespace App\Models;
 use App\Sheba\PayCharge\Rechargable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Sheba\PayCharge\Wallet;
+use Sheba\Reward\Rewardable;
 use Sheba\Voucher\VoucherCodeGenerator;
 
-class Customer extends Authenticatable implements Rechargable
+class Customer extends Authenticatable implements Rechargable, Rewardable
 {
     use Wallet;
     protected $fillable = [
@@ -22,6 +23,7 @@ class Customer extends Authenticatable implements Rechargable
         'gender',
         'dob',
         'pro_pic',
+        'wallet',
         'created_by',
         'created_by_name',
         'updated_by',
@@ -150,6 +152,21 @@ class Customer extends Authenticatable implements Rechargable
     public function transactions()
     {
         return $this->hasMany(CustomerTransaction::class);
+    }
+
+    public function bonuses()
+    {
+        return $this->morphMany(Bonus::class, 'user');
+    }
+
+    public function shebaCredit()
+    {
+        return $this->wallet + $this->shebaBonusCredit();
+    }
+
+    public function shebaBonusCredit()
+    {
+        return (double)$this->bonuses()->where('status', 'valid')->sum('amount');
     }
 
 }

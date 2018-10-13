@@ -99,7 +99,7 @@ class Ssl implements PayChargeMethod
         );
     }
 
-    public function getError(): MethodError
+    public function getError(): PayChargeMethodError
     {
         return (new SslErrorAdapter($this->error))->getError();
     }

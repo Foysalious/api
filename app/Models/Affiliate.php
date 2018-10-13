@@ -3,13 +3,14 @@
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Location\Distance\TransactionMethod;
+use Sheba\PayCharge\Wallet;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
 
 class Affiliate extends Model implements TopUpAgent
 {
     use TopUpTrait;
-
+    use Wallet;
     protected $guarded = ['id'];
     protected $dates = ['last_suspended_at'];
     protected $casts = ['wallet' => 'double', 'is_ambassador' => 'int', 'is_suspended' => 'int'];
@@ -103,11 +104,11 @@ class Affiliate extends Model implements TopUpAgent
 
     public function topUpTransaction($amount, $log)
     {
-        $this->debitWallet($amount, $log);
+        $this->debitWallet($amount);
         $this->walletTransaction(['amount' => $amount, 'type' => 'Debit', 'log' => $log]);
     }
 
-    public function debitWallet($amount, $log)
+    public function debitWallet($amount)
     {
         $this->update(['wallet' => $this->wallet - $amount]);
     }
@@ -120,5 +121,10 @@ class Affiliate extends Model implements TopUpAgent
     public function isAmbassador()
     {
         return $this->is_ambassador == 1;
+    }
+
+    public function bonuses()
+    {
+        return $this->morphMany(Bonus::class, 'user');
     }
 }

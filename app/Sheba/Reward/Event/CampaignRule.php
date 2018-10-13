@@ -18,8 +18,8 @@ abstract class CampaignRule extends Rule
         parent::__construct($rule);
 
         if (!property_exists($this->rule, 'target')) throw new RulesValueMismatchException('Target must be present');
-        $this->target->validate();
         $this->target->value = $this->rule->target;
+        $this->target->validate();
     }
 
     abstract public function check(Builder $query);

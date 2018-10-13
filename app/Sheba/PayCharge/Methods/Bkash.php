@@ -74,7 +74,7 @@ class Bkash implements PayChargeMethod
         );
     }
 
-    public function getError(): MethodError
+    public function getError(): PayChargeMethodError
     {
         return (new BkashErrorAdapter($this->error))->getError();
     }

@@ -23,6 +23,7 @@ class CampaignRewardDisburse extends Command
      * Execute the console command.
      *
      * @param CompletedCampaignHandler $handler
+     * @throws \Exception
      */
     public function handle(CompletedCampaignHandler $handler)
     {

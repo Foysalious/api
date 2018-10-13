@@ -4,5 +4,13 @@ use Sheba\Reward\Event;
 
 abstract class Action extends Event
 {
-    abstract function isEligible(array $params);
+    protected $params;
+
+    abstract function isEligible();
+
+    public function setParams(array $params)
+    {
+        $this->params = $params;
+        return $this;
+    }
 }

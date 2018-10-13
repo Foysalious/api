@@ -8,19 +8,27 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use DB;
+use Sheba\Partner\PartnerScheduleSlot;
 
 class ScheduleTimeController extends Controller
 {
     const SCHEDULE_START = '09:00:00';
     const SCHEDULE_END = '21:00:00';
 
-    public function index(Request $request)
+    public function index(Request $request, PartnerScheduleSlot $partnerSchedule)
     {
         try {
             $this->validate($request, [
                 'for' => 'sometimes|required|string|in:app',
                 'category' => 'sometimes|required|numeric',
+                'partner' => 'sometimes|required|numeric',
+                'limit' => 'sometimes|required|numeric:min:1'
             ]);
+            if ($request->has('category') && $request->has('partner')) {
+                $dates = $partnerSchedule->setPartner($request->partner)->setCategory($request->category);
+                $dates = $request->has('limit') ? $dates->get($request->limit) : $dates->get();
+                return api_response($request, $dates, 200, ['dates' => $dates]);
+            }
             $slots = ScheduleSlot::where([['start', '>=', DB::raw("CAST('" . self::SCHEDULE_START . "' As time)")], ['end', '<=', DB::raw("CAST('" . self::SCHEDULE_END . "' As time)")]])->get();
             $current_time = Carbon::now();
             if ($request->has('category')) {

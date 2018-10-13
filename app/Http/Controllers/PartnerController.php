@@ -444,10 +444,11 @@ class PartnerController extends Controller
         try {
             $start = microtime(true);
             $this->validate($request, [
-                'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
-                'time' => 'required|string',
+                'date' => 'sometimes|required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
+                'time' => 'sometimes|required|string',
                 'services' => 'required|string',
                 'isAvailable' => 'sometimes|required',
+                'availability' => 'sometimes|required',
                 'partner' => 'sometimes|required',
             ]);
             $validation = new Validation($request);
@@ -459,7 +460,7 @@ class PartnerController extends Controller
 
             $partner = $request->has('partner') ? $request->partner : null;
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $location);
-            $partner_list->find($partner);
+            $partner_list->setAvailability($request->availability)->find($partner);
             if ($request->has('isAvailable')) {
                 $partners = $partner_list->partners;
                 $available_partners = $partners->filter(function ($partner) {

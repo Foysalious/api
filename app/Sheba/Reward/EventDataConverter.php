@@ -52,7 +52,14 @@ class EventDataConverter
                 ]
             ],
             'customer' => [
-                'action'    => [],
+                'action'    => [
+                    'wallet_cashback' => [
+                        'name' => 'Wallet Cashback',
+                        'event_class' => 'Sheba\Reward\Event\Customer\Action\WalletCashback\Event',
+                        'rule_class' => 'Sheba\Reward\Event\Customer\Action\WalletCashback\Rule',
+                        'parameters' => []
+                    ]
+                ],
                 'campaign'  => []
             ]
         ]);

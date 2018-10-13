@@ -93,7 +93,7 @@ class Cbl implements PayChargeMethod
         ];
     }
 
-    public function getError(): MethodError
+    public function getError(): PayChargeMethodError
     {
         // TODO: Implement getError() method.
     }

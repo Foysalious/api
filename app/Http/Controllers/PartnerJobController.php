@@ -1,13 +1,10 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\Job;
 use App\Models\JobMaterial;
 use App\Models\JobUpdateLog;
 use App\Models\Resource;
 use App\Repositories\PartnerOrderRepository;
-use App\Repositories\PushNotificationRepository;
 use App\Repositories\ResourceJobRepository;
 use App\Sheba\JobTime;
 use App\Sheba\UserRequestInformation;
@@ -16,6 +13,7 @@ use DB;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\PushNotificationHandler;
 
 class PartnerJobController extends Controller
 {
@@ -126,7 +124,6 @@ class PartnerJobController extends Controller
             return api_response($request, null, 500);
         }
     }
-
 
     public function acceptJobAndAssignResource($partner, $job, Request $request)
     {
@@ -372,19 +369,23 @@ class PartnerJobController extends Controller
     private function sendAssignResourcePushNotifications(Job $job)
     {
         try {
-            (new PushNotificationRepository())->send([
+            $topic   = config('sheba.push_notification_topic_name.customer') . $job->partner_order->order->customer->id;
+            $channel = config('sheba.push_notification_channel_name.customer');
+            (new PushNotificationHandler())->send([
                 "title" => 'Resource has been assigned',
                 "message" => $job->resource->profile->name . " has been added as a resource for your job.",
                 "event_type" => 'Job',
                 "event_id" => $job->id
-            ], env('CUSTOMER_TOPIC_NAME') . $job->partner_order->order->customer->id);
+            ], $topic, $channel);
 
-            (new PushNotificationRepository())->send([
+            $topic   = config('sheba.push_notification_topic_name.resource') . $job->resource_id;
+            $channel = config('sheba.push_notification_channel_name.resource');
+            (new PushNotificationHandler())->send([
                 "title" => 'Assigned to a new job',
                 "message" => 'You have been assigned to a new job. Job ID: ' . $job->partnerOrder->order->code(),
                 "event_type" => 'PartnerOrder',
                 "event_id" => $job->partnerOrder->id
-            ], env('RESOURCE_TOPIC_NAME') . $job->resource_id);
+            ], $topic, $channel);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
         }
@@ -422,5 +423,4 @@ class PartnerJobController extends Controller
             return api_response($request, null, 500);
         }
     }
-
 }

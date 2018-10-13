@@ -4,9 +4,9 @@
 namespace Sheba\PayCharge\Adapters\Error;
 
 
-use Sheba\PayCharge\Methods\MethodError;
+use Sheba\PayCharge\Methods\PayChargeMethodError;
 
 interface MethodErrorAdapter
 {
-    public function getError(): MethodError;
+    public function getError(): PayChargeMethodError;
 }

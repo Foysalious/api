@@ -14,8 +14,8 @@ class Event extends Action
         return parent::setRule($rule);
     }
 
-    public function isEligible(array $params)
+    public function isEligible()
     {
-        return $this->rule->check($params);
+        return $this->rule->check($this->params);
     }
 }

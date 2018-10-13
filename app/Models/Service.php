@@ -205,4 +205,9 @@ class Service extends Model
     {
         return $this->belongsToMany(CustomerFavorite::class, 'customer_favourite_service', 'service_id', 'customer_favourite_id')->withPivot(['name', 'additional_info', 'variable_type', 'variables', 'option', 'quantity']);
     }
+
+    public function scopePublishedForBondhu($query)
+    {
+        return $query->where('is_published_for_bondhu', 1);
+    }
 }

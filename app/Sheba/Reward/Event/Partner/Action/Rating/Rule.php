@@ -8,6 +8,9 @@ class Rule extends ActionRule
     /** @var Rate*/
     public $rate;
 
+    /**
+     * @throws \Sheba\Reward\Exception\ParameterTypeMismatchException
+     */
     public function validate()
     {
         $this->rate->validate();
@@ -20,7 +23,7 @@ class Rule extends ActionRule
 
     public function setValues()
     {
-        $this->rate->value = property_exists($this->rule, 'rate') ? $this->rule->rate : null;
+        $this->rate->value = property_exists($this->rule, 'rate') ? (int) $this->rule->rate : null;
     }
 
     /**

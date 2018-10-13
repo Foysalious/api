@@ -8,8 +8,8 @@ abstract class Rule
     {
         $this->rule = is_string($rule) ? json_decode($rule) : $rule;
         $this->makeParamClasses();
-        $this->validate();
         $this->setValues();
+        $this->validate();
     }
 
     abstract public function makeParamClasses();

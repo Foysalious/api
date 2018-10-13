@@ -48,7 +48,7 @@ class CustomerType extends GraphQlType
 
     protected function resolveCreditField($root, $args)
     {
-        return $root->wallet;
+        return $root->shebaCredit();
     }
 
     protected function resolveAddressField($root, $args)

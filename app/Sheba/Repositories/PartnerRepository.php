@@ -75,12 +75,16 @@ class PartnerRepository extends BaseRepository
             "type" => notificationType('Info'),
         ]);
 
-        $topic = config('sheba.push_notification_topic_name.manager') . $partner->id;
+        $topic   = config('sheba.push_notification_topic_name.manager') . $partner->id;
+        $channel = config('sheba.push_notification_channel_name.manager');
+        $sound   = config('sheba.push_notification_sound.manager');
+
         (new PushNotificationHandler())->send([
-            "title" => 'ওয়ালেট ওয়ার্নিং!',
-            "message" => $notification,
-            "event_type" => 'WalletWarning'
-        ], $topic);
+            "title"         => 'ওয়ালেট ওয়ার্নিং!',
+            "message"       => $notification,
+            "event_type"    => 'WalletWarning',
+            "sound"         => "notification_sound"
+        ], $topic, $channel, $sound);
     }
 
     public function updateRewardPoint(Partner $partner, $point)

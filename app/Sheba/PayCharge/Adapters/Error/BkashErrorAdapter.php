@@ -3,7 +3,7 @@
 namespace Sheba\PayCharge\Adapters\Error;
 
 
-use Sheba\PayCharge\Methods\MethodError;
+use Sheba\PayCharge\Methods\PayChargeMethodError;
 
 class BkashErrorAdapter implements MethodErrorAdapter
 {
@@ -14,9 +14,9 @@ class BkashErrorAdapter implements MethodErrorAdapter
         $this->bkashError = $bkash_error;
     }
 
-    public function getError(): MethodError
+    public function getError(): PayChargeMethodError
     {
-        $method_error = new MethodError();
+        $method_error = new PayChargeMethodError();
         $method_error->code = $this->bkashError->errorCode;
         $method_error->message = $this->bkashError->errorMessage;
         return $method_error;
