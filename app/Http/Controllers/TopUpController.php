@@ -18,7 +18,7 @@ class TopUpController extends Controller
                 $asset_name = strtolower(trim(preg_replace('/\s+/', '_', $vendor->name)));
                 array_add($vendor, 'asset', $asset_name);
                 array_add($vendor, 'is_prepaid_available', 1);
-                array_add($vendor, 'is_postpaid_available', (int)$vendor->id != 6);
+                array_add($vendor, 'is_postpaid_available', (int)($vendor->id != 6));
                 if ($vendor->is_published) $error_message .= ',' . $vendor->name;
             }
             $regular_expression = array(
