@@ -234,7 +234,7 @@ class CategoryController extends Controller
             $category = Category::find($category);
             if (!$category) return api_response($request, null, 404);
             $category->load(['reviews' => function ($q) use ($offset, $limit) {
-                $q->select('id', 'category_id', 'customer_id', 'rating', 'review', 'review_title', 'partner_id')->whereIn('rating', [4, 5])->orderBy('created_at', 'desc')->skip($offset)->take($limit)->with(['rates', 'customer.profile', 'partner']);
+                $q->select('id', 'category_id', 'customer_id', 'rating', 'review', 'review_title', 'partner_id')->whereIn('rating', [4, 5])->orderBy('created_at', 'desc')->with(['rates', 'customer.profile', 'partner']);
             }]);
             $reviews = $category->reviews->each(function ($review) {
                 $review->review = $review->calculated_review;
@@ -244,7 +244,7 @@ class CategoryController extends Controller
                 removeRelationsAndFields($review);
             })->filter(function ($review) {
                 return (!empty($review->review) && $review->rating == 5);
-            })->unique('customer_id')->sortByDesc('id')->values()->all();
+            })->unique('customer_id')->sortByDesc('id')->splice($offset,$limit)->values()->all();
             return count($reviews) > 0 ? api_response($request, $reviews, 200, ['reviews' => $reviews]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
