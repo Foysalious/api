@@ -16,13 +16,12 @@ class CustomerTransactionHandler
     /**
      * @param $amount
      * @param $log
-     * @param PartnerOrder | null $partner_order
      * @param null $tags
      * @throws \Exception
      */
-    public function credit($amount, $log, PartnerOrder $partner_order = null, $tags = null)
+    public function credit($amount, $log, $tags = null)
     {
-        $data = $this->formatData($amount, $log, $partner_order);
+        $data = $this->formatData($amount, $log);
         $data['type'] = 'Credit';
         $this->customerTransactionRepo->save($data, $tags);
     }
@@ -30,23 +29,21 @@ class CustomerTransactionHandler
     /**
      * @param $amount
      * @param $log
-     * @param PartnerOrder | null $partner_order
      * @param null $tags
      * @throws \Exception
      */
-    public function debit($amount, $log, PartnerOrder $partner_order = null, $tags = null)
+    public function debit($amount, $log, $tags = null)
     {
-        $data = $this->formatData($amount, $log, $partner_order);
+        $data = $this->formatData($amount, $log);
         $data['type'] = 'Debit';
         $this->customerTransactionRepo->save($data, $tags);
     }
 
-    private function formatData($amount, $log, PartnerOrder $partner_order = null)
+    private function formatData($amount, $log)
     {
         return [
             'amount' => $amount,
-            'log' => $log,
-            'partner_order_id' => $partner_order ? $partner_order->id : null,
+            'log' => $log
         ];
     }
 }

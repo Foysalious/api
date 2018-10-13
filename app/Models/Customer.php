@@ -23,6 +23,7 @@ class Customer extends Authenticatable implements Rechargable, Rewardable
         'gender',
         'dob',
         'pro_pic',
+        'wallet',
         'created_by',
         'created_by_name',
         'updated_by',
