@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Settings;
 
 
 use App\Http\Controllers\Controller;
+use App\Models\Customer;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Redis;
@@ -52,9 +53,10 @@ class SettingsController extends Controller
     public function getCustomerSettings($customer, Request $request)
     {
         try {
+            /** @var Customer $customer */
             $customer = $request->customer;
             $settings = array(
-                'credit' => $customer->wallet,
+                'credit' => $customer->shebaCredit(),
                 'rating' => round($customer->customerReviews->avg('rating'), 2),
                 'pending_order' => $customer->partnerOrders->where('closed_and_paid_at', null)->where('cancelled_at', null)->count()
             );

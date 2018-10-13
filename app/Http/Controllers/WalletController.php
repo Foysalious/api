@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 use App\Models\PartnerOrder;
 use App\Sheba\PayCharge\Rechargable;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\PayCharge\Adapters\PayChargable\RechargeAdapter;
@@ -74,19 +75,24 @@ class WalletController extends Controller
             $pay_chargable = unserialize($payment->pay_chargable);
             if ($pay_chargable->userId == $user->id) {
                 if ($user->shebaCredit() < $pay_chargable->amount) return api_response($request, null, 400, ['message' => 'You don\'t have sufficient credit']);
-                DB::transaction(function () use ($pay_chargable, $user, $payment) {
-                    $remaining = (new ShebaBonusCredit())->setUser($user)->setSpentModel(PartnerOrder::find($pay_chargable->id))->deduct($pay_chargable->amount);
-                    if ($remaining > 0) {
-                        $user->debitWallet($remaining);
-                        $user->walletTransaction([
-                            'amount' => $remaining,
-                            'type' => 'Debit', 'log' => 'Service Purchase.',
-                            'partner_order_id' => $pay_chargable->id,
-                            'transaction_details' => json_encode($payment->method_info),
-                            'created_at' => Carbon::now()
-                        ]);
-                    }
-                });
+                try {
+                    DB::transaction(function () use ($pay_chargable, $user, $payment) {
+                        $remaining = (new ShebaBonusCredit())->setUser($user)->setSpentModel(PartnerOrder::find($pay_chargable->id))->deduct($pay_chargable->amount);
+                        if ($remaining > 0) {
+                            $user->debitWallet($remaining);
+                            $user->walletTransaction([
+                                'amount' => $remaining,
+                                'type' => 'Debit', 'log' => 'Service Purchase.',
+                                'partner_order_id' => $pay_chargable->id,
+                                'transaction_details' => json_encode($payment->method_info),
+                                'created_at' => Carbon::now()
+                            ]);
+                        }
+                    });
+                } catch (QueryException $e) {
+                    app('sentry')->captureException($e);
+                    return api_response($request, null, 500);
+                }
                 return api_response($request, $user, 200);
             } else {
                 return api_response($request, $user, 404);

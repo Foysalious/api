@@ -89,7 +89,7 @@ class CustomerTransactionController extends Controller
             'log' => $bonus->log,
             'created_at' => $bonus->created_at->toDateTimeString(),
             'partner_order_id' => null,
-            'valid_till' => $bonus->valid_till->format('Y-m-d'),
+            'valid_till' => $bonus->valid_till->format('d/m/Y'),
             'order_code' => '',
             'transaction_type' => $bonus->log,
             'category_name' => '',
