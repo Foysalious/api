@@ -42,7 +42,6 @@ class Ssl
             $calling_method = "POST";
             $create_recharge_response = $client->CreateRecharge($this->clientId, $this->clientPassword, $guid, $operator_id,
                 $mobile_number, $amount, $connection_type, $sender_id, $priority, $s_url, $f_url, $calling_method);
-            dd($this->clientId, $this->clientPassword, $this->clientPassword);
             $vr_guid = $create_recharge_response->vr_guid;
             $recharge_response = $client->InitRecharge($this->clientId, $this->clientPassword, $guid, $vr_guid);
             $recharge_response->guid = $guid;
@@ -61,8 +60,8 @@ class Ssl
             return 1;
         } elseif (preg_match("/^(\+88019)/", $mobile_number)) {
             return 2;
-        } elseif (preg_match("/^(\+88016)/", $mobile_number)) {
-            return 6;
+        } elseif (preg_match("/^(\+88015)/", $mobile_number)) {
+            return 5;
         } else {
             throw new \InvalidArgumentException('Invalid Mobile for ssl topup.');
         }
