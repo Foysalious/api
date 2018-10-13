@@ -8,8 +8,7 @@ use Sheba\Reward\CampaignEventInitiator;
 class Reward extends Model
 {
     protected $guarded = ['id'];
-
-    protected $dates = ['start_time', 'end_time'];
+    protected $dates = ['start_time', 'end_time', 'valid_till_date'];
     protected $casts = ['amount' => 'double'];
 
     public function detail()
