@@ -64,7 +64,6 @@ class ShebaBonusCredit
     {
         $new_bonus = $old_bonus->replicate();
         $new_bonus->amount = $old_bonus->amount - $amount;
-        $new_bonus = $this->setSpentInfo($new_bonus);
         $new_bonus->save();
     }
 }

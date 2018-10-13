@@ -162,5 +162,9 @@ class Customer extends Authenticatable implements Rechargable
         return $this->wallet - $this->bonuses()->where('status', 'valid')->sum('amount');
     }
 
+    public function shebaBonusCredit()
+    {
+        return $this->bonuses()->where('status', 'valid')->sum('amount');
+    }
 
 }

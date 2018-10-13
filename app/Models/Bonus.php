@@ -9,4 +9,9 @@ class Bonus extends Model
 {
     protected $guarded = ['id'];
     protected $casts = ['wallet' => 'double'];
+
+    public function spentOn()
+    {
+        return $this->morphTo();
+    }
 }
