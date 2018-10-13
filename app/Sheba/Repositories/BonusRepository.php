@@ -42,6 +42,6 @@ class BonusRepository extends BaseRepository
             $valid_till = Carbon::now()->addDays($reward->valid_till_day);
         }
 
-        return $valid_till;
+        return $valid_till->endOfDay();
     }
 }
