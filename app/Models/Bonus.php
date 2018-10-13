@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 class Bonus extends Model
 {
     protected $guarded = ['id'];
-    protected $casts = ['wallet' => 'double'];
+    protected $casts = ['amount' => 'double'];
 
     public function spentOn()
     {

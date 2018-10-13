@@ -50,8 +50,9 @@ class CustomerTransactionController extends Controller
                 $transactions = $this->formatCreditBonusTransaction($valid_bonus, $transactions);
             }
             $transactions = $transactions->sortByDesc('created_at')->values()->all();
-            return api_response($request, $transactions, 200, ['transactions' => $transactions, 'balance' => $customer->shebaCredit(),
-                'credit' => $customer->wallet, 'bonus' => $customer->shebaBonusCredit()]);
+            return api_response($request, $transactions, 200, [
+                'transactions' => $transactions, 'balance' => $customer->shebaCredit(),
+                'credit' => round($customer->wallet, 2), 'bonus' => round($customer->shebaBonusCredit(), 2)]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
