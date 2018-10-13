@@ -4,6 +4,7 @@ namespace Sheba\PayCharge\Methods;
 
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Sheba\PayCharge\Adapters\Error\WalletErrorAdapter;
 use Sheba\PayCharge\PayChargable;
 use Cache;
@@ -35,12 +36,12 @@ class Wallet implements PayChargeMethod
             $pay_chargable = unserialize($payment->pay_chargable);
             $class_name = $pay_chargable->userType;
             $user = $class_name::find($pay_chargable->userId);
+            if (!$user) throw new ModelNotFoundException("$pay_chargable->userType not found by ID " . $pay_chargable->userId);
             $transaction = $user->transactions()->where('partner_order_id', $pay_chargable->id)->first();
-            if ($transaction && (json_decode($transaction->transaction_details))->transaction_id == $payment->transaction_id) {
-                return $payment->method_info;
-            } else {
-                return null;
-            }
+            if (!$transaction) throw new ModelNotFoundException("$pay_chargable->type  not found by " . $pay_chargable->id);
+            $transaction_exists = $this->isTransactionIdMatches($payment->transaction_id, $transaction);
+            if (!$transaction_exists) throw new ModelNotFoundException("$payment->transaction_id  not found in transaction $payment->transaction_id");
+            return $transaction && $transaction_exists ? $payment->method_info : null;
         } catch (\Throwable $e) {
             return null;
         }
@@ -61,5 +62,10 @@ class Wallet implements PayChargeMethod
     public function getError(): PayChargeMethodError
     {
         return (new WalletErrorAdapter($this->error))->getError();
+    }
+
+    private function isTransactionIdMatches($transaction_id, $transaction)
+    {
+        return (json_decode($transaction->transaction_details))->transaction_id == $transaction_id;
     }
 }
