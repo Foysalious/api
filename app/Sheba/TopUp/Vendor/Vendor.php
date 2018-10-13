@@ -20,6 +20,11 @@ abstract class Vendor
         return $this->model;
     }
 
+    public function isPublished()
+    {
+        return $this->model->is_published;
+    }
+
     abstract function recharge($mobile_number, $amount, $type): TopUpResponse;
 
     public function deductAmount($amount)

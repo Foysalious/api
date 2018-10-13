@@ -3,6 +3,7 @@
 namespace Sheba\TopUp\Vendor;
 
 
+use App\Models\TopUpVendor;
 use Sheba\TopUp\Vendor\Internal\Ssl;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
@@ -34,14 +35,6 @@ class Banglalink extends Vendor
      */
     public function deductAmount($amount)
     {
-        $this->model->amount -= $amount;
-        $this->model->update();
-
-        $vendor = new VendorFactory();
-        $gp = $vendor->getById(4);
-        $gp->deductAmount($amount);
-        $teletalk = $vendor->getById(6);
-        $teletalk->deductAmount($amount);
-
+        TopUpVendor::whereIn('id', [4, 5, 6])->update(['amount' => $this->model->amount - $amount]);
     }
 }

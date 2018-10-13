@@ -17,6 +17,8 @@ class TopUpController extends Controller
             foreach ($vendors as $vendor) {
                 $asset_name = strtolower(trim(preg_replace('/\s+/', '_', $vendor->name)));
                 array_add($vendor, 'asset', $asset_name);
+                array_add($vendor, 'is_prepaid_available', 1);
+                array_add($vendor, 'is_postpaid_available', (int)$vendor->id != 6);
                 if ($vendor->is_published) $error_message .= ',' . $vendor->name;
             }
             $regular_expression = array(
@@ -45,6 +47,7 @@ class TopUpController extends Controller
                 return api_response($request, null, 403, ['message' => "You don't have sufficient balance to recharge."]);
             }
             $vendor = $vendor->getById($request->vendor_id);
+            if (!$vendor->isPublished()) return api_response($request, null, 403, ['message' => 'Sorry, we don\'t support this operator at this moment']);
             $response = $top_up->setAgent($affiliate)->setVendor($vendor)->recharge($request->mobile, $request->amount, $request->connection_type);
             if ($response) return api_response($request, null, 200, ['message' => "Recharge Successful"]);
             else return api_response($request, null, 500, ['message' => "Recharge Unsuccessful"]);

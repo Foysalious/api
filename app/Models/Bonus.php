@@ -10,6 +10,7 @@ class Bonus extends Model
 {
     protected $guarded = ['id'];
     protected $casts = ['amount' => 'double'];
+    protected $dates = ['valid_till'];
 
     public function spentOn()
     {

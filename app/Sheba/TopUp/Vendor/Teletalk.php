@@ -2,6 +2,7 @@
 
 namespace Sheba\TopUp\Vendor;
 
+use App\Models\TopUpVendor;
 use Sheba\TopUp\Vendor\Internal\Ssl;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
@@ -32,15 +33,7 @@ class Teletalk extends Vendor
      */
     public function deductAmount($amount)
     {
-        $this->model->amount -= $amount;
-        $this->model->update();
-
-        $vendor = new VendorFactory();
-        $gp = $vendor->getById(4);
-        $gp->deductAmount($amount);
-        $bl = $vendor->getById(5);
-        $bl->deductAmount($amount);
-
+        TopUpVendor::whereIn('id', [4, 5, 6])->update(['amount' => $this->model->amount - $amount]);
     }
 
 }
