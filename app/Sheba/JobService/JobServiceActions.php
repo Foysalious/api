@@ -20,7 +20,6 @@ class JobServiceActions
 
     public function add()
     {
-        dd(5);
     }
 
     public function update(JobService $job_service, Request $request, Job $old_job)
