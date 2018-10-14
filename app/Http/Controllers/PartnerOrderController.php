@@ -132,6 +132,7 @@ class PartnerOrderController extends Controller
             } else {
                 $partner_order['overdue'] = null;
             }
+            $partner_order['is_on_premise'] = 1;
             removeRelationsAndFields($partner_order);
             $partner_order['jobs'] = $jobs->each(function ($item) {
                 removeRelationsAndFields($item);
