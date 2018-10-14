@@ -270,6 +270,7 @@ class PartnerOrderRepository
         $partner_order['total_jobs'] = count($partner_order->jobs);
         $partner_order['order_status'] = $job->status;
         $partner_order['isRentCar'] = $job->isRentCar();
+        $partner_order['is_on_premise'] = 1;
         return $partner_order;
     }
 
