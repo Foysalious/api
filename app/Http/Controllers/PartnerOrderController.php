@@ -190,6 +190,7 @@ class PartnerOrderController extends Controller
                 'discount' => (double)$partner_order->totalDiscount,
                 'total_sheba_discount_amount' => (double)$partner_order->totalShebaDiscount,
                 'total_partner_discount_amount' => (double)$partner_order->totalPartnerDiscount,
+                'is_on_premise' => 1
             );
             return api_response($request, $partner_order, 200, ['order' => $partner_order]);
         } catch (\Throwable $e) {
