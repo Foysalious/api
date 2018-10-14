@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
-use App\Models\PartnerOrder;
 use Illuminate\Http\Request;
 
 class CustomerTransactionController extends Controller
@@ -21,7 +20,7 @@ class CustomerTransactionController extends Controller
             $customer = $request->customer;
             $transactions = $customer->transactions();
             $bonuses = $customer->bonuses()->whereIn('status', ['used', 'valid'])->get();
-            $valid_bonuses = $bonuses->where('status', 'valid')->splice($offset, $limit);
+            $valid_bonuses = $bonuses->where('status', 'valid')->sortByDesc('created_at')->splice($offset, $limit);
             $used_bonus_group_by_partner_order_id = $bonuses->where('status', 'used')->groupBy('spent_on_id');
             if ($request->has('type')) $transactions->where('type', ucwords($request->type));
             $transactions = $transactions->select('id', 'customer_id', 'type', 'amount', 'log', 'created_at', 'partner_order_id', 'created_at')
