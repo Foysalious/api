@@ -21,10 +21,11 @@ class CustomerTransactionController extends Controller
             $customer = $request->customer;
             $transactions = $customer->transactions();
             $bonuses = $customer->bonuses()->whereIn('status', ['used', 'valid'])->get();
-            $valid_bonuses = $bonuses->where('status', 'valid');
+            $valid_bonuses = $bonuses->where('status', 'valid')->splice($offset, $limit);
             $used_bonus_group_by_partner_order_id = $bonuses->where('status', 'used')->groupBy('spent_on_id');
             if ($request->has('type')) $transactions->where('type', ucwords($request->type));
-            $transactions = $transactions->select('id', 'customer_id', 'type', 'amount', 'log', 'created_at', 'partner_order_id', 'created_at')->orderBy('id', 'desc')->skip($offset)->take($limit)->get();
+            $transactions = $transactions->select('id', 'customer_id', 'type', 'amount', 'log', 'created_at', 'partner_order_id', 'created_at')
+                ->with('partnerOrder.order')->orderBy('id', 'desc')->skip($offset)->take($limit)->get();
             $transactions->each(function ($transaction) use ($customer, $bonuses, $used_bonus_group_by_partner_order_id) {
                 $transaction['valid_till'] = null;
                 if ($transaction->partnerOrder) {
@@ -49,7 +50,7 @@ class CustomerTransactionController extends Controller
             foreach ($valid_bonuses as $valid_bonus) {
                 $transactions = $this->formatCreditBonusTransaction($valid_bonus, $transactions);
             }
-            $transactions = $transactions->sortByDesc('created_at')->values()->all();
+            $transactions = $transactions->sortByDesc('created_at')->splice($offset, $limit)->values()->all();
             return api_response($request, $transactions, 200, [
                 'transactions' => $transactions, 'balance' => $customer->shebaCredit(),
                 'credit' => round($customer->wallet, 2), 'bonus' => round($customer->shebaBonusCredit(), 2)]);
