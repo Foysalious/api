@@ -174,6 +174,7 @@ class Route
                     $api->get('/{reward}', 'Partner\PartnerRewardController@show');
                 });
                 $api->get('get-profile', 'ResourceController@getResourceData');
+                $api->get('is-on-premise-applicable', 'Partner\OperationController@isOnPremiseAvailable');
             });
             (new AffiliateRoute())->set($api);
             $api->get('updates', 'UpdateController@getUpdates');
