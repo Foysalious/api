@@ -113,7 +113,7 @@ class PartnerOrderRepository
                 'created_at' => $jobs[0]->partner_order->created_at->timestamp,
                 'created_at_readable' => $jobs[0]->partner_order->created_at->diffForHumans(),
                 'code' => $jobs[0]->partner_order->code(),
-                'is_on_premise' => 0,
+                'is_on_premise' => 1,
                 'id' => $jobs[0]->partner_order->id,
                 'total_price' => (double)$jobs[0]->partner_order->totalPrice,
                 'discount' => (double)$jobs[0]->partner_order->totalDiscount,
