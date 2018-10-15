@@ -200,6 +200,7 @@ class PartnerList
         $this->partners->load(['workingHours', 'leaves']);
         $this->partners->each(function ($partner) {
             $partner['is_available'] = $this->isWithinPreparationTime($partner) && (new PartnerAvailable($partner))->available($this->date, $this->time, $this->selectedCategory) ? 1 : 0;
+            $partner['total_working_days']=7;
         });
         $available_partners = $this->partners->where('is_available', 1);
         if ($available_partners->count() > 1) {
@@ -247,6 +248,7 @@ class PartnerList
         }]);
         foreach ($this->partners as $partner) {
             $partner['total_jobs'] = $partner->jobs->first() ? $partner->jobs->first()->total_jobs : 0;
+            $partner['total_experts'] = 20;
             $partner['ongoing_jobs'] = $partner->jobs->first() ? $partner->jobs->first()->ongoing_jobs : 0;
             $partner['total_jobs_of_category'] = $partner->jobs->first() ? $partner->jobs->first()->total_jobs_of_category : 0;
             $partner['contact_no'] = $this->getContactNumber($partner);
@@ -268,6 +270,7 @@ class PartnerList
     {
         foreach ($this->partners as $partner) {
             $partner['total_ratings'] = count($partner->reviews);
+            $partner['total_compliments'] = 5;
             $partner['total_five_star_ratings'] = count($partner->reviews->filter(function ($review) {
                 return $review->rating == 5;
             }));

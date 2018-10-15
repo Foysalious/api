@@ -224,12 +224,6 @@ class Job extends Model
         return $this->hasMany(JobStatusChangeLog::class);
     }
 
-    public function statusChangeLog()
-    {
-        return $this->hasMany(JobStatusChangeLog::class);
-
-    }
-
     public function updateLogs()
     {
         return $this->hasMany(JobUpdateLog::class);
