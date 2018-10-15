@@ -73,6 +73,7 @@ class PartnerJobController extends Controller
                             $job['is_cancel_request_rejected'] = 1;
                         }
                     }
+                    $job['is_on_premise'] = $job->site == 'partner' ? 1 : 0;
                     removeRelationsFromModel($job);
                     if ($job->resource_id == null) {
                         $jobs_with_resource->push($job);
