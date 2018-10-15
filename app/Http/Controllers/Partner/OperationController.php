@@ -44,8 +44,11 @@ class OperationController extends Controller
                 'address'           => "sometimes|required|string",
                 'locations'         => "sometimes|required",
                 'working_schedule'  => "sometimes|required",
+                'is_home_delivery_available' => "sometimes|required",
+                'is_on_premise_available' => "sometimes|required",
             ]);
             $partner = $request->partner;
+            dd($partner);
             return $this->saveInDatabase($partner, $request) ? api_response($request, $partner, 200) : api_response($request, $partner, 500);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -180,7 +183,7 @@ class OperationController extends Controller
     {
         try {
             $partner = $request->partner;
-            $is_on_premise_applicable = $partner->categories()->where('is_partner_premise_applied', 1)->count() ? 1 : 0;
+            $is_on_premise_applicable = $partner->categories()->where('categories.is_partner_premise_applied', 1)->count() ? 1 : 0;
             return api_response($request, $is_on_premise_applicable, 200, ['is_on_premise_applicable' => $is_on_premise_applicable]);
         } catch (\Throwable $exception) {
             app('sentry')->captureException($exception);
