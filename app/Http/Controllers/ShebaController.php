@@ -21,9 +21,9 @@ use Illuminate\Validation\ValidationException;
 use Validator;
 use DB;
 use Cache;
-use Sheba\PayCharge\Adapters\PayCharged\OrderAdapter;
-use Sheba\PayCharge\Adapters\PayCharged\RechargeAdapter;
-use Sheba\PayCharge\PayCharge;
+use Sheba\Payment\Adapters\PayCharged\OrderAdapter;
+use Sheba\Payment\Adapters\PayCharged\RechargeAdapter;
+use Sheba\Payment\PayCharge;
 
 class ShebaController extends Controller
 {

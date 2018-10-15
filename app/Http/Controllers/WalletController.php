@@ -4,13 +4,13 @@ namespace App\Http\Controllers;
 
 
 use App\Models\PartnerOrder;
-use App\Sheba\PayCharge\Rechargable;
+use App\Sheba\Payment\Rechargable;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Sheba\PayCharge\Adapters\PayChargable\RechargeAdapter;
-use Sheba\PayCharge\PayCharge;
+use Sheba\Payment\Adapters\PayChargable\RechargeAdapter;
+use Sheba\Payment\PayCharge;
 use Cache;
 use DB;
 use Sheba\ShebaBonusCredit;

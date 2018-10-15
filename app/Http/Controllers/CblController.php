@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Sheba\PayCharge\PayChargable;
-use Sheba\PayCharge\PayCharge;
+use Sheba\Payment\PayChargable;
+use Sheba\Payment\PayCharge;
 use Cache;
 
 

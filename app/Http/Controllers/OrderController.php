@@ -16,8 +16,8 @@ use Illuminate\Validation\ValidationException;
 use Redis;
 use DB;
 
-use Sheba\PayCharge\Adapters\PayChargable\OrderAdapter;
-use Sheba\PayCharge\PayCharge;
+use Sheba\Payment\Adapters\PayChargable\OrderAdapter;
+use Sheba\Payment\PayCharge;
 
 class OrderController extends Controller
 {

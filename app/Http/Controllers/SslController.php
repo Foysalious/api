@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
-use Sheba\PayCharge\PayCharge;
+use Sheba\Payment\PayCharge;
 use Cache;
 
 class SslController extends Controller
