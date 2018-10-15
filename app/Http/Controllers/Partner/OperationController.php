@@ -180,8 +180,7 @@ class OperationController extends Controller
     {
         try {
             $partner = $request->partner;
-            // $is_on_premise_applicable = $partner->categories()->where('is_on_premisable', 1)->count() ? true : false;
-            $is_on_premise_applicable = 1;
+            $is_on_premise_applicable = $partner->categories()->where('is_partner_premise_applied', 1)->count() ? 1 : 0;
             return api_response($request, $is_on_premise_applicable, 200, ['is_on_premise_applicable' => $is_on_premise_applicable]);
         } catch (\Throwable $exception) {
             app('sentry')->captureException($exception);
