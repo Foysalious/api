@@ -17,7 +17,7 @@ class ExcludedStatus extends CampaignEventParameter
     public function check(Builder $query)
     {
         if ($this->value != null) {
-            $query->whereDoesntHave('statusChangeLog', function ($q) {
+            $query->whereDoesntHave('statusChangeLogs', function ($q) {
                 $q->whereIn('to_status', $this->value);
             });
         }
