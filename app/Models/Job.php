@@ -241,7 +241,7 @@ class Job extends Model
             'jobs.id', 'jobs.discount', 'jobs.created_at', 'jobs.category_id', 'sheba_contribution', 'jobs.preferred_time_start',
             'partner_contribution', 'commission_rate', 'resource_id', 'schedule_date', 'service_variables',
             'job_additional_info', 'delivered_date', 'preferred_time', 'service_name',
-            'status', 'service_quantity', 'service_unit_price', 'service_id', 'partner_order_id'
+            'status', 'site', 'service_quantity', 'service_unit_price', 'service_id', 'partner_order_id'
         );
     }
 
