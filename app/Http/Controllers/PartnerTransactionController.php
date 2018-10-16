@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Sheba\PartnerPayment\PartnerPaymentValidatorFactory;
+use Sheba\Reward\ActionRewardDispatcher;
 use Validator;
 
 class PartnerTransactionController extends Controller
@@ -54,11 +55,19 @@ class PartnerTransactionController extends Controller
                 return api_response($request, null, 400, ['message' => $error]);
             }
             $request->merge(['transaction_amount' => $payment_validator->amount, 'transaction_account' => $payment_validator->sender]);
+
             if ($res = $this->reconcile($request)) {
                 if ($res->code != 200) return api_response($request, null, 500, ['message' => $res->msg]);
             } else {
                 return api_response($request, null, 500);
             }
+
+            app(ActionRewardDispatcher::class)->run(
+                'partner_wallet_recharge',
+                $request->partner,
+                $payment_validator->amount
+            );
+
             return api_response($request, null, 200, ['message' => "Wallet refilled."]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
