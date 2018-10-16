@@ -55,7 +55,11 @@ class PartnerRegistrationController extends Controller
             $data = $this->makePartnerCreateData($request);
             if ($partner = $this->createPartner($resource, $data)) {
                 $info = $this->profileRepository->getProfileInfo('resource', Profile::find($profile->id));
-                app('\Sheba\PartnerAffiliation\RewardHandler')->setPartner($partner)->onBoarded();
+                /**
+                 * LOGIC CHANGE - PARTNER REWARD MOVE TO WAITING STATUS
+                 *
+                 * app('\Sheba\PartnerAffiliation\RewardHandler')->setPartner($partner)->onBoarded();
+                 */
                 return api_response($request, null, 200, ['info' => $info]);
             } else {
                 return api_response($request, null, 500);
