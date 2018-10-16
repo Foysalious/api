@@ -1,4 +1,6 @@
-<?php namespace Sheba\Payment\Methods;
+<?php
+
+namespace Sheba\Payment\Methods\Ssl;
 
 use App\Models\Payable;
 use App\Models\Payment;
@@ -6,10 +8,12 @@ use App\Models\PaymentDetail;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
-use Illuminate\Database\QueryException;
 use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Error\SslErrorAdapter;
 use Cache;
+use Sheba\Payment\Methods\PaymentMethod;
+use Sheba\Payment\Methods\Ssl\Response\InitResponse;
+use Sheba\Payment\Methods\Ssl\Response\ValidationResponse;
 use Sheba\RequestIdentification;
 use DB;
 
@@ -45,7 +49,7 @@ class Ssl implements PaymentMethod
 
     public function init(Payable $payable): Payment
     {
-        $invoice = "SHEBA_SSL_" . strtoupper($payable->type) . '_' . $payable->id . '_' . Carbon::now()->timestamp;
+        $invoice = "SHEBA_SSL_" . strtoupper($payable->readable_type) . '_' . $payable->id . '_' . Carbon::now()->timestamp;
         $data = array();
         $data['store_id'] = $this->storeId;
         $data['store_passwd'] = $this->storePassword;
@@ -61,36 +65,58 @@ class Ssl implements PaymentMethod
         $data['cus_name'] = $user->profile->name;
         $data['cus_email'] = $user->profile->email;
         $data['cus_phone'] = $user->profile->mobile;
-        $result = $this->getSslSession($data);
-        if ($result && $result->status == 'SUCCESS') {
-            $payment = new Payment();
-            DB::transaction(function () use ($payment, $payable, $invoice, $result, $user) {
-                $payment->payable_id = $payable->id;
-                $payment->transaction_id = $invoice;
-                $payment->status = 'initiated';
-                $payment->transaction_details = json_encode($result);
-                $payment->redirect_url = $result->GatewayPageURL;
-                $payment->valid_till = Carbon::tomorrow();
-                $this->setModifier($user);
-                $payment->fill((new RequestIdentification())->get());
-                $this->withCreateModificationField($payment);
-                $payment->save();
-                $payment_details = new PaymentDetail();
-                $payment_details->payment_id = $payment->id;
-                $payment_details->method = self::NAME;
-                $payment_details->amount = $payable->amount;
-                $payment_details->save();
+        $payment = new Payment();
+        DB::transaction(function () use ($payment, $payable, $invoice, $user) {
+            $payment->payable_id = $payable->id;
+            $payment->transaction_id = $invoice;
+            $payment->status = 'initiated';
+            $payment->valid_till = Carbon::tomorrow();
+            $this->setModifier($user);
+            $payment->fill((new RequestIdentification())->get());
+            $this->withCreateModificationField($payment);
+            $payment->save();
+            $payment_details = new PaymentDetail();
+            $payment_details->payment_id = $payment->id;
+            $payment_details->method = self::NAME;
+            $payment_details->amount = $payable->amount;
+            $payment_details->save();
 
-            });
-            return $payment;
+        });
+        $response = $this->getSslSession($data);
+        $init_response = new InitResponse();
+        $init_response->setResponse($response);
+        if ($init_response->hasSuccess()) {
+            $success = $init_response->getSuccess();
+            $payment->transaction_details = json_encode($success->details);
+            $payment->redirect_url = $success->redirect_url;
         } else {
-            return null;
+            $error = $init_response->getError();
+            $payment->status = 'failed';
+            $payment->transaction_details = json_encode($error->details);
+        }
+        $payment->update();
+        return $payment;
+    }
+
+    public function getSslSession($data)
+    {
+        try {
+            $client = new Client();
+            $result = $client->request('POST', $this->sessionUrl, ['form_params' => $data]);
+            return json_decode($result->getBody());
+        } catch (RequestException $e) {
+            throw $e;
         }
     }
 
-    public function validate($payment)
+    public function validate(Payment $payment)
     {
         if ($this->sslIpnHashValidation()) {
+            $validation_response=new ValidationResponse();
+            $validation_response->setResponse($this->validateOrder());
+            if($validation_response->hasSuccess()){
+
+            }
             if ($result = $this->validateOrder()) {
                 if ($result->status == "VALID" || $result->status == "VALIDATED") {
                     return $result;
@@ -100,6 +126,11 @@ class Ssl implements PaymentMethod
                 }
             }
 
+        } else {
+            $request = request()->all();
+            $request['status'] = 'HASH_VALIDATION_FAILED';
+            $payment->transaction_details = json_encode($request);
+            $payment->update();
         }
     }
 
@@ -118,17 +149,6 @@ class Ssl implements PaymentMethod
     public function getError(): PayChargeMethodError
     {
         return (new SslErrorAdapter($this->error))->getError();
-    }
-
-    public function getSslSession($data)
-    {
-        try {
-            $client = new Client();
-            $result = $client->request('POST', $this->sessionUrl, ['form_params' => $data]);
-            return json_decode($result->getBody());
-        } catch (RequestException $e) {
-            throw $e;
-        }
     }
 
     private function sslIpnHashValidation()

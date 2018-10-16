@@ -19,5 +19,9 @@ class Payable extends Model
         }
     }
 
+    public function user()
+    {
+        return $this->morphTo();
+    }
 
 }

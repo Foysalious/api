@@ -202,11 +202,12 @@ class OrderController extends Controller
         try {
             $order_adapter = new OrderAdapter($order->partnerOrders[0], 1);
             $payment = (new ShebaPayment($payment_method))->init($order_adapter->getPayable());
-            return $payment;
+            return $payment->status != 'failed' ? $payment : null;
         } catch (QueryException $e) {
             app('sentry')->captureException($e);
             return null;
         } catch (\Throwable $e) {
+//            dd($e);
             app('sentry')->captureException($e);
             return null;
         }

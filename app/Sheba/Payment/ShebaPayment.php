@@ -5,6 +5,7 @@ namespace Sheba\Payment;
 
 use App\Models\PartnerOrderPayment;
 use App\Models\Payable;
+use App\Models\Payment;
 use Cache;
 use Carbon\Carbon;
 use Sheba\Payment\Complete\PayChargeComplete;
@@ -30,11 +31,9 @@ class ShebaPayment
         return $this->method->init($payable);
     }
 
-    public function complete($redis_key)
+    public function complete(Payment $payment)
     {
-        $paycharge = Cache::store('redis')->get("paycharge::$redis_key");
-        $paycharge = json_decode($paycharge);
-        if ($response = $this->method->validate($paycharge)) {
+        if ($response = $this->method->validate($payment)) {
             $pay_chargable = unserialize($paycharge->pay_chargable);
             $this->updateTransactionRedis($redis_key, $paycharge, $response);
             $class_name = "Sheba\\Payment\\Complete\\" . $pay_chargable->completionClass;
