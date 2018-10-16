@@ -90,7 +90,7 @@ class PartnerRoute
                 $api->put('/', 'Partner\PartnerNotificationController@update');
             });
             $api->get('get-profile', 'ResourceController@getResourceData');
-            $api->get('is-on-premise-applicable', 'Partner\OperationController@isOnPremiseAvailable');
+            $api->get('settings', 'Partner\OperationController@isOnPremiseAvailable');
         });
     }
 }
