@@ -4,6 +4,7 @@ namespace Sheba\Payment\Adapters\Payable;
 
 use App\Models\PartnerOrder;
 use App\Models\Payable;
+use Carbon\Carbon;
 use Sheba\Payment\PayChargable;
 
 class OrderAdapter implements PayableAdapter
@@ -28,6 +29,7 @@ class OrderAdapter implements PayableAdapter
         $payable->amount = (double)$this->partnerOrder->due;
         $payable->completion_type = $this->isAdvancedPayment ? 'advanced_order' : "order";
         $payable->success_url = config('sheba.front_url') . '/orders/' . $this->partnerOrder->jobs()->where('status', '<>', constants('JOB_STATUSES')['Cancelled'])->first()->id;
+        $payable->created_at = Carbon::now();
         $payable->save();
         return $payable;
     }

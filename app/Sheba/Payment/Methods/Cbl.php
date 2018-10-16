@@ -1,11 +1,12 @@
 <?php namespace Sheba\Payment\Methods;
 
+use App\Models\Payable;
 use Carbon\Carbon;
 use Cache;
 
 use Sheba\Payment\PayChargable;
 
-class Cbl implements PayChargeMethod
+class Cbl implements PaymentMethod
 {
     private $tunnelHost;
     private $tunnelPort;
@@ -28,15 +29,10 @@ class Cbl implements PayChargeMethod
         $this->cancelUrl = config('payment.cbl.urls.cancel');
         $this->declineUrl = config('payment.cbl.urls.decline');
     }
-
-    /**
-     * @param PayChargable $pay_chargable
-     * @return array|null
-     * @throws \Exception
-     */
-    public function init(PayChargable $pay_chargable)
+    
+    public function init(Payable $payable)
     {
-        $response = $this->postQW($this->makeOrderCreateData($pay_chargable));
+        $response = $this->postQW($this->makeOrderCreateData($payable));
 
         $order_id = reset($response->Response->Order->OrderID);
         $session_id = reset($response->Response->Order->SessionID);
@@ -49,9 +45,9 @@ class Cbl implements PayChargeMethod
         $response->name = 'online';
         $payment_info = [
             'transaction_id' => $invoice,
-            'id' => $pay_chargable->id,
-            'type' => $pay_chargable->type,
-            'pay_chargable' => serialize($pay_chargable),
+            'id' => $payable->id,
+            'type' => $payable->type,
+            'pay_chargable' => serialize($payable),
             'link' => $url . "?ORDERID=" . $order_id . "&SESSIONID=" . $session_id . "",
             'method_info' => $response,
             'order_id' => $order_id,
@@ -103,7 +99,7 @@ class Cbl implements PayChargeMethod
         return $this->$name;
     }
 
-    private function makeOrderCreateData(PayChargable $pay_chargable)
+    private function makeOrderCreateData(PayChargable $payable)
     {
         $data = '<?xml version="1.0" encoding="UTF-8"?>';
         $data .= "<TKKPG>";
@@ -113,7 +109,7 @@ class Cbl implements PayChargeMethod
         $data .= "<Order>";
         $data .= "<OrderType>Purchase</OrderType>";
         $data .= "<Merchant>$this->merchantId</Merchant>";
-        $data .= "<Amount>" . $pay_chargable->amount * 100 . "</Amount>";
+        $data .= "<Amount>" . $payable->amount * 100 . "</Amount>";
         $data .= "<Currency>050</Currency>";
         $data .= "<Description>blah blah blah</Description>";
         $data .= "<ApproveURL>" . htmlentities($this->acceptUrl) . "</ApproveURL>";

@@ -1,10 +1,11 @@
 <?php namespace Sheba\Payment\Methods;
 
-use Sheba\Payment\PayChargable;
+use App\Models\Payable;
+use App\Models\Payment;
 
-interface PayChargeMethod
+interface PaymentMethod
 {
-    public function init(PayChargable $payChargable);
+    public function init(Payable $payable): Payment;
 
     public function validate($payment);
 

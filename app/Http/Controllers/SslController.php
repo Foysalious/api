@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
-use Sheba\Payment\Payment;
+use Sheba\Payment\ShebaPayment;
 use Cache;
 
 class SslController extends Controller
@@ -21,7 +21,7 @@ class SslController extends Controller
             if (!$paycharge) return redirect(config('sheba.front_url'));
             $paycharge = json_decode($paycharge);
             $pay_chargable = unserialize($paycharge->pay_chargable);
-            $pay_charge = new Payment('online');
+            $pay_charge = new ShebaPayment('online');
             $pay_charge->complete($request->tran_id);
             return redirect($pay_chargable->redirectUrl . '?invoice_id=' . $request->tran_id);
         } catch ( QueryException $e ) {

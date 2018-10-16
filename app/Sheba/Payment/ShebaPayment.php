@@ -4,12 +4,13 @@
 namespace Sheba\Payment;
 
 use App\Models\PartnerOrderPayment;
+use App\Models\Payable;
 use Cache;
 use Carbon\Carbon;
 use Sheba\Payment\Complete\PayChargeComplete;
 use Sheba\Payment\Factory\PaymentProcessor;
 
-class Payment
+class ShebaPayment
 {
     private $method;
     private $message;
@@ -24,9 +25,9 @@ class Payment
         return $this->$name;
     }
 
-    public function init(Payab $payChargable)
+    public function init(Payable $payable)
     {
-        return $this->method->init($payChargable);
+        return $this->method->init($payable);
     }
 
     public function complete($redis_key)

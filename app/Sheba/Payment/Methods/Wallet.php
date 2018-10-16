@@ -9,7 +9,7 @@ use Sheba\Payment\Adapters\Error\WalletErrorAdapter;
 use Sheba\Payment\PayChargable;
 use Cache;
 
-class Wallet implements PayChargeMethod
+class Wallet implements PaymentMethod
 {
     private $error;
 

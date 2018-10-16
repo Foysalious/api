@@ -15,7 +15,7 @@ use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 use Sheba\Logs\Customer\JobLogs;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
-use Sheba\Payment\Payment;
+use Sheba\Payment\ShebaPayment;
 
 class JobController extends Controller
 {
@@ -399,7 +399,7 @@ class JobController extends Controller
                 'payment_method' => 'sometimes|required|in:online,bkash'
             ]);
             $order_adapter = new OrderAdapter($request->job->partnerOrder);
-            $payment = (new Payment($request->has('payment_method') ? $request->payment_method : 'online'))->init($order_adapter->getPayable());
+            $payment = (new ShebaPayment($request->has('payment_method') ? $request->payment_method : 'online'))->init($order_adapter->getPayable());
             return api_response($request, $payment, 200, ['link' => $payment['link'], 'payment' => $payment]);
         } catch ( ValidationException $e ) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

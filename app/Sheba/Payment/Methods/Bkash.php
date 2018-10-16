@@ -1,12 +1,13 @@
 <?php namespace Sheba\Payment\Methods;
 
+use App\Models\Payable;
 use Carbon\Carbon;
 use Sheba\Payment\Adapters\Error\BkashErrorAdapter;
 use Sheba\Payment\PayChargable;
 use Cache;
 use Redis;
 
-class Bkash implements PayChargeMethod
+class Bkash implements PaymentMethod
 {
     private $appKey;
     private $appSecret;
@@ -24,16 +25,16 @@ class Bkash implements PayChargeMethod
         $this->url = config('bkash.url');
     }
 
-    public function init(PayChargable $payChargable)
+    public function init(Payable $payable)
     {
-        if ($data = $this->create($payChargable)) {
+        if ($data = $this->create($payable)) {
             $data->name = "bkash";
             $payment_info = array(
                 'transaction_id' => $data->merchantInvoiceNumber,
-                'id' => $payChargable->id,
-                'type' => $payChargable->type,
+                'id' => $payable->id,
+                'type' => $payable->type,
                 'link' => config('sheba.front_url') . '/bkash?paymentID=' . $data->merchantInvoiceNumber,
-                'pay_chargable' => serialize($payChargable),
+                'pay_chargable' => serialize($payable),
                 'method_info' => $data
             );
             Cache::store('redis')->put("paycharge::$data->merchantInvoiceNumber", json_encode($payment_info), Carbon::tomorrow());
@@ -79,14 +80,14 @@ class Bkash implements PayChargeMethod
         return (new BkashErrorAdapter($this->error))->getError();
     }
 
-    private function create(PayChargable $payChargable)
+    private function create(PayChargable $payable)
     {
         $token = Redis::get('BKASH_TOKEN');
         $token = $token ? $token : $this->grantToken();
-        $invoice = "SHEBA_BKASH_" . strtoupper($payChargable->type) . '_' . $payChargable->id . '_' . Carbon::now()->timestamp;
+        $invoice = "SHEBA_BKASH_" . strtoupper($payable->type) . '_' . $payable->id . '_' . Carbon::now()->timestamp;
         $intent = "sale";
         $create_pay_body = json_encode(array(
-            'amount' => (double)$payChargable->__get('amount'),
+            'amount' => (double)$payable->__get('amount'),
             'currency' => 'BDT',
             'intent' => $intent,
             'merchantInvoiceNumber' => $invoice

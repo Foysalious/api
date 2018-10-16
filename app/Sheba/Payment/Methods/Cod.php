@@ -11,7 +11,7 @@ namespace Sheba\Payment\Methods;
 
 use Sheba\Payment\PayChargable;
 
-class Cod implements PayChargeMethod
+class Cod implements PaymentMethod
 {
 
     public function init(PayChargable $payChargable)

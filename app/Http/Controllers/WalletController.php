@@ -10,7 +10,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Payment\Adapters\Payable\RechargeAdapter;
-use Sheba\Payment\Payment;
+use Sheba\Payment\ShebaPayment;
 use Cache;
 use DB;
 use Sheba\ShebaBonusCredit;
@@ -20,7 +20,7 @@ class WalletController extends Controller
     public function validatePaycharge(Request $request)
     {
         try {
-            $pay_charge = new Payment('wallet');
+            $pay_charge = new ShebaPayment('wallet');
             if ($response = $pay_charge->complete($request->transaction_id)) return api_response($request, null, 200);
             else  return api_response($request, null, 500, ['message' => $pay_charge->message]);
         } catch (\Throwable $e) {
@@ -43,7 +43,7 @@ class WalletController extends Controller
             $user = $class_name::where([['id', (int)$request->user_id], ['remember_token', $request->remember_token]])->first();
             if (!$user) return api_response($request, null, 404, ['message' => 'User Not found.']);
             $order_adapter = new RechargeAdapter($user, $request->amount);
-            $payment = (new Payment($request->payment_method))->init($order_adapter->getPayable());
+            $payment = (new ShebaPayment($request->payment_method))->init($order_adapter->getPayable());
             return api_response($request, $payment, 200, ['link' => $payment['link'], 'payment' => $payment]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

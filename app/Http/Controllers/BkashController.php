@@ -10,7 +10,7 @@ use Redis;
 use Sheba\OnlinePayment\Bkash;
 use Sheba\OnlinePayment\Payment;
 use Cache;
-use Sheba\Payment\Payment;
+use Sheba\Payment\ShebaPayment;
 
 class BkashController extends Controller
 {

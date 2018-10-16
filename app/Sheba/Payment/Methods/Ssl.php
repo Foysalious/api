@@ -1,16 +1,23 @@
 <?php namespace Sheba\Payment\Methods;
 
+use App\Models\Payable;
+use App\Models\Payment;
+use App\Models\PaymentDetail;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use Illuminate\Database\QueryException;
+use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Error\SslErrorAdapter;
-use Sheba\Payment\PayChargable;
 use Cache;
+use Sheba\RequestIdentification;
+use DB;
 
-class Ssl implements PayChargeMethod
+class Ssl implements PaymentMethod
 {
+    use ModificationFields;
     private $message;
-    private $error=[];
+    private $error = [];
     private $storeId;
     private $storePassword;
     private $sessionUrl;
@@ -18,6 +25,7 @@ class Ssl implements PayChargeMethod
     private $failUrl;
     private $cancelUrl;
     private $orderValidationUrl;
+    CONST NAME = 'ssl';
 
     public function __construct()
     {
@@ -35,41 +43,49 @@ class Ssl implements PayChargeMethod
         return $this->$name;
     }
 
-    public function init(PayChargable $payChargable)
+    public function init(Payable $payable): Payment
     {
-        $invoice = "SHEBA_SSL_" . strtoupper($payChargable->type) . '_' . $payChargable->id . '_' . Carbon::now()->timestamp;
+        $invoice = "SHEBA_SSL_" . strtoupper($payable->type) . '_' . $payable->id . '_' . Carbon::now()->timestamp;
         $data = array();
         $data['store_id'] = $this->storeId;
         $data['store_passwd'] = $this->storePassword;
-        $data['total_amount'] = (double)$payChargable->amount;
+        $data['total_amount'] = (double)$payable->amount;
         $data['currency'] = "BDT";
         $data['success_url'] = $this->successUrl;
         $data['fail_url'] = $this->failUrl;
         $data['cancel_url'] = $this->cancelUrl;
         $data['emi_option'] = 0;
         $data['tran_id'] = $invoice;
-        $user = $payChargable->userType;
-        $user = $user::find($payChargable->userId);
+        $user = $payable->user_type;
+        $user = $user::find($payable->user_id);
         $data['cus_name'] = $user->profile->name;
         $data['cus_email'] = $user->profile->email;
         $data['cus_phone'] = $user->profile->mobile;
         $result = $this->getSslSession($data);
         if ($result && $result->status == 'SUCCESS') {
-            $result->name = 'online';
-            $payment_info = array(
-                'transaction_id' => $invoice,
-                'id' => $payChargable->id,
-                'type' => $payChargable->type,
-                'pay_chargable' => serialize($payChargable),
-                'link' => $result->GatewayPageURL,
-                'method_info' => $result
-            );
-            Cache::store('redis')->put("paycharge::$invoice", json_encode($payment_info), Carbon::tomorrow());
-            array_forget($payment_info, 'pay_chargable');
-            array_forget($payment_info, 'method_info');
-            return $payment_info;
+            $payment = new Payment();
+            DB::transaction(function () use ($payment, $payable, $invoice, $result, $user) {
+                $payment->payable_id = $payable->id;
+                $payment->transaction_id = $invoice;
+                $payment->status = 'initiated';
+                $payment->transaction_details = json_encode($result);
+                $payment->redirect_url = $result->GatewayPageURL;
+                $payment->valid_till = Carbon::tomorrow();
+                $this->setModifier($user);
+                $payment->fill((new RequestIdentification())->get());
+                $this->withCreateModificationField($payment);
+                $payment->save();
+                $payment_details = new PaymentDetail();
+                $payment_details->payment_id = $payment->id;
+                $payment_details->method = self::NAME;
+                $payment_details->amount = $payable->amount;
+                $payment_details->save();
+
+            });
+            return $payment;
+        } else {
+            return null;
         }
-        return null;
     }
 
     public function validate($payment)

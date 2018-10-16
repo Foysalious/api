@@ -3,6 +3,7 @@
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\PartnerOrder;
+use App\Models\Payment;
 use App\Repositories\JobServiceRepository;
 use App\Repositories\NotificationRepository;
 use App\Repositories\OrderRepository;
@@ -11,13 +12,13 @@ use App\Sheba\Checkout\Checkout;
 use App\Sheba\Checkout\OnlinePayment;
 use App\Sheba\Checkout\Validation;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Redis;
 use DB;
-
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
-use Sheba\Payment\Payment;
+use Sheba\Payment\ShebaPayment;
 
 class OrderController extends Controller
 {
@@ -79,10 +80,14 @@ class OrderController extends Controller
                 $payment = $link = null;
                 if ($request->payment_method !== 'cod') {
                     $payment = $this->getPayment($request->payment_method, $order);
-                    $link = $payment ? $payment['link'] : null;
+                    if ($payment) {
+                        $link = $payment->redirect_url;
+                        $payment = $this->formatPayment($payment);
+                    }
                 }
                 $this->sendNotifications($customer, $order);
-                return api_response($request, $order, 200, ['link' => $link, 'job_id' => $order->jobs->first()->id, 'order_code' => $order->code(), 'payment' => $payment]);
+                return api_response($request, $order, 200, ['link' => $link, 'job_id' => $order->jobs->first()->id,
+                    'order_code' => $order->code(), 'payment' => $payment]);
             }
             return api_response($request, $order, 500);
         } catch (ValidationException $e) {
@@ -92,6 +97,7 @@ class OrderController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -195,11 +201,24 @@ class OrderController extends Controller
     {
         try {
             $order_adapter = new OrderAdapter($order->partnerOrders[0], 1);
-            $payment = (new Payment($payment_method))->init($order_adapter->getPayable());
+            $payment = (new ShebaPayment($payment_method))->init($order_adapter->getPayable());
             return $payment;
+        } catch (QueryException $e) {
+            app('sentry')->captureException($e);
+            return null;
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return null;
         }
+    }
+
+    private function formatPayment(Payment $payment)
+    {
+        return array(
+            'transaction_id' => $payment->transaction_id,
+            'id' => $payment->payable->type_id,
+            'type' => $payment->payable->readable_type,
+            'link' => $payment->redirect_url
+        );
     }
 }
