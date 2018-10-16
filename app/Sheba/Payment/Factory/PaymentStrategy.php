@@ -1,4 +1,6 @@
-<?php namespace Sheba\Payment;
+<?php
+
+namespace Sheba\Payment\Factory;
 
 class PaymentStrategy
 {

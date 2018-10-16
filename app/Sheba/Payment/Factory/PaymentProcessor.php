@@ -1,4 +1,6 @@
-<?php namespace Sheba\Payment;
+<?php
+
+namespace Sheba\Payment\Factory;
 
 use Sheba\Payment\Methods\Bkash;
 use Sheba\Payment\Methods\Cbl;
