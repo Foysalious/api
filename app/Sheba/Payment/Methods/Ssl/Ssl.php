@@ -91,7 +91,7 @@ class Ssl implements PaymentMethod
             $payment->redirect_url = $success->redirect_url;
         } else {
             $error = $init_response->getError();
-            $payment->status = 'failed';
+            $payment->status = 'validation_failed';
             $payment->transaction_details = json_encode($error->details);
         }
         $payment->update();
@@ -100,13 +100,9 @@ class Ssl implements PaymentMethod
 
     public function getSslSession($data)
     {
-        try {
-            $client = new Client();
-            $result = $client->request('POST', $this->sessionUrl, ['form_params' => $data]);
-            return json_decode($result->getBody());
-        } catch (RequestException $e) {
-            throw $e;
-        }
+        $client = new Client();
+        $result = $client->request('POST', $this->sessionUrl, ['form_params' => $data]);
+        return json_decode($result->getBody());
     }
 
     public function validate(Payment $payment)
@@ -146,11 +142,6 @@ class Ssl implements PaymentMethod
         );
     }
 
-    public function getError(): PayChargeMethodError
-    {
-        return (new SslErrorAdapter($this->error))->getError();
-    }
-
     private function sslIpnHashValidation()
     {
         if (request()->has('verify_key') && request()->has('verify_sign')) {
@@ -182,16 +173,12 @@ class Ssl implements PaymentMethod
 
     private function validateOrder()
     {
-        try {
-            $client = new Client();
-            $result = $client->request('GET', $this->orderValidationUrl, ['query' => [
-                'val_id' => request('val_id'),
-                'store_id' => $this->storeId,
-                'store_passwd' => $this->storePassword,
-            ]]);
-            return json_decode($result->getBody());
-        } catch (RequestException $e) {
-            throw $e;
-        }
+        $client = new Client();
+        $result = $client->request('GET', $this->orderValidationUrl, ['query' => [
+            'val_id' => request('val_id'),
+            'store_id' => $this->storeId,
+            'store_passwd' => $this->storePassword,
+        ]]);
+        return json_decode($result->getBody());
     }
 }

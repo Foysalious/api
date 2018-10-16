@@ -34,7 +34,7 @@ class ShebaPayment
     public function complete(Payment $payment)
     {
         $payment = $this->method->validate($payment);
-        if ($payment->status != 'validation_failed') {
+        if ($payment->isValid()) {
             /** @var Payable $payable */
             $payable = $payment->payable;
             $completion_class = $payable->getCompletionClass();

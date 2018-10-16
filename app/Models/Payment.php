@@ -24,4 +24,14 @@ class Payment extends Model
         return $this->status == 'completed';
     }
 
+    public function isValid()
+    {
+        return $this->status != 'validation_failed';
+    }
+
+    public function scopeValid($query)
+    {
+        return $query->where('status', '<>', 'validation_failed');
+    }
+
 }

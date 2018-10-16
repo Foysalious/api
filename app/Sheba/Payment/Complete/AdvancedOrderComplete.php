@@ -3,16 +3,13 @@
 namespace Sheba\Payment\Complete;
 
 
-use App\Models\Customer;
 use App\Models\PartnerOrder;
 use App\Models\PartnerOrderPayment;
-use App\Models\Payment;
+use App\Models\PaymentDetail;
 use Illuminate\Database\QueryException;
 use Sheba\ModificationFields;
-use Sheba\Payment\PayChargable;
 use DB;
 use Sheba\RequestIdentification;
-use Sheba\Reward\ActionRewardDispatcher;
 
 class AdvancedOrderComplete extends PaymentComplete
 {
@@ -21,6 +18,7 @@ class AdvancedOrderComplete extends PaymentComplete
     public function complete()
     {
         try {
+            if ($this->payment->isComplete()) return $this->payment;
             DB::transaction(function () {
                 $payable = $this->payment->payable;
                 $partner_order = PartnerOrder::find((int)$payable->type_id);
@@ -29,6 +27,7 @@ class AdvancedOrderComplete extends PaymentComplete
                 $user = $payable->user;
                 $this->setModifier($user);
                 foreach ($this->payment->paymentDetails as $paymentDetail) {
+                    /** @var PaymentDetail $paymentDetail */
                     $partner_order_payment = new PartnerOrderPayment();
                     $partner_order_payment->partner_order_id = $partner_order->id;
                     $partner_order_payment->transaction_type = 'Debit';
@@ -36,18 +35,11 @@ class AdvancedOrderComplete extends PaymentComplete
                     $partner_order_payment->log = 'advanced payment';
                     $partner_order_payment->collected_by = 'Sheba';
                     $partner_order_payment->transaction_detail = json_encode($paymentDetail->formatPaymentDetail());
-                    $partner_order_payment->method = $paymentDetail->method;
+                    $partner_order_payment->method = $paymentDetail->readable_method;
                     $this->withCreateModificationField($partner_order_payment);
                     $partner_order_payment->fill((new RequestIdentification())->get());
                     $partner_order_payment->save();
-                    if (strtolower($paymentDetail->name) == 'wallet') {
-                        app(ActionRewardDispatcher::class)->run(
-                            'wallet_cashback',
-                            $user,
-                            $paymentDetail->amount,
-                            $partner_order
-                        );
-                    }
+                    if (strtolower($paymentDetail->name) == 'wallet') dispatchReward()->run('wallet_cashback', $user, $paymentDetail->amount, $partner_order);
                 }
                 $this->payment->status = 'completed';
                 $this->payment->update();

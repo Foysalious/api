@@ -19,7 +19,7 @@ class PaymentDetail extends Model
     public function formatPaymentDetail()
     {
         return array(
-            'name' => $this->getPaymentName(),
+            'name' => $this->getReadableMethodAttribute(),
             'details' => array(
                 'transaction_id' => $this->payment->transaction_id,
                 'gateway' => $this->name,
@@ -28,9 +28,9 @@ class PaymentDetail extends Model
         );
     }
 
-    private function getPaymentName()
+    public function getReadableMethodAttribute()
     {
-        if ($this->name == 'ssl')
+        if ($this->method == 'ssl')
             return 'Online';
         else
             return 'Wallet';

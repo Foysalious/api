@@ -151,57 +151,12 @@ class OrderController extends Controller
         }
     }
 
-    public function clearPayment(Request $request)
-    {
-        try {
-            $redis_key_name = 'portwallet-payment-' . $request->invoice;
-            $redis_key = Redis::get($redis_key_name);
-            if ($redis_key) {
-                $data = json_decode($redis_key);
-                $response = (new OnlinePayment())->pay($data, $request);
-                if ($response != null) {
-                    Redis::set('portwallet-payment-app-' . $request->invoice, json_encode(['amount' => $data->amount,
-                        'partner_order_id' => $data->partner_order_id, 'success' => $response['success'], 'isDue' => $response['isDue'],
-                        'message' => $response['message']]));
-                    Redis::expire('portwallet-payment-app' . $request->invoice, 3600);
-                    Redis::del($redis_key_name);
-                    if ($response['success']) {
-                        return redirect($response['redirect_link']);
-                    }
-                }
-            }
-            return redirect(env('SHEBA_FRONT_END_URL'));
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
-    public function checkInvoiceValidity($customer, Request $request)
-    {
-        try {
-            $redis_key_name = 'portwallet-payment-app-' . $request->invoice;
-            $redis_key = Redis::get($redis_key_name);
-            if ($redis_key != null) {
-                $data = json_decode($redis_key);
-                $partnerOrder = PartnerOrder::find((int)$data->partner_order_id);
-                if ($partnerOrder->order->customer_id == $customer) {
-                    return api_response($request, 1, 200, ['message' => $data->message]);
-                }
-            }
-            return api_response($request, null, 404);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
     private function getPayment($payment_method, Order $order)
     {
         try {
             $order_adapter = new OrderAdapter($order->partnerOrders[0], 1);
             $payment = (new ShebaPayment($payment_method))->init($order_adapter->getPayable());
-            return $payment->status != 'failed' ? $payment : null;
+            return $payment->isValid() ? $payment : null;
         } catch (QueryException $e) {
             app('sentry')->captureException($e);
             return null;

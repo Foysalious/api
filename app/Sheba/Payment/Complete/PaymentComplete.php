@@ -7,6 +7,7 @@ use App\Models\Payment;
 
 abstract class PaymentComplete
 {
+    /** @var Payment $partner_order_payment */
     protected $payment;
 
     public function setPayment(Payment $payment)
