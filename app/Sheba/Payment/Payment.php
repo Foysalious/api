@@ -24,7 +24,7 @@ class Payment
         return $this->$name;
     }
 
-    public function init(PayChargable $payChargable)
+    public function init(Payab $payChargable)
     {
         return $this->method->init($payChargable);
     }

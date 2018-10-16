@@ -1,12 +1,12 @@
 <?php
 
-namespace Sheba\Payment\Adapters\PayChargable;
+namespace Sheba\Payment\Adapters\Payable;
 
 
 use App\Sheba\Payment\Rechargable;
 use Sheba\Payment\PayChargable;
 
-class RechargeAdapter implements PayChargableAdapter
+class RechargeAdapter implements PayableAdapter
 {
     private $user;
     private $amount;

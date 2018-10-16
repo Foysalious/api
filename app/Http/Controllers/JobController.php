@@ -14,7 +14,7 @@ use DB;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 use Sheba\Logs\Customer\JobLogs;
-use Sheba\Payment\Adapters\PayChargable\OrderAdapter;
+use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\Payment;
 
 class JobController extends Controller

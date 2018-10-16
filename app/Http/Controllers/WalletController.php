@@ -9,7 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Sheba\Payment\Adapters\PayChargable\RechargeAdapter;
+use Sheba\Payment\Adapters\Payable\RechargeAdapter;
 use Sheba\Payment\Payment;
 use Cache;
 use DB;
