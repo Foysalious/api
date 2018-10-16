@@ -16,7 +16,7 @@ class Payment
 
     public function __construct($enum)
     {
-        $this->method = (new PayChargeProcessor($enum))->method();
+        $this->method = (new PaymentProcessor($enum))->method();
     }
 
     public function __get($name)

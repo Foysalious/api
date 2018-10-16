@@ -6,7 +6,7 @@ use Sheba\Payment\Methods\Cod;
 use Sheba\Payment\Methods\Ssl;
 use Sheba\Payment\Methods\Wallet;
 
-class PayChargeProcessor
+class PaymentProcessor
 {
 
     private $method;
@@ -23,7 +23,7 @@ class PayChargeProcessor
 
     private function isValidMethod($method)
     {
-        return in_array($method, (new \ReflectionClass(PayChargeStrategy::class))->getStaticProperties());
+        return in_array($method, (new \ReflectionClass(PaymentStrategy::class))->getStaticProperties());
     }
 
     private function getMethod($method)

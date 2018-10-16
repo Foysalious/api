@@ -1,6 +1,6 @@
 <?php namespace Sheba\Payment;
 
-class PayChargeStrategy
+class PaymentStrategy
 {
     public static $COD = "cod";
     public static $BKASH = "bkash";
