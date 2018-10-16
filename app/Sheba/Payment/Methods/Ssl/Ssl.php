@@ -41,7 +41,7 @@ class Ssl implements PaymentMethod
 
     public function init(Payable $payable): Payment
     {
-        $invoice = "SHEBA_SSL_" . strtoupper($payable->readable_type) . '_' . $payable->id . '_' . Carbon::now()->timestamp;
+        $invoice = "SHEBA_SSL_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . Carbon::now()->timestamp;
         $data = array();
         $data['store_id'] = $this->storeId;
         $data['store_passwd'] = $this->storePassword;
@@ -52,8 +52,7 @@ class Ssl implements PaymentMethod
         $data['cancel_url'] = $this->cancelUrl;
         $data['emi_option'] = 0;
         $data['tran_id'] = $invoice;
-        $user = $payable->user_type;
-        $user = $user::find($payable->user_id);
+        $user = $payable->user;
         $data['cus_name'] = $user->profile->name;
         $data['cus_email'] = $user->profile->email;
         $data['cus_phone'] = $user->profile->mobile;

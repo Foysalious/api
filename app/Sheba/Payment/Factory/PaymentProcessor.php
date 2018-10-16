@@ -2,7 +2,7 @@
 
 namespace Sheba\Payment\Factory;
 
-use Sheba\Payment\Methods\Bkash;
+use Sheba\Payment\Methods\Bkash\Bkash;
 use Sheba\Payment\Methods\Cbl;
 use Sheba\Payment\Methods\Cod;
 use Sheba\Payment\Methods\Ssl\Ssl;

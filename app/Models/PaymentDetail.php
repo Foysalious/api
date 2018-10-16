@@ -22,7 +22,7 @@ class PaymentDetail extends Model
             'name' => $this->getReadableMethodAttribute(),
             'details' => array(
                 'transaction_id' => $this->payment->transaction_id,
-                'gateway' => $this->name,
+                'gateway' => $this->method,
                 'details' => $this->payment->transaction_details
             )
         );

@@ -1,20 +1,29 @@
-<?php namespace Sheba\Payment\Methods;
+<?php
+
+namespace Sheba\Payment\Methods\Bkash;
 
 use App\Models\Payable;
+use App\Models\Payment;
+use App\Models\PaymentDetail;
 use Carbon\Carbon;
-use Sheba\Payment\Adapters\Error\BkashErrorAdapter;
-use Sheba\Payment\PayChargable;
+use Sheba\ModificationFields;
 use Cache;
 use Redis;
+use Sheba\Payment\Methods\Bkash\Response\ExecuteResponse;
+use Sheba\Payment\Methods\PaymentMethod;
+use Sheba\RequestIdentification;
+use DB;
 
 class Bkash implements PaymentMethod
 {
+    use ModificationFields;
     private $appKey;
     private $appSecret;
     private $username;
     private $password;
     private $url;
     private $error = [];
+    CONST NAME = 'bkash';
 
     public function __construct()
     {
@@ -25,72 +34,61 @@ class Bkash implements PaymentMethod
         $this->url = config('bkash.url');
     }
 
-    public function init(Payable $payable)
+    public function init(Payable $payable): Payment
     {
-        if ($data = $this->create($payable)) {
-            $data->name = "bkash";
-            $payment_info = array(
-                'transaction_id' => $data->merchantInvoiceNumber,
-                'id' => $payable->id,
-                'type' => $payable->type,
-                'link' => config('sheba.front_url') . '/bkash?paymentID=' . $data->merchantInvoiceNumber,
-                'pay_chargable' => serialize($payable),
-                'method_info' => $data
-            );
-            Cache::store('redis')->put("paycharge::$data->merchantInvoiceNumber", json_encode($payment_info), Carbon::tomorrow());
-            array_forget($payment_info, 'pay_chargable');
-            return $payment_info;
+        $invoice = "SHEBA_BKASH_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . Carbon::now()->timestamp;
+        $payment = new Payment();
+        DB::transaction(function () use ($payment, $payable, $invoice) {
+            $payment->payable_id = $payable->id;
+            $payment->transaction_id = $invoice;
+            $payment->status = 'initiated';
+            $payment->valid_till = Carbon::tomorrow();
+            $this->setModifier($payable->user);
+            $payment->fill((new RequestIdentification())->get());
+            $this->withCreateModificationField($payment);
+            $payment->save();
+            $payment_details = new PaymentDetail();
+            $payment_details->payment_id = $payment->id;
+            $payment_details->method = self::NAME;
+            $payment_details->amount = $payable->amount;
+            $payment_details->save();
+        });
+        $data = $this->create($payment);
+        $payment->transaction_id = $data->merchantInvoiceNumber;
+        $payment->transaction_details = json_encode($data);
+        $payment->redirect_url = config('sheba.front_url') . '/bkash?paymentID=' . $data->merchantInvoiceNumber;
+        $payment->update();
+        return $payment;
+    }
+
+    public function validate(Payment $payment)
+    {
+        $execute_response = new ExecuteResponse();
+        $execute_response->setPayment($payment);
+        $execute_response->setResponse($this->execute($payment));
+        if ($execute_response->hasSuccess()) {
+            $success = $execute_response->getSuccess();
+            $payment->status = 'validated';
+            $payment->transaction_details = json_encode($success->details);
         } else {
-            return null;
+            $error = $execute_response->getError();
+            $payment->status = 'validation_failed';
+            $payment->transaction_details = json_encode($error->details);
         }
+        $payment->update();
+        return $payment;
     }
 
-    public function validate($payment)
-    {
-        $result_data = $this->execute($payment->method_info->paymentID);
-        if (isset($result_data->errorMessage)) {
-            $this->error = $result_data;
-            return false;
-        }
-        $pay_chargable = unserialize($payment->pay_chargable);
-        if ($result_data->transactionStatus == 'Completed') {
-            return $result_data;
-        } else {
-            $error = new \InvalidArgumentException('Bkash validation error. Because status is not completed.');
-            $error->result_data = $result_data;
-            $error->paycharge = $pay_chargable;
-            throw  $error;
-        }
-    }
-
-    public function formatTransactionData($method_response)
-    {
-        return array(
-            'name' => 'Bkash',
-            'details' => array(
-                'transaction_id' => $method_response->trxID,
-                'gateway' => 'bkash',
-                'details' => $method_response,
-            )
-        );
-    }
-
-    public function getError(): PayChargeMethodError
-    {
-        return (new BkashErrorAdapter($this->error))->getError();
-    }
-
-    private function create(PayChargable $payable)
+    private function create(Payment $payment)
     {
         $token = Redis::get('BKASH_TOKEN');
         $token = $token ? $token : $this->grantToken();
-        $invoice = "SHEBA_BKASH_" . strtoupper($payable->type) . '_' . $payable->id . '_' . Carbon::now()->timestamp;
-        $intent = "sale";
+        $intent = 'sale';
         $create_pay_body = json_encode(array(
-            'amount' => (double)$payable->__get('amount'),
+            'amount' => $payment->payable->amount,
             'currency' => 'BDT',
             'intent' => $intent,
-            'merchantInvoiceNumber' => $invoice
+            'merchantInvoiceNumber' => $payment->transaction_id
         ));
         $url = curl_init($this->url . '/checkout/payment/create');
         $header = array(
@@ -135,11 +133,11 @@ class Bkash implements PaymentMethod
         return $token;
     }
 
-    private function execute($paymentID)
+    private function execute(Payment $payment)
     {
         $token = Redis::get('BKASH_TOKEN');
         $token = $token ? $token : $this->grantToken();
-        $url = curl_init($this->url . '/checkout/payment/execute/' . $paymentID);
+        $url = curl_init($this->url . '/checkout/payment/execute/' . json_decode($payment->transaction_details)->paymentID);
         $header = array(
             'authorization:' . $token,
             'x-app-key:' . $this->appKey);
@@ -151,7 +149,7 @@ class Bkash implements PaymentMethod
         $result_data = json_decode($result_data);
         if (curl_errno($url) > 0) {
             $error = new \InvalidArgumentException('Bkash execute API error.');
-            $error->paymentId = $paymentID;
+            $error->paymentId = $payment->transaction_id;
             throw  $error;
         };
         curl_close($url);

@@ -24,10 +24,21 @@ class Payment extends Model
         return $this->status == 'completed';
     }
 
-    public function isValid()
+    public function isInitiated()
     {
-        return $this->status != 'validation_failed';
+        return $this->status == 'initiated';
     }
+
+    public function isFailed()
+    {
+        return $this->status == 'validation_failed';
+    }
+
+    public function isPassed()
+    {
+        return $this->status == 'validated' || $this->status == 'failed';
+    }
+
 
     public function scopeValid($query)
     {
