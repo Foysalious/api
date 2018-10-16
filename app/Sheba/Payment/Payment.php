@@ -9,7 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Sheba\Payment\Complete\PayChargeComplete;
 
-class PayCharge
+class Payment
 {
     private $method;
     private $message;

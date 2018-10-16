@@ -23,7 +23,7 @@ use DB;
 use Cache;
 use Sheba\Payment\Adapters\PayCharged\OrderAdapter;
 use Sheba\Payment\Adapters\PayCharged\RechargeAdapter;
-use Sheba\Payment\PayCharge;
+use Sheba\Payment\Payment;
 
 class ShebaController extends Controller
 {
@@ -253,7 +253,7 @@ class ShebaController extends Controller
                 $job = Job::find((int)$request->job_id);
                 $pay_charged = (new OrderAdapter($job->partnerOrder, $transactionID))->getPayCharged();
             }
-            $paycharge = new PayCharge($request->payment_method);
+            $paycharge = new Payment($request->payment_method);
             if ($response = $paycharge->isComplete($pay_charged)) {
                 return api_response($request, 1, 200, ['info' => array('amount' => $response->amount)]);
             } elseif ($pay_charged = $paycharge->isCompleteByMethods($pay_charged)) {

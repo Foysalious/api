@@ -17,7 +17,7 @@ use Redis;
 use DB;
 
 use Sheba\Payment\Adapters\PayChargable\OrderAdapter;
-use Sheba\Payment\PayCharge;
+use Sheba\Payment\Payment;
 
 class OrderController extends Controller
 {
@@ -195,7 +195,7 @@ class OrderController extends Controller
     {
         try {
             $order_adapter = new OrderAdapter($order->partnerOrders[0], 1);
-            $payment = (new PayCharge($payment_method))->init($order_adapter->getPayable());
+            $payment = (new Payment($payment_method))->init($order_adapter->getPayable());
             return $payment;
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

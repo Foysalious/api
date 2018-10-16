@@ -10,7 +10,7 @@ use Redis;
 use Sheba\OnlinePayment\Bkash;
 use Sheba\OnlinePayment\Payment;
 use Cache;
-use Sheba\Payment\PayCharge;
+use Sheba\Payment\Payment;
 
 class BkashController extends Controller
 {
@@ -51,7 +51,7 @@ class BkashController extends Controller
             if (!$paycharge) return redirect(config('sheba.front_url'));
             $paycharge = json_decode($paycharge);
             $pay_chargable = unserialize($paycharge->pay_chargable);
-            $pay_charge = new PayCharge('bkash');
+            $pay_charge = new Payment('bkash');
             if ($response = $pay_charge->complete($request->paymentID)) {
                 return api_response($request, 1, 200, ['payment' => array('redirect_url' => $response['redirect_url'] . '?invoice_id=' . $request->paymentID)]);
             } else {

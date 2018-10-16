@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Sheba\Payment\PayChargable;
-use Sheba\Payment\PayCharge;
+use Sheba\Payment\Payment;
 use Cache;
 
 
@@ -26,7 +26,7 @@ class CblController extends Controller
             if (!$pay_charge) return redirect(config('sheba.front_url'));
             $pay_charge = json_decode($pay_charge);
             $pay_chargable = unserialize($pay_charge->pay_chargable);
-            $pay_charge = new PayCharge('cbl');
+            $pay_charge = new Payment('cbl');
             $pay_charge->complete($invoice);
         } catch (\Exception $e) {
             app('sentry')->captureException($e);
