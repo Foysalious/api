@@ -14,11 +14,9 @@ class SslController extends Controller
     public function validatePaycharge(Request $request)
     {
         try {
-            if (empty($request->headers->get('referer'))) {
-                $message = 'Referer not present in header';
-                return api_response($request, null, 400, ['message' => $message]);
-            };
-            $payment = Payment::where('transaction_id', $request->tran_id)->where('status', '<>', 'failed')->get();
+            $payment = Payment::where('transaction_id', $request->tran_id)
+                ->where('status', '<>', 'validation_failed')
+                ->first();
             if (!$payment) return redirect(config('sheba.front_url'));
             $sheba_payment = new ShebaPayment('online');
             $sheba_payment->complete($payment);

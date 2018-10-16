@@ -112,26 +112,26 @@ class Ssl implements PaymentMethod
     public function validate(Payment $payment)
     {
         if ($this->sslIpnHashValidation()) {
-            $validation_response=new ValidationResponse();
+            $validation_response = new ValidationResponse();
             $validation_response->setResponse($this->validateOrder());
-            if($validation_response->hasSuccess()){
-
+            $validation_response->setPayment($payment);
+            if ($validation_response->hasSuccess()) {
+                $success = $validation_response->getSuccess();
+                $payment->status = 'validated';
+                $payment->transaction_details = json_encode($success->details);
+            } else {
+                $error = $validation_response->getError();
+                $payment->status = 'validation_failed';
+                $payment->transaction_details = json_encode($error->details);
             }
-            if ($result = $this->validateOrder()) {
-                if ($result->status == "VALID" || $result->status == "VALIDATED") {
-                    return $result;
-                } else {
-                    $this->message = 'Validation Failed. Response status is ' . $result->status;
-                    return null;
-                }
-            }
-
         } else {
             $request = request()->all();
             $request['status'] = 'HASH_VALIDATION_FAILED';
+            $payment->status = 'validation_failed';
             $payment->transaction_details = json_encode($request);
-            $payment->update();
         }
+        $payment->update();
+        return $payment;
     }
 
     public function formatTransactionData($method_response)

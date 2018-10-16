@@ -9,7 +9,7 @@ use Illuminate\Database\QueryException;
 use Sheba\Payment\PayChargable;
 use DB;
 
-class RechargeComplete extends PayChargeComplete
+class RechargeComplete extends PaymentComplete
 {
 
     public function complete(PayChargable $pay_chargable, $method_response)

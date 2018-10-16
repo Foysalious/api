@@ -8,7 +8,7 @@ use Sheba\Payment\PayChargable;
 use Sheba\RequestIdentification;
 use Sheba\Reward\ActionRewardDispatcher;
 
-class OrderComplete extends PayChargeComplete
+class OrderComplete extends PaymentComplete
 {
     CONST CASHBACK_PERCENTAGE = 1;
 

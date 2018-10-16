@@ -14,5 +14,14 @@ class Payment extends Model
         return $this->belongsTo(Payable::class);
     }
 
+    public function paymentDetails()
+    {
+        return $this->hasMany(PaymentDetail::class);
+    }
+
+    public function isComplete()
+    {
+        return $this->status == 'completed';
+    }
 
 }

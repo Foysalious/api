@@ -19,7 +19,7 @@ class InitResponse extends PaymentMethodResponse
         $success = new PaymentMethodSuccessResponse();
         $success->id = $this->response->sessionkey;
         $success->details = $this->response;
-        $success->redirect_url = $this->response->redirectGatewayURL;
+        $success->redirect_url = $this->response->GatewayPageURL;
         return $success;
     }
 

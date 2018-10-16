@@ -8,7 +8,7 @@ use App\Models\Payable;
 use App\Models\Payment;
 use Cache;
 use Carbon\Carbon;
-use Sheba\Payment\Complete\PayChargeComplete;
+use Sheba\Payment\Complete\PaymentComplete;
 use Sheba\Payment\Factory\PaymentProcessor;
 
 class ShebaPayment
@@ -33,21 +33,15 @@ class ShebaPayment
 
     public function complete(Payment $payment)
     {
-        if ($response = $this->method->validate($payment)) {
-            $pay_chargable = unserialize($paycharge->pay_chargable);
-            $this->updateTransactionRedis($redis_key, $paycharge, $response);
-            $class_name = "Sheba\\Payment\\Complete\\" . $pay_chargable->completionClass;
-            /** @var PayChargeComplete $complete_class */
-            $complete_class = new $class_name();
-            if ($complete_class->complete($pay_chargable, $this->method->formatTransactionData($response))) {
-                Cache::store('redis')->forget("paycharge::$redis_key");
-                return array('redirect_url' => $pay_chargable->redirectUrl);
-            }
-        } else {
-            $error = $this->method->getError();
-            $this->message = 'Sorry, your ' . ucwords($paycharge->type) . ' payment has failed. Due to ' . $error->message;
-            return false;
+        $payment = $this->method->validate($payment);
+        if ($payment->status != 'validation_failed') {
+            /** @var Payable $payable */
+            $payable = $payment->payable;
+            $completion_class = $payable->getCompletionClass();
+            $completion_class->setPayment($payment);
+            $payment = $completion_class->complete();
         }
+        return $payment;
     }
 
     public function isComplete(PayCharged $pay_charged)

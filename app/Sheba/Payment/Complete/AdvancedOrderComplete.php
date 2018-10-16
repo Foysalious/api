@@ -6,6 +6,7 @@ namespace Sheba\Payment\Complete;
 use App\Models\Customer;
 use App\Models\PartnerOrder;
 use App\Models\PartnerOrderPayment;
+use App\Models\Payment;
 use Illuminate\Database\QueryException;
 use Sheba\ModificationFields;
 use Sheba\Payment\PayChargable;
@@ -13,42 +14,49 @@ use DB;
 use Sheba\RequestIdentification;
 use Sheba\Reward\ActionRewardDispatcher;
 
-class AdvancedOrderComplete extends PayChargeComplete
+class AdvancedOrderComplete extends PaymentComplete
 {
     use ModificationFields;
 
-    public function complete(PayChargable $pay_chargable, $method_response)
+    public function complete()
     {
-        $partner_order_payment = new PartnerOrderPayment();
         try {
-            DB::transaction(function () use ($pay_chargable, $method_response, $partner_order_payment) {
-                $partner_order = PartnerOrder::find((int)$pay_chargable->id);
-                $partner_order->sheba_collection = $pay_chargable->amount;
+            DB::transaction(function () {
+                $payable = $this->payment->payable;
+                $partner_order = PartnerOrder::find((int)$payable->type_id);
+                $partner_order->sheba_collection = $payable->amount;
                 $partner_order->update();
-                $partner_order_payment->partner_order_id = $partner_order->id;
-                $partner_order_payment->transaction_type = 'Debit';
-                $partner_order_payment->amount = (double)$partner_order->sheba_collection;
-                $partner_order_payment->log = 'advanced payment';
-                $partner_order_payment->collected_by = 'Sheba';
-                $partner_order_payment->transaction_detail = json_encode($method_response['details']);
-                $partner_order_payment->method = $method_response['name'];
-                /** @var Customer $customer */
-                $customer = Customer::find($pay_chargable->userId);
-                $this->setModifier($customer);
-                $this->withCreateModificationField($partner_order_payment);
-                $partner_order_payment->fill((new RequestIdentification())->get());
-                $partner_order_payment->save();
-                if (strtolower($method_response['name']) == 'wallet') {
-                    app(ActionRewardDispatcher::class)->run(
-                        'wallet_cashback',
-                        $customer,
-                        $partner_order_payment
-                    );
+                $user = $payable->user;
+                $this->setModifier($user);
+                foreach ($this->payment->paymentDetails as $paymentDetail) {
+                    $partner_order_payment = new PartnerOrderPayment();
+                    $partner_order_payment->partner_order_id = $partner_order->id;
+                    $partner_order_payment->transaction_type = 'Debit';
+                    $partner_order_payment->amount = $paymentDetail->amount;
+                    $partner_order_payment->log = 'advanced payment';
+                    $partner_order_payment->collected_by = 'Sheba';
+                    $partner_order_payment->transaction_detail = json_encode($paymentDetail->formatPaymentDetail());
+                    $partner_order_payment->method = $paymentDetail->method;
+                    $this->withCreateModificationField($partner_order_payment);
+                    $partner_order_payment->fill((new RequestIdentification())->get());
+                    $partner_order_payment->save();
+                    if (strtolower($paymentDetail->name) == 'wallet') {
+                        app(ActionRewardDispatcher::class)->run(
+                            'wallet_cashback',
+                            $user,
+                            $paymentDetail->amount,
+                            $partner_order
+                        );
+                    }
                 }
+                $this->payment->status = 'completed';
+                $this->payment->update();
             });
         } catch (QueryException $e) {
+            $this->payment->status = 'failed';
+            $this->payment->update();
             throw $e;
         }
-        return $partner_order_payment;
+        return $this->payment;
     }
 }
