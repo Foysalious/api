@@ -11,7 +11,7 @@ class ValidationResponse extends PaymentMethodResponse
 {
     public function hasSuccess()
     {
-        return $this->response->tran_id == $this->payment->transaction_id && ($this->response->status == 'VALID' || $this->response->status == 'VALIDATED');
+        return $this->response && $this->response->tran_id == $this->payment->transaction_id && ($this->response->status == 'VALID' || $this->response->status == 'VALIDATED');
     }
 
     public function getSuccess(): PaymentMethodSuccessResponse

@@ -18,10 +18,9 @@ class SslController extends Controller
             $payable = $payment->payable;
             return redirect($payable->success_url . '?invoice_id=' . $request->tran_id);
         } catch (\Throwable $e) {
+            $payment = Payment::where('transaction_id', $request->tran_id)->valid()->first();
             app('sentry')->captureException($e);
-            return redirect($payable->success_url . '?invoice_id=' . $request->tran_id);
+            return redirect($payment->payable->success_url . '?invoice_id=' . $request->tran_id);
         }
     }
-
-
 }

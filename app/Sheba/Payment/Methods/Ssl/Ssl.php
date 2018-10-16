@@ -7,10 +7,7 @@ use App\Models\Payment;
 use App\Models\PaymentDetail;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
 use Sheba\ModificationFields;
-use Sheba\Payment\Adapters\Error\SslErrorAdapter;
-use Cache;
 use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\Payment\Methods\Ssl\Response\InitResponse;
 use Sheba\Payment\Methods\Ssl\Response\ValidationResponse;
@@ -40,11 +37,6 @@ class Ssl implements PaymentMethod
         $this->failUrl = config('ssl.fail_url');
         $this->cancelUrl = config('ssl.cancel_url');
         $this->orderValidationUrl = config('ssl.order_validation_url');
-    }
-
-    public function __get($name)
-    {
-        return $this->$name;
     }
 
     public function init(Payable $payable): Payment
@@ -128,18 +120,6 @@ class Ssl implements PaymentMethod
         }
         $payment->update();
         return $payment;
-    }
-
-    public function formatTransactionData($method_response)
-    {
-        return array(
-            'name' => 'Online',
-            'details' => array(
-                'transaction_id' => $method_response->tran_id,
-                'gateway' => "ssl",
-                'details' => $method_response
-            )
-        );
     }
 
     private function sslIpnHashValidation()

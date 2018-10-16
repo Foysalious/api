@@ -9,6 +9,7 @@ use Sheba\Payment\Complete\PaymentComplete;
 class Payable extends Model
 {
     protected $guarded = ['id'];
+    protected $casts = ['amount' => 'double'];
     public $timestamps = false;
 
     public function getReadableTypeAttribute()
