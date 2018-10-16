@@ -24,9 +24,18 @@ class RewardHandler
         $this->baseReward = PartnerAffiliation::reward();
     }
 
-    public function onBoarded()
+    /**
+     * LOGIC CHANGE - PARTNER REWARD MOVE TO WAITING STATUS
+     *
+     * public function onBoarded()
     {
         $this->setReward(constants('PARTNER_AFFILIATION_REWARD_BREAKDOWN.on_boarded'));
+        $this->handle();
+    }*/
+
+    public function waiting()
+    {
+        $this->setReward(constants('PARTNER_AFFILIATION_REWARD_BREAKDOWN.waiting'));
         $this->handle();
     }
 
@@ -71,5 +80,4 @@ class RewardHandler
     {
         $this->reward = floatval($this->baseReward) * (floatval($percent)/100);
     }
-
 }
