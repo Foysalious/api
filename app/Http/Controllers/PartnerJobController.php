@@ -407,6 +407,7 @@ class PartnerJobController extends Controller
             $jobs = collect();
             foreach ($partner->partnerOrders as $partnerOrder) {
                 foreach ($partnerOrder->jobs as $job) {
+                    $job['is_on_premise'] = (int) $job->isOnPremise();
                     $job['location'] = $partnerOrder->order->location->name;
                     $job['code'] = $partnerOrder->order->code();
                     $job['category_name'] = $job->category ? $job->category->name : null;

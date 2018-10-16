@@ -426,5 +426,9 @@ return [
         'Pending' => 'Pending',
         'Approved' => 'Approved',
         'Rejected' => 'Rejected'
+    ],
+    'JOB_ON_PREMISE' => [
+        'customer' => 'customer',
+        'partner' => 'partner'
     ]
 ];
