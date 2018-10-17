@@ -170,10 +170,12 @@ class PartnerScheduleSlot
     private function formatSlots($slots)
     {
         foreach ($slots as &$slot) {
+            $slot_start = humanReadableShebaTime($slot['start']);
+            $slot_end = humanReadableShebaTime($slot['end']);
             $slot['key'] = $slot['start'] . '-' . $slot['end'];
             $slot['value'] = humanReadableShebaTime($slot['start']) . '-' . humanReadableShebaTime($slot['end']);
-            unset($slot['start']);
-            unset($slot['end']);
+            $slot['start'] = $slot_start;
+            $slot['end'] = $slot_end;
         }
         return $slots;
     }
