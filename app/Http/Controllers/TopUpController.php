@@ -40,7 +40,7 @@ class TopUpController extends Controller
                 'mobile' => 'required|string|mobile:bd',
                 'connection_type' => 'required|in:prepaid,postpaid',
                 'vendor_id' => 'required|exists:topup_vendors,id',
-                'amount' => 'required|min:10|numeric'
+                'amount' => 'required|min:10|max:1000|numeric'
             ]);
             $affiliate = $request->affiliate;
             if ($affiliate->wallet < (double)$request->amount) {

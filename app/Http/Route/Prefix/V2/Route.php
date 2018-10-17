@@ -20,7 +20,7 @@ class Route
             $api->group(['prefix' => 'wallet'], function ($api) {
                 $api->post('recharge', 'WalletController@recharge');
                 $api->post('purchase', 'WalletController@purchase');
-                $api->post('validate', 'WalletController@validatePaycharge');
+                $api->post('validate', 'WalletController@validatePayment');
                 $api->get('faqs', 'WalletController@getFaqs');
             });
             $api->group(['prefix' => 'faqs'], function ($api) {
@@ -28,19 +28,19 @@ class Route
             });
 
             $api->group(['prefix' => 'ssl'], function ($api) {
-                $api->post('validate', 'SslController@validatePaycharge');
+                $api->post('validate', 'SslController@validatePayment');
             });
 
             $api->group(['prefix' => 'bkash'], function ($api) {
-                $api->post('validate', 'BkashController@validatePaycharge');
+                $api->post('validate', 'BkashController@validatePayment');
                 $api->get('paymentID/{paymentID}', 'BkashController@getPaymentInfo');
             });
             $api->group(['prefix' => 'orders'], function ($api) {
                 $api->get('online', 'OrderController@clearPayment');
                 $api->group(['prefix' => 'payments'], function ($api) {
-                    $api->post('success', 'SslController@validatePaycharge');
-                    $api->post('fail', 'SslController@validatePaycharge');
-                    $api->post('cancel', 'SslController@validatePaycharge');
+                    $api->post('success', 'SslController@validatePayment');
+                    $api->post('fail', 'SslController@validatePayment');
+                    $api->post('cancel', 'SslController@validatePayment');
                 });
             });
             $api->group(['prefix' => 'payments'], function ($api) {

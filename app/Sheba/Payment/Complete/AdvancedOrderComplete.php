@@ -39,7 +39,9 @@ class AdvancedOrderComplete extends PaymentComplete
                     $this->withCreateModificationField($partner_order_payment);
                     $partner_order_payment->fill((new RequestIdentification())->get());
                     $partner_order_payment->save();
-                    if (strtolower($paymentDetail->name) == 'wallet') dispatchReward()->run('wallet_cashback', $user, $paymentDetail->amount, $partner_order);
+                    if (strtolower($paymentDetail->method) == 'wallet') {
+                        dispatchReward()->run('wallet_cashback', $user, $paymentDetail->amount, $partner_order);
+                    }
                 }
                 $this->payment->status = 'completed';
                 $this->payment->update();

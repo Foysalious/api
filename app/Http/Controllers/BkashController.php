@@ -60,7 +60,7 @@ class BkashController extends Controller
                 ]);
             } elseif ($payment->isPassed()) {
                 return api_response($request, 1, 400, [
-                    'message' => 'Your payment has been received but there was a system error. It will take some time to update your order. Call 16516 for support.',
+                    'message' => 'Your payment has been received but there was a system error. It will take some time to update your transaction. Call 16516 for support.',
                     'payment' => array('redirect_url' => $redirect_url)
                 ]);
             }

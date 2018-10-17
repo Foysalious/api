@@ -11,26 +11,25 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Payment\Adapters\Payable\RechargeAdapter;
 use Sheba\Payment\ShebaPayment;
-use Cache;
 use DB;
 use Sheba\ShebaBonusCredit;
 
 class WalletController extends Controller
 {
-    public function validatePaycharge(Request $request)
+    public function validatePayment(Request $request)
     {
         try {
+            /** @var Payment $payment */
             $payment = Payment::where('transaction_id', $request->transaction_id)->valid()->first();
             if (!$payment) return api_response($request, null, 404);
-            elseif ($payment->isComplete()) return api_response($request, 1, 200, 'Payment completed');
-            elseif (!$payment->canComplete()) return api_response($request, null, 400, 'Payment can not be completed');
+            elseif ($payment->isComplete()) return api_response($request, 1, 200,
+                ['message' => 'Payment completed']);
+            elseif (!$payment->canComplete()) return api_response($request, null, 400,
+                ['message' => 'Your payment has been received but there was a system error. It will take some time to transaction your order. Call 16516 for support.']);
             $sheba_payment = new ShebaPayment('wallet');
             $payment = $sheba_payment->complete($payment);
-            if ($payment->isComplete()) {
-                $message = 'Payment successfully completed';
-            } elseif ($payment->isPassed()) {
-                $message = 'Payment successfully completed';
-            }
+            if ($payment->isComplete()) $message = 'Payment successfully completed';
+            elseif ($payment->isPassed()) $message = 'Payment successfully completed';
             return api_response($request, null, 200, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -78,6 +77,7 @@ class WalletController extends Controller
             $payment = Payment::where('transaction_id', $request->transaction_id)->valid()->first();
             if (!$payment) return api_response($request, null, 404);
             elseif ($payment->isFailed()) return api_response($request, null, 500, 'Payment failed');
+            elseif ($payment->isPassed()) return api_response($request, null, 200);
             $user = $payment->payable->user;
             if ($user->shebaCredit() < $payment->payable->amount) {
                 $payment->status = 'validation_failed';

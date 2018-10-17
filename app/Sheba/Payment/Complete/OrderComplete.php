@@ -22,14 +22,14 @@ class OrderComplete extends PaymentComplete
                             'customer_id' => $customer->id,
                             'remember_token' => $customer->remember_token,
                             'sheba_collection' => (double)$paymentDetail->amount,
-                            'payment_method' => $paymentDetail->readable_method,
+                            'payment_method' => $paymentDetail->method,
                             'created_by_type' => 'App\\Models\\Customer',
                             'transaction_detail' => $this->payment->transaction_details
                         ], (new RequestIdentification())->get())
                     ]);
                 $response = json_decode($res->getBody());
                 if ($response->code == 200) {
-                    if (strtolower($paymentDetail->name) == 'wallet') dispatchReward()->run('wallet_cashback', $customer, $paymentDetail->amount, $partner_order);
+                    if (strtolower($paymentDetail->method) == 'wallet') dispatchReward()->run('wallet_cashback', $customer, $paymentDetail->amount, $partner_order);
                 }
             }
         } catch (RequestException $e) {
