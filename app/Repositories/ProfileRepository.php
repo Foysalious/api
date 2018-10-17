@@ -257,7 +257,7 @@ class ProfileRepository
             $affiliate->remember_token = str_random(255);
             $affiliate->banking_info = json_encode(array('bKash' => ''));
             $affiliate->save();
-            // $this->addAffiliateBonus($affiliate);
+            $this->addAffiliateBonus($affiliate);
 
             (new NotificationRepository())->forAffiliateRegistration($affiliate);
         }
