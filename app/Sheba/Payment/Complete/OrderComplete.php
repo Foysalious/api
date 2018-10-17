@@ -9,6 +9,7 @@ class OrderComplete extends PaymentComplete
 {
     public function complete()
     {
+        $has_error = false;
         try {
             if ($this->payment->isComplete()) return $this->payment;
             $client = new Client();
@@ -30,12 +31,19 @@ class OrderComplete extends PaymentComplete
                 $response = json_decode($res->getBody());
                 if ($response->code == 200) {
                     if (strtolower($paymentDetail->method) == 'wallet') dispatchReward()->run('wallet_cashback', $customer, $paymentDetail->amount, $partner_order);
+                } else {
+                    $has_error = true;
                 }
             }
+
         } catch (RequestException $e) {
             $this->payment->status = 'failed';
             $this->payment->update();
             throw $e;
+        }
+        if ($has_error) {
+            $this->payment->status = 'completed';
+            $this->payment->update();
         }
         return $this->payment;
     }

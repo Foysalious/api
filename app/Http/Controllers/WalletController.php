@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-
+use App\Models\Customer;
 use App\Models\PartnerOrder;
 use App\Models\Payment;
+use App\Sheba\Payment\Rechargable;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -25,11 +26,11 @@ class WalletController extends Controller
             elseif ($payment->isComplete()) return api_response($request, 1, 200,
                 ['message' => 'Payment completed']);
             elseif (!$payment->canComplete()) return api_response($request, null, 400,
-                ['message' => 'Your payment has been received but there was a system error. It will take some time to transaction your order. Call 16516 for support.']);
+                ['message' => 'Payment validation failed.']);
             $sheba_payment = new ShebaPayment('wallet');
             $payment = $sheba_payment->complete($payment);
             if ($payment->isComplete()) $message = 'Payment successfully completed';
-            elseif ($payment->isPassed()) $message = 'Payment successfully completed';
+            elseif ($payment->isPassed()) $message = 'Your payment has been received but there was a system error. It will take some time to transaction your order. Call 16516 for support.';
             return api_response($request, null, 200, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -74,10 +75,12 @@ class WalletController extends Controller
                 'user_type' => 'required|in:customer',
                 'remember_token' => 'required',
             ]);
+            /** @var Payment $payment */
             $payment = Payment::where('transaction_id', $request->transaction_id)->valid()->first();
             if (!$payment) return api_response($request, null, 404);
             elseif ($payment->isFailed()) return api_response($request, null, 500, 'Payment failed');
             elseif ($payment->isPassed()) return api_response($request, null, 200);
+            /** @var Customer $user */
             $user = $payment->payable->user;
             if ($user->shebaCredit() < $payment->payable->amount) {
                 $payment->status = 'validation_failed';
