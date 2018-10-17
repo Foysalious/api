@@ -384,10 +384,11 @@ return [
     ],
     'PARTNER_AFFILIATIONS_FAKE_REJECT_REASONS' => ['fake'],
     'PARTNER_AFFILIATION_REWARD' => 200,
-    'PARTNER_AFFILIATION_PARTNER_ORDER_BENCHMARK' => 1,
+    'PARTNER_AFFILIATION_PARTNER_ORDER_BENCHMARK' => 2,
     'PARTNER_AFFILIATION_REWARD_BREAKDOWN' => [
-        'on_boarded' => 20,
-        'verified' => 10,
+        //'on_boarded' => 20,
+        'waiting'   => 10,
+        'verified'  => 20,
         'order_completed' => 70
     ],
     'PARTNER_AFFILIATION_AMBASSADOR_COMMISSION' => 30,
