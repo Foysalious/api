@@ -65,7 +65,8 @@ class PartnerTransactionController extends Controller
             app(ActionRewardDispatcher::class)->run(
                 'partner_wallet_recharge',
                 $request->partner,
-                $payment_validator->amount
+                $payment_validator->amount,
+                $request->partner
             );
 
             return api_response($request, null, 200, ['message' => "Wallet refilled."]);
