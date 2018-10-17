@@ -42,7 +42,7 @@ class BkashController extends Controller
         }
     }
 
-    public function validatePaycharge(Request $request)
+    public function validatePayment(Request $request)
     {
         try {
             $this->validate($request, ['paymentID' => 'required']);

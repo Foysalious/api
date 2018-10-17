@@ -13,7 +13,7 @@ use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\RequestIdentification;
 use DB;
 
-class Bkash implements PaymentMethod
+class Bkash extends PaymentMethod
 {
     use ModificationFields;
     private $appKey;
@@ -25,6 +25,7 @@ class Bkash implements PaymentMethod
 
     public function __construct()
     {
+        parent::__construct();
         $this->appKey = config('bkash.app_key');
         $this->appSecret = config('bkash.app_secret');
         $this->username = config('bkash.username');
@@ -64,12 +65,17 @@ class Bkash implements PaymentMethod
         $execute_response = new ExecuteResponse();
         $execute_response->setPayment($payment);
         $execute_response->setResponse($this->execute($payment));
+        $this->paymentRepository->setPayment($payment);
         if ($execute_response->hasSuccess()) {
             $success = $execute_response->getSuccess();
+            $this->paymentRepository->changeStatus(['to' => 'validated', 'from' => $payment->status,
+                'transaction_details' => $payment->transaction_details]);
             $payment->status = 'validated';
             $payment->transaction_details = json_encode($success->details);
         } else {
             $error = $execute_response->getError();
+            $this->paymentRepository->changeStatus(['to' => 'validation_failed', 'from' => $payment->status,
+                'transaction_details' => $payment->transaction_details]);
             $payment->status = 'validation_failed';
             $payment->transaction_details = json_encode($error->details);
         }

@@ -12,6 +12,7 @@ class OrderComplete extends PaymentComplete
         $has_error = false;
         try {
             if ($this->payment->isComplete()) return $this->payment;
+            $this->paymentRepository->setPayment($this->payment);
             $client = new Client();
             $payable = $this->payment->payable;
             $partner_order = PartnerOrder::find((int)$payable->type_id);
@@ -37,11 +38,15 @@ class OrderComplete extends PaymentComplete
             }
 
         } catch (RequestException $e) {
+            $this->paymentRepository->changeStatus(['to' => 'failed', 'from' => $this->payment->status,
+                'transaction_details' => $this->payment->transaction_details]);
             $this->payment->status = 'failed';
             $this->payment->update();
             throw $e;
         }
         if ($has_error) {
+            $this->paymentRepository->changeStatus(['to' => 'completed', 'from' => $this->payment->status,
+                'transaction_details' => $this->payment->transaction_details]);
             $this->payment->status = 'completed';
             $this->payment->update();
         }

@@ -6,7 +6,7 @@ use Cache;
 
 use Sheba\Payment\PayChargable;
 
-class Cbl implements PaymentMethod
+class Cbl extends PaymentMethod
 {
     private $tunnelHost;
     private $tunnelPort;
@@ -17,10 +17,10 @@ class Cbl implements PaymentMethod
     private $declineUrl;
 
     private $message;
-    private $error = [];
 
     public function __construct()
     {
+        parent::__construct();
         $this->tunnelHost = config('payment.cbl.tunnel_host');
         $this->tunnelPort = config('payment.cbl.tunnel_port');
         $this->merchantId = config('payment.cbl.merchant_id');
@@ -29,7 +29,7 @@ class Cbl implements PaymentMethod
         $this->cancelUrl = config('payment.cbl.urls.cancel');
         $this->declineUrl = config('payment.cbl.urls.decline');
     }
-    
+
     public function init(Payable $payable)
     {
         $response = $this->postQW($this->makeOrderCreateData($payable));

@@ -10,7 +10,7 @@ use Sheba\ModificationFields;
 use Sheba\RequestIdentification;
 use DB;
 
-class Wallet implements PaymentMethod
+class Wallet extends PaymentMethod
 {
     use ModificationFields;
 

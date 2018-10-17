@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Customer;
 use App\Models\PartnerOrder;
 use App\Models\Payment;
+use App\Repositories\PaymentRepository;
 use App\Sheba\Payment\Rechargable;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
@@ -66,7 +67,7 @@ class WalletController extends Controller
         }
     }
 
-    public function purchase(Request $request)
+    public function purchase(Request $request, PaymentRepository $paymentRepository)
     {
         try {
             $this->validate($request, [
@@ -82,7 +83,11 @@ class WalletController extends Controller
             elseif ($payment->isPassed()) return api_response($request, null, 200);
             /** @var Customer $user */
             $user = $payment->payable->user;
-            if ($user->shebaCredit() < $payment->payable->amount) {
+            $sheba_credit = $user->shebaCredit();
+            $paymentRepository->setPayment($payment);
+            if ($sheba_credit < $payment->payable->amount) {
+                $paymentRepository->changeStatus(['to' => 'validation_failed', 'from' => $payment->status,
+                    'transaction_details' => $payment->transaction_details, 'log' => "Insufficient balance. Purchase Amount: $sheba_credit & Sheba Credit: $sheba_credit"]);
                 $payment->status = 'validation_failed';
                 $payment->update();
                 return api_response($request, null, 400, ['message' => 'You don\'t have sufficient credit']);
@@ -101,6 +106,8 @@ class WalletController extends Controller
                         ]);
                     }
                 });
+                $paymentRepository->changeStatus(['to' => 'validated', 'from' => $payment->status,
+                    'transaction_details' => $payment->transaction_details]);
                 $payment->status = 'validated';
                 $payment->update();
             } catch (QueryException $e) {

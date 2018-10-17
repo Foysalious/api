@@ -19,6 +19,7 @@ class AdvancedOrderComplete extends PaymentComplete
     {
         try {
             if ($this->payment->isComplete()) return $this->payment;
+            $this->paymentRepository->setPayment($this->payment);
             DB::transaction(function () {
                 $payable = $this->payment->payable;
                 $partner_order = PartnerOrder::find((int)$payable->type_id);
@@ -43,10 +44,14 @@ class AdvancedOrderComplete extends PaymentComplete
                         dispatchReward()->run('wallet_cashback', $user, $paymentDetail->amount, $partner_order);
                     }
                 }
+                $this->paymentRepository->changeStatus(['to' => 'completed', 'from' => $this->payment->status,
+                    'transaction_details' => $this->payment->transaction_details]);
                 $this->payment->status = 'completed';
                 $this->payment->update();
             });
         } catch (QueryException $e) {
+            $this->paymentRepository->changeStatus(['to' => 'failed', 'from' => $this->payment->status,
+                'transaction_details' => $this->payment->transaction_details]);
             $this->payment->status = 'failed';
             $this->payment->update();
             throw $e;

@@ -8,7 +8,7 @@ use Sheba\Payment\ShebaPayment;
 
 class SslController extends Controller
 {
-    public function validatePaycharge(Request $request)
+    public function validatePayment(Request $request)
     {
         try {
             $payment = Payment::where('transaction_id', $request->tran_id)->valid()->first();

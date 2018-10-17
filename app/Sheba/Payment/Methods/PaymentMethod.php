@@ -2,10 +2,20 @@
 
 use App\Models\Payable;
 use App\Models\Payment;
+use App\Repositories\PaymentRepository;
+use Sheba\ModificationFields;
 
-interface PaymentMethod
+abstract class PaymentMethod
 {
-    public function init(Payable $payable): Payment;
+    use ModificationFields;
+    protected $paymentRepository;
 
-    public function validate(Payment $payment);
+    public function __construct()
+    {
+        $this->paymentRepository = new PaymentRepository();
+    }
+
+    abstract public function init(Payable $payable): Payment;
+
+    abstract public function validate(Payment $payment);
 }

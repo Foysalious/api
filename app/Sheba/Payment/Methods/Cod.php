@@ -1,17 +1,11 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: arnab
- * Date: 9/4/18
- * Time: 11:07 AM
- */
 
 namespace Sheba\Payment\Methods;
 
 
 use Sheba\Payment\PayChargable;
 
-class Cod implements PaymentMethod
+class Cod extends PaymentMethod
 {
 
     public function init(PayChargable $payChargable)
