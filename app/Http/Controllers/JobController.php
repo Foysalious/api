@@ -195,6 +195,7 @@ class JobController extends Controller
             $bill['closed_and_paid_at_timestamp'] = $partnerOrder->closed_and_paid_at != null ? $partnerOrder->closed_and_paid_at->timestamp : null;
             $bill['payment_method'] = $this->formatPaymentMethod($partnerOrder->payment_method);
             $bill['status'] = $job->status;
+            $bill['is_on_premise'] = (int) $job->isOnPremise();
             $bill['invoice'] = $job->partnerOrder->invoice;
             $bill['version'] = $job->partnerOrder->getVersion();
             return api_response($request, $bill, 200, ['bill' => $bill]);
