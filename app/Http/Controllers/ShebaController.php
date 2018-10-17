@@ -248,7 +248,7 @@ class ShebaController extends Controller
             $info = array('amount' => $payment->payable->amount);
             if ($payment->status == 'validated' || $payment->status == 'failed') {
                 return api_response($request, 1, 200, ['info' => $info,
-                    'message' => 'Your payment has been received but there was a system error. It will take some time to update your order. Call 16516 for support.']);
+                    'message' => 'Your payment has been received but there was a system error. It will take some time to update your transaction. Call 16516 for support.']);
             } else {
                 return api_response($request, 1, 200, ['info' => $info]);
             }
