@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 
 use App\Models\PartnerOrder;
-use App\Sheba\Payment\Rechargable;
+use App\Models\Payment;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -20,9 +20,18 @@ class WalletController extends Controller
     public function validatePaycharge(Request $request)
     {
         try {
-            $pay_charge = new ShebaPayment('wallet');
-            if ($response = $pay_charge->complete($request->transaction_id)) return api_response($request, null, 200);
-            else  return api_response($request, null, 500, ['message' => $pay_charge->message]);
+            $payment = Payment::where('transaction_id', $request->transaction_id)->valid()->first();
+            if (!$payment) return api_response($request, null, 404);
+            elseif ($payment->isComplete()) return api_response($request, 1, 200, 'Payment completed');
+            elseif (!$payment->canComplete()) return api_response($request, null, 400, 'Payment can not be completed');
+            $sheba_payment = new ShebaPayment('wallet');
+            $payment = $sheba_payment->complete($payment);
+            if ($payment->isComplete()) {
+                $message = 'Payment successfully completed';
+            } elseif ($payment->isPassed()) {
+                $message = 'Payment successfully completed';
+            }
+            return api_response($request, null, 200, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -42,9 +51,9 @@ class WalletController extends Controller
             $class_name = "App\\Models\\" . ucwords($request->user_type);
             $user = $class_name::where([['id', (int)$request->user_id], ['remember_token', $request->remember_token]])->first();
             if (!$user) return api_response($request, null, 404, ['message' => 'User Not found.']);
-            $order_adapter = new RechargeAdapter($user, $request->amount);
-            $payment = (new ShebaPayment($request->payment_method))->init($order_adapter->getPayable());
-            return api_response($request, $payment, 200, ['link' => $payment['link'], 'payment' => $payment]);
+            $recharge_adapter = new RechargeAdapter($user, $request->amount);
+            $payment = (new ShebaPayment($request->payment_method))->init($recharge_adapter->getPayable());
+            return api_response($request, $payment, 200, ['link' => $payment['link'], 'payment' => $payment->getFormattedPayment()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
@@ -66,37 +75,36 @@ class WalletController extends Controller
                 'user_type' => 'required|in:customer',
                 'remember_token' => 'required',
             ]);
-            $class_name = "App\\Models\\" . ucwords($request->user_type);
-            /** @var Rechargable $user */
-            $user = $class_name::where([['id', (int)$request->user_id], ['remember_token', $request->remember_token]])->first();
-            if (!$user) return api_response($request, null, 404, ['message' => 'User Not found.']);
-            $payment = Cache::store('redis')->get("paycharge::$request->transaction_id");
-            $payment = json_decode($payment);
-            $pay_chargable = unserialize($payment->pay_chargable);
-            if ($pay_chargable->userId == $user->id) {
-                if ($user->shebaCredit() < $pay_chargable->amount) return api_response($request, null, 400, ['message' => 'You don\'t have sufficient credit']);
-                try {
-                    DB::transaction(function () use ($pay_chargable, $user, $payment) {
-                        $remaining = (new ShebaBonusCredit())->setUser($user)->setSpentModel(PartnerOrder::find($pay_chargable->id))->deduct($pay_chargable->amount);
-                        if ($remaining > 0) {
-                            $user->debitWallet($remaining);
-                            $user->walletTransaction([
-                                'amount' => $remaining,
-                                'type' => 'Debit', 'log' => 'Service Purchase.',
-                                'partner_order_id' => $pay_chargable->id,
-                                'transaction_details' => json_encode($payment->method_info),
-                                'created_at' => Carbon::now()
-                            ]);
-                        }
-                    });
-                } catch (QueryException $e) {
-                    app('sentry')->captureException($e);
-                    return api_response($request, null, 500);
-                }
-                return api_response($request, $user, 200);
-            } else {
-                return api_response($request, $user, 404);
+            $payment = Payment::where('transaction_id', $request->transaction_id)->valid()->first();
+            if (!$payment) return api_response($request, null, 404);
+            elseif ($payment->isFailed()) return api_response($request, null, 500, 'Payment failed');
+            $user = $payment->payable->user;
+            if ($user->shebaCredit() < $payment->payable->amount) {
+                $payment->status = 'validation_failed';
+                $payment->update();
+                return api_response($request, null, 400, ['message' => 'You don\'t have sufficient credit']);
             }
+            try {
+                DB::transaction(function () use ($payment, $user) {
+                    $partner_order = PartnerOrder::find($payment->payable->type_id);
+                    $remaining = (new ShebaBonusCredit())->setUser($user)->setSpentModel($partner_order)->deduct($payment->payable->amount);
+                    if ($remaining > 0) {
+                        $user->debitWallet($remaining);
+                        $user->walletTransaction([
+                            'amount' => $remaining,
+                            'type' => 'Debit', 'log' => 'Service Purchase.',
+                            'partner_order_id' => $partner_order->id,
+                            'created_at' => Carbon::now()
+                        ]);
+                    }
+                });
+                $payment->status = 'validated';
+                $payment->update();
+            } catch (QueryException $e) {
+                app('sentry')->captureException($e);
+                return api_response($request, null, 500);
+            }
+            return api_response($request, $user, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');

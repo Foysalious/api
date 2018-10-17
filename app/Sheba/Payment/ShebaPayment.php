@@ -27,7 +27,7 @@ class ShebaPayment
     public function complete(Payment $payment)
     {
         $payment = $this->method->validate($payment);
-        if ($payment->isPassed()) {
+        if ($payment->canComplete()) {
             /** @var Payable $payable */
             $payable = $payment->payable;
             $completion_class = $payable->getCompletionClass();

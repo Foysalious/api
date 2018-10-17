@@ -2,31 +2,28 @@
 
 namespace Sheba\Payment\Complete;
 
-
-use App\Sheba\Payment\Rechargable;
-use Carbon\Carbon;
 use Illuminate\Database\QueryException;
-use Sheba\Payment\PayChargable;
 use DB;
 
 class RechargeComplete extends PaymentComplete
 {
 
-    public function complete(PayChargable $pay_chargable, $method_response)
+    public function complete()
     {
         try {
-            $class_name = $pay_chargable->userType;
-            /** @var Rechargable $user */
-            $user = $class_name::find($pay_chargable->userId);
-            DB::transaction(function () use ($pay_chargable, $method_response, $user) {
-                $user->rechargeWallet($pay_chargable->amount, [
-                    'amount' => $pay_chargable->amount, 'transaction_details' => json_encode($method_response['details']),
+            DB::transaction(function () {
+                $this->payment->payable->user->rechargeWallet($this->payment->payable->amount, [
+                    'amount' => $this->payment->payable->amount, 'transaction_details' => $this->payment->transaction_details,
                     'type' => 'Credit', 'log' => 'Credit Purchase'
                 ]);
             });
+            $this->payment->status = 'completed';
+            $this->payment->update();
         } catch (QueryException $e) {
+            $this->payment->status = 'failed';
+            $this->payment->update();
             throw $e;
         }
-        return true;
+        return $this->payment;
     }
 }

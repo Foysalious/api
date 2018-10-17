@@ -7,7 +7,6 @@ use App\Models\Payment;
 use App\Models\PaymentDetail;
 use Carbon\Carbon;
 use Sheba\ModificationFields;
-use Cache;
 use Redis;
 use Sheba\Payment\Methods\Bkash\Response\ExecuteResponse;
 use Sheba\Payment\Methods\PaymentMethod;
@@ -22,7 +21,6 @@ class Bkash implements PaymentMethod
     private $username;
     private $password;
     private $url;
-    private $error = [];
     CONST NAME = 'bkash';
 
     public function __construct()
@@ -142,7 +140,7 @@ class Bkash implements PaymentMethod
             'authorization:' . $token,
             'x-app-key:' . $this->appKey);
         curl_setopt($url, CURLOPT_HTTPHEADER, $header);
-        curl_setopt($url, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($url, CURLOPT_CUSTOMREQUEST, 'POST');
         curl_setopt($url, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($url, CURLOPT_FAILONERROR, true);
         $result_data = curl_exec($url);

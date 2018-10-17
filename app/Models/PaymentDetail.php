@@ -32,7 +32,9 @@ class PaymentDetail extends Model
     {
         if ($this->method == 'ssl')
             return 'Online';
-        else
+        elseif ($this->method == 'wallet' || $this->method == 'bonus')
             return 'Wallet';
+        elseif ($this->method == 'bkash')
+            return 'Bkash';
     }
 }

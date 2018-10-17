@@ -14,7 +14,7 @@ class SslController extends Controller
             $payment = Payment::where('transaction_id', $request->tran_id)->valid()->first();
             if (!$payment) return redirect(config('sheba.front_url'));
             $sheba_payment = new ShebaPayment('online');
-            $sheba_payment->complete($payment);
+            $payment = $sheba_payment->complete($payment);
             $payable = $payment->payable;
             return redirect($payable->success_url . '?invoice_id=' . $request->tran_id);
         } catch (\Throwable $e) {

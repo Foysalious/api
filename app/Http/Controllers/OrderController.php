@@ -79,10 +79,11 @@ class OrderController extends Controller
                 if ($order->voucher_id) $this->updateVouchers($order, $customer);
                 $payment = $link = null;
                 if ($request->payment_method !== 'cod') {
+                    /** @var Payment $payment */
                     $payment = $this->getPayment($request->payment_method, $order);
                     if ($payment) {
                         $link = $payment->redirect_url;
-                        $payment = $this->formatPayment($payment);
+                        $payment = $payment->getFormattedPayment();
                     }
                 }
                 $this->sendNotifications($customer, $order);
@@ -164,15 +165,5 @@ class OrderController extends Controller
             app('sentry')->captureException($e);
             return null;
         }
-    }
-
-    private function formatPayment(Payment $payment)
-    {
-        return array(
-            'transaction_id' => $payment->transaction_id,
-            'id' => $payment->payable->type_id,
-            'type' => $payment->payable->readable_type,
-            'link' => $payment->redirect_url
-        );
     }
 }

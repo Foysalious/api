@@ -3,8 +3,9 @@
 namespace Sheba\Payment\Adapters\Payable;
 
 
+use App\Models\Payable;
 use App\Sheba\Payment\Rechargable;
-use Sheba\Payment\PayChargable;
+use Carbon\Carbon;
 
 class RechargeAdapter implements PayableAdapter
 {
@@ -17,16 +18,17 @@ class RechargeAdapter implements PayableAdapter
         $this->amount = $amount;
     }
 
-    public function getPayable(): PayChargable
+    public function getPayable(): Payable
     {
-        $pay_chargable = new PayChargable();
-        $pay_chargable->type = 'recharge';
-        $pay_chargable->amount = (double)$this->amount;
-        $pay_chargable->completionClass = 'RechargeComplete';
-        $pay_chargable->redirectUrl = env('SHEBA_FRONT_END_URL') . '/profile/credit';
-        $pay_chargable->userId = $this->user->id;
-        $pay_chargable->userType = "App\\Models\\" . class_basename($this->user);
-
-        return $pay_chargable;
+        $payable = new Payable();
+        $payable->type = 'wallet_recharge';
+        $payable->user_id = $this->user->id;
+        $payable->user_type = "App\\Models\\Customer";
+        $payable->amount = (double)$this->amount;
+        $payable->completion_type = 'wallet_recharge';
+        $payable->success_url = config('sheba.front_url') . '/profile/credit';
+        $payable->created_at = Carbon::now();
+        $payable->save();
+        return $payable;
     }
 }
