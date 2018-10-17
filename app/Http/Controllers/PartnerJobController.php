@@ -73,6 +73,7 @@ class PartnerJobController extends Controller
                             $job['is_cancel_request_rejected'] = 1;
                         }
                     }
+                    $job['is_on_premise'] = $job->site == 'partner' ? 1 : 0;
                     removeRelationsFromModel($job);
                     if ($job->resource_id == null) {
                         $jobs_with_resource->push($job);
@@ -406,6 +407,7 @@ class PartnerJobController extends Controller
             $jobs = collect();
             foreach ($partner->partnerOrders as $partnerOrder) {
                 foreach ($partnerOrder->jobs as $job) {
+                    $job['is_on_premise'] = (int) $job->isOnPremise();
                     $job['location'] = $partnerOrder->order->location->name;
                     $job['code'] = $partnerOrder->order->code();
                     $job['category_name'] = $job->category ? $job->category->name : null;

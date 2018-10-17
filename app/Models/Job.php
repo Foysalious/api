@@ -357,4 +357,9 @@ class Job extends Model
         if (in_array($this->status, ['Accepted', 'Schedule Due', 'Process', 'Serve Due', 'Served'])) return Carbon::today()->gte(Carbon::parse($this->schedule_date));
         else return false;
     }
+
+    public function isOnPremise()
+    {
+        return $this->site == constants('JOB_ON_PREMISE')['partner'];
+    }
 }

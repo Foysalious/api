@@ -21,6 +21,17 @@ class EventDataConverter
                                 'min'   => 0
                             ]
                         ]
+                    ],
+                    'partner_wallet_recharge' => [
+                        'name' => 'Partner Wallet Recharge',
+                        'event_class' => 'Sheba\Reward\Event\Partner\Action\WalletRecharge\Event',
+                        'rule_class' => 'Sheba\Reward\Event\Partner\Action\WalletRecharge\Rule',
+                        'parameters' => [
+                            'amount' => [
+                                'type'  => 'number',
+                                'min'   => 0
+                            ]
+                        ]
                     ]
                 ],
                 'campaign' => [
