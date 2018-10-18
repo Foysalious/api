@@ -146,10 +146,15 @@ class PartnerList
 
     private function findPartnersByServiceAndLocation($partner_id = null)
     {
+        $has_premise = (int)request()->get('has_premise');
+        $has_home_delivery = (int)request()->get('has_home_delivery');
         $service_ids = $this->selected_services->pluck('id')->unique();
         $category_ids = $this->selected_services->pluck('category_id')->unique()->toArray();
-        $query = Partner::WhereHas('categories', function ($q) use ($category_ids) {
-            $q->whereIn('categories.id', $category_ids)->where('category_partner.is_verified', 1)->where('category_partner.is_home_delivery_applied', 1);
+        $query = Partner::WhereHas('categories', function ($q) use ($category_ids, $has_premise, $has_home_delivery) {
+            $q->whereIn('categories.id', $category_ids)->where('category_partner.is_verified', 1);
+            if (request()->has('has_home_delivery')) $q->where('category_partner.is_home_delivery_applied', $has_home_delivery);
+            if (request()->has('has_premise')) $q->where('category_partner.is_partner_premise_applied', $has_premise);
+            if (!request()->has('has_home_delivery') && !request()->has('has_premise')) $q->where('category_partner.is_home_delivery_applied', 1);
         })->whereHas('locations', function ($query) {
             $query->where('locations.id', (int)$this->location);
         })->whereHas('services', function ($query) use ($service_ids) {
@@ -327,8 +332,8 @@ class PartnerList
             'is_min_price_applied' => 0,
         ];
         $services = [];
+        $category_pivot = $partner->categories->first()->pivot;
         foreach ($this->selected_services as $selected_service) {
-            $category_pivot = $partner->categories->where('id', $selected_service->category_id)->first()->pivot;
             $service = $partner->services->where('id', $selected_service->id)->first();
             if ($service->isOptions()) {
                 $price = $this->partnerServiceRepository->getPriceOfOptionsService($service->pivot->prices, $selected_service->option);
@@ -347,14 +352,11 @@ class PartnerList
             $discount->calculateServiceDiscount(PartnerServiceDiscount::where('partner_service_id', $service->pivot->id)->running()->first());
             $service = [];
             $service['discount'] = $discount->discount;
-            $service['delivery_charge'] = (double)$category_pivot->delivery_charge;
-            $service['has_home_delivery'] = $service['delivery_charge'] > 0 ? 1 : 0;
-            $service['is_on_premise_available'] = (int)$category_pivot->is_partner_premise_applied ? 1 : 0;
             $service['cap'] = $discount->cap;
             $service['amount'] = $discount->amount;
             $service['is_percentage'] = $discount->isDiscountPercentage;
-            $service['discounted_price'] = $discount->discounted_price + $service['delivery_charge'];
-            $service['original_price'] = $discount->original_price + $service['delivery_charge'];
+            $service['discounted_price'] = $discount->discounted_price;
+            $service['original_price'] = $discount->original_price;
             $service['min_price'] = $discount->min_price;
             $service['unit_price'] = $discount->unit_price;
             $service['sheba_contribution'] = $discount->sheba_contribution;
@@ -377,6 +379,12 @@ class PartnerList
         }
         array_add($partner, 'breakdown', $services);
         $total_service_price['discount'] = (int)$total_service_price['discount'];
+        $delivery_charge = (double)$category_pivot->delivery_charge;
+        $total_service_price['discounted_price'] += $delivery_charge;
+        $total_service_price['original_price'] += $delivery_charge;
+        $total_service_price['delivery_charge'] = $delivery_charge;
+        $total_service_price['has_home_delivery'] = $delivery_charge > 0 ? 1 : 0;
+        $total_service_price['is_has_premise_available'] = (int)$category_pivot->is_partner_premise_applied ? 1 : 0;
         return $total_service_price;
     }
 
