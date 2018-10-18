@@ -128,7 +128,7 @@ class PartnerController extends Controller
             $info->put('total_rating', $partner->reviews->count());
             $info->put('avg_rating', $this->reviewRepository->getAvgRating($partner->reviews));
             return api_response($request, $info, 200, ['info' => $info]);
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -161,7 +161,7 @@ class PartnerController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -270,7 +270,7 @@ class PartnerController extends Controller
                 'breakdown' => $breakdown
             );
             return api_response($request, $info, 200, ['info' => $info]);
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -306,13 +306,13 @@ class PartnerController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch ( ValidationException $e ) {
+        } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -370,7 +370,7 @@ class PartnerController extends Controller
                 'has_reward_campaign' => count($partner_reward->upcoming()) > 0 ? 1 : 0
             );
             return api_response($request, $info, 200, ['info' => $info]);
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -389,7 +389,7 @@ class PartnerController extends Controller
             $breakdown = $this->partnerOrderRepository->getWeeklyBreakdown($partner_orders, $start_time, $end_time);
             $info = array('today' => $sales_stats->today->sale, 'week' => $sales_stats->week->sale, 'month' => $sales_stats->month->sale, 'year' => $sales_stats->year->sale, 'total' => $sales_stats->lifetime->sale);
             return api_response($request, $info, 200, ['info' => $info, 'breakdown' => $breakdown, 'orders' => $partner_orders]);
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -417,7 +417,7 @@ class PartnerController extends Controller
             $info->put('total_resources', $partner->resources->count());
             $info->put('wallet', $partner->wallet);
             return api_response($request, $info, 200, ['info' => $info]);
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -433,7 +433,7 @@ class PartnerController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -450,6 +450,8 @@ class PartnerController extends Controller
                 'isAvailable' => 'sometimes|required',
                 'availability' => 'sometimes|required',
                 'partner' => 'sometimes|required',
+                'has_premise' => 'sometimes|required',
+                'has_home_delivery' => 'sometimes|required',
             ]);
             $validation = new Validation($request);
             if (!$validation->isValid()) {
@@ -504,10 +506,11 @@ class PartnerController extends Controller
                 return api_response($request, $partners, 200, ['partners' => $partners->values()->all()]);
             }
             return api_response($request, null, 404, ['message' => 'No partner found.']);
-        } catch ( ValidationException $e ) {
+        } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -525,7 +528,7 @@ class PartnerController extends Controller
                 if (count($locations) > 0) return api_response($request, $locations, 200, ['locations' => $locations]);
             }
             return api_response($request, null, 404);
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -575,7 +578,7 @@ class PartnerController extends Controller
                 }
             }
             return api_response($request, null, 404);
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
