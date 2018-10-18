@@ -121,7 +121,8 @@ class PartnerScheduleSlot
                 if ($this->isBetweenAnyLeave($slot_start_time) || ($isToday && ($slot_start_time < $day))) {
                     $slot['is_available'] = 0;
                 } else {
-                    $slot['is_available'] = (int)($working_hour_end_time->notEqualTo($slot_start_time) && $slot_start_time->between($working_hour_start_time, $working_hour_end_time, true));
+                    $is_available = (int)($working_hour_end_time->notEqualTo($slot_start_time) && $slot_start_time->between($working_hour_start_time, $working_hour_end_time, true));
+                    $slot['is_available'] = $is_available ? 1 : 0;
                 }
             }
         } else {
@@ -162,7 +163,8 @@ class PartnerScheduleSlot
                 foreach ($bookedSchedules as $booked_schedule) {
                     if ($booked_schedule->start->gte($start_time) || $booked_schedule->end->lte($end_time)) $booked_resources->push($booked_schedule->resource_id);
                 }
-                $slot['is_available'] = (int)$total_resources > $booked_resources->unique()->count();
+                $is_available = (int)$total_resources > $booked_resources->unique()->count();
+                $slot['is_available'] = $is_available ? 1 : 0;
             }
         }
     }
@@ -170,10 +172,12 @@ class PartnerScheduleSlot
     private function formatSlots($slots)
     {
         foreach ($slots as &$slot) {
+            $slot_start = humanReadableShebaTime($slot['start']);
+            $slot_end = humanReadableShebaTime($slot['end']);
             $slot['key'] = $slot['start'] . '-' . $slot['end'];
             $slot['value'] = humanReadableShebaTime($slot['start']) . '-' . humanReadableShebaTime($slot['end']);
-            unset($slot['start']);
-            unset($slot['end']);
+            $slot['start'] = $slot_start;
+            $slot['end'] = $slot_end;
         }
         return $slots;
     }
