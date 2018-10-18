@@ -47,7 +47,7 @@ class Event extends Action implements AmountCalculator
 
     public function calculateAmount()
     {
-        $payment_amount = $this->params[0]->totalPrice;
+        $payment_amount = $this->params[0]->calculate(true)->totalPrice;
         $amount = ($payment_amount * $this->reward->amount) / 100;
 
         return ($this->reward->cap && ($amount > $this->reward->cap)) ? $this->reward->cap : $amount;
