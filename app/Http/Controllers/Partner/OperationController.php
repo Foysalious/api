@@ -49,6 +49,11 @@ class OperationController extends Controller
                 'is_on_premise_available' => "sometimes|required",
                 'delivery_charge' => "sometimes|required",
             ]);
+            if (($request->has('is_home_delivery_available') && !$request->is_home_delivery_available) &&
+                ($request->has('is_on_premise_available') && !$request->is_on_premise_available)) {
+                return api_response($request, null, 400, ['message' => "You have to select at least one delivery option"]);
+            }
+
             $partner = $request->partner;
             return $this->saveInDatabase($partner, $request) ? api_response($request, $partner, 200) : api_response($request, $partner, 500);
         } catch (ValidationException $e) {
@@ -88,16 +93,13 @@ class OperationController extends Controller
 
                 $category_partner_info = [];
                 $should_update_category_partner = 0;
-                if ($request->has('is_home_delivery_available')) {
+                if ($request->has('is_home_delivery_available') && $request->has('delivery_charge')) {
                     $category_partner_info['is_home_delivery_applied'] = $request->is_home_delivery_available;
+                    $category_partner_info['delivery_charge'] = $request->is_home_delivery_available ? $request->delivery_charge : 0;
                     $should_update_category_partner = 1;
                 }
                 if ($request->has('is_on_premise_available')) {
                     $category_partner_info['is_partner_premise_applied'] = $request->is_on_premise_available;
-                    $should_update_category_partner = 1;
-                }
-                if ($request->has('delivery_charge')) {
-                    $category_partner_info['delivery_charge'] = $request->delivery_charge;
                     $should_update_category_partner = 1;
                 }
 
