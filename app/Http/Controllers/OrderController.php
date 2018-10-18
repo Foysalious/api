@@ -63,6 +63,7 @@ class OrderController extends Controller
                 'address' => 'required_without:address_id',
                 'address_id' => 'required_without:address',
                 'resource' => 'sometimes|numeric',
+                'is_on_premise' => 'sometimes|numeric',
             ], ['mobile' => 'Invalid mobile number!']);
             $customer = $request->customer;
             $validation = new Validation($request);
