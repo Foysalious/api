@@ -132,6 +132,7 @@ class PartnerOrderController extends Controller
             } else {
                 $partner_order['overdue'] = null;
             }
+            $partner_order['is_on_premise'] = 1;
             removeRelationsAndFields($partner_order);
             $partner_order['jobs'] = $jobs->each(function ($item) {
                 removeRelationsAndFields($item);
@@ -189,6 +190,7 @@ class PartnerOrderController extends Controller
                 'discount' => (double)$partner_order->totalDiscount,
                 'total_sheba_discount_amount' => (double)$partner_order->totalShebaDiscount,
                 'total_partner_discount_amount' => (double)$partner_order->totalPartnerDiscount,
+                'delivery_charge' => $partner_order->deliveryCharge
             );
             return api_response($request, $partner_order, 200, ['order' => $partner_order]);
         } catch (\Throwable $e) {

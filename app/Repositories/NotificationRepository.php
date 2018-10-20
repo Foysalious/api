@@ -35,6 +35,15 @@ class NotificationRepository
         if (!$this->order->jobs->first()->resource_id) $this->sendNotificationToPartner($this->order->partner_orders);
     }
 
+    public function updateSeenBy($by, $notifications)
+    {
+        foreach ($notifications as $notification) {
+            $notification->timestamps = false;
+            $notification->is_seen = 1;
+            $notification->update();
+        }
+    }
+
     private function sendNotificationToCRM()
     {
         notify()->user($this->order->jobs->first()->crm_id)->sender($this->sender_id, $this->sender_type)->send([
@@ -66,9 +75,9 @@ class NotificationRepository
                 //'version' => $partner_order->getVersion()
             ]);
 
-            $topic   = config('sheba.push_notification_topic_name.manager') . $partner_order->partner_id;
+            $topic = config('sheba.push_notification_topic_name.manager') . $partner_order->partner_id;
             $channel = config('sheba.push_notification_channel_name.manager');
-            $sound   = config('sheba.push_notification_sound.manager');
+            $sound = config('sheba.push_notification_sound.manager');
 
             (new PushNotificationHandler())->send([
                 "title" => 'New Order',

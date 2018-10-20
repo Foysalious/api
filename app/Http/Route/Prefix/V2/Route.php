@@ -20,7 +20,7 @@ class Route
             $api->group(['prefix' => 'wallet'], function ($api) {
                 $api->post('recharge', 'WalletController@recharge');
                 $api->post('purchase', 'WalletController@purchase');
-                $api->post('validate', 'WalletController@validatePaycharge');
+                $api->post('validate', 'WalletController@validatePayment');
                 $api->get('faqs', 'WalletController@getFaqs');
             });
             $api->group(['prefix' => 'faqs'], function ($api) {
@@ -28,19 +28,19 @@ class Route
             });
 
             $api->group(['prefix' => 'ssl'], function ($api) {
-                $api->post('validate', 'SslController@validatePaycharge');
+                $api->post('validate', 'SslController@validatePayment');
             });
 
             $api->group(['prefix' => 'bkash'], function ($api) {
-                $api->post('validate', 'BkashController@validatePaycharge');
+                $api->post('validate', 'BkashController@validatePayment');
                 $api->get('paymentID/{paymentID}', 'BkashController@getPaymentInfo');
             });
             $api->group(['prefix' => 'orders'], function ($api) {
                 $api->get('online', 'OrderController@clearPayment');
                 $api->group(['prefix' => 'payments'], function ($api) {
-                    $api->post('success', 'SslController@validatePaycharge');
-                    $api->post('fail', 'SslController@validatePaycharge');
-                    $api->post('cancel', 'SslController@validatePaycharge');
+                    $api->post('success', 'SslController@validatePayment');
+                    $api->post('fail', 'SslController@validatePayment');
+                    $api->post('cancel', 'SslController@validatePayment');
                 });
             });
             $api->group(['prefix' => 'payments'], function ($api) {
@@ -80,16 +80,9 @@ class Route
                 $api->get('{location}/partners', 'PartnerController@findPartners');
                 $api->get('current', 'LocationController@getCurrent');
             });
-            $api->group(['prefix' => 'partners'], function ($api) {
-                $api->group(['prefix' => '{partner}'], function ($api) {
-                    $api->get('/', 'PartnerController@show');
-                    $api->get('locations', 'PartnerController@getLocations');
-                    $api->get('categories', 'PartnerController@getCategories');
-                    $api->get('categories/{category}/services', 'PartnerController@getServices');
-                });
-                $api->get('rewards/faqs', 'Partner\PartnerRewardController@getFaqs');
-            });
             (new CustomerRoute())->set($api);
+            (new AffiliateRoute())->set($api);
+            (new PartnerRoute())->set($api);
             $api->group(['prefix' => 'resources/{resource}', 'middleware' => ['resource.auth']], function ($api) {
                 $api->group(['prefix' => 'jobs'], function ($api) {
                     $api->group(['prefix' => '{job}', 'middleware' => ['resource_job.auth']], function ($api) {
@@ -103,81 +96,7 @@ class Route
                     });
                 });
             });
-            $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
-                $api->get('operations', 'Partner\OperationController@index');
-                $api->post('operations', 'Partner\OperationController@store');
-                $api->post('register', 'CustomerController@store');
-                $api->post('categories', 'Partner\OperationController@saveCategories');
-                $api->get('search', 'SearchController@search');
-                $api->group(['prefix' => 'subscriptions'], function ($api) {
-                    $api->get('/', 'Partner\PartnerSubscriptionController@index');
-                    $api->post('/', 'Partner\PartnerSubscriptionController@store');
-                    $api->post('/upgrade', 'Partner\PartnerSubscriptionController@update');
-                });
-                $api->group(['prefix' => 'resources'], function ($api) {
-                    $api->post('/', 'Resource\PersonalInformationController@store');
-                    $api->group(['prefix' => '{resource}', 'middleware' => ['partner_resource.auth']], function ($api) {
-                        $api->get('/', 'Resource\PersonalInformationController@index');
-                        $api->post('/', 'Resource\PersonalInformationController@update');
-                    });
-                });
-                $api->get('completion', 'Partner\ProfileCompletionController@getProfileCompletion');
-                $api->get('collections', 'PartnerOrderPaymentController@index');
-                $api->get('training', 'PartnerTrainingController@redirect');
-                $api->post('pay-sheba', 'PartnerTransactionController@payToSheba');
-                $api->group(['prefix' => 'orders'], function ($api) {
-                    $api->group(['prefix' => '{order}', 'middleware' => ['partner_order.auth']], function ($api) {
-                        $api->get('/', 'PartnerOrderController@showV2');
-                        $api->get('bills', 'PartnerOrderController@getBillsV2');
-                        $api->post('services', 'PartnerOrderController@addService');
-                        $api->post('collect', 'PartnerOrderController@collectMoney');
-                    });
-                });
-                $api->group(['prefix' => 'jobs'], function ($api) {
-                    $api->group(['prefix' => '{job}', 'middleware' => ['partner_job.auth']], function ($api) {
-                        $api->put('/', 'PartnerJobController@update');
-
-                        $api->group(['prefix' => 'materials'], function ($api) {
-                            $api->get('/', 'PartnerJobController@getMaterials');
-                        });
-                        $api->group(['prefix' => 'cancel-requests'], function ($api) {
-                            $api->post('/', 'PartnerCancelRequestController@store');
-                            $api->get('reasons', 'PartnerCancelRequestController@cancelReasons');
-                        });
-                    });
-                    $api->get('/cancel-request', 'PartnerJobController@cancelRequests');
-                });
-                $api->group(['prefix' => 'job_service/{job_service}'], function ($api) {
-                    $api->post('/update', 'JobServiceController@update');
-                    $api->delete('/', 'JobServiceController@destroy');
-                });
-                $api->group(['prefix' => 'complains'], function ($api) {
-                    $api->get('/', 'ComplainController@index');
-                    $api->post('/', 'ComplainController@storeForPartner');
-                    $api->get('/list', 'ComplainController@complainList');
-                    $api->get('/resolved-category', 'ComplainController@resolvedCategory');
-                    $api->group(['prefix' => '{complain}'], function ($api) {
-                        $api->post('/', 'ComplainController@postPartnerComment');
-                        $api->get('/', 'ComplainController@showPartnerComplain');
-                        $api->post('/status', 'ComplainController@updateStatus');
-                    });
-                });
-                $api->group(['prefix' => 'rewards'], function ($api) {
-                    $api->get('/', 'Partner\PartnerRewardController@index');
-                    $api->get('/history', 'Partner\PartnerRewardController@history');
-                    $api->group(['prefix' => 'shop'], function ($api) {
-                        $api->get('/', 'Partner\PartnerRewardShopController@index');
-                        $api->get('/history', 'Partner\PartnerRewardShopController@history');
-                        $api->post('/purchase', 'Partner\PartnerRewardShopController@purchase');
-                        $api->get('/purchasable', 'Partner\PartnerRewardShopController@purchasable');
-                    });
-                    $api->get('/{reward}', 'Partner\PartnerRewardController@show');
-                });
-                $api->get('get-profile', 'ResourceController@getResourceData');
-            });
-            (new AffiliateRoute())->set($api);
             $api->get('updates', 'UpdateController@getUpdates');
-
         });
         return $api;
     }

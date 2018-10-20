@@ -21,6 +21,42 @@ class EventDataConverter
                                 'min'   => 0
                             ]
                         ]
+                    ],
+                    'partner_wallet_recharge' => [
+                        'name' => 'Partner Wallet Recharge',
+                        'event_class' => 'Sheba\Reward\Event\Partner\Action\WalletRecharge\Event',
+                        'rule_class' => 'Sheba\Reward\Event\Partner\Action\WalletRecharge\Rule',
+                        'parameters' => [
+                            'amount' => [
+                                'type'  => 'number',
+                                'min'   => 0
+                            ]
+                        ]
+                    ],
+                    'order_serve' => [
+                        'name' => 'Order Serve',
+                        'event_class' => 'Sheba\Reward\Event\Partner\Action\OrderServed\Event',
+                        'rule_class' => 'Sheba\Reward\Event\Partner\Action\OrderServed\Rule',
+                        'parameters' => [
+                            'amount' => [
+                                'type'  => 'number',
+                                'min'   => 0
+                            ],
+                            'portals' => [
+                                'type' => 'select',
+                                'possible_value' => indexedArrayToAssociative(config('sheba.portals'), config('sheba.portals')),
+                                'is_multi_selectable' => 1
+                            ],
+                            'excluded_status' => [
+                                'type' => 'select',
+                                'possible_value' => [
+                                    'Not_Responded' => 'Not Responded',
+                                    'Schedule_Due'  => 'Schedule Due',
+                                    'Serve_Due'     => 'Serve Due'
+                                ],
+                                'is_multi_selectable' => 1
+                            ]
+                        ]
                     ]
                 ],
                 'campaign' => [

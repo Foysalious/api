@@ -15,7 +15,7 @@ class Portal extends CampaignEventParameter
     public function check(Builder $query)
     {
         if ($this->value != null) {
-            $query->whereHas('statusChangeLog', function ($q) {
+            $query->whereHas('statusChangeLogs', function ($q) {
                 $q->where('to_status', 'Served')->whereIn('portal_name', $this->value);
             });
         }

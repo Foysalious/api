@@ -224,12 +224,6 @@ class Job extends Model
         return $this->hasMany(JobStatusChangeLog::class);
     }
 
-    public function statusChangeLog()
-    {
-        return $this->hasMany(JobStatusChangeLog::class);
-
-    }
-
     public function updateLogs()
     {
         return $this->hasMany(JobUpdateLog::class);
@@ -241,7 +235,7 @@ class Job extends Model
             'jobs.id', 'jobs.discount', 'jobs.created_at', 'jobs.category_id', 'sheba_contribution', 'jobs.preferred_time_start',
             'partner_contribution', 'commission_rate', 'resource_id', 'schedule_date', 'service_variables',
             'job_additional_info', 'delivered_date', 'preferred_time', 'service_name',
-            'status', 'service_quantity', 'service_unit_price', 'service_id', 'partner_order_id'
+            'status', 'site', 'service_quantity', 'service_unit_price', 'service_id', 'partner_order_id'
         );
     }
 
@@ -362,5 +356,10 @@ class Job extends Model
     {
         if (in_array($this->status, ['Accepted', 'Schedule Due', 'Process', 'Serve Due', 'Served'])) return Carbon::today()->gte(Carbon::parse($this->schedule_date));
         else return false;
+    }
+
+    public function isOnPremise()
+    {
+        return $this->site == constants('JOB_ON_PREMISE')['partner'];
     }
 }

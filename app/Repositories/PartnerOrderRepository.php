@@ -113,6 +113,7 @@ class PartnerOrderRepository
                 'created_at' => $jobs[0]->partner_order->created_at->timestamp,
                 'created_at_readable' => $jobs[0]->partner_order->created_at->diffForHumans(),
                 'code' => $jobs[0]->partner_order->code(),
+                'is_on_premise' => $jobs[0]->site == 'partner' ? 1 : 0,
                 'id' => $jobs[0]->partner_order->id,
                 'total_price' => (double)$jobs[0]->partner_order->totalPrice,
                 'discount' => (double)$jobs[0]->partner_order->totalDiscount,
@@ -269,6 +270,7 @@ class PartnerOrderRepository
         $partner_order['total_jobs'] = count($partner_order->jobs);
         $partner_order['order_status'] = $job->status;
         $partner_order['isRentCar'] = $job->isRentCar();
+        $partner_order['is_on_premise'] =  $job->site == 'partner' ? 1 : 0;
         return $partner_order;
     }
 

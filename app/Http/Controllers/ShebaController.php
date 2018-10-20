@@ -7,6 +7,7 @@ use App\Models\AppVersion;
 use App\Models\Category;
 use App\Models\Job;
 use App\Models\OfferShowcase;
+use App\Models\Payment;
 use App\Models\Resource;
 use App\Models\ScheduleSlot;
 use App\Models\Service;
@@ -21,9 +22,6 @@ use Illuminate\Validation\ValidationException;
 use Validator;
 use DB;
 use Cache;
-use Sheba\PayCharge\Adapters\PayCharged\OrderAdapter;
-use Sheba\PayCharge\Adapters\PayCharged\RechargeAdapter;
-use Sheba\PayCharge\PayCharge;
 
 class ShebaController extends Controller
 {
@@ -245,23 +243,32 @@ class ShebaController extends Controller
                 'payment_method' => 'required|in:online,bkash',
                 'job_id' => 'sometimes|required',
             ]);
-            $class_name = "App\\Models\\" . ucwords($request->user_type);
-            $user = $class_name::where([['id', (int)$request->user_id], ['remember_token', $request->remember_token]])->first();
-            if (!$user) return api_response($request, null, 404, ['message' => 'User Not found.']);
-            if ($request->paycharge_type == 'recharge') $pay_charged = (new RechargeAdapter($user, $transactionID))->getPayCharged();
-            else {
-                $job = Job::find((int)$request->job_id);
-                $pay_charged = (new OrderAdapter($job->partnerOrder, $transactionID))->getPayCharged();
-            }
-            $paycharge = new PayCharge($request->payment_method);
-            if ($response = $paycharge->isComplete($pay_charged)) {
-                return api_response($request, 1, 200, ['info' => array('amount' => $response->amount)]);
-            } elseif ($pay_charged = $paycharge->isCompleteByMethods($pay_charged)) {
-                return api_response($request, 1, 200, ['info' => array('amount' => $pay_charged->amount),
-                    'message' => 'Your payment has been received but there was a system error. It will take some time to update your order. Call 16516 for support.']);
+            $payment = Payment::where('transaction_id', $transactionID)->whereIn('status', ['failed', 'validated', 'completed'])->first();
+            if (!$payment) return api_response($request, null, 404, ['message' => 'Payment Not found.']);
+            $info = array('amount' => $payment->payable->amount);
+            if ($payment->status == 'validated' || $payment->status == 'failed') {
+                return api_response($request, 1, 200, ['info' => $info,
+                    'message' => 'Your payment has been received but there was a system error. It will take some time to update your transaction. Call 16516 for support.']);
             } else {
-                return api_response($request, null, 404);
+                return api_response($request, 1, 200, ['info' => $info]);
             }
+//            $class_name = "App\\Models\\" . ucwords($request->user_type);
+//            $user = $class_name::where([['id', (int)$request->user_id], ['remember_token', $request->remember_token]])->first();
+//            if (!$user) return api_response($request, null, 404, ['message' => 'User Not found.']);
+//            if ($request->paycharge_type == 'recharge') $pay_charged = (new RechargeAdapter($user, $transactionID))->getPayCharged();
+//            else {
+//                $job = Job::find((int)$request->job_id);
+//                $pay_charged = (new OrderAdapter($job->partnerOrder, $transactionID))->getPayCharged();
+//            }
+//            $paycharge = new ShebaPayment($request->payment_method);
+//            if ($response = $paycharge->isComplete($pay_charged)) {
+//                return api_response($request, 1, 200, ['info' => array('amount' => $response->amount)]);
+//            } elseif ($pay_charged = $paycharge->isCompleteByMethods($pay_charged)) {
+//                return api_response($request, 1, 200, ['info' => array('amount' => $pay_charged->amount),
+//                    'message' => 'Your payment has been received but there was a system error. It will take some time to update your order. Call 16516 for support.']);
+//            } else {
+//                return api_response($request, null, 404);
+//            }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');

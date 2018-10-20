@@ -29,13 +29,13 @@ class Event extends Action implements AmountCalculator
 
     private function filterConstraints()
     {
-        $job = Job::where('partner_order_id', $this->params[0]->partner_order_id)->first();
+        $category_id = $this->params[1]->order->lastJob()->category_id;
 
         foreach ($this->reward->constraints->groupBy('constraint_type') as $key => $type) {
             $ids = $type->pluck('constraint_id')->toArray();
 
             if ($key == 'App\Models\Category') {
-                return in_array($job->category_id, $ids);
+                return in_array($category_id, $ids);
             }
         }
 
@@ -44,15 +44,11 @@ class Event extends Action implements AmountCalculator
 
     /**
      * @return float|int|mixed
-     * @throws ParameterTypeMismatchException
      */
     public function calculateAmount()
     {
-        $payment = $this->params[0];
-        if (!$payment instanceof PartnerOrderPayment) {
-            throw new ParameterTypeMismatchException("First parameter is must be an instance of Partner Order Payment");
-        }
-        $amount = ($payment->amount * $this->reward->amount) / 100;
+        $payment_amount = $this->params[0];
+        $amount = ($payment_amount * $this->reward->amount) / 100;
 
         return ($this->reward->cap && ($amount > $this->reward->cap)) ? $this->reward->cap : $amount;
     }

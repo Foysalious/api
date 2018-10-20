@@ -34,6 +34,7 @@ class PartnerOrder extends Model
     public $totalPartnerDiscount;
     public $totalShebaDiscount;
     public $totalCostWithoutDiscount;
+    public $deliveryCharge;
     public $isCalculated;
 
     protected $guarded = ['id'];
@@ -170,6 +171,7 @@ class PartnerOrder extends Model
         $this->jobDiscounts += $job->discount;
         $this->totalPartnerDiscount += $job->discountContributionPartner;
         $this->totalShebaDiscount += $job->discountContributionSheba;
+        $this->deliveryCharge += $job->delivery_charge;
     }
 
     private function _calculateRoundingCutOff()
@@ -224,6 +226,7 @@ class PartnerOrder extends Model
         $this->totalPartnerDiscount = 0;
         $this->totalShebaDiscount = 0;
         $this->totalCostWithoutDiscount = 0;
+        $this->deliveryCharge = 0;
     }
 
     public function calculateStatus()
