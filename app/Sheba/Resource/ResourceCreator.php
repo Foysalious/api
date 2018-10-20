@@ -108,6 +108,7 @@ class ResourceCreator
         $this->data['nid_no'] = isset($this->data['nid_no']) ? $this->data['nid_no'] : null;
         $this->data['nid_image'] = isset($this->data['nid_image']) ? $this->data['nid_image'] : null;
         $this->data['is_trained'] = isset($this->data['is_trained']) ? $this->data['is_trained'] : 0;
+        $this->data['alternate_contact'] = !is_null($this->data['alternate_contact']) ? formatMobile(trim($this->data['alternate_contact'])) : null;
     }
 
     private function hasFile($filename)

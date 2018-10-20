@@ -124,7 +124,6 @@ class CustomerOrderController extends Controller
             'preferred_time' => $job->preferred_time ? humanReadableShebaTime($job->preferred_time) : null,
             'readable_status' => constants('JOB_STATUSES_SHOW')[$job->status]['customer'],
             'status' => $job->status,
-            'is_on_premise' => (int) $job->isOnPremise(),
             'isRentCar' => $job->isRentCar(),
             'status_color' => constants('JOB_STATUSES_COLOR')[$job->status]['customer'],
             'partner_name' => $partnerOrder->partner->name,
