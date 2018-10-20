@@ -11,7 +11,7 @@ class PushNotificationHandler
     public function send($notification_data, $topic, $channel = null, $sound = 'default')
     {
         $notificationBuilder = new PayloadNotificationBuilder($notification_data['title']);
-        $notificationBuilder->setBody($notification_data['message'])->setSound('default');
+        $notificationBuilder->setBody($notification_data['message'])->setSound($sound)->setChannelId($channel);
         $notification = $notificationBuilder->build();
 
         $dataBuilder = new PayloadDataBuilder();
