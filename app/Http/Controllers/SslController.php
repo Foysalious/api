@@ -11,6 +11,9 @@ class SslController extends Controller
     public function validatePayment(Request $request)
     {
         try {
+            if (empty($request->headers->get('referer'))) {
+                return api_response($request, null, 400, ['message' => $message]);
+            };
             $payment = Payment::where('transaction_id', $request->tran_id)->valid()->first();
             if (!$payment) return redirect(config('sheba.front_url'));
             $sheba_payment = new ShebaPayment('online');
