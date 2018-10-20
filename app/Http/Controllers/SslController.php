@@ -12,7 +12,7 @@ class SslController extends Controller
     {
         try {
             if (empty($request->headers->get('referer'))) {
-                return api_response($request, null, 400, ['message' => $message]);
+                return api_response($request, null, 400);
             };
             $payment = Payment::where('transaction_id', $request->tran_id)->valid()->first();
             if (!$payment) return redirect(config('sheba.front_url'));
