@@ -85,7 +85,8 @@ class Checkout
         $data['category_answers'] = $request->category_answers;
         $data['info_call_id'] = $this->_setInfoCallId($request);
         $data['affiliation_id'] = $this->_setAffiliationId($request);
-        $data['is_on_premise'] = $request->has('is_on_premise') ? $request->is_on_premise : null;
+        $data['is_on_premise'] = $request->has('is_on_premise') ? $request->is_on_premise : 0;
+        $data['site'] = ! $data['is_on_premise'] ? 'customer' : 'partner';
         if ($request->has('address')) {
             $data['address'] = $request->address;
         }
@@ -137,7 +138,8 @@ class Checkout
                     'discount_percentage' => isset($data['discount_percentage']) ? $data['discount_percentage'] : 0,
                     'resource_id' => isset($data['resource_id']) ? $data['resource_id'] : null,
                     'status' => isset($data['resource_id']) ? constants('JOB_STATUSES')['Accepted'] : constants('JOB_STATUSES')['Pending'],
-                    'delivery_charge' => isset($data['is_on_premise']) ? (double)$partner->categories->first()->pivot->delivery_charge : 0
+                    'delivery_charge' => isset($data['is_on_premise']) ? (double)$partner->categories->first()->pivot->delivery_charge : 0,
+                    'site' => $data['site']
                 ]);
                 $job = $this->getAuthor($job, $data);
                 $job->jobServices()->saveMany($data['job_services']);
@@ -238,6 +240,7 @@ class Checkout
 
     private function getDeliveryAddress($data)
     {
+        if ($data['is_on_premise']) return '';
         if (array_has($data, 'address_id')) {
             if ($data['address_id'] != '' || $data['address_id'] != null) {
                 $deliver_address = CustomerDeliveryAddress::find($data['address_id']);
