@@ -33,7 +33,7 @@ class Wallet extends PaymentMethod
                 $this->savePaymentDetail($payment, $payable->amount, 'bonus');
             } else {
                 $this->savePaymentDetail($payment, $remaining, 'wallet');
-                if ($user_bonus > 0) $this->savePaymentDetail($payment, $payable->amount - $user_bonus, 'bonus');
+                if ($user_bonus > 0) $this->savePaymentDetail($payment, $payable->amount - $remaining, 'bonus');
             }
         });
         return $payment;

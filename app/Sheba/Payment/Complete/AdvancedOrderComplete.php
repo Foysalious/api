@@ -36,7 +36,7 @@ class AdvancedOrderComplete extends PaymentComplete
                     $partner_order_payment->log = 'advanced payment';
                     $partner_order_payment->collected_by = 'Sheba';
                     $partner_order_payment->transaction_detail = json_encode($paymentDetail->formatPaymentDetail());
-                    $partner_order_payment->method = $paymentDetail->readable_method;
+                    $partner_order_payment->method = ucfirst($paymentDetail->method);
                     $this->withCreateModificationField($partner_order_payment);
                     $partner_order_payment->fill((new RequestIdentification())->get());
                     $partner_order_payment->save();
