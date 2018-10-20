@@ -85,7 +85,8 @@ class NotificationRepository
                 "event_type" => 'PartnerOrder',
                 "event_id" => $partner_order->id,
                 "link" => "new_order",
-                "sound" => "notification_sound"
+                "sound" => "notification_sound",
+                "channel_id" => $channel
             ], $topic, $channel, $sound);
         }
     }
