@@ -31,7 +31,7 @@ class Payment extends Model
 
     public function isFailed()
     {
-        return $this->status == 'validation_failed';
+        return $this->status == 'validation_failed' || $this->status == 'initiation_failed';
     }
 
     public function isPassed()
@@ -41,7 +41,7 @@ class Payment extends Model
 
     public function scopeValid($query)
     {
-        return $query->where('status', '<>', 'validation_failed');
+        return $query->where('status', '<>', 'validation_failed')->where('status', '<>', 'initiation_failed');
     }
 
     public function canComplete()
