@@ -10,6 +10,7 @@ class Route
         $api->group(['prefix' => 'v2', 'namespace' => 'App\Http\Controllers'], function ($api) {
             $api->post('subscription', 'PushSubscriptionController@store');
             $api->get('car-rental-info', 'ShebaController@sendCarRentalInfo');
+            $api->get('payments', 'ShebaController@getPayments');
             $api->get('butcher-info', 'ShebaController@sendButcherInfo');
             $api->post('service-requests', 'ServiceRequestController@store');
             $api->post('transactions/{transactionID}', 'ShebaController@checkTransactionStatus');
