@@ -212,21 +212,25 @@ class ShebaController extends Controller
                 array(
                     'name' => 'Sheba Credit',
                     'is_published' => 1,
+                    'description' => '15% Credit Bonus',
                     'asset' => 'sheba_credit'
                 ),
                 array(
                     'name' => 'bKash Payment',
                     'is_published' => 1,
+                    'description' => '20% CashBack',
                     'asset' => 'bkash'
                 ),
                 array(
                     'name' => 'City Bank',
                     'is_published' => 0,
+                    'description' => '20% CashBack',
                     'asset' => 'cbl'
                 ),
                 array(
                     'name' => 'Other Debit/Credit',
                     'is_published' => 1,
+                    'description' => '',
                     'asset' => 'ssl'
                 )
             );
