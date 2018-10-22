@@ -48,6 +48,7 @@ class CustomerRoute
                 });
                 $api->group(['prefix' => 'jobs'], function ($api) {
                     $api->get('/', 'JobController@index');
+                    $api->get('cancel-reason', 'JobController@cancelReason');
                     $api->group(['prefix' => '{job}', 'middleware' => ['customer_job.auth']], function ($api) {
                         $api->get('/', 'JobController@show');
                         $api->get('bills', 'JobController@getBills');

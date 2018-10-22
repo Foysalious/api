@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CustomerFavorite;
 use App\Models\Job;
+use App\Models\JobCancelReason;
 use App\Models\Partner;
 use App\Models\Resource;
 use App\Repositories\JobCancelLogRepository;
@@ -522,6 +523,17 @@ class JobController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function cancelReason(Request $request)
+    {
+        try {
+            $job_cancel_reasons = JobCancelReason::ForCustomer()->select('name','key')->get();
+            return api_response($request, $job_cancel_reasons, 200, ['cancel-reason' => $job_cancel_reasons]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
