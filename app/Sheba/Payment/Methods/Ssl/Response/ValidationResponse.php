@@ -25,7 +25,7 @@ class ValidationResponse extends PaymentMethodResponse
     public function getError(): PaymentMethodErrorResponse
     {
         $error = new PaymentMethodErrorResponse();
-        $error->id = $this->response->tran_id;
+        $error->id = isset($this->response->tran_id) ? $this->response->tran_id : null;
         $error->details = $this->response;
         return $error;
     }
