@@ -22,7 +22,7 @@ class PartnerList
     private $time;
     private $partnerServiceRepository;
     private $rentCarServicesId;
-    private $availability;
+    private $skipAvailability;
 
     public function __construct($services, $date, $time, $location)
     {
@@ -37,13 +37,13 @@ class PartnerList
         $time_elapsed_secs = microtime(true) - $start;
         //dump("add selected service info: " . $time_elapsed_secs * 1000);
         $this->partnerServiceRepository = new PartnerServiceRepository();
-        $this->availability = 0;
+        $this->skipAvailability = 0;
     }
 
     public function setAvailability($availability)
     {
-        $this->availability = $availability;
-        return  $this;
+        $this->skipAvailability = $availability;
+        return $this;
     }
 
     private function getSelectedServices($services)
@@ -138,7 +138,7 @@ class PartnerList
         //dump("filter partner by option: " . $time_elapsed_secs * 1000);
 
         $start = microtime(true);
-        if ($this->availability != 1) $this->addAvailability();
+        if (!$this->skipAvailability) $this->addAvailability();
         $time_elapsed_secs = microtime(true) - $start;
         //dump("filter partner by availability: " . $time_elapsed_secs * 1000);
         $this->calculateHasPartner();
@@ -200,7 +200,6 @@ class PartnerList
         $this->partners->load(['workingHours', 'leaves']);
         $this->partners->each(function ($partner) {
             $partner['is_available'] = $this->isWithinPreparationTime($partner) && (new PartnerAvailable($partner))->available($this->date, $this->time, $this->selectedCategory) ? 1 : 0;
-            $partner['total_working_days']=7;
         });
         $available_partners = $this->partners->where('is_available', 1);
         if ($available_partners->count() > 1) {
@@ -249,6 +248,7 @@ class PartnerList
         foreach ($this->partners as $partner) {
             $partner['total_jobs'] = $partner->jobs->first() ? $partner->jobs->first()->total_jobs : 0;
             $partner['total_experts'] = 20;
+            $partner['total_working_days'] = 7;
             $partner['ongoing_jobs'] = $partner->jobs->first() ? $partner->jobs->first()->ongoing_jobs : 0;
             $partner['total_jobs_of_category'] = $partner->jobs->first() ? $partner->jobs->first()->total_jobs_of_category : 0;
             $partner['contact_no'] = $this->getContactNumber($partner);
@@ -410,6 +410,7 @@ class PartnerList
             $this->partners = $this->partners->reject(function ($partner) {
                 return $partner->id == 1809;
             });
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {
+        }
     }
 }

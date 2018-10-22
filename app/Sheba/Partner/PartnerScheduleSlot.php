@@ -136,6 +136,7 @@ class PartnerScheduleSlot
     {
         if (!$this->runningLeaves) return false;
         else {
+
             foreach ($this->runningLeaves as $runningLeave) {
                 $start = $runningLeave->start;
                 $end = $runningLeave->end;
@@ -161,7 +162,7 @@ class PartnerScheduleSlot
                 $end_time = Carbon::parse($date_string . ' ' . $slot->end)->addMinutes($this->category->book_resource_minutes);
                 $booked_resources = collect();
                 foreach ($bookedSchedules as $booked_schedule) {
-                    if ($booked_schedule->start->gte($start_time) || $booked_schedule->end->lte($end_time)) $booked_resources->push($booked_schedule->resource_id);
+                    if ($this->hasBookedSchedule($booked_schedule, $start_time, $end_time)) $booked_resources->push($booked_schedule->resource_id);
                 }
                 $is_available = (int)$total_resources > $booked_resources->unique()->count();
                 $slot['is_available'] = $is_available ? 1 : 0;
@@ -184,5 +185,14 @@ class PartnerScheduleSlot
             $slot['is_valid'] = $start > $current_time ? 1 : 0;
         }
         return $slots;
+    }
+
+    private function hasBookedSchedule($booked_schedule, $start_time, $end_time)
+    {
+        return $booked_schedule->start->gt($start_time) && $booked_schedule->start->lt($end_time) ||
+            $booked_schedule->end->gt($start_time) && $booked_schedule->end->lt($end_time) ||
+            $booked_schedule->start->lt($start_time) && $booked_schedule->end->gt($start_time) ||
+            $booked_schedule->start->lt($end_time) && $booked_schedule->end->gt($end_time) ||
+            $booked_schedule->start->eq($end_time) && $booked_schedule->end->eq($end_time);
     }
 }
