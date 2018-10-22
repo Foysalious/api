@@ -27,21 +27,15 @@ class ServiceController extends Controller
     public function index(Request $request)
     {
         try {
-            if ($request->has('type')) {
-                $type = strtoupper($request->type);
-            } else {
-                return api_response($request, null, 404);
-            }
             $location = $request->has('location') ? $request->location : 4;
-            $services = constants($type);
-            $services = Service::whereIn('id', $services)
-                ->select('id', 'name', 'unit', 'category_id', 'thumb', 'slug', 'min_quantity', 'banner', 'variable_type')
-                ->published()
-                ->get();
+            $services = Service::select('id', 'name', 'unit', 'category_id', 'thumb', 'slug', 'min_quantity', 'banner', 'variable_type');
+            if ($request->has('is_business')) $services = $services->publishedForBusiness();
+            $services = $services->get();
             $services = $this->serviceRepository->getpartnerServicePartnerDiscount($services, $location);
             $services = $this->serviceRepository->addServiceInfo($services, ['start_price']);
-            return api_response($request, $services, 200, ['services' => $services]);
-        } catch (\Exception $e) {
+            return count($services) != 0 ? api_response($request, $services, 200, ['services' => $services]) : api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }

@@ -77,6 +77,9 @@ class Route
                     $api->get('locations/{location}/partners', 'CategoryController@getPartnersOfLocation');
                 });
             });
+            $api->group(['prefix' => 'services'], function ($api) {
+                $api->get('', 'ServiceController@index');
+            });
             $api->group(['prefix' => 'locations'], function ($api) {
                 $api->get('{location}/partners', 'PartnerController@findPartners');
                 $api->get('current', 'LocationController@getCurrent');
