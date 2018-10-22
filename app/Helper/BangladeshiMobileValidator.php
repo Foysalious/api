@@ -4,18 +4,14 @@ class BangladeshiMobileValidator
 {
     public static function validate($number)
     {
-        if(self::isBangladeshiNumberFormat(formatMobile($number)))
-            return true;
+        if (!$number) return false;
 
-        return false;
+        return self::isBangladeshiNumberFormat(formatMobileAux($number));
     }
 
     private static function isBangladeshiNumberFormat($number)
     {
-        return self::contains88($number)
-        && strlen($number) == 14
-        && $number[4] == "1"
-        && self::inBdNumberDomain($number);
+        return self::contains88($number) && strlen($number) == 14 && $number[4] == "1" && self::inBdNumberDomain($number);
     }
 
     private static function contains88($number)
@@ -25,7 +21,6 @@ class BangladeshiMobileValidator
 
     private static function inBdNumberDomain($number)
     {
-        return in_array($number[5], [5,6,7,8,9]);
+        return in_array($number[5], [3, 5, 6, 7, 8, 9]);
     }
-
 }
