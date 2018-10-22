@@ -218,7 +218,7 @@ class ShebaController extends Controller
                 array(
                     'name' => 'bKash Payment',
                     'is_published' => 1,
-                    'description' => '20% CashBack',
+                    'description' => '',
                     'asset' => 'bkash'
                 ),
                 array(
