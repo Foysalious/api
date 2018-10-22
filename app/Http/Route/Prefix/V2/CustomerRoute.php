@@ -68,6 +68,7 @@ class CustomerRoute
                             $api->get('/', 'RateController@index');
                             $api->post('/', 'RateController@store');
                         });
+                        $api->post('cancel', 'JobController@cancel');
                     });
                 });
                 $api->group(['prefix' => 'transactions'], function ($api) {

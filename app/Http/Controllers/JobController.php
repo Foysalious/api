@@ -9,6 +9,9 @@ use App\Models\Partner;
 use App\Models\Resource;
 use App\Repositories\JobCancelLogRepository;
 use App\Sheba\JobStatus;
+use App\Sheba\UserRequestInformation;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use DB;
@@ -348,20 +351,36 @@ class JobController extends Controller
     public function cancel($customer, $job, Request $request)
     {
         try {
-            $job = Job::find($job);
-            $previous_status = $job->status;
-            $customer = $request->customer;
-            $job_status = new JobStatus($job, $request);
-            $job_status->__set('updated_by', $request->customer);
-            if ($response = $job_status->update('Cancelled')) {
-                $job_cancel_log = new JobCancelLogRepository($job);
-                $job_cancel_log->__set('created_by', $customer);
-                $job_cancel_log->store($previous_status, $request->reason);
-                return api_response($request, true, 200);
-            } else {
+            $this->validate($request, [
+                'remember_token' => 'required',
+                'cancel_reason' => 'required|exists:job_cancel_reasons,key,is_published_for_customer,1',
+                'cancel_reason_details' => 'sometimes|required'
+            ]);
+
+            $client = new Client();
+            $res = $client->request('POST', env('SHEBA_BACKEND_URL') . '/api/job/' . $job . '/change-status',
+                [
+                    'form_params' => array_merge((new UserRequestInformation($request))->getInformationArray(), [
+                        'customer_id' => $customer,
+                        'remember_token' => $request->remember_token,
+                        'status' => constants('JOB_STATUSES')['Cancelled'],
+                        'cancel_reason' => $request->cancel_reason,
+                        'cancel_reason_details' => $request->cancel_reason_details,
+                        'created_by_type' => get_class($request->customer)
+                    ])
+                ]);
+            if ($response = json_decode($res->getBody())) {
                 return api_response($request, $response, $response->code);
             }
-        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (RequestException $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
