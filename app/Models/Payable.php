@@ -28,6 +28,8 @@ class Payable extends Model
             $class_name .= 'AdvancedOrderComplete';
         } else if ($this->completion_type == 'wallet_recharge') {
             $class_name .= 'RechargeComplete';
+        } else if ($this->completion_type == 'order') {
+            $class_name .= 'OrderComplete';
         }
         return new $class_name();
     }
