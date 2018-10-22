@@ -47,7 +47,7 @@ class Validation
             }
         }
 
-        if (!$this->request->has('availability') || !$this->request->availability) {
+        if (!$this->request->has('skip_availability') || !$this->request->skip_availability) {
             if (!$this->isValidDate($this->request->date) || is_null($this->request->date)) {
                 $this->message = "Selected date is not valid";
                 return 0;
