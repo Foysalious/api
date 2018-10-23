@@ -1,7 +1,4 @@
-<?php
-
-
-namespace Sheba\Payment;
+<?php namespace Sheba\Payment;
 
 use App\Models\Affiliate;
 use App\Models\AffiliateTransaction;
@@ -47,5 +44,4 @@ trait Wallet
             return new AffiliateTransaction();
         }
     }
-
 }

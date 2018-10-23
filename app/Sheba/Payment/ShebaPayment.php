@@ -1,7 +1,4 @@
-<?php
-
-
-namespace Sheba\Payment;
+<?php namespace Sheba\Payment;
 
 use App\Models\Payable;
 use App\Models\Payment;
@@ -9,11 +6,20 @@ use Sheba\Payment\Factory\PaymentProcessor;
 
 class ShebaPayment
 {
+    /**
+     * ShebaPayment constructor.
+     * @param $enum
+     * @throws \ReflectionException
+     */
     public function __construct($enum)
     {
         $this->method = (new PaymentProcessor($enum))->method();
     }
 
+    /**
+     * @param $name
+     * @return mixed
+     */
     public function __get($name)
     {
         return $this->$name;

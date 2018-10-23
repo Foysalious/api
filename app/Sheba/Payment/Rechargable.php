@@ -1,7 +1,4 @@
-<?php
-
-namespace App\Sheba\Payment;
-
+<?php namespace App\Sheba\Payment;
 
 interface Rechargable
 {

@@ -1,6 +1,4 @@
-<?php
-
-namespace Sheba\Payment\Methods;
+<?php namespace Sheba\Payment\Methods;
 
 use App\Models\Payable;
 use App\Models\Payment;
@@ -55,5 +53,4 @@ class Wallet extends PaymentMethod
     {
         return $payment;
     }
-
 }
