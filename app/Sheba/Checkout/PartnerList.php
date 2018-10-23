@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use DB;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use Sheba\Checkout\PartnerSort;
 
 class PartnerList
 {
@@ -235,6 +236,7 @@ class PartnerList
         }
         $this->partners->load(['jobs' => function ($q) use ($category_ids) {
             $q->selectRaw("count(case when status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then status end) as total_jobs")
+                ->selectRaw("count(case when status in ('Served') then status end) as total_completed_orders")
                 ->selectRaw("count(case when status in ('Accepted', 'Schedule Due', 'Process', 'Serve Due') then status end) as ongoing_jobs")
                 ->selectRaw("count(case when category_id in(" . $category_ids . ") and status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then category_id end) as total_jobs_of_category")
                 ->groupBy('partner_id');
@@ -247,12 +249,14 @@ class PartnerList
         }]);
         foreach ($this->partners as $partner) {
             $partner['total_jobs'] = $partner->jobs->first() ? $partner->jobs->first()->total_jobs : 0;
-            $partner['total_experts'] = 20;
-            $partner['total_working_days'] = 7;
             $partner['ongoing_jobs'] = $partner->jobs->first() ? $partner->jobs->first()->ongoing_jobs : 0;
             $partner['total_jobs_of_category'] = $partner->jobs->first() ? $partner->jobs->first()->total_jobs_of_category : 0;
+
             $partner['contact_no'] = $this->getContactNumber($partner);
             $partner['subscription_type'] = $partner->subscription ? $partner->subscription->name : null;
+            $partner['total_experts'] = 20;
+            $partner['total_working_days'] = 7;
+            $partner['total_completed_orders'] = $partner->jobs->first() ? $partner->jobs->first()->total_completed_orders : 0;
         }
     }
 
@@ -275,6 +279,25 @@ class PartnerList
                 return $review->rating == 5;
             }));
         }
+    }
+
+    public function sortByShebaPartnerPriority()
+    {
+        $this->partners->load(['reviews' => function ($q) {
+            $q->selectRaw("avg(case when category_id=" . $this->selectedCategory->id . " then rating end) as avg_rating,reviews.partner_id")
+                ->selectRaw("count(case when category_id=" . $this->selectedCategory->id . " then id end) as total_rating,reviews.partner_id")
+                ->groupBy('reviews.partner_id');
+        }, 'handymanResources' => function ($q) {
+            $q->selectRaw('count(distinct resources.id) as total_experts, partner_id')
+                ->verified()->join('category_partner_resource', 'category_partner_resource.partner_resource_id', '=', 'partner_resource.id')
+                ->where('category_partner_resource.category_id', $this->selectedCategory->id)->groupBy('partner_id');
+        }]);
+        foreach ($this->partners as $partner) {
+            $partner['avg_rating'] = $partner->reviews->first() ? (double)$partner->reviews->first()->avg_rating : 0;
+            $partner['total_rating'] = $partner->reviews->first() ? (double)$partner->reviews->first()->total_rating : 0;
+            $partner['total_experts'] = $partner->handymanResources->first() ? $partner->handymanResources->first()->total_experts : 0;
+        }
+        $this->partners = (new PartnerSort($this->partners))->get();
     }
 
     public function sortByShebaSelectedCriteria()
@@ -301,20 +324,6 @@ class PartnerList
             return $partner->is_available == 1;
         });
         $this->partners = $available_partners->merge($unavailable_partners);
-    }
-
-    private function sortByRatingDesc()
-    {
-        $this->partners = $this->partners->sortByDesc(function ($partner, $key) {
-            return $partner->rating;
-        });
-    }
-
-    private function sortByLowestPrice()
-    {
-        $this->partners = $this->partners->sortBy(function ($partner, $key) {
-            return $partner->discounted_price;
-        });
     }
 
     private function calculateServicePricingAndBreakdownOfPartner($partner)
