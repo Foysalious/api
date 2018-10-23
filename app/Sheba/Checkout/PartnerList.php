@@ -22,7 +22,7 @@ class PartnerList
     private $time;
     private $partnerServiceRepository;
     private $rentCarServicesId;
-    private $availability;
+    private $skipAvailability;
 
     public function __construct($services, $date, $time, $location)
     {
@@ -37,12 +37,12 @@ class PartnerList
         $time_elapsed_secs = microtime(true) - $start;
         //dump("add selected service info: " . $time_elapsed_secs * 1000);
         $this->partnerServiceRepository = new PartnerServiceRepository();
-        $this->availability = 0;
+        $this->skipAvailability = 0;
     }
 
     public function setAvailability($availability)
     {
-        $this->availability = $availability;
+        $this->skipAvailability = $availability;
         return $this;
     }
 
@@ -138,7 +138,7 @@ class PartnerList
         //dump("filter partner by option: " . $time_elapsed_secs * 1000);
 
         $start = microtime(true);
-        if ($this->availability != 1) $this->addAvailability();
+        if (!$this->skipAvailability) $this->addAvailability();
         $time_elapsed_secs = microtime(true) - $start;
         //dump("filter partner by availability: " . $time_elapsed_secs * 1000);
         $this->calculateHasPartner();
@@ -205,7 +205,6 @@ class PartnerList
         $this->partners->load(['workingHours', 'leaves']);
         $this->partners->each(function ($partner) {
             $partner['is_available'] = $this->isWithinPreparationTime($partner) && (new PartnerAvailable($partner))->available($this->date, $this->time, $this->selectedCategory) ? 1 : 0;
-            $partner['total_working_days'] = 7;
         });
         $available_partners = $this->partners->where('is_available', 1);
         if ($available_partners->count() > 1) {
@@ -343,12 +342,14 @@ class PartnerList
                 $price = (double)$service->pivot->prices;
                 $min_price = (double)$service->pivot->min_prices;
             }
+
             if ($selected_service->is_surcharges_applicable) {
                 $schedule_date_time = Carbon::parse($this->date . ' ' . explode('-', $this->time)[0]);
                 $surcharge_amount = $this->partnerServiceRepository->getSurchargePriceOfService($service->pivot, $schedule_date_time);
                 $price = $price + ($price * $surcharge_amount / 100);
                 $service['is_surcharge_applied'] = ($surcharge_amount > 0) ? 1 : 0;
             }
+
             $discount = new Discount($price, $selected_service->quantity, $min_price);
             $discount->calculateServiceDiscount(PartnerServiceDiscount::where('partner_service_id', $service->pivot->id)->running()->first());
             $service = [];
@@ -422,7 +423,6 @@ class PartnerList
             $this->partners = $this->partners->reject(function ($partner) {
                 return $partner->id == 1809;
             });
-        } catch (\Throwable $e) {
-        }
+        } catch (\Throwable $e) {}
     }
 }

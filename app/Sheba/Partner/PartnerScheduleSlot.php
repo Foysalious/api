@@ -69,7 +69,7 @@ class PartnerScheduleSlot
         $day = $this->today->copy();
         while ($day <= $last_day) {
             $this->addAvailabilityToShebaSlots($day);
-            array_push($final, ['value' => $day->toDateString(), 'slots' => $this->formatSlots($this->shebaSlots->toArray())]);
+            array_push($final, ['value' => $day->toDateString(), 'slots' => $this->formatSlots($day, $this->shebaSlots->toArray())]);
             $day->addDay();
         }
         return $final;
@@ -136,6 +136,7 @@ class PartnerScheduleSlot
     {
         if (!$this->runningLeaves) return false;
         else {
+
             foreach ($this->runningLeaves as $runningLeave) {
                 $start = $runningLeave->start;
                 $end = $runningLeave->end;
@@ -161,7 +162,7 @@ class PartnerScheduleSlot
                 $end_time = Carbon::parse($date_string . ' ' . $slot->end)->addMinutes($this->category->book_resource_minutes);
                 $booked_resources = collect();
                 foreach ($bookedSchedules as $booked_schedule) {
-                    if ($booked_schedule->start->gte($start_time) || $booked_schedule->end->lte($end_time)) $booked_resources->push($booked_schedule->resource_id);
+                    if ($this->hasBookedSchedule($booked_schedule, $start_time, $end_time)) $booked_resources->push($booked_schedule->resource_id);
                 }
                 $is_available = (int)$total_resources > $booked_resources->unique()->count();
                 $slot['is_available'] = $is_available ? 1 : 0;
@@ -169,16 +170,29 @@ class PartnerScheduleSlot
         }
     }
 
-    private function formatSlots($slots)
+    private function formatSlots(Carbon $day, $slots)
     {
+        $current_time = Carbon::now();
         foreach ($slots as &$slot) {
+            $slot['key'] = $slot['start'] . '-' . $slot['end'];
+            $start = Carbon::parse($day->toDateString() . ' ' . $slot['start']);
+            $end = Carbon::parse($day->toDateString() . ' ' . $slot['end']);
+            $slot['value'] = $start->format('g') . ' - ' . $end->format('g A');
             $slot_start = humanReadableShebaTime($slot['start']);
             $slot_end = humanReadableShebaTime($slot['end']);
-            $slot['key'] = $slot['start'] . '-' . $slot['end'];
-            $slot['value'] = humanReadableShebaTime($slot['start']) . '-' . humanReadableShebaTime($slot['end']);
             $slot['start'] = $slot_start;
             $slot['end'] = $slot_end;
+            $slot['is_valid'] = $start > $current_time ? 1 : 0;
         }
         return $slots;
+    }
+
+    private function hasBookedSchedule($booked_schedule, $start_time, $end_time)
+    {
+        return $booked_schedule->start->gt($start_time) && $booked_schedule->start->lt($end_time) ||
+            $booked_schedule->end->gt($start_time) && $booked_schedule->end->lt($end_time) ||
+            $booked_schedule->start->lt($start_time) && $booked_schedule->end->gt($start_time) ||
+            $booked_schedule->start->lt($end_time) && $booked_schedule->end->gt($end_time) ||
+            $booked_schedule->start->eq($end_time) && $booked_schedule->end->eq($end_time);
     }
 }

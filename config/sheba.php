@@ -7,6 +7,7 @@ return [
     's3_url' => env('S3_URL'),
     'socket_url' => env('SHEBA_SOCKET_URL'),
     'socket_on' => env('SHEBA_SOCKET_ON', true),
+    'send_push_notifications' => env('SHEBA_SEND_PUSH_NOTIFICATIONS', true),
     'partners_url' => env('SHEBA_PARTNER_END_URL'),
     'db_backup' => env('SHEBA_DB_BACKUP', false),
     'portal' => 'customer-portal',

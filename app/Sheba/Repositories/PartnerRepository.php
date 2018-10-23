@@ -83,7 +83,8 @@ class PartnerRepository extends BaseRepository
             "title"         => 'ওয়ালেট ওয়ার্নিং!',
             "message"       => $notification,
             "event_type"    => 'WalletWarning',
-            "sound"         => "notification_sound"
+            "sound"         => "notification_sound",
+            "channel_id" => $channel
         ], $topic, $channel, $sound);
     }
 

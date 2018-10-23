@@ -1,6 +1,7 @@
 <?php
 
 use Carbon\Carbon;
+use Sheba\Reward\ActionRewardDispatcher;
 
 if (!function_exists('setTrace')) {
 
@@ -353,5 +354,11 @@ if (!function_exists('indexedArrayToAssociativ')) {
     function indexedArrayToAssociative($key, $value)
     {
         return array_combine(array_values($key), array_values($value));
+    }
+}
+if (!function_exists('dispatchReward')) {
+    function dispatchReward()
+    {
+        return app(ActionRewardDispatcher::class);
     }
 }

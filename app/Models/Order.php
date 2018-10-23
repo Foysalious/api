@@ -101,4 +101,17 @@ class Order extends Model
         return getSalesChannels('department')[$this->sales_channel];
     }
 
+    public function isCancelled()
+    {
+        return $this->getStatus() == $this->statuses['Cancelled'];
+    }
+
+    public function lastJob()
+    {
+        if ($this->isCancelled()) return $this->jobs->last();
+        return $this->jobs->filter(function ($job) {
+            return $job->status != $this->jobStatuses['Cancelled'];
+        })->first();
+    }
+
 }

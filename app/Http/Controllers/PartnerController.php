@@ -448,7 +448,7 @@ class PartnerController extends Controller
                 'time' => 'sometimes|required|string',
                 'services' => 'required|string',
                 'isAvailable' => 'sometimes|required',
-                'availability' => 'sometimes|required',
+                'skip_availability' => 'sometimes|required|numeric|in:0,1',
                 'partner' => 'sometimes|required',
                 'has_premise' => 'sometimes|required',
                 'has_home_delivery' => 'sometimes|required',
@@ -462,7 +462,7 @@ class PartnerController extends Controller
 
             $partner = $request->has('partner') ? $request->partner : null;
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $location);
-            $partner_list->setAvailability($request->availability)->find($partner);
+            $partner_list->setAvailability($request->skip_availability)->find($partner);
             if ($request->has('isAvailable')) {
                 $partners = $partner_list->partners;
                 $available_partners = $partners->filter(function ($partner) {

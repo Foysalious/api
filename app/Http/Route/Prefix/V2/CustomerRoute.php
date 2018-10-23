@@ -48,6 +48,7 @@ class CustomerRoute
                 });
                 $api->group(['prefix' => 'jobs'], function ($api) {
                     $api->get('/', 'JobController@index');
+                    $api->get('cancel-reason', 'JobController@cancelReason');
                     $api->group(['prefix' => '{job}', 'middleware' => ['customer_job.auth']], function ($api) {
                         $api->get('/', 'JobController@show');
                         $api->get('bills', 'JobController@getBills');
@@ -67,6 +68,7 @@ class CustomerRoute
                             $api->get('/', 'RateController@index');
                             $api->post('/', 'RateController@store');
                         });
+                        $api->post('cancel', 'JobController@cancel');
                     });
                 });
                 $api->group(['prefix' => 'transactions'], function ($api) {

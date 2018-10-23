@@ -40,6 +40,8 @@ class ResourceScheduleController extends Controller
             "event_id" => (string)$job->partner_order->id,
             "action" => 'extend_time',
             "version" => $job->partner_order->getVersion(),
+            "sound" => "notification_sound",
+            "channel_id" => $channel
         ], $topic, $channel);
     }
 }

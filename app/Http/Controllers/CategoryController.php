@@ -29,7 +29,7 @@ class CategoryController extends Controller
     {
         try {
             $with = '';
-            $categories = Category::where('parent_id', null)->published()->orderBy('order')->select('id', 'name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id');
+            $categories = Category::where('parent_id', null)->orderBy('order')->select('id', 'name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id');
             if ($request->has('with')) {
                 $with = $request->with;
                 if ($with == 'children') {
@@ -38,6 +38,7 @@ class CategoryController extends Controller
                     }]);
                 }
             }
+            $categories = $request->has('is_business') && (int)$request->is_business ? $categories->publishedForBusiness() : $categories->published();
             $categories = $categories->get();
             foreach ($categories as &$category) {
                 if ($with == 'children') {
@@ -244,7 +245,7 @@ class CategoryController extends Controller
                 removeRelationsAndFields($review);
             })->filter(function ($review) {
                 return (!empty($review->review) && $review->rating == 5);
-            })->unique('customer_id')->sortByDesc('id')->splice($offset,$limit)->values()->all();
+            })->unique('customer_id')->sortByDesc('id')->splice($offset, $limit)->values()->all();
             return count($reviews) > 0 ? api_response($request, $reviews, 200, ['reviews' => $reviews]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

@@ -40,7 +40,7 @@ class TopUpController extends Controller
                 'mobile' => 'required|string|mobile:bd',
                 'connection_type' => 'required|in:prepaid,postpaid',
                 'vendor_id' => 'required|exists:topup_vendors,id',
-                'amount' => 'required|min:10|numeric'
+                'amount' => 'required|min:10|max:1000|numeric'
             ]);
             $affiliate = $request->affiliate;
             if ($affiliate->wallet < (double)$request->amount) {
@@ -53,9 +53,6 @@ class TopUpController extends Controller
             else return api_response($request, null, 500, ['message' => "Recharge Unsuccessful"]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

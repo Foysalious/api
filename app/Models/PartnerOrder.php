@@ -208,6 +208,7 @@ class PartnerOrder extends Model
         $this->totalPartnerDiscount = formatTaka($this->totalPartnerDiscount);
         $this->totalShebaDiscount = formatTaka($this->totalShebaDiscount);
         $this->totalCostWithoutDiscount = formatTaka($this->totalCostWithoutDiscount);
+        $this->deliveryCharge = formatTaka($this->deliveryCharge);
         return $this;
     }
 
