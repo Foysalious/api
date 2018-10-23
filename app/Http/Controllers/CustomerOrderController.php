@@ -21,7 +21,9 @@ class CustomerOrderController extends Controller
             $filter = $request->filter;
             list($offset, $limit) = calculatePagination($request);
             $customer = $request->customer->load(['orders' => function ($q) use ($filter, $offset, $limit) {
-                $q->select('id', 'customer_id', 'location_id', 'sales_channel', 'delivery_name', 'delivery_mobile', 'delivery_address')->orderBy('id', 'desc')->skip($offset)->take($limit);
+                $q->select('id', 'customer_id', 'partner_id', 'location_id', 'sales_channel', 'delivery_name', 'delivery_mobile', 'delivery_address')->orderBy('id', 'desc')
+                    ->whereNull('partner_id')
+                    ->skip($offset)->take($limit);
                 if ($filter) {
                     $q->whereHas('partnerOrders', function ($q) use ($filter) {
                         $q->$filter();
