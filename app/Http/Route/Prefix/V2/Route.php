@@ -12,6 +12,7 @@ class Route
             $api->get('car-rental-info', 'ShebaController@sendCarRentalInfo');
             $api->get('payments', 'ShebaController@getPayments');
             $api->get('butcher-info', 'ShebaController@sendButcherInfo');
+            $api->get('eshop-images', 'ShebaController@getEShopImages');
             $api->post('service-requests', 'ServiceRequestController@store');
             $api->post('transactions/{transactionID}', 'ShebaController@checkTransactionStatus');
             $api->post('password/email', 'Auth\PasswordController@sendResetPasswordEmail');

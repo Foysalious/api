@@ -72,6 +72,16 @@ class ShebaController extends Controller
         }
     }
 
+    public function getEShopImages(Request $request)
+    {
+        try {
+            $images = Slider::select('id', 'image_link', 'small_image_link', 'target_link', 'target_type', 'target_id')->showBusiness();
+            return count($images) > 0 ? api_response($request, $images, 200, ['images' => $images]) : api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
     public function getSimilarOffer($offer)
     {
         $offer = OfferShowcase::select('id', 'thumb', 'title', 'banner', 'short_description', 'detail_description', 'target_link')
