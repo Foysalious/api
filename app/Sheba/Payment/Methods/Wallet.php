@@ -16,7 +16,7 @@ class Wallet extends PaymentMethod
 
     public function init(Payable $payable): Payment
     {
-        $invoice = 'SHEBA_CREDIT_' . strtoupper($payable->type) . '_' . $payable->type_id . '_' . Carbon::now()->timestamp;
+        $invoice = 'SHEBA_CREDIT_' . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, 1, 1);
         $user_bonus = $payable->user->shebaBonusCredit();
         $payment = new Payment();
         DB::transaction(function () use ($payment, $payable, $invoice, $user_bonus) {
