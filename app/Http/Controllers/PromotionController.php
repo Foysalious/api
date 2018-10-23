@@ -182,6 +182,8 @@ class PromotionController extends Controller
         if ($partner_list->hasPartners) {
             $partner = $partner_list->partners->first();
             $order_amount = 0;
+            $category_pivot = $partner->categories->first()->pivot;
+            $delivery_charge = (double)$category_pivot->delivery_charge;
             foreach ($partner_list->selected_services as $selected_service) {
                 $service = $partner->services->where('id', $selected_service->id)->first();
                 if ($service->isOptions()) {
@@ -196,7 +198,7 @@ class PromotionController extends Controller
                 if ($discount->__get('hasDiscount')) return null;
                 $order_amount += $discount->__get('discounted_price');
             }
-            return $order_amount;
+            return $order_amount + $delivery_charge;
         } else {
             return null;
         }

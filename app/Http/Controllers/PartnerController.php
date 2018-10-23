@@ -451,6 +451,8 @@ class PartnerController extends Controller
                 'skip_availability' => 'sometimes|required|numeric|in:0,1',
                 'partner' => 'sometimes|required',
                 'filter' => 'sometimes|required|in:sheba',
+                'has_premise' => 'sometimes|required',
+                'has_home_delivery' => 'sometimes|required',
             ]);
             $validation = new Validation($request);
             if (!$validation->isValid()) {

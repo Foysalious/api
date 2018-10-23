@@ -147,10 +147,15 @@ class PartnerList
 
     private function findPartnersByServiceAndLocation($partner_id = null)
     {
+        $has_premise = (int)request()->get('has_premise');
+        $has_home_delivery = (int)request()->get('has_home_delivery');
         $service_ids = $this->selected_services->pluck('id')->unique();
         $category_ids = $this->selected_services->pluck('category_id')->unique()->toArray();
-        $query = Partner::WhereHas('categories', function ($q) use ($category_ids) {
+        $query = Partner::WhereHas('categories', function ($q) use ($category_ids, $has_premise, $has_home_delivery) {
             $q->whereIn('categories.id', $category_ids)->where('category_partner.is_verified', 1);
+            if (request()->has('has_home_delivery')) $q->where('category_partner.is_home_delivery_applied', $has_home_delivery);
+            if (request()->has('has_premise')) $q->where('category_partner.is_partner_premise_applied', $has_premise);
+            if (!request()->has('has_home_delivery') && !request()->has('has_premise')) $q->where('category_partner.is_home_delivery_applied', 1);
         })->whereHas('locations', function ($query) {
             $query->where('locations.id', (int)$this->location);
         })->whereHas('services', function ($query) use ($service_ids) {
@@ -236,7 +241,6 @@ class PartnerList
         }
         $this->partners->load(['jobs' => function ($q) use ($category_ids) {
             $q->selectRaw("count(case when status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then status end) as total_jobs")
-                ->selectRaw("count(case when status in ('Served') then status end) as total_completed_orders")
                 ->selectRaw("count(case when status in ('Accepted', 'Schedule Due', 'Process', 'Serve Due') then status end) as ongoing_jobs")
                 ->selectRaw("count(case when category_id in(" . $category_ids . ") and status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then category_id end) as total_jobs_of_category")
                 ->groupBy('partner_id');
@@ -257,6 +261,7 @@ class PartnerList
             $partner['total_experts'] = 20;
             $partner['total_working_days'] = 7;
             $partner['total_completed_orders'] = $partner->jobs->first() ? $partner->jobs->first()->total_completed_orders : 0;
+            $partner['address'] = $partner->address;
         }
     }
 
@@ -335,6 +340,7 @@ class PartnerList
             'is_min_price_applied' => 0,
         ];
         $services = [];
+        $category_pivot = $partner->categories->first()->pivot;
         foreach ($this->selected_services as $selected_service) {
             $service = $partner->services->where('id', $selected_service->id)->first();
             if ($service->isOptions()) {
@@ -355,18 +361,18 @@ class PartnerList
             $discount = new Discount($price, $selected_service->quantity, $min_price);
             $discount->calculateServiceDiscount(PartnerServiceDiscount::where('partner_service_id', $service->pivot->id)->running()->first());
             $service = [];
-            $service['discount'] = $discount->__get('discount');
-            $service['cap'] = $discount->__get('cap');
-            $service['amount'] = $discount->__get('amount');
-            $service['is_percentage'] = $discount->__get('isDiscountPercentage');
-            $service['discounted_price'] = $discount->__get('discounted_price');
-            $service['original_price'] = $discount->__get('original_price');
-            $service['min_price'] = $discount->__get('min_price');
-            $service['unit_price'] = $discount->__get('unit_price');
-            $service['sheba_contribution'] = $discount->__get('sheba_contribution');
-            $service['partner_contribution'] = $discount->__get('partner_contribution');
-            $service['is_min_price_applied'] = $discount->__get('original_price') == $discount->__get('min_price') ? 1 : 0;
-            if ($discount->__get('original_price') == $discount->__get('min_price')) {
+            $service['discount'] = $discount->discount;
+            $service['cap'] = $discount->cap;
+            $service['amount'] = $discount->amount;
+            $service['is_percentage'] = $discount->isDiscountPercentage;
+            $service['discounted_price'] = $discount->discounted_price;
+            $service['original_price'] = $discount->original_price;
+            $service['min_price'] = $discount->min_price;
+            $service['unit_price'] = $discount->unit_price;
+            $service['sheba_contribution'] = $discount->sheba_contribution;
+            $service['partner_contribution'] = $discount->partner_contribution;
+            $service['is_min_price_applied'] = $discount->original_price == $discount->min_price ? 1 : 0;
+            if ($discount->original_price == $discount->min_price) {
                 $total_service_price['is_min_price_applied'] = 1;
             }
             $total_service_price['discount'] += $service['discount'];
@@ -383,6 +389,12 @@ class PartnerList
         }
         array_add($partner, 'breakdown', $services);
         $total_service_price['discount'] = (int)$total_service_price['discount'];
+        $delivery_charge = (double)$category_pivot->delivery_charge;
+        $total_service_price['discounted_price'] += $delivery_charge;
+        $total_service_price['original_price'] += $delivery_charge;
+        $total_service_price['delivery_charge'] = $delivery_charge;
+        $total_service_price['has_home_delivery'] = $delivery_charge > 0 ? 1 : 0;
+        $total_service_price['has_premise_available'] = (int)$category_pivot->is_partner_premise_applied ? 1 : 0;
         return $total_service_price;
     }
 
@@ -419,7 +431,6 @@ class PartnerList
             $this->partners = $this->partners->reject(function ($partner) {
                 return $partner->id == 1809;
             });
-        } catch (\Throwable $e) {
-        }
+        } catch (\Throwable $e) {}
     }
 }
