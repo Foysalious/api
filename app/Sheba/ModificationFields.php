@@ -1,5 +1,6 @@
 <?php namespace Sheba;
 
+use App\Models\Partner;
 use App\Models\User;
 use Auth;
 use Session;
@@ -130,7 +131,7 @@ trait ModificationFields
             $name = $user->department->name . ' - ' . $user->name;
         } else if ($this->isOfValidClass($this->modifier)) {
             $id = $this->modifier->id;
-            $name = $this->modifierModelName . '-' . (($this->modifier instanceof User) ? $this->modifier->name : $this->modifier->profile->name);
+            $name = $this->modifierModelName . '-' . (($this->modifier instanceof User || $this->modifier instanceof Partner) ? $this->modifier->name : $this->modifier->profile->name);
         }
 
         return [$id, $name, $time];
