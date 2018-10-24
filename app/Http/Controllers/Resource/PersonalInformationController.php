@@ -126,10 +126,9 @@ class PersonalInformationController extends Controller
         try {
             $resource = $request->resource;
             $profile = $resource->profile;
-            $this->validate($request, [
-                'nid_no' => 'string|unique:resources,nid_no,' . $resource->id,
-                'nid_back' => 'file',
-                'nid_front' => 'file',
+
+            $rules = [
+                'nid_no' => 'required|string|unique:resources,nid_no,' . $resource->id,
                 'name' => 'string',
                 'gender' => 'string|in:Male,Female,Other',
                 'birthday' => 'date_format:Y-m-d|before:' . date('Y-m-d'),
@@ -137,7 +136,14 @@ class PersonalInformationController extends Controller
                 'picture' => 'file',
                 'mobile' => 'string|mobile:bd',
                 'additional_mobile' => 'mobile:bd'
-            ], ['mobile' => 'Invalid mobile number!', 'unique' => 'Duplicate Nid No!']);
+            ];
+
+            if (!$resource->nid_image) {
+                $rules['nid_back'] = 'required|file';
+                $rules['nid_front'] = 'required|file';
+            }
+            
+            $this->validate($request, $rules, ['mobile' => 'Invalid mobile number!', 'unique' => 'Duplicate Nid No!']);
             if ($request->has('mobile')) {
                 $mobile = formatMobile($request->mobile);
                 if ($profile->mobile != $mobile) {
