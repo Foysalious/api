@@ -20,6 +20,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use DB;
 use Illuminate\Validation\ValidationException;
+use Redis;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
 use Sheba\Manager\JobList;
 use Sheba\Reward\PartnerReward;
@@ -473,6 +474,7 @@ class PartnerController extends Controller
                 return api_response($request, $is_available, 200, ['is_available' => $is_available, 'available_partners' => count($available_partners)]);
             }
             if ($partner_list->hasPartners) {
+                Redis::incr('partner_list_hit_count');
                 $start = microtime(true);
                 $partner_list->addPricing();
                 $time_elapsed_secs = microtime(true) - $start;

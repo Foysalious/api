@@ -65,17 +65,12 @@ class ShebaController extends Controller
     public function getImages(Request $request)
     {
         try {
-            $images = Slider::select('id', 'image_link', 'small_image_link', 'target_link', 'target_type', 'target_id')->show();
-            return count($images) > 0 ? api_response($request, $images, 200, ['images' => $images]) : api_response($request, null, 404);
-        } catch (\Throwable $e) {
-            return api_response($request, null, 500);
-        }
-    }
-
-    public function getEShopImages(Request $request)
-    {
-        try {
-            $images = Slider::select('id', 'image_link', 'small_image_link', 'target_link', 'target_type', 'target_id')->showBusiness();
+            $images = Slider::select('id', 'image_link', 'small_image_link', 'target_link', 'target_type', 'target_id');
+            if ($request->has('business')) {
+                $images = $images->showBusiness();
+            } else {
+                $images = $images->show();
+            }
             return count($images) > 0 ? api_response($request, $images, 200, ['images' => $images]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
