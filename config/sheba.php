@@ -43,7 +43,7 @@ return [
     ],
     'weight_on_partner_list' => [
         'capacity' => 0.5,
-        'order' => 0.15,
+        'orders' => 0.15,
         'rating' => 0.1,
         'price' => 0.05,
         'impression' => 0.2
