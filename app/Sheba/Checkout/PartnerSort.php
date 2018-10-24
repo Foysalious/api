@@ -14,6 +14,7 @@ class PartnerSort
     private $bronzePartnerCount;
     private $sortedPartners;
     private $weights;
+    private $shebaHelpDesk;
 
     public function __construct($partners)
     {
@@ -25,6 +26,7 @@ class PartnerSort
         $this->silverPartnerCount = config('sheba.partner_packages_on_partner_list')['PSP'];
         $this->bronzePartnerCount = config('sheba.partner_packages_on_partner_list')['LSP'];
         $this->setPartners();
+
     }
 
     private function setPartners()
@@ -50,7 +52,8 @@ class PartnerSort
         $this->goldPartners = $this->calculateTotalWeight($this->goldPartners)->splice(0, $this->goldPartnerCount);
         $this->silverPartners = $this->calculateTotalWeight($this->silverPartners)->splice(0, $this->silverPartnerCount);
         $this->bronzePartners = $this->calculateTotalWeight($this->bronzePartners)->splice(0, $this->bronzePartnerCount);
-        return $this->sortedPartners->merge($this->goldPartners)->merge($this->silverPartners)->merge($this->bronzePartners);
+        $this->sortedPartners = $this->sortedPartners->merge($this->goldPartners)->merge($this->silverPartners)->merge($this->bronzePartners);
+        return $this->sortedPartners->count() > 0 ? $this->sortedPartners : $this->shebaHelpDesk;
     }
 
     private function calculateTotalWeight($partners)
@@ -71,13 +74,18 @@ class PartnerSort
         $max_total_rating = $partners->max('total_rating');
         $rating_difference = $max_total_rating - $min_total_rating;
 
+        $min_current_impression = $partners->min('current_impression');
+        $max_current_impression = $partners->max('current_impression');
+        $current_impression_difference = $max_current_impression - $min_current_impression;
+
         foreach ($partners as $partner) {
             $avg_rating = $partner->avg_rating > 0 ? $this->weights['avg_rating'] * (($partner->avg_rating - 1) / (5 - 1)) : 0;
             $total_rating = ($partner->total_rating > 0 && $rating_difference > 0) ? $this->weights['total_rating'] * (($partner->total_rating - $min_total_rating) / $rating_difference) : 0;
             $total_experts = ($partner->total_experts > 0 && $expert_difference > 0) ? $this->weights['capacity'] * (($partner->total_experts - $min_total_experts) / $expert_difference) : 0;
             $orders = ($partner->total_completed_orders > 0 && $order_difference > 0) ? $this->weights['orders'] * (($partner->total_completed_orders - $min_orders) / $order_difference) : 0;
+            $impression = ($partner->current_impression > 0 && $current_impression_difference > 0) ? $this->weights['impression'] * (($partner->current_impression - $min_current_impression) / $current_impression_difference) : 0;
             $price = 1 - (($price_difference > 0) ? ($this->weights['price'] * (($partner->discounted_price - $min_price) / $price_difference)) : 0);
-            $partner['score'] = $price + $avg_rating + $orders + $total_experts + $total_rating;
+            $partner['score'] = $price + $avg_rating + $orders + $total_experts + $total_rating + $impression;
         }
         return $partners->sortByDesc('score');
     }
@@ -88,6 +96,10 @@ class PartnerSort
         $this->goldPartners = isset($group_by_packages[config('sheba.partner_packages')['ESP']]) ? $group_by_packages[config('sheba.partner_packages')['ESP']] : collect();;
         $this->silverPartners = isset($group_by_packages[config('sheba.partner_packages')['PSP']]) ? $group_by_packages[config('sheba.partner_packages')['PSP']] : collect();
         $this->bronzePartners = isset($group_by_packages[config('sheba.partner_packages')['LSP']]) ? $group_by_packages[config('sheba.partner_packages')['LSP']] : collect();
+        $this->shebaHelpDesk = $this->bronzePartners->where('id', 1809)->first();
+        $this->bronzePartners = $this->bronzePartners->reject(function ($partner) {
+            return $partner->id == 1809;
+        });
     }
 
 }
