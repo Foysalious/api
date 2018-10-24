@@ -42,10 +42,11 @@ return [
         'LSP' => 2
     ],
     'weight_on_partner_list' => [
-        'capacity' => 0.5,
+        'impression' => 0.3,
+        'capacity' => 0.2,
         'orders' => 0.15,
-        'rating' => 0.1,
-        'price' => 0.05,
-        'impression' => 0.2
+        'price' => 0.15,
+        'avg_rating' => 0.12,
+        'total_rating' => 0.08
     ]
 ];

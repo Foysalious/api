@@ -57,19 +57,27 @@ class PartnerSort
     {
         $min_total_experts = $partners->min('total_experts');
         $max_total_experts = $partners->max('total_experts');
+        $expert_difference = $max_total_experts - $min_total_experts;
 
         $min_orders = $partners->min('total_completed_orders');
         $max_orders = $partners->max('total_completed_orders');
+        $order_difference = $max_orders - $min_orders;
 
         $min_price = $partners->min('discounted_price');
         $max_price = $partners->max('discounted_price');
+        $price_difference = $max_price - $min_price;
+
+        $min_total_rating = $partners->min('total_rating');
+        $max_total_rating = $partners->max('total_rating');
+        $rating_difference = $max_total_rating - $min_total_rating;
 
         foreach ($partners as $partner) {
-            $avg_rating = $partner->avg_rating > 0 ? $this->weights['rating'] * (($partner->avg_rating - 1) / (5 - 1)) : 0;
-            $total_experts = $partner->total_experts > 0 ? $this->weights['capacity'] * (($partner->total_experts - $min_total_experts) / ($max_total_experts - $min_total_experts)) : 0;
-            $orders = $partner->total_completed_orders > 0 ? $this->weights['orders'] * (($partner->total_completed_orders - $min_orders) / ($max_orders - $min_orders)) : 0;
-            $price = 1 - ($this->weights['price'] * (($partner->discounted_price - $min_price) / ($max_price - $min_price)));
-            $partner['score'] = $price + $avg_rating + $orders + $total_experts;
+            $avg_rating = $partner->avg_rating > 0 ? $this->weights['avg_rating'] * (($partner->avg_rating - 1) / (5 - 1)) : 0;
+            $total_rating = ($partner->total_rating > 0 && $rating_difference > 0) ? $this->weights['total_rating'] * (($partner->total_rating - $min_total_rating) / $rating_difference) : 0;
+            $total_experts = ($partner->total_experts > 0 && $expert_difference > 0) ? $this->weights['capacity'] * (($partner->total_experts - $min_total_experts) / $expert_difference) : 0;
+            $orders = ($partner->total_completed_orders > 0 && $order_difference > 0) ? $this->weights['orders'] * (($partner->total_completed_orders - $min_orders) / $order_difference) : 0;
+            $price = 1 - (($price_difference > 0) ? ($this->weights['price'] * (($partner->discounted_price - $min_price) / $price_difference)) : 0);
+            $partner['score'] = $price + $avg_rating + $orders + $total_experts + $total_rating;
         }
         return $partners->sortByDesc('score');
     }
