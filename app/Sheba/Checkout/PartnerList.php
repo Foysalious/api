@@ -1,6 +1,8 @@
 <?php namespace App\Sheba\Checkout;
 
+use App\Jobs\DeductPartnerImpression;
 use App\Models\Category;
+use App\Models\ImpressionDeduction;
 use App\Models\Partner;
 use App\Models\PartnerServiceDiscount;
 use App\Models\Service;
@@ -11,10 +13,12 @@ use Carbon\Carbon;
 use DB;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Sheba\Checkout\PartnerSort;
 
 class PartnerList
 {
+    use DispatchesJobs;
     public $partners;
     public $hasPartners = false;
     public $selected_services;
@@ -163,7 +167,7 @@ class PartnerList
                 $q->published();
             })->select(DB::raw('count(*) as c'))->whereIn('services.id', $service_ids)->where([['partner_service.is_published', 1], ['partner_service.is_verified', 1]])->publishedForAll()
                 ->groupBy('partner_id')->havingRaw('c=' . count($service_ids));
-        })->published()->select('partners.id', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet', 'partners.package_id');
+        })->published()->select('partners.id', 'partners.current_impression', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet', 'partners.package_id');
         if ($partner_id != null) {
             $query = $query->where('partners.id', $partner_id);
         }
@@ -242,6 +246,7 @@ class PartnerList
         $this->partners->load(['jobs' => function ($q) use ($category_ids) {
             $q->selectRaw("count(case when status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then status end) as total_jobs")
                 ->selectRaw("count(case when status in ('Accepted', 'Schedule Due', 'Process', 'Serve Due') then status end) as ongoing_jobs")
+                ->selectRaw("count(case when status in ('Served') and category_id=" . $this->selectedCategory->id . " then status end) as total_completed_orders")
                 ->selectRaw("count(case when category_id in(" . $category_ids . ") and status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then category_id end) as total_jobs_of_category")
                 ->groupBy('partner_id');
         }, 'subscription' => function ($q) {
@@ -303,6 +308,28 @@ class PartnerList
             $partner['total_experts'] = $partner->handymanResources->first() ? $partner->handymanResources->first()->total_experts : 0;
         }
         $this->partners = (new PartnerSort($this->partners))->get();
+        $this->deductImpression();
+
+    }
+
+    private function deductImpression()
+    {
+        if (request()->has('screen') && request()->get('screen') == 'partner-list' && in_array(request()->header('Portal-Name'), ['customer-portal', 'customer-app', 'manager-app'])) {
+            $partners = $this->partners->pluck('id')->toArray();
+            $impression_deduction = new ImpressionDeduction();
+            $impression_deduction->category_id = $this->selectedCategory->id;
+            $impression_deduction->location_id = $this->location;
+            $impression_deduction->order_details = json_encode(array(
+                'services' => json_decode(request()->services)
+            ));
+            $impression_deduction->customer_id = request()->hasHeader('User-Id') ? request()->get('User-Id') : null;
+            $impression_deduction->portal_name = request()->header('Portal-Name');
+            $impression_deduction->ip = request()->ip();
+            $impression_deduction->created_at = Carbon::now();
+            $impression_deduction->save();
+            $impression_deduction->partners()->sync($partners);
+            dispatch(new DeductPartnerImpression($partners));
+        }
     }
 
     public function sortByShebaSelectedCriteria()
@@ -431,6 +458,7 @@ class PartnerList
             $this->partners = $this->partners->reject(function ($partner) {
                 return $partner->id == 1809;
             });
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {
+        }
     }
 }

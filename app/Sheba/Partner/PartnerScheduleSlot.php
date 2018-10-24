@@ -91,9 +91,17 @@ class PartnerScheduleSlot
 
     private function getLeavesBetween($start, $end)
     {
-        $leaves = $this->partner->leaves()->select('id', 'partner_id', 'start', 'end')->where('start', '>=', $start)->Where(function ($q) use ($end) {
-            $q->where('end', '<=', $end)->orWhere('end', null);
-        })->get();
+        $leaves = $this->partner->leaves()->select('id', 'partner_id', 'start', 'end')
+            ->where(function ($q) use ($start) {
+                $q->where('start', '<=', $start)->where(function ($q) use ($start) {
+                    $q->where('end', '>=', $start)->orWhere('end', null);
+                });
+            })
+            ->where(function ($q) use ($end) {
+                $q->where('start', '<=', $end)->where(function ($q) use ($end) {
+                    $q->where('end', '>=', $end)->orWhere('end', null);
+                });
+            })->get();
         return $leaves->count() > 0 ? $leaves : null;
     }
 
@@ -136,7 +144,6 @@ class PartnerScheduleSlot
     {
         if (!$this->runningLeaves) return false;
         else {
-
             foreach ($this->runningLeaves as $runningLeave) {
                 $start = $runningLeave->start;
                 $end = $runningLeave->end;
