@@ -29,10 +29,14 @@ class ServiceController extends Controller
         try {
             $location = $request->has('location') ? $request->location : 4;
             $services = Service::select('id', 'name', 'unit', 'category_id', 'thumb', 'slug', 'min_quantity', 'banner', 'variable_type');
-            if ($request->has('is_business')) $services = $services->publishedForBusiness();
+            $scope = ['start_price'];
+            if ($request->has('is_business')) {
+                $services = $services->publishedForBusiness();
+                array_push($scope, 'master_category_id');
+            }
             $services = $services->get();
             $services = $this->serviceRepository->getpartnerServicePartnerDiscount($services, $location);
-            $services = $this->serviceRepository->addServiceInfo($services, ['start_price']);
+            $services = $this->serviceRepository->addServiceInfo($services, $scope);
             return count($services) != 0 ? api_response($request, $services, 200, ['services' => $services]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
