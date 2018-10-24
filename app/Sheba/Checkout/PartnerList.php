@@ -314,7 +314,7 @@ class PartnerList
 
     private function deductImpression()
     {
-        if (in_array(request()->header('Portal-Name'), ['customer-portal', 'customer-app', 'manager-app'])) {
+        if (request()->has('screen') && request()->get('screen') == 'partner-list' && in_array(request()->header('Portal-Name'), ['customer-portal', 'customer-app', 'manager-app'])) {
             $partners = $this->partners->pluck('id')->toArray();
             $impression_deduction = new ImpressionDeduction();
             $impression_deduction->category_id = $this->selectedCategory->id;
