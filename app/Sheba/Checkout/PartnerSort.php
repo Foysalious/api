@@ -83,7 +83,7 @@ class PartnerSort
             $total_rating = ($partner->total_rating > 0 && $rating_difference > 0) ? $this->weights['total_rating'] * (($partner->total_rating - $min_total_rating) / $rating_difference) : 0;
             $total_experts = ($partner->total_experts > 0 && $expert_difference > 0) ? $this->weights['capacity'] * (($partner->total_experts - $min_total_experts) / $expert_difference) : 0;
             $orders = ($partner->total_completed_orders > 0 && $order_difference > 0) ? $this->weights['orders'] * (($partner->total_completed_orders - $min_orders) / $order_difference) : 0;
-            $impression = ($partner->current_impression > 0 && $current_impression_difference > 0) ? $this->weights['impression'] * (($partner->current_impression - $min_current_impression) / $current_impression_difference) : 0;
+            $impression = ($partner->current_impression > 10 && $current_impression_difference > 0) ? $this->weights['impression'] * (($partner->current_impression - $min_current_impression) / $current_impression_difference) : 0;
             $price = 1 - (($price_difference > 0) ? ($this->weights['price'] * (($partner->discounted_price - $min_price) / $price_difference)) : 0);
             $partner['score'] = $price + $avg_rating + $orders + $total_experts + $total_rating + $impression;
         }
