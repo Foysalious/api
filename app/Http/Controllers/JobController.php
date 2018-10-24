@@ -553,7 +553,7 @@ class JobController extends Controller
     public function cancelReason(Request $request)
     {
         try {
-            $job_cancel_reasons = JobCancelReason::ForCustomer()->select('name','key')->get();
+            $job_cancel_reasons = JobCancelReason::ForCustomer()->select('id', 'name','key')->get();
             return api_response($request, $job_cancel_reasons, 200, ['cancel-reason' => $job_cancel_reasons]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
