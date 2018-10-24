@@ -1,5 +1,6 @@
 <?php namespace App\Sheba\Checkout;
 
+use App\Jobs\DeductPartnerImpression;
 use App\Models\Category;
 use App\Models\ImpressionDeduction;
 use App\Models\Partner;
@@ -12,10 +13,12 @@ use Carbon\Carbon;
 use DB;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Sheba\Checkout\PartnerSort;
 
 class PartnerList
 {
+    use DispatchesJobs;
     public $partners;
     public $hasPartners = false;
     public $selected_services;
@@ -311,7 +314,7 @@ class PartnerList
 
     private function deductImpression()
     {
-        if (in_array(request()->header('Portal-Name'), ['customer-portal', 'customer-app', 'manager-app'])) {
+        if (request()->has('screen') && request()->get('screen') == 'partner-list' && in_array(request()->header('Portal-Name'), ['customer-portal', 'customer-app', 'manager-app'])) {
             $partners = $this->partners->pluck('id')->toArray();
             $impression_deduction = new ImpressionDeduction();
             $impression_deduction->category_id = $this->selectedCategory->id;
@@ -320,12 +323,12 @@ class PartnerList
                 'services' => json_decode(request()->services)
             ));
             $impression_deduction->customer_id = request()->hasHeader('User-Id') ? request()->get('User-Id') : null;
-            $impression_deduction->portal_name = request()->hasHeader('Portal-Name') ? request()->header('Portal-Name') : null;
+            $impression_deduction->portal_name = request()->header('Portal-Name');
             $impression_deduction->ip = request()->ip();
             $impression_deduction->created_at = Carbon::now();
             $impression_deduction->save();
             $impression_deduction->partners()->sync($partners);
-            Partner::whereIn('id', $partners)->decrement('current_impression');
+            dispatch(new DeductPartnerImpression($partners));
         }
     }
 
