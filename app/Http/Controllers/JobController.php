@@ -356,7 +356,7 @@ class JobController extends Controller
             $this->validate($request, [
                 'remember_token' => 'required',
                 'cancel_reason' => 'required|exists:job_cancel_reasons,key,is_published_for_customer,1',
-                'cancel_reason_details' => 'sometimes|required'
+                'cancel_reason_details' => 'sometimes|string'
             ]);
 
             $client = new Client();
