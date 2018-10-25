@@ -1,12 +1,11 @@
-<?php
-
-
-namespace Sheba\Payment;
+<?php namespace Sheba\Payment;
 
 use App\Models\Affiliate;
 use App\Models\AffiliateTransaction;
 use App\Models\Customer;
 use App\Models\CustomerTransaction;
+use App\Models\Partner;
+use App\Models\PartnerTransaction;
 use Carbon\Carbon;
 use DB;
 
@@ -45,7 +44,8 @@ trait Wallet
             return new CustomerTransaction();
         } else if ($this instanceof Affiliate) {
             return new AffiliateTransaction();
+        } else if ($this instanceof Partner) {
+            return new PartnerTransaction();
         }
     }
-
 }

@@ -1,6 +1,4 @@
-<?php
-
-namespace Sheba\Payment\Methods\Bkash;
+<?php namespace Sheba\Payment\Methods\Bkash;
 
 use App\Models\Payable;
 use App\Models\Payment;

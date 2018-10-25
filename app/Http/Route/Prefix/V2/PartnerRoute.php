@@ -1,7 +1,4 @@
-<?php
-
-namespace App\Http\Route\Prefix\V2;
-
+<?php namespace App\Http\Route\Prefix\V2;
 
 class PartnerRoute
 {
@@ -91,6 +88,11 @@ class PartnerRoute
             });
             $api->get('get-profile', 'ResourceController@getResourceData');
             $api->get('settings', 'Partner\OperationController@isOnPremiseAvailable');
+
+            $api->group(['prefix' => 'partner-wallet'], function ($api) {
+                $api->post('purchase', 'PartnerWalletController@purchase');
+                $api->post('validate', 'PartnerWalletController@validatePayment');
+            });
         });
     }
 }
