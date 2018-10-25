@@ -218,25 +218,29 @@ class ShebaController extends Controller
                     'name' => 'Sheba Credit',
                     'is_published' => 1,
                     'description' => '15% Credit Bonus',
-                    'asset' => 'sheba_credit'
+                    'asset' => 'sheba_credit',
+                    'method_name' => 'wallet'
                 ),
                 array(
                     'name' => 'bKash Payment',
                     'is_published' => 1,
                     'description' => '',
-                    'asset' => 'bkash'
+                    'asset' => 'bkash',
+                    'method_name' => 'bkash'
                 ),
                 array(
                     'name' => 'City Bank',
                     'is_published' => 0,
                     'description' => '20% CashBack',
-                    'asset' => 'cbl'
+                    'asset' => 'cbl',
+                    'method_name' => 'cbl'
                 ),
                 array(
                     'name' => 'Other Debit/Credit',
                     'is_published' => 1,
                     'description' => '',
-                    'asset' => 'ssl'
+                    'asset' => 'ssl',
+                    'method_name' => 'online'
                 )
             );
             return api_response($request, $payments, 200, ['payments' => $payments]);
