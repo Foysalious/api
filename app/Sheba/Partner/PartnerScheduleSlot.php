@@ -126,10 +126,10 @@ class PartnerScheduleSlot
             $isToday = $day->isToday();
             foreach ($this->shebaSlots as $slot) {
                 $slot_start_time = Carbon::parse($date_string . ' ' . $slot->start);
-                if ($this->isBetweenAnyLeave($slot_start_time) || ($isToday && ($slot_start_time < $day))) {
+                if (!($slot_start_time->gte($working_hour_start_time) && $slot_start_time->lte($working_hour_end_time)) || $this->isBetweenAnyLeave($slot_start_time) || ($isToday && ($slot_start_time < $day))) {
                     $slot['is_available'] = 0;
                 } else {
-                    $is_available = (int)($working_hour_end_time->notEqualTo($slot_start_time) && $slot_start_time->between($working_hour_start_time, $working_hour_end_time, true));
+                    $is_available = ($working_hour_end_time->notEqualTo($slot_start_time) && $slot_start_time->between($working_hour_start_time, $working_hour_end_time, true));
                     $slot['is_available'] = $is_available ? 1 : 0;
                 }
             }
