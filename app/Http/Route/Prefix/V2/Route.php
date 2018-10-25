@@ -1,7 +1,4 @@
-<?php
-
-namespace App\Http\Route\Prefix\V2;
-
+<?php namespace App\Http\Route\Prefix\V2;
 
 class Route
 {
@@ -24,6 +21,7 @@ class Route
                 $api->post('validate', 'WalletController@validatePayment');
                 $api->get('faqs', 'WalletController@getFaqs');
             });
+
             $api->group(['prefix' => 'faqs'], function ($api) {
                 $api->get('order', 'JobController@getFaqs');
             });

@@ -87,7 +87,7 @@ class WalletController extends Controller
             $paymentRepository->setPayment($payment);
             if ($sheba_credit < $payment->payable->amount) {
                 $paymentRepository->changeStatus(['to' => 'validation_failed', 'from' => $payment->status,
-                    'transaction_details' => $payment->transaction_details, 'log' => "Insufficient balance. Purchase Amount: $sheba_credit & Sheba Credit: $sheba_credit"]);
+                    'transaction_details' => $payment->transaction_details, 'log' => "Insufficient balance. Purchase Amount: " . $payment->payable->amount . " & Sheba Credit: $sheba_credit"]);
                 $payment->status = 'validation_failed';
                 $payment->update();
                 return api_response($request, null, 400, ['message' => 'You don\'t have sufficient credit']);

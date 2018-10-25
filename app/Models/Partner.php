@@ -2,6 +2,7 @@
 
 use Sheba\Reward\Rewardable;
 use Sheba\Subscription\Partner\PartnerSubscriber;
+use Sheba\Payment\Wallet;
 use Carbon\Carbon;
 use Sheba\Dal\Complain\Model as Complain;
 use Illuminate\Database\Eloquent\Model;
@@ -10,9 +11,9 @@ use DB;
 
 class Partner extends Model implements Rewardable
 {
-    protected $guarded = [
-        'id',
-    ];
+    use Wallet;
+
+    protected $guarded = ['id',];
     protected $dates = ['last_billed_date', 'billing_start_date'];
     protected $casts = ['wallet' => 'double', 'last_billed_amount' => 'double', 'reward_point' => 'int', 'current_impression' => 'double', 'impression_limit' => 'double'];
     protected $resourcePivotColumns = ['id', 'designation', 'department', 'resource_type', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
