@@ -331,10 +331,17 @@ class PartnerList
             $impression_deduction = new ImpressionDeduction();
             $impression_deduction->category_id = $this->selectedCategory->id;
             $impression_deduction->location_id = $this->location;
-            $impression_deduction->order_details = json_encode(array(
-                'services' => json_decode(request()->services)
-            ));
-            $customer = request()->hasHeader('User-Id') ? Customer::find((int)request()->header('User-Id')) : null;
+            $serviceArray = [];
+            foreach (json_decode(request()->services) as $service) {
+                array_push($serviceArray, [
+                    'id' => $service->id,
+                    'category_id' => $service->category_id,
+                    'quantity' => $service->quantity,
+                    'option' => $service->option
+                ]);
+            }
+            $impression_deduction->order_details = json_encode(['services' => $serviceArray]);
+            $customer = request()->hasHeader('User-Id') && request()->header('User-Id') ? Customer::find((int)request()->header('User-Id')) : null;
             if ($customer) $impression_deduction->customer_id = $customer->id;
             $impression_deduction->portal_name = request()->header('Portal-Name');
             $impression_deduction->ip = request()->ip();
