@@ -335,7 +335,6 @@ class PartnerList
             foreach (json_decode(request()->services) as $service) {
                 array_push($serviceArray, [
                     'id' => $service->id,
-                    'category_id' => $service->category_id,
                     'quantity' => $service->quantity,
                     'option' => $service->option
                 ]);
