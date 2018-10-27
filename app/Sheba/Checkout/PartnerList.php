@@ -378,7 +378,6 @@ class PartnerList
         $category_pivot = $partner->categories->first()->pivot;
         foreach ($this->selected_services as $selected_service) {
             $service = $partner->services->where('id', $selected_service->id)->first();
-            dd($service);
             if ($service->isOptions()) {
                 $price = $this->partnerServiceRepository->getPriceOfOptionsService($service->pivot->prices, $selected_service->option);
                 $min_price = empty($service->pivot->min_prices) ? 0 : $this->partnerServiceRepository->getMinimumPriceOfOptionsService($service->pivot->min_prices, $selected_service->option);
