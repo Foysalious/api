@@ -2,6 +2,7 @@
 
 use App\Jobs\DeductPartnerImpression;
 use App\Models\Category;
+use App\Models\Customer;
 use App\Models\ImpressionDeduction;
 use App\Models\Partner;
 use App\Models\PartnerServiceDiscount;
@@ -15,6 +16,8 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Sheba\Checkout\PartnerSort;
+use Sheba\ModificationFields;
+use Sheba\RequestIdentification;
 
 class PartnerList
 {
@@ -30,6 +33,7 @@ class PartnerList
     private $skipAvailability;
     private $selectedCategory;
     private $rentCarCategoryIds;
+    use ModificationFields;
 
     public function __construct($services, $date, $time, $location)
     {
@@ -330,9 +334,11 @@ class PartnerList
             $impression_deduction->order_details = json_encode(array(
                 'services' => json_decode(request()->services)
             ));
-            $impression_deduction->customer_id = request()->hasHeader('User-Id') ? request()->get('User-Id') : null;
+            $customer = request()->hasHeader('User-Id') ? Customer::find((int)request()->header('User-Id')) : null;
+            if ($customer) $impression_deduction->customer_id = $customer->id;
             $impression_deduction->portal_name = request()->header('Portal-Name');
             $impression_deduction->ip = request()->ip();
+            $impression_deduction->user_agent = request()->header('User-Agent');
             $impression_deduction->created_at = Carbon::now();
             $impression_deduction->save();
             $impression_deduction->partners()->sync($partners);
