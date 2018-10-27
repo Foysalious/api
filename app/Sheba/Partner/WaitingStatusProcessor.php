@@ -19,7 +19,8 @@ class WaitingStatusProcessor
     {
         return $this->isValidPartnerStatus() && $this->isCompanyNameExist() && $this->isCompanyPhoneExist() && $this->isOneLocationTagged() &&
             $this->isOneCategoryTagged() && $this->isOneServiceTagged() && $this->isOneAdminResource() &&
-            $this->isOneHandyResource() && $this->isOneActiveOperationDay() && $this->isCompanyAddressExists();
+            $this->isOneHandyResource() && $this->isOneActiveOperationDay() && $this->isCompanyAddressExists() &&
+            $this->isAdminAllInfoPresent();
     }
 
     private function isValidPartnerStatus()
@@ -70,5 +71,16 @@ class WaitingStatusProcessor
     private function isCompanyAddressExists()
     {
         return !empty($this->partner->address);
+    }
+
+    private function isAdminAllInfoPresent()
+    {
+        $admin_resource = $this->partner->admins()->first();
+        return (
+            $admin_resource &&
+            $admin_resource->nid_no &&
+            $admin_resource->nid_image &&
+            $admin_resource->profile->pro_pic != getProfileDefaultAvatar()
+        );
     }
 }

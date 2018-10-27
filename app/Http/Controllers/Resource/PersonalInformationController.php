@@ -133,10 +133,13 @@ class PersonalInformationController extends Controller
                 'gender' => 'string|in:Male,Female,Other',
                 'birthday' => 'date_format:Y-m-d|before:' . date('Y-m-d'),
                 'address' => 'string',
-                'picture' => 'file',
                 'mobile' => 'string|mobile:bd',
                 'additional_mobile' => 'mobile:bd'
             ];
+
+            if (!$profile->pro_pic) {
+                $rules['picture'] = 'required|file';
+            }
 
             if (!$resource->nid_image) {
                 $rules['nid_back'] = 'required|file';
