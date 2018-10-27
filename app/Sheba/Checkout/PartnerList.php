@@ -29,6 +29,7 @@ class PartnerList
     private $rentCarServicesId;
     private $skipAvailability;
     private $selectedCategory;
+    private $rentCarCategoryIds;
 
     public function __construct($services, $date, $time, $location)
     {
@@ -244,7 +245,7 @@ class PartnerList
         if (in_array($this->selectedCategory->id, $this->rentCarCategoryIds)) {
             $category_ids = $this->selectedCategory->id == (int)env('RENT_CAR_OUTSIDE_ID') ? $category_ids . ",40" : $category_ids . ",38";
         }
-        $this->partners->load(['jobs' => function ($q) use ($category_ids) {
+        $this->partners->load(['handymanResources', 'workingHours', 'jobs' => function ($q) use ($category_ids) {
             $q->selectRaw("count(case when status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then status end) as total_jobs")
                 ->selectRaw("count(case when status in ('Accepted', 'Schedule Due', 'Process', 'Serve Due') then status end) as ongoing_jobs")
                 ->selectRaw("count(case when status in ('Served') and category_id=" . $this->selectedCategory->id . " then status end) as total_completed_orders")
@@ -264,8 +265,8 @@ class PartnerList
 
             $partner['contact_no'] = $this->getContactNumber($partner);
             $partner['subscription_type'] = $partner->subscription ? $partner->subscription->name : null;
-            $partner['total_experts'] = 20;
-            $partner['total_working_days'] = 7;
+            $partner['total_experts'] = $partner->handymanResources->first() ? $partner->handymanResources->first()->total_experts : 0;
+            $partner['total_working_days'] = $partner->workingHours ? $partner->workingHours->count() : 0;
             $partner['total_completed_orders'] = $partner->jobs->first() ? $partner->jobs->first()->total_completed_orders : 0;
             $partner['address'] = $partner->address;
         }
@@ -274,7 +275,9 @@ class PartnerList
     public function calculateAverageRating()
     {
         $this->partners->load(['reviews' => function ($q) {
-            $q->select('reviews.id', 'rating', 'category_id', 'partner_id');
+            $q->select('reviews.id', 'rating', 'category_id', 'partner_id')->with(['rates' => function ($q) {
+                $q->select('id', 'review_id');
+            }]);
         }]);
         foreach ($this->partners as $partner) {
             $partner['rating'] = (new ReviewRepository())->getAvgRating($partner->reviews);
@@ -285,10 +288,13 @@ class PartnerList
     {
         foreach ($this->partners as $partner) {
             $partner['total_ratings'] = count($partner->reviews);
-            $partner['total_compliments'] = 5;
-            $partner['total_five_star_ratings'] = count($partner->reviews->filter(function ($review) {
+            $five_star_reviews = $partner->reviews->filter(function ($review) {
                 return $review->rating == 5;
-            }));
+            });
+            $partner['total_compliments'] = $five_star_reviews->reduce(function ($count, $review) {
+                return $count + $review->rates->count();
+            }, 0);
+            $partner['total_five_star_ratings'] = $five_star_reviews->count();
         }
     }
 
@@ -315,7 +321,7 @@ class PartnerList
 
     private function deductImpression()
     {
-        if (request()->has('screen') && request()->get('screen') == 'partner-list'
+        if (request()->has('screen') && request()->get('screen') == 'partner_list'
             && in_array(request()->header('Portal-Name'), ['customer-portal', 'customer-app', 'manager-app'])) {
             $partners = $this->partners->pluck('id')->toArray();
             $impression_deduction = new ImpressionDeduction();
@@ -372,6 +378,7 @@ class PartnerList
         $category_pivot = $partner->categories->first()->pivot;
         foreach ($this->selected_services as $selected_service) {
             $service = $partner->services->where('id', $selected_service->id)->first();
+            dd($service);
             if ($service->isOptions()) {
                 $price = $this->partnerServiceRepository->getPriceOfOptionsService($service->pivot->prices, $selected_service->option);
                 $min_price = empty($service->pivot->min_prices) ? 0 : $this->partnerServiceRepository->getMinimumPriceOfOptionsService($service->pivot->min_prices, $selected_service->option);
