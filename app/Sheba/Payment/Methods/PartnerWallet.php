@@ -21,9 +21,8 @@ class PartnerWallet extends PaymentMethod
     public function init(Payable $payable): Payment
     {
         $invoice = 'SHEBA_CREDIT_' . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, 1, 1);
-        # $user_bonus = $payable->user->shebaBonusCredit();
         $payment = new Payment();
-        DB::transaction(function () use ($payment, $payable, $invoice/*, $user_bonus*/) {
+        DB::transaction(function () use ($payment, $payable, $invoice) {
             $payment->payable_id = $payable->id;
             $payment->transaction_id = $invoice;
             $payment->status = 'initiated';
@@ -33,15 +32,7 @@ class PartnerWallet extends PaymentMethod
             $this->withCreateModificationField($payment);
             $payment->save();
 
-            $this->savePaymentDetail($payment, $payable->amount, 'wallet');
-
-            /*$remaining = $user_bonus >= $payable->amount ? 0 : $payable->amount - $user_bonus;
-            if ($remaining == 0) {
-                $this->savePaymentDetail($payment, $payable->amount, 'bonus');
-            } else {
-                $this->savePaymentDetail($payment, $remaining, 'wallet');
-                if ($user_bonus > 0) $this->savePaymentDetail($payment, $payable->amount - $remaining, 'bonus');
-            }*/
+            $this->savePaymentDetail($payment, $payable->amount, 'partner_wallet');
         });
 
         return $payment;
