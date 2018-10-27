@@ -179,6 +179,8 @@ class ServiceRepository
             }
             if (count($price) > 0) {
                 array_add($service, 'start_price', min($price) * $service->min_quantity);
+            } else {
+                array_add($service, 'start_price', 0);
             }
         }
         return $service;
