@@ -96,7 +96,7 @@ class PartnerSort
         $this->goldPartners = isset($group_by_packages[config('sheba.partner_packages')['ESP']]) ? $group_by_packages[config('sheba.partner_packages')['ESP']] : collect();;
         $this->silverPartners = isset($group_by_packages[config('sheba.partner_packages')['PSP']]) ? $group_by_packages[config('sheba.partner_packages')['PSP']] : collect();
         $this->bronzePartners = isset($group_by_packages[config('sheba.partner_packages')['LSP']]) ? $group_by_packages[config('sheba.partner_packages')['LSP']] : collect();
-        $this->shebaHelpDesk = $this->bronzePartners->where('id', 1809)->first();
+        $this->shebaHelpDesk = $this->partners->where('id', 1809);
         $this->bronzePartners = $this->bronzePartners->reject(function ($partner) {
             return $partner->id == 1809;
         });
