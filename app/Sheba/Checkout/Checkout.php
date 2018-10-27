@@ -322,8 +322,8 @@ class Checkout
             if (!$this->isVoucherAutoApplicable($job_services, $data)) return $data;
 
             $order_amount = $job_services->map(function ($job_service) {
-                return $job_service->unit_price * $job_service->quantity;
-            })->sum();
+                    return $job_service->unit_price * $job_service->quantity;
+                })->sum() + (double)$partner->categories->first()->pivot->delivery_charge;
             $valid = 0;
             if (isset($data['voucher'])) {
                 $result = voucher($data['voucher'])
