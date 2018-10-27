@@ -94,6 +94,27 @@ class EventDataConverter
                         'event_class' => 'Sheba\Reward\Event\Customer\Action\WalletCashback\Event',
                         'rule_class' => 'Sheba\Reward\Event\Customer\Action\WalletCashback\Rule',
                         'parameters' => []
+                    ],
+                    'order_serve_and_paid' => [
+                        'name' => 'Order Serve And Paid',
+                        'event_class' => 'Sheba\Reward\Event\Customer\Action\OrderServedAndPaid\Event',
+                        'rule_class' => 'Sheba\Reward\Event\Customer\Action\OrderServedAndPaid\Rule',
+                        'parameters' => [
+                            'amount' => [
+                                'type'  => 'number',
+                                'min'   => 0
+                            ],
+                            'sales_channels' => [
+                                'type' => 'select',
+                                'possible_value' => getSalesChannels(),
+                                'is_multi_selectable' => 1
+                            ],
+                            'payment_methods' => [
+                                'type' => 'select',
+                                'possible_value' => ['Bkash', 'Cash On Delivery', 'Online', 'Ssl', 'Wallet'],
+                                'is_multi_selectable' => 1
+                            ]
+                        ]
                     ]
                 ],
                 'campaign'  => []
