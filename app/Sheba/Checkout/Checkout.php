@@ -85,8 +85,8 @@ class Checkout
         $data['category_answers'] = $request->category_answers;
         $data['info_call_id'] = $this->_setInfoCallId($request);
         $data['affiliation_id'] = $this->_setAffiliationId($request);
-        $data['is_on_premise'] = $request->has('is_on_premise') ? $request->is_on_premise : 0;
-        $data['site'] = ! $data['is_on_premise'] ? 'customer' : 'partner';
+        $data['is_on_premise'] = $request->has('is_on_premise') ? (int)$request->is_on_premise : 0;
+        $data['site'] = !$data['is_on_premise'] ? 'customer' : 'partner';
         if ($request->has('address')) {
             $data['address'] = $request->address;
         }
