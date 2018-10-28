@@ -1,7 +1,4 @@
-<?php
-
-namespace App\Http\Route\Prefix\V2;
-
+<?php namespace App\Http\Route\Prefix\V2;
 
 class Route
 {
@@ -10,6 +7,7 @@ class Route
         $api->group(['prefix' => 'v2', 'namespace' => 'App\Http\Controllers'], function ($api) {
             $api->post('subscription', 'PushSubscriptionController@store');
             $api->get('car-rental-info', 'ShebaController@sendCarRentalInfo');
+            $api->get('payments', 'ShebaController@getPayments');
             $api->get('butcher-info', 'ShebaController@sendButcherInfo');
             $api->post('service-requests', 'ServiceRequestController@store');
             $api->post('transactions/{transactionID}', 'ShebaController@checkTransactionStatus');
@@ -23,6 +21,7 @@ class Route
                 $api->post('validate', 'WalletController@validatePayment');
                 $api->get('faqs', 'WalletController@getFaqs');
             });
+
             $api->group(['prefix' => 'faqs'], function ($api) {
                 $api->get('order', 'JobController@getFaqs');
             });
@@ -75,6 +74,9 @@ class Route
                     $api->get('reviews', 'CategoryController@getReviews');
                     $api->get('locations/{location}/partners', 'CategoryController@getPartnersOfLocation');
                 });
+            });
+            $api->group(['prefix' => 'services'], function ($api) {
+                $api->get('', 'ServiceController@index');
             });
             $api->group(['prefix' => 'locations'], function ($api) {
                 $api->get('{location}/partners', 'PartnerController@findPartners');

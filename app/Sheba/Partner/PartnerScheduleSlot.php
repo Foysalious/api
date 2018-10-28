@@ -91,9 +91,17 @@ class PartnerScheduleSlot
 
     private function getLeavesBetween($start, $end)
     {
-        $leaves = $this->partner->leaves()->select('id', 'partner_id', 'start', 'end')->where('start', '>=', $start)->Where(function ($q) use ($end) {
-            $q->where('end', '<=', $end)->orWhere('end', null);
-        })->get();
+        $leaves = $this->partner->leaves()->select('id', 'partner_id', 'start', 'end')
+            ->where(function ($q) use ($start) {
+                $q->where('start', '<=', $start)->where(function ($q) use ($start) {
+                    $q->where('end', '>=', $start)->orWhere('end', null);
+                });
+            })
+            ->where(function ($q) use ($end) {
+                $q->where('start', '<=', $end)->where(function ($q) use ($end) {
+                    $q->where('end', '>=', $end)->orWhere('end', null);
+                });
+            })->get();
         return $leaves->count() > 0 ? $leaves : null;
     }
 
@@ -118,10 +126,10 @@ class PartnerScheduleSlot
             $isToday = $day->isToday();
             foreach ($this->shebaSlots as $slot) {
                 $slot_start_time = Carbon::parse($date_string . ' ' . $slot->start);
-                if ($this->isBetweenAnyLeave($slot_start_time) || ($isToday && ($slot_start_time < $day))) {
+                if (!($slot_start_time->gte($working_hour_start_time) && $slot_start_time->lte($working_hour_end_time)) || $this->isBetweenAnyLeave($slot_start_time) || ($isToday && ($slot_start_time < $day))) {
                     $slot['is_available'] = 0;
                 } else {
-                    $is_available = (int)($working_hour_end_time->notEqualTo($slot_start_time) && $slot_start_time->between($working_hour_start_time, $working_hour_end_time, true));
+                    $is_available = ($working_hour_end_time->notEqualTo($slot_start_time) && $slot_start_time->between($working_hour_start_time, $working_hour_end_time, true));
                     $slot['is_available'] = $is_available ? 1 : 0;
                 }
             }
@@ -161,7 +169,7 @@ class PartnerScheduleSlot
                 $end_time = Carbon::parse($date_string . ' ' . $slot->end)->addMinutes($this->category->book_resource_minutes);
                 $booked_resources = collect();
                 foreach ($bookedSchedules as $booked_schedule) {
-                    if ($booked_schedule->start->gte($start_time) || $booked_schedule->end->lte($end_time)) $booked_resources->push($booked_schedule->resource_id);
+                    if ($this->hasBookedSchedule($booked_schedule, $start_time, $end_time)) $booked_resources->push($booked_schedule->resource_id);
                 }
                 $is_available = (int)$total_resources > $booked_resources->unique()->count();
                 $slot['is_available'] = $is_available ? 1 : 0;
@@ -184,5 +192,14 @@ class PartnerScheduleSlot
             $slot['is_valid'] = $start > $current_time ? 1 : 0;
         }
         return $slots;
+    }
+
+    private function hasBookedSchedule($booked_schedule, $start_time, $end_time)
+    {
+        return $booked_schedule->start->gt($start_time) && $booked_schedule->start->lt($end_time) ||
+            $booked_schedule->end->gt($start_time) && $booked_schedule->end->lt($end_time) ||
+            $booked_schedule->start->lt($start_time) && $booked_schedule->end->gt($start_time) ||
+            $booked_schedule->start->lt($end_time) && $booked_schedule->end->gt($end_time) ||
+            $booked_schedule->start->eq($end_time) && $booked_schedule->end->eq($end_time);
     }
 }

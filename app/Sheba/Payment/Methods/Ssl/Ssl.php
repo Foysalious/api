@@ -38,7 +38,7 @@ class Ssl extends PaymentMethod
 
     public function init(Payable $payable): Payment
     {
-        $invoice = "SHEBA_SSL_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . Carbon::now()->timestamp;
+        $invoice = "SHEBA_SSL_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, 1, 1);
         $data = array();
         $data['store_id'] = $this->storeId;
         $data['store_passwd'] = $this->storePassword;

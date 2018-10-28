@@ -9,12 +9,10 @@ use App\Models\Job;
 use App\Models\OfferShowcase;
 use App\Models\Payment;
 use App\Models\Resource;
-use App\Models\ScheduleSlot;
 use App\Models\Service;
 use App\Models\Slider;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
-use Carbon\Carbon;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
@@ -67,7 +65,12 @@ class ShebaController extends Controller
     public function getImages(Request $request)
     {
         try {
-            $images = Slider::select('id', 'image_link', 'small_image_link', 'target_link', 'target_type', 'target_id')->show();
+            $images = Slider::select('id', 'image_link', 'small_image_link', 'target_link', 'target_type', 'target_id');
+            if ($request->has('business')) {
+                $images = $images->showBusiness();
+            } else {
+                $images = $images->show();
+            }
             return count($images) > 0 ? api_response($request, $images, 200, ['images' => $images]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
@@ -87,63 +90,6 @@ class ShebaController extends Controller
     public function getLeadRewardAmount()
     {
         return response()->json(['code' => 200, 'amount' => constants('AFFILIATION_REWARD_MONEY')]);
-    }
-
-    public function getTimeSlots(Request $request)
-    {
-        try {
-            $this->validate($request, [
-                'for' => 'sometimes|required|string|in:app',
-            ]);
-            $slots = ScheduleSlot::where([
-                ['start', '>=', DB::raw("CAST('09:00:00' As time)")],
-                ['end', '<=', DB::raw("CAST('21:00:00' As time)")],
-            ])->get();
-            if ($request->has('for')) {
-                $sheba_slots = $this->getShebaSlots($slots);
-                return api_response($request, $sheba_slots, 200, ['times' => $sheba_slots]);
-            }
-            $time_slots = $valid_time_slots = [];
-            $current_time = Carbon::now();
-            foreach ($slots as $slot) {
-                $slot_start_time = Carbon::parse($slot->start);
-                $slot_end_time = Carbon::parse($slot->end);
-                $time_slot_key = $slot->start . '-' . $slot->end;
-                $time_slot_value = $slot_start_time->format('g:i A') . '-' . $slot_end_time->format('g:i A');
-                if ($slot_start_time > $current_time) {
-                    $valid_time_slots[$time_slot_key] = $time_slot_value;
-                }
-                $time_slots[$time_slot_key] = $time_slot_value;
-            }
-            $result = ['times' => $time_slots, 'valid_times' => $valid_time_slots];
-            return api_response($request, $result, 200, $result);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
-    private function getShebaSlots($slots)
-    {
-        $sheba_slots = [];
-        $current_time = Carbon::now();
-        foreach ($slots as $slot) {
-            $slot_start_time = Carbon::parse($slot->start);
-            $slot_end_time = Carbon::parse($slot->end);
-            $isValid = 0;
-            if ($slot_start_time > $current_time) {
-                $isValid = 1;
-            }
-            array_push($sheba_slots, array(
-                'key' => $slot->start . '-' . $slot->end,
-                'value' => $slot_start_time->format('g:i A') . '-' . $slot_end_time->format('g:i A'),
-                'isValid' => $isValid
-            ));
-        }
-        return $sheba_slots;
     }
 
     public function getVersions(Request $request)
@@ -252,23 +198,6 @@ class ShebaController extends Controller
             } else {
                 return api_response($request, 1, 200, ['info' => $info]);
             }
-//            $class_name = "App\\Models\\" . ucwords($request->user_type);
-//            $user = $class_name::where([['id', (int)$request->user_id], ['remember_token', $request->remember_token]])->first();
-//            if (!$user) return api_response($request, null, 404, ['message' => 'User Not found.']);
-//            if ($request->paycharge_type == 'recharge') $pay_charged = (new RechargeAdapter($user, $transactionID))->getPayCharged();
-//            else {
-//                $job = Job::find((int)$request->job_id);
-//                $pay_charged = (new OrderAdapter($job->partnerOrder, $transactionID))->getPayCharged();
-//            }
-//            $paycharge = new ShebaPayment($request->payment_method);
-//            if ($response = $paycharge->isComplete($pay_charged)) {
-//                return api_response($request, 1, 200, ['info' => array('amount' => $response->amount)]);
-//            } elseif ($pay_charged = $paycharge->isCompleteByMethods($pay_charged)) {
-//                return api_response($request, 1, 200, ['info' => array('amount' => $pay_charged->amount),
-//                    'message' => 'Your payment has been received but there was a system error. It will take some time to update your order. Call 16516 for support.']);
-//            } else {
-//                return api_response($request, null, 404);
-//            }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
@@ -280,4 +209,45 @@ class ShebaController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function getPayments(Request $request)
+    {
+        try {
+            $payments = array(
+                array(
+                    'name' => 'Sheba Credit',
+                    'is_published' => 1,
+                    'description' => '15% Credit Bonus',
+                    'asset' => 'sheba_credit',
+                    'method_name' => 'wallet'
+                ),
+                array(
+                    'name' => 'bKash Payment',
+                    'is_published' => 1,
+                    'description' => '',
+                    'asset' => 'bkash',
+                    'method_name' => 'bkash'
+                ),
+                array(
+                    'name' => 'City Bank',
+                    'is_published' => 0,
+                    'description' => '20% CashBack',
+                    'asset' => 'cbl',
+                    'method_name' => 'cbl'
+                ),
+                array(
+                    'name' => 'Other Debit/Credit',
+                    'is_published' => 1,
+                    'description' => '',
+                    'asset' => 'ssl',
+                    'method_name' => 'online'
+                )
+            );
+            return api_response($request, $payments, 200, ['payments' => $payments]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
 }

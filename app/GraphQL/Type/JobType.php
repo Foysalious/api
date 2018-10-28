@@ -38,12 +38,24 @@ class JobType extends GraphQlType
             'order' => ['type' => GraphQL::type('Order')],
             'complains' => ['type' => Type::listOf(GraphQL::type('Complain'))],
             'hasComplain' => ['type' => Type::int()],
+            'is_home_delivery' => ['type' => Type::int()],
+            'is_on_premise' => ['type' => Type::int()]
         ];
     }
 
     protected function resolveCompletedAtField($root, $args)
     {
         return $root->delivered_date ? $root->delivered_date->format('M jS, Y') : null;
+    }
+
+    protected function resolveIsHomeDeliveryField($root, $args)
+    {
+        return $root->site == 'customer' ? 1 : 0;
+    }
+
+    protected function resolveIsOnPremiseField($root, $args)
+    {
+        return $root->site == 'partner' ? 1 : 0;
     }
 
     protected function resolveCompletedAtTimestampField($root, $args)

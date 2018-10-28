@@ -1,6 +1,4 @@
-<?php
-
-namespace Sheba\Payment\Factory;
+<?php namespace Sheba\Payment\Factory;
 
 class PaymentStrategy
 {
@@ -9,4 +7,5 @@ class PaymentStrategy
     public static $ONLINE = "online";
     public static $WALLET = "wallet";
     public static $CBL = "cbl";
+    public static $PARTNER_WALLET = "partner_wallet";
 }

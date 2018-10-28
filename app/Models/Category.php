@@ -83,4 +83,9 @@ class Category extends Model
     {
         return (double)($this->partners()->wherePivot('partner_id', $partner_id)->first())->pivot->commission;
     }
+
+    public function scopePublishedForBusiness($query)
+    {
+        return $query->where('is_published_for_business', 1);
+    }
 }

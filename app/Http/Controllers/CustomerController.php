@@ -80,7 +80,8 @@ class CustomerController extends Controller
                 $this->validate($request, [
                     'value' => 'required|string'
                 ]);
-                $profile->$field = trim($request->value);
+                $value = $field == 'name' ? ucwords($request->value) : $request->value;
+                $profile->$field = trim($value);
             }
             $profile->update();
             return api_response($request, 1, 200);
