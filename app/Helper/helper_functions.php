@@ -122,6 +122,7 @@ if (!function_exists('formatMobile')) {
         }
     }
 }
+
 if (!function_exists('getOriginalMobileNumber')) {
     /**
      * Format Mobile number with +88 .
@@ -145,6 +146,7 @@ if (!function_exists('getOriginalMobileNumber')) {
         }
     }
 }
+
 if (!function_exists('isEmailValid')) {
     /**
      * Email formatting check.
@@ -223,7 +225,6 @@ if (!function_exists('removeRelationsFromModel')) {
     }
 }
 
-
 if (!function_exists('removeRelationsAndFields')) {
     function removeRelationsAndFields($model, array $columns_to_remove = [])
     {
@@ -232,6 +233,7 @@ if (!function_exists('removeRelationsAndFields')) {
         return $model;
     }
 }
+
 if (!function_exists('removeSelectedFieldsFromModel')) {
 
     function removeSelectedFieldsFromModel($model, array $columns_to_remove = [])
@@ -248,6 +250,7 @@ if (!function_exists('removeSelectedFieldsFromModel')) {
         return $model;
     }
 }
+
 if (!function_exists('getValidationErrorMessage')) {
     function getValidationErrorMessage($errors)
     {
@@ -356,9 +359,23 @@ if (!function_exists('indexedArrayToAssociativ')) {
         return array_combine(array_values($key), array_values($value));
     }
 }
+
 if (!function_exists('dispatchReward')) {
     function dispatchReward()
     {
         return app(ActionRewardDispatcher::class);
+    }
+}
+
+if (!function_exists('getSalesChannels')) {
+    /**
+     * Return Sales channel associative column (default to name).
+     *
+     * @param $key = The result column
+     * @return Array
+     */
+    function getSalesChannels($key = 'name')
+    {
+        return array_combine(array_keys(constants('SALES_CHANNELS')), array_column(constants('SALES_CHANNELS'), $key));
     }
 }
