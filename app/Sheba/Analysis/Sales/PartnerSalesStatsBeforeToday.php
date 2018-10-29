@@ -19,6 +19,7 @@ class PartnerSalesStatsBeforeToday extends SalesStatsBeforeToday
     protected function calculateFromDB()
     {
         $data = $this->partner->dailyStats;
+        unset($this->partner);
         $year_data = collect([]);
         $month_data = collect([]);
         $week_data = collect([]);

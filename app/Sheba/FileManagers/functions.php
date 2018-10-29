@@ -309,6 +309,17 @@ if (!function_exists('getPartnerLogoFolder')) {
     }
 }
 
+if (!function_exists('getPartnerPackageFolder')) {
+
+    function getPartnerPackageFolder($with_base_url = false)
+    {
+        $url = '';
+        if($with_base_url)
+            $url = env('S3_URL');
+        return $url . 'images/partners/package/';
+    }
+}
+
 if (!function_exists('getPartnerDefaultLogo')) {
 
     /**
@@ -404,6 +415,18 @@ if (!function_exists('getResourceNIDFolder')) {
             $url = env('S3_URL');
 
         return $url . 'images/resources/nid/';
+    }
+}
+
+if (!function_exists('getPushNotificationFolder')) {
+
+    function getPushNotificationFolder($with_base_url = false)
+    {
+        $url = '';
+        if($with_base_url)
+            $url = env('S3_URL');
+
+        return $url . 'images/push_notification/';
     }
 }
 

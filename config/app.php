@@ -167,7 +167,7 @@ return [
 
         App\Providers\CustomValidatorProvider::class,
         Sheba\Dal\Providers\RepositoriesServiceProvider::class,
-
+        Sheba\Notification\NotificationServiceProvider::class
     ],
 
     /*

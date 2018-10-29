@@ -1,6 +1,7 @@
 <?php
 
 use Carbon\Carbon;
+use Sheba\Reward\ActionRewardDispatcher;
 
 if (!function_exists('setTrace')) {
 
@@ -17,23 +18,7 @@ if (!function_exists('setTrace')) {
         print_r($data);
         echo "</pre><hr>";
 
-        if ($die)
-            exit;
-    }
-}
-
-if (!function_exists('clean')) {
-    /**
-     * Clean a string from all special characters.
-     *
-     * @param String $string
-     * @return App\Models\Partner
-     */
-    function clean($string)
-    {
-        $string = str_replace(' ', '-', $string); // Replaces all spaces with hyphens.
-        $string = preg_replace('/[^A-Za-z0-9\-]/', '', $string); // Removes special chars.
-        return preg_replace('/-+/', '-', $string); // Replaces multiple hyphens with single one.
+        if ($die) exit;
     }
 }
 
@@ -83,14 +68,10 @@ if (!function_exists('randomString')) {
         $numbers = "0123456789";
         $special_characters = "!@#$%^&*()_-+=}{][|:;.,/?";
         $characters = "";
-        if ($num)
-            $characters .= $numbers;
-        if ($alpha)
-            $characters .= $alphabets;
-        if ($spec_char)
-            $characters .= $special_characters;
-        if (!$num && !$alpha && !$spec_char)
-            $characters .= $numbers . $alphabets . $special_characters;
+        if ($num) $characters .= $numbers;
+        if ($alpha) $characters .= $alphabets;
+        if ($spec_char) $characters .= $special_characters;
+        if (!$num && !$alpha && !$spec_char) $characters .= $numbers . $alphabets . $special_characters;
         $rand_string = '';
         for ($i = 0; $i < $len; $i++) {
             $rand_string .= $characters[mt_rand(0, strlen($characters) - 1)];
@@ -127,6 +108,8 @@ if (!function_exists('formatMobile')) {
      */
     function formatMobile($number)
     {
+        $number = str_replace(" ", "", $number);
+        $number = str_replace("-", "", $number);
         // mobile starts with '+88'
         if (preg_match("/^(\+88)/", $number)) {
             return $number;
@@ -136,6 +119,30 @@ if (!function_exists('formatMobile')) {
         } // real mobile no add '+880' at the start
         else {
             return '+88' . $number;
+        }
+    }
+}
+
+if (!function_exists('getOriginalMobileNumber')) {
+    /**
+     * Format Mobile number with +88 .
+     *
+     * @param  $number
+     * @return string
+     */
+    function getOriginalMobileNumber($number)
+    {
+        $number = str_replace(" ", "", $number);
+        $number = str_replace("-", "", $number);
+        // mobile starts with '+88'
+        if (preg_match("/^(\+88)/", $number)) {
+            return substr($number, 3);
+        } // when mobile starts with '88' replace it with '+880'
+        elseif (preg_match("/^(88)/", $number)) {
+            return substr($number, 2);
+        } // real mobile no add '+880' at the start
+        else {
+            return $number;
         }
     }
 }
@@ -175,8 +182,36 @@ if (!function_exists('calculatePagination')) {
     function calculatePagination($request)
     {
         $offset = $request->has('offset') ? $request->offset : 0;
-        $limit = $request->has('limit') ? $request->limit : 30;
+        $limit = $request->has('limit') ? $request->limit : 50;
         return array($offset, $limit);
+    }
+}
+
+if (!function_exists('createAuthorWithType')) {
+    function createAuthorWithType($author)
+    {
+        $data = createAuthor($author);
+        $data['created_by_type'] = "App\Models\\" . class_basename($author);
+        return $data;
+    }
+}
+
+if (!function_exists('createAuthor')) {
+    function createAuthor($author)
+    {
+        $data = [];
+        $data['created_by'] = $author->id;
+        $data['created_by_name'] = class_basename($author) . " - " . ($author->profile != null ? $author->profile->name : $author->name);
+        return $data;
+    }
+}
+
+if (!function_exists('updateAuthor')) {
+    function updateAuthor($model, $author)
+    {
+        $model->updated_by = $author->id;
+        $model->updated_by_name = class_basename($author) . " - " . ($author->profile != null ? $author->profile->name : $author->name);
+        return $model;
     }
 }
 
@@ -190,9 +225,18 @@ if (!function_exists('removeRelationsFromModel')) {
     }
 }
 
+if (!function_exists('removeRelationsAndFields')) {
+    function removeRelationsAndFields($model, array $columns_to_remove = [])
+    {
+        removeRelationsFromModel($model);
+        $model = removeSelectedFieldsFromModel($model, $columns_to_remove);
+        return $model;
+    }
+}
+
 if (!function_exists('removeSelectedFieldsFromModel')) {
 
-    function removeSelectedFieldsFromModel($model)
+    function removeSelectedFieldsFromModel($model, array $columns_to_remove = [])
     {
         array_forget($model, 'created_by');
         array_forget($model, 'updated_by');
@@ -200,14 +244,9 @@ if (!function_exists('removeSelectedFieldsFromModel')) {
         array_forget($model, 'created_by_name');
         array_forget($model, 'updated_by_name');
         array_forget($model, 'remember_token');
-    }
-}
-
-if (!function_exists('removeRelationsAndFields')) {
-    function removeRelationsAndFields($model)
-    {
-        removeRelationsFromModel($model);
-        removeSelectedFieldsFromModel($model);
+        foreach ($columns_to_remove as $column) {
+            array_forget($model, $column);
+        }
         return $model;
     }
 }
@@ -247,6 +286,7 @@ if (!function_exists('floatValFormat')) {
         return floatval(number_format($value, 2, '.', ''));
     }
 }
+
 if (!function_exists('humanReadableShebaTime')) {
     function humanReadableShebaTime($time)
     {
@@ -254,7 +294,106 @@ if (!function_exists('humanReadableShebaTime')) {
             return $time;
         }
         $time = explode('-', $time);
-        return (Carbon::parse($time[0]))->format('g:i A') . '-' . (Carbon::parse($time[1]))->format('g:i A');
+        return (Carbon::parse($time[0]))->format('g:i A') . (isset($time[1]) ? ('-' . (Carbon::parse($time[1]))->format('g:i A')) : '');
     }
 }
 
+if (!function_exists('clean')) {
+    function clean($string, $separator = "-", $keep = [])
+    {
+        $string = str_replace(' ', $separator, $string); // Replaces all spaces with hyphens.
+        $keep_only = "/[^A-Za-z0-9";
+        foreach ($keep as $item) {
+            $keep_only .= "$item";
+        }
+        $keep_only .= (($separator == '-') ? '\-' : "_");
+        $keep_only .= "]/";
+
+        $string = preg_replace($keep_only, '', $string); // Removes special chars.
+        return preg_replace("/$separator+/", $separator, $string); // Replaces multiple hyphens with single one.
+    }
+}
+
+if (!function_exists('ordinal')) {
+    /**
+     * Ordinal numbers refer to a position in a series.
+     *
+     * @param $number = any natural number
+     * @return String
+     */
+    function ordinal($number)
+    {
+        $ends = array('th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th');
+        if ((($number % 100) >= 11) && (($number % 100) <= 13)) return $number . 'th';
+        else return $number . $ends[$number % 10];
+    }
+}
+
+if (!function_exists('findStartEndDateOfAMonth')) {
+    /**
+     * @param $month
+     * @param $year
+     * @return array
+     */
+    function findStartEndDateOfAMonth($month = null, $year = null)
+    {
+        if ($month == 0 && $year != 0) {
+            $start_time = \Carbon\Carbon::now()->year($year)->month(1)->day(1)->hour(0)->minute(0)->second(0);
+            $end_time = \Carbon\Carbon::now()->year($year)->month(12)->day(31)->hour(23)->minute(59)->second(59);
+            return ['start_time' => $start_time, 'end_time' => $end_time, 'days_in_month' => 31];
+        } else {
+            if (empty($month)) $month = \Carbon\Carbon::now()->month;
+            if (empty($year)) $year = \Carbon\Carbon::now()->year;
+            $days_in_month = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+            $start_time = \Carbon\Carbon::now()->year($year)->month($month)->day(1)->hour(0)->minute(0)->second(0);
+            $end_time = \Carbon\Carbon::now()->year($year)->month($month)->day($days_in_month)->hour(23)->minute(59)->second(59);
+            return ['start_time' => $start_time, 'end_time' => $end_time, 'days_in_month' => $days_in_month];
+        }
+    }
+}
+
+if (!function_exists('en2bnNumber')) {
+    /**
+     * @param  $number
+     * @return string
+     */
+    function en2bnNumber($number)
+    {
+        $search_array = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
+        $replace_array = ["১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯", "০"];
+
+        return str_replace($search_array, $replace_array, $number);
+    }
+}
+
+if (!function_exists('indexedArrayToAssociativ')) {
+    /**
+     * @param $key
+     * @param $value
+     * @return array
+     */
+    function indexedArrayToAssociative($key, $value)
+    {
+        return array_combine(array_values($key), array_values($value));
+    }
+}
+
+if (!function_exists('dispatchReward')) {
+    function dispatchReward()
+    {
+        return app(ActionRewardDispatcher::class);
+    }
+}
+
+if (!function_exists('getSalesChannels')) {
+    /**
+     * Return Sales channel associative column (default to name).
+     *
+     * @param $key = The result column
+     * @return Array
+     */
+    function getSalesChannels($key = 'name')
+    {
+        return array_combine(array_keys(constants('SALES_CHANNELS')), array_column(constants('SALES_CHANNELS'), $key));
+    }
+}

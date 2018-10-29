@@ -1,28 +1,49 @@
 <?php namespace Sheba\FileManagers;
 
 use Illuminate\Support\Facades\Storage;
-use App\Jobs\FileUploadToS3;
 
 trait CdnFileManager
 {
     protected function saveImageToCDN($file, $folder, $filename)
     {
-        $s3 = Storage::disk('s3');
-        $filename = clean($filename, '_', ['.']);
-        $s3->put($folder . $filename, (string)$file, 'public');
-        return config('sheba.s3_url') . $folder . $filename;
+        return $this->putFileToCDNAndGetPath((string)$file, $folder, $filename);
     }
 
     protected function saveFileToCDN($file, $folder, $filename)
     {
-        $filename = clean($filename, '_', ['.']);
-        //dispatch(new FileUploadToS3($folder . $filename, file_get_contents($file), 'public'));
-        Storage::disk('s3')->put($folder . $filename, file_get_contents($file), 'public');
-        return config('sheba.s3_url') . $folder . $filename;
+        return $this->putFileToCDNAndGetPath(file_get_contents($file), $folder, $filename);
+    }
+
+    protected function savePrivateFileToCDN($file, $folder, $filename)
+    {
+        return $this->putFileToCDNAndGetPath(file_get_contents($file), $folder, $filename, 'private');
     }
 
     protected function deleteImageFromCDN($filename)
     {
-        Storage::disk('s3')->delete($filename);
+        $this->deleteFileFromCDN($filename);
+    }
+
+    protected function deleteFileFromCDN($filename)
+    {
+        $this->getCDN()->delete($filename);
+    }
+
+    private function putFileToCDNAndGetPath($file, $folder, $filename, $access_level = "public")
+    {
+        $filename = clean($filename, '_', ['.', '-']);
+        $filename = $folder . $filename;
+        $cdn = $this->getCDN();
+        if($access_level == "private") {
+            $cdn->put($filename, $file);
+        } else {
+            $cdn->put($filename, $file, 'public');
+        }
+        return config('sheba.s3_url') . $filename;
+    }
+
+    private function getCDN()
+    {
+        return Storage::disk('s3');
     }
 }

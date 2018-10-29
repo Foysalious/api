@@ -9,8 +9,6 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Contracts\Validation\ValidationException;
 use Illuminate\Http\Request;
-
-use App\Http\Requests;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
@@ -47,19 +45,28 @@ class LocationController extends Controller
 
     public function getAllLocations(Request $request)
     {
+        try {
+            if (($request->hasHeader('Portal-Name') && $request->header('Portal-Name') == 'manager-app') || ($request->has('for') && $request->for == 'partner')) {
+                $locations = Location::select('id', 'name')->where('is_published_for_partner', 1)->orderBy('name')->get();
+                return response()->json(['locations' => $locations, 'code' => 200, 'msg' => 'successful']);
+            }
+            $locations = Location::select('id', 'name')->where([
+                ['name', 'NOT LIKE', '%Rest%'],
+                ['publication_status', 1]
+            ])->orderBy('name')->get();
 
-        $locations = Location::select('id', 'name')->where([
-            ['name', 'NOT LIKE', '%Rest%'],
-            ['publication_status', 1]
-        ])->orderBy('name')->get();
+            Location::select('id', 'name')->where([
+                ['name', 'LIKE', '%Rest%'],
+                ['publication_status', 1]
+            ])->get()->each(function ($location, $key) use ($locations) {
+                $locations->push($location);
+            });
+            return response()->json(['locations' => $locations, 'code' => 200, 'msg' => 'successful']);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
 
-        Location::select('id', 'name')->where([
-            ['name', 'LIKE', '%Rest%'],
-            ['publication_status', 1]
-        ])->get()->each(function ($location, $key) use ($locations) {
-            $locations->push($location);
-        });
-        return response()->json(['locations' => $locations, 'code' => 200, 'msg' => 'successful']);
     }
 
     public function getCurrent(Request $request)

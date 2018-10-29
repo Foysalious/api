@@ -2,11 +2,16 @@
 
 namespace App\Models;
 
+use App\Sheba\Payment\Rechargable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Sheba\Payment\Wallet;
+use Sheba\Reward\Rewardable;
 use Sheba\Voucher\VoucherCodeGenerator;
 
-class Customer extends Authenticatable
+class Customer extends Authenticatable implements Rechargable, Rewardable
 {
+    use Wallet;
+
     protected $fillable = [
         'name',
         'mobile',
@@ -19,6 +24,7 @@ class Customer extends Authenticatable
         'gender',
         'dob',
         'pro_pic',
+        'wallet',
         'created_by',
         'created_by_name',
         'updated_by',
@@ -30,6 +36,7 @@ class Customer extends Authenticatable
     protected $hidden = [
         'password', 'remember_token',
     ];
+    protected $casts = ['wallet' => 'double'];
 
     public function mobiles()
     {
@@ -49,6 +56,11 @@ class Customer extends Authenticatable
     public function reviews()
     {
         return $this->hasMany(Review::class);
+    }
+
+    public function customerReviews()
+    {
+        return $this->hasMany(CustomerReview::class);
     }
 
     public function profile()
@@ -123,6 +135,11 @@ class Customer extends Authenticatable
         return $this->morphMany(Notification::class, 'notifiable');
     }
 
+    public function pushSubscriptions()
+    {
+        return $this->morphMany(PushSubscription::class, 'subscriber');
+    }
+
     public function favorites()
     {
         return $this->hasMany(CustomerFavorite::class);
@@ -132,4 +149,25 @@ class Customer extends Authenticatable
     {
         return $this->hasManyThrough(PartnerOrder::class, Order::class);
     }
+
+    public function transactions()
+    {
+        return $this->hasMany(CustomerTransaction::class);
+    }
+
+    public function bonuses()
+    {
+        return $this->morphMany(Bonus::class, 'user');
+    }
+
+    public function shebaCredit()
+    {
+        return $this->wallet + $this->shebaBonusCredit();
+    }
+
+    public function shebaBonusCredit()
+    {
+        return (double)$this->bonuses()->where('status', 'valid')->sum('amount');
+    }
+
 }

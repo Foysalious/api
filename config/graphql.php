@@ -89,6 +89,7 @@ return [
         'view' => 'graphql::graphiql',
         'composer' => \Folklore\GraphQL\View\GraphiQLComposer::class,
     ],
+//    'graphiql' => null,
 
     /*
      * The name of the default schema used when no arguments are provided
@@ -199,6 +200,7 @@ return [
         'App\GraphQL\Type\UspType',
         'App\GraphQL\Type\LocationType',
         'App\GraphQL\Type\DeliveryAddressType',
+        'App\GraphQL\Type\OrderMessageType',
     ],
 
     /*

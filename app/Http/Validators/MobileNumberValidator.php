@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Validators;
+<?php namespace App\Http\Validators;
 
 use App\Helper\BangladeshiMobileValidator;
 

@@ -27,6 +27,7 @@ class CustomerType extends GraphQlType
             'created_at_timestamp' => ['type' => Type::string()],
             'referral_code' => ['type' => Type::string()],
             'user_hash' => ['type' => Type::string()],
+            'credit' => ['type' => Type::float()],
             'addresses' => ['type' => Type::listOf(GraphQL::type('Address'))],
             'profile' => ['type' => GraphQL::type('Profile')],
             'orders' => [
@@ -43,6 +44,11 @@ class CustomerType extends GraphQlType
     protected function resolveAddressesField($root, $args)
     {
         return $root->delivery_addresses;
+    }
+
+    protected function resolveCreditField($root, $args)
+    {
+        return $root->shebaCredit();
     }
 
     protected function resolveAddressField($root, $args)
@@ -111,17 +117,40 @@ class CustomerType extends GraphQlType
         } else {
             list($offset, $limit) = calculatePagination(\request());
         }
-        $root->load(['partnerOrders' => function ($q) use ($filter, $offset, $limit) {
-            if ($filter) {
-                $q->$filter();
-            }
-            $q->skip($offset)->take($limit)->orderBy('id', 'desc')->with(['partner', 'order' => function ($q) {
-                $q->with('location', 'customer');
-            }, 'jobs' => function ($q) {
-                $q->with(['category', 'usedMaterials', 'jobServices']);
-            }]);
+        $root->load(['orders' => function ($q) use ($filter, $offset, $limit) {
+            $q->select('id', 'customer_id', 'location_id', 'sales_channel', 'delivery_name', 'delivery_mobile', 'delivery_address', 'created_at')->orderBy('id', 'desc')->skip($offset)->take($limit)
+                ->with(['location', 'customer.profile', 'partnerOrders' => function ($q) use ($filter, $offset, $limit) {
+                    if ($filter) {
+                        $q->$filter();
+                    }
+                    $q->with(['partner', 'jobs' => function ($q) {
+                        $q->with(['statusChangeLogs', 'complains', 'category', 'usedMaterials', 'jobServices.service', 'review', 'resource.profile']);
+                    }]);
+                }]);
         }]);
-        return $root->partnerOrders;
+        $orders = $root->orders;
+        $final = [];
+        foreach ($orders as $order) {
+            $partnerOrders = $order->partnerOrders;
+            $cancelled_partnerOrders = $partnerOrders->filter(function ($o) {
+                return $o->cancelled_at != null;
+            })->sortByDesc('cancelled_at');
+            $not_cancelled_partnerOrders = $partnerOrders->filter(function ($o) {
+                return $o->cancelled_at == null;
+            })->sortByDesc('id');
+            $partnerOrder = $not_cancelled_partnerOrders->count() == 0 ? $cancelled_partnerOrders->first() : $not_cancelled_partnerOrders->first();
+            $partnerOrder['order'] = $order;
+            array_push($final, $partnerOrder);
+        }
+        $final = collect($final);
+        $cancelled_served_partnerOrders = $final->filter(function ($order) {
+            return $order->cancelled_at != null || $order->closed_at != null;
+        });
+        $others = $final->filter(function ($order) {
+            return $order->cancelled_at == null && $order->closed_at == null;
+        });
+        $final = $others->merge($cancelled_served_partnerOrders)->values()->all();
+        return $final;
     }
 
 }

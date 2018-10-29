@@ -36,25 +36,54 @@ class PartnerOrderRepository
             $job['partner_order'] = $partner_order;
             $job = $this->partnerJobRepository->getJobInfo($job);
             $services = [];
-            $job->jobServices->each(function ($job_service) use (&$services) {
-                array_push($services, $this->partnerJobRepository->getJobServiceInfo($job_service));
+            $job->jobServices->each(function ($job_service) use (&$services, $job) {
+                $info = $this->partnerJobRepository->getJobServiceInfo($job_service);
+                $info['name'] = $job_service->formatServiceName($job);
+                $info['unit'] = $job_service->service->unit;
+                $info['discount'] = (double)$job_service->discount;
+                $info['sheba_contribution'] = (double)$job_service->sheba_contribution;
+                $info['partner_contribution'] = (double)$job_service->partner_contribution;
+                $info['sheba_contribution_amount'] = round(($info['discount'] * $info['sheba_contribution']) / 100, 2);
+                $info['partner_contribution_amount'] = round(($info['discount'] * $info['partner_contribution']) / 100, 2);
+                array_push($services, $info);
             });
 
             $job['category_name'] = $job->category ? $job->category->name : null;
+            $job['complains'] = app('Sheba\Dal\Complain\EloquentImplementation')->jobWiseComplainInfo($job->id);
+            if (!$job['complains']->isEmpty()) {
+                $order = $job->partnerOrder->order;
+                $complain_additional_info = [
+                    'order_code' => $order->code(),
+                    'order_id' => $order->id,
+                    'customer_name' => $order->customer->profile->name,
+                    'customer_profile_picture' => $order->customer->profile->pro_pic,
+                    'schedule_date_and_time' => humanReadableShebaTime($job->preferred_time) . ', ' . Carbon::parse($job->schedule_date)->toFormattedDateString(),
+                    'category' => $job->category->name,
+                    'location' => $order->location->name,
+                    'resource' => $job->resource ? $job->resource->profile->name : 'N/A',
+                ];
+
+                foreach ($job['complains'] as $key => $complain) {
+                    $complain_additional_info['created_at'] = $complain['created_at']->format('jS F, Y');
+                    $job['complains'][$key] = array_merge($complain, $complain_additional_info);
+                }
+            }
             removeRelationsAndFields($job);
             $job['services'] = $services;
-
-            $job['pick_up_address']     = $job->carRentalJobDetail ? $job->carRentalJobDetail->pick_up_address : null;
+            $job['preferred_time'] = humanReadableShebaTime($job->preferred_time);
+            $job['pick_up_address'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->pick_up_address : null;
             $job['destination_address'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->destination_address : null;
-            $job['drop_off_date']       = $job->carRentalJobDetail ? Carbon::parse($job->carRentalJobDetail->drop_off_date)->format('jS F, Y') : null;
-            $job['drop_off_time']       = $job->carRentalJobDetail ? Carbon::parse($job->carRentalJobDetail->drop_off_time)->format('g:i A') : null;
-            $job['estimated_distance']  = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_distance : null;
-            $job['estimated_time']      = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_time : null;
+            $job['drop_off_date'] = $job->carRentalJobDetail ? Carbon::parse($job->carRentalJobDetail->drop_off_date)->format('jS F, Y') : null;
+            $job['drop_off_time'] = $job->carRentalJobDetail ? Carbon::parse($job->carRentalJobDetail->drop_off_time)->format('g:i A') : null;
+            $job['estimated_distance'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_distance : null;
+            $job['estimated_time'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_time : null;
 
             array_forget($job, ['partner_order', 'carRentalJobDetail']);
+
         })->values()->all();
         removeRelationsAndFields($partner_order);
         $partner_order['jobs'] = $jobs;
+
         return $partner_order;
     }
 
@@ -79,10 +108,12 @@ class PartnerOrderRepository
             }
             $order = collect([
                 'customer_name' => $jobs[0]->partner_order->order->delivery_name,
+                'address' => $jobs[0]->partner_order->order->delivery_address,
                 'location_name' => $jobs[0]->partner_order->order->location->name,
                 'created_at' => $jobs[0]->partner_order->created_at->timestamp,
                 'created_at_readable' => $jobs[0]->partner_order->created_at->diffForHumans(),
                 'code' => $jobs[0]->partner_order->code(),
+                'is_on_premise' => $jobs[0]->site == 'partner' ? 1 : 0,
                 'id' => $jobs[0]->partner_order->id,
                 'total_price' => (double)$jobs[0]->partner_order->totalPrice,
                 'discount' => (double)$jobs[0]->partner_order->totalDiscount,
@@ -112,7 +143,9 @@ class PartnerOrderRepository
                 $q->with(['customer.profile', 'location']);
             }]);
         }]);
-        return array_slice($partner->partner_orders->each(function ($partner_order, $key) {
+        return array_slice($partner->partner_orders->filter(function ($partner_order) {
+            return is_null($partner_order->order->partner_id);
+        })->each(function ($partner_order, $key) {
             $partner_order['version'] = $partner_order->is_v2 ? 'v2' : 'v1';
             $partner_order['category_name'] = $partner_order->jobs[0]->category ? $partner_order->jobs[0]->category->name : null;
             removeRelationsAndFields($this->getInfo($partner_order));
@@ -231,14 +264,15 @@ class PartnerOrderRepository
         $partner_order['location'] = $partner_order->order->location->name;
         $partner_order['total_price'] = (double)$partner_order->totalPrice;
         $partner_order['due_amount'] = (double)$partner_order->due;
-        $partner_order['discount'] = (double)$partner_order->discount;
+        $partner_order['discount'] = (double)$partner_order->totalDiscount;
         $partner_order['sheba_collection'] = (double)$partner_order->sheba_collection;
-        $partner_order['partner_collection'] = (double)$partner_order->partner_collection;
         $partner_order['partner_collection'] = (double)$partner_order->partner_collection;
         $partner_order['finance_collection'] = (double)$partner_order->finance_collection;
         $partner_order['discount'] = (double)$partner_order->discount;
         $partner_order['total_jobs'] = count($partner_order->jobs);
         $partner_order['order_status'] = $job->status;
+        $partner_order['isRentCar'] = $job->isRentCar();
+        $partner_order['is_on_premise'] =  $job->site == 'partner' ? 1 : 0;
         return $partner_order;
     }
 

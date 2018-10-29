@@ -3,31 +3,61 @@
 return [
     'HOTLINE' => '09639 - 444 000',
     'SERVICE_VARIABLE_TYPES' => ['Fixed' => 'Fixed', 'Options' => 'Options', 'Custom' => 'Custom'],
-    'PARTNER_STATUSES' => ['Verified' => 'Verified', 'Unverified' => 'Unverified', 'Paused' => 'Paused'],
+    'PARTNER_STATUSES' => [
+        'Verified'      => 'Verified',
+        'Unverified'    => 'Unverified',
+        'Paused'        => 'Paused',
+        'Closed'        => 'Closed',
+        'Blacklisted'   => 'Blacklisted',
+        'Waiting'       => 'Waiting',
+        'Onboarded'     => 'Onboarded',
+        'Rejected'      => 'Rejected'
+    ],
+    'PARTNER_STATUSES_SHOW' => [
+        'Verified'      => ['sheba' => 'Verified', 'partner' => 'Verified', 'customer' => 'Verified'],
+        'Unverified'    => ['sheba' => 'Inactive', 'partner' => 'Inactive', 'customer' => 'Inactive'],
+        'Paused'        => ['sheba' => 'Blocked', 'partner' => 'Blocked', 'customer' => 'Blocked'],
+        'Closed'        => ['sheba' => 'Closed', 'partner' => 'Closed', 'customer' => 'Closed'],
+        'Blacklisted'   => ['sheba' => 'Blacklisted', 'partner' => 'Blacklisted', 'customer' => 'Blacklisted'],
+        'Waiting'       => ['sheba' => 'Ready to verified', 'partner' => 'Ready to verified', 'customer' => 'Ready to verified'],
+        'Onboarded'     => ['sheba' => 'Onboarded', 'partner' => 'Onboarded', 'customer' => 'Onboarded'],
+        'Rejected'      => ['sheba' => 'Rejected', 'partner' => 'Rejected', 'customer' => 'Rejected']
+    ],
     'PARTNER_LEVELS' => ['Starter', 'Intermediate', 'Advanced'],
     'PARTNER_TYPES' => ['USP', 'NSP', 'ESP'],
     'RESOURCE_TYPES' => ['Admin' => 'Admin', 'Operation' => 'Operation', 'Finance' => 'Finance', 'Handyman' => 'Handyman'],
     'JOB_STATUSES' => [
         'Pending' => 'Pending',
-        'Accepted' => 'Accepted',
-        'Declined' => 'Declined',
         'Not_Responded' => 'Not Responded',
+        'Declined' => 'Declined',
+        'Accepted' => 'Accepted',
         'Schedule_Due' => 'Schedule Due',
         'Process' => 'Process',
         'Serve_Due' => 'Serve Due',
         'Served' => 'Served',
         'Cancelled' => 'Cancelled'
     ],
+    'JOB_STATUS_SEQUENCE' => [
+        'Pending' => 1,
+        'Declined' => 1,
+        'Not Responded' => 1,
+        'Cancelled' => 0,
+        'Accepted' => 2,
+        'Schedule Due' => 3,
+        'Process' => 4,
+        'Serve Due' => 5,
+        'Served' => 6
+    ],
     'JOB_STATUSES_SHOW' => [
-        'Pending' => ['sheba' => 'Pending', 'partner' => 'Pending', 'customer' => 'Pending'],
-        'Accepted' => ['sheba' => 'Accepted', 'partner' => 'Accepted', 'customer' => 'Accepted'],
-        'Declined' => ['sheba' => 'Declined', 'partner' => 'Declined', 'customer' => 'Pending'],
-        'Not_Responded' => ['sheba' => 'Not Responded', 'partner' => 'Not Responded', 'customer' => 'Response Delay'],
-        'Schedule_Due' => ['sheba' => 'Schedule Due', 'partner' => 'Schedule Due', 'customer' => 'Behind Schedule'],
-        'Process' => ['sheba' => 'Process', 'partner' => 'Process', 'customer' => 'On Going'],
-        'Serve_Due' => ['sheba' => 'Process', 'partner' => 'Process', 'customer' => 'On Going'],
-        'Served' => ['sheba' => 'Served', 'partner' => 'Served', 'customer' => 'Served'],
-        'Cancelled' => ['sheba' => 'Cancelled', 'partner' => 'Cancelled', 'customer' => 'Cancelled']
+        'Pending' => ['sheba' => 'Pending', 'partner' => 'Pending', 'customer' => 'Order Placed'],
+        'Declined' => ['sheba' => 'Declined', 'partner' => 'Declined', 'customer' => 'Order Placed'],
+        'Not Responded' => ['sheba' => 'Not Responded', 'partner' => 'Not Responded', 'customer' => 'Order Placed'],
+        'Accepted' => ['sheba' => 'Accepted', 'partner' => 'Accepted', 'customer' => 'Order Confirmed'],
+        'Schedule Due' => ['sheba' => 'Schedule Due', 'partner' => 'Schedule Due', 'customer' => 'Order Confirmed'],
+        'Process' => ['sheba' => 'Process', 'partner' => 'Process', 'customer' => 'Service is in Process'],
+        'Serve Due' => ['sheba' => 'Process', 'partner' => 'Process', 'customer' => 'Service is in Process'],
+        'Served' => ['sheba' => 'Served', 'partner' => 'Served', 'customer' => 'Order Completed'],
+        'Cancelled' => ['sheba' => 'Cancelled', 'partner' => 'Cancelled', 'customer' => 'Order Cancelled']
     ],
     'JOB_STATUSES_COLOR' => [
         'Pending' => ['sheba' => 'Pending', 'partner' => 'Pending', 'customer' => '#fcce54'],
@@ -72,6 +102,11 @@ return [
         'Closed' => 'Closed',
         'Declined' => 'Declined',
         'Halt' => 'Halt'
+    ],
+    'CANCEL_REQUEST_STATUSES' => [
+        'Pending' => 'Pending',
+        'Approved' => 'Approved',
+        'Disapproved' => 'Disapproved'
     ],
     'FLAG_TYPE' => [
         'Idea' => 'Idea',
@@ -195,6 +230,18 @@ return [
             'prefix' => 'D',
             'department' => 'SD'
         ],
+        'App' => [
+            'name' => 'App',
+            'short_name' => 'CC',
+            'prefix' => 'D',
+            'department' => 'SD'
+        ],
+        'App-iOS' => [
+            'name' => 'App-iOS',
+            'short_name' => 'CC',
+            'prefix' => 'D',
+            'department' => 'SD'
+        ],
         'Facebook' => [
             'name' => 'Facebook',
             'short_name' => 'CC',
@@ -284,8 +331,16 @@ return [
         'customer-app',
         'affiliation-app',
         'manager-app',
+        'manager-web'
+    ],
+    'PARTNER_ACQUISITION_CHANNEL' => [
+        'PM' => 'PM',
+        'Web' => 'Web',
+        'App' => 'App'
     ],
     'AFFILIATION_REWARD_MONEY' => 10,
+    'AFFILIATION_REGISTRATION_BONUS' => 8,
+    'AFFILIATION_ACQUISITION_MONEY' => 2,
     'API_RESPONSE_CODES' => [
         200 => ['message' => 'Successful', 'code' => 200],
         400 => ['message' => 'Bad request', 'code' => 400],
@@ -314,6 +369,67 @@ return [
         "resource_app" => "https://play.google.com/store/apps/details?id=xyz.sheba.resource",
         "manager_app" => "https://play.google.com/store/apps/details?id=xyz.sheba.managerapp"
     ],
-    'MANAGER_TOPIC_NAME' => env('MANAGER_TOPIC_NAME')
-
+    'MANAGER_TOPIC_NAME' => env('MANAGER_TOPIC_NAME'),
+    'PARTNER_AFFILIATIONS_STATUSES' => [
+        'pending' => 'Pending',
+        'rejected' => 'Rejected',
+        'successful' => 'Successful'
+    ],
+    'PARTNER_AFFILIATIONS_REJECT_REASONS' => [
+        'fake' => 'False Reference',
+        'no_response' => 'No Response',
+        'not_interested' => 'Not Interested',
+        'not_capable' => 'Not Capable',
+        'service_unavailable' => 'Service Unavailable'
+    ],
+    'PARTNER_AFFILIATIONS_FAKE_REJECT_REASONS' => ['fake'],
+    'PARTNER_AFFILIATION_REWARD' => 200,
+    'PARTNER_AFFILIATION_PARTNER_ORDER_BENCHMARK' => 2,
+    'PARTNER_AFFILIATION_REWARD_BREAKDOWN' => [
+        //'on_boarded' => 20,
+        'waiting'   => 0,
+        'verified'  => 30,
+        'order_completed' => 70
+    ],
+    'PARTNER_AFFILIATION_AMBASSADOR_COMMISSION' => 30,
+    'COMPLAIN_STATUSES' => [
+        'Open' => 'Open',
+        'Observation' => 'Observation',
+        'Resolved' => 'Resolved'
+    ],
+    'COMPLAIN_RESOLVE_CATEGORIES' => [
+        'service_provided' => 'Service Provided',
+        'sp_compensated' => 'SP Compensated',
+        'promo_provided' => 'Promo Code Provided',
+        'development' => 'Development'
+    ],
+    'REWARD_TARGET_TYPE' => [
+        'Partner' => 'App\Models\Partner',
+        'Customer' => 'App\Models\Customer'
+    ],
+    'REWARD_DETAIL_TYPE' => [
+        'Campaign' => 'App\Models\RewardCampaign',
+        'Action' => 'App\Models\RewardAction'
+    ],
+    'REWARD_TYPE' => [
+        'Cash' => 'Cash',
+        'Point' => 'Point'
+    ],
+    'CAMPAIGN_REWARD_TIMELINE_TYPE' => [
+        'Onetime' => 'Onetime',
+        'Recurring' => 'Recurring'
+    ],
+    'REWARD_CONSTRAINTS' => [
+        'category' => 'App\Models\Category',
+        'partner_package' => 'App\Models\PartnerSubscriptionPackage'
+    ],
+    'PARTNER_PACKAGE_UPDATE_STATUSES' => [
+        'Pending' => 'Pending',
+        'Approved' => 'Approved',
+        'Rejected' => 'Rejected'
+    ],
+    'JOB_ON_PREMISE' => [
+        'customer' => 'customer',
+        'partner' => 'partner'
+    ]
 ];

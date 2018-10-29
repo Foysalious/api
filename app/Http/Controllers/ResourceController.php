@@ -5,16 +5,20 @@ namespace App\Http\Controllers;
 
 
 use App\Models\PartnerResource;
+use App\Repositories\ProfileRepository;
 use App\Repositories\ReviewRepository;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class ResourceController extends Controller
 {
     private $reviewRepository;
+    private $profileRepo;
 
     public function __construct()
     {
         $this->reviewRepository = new ReviewRepository();
+        $this->profileRepo = new ProfileRepository();
     }
 
     public function show($partner, $resource, Request $request)
@@ -25,7 +29,7 @@ class ResourceController extends Controller
             $resource['specialized_categories'] = $specialized_categories;
             $resource['total_specialized_categories'] = $specialized_categories->count();
             $resource['served_jobs'] = $resource->jobs->where('status', 'Served')->count();
-            $resource['ongoing_jobs'] = $resource->jobs->whereIn('status', ['Schedule Due', 'Process', 'Accepted','Serve Due'])->count();
+            $resource['ongoing_jobs'] = $resource->jobs->whereIn('status', ['Schedule Due', 'Process', 'Accepted', 'Serve Due'])->count();
             $profile = $resource->profile;
             $resource['name'] = $profile->name;
             $resource['mobile'] = $profile->mobile;
@@ -71,6 +75,21 @@ class ResourceController extends Controller
                 'breakdown' => $breakdown
             );
             return api_response($request, $info, 200, ['info' => $info]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getResourceData(Request $request)
+    {
+        try {
+            $mobile = formatMobile($request->mobile);
+            if ($profile = $this->profileRepo->getIfExist($mobile, 'mobile')) {
+                if ($profile->resource) return api_response($request, null, 400, ['message' => 'Resource already Exist']);
+                return api_response($request, null, 200, ['profile' => collect($profile)->only(['id', 'name', 'mobile', 'address', 'pro_pic', 'email'])]);
+            }
+            return api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

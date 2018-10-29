@@ -12,17 +12,18 @@ use App\Models\Order;
 use App\Models\Profile;
 use App\Repositories\CustomerRepository;
 use App\Repositories\FileRepository;
+use App\Repositories\ProfileRepository;
 use Carbon\Carbon;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
 use Cache;
 use Illuminate\Validation\ValidationException;
 use Redis;
-#use Sheba\Voucher\ReferralCreator;
 use Sheba\Voucher\Creator\Referral;
 use Validator;
 use DB;
 use Hash;
+
 
 class CustomerController extends Controller
 {
@@ -30,12 +31,14 @@ class CustomerController extends Controller
     private $customer;
     private $fbKit;
     private $fileRepository;
+    private $profileRepository;
 
     public function __construct()
     {
         $this->customer = new CustomerRepository();
         $this->fbKit = new FacebookAccountKit();
         $this->fileRepository = new FileRepository();
+        $this->profileRepository = new ProfileRepository();
     }
 
     public function index($customer, Request $request)
@@ -48,6 +51,7 @@ class CustomerController extends Controller
             $profile->password = ($profile->password) ? 1 : 0;
             return api_response($request, $customer->profile, 200, ['profile' => $customer->profile]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -76,7 +80,8 @@ class CustomerController extends Controller
                 $this->validate($request, [
                     'value' => 'required|string'
                 ]);
-                $profile->$field = trim($request->value);
+                $value = $field == 'name' ? ucwords($request->value) : $request->value;
+                $profile->$field = trim($value);
             }
             $profile->update();
             return api_response($request, 1, 200);
@@ -84,6 +89,7 @@ class CustomerController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -91,10 +97,10 @@ class CustomerController extends Controller
     public function updateEmail($customer, Request $request)
     {
         try {
-            $this->validate($request, [
-                'email' => 'required|email|unique:profiles'
-            ]);
             $profile = $request->customer->profile;
+            $this->validate($request, [
+                'email' => 'required|email|unique:profiles,email,' . $profile->id
+            ]);
             $profile->email = $request->email;
             $profile->update();
             return api_response($request, 1, 200);
@@ -102,6 +108,7 @@ class CustomerController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -126,6 +133,7 @@ class CustomerController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -155,6 +163,7 @@ class CustomerController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -183,6 +192,7 @@ class CustomerController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -475,4 +485,28 @@ class CustomerController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function store(Request $request)
+    {
+        try {
+            $request->merge(['mobile' => formatMobile($request->mobile)]);
+            $this->validate($request, [
+                'mobile' => 'required|string|mobile:bd|unique:profiles,mobile',
+                'name' => 'required|string'
+            ], ['mobile' => 'Invalid mobile number!']);
+            $profile = $this->profileRepository->store(['mobile' => $request->mobile, 'name' => $request->name]);
+            $customer = new Customer();
+            $customer->remember_token = str_random(255);
+            $customer->profile_id = $profile->id;
+            $customer->save();
+            return api_response($request, $customer, 200, ['customer' => array('id' => $customer->id, 'remember_token' => $customer->remember_token)]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
 }

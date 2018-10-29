@@ -70,7 +70,14 @@ class PartnerOrderController extends Controller
     public function newOrders($partner, Request $request)
     {
         try {
-            $this->validate($request, ['sort' => 'sometimes|required|string|in:created_at,created_at:asc,created_at:desc,schedule_date,schedule_date:asc,schedule_date:desc']);
+            $this->validate($request, ['sort' => 'sometimes|required|string|in:created_at,created_at:asc,created_at:desc,schedule_date,schedule_date:asc,schedule_date:desc', 'getCount' => 'sometimes|required|numeric|in:1']);
+            if ($request->has('getCount')) {
+                $partner = $request->partner->load(['jobs' => function ($q) {
+                    $q->status(array(constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']))->select('jobs.id', 'jobs.status', 'jobs.partner_order_id');
+                }]);
+                $partner_orders = $partner->jobs->groupBy('partner_order_id');
+                return api_response($request, $partner_orders->count(), 200, ['total_new_orders' => $partner_orders->count()]);
+            }
             $orders = $this->partnerOrderRepository->getNewOrdersWithJobs($request);
             return count($orders) > 0 ? api_response($request, $orders, 200, ['orders' => $orders]) : api_response($request, null, 404);
         } catch (ValidationException $e) {
@@ -125,10 +132,11 @@ class PartnerOrderController extends Controller
             } else {
                 $partner_order['overdue'] = null;
             }
-            removeRelationsFromModel($partner_order);
-            removeSelectedFieldsFromModel($partner_order);
+            $partner_order['is_on_premise'] = 1;
+            removeRelationsAndFields($partner_order);
             $partner_order['jobs'] = $jobs->each(function ($item) {
-                removeRelationsFromModel($item);
+                removeRelationsAndFields($item);
+                array_forget($item, 'partner_order');
             });
             return api_response($request, $partner_order, 200, ['order' => $partner_order]);
         } catch (\Throwable $e) {
@@ -146,14 +154,21 @@ class PartnerOrderController extends Controller
                 if (count($job->jobServices) == 0) {
                     $services = array();
                     array_push($services, array(
-                        'name' => $job->service_name,
-                        'quantity' => (double)$job->quantity, 'price' => (double)$job->servicePrice));
+                            'name' => $job->service_name,
+                            'quantity' => (double)$job->quantity,
+                            'unit' => $job->service->unit,
+                            'price' => (double)$job->servicePrice)
+                    );
                 } else {
                     $services = array();
                     foreach ($job->jobServices as $jobService) {
                         array_push($services, array(
                             'name' => $jobService->service ? $jobService->service->name : null,
                             'quantity' => (double)$jobService->quantity,
+                            'unit' => $jobService->service ? $jobService->service->unit : null,
+                            'discount' => (double)$jobService->discount,
+                            'sheba_contribution' => (double)$jobService->sheba_contribution,
+                            'partner_contribution' => (double)$jobService->partner_contribution,
                             'price' => (double)$jobService->unit_price * (double)$jobService->quantity));
                     }
                 }
@@ -162,7 +177,6 @@ class PartnerOrderController extends Controller
                 'id' => $partner_order->id,
                 'total_material_price' => (double)$partner_order->totalMaterialPrice,
                 'total_price' => (double)$partner_order->totalPrice,
-                'discount' => (double)$partner_order->totalDiscount,
                 'paid' => (double)$partner_order->paid,
                 'due' => (double)$partner_order->due,
                 'invoice' => $partner_order->invoice,
@@ -171,7 +185,12 @@ class PartnerOrderController extends Controller
                 'service' => $services,
                 'is_paid' => (double)$partner_order->due == 0,
                 'is_due' => (double)$partner_order->due > 0,
-                'is_closed' => $partner_order->closed_at != null
+                'is_closed' => $partner_order->closed_at != null,
+                'total_bill' => (double)$partner_order->totalServicePrice,
+                'discount' => (double)$partner_order->totalDiscount,
+                'total_sheba_discount_amount' => (double)$partner_order->totalShebaDiscount,
+                'total_partner_discount_amount' => (double)$partner_order->totalPartnerDiscount,
+                'delivery_charge' => $partner_order->deliveryCharge
             );
             return api_response($request, $partner_order, 200, ['order' => $partner_order]);
         } catch (\Throwable $e) {
@@ -299,4 +318,27 @@ class PartnerOrderController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+
+    public function collectMoney($partner, Request $request)
+    {
+        try {
+            $this->validate($request, ['amount' => 'required|numeric']);
+            $partner_order = $request->partner_order;
+            $request->merge(['resource' => $request->manager_resource]);
+            $response = (new ResourceJobRepository())->collectMoney($partner_order, $request);
+            if ($response) {
+                if ($response->code == 200) {
+                    return api_response($request, $response, 200, ['message' => $request->amount . 'Tk have been successfully collected.']);
+                } else {
+                    return api_response($request, $response, $response->code);
+                }
+            }
+            return api_response($request, null, 500);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
 }

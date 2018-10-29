@@ -24,10 +24,12 @@ class JobServiceRepository
             $service = $services->where('id', $selected_service->id)->first();
             if ($service->isOptions()) {
                 $price = (new PartnerServiceRepository())->getPriceOfOptionsService($service->pivot->prices, $selected_service->option);
+                $min_price = empty($service->pivot->min_prices) ? 0 : (new PartnerServiceRepository())->getMinimumPriceOfOptionsService($service->pivot->min_prices, $selected_service->option);
             } else {
                 $price = (double)$service->pivot->prices;
+                $min_price = (double)$service->pivot->min_price;
             }
-            $discount = new Discount($price, $selected_service->quantity);
+            $discount = new Discount($price, $selected_service->quantity, $min_price);
             $discount->calculateServiceDiscount((PartnerService::find($service->pivot->id))->discount());
             $service_data = array(
                 'service_id' => $selected_service->id,
@@ -35,6 +37,7 @@ class JobServiceRepository
                 'created_by' => $data['created_by'],
                 'created_by_name' => $data['created_by_name'],
                 'unit_price' => $price,
+                'min_price' => $min_price,
                 'sheba_contribution' => $discount->__get('sheba_contribution'),
                 'partner_contribution' => $discount->__get('partner_contribution'),
                 'discount_id' => $discount->__get('discount_id'),

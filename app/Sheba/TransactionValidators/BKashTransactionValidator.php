@@ -13,6 +13,7 @@ class BKashTransactionValidator implements TransactionValidator
     private $merchantNumber = "01799444000";
     private $amount;
     private $sender;
+    private $response;
 
     public function __construct(BKashTransaction $transaction)
     {
@@ -43,6 +44,7 @@ class BKashTransactionValidator implements TransactionValidator
         }
         $this->amount = (double)$res->transaction->amount;
         $this->sender = $res->transaction->sender;
+        $this->response = $res;
         return false;
     }
 

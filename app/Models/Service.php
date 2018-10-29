@@ -175,6 +175,11 @@ class Service extends Model
         return $query->where('publication_status', 0)->where('is_published_for_backend', 1);
     }
 
+    public function scopePublishedForBusiness($query)
+    {
+        return $query->where('is_published_for_business', 1);
+    }
+
     public function tags()
     {
         return $this->morphToMany(Tag::class, 'taggable');
@@ -184,6 +189,7 @@ class Service extends Model
     {
         return $this->variable_type == 'Options';
     }
+
     public function isFixed()
     {
         return $this->variable_type == 'Fixed';
@@ -204,5 +210,10 @@ class Service extends Model
     public function favorites()
     {
         return $this->belongsToMany(CustomerFavorite::class, 'customer_favourite_service', 'service_id', 'customer_favourite_id')->withPivot(['name', 'additional_info', 'variable_type', 'variables', 'option', 'quantity']);
+    }
+
+    public function scopePublishedForBondhu($query)
+    {
+        return $query->where('is_published_for_bondhu', 1);
     }
 }

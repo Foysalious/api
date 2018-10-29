@@ -2,11 +2,18 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Location\Distance\TransactionMethod;
+use Sheba\Payment\Wallet;
+use Sheba\TopUp\TopUpAgent;
+use Sheba\TopUp\TopUpTrait;
 
-class Affiliate extends Model
+class Affiliate extends Model implements TopUpAgent
 {
+    use TopUpTrait;
+    use Wallet;
     protected $guarded = ['id'];
     protected $dates = ['last_suspended_at'];
+    protected $casts = ['wallet' => 'double', 'is_ambassador' => 'int', 'is_suspended' => 'int'];
 
     public function profile()
     {
@@ -21,6 +28,11 @@ class Affiliate extends Model
     public function location()
     {
         return $this->belongsTo(Location::class);
+    }
+
+    public function partnerAffiliations()
+    {
+        return $this->hasMany(PartnerAffiliation::class);
     }
 
     public function suspensions()
@@ -90,8 +102,29 @@ class Affiliate extends Model
         return $vouchers ? $vouchers->first() : null;
     }
 
+    public function topUpTransaction($amount, $log)
+    {
+        $this->debitWallet($amount);
+        $this->walletTransaction(['amount' => $amount, 'type' => 'Debit', 'log' => $log]);
+    }
+
+    public function debitWallet($amount)
+    {
+        $this->update(['wallet' => $this->wallet - $amount]);
+    }
+
+    public function walletTransaction($data)
+    {
+        $this->transactions()->save(new AffiliateTransaction(array_merge($data, createAuthor($this))));
+    }
+
     public function isAmbassador()
     {
         return $this->is_ambassador == 1;
+    }
+
+    public function bonuses()
+    {
+        return $this->morphMany(Bonus::class, 'user');
     }
 }

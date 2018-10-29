@@ -63,7 +63,7 @@ class Order extends Model
 
     public function channelCode()
     {
-        if (in_array($this->sales_channel, ['Web', 'Call-Center', 'App', 'Facebook'])) {
+        if (in_array($this->sales_channel, ['Web', 'Call-Center', 'App', 'Facebook', 'App-iOS'])) {
             $prefix = 'D';
         } elseif ($this->sales_channel == 'B2B') {
             $prefix = 'F';
@@ -99,6 +99,19 @@ class Order extends Model
     public function department()
     {
         return getSalesChannels('department')[$this->sales_channel];
+    }
+
+    public function isCancelled()
+    {
+        return $this->getStatus() == $this->statuses['Cancelled'];
+    }
+
+    public function lastJob()
+    {
+        if ($this->isCancelled()) return $this->jobs->last();
+        return $this->jobs->filter(function ($job) {
+            return $job->status != $this->jobStatuses['Cancelled'];
+        })->first();
     }
 
 }

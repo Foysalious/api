@@ -21,6 +21,7 @@ class JobServiceType extends GraphQlType
             'option' => ['type' => Type::string()],
             'unit' => ['type' => Type::string()],
             'unit_price' => ['type' => Type::float()],
+            'min_price' => ['type' => Type::float()],
             'quantity' => ['type' => Type::float()]
         ];
     }

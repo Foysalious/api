@@ -6,8 +6,10 @@ use App\Models\ScheduleSlot;
 use Carbon\Carbon;
 use GraphQL;
 use \Folklore\GraphQL\Support\Type as GraphQlType;
+use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use Redis;
+use DB;
 
 class CategoryType extends GraphQlType
 {
@@ -36,6 +38,9 @@ class CategoryType extends GraphQlType
             'questions' => ['type' => Type::int()],
             'children' => [
                 'type' => Type::listOf(GraphQL::type('Category'))
+            ],
+            'partners' => [
+                'type' => Type::listOf(GraphQL::type('Partner'))
             ],
             'parent' => [
                 'type' => GraphQL::type('Category')
@@ -69,10 +74,16 @@ class CategoryType extends GraphQlType
         ];
     }
 
-    protected function resolveServicesField($root, $args)
+    protected function resolveServicesField($root, $args, $context, ResolveInfo $info)
     {
-        $root->load(['services' => function ($q) use ($args) {
+        $fields = $info->getFieldSelection(1);
+        $root->load(['services' => function ($q) use ($args, $fields) {
             $q->published()->orderBy('order');
+            if (in_array('start_price', $fields)) {
+                $q->with(['partners' => function ($q) {
+                    $q->verified()->where([['partner_service.is_published', 1], ['partner_service.is_verified', 1]]);
+                }]);
+            }
             if (isset($args['id'])) {
                 $q->whereIn('id', $args['id']);
             }
@@ -105,8 +116,8 @@ class CategoryType extends GraphQlType
         return $root->reviews->each(function ($review) {
             $review->review = $review->calculated_review;
         })->filter(function ($review) {
-            return !empty($review->review);
-        })->sortByDesc('id');
+            return (!empty($review->review));
+        })->unique('customer_id')->sortByDesc('id');
     }
 
     protected function resolveTotalPartnersField($root, $args)
@@ -186,6 +197,20 @@ class CategoryType extends GraphQlType
     {
         $root->load('usps');
         return $root->usps;
+    }
+
+    protected function resolvePartnersField($root, $args)
+    {
+        $root->load(['partners' => function ($q) {
+            $q->where('category_partner.is_verified', 1)->with(['jobs' => function ($q) {
+                $q->selectRaw('count(*) as total_jobs, partner_id')->where('status', 'Served')->groupBy('partner_id');
+            }, 'reviews' => function ($q) {
+                $q->select(DB::raw('AVG(reviews.rating) as avg_rating'), 'partner_id')->groupBy('partner_id');
+            }, 'resources' => function ($q) {
+                $q->selectRaw('count(*) as total_resources, partner_id')->verified()->groupBy('partner_id');
+            }])->verified();
+        }]);
+        return $root->partners;
     }
 
     private function getFirstValidSlot()

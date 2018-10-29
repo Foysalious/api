@@ -21,7 +21,120 @@ class JobLogs
         $this->scheduleChangeLogs = collect([]);
         $this->statusChangeLogs = collect([]);
         $this->materialChangeLogs = collect([]);
+        $this->orderStatusLogs = collect([]);
         $this->comments = collect([]);
+    }
+
+    public function getorderStatusLogs()
+    {
+        $partner = $this->job->partnerOrder->partner;
+        $resource = $this->job->resource;
+        $job_status = $this->job->status;
+        $logs = [];
+        if (constants('JOB_STATUS_SEQUENCE')[$job_status] > 0) {
+            array_push($logs, array(
+                'status' => 'order_placed',
+                'log' => 'Order has been placed to ' . $partner->name . '.',
+                'user' => array(
+                    'name' => $partner->name,
+                    'picture' => $partner->logo,
+                    'mobile' => $partner->getManagerMobile(),
+                    'type' => 'partner',
+                )
+            ));
+        }
+        if (constants('JOB_STATUS_SEQUENCE')[$job_status] > 1) {
+            array_push($logs, [
+                'status' => 'order_confirmed',
+                'log' => 'Order has been confirmed.',
+            ]);
+            if ($resource) {
+                array_push($logs, [
+                    'status' => 'expert_assigned',
+                    'log' => 'An expert has been assigned to your order.',
+                    'user' => array(
+                        'name' => $resource->profile->name,
+                        'picture' => $resource->profile->pro_pic,
+                        'mobile' => $resource->profile->mobile,
+                        'type' => 'resource',
+                    )
+                ]);
+            }
+        }
+        if ($work_log = $this->formatWorkLog()) array_push($logs, $work_log);
+        if ($message_log = $this->getOrderMessage()) array_push($logs, $message_log);
+        return $logs;
+    }
+
+    private function formatWorkLog()
+    {
+        $job_status = $this->job->status;
+        if (in_array($job_status, [constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Serve_Due'], constants('JOB_STATUSES')['Served']])) {
+            $status_change_log = $this->job->statusChangeLogs->where('to_status', $job_status)->first();
+            if (!$status_change_log) return null;
+            $time = $status_change_log->created_at->format('h:i A, M d');
+            if (in_array($job_status, [constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Serve_Due']])) {
+                return [
+                    'status' => 'work_started',
+                    'log' => 'Expert has started working from ' . $time
+                ];
+            } elseif ($job_status == constants('JOB_STATUSES')['Served']) {
+                return [
+                    'status' => 'work_completed',
+                    'log' => 'Expert has completed your order at ' . $time,
+                ];
+            }
+        } else {
+            return null;
+        }
+    }
+
+    public function getOrderMessage()
+    {
+        $job_status = $this->job->status;
+        $job_review = $this->job->review;
+        if (in_array($job_status, [constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']])) {
+            return array(
+                'status' => 'message',
+                'log' => 'Your order is awaiting for confirmation. Please, contact the service provider.',
+                'type' => 'danger'
+            );
+        } elseif ($job_status == constants('JOB_STATUSES')['Accepted']) {
+            $thirty_min_before_scheduled_date_time = Carbon::parse($this->job->schedule_date . ' ' . $this->job->preferred_time_start)->subMinutes(30);
+            if (Carbon::now()->gte($thirty_min_before_scheduled_date_time)) {
+                return array(
+                    'status' => 'message',
+                    'log' => 'Your order is supposed to be started within ' . humanReadableShebaTime($this->job->preferred_time_end) . '.' . ($this->job->resource ? 'Please call ' . $this->job->resource->profile->name . ' to confirm.' : ''),
+                    'type' => 'danger'
+                );
+            } else {
+                return array(
+                    'status' => 'message',
+                    'log' => 'Expert will arrive at your place between ' . humanReadableShebaTime($this->job->preferred_time) . ', ' . Carbon::parse($this->job->schedule_date)->format('M d'),
+                    'type' => 'success'
+                );
+            }
+        } elseif ($job_status == constants('JOB_STATUSES')['Schedule_Due']) {
+            return array(
+                'status' => 'message',
+                'log' => 'Your order is supposed to be started by now. Please call the ' . ($this->job->resource ? 'expert' : 'service provider') . '. For any kind of help call 16516.',
+                'type' => 'danger'
+            );
+        } elseif (in_array($job_status, [constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Serve_Due']])) {
+            return array(
+                'status' => 'message',
+                'log' => 'Expert is working on your order.',
+                'type' => 'success'
+            );
+        } elseif ($job_status == constants('JOB_STATUSES')['Served'] && !$job_review) {
+            return array(
+                'status' => 'message',
+                'log' => 'Please rate the expert based on your service experience.',
+                'type' => 'success'
+            );
+        } else {
+            return null;
+        }
     }
 
     public function all()
@@ -37,8 +150,8 @@ class JobLogs
             }
         }
         $this->materialLogs($this->job->materialLogs);
-        $this->statusChangeLogs($this->job->statusChangeLog);
-        $this->getComments($this->job->comments->load('accessors')->filter(function($comment) {
+        $this->statusChangeLogs($this->job->statusChangeLogs);
+        $this->getComments($this->job->comments->load('accessors')->filter(function ($comment) {
             return $comment->accessors->pluck('model_name')->contains('App\\Models\\Customer');
         }));
 
@@ -90,7 +203,7 @@ class JobLogs
                 'created_at' => $comment->created_at,
                 'created_by_name' => $comment->created_by_name,
                 'comment' => $comment->comment,
-                'log' =>  "$commentator has commented - $comment->comment",
+                'log' => "$commentator has commented - $comment->comment",
             ]);
         }
     }
@@ -220,7 +333,7 @@ class JobLogs
                 "created_at" => $update_log->created_at,
                 "created_by_name" => $update_log->created_by_name
             ]);
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
 
         }
     }

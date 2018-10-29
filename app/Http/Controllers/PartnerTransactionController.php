@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Sheba\PartnerPayment\PartnerPaymentValidatorFactory;
+use Sheba\Reward\ActionRewardDispatcher;
 use Validator;
 
 class PartnerTransactionController extends Controller
@@ -30,7 +31,8 @@ class PartnerTransactionController extends Controller
             })->sortByDesc('id');
             if ($request->has('month') && $request->has('year')) {
                 $transactions = $transactions->filter(function ($transaction, $key) use ($request) {
-                    return ($transaction->created_at->month == $request->month) && ($transaction->created_at->year == $request->year);
+                    $created_at = Carbon::parse($transaction->created_at);
+                    return ($created_at->month == $request->month && $created_at->year == $request->year);
                 });
             }
             $transactions = array_slice($transactions->values()->all(), $offset, $limit);
@@ -53,11 +55,20 @@ class PartnerTransactionController extends Controller
                 return api_response($request, null, 400, ['message' => $error]);
             }
             $request->merge(['transaction_amount' => $payment_validator->amount, 'transaction_account' => $payment_validator->sender]);
+
             if ($res = $this->reconcile($request)) {
                 if ($res->code != 200) return api_response($request, null, 500, ['message' => $res->msg]);
             } else {
                 return api_response($request, null, 500);
             }
+
+            app(ActionRewardDispatcher::class)->run(
+                'partner_wallet_recharge',
+                $request->partner,
+                $payment_validator->amount,
+                $request->partner
+            );
+
             return api_response($request, null, 200, ['message' => "Wallet refilled."]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

@@ -19,13 +19,17 @@ class ResourceAuthMiddleware
         if ($request->has('remember_token')) {
             $resource = Resource::where('remember_token', $request->input('remember_token'))->first();
             if ($resource) {
-                if ($resource->id == $request->resource) {
+                if ($resource->id == (int)$request->resource) {
                     $request->merge(['resource' => $resource]);
                     return $next($request);
+                } else {
+                    return api_response($request, null, 403, ["message" => "You're not authorized to access this user."]);
                 }
+            } else {
+                return api_response($request, null, 404, ["message" => "User not found."]);
             }
-            return api_response($request, null, 403);
+        } else {
+            return api_response($request, null, 400, ["message" => "Authentication token is missing from the request."]);
         }
-        return api_response($request, null, 401);
     }
 }

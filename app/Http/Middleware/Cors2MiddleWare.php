@@ -22,8 +22,11 @@ class Cors2MiddleWare
             "http://localhost:8081",
             "http://localhost:8082",
             "http://localhost:8083",
-            "http://192.168.1.109:8080",
-            "http://192.168.1.108:8080",
+            "http://localhost:8084",
+            "http://103.26.139.148",
+            "http://144.76.92.216",
+            "https://developer.sslcommerz.com",
+            "https://www.sslcommerz.com",
             "http://dev-sheba.xyz",
             "http://business.dev-sheba.xyz",
             "http://www.dev-sheba.xyz",
@@ -31,6 +34,7 @@ class Cors2MiddleWare
             "http://admin.dev-sheba.xyz",
             "https://admin.dev-sheba.xyz",
             "http://partners.dev-sheba.xyz",
+            "https://partners.dev-sheba.xyz",
             "http://accounts.dev-sheba.xyz",
             "http://api.sheba.test",
             "https://api.dev-sheba.xyz",
@@ -38,6 +42,7 @@ class Cors2MiddleWare
             null,
             "null",
             "chrome-extension://fhbjgbiflinjbdggehcddcbncdddomop",
+            "file://",
             "http://admin.sheba.test",
             "http://partners.sheba.test",
             "http://partners.sheba.new",
@@ -48,11 +53,12 @@ class Cors2MiddleWare
             "http://accounts.sheba.test",
             "https://sandbox.sslcommerz.com",
             "https://securepay.sslcommerz.com",
+            "https://sandbox.thecitybank.com:4443",
         ];
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Credentials'] = 'true';
         $headers['Access-Control-Allow-Methods'] = 'POST, GET, PUT, DELETE';
-        $headers['Access-Control-Allow-Headers'] = 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With';
+        $headers['Access-Control-Allow-Headers'] = 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With, Portal-Name, User-Id';
         $headers['Access-Control-Allow-Origin'] = '*';
         if (!in_array($request->server('HTTP_ORIGIN'), $domains)) {
             return response()->json(['message' => 'Unauthorized', 'code' => 401])->withHeaders($headers);
@@ -60,7 +66,7 @@ class Cors2MiddleWare
 
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Methods'] = 'POST, GET, PUT, DELETE';
-        $headers['Access-Control-Allow-Headers'] = 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With';
+        $headers['Access-Control-Allow-Headers'] = 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With, Portal-Name, User-Id';
         $response = $next($request);
         foreach ($headers as $key => $value) {
             $response->header($key, $value);

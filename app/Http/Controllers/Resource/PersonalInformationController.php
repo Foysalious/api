@@ -1,7 +1,4 @@
-<?php
-
-namespace App\Http\Controllers\Resource;
-
+<?php namespace App\Http\Controllers\Resource;
 
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
@@ -15,9 +12,14 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Intervention\Image\Facades\Image;
 use DB;
+use Sheba\ModificationFields;
+use Sheba\Partner\StatusChanger;
+use Sheba\Resource\PartnerResourceCreator;
 
 class PersonalInformationController extends Controller
 {
+    use ModificationFields;
+
     private $fileRepository;
 
     public function __construct()
@@ -40,105 +42,111 @@ class PersonalInformationController extends Controller
                 'nid_image' => $resource->nid_image,
             );
             return api_response($request, $info, 200, ['info' => $info]);
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function store(Request $request)
+    public function store(Request $request, PartnerResourceCreator $partnerResourceCreator)
     {
         try {
+            $request->merge(['mobile' => trim($request->mobile)]);
             $this->validate($request, [
-                'nid_no' => 'required_without:resource|string|unique:resources',
+                'nid_no' => 'required_without:resource|string|unique:resources,nid_no',
                 'nid_back' => 'required_without:resource|file',
                 'nid_front' => 'required_without:resource|file',
                 'name' => 'string',
-                'gender' => 'string|in:Male,Female,Other',
-                'birthday' => 'date_format:Y-m-d|before:' . date('Y-m-d'),
                 'address' => 'string',
-                'picture' => 'required_without:resource|file',
+                'picture' => 'file',
                 'resource' => 'numeric',
-                'mobile' => 'required_without:resource|string|mobile:bd'
-            ], ['mobile' => 'Invalid mobile number!']);
+                'mobile' => 'required_without:resource|string|mobile:bd',
+                'additional_mobile' => 'mobile:bd'
+            ], ['mobile' => 'Invalid mobile number!', 'unique' => 'Duplicate Nid No!']);
             $partner = $request->partner;
-            $manager_resource = $request->manager_resource;
-            $by = ["created_by" => $manager_resource->id, "created_by_name" => "Resource - " . $manager_resource->profile->name];
-            $pivot_columns = array_merge($by, ['resource_type' => "Handyman"]);
+            $this->setModifier($request->manager_resource);
             if ($request->has('resource')) {
-                if ($partner->hasThisResource((int)$request->resource, 'Handyman')) {
-                    return api_response($request, null, 403, ['message' => 'The resource is already added with you!']);
-                }
                 $resource = Resource::find((int)$request->resource);
-                if ($this->createPartnerResource($partner, $resource, $pivot_columns))
-                    return api_response($request, $resource, 200);
-                else
-                    return api_response($request, null, 500);
-            } else {
-                try {
-                    $resource = '';
-                    DB::transaction(function () use ($request, $by, $partner, $pivot_columns, $resource) {
-                        $mobile = formatMobile($request->mobile);
-                        $profile = Profile::where('mobile', $mobile)->first();
-                        if (!$profile) $profile = Profile::create(array_merge($by, ['mobile' => $mobile]));
-                        $resource = $profile->resource;
-                        if ($resource) return api_response($request, null, 403, ['message' => 'There is already a resource exists at this number!']);
-                        $resource = Resource::create(array_merge($by, ['remember_token' => str_random(255), 'profile_id' => $profile->id]));
-                        $resource = $this->updateInformation($request, $profile, $resource);
-                        $this->createPartnerResource($partner, $resource, $pivot_columns);
-                    });
-                    return api_response($request, $resource, 200);
-                } catch (QueryException $e) {
-                    app('sentry')->captureException($e);
-                    return api_response($request, null, 500);
+                $partnerResourceCreator->setPartner($partner);
+                $partnerResourceCreator->setData(array(
+                    'resource_types' => ['Handyman'],
+                    'category_ids' => $partner->categories->pluck('id')->toArray()
+                ));
+                $partnerResourceCreator->setResource($resource);
+                if ($error = $partnerResourceCreator->hasError()) {
+                    return api_response($request, 1, 400, ['message' => $error['msg']]);
                 }
+                $partnerResourceCreator->create();
+
+                if (isPartnerReadyToVerified($partner)) {
+                    $status_changer = new StatusChanger($partner, ['status' => constants('PARTNER_STATUSES')['Waiting']]);
+                    $status_changer->change();
+                }
+
+                return api_response($request, 1, 200);
+            } else {
+                $partnerResourceCreator->setPartner($partner);
+                $partnerResourceCreator->setData(array(
+                    'mobile' => $request->mobile,
+                    'name' => $request->name,
+                    'address' => $request->address,
+                    'profile_image' => $request->file('picture'),
+                    'category_ids' => $partner->categories->pluck('id')->toArray(),
+                    'resource_types' => ['Handyman'],
+                    'nid_no' => $request->nid_no,
+                    'nid_image' => $this->mergeFrontAndBackNID($request->file('nid_front'), $request->file('nid_back')),
+                    'alternate_contact' => $request->has('additional_mobile') ? $request->additional_mobile : null
+                ));
+                if ($error = $partnerResourceCreator->hasError()) {
+                    return api_response($request, 1, 400, ['message' => $error['msg']]);
+                }
+                $partnerResourceCreator->create();
+
+                if (isPartnerReadyToVerified($partner)) {
+                    $status_changer = new StatusChanger($partner, ['status' => constants('PARTNER_STATUSES')['Waiting']]);
+                    $status_changer->change();
+                }
+
+                return api_response($request, 1, 200);
             }
-        } catch (ValidationException $e) {
+        } catch ( ValidationException $e ) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
-        }
-    }
-
-    private function createPartnerResource(Partner $partner, Resource $resource, $pivot_columns)
-    {
-        try {
-            DB::transaction(function () use ($partner, $resource, $pivot_columns) {
-                $partner->resources()->attach($resource->id, $pivot_columns);
-                $partner_resources = PartnerResource::whereIn('id', $partner->handymanResources->pluck('pivot.id')->toArray())->get();
-                $category_ids = $partner->categories->pluck('id')->toArray();
-                $partner_resources->each(function ($partner_resource) use ($category_ids) {
-                    $partner_resource->categories()->sync($category_ids);
-                });
-            });
-            return true;
-        } catch (QueryException $e) {
-            app('sentry')->captureException($e);
-            return null;
         }
     }
 
     public function update($resource, Request $request)
     {
         try {
-            $this->validate($request, [
-                'nid_no' => 'string',
-                'nid_back' => 'file',
-                'nid_front' => 'file',
+            $resource = $request->resource;
+            $profile = $resource->profile;
+
+            $rules = [
+                'nid_no' => 'required|string|unique:resources,nid_no,' . $resource->id,
                 'name' => 'string',
                 'gender' => 'string|in:Male,Female,Other',
                 'birthday' => 'date_format:Y-m-d|before:' . date('Y-m-d'),
                 'address' => 'string',
-                'picture' => 'file',
-                'mobile' => 'string|mobile:bd'
-            ], ['mobile' => 'Invalid mobile number!']);
-            $resource = $request->resource;
-            $profile = $resource->profile;
+                'mobile' => 'string|mobile:bd',
+                'additional_mobile' => 'mobile:bd'
+            ];
+
+            if (!$profile->pro_pic) {
+                $rules['picture'] = 'required|file';
+            }
+
+            if (!$resource->nid_image) {
+                $rules['nid_back'] = 'required|file';
+                $rules['nid_front'] = 'required|file';
+            }
+            
+            $this->validate($request, $rules, ['mobile' => 'Invalid mobile number!', 'unique' => 'Duplicate Nid No!']);
             if ($request->has('mobile')) {
                 $mobile = formatMobile($request->mobile);
                 if ($profile->mobile != $mobile) {
@@ -153,28 +161,38 @@ class PersonalInformationController extends Controller
                 }
             }
             $resource = $this->updateInformation($request, $profile, $resource);
+
+            $status_changer = new StatusChanger($request->partner, ['status' => constants('PARTNER_STATUSES')['Waiting']]);
+            if (isPartnerReadyToVerified($request->partner)) {
+                $status_changer->change();
+            }
+
             return api_response($request, $resource, 200);
-        } catch (ValidationException $e) {
+        } catch ( ValidationException $e ) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
-    private function mergeFrontAndBackNID($profile, $front, $back)
+    private function mergeFrontAndBackNID($front, $back)
     {
+        $weight = 227;
+        $height = 155;
         $img1 = Image::make($front);
         $img2 = Image::make($back);
-        $canvas = Image::canvas($img1->width() + $img2->width(), max($img1->height(), $img2->height()));
-        $canvas->insert($img1, 'top-left');
-        $canvas->insert($img2, 'top-right');
+        $img1->resize($weight, $height);
+        $img2->resize($weight, $height);
+        $canvas = Image::canvas(251, 359, '#FCFEFF');
+        $canvas->insert($img1, 'top', 12, 17);
+        $canvas->insert($img2, 'top', 12, 34 + $height);
         $canvas->encode('png');
-        return $this->fileRepository->uploadImageToCDN('images/resources/nid', Carbon::now()->timestamp . '_' . str_slug($profile->name, '_') . '.png', $canvas);
+        return $canvas;
     }
 
     private function makeProfilePicName($profile, $photo)
@@ -191,12 +209,14 @@ class PersonalInformationController extends Controller
         if ($request->has('mobile')) $profile->mobile = formatMobile($request->mobile);
         if ($request->has('name')) $profile->name = $request->name;
         if ($request->has('address')) $profile->address = $request->address;
+        if ($request->has('nid_no')) $resource->nid_no = $request->nid_no;
+        if ($request->has('additional_mobile')) $resource->alternate_contact = formatMobile(trim($request->additional_mobile));
         $profile->update();
-        $resource->nid_no = $request->nid_no;
-        if ($request->hasFile('nid_front') && $request->hasFile('nid_back'))
-            $resource->nid_image = $this->mergeFrontAndBackNID($profile, $request->file('nid_front'), $request->file('nid_back'));
+        if ($request->hasFile('nid_front') && $request->hasFile('nid_back')) {
+            $canvas = $this->mergeFrontAndBackNID($request->file('nid_front'), $request->file('nid_back'));
+            $resource->nid_image = $this->fileRepository->uploadImageToCDN('images/resources/nid', Carbon::now()->timestamp . '_' . str_slug($profile->name, '_') . '.png', $canvas);
+        }
         $resource->update();
         return $resource;
     }
-
 }

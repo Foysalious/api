@@ -12,10 +12,12 @@ abstract class ImageManager
     protected $file;
 
     /**
-     * @return Image
+     * @return Image | \Intervention\Image\Image
      */
     public function make()
     {
+        if($this->file instanceof  \Intervention\Image\Image) return $this->file;
+
         $image = Image::make($this->file);
         $image->encode($this->file->getClientOriginalExtension());
         return $image;

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "fc729cb39ef981f3ba865c9afe5b01d5",
+    "content-hash": "a40c8e01ef15cef0e7f38ca566858fe9",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -374,7 +374,7 @@
             },
             "require": {
                 "doctrine/lexer": "1.*",
-                "php": "^7.1"
+                "php": "^5.6 || ^7.0"
             },
             "require-dev": {
                 "doctrine/cache": "1.*",
@@ -383,7 +383,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "1.5.x-dev"
+                    "dev-master": "1.4.x-dev"
                 }
             },
             "autoload": {
@@ -424,7 +424,7 @@
                 "docblock",
                 "parser"
             ],
-            "time": "2017-07-22T10:58:02+00:00"
+            "time": "2017-02-24T16:22:25+00:00"
         },
         {
             "name": "doctrine/inflector",
@@ -703,12 +703,12 @@
             "version": "v2.2.1",
             "source": {
                 "type": "git",
-                "url": "https://github.com/google/google-api-php-client.git",
+                "url": "https://github.com/googleapis/google-api-php-client.git",
                 "reference": "b69b8ac4bf6501793c389d4e013a79d09c85c5f2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/google/google-api-php-client/zipball/b69b8ac4bf6501793c389d4e013a79d09c85c5f2",
+                "url": "https://api.github.com/repos/googleapis/google-api-php-client/zipball/b69b8ac4bf6501793c389d4e013a79d09c85c5f2",
                 "reference": "b69b8ac4bf6501793c389d4e013a79d09c85c5f2",
                 "shasum": ""
             },
@@ -762,12 +762,12 @@
             "version": "v0.45",
             "source": {
                 "type": "git",
-                "url": "https://github.com/google/google-api-php-client-services.git",
+                "url": "https://github.com/googleapis/google-api-php-client-services.git",
                 "reference": "35909fbc909bf9f9e0d36dd05b62f4b1d5ffe3ae"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/google/google-api-php-client-services/zipball/35909fbc909bf9f9e0d36dd05b62f4b1d5ffe3ae",
+                "url": "https://api.github.com/repos/googleapis/google-api-php-client-services/zipball/35909fbc909bf9f9e0d36dd05b62f4b1d5ffe3ae",
                 "reference": "35909fbc909bf9f9e0d36dd05b62f4b1d5ffe3ae",
                 "shasum": ""
             },
@@ -799,12 +799,12 @@
             "version": "v1.2.1",
             "source": {
                 "type": "git",
-                "url": "https://github.com/google/google-auth-library-php.git",
+                "url": "https://github.com/googleapis/google-auth-library-php.git",
                 "reference": "da0062d279c9459350808a4fb63dbc08b90d6b90"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/google/google-auth-library-php/zipball/da0062d279c9459350808a4fb63dbc08b90d6b90",
+                "url": "https://api.github.com/repos/googleapis/google-auth-library-php/zipball/da0062d279c9459350808a4fb63dbc08b90d6b90",
                 "reference": "da0062d279c9459350808a4fb63dbc08b90d6b90",
                 "shasum": ""
             },
@@ -2707,7 +2707,7 @@
             "source": {
                 "type": "git",
                 "url": "https://arnabrahman@bitbucket.org/startern/sheba_dal.git",
-                "reference": "aa520fed4b178afacebb89594425c10dc17e9219"
+                "reference": "656b97769194d1efd8eea0b42ff12e79e88b7da2"
             },
             "require": {
                 "php": ">=5.4"
@@ -2731,7 +2731,39 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2018-05-20T06:26:13+00:00"
+            "time": "2018-10-27T04:47:27+00:00"
+        },
+        {
+            "name": "sheba/notification",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_notification.git",
+                "reference": "2cde18294fb320c1a2f0445fc2ecab56b137d2af"
+            },
+            "require": {
+                "php": ">=5.4"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "src/functions.php"
+                ],
+                "psr-4": {
+                    "Sheba\\Notification\\": "src/"
+                }
+            },
+            "license": [
+                "proprietary"
+            ],
+            "authors": [
+                {
+                    "name": "Shafiqul Islam",
+                    "email": "shafiq.startern@gmail.com"
+                }
+            ],
+            "description": "Sheba notifications.",
+            "time": "2018-09-22T06:40:08+00:00"
         },
         {
             "name": "sheba/voucher",
@@ -2739,7 +2771,7 @@
             "source": {
                 "type": "git",
                 "url": "https://arnabrahman@bitbucket.org/startern/sheba_voucher.git",
-                "reference": "9e8074d0e20b50f09be54eca35da32ad60523a4b"
+                "reference": "7cbf3a4e275a9452bfda424c5260aa261e213cd6"
             },
             "require": {
                 "php": ">=5.4"
@@ -2763,7 +2795,7 @@
                 }
             ],
             "description": "Voucher for Sheba.",
-            "time": "2018-06-05 04:16:26"
+            "time": "2018-09-09T10:19:26+00:00"
         },
         {
             "name": "sunra/php-simple-html-dom-parser",
@@ -4068,20 +4100,20 @@
         },
         {
             "name": "itsgoingd/clockwork",
-            "version": "v1.14.5",
+            "version": "v3.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/itsgoingd/clockwork.git",
-                "reference": "55ec557cc8cc60944de0eefbe27f905d538a8f70"
+                "reference": "6632a54a273e74fa6c7f1ffa5a87925716a83b0e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/itsgoingd/clockwork/zipball/55ec557cc8cc60944de0eefbe27f905d538a8f70",
-                "reference": "55ec557cc8cc60944de0eefbe27f905d538a8f70",
+                "url": "https://api.github.com/repos/itsgoingd/clockwork/zipball/6632a54a273e74fa6c7f1ffa5a87925716a83b0e",
+                "reference": "6632a54a273e74fa6c7f1ffa5a87925716a83b0e",
                 "shasum": ""
             },
             "require": {
-                "php": ">=5.3.9",
+                "php": ">=5.5",
                 "psr/log": "1.*"
             },
             "type": "library",
@@ -4108,18 +4140,21 @@
                 {
                     "name": "itsgoingd",
                     "email": "itsgoingd@luzer.sk",
-                    "homepage": "http://twitter.com/itsgoingd"
+                    "homepage": "https://twitter.com/itsgoingd"
                 }
             ],
-            "description": "Server-side component of Clockwork, a Chrome extension for PHP development",
-            "homepage": "http://github.com/itsgoingd/clockwork",
+            "description": "php dev tools integrated to your browser",
+            "homepage": "https://underground.works/clockwork",
             "keywords": [
+                "Devtools",
                 "debugging",
                 "laravel",
                 "logging",
-                "profiling"
+                "lumen",
+                "profiling",
+                "slim"
             ],
-            "time": "2017-09-15T14:50:14+00:00"
+            "time": "2018-08-01T14:38:23+00:00"
         },
         {
             "name": "mockery/mockery",
@@ -5167,12 +5202,17 @@
     "stability-flags": {
         "dingo/api": 20,
         "sheba/dal": 20,
-        "sheba/voucher": 20
+        "sheba/voucher": 20,
+        "sheba/notification": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": ">=5.5.9"
+        "php": ">=5.5.9",
+        "ext-json": "*",
+        "ext-curl": "*",
+        "ext-soap": "*",
+        "ext-simplexml": "*"
     },
     "platform-dev": []
 }

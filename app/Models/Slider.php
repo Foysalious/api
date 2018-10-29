@@ -11,6 +11,11 @@ class Slider extends Model
         return $query->where('is_active', 1);
     }
 
+    public function scopeForBusiness($query)
+    {
+        return $query->where('is_active_for_business', 1);
+    }
+
     public function scopeSort($query)
     {
         return $query->orderBy('order');
@@ -19,5 +24,10 @@ class Slider extends Model
     public function scopeShow($query)
     {
         return $query->active()->sort()->get();
+    }
+
+    public function scopeShowBusiness($query)
+    {
+        return $query->ForBusiness()->sort()->get();
     }
 }

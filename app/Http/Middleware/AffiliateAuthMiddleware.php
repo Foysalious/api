@@ -16,16 +16,20 @@ class AffiliateAuthMiddleware
      */
     public function handle($request, Closure $next)
     {
-        If ($request->has('remember_token')) {
+        if ($request->has('remember_token')) {
             $affiliate = Affiliate::where('remember_token', $request->input('remember_token'))->first();
             if ($affiliate) {
                 if ($affiliate->id == $request->affiliate) {
                     $request->merge(['affiliate' => $affiliate]);
                     return $next($request);
+                } else {
+                    return api_response($request, null, 403, ["message" => "You're not authorized to access this user."]);
                 }
+            } else {
+                return api_response($request, null, 404, ["message" => "User not found."]);
             }
-            return api_response($request, null, 403);
+        } else {
+            return api_response($request, null, 400, ["message" => "Authentication token is missing from the request."]);
         }
-        return api_response($request, null, 401);
     }
 }

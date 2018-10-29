@@ -207,13 +207,4 @@ class FacebookController extends Controller
         return $validator->fails() ? $validator->errors()->all()[0] : false;
     }
 
-    private function _validateKitRequest($request)
-    {
-        $from = implode(',', constants('FROM'));
-        $validator = Validator::make($request->all(), [
-            'from' => "required|in:$from",
-            'code' => "required"
-        ], ['in' => 'from value is invalid!']);
-        return $validator->fails() ? $validator->errors()->all()[0] : false;
-    }
 }

@@ -6,6 +6,8 @@ use App\Models\Affiliate;
 use App\Models\Member;
 use App\Models\Promotion;
 use App\Models\Voucher;
+use App\Models\AffiliateTransaction;
+use App\Repositories\SmsHandler;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Customer;
@@ -42,7 +44,7 @@ class ProfileRepository
     public function updateIfNull($profile, array $data)
     {
         foreach ($data as $key => $value) {
-            if (empty($profile->$key) || $profile->$key == null) {
+            if (empty($profile->$key) || $profile->$key == null || !$profile->$key) {
                 $profile->$key = $value;
             }
         }
@@ -84,10 +86,10 @@ class ProfileRepository
                 $info['bKash'] = $avatar->banking_info->bKash;
                 $info['verification_status'] = $avatar->verification_status;
                 $info['is_suspended'] = $avatar->is_suspended;
-                $info['ambassador_code'] = $avatar->isAmbassador() ? $avatar->referral->code : null;
+                $info['ambassador_code'] = $avatar->is_ambassador ? $avatar->referral->code : null;
                 $info['is_ambassador'] = $avatar->is_ambassador;
             } elseif ($from == 'customer') {
-                $info['referral'] = $avatar->referral->code;
+                $info['referral'] = $avatar->referral ? $avatar->referral->code : '';
                 $info['order_count'] = $avatar->orders->count();
                 $info['voucher_code'] = constants('APP_VOUCHER');
                 $info['referrer_id'] = $avatar->referrer_id;
@@ -255,8 +257,33 @@ class ProfileRepository
             $affiliate->remember_token = str_random(255);
             $affiliate->banking_info = json_encode(array('bKash' => ''));
             $affiliate->save();
+            $this->addAffiliateBonus($affiliate);
+
             (new NotificationRepository())->forAffiliateRegistration($affiliate);
         }
+    }
+
+    private function addAffiliateBonus(Affiliate $affiliate)
+    {
+        $affiliate_bonus_amount = constants('AFFILIATION_REGISTRATION_BONUS');
+
+        DB::transaction(function () use ($affiliate, $affiliate_bonus_amount) {
+            $affiliate->update([
+                'wallet' => $affiliate_bonus_amount,
+                'acquisition_cost' => $affiliate_bonus_amount
+            ]);
+
+            AffiliateTransaction::create([
+                'affiliate_id' => $affiliate->id,
+                'type' => 'Credit',
+                'log' => "Affiliate earned $affiliate_bonus_amount tk for registration",
+                'amount' => $affiliate_bonus_amount
+            ]);
+        });
+
+        (new SmsHandler('affiliate-register'))->send($affiliate->profile->mobile, [
+            'bonus_amount' => $affiliate_bonus_amount
+        ]);
     }
 
     public function registerAvatarByEmail($avatar, $request, $user)

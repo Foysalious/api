@@ -36,7 +36,7 @@ class JobLogs
             }
         }
         $this->materialLogs($this->job->materialLogs);
-        $this->statusChangeLogs($this->job->statusChangeLog);
+        $this->statusChangeLogs($this->job->statusChangeLogs);
         $this->getComments($this->job->comments->load('accessors')->filter(function ($comment) {
             return $comment->accessors->pluck('model_name')->contains('App\\Models\\Resource');
         }));

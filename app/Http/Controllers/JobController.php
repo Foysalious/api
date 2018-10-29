@@ -4,15 +4,22 @@ namespace App\Http\Controllers;
 
 use App\Models\CustomerFavorite;
 use App\Models\Job;
+use App\Models\JobCancelReason;
+use App\Models\Partner;
+use App\Models\Resource;
 use App\Repositories\JobCancelLogRepository;
-use App\Sheba\Checkout\OnlinePayment;
 use App\Sheba\JobStatus;
+use App\Sheba\UserRequestInformation;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use DB;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 use Sheba\Logs\Customer\JobLogs;
+use Sheba\Payment\Adapters\Payable\OrderAdapter;
+use Sheba\Payment\ShebaPayment;
 
 class JobController extends Controller
 {
@@ -65,7 +72,6 @@ class JobController extends Controller
                         $query->where('accessors.model_name', get_class($customer));
                     });
             }]);
-
             $job->partnerOrder->calculate(true);
             $job_collection = collect();
             $job_collection->put('id', $job->id);
@@ -80,15 +86,21 @@ class JobController extends Controller
             $job_collection->put('schedule_date_readable', (Carbon::parse($job->schedule_date))->format('jS F, Y'));
             $job_collection->put('complains', $this->formatComplains($job->complains));
             $job_collection->put('preferred_time', $job->readable_preferred_time);
+            $job_collection->put('category_id', $job->category ? $job->category->id : null);
             $job_collection->put('category_name', $job->category ? $job->category->name : null);
             $job_collection->put('partner_name', $job->partnerOrder->partner->name);
             $job_collection->put('status', $job->status);
             $job_collection->put('rating', $job->review ? $job->review->rating : null);
             $job_collection->put('review', $job->review ? $job->review->calculated_review : null);
+            $job_collection->put('original_price', (double)$job->partnerOrder->jobPrices);
+            $job_collection->put('discount', (double)$job->partnerOrder->totalDiscount);
+            $job_collection->put('payment_method', $this->formatPaymentMethod($job->partnerOrder->payment_method));
             $job_collection->put('price', (double)$job->partnerOrder->totalPrice);
             $job_collection->put('isDue', (double)$job->partnerOrder->due > 0 ? 1 : 0);
+            $job_collection->put('isRentCar', $job->isRentCar());
+            $job_collection->put('is_on_premise', $job->isOnPremise());
+            $job_collection->put('partner_address', $job->partnerOrder->partner->address);
             $job_collection->put('order_code', $job->partnerOrder->order->code());
-
             $job_collection->put('pick_up_address', $job->carRentalJobDetail ? $job->carRentalJobDetail->pick_up_address : null);
             $job_collection->put('destination_address', $job->carRentalJobDetail ? $job->carRentalJobDetail->destination_address : null);
             $job_collection->put('drop_off_date', $job->carRentalJobDetail ? (Carbon::parse($job->carRentalJobDetail->drop_off_date)->format('jS F, Y')) : null);
@@ -99,12 +111,32 @@ class JobController extends Controller
             if (count($job->jobServices) == 0) {
                 $services = collect();
                 $variables = json_decode($job->service_variables);
-                $services->push(array('name' => $job->service_name, 'variables' => $variables, 'quantity' => $job->service_quantity));
+                $services->push(
+                    array(
+                        'service_id' => $job->service->id,
+                        'name' => $job->service_name,
+                        'variables' => $variables,
+                        'quantity' => $job->service_quantity,
+                        'unit' => $job->service->unit,
+                        'option' => $job->service_option,
+                        'variable_type' => $job->service_variable_type
+                    )
+                );
             } else {
                 $services = collect();
                 foreach ($job->jobServices as $jobService) {
                     $variables = json_decode($jobService->variables);
-                    $services->push(array('name' => $jobService->service->name, 'variables' => $variables, 'quantity' => $jobService->quantity));
+                    $services->push(
+                        array(
+                            'service_id' => $jobService->service->id,
+                            'name' => $jobService->formatServiceName($job),
+                            'variables' => $variables,
+                            'unit' => $jobService->service->unit,
+                            'quantity' => $jobService->quantity,
+                            'option' => $jobService->option,
+                            'variable_type' => $jobService->variable_type
+                        )
+                    );
                 }
             }
             $job_collection->put('services', $services);
@@ -132,17 +164,31 @@ class JobController extends Controller
             $job->calculate(true);
             if (count($job->jobServices) == 0) {
                 $services = array();
-                array_push($services, array('name' => $job->service != null ? $job->service->name : null, 'price' => (double)$job->servicePrice));
+                array_push($services, array(
+                    'name' => $job->service != null ? $job->service->name : null,
+                    'price' => (double)$job->servicePrice,
+                    'min_price' => 0, 'is_min_price_applied' => 0
+                ));
             } else {
                 $services = array();
                 foreach ($job->jobServices as $jobService) {
-                    array_push($services, array('name' => $jobService->service != null ? $jobService->service->name : null, 'price' => (double)$jobService->unit_price * (double)$jobService->quantity));
+                    $total = (double)$jobService->unit_price * (double)$jobService->quantity;
+                    $min_price = (double)$jobService->min_price;
+                    array_push($services, array(
+                        'name' => $jobService->service != null ? $jobService->service->name : null,
+                        'quantity' => $jobService->quantity,
+                        'price' => $total,
+                        'min_price' => $min_price,
+                        'is_min_price_applied' => $min_price > $total ? 1 : 0
+                    ));
                 }
             }
             $partnerOrder = $job->partnerOrder;
             $partnerOrder->calculate(true);
+
             $bill = collect();
             $bill['total'] = (double)$partnerOrder->totalPrice;
+            $bill['original_price'] = (double)$partnerOrder->jobPrices;
             $bill['paid'] = (double)$partnerOrder->paid;
             $bill['due'] = (double)$partnerOrder->due;
             $bill['material_price'] = (double)$job->materialPrice;
@@ -152,7 +198,10 @@ class JobController extends Controller
             $bill['delivered_date_timestamp'] = $job->delivered_date != null ? $job->delivered_date->timestamp : null;
             $bill['closed_and_paid_at'] = $partnerOrder->closed_and_paid_at ? $partnerOrder->closed_and_paid_at->format('Y-m-d') : null;
             $bill['closed_and_paid_at_timestamp'] = $partnerOrder->closed_and_paid_at != null ? $partnerOrder->closed_and_paid_at->timestamp : null;
+            $bill['payment_method'] = $this->formatPaymentMethod($partnerOrder->payment_method);
             $bill['status'] = $job->status;
+            $bill['is_on_premise'] = (int)$job->isOnPremise();
+            $bill['delivery_charge'] = (double)$partnerOrder->deliveryCharge;
             $bill['invoice'] = $job->partnerOrder->invoice;
             $bill['version'] = $job->partnerOrder->getVersion();
             return api_response($request, $bill, 200, ['bill' => $bill]);
@@ -160,6 +209,13 @@ class JobController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function formatPaymentMethod($payment_method)
+    {
+        if ($payment_method == 'Cash On Delivery' ||
+            $payment_method == 'cash-on-delivery') return 'cod';
+        return strtolower($payment_method);
     }
 
     public function getLogs($customer, $job, Request $request)
@@ -211,7 +267,8 @@ class JobController extends Controller
                         'rating' => $job->review != null ? $job->review->rating : null,
                         'order_code' => $order->code(),
                         'created_at' => $job->created_at->format('Y-m-d'),
-                        'created_at_timestamp' => $job->created_at->timestamp
+                        'created_at_timestamp' => $job->created_at->timestamp,
+                        'message' => (new JobLogs($job))->getOrderMessage()
                     )));
                 }
             }
@@ -297,20 +354,36 @@ class JobController extends Controller
     public function cancel($customer, $job, Request $request)
     {
         try {
-            $job = Job::find($job);
-            $previous_status = $job->status;
-            $customer = $request->customer;
-            $job_status = new JobStatus($job, $request);
-            $job_status->__set('updated_by', $request->customer);
-            if ($response = $job_status->update('Cancelled')) {
-                $job_cancel_log = new JobCancelLogRepository($job);
-                $job_cancel_log->__set('created_by', $customer);
-                $job_cancel_log->store($previous_status, $request->reason);
-                return api_response($request, true, 200);
-            } else {
+            $this->validate($request, [
+                'remember_token' => 'required',
+                'cancel_reason' => 'required|exists:job_cancel_reasons,key,is_published_for_customer,1',
+                'cancel_reason_details' => 'sometimes|string'
+            ]);
+
+            $client = new Client();
+            $res = $client->request('POST', env('SHEBA_BACKEND_URL') . '/api/job/' . $job . '/change-status',
+                [
+                    'form_params' => array_merge((new UserRequestInformation($request))->getInformationArray(), [
+                        'customer_id' => $customer,
+                        'remember_token' => $request->remember_token,
+                        'status' => constants('JOB_STATUSES')['Cancelled'],
+                        'cancel_reason' => $request->cancel_reason,
+                        'cancel_reason_details' => $request->cancel_reason_details,
+                        'created_by_type' => get_class($request->customer)
+                    ])
+                ]);
+            if ($response = json_decode($res->getBody())) {
                 return api_response($request, $response, $response->code);
             }
-        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (RequestException $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -345,8 +418,144 @@ class JobController extends Controller
     public function clearBills($customer, $job, Request $request)
     {
         try {
-            $link = (new OnlinePayment())->generateSSLLink($request->job->partnerOrder);
-            return api_response($request, $link, 200, ['link' => $link]);
+            $this->validate($request, [
+                'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl'
+            ]);
+            $order_adapter = new OrderAdapter($request->job->partnerOrder);
+            $payment = (new ShebaPayment($request->has('payment_method') ? $request->payment_method : 'online'))->init($order_adapter->getPayable());
+            return api_response($request, $payment, 200, ['link' => $payment->redirect_url, 'payment' => $payment->getFormattedPayment()]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getOrderLogs($customer, Request $request)
+    {
+        try {
+            $job = $request->job;
+            $logs = (new JobLogs($job))->getorderStatusLogs();
+            return api_response($request, $logs, 200, ['logs' => $logs]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getFaqs(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'status' => 'required'
+            ]);
+            $status = strtolower($request->status);
+            $faqs = [];
+            if (in_array($status, ['pending', 'not responded', 'declined'])) {
+                $faqs = array(
+                    array(
+                        'question' => 'When my order will be confirmed?',
+                        'answer' => 'When you placed an order, service provider will be notified. It will take 5-10 minutes for Service provider to accept the order. You can also call service provider to confirm.'
+                    ),
+                    array(
+                        'question' => 'What if Service Provider declined my order?',
+                        'answer' => 'If service provider declined to serve your order at that moment, Sheba.xyz will notify you and assign a new suitable service provider for you.'
+                    ),
+                    array(
+                        'question' => 'How can I change service provider?',
+                        'answer' => 'You can’t change service provider after confirming by service provider. In this case you can call 16516 or directly chat with us for help.'
+                    ),
+                    array(
+                        'question' => 'Who will come to work on my order?',
+                        'answer' => 'After confirming the order, Service provider will assign an expert for the order. Expert will come to work on your order on schedule time and date.'
+                    ),
+                    array(
+                        'question' => 'What if I used the wrong payment method?',
+                        'answer' => 'Unfortunately, you can’t change payment methods after placing the order. For more information, directly chat with us.'
+                    ),
+                    array(
+                        'question' => 'What if my service provider or expert aren’t receiving my call?',
+                        'answer' => 'If you failed to catch service provider or expert by several call, you can create an issue or chat with us. '
+                    )
+                );
+            } elseif (in_array($status, ['accepted', 'schedule due', 'process', 'serve due'])) {
+                $faqs = array(
+                    array(
+                        'question' => 'What if I want to reschedule the order?',
+                        'answer' => 'You can reschedule your order by calling service provider. You can check your new schedule time and date from order details page.'
+                    ),
+                    array(
+                        'question' => 'What if I pay advance to Service Provider?',
+                        'answer' => 'If you pay in advance to service provider, bill section will be updated. You can check the bill section to know in details about the bill.'
+                    ),
+                    array(
+                        'question' => 'What if I used the wrong payment method?',
+                        'answer' => 'Unfortunately, you can’t change payment methods after placing the order. For more information, directly chat with us.'
+                    ),
+                    array(
+                        'question' => 'Who will come to work on my order?',
+                        'answer' => 'After confirming the order, Service provider will assign an expert for the order. Expert will come to work on your order on schedule time and date.'
+                    ),
+                    array(
+                        'question' => 'What if my order is not started in schedule time?',
+                        'answer' => 'You will get a notification 30 minutes before your selected schedule slots. If your order hasn’t started in time, you can call expert to know the issue or you can let Sheba.xyz know by creating an issue.'
+                    ),
+                    array(
+                        'question' => 'What if my service provider or expert isn’t receiving my call?',
+                        'answer' => 'If you failed to catch service provider or expert by several call, you can create an issue or chat with us.'
+                    ),
+                );
+            } elseif (in_array($status, ['served'])) {
+                $faqs = array(
+                    array(
+                        'question' => 'What if expert asks for additional payment?',
+                        'answer' => 'Expert or Service Provider should not ask for extra payment. You don’t need to pay any additional payment. Tips are not also expected or required. If you wish to tip, the adjustment to the total bill will not be made. If expert asks for any additional payment which is not found in app, create an issue or directly chat with us'
+                    ),
+                    array(
+                        'question' => 'What if I want to create an issue against my service provider and expert?',
+                        'answer' => 'You can create an issue by clicking ‘Get Support’ option from the order details page. Sheba.xyz support team will receive the issue and solve it within 72 hours.'
+                    ),
+                    array(
+                        'question' => 'What can I do if I am not satisfied with the service quality?',
+                        'answer' => 'You can rate your experience so that service provider will take action against the expert or you can create an issue from ‘Get Support’ option'
+                    )
+                );
+            } elseif (in_array($status, ['cancelled'])) {
+                $faqs = array(
+                    array(
+                        'question' => 'What if my order is mistakenly cancelled?',
+                        'answer' => 'In this case, you can directly chat with us informing about the issue. Our support management team will look after the issue.'
+                    ),
+                    array(
+                        'question' => 'What if someone asks me for cancellation fee?',
+                        'answer' => 'Currently we don’t have any cancellation fee. If any expert or service provider ask you for the cancellation fee, kindly message us from message section of the app.'
+                    ),
+                    array(
+                        'question' => 'What if I paid online and my order is cancelled?',
+                        'answer' => 'Our Support management team will look after this issue. They will investigate and refund at your account within 72 working hours.'
+                    )
+                );
+            }
+            return api_response($request, $faqs, 200, ['faqs' => $faqs]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function cancelReason(Request $request)
+    {
+        try {
+            $job_cancel_reasons = JobCancelReason::ForCustomer()->select('id', 'name', 'key')->get();
+            return api_response($request, $job_cancel_reasons, 200, ['cancel-reason' => $job_cancel_reasons]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

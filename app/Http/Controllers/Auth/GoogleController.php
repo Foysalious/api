@@ -31,14 +31,13 @@ class GoogleController extends Controller
         try {
             $this->validate($request, ['id_token' => 'required', 'from' => "required|in:" . implode(',', constants('FROM'))]);
             if ($payload = $this->getGooglePayload($request->id_token)) {
-                $social_profile = new SocialProfile($payload);
-                $profile_info = $social_profile->getProfileInfo('google');
+                $profile_info = $this->extractProfileInformationFromPayload($payload);
                 if ($profile = $this->profileRepository->getIfExist($profile_info['email'], 'email')) {
-                    $profile = $social_profile->updateProfileInformation($profile);
-                    if (basename($profile->pro_pic) == 'default.jpg') {
+                    $profile = $this->profileRepository->updateIfNull($profile, $profile_info);
+                    if ($profile_info['pro_pic'] && basename($profile->pro_pic) == 'default.jpg') {
                         $profile->pro_pic = $this->profileRepository->uploadImage($profile, $profile_info['pro_pic'], 'images/profiles/');
+                        $profile->update();
                     }
-                    $profile->update();
                     $from = $this->profileRepository->getAvatar($request->from);
                     if ($profile->$from == null) {
                         $this->profileRepository->registerAvatar($from, $request, $profile);
@@ -50,10 +49,14 @@ class GoogleController extends Controller
                 }
             }
             return api_response($request, null, 403);
-        } catch (ValidationException $e) {
+        } catch ( ValidationException $e ) {
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all()]);
+            $sentry->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -84,11 +87,15 @@ class GoogleController extends Controller
                 $info = $this->profileRepository->getProfileInfo($from, Profile::find($profile->id), $request);
                 return $info ? api_response($request, $info, 200, ['info' => $info]) : api_response($request, null, 404);
             }
-            return api_response($request, null, 403);
-        } catch (ValidationException $e) {
+            return api_response($request, null, 403, ['message' => 'Authentication failed. Please try again.']);
+        } catch ( ValidationException $e ) {
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all()]);
+            $sentry->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -99,8 +106,18 @@ class GoogleController extends Controller
         try {
             $payload = $client->verifyIdToken($id_token);
             return $payload ? $payload : null;
-        } catch (\Throwable $e) {
+        } catch ( \Throwable $e ) {
             return null;
         }
+    }
+
+    private function extractProfileInformationFromPayload($payload)
+    {
+        return array(
+            'google_id' => $payload['sub'],
+            'email' => $payload['email'],
+            'pro_pic' => isset($payload['picture']) ? $payload['picture'] : null,
+            'email_verified' => $payload['email_verified'] ? 1 : 0,
+        );
     }
 }

@@ -40,6 +40,8 @@ class CategoryGroupsQuery extends Query
                 $query->$for();
             }
         };
+        $fields = $info->getFieldSelection(1);
+        if (in_array('categories', $fields)) $category_group = $category_group->with('categories');
         $category_group = $category_group->where($where)->orderBy('order', 'asc')->get();
         return $category_group ? $category_group : null;
     }

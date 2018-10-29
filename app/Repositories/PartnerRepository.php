@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 
-use App\Models\Job;
+use App\Models\Category;
 use App\Models\Partner;
 
 class PartnerRepository
@@ -17,7 +17,7 @@ class PartnerRepository
         $this->serviceRepo = new ServiceRepository();
     }
 
-    public function resources($type = null, $verify = null, $job_id = null)
+    public function handymanResources($verify = null, $category_id = null, $date = null, $preferred_time = null)
     {
         $resources = $this->partner->handymanResources()->get()->unique();
         $resources->load('jobs', 'profile', 'reviews');
@@ -28,18 +28,17 @@ class PartnerRepository
         };
 
         $job = null;
-        if ($job_id != null) {
-            $job = Job::find((int)$job_id);
-            $resources = $resources->map(function ($resource) use ($job) {
+        if ($category_id != null) {
+            $resources = $resources->map(function ($resource) use ($category_id) {
                 $resource_categories = $resource->categoriesIn($this->partner->id);
-                $is_tagged = $resource_categories->pluck('id')->contains($job->category_id ?: $job->service->category_id);
+                $is_tagged = $resource_categories->pluck('id')->contains($category_id);
                 array_add($resource, 'is_tagged', $is_tagged ? 1 : 0);
                 array_add($resource, 'total_tagged_categories', count($resource_categories));
                 return $resource;
             });
         }
 
-        return $resources->map(function ($resource) use ($job, $type) {
+        return $resources->map(function ($resource) use ($category_id, $date, $preferred_time) {
             $data = [];
             $data['id'] = $resource->id;
             $data['profile_id'] = $resource->profile_id;
@@ -52,15 +51,16 @@ class PartnerRepository
             $avg_rating = $resource->reviews->avg('rating');
             $data['rating'] = $avg_rating != null ? round($avg_rating, 2) : null;
             $data['joined_at'] = $resource->pivot->created_at->timestamp;
-            $data['resource_type'] = $type ?: $resource->pivot->resource_type;
+            $data['resource_type'] = $resource->pivot->resource_type;
             $data['is_verified'] = $resource->is_verified;
             $data['is_available'] = $resource->is_tagged;
             $data['booked_jobs'] = [];
             $data['is_tagged'] = $resource->is_tagged;
             $data['total_tagged_categories'] = isset($resource->total_tagged_categories) ? count($resource->total_tagged_categories) : count($resource->categoriesIn($this->partner->id));
-            if (!empty($job)) {
-                if (in_array($job->category_id, array_map('intval', explode(',', env('RENT_CAR_IDS'))))) {
-                    foreach ($ongoing_jobs->where('resource_id', $resource->id)->where('category_id', $job->category_id) as $job) {
+            if ($category_id) {
+                $category = Category::find($category_id);
+                if (in_array($category_id, array_map('intval', explode(',', env('RENT_CAR_IDS'))))) {
+                    foreach ($ongoing_jobs->where('resource_id', $resource->id)->where('category_id', $category_id) as $job) {
                         array_push($data['booked_jobs'], array(
                             'job_id' => $job->id,
                             'partner_order_id' => $job->partnerOrder->id,
@@ -69,7 +69,7 @@ class PartnerRepository
                     }
                 } else {
                     $resource_scheduler = scheduler($resource);
-                    if (!$resource_scheduler->isAvailableForCategory($job->schedule_date, $job->preferred_time_start, $job->category)) {
+                    if (!$resource_scheduler->isAvailableForCategory($date, explode( '-',$preferred_time)[0], $category)) {
                         $data['is_available'] = 0;
                         foreach ($resource_scheduler->getBookedJobs() as $job) {
                             array_push($data['booked_jobs'], array(

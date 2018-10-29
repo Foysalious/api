@@ -1,21 +1,24 @@
 <?php namespace App\Models;
 
+use Sheba\Reward\Rewardable;
+use Sheba\Subscription\Partner\PartnerSubscriber;
+use Sheba\Payment\Wallet;
 use Carbon\Carbon;
 use Sheba\Dal\Complain\Model as Complain;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Voucher\VoucherCodeGenerator;
 use DB;
 
-class Partner extends Model
+class Partner extends Model implements Rewardable
 {
-    protected $guarded = [
-        'id',
-    ];
-    protected $casts = ['wallet' => 'double'];
+    use Wallet;
 
+    protected $guarded = ['id',];
+    protected $dates = ['last_billed_date', 'billing_start_date'];
+    protected $casts = ['wallet' => 'double', 'last_billed_amount' => 'double', 'reward_point' => 'int', 'current_impression' => 'double', 'impression_limit' => 'double'];
     protected $resourcePivotColumns = ['id', 'designation', 'department', 'resource_type', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
-    protected $categoryPivotColumns = ['id', 'experience', 'preparation_time_minutes','response_time_min', 'response_time_max', 'commission', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
-    protected $servicePivotColumns = ['id', 'description', 'options', 'prices', 'is_published', 'discount', 'discount_start_date', 'discount_start_date', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
+    protected $categoryPivotColumns = ['id', 'experience', 'preparation_time_minutes', 'response_time_min', 'response_time_max', 'commission', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at', 'is_home_delivery_applied', 'is_partner_premise_applied', 'delivery_charge'];
+    protected $servicePivotColumns = ['id', 'description', 'options', 'prices', 'min_prices', 'is_published', 'discount', 'discount_start_date', 'discount_start_date', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
 
     public function basicInformations()
     {
@@ -195,6 +198,16 @@ class Partner extends Model
         return null;
     }
 
+    public function getManagerMobile()
+    {
+        if ($operation_resource = $this->resources->where('pivot.resource_type', constants('RESOURCE_TYPES')['Operation'])->first()) {
+            return $operation_resource->profile->mobile;
+        } elseif ($admin_resource = $this->resources->where('pivot.resource_type', constants('RESOURCE_TYPES')['Admin'])->first()) {
+            return $admin_resource->profile->mobile;
+        }
+        return null;
+    }
+
     public function hasThisResource($resource_id, $type)
     {
         return $this->resources->where('id', (int)$resource_id)->where('pivot.resource_type', $type)->first() ? true : false;
@@ -234,7 +247,7 @@ class Partner extends Model
     {
         $category = $category instanceof Category ? $category->id : $category;
         $partner_resource_ids = [];
-        $this->handymanResources->map(function ($resource) use (&$partner_resource_ids) {
+        $this->handymanResources()->verified()->get()->map(function ($resource) use (&$partner_resource_ids) {
             $partner_resource_ids[$resource->pivot->id] = $resource;
         });
 
@@ -256,8 +269,104 @@ class Partner extends Model
     {
         return (double)$this->wallet < (double)$this->walletSetting->min_wallet_threshold;
     }
+
     public function bankInformations()
     {
         return $this->hasOne(PartnerBankInformation::class);
+    }
+
+
+    public function affiliation()
+    {
+        return $this->belongsTo(PartnerAffiliation::class, 'affiliation_id');
+    }
+
+    public function hasAppropriateCreditLimit()
+    {
+        return (double)$this->wallet >= (double)$this->walletSetting->min_wallet_threshold;
+    }
+
+    public function subscription()
+    {
+        return $this->belongsTo(PartnerSubscriptionPackage::class, 'package_id');
+    }
+
+    public function subscriptionDiscount()
+    {
+        return $this->belongsTo(PartnerSubscriptionPackageDiscount::class, 'discount_id');
+    }
+
+    public function subscribe($package, $billing_type)
+    {
+        $package = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->partner->subscription;
+        $discount = $package->runningDiscount($billing_type);
+        $discount_id = $discount ? $discount->id : null;
+        $this->subscriber()->getPackage($package)->subscribe($billing_type, $discount_id);
+    }
+
+    public function subscriptionUpgrade($package, $billing_type = null)
+    {
+        $package = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->partner->subscription;
+        $this->subscriber()->upgrade($package, $billing_type);
+    }
+
+    public function runSubscriptionBilling()
+    {
+        $this->subscriber()->getBilling()->runSubscriptionBilling();
+    }
+
+    public function runUpfrontSubscriptionBilling()
+    {
+        $this->subscriber()->getBilling()->runUpfrontBilling();
+    }
+
+    private function subscriber()
+    {
+        return new PartnerSubscriber($this);
+    }
+
+    public function periodicBillingHandler()
+    {
+        return $this->subscriber()->periodicBillingHandler();
+    }
+
+    public function getCommissionAttribute()
+    {
+        return $this->subscriber()->commission();
+    }
+
+    public function canCreateResource(Array $types)
+    {
+        return $this->subscriber()->canCreateResource($types);
+    }
+
+    public function subscriptionUpdateRequest()
+    {
+        return $this->hasMany(PartnerSubscriptionUpdateRequest::class);
+    }
+
+    public function canRequestForSubscriptionUpdate()
+    {
+        return !(PartnerSubscriptionUpdateRequest::status(constants('PARTNER_PACKAGE_UPDATE_STATUSES')['Pending'])->partner($this->id)->count());
+    }
+
+    public function lastSubscriptionUpdateRequest()
+    {
+        return PartnerSubscriptionUpdateRequest::status(constants('PARTNER_PACKAGE_UPDATE_STATUSES')['Pending'])->partner($this->id)->get()->last();
+    }
+
+    public function isFirstTimeVerified()
+    {
+        return $this->statusChangeLogs()->where('to', constants('PARTNER_STATUSES')['Verified'])->count() == 0;
+    }
+
+    public function statusChangeLogs()
+    {
+        return $this->hasMany(PartnerStatusChangeLog::class);
+    }
+
+    public function impressionDeductions()
+    {
+        return $this->hasMany(ImpressionDeduction::class);
     }
 }

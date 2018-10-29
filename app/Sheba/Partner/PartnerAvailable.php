@@ -2,7 +2,7 @@
 
 namespace App\Sheba\Partner;
 
-
+use App\Models\Category;
 use App\Models\Partner;
 use Carbon\Carbon;
 
@@ -15,20 +15,23 @@ class PartnerAvailable
         $this->partner = ($partner) instanceof Partner ? $partner : Partner::find($partner);
     }
 
-    public function available($date, $preferred_time, $category_id)
+    public function available($date, $preferred_time, Category $category)
     {
         if ($this->_partnerOnLeave($date)) {
             return 0;
         }
+
         if (!$this->_worksAtDayAndTime($date, $preferred_time)) {
             return 0;
         }
+
         $rent_car_ids = array_map('intval', explode(',', env('RENT_CAR_IDS')));
-        if (!in_array($category_id, $rent_car_ids)) {
-            if (!((scheduler($this->partner)->isAvailable($date, explode('-', $preferred_time)[0], $category_id)))->get('is_available')) {
+        if (!in_array($category->id, $rent_car_ids)) {
+            if (!((scheduler($this->partner)->isAvailable($date, explode('-', $preferred_time)[0], $category)))->get('is_available')) {
                 return 0;
             }
         }
+        
         return 1;
     }
 

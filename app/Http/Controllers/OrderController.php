@@ -1,12 +1,9 @@
-<?php
+<?php namespace App\Http\Controllers;
 
-namespace App\Http\Controllers;
-
-use App\Jobs\CalculatePapAffiliateId;
-use App\Library\PortWallet;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\PartnerOrder;
+use App\Models\Payment;
 use App\Repositories\JobServiceRepository;
 use App\Repositories\NotificationRepository;
 use App\Repositories\OrderRepository;
@@ -15,170 +12,23 @@ use App\Sheba\Checkout\Checkout;
 use App\Sheba\Checkout\OnlinePayment;
 use App\Sheba\Checkout\Validation;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Redis;
 use DB;
+use Sheba\Payment\Adapters\Payable\OrderAdapter;
+use Sheba\Payment\ShebaPayment;
 
 class OrderController extends Controller
 {
     private $orderRepository;
     private $jobServiceRepository;
-    private $job_statuses_show;
 
     public function __construct()
     {
         $this->orderRepository = new OrderRepository();
         $this->jobServiceRepository = new JobServiceRepository();
-        $this->job_statuses_show = config('constants.JOB_STATUSES_SHOW');
-    }
-
-    public function getNotClosedOrderInfo($customer, Request $request)
-    {
-        $customer = $request->customer;
-        $orders = $this->orderRepository->getOrderInfo($customer);
-        $final_orders = [];
-        foreach ($orders as $key => $order) {
-            $order->calculate();
-            if (in_array($order->status, ['Cancelled']) || ($order->status == 'Closed' && $order->due <= 0)) {
-                continue;
-            }
-            foreach ($order->partner_orders as $partner_order) {
-                if ($partner_order->status == 'Cancelled' && count($partner_order->jobs) == 1) {
-                    $job = $partner_order->jobs[0];
-                    if ($job->partnerChangeLog != null) {
-                        array_add($partner_order, 'show', false);
-                        array_forget($partner_order, 'partner_collection');
-                        array_forget($partner_order, 'sheba_collection');
-                        array_forget($partner_order->partner, 'categories');
-                        array_forget($job, 'partnerChangeLog');
-                        continue;
-                    }
-                } else {
-                    array_add($partner_order, 'show', true);
-                }
-                foreach ($partner_order->jobs as $job) {
-                    if ($job->status == "Cancelled") {
-                        if ($job->partnerChangeLog != null) {
-                            array_add($job, 'show', false);
-                            array_forget($partner_order, 'partner_collection');
-                            array_forget($partner_order, 'sheba_collection');
-                            array_forget($partner_order->partner, 'categories');
-                            array_forget($job, 'partnerChangeLog');
-                            continue;
-                        } else {
-                            array_add($job, 'show', true);
-                        }
-                    }
-                    $job['code'] = $job->fullCode();
-                    array_add($job, 'customer_charge', $job->grossPrice);
-                    array_add($job, 'material_price', $job->materialPrice);
-                    array_forget($job, 'partner_order');
-                }
-                array_add($partner_order, 'total_amount', $partner_order->grossAmount);
-                array_add($partner_order, 'paid_amount', $partner_order->paid);
-                array_add($partner_order, 'due_amount', $partner_order->due);
-                array_add($partner_order, 'total_price', (double)$partner_order->totalPrice);
-                array_add($partner_order, 'rounding_cut_off', (double)$partner_order->roundingCutOff);
-                array_forget($partner_order, 'partner_collection');
-                array_forget($partner_order, 'sheba_collection');
-                array_forget($partner_order->partner, 'categories');
-            }
-            array_add($order, 'total_cost', $order->totalPrice);
-            array_add($order, 'due_amount', $order->due);
-            array_add($order, 'order_code', $order->code());
-            array_push($final_orders, $order);
-        }
-        return response()->json(['orders' => $final_orders, 'code' => 200, 'msg' => 'successful']);
-    }
-
-    public function getClosedOrderInfo($customer, Request $request)
-    {
-        $customer = $request->customer;
-        $orders = $this->orderRepository->getOrderInfo($customer);
-        $final_orders = [];
-        foreach ($orders as $key => $order) {
-            $order->calculate();
-            if (in_array($order->status, ['Open', 'Process', 'Cancelled']) || ($order->status == 'Closed' && $order->due != 0)) {
-                continue;
-            }
-            foreach ($order->partner_orders as $partner_order) {
-                array_add($partner_order, 'show', true);
-                array_add($partner_order, 'total_amount', $partner_order->grossAmount);
-                array_add($partner_order, 'paid_amount', $partner_order->paid);
-                array_add($partner_order, 'due_amount', $partner_order->due);
-                array_add($partner_order, 'total_price', (double)$partner_order->totalPrice);
-                array_add($partner_order, 'rounding_cut_off', $partner_order->roundingCutOff);
-                $job_partner_change = 0;
-                foreach ($partner_order->jobs as $job) {
-                    array_add($job, 'show', true);
-                    if ($job->status == "Cancelled") {
-                        if ($job->partnerChangeLog != null) {
-                            $job['show'] = false;
-                            $job_partner_change++;
-                        }
-                    }
-                    array_add($job, 'customer_charge', $job->grossPrice);
-                    array_add($job, 'material_price', $job->materialPrice);
-                    array_forget($job, 'partnerChangeLog');
-                }
-                if (count($partner_order->jobs) == $job_partner_change) {
-                    $partner_order['show'] = false;
-                }
-                array_forget($partner_order, 'partner_collection');
-                array_forget($partner_order, 'sheba_collection');
-                array_forget($partner_order->partner, 'categories');
-            }
-            array_add($order, 'total_cost', $order->totalPrice);
-            array_add($order, 'due_amount', $order->due);
-            array_add($order, 'order_code', $order->code());
-            array_push($final_orders, $order);
-        }
-        return response()->json(['orders' => $final_orders, 'code' => 200, 'msg' => 'successful']);
-    }
-
-    public function getCancelledOrders($customer, Request $request)
-    {
-        $customer = $request->customer;
-        $orders = $this->orderRepository->getOrderInfo($customer);
-        $final_orders = [];
-        foreach ($orders as $key => $order) {
-            $order->calculate();
-            if (in_array($order->status, ['Open', 'Process', 'Closed'])) {
-                continue;
-            }
-            foreach ($order->partner_orders as $partner_order) {
-                array_add($partner_order, 'show', true);
-                array_add($partner_order, 'total_amount', $partner_order->grossAmount);
-                array_add($partner_order, 'paid_amount', $partner_order->paid);
-                array_add($partner_order, 'due_amount', $partner_order->due);
-                array_add($partner_order, 'rounding_cut_off', $partner_order->roundingCutOff);
-                $job_partner_change = 0;
-                foreach ($partner_order->jobs as $job) {
-                    array_add($job, 'show', true);
-                    if ($job->status == "Cancelled") {
-                        if ($job->partnerChangeLog != null) {
-                            $job['show'] = false;
-                            $job_partner_change++;
-                        }
-                    }
-                    array_add($job, 'customer_charge', $job->grossPrice);
-                    array_add($job, 'material_price', $job->materialPrice);
-                    array_forget($job, 'partnerChangeLog');
-                }
-                if (count($partner_order->jobs) == $job_partner_change) {
-                    $partner_order['show'] = false;
-                }
-                array_forget($partner_order, 'partner_collection');
-                array_forget($partner_order, 'sheba_collection');
-                array_forget($partner_order->partner, 'categories');
-            }
-            array_add($order, 'total_cost', $order->totalPrice);
-            array_add($order, 'due_amount', $order->due);
-            array_add($order, 'order_code', $order->code());
-            array_push($final_orders, $order);
-        }
-        return response()->json(['orders' => $final_orders, 'code' => 200, 'msg' => 'successful']);
     }
 
     public function checkOrderValidity(Request $request)
@@ -199,7 +49,7 @@ class OrderController extends Controller
     public function store($customer, Request $request)
     {
         try {
-            $request->merge(['mobile' => trim($request->mobile)]);
+            $request->merge(['mobile' => formatMobile($request->mobile)]);
             $this->validate($request, [
                 'location' => 'required',
                 'services' => 'required|string',
@@ -210,9 +60,11 @@ class OrderController extends Controller
                 'email' => 'sometimes|email',
                 'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
                 'time' => 'required|string',
-                'payment_method' => 'required|string|in:cod,online',
+                'payment_method' => 'required|string|in:cod,online,wallet,bkash,cbl,partner_wallet',
                 'address' => 'required_without:address_id',
                 'address_id' => 'required_without:address',
+                'resource' => 'sometimes|numeric',
+                'is_on_premise' => 'sometimes|numeric',
             ], ['mobile' => 'Invalid mobile number!']);
             $customer = $request->customer;
             $validation = new Validation($request);
@@ -225,18 +77,19 @@ class OrderController extends Controller
             $order = new Checkout($customer);
             $order = $order->placeOrder($request);
             if ($order) {
-                if ($order->voucher_id != null) {
-                    $this->updateVouchers($order, $customer);
-                }
-                if ($order->pap_visitor_id != null) {
-                    $this->dispatch(new CalculatePapAffiliateId($order));
-                }
-                $link = null;
-                if ($request->payment_method == 'online') {
-                    $link = (new OnlinePayment())->generateSSLLink($order->partnerOrders[0], 1);
+                if ($order->voucher_id) $this->updateVouchers($order, $customer);
+                $payment = $link = null;
+                if ($request->payment_method !== 'cod') {
+                    /** @var Payment $payment */
+                    $payment = $this->getPayment($request->payment_method, $order);
+                    if ($payment) {
+                        $link = $payment->redirect_url;
+                        $payment = $payment->getFormattedPayment();
+                    }
                 }
                 $this->sendNotifications($customer, $order);
-                return api_response($request, $order, 200, ['link' => $link]);
+                return api_response($request, $order, 200, ['link' => $link, 'job_id' => $order->jobs->first()->id,
+                    'order_code' => $order->code(), 'payment' => $payment]);
             }
             return api_response($request, $order, 500);
         } catch (ValidationException $e) {
@@ -267,9 +120,17 @@ class OrderController extends Controller
     {
         try {
             $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
-            (new SmsHandler('order-created'))->send($customer->profile->mobile, [
-                'order_code' => $order->code()
-            ]);
+            $partner = $order->partnerOrders->first()->partner;
+            if ((bool)env('SEND_ORDER_CREATE_SMS')) {
+                (new SmsHandler('order-created'))->send($customer->profile->mobile, [
+                    'order_code' => $order->code()
+                ]);
+                if (!$order->jobs->first()->resource_id) {
+                    (new SmsHandler('order-created-to-partner'))->send($partner->getContactNumber(), [
+                        'order_code' => $order->code(), 'partner_name' => $partner->name
+                    ]);
+                }
+            }
             (new NotificationRepository())->send($order);
         } catch (\Throwable $e) {
             return null;
@@ -292,50 +153,18 @@ class OrderController extends Controller
         }
     }
 
-
-    public function clearPayment(Request $request)
+    private function getPayment($payment_method, Order $order)
     {
         try {
-            $redis_key_name = 'portwallet-payment-' . $request->invoice;
-            $redis_key = Redis::get($redis_key_name);
-            if ($redis_key) {
-                $data = json_decode($redis_key);
-                $response = (new OnlinePayment())->pay($data, $request);
-                if ($response != null) {
-                    Redis::set('portwallet-payment-app-' . $request->invoice, json_encode(['amount' => $data->amount,
-                        'partner_order_id' => $data->partner_order_id, 'success' => $response['success'], 'isDue' => $response['isDue'],
-                        'message' => $response['message']]));
-                    Redis::expire('portwallet-payment-app' . $request->invoice, 3600);
-                    Redis::del($redis_key_name);
-                    if ($response['success']) {
-                        return redirect($response['redirect_link']);
-                    }
-                }
-            }
-            return redirect(env('SHEBA_FRONT_END_URL'));
+            $order_adapter = new OrderAdapter($order->partnerOrders[0], 1);
+            $payment = (new ShebaPayment($payment_method))->init($order_adapter->getPayable());
+            return $payment->isInitiated() ? $payment : null;
+        } catch (QueryException $e) {
+            app('sentry')->captureException($e);
+            return null;
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            return null;
         }
     }
-
-    public function checkInvoiceValidity($customer, Request $request)
-    {
-        try {
-            $redis_key_name = 'portwallet-payment-app-' . $request->invoice;
-            $redis_key = Redis::get($redis_key_name);
-            if ($redis_key != null) {
-                $data = json_decode($redis_key);
-                $partnerOrder = PartnerOrder::find((int)$data->partner_order_id);
-                if ($partnerOrder->order->customer_id == $customer) {
-                    return api_response($request, 1, 200, ['message' => $data->message]);
-                }
-            }
-            return api_response($request, null, 404);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
 }

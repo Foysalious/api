@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\FacebookAccountKit;
 use App\Library\Sms;
 use App\Models\Partner;
+use App\Models\PartnerAffiliation;
 use App\Models\PartnerBasicInformation;
+use App\Models\PartnerSubscriptionPackage;
 use App\Models\PartnerWalletSetting;
 use App\Models\Profile;
 use App\Repositories\ProfileRepository;
@@ -32,9 +34,12 @@ class PartnerRegistrationController extends Controller
         try {
             $this->validate($request, [
                 'code' => "required|string",
-                'name' => 'required|string',
                 'company_name' => 'required|string',
+                'from' => 'string|in:' . implode(',', constants('FROM')),
+                'package_id' => 'exists:partner_subscription_packages,id',
+                'billing_type' => 'in:monthly,yearly'
             ]);
+
             $code_data = $this->fbKit->authenticateKit($request->code);
             if (!$code_data) return api_response($request, null, 401, ['message' => 'AccountKit authorization failed']);
             $mobile = formatMobile($code_data['mobile']);
@@ -45,10 +50,16 @@ class PartnerRegistrationController extends Controller
                 $profile = $this->profileRepository->registerMobile(array_merge($request->all(), ['mobile' => $mobile]));
                 $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
             }
-            $profile = $this->profileRepository->updateIfNull($profile, ['name' => $request->name]);
             if ($resource->partnerResources->count() > 0) return api_response($request, null, 403, ['message' => 'You already have a company!']);
-            if ($partner = $this->createPartner($resource, ['name' => $request->company_name])) {
+
+            $data = $this->makePartnerCreateData($request);
+            if ($partner = $this->createPartner($resource, $data)) {
                 $info = $this->profileRepository->getProfileInfo('resource', Profile::find($profile->id));
+                /**
+                 * LOGIC CHANGE - PARTNER REWARD MOVE TO WAITING STATUS
+                 *
+                 * app('\Sheba\PartnerAffiliation\RewardHandler')->setPartner($partner)->onBoarded();
+                 */
                 return api_response($request, null, 200, ['info' => $info]);
             } else {
                 return api_response($request, null, 500);
@@ -65,15 +76,51 @@ class PartnerRegistrationController extends Controller
         }
     }
 
+    private function makePartnerCreateData(Request $request)
+    {
+        $data = ['name' => $request->company_name];
+        if ($request->has('from')) {
+            if ($request->from == 'manager-app') $data['registration_channel'] = constants('PARTNER_ACQUISITION_CHANNEL')['App'];
+            elseif ($request->from == 'manager-web') $data['registration_channel'] = constants('PARTNER_ACQUISITION_CHANNEL')['Web'];
+        } else {
+            $data['registration_channel'] = constants('PARTNER_ACQUISITION_CHANNEL')['App'];
+        }
+        if ($request->has('billing_type') && $request->has('package_id')) {
+            $data['billing_type'] = $request->billing_type;
+            $data['package_id'] = $request->package_id;
+        }
+        return $data;
+    }
 
     private function createPartner($resource, $data)
     {
-        $data = ["name" => $data['name'], "sub_domain" => $this->guessSubDomain($data['name'])];
+        $data = array_merge($data, [
+            "sub_domain" => $this->guessSubDomain($data['name']),
+            "affiliation_id" => $this->partnerAffiliation($resource->profile->mobile),
+        ]);
         $by = ["created_by" => $resource->id, "created_by_name" => "Resource - " . $resource->profile->name];
         $partner = new Partner();
         $partner = $this->store($resource, $data, $by, $partner);
         if ($partner) Sms::send_single_message($resource->profile->mobile, "You have successfully completed your registration at Sheba.xyz. Please complete your profile to start serving orders.");
         return $partner;
+    }
+
+    /**
+     * CHECK THIS PARTNER CREATED FROM AFFILIATION,
+     * IF FROM AFFILIATION SET PARTNER AFFILIATION ID
+     *
+     * @param $resource_mobile
+     * @return null
+     */
+    private function partnerAffiliation($resource_mobile)
+    {
+        $partner_affiliation = PartnerAffiliation::where([
+            ['resource_mobile', $resource_mobile],
+            ['status', 'pending']
+        ])->first();
+
+        if ($partner_affiliation) return $partner_affiliation->id;
+        else return null;
     }
 
     private function store($resource, $data, $by, $partner)
@@ -86,6 +133,7 @@ class PartnerRegistrationController extends Controller
                 $partner->basicInformations()->save(new PartnerBasicInformation(array_merge($by, ['is_verified' => 0])));
                 (new Referral($partner));
                 $this->walletSetting($partner, $by);
+                if (isset($data['billing_type']) && isset($data['package_id'])) $partner->subscribe($data['package_id'], $data['billing_type']);
             });
         } catch (QueryException $e) {
             app('sentry')->captureException($e);

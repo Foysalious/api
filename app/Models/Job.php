@@ -137,7 +137,7 @@ class Job extends Model
     {
         $total_service_price = 0;
         foreach ($this->jobServices as $jobService) {
-            $total_service_price += $jobService->unit_price * $jobService->quantity;
+            $total_service_price += ($jobService->min_price > ($jobService->unit_price * $jobService->quantity) ? $jobService->min_price : ($jobService->unit_price * $jobService->quantity));
         }
         return $total_service_price;
     }
@@ -219,7 +219,7 @@ class Job extends Model
         return $this->hasOne(JobPartnerChangeLog::class);
     }
 
-    public function statusChangeLog()
+    public function statusChangeLogs()
     {
         return $this->hasMany(JobStatusChangeLog::class);
     }
@@ -232,10 +232,10 @@ class Job extends Model
     public function scopeInfo($query)
     {
         return $query->select(
-            'jobs.id', 'jobs.discount', 'jobs.created_at', 'jobs.category_id', 'sheba_contribution',
+            'jobs.id', 'jobs.discount', 'jobs.created_at', 'jobs.category_id', 'sheba_contribution', 'jobs.preferred_time_start',
             'partner_contribution', 'commission_rate', 'resource_id', 'schedule_date', 'service_variables',
             'job_additional_info', 'delivered_date', 'preferred_time', 'service_name',
-            'status', 'service_quantity', 'service_unit_price', 'service_id', 'partner_order_id'
+            'status', 'site', 'service_quantity', 'service_unit_price', 'service_id', 'partner_order_id'
         );
     }
 
@@ -269,6 +269,18 @@ class Job extends Model
         return $this->hasMany(Complain::class);
     }
 
+    public function customerComplains()
+    {
+        return $this->complains()->whereHas('accessor', function ($query) {
+            $query->where('model_name', Customer::class);
+        });
+    }
+
+    public function cancelRequests()
+    {
+        return $this->hasMany(JobCancelRequest::class);
+    }
+
     public function hasStatus(Array $status)
     {
         foreach ($status as $key => $value) {
@@ -297,6 +309,11 @@ class Job extends Model
         return $this->hasOne(ResourceSchedule::class);
     }
 
+    public function resourceScheduleSlot()
+    {
+        return $this->hasMany(ResourceSchedule::class);
+    }
+
     public function getReadablePreferredTimeAttribute()
     {
         if ($this->preferred_time !== 'Anytime') {
@@ -306,9 +323,43 @@ class Job extends Model
         return $this->preferred_time;
     }
 
-    public function customerComplains()
+    public function isRentCar()
     {
-        return $this->complains->where('accessor_id', 1);
+        return in_array($this->category_id, array_map('intval', explode(',', env('RENT_CAR_IDS')))) ? 1 : 0;
     }
 
+    public function isClosed()
+    {
+        return in_array($this->status, ["Served", "Cancelled"]);
+    }
+
+    public function isCancelRequestPending()
+    {
+        if ($cancel_request = $this->cancelRequests->last())
+            return $cancel_request->status == constants('CANCEL_REQUEST_STATUSES')['Pending'];
+
+        return false;
+    }
+
+    public function scopeOngoing($query)
+    {
+        return $query->whereIn('status',
+            array(
+                constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Schedule_Due'],
+                constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Serve_Due'],
+                constants('JOB_STATUSES')['Served']
+            )
+        );
+    }
+
+    public function canCallExpert()
+    {
+        if (in_array($this->status, ['Accepted', 'Schedule Due', 'Process', 'Serve Due', 'Served'])) return Carbon::today()->gte(Carbon::parse($this->schedule_date));
+        else return false;
+    }
+
+    public function isOnPremise()
+    {
+        return $this->site == constants('JOB_ON_PREMISE')['partner'] ? 1 : 0;
+    }
 }

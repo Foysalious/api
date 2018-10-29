@@ -27,6 +27,7 @@ class CustomerNotificationController extends Controller
             }
             return api_response($request, null, 200);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }

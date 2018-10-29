@@ -1,14 +1,15 @@
-<?php
-
-namespace App\Http\Controllers\Partner;
+<?php namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\CategoryPartner;
+use App\Models\Partner;
 use App\Models\PartnerResource;
 use App\Models\PartnerWorkingHour;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use DB;
+use Sheba\Partner\StatusChanger;
 
 class OperationController extends Controller
 {
@@ -41,10 +42,18 @@ class OperationController extends Controller
     {
         try {
             $this->validate($request, [
-                'address' => "required|string",
-                'locations' => "required",
-                'working_schedule' => "required",
+                'address'           => "sometimes|required|string",
+                'locations'         => "sometimes|required",
+                'working_schedule'  => "sometimes|required",
+                'is_home_delivery_available' => "sometimes|required",
+                'is_on_premise_available' => "sometimes|required",
+                'delivery_charge' => "sometimes|required",
             ]);
+            if (($request->has('is_home_delivery_available') && !$request->is_home_delivery_available) &&
+                ($request->has('is_on_premise_available') && !$request->is_on_premise_available)) {
+                return api_response($request, null, 400, ['message' => "You have to select at least one delivery option"]);
+            }
+
             $partner = $request->partner;
             return $this->saveInDatabase($partner, $request) ? api_response($request, $partner, 200) : api_response($request, $partner, 500);
         } catch (ValidationException $e) {
@@ -63,17 +72,47 @@ class OperationController extends Controller
     {
         try {
             DB::transaction(function () use ($request, $partner) {
-                $partner->locations()->sync(json_decode($request->locations));
-                $partner->update(['address' => $request->address]);
-                $partner->workingHours()->delete();
-                foreach (json_decode($request->working_schedule) as $working_schedule) {
-                    $partner->workingHours()->save(new PartnerWorkingHour([
-                        'day' => $working_schedule->day,
-                        'start_time' => $working_schedule->start_time,
-                        'end_time' => $working_schedule->end_time
-                    ]));
+                $partner_info = [];
+                if ($request->has('locations')) $partner->locations()->sync(json_decode($request->locations));
+                if ($request->has('address')) $partner_info['address'] = $request->address;
+                if ($request->has('lat') && $request->has('lng')) {
+                    $partner_info['geo_informations'] = json_encode(['lat' => $request->lat, 'lng' => $request->lng, 'radius' => "10"]);
+                }
+                $partner->update($partner_info);
+
+                if ($request->has('working_schedule')) {
+                    $partner->workingHours()->delete();
+                    foreach (json_decode($request->working_schedule) as $working_schedule) {
+                        $partner->workingHours()->save(new PartnerWorkingHour([
+                            'day'        => $working_schedule->day,
+                            'start_time' => $working_schedule->start_time,
+                            'end_time'   => $working_schedule->end_time
+                        ]));
+                    }
+                }
+
+                $category_partner_info = [];
+                $should_update_category_partner = 0;
+                if ($request->has('is_home_delivery_available') && $request->has('delivery_charge')) {
+                    $category_partner_info['is_home_delivery_applied'] = $request->is_home_delivery_available;
+                    $category_partner_info['delivery_charge'] = $request->is_home_delivery_available ? $request->delivery_charge : 0;
+                    $should_update_category_partner = 1;
+                }
+                if ($request->has('is_on_premise_available')) {
+                    $category_partner_info['is_partner_premise_applied'] = $request->is_on_premise_available;
+                    $should_update_category_partner = 1;
+                }
+
+                if ($should_update_category_partner) {
+                    CategoryPartner::where('partner_id', $partner->id)->update($category_partner_info);
+                }
+
+                if (isPartnerReadyToVerified($partner)) {
+                    $status_changer = new StatusChanger($partner, ['status' => constants('PARTNER_STATUSES')['Waiting']]);
+                    $status_changer->change();
                 }
             });
+
             return true;
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -92,8 +131,8 @@ class OperationController extends Controller
             $categories = json_decode($request->categories);
             $categories = Category::whereIn('id', $categories)->get();
             $categories->load('services');
-            list($services, $category_partners) = $this->makeCategoryPartnerWithServices($categories, $by);
             $partner = $request->partner;
+            list($services, $category_partners) = $this->makeCategoryPartnerWithServices($partner, $categories, $by);
             DB::transaction(function () use ($partner, $category_partners, $services) {
                 $partner->categories()->sync($category_partners);
                 $partner_resources = PartnerResource::whereIn('id', $partner->handymanResources->pluck('pivot.id')->toArray())->get();
@@ -102,6 +141,11 @@ class OperationController extends Controller
                     $partner_resource->categories()->sync($category_ids);
                 });
                 $partner->services()->sync($services);
+
+                if (isPartnerReadyToVerified($partner)) {
+                    $status_changer = new StatusChanger($partner, ['status' => constants('PARTNER_STATUSES')['Waiting']]);
+                    $status_changer->change();
+                }
             });
             return api_response($request, $partner, 200);
         } catch (ValidationException $e) {
@@ -116,12 +160,13 @@ class OperationController extends Controller
         }
     }
 
-    private function makeCategoryPartnerWithServices($categories, $by)
+    private function makeCategoryPartnerWithServices(Partner $partner, $categories, $by)
     {
         $services = [];
         $category_partners = [];
         foreach ($categories as $category) {
-            array_push($category_partners, array_merge(['response_time_min' => 60, 'response_time_max' => 120, 'commission' => $category->min_commission, 'category_id' => $category->id], $by));
+            array_push($category_partners, array_merge(['response_time_min' => 60, 'response_time_max' => 120,
+                'commission' => $partner->commission, 'category_id' => $category->id], $by));
             $category->load(['services' => function ($q) {
                 $q->publishedForAll();
             }]);
@@ -156,5 +201,15 @@ class OperationController extends Controller
         return array($services, $category_partners);
     }
 
-
+    public function isOnPremiseAvailable($partner, Request $request)
+    {
+        try {
+            $partner = $request->partner;
+            $is_on_premise_applicable = $partner->categories()->where('categories.is_partner_premise_applied', 1)->count() ? 1 : 0;
+            return api_response($request, $is_on_premise_applicable, 200, ['is_on_premise_applicable' => $is_on_premise_applicable]);
+        } catch (\Throwable $exception) {
+            app('sentry')->captureException($exception);
+            return api_response($request, null, 500);
+        }
+    }
 }

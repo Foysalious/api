@@ -1,5 +1,7 @@
 <?php namespace Sheba;
 
+use App\Models\Partner;
+use App\Models\User;
 use Auth;
 use Session;
 use Carbon\Carbon;
@@ -17,7 +19,7 @@ trait ModificationFields
 
     public function setModifier($entity)
     {
-        if($this->isOfValidClass($entity)) {
+        if ($this->isOfValidClass($entity)) {
             Session::flash('modifier', $entity);
         }
     }
@@ -34,13 +36,13 @@ trait ModificationFields
         list($id, $name, $time) = $this->getData();
 
         $data = [];
-        if($created_fields) {
+        if ($created_fields) {
             $data['created_by'] = $id;
             $data['created_by_name'] = $name;
             $data['created_at'] = $time;
         }
 
-        if($updated_fields) {
+        if ($updated_fields) {
             $data['updated_by'] = $id;
             $data['updated_by_name'] = $name;
             $data['updated_at'] = $time;
@@ -60,13 +62,13 @@ trait ModificationFields
     {
         list($id, $name, $time) = $this->getData();
 
-        if($created_fields) {
+        if ($created_fields) {
             $model->created_by = $id;
             $model->created_by_name = $name;
             $model->created_at = $time;
         }
 
-        if($updated_fields) {
+        if ($updated_fields) {
             $model->updated_by = $id;
             $model->updated_by_name = $name;
             $model->updated_at = $time;
@@ -123,15 +125,20 @@ trait ModificationFields
         $name = "";
         $time = Carbon::now();
 
-        if($this->modifierModelName == "User" || Auth::user()) {
+        if ($this->modifierModelName == "User" || Auth::user()) {
             $user = Auth::user() ?: $this->modifier;
             $id = $user->id;
             $name = $user->department->name . ' - ' . $user->name;
         } else if ($this->isOfValidClass($this->modifier)) {
             $id = $this->modifier->id;
-            $name = $this->modifierModelName . '-' . $this->modifier->name;
+            $name = $this->modifierModelName . '-' . (($this->modifier instanceof User || $this->modifier instanceof Partner) ? $this->modifier->name : $this->modifier->profile->name);
         }
 
         return [$id, $name, $time];
+    }
+
+    public function getModifierType()
+    {
+        return "App\\Models\\" . class_basename(Session::get('modifier'));
     }
 }

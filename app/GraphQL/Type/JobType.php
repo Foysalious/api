@@ -38,12 +38,24 @@ class JobType extends GraphQlType
             'order' => ['type' => GraphQL::type('Order')],
             'complains' => ['type' => Type::listOf(GraphQL::type('Complain'))],
             'hasComplain' => ['type' => Type::int()],
+            'is_home_delivery' => ['type' => Type::int()],
+            'is_on_premise' => ['type' => Type::int()]
         ];
     }
 
     protected function resolveCompletedAtField($root, $args)
     {
         return $root->delivered_date ? $root->delivered_date->format('M jS, Y') : null;
+    }
+
+    protected function resolveIsHomeDeliveryField($root, $args)
+    {
+        return $root->site == 'customer' ? 1 : 0;
+    }
+
+    protected function resolveIsOnPremiseField($root, $args)
+    {
+        return $root->site == 'partner' ? 1 : 0;
     }
 
     protected function resolveCompletedAtTimestampField($root, $args)
@@ -58,8 +70,10 @@ class JobType extends GraphQlType
                 'id' => $root->service->id,
                 'name' => $root->service_name, 'options' => $root->service_variables,
                 'unit' => $root->service->unit,
-                'quantity' => (float)$root->service_quantity, 'unit_price' => (float)$root->service_unit_price),
-                'option' => $root->service_option
+                'quantity' => (float)$root->service_quantity,
+                'unit_price' => (float)$root->service_unit_price),
+                'option' => $root->service_option,
+                'min_price' => 0
             );
         } else {
             $services = [];
@@ -70,8 +84,10 @@ class JobType extends GraphQlType
                         'options' => $jobService->variables,
                         'option' => $jobService->option,
                         'unit' => $jobService->service->unit,
-                        'quantity' => (float)$jobService->quantity, 'unit_price' => (float)$jobService->unit_price)
-
+                        'quantity' => (float)$jobService->quantity,
+                        'unit_price' => (float)$jobService->unit_price,
+                        'min_price' => (float)$jobService->min_price
+                    )
                 );
             }
             return $services;

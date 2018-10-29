@@ -365,7 +365,7 @@ $api->version('v1', function ($api) {
                 $api->get('categories/{category}/services', 'PartnerController@getServices');
             });
         });
-        
+
         $api->group(['prefix' => 'customers'], function ($api) {
             $api->group(['prefix' => '{customer}', 'middleware' => ['customer.auth']], function ($api) {
                 $api->get('checkout-info', 'CustomerController@getDeliveryInfo');

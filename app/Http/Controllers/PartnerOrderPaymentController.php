@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\PartnerOrder;
 use App\Models\PartnerOrderPayment;
 use App\Models\Resource;
 use Carbon\Carbon;
@@ -38,6 +37,7 @@ class PartnerOrderPaymentController extends Controller
             $total = $collections->sum('amount');
             return count($collections) > 0 ? api_response($request, $total, 200, ['collections' => $collections, 'total' => $total]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }

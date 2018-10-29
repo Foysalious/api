@@ -43,6 +43,8 @@ class CategoriesQuery extends Query
             }
             $query->published();
         };
+        $fields = $info->getFieldSelection(1);
+        if (in_array('children', $fields)) $category = $category->with('children');
         $categories = $category->where($where)->get();
         return $categories ? $categories : null;
     }

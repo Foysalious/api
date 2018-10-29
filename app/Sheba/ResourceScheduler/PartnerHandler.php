@@ -1,6 +1,9 @@
 <?php namespace Sheba\ResourceScheduler;
 
+use App\Models\Category;
 use App\Models\Partner;
+use App\Models\ResourceSchedule;
+use Carbon\Carbon;
 
 class PartnerHandler
 {
@@ -16,24 +19,39 @@ class PartnerHandler
         $is_available = false;
         $available_resources = collect([]);
         $unavailable_resources = collect([]);
-        $rent_car_ids = array_map('intval', explode(',', env('RENT_CAR_IDS')));
-        if (!in_array($category, $rent_car_ids)) {
-            $this->partner->resourcesInCategory($category)->each(function ($resource) use ($date, $time, &$is_available, &$available_resources, &$unavailable_resources) {
-                if (scheduler($resource)->isAvailable($date, $time)) {
-                    $available_resources->push($resource);
-                    $is_available = true;
-                } else {
-                    $unavailable_resources->push($resource);
-                }
-            });
-        } else {
-            $is_available = 1;
-        }
+        $category = $category instanceof Category ? $category : Category::find($category);
+
+//        $this->partner->resourcesInCategory($category)->each(function ($resource) use ($date, $time, &$is_available, &$available_resources, &$unavailable_resources, $category) {
+//            if (scheduler($resource)->isAvailableForCategory($date, $time, $category)) {
+//                $available_resources->push($resource);
+//                $is_available = true;
+//            } else {
+//                $unavailable_resources->push($resource);
+//            }
+//        });
+//        return collect([
+//            'is_available' => $is_available,
+//            'available_resources' => $available_resources,
+//            'unavailable_resources' => $unavailable_resources
+//        ]);
+
+
+        $resource_ids = $this->partner->resourcesInCategory($category)->pluck('id')->unique()->toArray();
+        $start_time = Carbon::parse($date . ' ' . $time);
+        $end_time = Carbon::parse($date . ' ' . $time)->addMinutes($category->book_resource_minutes);
+
+        $booked_schedules = ResourceSchedule::whereIn('resource_id', $resource_ids)
+            ->where(function ($query) use ($start_time, $end_time) {
+                $query->where([['start', '>', $start_time], ['start', '<', $end_time]]);
+                $query->orwhere([['end', '>', $start_time], ['end', '<', $end_time]]);
+                $query->orwhere([['start', '<', $start_time], ['end', '>', $start_time]]);
+                $query->orwhere([['start', '<', $end_time], ['end', '>', $end_time]]);
+                $query->orwhere([['start', $start_time], ['end', $end_time]]);
+            })->get();
+
 
         return collect([
-            'is_available' => $is_available,
-            'available_resources' => $available_resources,
-            'unavailable_resources' => $unavailable_resources
+            'is_available' => count($resource_ids) > $booked_schedules->pluck('resource_id')->unique()->count() ? 1 : 0
         ]);
     }
 }
