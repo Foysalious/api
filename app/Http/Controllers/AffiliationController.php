@@ -99,7 +99,8 @@ class AffiliationController extends Controller
                     'affiliate_name' => $affiliate->profile->name
                 ]);
                 (new NotificationRepository())->forAffiliation($affiliate, $affiliation);
-                $message = ['en' => 'Your refer have been submitted. You received 2TK bonus add in your wallet.', 'bd' => 'আপনার রেফারেন্সটি গ্রহন করা হয়েছে । আপনার ওয়ালেটে ২ টাকা বোনাস যোগ করা হয়েছে।'];
+                // $message = ['en' => 'Your refer have been submitted. You received 2TK bonus add in your wallet.', 'bd' => 'আপনার রেফারেন্সটি গ্রহন করা হয়েছে । আপনার ওয়ালেটে ২ টাকা বোনাস যোগ করা হয়েছে।'];
+                $message = ['en' => 'Your refer have been submitted. Thank you.', 'bd' => 'আপনার রেফারেন্সটি গ্রহন করা হয়েছে । ধন্যবাদ।'];
                 return api_response($request, 1, 200, ['massage' => $message]);
             } else {
                 $message = ['en' => 'Your referral limit already exceeded please try again tomorrow.', 'bd' => 'দুঃখিত! আপনার সর্বোচ্চ রেফার সংখ্যা অতিক্রম করেছে। অনুগ্রহ করে আগামিকাল চেষ্টা করুন।'];
@@ -120,8 +121,8 @@ class AffiliationController extends Controller
         try {
             DB::transaction(function () use ($request, $affiliate, $affiliation) {
                 $this->affiliationStore($request, $affiliate, $affiliation);
-                $this->affiliateWalletUpdate($affiliate);
-                $this->affiliateTransaction($affiliate, $affiliation);
+                // $this->affiliateWalletUpdate($affiliate);
+                // $this->affiliateTransaction($affiliate, $affiliation);
             });
         } catch (QueryException $e) {
             app('sentry')->captureException($e);

@@ -405,7 +405,7 @@ class AffiliateController extends Controller
                 return [
                     'id' => $service->id,
                     'name' => $service->name,
-                    'bangla_name' => $service->bn_name,
+                    'bangla_name' => empty($service->bn_name) ? null : $service->bn_name,
                     'image' => $service->app_thumb
                 ];
             });

@@ -2,15 +2,16 @@
 
 namespace App\Models;
 
-use App\Sheba\PayCharge\Rechargable;
+use App\Sheba\Payment\Rechargable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Sheba\PayCharge\Wallet;
+use Sheba\Payment\Wallet;
 use Sheba\Reward\Rewardable;
 use Sheba\Voucher\VoucherCodeGenerator;
 
 class Customer extends Authenticatable implements Rechargable, Rewardable
 {
     use Wallet;
+
     protected $fillable = [
         'name',
         'mobile',

@@ -2,8 +2,6 @@
 
 namespace Sheba;
 
-use App\Models\Customer;
-use App\Models\Affiliate;
 use App\Models\PartnerOrder;
 
 class ShebaBonusCredit

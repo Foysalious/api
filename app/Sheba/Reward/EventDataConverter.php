@@ -32,6 +32,31 @@ class EventDataConverter
                                 'min'   => 0
                             ]
                         ]
+                    ],
+                    'order_serve' => [
+                        'name' => 'Order Serve',
+                        'event_class' => 'Sheba\Reward\Event\Partner\Action\OrderServed\Event',
+                        'rule_class' => 'Sheba\Reward\Event\Partner\Action\OrderServed\Rule',
+                        'parameters' => [
+                            'amount' => [
+                                'type'  => 'number',
+                                'min'   => 0
+                            ],
+                            'portals' => [
+                                'type' => 'select',
+                                'possible_value' => indexedArrayToAssociative(config('sheba.portals'), config('sheba.portals')),
+                                'is_multi_selectable' => 1
+                            ],
+                            'excluded_status' => [
+                                'type' => 'select',
+                                'possible_value' => [
+                                    'Not_Responded' => 'Not Responded',
+                                    'Schedule_Due'  => 'Schedule Due',
+                                    'Serve_Due'     => 'Serve Due'
+                                ],
+                                'is_multi_selectable' => 1
+                            ]
+                        ]
                     ]
                 ],
                 'campaign' => [
@@ -69,6 +94,27 @@ class EventDataConverter
                         'event_class' => 'Sheba\Reward\Event\Customer\Action\WalletCashback\Event',
                         'rule_class' => 'Sheba\Reward\Event\Customer\Action\WalletCashback\Rule',
                         'parameters' => []
+                    ],
+                    'order_serve_and_paid' => [
+                        'name' => 'Order Serve And Paid',
+                        'event_class' => 'Sheba\Reward\Event\Customer\Action\OrderServedAndPaid\Event',
+                        'rule_class' => 'Sheba\Reward\Event\Customer\Action\OrderServedAndPaid\Rule',
+                        'parameters' => [
+                            'amount' => [
+                                'type'  => 'number',
+                                'min'   => 0
+                            ],
+                            'sales_channels' => [
+                                'type' => 'select',
+                                'possible_value' => getSalesChannels(),
+                                'is_multi_selectable' => 1
+                            ],
+                            'payment_methods' => [
+                                'type' => 'select',
+                                'possible_value' => ['Bkash', 'Cash On Delivery', 'Online', 'Ssl', 'Wallet'],
+                                'is_multi_selectable' => 1
+                            ]
+                        ]
                     ]
                 ],
                 'campaign'  => []

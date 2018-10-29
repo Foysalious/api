@@ -2,15 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Payment;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Redis;
-use Sheba\OnlinePayment\Bkash;
-use Sheba\OnlinePayment\Payment;
 use Cache;
-use Sheba\PayCharge\PayCharge;
+use Sheba\Payment\ShebaPayment;
 
 class BkashController extends Controller
 {
@@ -43,32 +42,34 @@ class BkashController extends Controller
         }
     }
 
-    public function validatePaycharge(Request $request)
+    public function validatePayment(Request $request)
     {
         try {
             $this->validate($request, ['paymentID' => 'required']);
-            $paycharge = Cache::store('redis')->get("paycharge::$request->paymentID");
-            if (!$paycharge) return redirect(config('sheba.front_url'));
-            $paycharge = json_decode($paycharge);
-            $pay_chargable = unserialize($paycharge->pay_chargable);
-            $pay_charge = new PayCharge('bkash');
-            if ($response = $pay_charge->complete($request->paymentID)) {
-                return api_response($request, 1, 200, ['payment' => array('redirect_url' => $response['redirect_url'] . '?invoice_id=' . $request->paymentID)]);
-            } else {
-                return api_response($request, null, 400, ['message' => $pay_charge->message, 'payment' => array('redirect_url' => $response['redirect_url'] . '?invoice_id=' . $request->paymentID)]);
+            $payment = Payment::where('transaction_id', $request->paymentID)->valid()->first();
+            if (!$payment) return api_response($request, null, 500);
+            $sheba_payment = new ShebaPayment('bkash');
+            $payment = $sheba_payment->complete($payment);
+            $redirect_url = $payment->payable->success_url . '?invoice_id=' . $request->paymentID;
+            if ($payment->isComplete()) {
+                return api_response($request, 1, 200, ['payment' => array('redirect_url' => $redirect_url)]);
+            } elseif ($payment->isFailed()) {
+                return api_response($request, null, 400, [
+                    'message' => 'Your payment has been failed due to ' . json_decode($payment->transaction_details)->errorMessage,
+                    'payment' => array('redirect_url' => $redirect_url)
+                ]);
+            } elseif ($payment->isPassed()) {
+                return api_response($request, 1, 400, [
+                    'message' => 'Your payment has been received but there was a system error. It will take some time to update your transaction. Call 16516 for support.',
+                    'payment' => array('redirect_url' => $redirect_url)
+                ]);
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message, 'payment' => array('redirect_url' => $response['redirect_url'] . '?invoice_id=' . $request->paymentID)]);
-        } catch (QueryException $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 200, ['message' => 'Your payment has been received but there was a system error. It will take some time to update your order. Call 16516 for support.', 'payment' => array('redirect_url' => $response['redirect_url'] . '?invoice_id=' . $request->paymentID)]);
-        } catch (RequestException $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 200, ['message' => 'Your payment has been received but there was a system error. It will take some time to update your order. Call 16516 for support.', 'payment' => array('redirect_url' => $response['redirect_url'] . '?invoice_id=' . $request->paymentID)]);
+            return api_response($request, $message, 400);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -78,8 +79,8 @@ class BkashController extends Controller
     public function getPaymentInfo($paymentID, Request $request)
     {
         try {
-            $data = Cache::store('redis')->get("paycharge::$paymentID");
-            return $data ? api_response($request, $data, 200, ['data' => json_decode($data)->method_info]) : api_response($request, null, 404);
+            $payment = Payment::where('transaction_id', $paymentID)->valid()->first();
+            return $payment ? api_response($request, $payment, 200, ['data' => json_decode($payment->transaction_details)]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

@@ -2,39 +2,28 @@
 
 namespace App\Http\Controllers;
 
-use GuzzleHttp\Exception\RequestException;
-use Illuminate\Database\QueryException;
+use App\Models\Payment;
 use Illuminate\Http\Request;
-use Sheba\PayCharge\PayCharge;
-use Cache;
+use Sheba\Payment\ShebaPayment;
 
 class SslController extends Controller
 {
-    public function validatePaycharge(Request $request)
+    public function validatePayment(Request $request)
     {
         try {
             if (empty($request->headers->get('referer'))) {
-                $message = 'Referer not present in header';
-                return api_response($request, null, 400, ['message' => $message]);
+                return api_response($request, null, 400);
             };
-            $paycharge = Cache::store('redis')->get("paycharge::$request->tran_id");
-            if (!$paycharge) return redirect(config('sheba.front_url'));
-            $paycharge = json_decode($paycharge);
-            $pay_chargable = unserialize($paycharge->pay_chargable);
-            $pay_charge = new PayCharge('online');
-            $pay_charge->complete($request->tran_id);
-            return redirect($pay_chargable->redirectUrl . '?invoice_id=' . $request->tran_id);
-        } catch ( QueryException $e ) {
+            $payment = Payment::where('transaction_id', $request->tran_id)->valid()->first();
+            if (!$payment) return redirect(config('sheba.front_url'));
+            $sheba_payment = new ShebaPayment('online');
+            $payment = $sheba_payment->complete($payment);
+            $payable = $payment->payable;
+            return redirect($payable->success_url . '?invoice_id=' . $request->tran_id);
+        } catch (\Throwable $e) {
+            $payment = Payment::where('transaction_id', $request->tran_id)->valid()->first();
             app('sentry')->captureException($e);
-            return redirect($pay_chargable->redirectUrl . '?invoice_id=' . $request->tran_id);
-        } catch ( RequestException $e ) {
-            app('sentry')->captureException($e);
-            return redirect($pay_chargable->redirectUrl . '?invoice_id=' . $request->tran_id);
-        } catch ( \Throwable $e ) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            return redirect($payment->payable->success_url . '?invoice_id=' . $request->tran_id);
         }
     }
-
-
 }

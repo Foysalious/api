@@ -34,6 +34,7 @@ class Cors2MiddleWare
             "http://admin.dev-sheba.xyz",
             "https://admin.dev-sheba.xyz",
             "http://partners.dev-sheba.xyz",
+            "https://partners.dev-sheba.xyz",
             "http://accounts.dev-sheba.xyz",
             "http://api.sheba.test",
             "https://api.dev-sheba.xyz",
@@ -57,7 +58,7 @@ class Cors2MiddleWare
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Credentials'] = 'true';
         $headers['Access-Control-Allow-Methods'] = 'POST, GET, PUT, DELETE';
-        $headers['Access-Control-Allow-Headers'] = 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With';
+        $headers['Access-Control-Allow-Headers'] = 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With, Portal-Name, User-Id';
         $headers['Access-Control-Allow-Origin'] = '*';
         if (!in_array($request->server('HTTP_ORIGIN'), $domains)) {
             return response()->json(['message' => 'Unauthorized', 'code' => 401])->withHeaders($headers);
@@ -65,7 +66,7 @@ class Cors2MiddleWare
 
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Methods'] = 'POST, GET, PUT, DELETE';
-        $headers['Access-Control-Allow-Headers'] = 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With';
+        $headers['Access-Control-Allow-Headers'] = 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With, Portal-Name, User-Id';
         $response = $next($request);
         foreach ($headers as $key => $value) {
             $response->header($key, $value);

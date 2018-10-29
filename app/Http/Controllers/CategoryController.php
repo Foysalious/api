@@ -29,7 +29,7 @@ class CategoryController extends Controller
     {
         try {
             $with = '';
-            $categories = Category::where('parent_id', null)->published()->orderBy('order')->select('id', 'name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id');
+            $categories = Category::where('parent_id', null)->orderBy('order')->select('id', 'name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id');
             if ($request->has('with')) {
                 $with = $request->with;
                 if ($with == 'children') {
@@ -38,6 +38,7 @@ class CategoryController extends Controller
                     }]);
                 }
             }
+            $categories = $request->has('is_business') && (int)$request->is_business ? $categories->publishedForBusiness() : $categories->published();
             $categories = $categories->get();
             foreach ($categories as &$category) {
                 if ($with == 'children') {
@@ -136,16 +137,19 @@ class CategoryController extends Controller
     public function getServices($category, Request $request)
     {
         try {
-            $category = Category::where('id', $category)->published()->first();
+            $category = Category::where('id', $category);
+            $category = ((int)$request->is_business ? $category->publishedForBusiness() : $category->published())->first();
             if ($category != null) {
                 list($offset, $limit) = calculatePagination($request);
                 $location = $request->location != '' ? $request->location : 4;
                 $scope = [];
-                if ($request->has('scope')) {
-                    $scope = $this->serviceRepository->getServiceScope($request->scope);
-                }
+                if ($request->has('scope')) $scope = $this->serviceRepository->getServiceScope($request->scope);
                 if ($category->parent_id == null) {
-                    $services = $this->categoryRepository->getServicesOfCategory($category->children->sortBy('order')->pluck('id'), $location, $offset, $limit);
+                    if ((int)$request->is_business) {
+                        $services = $this->categoryRepository->getServicesOfCategory((Category::where('parent_id', $category->id)->publishedForBusiness()->orderBy('order')->get())->pluck('id')->toArray(), $location, $offset, $limit);
+                    } else {
+                        $services = $this->categoryRepository->getServicesOfCategory($category->children->sortBy('order')->pluck('id'), $location, $offset, $limit);
+                    }
                     $services = $this->serviceRepository->addServiceInfo($services, $scope);
                 } else {
                     $category = Category::with(['services' => function ($q) use ($offset, $limit) {
@@ -164,6 +168,7 @@ class CategoryController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -244,7 +249,7 @@ class CategoryController extends Controller
                 removeRelationsAndFields($review);
             })->filter(function ($review) {
                 return (!empty($review->review) && $review->rating == 5);
-            })->unique('customer_id')->sortByDesc('id')->splice($offset,$limit)->values()->all();
+            })->unique('customer_id')->sortByDesc('id')->splice($offset, $limit)->values()->all();
             return count($reviews) > 0 ? api_response($request, $reviews, 200, ['reviews' => $reviews]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

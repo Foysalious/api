@@ -1,7 +1,4 @@
-<?php
-
-namespace App\Http\Route\Prefix\V2;
-
+<?php namespace App\Http\Route\Prefix\V2;
 
 class Route
 {
@@ -10,6 +7,7 @@ class Route
         $api->group(['prefix' => 'v2', 'namespace' => 'App\Http\Controllers'], function ($api) {
             $api->post('subscription', 'PushSubscriptionController@store');
             $api->get('car-rental-info', 'ShebaController@sendCarRentalInfo');
+            $api->get('payments', 'ShebaController@getPayments');
             $api->get('butcher-info', 'ShebaController@sendButcherInfo');
             $api->post('service-requests', 'ServiceRequestController@store');
             $api->post('transactions/{transactionID}', 'ShebaController@checkTransactionStatus');
@@ -20,27 +18,28 @@ class Route
             $api->group(['prefix' => 'wallet'], function ($api) {
                 $api->post('recharge', 'WalletController@recharge');
                 $api->post('purchase', 'WalletController@purchase');
-                $api->post('validate', 'WalletController@validatePaycharge');
+                $api->post('validate', 'WalletController@validatePayment');
                 $api->get('faqs', 'WalletController@getFaqs');
             });
+
             $api->group(['prefix' => 'faqs'], function ($api) {
                 $api->get('order', 'JobController@getFaqs');
             });
 
             $api->group(['prefix' => 'ssl'], function ($api) {
-                $api->post('validate', 'SslController@validatePaycharge');
+                $api->post('validate', 'SslController@validatePayment');
             });
 
             $api->group(['prefix' => 'bkash'], function ($api) {
-                $api->post('validate', 'BkashController@validatePaycharge');
+                $api->post('validate', 'BkashController@validatePayment');
                 $api->get('paymentID/{paymentID}', 'BkashController@getPaymentInfo');
             });
             $api->group(['prefix' => 'orders'], function ($api) {
                 $api->get('online', 'OrderController@clearPayment');
                 $api->group(['prefix' => 'payments'], function ($api) {
-                    $api->post('success', 'SslController@validatePaycharge');
-                    $api->post('fail', 'SslController@validatePaycharge');
-                    $api->post('cancel', 'SslController@validatePaycharge');
+                    $api->post('success', 'SslController@validatePayment');
+                    $api->post('fail', 'SslController@validatePayment');
+                    $api->post('cancel', 'SslController@validatePayment');
                 });
             });
             $api->group(['prefix' => 'payments'], function ($api) {
@@ -75,6 +74,9 @@ class Route
                     $api->get('reviews', 'CategoryController@getReviews');
                     $api->get('locations/{location}/partners', 'CategoryController@getPartnersOfLocation');
                 });
+            });
+            $api->group(['prefix' => 'services'], function ($api) {
+                $api->get('', 'ServiceController@index');
             });
             $api->group(['prefix' => 'locations'], function ($api) {
                 $api->get('{location}/partners', 'PartnerController@findPartners');

@@ -5,6 +5,7 @@ use Illuminate\Database\Eloquent\Model;
 class CategoryPartner extends Model
 {
     protected $table = 'category_partner';
+    protected $casts = ['delivery_charge' => 'double'];
 
     public function category()
     {

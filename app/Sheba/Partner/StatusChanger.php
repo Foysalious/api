@@ -53,6 +53,14 @@ class StatusChanger
             if ($this->data['status'] == constants('PARTNER_STATUSES')['Verified'] && in_array($this->partner->status, [constants('PARTNER_STATUSES')['Closed'], constants('PARTNER_STATUSES')['Blacklisted'], constants('PARTNER_STATUSES')['Waiting'], constants('PARTNER_STATUSES')['Onboarded']])) {
                 $this->partner->runUpfrontSubscriptionBilling();
             }
+
+            /**
+             * TEMPORARY TURNED OFF AFFILIATION REWARD FOR READY TO VERIFIED STATUS.
+             *
+             * if ($this->data['status'] == constants('PARTNER_STATUSES')['Waiting']) {
+                app('\Sheba\PartnerAffiliation\RewardHandler')->setPartner($this->partner)->waiting();
+            }*/
+            
             $this->partnerRepo->update($this->partner, $partner_data);
             $this->saveLog();
         });

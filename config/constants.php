@@ -339,7 +339,7 @@ return [
         'App' => 'App'
     ],
     'AFFILIATION_REWARD_MONEY' => 10,
-    'AFFILIATION_REGISTRATION_BONUS' => 20,
+    'AFFILIATION_REGISTRATION_BONUS' => 8,
     'AFFILIATION_ACQUISITION_MONEY' => 2,
     'API_RESPONSE_CODES' => [
         200 => ['message' => 'Successful', 'code' => 200],
@@ -384,10 +384,11 @@ return [
     ],
     'PARTNER_AFFILIATIONS_FAKE_REJECT_REASONS' => ['fake'],
     'PARTNER_AFFILIATION_REWARD' => 200,
-    'PARTNER_AFFILIATION_PARTNER_ORDER_BENCHMARK' => 1,
+    'PARTNER_AFFILIATION_PARTNER_ORDER_BENCHMARK' => 2,
     'PARTNER_AFFILIATION_REWARD_BREAKDOWN' => [
-        'on_boarded' => 20,
-        'verified' => 10,
+        //'on_boarded' => 20,
+        'waiting'   => 0,
+        'verified'  => 30,
         'order_completed' => 70
     ],
     'PARTNER_AFFILIATION_AMBASSADOR_COMMISSION' => 30,
