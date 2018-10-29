@@ -280,6 +280,7 @@ class AffiliateController extends Controller
             $info->put('agent_count', $affiliate->agents->count());
             $info->put('earning_amount', $affiliate->agents->sum('total_gifted_amount'));
             $info->put('total_refer', $affiliate->agents->sum('total_gifted_number'));
+            $info->put('sp_count',$affiliate->partnerAffiliations->count()); 
             return api_response($request, $info, 200, ['info' => $info->all()]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
