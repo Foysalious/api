@@ -76,6 +76,36 @@ class Affiliate extends Model implements TopUpAgent
         return $this->affiliations->where('status', 'successful')->count();
     }
 
+    public function pendingLead()
+    {
+        return $this->affiliations->whereIn('status', ['pending','follow_up','converted'])->count();
+    }
+
+    public function successFullLead()
+    {
+        return $this->affiliations->where('status', 'successful')->count();
+    }
+
+    public function rejectedLead()
+    {
+        return $this->affiliations->where('status', 'rejected')->count();
+    }
+
+//    public function countStatusAffiliate($from, $to ,$statuses = []) {
+//        if(sizeof($this->affiliations)>0){
+//            if(sizeof($statuses)>0) {
+//                return $this->affiliations->whereDate('created_at','>',$from)->whereDate('created_at','<',$to)->whereIn('status', $statuses)->count();
+//            }
+//            else
+//                return $this->affiliations->whereDate('created_at','>',$from)->whereDate('created_at','<',$to)->count();
+//        }
+//    }
+//
+//    public function countStatusPartnerAffiliate($from, $to ,$status) {
+//        return $this->partnerAffiliations->whereDate('created_at','>',$from)->whereDate('created_at','<',$to)->where('status', $status)->count();
+//    }
+
+
     public function earningAmount()
     {
         return $this->transactions->where('type', 'Credit')->sum('amount');

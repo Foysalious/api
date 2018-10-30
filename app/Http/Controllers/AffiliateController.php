@@ -9,6 +9,7 @@ use App\Models\Service;
 use App\Repositories\AffiliateRepository;
 use App\Repositories\FileRepository;
 use App\Repositories\LocationRepository;
+use App\Sheba\Bondhu\AffiliateStatus;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Sheba\PartnerPayment\PartnerPaymentValidatorFactory;
@@ -120,10 +121,25 @@ class AffiliateController extends Controller
         return $affiliate != null ? response()->json(['code' => 200, 'wallet' => $affiliate->wallet]) : response()->json(['code' => 404, 'msg' => 'Not found!']);
     }
 
-    public function leadInfo($affiliate, Request $request)
+    public function leadInfo($affiliate, AffiliateStatus $status, Request $request)
     {
-        $affiliate = Affiliate::find($affiliate);
-        return response()->json(['code' => 200, 'total_lead' => $affiliate->totalLead(), 'earning_amount' => $affiliate->earningAmount()]);
+        $rules = [
+            'filter_type' => 'required|string',
+            'from' => 'required_if:filter_type,date_range',
+            'to' => 'required_if:filter_type,date_range',
+            'sp_type' => 'required|in:affiliates,partner_affiliates'
+        ];
+        $validator = Validator::make($request->all(), $rules);
+        if ($validator->fails()) {
+            $error = $validator->errors()->all()[0];
+            return api_response($request, $error, 400, ['msg' => $error]);
+        }
+        if($request->agent_data)
+            $status = $status->setType($request->sp_type)->formatDateRange($request)->getAgentsData($affiliate);
+        else
+            $status = $status->setType($request->sp_type)->formatDateRange($request)->getIndividualData($affiliate);
+
+        return response()->json(['code' => 200, 'data'=>$status]);
     }
 
     public function getAmbassador($affiliate, Request $request)
