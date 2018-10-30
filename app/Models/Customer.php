@@ -11,6 +11,7 @@ use Sheba\Voucher\VoucherCodeGenerator;
 class Customer extends Authenticatable implements Rechargable, Rewardable
 {
     use Wallet;
+
     protected $fillable = [
         'name',
         'mobile',

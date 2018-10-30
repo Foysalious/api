@@ -1,6 +1,4 @@
-<?php
-
-namespace Sheba\Payment\Methods\Bkash;
+<?php namespace Sheba\Payment\Methods\Bkash;
 
 use App\Models\Payable;
 use App\Models\Payment;
@@ -74,9 +72,9 @@ class Bkash extends PaymentMethod
             $payment->transaction_details = json_encode($success->details);
         } else {
             $error = $execute_response->getError();
-            $this->paymentRepository->changeStatus(['to' => 'initiation_failed', 'from' => $payment->status,
+            $this->paymentRepository->changeStatus(['to' => 'validation_failed', 'from' => $payment->status,
                 'transaction_details' => json_encode($error->details)]);
-            $payment->status = 'initiation_failed';
+            $payment->status = 'validation_failed';
             $payment->transaction_details = json_encode($error->details);
         }
         $payment->update();

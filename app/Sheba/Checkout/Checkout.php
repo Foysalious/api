@@ -85,8 +85,8 @@ class Checkout
         $data['category_answers'] = $request->category_answers;
         $data['info_call_id'] = $this->_setInfoCallId($request);
         $data['affiliation_id'] = $this->_setAffiliationId($request);
-        $data['is_on_premise'] = $request->has('is_on_premise') ? $request->is_on_premise : 0;
-        $data['site'] = ! $data['is_on_premise'] ? 'customer' : 'partner';
+        $data['is_on_premise'] = $request->has('is_on_premise') ? (int)$request->is_on_premise : 0;
+        $data['site'] = $data['is_on_premise'] ? 'partner' : 'customer';
         if ($request->has('address')) {
             $data['address'] = $request->address;
         }
@@ -138,7 +138,7 @@ class Checkout
                     'discount_percentage' => isset($data['discount_percentage']) ? $data['discount_percentage'] : 0,
                     'resource_id' => isset($data['resource_id']) ? $data['resource_id'] : null,
                     'status' => isset($data['resource_id']) ? constants('JOB_STATUSES')['Accepted'] : constants('JOB_STATUSES')['Pending'],
-                    'delivery_charge' => isset($data['is_on_premise']) ? (double)$partner->categories->first()->pivot->delivery_charge : 0,
+                    'delivery_charge' => $data['is_on_premise'] ? 0 : (double)$partner->categories->first()->pivot->delivery_charge,
                     'site' => $data['site']
                 ]);
                 $job = $this->getAuthor($job, $data);
@@ -322,8 +322,8 @@ class Checkout
             if (!$this->isVoucherAutoApplicable($job_services, $data)) return $data;
 
             $order_amount = $job_services->map(function ($job_service) {
-                return $job_service->unit_price * $job_service->quantity;
-            })->sum();
+                    return $job_service->unit_price * $job_service->quantity;
+                })->sum() + (double)$partner->categories->first()->pivot->delivery_charge;
             $valid = 0;
             if (isset($data['voucher'])) {
                 $result = voucher($data['voucher'])

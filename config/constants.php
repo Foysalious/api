@@ -387,8 +387,8 @@ return [
     'PARTNER_AFFILIATION_PARTNER_ORDER_BENCHMARK' => 2,
     'PARTNER_AFFILIATION_REWARD_BREAKDOWN' => [
         //'on_boarded' => 20,
-        'waiting'   => 10,
-        'verified'  => 20,
+        'waiting'   => 0,
+        'verified'  => 30,
         'order_completed' => 70
     ],
     'PARTNER_AFFILIATION_AMBASSADOR_COMMISSION' => 30,

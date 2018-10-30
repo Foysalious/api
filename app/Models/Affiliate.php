@@ -71,6 +71,33 @@ class Affiliate extends Model implements TopUpAgent
         return $query->where('verification_status', 'verified');
     }
 
+    public function scopeAgentsWithoutFilter($query, $request)
+    {
+        $affiliate = $request->affiliate;
+        list($sort, $order) = calculateSort($request);
+        return $query->select('affiliates.id', 'affiliates.profile_id', 'affiliates.ambassador_id', 'affiliates.total_gifted_number','affiliates.total_gifted_amount' ,'profiles.name', 'profiles.pro_pic as picture', 'profiles.mobile')
+            ->leftJoin('profiles', 'profiles.id', '=','affiliates.profile_id')
+            ->orderBy('affiliates.total_gifted_amount', $order)
+            ->where('affiliates.ambassador_id', $affiliate->id);
+    }
+
+    public function scopeAgentsWithFilter($query, $request)
+    {
+        $affiliate = $request->affiliate;
+        $filter = $request->filter;
+        list($to, $from) = getRangeFormat($request);
+        list($sort, $order) = calculateSort($request, 'affiliates.id');
+        return $query->select('affiliates.id', 'affiliates.profile_id', 'affiliates.ambassador_id', 'profiles.name', 'profiles.pro_pic as picture', 'profiles.mobile')
+            ->leftJoin('profiles', 'profiles.id', '=', 'affiliates.profile_id')
+            ->leftJoin('affiliate_transactions', function ($join) {
+                $join->on('affiliate_transactions.affiliate_id', '=', 'affiliates.id');
+                $join->on('affiliate_transactions.created_at', '>', 'affiliates.under_ambassador_since')
+                    ->where('affiliate_transactions.is_gifted', '=', 1);
+            })
+            ->where('affiliates.ambassador_id', $affiliate->id)
+            ->orderBy('total_gifted_amount', $order);
+    }
+
     public function totalLead()
     {
         return $this->affiliations->where('status', 'successful')->count();

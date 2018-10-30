@@ -179,6 +179,8 @@ class ServiceRepository
             }
             if (count($price) > 0) {
                 array_add($service, 'start_price', min($price) * $service->min_quantity);
+            } else {
+                array_add($service, 'start_price', 0);
             }
         }
         return $service;
@@ -285,21 +287,9 @@ class ServiceRepository
             if (array_search('reviews', $scope) !== false) {
                 $this->reviewRepository->getGeneralReviewInformation($service);
             }
-            if (array_search('master_category_id', $scope) !== false) {
-                $service = $this->addMasterCategoryId($service);
-            }
             $this->removeRelationsFromModel($service, $service->getRelations());
         }
         return $services;
-    }
-
-    private function addMasterCategoryId($service)
-    {
-        $service->load(['category' => function($query) {
-            return $query->select('id', 'parent_id');
-        }]);
-        $service['master_category_id'] = $service->category->parent_id;
-        return $service;
     }
 
     public function removeRelationsFromModel($model, $relations)

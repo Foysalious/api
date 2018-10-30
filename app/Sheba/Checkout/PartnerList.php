@@ -2,6 +2,7 @@
 
 use App\Jobs\DeductPartnerImpression;
 use App\Models\Category;
+use App\Models\Customer;
 use App\Models\ImpressionDeduction;
 use App\Models\Partner;
 use App\Models\PartnerServiceDiscount;
@@ -15,6 +16,8 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Sheba\Checkout\PartnerSort;
+use Sheba\ModificationFields;
+use Sheba\RequestIdentification;
 
 class PartnerList
 {
@@ -29,6 +32,8 @@ class PartnerList
     private $rentCarServicesId;
     private $skipAvailability;
     private $selectedCategory;
+    private $rentCarCategoryIds;
+    use ModificationFields;
 
     public function __construct($services, $date, $time, $location)
     {
@@ -168,7 +173,8 @@ class PartnerList
                 $q->published();
             })->select(DB::raw('count(*) as c'))->whereIn('services.id', $service_ids)->where([['partner_service.is_published', 1], ['partner_service.is_verified', 1]])->publishedForAll()
                 ->groupBy('partner_id')->havingRaw('c=' . count($service_ids));
-        })->published()->select('partners.id', 'partners.current_impression', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet', 'partners.package_id');
+        })->published()
+            ->select('partners.id', 'partners.current_impression', 'partners.address', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet', 'partners.package_id');
         if ($partner_id != null) {
             $query = $query->where('partners.id', $partner_id);
         }
@@ -244,7 +250,7 @@ class PartnerList
         if (in_array($this->selectedCategory->id, $this->rentCarCategoryIds)) {
             $category_ids = $this->selectedCategory->id == (int)env('RENT_CAR_OUTSIDE_ID') ? $category_ids . ",40" : $category_ids . ",38";
         }
-        $this->partners->load(['jobs' => function ($q) use ($category_ids) {
+        $this->partners->load(['handymanResources', 'workingHours', 'jobs' => function ($q) use ($category_ids) {
             $q->selectRaw("count(case when status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then status end) as total_jobs")
                 ->selectRaw("count(case when status in ('Accepted', 'Schedule Due', 'Process', 'Serve Due') then status end) as ongoing_jobs")
                 ->selectRaw("count(case when status in ('Served') and category_id=" . $this->selectedCategory->id . " then status end) as total_completed_orders")
@@ -264,8 +270,8 @@ class PartnerList
 
             $partner['contact_no'] = $this->getContactNumber($partner);
             $partner['subscription_type'] = $partner->subscription ? $partner->subscription->name : null;
-            $partner['total_experts'] = 20;
-            $partner['total_working_days'] = 7;
+            $partner['total_experts'] = $partner->handymanResources->first() ? $partner->handymanResources->first()->total_experts : 0;
+            $partner['total_working_days'] = $partner->workingHours ? $partner->workingHours->count() : 0;
             $partner['total_completed_orders'] = $partner->jobs->first() ? $partner->jobs->first()->total_completed_orders : 0;
             $partner['address'] = $partner->address;
         }
@@ -274,7 +280,9 @@ class PartnerList
     public function calculateAverageRating()
     {
         $this->partners->load(['reviews' => function ($q) {
-            $q->select('reviews.id', 'rating', 'category_id', 'partner_id');
+            $q->select('reviews.id', 'rating', 'category_id', 'partner_id')->with(['rates' => function ($q) {
+                $q->select('id', 'review_id');
+            }]);
         }]);
         foreach ($this->partners as $partner) {
             $partner['rating'] = (new ReviewRepository())->getAvgRating($partner->reviews);
@@ -285,18 +293,25 @@ class PartnerList
     {
         foreach ($this->partners as $partner) {
             $partner['total_ratings'] = count($partner->reviews);
-            $partner['total_compliments'] = 5;
-            $partner['total_five_star_ratings'] = count($partner->reviews->filter(function ($review) {
+            $five_star_reviews = $partner->reviews->filter(function ($review) {
                 return $review->rating == 5;
-            }));
+            });
+            $partner['total_compliments'] = $five_star_reviews->reduce(function ($count, $review) {
+                return $count + $review->rates->count();
+            }, 0);
+            $partner['total_five_star_ratings'] = $five_star_reviews->count();
         }
     }
 
     public function sortByShebaPartnerPriority()
     {
         $this->partners->load(['reviews' => function ($q) {
-            $q->selectRaw("avg(case when category_id=" . $this->selectedCategory->id . " then rating end) as avg_rating,reviews.partner_id")
-                ->selectRaw("count(case when category_id=" . $this->selectedCategory->id . " then id end) as total_rating,reviews.partner_id")
+            $q->selectRaw("avg(rating) as avg_rating")
+                ->selectRaw("count(reviews.id) as total_rating")
+                ->selectRaw("count(case when rating=5 then reviews.id end) as total_five_star_ratings")
+                ->selectRaw("count(case when review_question_answer.review_type='App\\\Models\\\Review' and rating=5 then review_question_answer.id end) as total_compliments,reviews.partner_id")
+                ->leftJoin('review_question_answer', 'reviews.id', '=', 'review_question_answer.review_id')
+                ->where('category_id', $this->selectedCategory->id)
                 ->groupBy('reviews.partner_id');
         }, 'handymanResources' => function ($q) {
             $q->selectRaw('count(distinct resources.id) as total_experts, partner_id')
@@ -304,9 +319,11 @@ class PartnerList
                 ->where('category_partner_resource.category_id', $this->selectedCategory->id)->groupBy('partner_id');
         }]);
         foreach ($this->partners as $partner) {
-            $partner['avg_rating'] = $partner->reviews->first() ? (double)$partner->reviews->first()->avg_rating : 0;
-            $partner['total_rating'] = $partner->reviews->first() ? (double)$partner->reviews->first()->total_rating : 0;
-            $partner['total_experts'] = $partner->handymanResources->first() ? $partner->handymanResources->first()->total_experts : 0;
+            $partner['rating'] = $partner->reviews->first() ? (double)$partner->reviews->first()->avg_rating : 0;
+            $partner['total_rating'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_rating : 0;
+            $partner['total_five_star_ratings'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_five_star_ratings : 0;
+            $partner['total_compliments'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_compliments : 0;
+            $partner['total_experts'] = $partner->handymanResources->first() ? (int)$partner->handymanResources->first()->total_experts : 0;
         }
         $this->partners = (new PartnerSort($this->partners))->get();
         $this->deductImpression();
@@ -315,18 +332,26 @@ class PartnerList
 
     private function deductImpression()
     {
-        if (request()->has('screen') && request()->get('screen') == 'partner-list'
+        if (request()->has('screen') && request()->get('screen') == 'partner_list'
             && in_array(request()->header('Portal-Name'), ['customer-portal', 'customer-app', 'manager-app'])) {
             $partners = $this->partners->pluck('id')->toArray();
             $impression_deduction = new ImpressionDeduction();
             $impression_deduction->category_id = $this->selectedCategory->id;
             $impression_deduction->location_id = $this->location;
-            $impression_deduction->order_details = json_encode(array(
-                'services' => json_decode(request()->services)
-            ));
-            $impression_deduction->customer_id = request()->hasHeader('User-Id') ? request()->get('User-Id') : null;
+            $serviceArray = [];
+            foreach (json_decode(request()->services) as $service) {
+                array_push($serviceArray, [
+                    'id' => $service->id,
+                    'quantity' => $service->quantity,
+                    'option' => $service->option
+                ]);
+            }
+            $impression_deduction->order_details = json_encode(['services' => $serviceArray]);
+            $customer = request()->hasHeader('User-Id') && request()->header('User-Id') ? Customer::find((int)request()->header('User-Id')) : null;
+            if ($customer) $impression_deduction->customer_id = $customer->id;
             $impression_deduction->portal_name = request()->header('Portal-Name');
             $impression_deduction->ip = request()->ip();
+            $impression_deduction->user_agent = request()->header('User-Agent');
             $impression_deduction->created_at = Carbon::now();
             $impression_deduction->save();
             $impression_deduction->partners()->sync($partners);
@@ -422,7 +447,7 @@ class PartnerList
         $total_service_price['discounted_price'] += $delivery_charge;
         $total_service_price['original_price'] += $delivery_charge;
         $total_service_price['delivery_charge'] = $delivery_charge;
-        $total_service_price['has_home_delivery'] = $delivery_charge > 0 ? 1 : 0;
+        $total_service_price['has_home_delivery'] = (int)$category_pivot->is_home_delivery_applied ? 1 : 0;
         $total_service_price['has_premise_available'] = (int)$category_pivot->is_partner_premise_applied ? 1 : 0;
         return $total_service_price;
     }
