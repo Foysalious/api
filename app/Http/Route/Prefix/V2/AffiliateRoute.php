@@ -12,6 +12,7 @@ class AffiliateRoute
             $api->post('top-up', 'TopUpController@topUp');
             $api->post('recharge', 'AffiliateController@rechargeWallet');
             $api->get('service-lead-status', 'AffiliateController@leadInfo');
+            $api->get('history', 'AffiliateController@history');
         });
     }
 }
