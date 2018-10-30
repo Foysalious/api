@@ -99,6 +99,9 @@ class Checkout
         if ($request->has('voucher')) {
             $data['voucher'] = $request->voucher;
         }
+        if ($request->has('partner_id')) {
+            $data['partner_id'] = $request->partner_id;
+        }
         $data['pap_visitor_id'] = $request->has('pap_visitor_id') ? $request->pap_visitor_id : null;
         $data['created_by'] = $created_by = $request->has('created_by') ? $request->created_by : $this->customer->id;
         $data['created_by_name'] = $created_by_name = $request->has('created_by_name') ? $request->created_by_name : 'Customer - ' . $this->customer->profile->name;
@@ -234,6 +237,7 @@ class Checkout
         $order->created_by = $data['created_by'];
         $order->created_by_name = $data['created_by_name'];
         $order->delivery_address = $this->getDeliveryAddress($data);
+        $order->partner_id = isset($data['partner_id']) ? $data['partner_id'] : null;
         $order->save();
         return $order;
     }
