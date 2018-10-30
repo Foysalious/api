@@ -189,36 +189,31 @@ class AffiliateController extends Controller
 
     public function getAgents($affiliate, Request $request)
     {
+        $affiliate=$request->affiliate;
         try {
-            $affiliate = $request->affiliate;
             if ($affiliate->is_ambassador == 0) {
                 return api_response($request, null, 403);
             }
-            $affiliate->load(['agents' => function ($q) {
-                $q->select('id', 'profile_id', 'ambassador_id', 'total_gifted_number', 'total_gifted_amount')->with(['profile' => function ($q) {
-                    $q->select('id', 'name', 'pro_pic', 'mobile');
-                }]);
-            }]);
-            if (count($affiliate->agents) != 0) {
-                list($offset, $limit) = calculatePagination($request);
-                $agents = $affiliate->agents->splice($offset, $limit)->all();
-                if (count($agents) != 0) {
-                    foreach ($agents as $agent) {
-                        $agent['name'] = $agent->profile->name;
-                        $agent['picture'] = $agent->profile->pro_pic;
-                        $agent['mobile'] = $agent->profile->mobile;
-                        $agent['total_gifted_amount'] = (double)$agent->total_gifted_amount;
-                        array_forget($agent, 'profile');
-                        array_forget($agent, 'ambassador_id');
-                        array_forget($agent, 'profile_id');
-                    }
-                    $agents = $this->affiliateRepository->sortAgents($request, $agents);
-                    return api_response($request, $agents, 200, ['agents' => $agents]);
-                }
+            $q = $request->get('query');
+            $range = $request->get('range');
+            list($offset, $limit) = calculatePagination($request);
+            if (!isset($range)) {
+                $query = Affiliate::agentsWithoutFilter($request);
+            } else {
+                $query = Affiliate::agentsWithFilter($request);
+            }
+            if (isset($q)) {
+                $query->where('profiles.name', 'LIKE', $q . '%');
+            }
+            $agents = $query->skip($offset)
+                ->take($limit)->get();
+            if (count($agents) > 0) {
+                return api_response($request, $agents, 200, ['agents' => $agents]);
             }
             return api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
+            dd($e);
             return api_response($request, null, 500);
         }
     }
