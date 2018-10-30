@@ -135,9 +135,9 @@ class AffiliateController extends Controller
             return api_response($request, $error, 400, ['msg' => $error]);
         }
         if($request->agent_data)
-            $status = $status->setType($request->sp_type)->formatDateRange($request)->getAgentsData($affiliate);
+            $status = $status->setType($request->sp_type)->getFormattedDate($request)->getAgentsData($affiliate);
         else
-            $status = $status->setType($request->sp_type)->formatDateRange($request)->getIndividualData($affiliate);
+            $status = $status->setType($request->sp_type)->getFormattedDate($request)->getIndividualData($affiliate);
 
         return response()->json(['code' => 200, 'data'=>$status]);
     }

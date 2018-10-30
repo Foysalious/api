@@ -49,34 +49,15 @@ class AffiliateStatus
         return $this->generateData($affiliateIds);
     }
 
-    public function formatDateRange($request)
+    public function getFormattedDate($request)
     {
-        $currentDate = Carbon::now();
-
         switch ($request->filter_type) {
-            case "today":
-                    $this->setDateRange(Carbon::yesterday()->toDateString(), Carbon::today()->toDateString());
-                break;
-            case "yesterday":
-                $this->setDateRange(Carbon::yesterday()->addDay(-1)->toDateString(), Carbon::today()->toDateString());
-                break;
-            case "week":
-                    $this->setDateRange($currentDate->startOfWeek()->addDays(-1)->toDateString(), Carbon::today()->toDateString());
-                break;
-            case "month":
-                    $this->setDateRange($currentDate->startOfMonth()->toDateString(), Carbon::today()->toDateString());
-                break;
-            case "year":
-                $this->setDateRange($currentDate->startOfYear()->toDateString(), Carbon::today()->toDateString());
-                break;
-            case "all_time":
-                $this->setDateRange('2017-01-01', Carbon::today()->toDateString());
-                break;
             case "date_range":
                     $this->setDateRange($request->from, $request->to);
                 break;
             default:
-                    $this->setDateRange(Carbon::yesterday(), Carbon::today());
+                    $formattedDates = (formatDateRange($request->filter_type));
+                    $this->setDateRange($formattedDates["from"], $formattedDates["to"]);
                 break;
         }
         return $this;
@@ -112,7 +93,7 @@ class AffiliateStatus
         $earning_amount =(double) $earning_amount_query->sum('amount');
 
         $this->statuses["earning_amount"] = $earning_amount;
-        $this->statuses["from_date"] =  $this->from;
-        $this->statuses["to_date"] = $this->to;
+        $this->statuses["from_date"] =  date("dS F", strtotime($this->from));
+        $this->statuses["to_date"] = date("dS F", strtotime($this->to));
     }
 }
