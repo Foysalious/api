@@ -38,7 +38,7 @@ class Ssl
             $sender_id = "redwan@sslwireless.com";
             $priority = 1;
             $s_url = "http://192.168.69.178:88/virtualrecharge/client/reply.php?s=1";
-            $f_url = config('sheba.api_url') . '/v2/top-up/ssl/fail';
+            $f_url = config('sheba.api_url') . '/v2/top-up/fail/ssl';
             $calling_method = "POST";
             $create_recharge_response = $client->CreateRecharge($this->clientId, $this->clientPassword, $guid, $operator_id,
                 $mobile_number, $amount, $connection_type, $sender_id, $priority, $s_url, $f_url, $calling_method);
