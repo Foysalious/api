@@ -1,13 +1,9 @@
-<?php
-
-namespace App\Http\Route\Prefix\V2;
-
+<?php namespace App\Http\Route\Prefix\V2;
 
 class AffiliateRoute
 {
     public function set($api)
     {
-
         $api->group(['prefix' => 'affiliates/{affiliate}', 'middleware' => ['affiliate.auth']], function ($api) {
             $api->get('dashboard', 'AffiliateController@getDashboardInfo');
             $api->get('partner-affiliates', 'PartnerAffiliationController@index');
