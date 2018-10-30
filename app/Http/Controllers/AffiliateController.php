@@ -9,6 +9,7 @@ use App\Models\Service;
 use App\Repositories\AffiliateRepository;
 use App\Repositories\FileRepository;
 use App\Repositories\LocationRepository;
+use App\Sheba\Bondhu\AffiliateStatus;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Sheba\PartnerPayment\PartnerPaymentValidatorFactory;
@@ -120,10 +121,25 @@ class AffiliateController extends Controller
         return $affiliate != null ? response()->json(['code' => 200, 'wallet' => $affiliate->wallet]) : response()->json(['code' => 404, 'msg' => 'Not found!']);
     }
 
-    public function leadInfo($affiliate, Request $request)
+    public function leadInfo($affiliate, AffiliateStatus $status, Request $request)
     {
-        $affiliate = Affiliate::find($affiliate);
-        return response()->json(['code' => 200, 'total_lead' => $affiliate->totalLead(), 'earning_amount' => $affiliate->earningAmount()]);
+        $rules = [
+            'filter_type' => 'required|string',
+            'from' => 'required_if:filter_type,date_range',
+            'to' => 'required_if:filter_type,date_range',
+            'sp_type' => 'required|in:affiliates,partner_affiliates'
+        ];
+        $validator = Validator::make($request->all(), $rules);
+        if ($validator->fails()) {
+            $error = $validator->errors()->all()[0];
+            return api_response($request, $error, 400, ['msg' => $error]);
+        }
+        if($request->agent_data)
+            $status = $status->setType($request->sp_type)->formatDateRange($request)->getAgentsData($affiliate);
+        else
+            $status = $status->setType($request->sp_type)->formatDateRange($request)->getIndividualData($affiliate);
+
+        return response()->json(['code' => 200, 'data'=>$status]);
     }
 
     public function getAmbassador($affiliate, Request $request)
@@ -189,36 +205,31 @@ class AffiliateController extends Controller
 
     public function getAgents($affiliate, Request $request)
     {
+        $affiliate=$request->affiliate;
         try {
-            $affiliate = $request->affiliate;
             if ($affiliate->is_ambassador == 0) {
                 return api_response($request, null, 403);
             }
-            $affiliate->load(['agents' => function ($q) {
-                $q->select('id', 'profile_id', 'ambassador_id', 'total_gifted_number', 'total_gifted_amount')->with(['profile' => function ($q) {
-                    $q->select('id', 'name', 'pro_pic', 'mobile');
-                }]);
-            }]);
-            if (count($affiliate->agents) != 0) {
-                list($offset, $limit) = calculatePagination($request);
-                $agents = $affiliate->agents->splice($offset, $limit)->all();
-                if (count($agents) != 0) {
-                    foreach ($agents as $agent) {
-                        $agent['name'] = $agent->profile->name;
-                        $agent['picture'] = $agent->profile->pro_pic;
-                        $agent['mobile'] = $agent->profile->mobile;
-                        $agent['total_gifted_amount'] = (double)$agent->total_gifted_amount;
-                        array_forget($agent, 'profile');
-                        array_forget($agent, 'ambassador_id');
-                        array_forget($agent, 'profile_id');
-                    }
-                    $agents = $this->affiliateRepository->sortAgents($request, $agents);
-                    return api_response($request, $agents, 200, ['agents' => $agents]);
-                }
+            $q = $request->get('query');
+            $range = $request->get('range');
+            list($offset, $limit) = calculatePagination($request);
+            if (!isset($range)) {
+                $query = Affiliate::agentsWithoutFilter($request);
+            } else {
+                $query = Affiliate::agentsWithFilter($request);
+            }
+            if (isset($q)) {
+                $query->where('profiles.name', 'LIKE', $q . '%');
+            }
+            $agents = $query->skip($offset)
+                ->take($limit)->get();
+            if (count($agents) > 0) {
+                return api_response($request, $agents, 200, ['agents' => $agents]);
             }
             return api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
+            dd($e);
             return api_response($request, null, 500);
         }
     }
@@ -280,6 +291,7 @@ class AffiliateController extends Controller
             $info->put('agent_count', $affiliate->agents->count());
             $info->put('earning_amount', $affiliate->agents->sum('total_gifted_amount'));
             $info->put('total_refer', $affiliate->agents->sum('total_gifted_number'));
+            $info->put('sp_count',$affiliate->partnerAffiliations->count()); 
             return api_response($request, $info, 200, ['info' => $info->all()]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

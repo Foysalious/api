@@ -24,6 +24,7 @@ class PartnerType extends GraphQlType
             'slug' => ['type' => Type::string()],
             'locations' => ['type' => Type::listOf(GraphQL::type('Location'))],
             'total_jobs' => ['type' => Type::int()],
+            'total_completed_orders' => ['type' => Type::int(), 'description' => 'Total served jobs of Category'],
             'total_resources' => ['type' => Type::int()],
             'avg_rating' => ['type' => Type::float()],
         ];
@@ -37,6 +38,11 @@ class PartnerType extends GraphQlType
     protected function resolveTotalJobsField($root, $args)
     {
         return $root->jobs->first() ? $root->jobs->first()->total_jobs : 0;
+    }
+
+    protected function resolveTotalCompletedOrdersField($root, $args)
+    {
+        return $root->jobs->first() ? $root->jobs->first()->total_completed_orders : 0;
     }
 
     protected function resolveAvgRatingField($root, $args)

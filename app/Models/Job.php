@@ -360,6 +360,6 @@ class Job extends Model
 
     public function isOnPremise()
     {
-        return $this->site == constants('JOB_ON_PREMISE')['partner'];
+        return $this->site == constants('JOB_ON_PREMISE')['partner'] ? 1 : 0;
     }
 }

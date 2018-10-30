@@ -72,7 +72,6 @@ class JobController extends Controller
                         $query->where('accessors.model_name', get_class($customer));
                     });
             }]);
-
             $job->partnerOrder->calculate(true);
             $job_collection = collect();
             $job_collection->put('id', $job->id);
@@ -99,6 +98,8 @@ class JobController extends Controller
             $job_collection->put('price', (double)$job->partnerOrder->totalPrice);
             $job_collection->put('isDue', (double)$job->partnerOrder->due > 0 ? 1 : 0);
             $job_collection->put('isRentCar', $job->isRentCar());
+            $job_collection->put('is_on_premise', $job->isOnPremise());
+            $job_collection->put('partner_address', $job->partnerOrder->partner->address);
             $job_collection->put('order_code', $job->partnerOrder->order->code());
             $job_collection->put('pick_up_address', $job->carRentalJobDetail ? $job->carRentalJobDetail->pick_up_address : null);
             $job_collection->put('destination_address', $job->carRentalJobDetail ? $job->carRentalJobDetail->destination_address : null);
@@ -199,8 +200,8 @@ class JobController extends Controller
             $bill['closed_and_paid_at_timestamp'] = $partnerOrder->closed_and_paid_at != null ? $partnerOrder->closed_and_paid_at->timestamp : null;
             $bill['payment_method'] = $this->formatPaymentMethod($partnerOrder->payment_method);
             $bill['status'] = $job->status;
-            $bill['is_on_premise'] = (int) $job->isOnPremise();
-            $bill['delivery_charge'] = (double) $partnerOrder->deliveryCharge;
+            $bill['is_on_premise'] = (int)$job->isOnPremise();
+            $bill['delivery_charge'] = (double)$partnerOrder->deliveryCharge;
             $bill['invoice'] = $job->partnerOrder->invoice;
             $bill['version'] = $job->partnerOrder->getVersion();
             return api_response($request, $bill, 200, ['bill' => $bill]);
@@ -430,6 +431,7 @@ class JobController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -553,7 +555,7 @@ class JobController extends Controller
     public function cancelReason(Request $request)
     {
         try {
-            $job_cancel_reasons = JobCancelReason::ForCustomer()->select('id', 'name','key')->get();
+            $job_cancel_reasons = JobCancelReason::ForCustomer()->select('id', 'name', 'key')->get();
             return api_response($request, $job_cancel_reasons, 200, ['cancel-reason' => $job_cancel_reasons]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
