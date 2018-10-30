@@ -105,12 +105,14 @@ class AffiliateStatus
             ->where('affiliate_transactions.affiliate_id',$this->parent_id)
             ->whereIn($tableName.'.affiliate_id',$affiliate_ids);
 
-         if(sizeof($affiliate_ids)> 1) {
-             $earning_amount_query = $earning_amount_query->where('affiliate_transactions.created_at','>=',DB::raw('affiliates.under_ambassador_since'));
-         }
+        if(sizeof($affiliate_ids)> 1) {
+            $earning_amount_query = $earning_amount_query->where('affiliate_transactions.created_at','>=',DB::raw('affiliates.under_ambassador_since'));
+        }
 
-         $earning_amount =(double) $earning_amount_query->sum('amount');
+        $earning_amount =(double) $earning_amount_query->sum('amount');
 
         $this->statuses["earning_amount"] = $earning_amount;
+        $this->statuses["from_date"] =  $this->from;
+        $this->statuses["to_date"] = $this->to;
     }
 }
