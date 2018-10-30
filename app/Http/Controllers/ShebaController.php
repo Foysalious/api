@@ -66,7 +66,7 @@ class ShebaController extends Controller
     {
         try {
             $images = Slider::select('id', 'image_link', 'small_image_link', 'target_link', 'target_type', 'target_id');
-            if ($request->has('business')) {
+            if ($request->has('business') && $request->business) {
                 $images = $images->showBusiness();
             } else {
                 $images = $images->show();
