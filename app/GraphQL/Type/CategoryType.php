@@ -201,9 +201,10 @@ class CategoryType extends GraphQlType
 
     protected function resolvePartnersField($root, $args)
     {
-        $root->load(['partners' => function ($q) {
-            $q->where('category_partner.is_verified', 1)->with(['jobs' => function ($q) {
-                $q->selectRaw('count(*) as total_jobs, partner_id')->where('status', 'Served')->groupBy('partner_id');
+        $root->load(['partners' => function ($q) use ($root) {
+            $q->where('category_partner.is_verified', 1)->with(['jobs' => function ($q) use ($root) {
+                $q->selectRaw('count(*) as total_jobs, partner_id')->where('status', 'Served')
+                    ->selectRaw("count(case when status in ('Served') and category_id=" . $root->id . " then status end) as total_completed_orders")->groupBy('partner_id');
             }, 'reviews' => function ($q) {
                 $q->select(DB::raw('AVG(reviews.rating) as avg_rating'), 'partner_id')->groupBy('partner_id');
             }, 'resources' => function ($q) {
