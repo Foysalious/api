@@ -208,6 +208,7 @@ if (!function_exists('getRangeFormat')) {
     function getRangeFormat($request)
     {
         $filter = $request->range;
+        $today = Carbon::today();
         $dateFrame = new \Sheba\Helpers\TimeFrame();
         switch ($filter) {
             case 'today':
@@ -215,9 +216,13 @@ if (!function_exists('getRangeFormat')) {
             case 'yesterday':
                 return $dateFrame->forYesterday()->getArray();
             case 'year':
-                return $dateFrame->forAYear($request->year)->getArray();
+                return $dateFrame->forAYear($today->year)->getArray();
+            case 'month':
+                return $dateFrame->forAMonth($today->month, $today->year)->getArray();
+            case 'week':
+                return $dateFrame->forAWeek($today)->getArray();
             default:
-                return [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()];
+                return [$today->startOfDay(), $today->endOfDay()];
         }
     }
 }
