@@ -2,10 +2,14 @@
 
 use App\Models\Affiliate;
 use App\Models\TopUpVendor;
+use App\Repositories\FileRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use League\Flysystem\File;
 use Sheba\TopUp\TopUp;
 use Sheba\TopUp\Vendor\VendorFactory;
+use Storage;
 
 class TopUpController extends Controller
 {
@@ -54,6 +58,22 @@ class TopUpController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function sslFail(Request $request)
+    {
+        try {
+            $data = $request->all();
+            $filename = Carbon::now()->timestamp . str_random(6) . '.json';
+            Storage::disk('s3')->put("topup/fail/ssl/$filename", json_encode($data));
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $data]);
+            $sentry->captureException(new \Exception('SSL topup fail'));
+            return api_response($request, 1, 200);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
