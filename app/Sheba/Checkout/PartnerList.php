@@ -250,7 +250,7 @@ class PartnerList
         if (in_array($this->selectedCategory->id, $this->rentCarCategoryIds)) {
             $category_ids = $this->selectedCategory->id == (int)env('RENT_CAR_OUTSIDE_ID') ? $category_ids . ",40" : $category_ids . ",38";
         }
-        $this->partners->load(['handymanResources', 'workingHours', 'jobs' => function ($q) use ($category_ids) {
+        $this->partners->load(['workingHours', 'jobs' => function ($q) use ($category_ids) {
             $q->selectRaw("count(case when status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then status end) as total_jobs")
                 ->selectRaw("count(case when status in ('Accepted', 'Schedule Due', 'Process', 'Serve Due') then status end) as ongoing_jobs")
                 ->selectRaw("count(case when status in ('Served') and category_id=" . $this->selectedCategory->id . " then status end) as total_completed_orders")
@@ -262,18 +262,32 @@ class PartnerList
             $q->select('resources.id', 'profile_id')->with(['profile' => function ($q) {
                 $q->select('profiles.id', 'mobile');
             }]);
+        }, 'reviews' => function ($q) {
+            $q->selectRaw("avg(rating) as avg_rating")
+                ->selectRaw("count(reviews.id) as total_rating")
+                ->selectRaw("count(case when rating=5 then reviews.id end) as total_five_star_ratings")
+                ->selectRaw("count(case when review_question_answer.review_type='App\\\Models\\\Review' and rating=5 then review_question_answer.id end) as total_compliments,reviews.partner_id")
+                ->leftJoin('review_question_answer', 'reviews.id', '=', 'review_question_answer.review_id')
+                ->where('category_id', $this->selectedCategory->id)
+                ->groupBy('reviews.partner_id');
+        }, 'handymanResources' => function ($q) {
+            $q->selectRaw('count(distinct resources.id) as total_experts, partner_id')
+                ->verified()->join('category_partner_resource', 'category_partner_resource.partner_resource_id', '=', 'partner_resource.id')
+                ->where('category_partner_resource.category_id', $this->selectedCategory->id)->groupBy('partner_id');
         }]);
         foreach ($this->partners as $partner) {
             $partner['total_jobs'] = $partner->jobs->first() ? $partner->jobs->first()->total_jobs : 0;
             $partner['ongoing_jobs'] = $partner->jobs->first() ? $partner->jobs->first()->ongoing_jobs : 0;
             $partner['total_jobs_of_category'] = $partner->jobs->first() ? $partner->jobs->first()->total_jobs_of_category : 0;
-
+            $partner['total_completed_orders'] = $partner->jobs->first() ? $partner->jobs->first()->total_completed_orders : 0;
             $partner['contact_no'] = $this->getContactNumber($partner);
             $partner['subscription_type'] = $partner->subscription ? $partner->subscription->name : null;
-            $partner['total_experts'] = $partner->handymanResources->first() ? $partner->handymanResources->first()->total_experts : 0;
             $partner['total_working_days'] = $partner->workingHours ? $partner->workingHours->count() : 0;
-            $partner['total_completed_orders'] = $partner->jobs->first() ? $partner->jobs->first()->total_completed_orders : 0;
-            $partner['address'] = $partner->address;
+            $partner['rating'] = $partner->reviews->first() ? (double)$partner->reviews->first()->avg_rating : 0;
+            $partner['total_rating'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_rating : 0;
+            $partner['total_five_star_ratings'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_five_star_ratings : 0;
+            $partner['total_compliments'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_compliments : 0;
+            $partner['total_experts'] = $partner->handymanResources->first() ? (int)$partner->handymanResources->first()->total_experts : 0;
         }
     }
 
@@ -305,26 +319,6 @@ class PartnerList
 
     public function sortByShebaPartnerPriority()
     {
-        $this->partners->load(['reviews' => function ($q) {
-            $q->selectRaw("avg(rating) as avg_rating")
-                ->selectRaw("count(reviews.id) as total_rating")
-                ->selectRaw("count(case when rating=5 then reviews.id end) as total_five_star_ratings")
-                ->selectRaw("count(case when review_question_answer.review_type='App\\\Models\\\Review' and rating=5 then review_question_answer.id end) as total_compliments,reviews.partner_id")
-                ->leftJoin('review_question_answer', 'reviews.id', '=', 'review_question_answer.review_id')
-                ->where('category_id', $this->selectedCategory->id)
-                ->groupBy('reviews.partner_id');
-        }, 'handymanResources' => function ($q) {
-            $q->selectRaw('count(distinct resources.id) as total_experts, partner_id')
-                ->verified()->join('category_partner_resource', 'category_partner_resource.partner_resource_id', '=', 'partner_resource.id')
-                ->where('category_partner_resource.category_id', $this->selectedCategory->id)->groupBy('partner_id');
-        }]);
-        foreach ($this->partners as $partner) {
-            $partner['rating'] = $partner->reviews->first() ? (double)$partner->reviews->first()->avg_rating : 0;
-            $partner['total_rating'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_rating : 0;
-            $partner['total_five_star_ratings'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_five_star_ratings : 0;
-            $partner['total_compliments'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_compliments : 0;
-            $partner['total_experts'] = $partner->handymanResources->first() ? (int)$partner->handymanResources->first()->total_experts : 0;
-        }
         $this->partners = (new PartnerSort($this->partners))->get();
         $this->deductImpression();
 
@@ -383,6 +377,8 @@ class PartnerList
             return $partner->is_available == 1;
         });
         $this->partners = $available_partners->merge($unavailable_partners);
+        $this->rejectShebaHelpDesk();
+
     }
 
     private function calculateServicePricingAndBreakdownOfPartner($partner)

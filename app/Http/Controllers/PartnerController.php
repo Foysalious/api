@@ -489,16 +489,6 @@ class PartnerController extends Controller
                     $partner_list->sortByShebaPartnerPriority();
                 } else {
                     $start = microtime(true);
-                    $partner_list->calculateAverageRating();
-                    $time_elapsed_secs = microtime(true) - $start;
-                    //dump("avg rating: " . $time_elapsed_secs * 1000);
-
-                    $start = microtime(true);
-                    $partner_list->calculateTotalRatings();
-                    $time_elapsed_secs = microtime(true) - $start;
-                    //dump("total rating count: " . $time_elapsed_secs * 1000);
-
-                    $start = microtime(true);
                     $partner_list->sortByShebaSelectedCriteria();
                     $time_elapsed_secs = microtime(true) - $start;
                     //dump("sort by sheba criteria: " . $time_elapsed_secs * 1000);
