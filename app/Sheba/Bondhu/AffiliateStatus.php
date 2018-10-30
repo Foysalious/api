@@ -1,13 +1,7 @@
-<?php
-/**
- * Created by PhpStorm.
- * User: Tech Land
- * Date: 10/29/2018
- * Time: 12:51 PM
- */
+<?php namespace App\Sheba\Bondhu;
 
-namespace App\Sheba\Bondhu;
 use App\Models\Affiliate;
+
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -32,14 +26,11 @@ class AffiliateStatus
     }
 
     public function generateData($affiliate_ids) {
-        $from = $this->from;
-        $to = $this->to;
-
         if($this->type == "affiliates") {
-            $this->getData("App\Models\Affiliation","affiliations",$affiliate_ids,$from,$to);
+            $this->getData("App\Models\Affiliation","affiliations",$affiliate_ids,$this->from,$this->to);
             return  $this->statuses;
         } else if($this->type === "partner_affiliates"){
-            $this->getData("App\Models\PartnerAffiliation","partner_affiliations",$affiliate_ids,$from,$to);
+            $this->getData("App\Models\PartnerAffiliation","partner_affiliations",$affiliate_ids,$this->from,$this->to);
             return $this->statuses;
         }
     }
@@ -48,45 +39,44 @@ class AffiliateStatus
     {
         $this->parent_id = $affiliate_id;
         $this->generateData([$affiliate_id]);
-        return $this->formatData();
     }
 
     public function getAgentsData($affiliate_id)
     {
         $this->parent_id = $affiliate_id;
-        $affiliateIds = Affiliate::where("ambassador_id",$affiliate_id)
-                            ->pluck('id');
+        $affiliateIds = Affiliate::where("ambassador_id",$affiliate_id)->pluck('id');
 
         return $this->generateData($affiliateIds);
     }
 
     public function formatDateRange($request)
     {
-        $currentDate = \Carbon\Carbon::now();
+        $currentDate = Carbon::now();
+
         switch ($request->filter_type) {
             case "today":
-                    $this->setDateRange(Carbon::yesterday()->toDateString(),Carbon::today()->toDateString());
+                    $this->setDateRange(Carbon::yesterday()->toDateString(), Carbon::today()->toDateString());
                 break;
             case "yesterday":
-                $this->setDateRange(Carbon::yesterday()->addDay(-1)->toDateString(),Carbon::today()->toDateString());
+                $this->setDateRange(Carbon::yesterday()->addDay(-1)->toDateString(), Carbon::today()->toDateString());
                 break;
             case "week":
-                    $this->setDateRange($currentDate->startOfWeek()->addDays(-1)->toDateString(),Carbon::today()->toDateString());
+                    $this->setDateRange($currentDate->startOfWeek()->addDays(-1)->toDateString(), Carbon::today()->toDateString());
                 break;
             case "month":
-                    $this->setDateRange($currentDate->startOfMonth()->toDateString(),Carbon::today()->toDateString());
+                    $this->setDateRange($currentDate->startOfMonth()->toDateString(), Carbon::today()->toDateString());
                 break;
             case "year":
-                $this->setDateRange($currentDate->startOfYear()->toDateString(),Carbon::today()->toDateString());
+                $this->setDateRange($currentDate->startOfYear()->toDateString(), Carbon::today()->toDateString());
                 break;
             case "all_time":
-                $this->setDateRange(Carbon::today()->addDays(-9999)->toDateString(),Carbon::today()->toDateString());
+                $this->setDateRange('2017-01-01', Carbon::today()->toDateString());
                 break;
             case "date_range":
                     $this->setDateRange($request->from, $request->to);
                 break;
             default:
-                    $this->setDateRange(Carbon::yesterday(),Carbon::today());
+                    $this->setDateRange(Carbon::yesterday(), Carbon::today());
                 break;
         }
         return $this;

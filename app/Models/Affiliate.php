@@ -75,8 +75,8 @@ class Affiliate extends Model implements TopUpAgent
     {
         $affiliate = $request->affiliate;
         list($sort, $order) = calculateSort($request);
-        return $query->select('affiliates.id', 'affiliates.profile_id', 'affiliates.ambassador_id', 'affiliates.total_gifted_number','affiliates.total_gifted_amount' ,'profiles.name', 'profiles.pro_pic as picture', 'profiles.mobile')
-            ->leftJoin('profiles', 'profiles.id', '=','affiliates.profile_id')
+        return $query->select('affiliates.profile_id', 'affiliates.id', 'affiliates.ambassador_id', 'affiliates.total_gifted_number', 'affiliates.total_gifted_amount', 'profiles.name', 'profiles.pro_pic as picture', 'profiles.mobile')
+            ->leftJoin('profiles', 'profiles.id', '=', 'affiliates.profile_id')
             ->orderBy('affiliates.total_gifted_amount', $order)
             ->where('affiliates.ambassador_id', $affiliate->id);
     }
@@ -84,24 +84,55 @@ class Affiliate extends Model implements TopUpAgent
     public function scopeAgentsWithFilter($query, $request)
     {
         $affiliate = $request->affiliate;
-        $filter = $request->filter;
-        list($to, $from) = getRangeFormat($request);
-        list($sort, $order) = calculateSort($request, 'affiliates.id');
-        return $query->select('affiliates.id', 'affiliates.profile_id', 'affiliates.ambassador_id', 'profiles.name', 'profiles.pro_pic as picture', 'profiles.mobile')
-            ->leftJoin('profiles', 'profiles.id', '=', 'affiliates.profile_id')
-            ->leftJoin('affiliate_transactions', function ($join) {
-                $join->on('affiliate_transactions.affiliate_id', '=', 'affiliates.id');
-                $join->on('affiliate_transactions.created_at', '>', 'affiliates.under_ambassador_since')
-                    ->where('affiliate_transactions.is_gifted', '=', 1);
-            })
-            ->where('affiliates.ambassador_id', $affiliate->id)
-            ->orderBy('total_gifted_amount', $order);
+        $order = calculateSort($request, 'affiliates.id')[1];
+        return $query->select( 'affiliations.affiliate_id as id', 'aff2.profile_id', 'aff2.ambassador_id', 'profiles.name', 'profiles.pro_pic as picture', 'profiles.mobile')
+            ->leftJoin('affiliate_transactions','affiliate_transactions.affiliate_id', '=', 'affiliates.id')
+            ->leftJoin('affiliations', 'affiliate_transactions.affiliation_id', ' = ', 'affiliations.id')
+            ->leftJoin('affiliates as aff2', 'affiliations.affiliate_id', '=', 'aff2.id')
+            ->leftJoin('profiles', 'profiles.id', '=', 'aff2.profile_id')
+            ->selectRaw('sum(affiliate_transactions.amount) as total_gifted_amount,count(distinct(affiliate_transactions.id)) as total_gifted_number')
+            ->where('affiliates.id', $affiliate->id)
+            ->where('affiliate_transactions.created_at','>','aff2.under_ambassador_since')
+            ->where('affiliate_transactions.is_gifted',1)
+            ->whereBetween('affiliate_transactions.created_at', getRangeFormat($request))
+            ->orderBy('total_gifted_amount', $order)
+            ->groupBy('affiliations.affiliate_id');
     }
 
     public function totalLead()
     {
         return $this->affiliations->where('status', 'successful')->count();
     }
+
+    public function pendingLead()
+    {
+        return $this->affiliations->whereIn('status', ['pending','follow_up','converted'])->count();
+    }
+
+    public function successFullLead()
+    {
+        return $this->affiliations->where('status', 'successful')->count();
+    }
+
+    public function rejectedLead()
+    {
+        return $this->affiliations->where('status', 'rejected')->count();
+    }
+
+//    public function countStatusAffiliate($from, $to ,$statuses = []) {
+//        if(sizeof($this->affiliations)>0){
+//            if(sizeof($statuses)>0) {
+//                return $this->affiliations->whereDate('created_at','>',$from)->whereDate('created_at','<',$to)->whereIn('status', $statuses)->count();
+//            }
+//            else
+//                return $this->affiliations->whereDate('created_at','>',$from)->whereDate('created_at','<',$to)->count();
+//        }
+//    }
+//
+//    public function countStatusPartnerAffiliate($from, $to ,$status) {
+//        return $this->partnerAffiliations->whereDate('created_at','>',$from)->whereDate('created_at','<',$to)->where('status', $status)->count();
+//    }
+
 
     public function earningAmount()
     {
