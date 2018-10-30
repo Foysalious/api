@@ -217,7 +217,7 @@ if (!function_exists('getRangeFormat')) {
             case 'year':
                 return $dateFrame->forAYear($request->year)->getArray();
             default:
-                return [Carbon::today(), Carbon::today()];
+                return [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()];
         }
     }
 }
