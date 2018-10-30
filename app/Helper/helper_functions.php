@@ -418,3 +418,35 @@ if (!function_exists('getSalesChannels')) {
         return array_combine(array_keys(constants('SALES_CHANNELS')), array_column(constants('SALES_CHANNELS'), $key));
     }
 }
+
+
+if (!function_exists('formatDateRange')) {
+    /**
+     * Return Date Range Formatted
+     *
+     * @param $filter_type = Filter type to filter date range
+     * @return Array
+     */
+    function formatDateRange($filter_type)
+    {
+        $currentDate = Carbon::now();
+
+        switch ($filter_type) {
+            case "today":
+                return ["from" => Carbon::yesterday()->toDateString(), "to" => Carbon::today()->toDateString()];
+            case "yesterday":
+                return ["from" => Carbon::yesterday()->addDay(-1)->toDateString(), "to" => Carbon::today()->toDateString()];
+            case "week":
+                return ["from" => $currentDate->startOfWeek()->addDays(-1)->toDateString(), "to" => Carbon::today()->toDateString()];
+            case "month":
+                return ["from" => $currentDate->startOfMonth()->toDateString(), "to" => Carbon::today()->toDateString()];
+            case "year":
+                return ["from" => $currentDate->startOfYear()->toDateString(), "to" => Carbon::today()->toDateString()];
+            case "all_time":
+                return ["from" =>'2017-01-01', "to" =>Carbon::today()->toDateString()];
+            default:
+                return ["from" =>'2017-01-01', "to" =>Carbon::today()->toDateString()];
+        }
+    }
+}
+
