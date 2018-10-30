@@ -20,7 +20,6 @@ use Sheba\Location\Distance\DistanceStrategy;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Sheba\Checkout\PartnerSort;
 use Sheba\ModificationFields;
-use Sheba\RequestIdentification;
 
 class PartnerList
 {
@@ -127,12 +126,14 @@ class PartnerList
 
     public function find($partner_id = null)
     {
-        $this->partners = is_int($this->location) ? $this->findPartnersByServiceAndLocation((int)$partner_id) : $this->findPartnersByServiceAndGeo((int)$partner_id);
-        $start = microtime(true);
-        $this->partners = $this->findPartnersByServiceAndLocation((int)$partner_id);
-        $time_elapsed_secs = microtime(true) - $start;
-        // dump("filter partner by service,location,category: " . $time_elapsed_secs * 1000);
-
+        if (is_int($this->location)) {
+            $start = microtime(true);
+            $this->partners = $this->findPartnersByServiceAndLocation($partner_id);
+            $time_elapsed_secs = microtime(true) - $start;
+            // dump("filter partner by service,location,category: " . $time_elapsed_secs * 1000);
+        } else {
+            $this->partners = $this->findPartnersByServiceAndGeo($partner_id);
+        }
         $start = microtime(true);
         $this->filterByCreditLimit();
         $time_elapsed_secs = microtime(true) - $start;
@@ -161,8 +162,18 @@ class PartnerList
 
     private function findPartnersByServiceAndLocation($partner_id = null)
     {
+        $this->partners = $this->findPartnersByService($partner_id);
+        $this->partners->load('locations');
+        return $this->partners->filter(function ($partner) {
+            return $partner->locations->where('id', $this->location)->count() > 0;
+        });
+    }
+
+    private function findPartnersByService($partner_id = null)
+    {
         $has_premise = (int)request()->get('has_premise');
         $has_home_delivery = (int)request()->get('has_home_delivery');
+
         $service_ids = $this->selected_services->pluck('id')->unique();
         $category_ids = $this->selected_services->pluck('category_id')->unique()->toArray();
         $query = Partner::WhereHas('categories', function ($q) use ($category_ids, $has_premise, $has_home_delivery) {
@@ -170,8 +181,6 @@ class PartnerList
             if (request()->has('has_home_delivery')) $q->where('category_partner.is_home_delivery_applied', $has_home_delivery);
             if (request()->has('has_premise')) $q->where('category_partner.is_partner_premise_applied', $has_premise);
             if (!request()->has('has_home_delivery') && !request()->has('has_premise')) $q->where('category_partner.is_home_delivery_applied', 1);
-        })->whereHas('locations', function ($query) {
-            $query->where('locations.id', (int)$this->location);
         })->whereHas('services', function ($query) use ($service_ids) {
             $query->whereHas('category', function ($q) {
                 $q->published();
@@ -194,6 +203,7 @@ class PartnerList
         }
         return null;
     }
+
 
     private function findPartnersByServiceAndGeo($partner_id = null)
     {
