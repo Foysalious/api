@@ -38,7 +38,7 @@ class AffiliateStatus
     public function getIndividualData($affiliate_id)
     {
         $this->parent_id = $affiliate_id;
-        $this->generateData([$affiliate_id]);
+        return $this->generateData([$affiliate_id]);
     }
 
     public function getAgentsData($affiliate_id)
@@ -84,26 +84,35 @@ class AffiliateStatus
 
     private function getData($modelName, $tableName, $affiliate_ids, $from, $to) {
 
-        $counts = $modelName::join('affiliates','affiliates.id','=',$tableName.'.affiliate_id')
-            ->select(
-                DB::raw("count(case when date (affiliations.created_at) >= '".$from."' and date(affiliations.created_at)<= '".$to."' then affiliations.id end) as total_leads"),
-                DB::raw("count(case when status='successful' and date (affiliations.created_at) >= '".$from."' and date(affiliations.created_at)<= '".$to."' then affiliations.id end) as total_successful"),
-                DB::raw("count(case when status='pending' or status='follow_up' or status='converted' and date (affiliations.created_at) >= '".$from."' and date(affiliations.created_at)<= '".$to."' then affiliations.id end) as total_pending"),
-                DB::raw("count(case when status='rejected' and date (affiliations.created_at) >= '".$from."' and date(affiliations.created_at)<= '".$to."' then affiliations.id end) as total_rejected")
-            )
-            ->whereIn('affiliate_id',$affiliate_ids)
-            ->where($tableName.'.created_at','>=',DB::raw('affiliates.under_ambassador_since'))
-            ->get()->toArray();
-        
+        $countsQuery = $modelName::join('affiliates','affiliates.id','=',$tableName.'.affiliate_id')
+                        ->select(
+                            DB::raw("count(case when date (affiliations.created_at) >= '".$from."' and date(affiliations.created_at)<= '".$to."' then affiliations.id end) as total_leads"),
+                            DB::raw("count(case when status='successful' and date (affiliations.created_at) >= '".$from."' and date(affiliations.created_at)<= '".$to."' then affiliations.id end) as total_successful"),
+                            DB::raw("count(case when status='pending' or status='follow_up' or status='converted' and date (affiliations.created_at) >= '".$from."' and date(affiliations.created_at)<= '".$to."' then affiliations.id end) as total_pending"),
+                            DB::raw("count(case when status='rejected' and date (affiliations.created_at) >= '".$from."' and date(affiliations.created_at)<= '".$to."' then affiliations.id end) as total_rejected")
+                        )
+                        ->whereIn('affiliate_id',$affiliate_ids);
+
+        if(sizeof($affiliate_ids)>1) {
+            $countsQuery = $countsQuery->where($tableName.'.created_at','>=',DB::raw('affiliates.under_ambassador_since'));
+        }
+
+        $counts= $countsQuery->get()->toArray();
         $this->statuses = $counts[0];
 
-        $earning_amount = $modelName::join('affiliate_transactions',$tableName.'.id','=','affiliate_transactions.affiliation_id')
+        $earning_amount_query =  $modelName::join('affiliate_transactions',$tableName.'.id','=','affiliate_transactions.affiliation_id')
             ->join('affiliates','affiliates.id','=',$tableName.'.affiliate_id')
-            ->where('affiliate_transactions.created_at','>=',DB::raw('affiliates.under_ambassador_since'))
             ->where('affiliate_transactions.affiliate_id',$this->parent_id)
-            ->whereIn($tableName.'.affiliate_id',$affiliate_ids)
-            ->sum('amount');
+            ->whereIn($tableName.'.affiliate_id',$affiliate_ids);
+
+        if(sizeof($affiliate_ids)> 1) {
+            $earning_amount_query = $earning_amount_query->where('affiliate_transactions.created_at','>=',DB::raw('affiliates.under_ambassador_since'));
+        }
+
+        $earning_amount =(double) $earning_amount_query->sum('amount');
 
         $this->statuses["earning_amount"] = $earning_amount;
+        $this->statuses["from_date"] =  $this->from;
+        $this->statuses["to_date"] = $this->to;
     }
 }

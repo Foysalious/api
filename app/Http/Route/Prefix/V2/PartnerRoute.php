@@ -88,7 +88,7 @@ class PartnerRoute
             });
             $api->get('get-profile', 'ResourceController@getResourceData');
             $api->get('settings', 'Partner\OperationController@isOnPremiseAvailable');
-
+//            $api->get('customer_info','Partner\')
             $api->group(['prefix' => 'partner-wallet'], function ($api) {
                 $api->post('purchase', 'PartnerWalletController@purchase');
                 $api->post('validate', 'PartnerWalletController@validatePayment');
