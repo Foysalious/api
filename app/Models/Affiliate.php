@@ -13,7 +13,7 @@ class Affiliate extends Model implements TopUpAgent
     use Wallet;
     protected $guarded = ['id'];
     protected $dates = ['last_suspended_at'];
-    protected $casts = ['wallet' => 'double', 'is_ambassador' => 'int', 'is_suspended' => 'int'];
+    protected $casts = ['wallet' => 'double', 'is_ambassador' => 'int', 'is_suspended' => 'int','total_gifted_amount'=>'double'];
 
     public function profile()
     {
