@@ -3,6 +3,7 @@
 namespace App\Sheba\Checkout;
 
 use App\Models\Location;
+use App\Models\Partner;
 use App\Models\ScheduleSlot;
 use App\Models\Service;
 use Carbon\Carbon;
@@ -54,6 +55,24 @@ class Validation
             } elseif (!$this->isValidTime($this->request->time) || is_null($this->request->time)) {
                 $this->message = "Selected time is not valid";
                 return 0;
+            }
+        }
+
+        if ($this->request->has('partner_id')) {
+            $partner = Partner::find($this->request->partner_id);
+            if (!$partner) {
+                $this->message = "No Partner Found";
+                return 0;
+            }
+            $resource = $this->request->customer->profile->resource;
+            if (!$resource) {
+                $this->message = "No Resource Found";
+                return 0;
+            } else {
+                if(!$resource->isManager($partner)) {
+                    $this->message = "Resource Doesn't belong to this partner";
+                    return 0;
+                }
             }
         }
         return 1;
