@@ -135,12 +135,12 @@ class AffiliateController extends Controller
             $error = $validator->errors()->all()[0];
             return api_response($request, $error, 400, ['msg' => $error]);
         }
-        if($request->agent_data)
+        if ($request->agent_data)
             $status = $status->setType($request->sp_type)->getFormattedDate($request)->getAgentsData($affiliate);
         else
             $status = $status->setType($request->sp_type)->getFormattedDate($request)->getIndividualData($affiliate);
 
-        return response()->json(['code' => 200, 'data'=>$status]);
+        return response()->json(['code' => 200, 'data' => $status]);
     }
 
     public function getAmbassador($affiliate, Request $request)
@@ -206,7 +206,7 @@ class AffiliateController extends Controller
 
     public function getAgents($affiliate, Request $request)
     {
-        $affiliate=$request->affiliate;
+        $affiliate = $request->affiliate;
         try {
             if ($affiliate->is_ambassador == 0) {
                 return api_response($request, null, 403);
@@ -214,10 +214,10 @@ class AffiliateController extends Controller
             $q = $request->get('query');
             $range = $request->get('range');
             list($offset, $limit) = calculatePagination($request);
-            if (!isset($range)) {
-                $query = Affiliate::agentsWithoutFilter($request);
-            } else {
+            if (isset($range) && !empty($range)) {
                 $query = Affiliate::agentsWithFilter($request);
+            } else {
+                $query = Affiliate::agentsWithoutFilter($request);
             }
             if (isset($q)) {
                 $query->where('profiles.name', 'LIKE', $q . '%');
@@ -291,7 +291,7 @@ class AffiliateController extends Controller
             $info->put('agent_count', $affiliate->agents->count());
             $info->put('earning_amount', $affiliate->agents->sum('total_gifted_amount'));
             $info->put('total_refer', $affiliate->agents->sum('total_gifted_number'));
-            $info->put('sp_count',$affiliate->partnerAffiliations->count()); 
+            $info->put('sp_count', $affiliate->partnerAffiliations->count());
             return api_response($request, $info, 200, ['info' => $info->all()]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -412,7 +412,7 @@ class AffiliateController extends Controller
     {
         try {
             list($offset, $limit) = calculatePagination($request);
-            $services = Service::PublishedForBondhu()->skip($offset)->take($limit)->get()->map(function($service) {
+            $services = Service::PublishedForBondhu()->skip($offset)->take($limit)->get()->map(function ($service) {
                 return [
                     'id' => $service->id,
                     'name' => $service->name,
