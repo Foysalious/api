@@ -57,6 +57,18 @@ class EventDataConverter
                                 'is_multi_selectable' => 1
                             ]
                         ]
+                    ],
+                    'partner_creation_bonus' => [
+                        'name' => 'Partner Creation Bonus',
+                        'event_class' => 'Sheba\Reward\Event\Partner\Action\PartnerCreationBonus\Event',
+                        'rule_class' => 'Sheba\Reward\Event\Partner\Action\PartnerCreationBonus\Rule',
+                        'parameters' => [
+                            'registration_channel' => [
+                                'type' => 'select',
+                                'possible_value' => constants('PARTNER_ACQUISITION_CHANNEL'),
+                                'is_multi_selectable' => 1
+                            ]
+                        ]
                     ]
                 ],
                 'campaign' => [
