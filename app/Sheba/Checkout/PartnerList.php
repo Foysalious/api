@@ -254,7 +254,7 @@ class PartnerList
                 ->selectRaw("count(case when category_id in(" . $category_ids . ") and status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then category_id end) as total_jobs_of_category")
                 ->groupBy('partner_id');
         }, 'subscription' => function ($q) {
-            $q->select('id', 'name');
+            $q->select('id', 'name', 'rules');
         }, 'resources' => function ($q) {
             $q->select('resources.id', 'profile_id')->with(['profile' => function ($q) {
                 $q->select('profiles.id', 'mobile');
