@@ -1,6 +1,4 @@
-<?php
-
-namespace Sheba\Repositories;
+<?php namespace Sheba\Repositories;
 
 use App\Models\Bonus;
 use App\Models\Reward;
@@ -9,6 +7,21 @@ use Sheba\Reward\Rewardable;
 
 class BonusRepository extends BaseRepository
 {
+    /**
+     * @var BonusLogRepository
+     */
+    private $logRepository;
+
+    /**
+     * BonusRepository constructor.
+     * @param BonusLogRepository $logRepository
+     */
+    public function __construct(BonusLogRepository $logRepository)
+    {
+        parent::__construct();
+        $this->logRepository = $logRepository;
+    }
+
     /**
      * @param Rewardable $rewardable
      * @param Reward $reward
@@ -26,6 +39,12 @@ class BonusRepository extends BaseRepository
         ];
 
         Bonus::create($this->withCreateModificationField($data));
+
+        if ($reward->isCashType()) {
+            $log_data = array_except($data, ['type']);
+            $log_data['type'] = "Credit";
+            $this->logRepository->store($log_data);
+        }
     }
 
     /**
