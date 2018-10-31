@@ -494,6 +494,7 @@ class PartnerController extends Controller
                 }
                 $partners = $partner_list->partners;
                 $partners->each(function ($partner, $key) {
+                    $partner['rating'] = round($partner->rating, 2);
                     array_forget($partner, 'wallet');
                     array_forget($partner, 'package_id');
                     removeRelationsAndFields($partner);
