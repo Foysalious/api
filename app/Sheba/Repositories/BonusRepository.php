@@ -23,11 +23,25 @@ class BonusRepository extends BaseRepository
     }
 
     /**
+     * @param $data
+     */
+    public function storeFromPartnerBonusWallet($data)
+    {
+        $this->save($data);
+        $this->storeLog($data, 'Credit');
+    }
+
+    private function save($data)
+    {
+        Bonus::create($this->withCreateModificationField($data));
+    }
+
+    /**
      * @param Rewardable $rewardable
      * @param Reward $reward
      * @param $amount
      */
-    public function store(Rewardable $rewardable, Reward $reward, $amount)
+    public function storeFromReward(Rewardable $rewardable, Reward $reward, $amount)
     {
         $data = [
             'user_type' => get_class($rewardable),
@@ -38,13 +52,10 @@ class BonusRepository extends BaseRepository
             'valid_till'=> $this->validityCalculator($reward)
         ];
 
-        Bonus::create($this->withCreateModificationField($data));
+        $this->save($data);
 
-        if ($reward->isCashType()) {
-            $log_data = array_except($data, ['type']);
-            $log_data['type'] = "Credit";
-            $this->logRepository->store($log_data);
-        }
+        if ($reward->isCashType())
+            $this->storeLog($data, 'Credit');
     }
 
     /**
@@ -62,5 +73,15 @@ class BonusRepository extends BaseRepository
         }
 
         return $valid_till->endOfDay();
+    }
+
+    /**
+     * @param $data
+     * @param $type
+     */
+    private function storeLog($data, $type)
+    {
+        if ($type == 'Credit') $this->logRepository->storeCreditLog($data);
+        else $this->logRepository->storeDebitLog($data);
     }
 }
