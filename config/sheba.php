@@ -47,6 +47,6 @@ return [
         'orders' => 0.15,
         'price' => 0.15,
         'avg_rating' => 0.12,
-        'total_rating' => 0.08
+        'total_ratings' => 0.08
     ]
 ];
