@@ -93,7 +93,7 @@ class AffiliateStatus
         $earning_amount =(double) $earning_amount_query->sum('amount');
 
         $this->statuses["earning_amount"] = $earning_amount;
-        $this->statuses["from_date"] =  date("dS F", strtotime($this->from));
-        $this->statuses["to_date"] = date("dS F", strtotime($this->to));
+        $this->statuses["from_date"] =  date("jS F", strtotime($this->from));
+        $this->statuses["to_date"] = date("jS F", strtotime($this->to));
     }
 }
