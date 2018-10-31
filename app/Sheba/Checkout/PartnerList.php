@@ -218,10 +218,7 @@ class PartnerList
         $this->partners->each(function ($partner) {
             $partner['is_available'] = $this->isWithinPreparationTime($partner) && (new PartnerAvailable($partner))->available($this->date, $this->time, $this->selectedCategory) ? 1 : 0;
         });
-        $available_partners = $this->partners->where('is_available', 1);
-        if ($available_partners->count() > 1) {
-            $this->rejectShebaHelpDesk();
-        }
+        $this->rejectShebaHelpDesk();
     }
 
     public function isWithinPreparationTime($partner)
@@ -477,11 +474,13 @@ class PartnerList
 
     private function rejectShebaHelpDesk()
     {
-        try {
+        $available_partners = $this->partners->filter(function ($partner, $key) {
+            return $partner->is_available == 1;
+        });
+        if ($available_partners->count() > 1) {
             $this->partners = $this->partners->reject(function ($partner) {
                 return $partner->id == 1809;
             });
-        } catch (\Throwable $e) {
         }
     }
 }
