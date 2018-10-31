@@ -3,6 +3,7 @@
 namespace Sheba;
 
 use App\Models\PartnerOrder;
+use Sheba\Repositories\BonusLogRepository;
 
 class ShebaBonusCredit
 {
@@ -24,6 +25,7 @@ class ShebaBonusCredit
 
     public function deduct($amount)
     {
+        $initial_amount = $amount;
         $bonuses = $this->user->bonuses()->where('status', 'valid')->orderBy('valid_till')->get();
         foreach ($bonuses as $bonus) {
             if ($amount == 0) break;
@@ -38,6 +40,7 @@ class ShebaBonusCredit
             }
             $this->updateExistingBonus($bonus);
         }
+        if ($initial_amount > $amount) $this->storeBonusLog($amount);
         return $amount;
     }
 
@@ -55,6 +58,7 @@ class ShebaBonusCredit
         $bonus->status = 'used';
         $bonus = $this->setSpentInfo($bonus);
         $this->setModifier($this->user);
+        $this->withUpdateModificationField($bonus);
         $bonus->update();
     }
 
@@ -62,6 +66,20 @@ class ShebaBonusCredit
     {
         $new_bonus = $old_bonus->replicate();
         $new_bonus->amount = $old_bonus->amount - $amount;
+        $this->withCreateModificationField($new_bonus);
         $new_bonus->save();
+    }
+
+    private function storeBonusLog($amount)
+    {
+        $data = [
+            'user_type' => "App\\Models\\" . class_basename($this->user),
+            'user_id' => $this->user->id,
+            'amount' => $amount,
+            'log' => 'Service Purchase',
+            'spent_on_type' => "App\\Models\\" . class_basename($this->spent_model),
+            'spent_on_id' => $this->spent_model->id
+        ];
+        (new BonusLogRepository ())->storeDebitLog($data);
     }
 }
