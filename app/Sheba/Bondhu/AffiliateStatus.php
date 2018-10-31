@@ -67,10 +67,10 @@ class AffiliateStatus
 
         $countsQuery = $modelName::join('affiliates','affiliates.id','=',$tableName.'.affiliate_id')
                         ->select(
-                            DB::raw("count(case when date (affiliations.created_at) >= '".$from."' and date(affiliations.created_at)<= '".$to."' then affiliations.id end) as total_leads"),
-                            DB::raw("count(case when status='successful' and date (affiliations.created_at) >= '".$from."' and date(affiliations.created_at)<= '".$to."' then affiliations.id end) as total_successful"),
-                            DB::raw("count(case when status='pending' or status='follow_up' or status='converted' and date (affiliations.created_at) >= '".$from."' and date(affiliations.created_at)<= '".$to."' then affiliations.id end) as total_pending"),
-                            DB::raw("count(case when status='rejected' and date (affiliations.created_at) >= '".$from."' and date(affiliations.created_at)<= '".$to."' then affiliations.id end) as total_rejected")
+                            DB::raw("count(case when date (".$tableName.".created_at) >= '".$from."' and date(".$tableName.".created_at)<= '".$to."' then ".$tableName.".id end) as total_leads"),
+                            DB::raw("count(case when status='successful' and date (".$tableName.".created_at) >= '".$from."' and date(".$tableName.".created_at)<= '".$to."' then ".$tableName.".id end) as total_successful"),
+                            DB::raw("count(case when status='pending' or status='follow_up' or status='converted' and date (".$tableName.".created_at) >= '".$from."' and date(".$tableName.".created_at)<= '".$to."' then ".$tableName.".id end) as total_pending"),
+                            DB::raw("count(case when status='rejected' and date (".$tableName.".created_at) >= '".$from."' and date(".$tableName.".created_at)<= '".$to."' then ".$tableName.".id end) as total_rejected")
                         )
                         ->whereIn('affiliate_id',$affiliate_ids);
 
