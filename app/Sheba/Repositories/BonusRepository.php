@@ -1,6 +1,4 @@
-<?php
-
-namespace Sheba\Repositories;
+<?php namespace Sheba\Repositories;
 
 use App\Models\Bonus;
 use App\Models\Reward;
@@ -10,11 +8,40 @@ use Sheba\Reward\Rewardable;
 class BonusRepository extends BaseRepository
 {
     /**
+     * @var BonusLogRepository
+     */
+    private $logRepository;
+
+    /**
+     * BonusRepository constructor.
+     * @param BonusLogRepository $logRepository
+     */
+    public function __construct(BonusLogRepository $logRepository)
+    {
+        parent::__construct();
+        $this->logRepository = $logRepository;
+    }
+
+    /**
+     * @param $data
+     */
+    public function storeFromPartnerBonusWallet($data)
+    {
+        $this->save($data);
+        $this->storeLog($data, 'Credit');
+    }
+
+    private function save($data)
+    {
+        Bonus::create($this->withCreateModificationField($data));
+    }
+
+    /**
      * @param Rewardable $rewardable
      * @param Reward $reward
      * @param $amount
      */
-    public function store(Rewardable $rewardable, Reward $reward, $amount)
+    public function storeFromReward(Rewardable $rewardable, Reward $reward, $amount)
     {
         $data = [
             'user_type' => get_class($rewardable),
@@ -25,7 +52,10 @@ class BonusRepository extends BaseRepository
             'valid_till'=> $this->validityCalculator($reward)
         ];
 
-        Bonus::create($this->withCreateModificationField($data));
+        $this->save($data);
+
+        if ($reward->isCashType())
+            $this->storeLog($data, 'Credit');
     }
 
     /**
@@ -43,5 +73,15 @@ class BonusRepository extends BaseRepository
         }
 
         return $valid_till->endOfDay();
+    }
+
+    /**
+     * @param $data
+     * @param $type
+     */
+    private function storeLog($data, $type)
+    {
+        if ($type == 'Credit') $this->logRepository->storeCreditLog($data);
+        else $this->logRepository->storeDebitLog($data);
     }
 }

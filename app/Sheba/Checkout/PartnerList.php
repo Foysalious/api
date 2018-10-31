@@ -218,10 +218,7 @@ class PartnerList
         $this->partners->each(function ($partner) {
             $partner['is_available'] = $this->isWithinPreparationTime($partner) && (new PartnerAvailable($partner))->available($this->date, $this->time, $this->selectedCategory) ? 1 : 0;
         });
-        $available_partners = $this->partners->where('is_available', 1);
-        if ($available_partners->count() > 1) {
-            $this->rejectShebaHelpDesk();
-        }
+        $this->rejectShebaHelpDesk();
     }
 
     public function isWithinPreparationTime($partner)
@@ -257,14 +254,14 @@ class PartnerList
                 ->selectRaw("count(case when category_id in(" . $category_ids . ") and status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then category_id end) as total_jobs_of_category")
                 ->groupBy('partner_id');
         }, 'subscription' => function ($q) {
-            $q->select('id', 'name');
+            $q->select('id', 'name', 'rules');
         }, 'resources' => function ($q) {
             $q->select('resources.id', 'profile_id')->with(['profile' => function ($q) {
                 $q->select('profiles.id', 'mobile');
             }]);
         }, 'reviews' => function ($q) {
             $q->selectRaw("avg(rating) as avg_rating")
-                ->selectRaw("count(reviews.id) as total_rating")
+                ->selectRaw("count(reviews.id) as total_ratings")
                 ->selectRaw("count(case when rating=5 then reviews.id end) as total_five_star_ratings")
                 ->selectRaw("count(case when review_question_answer.review_type='App\\\Models\\\Review' and rating=5 then review_question_answer.id end) as total_compliments,reviews.partner_id")
                 ->leftJoin('review_question_answer', 'reviews.id', '=', 'review_question_answer.review_id')
@@ -284,7 +281,7 @@ class PartnerList
             $partner['subscription_type'] = $partner->subscription ? $partner->subscription->name : null;
             $partner['total_working_days'] = $partner->workingHours ? $partner->workingHours->count() : 0;
             $partner['rating'] = $partner->reviews->first() ? (double)$partner->reviews->first()->avg_rating : 0;
-            $partner['total_rating'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_rating : 0;
+            $partner['total_ratings'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_ratings : 0;
             $partner['total_five_star_ratings'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_five_star_ratings : 0;
             $partner['total_compliments'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_compliments : 0;
             $partner['total_experts'] = $partner->handymanResources->first() ? (int)$partner->handymanResources->first()->total_experts : 0;
@@ -477,11 +474,13 @@ class PartnerList
 
     private function rejectShebaHelpDesk()
     {
-        try {
+        $available_partners = $this->partners->filter(function ($partner, $key) {
+            return $partner->is_available == 1;
+        });
+        if ($available_partners->count() > 1) {
             $this->partners = $this->partners->reject(function ($partner) {
                 return $partner->id == 1809;
             });
-        } catch (\Throwable $e) {
         }
     }
 }

@@ -49,18 +49,16 @@ class PartnerSort
 
     public function get()
     {
-        $this->goldPartners = $this->calculateTotalWeight($this->goldPartners)->splice(0, $this->goldPartnerCount);
-        $this->silverPartners = $this->calculateTotalWeight($this->silverPartners)->splice(0, $this->silverPartnerCount);
-        $this->bronzePartners = $this->calculateTotalWeight($this->bronzePartners)->splice(0, $this->bronzePartnerCount);
+        $this->goldPartners = $this->goldPartners->count() > 0 ? $this->calculateTotalWeight($this->goldPartners)->splice(0, $this->goldPartnerCount) : collect();
+        $this->silverPartners = $this->silverPartners->count() > 0 ? $this->calculateTotalWeight($this->silverPartners)->splice(0, $this->silverPartnerCount) : collect();
+        $this->bronzePartners = $this->bronzePartners->count() > 0 ? $this->calculateTotalWeight($this->bronzePartners)->splice(0, $this->bronzePartnerCount) : collect();
         $this->sortedPartners = $this->sortedPartners->merge($this->goldPartners)->merge($this->silverPartners)->merge($this->bronzePartners);
         return $this->sortedPartners->count() > 0 ? $this->sortedPartners : $this->shebaHelpDesk;
     }
 
     private function calculateTotalWeight($partners)
     {
-        $min_total_experts = $partners->min('total_experts');
-        $max_total_experts = $partners->max('total_experts');
-        $expert_difference = $max_total_experts - $min_total_experts;
+        $expert_difference = $partners->first()->subscription->resource_cap - 1;
 
         $min_orders = $partners->min('total_completed_orders');
         $max_orders = $partners->max('total_completed_orders');
@@ -70,22 +68,22 @@ class PartnerSort
         $max_price = $partners->max('discounted_price');
         $price_difference = $max_price - $min_price;
 
-        $min_total_rating = $partners->min('total_rating');
-        $max_total_rating = $partners->max('total_rating');
-        $rating_difference = $max_total_rating - $min_total_rating;
+        $min_total_ratings = $partners->min('total_ratings');
+        $max_total_ratings = $partners->max('total_ratings');
+        $rating_difference = $max_total_ratings - $min_total_ratings;
 
         $min_current_impression = 10;
         $max_current_impression = 1000;
         $current_impression_difference = $max_current_impression - $min_current_impression;
 
         foreach ($partners as $partner) {
-            $avg_rating = $partner->avg_rating > 0 ? $this->weights['avg_rating'] * (($partner->avg_rating - 1) / (5 - 1)) : 0;
-            $total_rating = ($partner->total_rating > 0 && $rating_difference > 0) ? $this->weights['total_rating'] * (($partner->total_rating - $min_total_rating) / $rating_difference) : 0;
-            $total_experts = ($partner->total_experts > 0 && $expert_difference > 0) ? $this->weights['capacity'] * (($partner->total_experts - $min_total_experts) / $expert_difference) : 0;
+            $avg_rating = $partner->rating > 0 ? $this->weights['avg_rating'] * (($partner->rating - 1) / 4) : 0;
+            $total_ratings = ($partner->total_ratings > 0 && $rating_difference > 0) ? $this->weights['total_ratings'] * (($partner->total_ratings - $min_total_ratings) / $rating_difference) : 0;
+            $total_experts = ($partner->total_experts > 0 && $expert_difference > 0) ? $this->weights['capacity'] * (($partner->total_experts - 1) / $expert_difference) : 0;
             $orders = ($partner->total_completed_orders > 0 && $order_difference > 0) ? $this->weights['orders'] * (($partner->total_completed_orders - $min_orders) / $order_difference) : 0;
             $impression = $partner->current_impression > 10 ? $this->weights['impression'] * (($partner->current_impression - $min_current_impression) / $current_impression_difference) : 0;
             $price = 1 - (($price_difference > 0) ? ($this->weights['price'] * (($partner->discounted_price - $min_price) / $price_difference)) : 0);
-            $partner['score'] = $price + $avg_rating + $orders + $total_experts + $total_rating + $impression;
+            $partner['score'] = $price + $avg_rating + $orders + $total_experts + $total_ratings + $impression;
         }
         return $partners->sortByDesc('score');
     }

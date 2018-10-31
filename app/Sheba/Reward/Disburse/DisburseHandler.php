@@ -42,7 +42,7 @@ class DisburseHandler
         $amount = $this->reward->getAmount();
 
         if ($this->reward->isValidityApplicable()) {
-            $this->bonusRepo->store($rewardable, $this->reward, $amount);
+            $this->bonusRepo->storeFromReward($rewardable, $this->reward, $amount);
         } else {
             if ($this->reward->isCashType()) {
                 $log = $amount . " BDT credited for " . $this->reward->name . " reward";

@@ -9,6 +9,8 @@
 namespace App\Sheba\Bondhu;
 
 
+use Illuminate\Support\Facades\DB;
+
 class AffiliateHistory
 {
     private $from;
@@ -29,18 +31,40 @@ class AffiliateHistory
         return $this;
     }
 
-    public function generateData($affiliate_ids) {
+    public function generateData($affiliate_id) {
         if($this->type == "affiliates") {
-            $this->getData("App\Models\Affiliation","affiliations",$affiliate_ids,$this->from,$this->to);
-            return  $this->statuses;
+            $this->getQuery("App\Models\Affiliation","affiliations",$affiliate_id,$this->from,$this->to);
+            return $this->histories;
         } else if($this->type === "partner_affiliates"){
-            $this->getData("App\Models\PartnerAffiliation","partner_affiliations",$affiliate_ids,$this->from,$this->to);
-            return $this->statuses;
+            $this->getQuery("App\Models\PartnerAffiliation","partner_affiliations",$affiliate_id,$this->from,$this->to);
+            return $this->histories;
         }
     }
 
+    public function getFormattedDate($request)
+    {
+        switch ($request->filter_type) {
+            case "date_range":
+                $this->setDateRange($request->from, $request->to);
+                break;
+            default:
+                $formattedDates = (formatDateRange($request->filter_type));
+                $this->setDateRange($formattedDates["from"], $formattedDates["to"]);
+                break;
+        }
+        return $this;
+    }
 
-    public function getData($model,$tableName, $affiliate_ids, $from, $to) {
 
+    public function getQuery($model,$tableName, $affiliate_id, $from, $to) {
+        $this->histories = $model::join('affiliate_transactions','affiliate_transactions.affiliation_id','=',$tableName.".id")
+                ->join('affiliates',$tableName.'.affiliate_id','=','affiliates.id')
+                ->selectRaw(
+                    DB::raw('CONCAT("REF",affiliate_transactions.affiliation_id) as refer_id,status,amount, DATE_FORMAT(DATE(affiliate_transactions.created_at), "%d %b\'%y") as date')
+                )
+                ->where("affiliate_transactions.affiliate_id",$affiliate_id)
+                ->where("is_gifted",1)
+                ->whereDate($tableName.'.created_at','>=',$from)
+                ->whereDate($tableName.'.created_at','<=',$to);
     }
 }
