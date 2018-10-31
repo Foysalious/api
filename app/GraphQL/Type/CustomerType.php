@@ -43,7 +43,17 @@ class CustomerType extends GraphQlType
 
     protected function resolveAddressesField($root, $args)
     {
-        return $root->delivery_addresses;
+        $customer_order_addresses = $root->orders()->selectRaw('delivery_address,count(*) as c')->groupBy('delivery_address')->orderBy('c', 'desc')->get();
+        $customer_delivery_addresses = $root->delivery_addresses()->get()->map(function ($customer_delivery_address) use ($customer_order_addresses) {
+            $count = 0;
+            $customer_order_addresses->each(function ($customer_order_addresses) use ($customer_delivery_address, &$count) {
+                similar_text($customer_delivery_address->address, $customer_order_addresses->delivery_address, $percent);
+                if ($percent >= 80) $count = $customer_order_addresses->c;
+            });
+            $customer_delivery_address['count']=$count;
+            return $customer_delivery_address;
+        })->sortByDesc('count');
+        return $customer_delivery_addresses;
     }
 
     protected function resolveCreditField($root, $args)
