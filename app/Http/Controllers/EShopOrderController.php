@@ -20,7 +20,6 @@ class EShopOrderController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (\Throwable $exception) {
-            dd($exception);
             app('sentry')->captureException($exception);
             return api_response($request, null, 500);
         }
