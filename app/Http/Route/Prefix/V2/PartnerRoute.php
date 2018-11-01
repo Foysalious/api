@@ -14,6 +14,9 @@ class PartnerRoute
             $api->get('rewards/faqs', 'Partner\PartnerRewardController@getFaqs');
         });
         $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
+            $api->group(['prefix' => 'e-shop'], function ($api) {
+                $api->get('order', 'EShopOrderController@index');
+            });
             $api->get('operations', 'Partner\OperationController@index');
             $api->post('operations', 'Partner\OperationController@store');
             $api->post('register', 'CustomerController@store');
