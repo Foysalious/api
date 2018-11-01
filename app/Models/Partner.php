@@ -283,7 +283,17 @@ class Partner extends Model implements Rewardable
 
     public function hasAppropriateCreditLimit()
     {
-        return (double)$this->wallet >= (double)$this->walletSetting->min_wallet_threshold;
+        return (double)$this->wallet + $this->bonusWallet() >= (double)$this->walletSetting->min_wallet_threshold;
+    }
+
+    public function bonuses()
+    {
+        return $this->morphMany(Bonus::class, 'user');
+    }
+
+    public function bonusWallet()
+    {
+        return (double)$this->bonuses()->where('status', 'valid')->sum('amount');
     }
 
     public function subscription()
