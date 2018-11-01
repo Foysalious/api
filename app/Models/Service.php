@@ -161,6 +161,8 @@ class Service extends Model
     {
         return $query->where('publication_status', 1)->orWhere(function ($query) {
             $query->publishedForBackendOnly();
+        })->orWhere(function ($query) {
+            $query->publishedForBusiness();
         });
     }
 
