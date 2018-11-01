@@ -111,6 +111,8 @@ class WalletController extends Controller
                 $payment->status = 'validated';
                 $payment->update();
             } catch (QueryException $e) {
+                $payment->status = 'failed';
+                $payment->update();
                 app('sentry')->captureException($e);
                 return api_response($request, null, 500);
             }
