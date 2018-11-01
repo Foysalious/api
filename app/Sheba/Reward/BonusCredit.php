@@ -1,15 +1,20 @@
-<?php
+<?php namespace Sheba\Reward;
 
-namespace Sheba;
-
-use App\Models\PartnerOrder;
+use Sheba\ModificationFields;
 use Sheba\Repositories\BonusLogRepository;
 
-class ShebaBonusCredit
+class BonusCredit
 {
     use ModificationFields;
     private $user;
     private $spent_model;
+
+    private $logRepo;
+
+    public function __construct(BonusLogRepository $log_repo)
+    {
+        $this->logRepo = $log_repo;
+    }
 
     public function setUser($user)
     {
@@ -17,16 +22,16 @@ class ShebaBonusCredit
         return $this;
     }
 
-    public function setSpentModel(PartnerOrder $partnerOrder)
+    public function setSpentModel($spent_on)
     {
-        $this->spent_model = $partnerOrder;
+        $this->spent_model = $spent_on;
         return $this;
     }
 
     public function deduct($amount)
     {
-        $initial_amount = $amount;
-        $bonuses = $this->user->bonuses()->where('status', 'valid')->orderBy('valid_till')->get();
+        $original_amount = $amount;
+        $bonuses = $this->user->bonuses()->valid()->orderBy('valid_till')->get();
         foreach ($bonuses as $bonus) {
             if ($amount == 0) break;
             elseif ($bonus->amount >= $amount) {
@@ -40,17 +45,35 @@ class ShebaBonusCredit
             }
             $this->updateExistingBonus($bonus);
         }
-        if ($initial_amount > $amount) $this->storeBonusLog($amount);
+        if ($amount < $original_amount) $this->saveLog($original_amount - $amount);
         return $amount;
+    }
+
+    private function saveLog($amount)
+    {
+        $data = $this->getSpentInfo();
+        $data['user_type'] = "App\\Models\\" . class_basename($this->user);
+        $data['user_id'] = $this->user->id;
+        $data['amount'] = $amount;
+        $this->logRepo->storeDebitLog($data);
     }
 
     private function setSpentInfo($bonus)
     {
         if ($this->spent_model) {
-            $bonus->spent_on_type = "App\\Models\\" . class_basename($this->spent_model);
-            $bonus->spent_on_id = $this->spent_model->id;
+            $data = $this->getSpentInfo();
+            $bonus->spent_on_type = $data['spent_on_type'];
+            $bonus->spent_on_id = $data['spent_on_id'];
         }
         return $bonus;
+    }
+
+    private function getSpentInfo()
+    {
+        return [
+            'spent_on_type' => "App\\Models\\" . class_basename($this->spent_model),
+            'spent_on_id' => $this->spent_model->id
+        ];
     }
 
     private function updateExistingBonus($bonus)
@@ -58,7 +81,6 @@ class ShebaBonusCredit
         $bonus->status = 'used';
         $bonus = $this->setSpentInfo($bonus);
         $this->setModifier($this->user);
-        $this->withUpdateModificationField($bonus);
         $bonus->update();
     }
 
@@ -66,20 +88,6 @@ class ShebaBonusCredit
     {
         $new_bonus = $old_bonus->replicate();
         $new_bonus->amount = $old_bonus->amount - $amount;
-        $this->withCreateModificationField($new_bonus);
         $new_bonus->save();
-    }
-
-    private function storeBonusLog($amount)
-    {
-        $data = [
-            'user_type' => "App\\Models\\" . class_basename($this->user),
-            'user_id' => $this->user->id,
-            'amount' => $amount,
-            'log' => 'Service Purchase',
-            'spent_on_type' => "App\\Models\\" . class_basename($this->spent_model),
-            'spent_on_id' => $this->spent_model->id
-        ];
-        (new BonusLogRepository ())->storeDebitLog($data);
     }
 }

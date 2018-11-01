@@ -14,7 +14,7 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Payment\Adapters\Payable\RechargeAdapter;
 use Sheba\Payment\ShebaPayment;
 use DB;
-use Sheba\ShebaBonusCredit;
+use Sheba\Reward\BonusCredit;
 
 class WalletController extends Controller
 {
@@ -67,7 +67,7 @@ class WalletController extends Controller
         }
     }
 
-    public function purchase(Request $request, PaymentRepository $paymentRepository)
+    public function purchase(Request $request, PaymentRepository $paymentRepository, BonusCredit $bonus_credit)
     {
         try {
             $this->validate($request, [
@@ -93,9 +93,9 @@ class WalletController extends Controller
                 return api_response($request, null, 400, ['message' => 'You don\'t have sufficient credit']);
             }
             try {
-                DB::transaction(function () use ($payment, $user) {
+                DB::transaction(function () use ($payment, $user, $bonus_credit) {
                     $partner_order = PartnerOrder::find($payment->payable->type_id);
-                    $remaining = (new ShebaBonusCredit())->setUser($user)->setSpentModel($partner_order)->deduct($payment->payable->amount);
+                    $remaining = $bonus_credit->setUser($user)->setSpentModel($partner_order)->deduct($payment->payable->amount);
                     if ($remaining > 0) {
                         $user->debitWallet($remaining);
                         $user->walletTransaction([
