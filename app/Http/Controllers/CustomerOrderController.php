@@ -16,14 +16,22 @@ class CustomerOrderController extends Controller
     {
         try {
             $this->validate($request, [
-                'filter' => 'sometimes|string|in:ongoing,history'
+                'filter' => 'sometimes|string|in:ongoing,history',
+                'for' => 'sometimes|required|string|in:eshop'
             ]);
             $filter = $request->filter;
+            $for = $request->for;
             list($offset, $limit) = calculatePagination($request);
-            $customer = $request->customer->load(['orders' => function ($q) use ($filter, $offset, $limit) {
+            $customer = $request->customer->load(['orders' => function ($q) use ($filter, $offset, $limit, $for) {
                 $q->select('id', 'customer_id', 'partner_id', 'location_id', 'sales_channel', 'delivery_name', 'delivery_mobile', 'delivery_address')->orderBy('id', 'desc')
-                    ->whereNull('partner_id')
                     ->skip($offset)->take($limit);
+
+                if ($for == 'eshop') {
+                    $q->whereNotNull('partner_id');
+                } else {
+                    $q->whereNull('partner_id');
+                }
+
                 if ($filter) {
                     $q->whereHas('partnerOrders', function ($q) use ($filter) {
                         $q->$filter();

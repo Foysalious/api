@@ -4,6 +4,7 @@ namespace App\Sheba\Queries\Category;
 
 use App\Models\Category;
 use App\Models\Location;
+use App\Models\Partner;
 use App\Models\PartnerService;
 use App\Models\PartnerServiceDiscount;
 use App\Repositories\PartnerRepository;
@@ -73,9 +74,10 @@ class StartPrice
         $service_prices = collect();
         foreach ($services as $service) {
             foreach ($service->partnerServices as $partnerService) {
+                /** @var Partner $partner */
                 $partner = $partnerService->partner;
                 if ($partnerService->partner) {
-                    if ((new PartnerRepository($partner))->hasAppropriateCreditLimit()) {
+                    if ($partner->hasAppropriateCreditLimit()) {
                         $prices = $partnerService->prices;
                         if ($service->isFixed()) {
                             $price = (float)$prices;

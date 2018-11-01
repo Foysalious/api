@@ -39,4 +39,5 @@ class BonusLog extends Model
     {
         return $query->where('valid_till', '<', Carbon::now()->toDateTimeString());
     }
+
 }
