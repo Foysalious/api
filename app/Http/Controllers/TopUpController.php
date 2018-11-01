@@ -4,10 +4,12 @@ use App\Models\Affiliate;
 use App\Models\TopUpVendor;
 use App\Repositories\FileRepository;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Flysystem\File;
 use Sheba\TopUp\TopUp;
+use Sheba\TopUp\Vendor\Response\Ssl\SslFailResponse;
 use Sheba\TopUp\Vendor\VendorFactory;
 use Storage;
 
@@ -64,7 +66,7 @@ class TopUpController extends Controller
         }
     }
 
-    public function sslFail(Request $request)
+    public function sslFail(Request $request, SslFailResponse $error_response, TopUp $top_up)
     {
         try {
             $data = $request->all();
@@ -73,7 +75,12 @@ class TopUpController extends Controller
             $sentry = app('sentry');
             $sentry->user_context(['request' => $data]);
             $sentry->captureException(new \Exception('SSL topup fail'));
+            $error_response->setResponse($data);
+            $top_up->processFailedTopUp($error_response->getTopUpOrder(), $error_response);
             return api_response($request, 1, 200);
+        } catch (QueryException $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
