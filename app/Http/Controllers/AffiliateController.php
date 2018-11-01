@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Affiliate;
 use App\Models\AffiliateTransaction;
+use App\Models\Affiliation;
 use App\Models\PartnerTransaction;
 use App\Models\Service;
 use App\Repositories\AffiliateRepository;
@@ -295,7 +296,7 @@ class AffiliateController extends Controller
             $info = collect();
             $info->put('agent_count', $affiliate->agents->count());
             $info->put('earning_amount', $affiliate->agents->sum('total_gifted_amount'));
-            $info->put('total_refer', $affiliate->agents->sum('total_gifted_number'));
+            $info->put('total_refer', Affiliation::whereIn('affiliate_id', $affiliate->agents->pluck('id')->toArray())->count());
             $info->put('sp_count', $affiliate->partnerAffiliations->count());
             return api_response($request, $info, 200, ['info' => $info->all()]);
         } catch (\Throwable $e) {
