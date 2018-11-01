@@ -19,20 +19,17 @@ class CustomerTransactionController extends Controller
             /** @var Customer $customer */
             $customer = $request->customer;
             $transactions = $customer->transactions();
-            $bonuses = $customer->bonuses()->whereIn('status', ['used', 'valid'])->get();
-            $valid_bonuses = $bonuses->where('status', 'valid')->sortByDesc('created_at')->splice($offset, $limit);
-            $used_bonus_group_by_partner_order_id = $bonuses->where('status', 'used')->groupBy('spent_on_id');
-            if ($request->has('type')) $transactions->where('type', ucwords($request->type));
+            $bonus_logs = $customer->bonusLogs();
+            if ($request->has('type')) {
+                $transactions->where('type', ucwords($request->type));
+                $bonus_logs->where('type', ucwords($request->type));
+            }
             $transactions = $transactions->select('id', 'customer_id', 'type', 'amount', 'log', 'created_at', 'partner_order_id', 'created_at')
                 ->with('partnerOrder.order')->orderBy('id', 'desc')->skip($offset)->take($limit)->get();
-            $transactions->each(function ($transaction) use ($customer, $bonuses, $used_bonus_group_by_partner_order_id) {
+            $bonus_logs = $bonus_logs->with('spentOn')->skip($offset)->take($limit)->get();
+            $transactions->each(function ($transaction) {
                 $transaction['valid_till'] = null;
                 if ($transaction->partnerOrder) {
-                    $bonuses_used_on_this_order = $used_bonus_group_by_partner_order_id->get($transaction->partnerOrder->id);
-                    if ($bonuses_used_on_this_order) {
-                        $transaction['amount'] += $bonuses_used_on_this_order->sum('amount');
-                        $used_bonus_group_by_partner_order_id->forget($transaction->partnerOrder->id);
-                    }
                     $transaction['category_name'] = $transaction->partnerOrder->jobs->first()->category->name;
                     $transaction['log'] = $transaction['category_name'];
                     $transaction['transaction_type'] = "Service Purchase";
@@ -43,11 +40,9 @@ class CustomerTransactionController extends Controller
                 }
                 removeRelationsAndFields($transaction);
             });
-            foreach ($used_bonus_group_by_partner_order_id as $bonuses) {
-                $transactions = $this->formatDebitBonusTransaction($bonuses, $transactions);
-            }
-            foreach ($valid_bonuses as $valid_bonus) {
-                $transactions = $this->formatCreditBonusTransaction($valid_bonus, $transactions);
+            foreach ($bonus_logs as $bonus_log) {
+                if ($bonus_log->type == 'Credit') $transactions = $this->formatCreditBonusTransaction($bonus_log, $transactions);
+                else $transactions = $this->formatDebitBonusTransaction($bonus_log, $transactions);
             }
             $transactions = $transactions->sortByDesc('created_at')->splice($offset, $limit)->values()->all();
             return api_response($request, $transactions, 200, [
@@ -59,20 +54,19 @@ class CustomerTransactionController extends Controller
         }
     }
 
-    private function formatDebitBonusTransaction($bonuses, $transactions)
+    private function formatDebitBonusTransaction($bonus, $transactions)
     {
-        $bonus = $bonuses[0];
-        $category = $bonus->spentOn->jobs->first()->category;
+        $category = $bonus->spent_on->jobs->first()->category;
         $transactions->push(array(
             'id' => $bonus->id,
             'customer_id' => $bonus->user_id,
             'type' => 'Debit',
-            'amount' => $bonuses->sum('amount'),
+            'amount' => $bonus->amount,
             'log' => $category->name,
             'created_at' => $bonus->created_at->toDateTimeString(),
             'partner_order_id' => $bonus->spent_on_id,
             'valid_till' => null,
-            'order_code' => $bonus->spentOn->order->code(),
+            'order_code' => $bonus->spent_on->order->code(),
             'transaction_type' => 'Service Purchase',
             'category_name' => $category->name,
         ));
