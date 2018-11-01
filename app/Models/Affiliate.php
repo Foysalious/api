@@ -142,11 +142,6 @@ class Affiliate extends Model implements TopUpAgent
         $this->walletTransaction(['amount' => $amount, 'type' => 'Debit', 'log' => $log]);
     }
 
-    public function debitWallet($amount)
-    {
-        $this->update(['wallet' => $this->wallet - $amount]);
-    }
-
     public function walletTransaction($data)
     {
         $this->transactions()->save(new AffiliateTransaction(array_merge($data, createAuthor($this))));

@@ -18,4 +18,10 @@ trait TopUpTrait
         $vendor = (new VendorFactory())->getById($vendor_id);
         (new TopUp())->setAgent($this)->setVendor($vendor)->recharge($mobile_number, $amount, $type);
     }
+
+    public function refund($amount, $log)
+    {
+        $this->creditWallet($amount);
+        $this->walletTransaction(['amount' => $amount, 'type' => 'Credit', 'log' => $log]);
+    }
 }
