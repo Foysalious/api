@@ -225,7 +225,12 @@ class AffiliateController extends Controller
             $agents = $query->skip($offset)
                 ->take($limit)->get();
             if (count($agents) > 0) {
-                return api_response($request, $agents, 200, ['agents' => $agents, 'range' => getRangeFormat($request)]);
+                $response = ['agents' => $agents];
+                if ($range) {
+                    $r_d = calculateSort($request);
+                    $response['range'] = ['to' => $r_d[0], 'from' => $r_d[1]];
+                }
+                return api_response($request, $agents, 200, $response);
             }
             return api_response($request, null, 404);
         } catch (\Throwable $e) {
