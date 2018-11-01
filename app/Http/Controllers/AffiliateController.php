@@ -225,7 +225,12 @@ class AffiliateController extends Controller
             $agents = $query->skip($offset)
                 ->take($limit)->get();
             if (count($agents) > 0) {
-                return api_response($request, $agents, 200, ['agents' => $agents]);
+                $response = ['agents' => $agents];
+                if ($range) {
+                    $r_d = calculateSort($request);
+                    $response['range'] = ['to' => $r_d[0], 'from' => $r_d[1]];
+                }
+                return api_response($request, $agents, 200, $response);
             }
             return api_response($request, null, 404);
         } catch (\Throwable $e) {
@@ -427,7 +432,8 @@ class AffiliateController extends Controller
         }
     }
 
-    public function history($affiliate, AffiliateHistory $history, Request $request){
+    public function history($affiliate, AffiliateHistory $history, Request $request)
+    {
         $rules = [
             'filter_type' => 'required|string',
             'from' => 'required_if:filter_type,date_range',
@@ -442,6 +448,6 @@ class AffiliateController extends Controller
         }
         list($offset, $limit) = calculatePagination($request);
         $historyData = $history->setType($request->sp_type)->getFormattedDate($request)->generateData($affiliate)->skip($offset)->take($limit)->get();
-        return response()->json(['code' => 200, 'data'=>$historyData]);
+        return response()->json(['code' => 200, 'data' => $historyData]);
     }
 }
