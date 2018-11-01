@@ -15,7 +15,7 @@ class AsCustomerController extends Controller
         $partnerAsCustomer = new PartnerAsCustomer($request);
         $customerInfo = $partnerAsCustomer->getCustomerProfile();
         if ($customerInfo) {
-            return api_response($request, $customerInfo, 200, ['customer_info' => ['id'=>$customerInfo->id,'remember_token'=>$customerInfo->remember_token]]);
+            return api_response($request, $customerInfo, 200, ['customer_info' => ['id'=>$customerInfo->id,'mobile'=>$customerInfo->profile->mobile,'address'=>$customerInfo->profile->address,'name'=>$customerInfo->profile->name,'remember_token'=>$customerInfo->remember_token]]);
         } else {
             return api_response($request, null, 500);
         }
