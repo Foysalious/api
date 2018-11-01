@@ -15,7 +15,10 @@ class PartnerRoute
         });
         $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
             $api->group(['prefix' => 'e-shop'], function ($api) {
-                $api->get('order', 'EShopOrderController@index');
+                $api->group(['prefix' => 'order'], function ($api) {
+                    $api->get('/', 'EShopOrderController@index');
+                    $api->get('/{order}', 'EShopOrderController@show');
+                });
             });
             $api->get('operations', 'Partner\OperationController@index');
             $api->post('operations', 'Partner\OperationController@store');
