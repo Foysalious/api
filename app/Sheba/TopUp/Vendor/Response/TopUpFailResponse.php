@@ -14,4 +14,6 @@ abstract class TopUpFailResponse
     abstract public function setResponse($response);
 
     abstract public function getTopUpOrder(): TopUpOrder;
+
+    abstract public function getFailedTransactionDetails();
 }

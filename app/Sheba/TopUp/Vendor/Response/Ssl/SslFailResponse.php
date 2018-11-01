@@ -17,4 +17,9 @@ class SslFailResponse extends TopUpFailResponse
     {
         return TopUpOrder::where('transaction_details', 'like', '%' . $this->response['vr_guid'] . '%')->first();
     }
+
+    public function getFailedTransactionDetails()
+    {
+        return $this->response;
+    }
 }
