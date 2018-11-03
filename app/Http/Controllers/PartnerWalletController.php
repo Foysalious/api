@@ -83,9 +83,9 @@ class PartnerWalletController extends Controller
                     $partner_order = PartnerOrder::find($payment->payable->type_id);
                     $remaining = $partner_credit - $payment->payable->amount;
                     if ($remaining > 0) {
-                        $user->debitWallet($remaining);
+                        $user->debitWallet($payment->payable->amount);
                         $user->walletTransaction([
-                            'amount'    => $remaining,
+                            'amount'    => $payment->payable->amount,
                             'type'      => 'Debit',
                             'log'       => 'Service Purchase.',
                             'partner_order_id'  => $partner_order->id,
