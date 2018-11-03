@@ -119,7 +119,8 @@ class JobController extends Controller
                         'quantity' => $job->service_quantity,
                         'unit' => $job->service->unit,
                         'option' => $job->service_option,
-                        'variable_type' => $job->service_variable_type
+                        'variable_type' => $job->service_variable_type,
+                        'thumb' => $job->service->app_thumb
                     )
                 );
             } else {
@@ -134,7 +135,8 @@ class JobController extends Controller
                             'unit' => $jobService->service->unit,
                             'quantity' => $jobService->quantity,
                             'option' => $jobService->option,
-                            'variable_type' => $jobService->variable_type
+                            'variable_type' => $jobService->variable_type,
+                            'thumb' => $jobService->service->app_thumb
                         )
                     );
                 }
