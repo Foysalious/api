@@ -1,6 +1,7 @@
 <?php namespace Sheba\Payment\Complete;
 
 use App\Models\PartnerOrder;
+use App\Models\PaymentDetail;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Sheba\RequestIdentification;
@@ -18,15 +19,16 @@ class OrderComplete extends PaymentComplete
             $partner_order = PartnerOrder::find((int)$payable->type_id);
             $customer = $payable->user;
             foreach ($this->payment->paymentDetails as $paymentDetail) {
+                /* @var PaymentDetail $paymentDetail */
                 $res = $client->request('POST', config('sheba.admin_url') . '/api/partner-order/' . $partner_order->id . '/collect',
                     [
                         'form_params' => array_merge([
                             'customer_id' => $customer->id,
                             'remember_token' => $customer->remember_token,
                             'sheba_collection' => (double)$paymentDetail->amount,
-                            'payment_method' => $paymentDetail->method,
+                            'payment_method' => ucfirst($paymentDetail->method),
                             'created_by_type' => 'App\\Models\\Customer',
-                            'transaction_detail' => $this->payment->transaction_details
+                            'transaction_detail' => json_encode($paymentDetail->formatPaymentDetail())
                         ], (new RequestIdentification())->get())
                     ]);
                 $response = json_decode($res->getBody());
