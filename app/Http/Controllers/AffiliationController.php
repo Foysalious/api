@@ -90,7 +90,7 @@ class AffiliationController extends Controller
             $affiliate = $request->affiliate;
             if ($affiliate->verification_status != 'verified') return api_response($request, null, 403, ['massage' => ["en" => "Sorry, you're not verified.", "bd" => "দুঃখিত, আপনি ভেরিফাইড ইউজার নন"]]);
             if ($affiliate->is_suspended) return api_response($request, null, 403, ['massage' => ["en" => "Sorry, you're suspended.", "bd" => "দুঃখিত, আপনার একাউন্টটি সাময়িকভাবে স্থগিত করা হয়েছে"]]);
-            if ($affiliate->profile->mobile == $request->mobile) return response()->json(['code' => 501, 'msg' => "You can't refer to yourself!"]);
+            //if ($affiliate->profile->mobile == $request->mobile) return response()->json(['code' => 501, 'msg' => "You can't refer to yourself!"]);
             $affiliation_counter = Affiliation::where([['affiliate_id', $affiliate->id], ['created_at', '>=', Carbon::today()]])->count();
             if ($affiliation_counter < 20) {
                 $affiliation = $this->affiliationDatabaseTransaction($affiliate, $request);
