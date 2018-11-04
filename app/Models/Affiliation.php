@@ -43,4 +43,12 @@ class Affiliation extends Model
         return $query->whereDate('created_at', '=', Carbon::yesterday());
     }
 
+    public function scopeTotalRefer($query, $ambassador_id)
+    {
+        return $query
+            ->leftJoin('affiliates', 'affiliates.id', '=', 'affiliations.affiliate_id')
+            ->whereRaw('affiliations.affiliate_id IN ( SELECT id FROM affiliates WHERE ambassador_id = ? )
+	AND affiliates.under_ambassador_since > affiliations.created_at', [$ambassador_id]);
+    }
+
 }
