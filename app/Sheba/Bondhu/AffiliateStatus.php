@@ -84,11 +84,10 @@ class AffiliateStatus
         $earning_amount_query =  $modelName::join('affiliate_transactions',$tableName.'.id','=','affiliate_transactions.affiliation_id')
             ->join('affiliates','affiliates.id','=',$tableName.'.affiliate_id')
             ->where('affiliate_transactions.affiliate_id',$this->parent_id)
-            ->whereIn($tableName.'.affiliate_id',$affiliate_ids);
-
-        if(sizeof($affiliate_ids)> 1) {
-            $earning_amount_query = $earning_amount_query->where('affiliate_transactions.created_at','>=',DB::raw('affiliates.under_ambassador_since'));
-        }
+            ->whereIn($tableName.'.affiliate_id',$affiliate_ids)
+            ->whereRaw('affiliate_transactions.is_gifted = 1 and affiliate_transactions.created_at >= affiliates.under_ambassador_since and `affiliate_transactions`.`created_at` BETWEEN \'' . $from . ' 00:00:00'.'\' AND \'' . $to .' 23:59:59'.'\'')
+            ->where('affiliate_transactions.created_at','>=',DB::raw('affiliates.under_ambassador_since'))
+        ->where('affiliate_transactions.is_gifted',1);
 
         $earning_amount =(double) $earning_amount_query->sum('amount');
 
