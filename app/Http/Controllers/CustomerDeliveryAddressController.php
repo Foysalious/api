@@ -12,9 +12,11 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
+use Sheba\ModificationFields;
 
 class CustomerDeliveryAddressController extends Controller
 {
+    use ModificationFields;
 
     public function index($customer, Request $request)
     {
@@ -49,14 +51,18 @@ class CustomerDeliveryAddressController extends Controller
             $addresses = $customer->delivery_addresses;
             $address_validator = new AddressValidator();
             if ($address_validator->isAddressNameExists($addresses, $request->address)) return api_response($request, null, 400, ['message' => "There is almost a same address exits with this name!"]);
-            if ($address_validator->isAddressLocationExists($addresses, new Coords($request->lat, $request->lng))) return api_response($request, null, 400, ['message' => "There is already a address exits at this location!"]);
-            $hyper_local = HyperLocal::insidePolygon($request->lat, $request->lng)->with('location')->first();
+            $hyper_local = null;
+            if ($request->has('lat') && $request->has('lng')) {
+                if ($address_validator->isAddressLocationExists($addresses, new Coords($request->lat, $request->lng))) return api_response($request, null, 400, ['message' => "There is already a address exits at this location!"]);
+                $hyper_local = HyperLocal::insidePolygon($request->lat, $request->lng)->with('location')->first();
+            }
             $delivery_address = new CustomerDeliveryAddress();
             $delivery_address->customer_id = $customer->id;
             $delivery_address->geo_informations = json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]);
-            $delivery_address->location_id = $hyper_local->location_id;
+            $delivery_address->location_id = $hyper_local ? $hyper_local->location_id : null;
             $delivery_address = $this->setAddressProperties($delivery_address, $request);
-            createAuthor($delivery_address, $customer);
+            $this->setModifier($customer);
+            $this->withCreateModificationField($delivery_address);
             $delivery_address->save();
             return api_response($request, 1, 200, ['address' => $delivery_address->id]);
         } catch (\Throwable $e) {
@@ -68,7 +74,7 @@ class CustomerDeliveryAddressController extends Controller
     private function setAddressProperties($delivery_address, $request)
     {
         $delivery_address->address = trim($request->address);
-        if ($request->has('name')) $delivery_address->name = trim($request->name);
+        if ($request->has('name')) $delivery_address->name = trim(ucwords($request->name));
         if ($request->has('mobile')) $delivery_address->mobile = formatMobile($request->mobile);
         if ($request->has('flat_no')) $delivery_address->flat_no = trim($request->flat_no);
         if ($request->has('street_address')) $delivery_address->street_address = trim($request->street_address);
@@ -91,7 +97,8 @@ class CustomerDeliveryAddressController extends Controller
                 return api_response($request, null, 403);
             }
             $delivery_address = $this->setAddressProperties($delivery_address, $request);
-            updateAuthor($delivery_address, $customer);
+            $this->setModifier($customer);
+            $this->withUpdateModificationField($delivery_address);
             $delivery_address->update();
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
