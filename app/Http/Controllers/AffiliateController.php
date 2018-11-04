@@ -439,7 +439,8 @@ class AffiliateController extends Controller
             'filter_type' => 'required|string',
             'from' => 'required_if:filter_type,date_range',
             'to' => 'required_if:filter_type,date_range',
-            'sp_type' => 'required|in:affiliates,partner_affiliates'
+            'sp_type' => 'required|in:affiliates,partner_affiliates',
+            'agent_id' => 'required'
         ];
 
         $validator = Validator::make($request->all(), $rules);
@@ -448,7 +449,7 @@ class AffiliateController extends Controller
             return api_response($request, $error, 400, ['msg' => $error]);
         }
         list($offset, $limit) = calculatePagination($request);
-        $historyData = $history->setType($request->sp_type)->getFormattedDate($request)->generateData($affiliate)->skip($offset)->take($limit)->get();
+        $historyData = $history->setType($request->sp_type)->getFormattedDate($request)->generateData($affiliate,$request->agent_id)->skip($offset)->take($limit)->get();
         return response()->json(['code' => 200, 'data' => $historyData]);
     }
 }
