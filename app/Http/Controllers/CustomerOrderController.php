@@ -25,13 +25,11 @@ class CustomerOrderController extends Controller
             $customer = $request->customer->load(['orders' => function ($q) use ($filter, $offset, $limit, $for) {
                 $q->select('id', 'customer_id', 'partner_id', 'location_id', 'sales_channel', 'delivery_name', 'delivery_mobile', 'delivery_address')->orderBy('id', 'desc')
                     ->skip($offset)->take($limit);
-
                 if ($for == 'eshop') {
                     $q->whereNotNull('partner_id');
                 } else {
                     $q->whereNull('partner_id');
                 }
-
                 if ($filter) {
                     $q->whereHas('partnerOrders', function ($q) use ($filter) {
                         $q->$filter();
@@ -41,9 +39,7 @@ class CustomerOrderController extends Controller
                     $q->with(['partner.resources.profile', 'order' => function ($q) {
                         $q->select('id', 'sales_channel');
                     }, 'jobs' => function ($q) {
-                        $q->with(['statusChangeLogs', 'resource.profile', 'jobServices', 'customerComplains', 'category' => function ($q) {
-                            $q->select('id', 'name');
-                        }, 'review' => function ($q) {
+                        $q->with(['statusChangeLogs', 'resource.profile', 'jobServices', 'customerComplains', 'category', 'review' => function ($q) {
                             $q->select('id', 'rating', 'job_id');
                         }, 'usedMaterials']);
                     }]);
