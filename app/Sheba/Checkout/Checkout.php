@@ -39,7 +39,7 @@ class Checkout
 
     public function placeOrder($request)
     {
-        $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $request->location);
+        $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$request->location);
         $partner_list->find($request->partner);
         if ($partner_list->hasPartners) {
             $partner = $partner_list->partners->first();

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Sheba\Checkout\PartnerList;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class PartnerLocationController extends Controller
 {
@@ -46,16 +47,6 @@ class PartnerLocationController extends Controller
                     $partner_list->sortByShebaPartnerPriority();
                 } else {
                     $start = microtime(true);
-                    $partner_list->calculateAverageRating();
-                    $time_elapsed_secs = microtime(true) - $start;
-                    //dump("avg rating: " . $time_elapsed_secs * 1000);
-
-                    $start = microtime(true);
-                    $partner_list->calculateTotalRatings();
-                    $time_elapsed_secs = microtime(true) - $start;
-                    //dump("total rating count: " . $time_elapsed_secs * 1000);
-
-                    $start = microtime(true);
                     $partner_list->sortByShebaSelectedCriteria();
                     $time_elapsed_secs = microtime(true) - $start;
                     //dump("sort by sheba criteria: " . $time_elapsed_secs * 1000);
@@ -69,6 +60,10 @@ class PartnerLocationController extends Controller
                 return api_response($request, $partners, 200, ['partners' => $partners->values()->all()]);
             }
             return api_response($request, null, 404, ['message' => 'No partner found.']);
+        }catch (ValidationException $e) {
+            dd($e->validator->errors()->all());
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

@@ -463,7 +463,7 @@ class PartnerController extends Controller
             //dump("validation: " . $time_elapsed_secs);
 
             $partner = $request->has('partner') ? $request->partner : null;
-            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $location);
+            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$location);
             $partner_list->setAvailability($request->skip_availability)->find($partner);
             if ($request->has('isAvailable')) {
                 $partners = $partner_list->partners;
