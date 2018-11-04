@@ -20,7 +20,7 @@ class PartnerAffiliation extends Model
     public function scopeSpCount($query, $ambassador_id)
     {
         return $query->leftJoin('affiliates', 'affiliates.id', '=', 'partner_affiliations.affiliate_id')
-            ->whereRaw('partner_affiliations.affiliate_id IN ( SELECT id FROM affiliates WHERE ambassador_id = ? ) AND DATE(affiliates.under_ambassador_since) < DATE(partner_affiliations.created_at)', [$ambassador_id]);
+            ->whereRaw('partner_affiliations.affiliate_id IN ( SELECT id FROM affiliates WHERE ambassador_id = ? ) AND affiliates.under_ambassador_since < partner_affiliations.created_at', [$ambassador_id]);
     }
 
     public function scopeSuccessful($query)

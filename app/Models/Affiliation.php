@@ -48,7 +48,7 @@ class Affiliation extends Model
         return $query
             ->leftJoin('affiliates', 'affiliates.id', '=', 'affiliations.affiliate_id')
             ->whereRaw('affiliations.affiliate_id IN ( SELECT id FROM affiliates WHERE ambassador_id = ? )
-	AND DATE(affiliates.under_ambassador_since) < DATE(affiliations.created_at)', [$ambassador_id]);
+	AND affiliates.under_ambassador_since < affiliations.created_at', [$ambassador_id]);
     }
 
 }
