@@ -63,6 +63,7 @@ class AffiliateEarning implements PartnerAffiliationEarning
             'affiliation_type' => "App\\Models\\Affiliation",
             'affiliation_id' => $affiliation_id,
             'type' => 'Credit',
+            'is_gifted' => 1,
             'log' => "$affiliate_identity gifted $amount tk for reference: $affiliation_id and order: $order_code",
             'amount' => $amount
         ];
