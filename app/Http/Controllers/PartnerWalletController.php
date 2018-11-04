@@ -81,17 +81,14 @@ class PartnerWalletController extends Controller
             try {
                 DB::transaction(function () use ($payment, $user, $partner_credit) {
                     $partner_order = PartnerOrder::find($payment->payable->type_id);
-                    $remaining = $partner_credit - $payment->payable->amount;
-                    if ($remaining > 0) {
-                        $user->debitWallet($remaining);
-                        $user->walletTransaction([
-                            'amount'    => $remaining,
-                            'type'      => 'Debit',
-                            'log'       => 'Service Purchase.',
-                            'partner_order_id'  => $partner_order->id,
-                            'created_at'        => Carbon::now()
-                        ]);
-                    }
+                    $user->debitWallet($payment->payable->amount);
+                    $user->walletTransaction([
+                        'amount' => $payment->payable->amount,
+                        'type' => 'Debit',
+                        'log' => 'Service Purchase.',
+                        'partner_order_id' => $partner_order->id,
+                        'created_at' => Carbon::now()
+                    ]);
                 });
                 $paymentRepository->changeStatus(['to' => 'validated', 'from' => $payment->status, 'transaction_details' => $payment->transaction_details]);
                 $payment->status = 'validated';

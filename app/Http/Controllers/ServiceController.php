@@ -53,10 +53,9 @@ class ServiceController extends Controller
     public function get($service, Request $request)
     {
         try {
-            $service = Service::where('id', $service)
-                ->select('id', 'name', 'unit', 'category_id', 'description', 'thumb', 'slug', 'min_quantity', 'banner', 'faqs', 'variable_type', 'variables')
-                ->publishedForAll()
-                ->first();
+            $service = Service::where('id', $service)->select('id', 'name', 'unit', 'category_id', 'short_description', 'description', 'thumb', 'slug', 'min_quantity', 'banner', 'faqs', 'bn_name', 'bn_faqs', 'variable_type', 'variables');
+            $service = $request->has('is_business') ? $service->publishedForBusiness() : $service->publishedForAll();
+            $service = $service->first();
             if ($service == null)
                 return api_response($request, null, 404);
             if ($service->variable_type == 'Options') {
@@ -78,8 +77,10 @@ class ServiceController extends Controller
             unset($variables->prices);
             $services = [];
             array_push($services, $service);
-            $service = $this->serviceRepository->addServiceInfo($services, $scope)[0];
+//            $service = $this->serviceRepository->addServiceInfo($services, $scope)[0];
             $service['variables'] = $variables;
+            $service['faqs'] = json_decode($service->faqs);
+            $service['bn_faqs'] = $service->bn_faqs ? json_decode($service->bn_faqs) : null;
             $category = Category::with(['parent' => function ($query) {
                 $query->select('id', 'name');
             }])->where('id', $service->category_id)->select('id', 'name', 'parent_id')->first();
@@ -87,7 +88,8 @@ class ServiceController extends Controller
             array_add($service, 'master_category_id', $category->parent->id);
             array_add($service, 'master_category_name', $category->parent->name);
             return api_response($request, $service, 200, ['service' => $service]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }

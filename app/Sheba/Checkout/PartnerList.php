@@ -8,7 +8,6 @@ use App\Models\Partner;
 use App\Models\PartnerServiceDiscount;
 use App\Models\Service;
 use App\Repositories\PartnerServiceRepository;
-use App\Repositories\ReviewRepository;
 use App\Sheba\Partner\PartnerAvailable;
 use Carbon\Carbon;
 use DB;
@@ -17,7 +16,6 @@ use GuzzleHttp\Exception\RequestException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Sheba\Checkout\PartnerSort;
 use Sheba\ModificationFields;
-use Sheba\RequestIdentification;
 
 class PartnerList
 {
@@ -288,32 +286,6 @@ class PartnerList
         }
     }
 
-    public function calculateAverageRating()
-    {
-        $this->partners->load(['reviews' => function ($q) {
-            $q->select('reviews.id', 'rating', 'category_id', 'partner_id')->with(['rates' => function ($q) {
-                $q->select('id', 'review_id');
-            }]);
-        }]);
-        foreach ($this->partners as $partner) {
-            $partner['rating'] = (new ReviewRepository())->getAvgRating($partner->reviews);
-        }
-    }
-
-    public function calculateTotalRatings()
-    {
-        foreach ($this->partners as $partner) {
-            $partner['total_ratings'] = count($partner->reviews);
-            $five_star_reviews = $partner->reviews->filter(function ($review) {
-                return $review->rating == 5;
-            });
-            $partner['total_compliments'] = $five_star_reviews->reduce(function ($count, $review) {
-                return $count + $review->rates->count();
-            }, 0);
-            $partner['total_five_star_ratings'] = $five_star_reviews->count();
-        }
-    }
-
     public function sortByShebaPartnerPriority()
     {
         $this->partners = (new PartnerSort($this->partners))->get();
@@ -324,17 +296,17 @@ class PartnerList
     private function deductImpression()
     {
         if (request()->has('screen') && request()->get('screen') == 'partner_list'
-            && in_array(request()->header('Portal-Name'), ['customer-portal', 'customer-app', 'manager-app'])) {
+            && in_array(request()->header('Portal-Name'), ['customer-portal', 'customer-app', 'manager-app', 'manager-portal'])) {
             $partners = $this->partners->pluck('id')->toArray();
             $impression_deduction = new ImpressionDeduction();
             $impression_deduction->category_id = $this->selectedCategory->id;
             $impression_deduction->location_id = $this->location;
             $serviceArray = [];
-            foreach (json_decode(request()->services) as $service) {
+            foreach ($this->selected_services as $service) {
                 array_push($serviceArray, [
                     'id' => $service->id,
-                    'quantity' => $service->quantity,
-                    'option' => $service->option
+                    'quantity' => isset($service->quantity) ? $service->quantity : (double)$service->min_quantity,
+                    'option' => isset($service->option) ? $service->option : []
                 ]);
             }
             $impression_deduction->order_details = json_encode(['services' => $serviceArray]);

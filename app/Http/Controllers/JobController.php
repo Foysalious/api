@@ -119,7 +119,8 @@ class JobController extends Controller
                         'quantity' => $job->service_quantity,
                         'unit' => $job->service->unit,
                         'option' => $job->service_option,
-                        'variable_type' => $job->service_variable_type
+                        'variable_type' => $job->service_variable_type,
+                        'thumb' => $job->service->app_thumb
                     )
                 );
             } else {
@@ -134,7 +135,8 @@ class JobController extends Controller
                             'unit' => $jobService->service->unit,
                             'quantity' => $jobService->quantity,
                             'option' => $jobService->option,
-                            'variable_type' => $jobService->variable_type
+                            'variable_type' => $jobService->variable_type,
+                            'thumb' => $jobService->service->app_thumb
                         )
                     );
                 }
@@ -419,7 +421,7 @@ class JobController extends Controller
     {
         try {
             $this->validate($request, [
-                'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl'
+                'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl,partner_wallet'
             ]);
             $order_adapter = new OrderAdapter($request->job->partnerOrder);
             $payment = (new ShebaPayment($request->has('payment_method') ? $request->payment_method : 'online'))->init($order_adapter->getPayable());

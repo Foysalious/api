@@ -13,7 +13,8 @@ class Affiliate extends Model implements TopUpAgent
     use Wallet;
     protected $guarded = ['id'];
     protected $dates = ['last_suspended_at'];
-    protected $casts = ['wallet' => 'double', 'is_ambassador' => 'int', 'is_suspended' => 'int'];
+    protected $casts = ['wallet' => 'double', 'is_ambassador' => 'int', 'is_suspended' => 'int', 'total_gifted_amount' => 'double'];
+    protected $appends = ['joined'];
 
     public function profile()
     {
@@ -69,6 +70,38 @@ class Affiliate extends Model implements TopUpAgent
     public function scopeVerified($query)
     {
         return $query->where('verification_status', 'verified');
+    }
+
+    public function getJoinedAttribute()
+    {
+        return $this->under_ambassador_since ? Carbon::parse($this->under_ambassador_since)->diffForHumans() : null;
+    }
+
+    public function scopeAgentsWithoutFilter($query, $request)
+    {
+        $affiliate = $request->affiliate;
+        list($sort, $order) = calculateSort($request);
+        return $query->select('affiliates.profile_id', 'affiliates.id', 'affiliates.under_ambassador_since', 'affiliates.ambassador_id', 'affiliates.total_gifted_number', 'affiliates.total_gifted_amount', 'profiles.name', 'profiles.pro_pic as picture', 'profiles.mobile')
+            ->leftJoin('profiles', 'profiles.id', '=', 'affiliates.profile_id')
+            ->orderBy('affiliates.total_gifted_amount', $order)
+            ->where('affiliates.ambassador_id', $affiliate->id);
+    }
+
+    public function scopeAgentsWithFilter($query, $request)
+    {
+        $affiliate = $request->affiliate;
+        $range = getRangeFormat($request);
+        $order = calculateSort($request, 'affiliates.id')[1];
+        return $query->select('affiliations.affiliate_id as id', 'aff2.profile_id', 'aff2.ambassador_id', 'aff2.under_ambassador_since', 'profiles.name', 'profiles.pro_pic as picture', 'profiles.mobile', 'affiliate_transactions.created_at')
+            ->leftJoin('affiliate_transactions', 'affiliate_transactions.affiliate_id', '=', 'affiliates.id')
+            ->leftJoin('affiliations', 'affiliate_transactions.affiliation_id', ' = ', 'affiliations.id')
+            ->leftJoin('affiliates as aff2', 'affiliations.affiliate_id', '=', 'aff2.id')
+            ->leftJoin('profiles', 'profiles.id', '=', 'aff2.profile_id')
+            ->selectRaw('sum(affiliate_transactions.amount) as total_gifted_amount,count(distinct(affiliate_transactions.id)) as total_gifted_number')
+            ->where('affiliates.id', $affiliate->id)
+            ->whereRaw('affiliate_transactions.is_gifted = 1 and affiliate_transactions.created_at > aff2.under_ambassador_since and `affiliate_transactions`.`created_at` BETWEEN \'' . $range[0]->toDateTimeString() . '\' AND \'' . $range[1]->toDateTimeString() .'\'')
+            ->orderBy('total_gifted_amount', $order)
+            ->groupBy('affiliations.affiliate_id');
     }
 
     public function totalLead()

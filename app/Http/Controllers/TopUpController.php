@@ -1,13 +1,12 @@
-<?php namespace App\Http\Controllers;
+<?php
 
-use App\Models\Affiliate;
+namespace App\Http\Controllers;
+
 use App\Models\TopUpVendor;
-use App\Repositories\FileRepository;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use League\Flysystem\File;
 use Sheba\TopUp\TopUp;
 use Sheba\TopUp\Vendor\Response\Ssl\SslFailResponse;
 use Sheba\TopUp\Vendor\VendorFactory;
@@ -49,9 +48,7 @@ class TopUpController extends Controller
                 'amount' => 'required|min:10|max:1000|numeric'
             ]);
             $affiliate = $request->affiliate;
-            if ($affiliate->wallet < (double)$request->amount) {
-                return api_response($request, null, 403, ['message' => "You don't have sufficient balance to recharge."]);
-            }
+            if ($affiliate->wallet < (double)$request->amount) return api_response($request, null, 403, ['message' => "You don't have sufficient balance to recharge."]);
             $vendor = $vendor->getById($request->vendor_id);
             if (!$vendor->isPublished()) return api_response($request, null, 403, ['message' => 'Sorry, we don\'t support this operator at this moment']);
             $response = $top_up->setAgent($affiliate)->setVendor($vendor)->recharge($request->mobile, $request->amount, $request->connection_type);

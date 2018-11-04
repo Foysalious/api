@@ -48,5 +48,6 @@ return [
         'price' => 0.15,
         'avg_rating' => 0.12,
         'total_ratings' => 0.08
-    ]
+    ],
+    'promo_applicable_sales_channels' => ['Web', 'App', 'App-iOS', 'E-Shop']
 ];
