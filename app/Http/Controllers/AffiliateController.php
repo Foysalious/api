@@ -257,7 +257,7 @@ class AffiliateController extends Controller
             foreach ($transactions as $transaction) {
                 $info['id'] = $transaction->affiliate->id;
                 $info['earning_amount'] = (double)$transaction->earning_amount;
-                $info['total_reference'] = $transaction->affiliate->affiliations->first()->total_reference;
+                $info['total_reference'] = $transaction->affiliate->affiliations->first() ? $transaction->affiliate->affiliations->first()->total_reference : null;
                 $info['name'] = $transaction->affiliate->profile->name;
                 $info['picture'] = $transaction->affiliate->profile->pro_pic;
                 array_push($final, $info);
@@ -400,7 +400,7 @@ class AffiliateController extends Controller
     {
         try {
             list($offset, $limit) = calculatePagination($request);
-            $services = Service::PublishedForBondhu()->skip($offset)->take($limit)->get()->map(function($service) {
+            $services = Service::PublishedForBondhu()->skip($offset)->take($limit)->get()->map(function ($service) {
                 return [
                     'id' => $service->id,
                     'name' => $service->name,
