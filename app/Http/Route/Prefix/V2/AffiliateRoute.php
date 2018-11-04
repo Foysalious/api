@@ -1,7 +1,4 @@
-<?php
-
-namespace App\Http\Route\Prefix\V2;
-
+<?php namespace App\Http\Route\Prefix\V2;
 
 class AffiliateRoute
 {
@@ -14,6 +11,8 @@ class AffiliateRoute
             $api->post('partner-affiliates', 'PartnerAffiliationController@store');
             $api->post('top-up', 'TopUpController@topUp');
             $api->post('recharge', 'AffiliateController@rechargeWallet');
+            $api->get('service-lead-status', 'AffiliateController@leadInfo');
+            $api->get('history', 'AffiliateController@history');
         });
     }
 }

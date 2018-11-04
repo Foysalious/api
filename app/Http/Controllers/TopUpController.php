@@ -1,11 +1,16 @@
-<?php namespace App\Http\Controllers;
+<?php
 
-use App\Models\Affiliate;
+namespace App\Http\Controllers;
+
 use App\Models\TopUpVendor;
+use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\TopUp\TopUp;
+use Sheba\TopUp\Vendor\Response\Ssl\SslFailResponse;
 use Sheba\TopUp\Vendor\VendorFactory;
+use Storage;
 
 class TopUpController extends Controller
 {
@@ -43,9 +48,7 @@ class TopUpController extends Controller
                 'amount' => 'required|min:10|max:1000|numeric'
             ]);
             $affiliate = $request->affiliate;
-            if ($affiliate->wallet < (double)$request->amount) {
-                return api_response($request, null, 403, ['message' => "You don't have sufficient balance to recharge."]);
-            }
+            if ($affiliate->wallet < (double)$request->amount) return api_response($request, null, 403, ['message' => "You don't have sufficient balance to recharge."]);
             $vendor = $vendor->getById($request->vendor_id);
             if (!$vendor->isPublished()) return api_response($request, null, 403, ['message' => 'Sorry, we don\'t support this operator at this moment']);
             $response = $top_up->setAgent($affiliate)->setVendor($vendor)->recharge($request->mobile, $request->amount, $request->connection_type);
@@ -54,6 +57,27 @@ class TopUpController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function sslFail(Request $request, SslFailResponse $error_response, TopUp $top_up)
+    {
+        try {
+            $data = $request->all();
+            $filename = Carbon::now()->timestamp . str_random(6) . '.json';
+            Storage::disk('s3')->put("topup/fail/ssl/$filename", json_encode($data));
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $data]);
+            $sentry->captureException(new \Exception('SSL topup fail'));
+            $error_response->setResponse($data);
+            $top_up->processFailedTopUp($error_response->getTopUpOrder(), $error_response);
+            return api_response($request, 1, 200);
+        } catch (QueryException $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

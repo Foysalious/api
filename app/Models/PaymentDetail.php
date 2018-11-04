@@ -19,12 +19,9 @@ class PaymentDetail extends Model
     public function formatPaymentDetail()
     {
         return array(
-            'name' => $this->getReadableMethodAttribute(),
-            'details' => array(
-                'transaction_id' => $this->payment->transaction_id,
-                'gateway' => $this->method,
-                'details' => $this->payment->transaction_details
-            )
+            'transaction_id' => $this->payment->transaction_id,
+            'gateway' => $this->method,
+            'details' => json_decode($this->payment->transaction_details)
         );
     }
 

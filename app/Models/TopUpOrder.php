@@ -31,4 +31,9 @@ class TopUpOrder extends Model
         if ($agent_type == 'Partner') return $this->agent->contact_no;
         elseif ($agent_type == 'Affiliate') return $this->agent->profile->mobile;
     }
+
+    public function isFailed()
+    {
+        return $this->status == 'Failed';
+    }
 }

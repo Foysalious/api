@@ -160,6 +160,11 @@ class Customer extends Authenticatable implements Rechargable, Rewardable
         return $this->morphMany(Bonus::class, 'user');
     }
 
+    public function bonusLogs()
+    {
+        return $this->morphMany(BonusLog::class, 'user');
+    }
+
     public function shebaCredit()
     {
         return $this->wallet + $this->shebaBonusCredit();

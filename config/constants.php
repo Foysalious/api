@@ -156,7 +156,6 @@ return [
     ],
     'JOB_CI_LEVELS' => ['High' => 'High', 'Medium' => 'Medium', 'Low' => 'Low'],
     'JOB_SATISFACTION_LEVELS' => ['High' => 'High', 'Medium' => 'Medium', 'Low' => 'Low'],
-
     'JOB_CANCEL_REASONS' => [
         'Customer Dependency' => 'Customer Dependency',
         'Customer Management' => 'Customer Management',
@@ -316,7 +315,6 @@ return [
         'High' => 'High',
     ],
     'REFERRAL_VALID_DAYS' => 90,
-
     'AVATAR' => [
         env('SHEBA_CUSTOMER_APP') => 'customer',
         env('SHEBA_AFFILIATION_APP') => 'affiliate',

@@ -135,6 +135,8 @@ class PartnerOrderRepository
     {
         list($field, $orderBy) = $this->getSortByFieldAdOrderFromRequest($request);
         list($offset, $limit) = calculatePagination($request);
+        $for = $request->for;
+
         $filter = $request->filter;
         $partner = $request->partner->load(['partner_orders' => function ($q) use ($filter, $orderBy, $field) {
             $q->$filter()->orderBy($field, $orderBy)->with(['jobs' => function ($q) {
@@ -143,15 +145,23 @@ class PartnerOrderRepository
                 $q->with(['customer.profile', 'location']);
             }]);
         }]);
-        return array_slice($partner->partner_orders->filter(function ($partner_order) {
-            return is_null($partner_order->order->partner_id);
-        })->each(function ($partner_order, $key) {
+        $partner_orders = $this->filterEshopOrders($partner->partner_orders, $for);
+
+        return array_slice($partner_orders->each(function ($partner_order, $key) {
             $partner_order['version'] = $partner_order->is_v2 ? 'v2' : 'v1';
             $partner_order['category_name'] = $partner_order->jobs[0]->category ? $partner_order->jobs[0]->category->name : null;
             removeRelationsAndFields($this->getInfo($partner_order));
         })->reject(function ($item, $key) {
             return $item->order_status == 'Open';
         })->values()->all(), $offset, $limit);
+    }
+
+    private function filterEshopOrders($partner_orders, $for)
+    {
+        return $partner_orders->filter(function ($partner_order) use ($for) {
+            if ($for == 'eshop') return !is_null($partner_order->order->partner_id);
+            else return is_null($partner_order->order->partner_id);
+        });
     }
 
     public function getOrdersByClosedAt($partner, $start_time, $end_time)

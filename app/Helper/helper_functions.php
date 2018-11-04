@@ -186,7 +186,46 @@ if (!function_exists('calculatePagination')) {
         return array($offset, $limit);
     }
 }
+if (!function_exists('calculatePaginationNew')) {
 
+    function calculatePaginationNew($request)
+    {
+        $page = $request->has('page') ? $request->page : 0;
+        $limit = $request->has('limit') ? $request->limit : 50;
+        return array($page, $limit);
+    }
+}
+if (!function_exists('calculateSort')) {
+
+    function calculateSort($request, $default = 'id')
+    {
+        $offset = $request->has('sort') ? $request->sort : $default;
+        $limit = $request->has('sort_order') ? $request->sort_order : 'DESC';
+        return array($offset, $limit);
+    }
+}
+if (!function_exists('getRangeFormat')) {
+    function getRangeFormat($request)
+    {
+        $filter = $request->range;
+        $today = Carbon::today();
+        $dateFrame = new \Sheba\Helpers\TimeFrame();
+        switch ($filter) {
+            case 'today':
+                return $dateFrame->forToday()->getArray();
+            case 'yesterday':
+                return $dateFrame->forYesterday()->getArray();
+            case 'year':
+                return $dateFrame->forAYear($today->year)->getArray();
+            case 'month':
+                return $dateFrame->forAMonth($today->month, $today->year)->getArray();
+            case 'week':
+                return $dateFrame->forAWeek($today)->getArray();
+            default:
+                return [$today->startOfDay(), $today->endOfDay()];
+        }
+    }
+}
 if (!function_exists('createAuthorWithType')) {
     function createAuthorWithType($author)
     {
@@ -397,3 +436,35 @@ if (!function_exists('getSalesChannels')) {
         return array_combine(array_keys(constants('SALES_CHANNELS')), array_column(constants('SALES_CHANNELS'), $key));
     }
 }
+
+
+if (!function_exists('formatDateRange')) {
+    /**
+     * Return Date Range Formatted
+     *
+     * @param $filter_type = Filter type to filter date range
+     * @return Array
+     */
+    function formatDateRange($filter_type)
+    {
+        $currentDate = Carbon::now();
+
+        switch ($filter_type) {
+            case "today":
+                return ["from" => Carbon::yesterday()->toDateString(), "to" => Carbon::today()->toDateString()];
+            case "yesterday":
+                return ["from" => Carbon::yesterday()->addDay(-1)->toDateString(), "to" => Carbon::today()->toDateString()];
+            case "week":
+                return ["from" => $currentDate->startOfWeek()->addDays(-1)->toDateString(), "to" => Carbon::today()->toDateString()];
+            case "month":
+                return ["from" => $currentDate->startOfMonth()->toDateString(), "to" => Carbon::today()->toDateString()];
+            case "year":
+                return ["from" => $currentDate->startOfYear()->toDateString(), "to" => Carbon::today()->toDateString()];
+            case "all_time":
+                return ["from" =>'2017-01-01', "to" =>Carbon::today()->toDateString()];
+            default:
+                return ["from" =>'2017-01-01', "to" =>Carbon::today()->toDateString()];
+        }
+    }
+}
+

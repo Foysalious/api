@@ -26,9 +26,15 @@ class CustomerDeliveryAddressController extends Controller
                 $location = $hyper_location->location;
                 if ($location == null) return api_response($request, null, 404, ['message' => "No address at this location"]);
             }
-            $addresses = $customer->delivery_addresses()->select('id', 'address', 'name', 'mobile', 'location_id')->get();
-            if ($location) $addresses = $addresses->where('location_id', $location->id);
-            return api_response($request, null, 200, ['addresses' => $addresses->values()->all(), 'name' => $customer->profile->name, 'mobile' => $customer->profile->mobile]);
+            $customer_order_addresses = $customer->orders()->selectRaw('delivery_address,count(*) as c')->groupBy('delivery_address')->orderBy('c', 'desc')->get();
+            $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'address')->get()->map(function ($customer_delivery_address) use ($customer_order_addresses) {
+                $customer_delivery_address['count'] = $this->getOrderCount($customer_order_addresses, $customer_delivery_address);
+                return $customer_delivery_address;
+            });
+            if ($location) $customer_delivery_addresses = $customer_delivery_addresses->where('location_id', $location->id);
+            $customer_delivery_addresses = $customer_delivery_addresses->sortByDesc('count')->values()->all();
+            return api_response($request, $customer_delivery_addresses, 200, ['addresses' => $customer_delivery_addresses,
+                'name' => $customer->profile->name, 'mobile' => $customer->profile->mobile]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -95,7 +101,6 @@ class CustomerDeliveryAddressController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -113,5 +118,15 @@ class CustomerDeliveryAddressController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function getOrderCount($customer_order_addresses, $customer_delivery_address)
+    {
+        $count = 0;
+        $customer_order_addresses->each(function ($customer_order_addresses) use ($customer_delivery_address, &$count) {
+            similar_text($customer_delivery_address->address, $customer_order_addresses->delivery_address, $percent);
+            if ($percent >= 80) $count = $customer_order_addresses->c;
+        });
+        return $count;
     }
 }

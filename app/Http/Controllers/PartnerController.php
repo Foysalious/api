@@ -474,7 +474,6 @@ class PartnerController extends Controller
                 return api_response($request, $is_available, 200, ['is_available' => $is_available, 'available_partners' => count($available_partners)]);
             }
             if ($partner_list->hasPartners) {
-                Redis::incr('partner_list_hit_count');
                 $start = microtime(true);
                 $partner_list->addPricing();
                 $time_elapsed_secs = microtime(true) - $start;
@@ -489,22 +488,13 @@ class PartnerController extends Controller
                     $partner_list->sortByShebaPartnerPriority();
                 } else {
                     $start = microtime(true);
-                    $partner_list->calculateAverageRating();
-                    $time_elapsed_secs = microtime(true) - $start;
-                    //dump("avg rating: " . $time_elapsed_secs * 1000);
-
-                    $start = microtime(true);
-                    $partner_list->calculateTotalRatings();
-                    $time_elapsed_secs = microtime(true) - $start;
-                    //dump("total rating count: " . $time_elapsed_secs * 1000);
-
-                    $start = microtime(true);
                     $partner_list->sortByShebaSelectedCriteria();
                     $time_elapsed_secs = microtime(true) - $start;
                     //dump("sort by sheba criteria: " . $time_elapsed_secs * 1000);
                 }
                 $partners = $partner_list->partners;
                 $partners->each(function ($partner, $key) {
+                    $partner['rating'] = round($partner->rating, 2);
                     array_forget($partner, 'wallet');
                     array_forget($partner, 'package_id');
                     removeRelationsAndFields($partner);

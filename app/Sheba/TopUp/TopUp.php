@@ -2,9 +2,11 @@
 
 namespace Sheba\TopUp;
 
+use App\Models\Affiliate;
 use App\Models\TopUpOrder;
 use Sheba\ModificationFields;
 use DB;
+use Sheba\TopUp\Vendor\Response\TopUpFailResponse;
 use Sheba\TopUp\Vendor\Response\TopUpSuccessResponse;
 use Sheba\TopUp\Vendor\Vendor;
 
@@ -61,7 +63,7 @@ class TopUp
         $topUpOrder->agent_id = $this->agent->id;
         $topUpOrder->payee_mobile = $mobile_number;
         $topUpOrder->amount = $amount;
-        $topUpOrder->status = "Successful";
+        $topUpOrder->status = 'Successful';
         $topUpOrder->transaction_id = $response->transactionId;
         $topUpOrder->transaction_details = json_encode($response->transactionDetails);
         $topUpOrder->vendor_id = $this->model->id;
@@ -72,4 +74,42 @@ class TopUp
         $topUpOrder->save();
     }
 
+    public function processFailedTopUp(TopUpOrder $topUpOrder, TopUpFailResponse $topUpFailResponse)
+    {
+        if ($topUpOrder->isFailed()) return true;
+        DB::transaction(function () use ($topUpOrder, $topUpFailResponse) {
+            $this->model = $topUpOrder->vendor;
+            $topUpOrder->status = 'Failed';
+            $topUpOrder->transaction_details = json_encode($topUpFailResponse->getFailedTransactionDetails());
+            $this->setModifier($this->agent);
+            $this->withUpdateModificationField($topUpOrder);
+            $topUpOrder->update();
+            $this->refund($topUpOrder);
+        });
+    }
+
+    private function refund(TopUpOrder $topUpOrder)
+    {
+        $amount = $topUpOrder->amount;
+        $amount_after_commission = round($amount - $this->calculateCommission($amount), 2);
+        /** @var TopUpAgent $agent */
+        $agent = $topUpOrder->agent;
+        $log = "Your recharge TK $amount to $topUpOrder->payee_mobile has failed, TK $amount_after_commission is refunded in your account.";
+        $agent->refund($amount_after_commission, $log);
+        if ($topUpOrder->agent instanceof Affiliate) $this->sendRefundNotificationToAffiliate($topUpOrder, $log);
+    }
+
+    private function sendRefundNotificationToAffiliate(TopUpOrder $topUpOrder, $title)
+    {
+        try {
+            notify()->affiliate($topUpOrder->agent)->send([
+                "title" => $title,
+                "link" => url("affiliate/" . $topUpOrder->agent->id),
+                "type" => 'warning',
+                "event_type" => 'App\Models\Affiliate',
+                "event_id" => $topUpOrder->agent->id
+            ]);
+        } catch (\Throwable $e) {
+        }
+    }
 }
