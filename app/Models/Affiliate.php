@@ -91,7 +91,7 @@ class Affiliate extends Model implements TopUpAgent
     {
         $affiliate = $request->affiliate;
         $order = calculateSort($request, 'affiliates.id')[1];
-        return $query->select('affiliations.affiliate_id as id', 'aff2.profile_id', 'aff2.ambassador_id', 'aff2.under_ambassador_since', 'profiles.name', 'profiles.pro_pic as picture', 'profiles.mobile')
+        return $query->select('affiliations.affiliate_id as id', 'aff2.profile_id', 'aff2.ambassador_id', 'aff2.under_ambassador_since', 'profiles.name', 'profiles.pro_pic as picture', 'profiles.mobile','affiliate_transactions.created_at')
             ->leftJoin('affiliate_transactions', 'affiliate_transactions.affiliate_id', '=', 'affiliates.id')
             ->leftJoin('affiliations', 'affiliate_transactions.affiliation_id', ' = ', 'affiliations.id')
             ->leftJoin('affiliates as aff2', 'affiliations.affiliate_id', '=', 'aff2.id')
