@@ -21,7 +21,7 @@ class NotificationRepository
     public function send($order)
     {
         $this->order = $order;
-        if (in_array($this->order->sales_channel, ['Web', 'App', 'App-iOS'])) {
+        if (in_array($this->order->sales_channel, ['Web', 'App', 'App-iOS', 'E-Shop'])) {
             $this->sender_id = $this->order->customer_id;
             $this->sender_type = 'customer';
 
