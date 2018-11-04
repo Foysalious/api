@@ -306,6 +306,24 @@ class AffiliateController extends Controller
         }
     }
 
+    public function lifeTimeGift($affiliate, $agent_id, Request $request)
+    {
+        try {
+            $affiliate = $request->affiliate;
+            if ($affiliate->is_ambassador == 0) {
+                return api_response($request, null, 403);
+            }
+            $info = collect();
+            $agent = $request->affiliate->agents()->where('id', $agent_id)->first();
+            $gift_amount = $agent ? $agent->total_gifted_amount : 0;
+            $info->put('life_time_gift', $gift_amount);
+            return api_response($request, $info, 200, $info->all());
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     public function getTransactions($affiliate, Request $request)
     {
         try {

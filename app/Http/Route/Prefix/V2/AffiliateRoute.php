@@ -13,6 +13,7 @@ class AffiliateRoute
             $api->post('recharge', 'AffiliateController@rechargeWallet');
             $api->get('service-lead-status', 'AffiliateController@leadInfo');
             $api->get('history', 'AffiliateController@history');
+            $api->get('lifetime-gift/{agent_id}','AffiliateController@lifeTimeGift');
         });
     }
 }
