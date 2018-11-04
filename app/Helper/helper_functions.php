@@ -433,7 +433,7 @@ if (!function_exists('formatDateRange')) {
 
         switch ($filter_type) {
             case "today":
-                return ["from" => Carbon::yesterday()->toDateString(), "to" => Carbon::today()->toDateString()];
+                return ["from" => Carbon::today()->toDateString(), "to" => Carbon::today()->toDateString()];
             case "yesterday":
                 return ["from" => Carbon::yesterday()->addDay(-1)->toDateString(), "to" => Carbon::today()->toDateString()];
             case "week":
