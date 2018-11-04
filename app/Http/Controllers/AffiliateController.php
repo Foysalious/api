@@ -228,7 +228,7 @@ class AffiliateController extends Controller
             if (count($agents) > 0) {
                 $response = ['agents' => $agents];
                 if ($range) {
-                    $r_d = calculateSort($request);
+                    $r_d = getRangeFormat($request);
                     $response['range'] = ['to' => $r_d[0], 'from' => $r_d[1]];
                 }
                 return api_response($request, $agents, 200, $response);
