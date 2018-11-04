@@ -74,7 +74,7 @@ class Affiliate extends Model implements TopUpAgent
 
     public function getJoinedAttribute()
     {
-        return Carbon::parse($this->attributes['under_ambassador_since'])->diffForHumans();
+        return $this->attributes['under_ambassador_since'] ? Carbon::parse($this->attributes['under_ambassador_since'])->diffForHumans() : null;
     }
 
     public function scopeAgentsWithoutFilter($query, $request)
