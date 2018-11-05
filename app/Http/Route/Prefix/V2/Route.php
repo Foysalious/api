@@ -15,7 +15,7 @@ class Route
             $api->post('password/validate', 'Auth\PasswordController@validatePasswordResetCode');
             $api->post('password/reset', 'Auth\PasswordController@reset');
             $api->post('events', 'EventController@store');
-            $api->post('top-up/fail/ssl', 'TopUpController@sslFail');
+            $api->get('top-up/fail/ssl', 'TopUpController@sslFail');
             $api->group(['prefix' => 'wallet'], function ($api) {
                 $api->post('recharge', 'WalletController@recharge');
                 $api->post('purchase', 'WalletController@purchase');
