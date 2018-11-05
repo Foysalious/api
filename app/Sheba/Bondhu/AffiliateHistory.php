@@ -71,7 +71,9 @@ class AffiliateHistory
                     $q->where(function ($q) {
                         $q->where("is_gifted",1);
                         $q->where('status', "successful");
-                    })->orWhere('status','<>','successful');
+                    })->orWhere(function ($q){
+                        $q->whereRaw("`affiliations`.`status` <> 'successful' AND (is_gifted = 1 OR is_gifted is NULL)");
+                    });
                 })
                 ->whereDate($tableName.'.created_at','>=',$from)
                 ->whereDate($tableName.'.created_at','<=',$to);
