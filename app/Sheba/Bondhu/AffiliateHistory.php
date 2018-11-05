@@ -77,6 +77,7 @@ class AffiliateHistory
                 })
                 ->where($tableName . '.created_at', '>=', DB::raw('affiliates.under_ambassador_since'))
                 ->whereDate($tableName.'.created_at','>=',$from)
-                ->whereDate($tableName.'.created_at','<=',$to);
+                ->whereDate($tableName.'.created_at','<=',$to)
+                ->orderBy('affiliations.created_at','desc');
     }
 }
