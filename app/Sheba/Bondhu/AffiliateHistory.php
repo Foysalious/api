@@ -75,6 +75,7 @@ class AffiliateHistory
                         $q->whereRaw("`affiliations`.`status` <> 'successful' AND (is_gifted = 1 OR is_gifted is NULL)");
                     });
                 })
+                ->where($tableName . '.created_at', '>=', DB::raw('affiliates.under_ambassador_since'))
                 ->whereDate($tableName.'.created_at','>=',$from)
                 ->whereDate($tableName.'.created_at','<=',$to);
     }
