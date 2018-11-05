@@ -67,17 +67,17 @@ class AffiliateHistory
                 )
                 ->where($tableName.".affiliate_id",$agent_id)
                 ->where('affiliates.ambassador_id',$affiliate_id)
-                ->where(function($q){
+                ->where(function($q) use($tableName){
                     $q->where(function ($q) {
                         $q->where("is_gifted",1);
                         $q->where('status', "successful");
-                    })->orWhere(function ($q){
-                        $q->whereRaw("`affiliations`.`status` <> 'successful' AND (is_gifted = 1 OR is_gifted is NULL)");
+                    })->orWhere(function ($q) use ($tableName){
+                        $q->whereRaw($tableName.".`status` <> 'successful' AND (is_gifted = 1 OR is_gifted is NULL)");
                     });
                 })
                 ->where($tableName . '.created_at', '>=', DB::raw('affiliates.under_ambassador_since'))
                 ->whereDate($tableName.'.created_at','>=',$from)
                 ->whereDate($tableName.'.created_at','<=',$to)
-                ->orderBy('affiliations.created_at','desc');
+                ->orderBy($tableName.'.created_at','desc');
     }
 }
