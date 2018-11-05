@@ -222,13 +222,13 @@ class AffiliateController extends Controller
             $query2 = Affiliate::agentsWithFilter($request, 'partner_affiliations');
             $agents = collect(array_merge($query1->get()->toArray(), $query2->get()->toArray()))->groupBy('id')
                 ->map(function ($data) {
-                $dataSet = $data[0];
-                if (isset($data[1])) {
-                    $dataSet['total_gifted_amount'] += $data[1]['total_gifted_amount'];
-                    $dataSet['total_gifted_number'] += $data[1]['total_gifted_number'];
-                }
-                return $dataSet;
-            })->values();
+                    $dataSet = $data[0];
+                    if (isset($data[1])) {
+                        $dataSet['total_gifted_amount'] += $data[1]['total_gifted_amount'];
+                        $dataSet['total_gifted_number'] += $data[1]['total_gifted_number'];
+                    }
+                    return $dataSet;
+                })->values();
 
             if (isset($q)) {
                 $agents->filter(function ($data) use ($q) {
@@ -325,7 +325,11 @@ class AffiliateController extends Controller
             }
             $info = collect();
             $agent = $request->affiliate->agents()->where('id', $agent_id)->first();
+            $sp = Affiliate::agentsWithFilter($request, 'partner_affiliations')->get()->filter(function ($d) use ($agent_id) {
+                return $d['id'] == $agent_id;
+            })->first();
             $gift_amount = $agent ? $agent->total_gifted_amount : 0;
+            $gift_amount += $sp ? $sp->total_gifted_amount : 0;
             $info->put('life_time_gift', $gift_amount);
             return api_response($request, $info, 200, $info->all());
         } catch (\Throwable $e) {
