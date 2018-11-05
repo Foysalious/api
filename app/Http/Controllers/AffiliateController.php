@@ -216,16 +216,25 @@ class AffiliateController extends Controller
             $q = $request->get('query');
             $range = $request->get('range');
             list($offset, $limit) = calculatePagination($request);
-            if (isset($range) && !empty($range)) {
-                $query = Affiliate::agentsWithFilter($request);
-            } else {
-                $query = Affiliate::agentsWithoutFilter($request);
-            }
+
+            $query1 = Affiliate::agentsWithFilter($request, 'affiliations');
+            $query2 = Affiliate::agentsWithFilter($request, 'partner_affiliations');
+            $agents = collect(array_merge($query1->get()->toArray(), $query2->get()->toArray()))->groupBy('id')
+                ->map(function ($data) {
+                $dataSet = $data[0];
+                if (isset($data[1])) {
+                    $dataSet['total_gifted_amount'] += $data[1]['total_gifted_amount'];
+                    $dataSet['total_gifted_number'] += $data[1]['total_gifted_number'];
+                }
+                return $dataSet;
+            })->values();
+
             if (isset($q)) {
-                $query->where('profiles.name', 'LIKE', $q . '%');
+                $agents->filter(function ($data) use ($q) {
+                    return str_contains($data['name'], $q);
+                });
             }
-            $agents = $query->skip($offset)
-                ->take($limit)->get();
+            $agents = $agents->splice($offset, $limit)->toArray();
             if (count($agents) > 0) {
                 $response = ['agents' => $agents];
                 if ($range) {
