@@ -138,7 +138,7 @@ class AffiliateController extends Controller
             $error = $validator->errors()->all()[0];
             return api_response($request, $error, 400, ['msg' => $error]);
         }
-        if ($request->agent_data)
+        if ((int)$request->agent_data)
             $status = $status->setType($request->sp_type)->getFormattedDate($request)->getAgentsData($affiliate);
         else
             $status = $status->setType($request->sp_type)->getFormattedDate($request)->getIndividualData($request->agent_id);

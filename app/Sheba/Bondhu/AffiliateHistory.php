@@ -60,17 +60,24 @@ class AffiliateHistory
         $this->histories = $model::leftJoin('affiliate_transactions','affiliate_transactions.affiliation_id','=',$tableName.".id")
                 ->leftJoin('affiliates',$tableName.'.affiliate_id','=','affiliates.id')
                 ->selectRaw(
-                    DB::raw('CONCAT("REF",'.$tableName.'.id) as refer_id,status,ifnull(amount,0) as amount, DATE_FORMAT(DATE('.$tableName.'.created_at), "%d %b\'%y") as date')
+                    DB::raw('CONCAT("REF",'.$tableName.'.id) as refer_id,
+                    status,
+                    ifnull( CASE WHEN STATUS <> "successful" THEN 0 ELSE amount END, 0 ) AS amount, 
+                    DATE_FORMAT(DATE('.$tableName.'.created_at), "%d %b\'%y") as date')
                 )
                 ->where($tableName.".affiliate_id",$agent_id)
                 ->where('affiliates.ambassador_id',$affiliate_id)
-                ->where(function($q){
+                ->where(function($q) use($tableName){
                     $q->where(function ($q) {
                         $q->where("is_gifted",1);
                         $q->where('status', "successful");
-                    })->orWhere('status','<>','successful');
+                    })->orWhere(function ($q) use ($tableName){
+                        $q->whereRaw($tableName.".`status` <> 'successful' AND (is_gifted = 1 OR is_gifted is NULL)");
+                    });
                 })
+                ->where($tableName . '.created_at', '>=', DB::raw('affiliates.under_ambassador_since'))
                 ->whereDate($tableName.'.created_at','>=',$from)
-                ->whereDate($tableName.'.created_at','<=',$to);
+                ->whereDate($tableName.'.created_at','<=',$to)
+                ->orderBy($tableName.'.created_at','desc');
     }
 }

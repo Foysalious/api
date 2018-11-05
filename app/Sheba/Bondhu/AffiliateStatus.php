@@ -56,8 +56,8 @@ class AffiliateStatus
                 $this->setDateRange($request->from, $request->to);
                 break;
             default:
-                $formattedDates = (formatDateRange($request->filter_type));
-                $this->setDateRange($formattedDates["from"], $formattedDates["to"]);
+                $formattedDates = (getRangeFormat(request(), 'filter_type'));
+                $this->setDateRange($formattedDates[0], $formattedDates[1]);
                 break;
         }
         return $this;
@@ -75,10 +75,10 @@ class AffiliateStatus
             ->whereIn('affiliate_id', $affiliate_ids);
 
         $countsQuery = $countsQuery->where($tableName . '.created_at', '>=', DB::raw('affiliates.under_ambassador_since'));
-
         $counts = $countsQuery->get()->toArray();
+
         $this->statuses = $counts[0];
-        $range = getRangeFormat(request(), 'filter_type');
+
         $earning_amount_query = $modelName::join('affiliate_transactions', $tableName . '.id', '=', 'affiliate_transactions.affiliation_id')
             ->join('affiliates', 'affiliates.id', '=', $tableName . '.affiliate_id')
             ->where('affiliate_transactions.affiliate_id', $this->parent_id)
@@ -86,8 +86,9 @@ class AffiliateStatus
             ->where('status', 'successful')
             ->where('affiliate_transactions.is_gifted', 1)
             ->whereRaw('affiliate_transactions.created_at >= affiliates.under_ambassador_since')
-            ->whereBetween('affiliate_transactions.created_at', [$range[0], $range[1]]);
-        $earning_amount = (double)$earning_amount_query->sum('affiliate_transactions.amount');
+            ->whereBetween('affiliate_transactions.created_at', [$this->from, $this->to]);
+
+        $earning_amount = (double)  $earning_amount_query->sum('affiliate_transactions.amount');
 
         $this->statuses["earning_amount"] = $earning_amount;
         $this->statuses["from_date"] = date("jS F", strtotime($this->from));
