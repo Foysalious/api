@@ -74,7 +74,7 @@ class Affiliate extends Model implements TopUpAgent
 
     public function getJoinedAttribute()
     {
-        return Carbon::parse($this->attributes['under_ambassador_since'])->diffForHumans();
+        return $this->under_ambassador_since ? Carbon::parse($this->under_ambassador_since)->diffForHumans() : null;
     }
 
     public function scopeAgentsWithoutFilter($query, $request)
@@ -90,17 +90,16 @@ class Affiliate extends Model implements TopUpAgent
     public function scopeAgentsWithFilter($query, $request)
     {
         $affiliate = $request->affiliate;
+        $range = getRangeFormat($request);
         $order = calculateSort($request, 'affiliates.id')[1];
-        return $query->select('affiliations.affiliate_id as id', 'aff2.profile_id', 'aff2.ambassador_id', 'aff2.under_ambassador_since', 'profiles.name', 'profiles.pro_pic as picture', 'profiles.mobile')
+        return $query->select('affiliations.affiliate_id as id', 'aff2.profile_id', 'aff2.ambassador_id', 'aff2.under_ambassador_since', 'profiles.name', 'profiles.pro_pic as picture', 'profiles.mobile', 'affiliate_transactions.created_at')
             ->leftJoin('affiliate_transactions', 'affiliate_transactions.affiliate_id', '=', 'affiliates.id')
             ->leftJoin('affiliations', 'affiliate_transactions.affiliation_id', ' = ', 'affiliations.id')
             ->leftJoin('affiliates as aff2', 'affiliations.affiliate_id', '=', 'aff2.id')
             ->leftJoin('profiles', 'profiles.id', '=', 'aff2.profile_id')
             ->selectRaw('sum(affiliate_transactions.amount) as total_gifted_amount,count(distinct(affiliate_transactions.id)) as total_gifted_number')
             ->where('affiliates.id', $affiliate->id)
-            ->where('affiliate_transactions.created_at', '>', 'aff2.under_ambassador_since')
-            ->where('affiliate_transactions.is_gifted', 1)
-            ->whereBetween('affiliate_transactions.created_at', getRangeFormat($request))
+            ->whereRaw('affiliate_transactions.is_gifted = 1 and affiliate_transactions.created_at > aff2.under_ambassador_since and `affiliate_transactions`.`created_at` BETWEEN \'' . $range[0]->toDateTimeString() . '\' AND \'' . $range[1]->toDateTimeString() .'\'')
             ->orderBy('total_gifted_amount', $order)
             ->groupBy('affiliations.affiliate_id');
     }

@@ -31,12 +31,12 @@ class AffiliateHistory
         return $this;
     }
 
-    public function generateData($affiliate_id) {
+    public function generateData($affiliate_id, $agent_id) {
         if($this->type == "affiliates") {
-            $this->getQuery("App\Models\Affiliation","affiliations",$affiliate_id,$this->from,$this->to);
+            $this->getQuery("App\Models\Affiliation","affiliations",$affiliate_id, $agent_id,$this->from,$this->to);
             return $this->histories;
         } else if($this->type === "partner_affiliates"){
-            $this->getQuery("App\Models\PartnerAffiliation","partner_affiliations",$affiliate_id,$this->from,$this->to);
+            $this->getQuery("App\Models\PartnerAffiliation","partner_affiliations",$affiliate_id, $agent_id, $this->from,$this->to);
             return $this->histories;
         }
     }
@@ -56,14 +56,20 @@ class AffiliateHistory
     }
 
 
-    public function getQuery($model,$tableName, $affiliate_id, $from, $to) {
-        $this->histories = $model::join('affiliate_transactions','affiliate_transactions.affiliation_id','=',$tableName.".id")
-                ->join('affiliates',$tableName.'.affiliate_id','=','affiliates.id')
+    public function getQuery($model,$tableName, $affiliate_id, $agent_id, $from, $to) {
+        $this->histories = $model::leftJoin('affiliate_transactions','affiliate_transactions.affiliation_id','=',$tableName.".id")
+                ->leftJoin('affiliates',$tableName.'.affiliate_id','=','affiliates.id')
                 ->selectRaw(
-                    DB::raw('CONCAT("REF",affiliate_transactions.affiliation_id) as refer_id,status,amount, DATE_FORMAT(DATE(affiliate_transactions.created_at), "%d %b\'%y") as date')
+                    DB::raw('CONCAT("REF",'.$tableName.'.id) as refer_id,status,ifnull(amount,0) as amount, DATE_FORMAT(DATE('.$tableName.'.created_at), "%d %b\'%y") as date')
                 )
-                ->where("affiliate_transactions.affiliate_id",$affiliate_id)
-                ->where("is_gifted",1)
+                ->where($tableName.".affiliate_id",$agent_id)
+                ->where('affiliates.ambassador_id',$affiliate_id)
+                ->where(function($q){
+                    $q->where(function ($q) {
+                        $q->where("is_gifted",1);
+                        $q->where('status', "successful");
+                    })->orWhere('status','<>','successful');
+                })
                 ->whereDate($tableName.'.created_at','>=',$from)
                 ->whereDate($tableName.'.created_at','<=',$to);
     }

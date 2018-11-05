@@ -205,9 +205,9 @@ if (!function_exists('calculateSort')) {
     }
 }
 if (!function_exists('getRangeFormat')) {
-    function getRangeFormat($request)
+    function getRangeFormat($request, $param = 'range')
     {
-        $filter = $request->range;
+        $filter = $request->{$param};
         $today = Carbon::today();
         $dateFrame = new \Sheba\Helpers\TimeFrame();
         switch ($filter) {
@@ -451,19 +451,19 @@ if (!function_exists('formatDateRange')) {
 
         switch ($filter_type) {
             case "today":
-                return ["from" => Carbon::yesterday()->toDateString(), "to" => Carbon::today()->toDateString()];
+                return ["from" => Carbon::today(), "to" => Carbon::today()];
             case "yesterday":
-                return ["from" => Carbon::yesterday()->addDay(-1)->toDateString(), "to" => Carbon::today()->toDateString()];
+                return ["from" => Carbon::yesterday()->addDay(-1), "to" => Carbon::today()];
             case "week":
-                return ["from" => $currentDate->startOfWeek()->addDays(-1)->toDateString(), "to" => Carbon::today()->toDateString()];
+                return ["from" => $currentDate->startOfWeek()->addDays(-1), "to" => Carbon::today()];
             case "month":
-                return ["from" => $currentDate->startOfMonth()->toDateString(), "to" => Carbon::today()->toDateString()];
+                return ["from" => $currentDate->startOfMonth(), "to" => Carbon::today()];
             case "year":
-                return ["from" => $currentDate->startOfYear()->toDateString(), "to" => Carbon::today()->toDateString()];
+                return ["from" => $currentDate->startOfYear(), "to" => Carbon::today()];
             case "all_time":
-                return ["from" =>'2017-01-01', "to" =>Carbon::today()->toDateString()];
+                return ["from" => '2017-01-01', "to" => Carbon::today()];
             default:
-                return ["from" =>'2017-01-01', "to" =>Carbon::today()->toDateString()];
+                return ["from" => '2017-01-01', "to" => Carbon::today()];
         }
     }
 }

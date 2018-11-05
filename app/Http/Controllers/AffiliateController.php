@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Affiliate;
 use App\Models\AffiliateTransaction;
 use App\Models\Affiliation;
+use App\Models\PartnerAffiliation;
 use App\Models\PartnerTransaction;
 use App\Models\Service;
 use App\Repositories\AffiliateRepository;
@@ -129,17 +130,18 @@ class AffiliateController extends Controller
             'filter_type' => 'required|string',
             'from' => 'required_if:filter_type,date_range',
             'to' => 'required_if:filter_type,date_range',
-            'sp_type' => 'required|in:affiliates,partner_affiliates'
+            'sp_type' => 'required|in:affiliates,partner_affiliates',
+            'agent_id' => 'numeric'
         ];
         $validator = Validator::make($request->all(), $rules);
         if ($validator->fails()) {
             $error = $validator->errors()->all()[0];
             return api_response($request, $error, 400, ['msg' => $error]);
         }
-        if ($request->agent_data)
+        if ((int)$request->agent_data)
             $status = $status->setType($request->sp_type)->getFormattedDate($request)->getAgentsData($affiliate);
         else
-            $status = $status->setType($request->sp_type)->getFormattedDate($request)->getIndividualData($affiliate);
+            $status = $status->setType($request->sp_type)->getFormattedDate($request)->getIndividualData($request->agent_id);
 
         return response()->json(['code' => 200, 'data' => $status]);
     }
@@ -228,7 +230,7 @@ class AffiliateController extends Controller
             if (count($agents) > 0) {
                 $response = ['agents' => $agents];
                 if ($range) {
-                    $r_d = calculateSort($request);
+                    $r_d = getRangeFormat($request);
                     $response['range'] = ['to' => $r_d[0], 'from' => $r_d[1]];
                 }
                 return api_response($request, $agents, 200, $response);
@@ -296,9 +298,27 @@ class AffiliateController extends Controller
             $info = collect();
             $info->put('agent_count', $affiliate->agents->count());
             $info->put('earning_amount', $affiliate->agents->sum('total_gifted_amount'));
-            $info->put('total_refer', Affiliation::whereIn('affiliate_id', $affiliate->agents->pluck('id')->toArray())->count());
-            $info->put('sp_count', $affiliate->partnerAffiliations->count());
+            $info->put('total_refer', Affiliation::totalRefer($affiliate->id)->count());
+            $info->put('sp_count', PartnerAffiliation::spCount($affiliate->id)->count());
             return api_response($request, $info, 200, ['info' => $info->all()]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function lifeTimeGift($affiliate, $agent_id, Request $request)
+    {
+        try {
+            $affiliate = $request->affiliate;
+            if ($affiliate->is_ambassador == 0) {
+                return api_response($request, null, 403);
+            }
+            $info = collect();
+            $agent = $request->affiliate->agents()->where('id', $agent_id)->first();
+            $gift_amount = $agent ? $agent->total_gifted_amount : 0;
+            $info->put('life_time_gift', $gift_amount);
+            return api_response($request, $info, 200, $info->all());
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -439,7 +459,8 @@ class AffiliateController extends Controller
             'filter_type' => 'required|string',
             'from' => 'required_if:filter_type,date_range',
             'to' => 'required_if:filter_type,date_range',
-            'sp_type' => 'required|in:affiliates,partner_affiliates'
+            'sp_type' => 'required|in:affiliates,partner_affiliates',
+            'agent_id' => 'required'
         ];
 
         $validator = Validator::make($request->all(), $rules);
@@ -448,7 +469,7 @@ class AffiliateController extends Controller
             return api_response($request, $error, 400, ['msg' => $error]);
         }
         list($offset, $limit) = calculatePagination($request);
-        $historyData = $history->setType($request->sp_type)->getFormattedDate($request)->generateData($affiliate)->skip($offset)->take($limit)->get();
+        $historyData = $history->setType($request->sp_type)->getFormattedDate($request)->generateData($affiliate, $request->agent_id)->skip($offset)->take($limit)->get();
         return response()->json(['code' => 200, 'data' => $historyData]);
     }
 }
