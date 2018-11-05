@@ -216,6 +216,8 @@ class AffiliateController extends Controller
             }
             $q = $request->get('query');
             $range = $request->get('range');
+            $sort_order = $request->get('sort_order');
+
             list($offset, $limit) = calculatePagination($request);
 
             $query1 = Affiliate::agentsWithFilter($request, 'affiliations');
@@ -231,10 +233,15 @@ class AffiliateController extends Controller
                 })->values();
 
             if (isset($q)) {
-                $agents->filter(function ($data) use ($q) {
+                $agents = $agents->filter(function ($data) use ($q) {
                     return str_contains($data['name'], $q);
                 });
             }
+
+            if (isset($sort_order)) {
+                $agents = ($sort_order == 'asc') ? $agents->sortBy('total_gifted_amount') : $agents->sortByDesc('total_gifted_amount');
+            }
+
             $agents = $agents->splice($offset, $limit)->toArray();
             if (count($agents) > 0) {
                 $response = ['agents' => $agents];
