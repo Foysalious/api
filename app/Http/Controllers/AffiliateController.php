@@ -304,9 +304,19 @@ class AffiliateController extends Controller
             if ($affiliate->is_ambassador == 0) {
                 return api_response($request, null, 403);
             }
+
+            $partner_affiliation_total_amount = DB::select('SELECT SUM(affiliate_transactions.amount) as total_amount FROM affiliate_transactions 
+                    LEFT JOIN `partner_affiliations` ON `affiliate_transactions`.`affiliation_id` = `partner_affiliations`.`id` 
+                    LEFT JOIN `affiliates` ON `partner_affiliations`.`affiliate_id` = `affiliates`.`id` 
+                    WHERE `affiliate_transactions`.`affiliation_type` = \'App\\\Models\\\PartnerAffiliation\'
+                    AND affiliate_transactions.affiliate_id = ? AND is_gifted = 1
+                    AND affiliates.under_ambassador_since < affiliate_transactions.created_at', [$affiliate->id]
+            );
+            $total_amount = $partner_affiliation_total_amount[0]->total_amount ? : 0;
+
             $info = collect();
             $info->put('agent_count', $affiliate->agents->count());
-            $info->put('earning_amount', $affiliate->agents->sum('total_gifted_amount'));
+            $info->put('earning_amount', $affiliate->agents->sum('total_gifted_amount') + (double)$total_amount);
             $info->put('total_refer', Affiliation::totalRefer($affiliate->id)->count());
             $info->put('sp_count', PartnerAffiliation::spCount($affiliate->id)->count());
             return api_response($request, $info, 200, ['info' => $info->all()]);
