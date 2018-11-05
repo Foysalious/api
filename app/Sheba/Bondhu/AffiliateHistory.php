@@ -60,7 +60,10 @@ class AffiliateHistory
         $this->histories = $model::leftJoin('affiliate_transactions','affiliate_transactions.affiliation_id','=',$tableName.".id")
                 ->leftJoin('affiliates',$tableName.'.affiliate_id','=','affiliates.id')
                 ->selectRaw(
-                    DB::raw('CONCAT("REF",'.$tableName.'.id) as refer_id,status,ifnull(amount,0) as amount, DATE_FORMAT(DATE('.$tableName.'.created_at), "%d %b\'%y") as date')
+                    DB::raw('CONCAT("REF",'.$tableName.'.id) as refer_id,
+                    status,
+                    ifnull( CASE WHEN STATUS <> "successful" THEN 0 ELSE amount END, 0 ) AS amount, 
+                    DATE_FORMAT(DATE('.$tableName.'.created_at), "%d %b\'%y") as date')
                 )
                 ->where($tableName.".affiliate_id",$agent_id)
                 ->where('affiliates.ambassador_id',$affiliate_id)
