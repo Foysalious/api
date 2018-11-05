@@ -20,13 +20,16 @@ use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use DB;
 use Illuminate\Http\Request;
+use Sheba\ModificationFields;
 use Sheba\Voucher\VoucherSuggester;
 
 class Checkout
 {
+    use ModificationFields;
     private $customer;
     private $customerRepository;
     private $voucherRepository;
+    private $partnerServiceRepository;
     private $orderData;
 
     public function __construct($customer)
@@ -39,6 +42,7 @@ class Checkout
 
     public function placeOrder($request)
     {
+        $this->setModifier($this->customer);
         $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$request->location);
         $partner_list->find($request->partner);
         if ($partner_list->hasPartners) {
@@ -260,8 +264,7 @@ class Checkout
                 $deliver_address = new CustomerDeliveryAddress();
                 $deliver_address->address = $data['address'];
                 $deliver_address->customer_id = $data['customer_id'];
-                $deliver_address->created_by = $data['created_by'];
-                $deliver_address->created_by = $data['created_by_name'];
+                $this->withCreateModificationField($deliver_address);
                 $deliver_address->save();
                 return $deliver_address;
             }
