@@ -2,16 +2,12 @@
 
 namespace App\Http\Controllers;
 
-
-use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
 use App\Sheba\Address\AddressValidator;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Location\Coords;
-use Sheba\Location\Distance\Distance;
-use Sheba\Location\Distance\DistanceStrategy;
 use Sheba\ModificationFields;
 
 class CustomerDeliveryAddressController extends Controller
@@ -29,7 +25,7 @@ class CustomerDeliveryAddressController extends Controller
                 if ($location == null) return api_response($request, null, 404, ['message' => "No address at this location"]);
             }
             $customer_order_addresses = $customer->orders()->selectRaw('delivery_address,count(*) as c')->groupBy('delivery_address')->orderBy('c', 'desc')->get();
-            $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'address')->get()->map(function ($customer_delivery_address) use ($customer_order_addresses) {
+            $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'address', 'name')->get()->map(function ($customer_delivery_address) use ($customer_order_addresses) {
                 $customer_delivery_address['count'] = $this->getOrderCount($customer_order_addresses, $customer_delivery_address);
                 return $customer_delivery_address;
             });
