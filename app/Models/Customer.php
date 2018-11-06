@@ -6,10 +6,13 @@ use App\Sheba\Payment\Rechargable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Sheba\Payment\Wallet;
 use Sheba\Reward\Rewardable;
+use Sheba\TopUp\TopUpAgent;
+use Sheba\TopUp\TopUpTrait;
 use Sheba\Voucher\VoucherCodeGenerator;
 
-class Customer extends Authenticatable implements Rechargable, Rewardable
+class Customer extends Authenticatable implements Rechargable, Rewardable, TopUpAgent
 {
+    use TopUpTrait;
     use Wallet;
 
     protected $fillable = [
@@ -175,4 +178,9 @@ class Customer extends Authenticatable implements Rechargable, Rewardable
         return (double)$this->bonuses()->where('status', 'valid')->sum('amount');
     }
 
+    public function topUpTransaction($amount, $log)
+    {
+        $this->debitWallet($amount);
+        $this->walletTransaction(['amount' => $amount, 'type' => 'Debit', 'log' => $log]);
+    }
 }

@@ -13,6 +13,7 @@ class CustomerRoute
                 $api->get('settings/review', 'Settings\SettingsController@getCustomerReviewSettings');
                 $api->get('settings', 'Settings\SettingsController@getCustomerSettings');
                 $api->put('notifications', 'CustomerNotificationController@update');
+                $api->post('top-up', 'TopUpController@topUp');
                 $api->group(['prefix' => 'bkash'], function ($api) {
                     $api->post('create', 'BkashController@create')->middleware('customer_job.auth');
                     $api->post('execute', 'BkashController@execute');
