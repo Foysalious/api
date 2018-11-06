@@ -114,4 +114,13 @@ class Order extends Model
         })->first();
     }
 
+    public function findDeliveryIdFromAddressString()
+    {
+        $customer_addresses = $this->customer->delivery_addresses();
+        $address = $customer_addresses->where('address', $this->delivery_address)->first();
+        if ($address) return $address->id;
+        return $customer_addresses->first()->id;
+
+    }
+
 }

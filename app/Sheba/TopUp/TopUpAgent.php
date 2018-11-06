@@ -1,7 +1,4 @@
-<?php
-
-namespace Sheba\TopUp;
-
+<?php namespace Sheba\TopUp;
 
 interface TopUpAgent
 {
@@ -10,4 +7,6 @@ interface TopUpAgent
     public function topUpTransaction($amount, $log);
 
     public function refund($amount, $log);
+
+    public function calculateCommission($amount);
 }

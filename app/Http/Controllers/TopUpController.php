@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\TopUpVendor;
 use Carbon\Carbon;
@@ -60,7 +58,7 @@ class TopUpController extends Controller
             $vendor = $vendor->getById($request->vendor_id);
             if (!$vendor->isPublished()) return api_response($request, null, 403, ['message' => 'Sorry, we don\'t support this operator at this moment']);
             $response = $top_up->setAgent($agent)->setVendor($vendor)->recharge($request->mobile, $request->amount, $request->connection_type);
-            dd($response);
+
             if ($response)
                 return api_response($request, null, 200, ['message' => "Recharge Successful"]);
             else
@@ -69,7 +67,6 @@ class TopUpController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

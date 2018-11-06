@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\CustomerFavorite;
+use App\Models\Job;
 use App\Models\Service;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use DB;
 
 class CustomerFavoriteController extends Controller
@@ -13,17 +15,20 @@ class CustomerFavoriteController extends Controller
     public function index($customer, Request $request)
     {
         $customer = $request->customer;
-        $customer->load(['favorites' => function ($q) {
-            $q->with(['services', 'category' => function ($q) {
-                $q->select('id', 'name', 'slug', 'icon');
-            }]);
+        list($offset, $limit) = calculatePagination($request);
+        $customer->load(['favorites' => function ($q) use($offset, $limit) {
+            $q->with(['services', 'partner' => function ($q) {
+                $q->select('id', 'name', 'logo');
+            }, 'category' => function ($q) {
+                $q->select('id', 'name', 'slug', 'icon', 'icon_color');
+            }])->skip($offset)->take($limit);
         }]);
         $favorites = $customer->favorites->each(function (&$favorite, $key) {
             $services = [];
             $favorite['category_name'] = $favorite->category->name;
             $favorite['category_slug'] = $favorite->category->slug;
             $favorite['category_icon'] = $favorite->category->icon;
-            $favorite['color'] = '#66CDAA';
+            $favorite['icon_color'] = $favorite->category->icon_color;
             $favorite->services->each(function ($service) use ($favorite, &$services) {
                 $pivot = $service->pivot;
                 $pivot['variables'] = json_decode($pivot['variables']);
@@ -32,10 +37,11 @@ class CustomerFavoriteController extends Controller
                 $pivot['app_thumb'] = $service->app_thumb;
                 array_push($services, $pivot);
             });
-            $favorite['total_price'] = 100;
-            $favorite['partner_id'] = 1;
-            $favorite['partner_name'] = 'BD Transport';
-            $favorite['partner_logo'] = 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/partners/logos/1483020250_bd_transport.png';
+            $partner = $favorite->partner;
+            $favorite['total_price'] = $favorite->total_price;
+            $favorite['partner_id'] = $partner ? $partner->id : null;
+            $favorite['partner_name'] = $partner ? $partner->name : null;
+            $favorite['partner_logo'] = $partner ? $partner->logo : null;
             removeRelationsAndFields($favorite);
             $favorite['services'] = $services;
         });
@@ -49,17 +55,30 @@ class CustomerFavoriteController extends Controller
     public function store($customer, Request $request)
     {
         try {
-            $data = json_decode($request->data);
-            foreach ($data as $category) {
-                if (count($category->services) == 0) {
-                    return api_response($request, null, 400);
+            $this->validate($request, [
+                'job_id' => 'unique:customer_favourites'
+            ]);
+            if ($request->job_id){
+                $job = Job::find($request->job_id);
+                $response = $this->saveWithJOb($job, $request->customer);
+            } else{
+                $data = json_decode($request->data);
+                foreach ($data as $category) {
+                    if (count($category->services) == 0) {
+                        return api_response($request, null, 400);
+                    }
                 }
+                $response = $this->save(json_decode($request->data), $request->customer);
             }
-            if ($response = $this->save(json_decode($request->data), $request->customer)) {
+
+            if ($response) {
                 return api_response($request, 1, 200);
             } else {
                 return api_response($request, null, 500);
             }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
@@ -78,6 +97,45 @@ class CustomerFavoriteController extends Controller
             return true;
         } catch (QueryException $e) {
             return false;
+        }
+    }
+
+    private function saveWithJOb(Job $job, $customer)
+    {
+        try {
+            DB::transaction(function () use ($job, $customer) {
+                $favorite = new CustomerFavorite([
+                    'category_id' => (int)$job->category_id,
+                    'name' => $job->category->name,
+                    'job_id' => $job->id,
+                    'partner_id' => $job->partnerOrder->partner_id,
+                    'additional_info' => $job->job_additional_info,
+                    'preferred_time' => $job->preferred_time,
+                    'schedule_date' => $job->schedule_date,
+                    'total_price' => $job->partnerOrder->calculate(true)->totalPrice,
+                    'delivery_address_id' => $job->partnerOrder->order->delivery_address_id ?: $job->partnerOrder->order->findDeliveryIdFromAddressString(),
+                    'location_id' => $job->partnerOrder->order->location_id,
+
+                ]);
+                $customer->favorites()->save($favorite);
+                $this->saveServicesFromJobServices($favorite, $job->jobServices);
+            });
+            return true;
+        } catch (QueryException $e) {
+            return false;
+        }
+    }
+
+    private function saveServicesFromJobServices($favorite, $job_services)
+    {
+        foreach ($job_services as $job_service) {
+            $favorite->services()->attach($job_service->service_id, [
+                'name' => $job_service->name,
+                'variable_type' => $job_service->variable_type,
+                'variables' => $job_service->variables,
+                'option' => $job_service->option,
+                'quantity' => $job_service->quantity
+            ]);
         }
     }
 
