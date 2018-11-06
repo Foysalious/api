@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\CustomerFavorite;
+use App\Models\Job;
 use App\Models\Service;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use DB;
 
 class CustomerFavoriteController extends Controller
@@ -13,12 +15,13 @@ class CustomerFavoriteController extends Controller
     public function index($customer, Request $request)
     {
         $customer = $request->customer;
-        $customer->load(['favorites' => function ($q) {
+        list($offset, $limit) = calculatePagination($request);
+        $customer->load(['favorites' => function ($q) use($offset, $limit) {
             $q->with(['services', 'partner' => function ($q) {
                 $q->select('id', 'name', 'logo');
             }, 'category' => function ($q) {
                 $q->select('id', 'name', 'slug', 'icon', 'icon_color');
-            }]);
+            }])->skip($offset)->take($limit);
         }]);
         $favorites = $customer->favorites->each(function (&$favorite, $key) {
             $services = [];
@@ -52,17 +55,30 @@ class CustomerFavoriteController extends Controller
     public function store($customer, Request $request)
     {
         try {
-            $data = json_decode($request->data);
-            foreach ($data as $category) {
-                if (count($category->services) == 0) {
-                    return api_response($request, null, 400);
+            $this->validate($request, [
+                'job_id' => 'unique:customer_favourites'
+            ]);
+            if ($request->job_id){
+                $job = Job::find($request->job_id);
+                $response = $this->saveWithJOb($job, $request->customer);
+            } else{
+                $data = json_decode($request->data);
+                foreach ($data as $category) {
+                    if (count($category->services) == 0) {
+                        return api_response($request, null, 400);
+                    }
                 }
+                $response = $this->save(json_decode($request->data), $request->customer);
             }
-            if ($response = $this->save(json_decode($request->data), $request->customer)) {
+
+            if ($response) {
                 return api_response($request, 1, 200);
             } else {
                 return api_response($request, null, 500);
             }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
@@ -81,6 +97,45 @@ class CustomerFavoriteController extends Controller
             return true;
         } catch (QueryException $e) {
             return false;
+        }
+    }
+
+    private function saveWithJOb(Job $job, $customer)
+    {
+        try {
+            DB::transaction(function () use ($job, $customer) {
+                $favorite = new CustomerFavorite([
+                    'category_id' => (int)$job->category_id,
+                    'name' => $job->category->name,
+                    'job_id' => $job->id,
+                    'partner_id' => $job->partnerOrder->partner_id,
+                    'additional_info' => $job->job_additional_info,
+                    'preferred_time' => $job->preferred_time,
+                    'schedule_date' => $job->schedule_date,
+                    'total_price' => $job->partnerOrder->calculate(true)->totalPrice,
+                    'delivery_address_id' => $job->partnerOrder->order->delivery_address_id ?: $job->partnerOrder->order->findDeliveryIdFromAddressString(),
+                    'location_id' => $job->partnerOrder->order->location_id,
+
+                ]);
+                $customer->favorites()->save($favorite);
+                $this->saveServicesFromJobServices($favorite, $job->jobServices);
+            });
+            return true;
+        } catch (QueryException $e) {
+            return false;
+        }
+    }
+
+    private function saveServicesFromJobServices($favorite, $job_services)
+    {
+        foreach ($job_services as $job_service) {
+            $favorite->services()->attach($job_service->service_id, [
+                'name' => $job_service->name,
+                'variable_type' => $job_service->variable_type,
+                'variables' => $job_service->variables,
+                'option' => $job_service->option,
+                'quantity' => $job_service->quantity
+            ]);
         }
     }
 
