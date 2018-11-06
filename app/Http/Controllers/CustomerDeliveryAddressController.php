@@ -21,7 +21,7 @@ class CustomerDeliveryAddressController extends Controller
             $location = null;
             if ($request->has('lat') && $request->has('lng')) {
                 $hyper_location = HyperLocal::insidePolygon($request->lat, $request->lng)->first();
-                $location = $hyper_location->location;
+                if ($hyper_location) $location = $hyper_location->location;
                 if ($location == null) return api_response($request, null, 404, ['message' => "No address at this location"]);
             }
             $customer_order_addresses = $customer->orders()->selectRaw('delivery_address,count(*) as c')->groupBy('delivery_address')->orderBy('c', 'desc')->get();
