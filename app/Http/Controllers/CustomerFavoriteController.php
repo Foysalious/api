@@ -14,8 +14,10 @@ class CustomerFavoriteController extends Controller
     {
         $customer = $request->customer;
         $customer->load(['favorites' => function ($q) {
-            $q->with(['services', 'category' => function ($q) {
-                $q->select('id', 'name', 'slug', 'icon');
+            $q->with(['services', 'partner' => function ($q) {
+                $q->select('id', 'name', 'logo');
+            }, 'category' => function ($q) {
+                $q->select('id', 'name', 'slug', 'icon', 'icon_color');
             }]);
         }]);
         $favorites = $customer->favorites->each(function (&$favorite, $key) {
@@ -23,7 +25,7 @@ class CustomerFavoriteController extends Controller
             $favorite['category_name'] = $favorite->category->name;
             $favorite['category_slug'] = $favorite->category->slug;
             $favorite['category_icon'] = $favorite->category->icon;
-            $favorite['color'] = '#66CDAA';
+            $favorite['icon_color'] = $favorite->category->icon_color;
             $favorite->services->each(function ($service) use ($favorite, &$services) {
                 $pivot = $service->pivot;
                 $pivot['variables'] = json_decode($pivot['variables']);
@@ -32,10 +34,11 @@ class CustomerFavoriteController extends Controller
                 $pivot['app_thumb'] = $service->app_thumb;
                 array_push($services, $pivot);
             });
-            $favorite['total_price'] = 100;
-            $favorite['partner_id'] = 1;
-            $favorite['partner_name'] = 'BD Transport';
-            $favorite['partner_logo'] = 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/partners/logos/1483020250_bd_transport.png';
+            $partner = $favorite->partner;
+            $favorite['total_price'] = $favorite->total_price;
+            $favorite['partner_id'] = $partner ? $partner->id : null;
+            $favorite['partner_name'] = $partner ? $partner->name : null;
+            $favorite['partner_logo'] = $partner ? $partner->logo : null;
             removeRelationsAndFields($favorite);
             $favorite['services'] = $services;
         });

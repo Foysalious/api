@@ -24,4 +24,8 @@ class CustomerFavorite extends Model
         return $this->belongsToMany(Service::class, 'customer_favourite_service', 'customer_favourite_id')->withPivot($this->servicePivotColumns);
     }
 
+    public function partner()
+    {
+        return $this->belongsTo(Partner::class);
+    }
 }
