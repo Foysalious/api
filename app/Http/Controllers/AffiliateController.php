@@ -216,17 +216,33 @@ class AffiliateController extends Controller
             }
             $q = $request->get('query');
             $range = $request->get('range');
+            $sort_order = $request->get('sort_order');
+
             list($offset, $limit) = calculatePagination($request);
-            if (isset($range) && !empty($range)) {
-                $query = Affiliate::agentsWithFilter($request);
-            } else {
-                $query = Affiliate::agentsWithoutFilter($request);
-            }
+
+            $query1 = Affiliate::agentsWithFilter($request, 'affiliations');
+            $query2 = Affiliate::agentsWithFilter($request, 'partner_affiliations');
+            $agents = collect(array_merge($query1->get()->toArray(), $query2->get()->toArray()))->groupBy('id')
+                ->map(function ($data) {
+                    $dataSet = $data[0];
+                    if (isset($data[1])) {
+                        $dataSet['total_gifted_amount'] += $data[1]['total_gifted_amount'];
+                        $dataSet['total_gifted_number'] += $data[1]['total_gifted_number'];
+                    }
+                    return $dataSet;
+                })->values();
+
             if (isset($q)) {
-                $query->where('profiles.name', 'LIKE', $q . '%');
+                $agents = $agents->filter(function ($data) use ($q) {
+                    return str_contains($data['name'], $q);
+                });
             }
-            $agents = $query->skip($offset)
-                ->take($limit)->get();
+
+            if (isset($sort_order)) {
+                $agents = ($sort_order == 'asc') ? $agents->sortBy('total_gifted_amount') : $agents->sortByDesc('total_gifted_amount');
+            }
+
+            $agents = $agents->splice($offset, $limit)->toArray();
             if (count($agents) > 0) {
                 $response = ['agents' => $agents];
                 if ($range) {
@@ -276,7 +292,7 @@ class AffiliateController extends Controller
             foreach ($transactions as $transaction) {
                 $info['id'] = $transaction->affiliate->id;
                 $info['earning_amount'] = (double)$transaction->earning_amount;
-                $info['total_reference'] = $transaction->affiliate->affiliations->first()->total_reference;
+                $info['total_reference'] = $transaction->affiliate->affiliations->first() ? $transaction->affiliate->affiliations->first()->total_reference : null;
                 $info['name'] = $transaction->affiliate->profile->name;
                 $info['picture'] = $transaction->affiliate->profile->pro_pic;
                 array_push($final, $info);
@@ -295,9 +311,19 @@ class AffiliateController extends Controller
             if ($affiliate->is_ambassador == 0) {
                 return api_response($request, null, 403);
             }
+
+            $partner_affiliation_total_amount = DB::select('SELECT SUM(affiliate_transactions.amount) as total_amount FROM affiliate_transactions 
+                    LEFT JOIN `partner_affiliations` ON `affiliate_transactions`.`affiliation_id` = `partner_affiliations`.`id` 
+                    LEFT JOIN `affiliates` ON `partner_affiliations`.`affiliate_id` = `affiliates`.`id` 
+                    WHERE `affiliate_transactions`.`affiliation_type` = \'App\\\Models\\\PartnerAffiliation\'
+                    AND affiliate_transactions.affiliate_id = ? AND is_gifted = 1
+                    AND affiliates.under_ambassador_since < affiliate_transactions.created_at', [$affiliate->id]
+            );
+            $total_amount = $partner_affiliation_total_amount[0]->total_amount ? : 0;
+
             $info = collect();
             $info->put('agent_count', $affiliate->agents->count());
-            $info->put('earning_amount', $affiliate->agents->sum('total_gifted_amount'));
+            $info->put('earning_amount', $affiliate->agents->sum('total_gifted_amount') + (double)$total_amount);
             $info->put('total_refer', Affiliation::totalRefer($affiliate->id)->count());
             $info->put('sp_count', PartnerAffiliation::spCount($affiliate->id)->count());
             return api_response($request, $info, 200, ['info' => $info->all()]);
@@ -316,7 +342,11 @@ class AffiliateController extends Controller
             }
             $info = collect();
             $agent = $request->affiliate->agents()->where('id', $agent_id)->first();
+            $sp = Affiliate::agentsWithFilter($request, 'partner_affiliations')->get()->filter(function ($d) use ($agent_id) {
+                return $d['id'] == $agent_id;
+            })->first();
             $gift_amount = $agent ? $agent->total_gifted_amount : 0;
+            $gift_amount += $sp ? $sp->total_gifted_amount : 0;
             $info->put('life_time_gift', $gift_amount);
             return api_response($request, $info, 200, $info->all());
         } catch (\Throwable $e) {

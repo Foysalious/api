@@ -25,20 +25,22 @@ class AffiliateEarning implements PartnerAffiliationEarning
         } else {
             $ambassador = $affiliate->ambassador;
             $log = "Earned $ambassador_reward tk for sp reference by affiliate: " . $affiliate->name . " (#$affiliation->id)";
-            $this->creditWalletForPartnerAffiliation($affiliation, $ambassador_reward, $ambassador, $log);
+            $is_gifted = 1;
+            $this->creditWalletForPartnerAffiliation($affiliation, $ambassador_reward, $ambassador, $log, $is_gifted);
 
             $log = "Earned $affiliate_reward tk for sp reference: " . $affiliation->partner->name . " (#$affiliation->id)";
             $this->creditWalletForPartnerAffiliation($affiliation, $affiliate_reward, $affiliate, $log);
         }
     }
 
-    private function creditWalletForPartnerAffiliation(PartnerAffiliation $affiliation, $reward, Affiliate $affiliate, $log)
+    private function creditWalletForPartnerAffiliation(PartnerAffiliation $affiliation, $reward, Affiliate $affiliate, $log, $is_gifted = 0)
     {
         $data = [
             'affiliation_type' => get_class($affiliation),
             'affiliation_id' => $affiliation->id,
             'type' => 'Credit',
             'log' => $log,
+            'is_gifted' => $is_gifted,
             'amount' => $reward
         ];
         $this->affiliateRepo->creditWallet($affiliate, $reward, $data);
