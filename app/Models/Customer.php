@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Models;
+<?php namespace App\Models;
 
 use App\Sheba\Payment\Rechargable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -35,7 +33,6 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
         'remember_token',
         'reference_code', 'referrer_id', 'profile_id'
     ];
-
     protected $hidden = [
         'password', 'remember_token',
     ];
@@ -102,7 +99,6 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
             return $order->voucher;
         })->unique();
     }
-
 
     public function nthOrders(...$n)
     {
