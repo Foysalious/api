@@ -6,12 +6,15 @@ use Sheba\Payment\Wallet;
 use Carbon\Carbon;
 use Sheba\Dal\Complain\Model as Complain;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\TopUp\TopUpAgent;
+use Sheba\TopUp\TopUpTrait;
 use Sheba\Voucher\VoucherCodeGenerator;
 use DB;
 
-class Partner extends Model implements Rewardable
+class Partner extends Model implements Rewardable, TopUpAgent
 {
     use Wallet;
+    use TopUpTrait;
 
     protected $guarded = ['id',];
     protected $dates = ['last_billed_date', 'billing_start_date'];
@@ -275,7 +278,6 @@ class Partner extends Model implements Rewardable
         return $this->hasOne(PartnerBankInformation::class);
     }
 
-
     public function affiliation()
     {
         return $this->belongsTo(PartnerAffiliation::class, 'affiliation_id');
@@ -378,5 +380,11 @@ class Partner extends Model implements Rewardable
     public function impressionDeductions()
     {
         return $this->hasMany(ImpressionDeduction::class);
+    }
+
+    public function topUpTransaction($amount, $log)
+    {
+        $this->debitWallet($amount);
+        $this->walletTransaction(['amount' => $amount, 'type' => 'Debit', 'log' => $log]);
     }
 }
