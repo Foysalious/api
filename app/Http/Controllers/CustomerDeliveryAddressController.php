@@ -51,14 +51,14 @@ class CustomerDeliveryAddressController extends Controller
             $addresses = $customer->delivery_addresses;
             $address_validator = new AddressValidator();
             if ($address_validator->isAddressNameExists($addresses, $request->address)) return api_response($request, null, 400, ['message' => "There is almost a same address exits with this name!"]);
+            $delivery_address = new CustomerDeliveryAddress();
+            $delivery_address->customer_id = $customer->id;
             $hyper_local = null;
             if ($request->has('lat') && $request->has('lng')) {
                 if ($address_validator->isAddressLocationExists($addresses, new Coords($request->lat, $request->lng))) return api_response($request, null, 400, ['message' => "There is already a address exits at this location!"]);
                 $hyper_local = HyperLocal::insidePolygon($request->lat, $request->lng)->with('location')->first();
+                $delivery_address->geo_informations = json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]);
             }
-            $delivery_address = new CustomerDeliveryAddress();
-            $delivery_address->customer_id = $customer->id;
-            $delivery_address->geo_informations = json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]);
             $delivery_address->location_id = $hyper_local ? $hyper_local->location_id : null;
             $delivery_address = $this->setAddressProperties($delivery_address, $request);
             $this->setModifier($customer);

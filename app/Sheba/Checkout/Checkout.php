@@ -8,6 +8,7 @@ use App\Models\CustomerDeliveryAddress;
 use App\Models\InfoCall;
 use App\Models\Job;
 use App\Models\JobService;
+use App\Models\Location;
 use App\Models\Order;
 use App\Models\PartnerOrder;
 use App\Models\PartnerService;
@@ -72,7 +73,8 @@ class Checkout
 
     private function makeOrderData($request)
     {
-        $data['location_id'] = $request->location;
+        $data['location_id'] = (int)$request->location;
+        $this->orderData['location'] = Location::find($data['location_id']);
         $data['customer_id'] = $this->customer->id;
         if ($request->has('resource')) {
             $data['resource_id'] = $request->resource;
@@ -255,6 +257,8 @@ class Checkout
             if ($data['address_id'] != '' || $data['address_id'] != null) {
                 $deliver_address = CustomerDeliveryAddress::find($data['address_id']);
                 if ($deliver_address) {
+                    $deliver_address = $this->updateAddressLocation($deliver_address);
+                    $deliver_address->update();
                     return $deliver_address;
                 }
             }
@@ -264,12 +268,21 @@ class Checkout
                 $deliver_address = new CustomerDeliveryAddress();
                 $deliver_address->address = $data['address'];
                 $deliver_address->customer_id = $data['customer_id'];
+                $deliver_address = $this->updateAddressLocation($deliver_address);
                 $this->withCreateModificationField($deliver_address);
                 $deliver_address->save();
                 return $deliver_address;
             }
         }
         return null;
+    }
+
+    private function updateAddressLocation($address)
+    {
+        if (empty($address->location_id)) $address->location_id = $this->orderData->location_id;
+        $geo = $this->orderData->location->geo_informations ? json_decode($this->orderData->location->geo_informations) : null;
+        if (empty($address->geo_informations)) $address->geo_informations = $geo ? json_encode((['lat' => $geo->lat, 'lng' => $geo->lng])) : null;
+        return $address;
     }
 
     private function getVariableOptionOfService(Service $service, Array $option)
