@@ -280,7 +280,7 @@ class Checkout
     private function updateAddressLocation($address)
     {
         if (empty($address->location_id)) $address->location_id = $this->orderData['location_id'];
-        $geo = $this->orderData->location->geo_informations ? json_decode($this->orderData['location']->geo_informations) : null;
+        $geo = $this->orderData['location']->geo_informations ? json_decode($this->orderData['location']->geo_informations) : null;
         if (empty($address->geo_informations)) $address->geo_informations = $geo ? json_encode((['lat' => $geo->lat, 'lng' => $geo->lng])) : null;
         return $address;
     }
