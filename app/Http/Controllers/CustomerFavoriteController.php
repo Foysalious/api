@@ -60,7 +60,7 @@ class CustomerFavoriteController extends Controller
             ]);
             if ($request->job_id){
                 $job = Job::find($request->job_id);
-                $response = $this->saveWithJOb($job, $request->customer);
+                $response = $this->saveFromJOb($job, $request->customer);
             } else{
                 $data = json_decode($request->data);
                 foreach ($data as $category) {
@@ -100,7 +100,7 @@ class CustomerFavoriteController extends Controller
         }
     }
 
-    private function saveWithJOb(Job $job, $customer)
+    private function saveFromJOb(Job $job, $customer)
     {
         try {
             DB::transaction(function () use ($job, $customer) {
@@ -145,7 +145,8 @@ class CustomerFavoriteController extends Controller
             $service = Service::published()->where('id', (int)$service_info->id)->first();
             if ($service->category_id == (int)$favorite->category_id) {
                 $favorite->services()->attach($service->id, [
-                    'name' => $service->name, 'variable_type' => $service->variable_type,
+                    'name' => $service->name,
+                    'variable_type' => $service->variable_type,
                     'variables' => $service->isOptions() ? $service->getVariablesOfOptionsService($service_info->option) : '[]',
                     'option' => json_encode($service_info->option),
                     'quantity' => (double)$service->min_quantity <= (double)$service_info->quantity ? $service_info->quantity : $service->min_quantity
