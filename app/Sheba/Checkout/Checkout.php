@@ -109,6 +109,9 @@ class Checkout
         if ($request->has('partner_id')) {
             $data['partner_id'] = $request->partner_id;
         }
+        if ($request->has('favorite_id')) {
+            $data['favorite_id'] = $request->favorite_id;
+        }
         $data['pap_visitor_id'] = $request->has('pap_visitor_id') ? $request->pap_visitor_id : null;
         $data['created_by'] = $created_by = $request->has('created_by') ? $request->created_by : $this->customer->id;
         $data['created_by_name'] = $created_by_name = $request->has('created_by_name') ? $request->created_by_name : 'Customer - ' . $this->customer->profile->name;
@@ -245,9 +248,11 @@ class Checkout
         $order->created_by = $data['created_by'];
         $order->created_by_name = $data['created_by_name'];
         $order->partner_id = isset($data['partner_id']) ? $data['partner_id'] : null;
+
         $customer_delivery_address = $this->getDeliveryAddress($data);
         $order->delivery_address = $customer_delivery_address != null ? $customer_delivery_address->address : null;
         $order->delivery_address_id = $customer_delivery_address != null ? $customer_delivery_address->id : null;
+        $order->favorite_id = isset($data['favorite_id']) ? $data['favorite_id'] : null;
         $order->save();
         return $order;
     }
