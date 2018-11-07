@@ -21,6 +21,7 @@ use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use DB;
 use Illuminate\Http\Request;
+use Sheba\Checkout\Services\ServiceObject;
 use Sheba\ModificationFields;
 use Sheba\Voucher\VoucherSuggester;
 
@@ -52,10 +53,10 @@ class Checkout
             $data['payment_method'] = $request->payment_method == 'cod' ? 'cash-on-delivery' : ucwords($request->payment_method);
             $data['job_services'] = $this->createJobService($partner->services, $partner_list->selected_services, $data);
             $rent_car_ids = array_map('intval', explode(',', env('RENT_CAR_IDS')));
-            if (in_array(($partner_list->selected_services->first())->category_id, $rent_car_ids)) {
+            if (in_array($partner_list->selectedCategory->id, $rent_car_ids)) {
                 $data['car_rental_job_detail'] = $this->createCarRentalDetail($partner_list->selected_services->first());
             }
-            $data['category_id'] = $partner_list->selected_services->first()->category_id;
+            $data['category_id'] = $partner_list->selectedCategory->id;
             $data = $this->getVoucherData($data['job_services'], $data, $partner);
             if ($order = $this->storeInDB($data, $partner_list->selected_services, $partner)) {
                 if (isset($data['email'])) {
@@ -134,7 +135,7 @@ class Checkout
                 $preferred_time_start = (Carbon::parse(explode('-', $data['time'])[0]))->format('G:i:s');
                 $preferred_time_end = (Carbon::parse(explode('-', $data['time'])[1]))->format('G:i:s');
                 $job = Job::create([
-                    'category_id' => ($selected_services->first())->category_id,
+                    'category_id' => $data['category_id'],
                     'partner_order_id' => $partner_order->id,
                     'schedule_date' => $data['date'],
                     'preferred_time' => $preferred_time_start . '-' . $preferred_time_end,
@@ -143,7 +144,7 @@ class Checkout
                     'crm_id' => $data['crm_id'],
                     'job_additional_info' => $data['additional_information'],
                     'category_answers' => $data['category_answers'],
-                    'commission_rate' => (Category::find(($selected_services->first())->category_id))->commission($partner_order->partner_id),
+                    'commission_rate' => Category::find($data['category_id'])->commission($partner_order->partner_id),
                     'discount' => isset($data['discount']) ? $data['discount'] : 0,
                     'sheba_contribution' => isset($data['sheba_contribution']) ? $data['sheba_contribution'] : 0,
                     'partner_contribution' => isset($data['partner_contribution']) ? $data['partner_contribution'] : 0,
@@ -170,18 +171,18 @@ class Checkout
     private function createCarRentalDetail($service)
     {
         $car_rental_detail = new CarRentalJobDetail();
-        $car_rental_detail->pick_up_location_id = $service->pick_up_location_id;
-        $car_rental_detail->pick_up_location_type = $service->pick_up_location_type ? "App\\Models\\" . $service->pick_up_location_type : null;
-        $car_rental_detail->pick_up_address_geo = $service->pick_up_address_geo;
-        $car_rental_detail->pick_up_address = $service->pick_up_address;
-        $car_rental_detail->destination_location_id = $service->destination_location_id;
-        $car_rental_detail->destination_location_type = $service->destination_location_type ? "App\\Models\\" . $service->destination_location_type : null;
-        $car_rental_detail->destination_address_geo = $service->destination_address_geo;
-        $car_rental_detail->destination_address = $service->destination_address;
-        $car_rental_detail->drop_off_date = $service->drop_off_date;
-        $car_rental_detail->drop_off_time = $service->drop_off_time;
-        $car_rental_detail->estimated_distance = $service->estimated_distance;
-        $car_rental_detail->estimated_time = $service->estimated_time;
+        $car_rental_detail->pick_up_location_id = $service->pickUpLocationId;
+        $car_rental_detail->pick_up_location_type = $service->pickUpLocationType;
+        $car_rental_detail->pick_up_address_geo = json_encode(array('lat' => $service->pickUpLocationLat, 'lng' => $service->pickUpLocationLng));
+        $car_rental_detail->pick_up_address = $service->pickUpAddress;
+        $car_rental_detail->destination_location_id = $service->destinationLocationId;
+        $car_rental_detail->destination_location_type = $service->destinationLocationType;
+        $car_rental_detail->destination_address_geo = json_encode(array('lat' => $service->destinationLocationLat, 'lng' => $service->destinationLocationLng));
+        $car_rental_detail->destination_address = $service->destinationAddress;
+        $car_rental_detail->drop_off_date = $service->dropOffDate;
+        $car_rental_detail->drop_off_time = $service->dropOffTime;
+        $car_rental_detail->estimated_distance = $service->estimatedDistance;
+        $car_rental_detail->estimated_time = $service->estimatedTime;
         $car_rental_detail->created_by = $this->orderData['created_by'];
         $car_rental_detail->created_by_name = $this->orderData['created_by_name'];
         return $car_rental_detail;
@@ -191,6 +192,7 @@ class Checkout
     {
         $job_services = collect();
         foreach ($selected_services as $selected_service) {
+            /** @var ServiceObject $selected_service */
             $service = $services->where('id', $selected_service->id)->first();
             if ($service->isOptions()) {
                 $price = $this->partnerServiceRepository->getPriceOfOptionsService($service->pivot->prices, $selected_service->option);
@@ -201,7 +203,7 @@ class Checkout
             }
 
             $surcharge_amount = null;
-            if ($selected_service->is_surcharges_applicable) {
+            if ($selected_service->serviceModel->is_surcharges_applicable) {
                 $schedule_date_time = Carbon::parse($data['date'] . ' ' . explode('-', $data['time'])[0]);
                 $surcharge_amount = $this->partnerServiceRepository->getSurchargePriceOfService($service->pivot, $schedule_date_time);
                 $price = $price + ($price * $surcharge_amount / 100);
