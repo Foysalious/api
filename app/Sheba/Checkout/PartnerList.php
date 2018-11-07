@@ -13,6 +13,8 @@ use Carbon\Carbon;
 use DB;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use Sheba\Checkout\Services\RentACarServiceObject;
+use Sheba\Checkout\Services\ServiceObject;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
@@ -32,8 +34,10 @@ class PartnerList
     private $partnerServiceRepository;
     private $rentCarServicesId;
     private $skipAvailability;
-    private $selectedCategory;
+    /** @var Category */
+    public $selectedCategory;
     private $rentCarCategoryIds;
+    private $selectedServiceIds;
     use ModificationFields;
 
     public function __construct($services, $date, $time, $location)
@@ -44,8 +48,10 @@ class PartnerList
         $this->rentCarServicesId = array_map('intval', explode(',', env('RENT_CAR_SERVICE_IDS')));
         $this->rentCarCategoryIds = array_map('intval', explode(',', env('RENT_CAR_IDS')));
         $start = microtime(true);
+        $this->selectedCategory = Service::find((int)$services[0]->id)->category;
         $this->selected_services = $this->getSelectedServices($services);
-        $this->selectedCategory = Category::find($this->selected_services->first()->category_id);
+        $this->selectedServiceIds = $this->getServiceIds();
+//        $this->selectedCategory = Category::find($this->selected_services->first()->category_id);
         $time_elapsed_secs = microtime(true) - $start;
         //dump("add selected service info: " . $time_elapsed_secs * 1000);
         $this->partnerServiceRepository = new PartnerServiceRepository();
@@ -62,65 +68,19 @@ class PartnerList
     {
         $selected_services = collect();
         foreach ($services as $service) {
-            $selected_service = Service::where('id', $service->id)->publishedForAll()->first();
-            $selected_service['option'] = $service->option;
-            $selected_service['pick_up_location_id'] = isset($service->pick_up_location_id) ? $service->pick_up_location_id : null;
-            $selected_service['pick_up_location_type'] = isset($service->pick_up_location_type) ? $service->pick_up_location_type : null;
-            $selected_service['pick_up_address'] = isset($service->pick_up_address) ? $service->pick_up_address : null;
-            if ($selected_service->category_id != (int)env('RENT_CAR_OUTSIDE_ID')) {
-                $selected_service['destination_location_id'] = null;
-                $selected_service['destination_location_type'] = null;
-                $selected_service['destination_address'] = null;
-                $selected_service['drop_off_date'] = null;
-                $selected_service['drop_off_time'] = null;
-            } else {
-                $selected_service['destination_location_id'] = isset($service->destination_location_id) ? $service->destination_location_id : null;
-                $selected_service['destination_location_type'] = isset($service->destination_location_type) ? $service->destination_location_type : null;
-                $selected_service['destination_address'] = isset($service->destination_address) ? $service->destination_address : null;
-                $selected_service['drop_off_date'] = isset($service->drop_off_date) ? $service->drop_off_date : null;
-                $selected_service['drop_off_time'] = isset($service->drop_off_time) ? $service->drop_off_time : null;
-            }
-            if (in_array($selected_service->id, $this->rentCarServicesId)) {
-                $model = "App\\Models\\" . $service->pick_up_location_type;
-                $origin = $model::find($service->pick_up_location_id);
-                $selected_service['pick_up_address_geo'] = json_encode(array('lat' => $origin->lat, 'lng' => $origin->lng));
-                $model = "App\\Models\\" . $service->destination_location_type;
-                $destination = $model::find($service->destination_location_id);
-                $selected_service['destination_address_geo'] = json_encode(array('lat' => $destination->lat, 'lng' => $destination->lng));
-                $data = $this->getDistanceCalculationResult($origin->lat . ',' . $origin->lng, $destination->lat . ',' . $destination->lng);
-                $selected_service['quantity'] = (double)($data->rows[0]->elements[0]->distance->value) / 1000;
-                $selected_service['estimated_distance'] = $selected_service['quantity'];
-                $selected_service['estimated_time'] = (double)($data->rows[0]->elements[0]->duration->value) / 60;
-            } else {
-                $selected_service['quantity'] = $this->getSelectedServiceQuantity($service, (double)$selected_service->min_quantity);
-            }
-            $selected_services->push($selected_service);
+            $service = $this->selectedCategory->isRentCar() ? new RentACarServiceObject($service) : new ServiceObject($service);
+            $selected_services->push($service);
         }
         return $selected_services;
     }
 
-    private function getSelectedServiceQuantity($service, $min_quantity)
+    private function getServiceIds()
     {
-        if (isset($service->quantity)) {
-            $quantity = (double)$service->quantity;
-            return $quantity >= $min_quantity ? $quantity : $min_quantity;
-        } else {
-            return $min_quantity;
+        $service_ids = [];
+        foreach ($this->selected_services as $selected_service) {
+            $service_ids[] = $selected_service->id;
         }
-    }
-
-    private function getDistanceCalculationResult($origin, $destination)
-    {
-        $client = new Client();
-        try {
-            $res = $client->request('GET', 'https://maps.googleapis.com/maps/api/distancematrix/json',
-                [
-                    'query' => ['origins' => $origin, 'destinations' => $destination, 'key' => env('GOOGLE_DISTANCEMATRIX_KEY'), 'mode' => 'driving']
-                ]);
-            return json_decode($res->getBody());
-        } catch (RequestException $e) {
-            return null;
-        }
+        return $service_ids;
     }
 
     public function find($partner_id = null)
@@ -140,7 +100,7 @@ class PartnerList
 
         $start = microtime(true);
         $this->partners->load(['services' => function ($q) {
-            $q->whereIn('service_id', $this->selected_services->pluck('id')->unique());
+            $q->whereIn('service_id', $this->selectedServiceIds);
         }, 'categories' => function ($q) {
             $q->where('categories.id', $this->selectedCategory->id);
         }]);
@@ -172,19 +132,17 @@ class PartnerList
     {
         $has_premise = (int)request()->get('has_premise');
         $has_home_delivery = (int)request()->get('has_home_delivery');
-
-        $service_ids = $this->selected_services->pluck('id')->unique();
-        $category_ids = $this->selected_services->pluck('category_id')->unique()->toArray();
+        $category_ids = [$this->selectedCategory->id];
         $query = Partner::WhereHas('categories', function ($q) use ($category_ids, $has_premise, $has_home_delivery) {
             $q->whereIn('categories.id', $category_ids)->where('category_partner.is_verified', 1);
             if (request()->has('has_home_delivery')) $q->where('category_partner.is_home_delivery_applied', $has_home_delivery);
             if (request()->has('has_premise')) $q->where('category_partner.is_partner_premise_applied', $has_premise);
             if (!request()->has('has_home_delivery') && !request()->has('has_premise')) $q->where('category_partner.is_home_delivery_applied', 1);
-        })->whereHas('services', function ($query) use ($service_ids) {
+        })->whereHas('services', function ($query) {
             $query->whereHas('category', function ($q) {
                 $q->published();
-            })->select(DB::raw('count(*) as c'))->whereIn('services.id', $service_ids)->where([['partner_service.is_published', 1], ['partner_service.is_verified', 1]])->publishedForAll()
-                ->groupBy('partner_id')->havingRaw('c=' . count($service_ids));
+            })->select(DB::raw('count(*) as c'))->whereIn('services.id', $this->selectedServiceIds)->where([['partner_service.is_published', 1], ['partner_service.is_verified', 1]])->publishedForAll()
+                ->groupBy('partner_id')->havingRaw('c=' . count($this->selectedServiceIds));
         })->published()
             ->select('partners.id', 'partners.current_impression', 'partners.address', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet', 'partners.package_id');
         if ($partner_id != null) {
@@ -402,7 +360,7 @@ class PartnerList
                 $min_price = (double)$service->pivot->min_prices;
             }
 
-            if ($selected_service->is_surcharges_applicable) {
+            if ($selected_service->serviceModel->is_surcharges_applicable) {
                 $schedule_date_time = Carbon::parse($this->date . ' ' . explode('-', $this->time)[0]);
                 $surcharge_amount = $this->partnerServiceRepository->getSurchargePriceOfService($service->pivot, $schedule_date_time);
                 $price = $price + ($price * $surcharge_amount / 100);
@@ -430,11 +388,11 @@ class PartnerList
             $total_service_price['discounted_price'] += $service['discounted_price'];
             $total_service_price['original_price'] += $service['original_price'];
             $service['id'] = $selected_service->id;
-            $service['name'] = $selected_service->name;
+            $service['name'] = $selected_service->serviceModel->name;
             $service['option'] = $selected_service->option;
             $service['quantity'] = $selected_service->quantity;
-            $service['unit'] = $selected_service->unit;
-            list($option, $variables) = $this->getVariableOptionOfService($selected_service, $selected_service->option);
+            $service['unit'] = $selected_service->serviceModel->unit;
+            list($option, $variables) = $this->getVariableOptionOfService($selected_service->serviceModel, $selected_service->option);
             $service['questions'] = json_decode($variables);
             array_push($services, $service);
         }
