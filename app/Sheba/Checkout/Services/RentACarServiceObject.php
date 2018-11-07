@@ -24,8 +24,8 @@ class RentACarServiceObject extends ServiceObject
 
     private function setPickUpProperties()
     {
-        if (isset($this->service->pick_up_geo)) {
-            $geo = $this->service->pick_up_geo;
+        if (isset($this->service->pick_up_location_geo)) {
+            $geo = $this->service->pick_up_location_geo;
             $this->pickUpLocationLat = (double)$geo->lat;
             $this->pickUpLocationLng = (double)$geo->lng;
         } else {
@@ -40,8 +40,8 @@ class RentACarServiceObject extends ServiceObject
 
     private function setDestinationProperties()
     {
-        if (isset($this->service->destination_geo)) {
-            $geo = $this->service->destination_geo;
+        if (isset($this->service->destination_location_geo)) {
+            $geo = $this->service->destination_location_geo;
             $this->destinationLocationLat = (double)$geo->lat;
             $this->destinationLocationLng = (double)$geo->lng;
         } else {
