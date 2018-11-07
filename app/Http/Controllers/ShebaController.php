@@ -220,7 +220,7 @@ class ShebaController extends Controller
                 array(
                     'name' => 'Sheba Credit',
                     'is_published' => 1,
-                    'description' => '15% Credit Bonus',
+                    'description' => '',
                     'asset' => 'sheba_credit',
                     'method_name' => 'wallet'
                 ),

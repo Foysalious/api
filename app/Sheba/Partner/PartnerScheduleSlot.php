@@ -29,6 +29,7 @@ class PartnerScheduleSlot
     const SCHEDULE_START = '09:00:00';
     const SCHEDULE_END = '21:00:00';
     private $resources;
+    private $preparationTime;
 
     public function __construct()
     {
@@ -66,6 +67,7 @@ class PartnerScheduleSlot
         $this->resources = $this->getResources();
         $this->bookedSchedules = $this->getBookedSchedules($start, $end);
         $this->runningLeaves = $this->getLeavesBetween($start, $end);
+        $this->preparationTime = $this->partner->categories->where('id', $this->category->id)->first()->pivot->preparation_time_minutes;
         $day = $this->today->copy();
         while ($day <= $last_day) {
             $this->addAvailabilityToShebaSlots($day);
@@ -108,6 +110,7 @@ class PartnerScheduleSlot
     private function addAvailabilityToShebaSlots(Carbon $day)
     {
         $this->addAvailabilityByWorkingInformation($day);
+        $this->addAvailabilityByPreparationTime($day);
         $this->addAvailabilityByResource($day);
     }
 
@@ -154,6 +157,21 @@ class PartnerScheduleSlot
                 }
             }
             return false;
+        }
+    }
+
+    private function addAvailabilityByPreparationTime(Carbon $day)
+    {
+        if ($this->preparationTime > 0) {
+            $date_string = $day->toDateString();
+            $this->shebaSlots->each(function ($slot) use ($date_string) {
+                if ($slot->is_available) {
+                    $start_time = Carbon::parse($date_string . ' ' . $slot->start);
+                    $end_time = Carbon::parse($date_string . ' ' . $slot->end);
+                    $preparation_time = Carbon::createFromTime(Carbon::now()->hour)->addMinute(61)->addMinute($this->preparationTime);
+                    $slot['is_available'] = $preparation_time->lte($start_time) || $preparation_time->between($start_time, $end_time) ? 1 : 0;
+                }
+            });
         }
     }
 

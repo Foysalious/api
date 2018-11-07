@@ -292,7 +292,7 @@ class AffiliateController extends Controller
             foreach ($transactions as $transaction) {
                 $info['id'] = $transaction->affiliate->id;
                 $info['earning_amount'] = (double)$transaction->earning_amount;
-                $info['total_reference'] = $transaction->affiliate->affiliations->first() ? $transaction->affiliate->affiliations->first()->total_reference : null;
+                $info['total_reference'] = $transaction->affiliate->affiliations->first() ? $transaction->affiliate->affiliations->first()->total_reference : 0;
                 $info['name'] = $transaction->affiliate->profile->name;
                 $info['picture'] = $transaction->affiliate->profile->pro_pic;
                 array_push($final, $info);
@@ -319,7 +319,7 @@ class AffiliateController extends Controller
                     AND affiliate_transactions.affiliate_id = ? AND is_gifted = 1
                     AND affiliates.under_ambassador_since < affiliate_transactions.created_at', [$affiliate->id]
             );
-            $total_amount = $partner_affiliation_total_amount[0]->total_amount ? : 0;
+            $total_amount = $partner_affiliation_total_amount[0]->total_amount ?: 0;
 
             $info = collect();
             $info->put('agent_count', $affiliate->agents->count());
