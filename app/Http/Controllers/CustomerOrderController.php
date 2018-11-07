@@ -37,7 +37,7 @@ class CustomerOrderController extends Controller
                 }
                 $q->with(['partnerOrders' => function ($q) use ($filter, $offset, $limit) {
                     $q->with(['partner.resources.profile', 'order' => function ($q) {
-                        $q->select('id', 'sales_channel');
+                        $q->select('id', 'sales_channel', 'favorite_id');
                     }, 'jobs' => function ($q) {
                         $q->with(['statusChangeLogs', 'resource.profile', 'jobServices', 'customerComplains', 'category', 'review' => function ($q) {
                             $q->select('id', 'rating', 'job_id');
@@ -95,6 +95,7 @@ class CustomerOrderController extends Controller
     {
         try {
             $partner_order = PartnerOrder::find($order);
+            $partner_order['customer_favorite'] = $partner_order->order->favorite_id ? : null;
             $partner_order->calculate(true);
             $partner_order['total_paid'] = (double)$partner_order->paid;
             $partner_order['total_due'] = (double)$partner_order->due;
@@ -131,6 +132,7 @@ class CustomerOrderController extends Controller
             'readable_status' => constants('JOB_STATUSES_SHOW')[$job->status]['customer'],
             'status' => $job->status,
             'is_on_premise' => (int) $job->isOnPremise(),
+            'customer_favorite' => $partnerOrder->order->favorite_id ? : null,
             'isRentCar' => $job->isRentCar(),
             'status_color' => constants('JOB_STATUSES_COLOR')[$job->status]['customer'],
             'partner_name' => $partnerOrder->partner->name,
