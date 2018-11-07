@@ -46,15 +46,15 @@ class ServiceObject
 
     protected function build()
     {
-        $this->setCommonObject();
         $this->setService();
+        $this->setCommonObject();
         $this->setQuantity();
     }
 
     public function setCommonObject()
     {
         $this->id = (int)$this->service->id;
-        $this->option = array_map('intval', $this->service->option);
+        $this->option = $this->serviceModel->isOptions() ? array_map('intval', $this->service->option) : '[]';
     }
 
     public function setService()

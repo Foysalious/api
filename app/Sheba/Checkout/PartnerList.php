@@ -295,8 +295,8 @@ class PartnerList
             foreach ($this->selected_services as $service) {
                 array_push($serviceArray, [
                     'id' => $service->id,
-                    'quantity' => isset($service->quantity) ? $service->quantity : (double)$service->min_quantity,
-                    'option' => isset($service->option) ? $service->option : []
+                    'quantity' => $service->quantity,
+                    'option' => $service->option
                 ]);
             }
             $impression_deduction->order_details = json_encode(['services' => $serviceArray]);
