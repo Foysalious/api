@@ -1,5 +1,7 @@
 <?php namespace Sheba\TopUp;
 
+use App\Models\TopUpVendor;
+
 interface TopUpAgent
 {
     public function doRecharge($vendor_id, $mobile_number, $amount, $type);
@@ -8,5 +10,5 @@ interface TopUpAgent
 
     public function refund($amount, $log);
 
-    public function calculateCommission($amount);
+    public function calculateCommission($amount, TopUpVendor $topup_vendor);
 }
