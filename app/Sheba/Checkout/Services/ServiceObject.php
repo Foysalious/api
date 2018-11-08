@@ -32,10 +32,12 @@ class ServiceObject
     /**@var Service* */
     protected $serviceModel;
     protected $service;
+    protected $googleCalculatedCarService;
 
     public function __construct(stdClass $service)
     {
         $this->service = $service;
+        $this->googleCalculatedCarService=array_map('intval', explode(',', env('RENT_CAR_SERVICE_IDS')));
         $this->build();
     }
 
