@@ -39,8 +39,14 @@ class JobType extends GraphQlType
             'complains' => ['type' => Type::listOf(GraphQL::type('Complain'))],
             'hasComplain' => ['type' => Type::int()],
             'is_home_delivery' => ['type' => Type::int()],
-            'is_on_premise' => ['type' => Type::int()]
+            'is_on_premise' => ['type' => Type::int()],
+            'is_favorite' => ['type' => Type::int()]
         ];
+    }
+
+    protected function resolveIsFavoriteField($root, $args)
+    {
+        return $root->customerFavorite ? 1 : 0;
     }
 
     protected function resolveCompletedAtField($root, $args)
