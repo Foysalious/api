@@ -10,6 +10,6 @@ class TopUpVendor extends Model
 
     public function commissions()
     {
-        return $this->hasMany(TopUpVendorCommission::class);
+        return $this->hasMany(TopUpVendorCommission::class, 'topup_vendor_id');
     }
 }
