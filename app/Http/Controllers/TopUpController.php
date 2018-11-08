@@ -1,7 +1,7 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\TopUpVendor;
-use Carbon\Carbon;
+use App\Models\TopUpVendorCommission;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -15,13 +15,18 @@ class TopUpController extends Controller
     public function getVendor(Request $request)
     {
         try {
-            $vendors = TopUpVendor::select('id', 'name', 'is_published', 'agent_commission')->get();
+            if ($request->for == 'customer') $agent = "App\\Models\\Customer";
+            elseif ($request->for == 'partner') $agent = "App\\Models\\Partner";
+            else $agent = "App\\Models\\Affiliate";
+            $vendors = TopUpVendor::select('id', 'name', 'is_published')->get();
             $error_message = "Currently, we’re supporting";
             foreach ($vendors as $vendor) {
+                $vendor_commission = TopUpVendorCommission::where([['topup_vendor_id', $vendor->id], ['type', $agent]])->first();
                 $asset_name = strtolower(trim(preg_replace('/\s+/', '_', $vendor->name)));
                 array_add($vendor, 'asset', $asset_name);
+                array_add($vendor, 'agent_commission', $vendor_commission->agent_commission);
                 array_add($vendor, 'is_prepaid_available', 1);
-                array_add($vendor, 'is_postpaid_available', (int)($vendor->id != 6));
+                array_add($vendor, 'is_postpaid_available', ($vendor->id != 6) ? 1 : 0);
                 if ($vendor->is_published) $error_message .= ',' . $vendor->name;
             }
             $regular_expression = array(
@@ -46,11 +51,11 @@ class TopUpController extends Controller
                 'amount' => 'required|min:10|max:1000|numeric'
             ]);
 
-            if ($request->affiliate){
+            if ($request->affiliate) {
                 $agent = $request->affiliate;
-            } elseif ($request->customer){
+            } elseif ($request->customer) {
                 $agent = $request->customer;
-            } elseif($request->manager_resource) {
+            } elseif ($request->manager_resource) {
                 $agent = $request->manager_resource;
             }
 
@@ -76,8 +81,6 @@ class TopUpController extends Controller
     {
         try {
             $data = $request->all();
-            $filename = Carbon::now()->timestamp . str_random(6) . '.json';
-            Storage::disk('s3')->put("topup/fail/ssl/$filename", json_encode($data));
             $sentry = app('sentry');
             $sentry->user_context(['request' => $data]);
             $sentry->captureException(new \Exception('SSL topup fail'));
