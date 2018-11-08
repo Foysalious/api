@@ -131,7 +131,7 @@ class CustomerOrderController extends Controller
             'readable_status' => constants('JOB_STATUSES_SHOW')[$job->status]['customer'],
             'status' => $job->status,
             'is_on_premise' => (int) $job->isOnPremise(),
-            'customer_favorite' => empty($job->customerFavorite) ? 0 : 1,
+            'customer_favorite' => empty($job->customerFavorite) ? 0 : $job->customerFavorite->id,
             'isRentCar' => $job->isRentCar(),
             'status_color' => constants('JOB_STATUSES_COLOR')[$job->status]['customer'],
             'partner_name' => $partnerOrder->partner->name,
