@@ -29,9 +29,12 @@ class RentACarServiceObject extends ServiceObject
             $geo = $this->service->pick_up_location_geo;
             $this->pickUpLocationLat = (double)$geo->lat;
             $this->pickUpLocationLng = (double)$geo->lng;
+            $this->pickUpThana = $this->getThana($this->pickUpLocationLat, $this->pickUpLocationLng, Thana::where('district_id', 1)->get());
+            $this->pickUpLocationId = $this->pickUpThana->id;
+            $this->pickUpLocationType = "App\\Models\\" . class_basename($this->pickUpThana);
         } else {
             $this->pickUpLocationId = (int)$this->service->pick_up_location_id;
-            $this->pickUpLocationType = "App\\Models\\" . $this->service->pick_up_location_type;
+            $this->pickUpLocationType = "App\\Models\\Thana";
             $this->pickUpAddress = $this->service->pick_up_address;
             $origin = ($this->pickUpLocationType)::find($this->pickUpLocationId);
             $this->pickUpLocationLat = $origin->lat;
@@ -45,6 +48,9 @@ class RentACarServiceObject extends ServiceObject
             $geo = $this->service->destination_location_geo;
             $this->destinationLocationLat = (double)$geo->lat;
             $this->destinationLocationLng = (double)$geo->lng;
+            $this->destinationThana = $this->getThana($this->destinationLocationLat, $this->destinationLocationLng, Thana::where('district_id', '<>', 1)->get());
+            $this->destinationLocationId = $this->pickUpThana->id;
+            $this->destinationLocationType = "App\\Models\\Thana";
         } elseif (isset($this->service->destination_location_id) && isset($this->service->destination_location_type)) {
             $this->destinationLocationId = (int)$this->service->destination_location_id;
             $this->destinationLocationType = "App\\Models\\" . $this->service->destination_location_type;
@@ -65,8 +71,6 @@ class RentACarServiceObject extends ServiceObject
     {
         parent::setQuantity();
         if (in_array($this->service->id, $this->googleCalculatedCarService)) {
-            $this->pickUpThana = $this->getThana($this->pickUpLocationLat, $this->pickUpLocationLng, Thana::where('district_id', 1)->get());
-            $this->destinationThana = $this->getThana($this->destinationLocationLat, $this->destinationLocationLng, Thana::where('district_id', '<>', 1)->get());
             $data = $this->getDistanceCalculationResult();
             $this->quantity = (double)($data->rows[0]->elements[0]->distance->value) / 1000;
             $this->estimatedTime = (double)($data->rows[0]->elements[0]->duration->value) / 60;

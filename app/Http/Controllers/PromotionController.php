@@ -159,7 +159,7 @@ class PromotionController extends Controller
     public function autoApplyPromotion($customer, Request $request, VoucherSuggester $voucherSuggester)
     {
         try {
-            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $request->location);
+            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$request->location);
             $order_amount = $this->calculateOrderAmount($partner_list, $request->partner);
             if (!$order_amount) return api_response($request, null, 403, ['message' => 'No partner available at this combination']);
             $voucherSuggester->init($request->customer, $partner_list->selected_services[0]->serviceModel->category_id, $request->partner, (int)$request->location, $order_amount, $request->sales_channel);
