@@ -21,7 +21,7 @@ class CustomerFavoriteController extends Controller
                 $q->select('id', 'name', 'logo');
             }, 'category' => function ($q) {
                 $q->select('id', 'name', 'slug', 'icon', 'icon_color');
-            }])->skip($offset)->take($limit);
+            }])->orderBy('id', 'desc')->skip($offset)->take($limit);
         }]);
         $favorites = $customer->favorites->each(function (&$favorite, $key) {
             $services = [];
