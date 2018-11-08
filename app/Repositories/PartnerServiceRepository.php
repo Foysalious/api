@@ -86,8 +86,6 @@ class PartnerServiceRepository
     public function getSurchargePriceOfService($partner_service, Carbon $schedule_date_time)
     {
         $surcharge = PartnerServiceSurcharge::where('partner_service_id', $partner_service->id)->runningAt($schedule_date_time)->first();
-        if ($surcharge) return $surcharge->amount;
-
-        return 0;
+        return $surcharge ? $surcharge->amount : 0;
     }
 }

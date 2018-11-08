@@ -61,7 +61,6 @@ class PartnerLocationController extends Controller
             }
             return api_response($request, null, 404, ['message' => 'No partner found.']);
         }catch (ValidationException $e) {
-            dd($e->validator->errors()->all());
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {

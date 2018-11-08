@@ -194,30 +194,17 @@ class Checkout
         foreach ($selected_services as $selected_service) {
             /** @var ServiceObject $selected_service */
             $service = $services->where('id', $selected_service->id)->first();
-            if ($service->isOptions()) {
-                $price = $this->partnerServiceRepository->getPriceOfOptionsService($service->pivot->prices, $selected_service->option);
-                $min_price = empty($service->pivot->min_prices) ? 0 : $this->partnerServiceRepository->getMinimumPriceOfOptionsService($service->pivot->min_prices, $selected_service->option);
-            } else {
-                $price = (double)$service->pivot->prices;
-                $min_price = (double)$service->pivot->min_prices;
-            }
-
-            $surcharge_amount = null;
-            if ($selected_service->serviceModel->is_surcharges_applicable) {
-                $schedule_date_time = Carbon::parse($data['date'] . ' ' . explode('-', $data['time'])[0]);
-                $surcharge_amount = $this->partnerServiceRepository->getSurchargePriceOfService($service->pivot, $schedule_date_time);
-                $price = $price + ($price * $surcharge_amount / 100);
-            }
-
-            $discount = new Discount($price, $selected_service->quantity, $min_price);
-            $discount->calculateServiceDiscount((PartnerService::find($service->pivot->id))->discount());
+            $schedule_date_time = Carbon::parse($this->orderData['date'] . ' ' . explode('-', $this->orderData['time'])[0]);
+            $discount = new Discount();
+            $discount->setServiceObj($selected_service)->setServicePivot($service->pivot)->setScheduleDateTime($schedule_date_time)->initialize();
+            $discount->calculateServiceDiscount();
             $service_data = array(
                 'service_id' => $selected_service->id,
                 'quantity' => $selected_service->quantity,
                 'created_by' => $data['created_by'],
                 'created_by_name' => $data['created_by_name'],
-                'unit_price' => $price,
-                'min_price' => $min_price,
+                'unit_price' => $discount->unit_price,
+                'min_price' => $discount->min_price,
                 'sheba_contribution' => $discount->__get('sheba_contribution'),
                 'partner_contribution' => $discount->__get('partner_contribution'),
                 'discount_id' => $discount->__get('discount_id'),
@@ -225,7 +212,7 @@ class Checkout
                 'discount_percentage' => $discount->__get('discount_percentage'),
                 'name' => $service->name,
                 'variable_type' => $service->variable_type,
-                'surcharge_percentage' => $surcharge_amount
+                'surcharge_percentage' => $discount->surchargePercentage
             );
 
             list($service_data['option'], $service_data['variables']) = $this->getVariableOptionOfService($service, $selected_service->option);

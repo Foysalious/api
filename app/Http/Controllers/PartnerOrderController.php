@@ -304,7 +304,7 @@ class PartnerOrderController extends Controller
             $partner_list->addPricing();
             $partner = $partner_list->partners->first();
             $jobService_repo = new JobServiceRepository();
-            $job_services = $jobService_repo->createJobService($partner->services, $partner_list->selected_services, ['created_by' => $manager_resource->id, 'created_by_name' => $manager_resource->profile->name]);
+            $job_services = $jobService_repo->setJob($job)->createJobService($partner->services, $partner_list->selected_services, ['created_by' => $manager_resource->id, 'created_by_name' => $manager_resource->profile->name]);
             if (!$jobService_repo->existInJob($job, $job_services)) {
                 $job->jobServices()->saveMany($job_services);
                 return api_response($request, null, 200);
