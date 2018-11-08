@@ -3,6 +3,7 @@
 use Carbon\Carbon;
 use Cache;
 use Illuminate\Support\Collection;
+use Sheba\Helpers\TimeFrame;
 
 abstract class SalesStatsBeforeToday
 {
@@ -12,15 +13,17 @@ abstract class SalesStatsBeforeToday
     public $lifetime;
 
     protected $redisCacheName;
+
+    /** @var  TimeFrame */
     protected $yearTimeFrame;
     protected $weekTimeFrame;
 
     public function __construct()
     {
         $this->initializeTimeFrames();
-        $this->week = new SalesStat();
-        $this->month = new SalesStat();
-        $this->year = new SalesStat();
+        $this->week     = new SalesStat();
+        $this->month    = new SalesStat();
+        $this->year     = new SalesStat();
         $this->lifetime = new SalesStat();
     }
 
@@ -40,19 +43,15 @@ abstract class SalesStatsBeforeToday
 
     private function initializeTimeFrames()
     {
-        $startEndDate = findStartEndDateOfAMonth(0, Carbon::now()->year);
-        $year_start = $startEndDate['start_time'];
-        $year_end = $startEndDate['end_time'];
-        $this->yearTimeFrame = [$year_start, $year_end];
-        Carbon::setWeekStartsAt(Carbon::SUNDAY);
-        Carbon::setWeekEndsAt(Carbon::SATURDAY);
-        $this->weekTimeFrame = [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()];
+        $this->yearTimeFrame = (new TimeFrame())->forAYear(Carbon::now()->year);
+        $currentWeek = (new TimeFrame())->forCurrentWeek();
+        $this->weekTimeFrame = [$currentWeek->start, $currentWeek->end];
     }
 
     private function getFromRedis()
     {
         $data = Cache::store('redis')->get($this->redisCacheName);
-        if ($this->redisHasProperData($data)) {
+        if($this->redisHasProperData($data)) {
             $this->week = $data->week;
             $this->month = $data->month;
             $this->year = $data->year;
@@ -73,6 +72,5 @@ abstract class SalesStatsBeforeToday
     }
 
     abstract protected function calculateFromDB();
-
     abstract protected function sumDataForATimeFrame(SalesStat $timeFrameData, Collection $data);
 }

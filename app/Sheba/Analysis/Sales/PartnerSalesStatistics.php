@@ -52,6 +52,8 @@ class PartnerSalesStatistics
         $data->sale = $orders->sum('totalCost');
         $data->orderClosed = $orders->count();
         $data->jobServed = $orders->pluck('jobs')->map(function($jobs) { return $jobs->where('status', 'Served')->count(); })->sum();
+        $data->totalPartnerDiscount = $orders->sum('totalPartnerDiscount');
+        $data->totalCostWithoutDiscount = $orders->sum('totalCostWithoutDiscount');
         return $data;
     }
 
@@ -66,9 +68,7 @@ class PartnerSalesStatistics
     private function calculateStatsForToday()
     {
         $orders = $this->partnerOrders->getTodayClosedOrdersByPartner($this->partner);
-        $this->today->sale = $orders->sum('totalCost');
-        $this->today->orderClosed = $orders->count();
-        $this->today->jobServed = $orders->pluck('jobs')->map(function($jobs) { return $jobs->where('status', 'Served')->count(); })->sum();
+        $this->today = $this->calculateSalesFromOrders($orders);
     }
 
     private function calculateStatsBeforeToday()
@@ -93,6 +93,8 @@ class PartnerSalesStatistics
         $this->$time_frame->sale += $this->today->sale;
         $this->$time_frame->orderClosed += $this->today->orderClosed;
         $this->$time_frame->jobServed += $this->today->jobServed;
+        $this->$time_frame->totalPartnerDiscount += $this->today->totalPartnerDiscount;
+        $this->$time_frame->totalCostWithoutDiscount += $this->today->totalCostWithoutDiscount;
     }
 
     private function formatDataForView()
@@ -112,6 +114,8 @@ class PartnerSalesStatistics
             "Sale" => formatTaka($data->sale, $this->commaFormattedMoney),
             "ClosedOrder" => commaSeparate($data->orderClosed),
             "ServedJob" => commaSeparate($data->jobServed),
+            "Discount" => commaSeparate($data->totalPartnerDiscount),
+            "SaleWithoutDiscount" => commaSeparate($data->totalCostWithoutDiscount),
         ];
     }
 }
