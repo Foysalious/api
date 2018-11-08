@@ -54,7 +54,7 @@ class Checkout
             $data['job_services'] = $this->createJobService($partner->services, $partner_list->selected_services, $data);
             $rent_car_ids = array_map('intval', explode(',', env('RENT_CAR_IDS')));
             if (in_array($partner_list->selectedCategory->id, $rent_car_ids)) {
-                $data['car_rental_job_detail'] = $this->createCarRentalDetail($partner_list->selected_services->first());
+                $data['car_rental_job_detail'] = $this->createCarRentalDetail($partner_list->selected_services[0]);
             }
             $data['category_id'] = $partner_list->selectedCategory->id;
             $data = $this->getVoucherData($data['job_services'], $data, $partner);
@@ -109,7 +109,7 @@ class Checkout
         if ($request->has('partner_id')) {
             $data['partner_id'] = $request->partner_id;
         }
-        
+
         $data['pap_visitor_id'] = $request->has('pap_visitor_id') ? $request->pap_visitor_id : null;
         $data['created_by'] = $created_by = $request->has('created_by') ? $request->created_by : $this->customer->id;
         $data['created_by_name'] = $created_by_name = $request->has('created_by_name') ? $request->created_by_name : 'Customer - ' . $this->customer->profile->name;
