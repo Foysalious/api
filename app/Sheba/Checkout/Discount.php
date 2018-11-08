@@ -12,7 +12,8 @@ class Discount
 {
     protected $discount = 0;
     protected $min_price = 0;
-    protected $min_quantity = 0;
+    protected $base_quantity = 0;
+    protected $base_price = 0;
     protected $discounted_price;
     protected $unit_price;
     protected $quantity;
@@ -65,11 +66,13 @@ class Discount
         if ($this->serviceObject->serviceModel->isOptions()) {
             $this->unit_price = $this->partnerServiceRepository->getPriceOfOptionsService($this->servicePivot->prices, $this->serviceObject->option);
             $this->min_price = empty($this->servicePivot->min_prices) ? 0 : $this->partnerServiceRepository->getMinimumPriceOfOptionsService($this->servicePivot->min_prices, $this->serviceObject->option);
-            $this->min_quantity = empty($this->servicePivot->min_quantity) ? 0 : $this->partnerServiceRepository->getMinimumPriceOfOptionsService($this->servicePivot->min_quantity, $this->serviceObject->option);
+            $this->base_quantity = empty($this->servicePivot->base_quantity) ? 0 : $this->partnerServiceRepository->getMinimumPriceOfOptionsService($this->servicePivot->base_quantity, $this->serviceObject->option);
+            $this->base_price = empty($this->servicePivot->base_prices) ? 0 : $this->partnerServiceRepository->getMinimumPriceOfOptionsService($this->servicePivot->base_prices, $this->serviceObject->option);
         } else {
             $this->unit_price = (double)$this->servicePivot->prices;
             $this->min_price = (double)$this->servicePivot->min_prices;
-            $this->min_quantity = (double)$this->servicePivot->min_quantity;
+            $this->base_quantity = (double)$this->servicePivot->base_quantity;
+            $this->base_price = (double)$this->servicePivot->base_prices;
         }
         $this->quantity = $this->serviceObject->quantity;
         $this->calculateOriginalPrice();
@@ -89,14 +92,10 @@ class Discount
                 $this->discount_percentage = $running_discount->amount;
                 $this->isDiscountPercentage = 1;
                 $this->discount = ($this->original_price * $running_discount->amount) / 100;
-                if ($running_discount->hasCap() && $this->discount > $running_discount->cap) {
-                    $this->discount = $running_discount->cap;
-                }
+                if ($running_discount->hasCap() && $this->discount > $running_discount->cap) $this->discount = $running_discount->cap;
             } else {
                 $this->discount = $this->quantity * $running_discount->amount;
-                if ($this->discount > $this->original_price) {
-                    $this->discount = $this->original_price;
-                }
+                if ($this->discount > $this->original_price) $this->discount = $this->original_price;
             }
         }
         $this->discounted_price = $this->original_price - $this->discount;
@@ -104,17 +103,17 @@ class Discount
 
     private function calculateOriginalPrice()
     {
-        if (in_array($this->serviceObject->serviceModel->category_id, array_map('intval', explode(',', env('RENT_CAR_IDS')))) && ($this->min_price && $this->min_quantity)) {
-            if ($this->quantity <= $this->min_quantity) {
-                $this->original_price = $this->min_price;
-            } else {
-                $diff = $this->quantity - $this->min_quantity;
-                $this->original_price = $this->min_price + ($diff * $this->unit_price);
-            }
+        if ($this->isRentACar() && ($this->base_price && $this->base_quantity) && ($this->quantity >= $this->base_quantity)) {
+            $this->original_price = $this->base_price + ($this->unit_price * ($this->quantity - $this->base_quantity));
         } else {
-            $total = $this->unit_price * $this->quantity;
-            $this->original_price = $total < $this->min_price ? $this->min_price : $total;
+            $this->original_price = $this->unit_price * $this->quantity;
         }
+        $this->original_price = $this->original_price < $this->min_price ? $this->min_price : $this->original_price;
         if ($this->surchargePercentage > 0) $this->original_price = $this->original_price + ($this->original_price * $this->surchargePercentage / 100);
+    }
+
+    private function isRentACar()
+    {
+        return in_array($this->serviceObject->serviceModel->category_id, array_map('intval', explode(',', env('RENT_CAR_IDS'))));
     }
 }
