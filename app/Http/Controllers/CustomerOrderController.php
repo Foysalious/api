@@ -95,7 +95,6 @@ class CustomerOrderController extends Controller
     {
         try {
             $partner_order = PartnerOrder::find($order);
-            $partner_order['customer_favorite'] = $partner_order->order->favorite_id ? : null;
             $partner_order->calculate(true);
             $partner_order['total_paid'] = (double)$partner_order->paid;
             $partner_order['total_due'] = (double)$partner_order->due;
