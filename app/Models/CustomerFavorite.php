@@ -19,6 +19,11 @@ class CustomerFavorite extends Model
         return $this->belongsTo(CustomerFavorite::class);
     }
 
+    public function job()
+    {
+        return $this->belongsTo(Job::class);
+    }
+
     public function services()
     {
         return $this->belongsToMany(Service::class, 'customer_favourite_service', 'customer_favourite_id')->withPivot($this->servicePivotColumns);
