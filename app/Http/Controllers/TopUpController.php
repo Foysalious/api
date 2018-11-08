@@ -55,10 +55,10 @@ class TopUpController extends Controller
                 $agent = $request->affiliate;
             } elseif ($request->customer) {
                 $agent = $request->customer;
-            } elseif ($request->manager_resource) {
-                $agent = $request->manager_resource;
+            } elseif ($request->partner) {
+                $agent = $request->partner;
             }
-
+            
             if ($agent->wallet < (double)$request->amount) return api_response($request, null, 403, ['message' => "You don't have sufficient balance to recharge."]);
             $vendor = $vendor->getById($request->vendor_id);
             if (!$vendor->isPublished()) return api_response($request, null, 403, ['message' => 'Sorry, we don\'t support this operator at this moment']);
