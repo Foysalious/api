@@ -33,6 +33,6 @@ trait TopUpTrait
 
     public function agentCommission($topup_vendor)
     {
-        return (double)$topup_vendor->commissions()->where('type', get_class($this))->agent_commission;
+        return (double)$topup_vendor->commissions()->where('type', get_class($this))->first()->agent_commission;
     }
 }
