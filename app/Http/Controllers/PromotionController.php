@@ -138,7 +138,7 @@ class PromotionController extends Controller
             $order_amount = $this->calculateOrderAmount($partner_list, $request->partner);
             if (!$order_amount) return api_response($request, null, 403);
             $result = voucher($request->code)
-                ->check($partner_list->selected_services->first()->category_id, $request->partner, $request->location, $customer, $order_amount, $request->sales_channel)
+                ->check($partner_list->selected_services[0]->serviceModel->category_id, $request->partner, $request->location, $customer, $order_amount, $request->sales_channel)
                 ->reveal();
             if ($result['is_valid']) {
                 $voucher = $result['voucher'];
@@ -162,7 +162,7 @@ class PromotionController extends Controller
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $request->location);
             $order_amount = $this->calculateOrderAmount($partner_list, $request->partner);
             if (!$order_amount) return api_response($request, null, 403, ['message' => 'No partner available at this combination']);
-            $voucherSuggester->init($request->customer, $partner_list->selected_services->first()->category_id, $request->partner, (int)$request->location, $order_amount, $request->sales_channel);
+            $voucherSuggester->init($request->customer, $partner_list->selected_services[0]->serviceModel->category_id, $request->partner, (int)$request->location, $order_amount, $request->sales_channel);
             if ($promo = $voucherSuggester->suggest()) {
                 $applied_voucher = array('amount' => (int)$promo['amount'], 'code' => $promo['voucher']->code, 'id' => $promo['voucher']->id);
                 $valid_promos = $this->sortPromotionsByWeight($voucherSuggester->validPromos);
@@ -186,7 +186,7 @@ class PromotionController extends Controller
             $delivery_charge = (double)$category_pivot->delivery_charge;
             foreach ($partner_list->selected_services as $selected_service) {
                 $service = $partner->services->where('id', $selected_service->id)->first();
-                if ($service->isOptions()) {
+                if ($selected_service->serviceModel->isOptions()) {
                     $price = (new PartnerServiceRepository())->getPriceOfOptionsService($service->pivot->prices, $selected_service->option);
                     $min_price = empty($service->pivot->min_prices) ? 0 : (new PartnerServiceRepository())->getMinimumPriceOfOptionsService($service->pivot->min_prices, $selected_service->option);
                 } else {

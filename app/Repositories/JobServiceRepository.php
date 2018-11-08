@@ -22,7 +22,7 @@ class JobServiceRepository
         $job_services = collect();
         foreach ($selected_services as $selected_service) {
             $service = $services->where('id', $selected_service->id)->first();
-            if ($service->isOptions()) {
+            if ($selected_service->serviceModel->isOptions()) {
                 $price = (new PartnerServiceRepository())->getPriceOfOptionsService($service->pivot->prices, $selected_service->option);
                 $min_price = empty($service->pivot->min_prices) ? 0 : (new PartnerServiceRepository())->getMinimumPriceOfOptionsService($service->pivot->min_prices, $selected_service->option);
             } else {
@@ -43,10 +43,10 @@ class JobServiceRepository
                 'discount_id' => $discount->__get('discount_id'),
                 'discount' => $discount->__get('discount'),
                 'discount_percentage' => $discount->__get('discount_percentage'),
-                'name' => $service->name,
-                'variable_type' => $service->variable_type,
+                'name' => $service->serviceModel->name,
+                'variable_type' => $service->serviceModel->variable_type,
             );
-            list($service_data['option'], $service_data['variables']) = $this->getVariableOptionOfService($service, $selected_service->option);
+            list($service_data['option'], $service_data['variables']) = $this->getVariableOptionOfService($service->serviceModel, $selected_service->option);
             $job_services->push(new JobService($service_data));
         }
         return $job_services;
@@ -54,7 +54,7 @@ class JobServiceRepository
 
     private function getVariableOptionOfService(Service $service, Array $option)
     {
-        if ($service->variable_type == 'Options') {
+        if ($service->isOptions()) {
             $variables = [];
             foreach ((array)(json_decode($service->variables))->options as $key => $service_option) {
                 array_push($variables, [

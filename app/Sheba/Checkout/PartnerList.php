@@ -64,7 +64,7 @@ class PartnerList
 
     /**
      * @param $services
-     * @return \Illuminate\Support\Collection |ServiceObject
+     * @return ServiceObject[]
      */
     private function getSelectedServices($services)
     {
@@ -356,14 +356,13 @@ class PartnerList
         $category_pivot = $partner->categories->first()->pivot;
         foreach ($this->selected_services as $selected_service) {
             $service = $partner->services->where('id', $selected_service->id)->first();
-            if ($service->isOptions()) {
+            if ($selected_service->serviceModel->isOptions()) {
                 $price = $this->partnerServiceRepository->getPriceOfOptionsService($service->pivot->prices, $selected_service->option);
                 $min_price = empty($service->pivot->min_prices) ? 0 : $this->partnerServiceRepository->getMinimumPriceOfOptionsService($service->pivot->min_prices, $selected_service->option);
             } else {
                 $price = (double)$service->pivot->prices;
                 $min_price = (double)$service->pivot->min_prices;
             }
-
             if ($selected_service->serviceModel->is_surcharges_applicable) {
                 $schedule_date_time = Carbon::parse($this->date . ' ' . explode('-', $this->time)[0]);
                 $surcharge_amount = $this->partnerServiceRepository->getSurchargePriceOfService($service->pivot, $schedule_date_time);
