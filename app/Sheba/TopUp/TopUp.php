@@ -39,7 +39,7 @@ class TopUp
             $response = $response->getSuccess();
             DB::transaction(function () use ($response, $mobile_number, $amount) {
                 $this->placeTopUpOrder($response, $mobile_number, $amount);
-                $amount_after_commission = $amount - $this->agent->calculateCommission($amount);
+                $amount_after_commission = $amount - $this->agent->calculateCommission($amount, $this->model);
                 $this->agent->topUpTransaction($amount_after_commission, $amount . " has been topped up to " . $mobile_number);
                 $this->vendor->deductAmount($amount);
             });
@@ -54,7 +54,7 @@ class TopUp
         $amount = $topUpOrder->amount;
         /** @var TopUpAgent $agent */
         $agent = $topUpOrder->agent;
-        $amount_after_commission = round($amount - $agent->calculateCommission($amount), 2);
+        $amount_after_commission = round($amount - $agent->calculateCommission($amount, $this->model), 2);
         $log = "Your recharge TK $amount to $topUpOrder->payee_mobile has failed, TK $amount_after_commission is refunded in your account.";
         $agent->refund($amount_after_commission, $log);
         if ($topUpOrder->agent instanceof Affiliate) $this->sendRefundNotificationToAffiliate($topUpOrder, $log);
