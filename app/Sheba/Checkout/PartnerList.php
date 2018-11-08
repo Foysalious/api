@@ -11,8 +11,6 @@ use App\Repositories\PartnerServiceRepository;
 use App\Sheba\Partner\PartnerAvailable;
 use Carbon\Carbon;
 use DB;
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
 use Sheba\Checkout\Services\RentACarServiceObject;
 use Sheba\Checkout\Services\ServiceObject;
 use Sheba\Location\Coords;
@@ -51,7 +49,6 @@ class PartnerList
         $this->selectedCategory = Service::find((int)$services[0]->id)->category;
         $this->selected_services = $this->getSelectedServices($services);
         $this->selectedServiceIds = $this->getServiceIds();
-//        $this->selectedCategory = Category::find($this->selected_services->first()->category_id);
         $time_elapsed_secs = microtime(true) - $start;
         //dump("add selected service info: " . $time_elapsed_secs * 1000);
         $this->partnerServiceRepository = new PartnerServiceRepository();
@@ -107,8 +104,7 @@ class PartnerList
         $time_elapsed_secs = microtime(true) - $start;
         //dump("load partner service and category: " . $time_elapsed_secs * 1000);
         $start = microtime(true);
-        $selected_option_services = $this->selected_services->where('variable_type', 'Options');
-        $this->filterByOption($selected_option_services);
+        $this->filterByOption();
         $time_elapsed_secs = microtime(true) - $start;
         //dump("filter partner by option: " . $time_elapsed_secs * 1000);
 
@@ -118,6 +114,7 @@ class PartnerList
         //dump("filter partner by availability: " . $time_elapsed_secs * 1000);
         $this->calculateHasPartner();
     }
+
 
     private function findPartnersByServiceAndLocation($partner_id = null)
     {
@@ -179,13 +176,15 @@ class PartnerList
         });
     }
 
-    private function filterByOption($selected_option_services)
+    private function filterByOption()
     {
-        foreach ($selected_option_services as $selected_option_service) {
-            $this->partners = $this->partners->filter(function ($partner, $key) use ($selected_option_service) {
-                $service = $partner->services->where('id', $selected_option_service->id)->first();
-                return $this->partnerServiceRepository->hasThisOption($service->pivot->prices, implode(',', $selected_option_service->option));
-            });
+        foreach ($this->selected_services as $selected_service) {
+            if ($selected_service->serviceModel->isOptions()) {
+                $this->partners = $this->partners->filter(function ($partner, $key) use ($selected_service) {
+                    $service = $partner->services->where('id', $selected_service->id)->first();
+                    return $this->partnerServiceRepository->hasThisOption($service->pivot->prices, implode(',', $selected_service->option));
+                });
+            }
         }
     }
 
