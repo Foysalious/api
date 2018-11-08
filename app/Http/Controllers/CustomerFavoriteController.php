@@ -118,7 +118,8 @@ class CustomerFavoriteController extends Controller
                     'location_id' => $job->partnerOrder->order->location_id,
 
                 ]);
-                $customer->favorites()->save($favorite);
+                $customer_favorite = $customer->favorites()->save($favorite);
+                $job->partnerOrder->order->update(['favorite_id'=>$customer_favorite->id]);
                 $this->saveServicesFromJobServices($favorite, $job->jobServices);
             });
             return true;

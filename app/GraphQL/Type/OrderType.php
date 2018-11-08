@@ -51,7 +51,8 @@ class OrderType extends GraphQlType
             'completed_at' => ['type' => Type::string()],
             'completed_at_timestamp' => ['type' => Type::string()],
             'invoice' => ['type' => Type::string()],
-            'message' => ['type' => GraphQL::type('OrderMessage')]
+            'message' => ['type' => GraphQL::type('OrderMessage')],
+            'customer_favorite' => ['type' => Type::int()]
         ];
     }
 
