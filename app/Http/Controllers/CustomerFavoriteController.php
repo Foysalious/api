@@ -34,6 +34,7 @@ class CustomerFavoriteController extends Controller
                 $pivot['variables'] = json_decode($pivot['variables']);
                 $pivot['picture'] = $service->thumb;
                 $pivot['unit'] = $service->unit;
+                $pivot['min_quantity'] = $service->min_quantity;
                 $pivot['app_thumb'] = $service->app_thumb;
                 array_push($services, $pivot);
             });
