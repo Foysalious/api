@@ -2,9 +2,11 @@
 
 namespace App\Sheba\Checkout;
 
+use App\Exceptions\HyperLocationNotFoundException;
 use App\Jobs\DeductPartnerImpression;
 use App\Models\Category;
 use App\Models\Customer;
+use App\Models\HyperLocal;
 use App\Models\ImpressionDeduction;
 use App\Models\Partner;
 use App\Models\PartnerServiceDiscount;
@@ -30,8 +32,11 @@ class PartnerList
     public $hasPartners = false;
     public $selected_services;
     private $location;
+    private $hyperLocation;
     private $date;
     private $time;
+    private $lat;
+    private $lng;
     private $partnerServiceRepository;
     private $rentCarServicesId;
     private $skipAvailability;
@@ -41,7 +46,7 @@ class PartnerList
     private $selectedServiceIds;
     use ModificationFields;
 
-    public function __construct($services, $date, $time, $location)
+    public function __construct($services, $date, $time, $location = null)
     {
         $this->location = $location;
         $this->date = $date;
@@ -56,6 +61,13 @@ class PartnerList
         //dump("add selected service info: " . $time_elapsed_secs * 1000);
         $this->partnerServiceRepository = new PartnerServiceRepository();
         $this->skipAvailability = 0;
+    }
+
+    public function setGeo($lat, $lng)
+    {
+        $this->lat = (double)$lat;
+        $this->lng = (double)$lng;
+        return $this;
     }
 
     public function setAvailability($availability)
@@ -89,7 +101,7 @@ class PartnerList
 
     public function find($partner_id = null)
     {
-        if (is_int($this->location)) {
+        if ($this->location) {
             $start = microtime(true);
             $this->partners = $this->findPartnersByServiceAndLocation($partner_id);
             $time_elapsed_secs = microtime(true) - $start;
@@ -148,7 +160,7 @@ class PartnerList
             })->select(DB::raw('count(*) as c'))->whereIn('services.id', $this->selectedServiceIds)->where([['partner_service.is_published', 1], ['partner_service.is_verified', 1]])->publishedForAll()
                 ->groupBy('partner_id')->havingRaw('c=' . count($this->selectedServiceIds));
         })->published()
-            ->select('partners.id', 'partners.current_impression', 'partners.address', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet', 'partners.package_id');
+            ->select('partners.id', 'partners.current_impression', 'partners.geo_informations', 'partners.address', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet', 'partners.package_id');
         if ($partner_id != null) {
             $query = $query->where('partners.id', $partner_id);
         }
@@ -166,12 +178,19 @@ class PartnerList
     }
 
 
+    /**
+     * @param null $partner_id
+     * @return mixed
+     * @throws HyperLocationNotFoundException
+     */
     private function findPartnersByServiceAndGeo($partner_id = null)
     {
-        $this->partners = $this->findPartnersByService($partner_id)->filter(function ($partner) {
-            return $partner->geo_informations != null;
+        $hyper_local = HyperLocal::insidePolygon($this->lat, $this->lng)->with('location')->first();
+        if (!$hyper_local) throw new HyperLocationNotFoundException("lat : $this->lat, lng: $this->lng");
+        $this->partners = $this->findPartnersByService($partner_id)->reject(function ($partner) {
+            return $partner->geo_informations == null;
         });
-        $current = new Coords($this->location['lat'], $this->location['lng']);
+        $current = new Coords($hyper_local->location['lat'], $hyper_local->location['lng']);
         $to = $this->partners->map(function ($partner) {
             $geo = json_decode($partner->geo_informations);
             return new Coords(floatval($geo->lat), floatval($geo->lng), $partner->id);

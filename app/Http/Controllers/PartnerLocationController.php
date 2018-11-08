@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\HyperLocationNotFoundException;
 use App\Sheba\Checkout\PartnerList;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -22,8 +23,8 @@ class PartnerLocationController extends Controller
                 'lng' => 'required|numeric',
             ]);
             $partner = $request->has('partner') ? $request->partner : null;
-            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, array('lat' => (double)$request->lat, 'lng' => (double)$request->lng));
-            $partner_list->setAvailability($request->skip_availability)->find($partner);
+            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time);
+            $partner_list->setGeo($request->lat, $request->lng)->setAvailability($request->skip_availability)->find($partner);
             if ($request->has('isAvailable')) {
                 $partners = $partner_list->partners;
                 $available_partners = $partners->filter(function ($partner) {
@@ -55,12 +56,16 @@ class PartnerLocationController extends Controller
                 $partners->each(function ($partner, $key) {
                     array_forget($partner, 'wallet');
                     array_forget($partner, 'package_id');
+                    array_forget($partner, 'geo_informations');
                     removeRelationsAndFields($partner);
                 });
                 return api_response($request, $partners, 200, ['partners' => $partners->values()->all()]);
             }
             return api_response($request, null, 404, ['message' => 'No partner found.']);
-        }catch (ValidationException $e) {
+        } catch (HyperLocationNotFoundException $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 400, ['message' => 'Your are out of service area.']);
+        } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
