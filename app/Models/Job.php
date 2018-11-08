@@ -88,6 +88,11 @@ class Job extends Model
         return $this->hasOne(CustomerReview::class);
     }
 
+    public function customerFavorite()
+    {
+        return $this->hasOne(CustomerFavorite::class);
+    }
+
     public function comments()
     {
         return $this->morphMany(Comment::class, 'commentable');
