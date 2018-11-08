@@ -1,4 +1,6 @@
-<?php namespace App\Sheba\Checkout;
+<?php
+
+namespace App\Sheba\Checkout;
 
 use App\Jobs\DeductPartnerImpression;
 use App\Models\Category;
@@ -11,6 +13,7 @@ use App\Repositories\PartnerServiceRepository;
 use App\Sheba\Partner\PartnerAvailable;
 use Carbon\Carbon;
 use DB;
+use Sheba\Checkout\Pricing\RentACarPricing;
 use Sheba\Checkout\Services\RentACarServiceObject;
 use Sheba\Checkout\Services\ServiceObject;
 use Sheba\Location\Coords;
@@ -60,7 +63,6 @@ class PartnerList
         $this->skipAvailability = $availability;
         return $this;
     }
-
 
     /**
      * @param $services
@@ -284,7 +286,6 @@ class PartnerList
     {
         $this->partners = (new PartnerSort($this->partners))->get();
         $this->deductImpression();
-
     }
 
     private function deductImpression()
@@ -356,22 +357,10 @@ class PartnerList
         $category_pivot = $partner->categories->first()->pivot;
         foreach ($this->selected_services as $selected_service) {
             $service = $partner->services->where('id', $selected_service->id)->first();
-            if ($selected_service->serviceModel->isOptions()) {
-                $price = $this->partnerServiceRepository->getPriceOfOptionsService($service->pivot->prices, $selected_service->option);
-                $min_price = empty($service->pivot->min_prices) ? 0 : $this->partnerServiceRepository->getMinimumPriceOfOptionsService($service->pivot->min_prices, $selected_service->option);
-            } else {
-                $price = (double)$service->pivot->prices;
-                $min_price = (double)$service->pivot->min_prices;
-            }
-            if ($selected_service->serviceModel->is_surcharges_applicable) {
-                $schedule_date_time = Carbon::parse($this->date . ' ' . explode('-', $this->time)[0]);
-                $surcharge_amount = $this->partnerServiceRepository->getSurchargePriceOfService($service->pivot, $schedule_date_time);
-                $price = $price + ($price * $surcharge_amount / 100);
-                $service['is_surcharge_applied'] = ($surcharge_amount > 0) ? 1 : 0;
-            }
-
-            $discount = new Discount($price, $selected_service->quantity, $min_price);
-            $discount->calculateServiceDiscount(PartnerServiceDiscount::where('partner_service_id', $service->pivot->id)->running()->first());
+            $schedule_date_time = Carbon::parse($this->date . ' ' . explode('-', $this->time)[0]);
+            $discount = new Discount();
+            $discount->setServiceObj($selected_service)->setServicePivot($service->pivot)->setScheduleDateTime($schedule_date_time)->initialize();
+            $discount->calculateServiceDiscount();
             $service = [];
             $service['discount'] = $discount->discount;
             $service['cap'] = $discount->cap;
@@ -419,7 +408,7 @@ class PartnerList
 
     private function getVariableOptionOfService(Service $service, Array $option)
     {
-        if ($service->variable_type == 'Options') {
+        if ($service->isOptions()) {
             $variables = [];
             $options = implode(',', $option);
             foreach ((array)(json_decode($service->variables))->options as $key => $service_option) {

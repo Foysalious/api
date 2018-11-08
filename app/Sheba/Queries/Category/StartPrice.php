@@ -3,12 +3,7 @@
 namespace App\Sheba\Queries\Category;
 
 use App\Models\Category;
-use App\Models\Location;
 use App\Models\Partner;
-use App\Models\PartnerService;
-use App\Models\PartnerServiceDiscount;
-use App\Repositories\PartnerRepository;
-use App\Sheba\Checkout\Discount;
 use Carbon\Carbon;
 
 class StartPrice
@@ -85,10 +80,7 @@ class StartPrice
                             $prices = (array)json_decode($prices);
                             $price = (float)min($prices);
                         }
-                        $discount = new Discount($price, $service->min_quantity);
-                        $running_discount = $partnerService->discounts->first();
-                        $discount->calculateServiceDiscount($running_discount);
-                        $service_prices->push($discount->__get('discounted_price'));
+                        $service_prices->push($price);
                     }
                 }
             }

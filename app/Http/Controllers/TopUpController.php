@@ -50,7 +50,6 @@ class TopUpController extends Controller
                 'vendor_id' => 'required|exists:topup_vendors,id',
                 'amount' => 'required|min:10|max:1000|numeric'
             ]);
-
             if ($request->affiliate) {
                 $agent = $request->affiliate;
             } elseif ($request->customer) {
@@ -58,16 +57,11 @@ class TopUpController extends Controller
             } elseif ($request->manager_resource) {
                 $agent = $request->manager_resource;
             }
-
             if ($agent->wallet < (double)$request->amount) return api_response($request, null, 403, ['message' => "You don't have sufficient balance to recharge."]);
             $vendor = $vendor->getById($request->vendor_id);
             if (!$vendor->isPublished()) return api_response($request, null, 403, ['message' => 'Sorry, we don\'t support this operator at this moment']);
             $response = $top_up->setAgent($agent)->setVendor($vendor)->recharge($request->mobile, $request->amount, $request->connection_type);
-
-            if ($response)
-                return api_response($request, null, 200, ['message' => "Recharge Successful"]);
-            else
-                return api_response($request, null, 500, ['message' => "Recharge Unsuccessful"]);
+            return $response ? api_response($request, null, 200, ['message' => "Recharge Successful"]) : api_response($request, null, 500, ['message' => "Recharge Unsuccessful"]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);

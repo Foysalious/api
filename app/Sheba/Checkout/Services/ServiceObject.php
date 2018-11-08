@@ -37,7 +37,7 @@ class ServiceObject
     public function __construct(stdClass $service)
     {
         $this->service = $service;
-        $this->googleCalculatedCarService=array_map('intval', explode(',', env('RENT_CAR_SERVICE_IDS')));
+        $this->googleCalculatedCarService = array_map('intval', explode(',', env('RENT_CAR_SERVICE_IDS')));
         $this->build();
     }
 
@@ -56,7 +56,7 @@ class ServiceObject
     public function setCommonObject()
     {
         $this->id = (int)$this->service->id;
-        $this->option = $this->serviceModel->isOptions() ? array_map('intval', $this->service->option) : '[]';
+        $this->option = $this->serviceModel->isOptions() ? array_map('intval', $this->service->option) : [];
     }
 
     public function setService()

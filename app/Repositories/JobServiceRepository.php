@@ -7,14 +7,22 @@ use App\Models\JobService;
 use App\Models\PartnerService;
 use App\Models\Service;
 use App\Sheba\Checkout\Discount;
+use Carbon\Carbon;
 
 class JobServiceRepository
 {
     private $partnerServiceRepository;
+    private $job;
 
     public function __construct()
     {
         $this->partnerServiceRepository = new PartnerServiceRepository();
+    }
+
+    public function setJob(Job $job)
+    {
+        $this->job = $job;
+        return $this;
     }
 
     public function createJobService($services, $selected_services, $data)
@@ -22,22 +30,17 @@ class JobServiceRepository
         $job_services = collect();
         foreach ($selected_services as $selected_service) {
             $service = $services->where('id', $selected_service->id)->first();
-            if ($selected_service->serviceModel->isOptions()) {
-                $price = (new PartnerServiceRepository())->getPriceOfOptionsService($service->pivot->prices, $selected_service->option);
-                $min_price = empty($service->pivot->min_prices) ? 0 : (new PartnerServiceRepository())->getMinimumPriceOfOptionsService($service->pivot->min_prices, $selected_service->option);
-            } else {
-                $price = (double)$service->pivot->prices;
-                $min_price = (double)$service->pivot->min_price;
-            }
-            $discount = new Discount($price, $selected_service->quantity, $min_price);
-            $discount->calculateServiceDiscount((PartnerService::find($service->pivot->id))->discount());
+            $schedule_date_time = Carbon::parse($this->job->date . ' ' . $this->job->preferred_time_start);
+            $discount = new Discount();
+            $discount->setServiceObj($selected_service)->setServicePivot($service->pivot)->setScheduleDateTime($schedule_date_time)->initialize();
+            $discount->calculateServiceDiscount();
             $service_data = array(
                 'service_id' => $selected_service->id,
                 'quantity' => $selected_service->quantity,
                 'created_by' => $data['created_by'],
                 'created_by_name' => $data['created_by_name'],
-                'unit_price' => $price,
-                'min_price' => $min_price,
+                'unit_price' => $discount->unit_price,
+                'min_price' => $discount->min_price,
                 'sheba_contribution' => $discount->__get('sheba_contribution'),
                 'partner_contribution' => $discount->__get('partner_contribution'),
                 'discount_id' => $discount->__get('discount_id'),

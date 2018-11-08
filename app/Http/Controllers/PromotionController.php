@@ -186,15 +186,10 @@ class PromotionController extends Controller
             $delivery_charge = (double)$category_pivot->delivery_charge;
             foreach ($partner_list->selected_services as $selected_service) {
                 $service = $partner->services->where('id', $selected_service->id)->first();
-                if ($selected_service->serviceModel->isOptions()) {
-                    $price = (new PartnerServiceRepository())->getPriceOfOptionsService($service->pivot->prices, $selected_service->option);
-                    $min_price = empty($service->pivot->min_prices) ? 0 : (new PartnerServiceRepository())->getMinimumPriceOfOptionsService($service->pivot->min_prices, $selected_service->option);
-                } else {
-                    $price = (double)$service->pivot->prices;
-                    $min_price = (double)$service->pivot->min_prices;
-                }
-                $discount = new Discount($price, $selected_service->quantity, $min_price);
-                $discount->calculateServiceDiscount((PartnerService::find($service->pivot->id))->discount());
+                $schedule_date_time = Carbon::parse(request()->get('date') . ' ' . explode('-', request()->get('time'))[0]);
+                $discount = new Discount();
+                $discount->setServiceObj($selected_service)->setServicePivot($service->pivot)->setScheduleDateTime($schedule_date_time)->initialize();
+                $discount->calculateServiceDiscount();
                 if ($discount->__get('hasDiscount')) return null;
                 $order_amount += $discount->__get('discounted_price');
             }

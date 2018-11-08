@@ -3,31 +3,37 @@
 namespace App\Sheba\Checkout;
 
 use App\Models\PartnerServiceDiscount;
+use App\Models\PartnerServiceSurcharge;
+use App\Repositories\PartnerServiceRepository;
+use Illuminate\Database\Eloquent\Relations\Pivot;
+use Sheba\Checkout\Services\ServiceObject;
 
 class Discount
 {
-    private $discount = 0;
-    private $min_price = 0;
-    private $discounted_price;
-    private $unit_price;
-    private $quantity;
-    private $original_price;
-    private $sheba_contribution = 0;
-    private $partner_contribution = 0;
-    private $discount_percentage = 0;
-    private $isDiscountPercentage = 0;
-    private $amount = 0;
-    private $cap = null;
-    private $discount_id = null;
-    private $hasDiscount = 0;
+    protected $discount = 0;
+    protected $min_price = 0;
+    protected $min_quantity = 0;
+    protected $discounted_price;
+    protected $unit_price;
+    protected $quantity;
+    protected $original_price;
+    protected $sheba_contribution = 0;
+    protected $partner_contribution = 0;
+    protected $discount_percentage = 0;
+    protected $isDiscountPercentage = 0;
+    protected $surchargePercentage = 0;
+    protected $amount = 0;
+    protected $cap = null;
+    protected $discount_id = null;
+    protected $hasDiscount = 0;
+    /** @var ServiceObject */
+    protected $serviceObject;
+    protected $servicePivot;
+    protected $partnerServiceRepository;
 
-    public function __construct($unit_price, $quantity = 1, $min_price = 0)
+    public function __construct()
     {
-        $this->unit_price = (double)$unit_price;
-        $this->quantity = (double)$quantity;
-        $this->min_price = (double)$min_price;
-        $total = $this->unit_price * $this->quantity;
-        $this->original_price = $total < $min_price ? $min_price : $total;
+        $this->partnerServiceRepository = new PartnerServiceRepository();
     }
 
     public function __get($name)
@@ -35,9 +41,44 @@ class Discount
         return $this->$name;
     }
 
-    public function calculateServiceDiscount(PartnerServiceDiscount $running_discount = null)
+    public function setServiceObj(ServiceObject $serviceObject)
     {
-        if ($running_discount) {
+        $this->serviceObject = $serviceObject;
+        return $this;
+    }
+
+    public function setServicePivot(Pivot $servicePivot)
+    {
+        $this->servicePivot = $servicePivot;
+        return $this;
+    }
+
+    public function setScheduleDateTime($schedule_date_time)
+    {
+        $surcharge = PartnerServiceSurcharge::where('partner_service_id', $this->servicePivot->id)->runningAt($schedule_date_time)->first();
+        $this->surchargePercentage = $surcharge ? $surcharge->amount : 0;;
+        return $this;
+    }
+
+    public function initialize()
+    {
+        if ($this->serviceObject->serviceModel->isOptions()) {
+            $this->unit_price = $this->partnerServiceRepository->getPriceOfOptionsService($this->servicePivot->prices, $this->serviceObject->option);
+            $this->min_price = empty($this->servicePivot->min_prices) ? 0 : $this->partnerServiceRepository->getMinimumPriceOfOptionsService($this->servicePivot->min_prices, $this->serviceObject->option);
+            $this->min_quantity = empty($this->servicePivot->min_quantity) ? 0 : $this->partnerServiceRepository->getMinimumPriceOfOptionsService($this->servicePivot->min_quantity, $this->serviceObject->option);
+        } else {
+            $this->unit_price = (double)$this->servicePivot->prices;
+            $this->min_price = (double)$this->servicePivot->min_prices;
+            $this->min_quantity = (double)$this->servicePivot->min_quantity;
+        }
+        $this->quantity = $this->serviceObject->quantity;
+        $this->calculateOriginalPrice();
+        return $this;
+    }
+
+    public function calculateServiceDiscount()
+    {
+        if ($running_discount = PartnerServiceDiscount::where('partner_service_id', $this->servicePivot->id)->running()->first()) {
             $this->hasDiscount = 1;
             $this->discount_id = $running_discount->id;
             $this->cap = (double)$running_discount->cap;
@@ -59,5 +100,21 @@ class Discount
             }
         }
         $this->discounted_price = $this->original_price - $this->discount;
+    }
+
+    private function calculateOriginalPrice()
+    {
+        if (in_array($this->serviceObject->serviceModel->category_id, array_map('intval', explode(',', env('RENT_CAR_IDS')))) && ($this->min_price && $this->min_quantity)) {
+            if ($this->quantity <= $this->min_quantity) {
+                $this->original_price = $this->min_price;
+            } else {
+                $diff = $this->quantity - $this->min_quantity;
+                $this->original_price = $this->min_price + ($diff * $this->unit_price);
+            }
+        } else {
+            $total = $this->unit_price * $this->quantity;
+            $this->original_price = $total < $this->min_price ? $this->min_price : $total;
+        }
+        if ($this->surchargePercentage > 0) $this->original_price = $this->original_price + ($this->original_price * $this->surchargePercentage / 100);
     }
 }
