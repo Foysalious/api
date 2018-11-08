@@ -342,7 +342,6 @@ class PartnerList
         });
         $this->partners = $available_partners->merge($unavailable_partners);
         $this->rejectShebaHelpDesk();
-
     }
 
     private function calculateServicePricingAndBreakdownOfPartner($partner)

@@ -40,7 +40,8 @@ class JobType extends GraphQlType
             'hasComplain' => ['type' => Type::int()],
             'is_home_delivery' => ['type' => Type::int()],
             'is_on_premise' => ['type' => Type::int()],
-            'is_favorite' => ['type' => Type::int()]
+            'is_favorite' => ['type' => Type::int()],
+            'customerFavorite' => ['type' => GraphQL::type('CustomerFavorite')],
         ];
     }
 
