@@ -5,15 +5,15 @@ class SalesStat
 {
     public $sale;
     public $orderClosed;
+    public $orderCreated;
     public $jobServed;
     public $profit;
     public $customerRegistered;
+    public $uniqueCustomer;
+    public $uniqueCustomerServed;
     public $collection;
-
-    /*public function __get($property)
-    {
-        if (property_exists($this, $property)) {
-            return $this->$property;
-        }
-    }*/
+    public $revenue;
+    public $complain;
+    public $totalPartnerDiscount;
+    public $totalCostWithoutDiscount;
 }
