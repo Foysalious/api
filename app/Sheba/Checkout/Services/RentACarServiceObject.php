@@ -80,7 +80,8 @@ class RentACarServiceObject extends ServiceObject
         try {
             $res = $client->request('GET', 'https://maps.googleapis.com/maps/api/distancematrix/json',
                 [
-                    'query' => ['origins' => "$this->pickUpThana->lat,$this->pickUpThana->lng", 'destinations' => "$this->destinationThana->lat,$this->destinationThana->lng",
+                    'query' => ['origins' => (string)$this->pickUpThana->lat . ',' . (string)$this->pickUpThana->lng,
+                        'destinations' => (string)$this->destinationThana->lat . ',' . (string)$this->destinationThana->lng,
                         'key' => env('GOOGLE_DISTANCEMATRIX_KEY'), 'mode' => 'driving']
                 ]);
             return json_decode($res->getBody());
