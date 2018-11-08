@@ -61,6 +61,11 @@ class PartnerList
         return $this;
     }
 
+
+    /**
+     * @param $services
+     * @return \Illuminate\Support\Collection |ServiceObject
+     */
     private function getSelectedServices($services)
     {
         $selected_services = collect();
