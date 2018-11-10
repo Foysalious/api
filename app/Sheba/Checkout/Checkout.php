@@ -260,6 +260,7 @@ class Checkout
                 $deliver_address = new CustomerDeliveryAddress();
                 $deliver_address->address = $data['address'];
                 $deliver_address->customer_id = $data['customer_id'];
+                $deliver_address->mobile = $data['delivery_mobile'];
                 $deliver_address = $this->updateAddressLocation($deliver_address);
                 $this->withCreateModificationField($deliver_address);
                 $deliver_address->save();
@@ -272,6 +273,8 @@ class Checkout
     private function updateAddressLocation($address)
     {
         if (empty($address->location_id)) $address->location_id = $this->orderData['location_id'];
+        if (empty($address->mobile)) $address->mobile = $this->orderData['delivery_mobile'];
+        if (empty($address->name)) $address->name = $this->orderData['delivery_name'];
         $geo = $this->orderData['location']->geo_informations ? json_decode($this->orderData['location']->geo_informations) : null;
         if (empty($address->geo_informations)) $address->geo_informations = $geo ? json_encode((['lat' => $geo->lat, 'lng' => $geo->lng])) : null;
         return $address;
