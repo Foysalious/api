@@ -46,7 +46,7 @@ class RentACarServiceObject extends ServiceObject
             $this->pickUpLocationLng = $origin->lng;
         }
 
-
+        if (is_null($this->pickUpThana)) throw new HyperLocationNotFoundException("You are out of service location");
     }
 
     private function setDestinationProperties()
