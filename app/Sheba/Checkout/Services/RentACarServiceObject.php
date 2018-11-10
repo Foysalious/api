@@ -50,22 +50,24 @@ class RentACarServiceObject extends ServiceObject
 
     private function setDestinationProperties()
     {
-        if (isset($this->service->destination_location_geo)) {
-            $geo = $this->service->destination_location_geo;
-            $this->destinationLocationLat = (double)$geo->lat;
-            $this->destinationLocationLng = (double)$geo->lng;
-            $this->destinationThana = $this->getThana($this->destinationLocationLat, $this->destinationLocationLng, Thana::where('district_id', '<>', 1)->get());
-            $this->destinationLocationId = $this->pickUpThana->id;
-            $this->destinationLocationType = "App\\Models\\Thana";
-        } elseif (isset($this->service->destination_location_id) && isset($this->service->destination_location_type)) {
-            $this->destinationLocationId = (int)$this->service->destination_location_id;
-            $this->destinationLocationType = "App\\Models\\" . $this->service->destination_location_type;
-            $destination = ($this->destinationLocationType)::find($this->destinationLocationId);
-            $this->destinationThana = $destination;
-            $this->destinationLocationLat = $destination->lat;
-            $this->destinationLocationLng = $destination->lng;
+        if (!in_array($this->service->id, [1043, 1044])) {
+            if (isset($this->service->destination_location_geo)) {
+                $geo = $this->service->destination_location_geo;
+                $this->destinationLocationLat = (double)$geo->lat;
+                $this->destinationLocationLng = (double)$geo->lng;
+                $this->destinationThana = $this->getThana($this->destinationLocationLat, $this->destinationLocationLng, Thana::where('district_id', '<>', 1)->get());
+                $this->destinationLocationId = $this->pickUpThana->id;
+                $this->destinationLocationType = "App\\Models\\Thana";
+            } elseif (isset($this->service->destination_location_id) && isset($this->service->destination_location_type)) {
+                $this->destinationLocationId = (int)$this->service->destination_location_id;
+                $this->destinationLocationType = "App\\Models\\" . $this->service->destination_location_type;
+                $destination = ($this->destinationLocationType)::find($this->destinationLocationId);
+                $this->destinationThana = $destination;
+                $this->destinationLocationLat = $destination->lat;
+                $this->destinationLocationLng = $destination->lng;
+            }
+            if (isset($this->service->destination_address)) $this->destinationAddress = $this->service->destination_address;
         }
-        if (isset($this->service->destination_address)) $this->destinationAddress = $this->service->destination_address;
     }
 
     private function setDropProperties()
