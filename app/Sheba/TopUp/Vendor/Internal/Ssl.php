@@ -2,22 +2,16 @@
 
 namespace Sheba\TopUp\Vendor\Internal;
 
-use Sheba\TopUp\Vendor\Response\SslResponse;
+use App\Models\TopUpVendor;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
-use SoapClient;
-use SoapFault;
 
-class Ssl
+trait Ssl
 {
-    private $clientId;
-    private $clientPassword;
-    private $topUpUrl;
+    private $ssl;
 
-    public function __construct()
+    public function __construct(SslClient $ssl)
     {
-        $this->clientId = config('ssl.topup_client_id');
-        $this->clientPassword = config('ssl.topup_client_password');
-        $this->topUpUrl = config('ssl.topup_url');
+        $this->ssl = $ssl;
     }
 
     /**
@@ -25,45 +19,27 @@ class Ssl
      * @param $amount
      * @param $type
      * @return TopUpResponse
-     * @throws SoapFault
+     * @throws \SoapFault
      */
     public function recharge($mobile_number, $amount, $type): TopUpResponse
     {
-        try {
-            ini_set("soap.wsdl_cache_enabled", '0'); // disabling WSDL cache
-            $client = new SoapClient($this->topUpUrl);
-            $guid = randomString(20, 1, 1);
-            $operator_id = $this->getOperatorId($mobile_number);
-            $connection_type = $type;
-            $sender_id = "redwan@sslwireless.com";
-            $priority = 1;
-            $s_url = "http://192.168.69.178:88/virtualrecharge/client/reply.php?s=1";
-            $f_url = config('sheba.api_url') . '/v2/top-up/fail/ssl';
-            $calling_method = "GET";
-            $create_recharge_response = $client->CreateRecharge($this->clientId, $this->clientPassword, $guid, $operator_id,
-                $mobile_number, $amount, $connection_type, $sender_id, $priority, $s_url, $f_url, $calling_method);
-            $vr_guid = $create_recharge_response->vr_guid;
-            $recharge_response = $client->InitRecharge($this->clientId, $this->clientPassword, $guid, $vr_guid);
-            $recharge_response->guid = $guid;
-            $ssl_response = new SslResponse();
-            $ssl_response->setResponse($recharge_response);
-            return $ssl_response;
-        } catch (SoapFault $exception) {
-            throw $exception;
-        }
+        return $this->ssl->recharge($mobile_number, $amount, $type);
     }
 
-    private function getOperatorId($mobile_number)
+    /**
+     * @param $amount
+     * @throws \Exception
+     */
+    public function deductAmount($amount)
     {
-        $mobile_number = formatMobile($mobile_number);
-        if (preg_match("/^(\+88017)/", $mobile_number)) {
-            return 1;
-        } elseif (preg_match("/^(\+88019)/", $mobile_number)) {
-            return 2;
-        } elseif (preg_match("/^(\+88015)/", $mobile_number)) {
-            return 5;
-        } else {
-            throw new \InvalidArgumentException('Invalid Mobile for ssl topup.');
-        }
+        TopUpVendor::whereIn('id', [4, 5, 6])->update(['amount' => $this->model->amount - $amount]);
+    }
+
+    public function refill($amount)
+    {
+        TopUpVendor::whereIn('id', [4, 5, 6])->increment('amount', $amount);
+        // $this->createNewRechargeHistory($amount, 4);
+        // $this->createNewRechargeHistory($amount, 5);
+        // $this->createNewRechargeHistory($amount, 6);
     }
 }
