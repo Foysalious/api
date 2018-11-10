@@ -32,4 +32,10 @@ abstract class Vendor
         $this->model->amount -= $amount;
         $this->model->update();
     }
+
+    public function refill($amount)
+    {
+        $this->model->amount += $amount;
+        $this->model->update();
+    }
 }

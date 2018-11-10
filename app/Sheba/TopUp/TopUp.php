@@ -9,6 +9,7 @@ use DB;
 use Sheba\TopUp\Vendor\Response\TopUpFailResponse;
 use Sheba\TopUp\Vendor\Response\TopUpSuccessResponse;
 use Sheba\TopUp\Vendor\Vendor;
+use Sheba\TopUp\Vendor\VendorFactory;
 
 class TopUp
 {
@@ -85,6 +86,9 @@ class TopUp
             $this->withUpdateModificationField($topUpOrder);
             $topUpOrder->update();
             $this->refund($topUpOrder);
+            $vendor = new VendorFactory ();
+            $vendor = $vendor->getById($topUpOrder->vendor_id);
+            $vendor->refill($topUpOrder->amount);
         });
     }
 
