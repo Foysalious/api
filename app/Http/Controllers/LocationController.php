@@ -76,12 +76,32 @@ class LocationController extends Controller
                 'lat' => 'required|numeric',
                 'lng' => 'required|numeric',
             ]);
-            $hyper_local = HyperLocal::insidePolygon($request->lat, $request->lng)->with('location')->first();
-            if ($hyper_local) {
-                return api_response($request, $hyper_local->location, 200, ['location' => collect($hyper_local->location)->only(['id', 'name'])]);
-            } else {
-                return api_response($request, null, 404);
+//            $hyper_local = HyperLocal::insidePolygon($request->lat, $request->lng)->with('location')->first();
+//            if ($hyper_local) {
+//                return api_response($request, $hyper_local->location, 200, ['location' => collect($hyper_local->location)->only(['id', 'name'])]);
+//            } else {
+//                return api_response($request, null, 404);
+//            }
+            $current = new Coords($request->lat, $request->lng);
+            $locations = Location::whereNotNull('geo_informations')->published()->get();
+            $to = $locations->map(function ($location) {
+                $geo = json_decode($location->geo_informations);
+                return new Coords(floatval($geo->lat), floatval($geo->lng), $location->id);
+            })->toArray();
+            $distance = (new Distance(DistanceStrategy::$VINCENTY))->matrix();
+            $results = $distance->from([$current])->to($to)->sortedDistance()[0];
+            $final = collect();
+            foreach ($results as $key => $result) {
+                $location = $locations->where('id', $key)->first();
+                if ($result <= (double)json_decode($location->geo_informations)->radius * 1000) {
+                    $final->push($location);
+                    break;
+                }
             }
+            if ($final->count() == 0) {
+                $final->push($locations->where('id', array_keys($results)[0])->first());
+            }
+            return api_response($request, $final->first(), 200, ['location' => collect($final->first())->only(['id', 'name'])]);
 //            $current = new Coords($request->lat, $request->lng);
 //            $to = $hyper_locals->filter(function ($hyper_local) {
 //                return $hyper_local->location->publication_status == 1;

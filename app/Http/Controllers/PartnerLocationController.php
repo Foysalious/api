@@ -34,24 +34,10 @@ class PartnerLocationController extends Controller
                 return api_response($request, $is_available, 200, ['is_available' => $is_available, 'available_partners' => count($available_partners)]);
             }
             if ($partner_list->hasPartners) {
-                $start = microtime(true);
                 $partner_list->addPricing();
-                $time_elapsed_secs = microtime(true) - $start;
-                //dump("partner pricing: " . $time_elapsed_secs * 1000);
-
-                $start = microtime(true);
                 $partner_list->addInfo();
-                $time_elapsed_secs = microtime(true) - $start;
-                //dump("total_jobs,total_jobs_of_cat,ongoing_jobs,contact_no,subscription info: " . $time_elapsed_secs * 1000);
-
-                if ($request->has('filter') && $request->filter == 'sheba') {
-                    $partner_list->sortByShebaPartnerPriority();
-                } else {
-                    $start = microtime(true);
-                    $partner_list->sortByShebaSelectedCriteria();
-                    $time_elapsed_secs = microtime(true) - $start;
-                    //dump("sort by sheba criteria: " . $time_elapsed_secs * 1000);
-                }
+                if ($request->filter == 'sheba') $partner_list->sortByShebaPartnerPriority();
+                else $partner_list->sortByShebaSelectedCriteria();
                 $partners = $partner_list->partners;
                 $partners->each(function ($partner, $key) {
                     array_forget($partner, 'wallet');

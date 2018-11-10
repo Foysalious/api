@@ -9,13 +9,11 @@ use App\Models\Customer;
 use App\Models\HyperLocal;
 use App\Models\ImpressionDeduction;
 use App\Models\Partner;
-use App\Models\PartnerServiceDiscount;
 use App\Models\Service;
 use App\Repositories\PartnerServiceRepository;
 use App\Sheba\Partner\PartnerAvailable;
 use Carbon\Carbon;
 use DB;
-use Sheba\Checkout\Pricing\RentACarPricing;
 use Sheba\Checkout\Services\RentACarServiceObject;
 use Sheba\Checkout\Services\ServiceObject;
 use Sheba\Location\Coords;
@@ -99,6 +97,10 @@ class PartnerList
         return $service_ids;
     }
 
+    /**
+     * @param null $partner_id
+     * @throws HyperLocationNotFoundException
+     */
     public function find($partner_id = null)
     {
         if ($this->location) {
