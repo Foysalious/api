@@ -3,9 +3,12 @@
 namespace Sheba\TopUp\Vendor;
 
 
+use App\Models\TopUpRechargeHistory;
 use App\Models\TopUpVendor;
+use Carbon\Carbon;
 use Sheba\TopUp\Vendor\Internal\Ssl;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
+use DB;
 
 class Banglalink extends Vendor
 {
@@ -41,5 +44,18 @@ class Banglalink extends Vendor
     public function refill($amount)
     {
         TopUpVendor::whereIn('id', [4, 5, 6])->update(['amount' => $this->model->amount + $amount]);
+        $this->createNewRechargeHistory($amount, 4);
+        $this->createNewRechargeHistory($amount, 5);
+        $this->createNewRechargeHistory($amount, 6);
     }
+
+    private function createNewRechargeHistory($amount, $vendor_id)
+    {
+        $recharge_history = new TopUpRechargeHistory();
+        $recharge_history->recharge_date = Carbon::now();
+        $recharge_history->vendor_id = $vendor_id;
+        $recharge_history->amount = $amount;
+        $recharge_history->save();
+    }
+
 }

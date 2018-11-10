@@ -83,11 +83,13 @@ class TopUpController extends Controller
             $top_up->processFailedTopUp($error_response->getTopUpOrder(), $error_response);
             return api_response($request, 1, 200);
         } catch (QueryException $e) {
+            dd($e);
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);
             $sentry->captureException($e);
             return api_response($request, null, 500);
         } catch (\Throwable $e) {
+            dd($e);
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);
             $sentry->captureException($e);
