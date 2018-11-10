@@ -36,4 +36,8 @@ class Gp extends Vendor
         TopUpVendor::whereIn('id', [4, 5, 6])->update(['amount' => $this->model->amount - $amount]);
     }
 
+    public function refill($amount)
+    {
+        TopUpVendor::whereIn('id', [4, 5, 6])->update(['amount' => $this->model->amount + $amount]);
+    }
 }
