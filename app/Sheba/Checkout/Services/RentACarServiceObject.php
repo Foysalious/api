@@ -39,7 +39,7 @@ class RentACarServiceObject extends ServiceObject
         } else {
             $this->pickUpLocationId = (int)$this->service->pick_up_location_id;
             $this->pickUpLocationType = "App\\Models\\Thana";
-            $this->pickUpAddress = $this->service->pick_up_address;
+            $this->pickUpAddress = isset($this->service->pick_up_address) ? $this->service->pick_up_address : '';
             $this->pickUpThana = ($this->pickUpLocationType)::find($this->pickUpLocationId);
             if (is_null($this->pickUpThana)) throw new HyperLocationNotFoundException("You are out of service area");
             $this->pickUpLocationLat = $this->pickUpThana->lat;
