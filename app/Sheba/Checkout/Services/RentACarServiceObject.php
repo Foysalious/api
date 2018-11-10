@@ -56,7 +56,7 @@ class RentACarServiceObject extends ServiceObject
                 $this->destinationLocationLat = (double)$geo->lat;
                 $this->destinationLocationLng = (double)$geo->lng;
                 $this->destinationThana = $this->getThana($this->destinationLocationLat, $this->destinationLocationLng, Thana::where('district_id', '<>', 1)->get());
-                $this->destinationLocationId = $this->pickUpThana->id;
+                $this->destinationLocationId = $this->destinationThana->id;
                 $this->destinationLocationType = "App\\Models\\Thana";
             } elseif (isset($this->service->destination_location_id) && isset($this->service->destination_location_type)) {
                 $this->destinationLocationId = (int)$this->service->destination_location_id;
