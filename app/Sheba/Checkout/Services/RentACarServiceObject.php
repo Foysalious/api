@@ -37,6 +37,7 @@ class RentACarServiceObject extends ServiceObject
             $this->pickUpLocationType = "App\\Models\\Thana";
             $this->pickUpAddress = $this->service->pick_up_address;
             $origin = ($this->pickUpLocationType)::find($this->pickUpLocationId);
+            $this->pickUpThana = $origin;
             $this->pickUpLocationLat = $origin->lat;
             $this->pickUpLocationLng = $origin->lng;
         }
@@ -55,6 +56,7 @@ class RentACarServiceObject extends ServiceObject
             $this->destinationLocationId = (int)$this->service->destination_location_id;
             $this->destinationLocationType = "App\\Models\\" . $this->service->destination_location_type;
             $destination = ($this->destinationLocationType)::find($this->destinationLocationId);
+            $this->destinationThana = $destination;
             $this->destinationLocationLat = $destination->lat;
             $this->destinationLocationLng = $destination->lng;
         }
