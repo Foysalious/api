@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\HyperLocationNotFoundException;
 use App\Models\Job;
 use App\Models\Partner;
 use App\Models\PartnerResource;
@@ -502,6 +503,9 @@ class PartnerController extends Controller
                 return api_response($request, $partners, 200, ['partners' => $partners->values()->all()]);
             }
             return api_response($request, null, 404, ['message' => 'No partner found.']);
+        } catch (HyperLocationNotFoundException $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 400, ['message' => 'Your are out of service area.']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);

@@ -36,6 +36,7 @@ return [
         'PSP' => 2,
         'LSP' => 1
     ],
+    'rent_a_car_districts' => [1],
     'partner_packages_on_partner_list' => [
         'ESP' => 2,
         'PSP' => 6,
