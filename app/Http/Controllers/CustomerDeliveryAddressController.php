@@ -53,6 +53,7 @@ class CustomerDeliveryAddressController extends Controller
             if ($request->has('lat') && $request->has('lng')) {
                 if ($address_validator->isAddressLocationExists($addresses, new Coords($request->lat, $request->lng))) return api_response($request, null, 400, ['message' => "There is already a address exits at this location!"]);
                 $hyper_local = HyperLocal::insidePolygon($request->lat, $request->lng)->with('location')->first();
+                if (!$hyper_local) return api_response($request, null, 400, ['message' => "You're out of our service area."]);
                 $delivery_address->geo_informations = json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]);
             }
             $delivery_address->location_id = $hyper_local ? $hyper_local->location_id : null;
@@ -69,7 +70,7 @@ class CustomerDeliveryAddressController extends Controller
 
     private function setAddressProperties($delivery_address, $request)
     {
-        $delivery_address->address = trim($request->address);
+        if ($request->has('address')) $delivery_address->address = trim($request->address);
         if ($request->has('name')) $delivery_address->name = trim(ucwords($request->name));
         if ($request->has('mobile')) $delivery_address->mobile = formatMobile($request->mobile);
         if ($request->has('flat_no')) $delivery_address->flat_no = trim($request->flat_no);
@@ -81,16 +82,18 @@ class CustomerDeliveryAddressController extends Controller
     public function update($customer, $delivery_address, Request $request)
     {
         try {
-            $this->validate($request, [
-                'address' => 'required|string'
-            ]);
             $customer = $request->customer;
             $delivery_address = CustomerDeliveryAddress::find((int)$delivery_address);
-            if (!$delivery_address) {
-                return api_response($request, null, 404, ['message' => 'Address not found']);
-            }
-            if ($delivery_address->customer_id != $customer->id) {
-                return api_response($request, null, 403);
+            if (!$delivery_address) return api_response($request, null, 404, ['message' => 'Address not found']);
+            if ($delivery_address->customer_id != $customer->id) return api_response($request, null, 403);
+            $addresses = $customer->delivery_addresses;
+            $address_validator = new AddressValidator();
+            if ($address_validator->isAddressNameExists($addresses, $request->address)) return api_response($request, null, 400, ['message' => "There is almost a same address exits with this name!"]);
+            if ($request->has('lat') && $request->has('lng')) {
+                if ($address_validator->isAddressLocationExists($addresses, new Coords((double)$request->lat, (double)$request->lng))) return api_response($request, null, 400, ['message' => "There is already a address exits at this location!"]);
+                $hyper_local = HyperLocal::insidePolygon($request->lat, $request->lng)->with('location')->first();
+                if (!$hyper_local) return api_response($request, null, 400, ['message' => "You're out of our service area."]);
+                $delivery_address->geo_informations = json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]);
             }
             $delivery_address = $this->setAddressProperties($delivery_address, $request);
             $this->setModifier($customer);
