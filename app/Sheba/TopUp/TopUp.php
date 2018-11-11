@@ -73,7 +73,8 @@ class TopUp
         $topUpOrder->transaction_details = json_encode($response->transactionDetails);
         $topUpOrder->vendor_id = $this->model->id;
         $topUpOrder->sheba_commission = ($amount * $this->model->sheba_commission) / 100;
-        $topUpOrder->agent_commission = ($amount * $this->model->agent_commission) / 100;
+        $topUpOrder->agent_commission = $this->agent->calculateCommission($amount, $this->model);
+
         $this->setModifier($this->agent);
         $this->withCreateModificationField($topUpOrder);
         $topUpOrder->save();
