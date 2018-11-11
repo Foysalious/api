@@ -46,10 +46,10 @@ class JobServiceRepository
                 'discount_id' => $discount->__get('discount_id'),
                 'discount' => $discount->__get('discount'),
                 'discount_percentage' => $discount->__get('discount_percentage'),
-                'name' => $service->serviceModel->name,
-                'variable_type' => $service->serviceModel->variable_type,
+                'name' => $selected_service->serviceModel->name,
+                'variable_type' => $selected_service->serviceModel->variable_type,
             );
-            list($service_data['option'], $service_data['variables']) = $this->getVariableOptionOfService($service->serviceModel, $selected_service->option);
+            list($service_data['option'], $service_data['variables']) = $this->getVariableOptionOfService($selected_service->serviceModel, $selected_service->option);
             $job_services->push(new JobService($service_data));
         }
         return $job_services;
