@@ -498,6 +498,7 @@ class PartnerController extends Controller
                     $partner['rating'] = round($partner->rating, 2);
                     array_forget($partner, 'wallet');
                     array_forget($partner, 'package_id');
+                    array_forget($partner, 'geo_informations');
                     removeRelationsAndFields($partner);
                 });
                 return api_response($request, $partners, 200, ['partners' => $partners->values()->all()]);

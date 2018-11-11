@@ -90,11 +90,11 @@ class PartnerList
 
     private function getServiceIds()
     {
-        $service_ids = [];
+        $service_ids = collect();
         foreach ($this->selected_services as $selected_service) {
-            $service_ids[] = $selected_service->id;
+            $service_ids->push($selected_service->id);
         }
-        return $service_ids;
+        return $service_ids->unique()->toArray();
     }
 
     /**
