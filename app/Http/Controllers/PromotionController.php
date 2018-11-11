@@ -134,7 +134,7 @@ class PromotionController extends Controller
     {
         try {
             $customer = $request->customer;
-            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $request->location);
+            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$request->location);
             $order_amount = $this->calculateOrderAmount($partner_list, $request->partner);
             if (!$order_amount) return api_response($request, null, 403);
             $result = voucher($request->code)
