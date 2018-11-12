@@ -11,6 +11,7 @@ class PartnerRoute
                 $api->get('categories', 'PartnerController@getCategories');
                 $api->get('categories/tree', 'PartnerController@getCategoriesTree');
                 $api->get('categories/{category}/services', 'PartnerController@getServices');
+                $api->get('categories/{category}/services/tree', 'PartnerController@getServicesTree');
             });
             $api->get('rewards/faqs', 'Partner\PartnerRewardController@getFaqs');
         });
