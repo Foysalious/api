@@ -130,7 +130,8 @@ class PartnerList
         //dump("filter partner by option: " . $time_elapsed_secs * 1000);
 
         $start = microtime(true);
-        if (!$this->skipAvailability) $this->addAvailability();
+        //if (!$this->skipAvailability)
+        $this->addAvailability();
         $time_elapsed_secs = microtime(true) - $start;
         //dump("filter partner by availability: " . $time_elapsed_secs * 1000);
         $this->calculateHasPartner();
@@ -231,7 +232,11 @@ class PartnerList
     {
         $this->partners->load(['workingHours', 'leaves']);
         $this->partners->each(function ($partner) {
-            $partner['is_available'] = $this->isWithinPreparationTime($partner) && (new PartnerAvailable($partner))->available($this->date, $this->time, $this->selectedCategory) ? 1 : 0;
+            if ($this->skipAvailability) {
+                $partner['is_available'] = !$partner->onIndefiniteLeave() ? 1 : 0;
+            } else {
+                $partner['is_available'] = $this->isWithinPreparationTime($partner) && (new PartnerAvailable($partner))->available($this->date, $this->time, $this->selectedCategory) ? 1 : 0;
+            }
         });
         $this->rejectShebaHelpDesk();
     }

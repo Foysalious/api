@@ -156,6 +156,12 @@ class Partner extends Model implements Rewardable, TopUpAgent
         return null;
     }
 
+    public function onIndefiniteLeave()
+    {
+        $leave = $this->runningLeave();
+        return ($leave && !$leave->end_date) ? true : false;
+    }
+
     public function hasLeave($date)
     {
         $date = $date == null ? Carbon::now() : new Carbon($date);
