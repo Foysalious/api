@@ -583,4 +583,82 @@ class PartnerController extends Controller
             return api_response($request, null, 500);
         }
     }
+    public function getCategoriesTree($partner, Request $request)
+    {
+        try {
+
+            $master_categories = [
+                [
+                    'id' => 1,
+                    "name" =>  "Appliances Repair",
+                    "app_thumb" =>  "",
+                    "secondary_category" => [
+                        [
+                            "id" => 10,
+                            "name" =>  "Refrigerator Servicing ",
+                            "published_services" => 6,
+                            "unpublished_services" => 2,
+                            "delivery_charge"  => 100
+                        ],
+                        [
+                            "id" => 11,
+                            "name" =>  "Washing Machine Repair",
+                            "published_services" => 4,
+                            "unpublished_services" => 1,
+                            "delivery_charge"  => 100
+                        ]
+                    ]
+                ],
+                [
+                    'id' => 73,
+                    "name" =>  "Gadgets Repair",
+                    "app_thumb" =>  "",
+                    "secondary_category" => [
+                        [
+                            "id" => 74,
+                            "name" =>  "Gadgets Repair",
+                            "published_services" => 5,
+                            "unpublished_services" => 0,
+                            "delivery_charge"  => 100
+                        ],
+                        [
+                            "id" => 75,
+                            "name" =>  "Laptop Servicing",
+                            "published_services" => 3,
+                            "unpublished_services" => 4,
+                            "delivery_charge"  => 10
+                        ]
+                    ]
+                ]
+            ];
+
+            return api_response($request, $master_categories, 200, ['master_categories' => $master_categories]);
+
+            /*$partner = Partner::with(['categories' => function ($query) {
+                return $query->published()->with('parent');
+            }])->find($partner);
+            // return $partner;
+            if ($partner) {
+                $master_categories = collect();
+                foreach ($partner->categories as $category) {
+                    $master_category = $category->parent;
+                    $category = $category->select('id', 'name')
+                        ->where('parent_id', $category->parent_id)->published()->get();
+                    $master_categories->push([
+                        'id' => $master_category->id,
+                        'name' => $master_category->name,
+                        'app_thumb' => $master_category->app_thumb,
+                        'secondary_category' => $category
+                    ]);
+                }
+                return api_response($request, $master_categories, 200, ['master_category' => $master_categories]);
+            }*/
+            return api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
 }
