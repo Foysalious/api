@@ -1,6 +1,5 @@
 <?php namespace App\Http\Controllers\Partner;
 
-use App\Models\Category;
 use App\Models\PartnerService;
 use Illuminate\Http\Request;
 
@@ -10,54 +9,53 @@ class PartnerServiceController extends Controller
 {
     public function index(Request $request)
     {
-        $partner_services = [
-            [
-                'id' => 236,
-                'name' => 'Trip & Travels',
-                'sub_categories' => [
-                    [
-                        'id' => 38,
-                        'name' => 'Airport Pick or Drop',
-                        'services' => [
-                            [
-                                'id' => 117,
-                                'name' => 'Full Day Car Rental - Within Dhaka ( 10 Hours )',
-                                'has_update_request' => 1,
-                                'thumb' => "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/service_resized/117/thumb100X100.jpg"
-                            ],
-                            [
-                                'id' => 118,
-                                'name' => 'Full Day Car Rental - Within Dhaka ( 10 Hours )2',
-                                'has_update_request' => 0,
-                                'thumb' => "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/service_resized/117/thumb100X100.jpg"
-                            ]
-                        ]
-                    ],
-                    [
-                        'id' => 39,
-                        'name' => 'Day Long Tour Near Dhaka',
-                        'services' => [
-                            [
-                                'id' => 6256,
-                                'name' => 'Visit Fantasy Kingdom',
-                                'has_update_request' => 0,
-                                'thumb' => "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/service_resized/117/thumb100X100.jpg"
-                            ],
-                            [
-                                'id' => 6257,
-                                'name' => 'Visit Fantasy Kingdom2',
-                                'has_update_request' => 1,
-                                'thumb' => "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/service_resized/117/thumb100X100.jpg"
-                            ],
-                        ]
-                    ]
-                ]
-            ]
-        ];
-        return api_response($request, $partner_services, 200, ['master_categories' => $partner_services]);
-//        $partner_services = PartnerService::with(['service.category.parent'])->where('partner_id', $request->partner->id)->published()->withCount(['pricesUpdates' => function ($query) {
-//            $query->status(constants('PARTNER_SERVICE_UPDATE_STATUS')['Pending']);
-//        }])->get();
-//        return $partner_services;
+        $partner_services = PartnerService::with(['service.category.parent'])->where('partner_id', $request->partner->id)->published()->withCount(['pricesUpdates' => function ($query) {
+            $query->status(constants('PARTNER_SERVICE_UPDATE_STATUS')['Pending']);
+        }])->get();
+        $master_categories = collect();
+        foreach ($partner_services as $partner_service) {
+            if (!$partner_service->service->publication_status && !$partner_service->service->is_published_for_backend) continue;
+
+            $master_category = $partner_service->service->category->parent;
+            $master_category_in_collection = $master_categories->where('id', $master_category->id)->first();
+            if (!$master_category_in_collection) {
+                $master_categories->push([
+                    'id' => $master_category->id,
+                    'name' => $master_category->name,
+                    'sub_categories' => collect([[
+                        'id' => $partner_service->service->category->id,
+                        'name' => $partner_service->service->category->name,
+                        'services' => collect([[
+                            'id' => $partner_service->id,
+                            'name' => $partner_service->service->name,
+                            'has_update_request' => $partner_service->prices_updates_count,
+                            'thumb' => $partner_service->service->app_thumb
+                        ]])
+                    ]])
+                ]);
+            } else {
+                $sub_category_in_collection = $master_category_in_collection['sub_categories']->where('id', $partner_service->service->category->id)->first();
+                if (!$sub_category_in_collection) {
+                    $master_category_in_collection['sub_categories']->push([
+                        'id' => $partner_service->service->category->id,
+                        'name' => $partner_service->service->category->name,
+                        'services' => collect([[
+                            'id' => $partner_service->id,
+                            'name' => $partner_service->service->name,
+                            'has_update_request' => $partner_service->prices_updates_count,
+                            'thumb' => $partner_service->service->app_thumb
+                        ]])
+                    ]);
+                } else {
+                    $sub_category_in_collection['services']->push([
+                        'id' => $partner_service->id,
+                        'name' => $partner_service->service->name,
+                        'has_update_request' => $partner_service->prices_updates_count,
+                        'thumb' => $partner_service->service->app_thumb
+                    ]);
+                }
+            }
+        }
+        return api_response($request, $partner_services, 200, ['master_categories' => $master_categories]);
     }
 }
