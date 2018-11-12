@@ -597,13 +597,15 @@ class PartnerController extends Controller
                             "id" => 10,
                             "name" =>  "Refrigerator Servicing ",
                             "published_services" => 6,
-                            "unpublished_services" => 2
+                            "unpublished_services" => 2,
+                            "delivery_charge"  => 100
                         ],
                         [
                             "id" => 11,
                             "name" =>  "Washing Machine Repair",
                             "published_services" => 4,
-                            "unpublished_services" => 1
+                            "unpublished_services" => 1,
+                            "delivery_charge"  => 100
                         ]
                     ]
                 ],
@@ -616,13 +618,15 @@ class PartnerController extends Controller
                             "id" => 74,
                             "name" =>  "Gadgets Repair",
                             "published_services" => 5,
-                            "unpublished_services" => 0
+                            "unpublished_services" => 0,
+                            "delivery_charge"  => 100
                         ],
                         [
                             "id" => 75,
                             "name" =>  "Laptop Servicing",
                             "published_services" => 3,
-                            "unpublished_services" => 4
+                            "unpublished_services" => 4,
+                            "delivery_charge"  => 10
                         ]
                     ]
                 ]
