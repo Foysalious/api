@@ -6,6 +6,8 @@ use App\Exceptions\HyperLocationNotFoundException;
 use App\Models\Job;
 use App\Models\Partner;
 use App\Models\PartnerResource;
+use App\Models\PartnerService;
+use App\Models\Service;
 use App\Repositories\DiscountRepository;
 use App\Repositories\NotificationRepository;
 use App\Repositories\PartnerOrderRepository;
@@ -24,11 +26,13 @@ use Illuminate\Validation\ValidationException;
 use Redis;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
 use Sheba\Manager\JobList;
+use Sheba\ModificationFields;
 use Sheba\Reward\PartnerReward;
 use Validator;
 
 class PartnerController extends Controller
 {
+    use ModificationFields;
     private $serviceRepository;
     private $partnerServiceRepository;
     private $reviewRepository;
@@ -633,7 +637,6 @@ class PartnerController extends Controller
             }
             return api_response($request, null, 404);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -643,7 +646,7 @@ class PartnerController extends Controller
     {
         try {
             if ($partner = Partner::find((int)$partner)) {
-                $services = $partner->services()->select('services.id', 'name', 'variable_type', 'services.min_quantity', 'services.variables', 'is_verified', 'publication_status')
+                $services = $partner->services()->select($this->getSelectColumnsOfService())
                     ->where('category_id', $request->category)->get();
                 if (count($services) > 0) {
                     $services->each(function (&$service) {
@@ -670,6 +673,31 @@ class PartnerController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function changePublicationStatus($partner, $category, $service, Request $request)
+    {
+        try {
+            $partner = Partner::find((int)$partner);
+            $partner_service = new PartnerService();
+            $partner_service = $partner_service->where('partner_id', $request->partner)->where('service_id', $request->service)->first();
+
+            if ($partner_service) {
+                $data['is_published'] = !$partner_service->is_published;
+                $this->setModifier($partner);
+                $partner_service->update($this->withUpdateModificationField($data));
+                return api_response($request, null, 200);
+            } else {
+                return api_response($request, null, 500);
+            }
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    private function getSelectColumnsOfService()
+    {
+        return ['services.id', 'name', 'variable_type', 'services.min_quantity', 'services.variables', 'is_verified' ,'is_published'];
     }
 
 }

@@ -5,6 +5,7 @@ use Carbon\Carbon;
 
 class PartnerService extends Model
 {
+    protected $guarded = ['id',];
     protected $table = 'partner_service';
 
     public function locations()
