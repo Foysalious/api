@@ -10,6 +10,7 @@ class PartnerRoute
                 $api->get('locations', 'PartnerController@getLocations');
                 $api->get('categories', 'PartnerController@getCategories');
                 $api->get('categories/tree', 'PartnerController@getCategoriesTree');
+                $api->get('categories/{category}', 'PartnerController@getSecondaryCategory');
                 $api->get('categories/{category}/services', 'PartnerController@getServices');
                 $api->get('categories/{category}/services/tree', 'PartnerController@getServicesTree');
                 $api->post('categories/{category}/services/{service}', 'PartnerController@changePublicationStatus');

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\HyperLocationNotFoundException;
+use App\Models\Category;
+use App\Models\CategoryPartner;
 use App\Models\Job;
 use App\Models\Partner;
 use App\Models\PartnerResource;
@@ -623,7 +625,7 @@ class PartnerController extends Controller
                         'parent_id' => $category->parent_id,
                         'thumb' => $category->thumb,
                         'app_thumb' => $category->app_thumb,
-                        'is_verified' => $category->is_verified,
+                        'is_verified' => $category->pivot->is_verified,
                         'is_home_delivery_applied' => $category->pivot->is_home_delivery_applied,
                         'is_partner_premise_applied' => $category->pivot->is_partner_premise_applied,
                         'delivery_charge' => $category->pivot->delivery_charge,
@@ -634,6 +636,25 @@ class PartnerController extends Controller
                     $master_category['secondary_category']->push($category);
                 }
                 return api_response($request, $master_categories, 200, ['master_categories' => $master_categories]);
+            }
+            return api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getSecondaryCategory($partner, $category, Request $request)
+    {
+        try {
+            $partner = Partner::find((int)$partner);
+            $category_partner = new CategoryPartner();
+            if ($partner) {
+                $category_partner = $category_partner->select($this->getSelectColumnsOfCategory())
+                    ->where('partner_id', $request->partner)->where('category_id', $request->category)->first();
+
+                $secondary_category = $category_partner;
+                return api_response($request, $secondary_category, 200, ['secondary_category' => $secondary_category]);
             }
             return api_response($request, null, 404);
         } catch (\Throwable $e) {
@@ -697,7 +718,11 @@ class PartnerController extends Controller
 
     private function getSelectColumnsOfService()
     {
-        return ['services.id', 'name', 'variable_type', 'services.min_quantity', 'services.variables', 'is_verified' ,'is_published'];
+        return ['services.id', 'name', 'is_published_for_backend', 'variable_type', 'services.min_quantity', 'services.variables', 'is_verified' ,'is_published'];
+    }
+    private function getSelectColumnsOfCategory()
+    {
+        return ['id', 'category_id', 'partner_id', 'is_home_delivery_applied', 'is_partner_premise_applied', 'delivery_charge'];
     }
 
 }
