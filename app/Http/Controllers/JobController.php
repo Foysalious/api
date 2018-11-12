@@ -72,6 +72,7 @@ class JobController extends Controller
                         $query->where('accessors.model_name', get_class($customer));
                     });
             }]);
+
             $job->partnerOrder->calculate(true);
             $job_collection = collect();
             $job_collection->put('id', $job->id);
@@ -99,6 +100,7 @@ class JobController extends Controller
             $job_collection->put('isDue', (double)$job->partnerOrder->due > 0 ? 1 : 0);
             $job_collection->put('isRentCar', $job->isRentCar());
             $job_collection->put('is_on_premise', $job->isOnPremise());
+            $job_collection->put('customer_favorite', $job->customerFavorite ? $job->customerFavorite->id : null);
             $job_collection->put('partner_address', $job->partnerOrder->partner->address);
             $job_collection->put('order_code', $job->partnerOrder->order->code());
             $job_collection->put('pick_up_address', $job->carRentalJobDetail ? $job->carRentalJobDetail->pick_up_address : null);
