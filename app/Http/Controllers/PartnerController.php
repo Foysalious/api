@@ -628,7 +628,7 @@ class PartnerController extends Controller
                 ]
             ];
 
-            return api_response($request, $master_categories, 200, ['master_category' => $master_categories]);
+            return api_response($request, $master_categories, 200, ['master_categories' => $master_categories]);
 
             /*$partner = Partner::with(['categories' => function ($query) {
                 return $query->published()->with('parent');
