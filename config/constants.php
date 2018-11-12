@@ -429,5 +429,10 @@ return [
     'JOB_ON_PREMISE' => [
         'customer' => 'customer',
         'partner' => 'partner'
+    ],
+    'PARTNER_SERVICE_UPDATE_STATUS' => [
+        'Pending' => 'Pending',
+        'Approved' => 'Approved',
+        'Rejected' => 'Rejected'
     ]
 ];

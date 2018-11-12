@@ -32,6 +32,11 @@ class PartnerService extends Model
         return $this->hasMany(PartnerServiceDiscount::class);
     }
 
+    public function pricesUpdates()
+    {
+        return $this->hasMany(PartnerServicePricesUpdate::class);
+    }
+
     public function runningDiscounts()
     {
         $now = Carbon::now();

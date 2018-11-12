@@ -20,6 +20,9 @@ class PartnerRoute
                     $api->get('/{order}', 'EShopOrderController@show');
                 });
             });
+
+            $api->get('services', 'Partner\PartnerServiceController@index');
+
             $api->get('operations', 'Partner\OperationController@index');
             $api->post('operations', 'Partner\OperationController@store');
             $api->post('register', 'CustomerController@store');
