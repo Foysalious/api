@@ -33,16 +33,17 @@ class RentACarServiceObject extends ServiceObject
             $this->pickUpLocationLat = (double)$geo->lat;
             $this->pickUpLocationLng = (double)$geo->lng;
             $this->pickUpThana = $this->getThana($this->pickUpLocationLat, $this->pickUpLocationLng, Thana::all());
-            if (!in_array($this->pickUpThana->district_id, config('sheba.rent_a_car_districts'))) throw new HyperLocationNotFoundException("You are out of service area");
             $this->pickUpLocationId = $this->pickUpThana->id;
             $this->pickUpLocationType = "App\\Models\\" . class_basename($this->pickUpThana);
         } else {
             $this->pickUpLocationId = (int)$this->service->pick_up_location_id;
             $this->pickUpLocationType = "App\\Models\\Thana";
             $this->pickUpThana = ($this->pickUpLocationType)::find($this->pickUpLocationId);
-            if (is_null($this->pickUpThana)) throw new HyperLocationNotFoundException("You are out of service area");
             $this->pickUpLocationLat = $this->pickUpThana->lat;
             $this->pickUpLocationLng = $this->pickUpThana->lng;
+        }
+        if (!in_array($this->pickUpThana->district_id, config('sheba.rent_a_car_pickup_district_ids'))) {
+            throw new HyperLocationNotFoundException("Got " . $this->pickUpThana->name . '(' . $this->pickUpThana->id . ') for pickup');
         }
         if (isset($this->service->pick_up_address)) $this->pickUpAddress = $this->service->pick_up_address;
 
@@ -55,7 +56,7 @@ class RentACarServiceObject extends ServiceObject
                 $geo = $this->service->destination_location_geo;
                 $this->destinationLocationLat = (double)$geo->lat;
                 $this->destinationLocationLng = (double)$geo->lng;
-                $this->destinationThana = $this->getThana($this->destinationLocationLat, $this->destinationLocationLng, Thana::where('district_id', '<>', 1)->get());
+                $this->destinationThana = $this->getThana($this->destinationLocationLat, $this->destinationLocationLng, Thana::all());
                 $this->destinationLocationId = $this->destinationThana->id;
                 $this->destinationLocationType = "App\\Models\\Thana";
             } elseif (isset($this->service->destination_location_id) && isset($this->service->destination_location_type)) {
@@ -65,6 +66,9 @@ class RentACarServiceObject extends ServiceObject
                 $this->destinationThana = $destination;
                 $this->destinationLocationLat = $destination->lat;
                 $this->destinationLocationLng = $destination->lng;
+            }
+            if (in_array($this->destinationThana->district_id, config('sheba.rent_a_car_pickup_district_ids'))) {
+                throw new HyperLocationNotFoundException("Got " . $this->destinationThana->name . '(' . $this->destinationThana->id . ') for destination');
             }
             if (isset($this->service->destination_address)) $this->destinationAddress = $this->service->destination_address;
         }

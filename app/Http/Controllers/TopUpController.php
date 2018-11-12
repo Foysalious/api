@@ -30,7 +30,7 @@ class TopUpController extends Controller
                 if ($vendor->is_published) $error_message .= ',' . $vendor->name;
             }
             $regular_expression = array(
-                'typing' => "^(018|18|016|16|017|17|019|19|015|15)",
+                'typing' => "^(013|13|018|18|016|16|017|17|019|19|015|15)",
                 'from_contact' => "^(?:\+?88)?01[16|8]\d{8}$",
                 'error_message' => $error_message . '.'
             );

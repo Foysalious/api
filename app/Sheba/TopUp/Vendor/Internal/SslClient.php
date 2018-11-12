@@ -62,6 +62,8 @@ class SslClient
             return 2;
         } elseif (preg_match("/^(\+88015)/", $mobile_number)) {
             return 5;
+        } elseif (preg_match("/^(\+88013)/", $mobile_number)) {
+            return 1;
         } else {
             throw new \InvalidArgumentException('Invalid Mobile for ssl topup.');
         }
