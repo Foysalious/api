@@ -6,6 +6,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\TopUp\TopUp;
+use Sheba\TopUp\TopUpJob;
 use Sheba\TopUp\Vendor\Response\Ssl\SslFailResponse;
 use Sheba\TopUp\Vendor\VendorFactory;
 use Storage;
@@ -61,8 +62,13 @@ class TopUpController extends Controller
             if ($agent->wallet < (double)$request->amount) return api_response($request, null, 403, ['message' => "You don't have sufficient balance to recharge."]);
             $vendor = $vendor->getById($request->vendor_id);
             if (!$vendor->isPublished()) return api_response($request, null, 403, ['message' => 'Sorry, we don\'t support this operator at this moment']);
-            $response = $top_up->setAgent($agent)->setVendor($vendor)->recharge($request->mobile, $request->amount, $request->connection_type);
-            return $response ? api_response($request, null, 200, ['message' => "Recharge Successful"]) : api_response($request, null, 500, ['message' => "Recharge Unsuccessful"]);
+
+            dispatch(new TopUpJob($agent, $vendor, $request->mobile, $request->amount, $request->connection_type));
+
+            return api_response($request, null, 200, ['message' => "Recharge Request Successful"]);
+
+            // $response = $top_up->setAgent($agent)->setVendor($vendor)->recharge($request->mobile, $request->amount, $request->connection_type);
+            // return $response ? api_response($request, null, 200, ['message' => "Recharge Successful"]) : api_response($request, null, 500, ['message' => "Recharge Unsuccessful"]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
