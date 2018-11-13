@@ -57,7 +57,12 @@ class TopUp
         $agent = $topUpOrder->agent;
         $amount_after_commission = round($amount - $agent->calculateCommission($amount, $this->model), 2);
         $log = "Your recharge TK $amount to $topUpOrder->payee_mobile has failed, TK $amount_after_commission is refunded in your account.";
-        $agent->refund($amount_after_commission, $log);
+        /**
+         * TEMPORARY TURNED OFF REFUND
+         *
+         * $agent->refund($amount_after_commission, $log);
+         *
+         */
         if ($topUpOrder->agent instanceof Affiliate) $this->sendRefundNotificationToAffiliate($topUpOrder, $log);
     }
 
