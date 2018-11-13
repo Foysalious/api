@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Jobs\SendEmailVerficationEmail;
 use App\Jobs\SendReferralRequestEmail;
@@ -23,7 +21,6 @@ use Sheba\Voucher\Creator\Referral;
 use Validator;
 use DB;
 use Hash;
-
 
 class CustomerController extends Controller
 {
@@ -524,5 +521,4 @@ class CustomerController extends Controller
             return api_response($request, null, 500);
         }
     }
-
 }
