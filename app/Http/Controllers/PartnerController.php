@@ -589,6 +589,7 @@ class PartnerController extends Controller
             return api_response($request, null, 500);
         }
     }
+
     public function getCategoriesTree($partner, Request $request)
     {
         try {
@@ -714,6 +715,7 @@ class PartnerController extends Controller
             return api_response($request, null, 500);
         }
     }
+
     public function updateSecondaryCategory($partner, $category, Request $request)
     {
         try {
@@ -738,10 +740,77 @@ class PartnerController extends Controller
         }
     }
 
+    /*public function getPartnerServices($partner, $category, Request $request)
+    {
+        try {
+            if ($partner = Partner::find((int)$partner)) {
+                $services = $partner->services()->where('category_id', $request->category)->published()->get();
+
+                $categories = Category::find($request->category)->services->where('publication_status', 1);
+                dd($services, $category);
+                if (count($services) > 0) {
+                    $services->each(function (&$service) {
+                        $variables = json_decode($service->variables);
+                        if ($service->variable_type == 'Options') {
+                            $service['questions'] = $this->formatServiceQuestions($variables->options);
+                            $service['option_prices'] = $this->formatOptionWithPrice(json_decode($service->pivot->prices));
+                            $service['fixed_price'] = null;
+                        } else {
+                            $service['questions'] = $service['option_prices'] = [];
+                            $service['fixed_price'] = (double)$variables->price;
+                        }
+                        array_forget($service, 'variables');
+                        removeRelationsAndFields($service);
+                    });
+                    return api_response($request, null, 200, ['services' => $services]);
+                } else {
+                    return api_response($request, null, 404);
+                }
+            } else {
+                return api_response($request, null, 404);
+            }
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }*/
+
+    public function serviceOption($partner, $category, $service, Request $request)
+    {
+        try {
+            if ($partner = Partner::find((int)$partner)) {
+                $service = $partner->services()->select('services.id', 'name', 'variable_type', 'services.min_quantity', 'services.variables')
+                    ->where('services.id', $service)->published()->first();
+                if (count($service) > 0) {
+                    $variables = json_decode($service->variables);
+                    if ($service->variable_type == 'Options') {
+                        $service['questions'] = $this->formatServiceQuestions($variables->options);
+                        $service['option_prices'] = $this->formatOptionWithPrice(json_decode($service->pivot->prices));
+                        $service['fixed_price'] = null;
+                    } else {
+                        $service['questions'] = $service['option_prices'] = [];
+                        $service['fixed_price'] = (double)$variables->price;
+                    }
+                    array_forget($service, 'variables');
+                    removeRelationsAndFields($service);
+                    return api_response($request, null, 200, ['service' => $service]);
+                } else {
+                    return api_response($request, null, 404);
+                }
+            } else {
+                return api_response($request, null, 404);
+            }
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     private function getSelectColumnsOfService()
     {
         return ['services.id', 'name', 'is_published_for_backend', 'variable_type', 'services.min_quantity', 'services.variables', 'is_verified' ,'is_published'];
     }
+
     private function getSelectColumnsOfCategory()
     {
         return ['id', 'category_id', 'partner_id', 'is_home_delivery_applied', 'is_partner_premise_applied', 'delivery_charge'];

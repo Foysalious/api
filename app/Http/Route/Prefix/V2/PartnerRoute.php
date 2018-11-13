@@ -9,11 +9,13 @@ class PartnerRoute
                 $api->get('/', 'PartnerController@show');
                 $api->get('locations', 'PartnerController@getLocations');
                 $api->get('categories', 'PartnerController@getCategories');
-                $api->get('categories/tree', 'PartnerController@getCategoriesTree');
-                $api->get('categories/{category}', 'PartnerController@getSecondaryCategory');
-                $api->post('categories/{category}', 'PartnerController@updateSecondaryCategory');
+                    $api->get('categories/tree', 'PartnerController@getCategoriesTree');
+                    $api->get('categories/{category}', 'PartnerController@getSecondaryCategory');
+                    $api->post('categories/{category}', 'PartnerController@updateSecondaryCategory');
                 $api->get('categories/{category}/services', 'PartnerController@getServices');
-                $api->get('categories/{category}/services/tree', 'PartnerController@getServicesTree');
+                    /*$api->get('categories/{category}/services-partner', 'PartnerController@getPartnerServices');*/
+                    $api->get('categories/{category}/services/tree', 'PartnerController@getServicesTree');
+                $api->get('categories/{category}/services/{service}', 'PartnerController@serviceOption');
                 $api->post('categories/{category}/services/{service}', 'PartnerController@changePublicationStatus');
             });
             $api->get('rewards/faqs', 'Partner\PartnerRewardController@getFaqs');
