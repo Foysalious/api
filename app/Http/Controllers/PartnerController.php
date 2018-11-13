@@ -650,8 +650,8 @@ class PartnerController extends Controller
         try {
             $partner = Partner::find((int)$partner);
             $category_partner = new CategoryPartner();
-            $category_partner = $category_partner->select($this->getSelectColumnsOfCategory())
-                ->where('partner_id', $request->partner)->where('category_id', $request->category)->first();
+            $category_partner = CategoryPartner::select($this->getSelectColumnsOfCategory())
+                ->where('partner_id', $request->partner->id)->where('category_id', $request->category)->first();
             if ($category_partner) {
                 $secondary_category = $category_partner;
                 return api_response($request, $secondary_category, 200, ['secondary_category' => $secondary_category]);
@@ -701,8 +701,7 @@ class PartnerController extends Controller
         try {
             $partner = Partner::find((int)$partner);
             $partner_service = new PartnerService();
-            $partner_service = $partner_service->where('partner_id', $request->partner)->where('service_id', $request->service)->first();
-
+            $partner_service = $partner_service->where('partner_id', $request->partner_id)->where('service_id', $request->service_id)->first();
             if ($partner_service) {
                 $data['is_published'] = !$partner_service->is_published;
                 $this->setModifier($partner);
@@ -722,7 +721,7 @@ class PartnerController extends Controller
             $partner = Partner::find((int)$partner);
             $category_partner = new CategoryPartner();
             $category_partner = $category_partner->select($this->getSelectColumnsOfCategory())
-                ->where('partner_id', $request->partner)->where('category_id', $request->category)->first();
+                ->where('partner_id', $request->partner_id)->where('category_id', $request->category_id)->first();
             if ($category_partner) {
                 $data = [
                     'delivery_charge'             => $request->delivery_charge,
@@ -735,45 +734,9 @@ class PartnerController extends Controller
                 return api_response($request, null, 500);
             }
         } catch (\Throwable $e) {
-            dd($e);
             return api_response($request, null, 500);
         }
     }
-
-    /*public function getPartnerServices($partner, $category, Request $request)
-    {
-        try {
-            if ($partner = Partner::find((int)$partner)) {
-                $services = $partner->services()->where('category_id', $request->category)->published()->get();
-
-                $categories = Category::find($request->category)->services->where('publication_status', 1);
-                dd($services, $category);
-                if (count($services) > 0) {
-                    $services->each(function (&$service) {
-                        $variables = json_decode($service->variables);
-                        if ($service->variable_type == 'Options') {
-                            $service['questions'] = $this->formatServiceQuestions($variables->options);
-                            $service['option_prices'] = $this->formatOptionWithPrice(json_decode($service->pivot->prices));
-                            $service['fixed_price'] = null;
-                        } else {
-                            $service['questions'] = $service['option_prices'] = [];
-                            $service['fixed_price'] = (double)$variables->price;
-                        }
-                        array_forget($service, 'variables');
-                        removeRelationsAndFields($service);
-                    });
-                    return api_response($request, null, 200, ['services' => $services]);
-                } else {
-                    return api_response($request, null, 404);
-                }
-            } else {
-                return api_response($request, null, 404);
-            }
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }*/
 
     public function serviceOption($partner, $category, $service, Request $request)
     {
