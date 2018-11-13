@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Exceptions\HyperLocationNotFoundException;
 use App\Models\Category;
@@ -368,7 +366,8 @@ class PartnerController extends Controller
                 'total_resources' => $resource_ids->count(),
                 'assigned_resources' => $assigned_resource_ids->count(),
                 'unassigned_resources' => $unassigned_resource_ids->count(),
-                'balance' => (double)$partner->wallet,
+                'balance' => $partner->totalWalletAmount(),
+                'credit' => (double)$partner->wallet,
                 'bonus' => round($partner->bonusWallet(), 2),
                 'is_credit_limit_exceed' => $partner->isCreditLimitExceed(),
                 'geo_informations' => $partner->geo_informations,
@@ -800,6 +799,5 @@ class PartnerController extends Controller
     {
         return ['id', 'category_id', 'partner_id', 'is_home_delivery_applied', 'is_partner_premise_applied', 'delivery_charge'];
     }
-
 }
 

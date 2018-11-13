@@ -294,6 +294,11 @@ class Partner extends Model implements Rewardable, TopUpAgent
         return (double)$this->wallet >= (double)$this->walletSetting->min_wallet_threshold;
     }
 
+    public function totalWalletAmount()
+    {
+        return (double)$this->wallet + $this->bonusWallet();
+    }
+
     public function bonuses()
     {
         return $this->morphMany(Bonus::class, 'user');

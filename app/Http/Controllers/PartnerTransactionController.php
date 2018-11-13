@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use Carbon\Carbon;
 use GuzzleHttp\Client;
@@ -14,7 +12,6 @@ use Validator;
 
 class PartnerTransactionController extends Controller
 {
-
     public function index($partner, Request $request)
     {
         try {
@@ -36,7 +33,12 @@ class PartnerTransactionController extends Controller
                 });
             }
             $transactions = array_slice($transactions->values()->all(), $offset, $limit);
-            return count($transactions) > 0 ? api_response($request, $transactions, 200, ['transactions' => $transactions, 'balance' => $request->partner->wallet]) : api_response($request, null, 404);
+            return count($transactions) > 0 ? api_response($request, $transactions, 200, [
+                'transactions' => $transactions,
+                'balance' => $request->partner->totalWalletAmount(),
+                'credit' => (double)$request->partner->wallet,
+                'bonus' => round($request->partner->bonusWallet(), 2)
+            ]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
