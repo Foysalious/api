@@ -5,12 +5,11 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Redis;
+use Sheba\TopUp\Vendor\VendorFactory;
 
 class TopUpJob extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
-
-    public $tries = 1;
 
     private $agent;
     private $vendor;
@@ -31,13 +30,15 @@ class TopUpJob extends Job implements ShouldQueue
      * Execute the job.
      *
      * @param  TopUp $top_up
+     * @param VendorFactory $vendor
      * @return void
      * @throws \Exception
      */
-    public function handle(TopUp $top_up)
+    public function handle(TopUp $top_up, VendorFactory $vendor)
     {
         if ($this->attempts() < 1) {
-            $top_up->setAgent($this->agent)->setVendor($this->vendor)->recharge($this->mobile, $this->amount, $this->type);
+            $vendor = $vendor->getById($this->vendor);
+            $top_up->setAgent($this->agent)->setVendor($vendor)->recharge($this->mobile, $this->amount, $this->type);
             if($top_up->isNotSuccessful()) $this->notifyAgentAboutFailure();
             else Redis::rpush('test_done_' . $this->agent->id, $this->mobile);
         }

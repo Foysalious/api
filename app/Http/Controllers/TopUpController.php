@@ -63,7 +63,7 @@ class TopUpController extends Controller
             $vendor = $vendor->getById($request->vendor_id);
             if (!$vendor->isPublished()) return api_response($request, null, 403, ['message' => 'Sorry, we don\'t support this operator at this moment']);
 
-            dispatch(new TopUpJob($agent, $vendor, $request->mobile, $request->amount, $request->connection_type));
+            dispatch(new TopUpJob($agent, $request->vendor_id, $request->mobile, $request->amount, $request->connection_type));
 
             return api_response($request, null, 200, ['message' => "Recharge Request Successful"]);
 
