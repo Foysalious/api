@@ -37,7 +37,7 @@ class OrderHandler
         if (get_class($user) == constants('REWARD_TARGET_TYPE')['Partner']) $user_name = $user->name;
         elseif (get_class($user) == constants('REWARD_TARGET_TYPE')['Customer']) $user_name = $user->profile->name;
 
-        $this->notifyPM("$user_name has placed a reward order.", env('SHEBA_BACKEND_URL'). '/reward-shop/order', $order);
+        $this->notify("$user_name has placed a reward order.", env('SHEBA_BACKEND_URL'). '/reward-shop/order', $order);
 
     }
 
@@ -60,16 +60,16 @@ class OrderHandler
      * @param null $link
      * @throws \Exception
      */
-    protected function notifyPM($title = 'New Reward Order Placed', $link = null, $order)
+    protected function notify($title = 'New Reward Order Placed', $link = null, $order)
     {
         $link = $link ? : env('SHEBA_BACKEND_URL');
 
-        notify()->department(Department::where('name', 'PM')->first())->send([
+        notify()->departments([5, 9, 13, 18])->send([
             "title" => $title,
-            "link" => $link,
-            "type" => notificationType('Info'),
-            "event_type" => "App\\Models\\RewardShopOrder",
-            "event_id" => $order->id
+            "link"  => $link,
+            "type"  => notificationType('Info'),
+            "event_type"    => "App\\Models\\RewardShopOrder",
+            "event_id"      => $order->id
         ]);
     }
 }
