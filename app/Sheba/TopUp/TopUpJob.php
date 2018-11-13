@@ -36,11 +36,11 @@ class TopUpJob extends Job implements ShouldQueue
      */
     public function handle(TopUp $top_up, VendorFactory $vendor)
     {
-        if ($this->attempts() < 1) {
+        if ($this->attempts() < 2) {
             $vendor = $vendor->getById($this->vendor);
             $top_up->setAgent($this->agent)->setVendor($vendor)->recharge($this->mobile, $this->amount, $this->type);
             if($top_up->isNotSuccessful()) $this->notifyAgentAboutFailure();
-            else Redis::rpush('test_done_' . $this->agent->id, $this->mobile);
+            // else Redis::rpush('test_done_' . $this->agent->id, $this->mobile);
         }
     }
 

@@ -34,10 +34,9 @@ class TopUp
         return $this;
     }
 
-
     public function recharge($mobile_number, $amount, $type)
     {
-        if($this->agent->wallet >= $amount) {
+        if ($this->agent->wallet >= $amount) {
             $mobile_number = formatMobile($mobile_number);
             $response = $this->vendor->recharge($mobile_number, $amount, $type);
             if ($response->hasSuccess()) {
