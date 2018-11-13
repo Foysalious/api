@@ -19,6 +19,8 @@ class TopUp
     /** @var TopUpAgent */
     private $agent;
 
+    private $isSuccessful;
+
     public function setAgent(TopUpAgent $agent)
     {
         $this->agent = $agent;
@@ -34,20 +36,25 @@ class TopUp
 
     public function recharge($mobile_number, $amount, $type)
     {
-        $mobile_number = formatMobile($mobile_number);
-        $response = $this->vendor->recharge($mobile_number, $amount, $type);
-        if ($response->hasSuccess()) {
-            $response = $response->getSuccess();
-            DB::transaction(function () use ($response, $mobile_number, $amount) {
-                $this->placeTopUpOrder($response, $mobile_number, $amount);
-                $amount_after_commission = $amount - $this->agent->calculateCommission($amount, $this->model);
-                $this->agent->topUpTransaction($amount_after_commission, $amount . " has been topped up to " . $mobile_number);
-                $this->vendor->deductAmount($amount);
-            });
-            return true;
-        } else {
-            return null;
+        if ($this->agent->wallet >= $amount) {
+            $mobile_number = formatMobile($mobile_number);
+            $response = $this->vendor->recharge($mobile_number, $amount, $type);
+            if ($response->hasSuccess()) {
+                $response = $response->getSuccess();
+                DB::transaction(function () use ($response, $mobile_number, $amount) {
+                    $this->placeTopUpOrder($response, $mobile_number, $amount);
+                    $amount_after_commission = $amount - $this->agent->calculateCommission($amount, $this->model);
+                    $this->agent->topUpTransaction($amount_after_commission, $amount . " has been topped up to " . $mobile_number);
+                    $this->vendor->deductAmount($amount);
+                    $this->isSuccessful = true;
+                });
+            }
         }
+    }
+
+    public function isNotSuccessful()
+    {
+        return !$this->isSuccessful;
     }
 
     private function refund(TopUpOrder $topUpOrder)
@@ -57,7 +64,12 @@ class TopUp
         $agent = $topUpOrder->agent;
         $amount_after_commission = round($amount - $agent->calculateCommission($amount, $this->model), 2);
         $log = "Your recharge TK $amount to $topUpOrder->payee_mobile has failed, TK $amount_after_commission is refunded in your account.";
-        $agent->refund($amount_after_commission, $log);
+        /**
+         * TEMPORARY TURNED OFF REFUND
+         *
+         * $agent->refund($amount_after_commission, $log);
+         *
+         */
         if ($topUpOrder->agent instanceof Affiliate) $this->sendRefundNotificationToAffiliate($topUpOrder, $log);
     }
 
