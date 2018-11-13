@@ -649,10 +649,9 @@ class PartnerController extends Controller
         try {
             $partner = Partner::find((int)$partner);
             $category_partner = new CategoryPartner();
-            if ($partner) {
-                $category_partner = $category_partner->select($this->getSelectColumnsOfCategory())
-                    ->where('partner_id', $request->partner)->where('category_id', $request->category)->first();
-
+            $category_partner = $category_partner->select($this->getSelectColumnsOfCategory())
+                ->where('partner_id', $request->partner)->where('category_id', $request->category)->first();
+            if ($category_partner) {
                 $secondary_category = $category_partner;
                 return api_response($request, $secondary_category, 200, ['secondary_category' => $secondary_category]);
             }
@@ -712,6 +711,29 @@ class PartnerController extends Controller
                 return api_response($request, null, 500);
             }
         } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+    public function updateSecondaryCategory($partner, $category, Request $request)
+    {
+        try {
+            $partner = Partner::find((int)$partner);
+            $category_partner = new CategoryPartner();
+            $category_partner = $category_partner->select($this->getSelectColumnsOfCategory())
+                ->where('partner_id', $request->partner)->where('category_id', $request->category)->first();
+            if ($category_partner) {
+                $data = [
+                    'delivery_charge'             => $request->delivery_charge,
+                    'is_home_delivery_applied' => $request->is_home_delivery_applied
+                ] ;
+                $this->setModifier($partner);
+                $category_partner->update($this->withUpdateModificationField($data));
+                return api_response($request, null, 200);
+            } else {
+                return api_response($request, null, 500);
+            }
+        } catch (\Throwable $e) {
+            dd($e);
             return api_response($request, null, 500);
         }
     }

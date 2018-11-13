@@ -4,6 +4,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class CategoryPartner extends Model
 {
+    protected $guarded = ['id',];
     protected $table = 'category_partner';
     protected $casts = ['delivery_charge' => 'double'];
 

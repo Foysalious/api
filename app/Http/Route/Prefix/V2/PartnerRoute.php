@@ -11,6 +11,7 @@ class PartnerRoute
                 $api->get('categories', 'PartnerController@getCategories');
                 $api->get('categories/tree', 'PartnerController@getCategoriesTree');
                 $api->get('categories/{category}', 'PartnerController@getSecondaryCategory');
+                $api->post('categories/{category}', 'PartnerController@updateSecondaryCategory');
                 $api->get('categories/{category}/services', 'PartnerController@getServices');
                 $api->get('categories/{category}/services/tree', 'PartnerController@getServicesTree');
                 $api->post('categories/{category}/services/{service}', 'PartnerController@changePublicationStatus');
