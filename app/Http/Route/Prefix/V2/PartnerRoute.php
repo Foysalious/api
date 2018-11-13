@@ -32,6 +32,8 @@ class PartnerRoute
                 });
             });
 
+            $api->post('/bkash', 'PartnerController@storeBashNumber');
+
             $api->get('services', 'Partner\PartnerServiceController@index');
 
             $api->get('operations', 'Partner\OperationController@index');

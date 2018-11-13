@@ -769,6 +769,27 @@ class PartnerController extends Controller
         }
     }
 
+    public function storeBashNumber($partner, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'bkash_no' => 'required|string|mobile:bd'
+            ]);
+            $bkash_no = formatMobile($request->bkash_no);
+            $data['bkash_no'] = $bkash_no;
+            $this->setModifier($request->partner);
+            $request->partner->update($this->withUpdateModificationField($data));
+
+            return api_response($request, null, 200, ['message' => "Update Successful"]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     private function getSelectColumnsOfService()
     {
         return ['services.id', 'name', 'is_published_for_backend', 'variable_type', 'services.min_quantity', 'services.variables', 'is_verified' ,'is_published'];
