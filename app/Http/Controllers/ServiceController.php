@@ -77,7 +77,7 @@ class ServiceController extends Controller
             unset($variables->prices);
             $services = [];
             array_push($services, $service);
-//            $service = $this->serviceRepository->addServiceInfo($services, $scope)[0];
+            //$service = $this->serviceRepository->addServiceInfo($services, $scope)[0];
             $service['variables'] = $variables;
             $service['faqs'] = json_decode($service->faqs);
             $service['bn_faqs'] = $service->bn_faqs ? json_decode($service->bn_faqs) : null;
@@ -87,8 +87,30 @@ class ServiceController extends Controller
             array_add($service, 'category_name', $category->name);
             array_add($service, 'master_category_id', $category->parent->id);
             array_add($service, 'master_category_name', $category->parent->name);
+
+            if ($request->has('is_business')) {
+                $questions = null;
+                $service['type'] = 'normal';
+                if ($service->variable_type == 'Options') {
+                    $questions = $service->variables->options;
+                    foreach ($questions as &$question) {
+                        $question = collect($question);
+                        $question->put('input_type', $this->resolveInputTypeField($question->get('answers')));
+                        $question->put('screen', count($questions) > 3 ? 'slide' : 'normal');
+                        $explode_answers = explode(',', $question->get('answers'));
+                        $question->put('answers', $explode_answers);
+                    }
+                    if (count($questions) == 1) {
+                        $questions[0]->put('input_type', 'selectbox');
+                    }
+                }
+                array_add($service, 'questions', $questions);
+                array_add($service, 'faqs', $service->faqs);
+            }
+
             return api_response($request, $service, 200, ['service' => $service]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -127,5 +149,11 @@ class ServiceController extends Controller
         $service = Service::find($service);
         $prices = $this->serviceRepository->getMaxMinPrice($service);
         return response()->json(['max' => $prices[0], 'min' => $prices[1], 'code' => 200]);
+    }
+
+    private function resolveInputTypeField($answers)
+    {
+        $answers = explode(',', $answers);
+        return count($answers) <= 4 ? "radiobox" : "dropdown";
     }
 }
