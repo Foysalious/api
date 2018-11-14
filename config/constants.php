@@ -438,7 +438,7 @@ return [
         'Rejected' => 'Rejected'
     ],
     'WITHDRAW_LIMIT' => [
-        'bkash' => ['min' => 500, 'max' => 10000],
-        'bank' => ['min' => 10000, 'max' => 1000000]
+        'bkash' => ['min' => 500, 'max' => 15000],
+        'bank' => ['min' => 15000, 'max' => 1000000]
     ]
 ];
