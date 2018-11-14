@@ -81,9 +81,7 @@ class Checkout
             $data['resource_id'] = $request->resource;
         };
         $data['delivery_mobile'] = formatMobile(trim($request->mobile));
-        if ($request->has('name')) {
-            $data['delivery_name'] = $request->name;
-        }
+        $data['delivery_name'] = $request->has('name') ? $request->name : '';
         $data['sales_channel'] = $request->sales_channel;
         $data['date'] = $request->date;
         $data['time'] = $request->time;
