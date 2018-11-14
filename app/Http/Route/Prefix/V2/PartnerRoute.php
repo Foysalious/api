@@ -10,7 +10,7 @@ class PartnerRoute
                 $api->get('locations', 'PartnerController@getLocations');
                 $api->get('categories', 'PartnerController@getCategories');
                 $api->get('categories/{category}/services', 'PartnerController@getServices');
-                    /*$api->get('categories/{category}/services-partner', 'PartnerController@getPartnerServices');*/
+                /*$api->get('categories/{category}/services-partner', 'PartnerController@getPartnerServices');*/
             });
             $api->get('rewards/faqs', 'Partner\PartnerRewardController@getFaqs');
         });
@@ -33,8 +33,8 @@ class PartnerRoute
             });
 
             $api->post('/bkash', 'PartnerController@storeBashNumber');
-
             $api->get('services', 'Partner\PartnerServiceController@index');
+            $api->post('services', 'Partner\PartnerServiceController@store');
 
             $api->get('operations', 'Partner\OperationController@index');
             $api->post('operations', 'Partner\OperationController@store');
@@ -111,7 +111,7 @@ class PartnerRoute
             });
             $api->get('get-profile', 'ResourceController@getResourceData');
             $api->get('settings', 'Partner\OperationController@isOnPremiseAvailable');
-            $api->get('my-customer-info','Partner\AsCustomerController@getResourceCustomerProfile');
+            $api->get('my-customer-info', 'Partner\AsCustomerController@getResourceCustomerProfile');
             $api->group(['prefix' => 'partner-wallet'], function ($api) {
                 $api->post('purchase', 'PartnerWalletController@purchase');
                 $api->post('validate', 'PartnerWalletController@validatePayment');
