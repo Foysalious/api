@@ -33,8 +33,11 @@ class PartnerRoute
             });
 
             $api->post('/bkash', 'PartnerController@storeBashNumber');
-            $api->get('services', 'Partner\PartnerServiceController@index');
-            $api->post('services', 'Partner\PartnerServiceController@store');
+            $api->group(['prefix' => 'services'], function ($api) {
+                $api->get('/', 'Partner\PartnerServiceController@index');
+                $api->post('/', 'Partner\PartnerServiceController@store');
+                $api->put('{service}', 'Partner\PartnerServiceController@update');
+            });
 
             $api->get('operations', 'Partner\OperationController@index');
             $api->post('operations', 'Partner\OperationController@store');
