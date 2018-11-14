@@ -57,8 +57,8 @@ class CustomerDeliveryAddressController extends Controller
                 $request->merge(["geo_informations" => json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng])]);
             }
             $request->merge(["location_id" => $hyper_local ? $hyper_local->location_id : null]);
-
-            $delivery_address = $this->_store($customer, $request);
+            $new_address = new CustomerDeliveryAddress();
+            $delivery_address = $this->_store($customer, $new_address, $request);
 
             return api_response($request, 1, 200, ['address' => $delivery_address->id]);
         } catch (\Throwable $e) {
@@ -71,10 +71,12 @@ class CustomerDeliveryAddressController extends Controller
     {
         if ($request->has('address')) $delivery_address->address = trim($request->address);
         if ($request->has('name')) $delivery_address->name = trim(ucwords($request->name));
+        if ($request->has('location_id')) $delivery_address->location_id = $request->location_id;
         if ($request->has('mobile')) $delivery_address->mobile = formatMobile($request->mobile);
         if ($request->has('flat_no')) $delivery_address->flat_no = trim($request->flat_no);
         if ($request->has('street_address')) $delivery_address->street_address = trim($request->street_address);
         if ($request->has('landmark')) $delivery_address->landmark = trim($request->landmark);
+        if ($request->has('lat') && $request->has('lng')) $delivery_address->geo_informations = json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]);
         return $delivery_address;
     }
 
@@ -95,8 +97,8 @@ class CustomerDeliveryAddressController extends Controller
                 //$delivery_address->geo_informations = json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]);
                 $request->merge(["geo_informations" => json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng])]);
             }
-
-            $this->_store($customer, $request);
+            $new_address = $delivery_address->replicate();
+            $this->_store($customer, $new_address, $request);
             $this->_delete($customer, $delivery_address);
 
             return api_response($request, 1, 200);
@@ -112,14 +114,8 @@ class CustomerDeliveryAddressController extends Controller
         }
     }
 
-    private function _store(Customer $customer, $request)
+    private function _store(Customer $customer, CustomerDeliveryAddress $delivery_address, $request)
     {
-        $delivery_address = new CustomerDeliveryAddress();
-        $delivery_address->customer_id = $customer->id;
-        if ($request->has('lat') && $request->has('lng')) {
-            $delivery_address->geo_informations = json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]);
-        }
-        $delivery_address->location_id = $request->location_id;
         $delivery_address = $this->setAddressProperties($delivery_address, $request);
         $this->setModifier($customer);
         $this->withCreateModificationField($delivery_address);
