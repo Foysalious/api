@@ -144,7 +144,7 @@ class PartnerController extends Controller
     {
         try {
             if ($partner = Partner::find((int)$partner)) {
-                $services = $partner->services()->select('services.id', 'name', 'variable_type', 'services.min_quantity', 'services.variables')
+                $services = $partner->services()->select($this->getSelectColumnsOfService())
                     ->where('category_id', $request->category)->published()->get();
                 if (count($services) > 0) {
                     $services->each(function (&$service) {
@@ -663,7 +663,7 @@ class PartnerController extends Controller
         }
     }
 
-    public function getServicesTree($partner, $category, Request $request)
+    /*public function getServicesTree($partner, $category, Request $request)
     {
         try {
             if ($partner = Partner::find((int)$partner)) {
@@ -694,7 +694,7 @@ class PartnerController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-    }
+    }*/
 
     public function changePublicationStatus($partner, $category, $service, Request $request)
     {
