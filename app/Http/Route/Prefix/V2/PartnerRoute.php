@@ -36,6 +36,13 @@ class PartnerRoute
 
             $api->get('services', 'Partner\PartnerServiceController@index');
 
+            $api->group(['prefix' => 'services'], function ($api) {
+                $api->get('/', 'Partner\PartnerServiceController@index');
+                $api->post('/', 'Partner\PartnerServiceController@store');
+                $api->put('{service}', 'Partner\PartnerServiceController@update');
+            });
+
+
             $api->get('operations', 'Partner\OperationController@index');
             $api->post('operations', 'Partner\OperationController@store');
             $api->post('register', 'CustomerController@store');
@@ -111,7 +118,7 @@ class PartnerRoute
             });
             $api->get('get-profile', 'ResourceController@getResourceData');
             $api->get('settings', 'Partner\OperationController@isOnPremiseAvailable');
-            $api->get('my-customer-info','Partner\AsCustomerController@getResourceCustomerProfile');
+            $api->get('my-customer-info', 'Partner\AsCustomerController@getResourceCustomerProfile');
             $api->group(['prefix' => 'partner-wallet'], function ($api) {
                 $api->post('purchase', 'PartnerWalletController@purchase');
                 $api->post('validate', 'PartnerWalletController@validatePayment');

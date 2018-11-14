@@ -175,6 +175,7 @@ class Route
                     $api->post('/', 'PartnerWithdrawalRequestController@store');
                     $api->put('{withdrawals}', 'PartnerWithdrawalRequestController@update');
                     $api->get('status', 'PartnerWithdrawalRequestController@getStatus');
+                    $api->get('{withdrawals}/cancel', 'PartnerWithdrawalRequestController@cancel');
                 });
                 $api->group(['prefix' => 'transactions'], function ($api) {
                     $api->get('/', 'PartnerTransactionController@index');
