@@ -107,7 +107,7 @@ class Job extends Model
         $this->serviceCost = formatTaka($this->servicePrice * $costRate);
         $this->materialPrice = formatTaka($this->calculateMaterialPrice());
         $this->materialCost = formatTaka($this->materialPrice * $costRate);
-        $this->totalCostWithoutDiscount = formatTaka($this->serviceCost + $this->materialCost);
+        $this->totalCostWithoutDiscount = formatTaka($this->serviceCost + $this->materialCost + $this->delivery_charge);
         $this->totalPriceWithoutVat = formatTaka($this->servicePrice + $this->materialPrice + $this->delivery_charge);
         //$this->totalPrice = formatTaka($this->totalPriceWithoutVat + $this->vat); // later
         $this->totalPrice = formatTaka($this->totalPriceWithoutVat);
