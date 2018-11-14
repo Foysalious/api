@@ -757,21 +757,21 @@ class PartnerController extends Controller
         }
     }
 
-    public function getAvailableService($partner, $category, Request $request)
+    public function getAddableServices($partner, $category, Request $request)
     {
         try {
             if ($partner = Partner::find((int)$partner)) {
                 $registered_services = $partner->services()
                     ->where('category_id', $request->category)->published()->get()->pluck('id')->toArray();
 
-                $available_services = Service::where('category_id', $request->category)
-                    ->select('services.id', 'name')
+                $addable_services = Service::where('category_id', $request->category)
+                    ->select($this->getSelectColumnsOfAddableService())
                     ->whereNotIn('id', $registered_services)
                     ->publishedForAll()
                     ->get();
 
-                if (count($available_services) > 0) {
-                    return api_response($request, null, 200, ['available_services' => $available_services]);
+                if (count($addable_services) > 0) {
+                    return api_response($request, null, 200, ['addable_services' => $addable_services]);
                 } else {
                     return api_response($request, null, 404);
                 }
@@ -792,6 +792,11 @@ class PartnerController extends Controller
     private function getSelectColumnsOfCategory()
     {
         return ['id', 'category_id', 'partner_id', 'is_home_delivery_applied', 'is_partner_premise_applied', 'delivery_charge'];
+    }
+
+    private function getSelectColumnsOfAddableService()
+    {
+        return ['services.id', 'name', 'is_published_for_backend', 'thumb', 'app_thumb', 'is_published_for_business' ,'publication_status'];
     }
 }
 

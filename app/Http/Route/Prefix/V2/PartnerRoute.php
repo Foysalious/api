@@ -10,6 +10,7 @@ class PartnerRoute
                 $api->get('locations', 'PartnerController@getLocations');
                 $api->get('categories', 'PartnerController@getCategories');
                 $api->get('categories/{category}/services', 'PartnerController@getServices');
+                $api->get('categories/{category}/addable-services', 'PartnerController@getAddableServices');
             });
             $api->get('rewards/faqs', 'Partner\PartnerRewardController@getFaqs');
         });
@@ -25,7 +26,6 @@ class PartnerRoute
                 $api->group(['prefix' => '{category}'], function ($api) {
                     $api->get('/', 'PartnerController@getSecondaryCategory');
                     $api->post('/update', 'PartnerController@updateSecondaryCategory');
-                    $api->get('/available-services', 'PartnerController@getAvailableService');
                     $api->get('/services/{service}', 'PartnerController@serviceOption');
                     $api->post('/services/{service}', 'PartnerController@changePublicationStatus');
                 });
