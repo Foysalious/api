@@ -35,7 +35,7 @@ trait Wallet
     {
         $data = array_merge($transaction_data, ['created_at' => Carbon::now()]);
         $user_transaction = $this->getUserTransaction()->fill($data);
-        $this->transactions()->save($user_transaction);
+        return $this->transactions()->save($user_transaction);
     }
 
     private function getUserTransaction()

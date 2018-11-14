@@ -10,7 +10,6 @@ class PartnerRoute
                 $api->get('locations', 'PartnerController@getLocations');
                 $api->get('categories', 'PartnerController@getCategories');
                 $api->get('categories/{category}/services', 'PartnerController@getServices');
-                    /*$api->get('categories/{category}/services-partner', 'PartnerController@getPartnerServices');*/
             });
             $api->get('rewards/faqs', 'Partner\PartnerRewardController@getFaqs');
         });
@@ -26,15 +25,23 @@ class PartnerRoute
                 $api->group(['prefix' => '{category}'], function ($api) {
                     $api->get('/', 'PartnerController@getSecondaryCategory');
                     $api->post('/update', 'PartnerController@updateSecondaryCategory');
+                    $api->get('/services-not-selected', 'PartnerController@getPartnerNotSelectedServices');
                     $api->get('/services/tree', 'PartnerController@getServicesTree');
                     $api->get('/services/{service}', 'PartnerController@serviceOption');
                     $api->post('/services/{service}', 'PartnerController@changePublicationStatus');
                 });
             });
 
-            $api->post('/bkash', 'PartnerController@storeBashNumber');
+            $api->post('/bkash', 'PartnerController@storeBkashNumber');
 
             $api->get('services', 'Partner\PartnerServiceController@index');
+
+            $api->group(['prefix' => 'services'], function ($api) {
+                $api->get('/', 'Partner\PartnerServiceController@index');
+                $api->post('/', 'Partner\PartnerServiceController@store');
+                $api->put('{service}', 'Partner\PartnerServiceController@update');
+            });
+
 
             $api->get('operations', 'Partner\OperationController@index');
             $api->post('operations', 'Partner\OperationController@store');
@@ -111,7 +118,7 @@ class PartnerRoute
             });
             $api->get('get-profile', 'ResourceController@getResourceData');
             $api->get('settings', 'Partner\OperationController@isOnPremiseAvailable');
-            $api->get('my-customer-info','Partner\AsCustomerController@getResourceCustomerProfile');
+            $api->get('my-customer-info', 'Partner\AsCustomerController@getResourceCustomerProfile');
             $api->group(['prefix' => 'partner-wallet'], function ($api) {
                 $api->post('purchase', 'PartnerWalletController@purchase');
                 $api->post('validate', 'PartnerWalletController@validatePayment');

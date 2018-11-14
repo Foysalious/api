@@ -93,12 +93,13 @@ class WalletController extends Controller
                 return api_response($request, null, 400, ['message' => 'You don\'t have sufficient credit']);
             }
             try {
-                DB::transaction(function () use ($payment, $user, $bonus_credit) {
+                $transaction = '';
+                DB::transaction(function () use ($payment, $user, $bonus_credit, &$transaction) {
                     $partner_order = PartnerOrder::find($payment->payable->type_id);
                     $remaining = $bonus_credit->setUser($user)->setSpentModel($partner_order)->deduct($payment->payable->amount);
                     if ($remaining > 0) {
                         $user->debitWallet($remaining);
-                        $user->walletTransaction([
+                        $transaction = $user->walletTransaction([
                             'amount' => $remaining,
                             'type' => 'Debit', 'log' => 'Service Purchase.',
                             'partner_order_id' => $partner_order->id,
@@ -109,6 +110,7 @@ class WalletController extends Controller
                 $paymentRepository->changeStatus(['to' => 'validated', 'from' => $payment->status,
                     'transaction_details' => $payment->transaction_details]);
                 $payment->status = 'validated';
+                $payment->transaction_details = json_encode(array('payment_id' => $payment->id, 'transaction_id' => $transaction->id));
                 $payment->update();
             } catch (QueryException $e) {
                 $payment->status = 'failed';
@@ -124,6 +126,7 @@ class WalletController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

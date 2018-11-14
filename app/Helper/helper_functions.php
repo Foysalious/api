@@ -467,4 +467,22 @@ if (!function_exists('formatDateRange')) {
         }
     }
 }
+if (!function_exists('createOptionsFromOptionVariables')) {
+
+    function createOptionsFromOptionVariables($variables)
+    {
+        $options = '';
+        foreach ($variables->options as $key => $option) {
+            $input = explode(',', $option->answers);
+            $output = implode(',', array_map(
+                function ($value, $key) {
+                    return sprintf("%s", $key);
+                }, $input, array_keys($input)
+            ));
+            $output = '[' . $output . '],';
+            $options .= $output;
+        }
+        return '[' . substr($options, 0, -1) . ']';
+    }
+}
 

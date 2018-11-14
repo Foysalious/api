@@ -352,12 +352,14 @@ return [
     'TRENDING' => [875, 775, 783, 629, 118, 76, 756],
     'APP_VOUCHER' => env('APP_VOUCHER'),
     'PARTNER_WITHDRAWAL_REQUEST_STATUSES' => [
-        'pending' => 'pending',
-        'approval_pending' => 'Approval Pending',
-        'approved' => 'Approved',
-        'rejected' => 'rejected',
-        'completed' => 'Completed',
-        'cancelled' => 'cancelled'
+        'pending'           => 'Pending',
+        'approval_pending'  => 'Approval Pending',
+        'approved'          => 'Approved',
+        'rejected'          => 'Rejected',
+        'completed'         => 'Completed',
+        'failed'            => 'Failed',
+        'expired'           => 'Expired',
+        'cancelled'         => 'Cancelled'
     ],
     'REFERRAL_GIFT_AMOUNT' => env('REFERRAL_GIFT_AMOUNT'),
     'send_push_notifications' => env('SHEBA_SEND_PUSH_NOTIFICATIONS'),
