@@ -36,9 +36,23 @@ class PartnerWithdrawalRequestController extends Controller
     public function store($partner, Request $request)
     {
         try {
-            $this->validate($request, ['amount' => 'required|numeric']);
+            $this->validate($request, ['amount' => 'required|numeric', 'payment_method' => 'required|in:bkash,bank', 'bkash_number' => 'required_if:payment_method,bkash|mobile:bd', 'code' => 'required_if:payment_method,bkash|string']);
             $partner = $request->partner;
-            $activePartnerWithdrawalRequest = $partner->withdrawalRequests()->currentWeek()->notCancelled()->first();
+//            Number Match validations
+            $authenticate_data = (new FacebookAccountKit())->authenticateKit($request->code);
+
+            if ($request->bkash_number != $authenticate_data['mobile']) {
+                return api_response($request, null, 400, ['message' => 'Your provided bkash number and verification number did not match,please verify using your bkash number']);
+            }
+//            Limit Validation
+            $minLimit = constants('WITHDRAW_LIMIT')['bkash']['min'];
+            $maxLimit = constants('WITHDRAW_LIMIT')['bkash']['max'];
+            if ($request->payment_method == 'bkash' && ((double)$request->amount < $minLimit || (double)$request->amount > $maxLimit)) {
+                return api_response($request, null, 400, ['message' => 'Payment Limit mismatch minimum limit ' . $minLimit . ' TK and maximum ' . $maxLimit . ' TK']);
+            } else if ($request->payment_method == 'bank' && ((double)$request->amount < $maxLimit)) {
+                return api_response($request, null, 400, ['message' => 'For Bank Transaction minimum limit is ' . $maxLimit]);
+            }
+            $activePartnerWithdrawalRequest = $partner->withdrawalRequests()->pending()->first();
             $valid_maximum_requested_amount = (double)$partner->wallet - (double)$partner->walletSetting->security_money;
             if ($activePartnerWithdrawalRequest || ($request->amount > $valid_maximum_requested_amount)) {
                 if ($activePartnerWithdrawalRequest) $message = "You have already sent a Withdrawal Request";
@@ -48,6 +62,8 @@ class PartnerWithdrawalRequestController extends Controller
             $new_withdrawal = PartnerWithdrawalRequest::create(array_merge((new UserRequestInformation($request))->getInformationArray(), [
                 'partner_id' => $partner->id,
                 'amount' => $request->amount,
+                'payment_method' => $request->payment_method,
+                'payment_info' => json_encode(['bkash_number' => $request->payment_method != 'bkash' ?: $request->bkash_number]),
                 'created_by_type' => class_basename($request->manager_resource),
                 'created_by' => $request->manager_resource->id,
                 'created_by_name' => 'Resource - ' . $request->manager_resource->profile->name,
@@ -105,9 +121,31 @@ class PartnerWithdrawalRequestController extends Controller
         }
     }
 
+    public function cancel($partner, $withdrawals, Request $request)
+    {
+        try {
+//            $this->validate($request, ['status' => 'required|in:cancelled']);
+            $partner = $request->partner;
+            $partnerWithdrawalRequest = PartnerWithdrawalRequest::find($withdrawals);
+            if ($partner->id == $partnerWithdrawalRequest->partner_id && $partnerWithdrawalRequest->status == constants('PARTNER_WITHDRAWAL_REQUEST_STATUSES')['pending']) {
+                $withdrawal_update = $partnerWithdrawalRequest->update([
+                    'status' => 'cancelled',
+                    'updated_by' => $request->manager_resource->id,
+                    'updated_by_name' => 'Resource - ' . $request->manager_resource->profile->name,
+                ]);
+                return api_response($request, $withdrawal_update, 200);
+            } else {
+                return api_response($request, '', 403, ['result' => 'You can not update this withdraw request']);
+            }
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     private function canWithdraw(Partner $partner)
     {
-        $activePartnerWithdrawalRequest = $partner->withdrawalRequests()->currentWeek()->notCancelled()->first();
+        $activePartnerWithdrawalRequest = $partner->withdrawalRequests()->pending()->first();
         $is_wallet_has_sufficient_balance = $partner->wallet > $partner->walletSetting->security_money;
         $can_withdraw = true;
         $status = 'You can send withdraw request';
