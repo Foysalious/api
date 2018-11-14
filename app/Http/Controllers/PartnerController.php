@@ -801,7 +801,7 @@ class PartnerController extends Controller
                     ->get()->pluck('id', 'name');
 
                 $not_selected_services_by_partner = $services->diffKeys($partner_services)->flip();
-                dd($not_selected_services_by_partner,$partner_services, $services);
+                //dd($not_selected_services_by_partner,$partner_services, $services);
 
                 if (count($not_selected_services_by_partner) > 0) {
                     return api_response($request, null, 200, ['not_selected_services_by_partner' => $not_selected_services_by_partner]);
