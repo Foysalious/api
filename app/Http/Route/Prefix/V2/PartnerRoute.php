@@ -25,7 +25,7 @@ class PartnerRoute
                 $api->group(['prefix' => '{category}'], function ($api) {
                     $api->get('/', 'PartnerController@getSecondaryCategory');
                     $api->post('/update', 'PartnerController@updateSecondaryCategory');
-                    $api->get('/services-not-selected', 'PartnerController@getPartnerNotSelectedServices');
+                    $api->get('/available-services', 'PartnerController@getAvailableService');
                     $api->get('/services/tree', 'PartnerController@getServicesTree');
                     $api->get('/services/{service}', 'PartnerController@serviceOption');
                     $api->post('/services/{service}', 'PartnerController@changePublicationStatus');

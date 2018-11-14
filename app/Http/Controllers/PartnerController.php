@@ -790,21 +790,21 @@ class PartnerController extends Controller
         }
     }
 
-    public function getPartnerNotSelectedServices($partner, $category, Request $request)
+    public function getAvailableService($partner, $category, Request $request)
     {
         try {
             if ($partner = Partner::find((int)$partner)) {
-                $partner_services = $partner->services()
-                    ->where('category_id', $request->category)->published()->get()->pluck('id', 'name');
+                $registered_services = $partner->services()
+                    ->where('category_id', $request->category)->published()->get()->pluck('id')->toArray();
 
-                $services = Service::where('category_id', $request->category)->publishedForAll()
-                    ->get()->pluck('id', 'name');
+                $available_services = Service::where('category_id', $request->category)
+                    ->select('services.id', 'name')
+                    ->whereNotIn('id', $registered_services)
+                    ->publishedForAll()
+                    ->get();
 
-                $not_selected_services_by_partner = $services->diffKeys($partner_services)->flip();
-                //dd($not_selected_services_by_partner,$partner_services, $services);
-
-                if (count($not_selected_services_by_partner) > 0) {
-                    return api_response($request, null, 200, ['not_selected_services_by_partner' => $not_selected_services_by_partner]);
+                if (count($available_services) > 0) {
+                    return api_response($request, null, 200, ['available_services' => $available_services]);
                 } else {
                     return api_response($request, null, 404);
                 }
