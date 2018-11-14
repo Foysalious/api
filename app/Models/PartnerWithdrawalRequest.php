@@ -24,6 +24,11 @@ class PartnerWithdrawalRequest extends Model
         return $query->whereBetween('created_at', $session);
     }
 
+    public function scopePending($query)
+    {
+        return $query->where('status', '=', 'pending');
+    }
+
     public function scopeCurrentWeek($query)
     {
         $session = $this->getSessionBy(Carbon::now());
