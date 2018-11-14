@@ -4,24 +4,24 @@ return [
     'HOTLINE' => '09639 - 444 000',
     'SERVICE_VARIABLE_TYPES' => ['Fixed' => 'Fixed', 'Options' => 'Options', 'Custom' => 'Custom'],
     'PARTNER_STATUSES' => [
-        'Verified'      => 'Verified',
-        'Unverified'    => 'Unverified',
-        'Paused'        => 'Paused',
-        'Closed'        => 'Closed',
-        'Blacklisted'   => 'Blacklisted',
-        'Waiting'       => 'Waiting',
-        'Onboarded'     => 'Onboarded',
-        'Rejected'      => 'Rejected'
+        'Verified' => 'Verified',
+        'Unverified' => 'Unverified',
+        'Paused' => 'Paused',
+        'Closed' => 'Closed',
+        'Blacklisted' => 'Blacklisted',
+        'Waiting' => 'Waiting',
+        'Onboarded' => 'Onboarded',
+        'Rejected' => 'Rejected'
     ],
     'PARTNER_STATUSES_SHOW' => [
-        'Verified'      => ['sheba' => 'Verified', 'partner' => 'Verified', 'customer' => 'Verified'],
-        'Unverified'    => ['sheba' => 'Inactive', 'partner' => 'Inactive', 'customer' => 'Inactive'],
-        'Paused'        => ['sheba' => 'Blocked', 'partner' => 'Blocked', 'customer' => 'Blocked'],
-        'Closed'        => ['sheba' => 'Closed', 'partner' => 'Closed', 'customer' => 'Closed'],
-        'Blacklisted'   => ['sheba' => 'Blacklisted', 'partner' => 'Blacklisted', 'customer' => 'Blacklisted'],
-        'Waiting'       => ['sheba' => 'Ready to verified', 'partner' => 'Ready to verified', 'customer' => 'Ready to verified'],
-        'Onboarded'     => ['sheba' => 'Onboarded', 'partner' => 'Onboarded', 'customer' => 'Onboarded'],
-        'Rejected'      => ['sheba' => 'Rejected', 'partner' => 'Rejected', 'customer' => 'Rejected']
+        'Verified' => ['sheba' => 'Verified', 'partner' => 'Verified', 'customer' => 'Verified'],
+        'Unverified' => ['sheba' => 'Inactive', 'partner' => 'Inactive', 'customer' => 'Inactive'],
+        'Paused' => ['sheba' => 'Blocked', 'partner' => 'Blocked', 'customer' => 'Blocked'],
+        'Closed' => ['sheba' => 'Closed', 'partner' => 'Closed', 'customer' => 'Closed'],
+        'Blacklisted' => ['sheba' => 'Blacklisted', 'partner' => 'Blacklisted', 'customer' => 'Blacklisted'],
+        'Waiting' => ['sheba' => 'Ready to verified', 'partner' => 'Ready to verified', 'customer' => 'Ready to verified'],
+        'Onboarded' => ['sheba' => 'Onboarded', 'partner' => 'Onboarded', 'customer' => 'Onboarded'],
+        'Rejected' => ['sheba' => 'Rejected', 'partner' => 'Rejected', 'customer' => 'Rejected']
     ],
     'PARTNER_LEVELS' => ['Starter', 'Intermediate', 'Advanced'],
     'PARTNER_TYPES' => ['USP', 'NSP', 'ESP'],
@@ -387,8 +387,8 @@ return [
     'PARTNER_AFFILIATION_PARTNER_ORDER_BENCHMARK' => 2,
     'PARTNER_AFFILIATION_REWARD_BREAKDOWN' => [
         //'on_boarded' => 20,
-        'waiting'   => 0,
-        'verified'  => 30,
+        'waiting' => 0,
+        'verified' => 30,
         'order_completed' => 70
     ],
     'PARTNER_AFFILIATION_AMBASSADOR_COMMISSION' => 30,
@@ -436,5 +436,9 @@ return [
         'Pending' => 'Pending',
         'Approved' => 'Approved',
         'Rejected' => 'Rejected'
+    ],
+    'WITHDRAW_LIMIT' => [
+        'bkash' => ['min' => 500, 'max' => 10000],
+        'bank' => ['min' => 10000, 'max' => 1000000]
     ]
 ];

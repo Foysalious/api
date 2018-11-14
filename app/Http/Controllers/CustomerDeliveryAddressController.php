@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
 use App\Sheba\Address\AddressValidator;
@@ -47,20 +48,18 @@ class CustomerDeliveryAddressController extends Controller
             $addresses = $customer->delivery_addresses;
             $address_validator = new AddressValidator();
             if ($address_validator->isAddressNameExists($addresses, $request->address)) return api_response($request, null, 400, ['message' => "There is almost a same address exits with this name!"]);
-            $delivery_address = new CustomerDeliveryAddress();
-            $delivery_address->customer_id = $customer->id;
+
             $hyper_local = null;
             if ($request->has('lat') && $request->has('lng')) {
                 if ($address_validator->isAddressLocationExists($addresses, new Coords($request->lat, $request->lng))) return api_response($request, null, 400, ['message' => "There is already a address exits at this location!"]);
                 $hyper_local = HyperLocal::insidePolygon($request->lat, $request->lng)->with('location')->first();
                 if (!$hyper_local) return api_response($request, null, 400, ['message' => "You're out of our service area."]);
-                $delivery_address->geo_informations = json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]);
+                $request->merge(["geo_informations" => json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng])]);
             }
-            $delivery_address->location_id = $hyper_local ? $hyper_local->location_id : null;
-            $delivery_address = $this->setAddressProperties($delivery_address, $request);
-            $this->setModifier($customer);
-            $this->withCreateModificationField($delivery_address);
-            $delivery_address->save();
+            $request->merge(["location_id" => $hyper_local ? $hyper_local->location_id : null]);
+
+            $delivery_address = $this->_store($customer, $request);
+
             return api_response($request, 1, 200, ['address' => $delivery_address->id]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -93,12 +92,13 @@ class CustomerDeliveryAddressController extends Controller
                 if ($address_validator->isAddressLocationExists($addresses, new Coords((double)$request->lat, (double)$request->lng))) return api_response($request, null, 400, ['message' => "There is already a address exits at this location!"]);
                 $hyper_local = HyperLocal::insidePolygon($request->lat, $request->lng)->with('location')->first();
                 if (!$hyper_local) return api_response($request, null, 400, ['message' => "You're out of our service area."]);
-                $delivery_address->geo_informations = json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]);
+                //$delivery_address->geo_informations = json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]);
+                $request->merge(["geo_informations" => json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng])]);
             }
-            $delivery_address = $this->setAddressProperties($delivery_address, $request);
-            $this->setModifier($customer);
-            $this->withUpdateModificationField($delivery_address);
-            $delivery_address->update();
+
+            $this->_store($customer, $request);
+            $this->_delete($customer, $delivery_address);
+
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -112,12 +112,40 @@ class CustomerDeliveryAddressController extends Controller
         }
     }
 
+    private function _store(Customer $customer, $request)
+    {
+        $delivery_address = new CustomerDeliveryAddress();
+        $delivery_address->customer_id = $customer->id;
+        if ($request->has('lat') && $request->has('lng')) {
+            $delivery_address->geo_informations = json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]);
+        }
+        $delivery_address->location_id = $request->location_id;
+        $delivery_address = $this->setAddressProperties($delivery_address, $request);
+        $this->setModifier($customer);
+        $this->withCreateModificationField($delivery_address);
+        $delivery_address->save();
+        return $delivery_address;
+    }
+
+    /**
+     * @param Customer $customer
+     * @param CustomerDeliveryAddress $address
+     * @throws \Exception
+     */
+    private function _delete(Customer $customer, CustomerDeliveryAddress $address)
+    {
+        $this->setModifier($customer);
+        $this->withUpdateModificationField($address);
+        $address->update();
+        $address->delete();
+    }
+
     public function destroy($customer, $delivery_address, Request $request)
     {
         try {
             $address = CustomerDeliveryAddress::where([['id', $delivery_address], ['customer_id', (int)$customer]])->first();
             if ($address) {
-                $address->delete();
+                $this->_delete($request->customer, $address);
                 return api_response($request, null, 200);
             }
         } catch (\Throwable $e) {
