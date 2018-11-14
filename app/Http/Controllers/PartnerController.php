@@ -21,7 +21,7 @@ use App\Sheba\Checkout\PartnerPrice;
 use App\Sheba\Checkout\Validation;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Redis;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
@@ -769,7 +769,7 @@ class PartnerController extends Controller
         }
     }
 
-    public function storeBashNumber($partner, Request $request)
+    public function storeBkashNumber($partner, Request $request)
     {
         try {
             $this->validate($request, [
@@ -784,6 +784,33 @@ class PartnerController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getPartnerNotSelectedServices($partner, $category, Request $request)
+    {
+        try {
+            if ($partner = Partner::find((int)$partner)) {
+                $partner_services = $partner->services()
+                    ->where('category_id', $request->category)->published()->get()->pluck('id', 'name');
+
+                $services = Service::where('category_id', $request->category)->publishedForAll()
+                    ->get()->pluck('id', 'name');
+
+                $not_selected_services_by_partner = $services->diffKeys($partner_services)->flip();
+//                dd($not_selected_services_by_partner,$partner_services, $services);
+
+                if (count($not_selected_services_by_partner) > 0) {
+                    return api_response($request, null, 200, ['not_selected_services_by_partner' => $not_selected_services_by_partner]);
+                } else {
+                    return api_response($request, null, 404);
+                }
+            } else {
+                return api_response($request, null, 404);
+            }
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
