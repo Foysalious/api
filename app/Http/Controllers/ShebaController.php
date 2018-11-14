@@ -66,7 +66,7 @@ class ShebaController extends Controller
     {
         try {
             $images = Slider::select('id', 'image_link', 'small_image_link', 'target_link', 'target_type', 'target_id');
-            if ($request->has('business') && $request->business) {
+            if ($request->has('is_business') && (int)$request->is_business) {
                 $images = $images->showBusiness()->map(function ($image) {
                     $image['target_type'] = $image['target_type'] ? explode('\\', $image['target_type'])[2] : null;
                     return $image;
