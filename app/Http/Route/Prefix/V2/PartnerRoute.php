@@ -23,6 +23,7 @@ class PartnerRoute
             });
             $api->group(['prefix' => 'categories'], function ($api) {
                 $api->get('/tree', 'PartnerController@getCategoriesTree');
+                $api->get('/untagged-categories', 'PartnerController@untaggedCategories');
                 $api->group(['prefix' => '{category}'], function ($api) {
                     $api->get('/', 'PartnerController@getSecondaryCategory');
                     $api->post('/update', 'PartnerController@updateSecondaryCategory');

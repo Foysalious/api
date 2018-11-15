@@ -33,7 +33,7 @@ class PartnerServiceController extends Controller
                         'id' => $partner_service->service->category->id,
                         'name' => $partner_service->service->category->name,
                         'services' => collect([[
-                            'id' => $partner_service->id,
+                            'id' => $partner_service->service_id,
                             'name' => $partner_service->service->name,
                             'has_update_request' => $partner_service->prices_updates_count,
                             'thumb' => $partner_service->service->app_thumb
@@ -47,7 +47,7 @@ class PartnerServiceController extends Controller
                         'id' => $partner_service->service->category->id,
                         'name' => $partner_service->service->category->name,
                         'services' => collect([[
-                            'id' => $partner_service->id,
+                            'id' => $partner_service->service_id,
                             'name' => $partner_service->service->name,
                             'has_update_request' => $partner_service->prices_updates_count,
                             'thumb' => $partner_service->service->app_thumb
@@ -55,7 +55,7 @@ class PartnerServiceController extends Controller
                     ]);
                 } else {
                     $sub_category_in_collection['services']->push([
-                        'id' => $partner_service->id,
+                        'id' => $partner_service->service_id,
                         'name' => $partner_service->service->name,
                         'has_update_request' => $partner_service->prices_updates_count,
                         'thumb' => $partner_service->service->app_thumb

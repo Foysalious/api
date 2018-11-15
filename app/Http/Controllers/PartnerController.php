@@ -819,5 +819,15 @@ class PartnerController extends Controller
     {
         return ['services.id', 'name', 'is_published_for_backend', 'thumb', 'app_thumb', 'is_published_for_business' ,'publication_status'];
     }
+
+    public function untaggedCategories(Request $request)
+    {
+        try {
+            // Category::with('children')->published();
+        } catch (\Throwable $exception) {
+            app('sentry')->captureException($exception);
+            return api_response($request, null, 500);
+        }
+    }
 }
 
