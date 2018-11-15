@@ -712,7 +712,7 @@ class PartnerController extends Controller
         try {
             if ($partner = Partner::find((int)$partner)) {
                 $service = $partner->services()->select('services.id', 'name', 'variable_type', 'services.min_quantity', 'services.variables')
-                    ->where('services.id', $service)->published()->first();
+                    ->where('services.id', $service)->first();
                 if (count($service) > 0) {
                     $variables = json_decode($service->variables);
                     $partner_service_price_update = PartnerServicePricesUpdate::where('partner_service_id', $service->pivot->id)->where('status', 'Pending')->first();
