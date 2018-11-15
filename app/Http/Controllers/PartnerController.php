@@ -7,6 +7,7 @@ use App\Models\Job;
 use App\Models\Partner;
 use App\Models\PartnerResource;
 use App\Models\PartnerService;
+use App\Models\PartnerServicePricesUpdate;
 use App\Models\Service;
 use App\Repositories\DiscountRepository;
 use App\Repositories\NotificationRepository;
@@ -691,7 +692,7 @@ class PartnerController extends Controller
                 ->where('partner_id', $request->partner_id)->where('category_id', $request->category_id)->first();
             if ($category_partner) {
                 $data = [
-                    'delivery_charge'             => $request->delivery_charge,
+                    'delivery_charge' => $request->delivery_charge,
                     'is_home_delivery_applied' => $request->is_home_delivery_applied
                 ] ;
                 $this->setModifier($partner);
@@ -713,9 +714,12 @@ class PartnerController extends Controller
                     ->where('services.id', $service)->published()->first();
                 if (count($service) > 0) {
                     $variables = json_decode($service->variables);
+                    $partner_service_price_update = PartnerServicePricesUpdate::where('partner_service_id', $service->pivot->id)->where('status', 'Pending')->first();
+                    $old_prices = $partner_service_price_update ? json_decode($partner_service_price_update->old_prices, 1) : null;
+                    $new_prices = $partner_service_price_update ? json_decode($partner_service_price_update->new_prices, 1) : json_decode($service->pivot->prices, 1);
                     if ($service->variable_type == 'Options') {
                         $service['questions'] = $this->formatServiceQuestions($variables->options);
-                        $service['option_prices'] = $this->formatOptionWithPrice(json_decode($service->pivot->prices));
+                        $service['option_prices'] = $this->formatOptionWithOldPrice($new_prices, $old_prices);
                         $service['fixed_price'] = null;
                     } else {
                         $service['questions'] = $service['option_prices'] = [];
@@ -734,6 +738,23 @@ class PartnerController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function formatOptionWithOldPrice($prices, $old_prices)
+    {
+        $options = collect();
+        foreach ($prices as $key => $price) {
+            $options->push(
+                array(
+                    'option' => collect(explode(',', $key))->map(function ($key) {
+                        return (int)$key;
+                    }),
+                    'price' => (double)$price,
+                    'old_price' => is_null($old_prices) ? null : (isset($old_prices[$key]) ? $old_prices[$key] : null)
+                )
+            );
+        }
+        return $options;
     }
 
     public function storeBkashNumber($partner, Request $request)
