@@ -174,34 +174,6 @@ class PartnerController extends Controller
         }
     }
 
-    private function formatServiceQuestions($options)
-    {
-        $questions = collect();
-        foreach ($options as $option) {
-            $questions->push(array(
-                'question' => $option->question,
-                'answers' => explode(',', $option->answers)
-            ));
-        }
-        return $questions;
-    }
-
-    private function formatOptionWithPrice($prices)
-    {
-        $options = collect();
-        foreach ($prices as $key => $price) {
-            $options->push(
-                array(
-                    'option' => collect(explode(',', $key))->map(function ($key) {
-                        return (int)$key;
-                    }),
-                    'price' => (double)$price
-                )
-            );
-        }
-        return $options;
-    }
-
     public function getReviews($partner)
     {
         $partner = Partner::with(['reviews' => function ($q) {
@@ -646,24 +618,6 @@ class PartnerController extends Controller
         }
     }
 
-    public function getSecondaryCategory($partner, $category, Request $request)
-    {
-        try {
-            $partner = Partner::find((int)$partner);
-            $category_partner = new CategoryPartner();
-            $category_partner = CategoryPartner::select($this->getSelectColumnsOfCategory())
-                ->where('partner_id', $request->partner->id)->where('category_id', $request->category)->first();
-            if ($category_partner) {
-                $secondary_category = $category_partner;
-                return api_response($request, $secondary_category, 200, ['secondary_category' => $secondary_category]);
-            }
-            return api_response($request, null, 404);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
     public function changePublicationStatus($partner, $category, $service, Request $request)
     {
         try {
@@ -680,6 +634,24 @@ class PartnerController extends Controller
                 return api_response($request, null, 500);
             }
         } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getSecondaryCategory($partner, $category, Request $request)
+    {
+        try {
+            $partner = Partner::find((int)$partner);
+            $category_partner = new CategoryPartner();
+            $category_partner = CategoryPartner::select($this->getSelectColumnsOfCategory())
+                ->where('partner_id', $request->partner->id)->where('category_id', $request->category)->first();
+            if ($category_partner) {
+                $secondary_category = $category_partner;
+                return api_response($request, $secondary_category, 200, ['secondary_category' => $secondary_category]);
+            }
+            return api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -741,23 +713,6 @@ class PartnerController extends Controller
         }
     }
 
-    private function formatOptionWithOldPrice($prices, $old_prices)
-    {
-        $options = collect();
-        foreach ($prices as $key => $price) {
-            $options->push(
-                array(
-                    'option' => collect(explode(',', $key))->map(function ($key) {
-                        return (int)$key;
-                    }),
-                    'price' => (double)$price,
-                    'old_price' => is_null($old_prices) ? null : (isset($old_prices[$key]) ? $old_prices[$key] : null)
-                )
-            );
-        }
-        return $options;
-    }
-
     public function storeBkashNumber($partner, Request $request)
     {
         try {
@@ -804,6 +759,51 @@ class PartnerController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function formatServiceQuestions($options)
+    {
+        $questions = collect();
+        foreach ($options as $option) {
+            $questions->push(array(
+                'question' => $option->question,
+                'answers' => explode(',', $option->answers)
+            ));
+        }
+        return $questions;
+    }
+
+    private function formatOptionWithPrice($prices)
+    {
+        $options = collect();
+        foreach ($prices as $key => $price) {
+            $options->push(
+                array(
+                    'option' => collect(explode(',', $key))->map(function ($key) {
+                        return (int)$key;
+                    }),
+                    'price' => (double)$price
+                )
+            );
+        }
+        return $options;
+    }
+
+    private function formatOptionWithOldPrice($prices, $old_prices)
+    {
+        $options = collect();
+        foreach ($prices as $key => $price) {
+            $options->push(
+                array(
+                    'option' => collect(explode(',', $key))->map(function ($key) {
+                        return (int)$key;
+                    }),
+                    'price' => (double)$price,
+                    'old_price' => is_null($old_prices) ? null : (isset($old_prices[$key]) ? $old_prices[$key] : null)
+                )
+            );
+        }
+        return $options;
     }
 
     private function getSelectColumnsOfService()
