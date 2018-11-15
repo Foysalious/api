@@ -697,7 +697,7 @@ class PartnerController extends Controller
                 ] ;
                 $this->setModifier($partner);
                 $category_partner->update($this->withUpdateModificationField($data));
-                return api_response($request, null, 200);
+                return api_response($request, null, 200, ['message' => 'Your Home Delivery Charge will be updated within 2 working days.']);
             } else {
                 return api_response($request, null, 500);
             }
