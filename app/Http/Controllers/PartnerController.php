@@ -670,11 +670,12 @@ class PartnerController extends Controller
             $partner = Partner::find((int)$partner);
             $partner_service = new PartnerService();
             $partner_service = $partner_service->where('partner_id', $request->partner_id)->where('service_id', $request->service_id)->first();
+
             if ($partner_service) {
                 $data['is_published'] = !$partner_service->is_published;
                 $this->setModifier($partner);
                 $partner_service->update($this->withUpdateModificationField($data));
-                return api_response($request, null, 200);
+                return api_response($request, null, 200, ['message' => 'Your service(s) will be updated within 2 working days.']);
             } else {
                 return api_response($request, null, 500);
             }
