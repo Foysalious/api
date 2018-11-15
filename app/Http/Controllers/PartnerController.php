@@ -601,8 +601,6 @@ class PartnerController extends Controller
             }])->find($partner);
             if ($partner) {
                 $master_categories = collect();
-                /*dd($partner->services()->select("category_id", 'is_published',DB::raw('count(*) as absent'))->whereIn('category_id', $partner->categories->pluck('id')->toArray())
-                    ->wherePivot('is_verified', 1)->published()->groupBy('category_id', 'is_published')->toSql());*/
                 foreach ($partner->categories as $category) {
                     $published_services = $partner->services()->where('category_id', $category->id)
                         ->wherePivot('is_published', 1)->wherePivot('is_verified', 1)->published()->count();
@@ -629,7 +627,7 @@ class PartnerController extends Controller
                         'is_verified' => $category->pivot->is_verified,
                         'is_home_delivery_applied' => $category->pivot->is_home_delivery_applied,
                         'is_partner_premise_applied' => $category->pivot->is_partner_premise_applied,
-                        'delivery_charge' => $category->pivot->delivery_charge,
+                        'delivery_charge' => (double)$category->pivot->delivery_charge,
                         'published_services' => $published_services,
                         'unpublished_services' => $unpublished_services,
                     ];
