@@ -366,6 +366,7 @@ class PartnerController extends Controller
                 'total_resources' => $resource_ids->count(),
                 'assigned_resources' => $assigned_resource_ids->count(),
                 'unassigned_resources' => $unassigned_resource_ids->count(),
+                'bkash_no' => $partner->bkash_no,
                 'balance' => $partner->totalWalletAmount(),
                 'credit' => (double)$partner->wallet,
                 'bonus' => round($partner->bonusWallet(), 2),
