@@ -40,8 +40,7 @@ class PartnerWithdrawalRequestController extends Controller
             $partner = $request->partner;
 //            Number Match validations
             $authenticate_data = (new FacebookAccountKit())->authenticateKit($request->code);
-
-            if ($request->bkash_number != $authenticate_data['mobile']) {
+            if (trim_phone_number($request->bkash_number) != trim_phone_number($authenticate_data['mobile'])) {
                 return api_response($request, null, 400, ['message' => 'Your provided bkash number and verification number did not match,please verify using your bkash number']);
             }
 //            Limit Validation
