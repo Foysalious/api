@@ -280,19 +280,25 @@ class AffiliateController extends Controller
     {
         try {
             list($offset, $limit) = calculatePagination($request);
-            $transactions = AffiliateTransaction::with(['affiliate' => function ($q) {
-                $q->with(['profile' => function ($q) {
-                    $q->select('id', 'name', 'pro_pic');
-                }, 'affiliations' => function ($q) {
-                    $q->selectRaw('count(*) as total_reference, affiliate_id')->where('status', 'successful')->groupBy('affiliate_id');
-                }]);
-            }])->selectRaw('sum(amount) as earning_amount, affiliate_id')
+            $transactions = AffiliateTransaction::where('affiliation_type', '<>', null)
+                ->with(['affiliate' => function ($q) {
+                    $q->with(['profile' => function ($q) {
+                        $q->select('id', 'name', 'pro_pic');
+                    }, 'affiliations' => function ($q) {
+                        $q->selectRaw('count(*) as total_reference, affiliate_id')->groupBy('affiliate_id');
+                    }, 'partnerAffiliations' => function ($q) {
+                        $q->selectRaw('count(*) as total_partner_reference, affiliate_id')->groupBy('affiliate_id');
+                    }]);
+                }])
+                ->selectRaw('sum(amount) as earning_amount, affiliate_id')
                 ->where('type', 'Credit')->groupBy('affiliate_id')->orderBy('earning_amount', 'desc')->skip($offset)->take($limit)->get();
             $final = [];
             foreach ($transactions as $transaction) {
                 $info['id'] = $transaction->affiliate->id;
                 $info['earning_amount'] = (double)$transaction->earning_amount;
-                $info['total_reference'] = $transaction->affiliate->affiliations->first() ? $transaction->affiliate->affiliations->first()->total_reference : 0;
+                $total_affiliation = $transaction->affiliate->affiliations->first() ? $transaction->affiliate->affiliations->first()->total_reference : 0;
+                $total_partner_affiliation = $transaction->affiliate->partnerAffiliations->first() ? $transaction->affiliate->partnerAffiliations->first()->total_partner_reference : 0;
+                $info['total_reference'] = $total_affiliation + $total_partner_affiliation;
                 $info['name'] = $transaction->affiliate->profile->name;
                 $info['picture'] = $transaction->affiliate->profile->pro_pic;
                 array_push($final, $info);
