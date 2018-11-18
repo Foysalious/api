@@ -13,7 +13,9 @@ class AddressValidator
 
     public function isAddressLocationExists($addresses, Coords $current)
     {
-        $to = $addresses->map(function ($address) {
+        $to = $addresses->reject(function ($address) {
+            return $address->geo_informations == null;
+        })->map(function ($address) {
             $geo = json_decode($address->geo_informations);
             return new Coords(floatval($geo->lat), floatval($geo->lng), $address->id);
         })->toArray();
