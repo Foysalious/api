@@ -19,6 +19,7 @@ class AddressValidator
             $geo = json_decode($address->geo_informations);
             return new Coords(floatval($geo->lat), floatval($geo->lng), $address->id);
         })->toArray();
+        if (count($to) == 0) return 0;
         $distance = (new Distance(DistanceStrategy::$VINCENTY))->matrix();
         $results = collect($distance->from([$current])->to($to)->sortedDistance()[0])->reject(function ($value) {
             return $value > self::THRESHOLD_DISTANCE;
