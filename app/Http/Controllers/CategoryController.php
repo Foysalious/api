@@ -29,7 +29,7 @@ class CategoryController extends Controller
     {
         try {
             $with = '';
-            $categories = Category::where('parent_id', null)->orderBy('order')->select('id', 'name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id');
+            $categories = Category::where('parent_id', null)->orderBy('order')->select('id', 'name', 'bn_name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id');
             if ($request->has('with')) {
                 $with = $request->with;
                 if ($with == 'children') {
