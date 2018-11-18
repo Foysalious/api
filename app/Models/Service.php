@@ -9,6 +9,7 @@ class Service extends Model
     protected $fillable = [
         'category_id',
         'name',
+        'bn_name',
         'description',
         'publication_status',
         'recurring_possibility',
