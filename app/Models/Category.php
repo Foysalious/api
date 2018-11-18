@@ -89,6 +89,13 @@ class Category extends Model
         return $query->where('is_published_for_business', 1);
     }
 
+    public function scopePublishedForAll($query)
+    {
+        return $query->where('parent_id')->where(function ($query) {
+            return $query->published()->orWhere('is_published_for_business', 1);
+        });
+    }
+
     public function isRentCar()
     {
         return in_array($this->id, array_map('intval', explode(',', env('RENT_CAR_IDS')))) ? 1 : 0;

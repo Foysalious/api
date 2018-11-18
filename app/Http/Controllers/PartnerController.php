@@ -824,7 +824,23 @@ class PartnerController extends Controller
     public function untaggedCategories(Request $request)
     {
         try {
-            // Category::with('children')->published();
+            $categories = Category::child()->published()->orWhere('is_published_for_business', 1)->whereDoesntHave('partners', function ($query) use ($request) {
+                return $query->where('partner_id', '<>', $request->partner->id);
+            })->get();
+            $master_categories = Category::publishedForAll()->select('id', 'name', 'app_thumb', 'icon', 'icon_png')->get();
+
+            foreach ($categories as $category) {
+                $master_category = $master_categories->where('id', $category->parent_id)->first();
+                if (is_null($master_category['sub_categories'])) $master_category['sub_categories'] = collect([]);
+                $master_category['sub_categories']->push([
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'app_thumb' => $category->app_thumb,
+                    'icon' => $category->icon,
+                    'icon_png' => $category->icon_png
+                ]);
+            }
+            return $master_categories;
         } catch (\Throwable $exception) {
             app('sentry')->captureException($exception);
             return api_response($request, null, 500);
