@@ -36,6 +36,7 @@ class CustomerFavoriteController extends Controller
                 $pivot['unit'] = $service->unit;
                 $pivot['min_quantity'] = $service->min_quantity;
                 $pivot['app_thumb'] = $service->app_thumb;
+                $pivot['publication_status'] = $service->publication_status;
                 array_push($services, $pivot);
             });
             $partner = $favorite->partner;
