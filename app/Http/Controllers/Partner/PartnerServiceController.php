@@ -104,23 +104,27 @@ class PartnerServiceController extends Controller
                 'base_quantity' => 'sometimes|string',
             ]);
             $partner = $request->partner;
-            $data = [];
-            $prices = [];
-            foreach (json_decode($request->prices) as $price_option) {
-                $prices[implode(array_values($price_option->option), ',')] = $price_option->price;
-            }
-            $data['prices'] = json_encode($prices);
-            $data['options'] = $request->options;
-            $data['min_prices'] = $request->min_prices;
-            $data['base_prices'] = $request->base_prices;
-            $data['base_quantity'] = $request->base_quantity;
-            if ($partner->status == 'Verified') $this->_updateRequest($data, $partner, $service);
-            else $this->_update($data, $partner, $service);
             /**@var Service $service * */
             $service = Service::find((int)$service);
             if (!$service) return api_response($request, null, 404, ['message' => 'Service not found.']);
             if (!$partner->services()->find($service->id)) return api_response($request, null, 403, ['message' => 'Service is not added yet.']);
             $this->setModifier($request->manager_resource);
+            $data = [];
+            $prices = [];
+            if ($service->isOptions()) {
+                foreach (json_decode($request->prices) as $price_option) {
+                    $prices[implode(array_values($price_option->option), ',')] = $price_option->price;
+                }
+                $data['prices'] = json_encode($prices);
+                $data['options'] = $request->options;
+            } else {
+                $data['prices'] = $request->prices;
+            }
+            $data['min_prices'] = $request->min_prices;
+            $data['base_prices'] = $request->base_prices;
+            $data['base_quantity'] = $request->base_quantity;
+            if ($partner->status == 'Verified') $this->_updateRequest($data, $partner, $service);
+            else $this->_update($data, $partner, $service);
             $pivot_data = $this->withBothModificationFields($data);
             $partner->services()->save($service, $pivot_data);
             return api_response($request, 1, 200);
