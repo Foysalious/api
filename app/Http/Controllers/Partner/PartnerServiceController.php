@@ -97,7 +97,7 @@ class PartnerServiceController extends Controller
     {
         try {
             $this->validate($request, [
-                'options' => 'required|string',
+                'options' => 'sometimes|string',
                 'prices' => 'required|string',
                 'min_prices' => 'sometimes|string',
                 'base_prices' => 'sometimes|string',
