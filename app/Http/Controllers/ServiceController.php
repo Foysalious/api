@@ -110,7 +110,6 @@ class ServiceController extends Controller
 
             return api_response($request, $service, 200, ['service' => $service]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

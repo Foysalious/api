@@ -126,7 +126,6 @@ class WalletController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
