@@ -124,8 +124,6 @@ class PartnerServiceController extends Controller
             $data['base_quantity'] = $request->base_quantity;
             if ($partner->status == 'Verified') $this->_updateRequest($data, $partner, $service);
             else $this->_update($data, $service);
-            $pivot_data = $this->withBothModificationFields($data);
-            $partner->services()->save($service, $pivot_data);
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
