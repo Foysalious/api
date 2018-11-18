@@ -105,9 +105,8 @@ class PartnerServiceController extends Controller
             ]);
             $partner = $request->partner;
             /**@var Service $service * */
-            $service = Service::find((int)$service);
-            if (!$service) return api_response($request, null, 404, ['message' => 'Service not found.']);
-            if (!$partner->services()->find($service->id)) return api_response($request, null, 403, ['message' => 'Service is not added yet.']);
+            $service = $partner->services()->where('services.id', $service)->first();
+            if (!$service) return api_response($request, null, 403, ['message' => 'Service is not added yet.']);
             $this->setModifier($request->manager_resource);
             $data = [];
             $prices = [];
@@ -124,7 +123,7 @@ class PartnerServiceController extends Controller
             $data['base_prices'] = $request->base_prices;
             $data['base_quantity'] = $request->base_quantity;
             if ($partner->status == 'Verified') $this->_updateRequest($data, $partner, $service);
-            else $this->_update($data, $partner, $service);
+            else $this->_update($data, $service);
             $pivot_data = $this->withBothModificationFields($data);
             $partner->services()->save($service, $pivot_data);
             return api_response($request, 1, 200);
@@ -140,9 +139,8 @@ class PartnerServiceController extends Controller
         }
     }
 
-    private function _updateRequest($data, Partner $partner, $service)
+    private function _updateRequest($data, Partner $partner, Service $service)
     {
-        $service = $partner->services()->find($service);
         $partner_service = $service->pivot;
         $update_data = [
             'partner_service_id' => $partner_service->id,
@@ -179,9 +177,9 @@ class PartnerServiceController extends Controller
         ];
     }
 
-    private function _update($data, Partner $partner, $service)
+    private function _update($data, Service $service)
     {
-        $pivot_data = $partner->services()->find($service)->pivot;
+        $pivot_data = $service->pivot;
         $data = $this->withUpdateModificationField($data);
         $pivot_data->update($data);
     }
