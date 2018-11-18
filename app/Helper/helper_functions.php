@@ -485,4 +485,9 @@ if (!function_exists('createOptionsFromOptionVariables')) {
         return '[' . substr($options, 0, -1) . ']';
     }
 }
-
+if (!function_exists('trim_phone_number')) {
+    function trim_phone_number($number, $index_number = '0')
+    {
+        return  strstr($number, $index_number);
+    }
+}
