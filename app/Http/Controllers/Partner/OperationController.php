@@ -76,8 +76,13 @@ class OperationController extends Controller
                 if ($request->has('locations')) $partner->locations()->sync(json_decode($request->locations));
                 if ($request->has('address')) $partner_info['address'] = $request->address;
                 if ($request->has('lat') && $request->has('lng')) {
-                    $partner_info['geo_informations'] = json_encode(['lat' => $request->lat, 'lng' => $request->lng, 'radius' => "10"]);
+                    $partner_info['geo_informations'] = json_encode([
+                        'lat' => $request->lat,
+                        'lng' => $request->lng,
+                        'radius' => $request->has('radius') ? $request->radius : (json_decode($partner->geo_informations)->radius ?: '10')
+                    ]);
                 }
+
                 $partner->update($partner_info);
 
                 if ($request->has('working_schedule')) {
