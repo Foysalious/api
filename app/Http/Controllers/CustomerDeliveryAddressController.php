@@ -118,6 +118,7 @@ class CustomerDeliveryAddressController extends Controller
     private function _store(Customer $customer, CustomerDeliveryAddress $delivery_address, $request)
     {
         $delivery_address = $this->setAddressProperties($delivery_address, $request);
+        $delivery_address->customer_id = $customer->id;
         $this->setModifier($customer);
         $this->withCreateModificationField($delivery_address);
         $delivery_address->save();
