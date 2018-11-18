@@ -29,7 +29,7 @@ class CategoryController extends Controller
     {
         try {
             $with = '';
-            $categories = Category::where('parent_id', null)->orderBy('order')->select('id', 'name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id');
+            $categories = Category::where('parent_id', null)->orderBy('order')->select('id', 'name', 'bn_name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id');
             if ($request->has('with')) {
                 $with = $request->with;
                 if ($with == 'children') {
@@ -153,7 +153,7 @@ class CategoryController extends Controller
                     $services = $this->serviceRepository->addServiceInfo($services, $scope);
                 } else {
                     $category = $category->load(['services' => function ($q) use ($offset, $limit) {
-                        $q->select('id', 'category_id', 'unit', 'name', 'thumb', 'app_thumb', 'app_banner',
+                        $q->select('id', 'category_id', 'unit', 'name', 'bn_name', 'thumb', 'app_thumb', 'app_banner',
                             'short_description', 'description', 'banner', 'faqs', 'variables', 'variable_type', 'min_quantity')->orderBy('order')->skip($offset)->take($limit);
                         if ((int)\request()->is_business) $q->publishedForBusiness();
                         else $q->published();

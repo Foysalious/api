@@ -11,4 +11,9 @@ class AffiliateTransaction extends Model
     {
         return $this->belongsTo(Affiliate::class);
     }
+
+    public function affiliation()
+    {
+        return $this->morphTo();
+    }
 }

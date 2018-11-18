@@ -14,8 +14,8 @@ class PartnerLocationController extends Controller
     {
         try {
             $this->validate($request, [
-                'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
-                'time' => 'required|string',
+                'date' => 'sometimes|required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
+                'time' => 'sometimes|required|string',
                 'services' => 'required|string',
                 'isAvailable' => 'sometimes|required',
                 'partner' => 'sometimes|required',
@@ -24,7 +24,7 @@ class PartnerLocationController extends Controller
             ]);
             $partner = $request->has('partner') ? $request->partner : null;
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time);
-            $partner_list->setGeo($request->lat, $request->lng)->setAvailability($request->skip_availability)->find($partner);
+            $partner_list->setGeo($request->lat, $request->lng)->setAvailability((int)$request->skip_availability)->find($partner);
             if ($request->has('isAvailable')) {
                 $partners = $partner_list->partners;
                 $available_partners = $partners->filter(function ($partner) {
@@ -36,10 +36,14 @@ class PartnerLocationController extends Controller
             if ($partner_list->hasPartners) {
                 $partner_list->addPricing();
                 $partner_list->addInfo();
-                if ($request->filter == 'sheba') $partner_list->sortByShebaPartnerPriority();
-                else $partner_list->sortByShebaSelectedCriteria();
+                if ($request->has('filter') && $request->filter == 'sheba') {
+                    $partner_list->sortByShebaPartnerPriority();
+                } else {
+                    $partner_list->sortByShebaSelectedCriteria();
+                }
                 $partners = $partner_list->partners;
                 $partners->each(function ($partner, $key) {
+                    $partner['rating'] = round($partner->rating, 2);
                     array_forget($partner, 'wallet');
                     array_forget($partner, 'package_id');
                     array_forget($partner, 'geo_informations');

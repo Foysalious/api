@@ -162,6 +162,8 @@ class PartnerList
                 $q->published();
             })->select(DB::raw('count(*) as c'))->whereIn('services.id', $this->selectedServiceIds)->where([['partner_service.is_published', 1], ['partner_service.is_verified', 1]])->publishedForAll()
                 ->groupBy('partner_id')->havingRaw('c=' . count($this->selectedServiceIds));
+        })->whereDoesntHave('leaves', function ($q) {
+            $q->where('end', null)->orWhere([['start', '<=', Carbon::now()], ['end', '>=', Carbon::now()->addDays(7)]]);
         })->published()
             ->select('partners.id', 'partners.current_impression', 'partners.geo_informations', 'partners.address', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet', 'partners.package_id');
         if ($partner_id != null) {

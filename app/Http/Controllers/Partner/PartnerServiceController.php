@@ -33,7 +33,7 @@ class PartnerServiceController extends Controller
                         'id' => $partner_service->service->category->id,
                         'name' => $partner_service->service->category->name,
                         'services' => collect([[
-                            'id' => $partner_service->id,
+                            'id' => $partner_service->service_id,
                             'name' => $partner_service->service->name,
                             'has_update_request' => $partner_service->prices_updates_count,
                             'thumb' => $partner_service->service->app_thumb
@@ -47,7 +47,7 @@ class PartnerServiceController extends Controller
                         'id' => $partner_service->service->category->id,
                         'name' => $partner_service->service->category->name,
                         'services' => collect([[
-                            'id' => $partner_service->id,
+                            'id' => $partner_service->service_id,
                             'name' => $partner_service->service->name,
                             'has_update_request' => $partner_service->prices_updates_count,
                             'thumb' => $partner_service->service->app_thumb
@@ -55,7 +55,7 @@ class PartnerServiceController extends Controller
                     ]);
                 } else {
                     $sub_category_in_collection['services']->push([
-                        'id' => $partner_service->id,
+                        'id' => $partner_service->service_id,
                         'name' => $partner_service->service->name,
                         'has_update_request' => $partner_service->prices_updates_count,
                         'thumb' => $partner_service->service->app_thumb
@@ -97,32 +97,33 @@ class PartnerServiceController extends Controller
     {
         try {
             $this->validate($request, [
-                'options' => 'required|string',
+                'options' => 'sometimes|string',
                 'prices' => 'required|string',
                 'min_prices' => 'sometimes|string',
                 'base_prices' => 'sometimes|string',
                 'base_quantity' => 'sometimes|string',
             ]);
             $partner = $request->partner;
+            /**@var Service $service * */
+            $service = $partner->services()->where('services.id', $service)->first();
+            if (!$service) return api_response($request, null, 403, ['message' => 'Service is not added yet.']);
+            $this->setModifier($request->manager_resource);
             $data = [];
             $prices = [];
-            foreach (json_decode($request->prices) as $price_option) {
-                $prices[implode(array_values($price_option->option), ',')] = $price_option->price;
+            if ($service->isOptions()) {
+                foreach (json_decode($request->prices) as $price_option) {
+                    $prices[implode(array_values($price_option->option), ',')] = $price_option->price;
+                }
+                $data['prices'] = json_encode($prices);
+                $data['options'] = $request->options;
+            } else {
+                $data['prices'] = $request->prices;
             }
-            $data['prices'] = json_encode($prices);
-            $data['options'] = $request->options;
             $data['min_prices'] = $request->min_prices;
             $data['base_prices'] = $request->base_prices;
             $data['base_quantity'] = $request->base_quantity;
             if ($partner->status == 'Verified') $this->_updateRequest($data, $partner, $service);
-            else $this->_update($data, $partner, $service);
-            /**@var Service $service * */
-            $service = Service::find((int)$service);
-            if (!$service) return api_response($request, null, 404, ['message' => 'Service not found.']);
-            if (!$partner->services()->find($service->id)) return api_response($request, null, 403, ['message' => 'Service is not added yet.']);
-            $this->setModifier($request->manager_resource);
-            $pivot_data = $this->withBothModificationFields($data);
-            $partner->services()->save($service, $pivot_data);
+            else $this->_update($data, $service);
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -136,9 +137,8 @@ class PartnerServiceController extends Controller
         }
     }
 
-    private function _updateRequest($data, Partner $partner, $service)
+    private function _updateRequest($data, Partner $partner, Service $service)
     {
-        $service = $partner->services()->find($service);
         $partner_service = $service->pivot;
         $update_data = [
             'partner_service_id' => $partner_service->id,
@@ -175,9 +175,9 @@ class PartnerServiceController extends Controller
         ];
     }
 
-    private function _update($data, Partner $partner, $service)
+    private function _update($data, Service $service)
     {
-        $pivot_data = $partner->services()->find($service)->pivot;
+        $pivot_data = $service->pivot;
         $data = $this->withUpdateModificationField($data);
         $pivot_data->update($data);
     }

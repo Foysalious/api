@@ -24,7 +24,7 @@ class CategoryRepository
                     $query->where('id', $location);
                 });
             }]);
-        }])->select('id', 'category_id', 'name', 'thumb', 'banner', 'app_thumb', 'app_banner', 'slug', 'min_quantity', 'short_description', 'description', 'variable_type', 'variables', 'faqs')
+        }])->select('id', 'category_id', 'name', 'bn_name', 'thumb', 'banner', 'app_thumb', 'app_banner', 'slug', 'min_quantity', 'short_description', 'description', 'variable_type', 'variables', 'faqs')
             ->whereIn('category_id', $category_ids)->skip($offset)->take($limit);
         $services = (int)request()->get('is_business') ? $services->publishedForBusiness()->get() : $services->published()->get();
         $final_services = [];
