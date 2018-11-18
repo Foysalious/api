@@ -485,7 +485,6 @@ class PartnerController extends Controller
             }
             return api_response($request, null, 404, ['message' => 'No partner found.']);
         } catch (HyperLocationNotFoundException $e) {
-            app('sentry')->captureException($e);
             return api_response($request, null, 400, ['message' => 'Your are out of service area.']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -569,7 +568,7 @@ class PartnerController extends Controller
         try {
             $partner = Partner::with(['categories' => function ($query) {
                 return $query->select('categories.id', 'name', 'parent_id', 'thumb', 'app_thumb', 'categories.is_home_delivery_applied')
-                    ->published()->with(['parent' => function($query){
+                    ->published()->with(['parent' => function ($query) {
                         return $query->select('id', 'name', 'thumb', 'app_thumb');
                     }]);
             }])->find($partner);
@@ -582,7 +581,7 @@ class PartnerController extends Controller
                         ->wherePivot('is_published', 0)->wherePivot('is_verified', 1)->published()->count();
 
                     $master_category = $master_categories->where('id', $category->parent->id)->first();
-                    if(!$master_category) {
+                    if (!$master_category) {
                         $master_category = [
                             'id' => $category->parent->id,
                             'name' => $category->parent->name,
@@ -667,7 +666,7 @@ class PartnerController extends Controller
                 $data = [
                     'delivery_charge' => $request->delivery_charge,
                     'is_home_delivery_applied' => $request->is_home_delivery_applied
-                ] ;
+                ];
                 $this->setModifier($partner);
                 $category_partner->update($this->withUpdateModificationField($data));
                 return api_response($request, null, 200, ['message' => 'Your Home Delivery Charge will be updated within 2 working days.']);
@@ -808,7 +807,7 @@ class PartnerController extends Controller
 
     private function getSelectColumnsOfService()
     {
-        return ['services.id', 'name', 'is_published_for_backend', 'variable_type', 'services.min_quantity', 'services.variables', 'is_verified' ,'is_published'];
+        return ['services.id', 'name', 'is_published_for_backend', 'variable_type', 'services.min_quantity', 'services.variables', 'is_verified', 'is_published'];
     }
 
     private function getSelectColumnsOfCategory()
@@ -818,7 +817,7 @@ class PartnerController extends Controller
 
     private function getSelectColumnsOfAddableService()
     {
-        return ['services.id', 'name', 'is_published_for_backend', 'thumb', 'app_thumb', 'is_published_for_business' ,'publication_status'];
+        return ['services.id', 'name', 'is_published_for_backend', 'thumb', 'app_thumb', 'is_published_for_business', 'publication_status'];
     }
 
     public function untaggedCategories(Request $request)
