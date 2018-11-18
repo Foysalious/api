@@ -174,34 +174,6 @@ class PartnerController extends Controller
         }
     }
 
-    private function formatServiceQuestions($options)
-    {
-        $questions = collect();
-        foreach ($options as $option) {
-            $questions->push(array(
-                'question' => $option->question,
-                'answers' => explode(',', $option->answers)
-            ));
-        }
-        return $questions;
-    }
-
-    private function formatOptionWithPrice($prices)
-    {
-        $options = collect();
-        foreach ($prices as $key => $price) {
-            $options->push(
-                array(
-                    'option' => collect(explode(',', $key))->map(function ($key) {
-                        return (int)$key;
-                    }),
-                    'price' => (double)$price
-                )
-            );
-        }
-        return $options;
-    }
-
     public function getReviews($partner)
     {
         $partner = Partner::with(['reviews' => function ($q) {
@@ -513,7 +485,6 @@ class PartnerController extends Controller
             }
             return api_response($request, null, 404, ['message' => 'No partner found.']);
         } catch (HyperLocationNotFoundException $e) {
-            app('sentry')->captureException($e);
             return api_response($request, null, 400, ['message' => 'Your are out of service area.']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -597,7 +568,7 @@ class PartnerController extends Controller
         try {
             $partner = Partner::with(['categories' => function ($query) {
                 return $query->select('categories.id', 'name', 'parent_id', 'thumb', 'app_thumb', 'categories.is_home_delivery_applied')
-                    ->published()->with(['parent' => function($query){
+                    ->published()->with(['parent' => function ($query) {
                         return $query->select('id', 'name', 'thumb', 'app_thumb');
                     }]);
             }])->find($partner);
@@ -610,7 +581,7 @@ class PartnerController extends Controller
                         ->wherePivot('is_published', 0)->wherePivot('is_verified', 1)->published()->count();
 
                     $master_category = $master_categories->where('id', $category->parent->id)->first();
-                    if(!$master_category) {
+                    if (!$master_category) {
                         $master_category = [
                             'id' => $category->parent->id,
                             'name' => $category->parent->name,
@@ -646,24 +617,6 @@ class PartnerController extends Controller
         }
     }
 
-    public function getSecondaryCategory($partner, $category, Request $request)
-    {
-        try {
-            $partner = Partner::find((int)$partner);
-            $category_partner = new CategoryPartner();
-            $category_partner = CategoryPartner::select($this->getSelectColumnsOfCategory())
-                ->where('partner_id', $request->partner->id)->where('category_id', $request->category)->first();
-            if ($category_partner) {
-                $secondary_category = $category_partner;
-                return api_response($request, $secondary_category, 200, ['secondary_category' => $secondary_category]);
-            }
-            return api_response($request, null, 404);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
     public function changePublicationStatus($partner, $category, $service, Request $request)
     {
         try {
@@ -684,6 +637,24 @@ class PartnerController extends Controller
         }
     }
 
+    public function getSecondaryCategory($partner, $category, Request $request)
+    {
+        try {
+            $partner = Partner::find((int)$partner);
+            $category_partner = new CategoryPartner();
+            $category_partner = CategoryPartner::select($this->getSelectColumnsOfCategory())
+                ->where('partner_id', $request->partner->id)->where('category_id', $request->category)->first();
+            if ($category_partner) {
+                $secondary_category = $category_partner;
+                return api_response($request, $secondary_category, 200, ['secondary_category' => $secondary_category]);
+            }
+            return api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     public function updateSecondaryCategory($partner, $category, Request $request)
     {
         try {
@@ -695,7 +666,7 @@ class PartnerController extends Controller
                 $data = [
                     'delivery_charge' => $request->delivery_charge,
                     'is_home_delivery_applied' => $request->is_home_delivery_applied
-                ] ;
+                ];
                 $this->setModifier($partner);
                 $category_partner->update($this->withUpdateModificationField($data));
                 return api_response($request, null, 200, ['message' => 'Your Home Delivery Charge will be updated within 2 working days.']);
@@ -739,23 +710,6 @@ class PartnerController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-    }
-
-    private function formatOptionWithOldPrice($prices, $old_prices)
-    {
-        $options = collect();
-        foreach ($prices as $key => $price) {
-            $options->push(
-                array(
-                    'option' => collect(explode(',', $key))->map(function ($key) {
-                        return (int)$key;
-                    }),
-                    'price' => (double)$price,
-                    'old_price' => is_null($old_prices) ? null : (isset($old_prices[$key]) ? $old_prices[$key] : null)
-                )
-            );
-        }
-        return $options;
     }
 
     public function storeBkashNumber($partner, Request $request)
@@ -806,9 +760,54 @@ class PartnerController extends Controller
         }
     }
 
+    private function formatServiceQuestions($options)
+    {
+        $questions = collect();
+        foreach ($options as $option) {
+            $questions->push(array(
+                'question' => $option->question,
+                'answers' => explode(',', $option->answers)
+            ));
+        }
+        return $questions;
+    }
+
+    private function formatOptionWithPrice($prices)
+    {
+        $options = collect();
+        foreach ($prices as $key => $price) {
+            $options->push(
+                array(
+                    'option' => collect(explode(',', $key))->map(function ($key) {
+                        return (int)$key;
+                    }),
+                    'price' => (double)$price
+                )
+            );
+        }
+        return $options;
+    }
+
+    private function formatOptionWithOldPrice($prices, $old_prices)
+    {
+        $options = collect();
+        foreach ($prices as $key => $price) {
+            $options->push(
+                array(
+                    'option' => collect(explode(',', $key))->map(function ($key) {
+                        return (int)$key;
+                    }),
+                    'price' => (double)$price,
+                    'old_price' => is_null($old_prices) ? null : (isset($old_prices[$key]) ? $old_prices[$key] : null)
+                )
+            );
+        }
+        return $options;
+    }
+
     private function getSelectColumnsOfService()
     {
-        return ['services.id', 'name', 'is_published_for_backend', 'variable_type', 'services.min_quantity', 'services.variables', 'is_verified' ,'is_published'];
+        return ['services.id', 'name', 'is_published_for_backend', 'variable_type', 'services.min_quantity', 'services.variables', 'is_verified', 'is_published'];
     }
 
     private function getSelectColumnsOfCategory()
@@ -818,7 +817,7 @@ class PartnerController extends Controller
 
     private function getSelectColumnsOfAddableService()
     {
-        return ['services.id', 'name', 'is_published_for_backend', 'thumb', 'app_thumb', 'is_published_for_business' ,'publication_status'];
+        return ['services.id', 'name', 'is_published_for_backend', 'thumb', 'app_thumb', 'is_published_for_business', 'publication_status'];
     }
 
     public function untaggedCategories(Request $request)

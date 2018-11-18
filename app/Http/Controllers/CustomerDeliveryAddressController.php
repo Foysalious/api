@@ -68,7 +68,7 @@ class CustomerDeliveryAddressController extends Controller
         }
     }
 
-    private function setAddressProperties($delivery_address, $request)
+    private function setAddressProperties(CustomerDeliveryAddress $delivery_address, $request)
     {
         if ($request->has('address')) $delivery_address->address = trim($request->address);
         if ($request->has('name')) $delivery_address->name = trim(ucwords($request->name));

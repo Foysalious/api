@@ -285,11 +285,12 @@ class AffiliateController extends Controller
                     $q->with(['profile' => function ($q) {
                         $q->select('id', 'name', 'pro_pic');
                     }, 'affiliations' => function ($q) {
-                        $q->selectRaw('count(*) as total_reference, affiliate_id')->where('status', 'successful')->groupBy('affiliate_id');
+                        $q->selectRaw('count(*) as total_reference, affiliate_id')->groupBy('affiliate_id');
                     }, 'partnerAffiliations' => function ($q) {
-                        $q->selectRaw('count(*) as total_partner_reference, affiliate_id')->where('status', 'successful')->groupBy('affiliate_id');
+                        $q->selectRaw('count(*) as total_partner_reference, affiliate_id')->groupBy('affiliate_id');
                     }]);
-                }])->selectRaw('sum(amount) as earning_amount, affiliate_id')
+                }])
+                ->selectRaw('sum(amount) as earning_amount, affiliate_id')
                 ->where('type', 'Credit')->groupBy('affiliate_id')->orderBy('earning_amount', 'desc')->skip($offset)->take($limit)->get();
             $final = [];
             foreach ($transactions as $transaction) {
