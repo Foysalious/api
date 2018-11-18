@@ -29,7 +29,7 @@ class CustomerDeliveryAddressController extends Controller
             $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'address', 'name', 'geo_informations')->get()->map(function ($customer_delivery_address) use ($customer_order_addresses) {
                 $customer_delivery_address['count'] = $this->getOrderCount($customer_order_addresses, $customer_delivery_address);
                 $geo = json_decode($customer_delivery_address['geo_informations']);
-                $customer_delivery_address['geo_informations'] = array('lat' => (double)$geo->lat, 'lng' => (double)$geo->lng);
+                $customer_delivery_address['geo_informations'] = $geo ? array('lat' => (double)$geo->lat, 'lng' => (double)$geo->lng) : null;
                 return $customer_delivery_address;
             });
             if ($location) $customer_delivery_addresses = $customer_delivery_addresses->where('location_id', $location->id);
