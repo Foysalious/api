@@ -110,7 +110,7 @@ class WalletController extends Controller
                 $paymentRepository->changeStatus(['to' => 'validated', 'from' => $payment->status,
                     'transaction_details' => $payment->transaction_details]);
                 $payment->status = 'validated';
-                $payment->transaction_details = json_encode(array('payment_id' => $payment->id, 'transaction_id' => $transaction->id));
+                $payment->transaction_details = json_encode(array('payment_id' => $payment->id, 'transaction_id' => $transaction ? $transaction->id : null));
                 $payment->update();
             } catch (QueryException $e) {
                 $payment->status = 'failed';
