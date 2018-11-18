@@ -90,7 +90,6 @@ class CustomerDeliveryAddressController extends Controller
             if ($delivery_address->customer_id != $customer->id) return api_response($request, null, 403);
             $addresses = $customer->delivery_addresses;
             $address_validator = new AddressValidator();
-            if ($address_validator->isAddressNameExists($addresses, $request->address)) return api_response($request, null, 400, ['message' => "There is almost a same address exits with this name!"]);
             if ($request->has('lat') && $request->has('lng')) {
                 if ($address_validator->isAddressLocationExists($addresses, new Coords((double)$request->lat, (double)$request->lng))) return api_response($request, null, 400, ['message' => "There is already a address exits at this location!"]);
                 $hyper_local = HyperLocal::insidePolygon($request->lat, $request->lng)->with('location')->first();
