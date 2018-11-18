@@ -2,6 +2,7 @@
 
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
+use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -82,6 +83,8 @@ class TopUpController extends Controller
     {
         try {
             $data = $request->all();
+            $filename = Carbon::now()->timestamp . str_random(6) . '.json';
+            Storage::disk('s3')->put("topup/fail/ssl/$filename", json_encode($data));
             $sentry = app('sentry');
             $sentry->user_context(['request' => $data]);
             $sentry->captureException(new \Exception('SSL topup fail'));
