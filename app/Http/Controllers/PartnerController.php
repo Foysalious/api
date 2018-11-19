@@ -3,6 +3,7 @@
 use App\Exceptions\HyperLocationNotFoundException;
 use App\Models\Category;
 use App\Models\CategoryPartner;
+use App\Models\DeliveryChargeUpdateRequest;
 use App\Models\Job;
 use App\Models\Partner;
 use App\Models\PartnerResource;
@@ -69,8 +70,7 @@ class PartnerController extends Controller
             if ($partner == null) {
                 $partner = Partner::where([['sub_domain', $partner_request], ['status', 'Verified']])->first();
             }
-            if ($partner == null)
-                return api_response($request, null, 404);
+            if ($partner == null) return api_response($request, null, 404);
             $partner->load(['workingHours', 'categories' => function ($q) {
                 $q->select('categories.id', 'name', 'thumb', 'icon', 'categories.slug')->where('category_partner.is_verified', 1);
             }, 'reviews', 'jobs' => function ($q) {
@@ -88,10 +88,7 @@ class PartnerController extends Controller
             $info = collect($partner)->only(['id', 'name', 'mobile', 'description', 'email', 'verified_at', 'status', 'logo', 'address', 'created_at']);
             $working_info = [];
             foreach ($partner->workingHours as $workingHour) {
-                array_push($working_info, array(
-                    'day' => $workingHour->day,
-                    'hour' => (Carbon::parse($workingHour->start_time))->format('g:i A') . '-' . (Carbon::parse($workingHour->end_time))->format('g:i A')
-                ));
+                array_push($working_info, array('day' => $workingHour->day, 'hour' => (Carbon::parse($workingHour->start_time))->format('g:i A') . '-' . (Carbon::parse($workingHour->end_time))->format('g:i A')));
             }
             $info->put('working_days', $working_info);
             $info->put('is_available', in_array(date('l'), collect($working_info)->pluck('day')->toArray()) ? 1 : 0);
@@ -104,13 +101,7 @@ class PartnerController extends Controller
             $all_resources = collect();
             foreach ($resource_jobs as $resource_job) {
                 if ($partner_resource = PartnerResource::where('partner_id', $partner->id)->where('resource_id', $resource_job[0]->resource_id)->first() && $resource_job[0]->resource->is_verified) {
-                    $all_resources->push(collect([
-                        'name' => $resource_job[0]->resource->profile->name,
-                        'mobile' => $resource_job[0]->resource->profile->mobile,
-                        'picture' => $resource_job[0]->resource->profile->pro_pic,
-                        'total_rating' => $resource_job->count(),
-                        'avg_rating' => round($resource_job->avg('review.rating'), 2),
-                    ]));
+                    $all_resources->push(collect(['name' => $resource_job[0]->resource->profile->name, 'mobile' => $resource_job[0]->resource->profile->mobile, 'picture' => $resource_job[0]->resource->profile->pro_pic, 'total_rating' => $resource_job->count(), 'avg_rating' => round($resource_job->avg('review.rating'), 2),]));
                 }
             }
             $all_resources = $all_resources->sortByDesc('avg_rating')->take(4);
@@ -145,8 +136,7 @@ class PartnerController extends Controller
     {
         try {
             if ($partner = Partner::find((int)$partner)) {
-                $services = $partner->services()->select($this->getSelectColumnsOfService())
-                    ->where('category_id', $request->category)->published()->get();
+                $services = $partner->services()->select($this->getSelectColumnsOfService())->where('category_id', $request->category)->published()->get();
                 if (count($services) > 0) {
                     $services->each(function (&$service) {
                         $variables = json_decode($service->variables);
@@ -177,14 +167,13 @@ class PartnerController extends Controller
     public function getReviews($partner)
     {
         $partner = Partner::with(['reviews' => function ($q) {
-            $q->select('id', 'service_id', 'partner_id', 'customer_id', 'review_title', 'review', 'rating', DB::raw('DATE_FORMAT(updated_at, "%M %d,%Y at %h:%i:%s %p") as time'))
-                ->with(['service' => function ($q) {
+            $q->select('id', 'service_id', 'partner_id', 'customer_id', 'review_title', 'review', 'rating', DB::raw('DATE_FORMAT(updated_at, "%M %d,%Y at %h:%i:%s %p") as time'))->with(['service' => function ($q) {
+                $q->select('id', 'name');
+            }])->with(['customer' => function ($q) {
+                $q->select('id', 'profile_id')->with(['profile' => function ($q) {
                     $q->select('id', 'name');
-                }])->with(['customer' => function ($q) {
-                    $q->select('id', 'profile_id')->with(['profile' => function ($q) {
-                        $q->select('id', 'name');
-                    }]);
-                }])->orderBy('updated_at', 'desc');
+                }]);
+            }])->orderBy('updated_at', 'desc');
         }])->select('id')->where('id', $partner)->first();
         if (count($partner->reviews) > 0) {
             $partner = $this->reviewRepository->getGeneralReviewInformation($partner);
@@ -202,10 +191,7 @@ class PartnerController extends Controller
     public function getReviewInfo($partner, Request $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
-                'service_id' => 'sometimes|required|numeric',
-                'resource_id' => 'sometimes|required|numeric'
-            ]);
+            $validator = Validator::make($request->all(), ['service_id' => 'sometimes|required|numeric', 'resource_id' => 'sometimes|required|numeric']);
             if ($validator->fails()) {
                 $errors = $validator->errors()->all()[0];
                 return api_response($request, $errors, 400, ['message' => $errors]);
@@ -242,12 +228,7 @@ class PartnerController extends Controller
                 })->sortByDesc('created_at');
                 removeRelationsAndFields($partner);
             }
-            $info = array(
-                'rating' => $avg_rating,
-                'total_reviews' => $reviews->count(),
-                'reviews' => array_slice($reviews->values()->all(), $offset, $limit),
-                'breakdown' => $breakdown
-            );
+            $info = array('rating' => $avg_rating, 'total_reviews' => $reviews->count(), 'reviews' => array_slice($reviews->values()->all(), $offset, $limit), 'breakdown' => $breakdown);
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -258,14 +239,7 @@ class PartnerController extends Controller
     public function getResources($partner, Request $request)
     {
         try {
-            $this->validate($request, [
-                'type' => 'sometimes|required|string',
-                'verified' => 'sometimes|required',
-                'job_id' => 'sometimes|required|numeric|exists:jobs,id',
-                'category_id' => 'sometimes|required|numeric',
-                'date' => 'sometimes|required|date',
-                'time' => 'sometimes|required',
-            ]);
+            $this->validate($request, ['type' => 'sometimes|required|string', 'verified' => 'sometimes|required', 'job_id' => 'sometimes|required|numeric|exists:jobs,id', 'category_id' => 'sometimes|required|numeric', 'date' => 'sometimes|required|date', 'time' => 'sometimes|required',]);
             $partnerRepo = new PartnerRepository($request->partner);
             $verified = $request->has('verified') ? (int)$request->verified : null;
             $category_id = $date = $preferred_time = null;
@@ -301,13 +275,7 @@ class PartnerController extends Controller
     {
         try {
             $partner = $request->partner;
-            $statuses = array(
-                constants('JOB_STATUSES')['Accepted'],
-                constants('JOB_STATUSES')['Schedule_Due'],
-                constants('JOB_STATUSES')['Process'],
-                constants('JOB_STATUSES')['Served'],
-                constants('JOB_STATUSES')['Serve_Due'],
-            );
+            $statuses = array(constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Served'], constants('JOB_STATUSES')['Serve_Due'],);
             $partner->load(['walletSetting', 'resources' => function ($q) {
                 $q->verified()->type('Handyman');
             }, 'jobs' => function ($q) use ($statuses) {
@@ -322,35 +290,11 @@ class PartnerController extends Controller
             $assigned_resource_ids = $jobs->whereIn('status', [constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Schedule_Due']])->pluck('resource_id')->unique();
             $unassigned_resource_ids = $resource_ids->diff($assigned_resource_ids);
             $sales_stats = (new PartnerSalesStatistics($request->partner))->calculate();
-            $info = array(
-                'todays_jobs' => $jobs->filter(function ($job, $key) {
-                    return $job->schedule_date == Carbon::now()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined']);
-                })->count(),
-                'tomorrows_jobs' => $jobs->filter(function ($job, $key) {
-                    return $job->schedule_date == Carbon::tomorrow()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined']);
-                })->count(),
-                'accepted_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Accepted'])->count(),
-                'schedule_due_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Schedule_Due'])->count(),
-                'process_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Process'])->count(),
-                'served_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Served'])->count(),
-                'serve_due_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Serve_Due'])->count(),
-                'total_ongoing_orders' => (new JobList($partner))->ongoing()->count(),
-                'total_open_complains' => $partner->complains->whereIn('status', ['Observation', 'Open'])->count(),
-                'total_resources' => $resource_ids->count(),
-                'assigned_resources' => $assigned_resource_ids->count(),
-                'unassigned_resources' => $unassigned_resource_ids->count(),
-                'bkash_no' => $partner->bkash_no,
-                'balance' => $partner->totalWalletAmount(),
-                'credit' => (double)$partner->wallet,
-                'bonus' => round($partner->bonusWallet(), 2),
-                'is_credit_limit_exceed' => $partner->isCreditLimitExceed(),
-                'geo_informations' => $partner->geo_informations,
-                'today' => $sales_stats->today->sale,
-                'week' => $sales_stats->week->sale,
-                'month' => $sales_stats->month->sale,
-                'reward_point' => $partner->reward_point,
-                'has_reward_campaign' => count($partner_reward->upcoming()) > 0 ? 1 : 0
-            );
+            $info = array('todays_jobs' => $jobs->filter(function ($job, $key) {
+                return $job->schedule_date == Carbon::now()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined']);
+            })->count(), 'tomorrows_jobs' => $jobs->filter(function ($job, $key) {
+                return $job->schedule_date == Carbon::tomorrow()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined']);
+            })->count(), 'accepted_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Accepted'])->count(), 'schedule_due_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Schedule_Due'])->count(), 'process_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Process'])->count(), 'served_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Served'])->count(), 'serve_due_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Serve_Due'])->count(), 'total_ongoing_orders' => (new JobList($partner))->ongoing()->count(), 'total_open_complains' => $partner->complains->whereIn('status', ['Observation', 'Open'])->count(), 'total_resources' => $resource_ids->count(), 'assigned_resources' => $assigned_resource_ids->count(), 'unassigned_resources' => $unassigned_resource_ids->count(), 'bkash_no' => $partner->bkash_no, 'balance' => $partner->totalWalletAmount(), 'credit' => (double)$partner->wallet, 'bonus' => round($partner->bonusWallet(), 2), 'is_credit_limit_exceed' => $partner->isCreditLimitExceed(), 'geo_informations' => $partner->geo_informations, 'today' => $sales_stats->today->sale, 'week' => $sales_stats->week->sale, 'month' => $sales_stats->month->sale, 'reward_point' => $partner->reward_point, 'has_reward_campaign' => count($partner_reward->upcoming()) > 0 ? 1 : 0);
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -425,17 +369,7 @@ class PartnerController extends Controller
     {
         try {
             $start = microtime(true);
-            $this->validate($request, [
-                'date' => 'sometimes|required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
-                'time' => 'sometimes|required|string',
-                'services' => 'required|string',
-                'isAvailable' => 'sometimes|required',
-                'skip_availability' => 'sometimes|required|numeric|in:0,1',
-                'partner' => 'sometimes|required',
-                'filter' => 'sometimes|required|in:sheba',
-                'has_premise' => 'sometimes|required',
-                'has_home_delivery' => 'sometimes|required',
-            ]);
+            $this->validate($request, ['date' => 'sometimes|required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'), 'time' => 'sometimes|required|string', 'services' => 'required|string', 'isAvailable' => 'sometimes|required', 'skip_availability' => 'sometimes|required|numeric|in:0,1', 'partner' => 'sometimes|required', 'filter' => 'sometimes|required|in:sheba', 'has_premise' => 'sometimes|required', 'has_home_delivery' => 'sometimes|required',]);
             $validation = new Validation($request);
             if (!$validation->isValid()) {
                 return api_response($request, $validation->message, 400, ['message' => $validation->message]);
@@ -522,8 +456,7 @@ class PartnerController extends Controller
             if ($partner) {
                 $categories = collect();
                 foreach ($partner->categories as $category) {
-                    $services = $partner->services()->select('services.id', 'name', 'variable_type', 'services.min_quantity', 'services.variables')
-                        ->where('category_id', $category->id)->wherePivot('is_published', 1)->wherePivot('is_verified', 1)->published()->get();
+                    $services = $partner->services()->select('services.id', 'name', 'variable_type', 'services.min_quantity', 'services.variables')->where('category_id', $category->id)->wherePivot('is_published', 1)->wherePivot('is_verified', 1)->published()->get();
                     if (count($services) > 0) {
                         $services->each(function (&$service) {
                             $variables = json_decode($service->variables);
@@ -539,12 +472,7 @@ class PartnerController extends Controller
                             removeRelationsAndFields($service);
                         });
                     }
-                    $categories->push([
-                        'id' => $category->id,
-                        'name' => $category->name,
-                        'app_thumb' => $category->app_thumb,
-                        'services' => $services
-                    ]);
+                    $categories->push(['id' => $category->id, 'name' => $category->name, 'app_thumb' => $category->app_thumb, 'services' => $services]);
                 }
                 if (count($categories) > 0) {
                     $hasCarRental = $categories->filter(function ($category) {
@@ -567,45 +495,23 @@ class PartnerController extends Controller
     {
         try {
             $partner = Partner::with(['categories' => function ($query) {
-                return $query->select('categories.id', 'name', 'parent_id', 'thumb', 'app_thumb', 'categories.is_home_delivery_applied', 'categories.is_partner_premise_applied')
-                    ->published()->with(['parent' => function ($query) {
-                        return $query->select('id', 'name', 'thumb', 'app_thumb');
-                    }]);
+                return $query->select('categories.id', 'name', 'parent_id', 'thumb', 'app_thumb', 'categories.is_home_delivery_applied', 'categories.is_partner_premise_applied')->published()->with(['parent' => function ($query) {
+                    return $query->select('id', 'name', 'thumb', 'app_thumb');
+                }]);
             }])->find($partner);
             if ($partner) {
                 $master_categories = collect();
                 foreach ($partner->categories as $category) {
-                    $published_services = $partner->services()->where('category_id', $category->id)
-                        ->wherePivot('is_published', 1)->wherePivot('is_verified', 1)->published()->count();
-                    $unpublished_services = $partner->services()->where('category_id', $category->id)
-                        ->wherePivot('is_published', 0)->wherePivot('is_verified', 1)->published()->count();
+                    $published_services = $partner->services()->where('category_id', $category->id)->wherePivot('is_published', 1)->wherePivot('is_verified', 1)->published()->count();
+                    $unpublished_services = $partner->services()->where('category_id', $category->id)->wherePivot('is_published', 0)->wherePivot('is_verified', 1)->published()->count();
 
                     $master_category = $master_categories->where('id', $category->parent->id)->first();
                     if (!$master_category) {
-                        $master_category = [
-                            'id' => $category->parent->id,
-                            'name' => $category->parent->name,
-                            'app_thumb' => $category->parent->app_thumb,
-                            'secondary_category' => collect()
-                        ];
+                        $master_category = ['id' => $category->parent->id, 'name' => $category->parent->name, 'app_thumb' => $category->parent->app_thumb, 'secondary_category' => collect()];
                         $master_categories->push($master_category);
                     }
-                    
-                    $category = [
-                        'id' => $category->id,
-                        'name' => $category->name,
-                        'parent_id' => $category->parent_id,
-                        'thumb' => $category->thumb,
-                        'app_thumb' => $category->app_thumb,
-                        'is_verified' => $category->pivot->is_verified,
-                        'is_sheba_home_delivery_applied' => $category->is_home_delivery_applied,
-                        'is_sheba_partner_premise_applied' => $category->is_partner_premise_applied,
-                        'is_home_delivery_applied' => $category->pivot->is_home_delivery_applied,
-                        'is_partner_premise_applied' => $category->pivot->is_partner_premise_applied,
-                        'delivery_charge' => (double)$category->pivot->delivery_charge,
-                        'published_services' => $published_services,
-                        'unpublished_services' => $unpublished_services,
-                    ];
+
+                    $category = ['id' => $category->id, 'name' => $category->name, 'parent_id' => $category->parent_id, 'thumb' => $category->thumb, 'app_thumb' => $category->app_thumb, 'is_verified' => $category->pivot->is_verified, 'is_sheba_home_delivery_applied' => $category->is_home_delivery_applied, 'is_sheba_partner_premise_applied' => $category->is_partner_premise_applied, 'is_home_delivery_applied' => $category->pivot->is_home_delivery_applied, 'is_partner_premise_applied' => $category->pivot->is_partner_premise_applied, 'delivery_charge' => (double)$category->pivot->delivery_charge, 'published_services' => $published_services, 'unpublished_services' => $unpublished_services,];
 
                     $master_category['secondary_category']->push($category);
                 }
@@ -643,8 +549,7 @@ class PartnerController extends Controller
         try {
             $partner = Partner::find((int)$partner);
             $category_partner = new CategoryPartner();
-            $category_partner = CategoryPartner::select($this->getSelectColumnsOfCategory())
-                ->where('partner_id', $request->partner->id)->where('category_id', $request->category)->first();
+            $category_partner = CategoryPartner::select($this->getSelectColumnsOfCategory())->where('partner_id', $request->partner->id)->where('category_id', $request->category)->first();
             if ($category_partner) {
                 $secondary_category = $category_partner;
                 return api_response($request, $secondary_category, 200, ['secondary_category' => $secondary_category]);
@@ -656,35 +561,11 @@ class PartnerController extends Controller
         }
     }
 
-    public function updateSecondaryCategory($partner, $category, Request $request)
-    {
-        try {
-            $partner = Partner::find((int)$partner);
-            $category_partner = new CategoryPartner();
-            $category_partner = $category_partner->select($this->getSelectColumnsOfCategory())
-                ->where('partner_id', $request->partner_id)->where('category_id', $request->category_id)->first();
-            if ($category_partner) {
-                $data = [
-                    'delivery_charge' => $request->delivery_charge,
-                    'is_home_delivery_applied' => $request->is_home_delivery_applied
-                ];
-                $this->setModifier($partner);
-                $category_partner->update($this->withUpdateModificationField($data));
-                return api_response($request, null, 200, ['message' => 'Your Home Delivery Charge will be updated within 2 working days.']);
-            } else {
-                return api_response($request, null, 500);
-            }
-        } catch (\Throwable $e) {
-            return api_response($request, null, 500);
-        }
-    }
-
     public function serviceOption($partner, $category, $service, Request $request)
     {
         try {
             if ($partner = Partner::find((int)$partner)) {
-                $service = $partner->services()->select('services.id', 'name', 'variable_type', 'services.min_quantity', 'services.variables')
-                    ->where('services.id', $service)->first();
+                $service = $partner->services()->select('services.id', 'name', 'variable_type', 'services.min_quantity', 'services.variables')->where('services.id', $service)->first();
                 if (count($service) > 0) {
                     $variables = json_decode($service->variables);
                     $partner_service_price_update = PartnerServicePricesUpdate::where('partner_service_id', $service->pivot->id)->where('status', 'Pending')->first();
@@ -718,9 +599,7 @@ class PartnerController extends Controller
     public function storeBkashNumber($partner, Request $request)
     {
         try {
-            $this->validate($request, [
-                'bkash_no' => 'required|string|mobile:bd'
-            ]);
+            $this->validate($request, ['bkash_no' => 'required|string|mobile:bd']);
             $bkash_no = formatMobile($request->bkash_no);
             $data['bkash_no'] = $bkash_no;
             $this->setModifier($request->partner);
@@ -740,14 +619,9 @@ class PartnerController extends Controller
     {
         try {
             if ($partner = Partner::find((int)$partner)) {
-                $registered_services = $partner->services()
-                    ->where('category_id', $request->category)->published()->get()->pluck('id')->toArray();
+                $registered_services = $partner->services()->where('category_id', $request->category)->published()->get()->pluck('id')->toArray();
 
-                $addable_services = Service::where('category_id', $request->category)
-                    ->select($this->getSelectColumnsOfAddableService())
-                    ->whereNotIn('id', $registered_services)
-                    ->publishedForAll()
-                    ->get();
+                $addable_services = Service::where('category_id', $request->category)->select($this->getSelectColumnsOfAddableService())->whereNotIn('id', $registered_services)->publishedForAll()->get();
 
                 if (count($addable_services) > 0) {
                     return api_response($request, null, 200, ['addable_services' => $addable_services]);
@@ -767,10 +641,7 @@ class PartnerController extends Controller
     {
         $questions = collect();
         foreach ($options as $option) {
-            $questions->push(array(
-                'question' => $option->question,
-                'answers' => explode(',', $option->answers)
-            ));
+            $questions->push(array('question' => $option->question, 'answers' => explode(',', $option->answers)));
         }
         return $questions;
     }
@@ -779,14 +650,9 @@ class PartnerController extends Controller
     {
         $options = collect();
         foreach ($prices as $key => $price) {
-            $options->push(
-                array(
-                    'option' => collect(explode(',', $key))->map(function ($key) {
-                        return (int)$key;
-                    }),
-                    'price' => (double)$price
-                )
-            );
+            $options->push(array('option' => collect(explode(',', $key))->map(function ($key) {
+                return (int)$key;
+            }), 'price' => (double)$price));
         }
         return $options;
     }
@@ -795,15 +661,9 @@ class PartnerController extends Controller
     {
         $options = collect();
         foreach ($prices as $key => $price) {
-            $options->push(
-                array(
-                    'option' => collect(explode(',', $key))->map(function ($key) {
-                        return (int)$key;
-                    }),
-                    'price' => (double)$price,
-                    'old_price' => is_null($old_prices) ? null : (isset($old_prices[$key]) ? (double)$old_prices[$key] : null)
-                )
-            );
+            $options->push(array('option' => collect(explode(',', $key))->map(function ($key) {
+                return (int)$key;
+            }), 'price' => (double)$price, 'old_price' => is_null($old_prices) ? null : (isset($old_prices[$key]) ? (double)$old_prices[$key] : null)));
         }
         return $options;
     }
@@ -834,19 +694,53 @@ class PartnerController extends Controller
             foreach ($categories as $category) {
                 $master_category = $master_categories->where('id', $category->parent_id)->first();
                 if (is_null($master_category['sub_categories'])) $master_category['sub_categories'] = collect([]);
-                $master_category['sub_categories']->push([
-                    'id' => $category->id,
-                    'name' => $category->name,
-                    'app_thumb' => $category->app_thumb,
-                    'icon' => $category->icon,
-                    'icon_png' => $category->icon_png
-                ]);
+                $master_category['sub_categories']->push(['id' => $category->id, 'name' => $category->name, 'app_thumb' => $category->app_thumb, 'icon' => $category->icon, 'icon_png' => $category->icon_png]);
             }
             return $master_categories;
         } catch (\Throwable $exception) {
             app('sentry')->captureException($exception);
             return api_response($request, null, 500);
         }
+    }
+
+    public function updateSecondaryCategory($partner, $category, Request $request)
+    {
+        try {
+            $partner = Partner::find((int)$partner);
+            $category_partner = new CategoryPartner();
+            $category_partner = $category_partner->where('partner_id', $request->partner_id)->where('category_id', $request->category_id)->first();
+            $data = ['delivery_charge' => $request->delivery_charge, 'is_home_delivery_applied' => $request->is_home_delivery_applied];
+            $this->setModifier($partner);
+            if ($category_partner->is_verified) {
+                if ($this->isRequestCreatable($request->partner_id, $request->category_id)) {
+                    list($old_category_partner_info, $new_category_partner_info) = $this->formatData($category_partner, $request);
+                    DeliveryChargeUpdateRequest::create($this->withCreateModificationField(['category_partner_id' => $category_partner->id, 'old_category_partner_info' => json_encode($old_category_partner_info), 'new_category_partner_info' => json_encode($new_category_partner_info)]));
+                    return api_response($request, 1, 200, ['message' => 'Your home delivery charge will be updated within 2 working days.']);
+                } else {
+                    return api_response($request, null, 403, ['message' => 'You already have a pending a request']);
+                }
+            } else {
+                $category_partner->update($this->withUpdateModificationField($data));
+                return api_response($request, 1, 200);
+            }
+        } catch (\Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    private function isRequestCreatable($partner_id, $category_id)
+    {
+        return CategoryPartner::where('category_id', $category_id)->where('partner_id', $partner_id)->first()->deliveryChargeUpdateRequest()->Status(constants('DELIVERY_CHARGE_UPDATE_STATUSES')['pending'])->count() ? false : true;
+    }
+
+    private function formatData($category_partner, Request $request)
+    {
+        $old = ['is_home_delivery_applied' => $category_partner->is_home_delivery_applied, 'is_partner_premise_applied' => $category_partner->is_partner_premise_applied, 'delivery_charge' => $category_partner->delivery_charge];
+        $new = ['is_home_delivery_applied' => $request->has('is_home_delivery_applied') ? 1 : 0, 'is_partner_premise_applied' => $request->has('on_premise') ? 1 : 0, 'delivery_charge' => $request->has('is_home_delivery_applied') ? $request->delivery_charge : 0];
+
+        return [$old, $new];
     }
 }
 
