@@ -103,12 +103,18 @@ class Discount
 
     private function calculateOriginalPrice()
     {
+        $rent_a_car_price_applied = 0;
         if ($this->isRentACar() && ($this->base_price && $this->base_quantity) && ($this->quantity >= $this->base_quantity)) {
             $this->original_price = $this->base_price + ($this->unit_price * ($this->quantity - $this->base_quantity));
+            $rent_a_car_price_applied = 1;
         } else {
             $this->original_price = $this->unit_price * $this->quantity;
         }
-        $this->original_price = $this->original_price < $this->min_price ? $this->min_price : $this->original_price;
+        if ($this->original_price < $this->min_price) {
+            $this->original_price = $this->min_price;
+        } elseif ($rent_a_car_price_applied) {
+            $this->min_price = $this->original_price;
+        }
         if ($this->surchargePercentage > 0) $this->original_price = $this->original_price + ($this->original_price * $this->surchargePercentage / 100);
     }
 
