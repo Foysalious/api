@@ -798,7 +798,7 @@ class PartnerController extends Controller
                         return (int)$key;
                     }),
                     'price' => (double)$price,
-                    'old_price' => is_null($old_prices) ? null : (isset($old_prices[$key]) ? $old_prices[$key] : null)
+                    'old_price' => is_null($old_prices) ? null : (isset($old_prices[$key]) ? (double)$old_prices[$key] : null)
                 )
             );
         }
