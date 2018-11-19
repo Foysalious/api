@@ -440,5 +440,10 @@ return [
     'WITHDRAW_LIMIT' => [
         'bkash' => ['min' => 500, 'max' => 15000],
         'bank' => ['min' => 20000, 'max' => 250000]
+    ],
+    'DELIVERY_CHARGE_UPDATE_STATUSES' => [
+        'pending' => 'Pending',
+        'approved' => 'Approved',
+        'rejected' => 'Rejected'
     ]
 ];
