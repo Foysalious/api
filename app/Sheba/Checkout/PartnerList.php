@@ -195,7 +195,7 @@ class PartnerList
         $this->partners = $this->findPartnersByService($partner_id)->reject(function ($partner) {
             return $partner->geo_informations == null;
         });
-        $current = new Coords($hyper_local->location['lat'], $hyper_local->location['lng']);
+        $current = new Coords($this->lat, $this->lng);
         $to = $this->partners->map(function ($partner) {
             $geo = json_decode($partner->geo_informations);
             return new Coords(floatval($geo->lat), floatval($geo->lng), $partner->id);

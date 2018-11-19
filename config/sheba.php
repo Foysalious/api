@@ -50,5 +50,22 @@ return [
         'avg_rating' => 0.12,
         'total_ratings' => 0.08
     ],
-    'promo_applicable_sales_channels' => ['Web', 'App', 'App-iOS', 'E-Shop']
+    'promo_applicable_sales_channels' => ['Web', 'App', 'App-iOS', 'E-Shop'],
+    'category_colors' => [
+        1 => '#78B9EB',
+        3 => '#D5B4EB',
+        221 => '#9BB9FB',
+        17 => '#8B9EB',
+        225 => '#7EE3FF',
+        73 => '#5FE6D6',
+        186 => '#73DA9E',
+        224 => '#B2E59C',
+        183 => '#F490C0',
+        184 => '#CDEEAE',
+        236 => '#FFE477',
+        185 => '#FFC477',
+        226 => '#FF9478',
+        235 => '#FE7B7C',
+        101 => '#C6C5CA',
+    ]
 ];
