@@ -16,11 +16,11 @@ class CustomerFavoriteController extends Controller
     {
         $customer = $request->customer;
         list($offset, $limit) = calculatePagination($request);
-        $customer->load(['favorites' => function ($q) use($offset, $limit) {
+        $customer->load(['favorites' => function ($q) use ($offset, $limit) {
             $q->with(['services', 'partner' => function ($q) {
                 $q->select('id', 'name', 'logo');
             }, 'category' => function ($q) {
-                $q->select('id', 'name', 'slug', 'icon', 'icon_color');
+                $q->select('id', 'parent_id', 'name', 'slug', 'icon', 'icon_color')->with('parent');
             }])->orderBy('id', 'desc')->skip($offset)->take($limit);
         }]);
         $favorites = $customer->favorites->each(function (&$favorite, $key) {
@@ -28,7 +28,7 @@ class CustomerFavoriteController extends Controller
             $favorite['category_name'] = $favorite->category->name;
             $favorite['category_slug'] = $favorite->category->slug;
             $favorite['category_icon'] = $favorite->category->icon;
-            $favorite['icon_color'] = $favorite->category->icon_color;
+            $favorite['icon_color'] = isset(config('sheba.category_colors')[$favorite->category->parent->id]) ? config('sheba.category_colors')[$favorite->category->parent->id] : null;
             $favorite->services->each(function ($service) use ($favorite, &$services) {
                 $pivot = $service->pivot;
                 $pivot['variables'] = json_decode($pivot['variables']);
@@ -36,6 +36,7 @@ class CustomerFavoriteController extends Controller
                 $pivot['unit'] = $service->unit;
                 $pivot['min_quantity'] = $service->min_quantity;
                 $pivot['app_thumb'] = $service->app_thumb;
+                $pivot['publication_status'] = $service->publication_status;
                 array_push($services, $pivot);
             });
             $partner = $favorite->partner;
@@ -59,10 +60,10 @@ class CustomerFavoriteController extends Controller
             $this->validate($request, [
                 'job_id' => 'unique:customer_favourites'
             ]);
-            if ($request->job_id){
+            if ($request->job_id) {
                 $job = Job::find($request->job_id);
                 $response = $this->saveFromJOb($job, $request->customer);
-            } else{
+            } else {
                 $data = json_decode($request->data);
                 foreach ($data as $category) {
                     if (count($category->services) == 0) {
