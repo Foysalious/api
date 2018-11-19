@@ -567,7 +567,7 @@ class PartnerController extends Controller
     {
         try {
             $partner = Partner::with(['categories' => function ($query) {
-                return $query->select('categories.id', 'name', 'parent_id', 'thumb', 'app_thumb', 'categories.is_home_delivery_applied')
+                return $query->select('categories.id', 'name', 'parent_id', 'thumb', 'app_thumb', 'categories.is_home_delivery_applied', 'categories.is_partner_premise_applied')
                     ->published()->with(['parent' => function ($query) {
                         return $query->select('id', 'name', 'thumb', 'app_thumb');
                     }]);
@@ -590,7 +590,7 @@ class PartnerController extends Controller
                         ];
                         $master_categories->push($master_category);
                     }
-
+                    
                     $category = [
                         'id' => $category->id,
                         'name' => $category->name,
@@ -599,6 +599,7 @@ class PartnerController extends Controller
                         'app_thumb' => $category->app_thumb,
                         'is_verified' => $category->pivot->is_verified,
                         'is_sheba_home_delivery_applied' => $category->is_home_delivery_applied,
+                        'is_sheba_partner_premise_applied' => $category->is_partner_premise_applied,
                         'is_home_delivery_applied' => $category->pivot->is_home_delivery_applied,
                         'is_partner_premise_applied' => $category->pivot->is_partner_premise_applied,
                         'delivery_charge' => (double)$category->pivot->delivery_charge,
