@@ -97,7 +97,7 @@ class Checkout
             $data['address'] = $request->address;
         }
         if ($request->has('address_id')) {
-            $data['address_id'] = $request->address_id;
+            $data['address_id'] = (int)$request->address_id;
         }
         if ($request->has('email')) {
             $data['email'] = $request->email;
@@ -250,7 +250,7 @@ class Checkout
             $this->withCreateModificationField($deliver_address);
             $deliver_address->save();
             return $deliver_address;
-        } elseif (array_has($data, 'address_id')) {
+        } elseif (array_has($data, 'address_id') && $data['address_id']) {
             if ($data['address_id'] != '' || $data['address_id'] != null) {
                 $deliver_address = CustomerDeliveryAddress::find($data['address_id']);
                 if ($deliver_address) {
@@ -259,7 +259,7 @@ class Checkout
                     return $deliver_address;
                 }
             }
-        } elseif (array_has($data, 'address')) {
+        } elseif (array_has($data, 'address') && $data['address']) {
             if ($data['address'] != '' || $data['address'] != null) {
                 $deliver_address = new CustomerDeliveryAddress();
                 $deliver_address->address = $data['address'];
