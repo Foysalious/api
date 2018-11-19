@@ -12,15 +12,21 @@ class PartnerBonusWalletController extends Controller
     public function transactions($partner, Request $request)
     {
         try {
-            $partnerObj = Partner::findOrFail($partner);
-            $bonusTransactions = $partnerObj->bonusLogs->map(function ($transaction) {
+            $partner = Partner::findOrFail($partner);
+            $bonusTransactions = $partner->bonusLogs->map(function ($transaction) use ($partner) {
                 return [
-                    'created_at'    => $transaction->created_at,
-                    'id'            => $transaction->id,
-                    'type'          => $transaction->type,
-                    'log'           => $transaction->log,
-                    'amount'        => $transaction->amount ? $transaction->amount : "N/A",
-                    'valid_till'    => $transaction->valid_till ? $transaction->valid_till : 'N/S',
+                    'id'              => $transaction->id,
+                    'partner_id'      => $partner->id,
+                    'type'            => $transaction->type,
+                    'amount'          => $transaction->amount ? $transaction->amount : "N/A",
+                    'log'             => $transaction->log,
+                    'portal_name'     => null,
+                    'ip'              => null,
+                    'user_agent'      => null,
+                    'created_by_type' => null,
+                    'created_by'      => $transaction->created_by,
+                    'created_at'      => $transaction->created_at->toDateString(),
+                    'valid_till'      => $transaction->valid_till->toDateString() ? $transaction->valid_till->toDateString() : 'N/S',
                 ];
             });
 
