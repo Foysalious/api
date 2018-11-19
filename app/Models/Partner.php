@@ -309,6 +309,11 @@ class Partner extends Model implements Rewardable, TopUpAgent
         return (double)$this->bonuses()->where('status', 'valid')->sum('amount');
     }
 
+    public function bonusLogs()
+    {
+        return $this->morphMany(BonusLog::class, 'user');
+    }
+
     public function subscription()
     {
         return $this->belongsTo(PartnerSubscriptionPackage::class, 'package_id');
