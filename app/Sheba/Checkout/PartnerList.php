@@ -162,6 +162,8 @@ class PartnerList
                 $q->published();
             })->select(DB::raw('count(*) as c'))->whereIn('services.id', $this->selectedServiceIds)->where([['partner_service.is_published', 1], ['partner_service.is_verified', 1]])->publishedForAll()
                 ->groupBy('partner_id')->havingRaw('c=' . count($this->selectedServiceIds));
+        })->whereDoesntHave('leaves', function ($q) {
+            $q->where('end', null)->orWhere([['start', '<=', Carbon::now()], ['end', '>=', Carbon::now()->addDays(7)]]);
         })->published()
             ->select('partners.id', 'partners.current_impression', 'partners.geo_informations', 'partners.address', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet', 'partners.package_id');
         if ($partner_id != null) {
@@ -193,7 +195,7 @@ class PartnerList
         $this->partners = $this->findPartnersByService($partner_id)->reject(function ($partner) {
             return $partner->geo_informations == null;
         });
-        $current = new Coords($hyper_local->location['lat'], $hyper_local->location['lng']);
+        $current = new Coords($this->lat, $this->lng);
         $to = $this->partners->map(function ($partner) {
             $geo = json_decode($partner->geo_informations);
             return new Coords(floatval($geo->lat), floatval($geo->lng), $partner->id);

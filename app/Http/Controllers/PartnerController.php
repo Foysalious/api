@@ -693,9 +693,11 @@ class PartnerController extends Controller
                         $service['questions'] = $this->formatServiceQuestions($variables->options);
                         $service['option_prices'] = $this->formatOptionWithOldPrice($new_prices, $old_prices);
                         $service['fixed_price'] = null;
+                        $service['fixed_old_price'] = null;
                     } else {
                         $service['questions'] = $service['option_prices'] = [];
                         $service['fixed_price'] = (double)$variables->price;
+                        $service['fixed_old_price'] = $partner_service_price_update ? $partner_service_price_update->new_prices : null;
                     }
                     array_forget($service, 'variables');
                     removeRelationsAndFields($service);
