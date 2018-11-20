@@ -19,6 +19,7 @@ class PartnerTransactionController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $transactions = $partner->transactions()->select('id', 'partner_id', 'type', 'amount', 'log', 'created_at', 'partner_order_id')->get()->map(function ($transaction) {
                 $transaction['is_bonus'] = 0;
+                $transaction['valid_till'] = null;
                 return $transaction;
             });
             $bonus_logs = $partner->bonusLogs()->with('spentOn')->get();
@@ -41,8 +42,9 @@ class PartnerTransactionController extends Controller
                 } else {
                     $transaction['balance'] = $balance -= $transaction['amount'];
                 }
+                $transaction['balance'] = round($transaction['balance'], 2);
                 return $transaction;
-            });
+            })->sortByDesc('created_at');
             $final = array_slice($transactions->values()->all(), $offset, $limit);
             return count($final) > 0 ? api_response($request, $final, 200, [
                 'transactions' => $final,
@@ -66,22 +68,9 @@ class PartnerTransactionController extends Controller
             'log' => $bonus->log,
             'created_at' => $bonus->created_at->toDateTimeString(),
             'partner_order_id' => $bonus->spent_on_id,
-            'is_bonus' => 1
+            'is_bonus' => 1,
+            'valid_till' => $bonus->valid_till->format('d/m/Y')
         ]);
-    }
-
-    private function formatCreditBonusTransaction($bonus)
-    {
-        return [
-            'id' => $bonus->id,
-            'partner_id' => $bonus->user_id,
-            'type' => 'Credit',
-            'amount' => $bonus->amount,
-            'log' => $bonus->log,
-            'created_at' => $bonus->created_at->toDateTimeString(),
-            'partner_order_id' => null,
-            'is_bonus' => 1
-        ];
     }
 
     public function payToSheba(Request $request)
