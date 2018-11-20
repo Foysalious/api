@@ -10,6 +10,7 @@ use App\Models\Job;
 use App\Models\JobService;
 use App\Models\Location;
 use App\Models\Order;
+use App\Models\Partner;
 use App\Models\PartnerOrder;
 use App\Models\PartnerService;
 use App\Models\Service;
@@ -96,7 +97,7 @@ class Checkout
             $data['address'] = $request->address;
         }
         if ($request->has('address_id')) {
-            $data['address_id'] = $request->address_id;
+            $data['address_id'] = (int)$request->address_id;
         }
         if ($request->has('email')) {
             $data['email'] = $request->email;
@@ -120,7 +121,7 @@ class Checkout
         $order = new Order;
         try {
             DB::transaction(function () use ($data, $selected_services, $partner, $order) {
-                $order = $this->createOrder($order, $data);
+                $order = $this->createOrder($order, $partner, $data);
                 $order = $this->getAuthor($order, $data);
                 $partner_order = PartnerOrder::create([
                     'created_by' => $data['created_by'], 'created_by_name' => $data['created_by_name'],
@@ -217,7 +218,7 @@ class Checkout
         return $job_services;
     }
 
-    private function createOrder(Order $order, $data)
+    private function createOrder(Order $order, Partner $partner, $data)
     {
         $order->info_call_id = $data['info_call_id'];
         $order->affiliation_id = $data['affiliation_id'];
@@ -231,19 +232,25 @@ class Checkout
         $order->created_by = $data['created_by'];
         $order->created_by_name = $data['created_by_name'];
         $order->partner_id = isset($data['partner_id']) ? $data['partner_id'] : null;
-
-        $customer_delivery_address = $this->getDeliveryAddress($data);
+        $customer_delivery_address = $this->getDeliveryAddress($data, $partner);
         $order->delivery_address = $customer_delivery_address != null ? $customer_delivery_address->address : null;
         $order->delivery_address_id = $customer_delivery_address != null ? $customer_delivery_address->id : null;
-
         $order->save();
         return $order;
     }
 
-    private function getDeliveryAddress($data)
+    private function getDeliveryAddress($data, Partner $partner)
     {
-        if ($data['is_on_premise']) return '';
-        if (array_has($data, 'address_id')) {
+        if ($data['is_on_premise']) {
+            $deliver_address = new CustomerDeliveryAddress();
+            $deliver_address->address = $partner->address;
+            $deliver_address->customer_id = $data['customer_id'];
+            $deliver_address->mobile = $data['delivery_mobile'];
+            $deliver_address = $this->updateAddressLocation($deliver_address);
+            $this->withCreateModificationField($deliver_address);
+            $deliver_address->save();
+            return $deliver_address;
+        } elseif (array_has($data, 'address_id') && $data['address_id']) {
             if ($data['address_id'] != '' || $data['address_id'] != null) {
                 $deliver_address = CustomerDeliveryAddress::find($data['address_id']);
                 if ($deliver_address) {
@@ -252,8 +259,7 @@ class Checkout
                     return $deliver_address;
                 }
             }
-        }
-        if (array_has($data, 'address')) {
+        } elseif (array_has($data, 'address') && $data['address']) {
             if ($data['address'] != '' || $data['address'] != null) {
                 $deliver_address = new CustomerDeliveryAddress();
                 $deliver_address->address = $data['address'];

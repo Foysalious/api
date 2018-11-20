@@ -22,4 +22,9 @@ class CategoryPartner extends Model
     {
         return $this->belongsTo(CategoryPartner::class);
     }
+
+    public function deliveryChargeUpdateRequest()
+    {
+        return $this->hasMany(DeliveryChargeUpdateRequest::class);
+    }
 }

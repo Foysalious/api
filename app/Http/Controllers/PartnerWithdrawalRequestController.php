@@ -44,12 +44,12 @@ class PartnerWithdrawalRequestController extends Controller
                 return api_response($request, null, 400, ['message' => 'Your provided bkash number and verification number did not match,please verify using your bkash number']);
             }
 //            Limit Validation
-            $minLimit = constants('WITHDRAW_LIMIT')['bkash']['min'];
-            $maxLimit = constants('WITHDRAW_LIMIT')['bkash']['max'];
-            if ($request->payment_method == 'bkash' && ((double)$request->amount < $minLimit || (double)$request->amount > $maxLimit)) {
-                return api_response($request, null, 400, ['message' => 'Payment Limit mismatch minimum limit ' . $minLimit . ' TK and maximum ' . $maxLimit . ' TK']);
-            } else if ($request->payment_method == 'bank' && ((double)$request->amount < $maxLimit)) {
-                return api_response($request, null, 400, ['message' => 'For Bank Transaction minimum limit is ' . $maxLimit]);
+            $limitBkash = constants('WITHDRAW_LIMIT')['bkash'];
+            $limitBank = constants('WITHDRAW_LIMIT')['bank'];
+            if ($request->payment_method == 'bkash' && ((double)$request->amount < $limitBkash['min'] || (double)$request->amount > $limitBkash['max'])) {
+                return api_response($request, null, 400, ['message' => 'Payment Limit mismatch for bkash minimum limit ' . $limitBkash['min'] . ' TK and maximum ' . $limitBkash['max'] . ' TK']);
+            } else if ($request->payment_method == 'bank' && ((double)$request->amount < $limitBank['min'] || (double)$request->amount > $limitBank['max'])) {
+                return api_response($request, null, 400, ['message' => 'Payment Limit mismatch for bank minimum limit ' . $limitBank['min'] . ' TK and maximum ' . $limitBank['max'] . ' TK']);
             }
             $activePartnerWithdrawalRequest = $partner->withdrawalRequests()->pending()->first();
             $valid_maximum_requested_amount = (double)$partner->wallet - (double)$partner->walletSetting->security_money;
