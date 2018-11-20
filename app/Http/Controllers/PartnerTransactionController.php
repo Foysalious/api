@@ -58,13 +58,12 @@ class PartnerTransactionController extends Controller
 
     private function formatDebitBonusTransaction($bonus, $transactions)
     {
-        $category = $bonus->spent_on->jobs->first()->category;
         $transactions->push(array(
             'id' => $bonus->id,
             'partner_id' => $bonus->user_id,
             'type' => 'Debit',
             'amount' => $bonus->amount,
-            'log' => $category->name,
+            'log' => $bonus->log,
             'created_at' => $bonus->created_at->toDateTimeString(),
             'partner_order_id' => $bonus->spent_on_id,
             'is_bonus' => 1
