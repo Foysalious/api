@@ -15,5 +15,6 @@ class AffiliateRoute
             $api->get('history', 'AffiliateController@history');
             $api->get('lifetime-gift/{agent_id}','AffiliateController@lifeTimeGift');
         });
+        $api->get('affiliates/faq', 'FaqController@getAffiliateFaqs');
     }
 }
