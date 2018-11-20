@@ -20,7 +20,7 @@ class TopUpController extends Controller
             if ($request->for == 'customer') $agent = "App\\Models\\Customer";
             elseif ($request->for == 'partner') $agent = "App\\Models\\Partner";
             else $agent = "App\\Models\\Affiliate";
-            $vendors = TopUpVendor::select('id', 'name', 'is_published')->get();
+            $vendors = TopUpVendor::select('id', 'name')->published()->get();
             $error_message = "Currently, we’re supporting";
             foreach ($vendors as $vendor) {
                 $vendor_commission = TopUpVendorCommission::where([['topup_vendor_id', $vendor->id], ['type', $agent]])->first();

@@ -12,4 +12,9 @@ class TopUpVendor extends Model
     {
         return $this->hasMany(TopUpVendorCommission::class, 'topup_vendor_id');
     }
+
+    public function scopePublished($query)
+    {
+        return $query->where('is_published', 1);
+    }
 }
