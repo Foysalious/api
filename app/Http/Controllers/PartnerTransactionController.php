@@ -69,7 +69,7 @@ class PartnerTransactionController extends Controller
             'created_at' => $bonus->created_at->toDateTimeString(),
             'partner_order_id' => $bonus->spent_on_id,
             'is_bonus' => 1,
-            'valid_till' => $bonus->valid_till->format('d/m/Y')
+            'valid_till' => $bonus->valid_till ? $bonus->valid_till->format('d/m/Y') : null
         ]);
     }
 
