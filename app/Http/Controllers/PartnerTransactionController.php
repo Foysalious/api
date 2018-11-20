@@ -15,9 +15,26 @@ class PartnerTransactionController extends Controller
     public function index($partner, Request $request)
     {
         try {
+            $partner = $request->partner;
             list($offset, $limit) = calculatePagination($request);
+            $transactions = $partner->transactions()->select('id', 'partner_id', 'type', 'amount', 'log', 'created_at', 'partner_order_id')->get()->map(function (&$transaction) {
+                $transaction['is_bonus'] = 0;
+                return $transaction;
+            });
+            $bonus_logs = $partner->bonusLogs();
+            $bonus_logs = $bonus_logs->with('spentOn')->get();
+            foreach ($bonus_logs as $bonus_log) {
+                if ($bonus_log->type == 'Credit') $transactions = $this->formatCreditBonusTransaction($bonus_log, $transactions);
+                else $transactions = $this->formatDebitBonusTransaction($bonus_log, $transactions);
+            }
+            if ($request->has('month') && $request->has('year')) {
+                $transactions = $transactions->filter(function ($transaction, $key) use ($request) {
+                    $created_at = Carbon::parse($transaction->created_at);
+                    return ($created_at->month == $request->month && $created_at->year == $request->year);
+                });
+            }
             $balance = 0;
-            $transactions = $request->partner->transactions->each(function ($transaction, $key) use ($partner, &$balance) {
+            $transactions = $transactions->each(function ($transaction, $key) use ($partner, &$balance) {
                 $transaction->amount = (double)$transaction->amount;
                 if ($transaction->type == 'Credit') {
                     $transaction['balance'] = $balance += $transaction->amount;
@@ -26,23 +43,48 @@ class PartnerTransactionController extends Controller
                 }
                 removeRelationsFromModel($transaction);
             })->sortByDesc('id');
-            if ($request->has('month') && $request->has('year')) {
-                $transactions = $transactions->filter(function ($transaction, $key) use ($request) {
-                    $created_at = Carbon::parse($transaction->created_at);
-                    return ($created_at->month == $request->month && $created_at->year == $request->year);
-                });
-            }
             $transactions = array_slice($transactions->values()->all(), $offset, $limit);
             return count($transactions) > 0 ? api_response($request, $transactions, 200, [
                 'transactions' => $transactions,
-                'balance' => $request->partner->totalWalletAmount(),
-                'credit' => (double)$request->partner->wallet,
+                'balance' => round($request->partner->totalWalletAmount(), 2),
+                'credit' => round($request->partner->wallet, 2),
                 'bonus' => round($request->partner->bonusWallet(), 2)
             ]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function formatDebitBonusTransaction($bonus, $transactions)
+    {
+        $category = $bonus->spent_on->jobs->first()->category;
+        $transactions->push(array(
+            'id' => $bonus->id,
+            'partner_id' => $bonus->user_id,
+            'type' => 'Debit',
+            'amount' => $bonus->amount,
+            'log' => $category->name,
+            'created_at' => $bonus->created_at->toDateTimeString(),
+            'partner_order_id' => $bonus->spent_on_id,
+            'is_bonus' => 1
+        ));
+        return $transactions;
+    }
+
+    private function formatCreditBonusTransaction($bonus, $transactions)
+    {
+        $transactions->push(array(
+            'id' => $bonus->id,
+            'partner_id' => $bonus->user_id,
+            'type' => 'Credit',
+            'amount' => $bonus->amount,
+            'log' => $bonus->log,
+            'created_at' => $bonus->created_at->toDateTimeString(),
+            'partner_order_id' => null,
+            'is_bonus' => 1
+        ));
+        return $transactions;
     }
 
     public function payToSheba(Request $request)
