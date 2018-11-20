@@ -41,22 +41,24 @@ class DisburseHandler
     {
         $amount = $this->reward->getAmount();
 
-        if ($this->reward->isValidityApplicable()) {
-            $this->bonusRepo->storeFromReward($rewardable, $this->reward, $amount);
-        } else {
-            if ($this->reward->isCashType()) {
-                $log = $amount . " BDT credited for " . $this->reward->name . " reward";
+        if ($amount > 0) {
+            if ($this->reward->isValidityApplicable()) {
+                $this->bonusRepo->storeFromReward($rewardable, $this->reward, $amount);
+            } else {
+                if ($this->reward->isCashType()) {
+                    $log = $amount . " BDT credited for " . $this->reward->name . " reward";
 
-                if ($rewardable instanceof Partner) {
-                    (new PartnerTransactionHandler($rewardable))->credit($amount, $log);
-                } elseif ($rewardable instanceof Customer) {
-                    (new CustomerTransactionHandler($rewardable))->credit($amount, $log);
-                }
-            } elseif ($this->reward->isPointType()) {
-                if ($rewardable instanceof Partner) {
-                    (new PartnerRepository())->updateRewardPoint($rewardable, $amount);
-                } elseif ($rewardable instanceof Customer) {
-                    (new CustomerRepository())->updateRewardPoint($rewardable, $amount);
+                    if ($rewardable instanceof Partner) {
+                        (new PartnerTransactionHandler($rewardable))->credit($amount, $log);
+                    } elseif ($rewardable instanceof Customer) {
+                        (new CustomerTransactionHandler($rewardable))->credit($amount, $log);
+                    }
+                } elseif ($this->reward->isPointType()) {
+                    if ($rewardable instanceof Partner) {
+                        (new PartnerRepository())->updateRewardPoint($rewardable, $amount);
+                    } elseif ($rewardable instanceof Customer) {
+                        (new CustomerRepository())->updateRewardPoint($rewardable, $amount);
+                    }
                 }
             }
         }
