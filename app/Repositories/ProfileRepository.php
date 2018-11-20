@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Http\Validators\MobileNumberValidator;
 use App\Models\Affiliate;
 use App\Models\Member;
 use App\Models\Promotion;
@@ -257,8 +258,7 @@ class ProfileRepository
             $affiliate->remember_token = str_random(255);
             $affiliate->banking_info = json_encode(array('bKash' => ''));
             $affiliate->save();
-            // $this->addAffiliateBonus($affiliate);
-
+            if ((new MobileNumberValidator())->validateBangladeshi($user->mobile)) $this->addAffiliateBonus($affiliate);
             (new NotificationRepository())->forAffiliateRegistration($affiliate);
         }
     }
