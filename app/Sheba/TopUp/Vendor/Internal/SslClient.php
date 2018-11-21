@@ -53,6 +53,18 @@ class SslClient
         }
     }
 
+    public function getBalance()
+    {
+        try {
+            ini_set("soap.wsdl_cache_enabled", '0'); // disabling WSDL cache
+            $client = new SoapClient($this->topUpUrl);
+            $response = $client->GetBalanceInfo($this->clientId);
+            return $response;
+        } catch (SoapFault $exception) {
+            throw $exception;
+        }
+    }
+    
     private function getOperatorId($mobile_number)
     {
         $mobile_number = formatMobile($mobile_number);
