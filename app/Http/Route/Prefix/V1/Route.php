@@ -14,6 +14,8 @@ class Route
                 $api->get('categories/{category}/secondaries', 'Vendor\CategoryController@get');
                 $api->get('categories/{category}/services', 'Vendor\CategoryController@getServices');
                 $api->get('partners', 'Vendor\PartnerController@getPartners');
+                $api->get('orders/{order}', 'Vendor\OrderController@show');
+                $api->post('orders', 'Vendor\OrderController@placeOrder');
             });
             $api->get('categories', ['uses' => 'CategoryController@index']);
             $api->get('categories/{category}/secondaries', ['uses' => 'CategoryController@get']);
