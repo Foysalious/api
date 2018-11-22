@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Affiliate;
 use App\Models\Customer;
 use App\Models\Member;
 use App\Models\Resource;
@@ -17,6 +18,7 @@ class AccountController extends Controller
     public function checkForAuthentication(Request $request)
     {
         $key = Redis::get($request->input('access_token'));
+        dd($key);
         //key exists
         if ($key != null) {
             $info = json_decode($key);
@@ -45,6 +47,16 @@ class AccountController extends Controller
                     return response()->json([
                         'msg' => 'successful', 'code' => 200, 'remember_token' => $member->remember_token,
                         'member' => $member->id, 'member_img' => $member->profile->pro_pic
+                    ]);
+                }
+            }
+            else if ($info->avatar == 'affiliate') {
+                $affiliate = Affiliate::find($info->id);
+                Redis::del($request->input('access_token'));
+                if ($affiliate->profile_id == $info->profile_id) {
+                    return response()->json([
+                        'msg' => 'successful', 'code' => 200, 'remember_token' => $affiliate->remember_token,
+                        'member' => $affiliate->id, 'member_img' => $affiliate->profile->pro_pic
                     ]);
                 }
             }
