@@ -15,7 +15,7 @@ class ShebaController extends Controller
 {
     use Helpers;
 
-    public function index(Request $request)
+    public function getTimes(Request $request)
     {
         try {
             $this->validate($request, [

@@ -369,7 +369,15 @@ class PartnerController extends Controller
     {
         try {
             $start = microtime(true);
-            $this->validate($request, ['date' => 'sometimes|required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'), 'time' => 'sometimes|required|string', 'services' => 'required|string', 'isAvailable' => 'sometimes|required', 'skip_availability' => 'sometimes|required|numeric|in:0,1', 'partner' => 'sometimes|required', 'filter' => 'sometimes|required|in:sheba', 'has_premise' => 'sometimes|required', 'has_home_delivery' => 'sometimes|required',]);
+            $this->validate($request, [
+                'date' => 'sometimes|required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
+                'time' => 'sometimes|required|string',
+                'services' => 'required|string', 'isAvailable' => 'sometimes|required',
+                'skip_availability' => 'sometimes|required|numeric|in:0,1',
+                'partner' => 'sometimes|required',
+                'filter' => 'sometimes|required|in:sheba',
+                'has_premise' => 'sometimes|required',
+                'has_home_delivery' => 'sometimes|required']);
             $validation = new Validation($request);
             if (!$validation->isValid()) {
                 return api_response($request, $validation->message, 400, ['message' => $validation->message]);
