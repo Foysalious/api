@@ -32,7 +32,8 @@
     "ext-json": "*",
     "ext-curl": "*",
     "ext-soap": "*",
-    "ext-simplexml": "*"
+    "ext-simplexml": "*",
+    "maatwebsite/excel": "~2.1.0"
   },
   "require-dev": {
     "fzaninotto/faker": "~1.4",
