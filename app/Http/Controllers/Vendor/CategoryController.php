@@ -57,7 +57,6 @@ class CategoryController extends Controller
             $resource = new Collection($services, new ServiceTransformer());
             return response()->json($fractal->createData($resource)->toArray());
         } catch (\Throwable $e) {
-            dd($e);
             return response()->json(['data' => null]);
         }
     }
