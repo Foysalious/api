@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Sheba\Payment\ShebaPayment;
 use Sheba\TopUp\Vendor\Internal\SslClient;
 
@@ -31,9 +32,16 @@ class SslController extends Controller
     public function validateTopUp(Request $request)
     {
         try {
+            $this->validate($request, [
+                'vr_guid' => 'required',
+                'guid' => 'required',
+            ]);
             $ssl = new SslClient();
-            $response = $ssl->getRecharge($request->vr_guid);
-            return $response;
+            $response = $ssl->getRecharge($request->guid, $request->vr_guid);
+            return api_response($request, $response, 200, ['data' => $response]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
