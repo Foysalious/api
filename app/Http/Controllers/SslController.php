@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Payment;
 use Illuminate\Http\Request;
 use Sheba\Payment\ShebaPayment;
+use Sheba\TopUp\Vendor\Internal\SslClient;
 
 class SslController extends Controller
 {
@@ -24,6 +25,18 @@ class SslController extends Controller
             $payment = Payment::where('transaction_id', $request->tran_id)->valid()->first();
             app('sentry')->captureException($e);
             return redirect($payment->payable->success_url . '?invoice_id=' . $request->tran_id);
+        }
+    }
+
+    public function validateTopUp(Request $request)
+    {
+        try {
+            $ssl = new SslClient();
+            $response = $ssl->getRecharge($request->vr_guid);
+            return $response;
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
         }
     }
 }
