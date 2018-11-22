@@ -11,7 +11,7 @@ class QuestionTransformer extends TransformerAbstract
     {
         return [
             'question' => $question->question,
-            'answer' => $question->answers
+            'answer' => isset($question->answers) ? $question->answers : $question->answer
         ];
     }
 }
