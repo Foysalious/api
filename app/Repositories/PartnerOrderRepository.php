@@ -80,7 +80,7 @@ class PartnerOrderRepository
 
             array_forget($job, ['partner_order', 'carRentalJobDetail']);
 
-        })->values()->all();
+        })->sortByDesc('id')->values()->all();
         removeRelationsAndFields($partner_order);
         $partner_order['jobs'] = $jobs;
 
