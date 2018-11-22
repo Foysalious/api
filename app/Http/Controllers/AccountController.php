@@ -18,7 +18,6 @@ class AccountController extends Controller
     public function checkForAuthentication(Request $request)
     {
         $key = Redis::get($request->input('access_token'));
-        dd($key);
         //key exists
         if ($key != null) {
             $info = json_decode($key);
@@ -49,8 +48,7 @@ class AccountController extends Controller
                         'member' => $member->id, 'member_img' => $member->profile->pro_pic
                     ]);
                 }
-            }
-            else if ($info->avatar == 'affiliate') {
+            } else if ($info->avatar == 'affiliate') {
                 $affiliate = Affiliate::find($info->id);
                 Redis::del($request->input('access_token'));
                 if ($affiliate->profile_id == $info->profile_id) {
