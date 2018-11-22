@@ -54,7 +54,7 @@ class AccountController extends Controller
                 if ($affiliate->profile_id == $info->profile_id) {
                     return response()->json([
                         'msg' => 'successful', 'code' => 200, 'remember_token' => $affiliate->remember_token,
-                        'member' => $affiliate->id, 'member_img' => $affiliate->profile->pro_pic
+                        'affiliate' => $affiliate->id, 'affiliate_img' => $affiliate->profile->pro_pic
                     ]);
                 }
             }
