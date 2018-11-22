@@ -69,7 +69,7 @@ class PartnerScheduleSlot
         $this->runningLeaves = $this->getLeavesBetween($start, $end);
         $this->preparationTime = $this->partner->categories->where('id', $this->category->id)->first()->pivot->preparation_time_minutes;
         $day = $this->today->copy();
-        while ($day <= $last_day) {
+        while ($day < $last_day) {
             $this->addAvailabilityToShebaSlots($day);
             array_push($final, ['value' => $day->toDateString(), 'slots' => $this->formatSlots($day, $this->shebaSlots->toArray())]);
             $day->addDay();
