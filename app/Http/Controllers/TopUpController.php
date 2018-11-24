@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Http\Validators\MobileNumberValidator;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use Carbon\Carbon;
@@ -119,24 +120,42 @@ class TopUpController extends Controller
                 return api_response($request, null, 400, ['message' => 'File type not support']);
             }
 
-            $topups = Excel::load($request->file, function ($reader) use ($vendor) {
-                })->get()->map(function ($value, $key) use ($vendor) {
+            $valid_topups   = collect([]);
+            $failed_topups  = collect([]);
+
+            Excel::load($request->file, function ($reader) use ($vendor, $valid_topups, $failed_topups) {
+                })->get()->each(function ($value, $key) use ($vendor, $valid_topups, $failed_topups) {
                     $value["mobile"] = BDMobileFormatter::format($value->mobile);
                     $value["vendor_id"] = $vendor->getIdByName($value->operator);
 
-                    return $value;
-                })->all();
+                    $vendor = $vendor->getById($value["vendor_id"]);
+
+                    if (!$vendor->isPublished()) {
+                        $value['failed_reason'] = 'Unsupported operator';
+                        $failed_topups->push($value);
+                        return true;
+                    }
+
+                    if (!(new MobileNumberValidator())->validateBangladeshi($value["mobile"])) {
+                        $value['failed_reason'] = 'Invalid mobile number';
+                        $failed_topups->push($value);
+                        return true;
+                    }
+
+                    $valid_topups->push($value);
+            });
 
             $agent = null;
             if ($request->affiliate) $agent = $request->affiliate;
             elseif ($request->customer) $agent = $request->customer;
             elseif ($request->partner) $agent = $request->partner;
 
-            foreach ($topups as $topup) {
+            foreach ($valid_topups as $topup) {
                 dispatch(new TopUpJob($agent, $topup->vendor_id, $topup->mobile, $topup->amount, $topup->connection_type));
             }
 
-            return api_response($request, null, 200, ['message' => "Recharge Successful"]);
+            $response_msg = "Recharge Initiate Successfully, " . $valid_topups->count() . " Initiated & " . $failed_topups->count() . " Failed";
+            return api_response($request, null, 200, ['message' => $response_msg]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);

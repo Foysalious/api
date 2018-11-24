@@ -14,8 +14,9 @@ class AffiliateRoute
             $api->post('recharge', 'AffiliateController@rechargeWallet');
             $api->get('service-lead-status', 'AffiliateController@leadInfo');
             $api->get('history', 'AffiliateController@history');
-            $api->get('lifetime-gift/{agent_id}','AffiliateController@lifeTimeGift');
+            $api->get('lifetime-gift/{agent_id}', 'AffiliateController@lifeTimeGift');
             $api->get('top-up/validate/ssl', 'SslController@validateTopUp');
+            $api->get('top-up/ssl/balance', 'SslController@checkBalance');
             $api->get('top-up/history', 'AffiliateController@topUpHistory');
         });
         $api->get('affiliates/faq', 'FaqController@getAffiliateFaqs');

@@ -47,4 +47,16 @@ class SslController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function checkBalance(Request $request)
+    {
+        try {
+            $ssl = new SslClient();
+            $response = $ssl->getBalance();
+            return api_response($request, $response, 200, ['data' => $response]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }
