@@ -40,6 +40,8 @@ class Cors2MiddleWare
             "http://api.sheba.test",
             "https://api.dev-sheba.xyz",
             "http://sheba.dev",
+            "http://bondhu.dev-sheba.xyz",
+            "https://bondhu.dev-sheba.xyz",
             null,
             "null",
             "chrome-extension://fhbjgbiflinjbdggehcddcbncdddomop",
@@ -55,6 +57,8 @@ class Cors2MiddleWare
             "https://sandbox.sslcommerz.com",
             "https://securepay.sslcommerz.com",
             "https://sandbox.thecitybank.com:4443",
+            "http://bondhu.sheba.xyz",
+            "https://bondhu.sheba.xyz"
         ];
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Credentials'] = 'true';
