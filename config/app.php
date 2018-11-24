@@ -164,10 +164,10 @@ return [
         Clockwork\Support\Laravel\ClockworkServiceProvider::class,
         Folklore\GraphQL\ServiceProvider::class,
         Intervention\Image\ImageServiceProvider::class,
-
+        Maatwebsite\Excel\ExcelServiceProvider::class,
         App\Providers\CustomValidatorProvider::class,
         Sheba\Dal\Providers\RepositoriesServiceProvider::class,
-        Sheba\Notification\NotificationServiceProvider::class
+        Sheba\Notification\NotificationServiceProvider::class,
     ],
 
     /*
@@ -182,7 +182,6 @@ return [
     */
 
     'aliases' => [
-
         'App' => Illuminate\Support\Facades\App::class,
         'Artisan' => Illuminate\Support\Facades\Artisan::class,
         'Auth' => Illuminate\Support\Facades\Auth::class,
@@ -220,7 +219,7 @@ return [
         'FCMGroup' => LaravelFCM\Facades\FCMGroup::class,
         'Clockwork' => Clockwork\Support\Laravel\Facade::class,
         'GraphQL' => Folklore\GraphQL\Support\Facades\GraphQL::class,
-        'Image' => Intervention\Image\Facades\Image::class
-    ],
-
+        'Image' => Intervention\Image\Facades\Image::class,
+        'Excel' => Maatwebsite\Excel\Facades\Excel::class
+    ]
 ];

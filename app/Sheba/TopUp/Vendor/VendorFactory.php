@@ -37,6 +37,33 @@ class VendorFactory
     }
 
     /**
+     * @param $name
+     * @return Vendor
+     * @throws \Exception
+     */
+    public function getByName($name)
+    {
+        if(!in_array($name, array_keys($this->getConstants()))) {
+            throw new \Exception('Invalid Vendor');
+        }
+        $id = $this->getConstants()[$name];
+        return app($this->classes[$id - 1])->setModel($this->getModel($id));
+    }
+
+    /**
+     * @param $name
+     * @return Vendor
+     * @throws \Exception
+     */
+    public function getIdByName($name)
+    {
+        if(!in_array($name, array_keys($this->getConstants()))) {
+            throw new \Exception('Invalid Vendor');
+        }
+        return $this->getConstants()[$name];
+    }
+
+    /**
      * @param $mobile
      * @return Vendor
      * @throws \Exception
