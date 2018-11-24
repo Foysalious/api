@@ -78,7 +78,7 @@ class FaqController extends Controller
                             'question_bn' => 'মানিব্যাগ কি ?',
                             'answer_bn' => 'মানিব্যাগ হচ্ছে আপনার ভার্চুয়াল ওয়ালেট। মানিব্যাগে যেই টাকার পরিমান দেখাবে সেটি হচ্ছে আপনার আয় করা টাকার পরিমান।',
                             'question_en' => 'What is a Money bag?  ',
-                            'answer_en'=> 'he amount in Money bag represent how much you have earned through this app. The amount you earned can be can be received once per week. To withdraw cash from your Money bag through bKash you’ll need to have minimum 100 TK in your Money bag.'
+                            'answer_en'=> 'The amount in Money bag represent how much you have earned through this app. The amount you earned can be can be received once per week. To withdraw cash from your Money bag through bKash you’ll need to have minimum 100 TK in your Money bag.'
                         ),
                         array(
                             'question_bn' => 'মানিব্যাগ হতে কিভাবে নগদ টাকা উত্তোলন করব?',
