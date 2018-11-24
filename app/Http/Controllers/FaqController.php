@@ -42,7 +42,7 @@ class FaqController extends Controller
                         ),
                         array(
                             'question_bn' => 'সার্ভিস রেফার এর মাধ্যমে কিভাবে টাকা আয় করবেন?',
-                            'answer_bn' => 'বন্ধু অ্যাপ এর মাধ্যমে সেবা তে আপনি আপনার পরিচিত জনের জন্য সার্ভিস রেফার করতে পারবেন। আগ্রহী গ্রাহকের নাম, ফোন নাম্বার ও কোন সার্ভিসটি লাগবে এই তথ্যগুলো দিয়ে রেফার করুন। প্রতিটি রেফার সফল ভাবে সম্পন্ন হতেই আপনার ওয়ালেট এ ১০ টাকা থেকে ১০০০ টাকা পর্যন্ত পাবেন।',
+                            'answer_bn' => 'বন্ধু অ্যাপ এর মাধ্যমে সেবা তে আপনি আপনার পরিচিত জনের জন্য সার্ভিস রেফার করতে পারবেন। আগ্রহী গ্রাহকের নাম, ফোন নাম্বার ও কোন সার্ভিসটি লাগবে এই তথ্য গুল দিয়ে রেফার করুন। প্রতিটি রেফার সফল ভাবে সম্পন্ন হতেই আপনার বন্ধু মানিব্যাগ এ সার্ভিস মূল্যের ৫% বোনাস পেয়ে যাবেন।',
                             'question_en' => 'How to earn money by referring service for your friend? ',
                             'answer_en' => 'You can refer a service to your friend via Sheba Bondhu APP. By giving information about Customer Name, Phone and Needed Service name you can refer your friend. On every successful refer you will earn 5% of order amount as bonus in your Bondhu moneybag'
                         ),
@@ -61,11 +61,9 @@ class FaqController extends Controller
                         ),
                         array(
                             'question_bn' => 'কিভাবে আপনার ব্যাবসায়ী বন্ধুকে রেফার করে টাকা আয় করবেন?',
-                            'answer_bn' => 'আপনি আপনার বন্ধু অ্যাপ এর মাধ্যমে আপনার ব্যাবসায়ী বন্ধুকে রেফার করতে পারবেন। আপনার বন্ধুর নাম, ফোন নং এবং সার্ভিস নাম প্রদান করে আপনি তাকে সেবাতে রেফার করতে পারবেন। আর প্রতিটি সফল রেফের এ আপনি পাবেন ১৪০ টাকা বোনাস। এই বোনাস আপনি পাবেন দুটি কিস্তিতে- 
-- রেজিস্টারড বন্ধুটি যখন সেবা দ্বারা ভেরিফাইড হবে তখন বোনাস পাবেন ৪২টাকা। 
-- দুটি সফল সার্ভিস প্রদান করলে বন্ধু পাবে বাকি ৯৮ টাকা।',
+                            'answer_bn' => 'আপনি আপনার বন্ধু অ্যাপ এর মাধ্যমে আপনার ব্যাবসায়ী বন্ধুকে রেফার করতে পারবেন। আপনার বন্ধুর নাম, ফোন নং এবং সার্ভিস নাম প্রদান করে আপনি তাকে সেবাতে রেফার করতে পারবেন। আর প্রতিটি সফল রেফের এ আপনি পাবেন ১৪০ টাকা বোনাস। এই বোনাস আপনি পাবেন দুটি কিস্তিতে- (১) রেজিস্টারড বন্ধুটি যখন সেবা দ্বারা ভেরিফাইড হবে তখন বোনাস পাবেন ৪২টাকা। (২) দুটি সফল সার্ভিস প্রদান করলে বন্ধু পাবে বাকি ৯৮ টাকা।',
                             'question_en' => 'How to refer your businessman friend? ',
-                            'answer_en' => 'You can refer your business man friend in sheba.xyz via Bondhu App. By providing your friend name, phone no and company name him in sheba as Service Provider. You will get TK140 in every successful refer. You will get the bonus in two steps – 
+                            'answer_en' => 'You can refer your business man friend in sheba.xyz via Bondhu App. By providing your friend name, phone no and company name him in sheba as Service Provider. You will get TK140 in every successful refer. You will get the bonus in two steps –
 - After complete his verification you will get Tk 42 as bonus.
 - After completing two successful work Bondhu will get TK 98 as final bonus.',
                         ),
@@ -113,7 +111,7 @@ class FaqController extends Controller
                 array(
                     'group_label_bn' => 'ওয়ালেট রিচার্জ',
                     'group_label_en' => 'Wallet Recharge',
-                    'group_name' => 'wallet_recharge',
+                    'group_name' => 'reference_rejection',
                     'questions' => array(
                         array(
                             'question_bn' => 'ওয়ালেট রিচার্জঃ',
@@ -158,7 +156,7 @@ class FaqController extends Controller
                 array(
                     'group_label_bn' => 'টপ-আপ কিভাবে কাজ করে?',
                     'group_label_en' => 'How TOP-UP works?',
-                    'group_name' => 'top_up',
+                    'group_name' => 'TOP-UP',
                     'questions' => array(
                         array(
                             'question_bn' => 'টপ- আপ কিভাবে কাজ করে?',
@@ -166,17 +164,30 @@ class FaqController extends Controller
                             'question_en' => 'How TOP-UP works?',
                             'answer_en'=> ' In Bondhu App you can also top-up facility. You can top-up for anyone mobile and get 3% cashback.'
                         ),
-                        /** !!----- DO NOT REMOVE THIS BLOCK OF CODE. -------!! Currently not used, but may be required for later. */
-//                        array(
-//                            'question_bn' => 'প্রোমোকোড ব্রডকাস্টিং',
-//                            'answer_bn' => 'প্রোমোকোড ব্রডকাস্টিং- আপনি আপনার প্রোমোকোডটি নতুন কাস্টমারদের বিতরণ করতে পারবেন। নতুন কাস্টমার, তার কাস্টমার অ্যাপদ্বারা অর্ডার প্লেস করার সময় আপনার প্রদত্ত কোডটি প্রোমোকোড হিসেবে ব্যাবহার করে সর্বোচ্চ ১০০ টাকা পর্যন্ত ডিস্কাউন্ট পাবে। এক্ষেত্রে প্রত্যেকটি সফল অর্ডার এর জন্য আপনি সেবার সার্ভিস চার্জ থেকে ৫০% (২০ টাকা থেকে সর্বোচ্চ ২০০ টাকা) পাবেন।',
-//                            'question_en' => 'Promo code broadcasting',
-//                            'answer_en'=> 'Promo code broadcasting- You can also distribute your promo code to the new users who are willing to place order via customer app. If new users use your ambassador code as a promo code while placing order. Customer will get maximum 100 BDT discount for his order. For the  each successful order you will get 50% of benefits from Sheba service charge (at least 20 BDT up-to 200 BDT) from each orders by new users.'
-//                        ),
+//            array(
+//                'question_bn' => 'প্রোমোকোড ব্রডকাস্টিং',
+//                'answer_bn' => 'প্রোমোকোড ব্রডকাস্টিং- আপনি আপনার প্রোমোকোডটি নতুন কাস্টমারদের বিতরণ করতে পারবেন। নতুন কাস্টমার, তার কাস্টমার অ্যাপদ্বারা অর্ডার প্লেস করার সময় আপনার প্রদত্ত কোডটি প্রোমোকোড হিসেবে ব্যাবহার করে সর্বোচ্চ ১০০ টাকা পর্যন্ত ডিস্কাউন্ট পাবে। এক্ষেত্রে প্রত্যেকটি সফল অর্ডার এর জন্য আপনি সেবার সার্ভিস চার্জ থেকে ৫০% (২০ টাকা থেকে সর্বোচ্চ ২০০ টাকা) পাবেন।',
+//                'question_en' => 'Promo code broadcasting',
+//                'answer_en'=> 'Promo code broadcasting- You can also distribute your promo code to the new users who are willing to place order via customer app. If new users use your ambassador code as a promo code while placing order. Customer will get maximum 100 BDT discount for his order. For the  each successful order you will get 50% of benefits from Sheba service charge (at least 20 BDT up-to 200 BDT) from each orders by new users.'
+//            ),
+                    ),
+                ),
+                array(
+                    'group_label_bn' => 'এম্বাসেডর কোড',
+                    'group_label_en' => 'Ambassador Code',
+                    'group_name' => 'Ambassador_Code',
+                    'questions' => array(
+                        array(
+                            'question_bn' => 'আমার কোডটি কিভাবে কাজ করবে? ',
+                            'answer_bn' => ' এজেন্ট সংগ্রহ- এজেন্ট সংগ্রহ করার জন্য আপনার কোডটি তাদের সাথে শেয়ার করুন। আপনার এজেন্ট বন্ধু অ্যাপ দ্বারা রেফার বা টপ- আপ করলে, এজেন্ট দের প্রতিটি সফল সার্ভিস রেফারে সার্ভিস মূল্যের  এর ২% বোনাস এবং সার্ভিস প্রভাইডার রেফার এ ৬০ টাকা বোনাস পাবেন।  সার্ভিস প্রভাইডার রেফার বোনাস আপনি পাবেন দুটি কিস্তিতে- (১) রেজিস্টারড বন্ধুটি যখন সেবা দ্বারা ভেরিফাইড হবে তখন বোনাস পাবেন ১৮ টাকা। (২) একটি সফল সার্ভিস প্রদান করলে বন্ধু পাবে বাকি ৪২ টাকা। আপনি যতবেশি আপনার এজেন্ট সংগ্রহ করবেন, আপনার লাভবান হবার সম্ভাবনা তত বেড়ে যাবে। বেশি বেশি এজেন্ট সংগ্রহ করুন, বেশি বেশি উপার্জন করুন।',
+                            'question_en' => 'How my code will work?',
+                            'answer_en'=> ' Connect Agents- Share your code with your friends and connect them with your account.When your agents start referring to Sheba through Bondhu app, From every successful service an refer ambassador will receive 2% of Service Price and every successful service provider refer ambassador will get TK 60 as bonus. Service provider bonus will provide in two steps- (1) After verification of referred service provider 18tk, (2) After completing to successful job by the referred service provider, ambassador will get 42tk.'
+                        ),
+
                     )
                 ),
-
             );
+
             return api_response($request, $faqs, 200, ['faqs' => $faqs]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

@@ -530,7 +530,7 @@ class AffiliateController extends Controller
             if (isset($request->from)) $topups = $topups->whereBetween('created_at', [$request->from, $request->to]);
             if (isset($request->vendor_id)) $topups = $topups->where('vendor_id', $request->vendor_id);
             if (isset($request->status)) $topups = $topups->where('status', $request->status);
-            if (isset($request->q)) $topups = $topups->where('payee_mobile', 'LIKE', $request->q);
+            if (isset($request->q)) $topups = $topups->where('payee_mobile', 'LIKE', '%'.$request->q.'%');
 
             $topup_from_db = $topups->with('vendor')->skip($offset)->take($limit)->get();
 
