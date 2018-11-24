@@ -510,13 +510,10 @@ class AffiliateController extends Controller
         return response()->json(['code' => 200, 'data' => $historyData]);
     }
 
-    public function topUpHistory($affiliate, Request $request) {
-
+    public function topUpHistory($affiliate, Request $request)
+    {
         try {
-            $rules = [
-                'from' => 'date_format:Y-m-d',
-                'to' => 'date_format:Y-m-d|required_with:from,'
-            ];
+            $rules = ['from' => 'date_format:Y-m-d', 'to' => 'date_format:Y-m-d|required_with:from,'];
 
             $validator = Validator::make($request->all(), $rules);
             if ($validator->fails()) {
@@ -530,23 +527,24 @@ class AffiliateController extends Controller
             if (isset($request->from)) $topups = $topups->whereBetween('created_at', [$request->from, $request->to]);
             if (isset($request->vendor_id)) $topups = $topups->where('vendor_id', $request->vendor_id);
             if (isset($request->status)) $topups = $topups->where('status', $request->status);
-            if (isset($request->q)) $topups = $topups->where('payee_mobile', 'LIKE', '%'.$request->q.'%');
+            if (isset($request->q)) $topups = $topups->where('payee_mobile', 'LIKE', '%' . $request->q . '%');
 
-            $topup_from_db = $topups->with('vendor')->skip($offset)->take($limit)->get();
+            $total_topups = $topups->count();
+            $topups = $topups->with('vendor')->skip($offset)->take($limit)->get();
 
-            $topupData = array();
-            foreach ( $topup_from_db as $topup) {
-                $tpup = array(
+            $topupData = [];
+            foreach ($topups as $topup) {
+                $topup = [
                     'payee_mobile' => $topup->payee_mobile,
                     'amount' => $topup->amount,
                     'operator' => $topup->vendor->name,
                     'status' => $topup->status,
-                    'created_at' => $topup->created_at->format('jS M, Y H:i A'),
-                );
-                array_push($topupData, $tpup);
+                    'created_at' => $topup->created_at->format('jS M, Y H:i A')
+                ];
+                array_push($topupData, $topup);
             }
 
-            return response()->json(['code' => 200, 'data' => $topupData]);
+            return response()->json(['code' => 200, 'data' => $topupData, 'total_topups' => $total_topups, 'offset' => $offset]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
