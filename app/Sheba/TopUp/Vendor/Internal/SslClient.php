@@ -64,7 +64,19 @@ class SslClient
             throw $exception;
         }
     }
-    
+
+    public function getRecharge($guid, $vr_guid)
+    {
+        try {
+            ini_set("soap.wsdl_cache_enabled", '0'); // disabling WSDL cache
+            $client = new SoapClient($this->topUpUrl);
+            $response = $client->QueryRechargeStatus($this->clientId, $guid, $vr_guid);
+            return $response;
+        } catch (SoapFault $exception) {
+            throw $exception;
+        }
+    }
+
     private function getOperatorId($mobile_number)
     {
         $mobile_number = formatMobile($mobile_number);
