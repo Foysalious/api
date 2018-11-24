@@ -12,14 +12,16 @@ use App\Sheba\Checkout\Checkout;
 use App\Transformers\CustomSerializer;
 use App\Transformers\JobTransformer;
 use Carbon\Carbon;
+use Dingo\Api\Routing\Helpers;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
-use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 
 class OrderController extends Controller
 {
+    use Helpers;
+
     public function show($order, Request $request)
     {
         try {
@@ -43,20 +45,22 @@ class OrderController extends Controller
     public function placeOrder(Request $request)
     {
         try {
-            $request->merge(['mobile' => formatMobile($request->mobile)]);
+            $request->merge(['mobile' => trim($request->mobile)]);
             $this->validate($request, [
-                'location' => 'required',
+                'lat' => 'required|numeric',
+                'lng' => 'required|numeric',
                 'services' => 'required|string',
-                'sales_channel' => 'required|string',
                 'partner' => 'required',
                 'mobile' => 'required|string|mobile:bd',
                 'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
                 'time' => 'required|string',
-                'payment_method' => 'required|string|in:cod',
                 'address' => 'required',
                 'is_on_premise' => 'sometimes|numeric',
                 'name' => 'required'
             ], ['mobile' => 'Invalid mobile number!']);
+            $location = $this->api->get('v2/locations/current?lat=' . $request->lat . '&lng=' . $request->lng);
+            $request->merge(['location' => $location->id]);
+            $request->merge(['payment_method' => 'cod']);
             $profile = Profile::where('mobile', $request->mobile)->first();
             if ($profile) {
                 $customer = $profile->customer;
