@@ -64,8 +64,10 @@ class FaqController extends Controller
                             'answer_bn' => 'আপনি আপনার বন্ধু অ্যাপ এর মাধ্যমে আপনার ব্যাবসায়ী বন্ধুকে রেফার করতে পারবেন। আপনার বন্ধুর নাম, ফোন নং এবং সার্ভিস নাম প্রদান করে আপনি তাকে সেবাতে রেফার করতে পারবেন। আর প্রতিটি সফল রেফের এ আপনি পাবেন ১৪০ টাকা বোনাস। এই বোনাস আপনি পাবেন দুটি কিস্তিতে- 
 - রেজিস্টারড বন্ধুটি যখন সেবা দ্বারা ভেরিফাইড হবে তখন বোনাস পাবেন ৪২টাকা। 
 - দুটি সফল সার্ভিস প্রদান করলে বন্ধু পাবে বাকি ৯৮ টাকা।',
-                            'question_en' => 'How to earn money by referring service for your friend? ',
-                            'answer_en' => 'You can refer a service to your friend via Sheba Bondhu APP. By giving information about Customer Name, Phone and Needed Service name you can refer your friend. On every successful refer you will earn 5% of order amount as bonus in your Bondhu moneybag'
+                            'question_en' => 'How to refer your businessman friend? ',
+                            'answer_en' => 'You can refer your business man friend in sheba.xyz via Bondhu App. By providing your friend name, phone no and company name him in sheba as Service Provider. You will get TK140 in every successful refer. You will get the bonus in two steps – \n
+- After complete his verification you will get Tk 42 as bonus.
+- After completing two successful work Bondhu will get TK 98 as final bonus.',
                         ),
                     )
                 ),
@@ -78,7 +80,7 @@ class FaqController extends Controller
                             'question_bn' => 'মানিব্যাগ কি ?',
                             'answer_bn' => 'মানিব্যাগ হচ্ছে আপনার ভার্চুয়াল ওয়ালেট। মানিব্যাগে যেই টাকার পরিমান দেখাবে সেটি হচ্ছে আপনার আয় করা টাকার পরিমান।',
                             'question_en' => 'What is a Money bag?  ',
-                            'answer_en'=> 'The amount in Money bag represent how much you have earned through this app. The amount you earned can be can be received once per week. To withdraw cash from your Money bag through bKash you’ll need to have minimum 100 TK in your Money bag.'
+                            'answer_en'=> 'The amount in moneybag represent how much you have earned, deposit or spend through this app.You can use this money bag amount for TOP-UP.'
                         ),
                         array(
                             'question_bn' => 'মানিব্যাগ হতে কিভাবে নগদ টাকা উত্তোলন করব?',
@@ -129,7 +131,7 @@ class FaqController extends Controller
                             'question_bn' => 'এজেন্ট কি?',
                             'answer_bn' => 'সেবাতে রেজিস্টার্ড সকল বন্ধুকে সেবা বন্ধু এজেন্ট বলা হয়। সেবা বন্ধু এজেন্টগণ নিজে স্বাধীনভাবে বা একজন এম্বাসেডর এর সাথে থেকে রেফার করতে পারবেন।',
                             'question_en' => 'What is Agent?  ',
-                            'answer_en'=> 'All agents registered in Sheba Bondhu app will count as an agent. Sheba Bondhu Agent can able to operate independently as an agent, or they can operate under an ambassador.'
+                            'answer_en'=> 'All users registered in sheba Bondhu is known as Agent. An Sheba Bondhu agent can able to refer independently or he/she can join under any ambassador.'
                         ),
                         array(
                             'question_bn' => 'এম্বাসেডর কি?',
@@ -140,8 +142,8 @@ class FaqController extends Controller
                     )
                 ),
                 array(
-                    'group_label_bn' => 'হেল্পলাইন',
-                    'group_label_en' => 'HELPLINE',
+                    'group_label_bn' => 'যেকোন ধরণের জিজ্ঞাসা আমি কোথায় করব?',
+                    'group_label_en' => 'General Question',
                     'group_name' => 'helpline',
                     'questions' => array(
                         array(

@@ -521,8 +521,14 @@ class AffiliateController extends Controller
             $error = $validator->errors()->all()[0];
             return api_response($request, $error, 400, ['msg' => $error]);
         }
-       $transactions = Affiliate::find($affiliate)->topUpTransactions()
-                        ->whereBetween('created_at',[$request->from, $request->to])->get();
-        dd($transactions);
+
+       $topUps = Affiliate::find($affiliate)->topUps();
+
+        if(isset($request->from))$topUps = $topUps->whereBetween('created_at',[$request->from, $request->to]);
+        if(isset($request->vendor_id)) $topUps = $topUps->where('vendor_id',$request->vendor_id);
+        if(isset($request->status)) $topUps = $topUps->where('status',$request->status);
+        if(isset($request->q))  $topUps = $topUps->where('payee_mobile','LIKE',$request->q);
+
+        return response()->json(['code' => 200, 'data' => $topUps->with('vendor')->pluck('payee_mobile','amount','vendor.name','status',"created_at")->toArray()]);
     }
 }
