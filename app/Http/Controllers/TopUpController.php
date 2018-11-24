@@ -6,11 +6,13 @@ use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\TopUp\TopUp;
 use Sheba\TopUp\TopUpJob;
 use Sheba\TopUp\Vendor\Response\Ssl\SslFailResponse;
 use Sheba\TopUp\Vendor\VendorFactory;
 use Storage;
+use Excel;
 
 class TopUpController extends Controller
 {
@@ -52,6 +54,7 @@ class TopUpController extends Controller
                 'vendor_id' => 'required|exists:topup_vendors,id',
                 'amount' => 'required|min:10|max:1000|numeric'
             ]);
+
             if ($request->affiliate) {
                 $agent = $request->affiliate;
             } elseif ($request->customer) {
@@ -100,6 +103,45 @@ class TopUpController extends Controller
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);
             $sentry->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function bulkTopUp(Request $request, VendorFactory $vendor, TopUp $topUp)
+    {
+        try {
+            $this->validate($request, ['file' => 'required|file']);
+
+            $valid_extensions = ["csv", "xls", "xlsx", "xlm", "xla", "xlc", "xlt", "xlw"];
+            $extension = $request->file('file')->getClientOriginalExtension();
+
+            if (!in_array($extension, $valid_extensions)) {
+                return api_response($request, null, 400, ['message' => 'File type not support']);
+            }
+
+            $topups = Excel::load($request->file, function ($reader) use ($vendor) {
+                })->get()->map(function ($value, $key) use ($vendor) {
+                    $value["mobile"] = BDMobileFormatter::format($value->mobile);
+                    $value["vendor_id"] = $vendor->getIdByName($value->operator);
+
+                    return $value;
+                })->all();
+
+            $agent = null;
+            if ($request->affiliate) $agent = $request->affiliate;
+            elseif ($request->customer) $agent = $request->customer;
+            elseif ($request->partner) $agent = $request->partner;
+
+            foreach ($topups as $topup) {
+                dispatch(new TopUpJob($agent, $topup->vendor_id, $topup->mobile, $topup->amount, $topup->connection_type));
+            }
+
+            return api_response($request, null, 200, ['message' => "Recharge Successful"]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
