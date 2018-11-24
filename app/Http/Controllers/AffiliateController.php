@@ -8,6 +8,7 @@ use App\Models\Affiliation;
 use App\Models\PartnerAffiliation;
 use App\Models\PartnerTransaction;
 use App\Models\Service;
+use App\Models\TopUpOrder;
 use App\Repositories\AffiliateRepository;
 use App\Repositories\FileRepository;
 use App\Repositories\LocationRepository;
@@ -507,5 +508,48 @@ class AffiliateController extends Controller
         list($offset, $limit) = calculatePagination($request);
         $historyData = $history->setType($request->sp_type)->getFormattedDate($request)->generateData($affiliate, $request->agent_id)->skip($offset)->take($limit)->get();
         return response()->json(['code' => 200, 'data' => $historyData]);
+    }
+
+    public function topUpHistory($affiliate, Request $request) {
+
+        try {
+            $rules = [
+                'from' => 'date_format:Y-m-d',
+                'to' => 'date_format:Y-m-d|required_with:from,'
+            ];
+
+            $validator = Validator::make($request->all(), $rules);
+            if ($validator->fails()) {
+                $error = $validator->errors()->all()[0];
+                return api_response($request, $error, 400, ['msg' => $error]);
+            }
+
+            list($offset, $limit) = calculatePagination($request);
+            $topups = Affiliate::find($affiliate)->topups();
+
+            if (isset($request->from)) $topups = $topups->whereBetween('created_at', [$request->from, $request->to]);
+            if (isset($request->vendor_id)) $topups = $topups->where('vendor_id', $request->vendor_id);
+            if (isset($request->status)) $topups = $topups->where('status', $request->status);
+            if (isset($request->q)) $topups = $topups->where('payee_mobile', 'LIKE', $request->q);
+
+            $topup_from_db = $topups->with('vendor')->skip($offset)->take($limit)->get();
+
+            $topupData = array();
+            foreach ( $topup_from_db as $topup) {
+                $tpup = array(
+                    'payee_mobile' => $topup->payee_mobile,
+                    'amount' => $topup->amount,
+                    'operator' => $topup->vendor->name,
+                    'status' => $topup->status,
+                    'created_at' => $topup->created_at->format('jS M, Y H:i A'),
+                );
+                array_push($topupData, $tpup);
+            }
+
+            return response()->json(['code' => 200, 'data' => $topupData]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 }
