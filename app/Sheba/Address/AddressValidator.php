@@ -31,7 +31,7 @@ class AddressValidator
     {
         foreach ($addresses as $address) {
             similar_text($address->address, $new_address, $percent);
-            if ($percent >= 80) return 1;
+            if ($percent >= 80) return $address;
         }
         return 0;
     }

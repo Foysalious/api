@@ -82,14 +82,14 @@ return [
      * Config for GraphiQL (see (https://github.com/graphql/graphiql).
      * To disable GraphiQL, set this to null
      */
-//    'graphiql' => [
-//        'routes' => '/graphiql/{graphql_schema?}',
-//        'controller' => \Folklore\GraphQL\GraphQLController::class . '@graphiql',
-//        'middleware' => [],
-//        'view' => 'graphql::graphiql',
-//        'composer' => \Folklore\GraphQL\View\GraphiQLComposer::class,
-//    ],
-    'graphiql' => null,
+    'graphiql' => [
+        'routes' => '/graphiql/{graphql_schema?}',
+        'controller' => \Folklore\GraphQL\GraphQLController::class . '@graphiql',
+        'middleware' => [],
+        'view' => 'graphql::graphiql',
+        'composer' => \Folklore\GraphQL\View\GraphiQLComposer::class,
+    ],
+//    'graphiql' => null,
 
     /*
      * The name of the default schema used when no arguments are provided
@@ -130,6 +130,7 @@ return [
                 'reviews' => 'App\GraphQL\Query\ReviewsQuery',
                 'category' => 'App\GraphQL\Query\CategoryQuery',
                 'customer' => 'App\GraphQL\Query\CustomerQuery',
+                'affiliate' => 'App\GraphQL\Query\AffiliateQuery',
                 'order' => 'App\GraphQL\Query\OrderQuery',
                 'partner' => 'App\GraphQL\Query\PartnerQuery',
                 'job' => 'App\GraphQL\Query\JobQuery',
@@ -201,7 +202,8 @@ return [
         'App\GraphQL\Type\LocationType',
         'App\GraphQL\Type\DeliveryAddressType',
         'App\GraphQL\Type\OrderMessageType',
-        'App\GraphQL\Type\CustomerFavoriteType'
+        'App\GraphQL\Type\CustomerFavoriteType',
+        'App\GraphQL\Type\AffiliateType'
     ],
 
     /*
