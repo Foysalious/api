@@ -511,24 +511,45 @@ class AffiliateController extends Controller
     }
 
     public function topUpHistory($affiliate, Request $request) {
-        $rules = [
-            'from' => 'date_format:Y-m-d',
-            'to' => 'date_format:Y-m-d|required_with:from,'
-        ];
 
-        $validator = Validator::make($request->all(), $rules);
-        if ($validator->fails()) {
-            $error = $validator->errors()->all()[0];
-            return api_response($request, $error, 400, ['msg' => $error]);
+        try {
+            $rules = [
+                'from' => 'date_format:Y-m-d',
+                'to' => 'date_format:Y-m-d|required_with:from,'
+            ];
+
+            $validator = Validator::make($request->all(), $rules);
+            if ($validator->fails()) {
+                $error = $validator->errors()->all()[0];
+                return api_response($request, $error, 400, ['msg' => $error]);
+            }
+
+            list($offset, $limit) = calculatePagination($request);
+            $topups = Affiliate::find($affiliate)->topups();
+
+            if (isset($request->from)) $topups = $topups->whereBetween('created_at', [$request->from, $request->to]);
+            if (isset($request->vendor_id)) $topups = $topups->where('vendor_id', $request->vendor_id);
+            if (isset($request->status)) $topups = $topups->where('status', $request->status);
+            if (isset($request->q)) $topups = $topups->where('payee_mobile', 'LIKE', $request->q);
+
+            $topup_from_db = $topups->with('vendor')->skip($offset)->take($limit)->get();
+
+            $topupData = array();
+            foreach ( $topup_from_db as $topup) {
+                $tpup = array(
+                    'payee_mobile' => $topup->payee_mobile,
+                    'amount' => $topup->amount,
+                    'operator' => $topup->vendor->name,
+                    'status' => $topup->status,
+                    'created_at' => $topup->created_at->format('jS M, Y H:i A'),
+                );
+                array_push($topupData, $tpup);
+            }
+
+            return response()->json(['code' => 200, 'data' => $topupData]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
         }
-
-       $topUps = Affiliate::find($affiliate)->topUps();
-
-        if(isset($request->from))$topUps = $topUps->whereBetween('created_at',[$request->from, $request->to]);
-        if(isset($request->vendor_id)) $topUps = $topUps->where('vendor_id',$request->vendor_id);
-        if(isset($request->status)) $topUps = $topUps->where('status',$request->status);
-        if(isset($request->q))  $topUps = $topUps->where('payee_mobile','LIKE',$request->q);
-
-        return response()->json(['code' => 200, 'data' => $topUps->with('vendor')->select('payee_mobile','amount','vendor.name','status',"created_at")->get()]);
     }
 }

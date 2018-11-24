@@ -158,7 +158,7 @@ class Affiliate extends Model implements TopUpAgent
         return $this->morphMany(Bonus::class, 'user');
     }
 
-    public function topUps() {
+    public function topups() {
           return $this->hasMany(TopUpOrder::class,'agent_id');
     }
 
