@@ -56,7 +56,7 @@ class FaqController extends Controller
                         array(
                             'question_bn' => 'কিভাবে সার্ভিস প্রোভাইডার রেফার কাজ করে?',
                             'answer_bn' => 'আপনি কোন ব্যাবসায়ী বন্ধুকে রেফার করলে সেই রেফার ক্রিত নম্বার এ একটি মাসেজ এর মাধ্যমে সেবা মানেজার অ্যাপ এর লিঙ্ক পাঠানো হবে। আপনার বন্ধুকে সেই অ্যাপটি ডাউনলোড করে অ্যাপটি ইন্সটল করতে হবে। ডাউনলোড সম্পন্ন হলে অ্যাপ এর মাধ্যমে সার্ভিস প্রোভাইডার হিসাবে রেজিস্টার করতে হবে। সকল আবশ্যক তথ্য প্রদানের পর আপনার রেফের ক্রিত বন্ধুটি Ready to Verified হবে। সে সেবা দ্বারা ভেরিফাইড হওয়ার পর আপনি প্রথম কিস্তি বোনাস পাবেন। আপনার বন্ধুটি প্রথম দুটি কাজ সফল ভাবে সম্পন করলে আপনি বাকি বোনাস পায়ে যাবেন।',
-                            'question_en' => 'How does service referral work?  ',
+                            'question_en' => 'How does service provider referral work?  ',
                             'answer_en'=> 'When you refer your business man friend, it will develop and send a massage to your friend phone with a link of Sheba Manager APP. Manger App need to download and install to his phone. He needs to get registered by giving all the valid necessary information. Sheba team will verify the service provider and he will able to serve. After completing verification, you will get first step of bonus. After completing two successful job Bondhu will get the bonus.'
                         ),
                         array(
@@ -75,10 +75,10 @@ class FaqController extends Controller
                     'group_name' => 'money_bag',
                     'questions' => array(
                         array(
-                            'question_bn' => 'কিভাবে সার্ভিস প্রোভাইডার রেফার কাজ করে?',
+                            'question_bn' => 'মানিব্যাগ কি ?',
                             'answer_bn' => 'মানিব্যাগ হচ্ছে আপনার ভার্চুয়াল ওয়ালেট। মানিব্যাগে যেই টাকার পরিমান দেখাবে সেটি হচ্ছে আপনার আয় করা টাকার পরিমান।',
                             'question_en' => 'What is a Money bag?  ',
-                            'answer_en'=> 'When you refer your business man friend, it will develop and send a massage to your friend phone with a link of Sheba Manager APP. Manger App need to download and install to his phone. He needs to get registered by giving all the valid necessary information. Sheba team will verify the service provider and he will able to serve. After completing verification, you will get first step of bonus. After completing two successful job Bondhu will get the bonus.'
+                            'answer_en'=> 'he amount in Money bag represent how much you have earned through this app. The amount you earned can be can be received once per week. To withdraw cash from your Money bag through bKash you’ll need to have minimum 100 TK in your Money bag.'
                         ),
                         array(
                             'question_bn' => 'মানিব্যাগ হতে কিভাবে নগদ টাকা উত্তোলন করব?',
@@ -127,7 +127,7 @@ class FaqController extends Controller
                     'questions' => array(
                         array(
                             'question_bn' => 'এজেন্ট কি?',
-                            'answer_bn' => 'যেবাতে রেজিস্টার্ড সকল বন্ধুকে সেবা বন্ধু এজেন্ট বলা হয়। সেবা বন্ধু এজেন্টগণ নিজে স্বাধীনভাবে বা একজন এম্বাসেডর এর সাথে থেকে রেফার করতে পারবেন।',
+                            'answer_bn' => 'সেবাতে রেজিস্টার্ড সকল বন্ধুকে সেবা বন্ধু এজেন্ট বলা হয়। সেবা বন্ধু এজেন্টগণ নিজে স্বাধীনভাবে বা একজন এম্বাসেডর এর সাথে থেকে রেফার করতে পারবেন।',
                             'question_en' => 'What is Agent?  ',
                             'answer_en'=> 'All agents registered in Sheba Bondhu app will count as an agent. Sheba Bondhu Agent can able to operate independently as an agent, or they can operate under an ambassador.'
                         ),

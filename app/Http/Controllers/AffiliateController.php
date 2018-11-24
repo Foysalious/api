@@ -8,6 +8,7 @@ use App\Models\Affiliation;
 use App\Models\PartnerAffiliation;
 use App\Models\PartnerTransaction;
 use App\Models\Service;
+use App\Models\TopUpOrder;
 use App\Repositories\AffiliateRepository;
 use App\Repositories\FileRepository;
 use App\Repositories\LocationRepository;
@@ -507,5 +508,10 @@ class AffiliateController extends Controller
         list($offset, $limit) = calculatePagination($request);
         $historyData = $history->setType($request->sp_type)->getFormattedDate($request)->generateData($affiliate, $request->agent_id)->skip($offset)->take($limit)->get();
         return response()->json(['code' => 200, 'data' => $historyData]);
+    }
+
+    public function topUpHistory($affiliate, Request $request) {
+
+        dd(Affiliate::find($affiliate)->topUpTransactions()->get());
     }
 }

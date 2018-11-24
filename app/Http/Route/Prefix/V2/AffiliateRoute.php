@@ -16,6 +16,7 @@ class AffiliateRoute
             $api->get('history', 'AffiliateController@history');
             $api->get('lifetime-gift/{agent_id}','AffiliateController@lifeTimeGift');
             $api->get('top-up/validate/ssl', 'SslController@validateTopUp');
+            $api->get('top-up/history', 'AffiliateController@topUpHistory');
         });
         $api->get('affiliates/faq', 'FaqController@getAffiliateFaqs');
     }

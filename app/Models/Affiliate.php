@@ -157,4 +157,16 @@ class Affiliate extends Model implements TopUpAgent
     {
         return $this->morphMany(Bonus::class, 'user');
     }
+
+    public function topUpTransactions() {
+          return $this->hasMany(TopUpOrder::class,'agent_id');
+    }
+
+    public function scopeTopUpTransactionBetween($query, $from, $to) {
+        return $query->whereBetween('created_at',[$from,$to]);
+    }
+
+    public function scopeTopUpOperator($query, $operator) {
+        return $query->where('vendor_id',$operator);
+    }
 }
