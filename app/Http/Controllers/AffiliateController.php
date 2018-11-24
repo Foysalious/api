@@ -511,7 +511,18 @@ class AffiliateController extends Controller
     }
 
     public function topUpHistory($affiliate, Request $request) {
+        $rules = [
+            'from' => 'date_format:Y-m-d',
+            'to' => 'date_format:Y-m-d|required_with:from,'
+        ];
 
-        dd(Affiliate::find($affiliate)->topUpTransactions()->get());
+        $validator = Validator::make($request->all(), $rules);
+        if ($validator->fails()) {
+            $error = $validator->errors()->all()[0];
+            return api_response($request, $error, 400, ['msg' => $error]);
+        }
+       $transactions = Affiliate::find($affiliate)->topUpTransactions()
+                        ->whereBetween('created_at',[$request->from, $request->to])->get();
+        dd($transactions);
     }
 }
