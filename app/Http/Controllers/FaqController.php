@@ -78,11 +78,11 @@ class FaqController extends Controller
                     'questions' => array(
                         array(
                             'question_bn' => 'মানিব্যাগ কি ?',
-                            'answer_bn' => 'মানিব্যাগ হচ্ছে আপনার ভার্চুয়াল ওয়ালেট। মানিব্যাগে যেই টাকার পরিমান দেখাবে সেটি হচ্ছে আপনার আয় করা টাকার পরিমান।',
+                            'answer_bn' => 'আপনি বন্ধু অ্যাপ এর মাধ্যমে যে সকল লেনদেন করবেন তার বিবরণ পাবেন মানিব্যাগ এ। এছাড়াও আপনি আপনার মানিব্যাগ এ জমা অর্থ দিয়ে টপ আপ করতে পারবেন আপনার ফোনে।',
                             'question_en' => 'What is a Money bag?  ',
                             'answer_en'=> 'The amount in moneybag represent how much you have earned, deposit or spend through this app.You can use this money bag amount for TOP-UP.'
                         ),
- /** !!----- DO NOT REMOVE THIS BLOCK OF CODE. -------!! Currently not used, but may be required for later. */
+                        /** !!----- DO NOT REMOVE THIS BLOCK OF CODE. -------!! Currently not used, but may be required for later. */
 //                        array(
 //                            'question_bn' => 'মানিব্যাগ হতে কিভাবে নগদ টাকা উত্তোলন করব?',
 //                            'answer_bn' => 'এই অ্যাপ থেকে আয়কৃত টাকা প্রতি সপ্তাহে একবার আপনার দেয়া বিকাশ অ্যাকাউন্ট-এ ট্রান্সফার হয়ে যাবে। নিকটস্থ বিকাশ পয়েন্ট থেকে বিকাশ অ্যাকাউন্টের টাকা নগদ উত্তোলন করতে পারবেন। তবে টাকা উত্তোলন করতে হলে আপনার মানিব্যাগে সর্বনিম্ন ১০০ টাকা থাকতে হবে।।',
@@ -111,15 +111,15 @@ class FaqController extends Controller
                     )
                 ),
                 array(
-                    'group_label_bn' => 'রেফারেন্স রিজেকশন',
-                    'group_label_en' => 'REFERENCE REJECTION',
-                    'group_name' => 'reference_rejection',
+                    'group_label_bn' => 'ওয়ালেট রিচার্জ',
+                    'group_label_en' => 'Wallet Recharge',
+                    'group_name' => 'wallet_recharge',
                     'questions' => array(
                         array(
-                            'question_bn' => 'আমার রেফারেল রিজেকশন হলে কি করবো?',
-                            'answer_bn' => 'যেকোন হেল্পের জন্য  আমাদের গ্রাহক সেবা নম্বর ১৬৫১৬ এ কল করলে সমাধান পেয়ে যাবেন।',
-                            'question_en' => 'What to do if I get rejected ?  ',
-                            'answer_en'=> 'Contact with our call center(16516) for reactivation of your account.'
+                            'question_bn' => 'ওয়ালেট রিচার্জঃ',
+                            'answer_bn' => 'আপনি আপনার ওয়ালেটটি রিচার্জ করতে পারবেন। ওয়ালেট রিচার্জ করতে প্রথমে আপনার বন্ধু অ্যাপ এর মেনু অপশনে যান। মেনুতে রিচার্জ এ প্রবেশ করুন। এখানে আপনি বিকাশ নাম্বার এবং আপনার বন্ধু আইডি দেখতে পাবেন। এই নাম্বার এ আপনার বিকাশ এর পেমেন্ট আপশন থেকে প্রয়জনীয় টাকার আংক বিকাশ করুন। আপনার বিকাশের ট্রান্সেকশন আইডিটি রিচার্জ বক্স এ লিখুন এবং রিচার্জ এ ক্লিক করুন।',
+                            'question_en' => 'Wallet Recharge:',
+                            'answer_en'=> 'You can recharge your Bondhu wallet from sheba Bondhu app. To recharge your wallet you have to go to recharge menu of Bondhu wallet in menu bar. You will find a Bkash payment number & Bondhu ID. bkash your preferred amount to sheba on that number & use the Bondhu id in reference. The transection id that you get from massage please type that id on Transection filed & press recharge. Your wallet will be automatically updated in system.'
                         ),
                     )
                 ),
@@ -156,22 +156,23 @@ class FaqController extends Controller
                     )
                 ),
                 array(
-                    'group_label_bn' => 'প্রোমোকোড',
-                    'group_label_en' => 'PROMO CODE',
-                    'group_name' => 'promo_code',
+                    'group_label_bn' => 'টপ-আপ কিভাবে কাজ করে?',
+                    'group_label_en' => 'How TOP-UP works?',
+                    'group_name' => 'top_up',
                     'questions' => array(
                         array(
-                            'question_bn' => 'আমার কোডটি কিভাবে কাজ করবে?',
-                            'answer_bn' => 'এজেন্ট সংগ্রহ- এজেন্ট সংগ্রহ করার জন্য আপনার কোডটি তাদের সাথে শেয়ার করুন। আপনার এজেন্ট বন্ধু অ্যাপ দ্বারা রেফার করলে, প্রত্যেকটি সফল রেফার এর জন্য আপনি সেবার সার্ভিস চার্জ থেকে ২০% (১০ টাকা থেকে সর্বোচ্চ ২০০ টাকা) পাবেন। আপনি যতবেশি আপনার এজেন্ট সংগ্রহ করবেন, আপনার লাভবান হবার সম্ভাবনা তত বেড়ে যাবে। বেশি বেশি এজেন্ট সংগ্রহ করুন, বেশি বেশি উপার্জন করুন। ',
-                            'question_en' => 'How my code will work?',
-                            'answer_en'=> 'Connect Agents- Share your code with your friends and connect them with your account.When your agents start referring to Sheba through Bondhu app, at each successful reference you will get 20% of benefits from Sheba service charge (at least 10 BDT up-to 200 BDT). The more you connect your friends, the more you chance will be increased to be benefited. Start connecting more agents and earn more by your agents.'
+                            'question_bn' => 'টপ- আপ কিভাবে কাজ করে?',
+                            'answer_bn' => 'বন্ধুতে আপনি টপ-আপ করার সুযোগ পাচ্ছেন সহজেই। আপনি আপনার বন্ধুর মোবাইলে টপ-আপ করার পাশাপাশি পাচ্ছেন ৩% ক্যাশ ব্যাক।',
+                            'question_en' => 'How TOP-UP works?',
+                            'answer_en'=> ' In Bondhu App you can also top-up facility. You can top-up for anyone mobile and get 3% cashback.'
                         ),
-                        array(
-                            'question_bn' => 'প্রোমোকোড ব্রডকাস্টিং',
-                            'answer_bn' => 'প্রোমোকোড ব্রডকাস্টিং- আপনি আপনার প্রোমোকোডটি নতুন কাস্টমারদের বিতরণ করতে পারবেন। নতুন কাস্টমার, তার কাস্টমার অ্যাপদ্বারা অর্ডার প্লেস করার সময় আপনার প্রদত্ত কোডটি প্রোমোকোড হিসেবে ব্যাবহার করে সর্বোচ্চ ১০০ টাকা পর্যন্ত ডিস্কাউন্ট পাবে। এক্ষেত্রে প্রত্যেকটি সফল অর্ডার এর জন্য আপনি সেবার সার্ভিস চার্জ থেকে ৫০% (২০ টাকা থেকে সর্বোচ্চ ২০০ টাকা) পাবেন।',
-                            'question_en' => 'Promo code broadcasting',
-                            'answer_en'=> 'Promo code broadcasting- You can also distribute your promo code to the new users who are willing to place order via customer app. If new users use your ambassador code as a promo code while placing order. Customer will get maximum 100 BDT discount for his order. For the  each successful order you will get 50% of benefits from Sheba service charge (at least 20 BDT up-to 200 BDT) from each orders by new users.'
-                        ),
+                        /** !!----- DO NOT REMOVE THIS BLOCK OF CODE. -------!! Currently not used, but may be required for later. */
+//                        array(
+//                            'question_bn' => 'প্রোমোকোড ব্রডকাস্টিং',
+//                            'answer_bn' => 'প্রোমোকোড ব্রডকাস্টিং- আপনি আপনার প্রোমোকোডটি নতুন কাস্টমারদের বিতরণ করতে পারবেন। নতুন কাস্টমার, তার কাস্টমার অ্যাপদ্বারা অর্ডার প্লেস করার সময় আপনার প্রদত্ত কোডটি প্রোমোকোড হিসেবে ব্যাবহার করে সর্বোচ্চ ১০০ টাকা পর্যন্ত ডিস্কাউন্ট পাবে। এক্ষেত্রে প্রত্যেকটি সফল অর্ডার এর জন্য আপনি সেবার সার্ভিস চার্জ থেকে ৫০% (২০ টাকা থেকে সর্বোচ্চ ২০০ টাকা) পাবেন।',
+//                            'question_en' => 'Promo code broadcasting',
+//                            'answer_en'=> 'Promo code broadcasting- You can also distribute your promo code to the new users who are willing to place order via customer app. If new users use your ambassador code as a promo code while placing order. Customer will get maximum 100 BDT discount for his order. For the  each successful order you will get 50% of benefits from Sheba service charge (at least 20 BDT up-to 200 BDT) from each orders by new users.'
+//                        ),
                     )
                 ),
 
