@@ -153,8 +153,8 @@ class TopUpController extends Controller
             foreach ($valid_topups as $topup) {
                 dispatch(new TopUpJob($agent, $topup->vendor_id, $topup->mobile, $topup->amount, $topup->connection_type));
             }
-
-            $response_msg = "Recharge Initiate Successfully, " . $valid_topups->count() . " Initiated & " . $failed_topups->count() . " Failed";
+            
+            $response_msg = "We have initiated " . $valid_topups->count() . " of your requested top-up and will be transferred shortly. " . $failed_topups->count() . " of your requested top-up is unsuccessful";
             return api_response($request, null, 200, ['message' => $response_msg]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
