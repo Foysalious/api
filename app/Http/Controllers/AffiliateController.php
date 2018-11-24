@@ -529,6 +529,6 @@ class AffiliateController extends Controller
         if(isset($request->status)) $topUps = $topUps->where('status',$request->status);
         if(isset($request->q))  $topUps = $topUps->where('payee_mobile','LIKE',$request->q);
 
-        return response()->json(['code' => 200, 'data' => $topUps->with('vendor')->pluck('payee_mobile','amount','vendor.name','status',"created_at")->toArray()]);
+        return response()->json(['code' => 200, 'data' => $topUps->with('vendor')->select('payee_mobile','amount','vendor.name','status',"created_at")->get()]);
     }
 }
