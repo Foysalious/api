@@ -12,7 +12,6 @@ use App\Models\Location;
 use App\Models\Order;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
-use App\Models\PartnerService;
 use App\Models\Service;
 use App\Models\Voucher;
 use App\Repositories\CustomerRepository;
@@ -46,7 +45,13 @@ class Checkout
     public function placeOrder($request)
     {
         $this->setModifier($this->customer);
-        $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$request->location);
+        if ($request->has('location')) $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$request->location);
+        else {
+            $address = CustomerDeliveryAddress::find((int)$request->address_id);
+            $geo = json_encode($address->geo_informations);
+            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time);
+            $partner_list->setGeo($geo->lat, $geo->lng);
+        }
         $partner_list->find($request->partner);
         if ($partner_list->hasPartners) {
             $partner = $partner_list->partners->first();
