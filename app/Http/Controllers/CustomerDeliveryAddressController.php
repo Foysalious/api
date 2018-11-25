@@ -47,12 +47,8 @@ class CustomerDeliveryAddressController extends Controller
         try {
             $request->merge(['address' => trim($request->address), 'mobile' => trim(str_replace(' ', '', $request->mobile))]);
             $customer = $request->customer;
-            $addresses = $customer->delivery_addresses;
-            $address_validator = new AddressValidator();
-            if ($address_validator->isAddressNameExists($addresses, $request->address)) return api_response($request, null, 400, ['message' => "There is almost a same address exits with this name!"]);
             $hyper_local = null;
             if ($request->has('lat') && $request->has('lng')) {
-                if ($address_validator->isAddressLocationExists($addresses, new Coords($request->lat, $request->lng))) return api_response($request, null, 400, ['message' => "There is already a address exits at this location!"]);
                 $hyper_local = HyperLocal::insidePolygon($request->lat, $request->lng)->with('location')->first();
                 if (!$hyper_local) return api_response($request, null, 400, ['message' => "You're out of our service area."]);
                 $request->merge(["geo_informations" => json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng])]);
@@ -60,7 +56,6 @@ class CustomerDeliveryAddressController extends Controller
             $request->merge(["location_id" => $hyper_local ? $hyper_local->location_id : null]);
             $new_address = new CustomerDeliveryAddress();
             $delivery_address = $this->_store($customer, $new_address, $request);
-
             return api_response($request, 1, 200, ['address' => $delivery_address->id]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
