@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 
 use App\Models\OfferShowcase;
+use App\Transformers\OfferDetailsTransformer;
 use App\Transformers\OfferTransformer;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
+use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
 
 class OfferController extends Controller
@@ -31,9 +33,13 @@ class OfferController extends Controller
     public function show($offer, Request $request)
     {
         try {
-            $offer = OfferShowcase::active()->select('id', 'thumb', 'title', 'banner', 'short_description', 'detail_description', 'target_link')->where('id', $offer)->first();
-            return ($offer) ? api_response($request, $offer, 200, ['offer' => $offer]) : api_response($request, null, 404);
+            $type = $offer == 1 ? 'App\\Models\\Voucher' : 'App\\Models\\Category';
+            $manager = new Manager();
+            $manager->setSerializer(new ArraySerializer());
+            $offer = OfferShowcase::active()->where('target_type', $type)->first();
+            return ($offer) ? api_response($request, $offer, 200, ['offer' => $manager->createData(( new Item($offer, new OfferDetailsTransformer())))->toArray()]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
+            dd($e);
             return api_response($request, null, 500);
         }
 
