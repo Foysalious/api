@@ -17,4 +17,9 @@ class OfferShowcase extends Model
         $now = Carbon::now();
         return $q->where('start_date', '<=', $now)->where('end_date', '>=', $now);
     }
+
+    public function voucher()
+    {
+        return $this->belongsTo(Voucher::class, 'target_id');
+    }
 }

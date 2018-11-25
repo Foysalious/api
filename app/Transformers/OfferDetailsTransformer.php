@@ -50,6 +50,7 @@ class OfferDetailsTransformer extends TransformerAbstract
             'start_date' => $offer->start_date,
             'end_date' => $offer->end_date,
             'is_applied' => false,
+            'code' => $target_type == 'voucher' ? $offer->voucher?$offer->voucher->code:null : null
         ];
 
     }
