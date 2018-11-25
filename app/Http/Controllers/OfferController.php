@@ -4,7 +4,11 @@ namespace App\Http\Controllers;
 
 
 use App\Models\OfferShowcase;
+use App\Transformers\OfferTransformer;
 use Illuminate\Http\Request;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
+use League\Fractal\Serializer\ArraySerializer;
 
 class OfferController extends Controller
 {
@@ -12,8 +16,13 @@ class OfferController extends Controller
     public function index(Request $request)
     {
         try {
-            $offers = OfferShowcase::active()->select('id', 'thumb', 'title', 'short_description', 'target_link')->get();
-            return count($offers) > 0 ? api_response($request, $offers, 200, ['offers' => $offers]) : api_response($request, null, 404);
+            $offers = OfferShowcase::active()->valid()->get();
+            $manager = new Manager();
+            $manager->setSerializer(new ArraySerializer());
+            $resource = new Collection($offers, new OfferTransformer());
+            $offers = $manager->createData($resource)->toArray()['data'];
+            if (count($offers) > 0) return api_response($request, $offers, 200, ['offers' => $offers]);
+            else return api_response($request, null, 404);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
