@@ -48,7 +48,7 @@ class Checkout
         if ($request->has('location')) $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$request->location);
         else {
             $address = CustomerDeliveryAddress::find((int)$request->address_id);
-            $geo = json_encode($address->geo_informations);
+            $geo = json_decode($address->geo_informations);
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time);
             $partner_list->setGeo($geo->lat, $geo->lng);
         }

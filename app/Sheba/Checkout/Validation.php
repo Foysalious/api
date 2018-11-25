@@ -34,11 +34,14 @@ class Validation
             return 0;
         }
         $category_id = $selected_services->pluck('category_id')->unique()->toArray();
-        $location = Location::where('id', (int)$this->request->location)->published()->first();
-        if (!$location) {
-            $this->message = "Selected location is not valid";
-            return 0;
-        } elseif (count($category_id) > 1) {
+        if ($this->request->has('location')) {
+            $location = Location::where('id', (int)$this->request->location)->published()->first();
+            if (!$location) {
+                $this->message = "Selected location is not valid";
+                return 0;
+            }
+        }
+        if (count($category_id) > 1) {
             $this->message = "You can select only one category";
             return 0;
         } elseif (in_array($category_id[0], $this->rentCarIds)) {
@@ -69,7 +72,7 @@ class Validation
                 $this->message = "No Resource Found";
                 return 0;
             } else {
-                if(!$resource->isManager($partner)) {
+                if (!$resource->isManager($partner)) {
                     $this->message = "Resource Doesn't belong to this partner";
                     return 0;
                 }
