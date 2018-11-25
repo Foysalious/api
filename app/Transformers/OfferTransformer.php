@@ -18,7 +18,17 @@ class OfferTransformer extends TransformerAbstract
             'start_date' => $offer->start_date,
             'end_date' => $offer->end_date,
             'icon' => "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/categories/1/icon_png.png",
-            'gradiant' => ['#4286f4', '#f48041']
+            'gradiant' => ['#4286f4', '#f48041'],
+            'structured_title' => array(
+                array(
+                    'value' => 'Save upto',
+                    'is_bold' => 0,
+                ),
+                array(
+                    'value' => 'BDT 500',
+                    'is_bold' => 1,
+                )
+            )
         ];
     }
 }
