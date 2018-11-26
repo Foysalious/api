@@ -534,6 +534,7 @@ class AffiliateController extends Controller
             $total_topups = $topups->count();
             $topups = $topups->with('vendor')->skip($offset)->take($limit)->orderBy('created_at','desc')->get();
 
+
             $topup_data = [];
             foreach ($topups as $topup) {
                 $topup = [
@@ -541,7 +542,7 @@ class AffiliateController extends Controller
                     'amount' => $topup->amount,
                     'operator' => $topup->vendor->name,
                     'status' => $topup->status,
-                    'created_at' => $topup->created_at->format('jS M, Y H:i A')
+                    'created_at' => $topup->created_at->format('jS M, Y h:i A')
                 ];
                 array_push($topup_data, $topup);
             }
