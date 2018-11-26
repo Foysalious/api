@@ -51,7 +51,7 @@ class Checkout
             $this->orderData['location_id'] = (int)$request->location;
             $this->orderData['location'] = Location::find((int)$request->location);
         } else {
-            $address = CustomerDeliveryAddress::find((int)$request->address_id);
+            $address = $this->customer->delivery_addresses()->where('id', (int)$request->address_id)->first();
             $geo = json_decode($address->geo_informations);
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time);
             $partner_list->setGeo($geo->lat, $geo->lng);
@@ -124,8 +124,8 @@ class Checkout
         $data['pap_visitor_id'] = $request->has('pap_visitor_id') ? $request->pap_visitor_id : null;
         $data['created_by'] = $created_by = $request->has('created_by') ? $request->created_by : $this->customer->id;
         $data['created_by_name'] = $created_by_name = $request->has('created_by_name') ? $request->created_by_name : 'Customer - ' . $this->customer->profile->name;
-        $this->orderData = $data;
-        return $data;
+        $this->orderData = array_merge($this->orderData, $data);
+        return $this->orderData;
     }
 
     private function storeInDB($data, $selected_services, $partner)
