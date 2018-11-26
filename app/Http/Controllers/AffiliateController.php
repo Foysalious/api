@@ -532,7 +532,7 @@ class AffiliateController extends Controller
             if (isset($request->q) && $request->q !== "null") $topups = $topups->where('payee_mobile', 'LIKE', '%' . $request->q . '%');
 
             $total_topups = $topups->count();
-            $topups = $topups->with('vendor')->skip($offset)->take($limit)->get();
+            $topups = $topups->with('vendor')->skip($offset)->take($limit)->orderBy('created_at','desc')->get();
 
             $topup_data = [];
             foreach ($topups as $topup) {
