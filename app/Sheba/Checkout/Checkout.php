@@ -5,6 +5,7 @@ use App\Models\CarRentalJobDetail;
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
+use App\Models\HyperLocal;
 use App\Models\InfoCall;
 use App\Models\Job;
 use App\Models\JobService;
@@ -45,12 +46,20 @@ class Checkout
     public function placeOrder($request)
     {
         $this->setModifier($this->customer);
-        if ($request->has('location')) $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$request->location);
-        else {
+        if ($request->has('location')) {
+            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$request->location);
+            $this->orderData['location_id'] = (int)$request->location;
+            $this->orderData['location'] = Location::find((int)$request->location);
+        } else {
             $address = CustomerDeliveryAddress::find((int)$request->address_id);
             $geo = json_decode($address->geo_informations);
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time);
             $partner_list->setGeo($geo->lat, $geo->lng);
+            $hyper_local = HyperLocal::insidePolygon($geo->lat, $geo->lng)->with('location')->first();
+            if ($hyper_local) {
+                $this->orderData['location_id'] = $hyper_local->location->id;
+                $this->orderData['location'] = $hyper_local->location;
+            }
         }
         $partner_list->find($request->partner);
         if ($partner_list->hasPartners) {
@@ -80,8 +89,6 @@ class Checkout
 
     private function makeOrderData($request)
     {
-        $data['location_id'] = (int)$request->location;
-        $data['location'] = Location::find($data['location_id']);
         $data['customer_id'] = $this->customer->id;
         if ($request->has('resource')) {
             $data['resource_id'] = $request->resource;
