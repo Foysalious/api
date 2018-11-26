@@ -51,7 +51,7 @@ class OrderController extends Controller
         try {
             $request->merge(['mobile' => formatMobile($request->mobile)]);
             $this->validate($request, [
-                'location' => 'sometimes|string',
+                'location' => 'sometimes|numeric',
                 'services' => 'required|string',
                 'sales_channel' => 'required|string',
                 'partner' => 'required',

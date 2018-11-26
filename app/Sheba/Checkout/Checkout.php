@@ -5,6 +5,7 @@ use App\Models\CarRentalJobDetail;
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
+use App\Models\HyperLocal;
 use App\Models\InfoCall;
 use App\Models\Job;
 use App\Models\JobService;
@@ -45,12 +46,20 @@ class Checkout
     public function placeOrder($request)
     {
         $this->setModifier($this->customer);
-        if ($request->has('location')) $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$request->location);
-        else {
-            $address = CustomerDeliveryAddress::find((int)$request->address_id);
+        if ($request->has('location')) {
+            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$request->location);
+            $this->orderData['location_id'] = (int)$request->location;
+            $this->orderData['location'] = Location::find((int)$request->location);
+        } else {
+            $address = $this->customer->delivery_addresses()->where('id', (int)$request->address_id)->first();
             $geo = json_decode($address->geo_informations);
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time);
             $partner_list->setGeo($geo->lat, $geo->lng);
+            $hyper_local = HyperLocal::insidePolygon($geo->lat, $geo->lng)->with('location')->first();
+            if ($hyper_local) {
+                $this->orderData['location_id'] = $hyper_local->location->id;
+                $this->orderData['location'] = $hyper_local->location;
+            }
         }
         $partner_list->find($request->partner);
         if ($partner_list->hasPartners) {
@@ -80,8 +89,6 @@ class Checkout
 
     private function makeOrderData($request)
     {
-        $data['location_id'] = (int)$request->location;
-        $data['location'] = Location::find($data['location_id']);
         $data['customer_id'] = $this->customer->id;
         if ($request->has('resource')) {
             $data['resource_id'] = $request->resource;
@@ -117,8 +124,8 @@ class Checkout
         $data['pap_visitor_id'] = $request->has('pap_visitor_id') ? $request->pap_visitor_id : null;
         $data['created_by'] = $created_by = $request->has('created_by') ? $request->created_by : $this->customer->id;
         $data['created_by_name'] = $created_by_name = $request->has('created_by_name') ? $request->created_by_name : 'Customer - ' . $this->customer->profile->name;
-        $this->orderData = $data;
-        return $data;
+        $this->orderData = array_merge($this->orderData, $data);
+        return $this->orderData;
     }
 
     private function storeInDB($data, $selected_services, $partner)
