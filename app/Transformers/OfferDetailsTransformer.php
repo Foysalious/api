@@ -28,7 +28,7 @@ class OfferDetailsTransformer extends TransformerAbstract
             'target_link' => $offer->target_link,
             'structured_description' => $offer->structured_description,
             'target_type' => $target_type,
-            'amount' => $offer->amount,
+            'amount' => (double)$offer->amount,
             'amount_text' => $this->getAmountText($offer, $target_type),
             'start_date' => $offer->start_date,
             'end_date' => $offer->end_date,
