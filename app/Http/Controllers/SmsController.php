@@ -14,7 +14,7 @@ class SmsController extends Controller
             if ($request->server('HTTP_REFERER') != '') {
                 $withOutHTTP = explode('//', $request->server('HTTP_REFERER'));
                 $trim = explode('/', $withOutHTTP[1]);
-                if ($withOutHTTP[0] . '//' . $trim[0] == env('SHEBA_FRONT_END_URL')) {
+                if ($withOutHTTP[0] . '//' . $trim[0] == env('SHEBA_FRONT_END_URL') || $withOutHTTP[0] . '//' . $trim[0] == env('SHEBA_BONDHU_URL')) {
                     if ($request->has('mobile')) {
                         $mobile = formatMobile(ltrim($request->mobile));
                         $request->merge(['mobile' => $mobile]);
