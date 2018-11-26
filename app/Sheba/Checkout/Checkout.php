@@ -12,7 +12,6 @@ use App\Models\Location;
 use App\Models\Order;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
-use App\Models\PartnerService;
 use App\Models\Service;
 use App\Models\Voucher;
 use App\Repositories\CustomerRepository;
@@ -46,7 +45,13 @@ class Checkout
     public function placeOrder($request)
     {
         $this->setModifier($this->customer);
-        $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$request->location);
+        if ($request->has('location')) $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$request->location);
+        else {
+            $address = CustomerDeliveryAddress::find((int)$request->address_id);
+            $geo = json_decode($address->geo_informations);
+            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time);
+            $partner_list->setGeo($geo->lat, $geo->lng);
+        }
         $partner_list->find($request->partner);
         if ($partner_list->hasPartners) {
             $partner = $partner_list->partners->first();
@@ -279,8 +284,10 @@ class Checkout
         if (empty($address->location_id)) $address->location_id = $this->orderData['location_id'];
         if (empty($address->mobile)) $address->mobile = $this->orderData['delivery_mobile'];
         if (empty($address->name)) $address->name = $this->orderData['delivery_name'];
-        $geo = $this->orderData['location']->geo_informations ? json_decode($this->orderData['location']->geo_informations) : null;
-        if (empty($address->geo_informations)) $address->geo_informations = $geo ? json_encode((['lat' => $geo->lat, 'lng' => $geo->lng])) : null;
+        if (empty($address->geo_informations)) {
+            $geo = $this->orderData['location']->geo_informations ? json_decode($this->orderData['location']->geo_informations) : null;
+            $address->geo_informations = $geo ? json_encode((['lat' => $geo->lat, 'lng' => $geo->lng])) : null;
+        }
         return $address;
     }
 

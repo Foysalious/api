@@ -526,10 +526,10 @@ class AffiliateController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $topups = Affiliate::find($affiliate)->topups();
 
-            if (isset($request->from)) $topups = $topups->whereBetween('created_at', [$request->from, $request->to]);
-            if (isset($request->vendor_id)) $topups = $topups->where('vendor_id', $request->vendor_id);
-            if (isset($request->status)) $topups = $topups->where('status', $request->status);
-            if (isset($request->q)) $topups = $topups->where('payee_mobile', 'LIKE', '%' . $request->q . '%');
+            if (isset($request->from) && $request->from !== "null") $topups = $topups->whereBetween('created_at', [$request->from, $request->to]);
+            if (isset($request->vendor_id) && $request->vendor_id !== "null") $topups = $topups->where('vendor_id', $request->vendor_id);
+            if (isset($request->status) && $request->status !== "null")  $topups = $topups->where('status', $request->status);
+            if (isset($request->q) && $request->q !== "null") $topups = $topups->where('payee_mobile', 'LIKE', '%' . $request->q . '%');
 
             $total_topups = $topups->count();
             $topups = $topups->with('vendor')->skip($offset)->take($limit)->get();
