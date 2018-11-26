@@ -3,12 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\City;
-use App\Models\HyperLocal;
 use App\Models\Location;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
-use Illuminate\Contracts\Validation\ValidationException;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;

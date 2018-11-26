@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\Affiliate;
 use App\Models\AffiliateTransaction;
@@ -17,6 +15,7 @@ use App\Sheba\Bondhu\AffiliateStatus;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Sheba\PartnerPayment\PartnerPaymentValidatorFactory;
+use Sheba\Reports\ExcelHandler;
 use Validator;
 use DB;
 
@@ -513,7 +512,10 @@ class AffiliateController extends Controller
     public function topUpHistory($affiliate, Request $request)
     {
         try {
-            $rules = ['from' => 'date_format:Y-m-d', 'to' => 'date_format:Y-m-d|required_with:from,'];
+            $rules = [
+                'from'  => 'date_format:Y-m-d',
+                'to'    => 'date_format:Y-m-d|required_with:from'
+            ];
 
             $validator = Validator::make($request->all(), $rules);
             if ($validator->fails()) {
@@ -523,28 +525,37 @@ class AffiliateController extends Controller
 
             list($offset, $limit) = calculatePagination($request);
             $topups = Affiliate::find($affiliate)->topups();
-
-            if (isset($request->from) && $request->from !== "null") $topups = $topups->whereBetween('created_at', [$request->from, $request->to]);
+           
+            if (isset($request->from) && $request->from !== "null") $topups = $topups->whereBetween('created_at', [$request->from." 00:00:00", $request->to." 23:59:59"]);
             if (isset($request->vendor_id) && $request->vendor_id !== "null") $topups = $topups->where('vendor_id', $request->vendor_id);
             if (isset($request->status) && $request->status !== "null")  $topups = $topups->where('status', $request->status);
             if (isset($request->q) && $request->q !== "null") $topups = $topups->where('payee_mobile', 'LIKE', '%' . $request->q . '%');
 
             $total_topups = $topups->count();
-            $topups = $topups->with('vendor')->skip($offset)->take($limit)->get();
+            $topups = $topups->with('vendor')->skip($offset)->take($limit)->orderBy('created_at','desc')->get();
 
-            $topupData = [];
+
+            $topup_data = [];
             foreach ($topups as $topup) {
                 $topup = [
                     'payee_mobile' => $topup->payee_mobile,
                     'amount' => $topup->amount,
                     'operator' => $topup->vendor->name,
                     'status' => $topup->status,
-                    'created_at' => $topup->created_at->format('jS M, Y H:i A')
+                    'created_at' => $topup->created_at->format('jS M, Y h:i A')
                 ];
-                array_push($topupData, $topup);
+                array_push($topup_data, $topup);
             }
 
-            return response()->json(['code' => 200, 'data' => $topupData, 'total_topups' => $total_topups, 'offset' => $offset]);
+            if ($request->has('content_type') && $request->content_type == 'excel') {
+                $excel = (new ExcelHandler());
+                $excel->setName('Topup History');
+                $excel->setViewFile('topup_history');
+                $excel->pushData('topup_data', $topup_data);
+                $excel->download();
+            }
+
+            return response()->json(['code' => 200, 'data' => $topup_data, 'total_topups' => $total_topups, 'offset' => $offset]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
