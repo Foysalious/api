@@ -36,7 +36,8 @@ class OfferDetailsTransformer extends TransformerAbstract
             'target_id' => (int)$offer->target_id,
             'code' => $target_type == 'voucher' ? $offer->voucher ? $offer->voucher->code : null : null,
             'voucher_title' => $target_type == 'voucher' ? $offer->voucher ? $offer->voucher->title : null : null,
-            'is_amount_percent' => $this->isAmountPercent($target_type, $offer)
+            'is_amount_percent' => $this->isAmountPercent($target_type, $offer),
+            'has_cap' => $this->getCapStatus($offer, $target_type)
         ];
     }
 
@@ -46,17 +47,30 @@ class OfferDetailsTransformer extends TransformerAbstract
             case 'voucher':
                 $data = 'Save ';
                 if ($offer->voucher->cap > 0) {
-                    $data .= ('Upto ' . $offer->voucher->cap);
+                    $data .= 'Upto ';
                 }
                 return $data;
             case 'reward':
                 $data = 'Save ';
                 if ($offer->reward->cap > 0) {
-                    $data .= 'Upto ' . $offer->reward->cap;
+                    $data .= 'Upto ';
                 }
                 return $data;
             default:
-                return 'Price ৳ ';
+                return 'Price ';
+
+        }
+    }
+
+    private function getCapStatus($offer, $target_type)
+    {
+        switch ($target_type) {
+            case 'voucher':
+                return $offer->voucher->cap > 0;
+            case 'reward':
+                return $offer->reward->cap > 0;
+            default:
+                return false;
 
         }
     }
