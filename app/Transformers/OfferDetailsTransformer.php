@@ -28,14 +28,15 @@ class OfferDetailsTransformer extends TransformerAbstract
             'target_link' => $offer->target_link,
             'structured_description' => $offer->structured_description,
             'target_type' => $target_type,
-            'amount' => 200,
+            'amount' => $offer->amount,
             'amount_text' => $this->getAmountText($offer, $target_type),
             'start_date' => $offer->start_date,
             'end_date' => $offer->end_date,
             'is_applied' => $is_applied,
             'target_id' => (int)$offer->target_id,
             'code' => $target_type == 'voucher' ? $offer->voucher ? $offer->voucher->code : null : null,
-            'voucher_title' => $target_type == 'voucher' ? $offer->voucher ? $offer->voucher->title : null : null
+            'voucher_title' => $target_type == 'voucher' ? $offer->voucher ? $offer->voucher->title : null : null,
+            'is_amount_percent' => $this->isAmountPercent($target_type, $offer)
         ];
     }
 
@@ -45,27 +46,38 @@ class OfferDetailsTransformer extends TransformerAbstract
             case 'voucher':
                 $data = 'Save ';
                 if ($offer->voucher->cap > 0) {
-                    $data .= ('Up to ৳ ' . $offer->voucher->cap);
-                } else if ($offer->voucher->is_amount_percentage > 0) {
-                    $data .= $offer->amount . ' %';
-                } else {
-                    $data .= '৳ ';
-                    $data .= ($offer->ammount) ? $offer->amount : $offer->voucher->amount;
+                    $data .= ('Upto ' . $offer->voucher->cap);
                 }
                 return $data;
             case 'reward':
                 $data = 'Save ';
                 if ($offer->reward->cap > 0) {
-                    $data .= 'Up to ৳ ' . $offer->reward->cap;
-                } else if ($offer->reward->is_amount_percentage) {
-                    $data .= $offer->amount . ' %';
-                } else {
-                    $data .= '৳ ';
-                    $data .= $offer->ammount ? $offer->amount : $offer->reward->amount;
+                    $data .= 'Upto ' . $offer->reward->cap;
                 }
                 return $data;
             default:
-                return 'Price ৳ ' . $offer->amount;
+                return 'Price ৳ ';
+
+        }
+    }
+
+    private function isAmountPercent($target_type, $offer)
+    {
+        switch ($target_type) {
+            case 'voucher':
+                if ($offer->voucher->is_amount_percentage > 0) {
+                    return true;
+                } else {
+                    return false;
+                }
+            case 'reward':
+                if ($offer->reward->is_amount_percentage) {
+                    return true;
+                } else {
+                    return false;
+                }
+            default:
+                return false;
 
         }
     }
