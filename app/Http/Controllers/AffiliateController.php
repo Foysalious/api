@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\Affiliate;
 use App\Models\AffiliateTransaction;
@@ -17,6 +15,7 @@ use App\Sheba\Bondhu\AffiliateStatus;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Sheba\PartnerPayment\PartnerPaymentValidatorFactory;
+use Sheba\Reports\ExcelHandler;
 use Validator;
 use DB;
 
@@ -513,7 +512,10 @@ class AffiliateController extends Controller
     public function topUpHistory($affiliate, Request $request)
     {
         try {
-            $rules = ['from' => 'date_format:Y-m-d', 'to' => 'date_format:Y-m-d|required_with:from,'];
+            $rules = [
+                'from'  => 'date_format:Y-m-d',
+                'to'    => 'date_format:Y-m-d|required_with:from'
+            ];
 
             $validator = Validator::make($request->all(), $rules);
             if ($validator->fails()) {
@@ -532,7 +534,7 @@ class AffiliateController extends Controller
             $total_topups = $topups->count();
             $topups = $topups->with('vendor')->skip($offset)->take($limit)->get();
 
-            $topupData = [];
+            $topup_data = [];
             foreach ($topups as $topup) {
                 $topup = [
                     'payee_mobile' => $topup->payee_mobile,
@@ -541,10 +543,18 @@ class AffiliateController extends Controller
                     'status' => $topup->status,
                     'created_at' => $topup->created_at->format('jS M, Y H:i A')
                 ];
-                array_push($topupData, $topup);
+                array_push($topup_data, $topup);
             }
 
-            return response()->json(['code' => 200, 'data' => $topupData, 'total_topups' => $total_topups, 'offset' => $offset]);
+            if ($request->has('content_type') && $request->content_type == 'excel') {
+                $excel = (new ExcelHandler());
+                $excel->setName('Topup History');
+                $excel->setViewFile('topup_history');
+                $excel->pushData('topup_data', $topup_data);
+                $excel->download();
+            }
+
+            return response()->json(['code' => 200, 'data' => $topup_data, 'total_topups' => $total_topups, 'offset' => $offset]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
