@@ -22,11 +22,11 @@ class PerformanceController extends Controller
             ]);
 
             $time_frame = $this->getTimeFrame($request);
-            $performance->setPartner($request->partner)->setTimeFrame($time_frame);
+            $performance->setPartner($request->partner)->setTimeFrame($time_frame)->calculate();
 
             $data = [
                 'timeline' => $time_frame->start->toDateString() . ' - ' . $time_frame->end->toDateString()
-            ] + $performance->get();
+            ] + $performance->getData()->toArray();
 
             return api_response($request, $performance, 200, ['data' => $data]);
         } catch (ValidationException $e) {
