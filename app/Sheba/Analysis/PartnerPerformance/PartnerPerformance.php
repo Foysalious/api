@@ -1,9 +1,10 @@
 <?php namespace Sheba\Analysis\PartnerPerformance;
 
 use App\Models\Partner;
+use Illuminate\Support\Collection;
 use Sheba\Helpers\TimeFrame;
 
-class PartnerPerformance
+abstract class PartnerPerformance
 {
     /** @var TimeFrame */
     private $timeFrame;
@@ -11,9 +12,15 @@ class PartnerPerformance
     /** @var Partner */
     private $partner;
 
-    public function __construct()
-    {
+    /** @var PartnerPerformance  */
+    protected $next;
 
+    /** @var Collection */
+    private $data;
+
+    public function __construct(PartnerPerformance $next = null)
+    {
+        $this->next = $next;
     }
 
     public function setPartner(Partner $partner)
@@ -28,84 +35,21 @@ class PartnerPerformance
         return $this;
     }
 
-    public function get()
+    public function calculate()
     {
-        $completed = $this->getDataOf('successfully_completed');
-        $complain = $this->getDataOf('successfully_completed');
-        $timely_accepted = $this->getDataOf('successfully_completed');
-        $timely_processed = $this->getDataOf('successfully_completed');
-
-        return [
-            'score' => ($completed['rate'] + $complain['rate'] + $timely_accepted['rate'] + $timely_processed['rate']) / 4,
-            'performance_summary' => [
-                'total_order_taken' => 51,
-                'successfully_completed' => $completed['total_order'],
-                'order_without_complain' => $complain['total_order'],
-                'timely_order_taken' => $timely_accepted['total_order'],
-                'timely_job_start' => $timely_processed['total_order']
-            ],
-            'successfully_completed' => $completed,
-            'order_without_complain' => $complain,
-            'timely_order_taken' => $timely_accepted,
-            'timely_job_start' => $timely_processed
-        ];
+        $this->data = $this->get();
     }
 
-    private function getDataOf($of)
+    /**
+     * @return Collection
+     */
+    public function getData()
     {
-        return [
-            'total_order' => 24,
-            'rate' => 49,
-            'last_week_rate' => 34,
-            'is_improved' => 1,
-            'last_week_rate_difference' => 15,
-            'previous_weeks' => $this->getPreviousWeeksData($of)
-        ];
+        return $this->data;
     }
 
-    private function getPreviousWeeksData($of)
-    {
-        return [
-            [
-                'name' => 'Week 41',
-                'date_range' => [
-                    'start' => '2018-11-11',
-                    'end' => '2018-11-18'
-                ],
-                'value' => '12',
-            ],
-            [
-                'name' => 'Week 41',
-                'date_range' => [
-                    'start' => '2018-11-11',
-                    'end' => '2018-11-18'
-                ],
-                'value' => '12',
-            ],
-            [
-                'name' => 'Week 41',
-                'date_range' => [
-                    'start' => '2018-11-11',
-                    'end' => '2018-11-18'
-                ],
-                'value' => '12',
-            ],
-            [
-                'name' => 'Week 41',
-                'date_range' => [
-                    'start' => '2018-11-11',
-                    'end' => '2018-11-18'
-                ],
-                'value' => '12',
-            ],
-            [
-                'name' => 'Week 41',
-                'date_range' => [
-                    'start' => '2018-11-11',
-                    'end' => '2018-11-18'
-                ],
-                'value' => '12',
-            ]
-        ];
-    }
+    /**
+     * @return Collection
+     */
+    protected abstract function get();
 }
