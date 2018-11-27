@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 
 use App\Models\OfferShowcase;
-use App\Models\Promotion;
 use App\Transformers\OfferDetailsTransformer;
 use App\Transformers\OfferTransformer;
 use Illuminate\Http\Request;
@@ -12,6 +11,7 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
+use Sheba\Offer\OfferFilter;
 
 class OfferController extends Controller
 {
@@ -27,9 +27,11 @@ class OfferController extends Controller
                 'category' => 'numeric'
             ]);
             if ($request->has('user') && $request->has('user_type') && $request->has('remember_token')) {
-                $user = "App\\Models\\" . ucwords($request->user_type)::where('id', (int)$request->user)->where('remember_token', $request->remember_token)->first();
+                $model_name = "App\\Models\\" . ucwords($request->user_type);
+                $user = $model_name::where('id', (int)$request->user)->where('remember_token', $request->remember_token)->first();
             }
             $offers = OfferShowcase::active()->valid()->get();
+            $offers = (new OfferFilter($offers))->filter();
             $manager = new Manager();
             $manager->setSerializer(new ArraySerializer());
             $resource = new Collection($offers, new OfferTransformer());
@@ -48,11 +50,11 @@ class OfferController extends Controller
             $manager = new Manager();
             $manager->setSerializer(new ArraySerializer());
             $offer = OfferShowcase::active()->where('id', $offer)->first();
-            if($offer){
-                $offer->customer_id=$request->get('customer_id');
+            if ($offer) {
+                $offer->customer_id = $request->get('customer_id');
                 $data = $manager->createData((new Item($offer, new OfferDetailsTransformer())))->toArray();
                 return api_response($request, $offer, 200, ['offer' => $data]);
-            }else {
+            } else {
                 return api_response($request, null, 404);
             }
         } catch (\Throwable $e) {
