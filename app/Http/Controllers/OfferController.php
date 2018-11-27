@@ -35,7 +35,7 @@ class OfferController extends Controller
             $offer_filter = new OfferFilter($offers);
             if ($user) $offer_filter->setCustomer($user);
             if ($request->has('category')) $offer_filter->setCategory($request->category);
-            $offers = (new OfferFilter($offers))->filter();
+            $offers = $offer_filter->filter();
             $manager = new Manager();
             $manager->setSerializer(new ArraySerializer());
             $resource = new Collection($offers, new OfferTransformer());
