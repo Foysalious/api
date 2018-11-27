@@ -47,4 +47,20 @@ class OfferShowcase extends Model
     {
         return $this->type() == 'voucher' ? 1 : 0;
     }
+
+    public function isReward()
+    {
+        return $this->type() == 'reward' ? 1 : 0;
+    }
+
+    public function isCategory()
+    {
+        return $this->type() == 'category' ? 1 : 0;
+    }
+
+    public function isCategoryGroup()
+    {
+        return $this->type() == 'category_group' ? 1 : 0;
+    }
+
 }

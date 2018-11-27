@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 
+use App\Models\Category;
 use App\Models\OfferShowcase;
 use App\Transformers\OfferDetailsTransformer;
 use App\Transformers\OfferTransformer;
@@ -29,12 +30,12 @@ class OfferController extends Controller
             $user = $category = null;
             if ($request->has('user') && $request->has('user_type') && $request->has('remember_token')) {
                 $model_name = "App\\Models\\" . ucwords($request->user_type);
-                $user = $model_name::where('id', (int)$request->user)->where('remember_token', $request->remember_token)->first();
+                $user = $model_name::with('orders', 'promotions')->where('id', (int)$request->user)->where('remember_token', $request->remember_token)->first();
             }
-            $offers = OfferShowcase::active()->valid()->get();
+            $offers = OfferShowcase::with('target')->active()->valid()->get();
             $offer_filter = new OfferFilter($offers);
             if ($user) $offer_filter->setCustomer($user);
-            if ($request->has('category')) $offer_filter->setCategory($request->category);
+            if ($request->has('category')) $offer_filter->setCategory(Category::find((int)$request->category));
             $offers = $offer_filter->filter();
             $manager = new Manager();
             $manager->setSerializer(new ArraySerializer());
