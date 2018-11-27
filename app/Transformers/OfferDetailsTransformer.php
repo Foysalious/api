@@ -63,7 +63,7 @@ class OfferDetailsTransformer extends TransformerAbstract
         switch ($target_type) {
             case 'voucher':
             case 'reward':
-                return $offer->target->cap > 0;
+                return (double)$offer->target->cap > 0;
             default:
                 return false;
 
@@ -75,11 +75,7 @@ class OfferDetailsTransformer extends TransformerAbstract
         switch ($target_type) {
             case 'voucher':
             case 'reward':
-                if ($offer->target->is_amount_percentage > 0) {
-                    return true;
-                } else {
-                    return false;
-                }
+                return (int)$offer->target->is_amount_percentage > 0;
             default:
                 return false;
 
