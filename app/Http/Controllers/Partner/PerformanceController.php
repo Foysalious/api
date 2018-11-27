@@ -10,70 +10,54 @@ class PerformanceController extends Controller
     public function index($partner, Request $request)
     {
         try {
-            $this->validate($request, ['timeline' => 'required|string|in:time-frame,week,month,year']);
+            $this->validate($request, [
+                'of' => 'required|string|in:time-frame,week,month',
+                'start_date' => 'required_if:of,time-frame|date',
+                'end_date' => 'required_if:of,time-frame|date',
+                'week' => 'required_if:of,week|numeric',
+                'month' => 'required_if:of,month|numeric',
+                'year' => 'required_if:of,month|numeric',
+            ]);
 
-            $data = [
-                'total_sales'       => 5000.00,
-                'order_accepted'    => 50,
-                'order_completed'   => 50
+            $performance = [
+                'timeline' => 'Oct 26 - Nov 1',
+                'performance_summary' => [
+                    'total_order_taken' => 51,
+                    'successfully_completed' => 39,
+                    'order_without_complain' => 30,
+                    'timely_order_taken' => 46,
+                    'timely_job_start' => 15
+                ],
+                'successfully_completed' => [
+                    'total_order' => 24,
+                    'rate' => 49,
+                    'last_week_rate' => 34,
+                    'is_improved' => 1,
+                    'last_week_rate_difference' => 15
+                ],
+                'order_without_complain' => [
+                    'total_order' => 30,
+                    'rate' => 60,
+                    'last_week_rate' => 54,
+                    'is_improved' => 1,
+                    'last_week_rate_difference' => 6
+                ],
+                'timely_order_taken' => [
+                    'total_order' => 46,
+                    'rate' => 93,
+                    'last_week_rate' => 95,
+                    'is_improved' => 0,
+                    'last_week_rate_difference' => 2
+                ],
+                'timely_job_start' => [
+                    'total_order' => 15,
+                    'rate' => 30,
+                    'last_week_rate' => 47,
+                    'is_improved' => 0,
+                    'last_week_rate_difference' => 17
+                ]
             ];
-
-            if ($request->frequency == 'time-frame') {
-                $data['day'] = 'Thursday, Oct 31';
-                $data['sheba_payable'] = 4832.56;
-                $data['partner_collection'] = 483.56;
-            }
-
-            if ($request->frequency == 'week') {
-                $data['timeline'] = 'Oct 26 - Nov 1';
-                $data['sheba_payable'] = 4832.56;
-                $data['partner_collection'] = 483.56;
-                $data['sales_stat_breakdown'] = [
-                    ['value' => 'Sun', 'amount' => 455.58],
-                    ['value' => 'Mon', 'amount' => 4552],
-                    ['value' => 'Tue', 'amount' => 45005],
-                    ['value' => 'Wed', 'amount' => 4505,],
-                    ['value' => 'Thu', 'amount' => 455],
-                    ['value' => 'Fri', 'amount' => 4550],
-                    ['value' => 'Sat', 'amount' => 455]
-                ];
-                $data['order_stat_breakdown'] = [
-                    ['value' => 'Sun', 'amount' => 455],
-                    ['value' => 'Mon', 'amount' => 4552],
-                    ['value' => 'Tue', 'amount' => 45005],
-                    ['value' => 'Wed', 'amount' => 4505],
-                    ['value' => 'Thu', 'amount' => 455],
-                    ['value' => 'Fri', 'amount' => 4550],
-                    ['value' => 'Sat', 'amount' => 455]
-                ];
-            }
-
-            if ($request->frequency == 'month') {
-                $data['timeline'] = 'October';
-                $data['sheba_payable'] = 4832.56;
-                $data['partner_collection'] = 483.56;
-                $data['sales_stat_breakdown'] = [
-                    ['value' => 1, 'amount' => 11.22],
-                    ['value' => 2, 'amount' => 1121],
-                    ['value' => 3, 'amount' => 112.2],
-                    ['value' => 4, 'amount' => 11],
-                    ['value' => 5, 'amount' => 11]
-                ];
-                $data['order_stat_breakdown'] = [
-                    ['value' => 1, 'amount' => 10],
-                    ['value' => 2, 'amount' => 22],
-                    ['value' => 3, 'amount' => 11],
-                    ['value' => 4, 'amount' => 111],
-                    ['value' => 5, 'amount' => 101]
-                ];
-            }
-
-            if ($request->frequency == 'year') {
-                $data['timeline'] = 'Year 2018';
-                $data['lifetime_sales'] = 483.56;
-            }
-
-            return api_response($request, $data, 200, ['data' => $data]);
+            return api_response($request, $performance, 200, ['data' => $performance]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
