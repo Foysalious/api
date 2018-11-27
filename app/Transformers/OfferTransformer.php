@@ -30,7 +30,9 @@ class OfferTransformer extends TransformerAbstract
                     'is_bold' => 1,
                 )
             ),
-            'is_flash' => $offer->is_flash
+            'is_flash' => $offer->is_flash,
+            'is_applied' => 1,
+            'promo_code' => 'TESTOFFER'
         ];
     }
 }
