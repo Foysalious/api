@@ -122,6 +122,7 @@ class PartnerRoute
             });
 
             $api->get('sales', 'Partner\SalesStatisticsController@getSales');
+            $api->get('performance', 'Partner\PerformanceController@index');
         });
     }
 }
