@@ -461,10 +461,16 @@ class PartnerController extends Controller
             $partner = Partner::with(['categories' => function ($query) {
                 return $query->published()->wherePivot('is_verified', 1);
             }])->find($partner);
+
             if ($partner) {
                 $categories = collect();
                 foreach ($partner->categories as $category) {
-                    $services = $partner->services()->select('services.id', 'name', 'variable_type', 'services.min_quantity', 'services.variables')->where('category_id', $category->id)->wherePivot('is_published', 1)->wherePivot('is_verified', 1)->published()->get();
+                    $services = $partner->services()->select('services.id', 'name', 'variable_type', 'services.min_quantity', 'services.variables')
+                        ->where('category_id', $category->id)
+                        ->wherePivot('is_published', 1)->wherePivot('is_verified', 1)
+                        ->publishedForAll()
+                        ->get();
+
                     if (count($services) > 0) {
                         $services->each(function (&$service) {
                             $variables = json_decode($service->variables);
@@ -482,6 +488,7 @@ class PartnerController extends Controller
                     }
                     $categories->push(['id' => $category->id, 'name' => $category->name, 'app_thumb' => $category->app_thumb, 'services' => $services]);
                 }
+                
                 if (count($categories) > 0) {
                     $hasCarRental = $categories->filter(function ($category) {
                         return in_array($category['id'], $this->rentCarCategoryIds);
@@ -492,6 +499,7 @@ class PartnerController extends Controller
                     return api_response($request, $categories, 200, ['categories' => $categories, 'has_car_rental' => $hasCarRental, 'has_others' => $hasOthers]);
                 }
             }
+
             return api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

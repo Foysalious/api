@@ -43,7 +43,6 @@ class PartnerRoute
                 $api->put('{service}', 'Partner\PartnerServiceController@update');
             });
 
-
             $api->get('operations', 'Partner\OperationController@index');
             $api->post('operations', 'Partner\OperationController@store');
             $api->post('register', 'CustomerController@store');
