@@ -48,7 +48,7 @@ class OfferFilter
                 }
             }
             if ($this->category) {
-                $category_ids = !$this->category->isParent() ? [$this->category->id] : $this->category->children->pluck('id');
+                $category_ids = !$this->category->isParent() ? [$this->category->id] : $this->category->children->pluck('id')->toArray();
                 if ($offer->isVoucher()) {
                     $voucher_rule = new VoucherRule($offer->target->rules);
                     $is_applicable = 0;
@@ -61,7 +61,7 @@ class OfferFilter
                     }
                 } elseif ($offer->isCategory()) {
                     $offer_category = $offer->target;
-                    $ids = !$offer_category->isParent() ? [$offer_category->id] : $offer_category->children->pluck('id');
+                    $ids = !$offer_category->isParent() ? [$offer_category->id] : $offer_category->children->pluck('id')->toArray();
                     $is_applicable = 0;
                     foreach ($category_ids as $id) {
                         if (in_array($id, $ids)) $is_applicable = 1;
@@ -71,7 +71,7 @@ class OfferFilter
                         continue;
                     }
                 } elseif ($offer->isCategoryGroup()) {
-                    $ids = $offer->target->categories;
+                    $ids = $offer->target->categories->pluck('id')->toArray();
                     $is_applicable = 0;
                     foreach ($category_ids as $id) {
                         if (in_array($id, $ids)) $is_applicable = 1;

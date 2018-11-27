@@ -33,10 +33,11 @@ class OfferController extends Controller
                 $user = $model_name::with('orders', 'promotions')->where('id', (int)$request->user)->where('remember_token', $request->remember_token)->first();
             }
             $offers = OfferShowcase::active()->valid()->get();
+            if (count($offers) == 0) return api_response($request, null, 404);
             $offer_filter = new OfferFilter($offers);
             if ($user) $offer_filter->setCustomer($user);
             if ($request->has('category')) $offer_filter->setCategory(Category::find((int)$request->category));
-            $offers = $offer_filter->filter();
+            $offers = $offer_filter->filter()->sortByDesc('amount');
             $manager = new Manager();
             $manager->setSerializer(new ArraySerializer());
             $resource = new Collection($offers, new OfferTransformer());
