@@ -36,23 +36,18 @@ class OfferDetailsTransformer extends TransformerAbstract
             'target_id' => (int)$offer->target_id,
             'code' => $target_type == 'voucher' ? $offer->voucher ? $offer->voucher->code : null : null,
             'voucher_title' => $target_type == 'voucher' ? $offer->voucher ? $offer->voucher->title : null : null,
-            'is_amount_percent' => $this->isAmountPercent($target_type, $offer),
-            'has_cap' => $this->getCapStatus($offer, $target_type)
+            'is_amount_percent' => $this->isAmountPercent($offer, $target_type),
+            'has_cap' => $this->getCapStatus($offer, $target_type),
+            'category_id' => $this->getCategoryId($offer, $target_type)
         ];
     }
 
     private function getAmountText($offer, $target_type)
     {
         switch ($target_type) {
-            case 'voucher':
+            case 'reward' | 'voucher':
                 $data = 'Save ';
-                if ($offer->voucher->cap > 0) {
-                    $data .= 'Upto ';
-                }
-                return $data;
-            case 'reward':
-                $data = 'Save ';
-                if ($offer->reward->cap > 0) {
+                if ($offer->target->cap > 0) {
                     $data .= 'Upto ';
                 }
                 return $data;
@@ -65,27 +60,19 @@ class OfferDetailsTransformer extends TransformerAbstract
     private function getCapStatus($offer, $target_type)
     {
         switch ($target_type) {
-            case 'voucher':
-                return $offer->voucher->cap > 0;
-            case 'reward':
-                return $offer->reward->cap > 0;
+            case 'voucher' | 'reward':
+                return $offer->target->cap > 0;
             default:
                 return false;
 
         }
     }
 
-    private function isAmountPercent($target_type, $offer)
+    private function isAmountPercent($offer, $target_type)
     {
         switch ($target_type) {
-            case 'voucher':
-                if ($offer->voucher->is_amount_percentage > 0) {
-                    return true;
-                } else {
-                    return false;
-                }
-            case 'reward':
-                if ($offer->reward->is_amount_percentage) {
+            case 'voucher' | 'reward':
+                if ($offer->target->is_amount_percentage > 0) {
                     return true;
                 } else {
                     return false;
@@ -93,6 +80,28 @@ class OfferDetailsTransformer extends TransformerAbstract
             default:
                 return false;
 
+        }
+    }
+
+    public function getCategoryId($offer, $target_type)
+    {
+        switch ($target_type) {
+            case 'voucher':
+                $rules = json_decode($offer->target->rules);
+                $count = is_array($rules->categories) ? count($rules->categories) : 0;
+                return $count == 1 ? (int)$rules->categories[0] : null;
+            case 'reward':
+                if ($offer->target->categoryNoConstraints && $offer->target->categoryNoConstraints->count() > 0) {
+                    return null;
+                } elseif ($offer->target->categoryConstraints && $offer->target->categoryConstraints->count() == 1) {
+                    return $offer->target->categoryConstraints->first()->constraint_id;
+                } else {
+                    return null;
+                }
+            case 'category':
+                return (int)$offer->target_id;
+            default:
+                return null;
         }
     }
 }
