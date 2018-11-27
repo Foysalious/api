@@ -123,7 +123,7 @@ class TopUpController extends Controller
             $valid_topups   = collect([]);
             $failed_topups  = collect([]);
 
-            Excel::load($request->file, function ($reader) use ($vendor, $valid_topups, $failed_topups) {
+            Excel::selectSheets('data')->load($request->file, function ($reader) use ($vendor, $valid_topups, $failed_topups) {
                 })->get()->each(function ($value, $key) use ($vendor, $valid_topups, $failed_topups) {
                     $value["mobile"] = BDMobileFormatter::format($value->mobile);
                     $value["vendor_id"] = $vendor->getIdByName($value->operator);
