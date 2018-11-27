@@ -22,4 +22,19 @@ class OfferShowcase extends Model
     {
         return $this->belongsTo(Voucher::class, 'target_id');
     }
+
+    public function target()
+    {
+        return $this->morphTo();
+    }
+
+    public function type()
+    {
+        return strtolower(snake_case(str_replace("App\\Models\\", '', $this->target_type)));
+    }
+
+    public function isVoucher()
+    {
+        return $this->type() == 'voucher' ? 1 : 0;
+    }
 }
