@@ -45,7 +45,8 @@ class OfferDetailsTransformer extends TransformerAbstract
     private function getAmountText($offer, $target_type)
     {
         switch ($target_type) {
-            case 'reward' | 'voucher':
+            case 'voucher':
+            case 'reward':
                 $data = 'Save ';
                 if ($offer->target->cap > 0) {
                     $data .= 'Upto ';
@@ -60,7 +61,8 @@ class OfferDetailsTransformer extends TransformerAbstract
     private function getCapStatus($offer, $target_type)
     {
         switch ($target_type) {
-            case 'voucher' | 'reward':
+            case 'voucher':
+            case 'reward':
                 return $offer->target->cap > 0;
             default:
                 return false;
@@ -71,7 +73,8 @@ class OfferDetailsTransformer extends TransformerAbstract
     private function isAmountPercent($offer, $target_type)
     {
         switch ($target_type) {
-            case 'voucher' | 'reward':
+            case 'voucher':
+            case 'reward':
                 if ($offer->target->is_amount_percentage > 0) {
                     return true;
                 } else {
