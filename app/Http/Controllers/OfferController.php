@@ -26,11 +26,15 @@ class OfferController extends Controller
                 'remember_token' => 'required_with:user|string',
                 'category' => 'numeric'
             ]);
+            $user = $category = null;
             if ($request->has('user') && $request->has('user_type') && $request->has('remember_token')) {
                 $model_name = "App\\Models\\" . ucwords($request->user_type);
                 $user = $model_name::where('id', (int)$request->user)->where('remember_token', $request->remember_token)->first();
             }
             $offers = OfferShowcase::active()->valid()->get();
+            $offer_filter = new OfferFilter($offers);
+            if ($user) $offer_filter->setCustomer($user);
+            if ($request->has('category')) $offer_filter->setCategory($request->category);
             $offers = (new OfferFilter($offers))->filter();
             $manager = new Manager();
             $manager->setSerializer(new ArraySerializer());
@@ -39,6 +43,7 @@ class OfferController extends Controller
             if (count($offers) > 0) return api_response($request, $offers, 200, ['offers' => $offers]);
             else return api_response($request, null, 404);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
