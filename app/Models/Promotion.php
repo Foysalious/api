@@ -22,4 +22,11 @@ class Promotion extends Model
     {
         return $query->where('is_valid', 1)->where('valid_till', '>=', Carbon::now());
     }
+
+    public function scopeIsApplied($query, $customer_id, $voucher_id)
+    {
+        return $query
+            ->where('customer_id', $customer_id)
+            ->where('voucher_id', $voucher_id);
+    }
 }

@@ -22,4 +22,29 @@ class OfferShowcase extends Model
     {
         return $this->belongsTo(Voucher::class, 'target_id');
     }
+
+    public function getStructuredTitleAttribute()
+    {
+        return isset($this->attributes['structured_title']) ? json_decode($this->attributes['structured_title']) : null;
+    }
+
+    public function getStructuredDescriptionAttribute()
+    {
+        return isset($this->attributes['structured_description']) ? json_decode($this->attributes['structured_description']) : null;
+    }
+
+    public function target()
+    {
+        return $this->morphTo();
+    }
+
+    public function type()
+    {
+        return strtolower(snake_case(str_replace("App\\Models\\", '', $this->target_type)));
+    }
+
+    public function isVoucher()
+    {
+        return $this->type() == 'voucher' ? 1 : 0;
+    }
 }
