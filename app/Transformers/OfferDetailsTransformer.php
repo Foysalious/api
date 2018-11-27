@@ -88,7 +88,7 @@ class OfferDetailsTransformer extends TransformerAbstract
         switch ($target_type) {
             case 'voucher':
                 $rules = json_decode($offer->target->rules);
-                $count = is_array($rules->categories) ? count($rules->categories) : 0;
+                $count = isset($rules->categories) && is_array($rules->categories) ? count($rules->categories) : 0;
                 return $count == 1 ? (int)$rules->categories[0] : null;
             case 'reward':
                 if ($offer->target->categoryNoConstraints && $offer->target->categoryNoConstraints->count() > 0) {
