@@ -20,7 +20,7 @@ class CustomerFavoriteController extends Controller
             $q->with(['services', 'partner' => function ($q) {
                 $q->select('id', 'name', 'logo');
             }, 'category' => function ($q) {
-                $q->select('id', 'parent_id', 'name', 'slug', 'icon', 'icon_color')->with('parent');
+                $q->select('id', 'parent_id', 'name', 'slug', 'icon_png', 'icon_color')->with('parent');
             }])->orderBy('id', 'desc')->skip($offset)->take($limit);
         }]);
         $favorites = $customer->favorites->each(function (&$favorite, $key) {
