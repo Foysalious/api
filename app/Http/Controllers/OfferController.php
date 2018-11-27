@@ -54,15 +54,14 @@ class OfferController extends Controller
     public function show($offer, Request $request)
     {
         try {
-
-            $manager = new Manager();
-            $manager->setSerializer(new ArraySerializer());
             $offer = OfferShowcase::active()->where('id', $offer)->first();
             if ($offer) {
                 $customer = $request->has('remember_token') ? Customer::where('remember_token', $request->input('remember_token'))->first() : null;
                 if ($customer) {
                     $offer->customer_id = $customer->id;
                 }
+                $manager = new Manager();
+                $manager->setSerializer(new ArraySerializer());
                 $data = $manager->createData((new Item($offer, new OfferDetailsTransformer())))->toArray();
                 return api_response($request, $offer, 200, ['offer' => $data]);
             } else {
