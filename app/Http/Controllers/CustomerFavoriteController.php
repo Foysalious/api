@@ -27,7 +27,7 @@ class CustomerFavoriteController extends Controller
             $services = [];
             $favorite['category_name'] = $favorite->category->name;
             $favorite['category_slug'] = $favorite->category->slug;
-            $favorite['category_icon'] = $favorite->category->icon;
+            $favorite['category_icon'] = $favorite->category->icon_png;
             $favorite['icon_color'] = isset(config('sheba.category_colors')[$favorite->category->parent->id]) ? config('sheba.category_colors')[$favorite->category->parent->id] : null;
             $favorite->services->each(function ($service) use ($favorite, &$services) {
                 $pivot = $service->pivot;
