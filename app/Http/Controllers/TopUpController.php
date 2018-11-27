@@ -123,26 +123,26 @@ class TopUpController extends Controller
             $valid_topups   = collect([]);
             $failed_topups  = collect([]);
 
-            Excel::load($request->file, function ($reader) use ($vendor, $valid_topups, $failed_topups) {
-                })->get()->each(function ($value, $key) use ($vendor, $valid_topups, $failed_topups) {
-                    $value["mobile"] = BDMobileFormatter::format($value->mobile);
-                    $value["vendor_id"] = $vendor->getIdByName($value->operator);
+            Excel::selectSheets('data')->load($request->file, function ($reader) use ($vendor, $valid_topups, $failed_topups) {
+            })->get()->each(function ($value, $key) use ($vendor, $valid_topups, $failed_topups) {
+                $value["mobile"] = BDMobileFormatter::format($value->mobile);
+                $value["vendor_id"] = $vendor->getIdByName($value->operator);
 
-                    $vendor = $vendor->getById($value["vendor_id"]);
+                $vendor = $vendor->getById($value["vendor_id"]);
 
-                    if (!$vendor->isPublished()) {
-                        $value['failed_reason'] = 'Unsupported operator';
-                        $failed_topups->push($value);
-                        return true;
-                    }
+                if (!$vendor->isPublished()) {
+                    $value['failed_reason'] = 'Unsupported operator';
+                    $failed_topups->push($value);
+                    return true;
+                }
 
-                    if (!(new MobileNumberValidator())->validateBangladeshi($value["mobile"])) {
-                        $value['failed_reason'] = 'Invalid mobile number';
-                        $failed_topups->push($value);
-                        return true;
-                    }
+                if (!(new MobileNumberValidator())->validateBangladeshi($value["mobile"])) {
+                    $value['failed_reason'] = 'Invalid mobile number';
+                    $failed_topups->push($value);
+                    return true;
+                }
 
-                    $valid_topups->push($value);
+                $valid_topups->push($value);
             });
 
             $agent = null;
@@ -153,7 +153,7 @@ class TopUpController extends Controller
             foreach ($valid_topups as $topup) {
                 dispatch(new TopUpJob($agent, $topup->vendor_id, $topup->mobile, $topup->amount, $topup->connection_type));
             }
-            
+
             $response_msg = "We have initiated " . $valid_topups->count() . " of your requested top-up and will be transferred shortly. " . $failed_topups->count() . " of your requested top-up is unsuccessful";
             return api_response($request, null, 200, ['message' => $response_msg]);
         } catch (ValidationException $e) {
