@@ -32,7 +32,7 @@ class OfferController extends Controller
                 $model_name = "App\\Models\\" . ucwords($request->user_type);
                 $user = $model_name::with('orders', 'promotions')->where('id', (int)$request->user)->where('remember_token', $request->remember_token)->first();
             }
-            $offers = OfferShowcase::with('target')->active()->valid()->get();
+            $offers = OfferShowcase::active()->valid()->get();
             $offer_filter = new OfferFilter($offers);
             if ($user) $offer_filter->setCustomer($user);
             if ($request->has('category')) $offer_filter->setCategory(Category::find((int)$request->category));

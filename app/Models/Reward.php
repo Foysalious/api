@@ -105,4 +105,9 @@ class Reward extends Model
     {
         return $this->is_amount_percentage && $this->detail_type == constants('REWARD_DETAIL_TYPE')['Action'];
     }
+
+    public function isCustomer()
+    {
+        return $this->target_type == "App\\Models\\Customer";
+    }
 }

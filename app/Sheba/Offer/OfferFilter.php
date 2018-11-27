@@ -6,7 +6,6 @@ use App\Models\Category;
 use App\Models\Customer;
 use App\Models\OfferShowcase;
 use App\Models\Voucher;
-use Sheba\Voucher\PromotionList;
 use Sheba\Voucher\VoucherRule;
 
 class OfferFilter
@@ -32,7 +31,8 @@ class OfferFilter
 
     public function filter()
     {
-        foreach ($this->offers as $key => $offer) {
+        foreach ($this->offers as $key => &$offer) {
+            array_add($offer, 'is_applied', 0);
             /** @var OfferShowcase $offer */
             if ($this->customer) {
                 if ($offer->isVoucher()) {
@@ -42,8 +42,9 @@ class OfferFilter
                     } else {
                         $offer['is_applied'] = $this->customer->promotions->where('voucher_id', $offer->target->id)->first() ? 1 : 0;
                     }
-                } elseif ($offer->isReward()) {
-
+                } elseif ($offer->isReward() && !$offer->target->isCustomer()) {
+                    unset($this->offers[$key]);
+                    continue;
                 }
             }
             if ($this->category) {
@@ -71,6 +72,19 @@ class OfferFilter
                     }
                 } elseif ($offer->isCategoryGroup()) {
                     $ids = $offer->target->categories;
+                    $is_applicable = 0;
+                    foreach ($category_ids as $id) {
+                        if (in_array($id, $ids)) $is_applicable = 1;
+                    }
+                    if (!$is_applicable) {
+                        unset($this->offers[$key]);
+                        continue;
+                    }
+                } elseif ($offer->isReward()) {
+                    $reward = $offer->target;
+                    if ($reward->noConstraints()->where('constraint_type', "App\\Models\\Category")->first()) continue;
+                    $ids = $reward->constraints()->where('constraint_type', "App\\Models\\Category")->pluck('constraint_id');
+                    if ($ids->count() == 0) continue;
                     $is_applicable = 0;
                     foreach ($category_ids as $id) {
                         if (in_array($id, $ids)) $is_applicable = 1;

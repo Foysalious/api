@@ -37,7 +37,6 @@ class OfferShowcase extends Model
     {
         return $this->morphTo();
     }
-
     public function type()
     {
         return strtolower(snake_case(str_replace("App\\Models\\", '', $this->target_type)));
