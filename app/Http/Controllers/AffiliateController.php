@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\Affiliate;
 use App\Models\AffiliateTransaction;
@@ -17,6 +15,7 @@ use App\Sheba\Bondhu\AffiliateStatus;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Sheba\PartnerPayment\PartnerPaymentValidatorFactory;
+use Sheba\Reports\ExcelHandler;
 use Validator;
 use DB;
 
