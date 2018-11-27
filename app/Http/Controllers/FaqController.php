@@ -194,4 +194,158 @@ class FaqController extends Controller
             return api_response($request, null, 500);
         }
     }
+    public function getPartnerPerformanceFaqs(Request $request){
+        try {
+            $faqs = array(
+                array(
+                    'question_en' => null,
+                    'question_bn' => 'পারফর্মেন্স বলতে কি বুঝায়?',
+                    'list' => array(
+                        array(
+                            'title_bn' => null,
+                            'answer_bn' => 'আপনি কাস্টমার এর কাছ থেকে যতগুলো অর্ডার গ্রহণ করেছেন তার মধ্যে কতটা সফল ভাবে সম্পন্ন করতে পেরেছেন তাই হচ্ছে পারফর্মেন্স।',
+                            'title_en' => null,
+                            'answer_en'=> null,
+                            'asset_type' => 'none',
+                            'emoji' => null,
+                            'range_en' => null,
+                            'range_bn' => null,
+                        ),
+                    )
+                ),
+                array(
+                    'question_en' => null,
+                    'question_bn' => 'কি কি বিষয়ের উপর পারফর্মেন্স নির্ভর করে?',
+                    'list' => array(
+                        array(
+                            'title_bn' => 'সফল ভাবে সম্পন্ন',
+                            'answer_bn' => 'আপনার প্রাপ্ত অর্ডার গুলোর মধ্যে কতগুলো অর্ডার সফলভাবে সম্পন্ন হয়েছে?',
+                            'title_en' => null,
+                            'answer_en'=> null,
+                            'asset_type' => 'bullet',
+                            'emoji' => null,
+                            'range_en' => null,
+                            'range_bn' => null,
+                        ),
+                        array(
+                            'title_bn' => 'কমপ্লেইন ছাড়া সম্পন্ন',
+                            'answer_bn' => 'প্রাপ্ত অর্ডার গুলোর মধ্যে যত গুলো অর্ডার কোন কমপ্লেইন ছাড়া সম্পন্ন হয়েছে।',
+                            'title_en' => null,
+                            'answer_en'=> null,
+                            'asset_type' => 'bullet',
+                            'emoji' => null,
+                            'range_en' => null,
+                            'range_bn' => null,
+                        ),
+                        array(
+                            'title_bn' => 'টাইমলি এক্সেপ্ট',
+                            'answer_bn' => 'প্রাপ্ত অর্ডার গুলোর মধ্যে যতগুলো অর্ডার ২ মিনিটের মধ্যে এক্সেপ্ট করতে পেরেছেন।',
+                            'title_en' => null,
+                            'answer_en'=> null,
+                            'asset_type' => 'bullet',
+                            'emoji' => null,
+                            'range_en' => null,
+                            'range_bn' => null,
+                        ),
+                        array(
+                            'title_bn' => 'সময়মত কাজ শুরু',
+                            'answer_bn' => ' প্রাপ্ত অর্ডার গুলোর মধ্যে যতগুলো অর্ডার শিডিউল অনুজায়ী শুরু করতে পেরেছেন।',
+                            'title_en' => null,
+                            'answer_en'=> null,
+                            'asset_type' => 'bullet',
+                            'emoji' => null,
+                            'range_en' => null,
+                            'range_bn' => null,
+                        ),
+                    )
+                ),
+                array(
+                    'question_en' => null,
+                    'question_bn' => 'এই বিষয়গুলো কিভাবে আমাদের উপকার করবে?',
+                    'list' => array(
+                        array(
+                            'title_bn' => null,
+                            'answer_bn' => 'যখনি তুলনামূলক ভাবে আপনার কোন সার্ভিস এর গুণগত মান কমে যাবে তখনি সেই বিষয়গুলো আপনার সামনে দৃশ্যমান হবে। তখন আপনি উল্লিখিত বিষয়গুলো নিয়ে মান উন্নয়নের জন্য কাজ করতে পারবেন।',
+                            'title_en' => null,
+                            'answer_en'=> null,
+                            'asset_type' => 'none',
+                            'emoji' => null,
+                            'range_en' => null,
+                            'range_bn' => null,
+                        ),
+                    )
+                ),
+                array(
+                    'question_en' => null,
+                    'question_bn' => 'পারফর্মেন্স কিভাবে পরিমাপ করা হবে?',
+                    'list' => array(
+                        array(
+                            'title_bn' => 'খুব ভালো',
+                            'answer_bn' => 'আপনার সার্ভিস এর গুণগত মান সর্বোচ্চ পর্যায়ে রাখতে সফল হয়েছেন।',
+                            'title_en' => null,
+                            'answer_en'=> null,
+                            'asset_type' => 'emoji',
+                            'emoji' => 'very_good',
+                            'range_bn' => '( ৮১% - ১০০% )',
+                            'range_en' => '( 81% - 100% )',
+                        ),
+                        array(
+                            'title_bn' => 'খুব ভালো',
+                            'answer_bn' => 'আপনার সার্ভিস এর গুণগত মান সর্বোচ্চ পর্যায়ে রাখতে সফল হয়েছেন।',
+                            'title_en' => null,
+                            'answer_en'=> null,
+                            'asset_type' => 'emoji',
+                            'emoji' => 'very_good',
+                            'range_bn' => '(৮১% - ১০০%)',
+                            'range_en' => '(81% - 100%)',
+                        ),
+                        array(
+                            'title_bn' => 'ভালো',
+                            'answer_bn' => 'আপনার সার্ভিস এর গুণগত মান কাস্টমার এর প্রত্যাশার কাছাকাছি রয়েছে।',
+                            'title_en' => null,
+                            'answer_en'=> null,
+                            'asset_type' => 'emoji',
+                            'emoji' => 'good',
+                            'range_bn' => '(৬১% - ৮০%)',
+                            'range_en' => '(61% - 80%)',
+                        ),
+                        array(
+                            'title_bn' => 'সন্তোষজনক',
+                            'answer_bn' => 'আপনার সার্ভিস এর মান কাস্টমার এর প্রত্যাশার কাছাকাছি নেই।',
+                            'title_en' => null,
+                            'answer_en'=> null,
+                            'asset_type' => 'emoji',
+                            'emoji' => 'satisfactory',
+                            'range_bn' => '(৪১% - ৬০%)',
+                            'range_en' => '(41% - 60%)',
+                        ),
+                        array(
+                            'title_bn' => 'খারাপ',
+                            'answer_bn' => 'আপনার সার্ভিস এর মান খারাপ। মান উন্নয়নের জন্য কাজ করতে হবে।',
+                            'title_en' => null,
+                            'answer_en'=> null,
+                            'asset_type' => 'bad',
+                            'emoji' => 'good',
+                            'range_bn' => '(২১% - ৪০%)',
+                            'range_en' => '(21% - 40%)',
+                        ),
+                        array(
+                            'title_bn' => 'খুব খারাপ',
+                            'answer_bn' => 'আপনার সার্ভিস এর মান কাস্টমার কে সার্ভ করার উপযোগী নয়। অনুগ্রহ করে মান উন্নয়নের জন্য কাজ করুন।',
+                            'title_en' => null,
+                            'answer_en'=> null,
+                            'asset_type' => 'emoji',
+                            'emoji' => 'very_bad',
+                            'range_bn' => '(০% - ২০%)',
+                            'range_en' => '(0% - 20%)',
+                        ),
+                    )
+                ),
+            );
+            return api_response($request, $faqs, 200, ['faqs' => $faqs]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }

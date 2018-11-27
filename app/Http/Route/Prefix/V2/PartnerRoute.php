@@ -5,6 +5,7 @@ class PartnerRoute
     public function set($api)
     {
         $api->group(['prefix' => 'partners'], function ($api) {
+            $api->get('/performance-faqs', 'FaqController@getPartnerPerformanceFaqs');
             $api->group(['prefix' => '{partner}'], function ($api) {
                 $api->get('/', 'PartnerController@show');
                 $api->get('locations', 'PartnerController@getLocations');
@@ -16,7 +17,6 @@ class PartnerRoute
         });
         $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
             $api->get('dashboard', 'Partner\DashboardController@get');
-            $api->get('weekly-performance', 'Partner\DashboardController@weeklyPerformance');
             $api->group(['prefix' => 'e-shop'], function ($api) {
                 $api->group(['prefix' => 'order'], function ($api) {
                     $api->get('/', 'EShopOrderController@index');

@@ -20,14 +20,14 @@ class CustomerFavoriteController extends Controller
             $q->with(['services', 'partner' => function ($q) {
                 $q->select('id', 'name', 'logo');
             }, 'category' => function ($q) {
-                $q->select('id', 'parent_id', 'name', 'slug', 'icon', 'icon_color')->with('parent');
+                $q->select('id', 'parent_id', 'name', 'slug', 'icon_png', 'icon_color')->with('parent');
             }])->orderBy('id', 'desc')->skip($offset)->take($limit);
         }]);
         $favorites = $customer->favorites->each(function (&$favorite, $key) {
             $services = [];
             $favorite['category_name'] = $favorite->category->name;
             $favorite['category_slug'] = $favorite->category->slug;
-            $favorite['category_icon'] = $favorite->category->icon;
+            $favorite['category_icon'] = $favorite->category->icon_png;
             $favorite['icon_color'] = isset(config('sheba.category_colors')[$favorite->category->parent->id]) ? config('sheba.category_colors')[$favorite->category->parent->id] : null;
             $favorite->services->each(function ($service) use ($favorite, &$services) {
                 $pivot = $service->pivot;

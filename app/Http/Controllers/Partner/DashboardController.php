@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\Partner;
 
+use App\Repositories\ReviewRepository;
 use Illuminate\Http\Request;
 
 use App\Http\Requests;
@@ -9,16 +10,19 @@ class DashboardController extends Controller
 {
     public function get(Request $request)
     {
+        $rating = (new ReviewRepository)->getAvgRating($request->partner->reviews);
+        $rating = (string) (is_null($rating) ? 0 : $rating);
+
         $dashboard = [
             'name' => $request->partner->name,
             'logo' => $request->partner->logo,
             'current_subscription_bn' => $request->partner->subscription->tagline_bn,
-            'badge' => $request->partner->subscription->badge,
-            'rating' => "4.00",
+            'badge' => $request->partner->subscription->badge_thumb,
+            'rating' => $rating,
             'status' => 'active',
-            'balance' => 1234,
-            'credit' => 123,
-            'bonus_credit' => 123,
+            'balance' => $request->partner->totalWalletAmount(),
+            'credit' => $request->partner->wallet,
+            'bonus_credit' => $request->partner->bonusWallet(),
             'reward_point' => 123,
             'inbox' => 4,
             'current_stats' => [
@@ -73,48 +77,5 @@ class DashboardController extends Controller
             ]
         ];
         return api_response($request, $dashboard, 200, ['data' => $dashboard]);
-    }
-
-    public function weeklyPerformance(Request $request)
-    {
-        $performance = [
-            'timeline' => 'Oct 26 - Nov 1',
-            'performance_summary' => [
-                'total_order_taken' => 51,
-                'successfully_completed' => 39,
-                'order_without_complain' => 30,
-                'timely_order_taken' => 46,
-                'timely_job_start' => 15
-            ],
-            'successfully_completed' => [
-                'total_order' => 24,
-                'rate' => 49,
-                'last_week_rate' => 34,
-                'is_improved' => 1,
-                'last_week_rate_difference' => 15
-            ],
-            'order_without_complain' => [
-                'total_order' => 30,
-                'rate' => 60,
-                'last_week_rate' => 54,
-                'is_improved' => 1,
-                'last_week_rate_difference' => 6
-            ],
-            'timely_order_taken' => [
-                'total_order' => 46,
-                'rate' => 93,
-                'last_week_rate' => 95,
-                'is_improved' => 0,
-                'last_week_rate_difference' => 2
-            ],
-            'timely_job_start' => [
-                'total_order' => 15,
-                'rate' => 30,
-                'last_week_rate' => 47,
-                'is_improved' => 0,
-                'last_week_rate_difference' => 17
-            ]
-        ];
-        return api_response($request, $performance, 200, ['data' => $performance]);
     }
 }
