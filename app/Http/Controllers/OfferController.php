@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 
 use App\Models\Category;
+use App\Models\Customer;
 use App\Models\OfferShowcase;
+use App\Models\User;
 use App\Transformers\OfferDetailsTransformer;
 use App\Transformers\OfferTransformer;
 use Illuminate\Http\Request;
@@ -53,18 +55,21 @@ class OfferController extends Controller
     public function show($offer, Request $request)
     {
         try {
-
-            $manager = new Manager();
-            $manager->setSerializer(new ArraySerializer());
             $offer = OfferShowcase::active()->where('id', $offer)->first();
             if ($offer) {
-                $offer->customer_id = $request->get('customer_id');
+                $customer = $request->has('remember_token') ? Customer::where('remember_token', $request->input('remember_token'))->first() : null;
+                if ($customer) {
+                    $offer->customer_id = $customer->id;
+                }
+                $manager = new Manager();
+                $manager->setSerializer(new ArraySerializer());
                 $data = $manager->createData((new Item($offer, new OfferDetailsTransformer())))->toArray();
                 return api_response($request, $offer, 200, ['offer' => $data]);
             } else {
                 return api_response($request, null, 404);
             }
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
 
