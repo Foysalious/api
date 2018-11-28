@@ -141,7 +141,6 @@ class PartnerList
     {
         $this->partners = $this->findPartnersByService($partner_id);
         $this->partners->load('locations');
-        dd($this->partners->first()->locations->pluck('id'));
         return $this->partners->filter(function ($partner) {
             return $partner->locations->where('id', $this->location)->count() > 0;
         });
