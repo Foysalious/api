@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
 use App\Sheba\Address\AddressValidator;
+use App\Sheba\Geo;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Location\Coords;
@@ -48,6 +49,10 @@ class CustomerDeliveryAddressController extends Controller
             $request->merge(['address' => trim($request->address), 'mobile' => trim(str_replace(' ', '', $request->mobile))]);
             $customer = $request->customer;
             $hyper_local = null;
+            if (!$request->has('lat') && !$request->has('lng')) {
+                $geo = (new Geo())->geoCodeFromPlace($request->address);
+                if ($geo) $request->merge(['lat' => $geo['lat'], 'lng' => $geo['lng']]);
+            }
             if ($request->has('lat') && $request->has('lng')) {
                 $hyper_local = HyperLocal::insidePolygon($request->lat, $request->lng)->with('location')->first();
                 if (!$hyper_local) return api_response($request, null, 400, ['message' => "You're out of our service area."]);
@@ -85,6 +90,10 @@ class CustomerDeliveryAddressController extends Controller
             if ($delivery_address->customer_id != $customer->id) return api_response($request, null, 403);
             $addresses = $customer->delivery_addresses;
             $address_validator = new AddressValidator();
+            if (!$request->has('lat') && !$request->has('lng')) {
+                $geo = (new Geo())->geoCodeFromPlace($request->address);
+                if ($geo) $request->merge(['lat' => $geo['lat'], 'lng' => $geo['lng']]);
+            }
             if ($request->has('lat') && $request->has('lng')) {
                 if ($address_validator->isAddressLocationExists($addresses, new Coords((double)$request->lat, (double)$request->lng))) return api_response($request, null, 400, ['message' => "There is already a address exits at this location!"]);
                 $hyper_local = HyperLocal::insidePolygon($request->lat, $request->lng)->with('location')->first();
