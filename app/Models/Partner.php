@@ -403,4 +403,49 @@ class Partner extends Model implements Rewardable, TopUpAgent
         $this->debitWallet($amount);
         $this->walletTransaction(['amount' => $amount, 'type' => 'Debit', 'log' => $log]);
     }
+
+    public function notCancelledJobs()
+    {
+        return $this->jobs->reject(function ($job) {
+            return $job->cancelRequests->count() > 0;
+        });
+    }
+
+    public function todayJobs($jobs = null) {
+        if(is_null($jobs)) {
+            return $this->notCancelledJobs()->filter(function ($job, $key) {
+                return $job->schedule_date == Carbon::now()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined']);
+            });
+        }
+        return $jobs->filter(function ($job, $key) {
+            return $job->schedule_date == Carbon::now()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined']);
+        });
+    }
+
+    public function tomorrowJobs($jobs = null)
+    {
+        if(is_null($jobs)) {
+            return $this->notCancelledJobs()->filter(function ($job, $key) {
+                return $job->schedule_date == Carbon::tomorrow()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined']);
+            });
+        }
+        return $jobs->filter(function ($job, $key) {
+            return $job->schedule_date == Carbon::now()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined']);
+        });
+    }
+
+    public function notRespondedJobs($jobs = null)
+    {
+        if(is_null($jobs))
+            return $this->notCancelledJobs()->where('status', constants('JOB_STATUSES')['Not_Responded']);
+
+        return $jobs->where('status', constants('JOB_STATUSES')['Not_Responded']);
+    }
+
+    public function scheduleDueJobs($jobs = null){
+        if(is_null($jobs))
+            return $this->notCancelledJobs()->where('status', constants('JOB_STATUSES')['Schedule_Due']);
+
+        return $jobs->where('status', constants('JOB_STATUSES')['Not_Responded']);
+    }
 }
