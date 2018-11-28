@@ -6,6 +6,7 @@ use Sheba\Dal\Providers\CustomMigrationServiceProvider;
 use Sheba\Voucher\VoucherCodeServiceProvider;
 use Sheba\Voucher\VoucherSuggesterServiceProvider;
 use Sheba\Analysis\PartnerPerformance\Providers\ServiceProvider as PartnerPerformanceServiceProvider;
+use Sheba\Analysis\PartnerSale\Providers\ServiceProvider as PartnerSaleServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -30,5 +31,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->register(VoucherSuggesterServiceProvider::class);
         $this->app->register(CustomMigrationServiceProvider::class);
         $this->app->register(partnerPerformanceServiceProvider::class);
+        $this->app->register(PartnerSaleServiceProvider::class);
     }
 }

@@ -23,7 +23,7 @@ class TimeFrame
     {
         return [$this->start, $this->end];
     }
-    
+
     public function forAMonth($month, $year)
     {
         $start_end_date = findStartEndDateOfAMonth($month, $year);

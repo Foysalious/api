@@ -31,7 +31,7 @@ class PartnerOrderRepository
 
     public function getClosedOrdersOfDateByPartner(Carbon $date, Partner $partner)
     {
-        return $this->calculate( $this->closedQuery($date)->of($partner->id)->get() );
+        return $this->calculate($this->closedQuery($date)->of($partner->id)->get() );
     }
 
     public function getClosedOrdersOfDateGroupedByPartner(Carbon $date, $partners = null)
