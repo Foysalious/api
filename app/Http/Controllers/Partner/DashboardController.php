@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
+use Sheba\Analysis\Sales\PartnerSalesStatistics;
 
 class DashboardController extends Controller
 {
@@ -13,25 +14,29 @@ class DashboardController extends Controller
         $rating = (new ReviewRepository)->getAvgRating($request->partner->reviews);
         $rating = (string) (is_null($rating) ? 0 : $rating);
 
+        $successful_jobs = $request->partner->notCancelledJobs();
+        $sales_stats = (new PartnerSalesStatistics($request->partner))->calculate();
+        dd($sales_stats);
+
         $dashboard = [
             'name' => $request->partner->name,
             'logo' => $request->partner->logo,
             'current_subscription_bn' => $request->partner->subscription->tagline_bn,
             'badge' => $request->partner->subscription->badge_thumb,
             'rating' => $rating,
-            'status' => 'active',
+            'status' => $request->partner->status,
             'balance' => $request->partner->totalWalletAmount(),
             'credit' => $request->partner->wallet,
             'bonus_credit' => $request->partner->bonusWallet(),
-            'reward_point' => 123,
-            'inbox' => 4,
+            'reward_point' => $request->partner->reward_point,
+            'bkash_no' => $request->partner->bkash_no,
             'current_stats' => [
-                'total_order' => 8,
-                'today_order' => 3,
-                'tomorrow_order' => 4,
-                'not_responded' => 2,
-                'schedule_due' => 2,
-                'complain' => 2
+                'total_order' => $request->partner->orders()->count(),
+                'today_order' => $request->partner->todayJobs($successful_jobs)->count(),
+                'tomorrow_order' =>  $request->partner->tomorrowJobs($successful_jobs)->count(),
+                'not_responded' => $request->partner->notRespondedJobs($successful_jobs)->count(),
+                'schedule_due' => $request->partner->scheduleDueJobs($successful_jobs)->count(),
+                'complain' => $request->partner->complains()->count()
             ],
             'sales' => [
                 'today' => [
