@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "4186a1e01403003617d979b78490f993",
+    "content-hash": "1e6f8560afe93e63769f17fe65208180",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -2843,7 +2843,7 @@
             "source": {
                 "type": "git",
                 "url": "https://arnabrahman@bitbucket.org/startern/sheba_dal.git",
-                "reference": "49bebe2c597bf234067906df92eac2fb7a1cd28b"
+                "reference": "727882897a2829026fcff22eaad7a124708cb4a3"
             },
             "require": {
                 "php": ">=5.4"
@@ -2867,7 +2867,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2018-11-18T11:51:06+00:00"
+            "time": "2018-11-28T09:40:14+00:00"
         },
         {
             "name": "sheba/notification",
