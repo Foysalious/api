@@ -28,7 +28,7 @@ class Basic extends PartnerPerformance
                 'timely_processed' => $timely_processed['total']
             ],
             'completed' => $completed,
-            'order_without_complain' => $complain,
+            'no_complain' => $complain,
             'timely_accepted' => $timely_accepted,
             'timely_processed' => $timely_processed
         ]);
