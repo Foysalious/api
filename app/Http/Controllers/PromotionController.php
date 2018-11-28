@@ -135,6 +135,7 @@ class PromotionController extends Controller
         try {
             $customer = $request->customer;
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$request->location);
+            $partner_list->setAvailability(1);
             $order_amount = $this->calculateOrderAmount($partner_list, $request->partner);
             if (!$order_amount) return api_response($request, null, 403);
             $result = voucher($request->code)
@@ -160,6 +161,7 @@ class PromotionController extends Controller
     {
         try {
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$request->location);
+            $partner_list->setAvailability(1);
             $order_amount = $this->calculateOrderAmount($partner_list, $request->partner);
             if (!$order_amount) return api_response($request, null, 403, ['message' => 'No partner available at this combination']);
             $voucherSuggester->init($request->customer, $partner_list->selected_services[0]->serviceModel->category_id, $request->partner, (int)$request->location, $order_amount, $request->sales_channel);
