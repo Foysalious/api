@@ -525,7 +525,7 @@ class AffiliateController extends Controller
 
             list($offset, $limit) = calculatePagination($request);
             $topups = Affiliate::find($affiliate)->topups();
-           
+
             if (isset($request->from) && $request->from !== "null") $topups = $topups->whereBetween('created_at', [$request->from." 00:00:00", $request->to." 23:59:59"]);
             if (isset($request->vendor_id) && $request->vendor_id !== "null") $topups = $topups->where('vendor_id', $request->vendor_id);
             if (isset($request->status) && $request->status !== "null")  $topups = $topups->where('status', $request->status);
@@ -533,7 +533,6 @@ class AffiliateController extends Controller
 
             $total_topups = $topups->count();
             $topups = $topups->with('vendor')->skip($offset)->take($limit)->orderBy('created_at','desc')->get();
-
 
             $topup_data = [];
             foreach ($topups as $topup) {
