@@ -95,7 +95,7 @@ class CustomerDeliveryAddressController extends Controller
                 if ($geo) $request->merge(['lat' => $geo['lat'], 'lng' => $geo['lng']]);
             }
             if ($request->has('lat') && $request->has('lng')) {
-                if ($address_validator->isAddressLocationExists($addresses, new Coords((double)$request->lat, (double)$request->lng))) return api_response($request, null, 400, ['message' => "There is already a address exits at this location!"]);
+//                if ($address_validator->isAddressLocationExists($addresses, new Coords((double)$request->lat, (double)$request->lng))) return api_response($request, null, 400, ['message' => "There is already a address exits at this location!"]);
                 $hyper_local = HyperLocal::insidePolygon($request->lat, $request->lng)->with('location')->first();
                 if (!$hyper_local) return api_response($request, null, 400, ['message' => "You're out of our service area."]);
                 //$delivery_address->geo_informations = json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]);
