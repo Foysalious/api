@@ -92,6 +92,7 @@ class PartnerSalesStatistics
     private function addTodayStatsWithPreviousStatsForATimeFrame($time_frame)
     {
         $this->$time_frame->sale += $this->today->sale;
+        $this->$time_frame->orderTotalPrice += $this->today->orderTotalPrice;
         $this->$time_frame->orderClosed += $this->today->orderClosed;
         $this->$time_frame->jobServed += $this->today->jobServed;
         $this->$time_frame->totalPartnerDiscount += $this->today->totalPartnerDiscount;
@@ -113,6 +114,7 @@ class PartnerSalesStatistics
     {
         return [
             "Sale" => formatTaka($data->sale, $this->commaFormattedMoney),
+            "orderTotalPrice" => formatTaka($data->orderTotalPrice, $this->commaFormattedMoney),
             "ClosedOrder" => commaSeparate($data->orderClosed),
             "ServedJob" => commaSeparate($data->jobServed),
             "Discount" => commaSeparate($data->totalPartnerDiscount),

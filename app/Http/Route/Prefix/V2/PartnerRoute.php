@@ -126,7 +126,7 @@ class PartnerRoute
                 $api->post('purchase', 'PartnerWalletController@purchase');
                 $api->post('validate', 'PartnerWalletController@validatePayment');
             });
-            $api->get('sales', 'Partner\SalesStatisticsController@getSales');
+            $api->get('sales', 'Partner\SalesStatisticsController@index');
             $api->get('performance', 'Partner\PerformanceController@index');
         });
     }

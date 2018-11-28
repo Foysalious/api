@@ -11,13 +11,16 @@ class CacheWrapper extends PartnerPerformance
     {
         $store = Cache::store('redis'); /** @var \Illuminate\Contracts\Cache\Repository $store */
 
-        $cache_name = sprintf("%s::%d_%d_%s_%s_%s_%s_data", $this->redisNameSpace);
+        $cache_name = sprintf("%s::%d_%s_%s_data", $this->redisNameSpace, $this->partner->id,
+            $this->timeFrame->start->toDateString(), $this->timeFrame->end->toDateString());
 
         if ($store->has($cache_name)) {
             return $store->get($cache_name);
         } else {
             $data = $this->next->get();
-            $store->forever($cache_name, $data);
+            if (!$this->isCalculatingCurrentDate()) {
+                $store->forever($cache_name, $data);
+            }
             return $data;
         }
     }

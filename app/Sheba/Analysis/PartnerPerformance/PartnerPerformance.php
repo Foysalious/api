@@ -1,6 +1,7 @@
 <?php namespace Sheba\Analysis\PartnerPerformance;
 
 use App\Models\Partner;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Sheba\Helpers\TimeFrame;
 
@@ -53,6 +54,11 @@ abstract class PartnerPerformance
     protected function isCalculatingWeekly()
     {
         return $this->timeFrame->end->diffInDays($this->timeFrame->start) < 10;
+    }
+
+    protected function isCalculatingCurrentDate()
+    {
+        return $this->timeFrame->hasDateBetween(Carbon::today());
     }
 
     /**

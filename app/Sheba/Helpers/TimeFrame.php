@@ -23,7 +23,7 @@ class TimeFrame
     {
         return [$this->start, $this->end];
     }
-    
+
     public function forAMonth($month, $year)
     {
         $start_end_date = findStartEndDateOfAMonth($month, $year);
@@ -84,5 +84,10 @@ class TimeFrame
         $this->start = $date->copy()->startOfWeek();
         $this->end = $date->endOfWeek();
         return $this;
+    }
+
+    public function hasDateBetween(Carbon $date)
+    {
+        return $date->between($this->start, $this->end);
     }
 }
