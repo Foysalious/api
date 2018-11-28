@@ -16,7 +16,7 @@ class PartnerRoute
             $api->get('rewards/faqs', 'Partner\PartnerRewardController@getFaqs');
         });
         $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
-
+            $api->get('dashboard', 'Partner\DashboardController@get');
             $api->group(['prefix' => 'e-shop'], function ($api) {
                 $api->group(['prefix' => 'order'], function ($api) {
                     $api->get('/', 'EShopOrderController@index');
@@ -125,6 +125,8 @@ class PartnerRoute
                 $api->post('purchase', 'PartnerWalletController@purchase');
                 $api->post('validate', 'PartnerWalletController@validatePayment');
             });
+            $api->get('sales', 'Partner\SalesStatisticsController@getSales');
+            $api->get('performance', 'Partner\PerformanceController@index');
         });
     }
 }
