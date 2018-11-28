@@ -6,7 +6,6 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Analysis\PartnerPerformance\PartnerPerformance;
 use Sheba\Helpers\TimeFrame;
 
-
 class PerformanceController extends Controller
 {
     public function index($partner, Request $request, PartnerPerformance $performance)
