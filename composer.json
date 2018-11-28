@@ -33,7 +33,6 @@
     "ext-curl": "*",
     "ext-soap": "*",
     "ext-simplexml": "*",
-    "maatwebsite/excel": "~2.1.0",
     "league/fractal": "^0.17.0"
   },
   "require-dev": {
