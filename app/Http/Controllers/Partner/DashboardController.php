@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\Partner;
 
+use App\Repositories\ReviewRepository;
 use Illuminate\Http\Request;
 
 use App\Http\Requests;
@@ -9,16 +10,19 @@ class DashboardController extends Controller
 {
     public function get(Request $request)
     {
+        $rating = (new ReviewRepository)->getAvgRating($request->partner->reviews);
+        $rating = (string) (is_null($rating) ? 0 : $rating);
+
         $dashboard = [
             'name' => $request->partner->name,
             'logo' => $request->partner->logo,
             'current_subscription_bn' => $request->partner->subscription->tagline_bn,
-            'badge' => $request->partner->subscription->badge,
-            'rating' => "4.00",
+            'badge' => $request->partner->subscription->badge_thumb,
+            'rating' => $rating,
             'status' => 'active',
-            'balance' => 1234,
-            'credit' => 123,
-            'bonus_credit' => 123,
+            'balance' => $request->partner->totalWalletAmount(),
+            'credit' => $request->partner->wallet,
+            'bonus_credit' => $request->partner->bonusWallet(),
             'reward_point' => 123,
             'inbox' => 4,
             'current_stats' => [

@@ -3,11 +3,13 @@
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Analysis\PartnerPerformance\PartnerPerformance;
+use Sheba\Helpers\TimeFrame;
 
 
 class PerformanceController extends Controller
 {
-    public function index($partner, Request $request)
+    public function index($partner, Request $request, PartnerPerformance $performance)
     {
         try {
             $this->validate($request, [
@@ -19,45 +21,14 @@ class PerformanceController extends Controller
                 'year' => 'required_if:of,month|numeric',
             ]);
 
-            $performance = [
-                'timeline' => 'Oct 26 - Nov 1',
-                'performance_summary' => [
-                    'total_order_taken' => 51,
-                    'successfully_completed' => 39,
-                    'order_without_complain' => 30,
-                    'timely_order_taken' => 46,
-                    'timely_job_start' => 15
-                ],
-                'successfully_completed' => [
-                    'total_order' => 24,
-                    'rate' => 49,
-                    'last_week_rate' => 34,
-                    'is_improved' => 1,
-                    'last_week_rate_difference' => 15
-                ],
-                'order_without_complain' => [
-                    'total_order' => 30,
-                    'rate' => 60,
-                    'last_week_rate' => 54,
-                    'is_improved' => 1,
-                    'last_week_rate_difference' => 6
-                ],
-                'timely_order_taken' => [
-                    'total_order' => 46,
-                    'rate' => 93,
-                    'last_week_rate' => 95,
-                    'is_improved' => 0,
-                    'last_week_rate_difference' => 2
-                ],
-                'timely_job_start' => [
-                    'total_order' => 15,
-                    'rate' => 30,
-                    'last_week_rate' => 47,
-                    'is_improved' => 0,
-                    'last_week_rate_difference' => 17
-                ]
-            ];
-            return api_response($request, $performance, 200, ['data' => $performance]);
+            $time_frame = $this->getTimeFrame($request);
+            $performance->setPartner($request->partner)->setTimeFrame($time_frame)->calculate();
+
+            $data = [
+                'timeline' => $time_frame->start->toDateString() . ' - ' . $time_frame->end->toDateString()
+            ] + $performance->getData()->toArray();
+
+            return api_response($request, $performance, 200, ['data' => $data]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -65,5 +36,22 @@ class PerformanceController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param Request $request
+     * @return TimeFrame
+     */
+    private function getTimeFrame(Request $request)
+    {
+        $time_frame = new TimeFrame();
+        if($request->of == "week") {
+            $time_frame->forSomeWeekFromNow($request->week);
+        } else if ($request->of == "month") {
+            $time_frame->forAMonth($request->month, $request->year);
+        } else {
+            $time_frame->set($request->start_date, $request->end_date);
+        }
+        return $time_frame;
     }
 }

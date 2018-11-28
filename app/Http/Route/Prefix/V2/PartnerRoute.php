@@ -5,7 +5,6 @@ class PartnerRoute
     public function set($api)
     {
         $api->group(['prefix' => 'partners'], function ($api) {
-            $api->get('/performance-faqs', 'FaqController@getPartnerPerformanceFaqs');
             $api->group(['prefix' => '{partner}'], function ($api) {
                 $api->get('/', 'PartnerController@show');
                 $api->get('locations', 'PartnerController@getLocations');
@@ -16,7 +15,7 @@ class PartnerRoute
             $api->get('rewards/faqs', 'Partner\PartnerRewardController@getFaqs');
         });
         $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
-            $api->get('dashboard', 'Partner\DashboardController@get');
+
             $api->group(['prefix' => 'e-shop'], function ($api) {
                 $api->group(['prefix' => 'order'], function ($api) {
                     $api->get('/', 'EShopOrderController@index');
@@ -33,13 +32,17 @@ class PartnerRoute
                     $api->post('/services/{service}', 'PartnerController@changePublicationStatus');
                 });
             });
+
             $api->post('/bkash', 'PartnerController@storeBkashNumber');
+
             $api->get('services', 'Partner\PartnerServiceController@index');
+
             $api->group(['prefix' => 'services'], function ($api) {
                 $api->get('/', 'Partner\PartnerServiceController@index');
                 $api->post('/', 'Partner\PartnerServiceController@store');
                 $api->put('{service}', 'Partner\PartnerServiceController@update');
             });
+
             $api->get('operations', 'Partner\OperationController@index');
             $api->post('operations', 'Partner\OperationController@store');
             $api->post('register', 'CustomerController@store');
@@ -121,9 +124,6 @@ class PartnerRoute
                 $api->post('purchase', 'PartnerWalletController@purchase');
                 $api->post('validate', 'PartnerWalletController@validatePayment');
             });
-
-            $api->get('sales', 'Partner\SalesStatisticsController@getSales');
-            $api->get('performance', 'Partner\PerformanceController@index');
         });
     }
 }
