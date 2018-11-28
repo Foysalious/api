@@ -22,13 +22,13 @@ class Basic extends PartnerPerformance
             'score' => ($completed['rate'] + $complain['rate'] + $timely_accepted['rate'] + $timely_processed['rate']) / 4,
             'performance_summary' => [
                 'order_received' => $this->orderTaken,
-                'completed' => $completed['total_order'],
-                'no_complain' => $complain['total_order'],
-                'timely_accepted' => $timely_accepted['total_order'],
-                'timely_processed' => $timely_processed['total_order']
+                'completed' => $completed['total'],
+                'no_complain' => $complain['total'],
+                'timely_accepted' => $timely_accepted['total'],
+                'timely_processed' => $timely_processed['total']
             ],
             'completed' => $completed,
-            'order_without_complain' => $complain,
+            'no_complain' => $complain,
             'timely_accepted' => $timely_accepted,
             'timely_processed' => $timely_processed
         ]);
