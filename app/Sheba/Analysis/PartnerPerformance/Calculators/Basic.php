@@ -50,7 +50,7 @@ class Basic extends PartnerPerformance
             'total' => $data['value'],
             'rate' => $rate = $data['rate'],
             'last_rate' => $last_rate = $last['rate'],
-            'is_improved' => $last_rate < $rate ? 1 : 0,
+            'is_improved' => $last_rate < $rate ? true : false,
             'last_rate_difference' => abs($rate - $last_rate),
             'previous' => $previous
         ];
