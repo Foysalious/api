@@ -2,6 +2,7 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Helpers\TimeFrame;
 use Sheba\PartnerOrder\StatusCalculator;
 
 class PartnerOrder extends Model
@@ -251,6 +252,21 @@ class PartnerOrder extends Model
     public function scopeClosedAt($query, Carbon $date)
     {
         $query->whereDate('closed_at', '=', $date->toDateString());
+    }
+
+    public function scopeDateBetween($query, $field, TimeFrame $time_frame)
+    {
+        $query->whereBetween($field, $time_frame->getArray());
+    }
+
+    public function scopeCreatedAtBetween($query, TimeFrame $time_frame)
+    {
+        $query->dateBetween('created_at', $time_frame);
+    }
+
+    public function scopeClosedAtBetween($query, TimeFrame $time_frame)
+    {
+        $query->dateBetween('closed_at', $time_frame);
     }
 
     public function scopeOf($query, $partner)
