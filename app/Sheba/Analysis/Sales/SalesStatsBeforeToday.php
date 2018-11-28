@@ -13,7 +13,7 @@ abstract class SalesStatsBeforeToday
     public $lifetime;
 
     protected $redisCacheName;
-
+    
     /** @var  TimeFrame */
     protected $yearTimeFrame;
     protected $weekTimeFrame;

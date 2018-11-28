@@ -1,11 +1,11 @@
 <?php namespace Sheba\Analysis\Sales;
 
-
 class SalesStat
 {
     public $sale;
     public $orderClosed;
     public $orderCreated;
+    public $orderTotalPrice;
     public $jobServed;
     public $profit;
     public $customerRegistered;

@@ -21,7 +21,7 @@ class PartnerSalesStatistics
     public function __construct(Partner $partner = null)
     {
         $this->partnerOrders = new PartnerOrderRepository();
-        if($partner instanceof Partner) $this->beforeToday = new PartnerSalesStatsBeforeToday($partner);
+        if ($partner instanceof Partner) $this->beforeToday = new PartnerSalesStatsBeforeToday($partner);
         $this->today = new SalesStat();
         $this->commaFormattedMoney = true;
         $this->partner = $partner;
@@ -50,6 +50,7 @@ class PartnerSalesStatistics
     {
         $data = new SalesStat();
         $data->sale = $orders->sum('totalCost');
+        $data->orderTotalPrice = $orders->sum('totalPrice');
         $data->orderClosed = $orders->count();
         $data->jobServed = $orders->pluck('jobs')->map(function($jobs) { return $jobs->where('status', 'Served')->count(); })->sum();
         $data->totalPartnerDiscount = $orders->sum('totalPartnerDiscount');
