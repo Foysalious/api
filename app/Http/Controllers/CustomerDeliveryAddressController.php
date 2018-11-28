@@ -27,7 +27,7 @@ class CustomerDeliveryAddressController extends Controller
                 if ($location == null) return api_response($request, null, 404, ['message' => "No address at this location"]);
             }
             $customer_order_addresses = $customer->orders()->selectRaw('delivery_address,count(*) as c')->groupBy('delivery_address')->orderBy('c', 'desc')->get();
-            $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'address', 'name', 'geo_informations')->get()->map(function ($customer_delivery_address) use ($customer_order_addresses) {
+            $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'location_id', 'address', 'name', 'geo_informations')->get()->map(function ($customer_delivery_address) use ($customer_order_addresses) {
                 $customer_delivery_address['count'] = $this->getOrderCount($customer_order_addresses, $customer_delivery_address);
                 $geo = json_decode($customer_delivery_address['geo_informations']);
                 $customer_delivery_address['geo_informations'] = $geo ? array('lat' => (double)$geo->lat, 'lng' => (double)$geo->lng) : null;
