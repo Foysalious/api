@@ -63,23 +63,26 @@ class Basic extends PartnerPerformance
 
     private function getDataOfComplain(TimeFrame $time_frame)
     {
+        $complain = 1;
         $order_closed = $this->partner->orders()->closedAtBetween($time_frame)->count();
-        $order_created = $this->partner->orders()->createdAtBetween($time_frame)->count();
-        return ['value' => $order_closed, 'rate' => $order_created ? ($order_closed / $order_created) : 0];
+        $without_complain = $order_closed - $complain;
+        return ['value' => $without_complain, 'rate' => $order_closed ? ($without_complain / $order_closed) : 0];
     }
 
     private function getDataOfTimelyAccepted(TimeFrame $time_frame)
     {
+        $not_responded = 1;
         $order_closed = $this->partner->orders()->closedAtBetween($time_frame)->count();
-        $order_created = $this->partner->orders()->createdAtBetween($time_frame)->count();
-        return ['value' => $order_closed, 'rate' => $order_created ? ($order_closed / $order_created) : 0];
+        $timely_accepted = $order_closed - $not_responded;
+        return ['value' => $timely_accepted, 'rate' => $order_closed ? ($timely_accepted / $order_closed) : 0];
     }
 
     private function getDataOfTimelyProcessed(TimeFrame $time_frame)
     {
+        $schedule_due = 1;
         $order_closed = $this->partner->orders()->closedAtBetween($time_frame)->count();
-        $order_created = $this->partner->orders()->createdAtBetween($time_frame)->count();
-        return ['value' => $order_closed, 'rate' => $order_created ? ($order_closed / $order_created) : 0];
+        $timely_processed = $order_closed - $schedule_due;
+        return ['value' => $timely_processed, 'rate' => $order_closed ? ($timely_processed / $order_closed) : 0];
     }
 
     private function getPreviousDataByWeekly($of)
