@@ -491,3 +491,11 @@ if (!function_exists('trim_phone_number')) {
         return  strstr($number, $index_number);
     }
 }
+
+if (!function_exists('pamel_case'))
+{
+    function pamel_case($string)
+    {
+        return ucfirst(camel_case($string));
+    }
+}

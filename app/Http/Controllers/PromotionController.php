@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\HyperLocal;
 use App\Models\PartnerService;
 use App\Models\Promotion;
 use App\Repositories\CartRepository;
@@ -134,11 +135,17 @@ class PromotionController extends Controller
     {
         try {
             $customer = $request->customer;
-            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$request->location);
+            $location = $request->location;
+            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$location);
+            if ($request->has('lat') && $request->has('lng')) {
+                $partner_list->setGeo((double)$request->lat, (double)$request->lng);
+                $hyper_local = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                $location = $hyper_local ? $hyper_local->location->id : $location;
+            }
             $order_amount = $this->calculateOrderAmount($partner_list, $request->partner);
             if (!$order_amount) return api_response($request, null, 403);
             $result = voucher($request->code)
-                ->check($partner_list->selected_services[0]->serviceModel->category_id, $request->partner, $request->location, $customer, $order_amount, $request->sales_channel)
+                ->check($partner_list->selected_services[0]->serviceModel->category_id, $request->partner, $location, $customer, $order_amount, $request->sales_channel)
                 ->reveal();
             if ($result['is_valid']) {
                 $voucher = $result['voucher'];
@@ -160,9 +167,15 @@ class PromotionController extends Controller
     {
         try {
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$request->location);
+            $location = $request->location;
+            if ($request->has('lat') && $request->has('lng')) {
+                $partner_list->setGeo((double)$request->lat, (double)$request->lng);
+                $hyper_local = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                $location = $hyper_local ? $hyper_local->location->id : $location;
+            }
             $order_amount = $this->calculateOrderAmount($partner_list, $request->partner);
             if (!$order_amount) return api_response($request, null, 403, ['message' => 'No partner available at this combination']);
-            $voucherSuggester->init($request->customer, $partner_list->selected_services[0]->serviceModel->category_id, $request->partner, (int)$request->location, $order_amount, $request->sales_channel);
+            $voucherSuggester->init($request->customer, $partner_list->selected_services[0]->serviceModel->category_id, $request->partner, (int)$location, $order_amount, $request->sales_channel);
             if ($promo = $voucherSuggester->suggest()) {
                 $applied_voucher = array('amount' => (int)$promo['amount'], 'code' => $promo['voucher']->code, 'id' => $promo['voucher']->id);
                 $valid_promos = $this->sortPromotionsByWeight($voucherSuggester->validPromos);
@@ -178,6 +191,7 @@ class PromotionController extends Controller
 
     private function calculateOrderAmount(PartnerList $partner_list, $partner)
     {
+        $partner_list->setAvailability(1);
         $partner_list->find($partner);
         if ($partner_list->hasPartners) {
             $partner = $partner_list->partners->first();
