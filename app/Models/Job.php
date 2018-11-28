@@ -4,6 +4,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\CiCalculator;
 use Sheba\Dal\Complain\Model as Complain;
+use Sheba\Helpers\TimeFrame;
 
 class Job extends Model
 {
@@ -262,6 +263,26 @@ class Job extends Model
     public function scopeStatus($query, Array $status)
     {
         return $query->whereIn('status', $status);
+    }
+
+    public function scopeDeliveredAt($query, Carbon $date)
+    {
+        $query->whereDate('delivered_date', '=', $date->toDateString());
+    }
+
+    public function scopeDateBetween($query, $field, TimeFrame $time_frame)
+    {
+        $query->whereBetween($field, $time_frame->getArray());
+    }
+
+    public function scopeCreatedAtBetween($query, TimeFrame $time_frame)
+    {
+        $query->dateBetween('created_at', $time_frame);
+    }
+
+    public function scopeDeliveredAtBetween($query, TimeFrame $time_frame)
+    {
+        $query->dateBetween('delivered_date', $time_frame);
     }
 
     public function materialLogs()

@@ -85,4 +85,9 @@ class TimeFrame
         $this->end = $date->endOfWeek();
         return $this;
     }
+
+    public function hasDateBetween(Carbon $date)
+    {
+        return $date->between($this->start, $this->end);
+    }
 }

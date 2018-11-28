@@ -7,7 +7,7 @@ class StatDbWrapper extends PartnerPerformance
     protected function get()
     {
         try {
-            return collect([]);
+            throw new \Exception();
         } catch (\Exception $e) {
             return $this->next->get();
         }
