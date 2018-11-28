@@ -21,16 +21,16 @@ class Basic extends PartnerPerformance
         return collect([
             'score' => ($completed['rate'] + $complain['rate'] + $timely_accepted['rate'] + $timely_processed['rate']) / 4,
             'performance_summary' => [
-                'total_order_taken' => $this->orderTaken,
-                'successfully_completed' => $completed['total_order'],
-                'order_without_complain' => $complain['total_order'],
-                'timely_order_taken' => $timely_accepted['total_order'],
-                'timely_job_start' => $timely_processed['total_order']
+                'order_received' => $this->orderTaken,
+                'completed' => $completed['total_order'],
+                'no_complain' => $complain['total_order'],
+                'timely_accepted' => $timely_accepted['total_order'],
+                'timely_processed' => $timely_processed['total_order']
             ],
-            'successfully_completed' => $completed,
+            'completed' => $completed,
             'order_without_complain' => $complain,
-            'timely_order_taken' => $timely_accepted,
-            'timely_job_start' => $timely_processed
+            'timely_accepted' => $timely_accepted,
+            'timely_processed' => $timely_processed
         ]);
     }
 
@@ -45,12 +45,12 @@ class Basic extends PartnerPerformance
         $last = end($previous);
 
         return [
-            'total_order' => $data['value'],
+            'total' => $data['value'],
             'rate' => $rate = $data['rate'],
-            'last_week_rate' => $last_rate = $last['rate'],
+            'last_rate' => $last_rate = $last['rate'],
             'is_improved' => $last_rate < $rate,
-            'last_week_rate_difference' => abs($rate - $last_rate),
-            'previous_weeks' => $previous
+            'last_rate_difference' => abs($rate - $last_rate),
+            'previous' => $previous
         ];
     }
 
