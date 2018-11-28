@@ -6,17 +6,19 @@ use Sheba\Helpers\TimeFrame;
 
 abstract class PartnerPerformance
 {
+    const CALCULATE_PREVIOUS_SLOT = 5;
+
     /** @var TimeFrame */
-    private $timeFrame;
+    protected $timeFrame;
 
     /** @var Partner */
-    private $partner;
+    protected $partner;
 
     /** @var PartnerPerformance  */
     protected $next;
 
     /** @var Collection */
-    private $data;
+    protected $data;
 
     public function __construct(PartnerPerformance $next = null)
     {
@@ -46,6 +48,11 @@ abstract class PartnerPerformance
     public function getData()
     {
         return $this->data;
+    }
+
+    protected function isCalculatingWeekly()
+    {
+        return $this->timeFrame->end->diffInDays($this->timeFrame->start) < 10;
     }
 
     /**

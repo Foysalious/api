@@ -29,6 +29,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->register(VoucherCodeServiceProvider::class);
         $this->app->register(VoucherSuggesterServiceProvider::class);
         $this->app->register(CustomMigrationServiceProvider::class);
-        $this->app->register(partnerPerformanceServiceProvider::class);
+        $this->app->register(PartnerPerformanceServiceProvider::class);
     }
 }

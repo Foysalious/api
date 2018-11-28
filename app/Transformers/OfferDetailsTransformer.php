@@ -26,6 +26,7 @@ class OfferDetailsTransformer extends TransformerAbstract
             'structured_title' => $offer->structured_title,
             'short_description' => $offer->short_description,
             'target_link' => $offer->target_link,
+            'detail_description' => $offer->detail_description,
             'structured_description' => $offer->structured_description,
             'target_type' => $target_type,
             'amount' => (double)$offer->amount,
@@ -48,7 +49,7 @@ class OfferDetailsTransformer extends TransformerAbstract
             case 'voucher':
             case 'reward':
                 $data = 'Save ';
-                if ($offer->target->cap > 0) {
+                if ((double)$offer->target->cap > 0) {
                     $data .= 'Upto ';
                 }
                 return $data;
@@ -63,7 +64,7 @@ class OfferDetailsTransformer extends TransformerAbstract
         switch ($target_type) {
             case 'voucher':
             case 'reward':
-                return (double)$offer->target->cap > 0;
+                return !!$offer->target->cap;
             default:
                 return false;
 
@@ -75,7 +76,7 @@ class OfferDetailsTransformer extends TransformerAbstract
         switch ($target_type) {
             case 'voucher':
             case 'reward':
-                return (int)$offer->target->is_amount_percentage > 0;
+                return !!$offer->target->is_amount_percentage;
             default:
                 return false;
 
