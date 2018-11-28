@@ -32,6 +32,7 @@ class DashboardController extends Controller
             'status' => $request->partner->status,
             'balance' => $request->partner->totalWalletAmount(),
             'credit' => $request->partner->wallet,
+            'is_credit_limit_exceed' => $request->partner->isCreditLimitExceed(),
             'bonus_credit' => $request->partner->bonusWallet(),
             'reward_point' => $request->partner->reward_point,
             'bkash_no' => $request->partner->bkash_no,
