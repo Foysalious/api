@@ -1,4 +1,4 @@
-<?php namespace Sheba\Analysis\PartnerPerformance\Calculator;
+<?php namespace Sheba\Analysis\PartnerPerformance\Calculators;
 
 use Cache;
 use Sheba\Analysis\PartnerPerformance\PartnerPerformance;
