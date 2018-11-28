@@ -83,7 +83,7 @@ class OfferFilter
                 } elseif ($offer->isReward()) {
                     $reward = $offer->target;
                     if ($reward->noConstraints()->where('constraint_type', "App\\Models\\Category")->first()) continue;
-                    $ids = $reward->constraints()->where('constraint_type', "App\\Models\\Category")->pluck('constraint_id');
+                    $ids = $reward->constraints()->where('constraint_type', "App\\Models\\Category")->pluck('constraint_id')->toArray();
                     if ($ids->count() == 0) continue;
                     $is_applicable = 0;
                     foreach ($category_ids as $id) {
