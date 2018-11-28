@@ -10,7 +10,8 @@ class Basic extends PartnerSale
         $data = ['total_sales' => 5000.00, 'order_accepted' => 50, 'order_completed' => 50];
 
         if ($this->frequency == self::DAY_BASE) {
-            $data['day'] = 'Thursday, Oct 31';
+            $data['day'] = $this->timeFrame->start->format('Y-m-d');
+            $data['timeline'] = 'Thursday, Oct 31';
             $data['sheba_payable'] = 4832.56;
             $data['partner_collection'] = 483.56;
         }
@@ -25,6 +26,7 @@ class Basic extends PartnerSale
 
         if ($this->frequency == self::MONTH_BASE) {
             $data['timeline'] = 'October';
+            $data['day'] = $this->timeFrame->start->format('Y-m-d');
             $data['sheba_payable'] = 4832.56;
             $data['partner_collection'] = 483.56;
             $data['sales_stat_breakdown'] = [['value' => 1, 'amount' => 11.22], ['value' => 2, 'amount' => 1121], ['value' => 3, 'amount' => 112.2], ['value' => 4, 'amount' => 11], ['value' => 5, 'amount' => 11]];
@@ -33,6 +35,7 @@ class Basic extends PartnerSale
 
         if ($this->frequency == self::YEAR_BASE) {
             $data['timeline'] = 'Year 2018';
+            $data['day'] = $this->timeFrame->start->format('Y-m-d');
             $data['lifetime_sales'] = 483.56;
         }
 

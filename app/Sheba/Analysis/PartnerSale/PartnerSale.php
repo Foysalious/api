@@ -12,7 +12,7 @@ abstract class PartnerSale
     const YEAR_BASE = "year";
 
     /** @var TimeFrame */
-    private $timeFrame;
+    protected $timeFrame;
     /** @var Partner */
     private $partner;
     /** @var PartnerSale */

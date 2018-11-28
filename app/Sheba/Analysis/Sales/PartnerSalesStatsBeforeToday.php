@@ -45,6 +45,7 @@ class PartnerSalesStatsBeforeToday extends SalesStatsBeforeToday
     protected function sumDataForATimeFrame(SalesStat $timeFrameData, Collection $data)
     {
         $timeFrameData->sale = $data->sum('sale');
+        $timeFrameData->orderTotalPrice = $data->sum('orderTotalPrice');
         $timeFrameData->orderClosed = $data->sum('orderClosed');
         $timeFrameData->jobServed = $data->sum('jobServed');
         $timeFrameData->totalPartnerDiscount = $data->sum('totalPartnerDiscount');
