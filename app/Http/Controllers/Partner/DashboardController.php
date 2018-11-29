@@ -35,7 +35,7 @@ class DashboardController extends Controller
                 ),
                 'badge' => $partner->subscription->badge_thumb,
                 'rating' => $rating,
-                'status' => constants('PARTNER_STATUSES_SHOW')[$partner->status],
+                'status' => constants('PARTNER_STATUSES_SHOW')[$partner['status']]['partner'],
                 'balance' => $partner->totalWalletAmount(),
                 'credit' => $partner->wallet,
                 'is_credit_limit_exceed' => $partner->isCreditLimitExceed(),
