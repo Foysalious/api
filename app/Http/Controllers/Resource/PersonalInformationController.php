@@ -42,7 +42,7 @@ class PersonalInformationController extends Controller
                 'nid_image' => $resource->nid_image,
             );
             return api_response($request, $info, 200, ['info' => $info]);
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -109,13 +109,13 @@ class PersonalInformationController extends Controller
 
                 return api_response($request, 1, 200);
             }
-        } catch ( ValidationException $e ) {
+        } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -145,7 +145,7 @@ class PersonalInformationController extends Controller
                 $rules['nid_back'] = 'required|file';
                 $rules['nid_front'] = 'required|file';
             }
-            
+
             $this->validate($request, $rules, ['mobile' => 'Invalid mobile number!', 'unique' => 'Duplicate Nid No!']);
             if ($request->has('mobile')) {
                 $mobile = formatMobile($request->mobile);
@@ -168,13 +168,10 @@ class PersonalInformationController extends Controller
             }
 
             return api_response($request, $resource, 200);
-        } catch ( ValidationException $e ) {
+        } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

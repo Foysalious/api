@@ -14,14 +14,14 @@ return [
         'Rejected' => 'Rejected'
     ],
     'PARTNER_STATUSES_SHOW' => [
-        'Verified' => ['sheba' => 'Verified', 'partner' => 'Verified', 'customer' => 'Verified'],
+        'Verified' => ['sheba' => 'Verified', 'partner' => 'Active', 'customer' => 'Verified'],
         'Unverified' => ['sheba' => 'Inactive', 'partner' => 'Inactive', 'customer' => 'Inactive'],
-        'Paused' => ['sheba' => 'Blocked', 'partner' => 'Blocked', 'customer' => 'Blocked'],
+        'Paused' => ['sheba' => 'Blocked', 'partner' => 'Inactive', 'customer' => 'Blocked'],
         'Closed' => ['sheba' => 'Closed', 'partner' => 'Closed', 'customer' => 'Closed'],
         'Blacklisted' => ['sheba' => 'Blacklisted', 'partner' => 'Blacklisted', 'customer' => 'Blacklisted'],
-        'Waiting' => ['sheba' => 'Ready to verified', 'partner' => 'Ready to verified', 'customer' => 'Ready to verified'],
-        'Onboarded' => ['sheba' => 'Onboarded', 'partner' => 'Onboarded', 'customer' => 'Onboarded'],
-        'Rejected' => ['sheba' => 'Rejected', 'partner' => 'Rejected', 'customer' => 'Rejected']
+        'Waiting' => ['sheba' => 'Ready to verified', 'partner' => 'Inactive', 'customer' => 'Ready to verified'],
+        'Onboarded' => ['sheba' => 'Onboarded', 'partner' => 'Inactive', 'customer' => 'Onboarded'],
+        'Rejected' => ['sheba' => 'Rejected', 'partner' => 'Inactive', 'customer' => 'Rejected']
     ],
     'PARTNER_LEVELS' => ['Starter', 'Intermediate', 'Advanced'],
     'PARTNER_TYPES' => ['USP', 'NSP', 'ESP'],

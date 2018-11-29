@@ -42,6 +42,9 @@ return [
         'PSP' => 6,
         'LSP' => 2
     ],
+    'partner_statuses' => [
+
+    ],
     'weight_on_partner_list' => [
         'impression' => 0.3,
         'capacity' => 0.2,
