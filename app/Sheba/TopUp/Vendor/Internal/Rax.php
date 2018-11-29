@@ -2,6 +2,7 @@
 
 namespace Sheba\TopUp\Vendor\Internal;
 
+use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
 trait Rax
@@ -16,9 +17,9 @@ trait Rax
         $this->rax = $rax;
     }
 
-    public function recharge($mobile_number, $amount, $type): TopUpResponse
+    public function recharge(TopUpRequest $top_up_request): TopUpResponse
     {
         $this->setup();
-        return $this->rax->setPin($this->pin)->setMId($this->mid)->recharge($mobile_number, $amount, $type);
+        return $this->rax->setPin($this->pin)->setMId($this->mid)->recharge($top_up_request);
     }
 }

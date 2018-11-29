@@ -720,3 +720,21 @@ if (!function_exists('getFileExtension')) {
         return end($extension);
     }
 }
+
+if (!function_exists('getBulkTopUpFolder')) {
+
+    /**
+     * Get Profile's Avatar Folder.
+     *
+     * @param bool $with_base_url
+     * @return string
+     */
+    function getBulkTopUpFolder($with_base_url = false)
+    {
+        $url = '';
+        if($with_base_url)
+            $url = env('S3_URL');
+
+        return $url . 'bulk_top_ups/';
+    }
+}

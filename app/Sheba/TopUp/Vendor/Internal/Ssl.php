@@ -3,6 +3,7 @@
 namespace Sheba\TopUp\Vendor\Internal;
 
 use App\Models\TopUpVendor;
+use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
 trait Ssl
@@ -15,15 +16,13 @@ trait Ssl
     }
 
     /**
-     * @param $mobile_number
-     * @param $amount
-     * @param $type
+     * @param TopUpRequest $top_up_request
      * @return TopUpResponse
      * @throws \SoapFault
      */
-    public function recharge($mobile_number, $amount, $type): TopUpResponse
+    public function recharge(TopUpRequest $top_up_request): TopUpResponse
     {
-        return $this->ssl->recharge($mobile_number, $amount, $type);
+        return $this->ssl->recharge($top_up_request);
     }
 
     /**

@@ -11,19 +11,15 @@ class TopUpJob extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
 
-    private $agent;
-    private $vendor;
-    private $mobile;
-    private $amount;
-    private $type;
+    protected $agent;
+    protected $vendor;
+    protected $topUpRequest;
 
-    public function __construct($agent, $vendor, $mobile, $amount, $type)
+    public function __construct($agent, $vendor, TopUpRequest $top_up_request)
     {
         $this->agent = $agent;
         $this->vendor = $vendor;
-        $this->mobile = $mobile;
-        $this->amount = $amount;
-        $this->type = $type;
+        $this->topUpRequest = $top_up_request;
     }
 
     /**
@@ -38,10 +34,31 @@ class TopUpJob extends Job implements ShouldQueue
     {
         if ($this->attempts() < 2) {
             $vendor = $vendor->getById($this->vendor);
-            $top_up->setAgent($this->agent)->setVendor($vendor)->recharge($this->mobile, $this->amount, $this->type);
-            if($top_up->isNotSuccessful()) $this->notifyAgentAboutFailure();
-            // else Redis::rpush('test_done_' . $this->agent->id, $this->mobile);
+            $top_up->setAgent($this->agent)->setVendor($vendor)->recharge($this->topUpRequest);
+            if($top_up->isNotSuccessful()) {
+                $this->takeUnsuccessfulAction($top_up);
+            } else {
+                $this->takeSuccessfulAction($top_up);
+            }
         }
+    }
+
+    /**
+     * @param TopUp $top_up
+     * @throws \Exception
+     */
+    protected function takeUnsuccessfulAction(TopUp $top_up)
+    {
+        $this->notifyAgentAboutFailure();
+    }
+
+    /**
+     * @param TopUp $top_up
+     * @throws \Exception
+     */
+    protected function takeSuccessfulAction(TopUp $top_up)
+    {
+        //
     }
 
     /**
@@ -50,7 +67,7 @@ class TopUpJob extends Job implements ShouldQueue
     private function notifyAgentAboutFailure()
     {
         notify($this->agent)->send([
-            "title" => 'Your top up to ' . $this->mobile . ' has been failed.',
+            "title" => 'Your top up to ' . $this->topUpRequest->getMobile() . ' has been failed.',
             "link" => '',
             "type" => notificationType('Danger')
         ]);
