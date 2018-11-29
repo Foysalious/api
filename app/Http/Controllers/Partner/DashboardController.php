@@ -1,14 +1,15 @@
-<?php namespace App\Http\Controllers\Partner;
+<?php
+
+namespace App\Http\Controllers\Partner;
 
 use App\Repositories\ReviewRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-
-use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use Sheba\Analysis\PartnerPerformance\PartnerPerformance;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
 use Sheba\Helpers\TimeFrame;
+use Sheba\Subscription\Partner\PartnerSubscriber;
 
 class DashboardController extends Controller
 {
@@ -24,7 +25,7 @@ class DashboardController extends Controller
 
             $successful_jobs = $partner->notCancelledJobs();
             $sales_stats = (new PartnerSalesStatistics($partner))->calculate();
-
+            $upgradable_package = (new PartnerSubscriber($partner))->getUpgradablePackage();
             $dashboard = [
                 'name' => $partner->name,
                 'logo' => $partner->logo,
@@ -87,12 +88,12 @@ class DashboardController extends Controller
                         'is_improved' => $performanceStats['timely_processed']['is_improved']
                     ]
                 ],
-                'subscription_promotion' => [
-                    'package' => $partner->subscription->name,
-                    'package_name_bn' => $partner->subscription->name_bn,
-                    'package_badge' => $partner->subscription->badge,
-                    'package_usp_bn' => json_decode($partner->subscription->usps, 1)['usp_bn']
-                ]
+                'subscription_promotion' => $upgradable_package ? [
+                    'package' => $upgradable_package->name,
+                    'package_name_bn' => $upgradable_package->name_bn,
+                    'package_badge' => $upgradable_package->badge,
+                    'package_usp_bn' => json_decode($upgradable_package->usps, 1)['usp_bn']
+                ] : null
             ];
             return api_response($request, $dashboard, 200, ['data' => $dashboard]);
         } catch (\Throwable $e) {

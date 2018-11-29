@@ -3,6 +3,7 @@
 namespace Sheba\Subscription\Partner;
 
 use App\Models\Partner;
+use App\Models\PartnerSubscriptionPackage;
 use App\Models\PartnerSubscriptionUpdateRequest;
 use Sheba\Subscription\ShebaSubscriber;
 use Sheba\Subscription\SubscriptionPackage;
@@ -75,5 +76,10 @@ class PartnerSubscriber extends ShebaSubscriber
     public function commission()
     {
         return (double)$this->rules()->commission->value;
+    }
+
+    public function getUpgradablePackage()
+    {
+        return PartnerSubscriptionPackage::where('id', '>', $this->partner->subscription->id)->orderBy('id')->take(1)->first();
     }
 }
