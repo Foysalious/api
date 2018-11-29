@@ -48,12 +48,14 @@ class CustomerDeliveryAddressController extends Controller
         try {
             $request->merge(['address' => trim($request->address), 'mobile' => trim(str_replace(' ', '', $request->mobile))]);
             $customer = $request->customer;
-            $hyper_local = null;
-            if (!$request->has('lat') && !$request->has('lng')) {
-                $geo = (new Geo())->geoCodeFromPlace($request->address);
-                if ($geo) $request->merge(['lat' => $geo['lat'], 'lng' => $geo['lng']]);
+            $hyper_local = $request->has('lat') && $request->has('lng');
+            if (!$hyper_local) {
+                if ($geo = (new Geo())->geoCodeFromPlace($request->address)) {
+                    $request->merge(['lat' => $geo['lat'], 'lng' => $geo['lng']]);
+                    $request->merge(["geo_informations" => json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng])]);
+                }
             }
-            if ($request->has('lat') && $request->has('lng')) {
+            if ($hyper_local) {
                 $hyper_local = HyperLocal::insidePolygon($request->lat, $request->lng)->with('location')->first();
                 if (!$hyper_local) return api_response($request, null, 400, ['message' => "You're out of our service area."]);
                 $request->merge(["geo_informations" => json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng])]);
