@@ -26,6 +26,8 @@ class Basic extends PartnerSale
 
         if ($this->frequency == self::WEEK_BASE) {
             $data['timeline'] = $this->timeFrame->start->format('M d') . ' - ' . $this->timeFrame->end->format('M d');
+            // $data['sales_stat_breakdown'] = $this->getSalesStatBreakdown($this->frequency, $orders);
+            // $data['order_stat_breakdown'] = $this->getOrdersStatBreakdown($this->frequency, $orders);
             $data['sales_stat_breakdown'] = [['value' => 'Sun', 'amount' => 455.58], ['value' => 'Mon', 'amount' => 4552], ['value' => 'Tue', 'amount' => 45005], ['value' => 'Wed', 'amount' => 4505,], ['value' => 'Thu', 'amount' => 455], ['value' => 'Fri', 'amount' => 4550], ['value' => 'Sat', 'amount' => 455]];
             $data['order_stat_breakdown'] = [['value' => 'Sun', 'amount' => 455], ['value' => 'Mon', 'amount' => 4552], ['value' => 'Tue', 'amount' => 45005], ['value' => 'Wed', 'amount' => 4505], ['value' => 'Thu', 'amount' => 455], ['value' => 'Fri', 'amount' => 4550], ['value' => 'Sat', 'amount' => 455]];
         }
@@ -33,6 +35,7 @@ class Basic extends PartnerSale
         if ($this->frequency == self::MONTH_BASE) {
             $data['timeline'] = $this->timeFrame->start->format('F');
             $data['day'] = $this->timeFrame->start->format('Y-m-d');
+
             $data['sales_stat_breakdown'] = [['value' => 1, 'amount' => 11.22], ['value' => 2, 'amount' => 1121], ['value' => 3, 'amount' => 112.2], ['value' => 4, 'amount' => 11], ['value' => 5, 'amount' => 11]];
             $data['order_stat_breakdown'] = [['value' => 1, 'amount' => 10], ['value' => 2, 'amount' => 22], ['value' => 3, 'amount' => 11], ['value' => 4, 'amount' => 111], ['value' => 5, 'amount' => 101]];
         }
@@ -48,11 +51,29 @@ class Basic extends PartnerSale
 
         if (in_array($this->frequency, [self::DAY_BASE, self::WEEK_BASE, self::MONTH_BASE])) {
             $data['partner_collection'] = $orders->sum('partner_collection');
-            $data['sheba_receivable'] = $orders->sum('shebaReceivable');
-            $data['sp_payable'] = $orders->sum('spPayable');
-            $data['is_reconciled'] = (!$data['sheba_receivable'] && !$data['sp_payable']) ? true : false;
+
+            list($payable_to, $payable_amount) = $this->payableTo($orders->sum('shebaReceivable'), $orders->sum('spPayable'));
+            $data['payable_to'] = $payable_to;
+            $data['payable_amount'] = $payable_amount;
         }
 
         return $data;
+    }
+
+    private function payableTo($sheba_receivable, $sp_payable)
+    {
+        if (!$sheba_receivable && !$sp_payable) return [null, 0];
+        elseif ($sheba_receivable > $sp_payable) return ['sheba', $sheba_receivable];
+        elseif ($sp_payable > $sheba_receivable) return ['partner', $sp_payable];
+    }
+
+    private function getSalesStatBreakdown($frequency, $orders)
+    {
+        dd($frequency, $orders);
+    }
+
+    private function getOrdersStatBreakdown($frequency, $orders)
+    {
+        dd($frequency, $orders);
     }
 }
