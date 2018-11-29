@@ -20,7 +20,7 @@ class OfferTransformer extends TransformerAbstract
             'start_date' => $offer->start_date,
             'end_date' => $offer->end_date,
             'icon' => $this->icon($offer),
-            'gradiant' => [config('sheba.gradiant1')[array_rand(config('sheba.gradiant1'))], config('sheba.gradiant2')[array_rand(config('sheba.gradiant2'))]],
+            'gradient' => config('sheba.gradients')[array_rand(config('sheba.gradients'))],
             'structured_title' => $offer->structured_title,
             'is_flash' => $offer->is_flash,
             'is_applied' => $offer->is_applied,
