@@ -36,8 +36,12 @@ class Basic extends PartnerSale
             $data['timeline'] = $this->timeFrame->start->format('F');
             $data['day'] = $this->timeFrame->start->format('Y-m-d');
 
-            $data['sales_stat_breakdown'] = [['value' => 1, 'amount' => 11.22], ['value' => 2, 'amount' => 1121], ['value' => 3, 'amount' => 112.2], ['value' => 4, 'amount' => 11], ['value' => 5, 'amount' => 11]];
-            $data['order_stat_breakdown'] = [['value' => 1, 'amount' => 10], ['value' => 2, 'amount' => 22], ['value' => 3, 'amount' => 11], ['value' => 4, 'amount' => 111], ['value' => 5, 'amount' => 101]];
+            $data['sales_stat_breakdown'] = [];
+            $data['order_stat_breakdown'] = [];
+            for ($i = 1; $i <= cal_days_in_month(CAL_GREGORIAN, $this->timeFrame->start->month, $this->timeFrame->start->year); $i++) {
+                $data['sales_stat_breakdown'][] = ['value' => $i, 'amount' => random_int(1, 100)];
+                $data['order_stat_breakdown'][] = ['value' => $i, 'amount' => random_int(1, 100)];
+            }
         }
 
         if ($this->frequency == self::YEAR_BASE) {
