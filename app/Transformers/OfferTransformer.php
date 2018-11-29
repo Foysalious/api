@@ -32,7 +32,6 @@ class OfferTransformer extends TransformerAbstract
     {
         if ($offer->isCategory()) return $offer->target->icon_png;
         elseif ($offer->isCategoryGroup()) return $offer->target->icon_png;
-        elseif ($offer->isReward()) return "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/png/percentage.png";
         elseif ($offer->isVoucher()) {
             $target = $offer->target;
             $rules = json_decode($target->rules);
