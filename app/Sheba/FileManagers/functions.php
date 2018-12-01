@@ -670,7 +670,7 @@ if(!function_exists('getBase64FileExtension')) {
      */
     function getBase64FileExtension($file)
     {
-        return image_type_to_extension(getimagesize($file)[2]);
+        return image_type_to_extension(getimagesize($file)[2], false);
     }
 }
 
@@ -705,7 +705,8 @@ if (!function_exists('getProfileAvatarFolder')) {
     }
 }
 
-if (!function_exists('getFileName')) {
+if (!function_exists('getFileName'))
+{
     function getFileName($file)
     {
         $extension = explode("/", $file);
@@ -713,11 +714,74 @@ if (!function_exists('getFileName')) {
     }
 }
 
-if (!function_exists('getFileExtension')) {
+if (!function_exists('getFileExtension'))
+{
     function getFileExtension($file)
     {
         $extension = explode(".", $file);
         return end($extension);
+    }
+}
+
+if (!function_exists('getRewardShopDefaultThumb')) {
+
+    /**
+     * Get Reward Shop default Thumb file name.
+     *
+     * @return string
+     */
+    function getRewardShopDefaultThumb()
+    {
+        return getRewardShopThumbFolder(true) . 'default.jpg';
+    }
+}
+
+if (!function_exists('getRewardShopDefaultBanner')) {
+
+    /**
+     * Get Reward Shop default Banner file name.
+     *
+     * @return string
+     */
+    function getRewardShopDefaultBanner()
+    {
+        return getRewardShopBannerFolder(true) . 'default.jpg';
+    }
+}
+
+if (!function_exists('getRewardShopThumbFolder')) {
+
+    /**
+     * Get Reward Shop Thumb Folder.
+     *
+     * @param bool $with_base_url
+     * @return string
+     */
+    function getRewardShopThumbFolder($with_base_url = false)
+    {
+        $url = '';
+        if($with_base_url)
+            $url = config('s3.url');
+
+        return $url . 'images/reward_product_images/thumbs/';
+    }
+}
+
+if (!function_exists('getRewardShopBannerFolder')) {
+
+    /**
+     * Get Service Thumb Folder.
+     *
+     * @param bool $with_base_url
+     * @return string
+     */
+    function getRewardShopBannerFolder($with_base_url = false)
+    {
+        $url = '';
+        if($with_base_url)
+            $url = config('s3.url');
+
+        return $url . 'images/reward_product_images/banners/';
     }
 }
 

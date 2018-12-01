@@ -54,25 +54,19 @@ class TopUpValidator
 
     public function validate()
     {
-        if ($this->agent->wallet < $this->request->getAmount()) {
-            $this->error = new TopUpWalletErrorResponse();
-            return;
-        }
-
         if (!$this->vendor->isPublished()) {
             $this->error = new TopUpErrorResponse();
             $this->error->errorCode = 421;
-            $this->error->errorMessage = "Unsupported operator";
-            return;
-        }
-
-        if (!(new MobileNumberValidator())->validateBangladeshi($this->request->getMobile())) {
+            $this->error->errorMessage = "Unsupported operator.";
+        } else if (!(new MobileNumberValidator())->validateBangladeshi($this->request->getMobile())) {
             $this->error = new TopUpErrorResponse();
             $this->error->errorCode = 421;
-            $this->error->errorMessage = "Invalid mobile number";
-            return;
+            $this->error->errorMessage = "Invalid number.";
+        } else if ($this->agent->wallet < $this->request->getAmount()) {
+            $this->error = new TopUpWalletErrorResponse();
         }
 
+        return $this;
     }
 
     public function hasError()

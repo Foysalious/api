@@ -1,10 +1,11 @@
-<?php namespace Sheba\TopUp;
+<?php namespace Sheba\TopUp\Jobs;
 
 use App\Jobs\Job;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Support\Facades\Redis;
+use Sheba\TopUp\TopUp;
+use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\VendorFactory;
 
 class TopUpJob extends Job implements ShouldQueue
@@ -12,51 +13,58 @@ class TopUpJob extends Job implements ShouldQueue
     use InteractsWithQueue, SerializesModels;
 
     protected $agent;
+    protected $vendorId;
     protected $vendor;
+
+    /** @var TopUpRequest */
     protected $topUpRequest;
+
+    /** @var TopUp */
+    protected $topUp;
 
     public function __construct($agent, $vendor, TopUpRequest $top_up_request)
     {
         $this->agent = $agent;
-        $this->vendor = $vendor;
         $this->topUpRequest = $top_up_request;
+        $this->vendorId = $vendor;
     }
 
     /**
      * Execute the job.
      *
-     * @param  TopUp $top_up
-     * @param VendorFactory $vendor
      * @return void
      * @throws \Exception
      */
-    public function handle(TopUp $top_up, VendorFactory $vendor)
+    public function handle()
     {
         if ($this->attempts() < 2) {
-            $vendor = $vendor->getById($this->vendor);
-            $top_up->setAgent($this->agent)->setVendor($vendor)->recharge($this->topUpRequest);
-            if($top_up->isNotSuccessful()) {
-                $this->takeUnsuccessfulAction($top_up);
+            $vendor_factory = app(VendorFactory::class);
+            $this->vendor = $vendor_factory->getById($this->vendorId);
+
+            $this->topUp = app(TopUp::class);
+            $this->topUp->setAgent($this->agent)->setVendor($this->vendor);
+
+            $this->topUp->recharge($this->topUpRequest);
+            if($this->topUp->isNotSuccessful()) {
+                $this->takeUnsuccessfulAction();
             } else {
-                $this->takeSuccessfulAction($top_up);
+                $this->takeSuccessfulAction();
             }
         }
     }
 
     /**
-     * @param TopUp $top_up
      * @throws \Exception
      */
-    protected function takeUnsuccessfulAction(TopUp $top_up)
+    protected function takeUnsuccessfulAction()
     {
         $this->notifyAgentAboutFailure();
     }
 
     /**
-     * @param TopUp $top_up
      * @throws \Exception
      */
-    protected function takeSuccessfulAction(TopUp $top_up)
+    protected function takeSuccessfulAction()
     {
         //
     }

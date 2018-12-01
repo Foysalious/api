@@ -8,8 +8,9 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\TopUp\TopUp;
-use Sheba\TopUp\TopUpExcelJob;
-use Sheba\TopUp\TopUpJob;
+use Sheba\TopUp\Jobs\TopUpExcelJob;
+use Sheba\TopUp\Jobs\TopUpJob;
+use Sheba\TopUp\TopUpExcel;
 use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\Response\Ssl\SslFailResponse;
 use Sheba\TopUp\Vendor\VendorFactory;
@@ -47,7 +48,7 @@ class TopUpController extends Controller
         }
     }
 
-    public function topUp(Request $request, VendorFactory $vendor, TopUp $top_up)
+    public function topUp(Request $request, VendorFactory $vendor, TopUpRequest $top_up_request)
     {
         try {
             $this->validate($request, [
@@ -63,7 +64,8 @@ class TopUpController extends Controller
             $vendor = $vendor->getById($request->vendor_id);
             if (!$vendor->isPublished()) return api_response($request, null, 403, ['message' => 'Sorry, we don\'t support this operator at this moment']);
 
-            dispatch(new TopUpJob($agent, $request->vendor_id, $request->mobile, $request->amount, $request->connection_type));
+            $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type);
+            dispatch(new TopUpJob($agent, $request->vendor_id, $top_up_request));
 
             return api_response($request, null, 200, ['message' => "Recharge Request Successful"]);
         } catch (ValidationException $e) {
@@ -112,26 +114,26 @@ class TopUpController extends Controller
                 return api_response($request, null, 400, ['message' => 'File type not support']);
             }
 
-            $valid_topups   = collect([]);
-            $failed_topups  = collect([]);
-
             $agent = $this->getAgent($request);
 
-            $e = Excel::selectSheets('data')->load($request->file);
+            $file = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
+            $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
 
-            $e->get()->each(function ($value, $key) use ($vendor, $agent, $e, $top_up_request) {
-                $vendor_id = $vendor->getIdByName($value->operator);
-                $request = $top_up_request->setType($value->connection_type)
-                    ->setMobile(BDMobileFormatter::format($value->mobile))->setAmount($value->amount);
-                dispatch(new TopUpExcelJob($agent, $vendor_id, $request, $e, $key + 2, $e->get()->count()));
+            $data = Excel::selectSheets(TopUpExcel::SHEET)->load($file_path)->get();
+            $total = $data->count();
+            $data->each(function ($value, $key) use ($vendor, $agent, $file_path, $top_up_request, $total) {
+                $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
+                $type_field = TopUpExcel::TYPE_COLUMN_TITLE;
+                $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
+                $amount_field = TopUpExcel::VENDOR_COLUMN_TITLE;
+
+                $vendor_id = $vendor->getIdByName($value->$operator_field);
+                $request = $top_up_request->setType($value->$type_field)
+                    ->setMobile(BDMobileFormatter::format($value->$mobile_field))->setAmount($value->$amount_field);
+                dispatch(new TopUpExcelJob($agent, $vendor_id, $request, $file_path, $key + 2, $total));
             });
 
-            /*foreach ($valid_topups as $topup) {
-                $top_up_request->setMobile($topup->mobile)->setAmount($topup->amount)->setType($topup->connection_type);
-                dispatch(new TopUpJob($agent, $topup->vendor_id, $top_up_request));
-            }*/
-
-            $response_msg = "We have initiated " . $valid_topups->count() . " of your requested top-up and will be transferred shortly. " . $failed_topups->count() . " of your requested top-up is unsuccessful";
+            $response_msg = "Your top-up request has been received and will be transferred and notified shortly.";
             return api_response($request, null, 200, ['message' => $response_msg]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

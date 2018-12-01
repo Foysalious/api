@@ -64,7 +64,7 @@ class TopUp
      */
     public function recharge(TopUpRequest $top_up_request)
     {
-        if($this->validator->setRequest($top_up_request)->hasError()) return;
+        if($this->validator->setRequest($top_up_request)->validate()->hasError()) return;
 
         $this->response = $this->vendor->recharge($top_up_request);
         if ($this->response->hasSuccess()) {
