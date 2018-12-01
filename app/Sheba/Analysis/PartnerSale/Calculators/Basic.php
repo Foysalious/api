@@ -10,7 +10,6 @@ class Basic extends PartnerSale
 {
     private $data;
     private $partnerOrders;
-    private $weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     protected function calculate()
     {
@@ -92,8 +91,8 @@ class Basic extends PartnerSale
     private function initData($type, $limit = null)
     {
         if ($type == self::WEEK_BASE) {
-            foreach ($this->weekDays as $i) {
-                $this->data[$i] = ['value' => $i, 'amount' => 0];
+            for($date = $this->timeFrame->start; $date->lte($this->timeFrame->end); $date->addDay()) {
+                $this->data[$date->format('D')] = ['value' => $date->format('D'), 'date' => $date->format('d M'), 'amount' => 0];
             }
         } elseif ($type == self::MONTH_BASE) {
             for ($i = 1; $i <= $limit; $i++) {
