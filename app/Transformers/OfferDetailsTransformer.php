@@ -8,7 +8,9 @@
 
 namespace App\Transformers;
 
+use App\Models\Category;
 use App\Models\Promotion;
+use App\Models\Service;
 use League\Fractal\TransformerAbstract;
 
 class OfferDetailsTransformer extends TransformerAbstract
@@ -18,6 +20,7 @@ class OfferDetailsTransformer extends TransformerAbstract
 
         $target_type = strtolower(snake_case(str_replace("App\\Models\\", '', $offer->target_type)));
         $is_applied = isset($offer->customer_id) && $target_type == 'voucher' ? !!Promotion::isApplied($offer->customer_id, $offer->target_id)->count() : false;
+        $category_id = $this->getCategoryId($offer, $target_type);
         return [
             'id' => $offer->id,
             'thumb' => $offer->thumb,
@@ -39,7 +42,9 @@ class OfferDetailsTransformer extends TransformerAbstract
             'voucher_title' => $target_type == 'voucher' ? $offer->voucher ? $offer->voucher->title : null : null,
             'is_amount_percent' => $this->isAmountPercent($offer, $target_type),
             'has_cap' => $this->getCapStatus($offer, $target_type),
-            'category_id' => $this->getCategoryId($offer, $target_type)
+            'category_id' => $category_id,
+            'category_slug' => $this->getCategorySlug($category_id),
+            'service_slug' => $target_type == 'service' ? $this->getServiceSlug($offer->target_id) : null
         ];
     }
 
@@ -102,6 +107,32 @@ class OfferDetailsTransformer extends TransformerAbstract
                 return (int)$offer->target_id;
             default:
                 return null;
+        }
+    }
+
+    private function getCategorySlug($category_id)
+    {
+        try {
+            if ($category_id) {
+                return Category::find($category_id)->slug;
+            } else {
+                return null;
+            }
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    private function getServiceSlug($service_id)
+    {
+        try {
+            if ($service_id) {
+                return Service::find($service_id)->slug;
+            } else {
+                return null;
+            }
+        } catch (\Throwable $e) {
+            return null;
         }
     }
 }
