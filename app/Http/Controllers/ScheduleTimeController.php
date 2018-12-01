@@ -32,9 +32,7 @@ class ScheduleTimeController extends Controller
             $slots = ScheduleSlot::where([['start', '>=', DB::raw("CAST('" . self::SCHEDULE_START . "' As time)")], ['end', '<=', DB::raw("CAST('" . self::SCHEDULE_END . "' As time)")]])->get();
             $current_time = Carbon::now();
             if ($request->has('category')) {
-                $rent_a_car_ids = array_map('intval', explode(',', env('RENT_CAR_IDS')));
-                $prep_min = in_array($request->category, $rent_a_car_ids) ? 2*60 : $this->getPreparationTime($request->category);
-                $current_time->addMinutes($prep_min);
+                $current_time->addMinutes($this->getPreparationTime($request->category));
             }
             $time_slots = $valid_time_slots = $sheba_slots = [];
             foreach ($slots as $slot) {

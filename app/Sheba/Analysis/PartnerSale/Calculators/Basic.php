@@ -11,6 +11,9 @@ class Basic extends PartnerSale
     private $data;
     private $partnerOrders;
 
+    /**
+     * @return Collection|mixed
+     */
     protected function calculate()
     {
         $this->partnerOrders = new PartnerOrderRepository();
@@ -61,6 +64,11 @@ class Basic extends PartnerSale
         return $data;
     }
 
+    /**
+     * @param $sheba_receivable
+     * @param $sp_payable
+     * @return array
+     */
     private function payableTo($sheba_receivable, $sp_payable)
     {
         if (!$sheba_receivable && !$sp_payable) return [null, 0];
@@ -68,6 +76,11 @@ class Basic extends PartnerSale
         elseif ($sp_payable) return ['partner', $sp_payable];
     }
 
+    /**
+     * @param $orders
+     * @param string $for
+     * @return array
+     */
     private function getWeeklyStatFor($orders, $for = 'sales')
     {
         $this->initData(self::WEEK_BASE);
@@ -78,6 +91,11 @@ class Basic extends PartnerSale
         return collect($this->data)->values()->all();
     }
 
+    /**
+     * @param $orders
+     * @param string $for
+     * @return array
+     */
     private function getMonthlyStatFor($orders, $for = 'sales')
     {
         $this->initData(self::MONTH_BASE, cal_days_in_month(CAL_GREGORIAN, $this->timeFrame->start->month, $this->timeFrame->start->year));
@@ -88,10 +106,14 @@ class Basic extends PartnerSale
         return collect($this->data)->values()->all();
     }
 
+    /**
+     * @param $type
+     * @param null $limit
+     */
     private function initData($type, $limit = null)
     {
         if ($type == self::WEEK_BASE) {
-            for($date = $this->timeFrame->start; $date->lte($this->timeFrame->end); $date->addDay()) {
+            for($date = $this->timeFrame->start->copy(); $date->lte($this->timeFrame->end); $date->addDay()) {
                 $this->data[$date->format('D')] = ['value' => $date->format('D'), 'date' => $date->format('d M'), 'amount' => 0];
             }
         } elseif ($type == self::MONTH_BASE) {
