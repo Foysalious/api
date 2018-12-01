@@ -57,9 +57,9 @@ class Checkout
         $partner_list->find($request->partner);
         if ($partner_list->hasPartners) {
             $partner = $partner_list->partners->first();
-            $data = $this->makeOrderData($request);
             $this->orderData['location_id'] = $partner_list->location;
             $this->orderData['location'] = Location::find($partner_list->location);
+            $data = $this->makeOrderData($request);
             $data['payment_method'] = $request->payment_method == 'cod' ? 'cash-on-delivery' : ucwords($request->payment_method);
             $data['job_services'] = $this->createJobService($partner->services, $partner_list->selected_services, $data);
             $rent_car_ids = array_map('intval', explode(',', env('RENT_CAR_IDS')));
