@@ -24,7 +24,7 @@ class OfferDetailsTransformer extends TransformerAbstract
         return [
             'id' => $offer->id,
             'thumb' => $offer->thumb,
-            'banner' => $offer->banner,
+            'banner' => $offer->app_banner,
             'title' => $offer->title,
             'structured_title' => $offer->structured_title,
             'short_description' => $offer->short_description,
