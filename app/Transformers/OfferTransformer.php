@@ -19,7 +19,7 @@ class OfferTransformer extends TransformerAbstract
             'type_id' => (int)$offer->target_id,
             'start_date' => $offer->start_date,
             'end_date' => $offer->end_date,
-            'icon' => $this->icon($offer),
+            'icon' => "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/png/percentage.png",
             'gradient' => config('sheba.gradients')[array_rand(config('sheba.gradients'))],
             'structured_title' => $offer->structured_title,
             'is_flash' => $offer->is_flash,
@@ -32,7 +32,6 @@ class OfferTransformer extends TransformerAbstract
     {
         if ($offer->isCategory()) return $offer->target->icon_png;
         elseif ($offer->isCategoryGroup()) return $offer->target->icon_png;
-        elseif ($offer->isReward()) return "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/png/percentage.png";
         elseif ($offer->isVoucher()) {
             $target = $offer->target;
             $rules = json_decode($target->rules);
