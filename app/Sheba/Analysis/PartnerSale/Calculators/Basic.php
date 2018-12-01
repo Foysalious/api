@@ -1,5 +1,6 @@
 <?php namespace Sheba\Analysis\PartnerSale\Calculators;
 
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Sheba\Analysis\PartnerSale\PartnerSale;
 use Sheba\Helpers\TimeFrame;
@@ -8,6 +9,7 @@ use Sheba\Repositories\PartnerOrderRepository;
 class Basic extends PartnerSale
 {
     private $partnerOrders;
+    private $weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     protected function calculate()
     {
@@ -26,18 +28,17 @@ class Basic extends PartnerSale
 
         if ($this->frequency == self::WEEK_BASE) {
             $data['timeline'] = $this->timeFrame->start->format('M d') . ' - ' . $this->timeFrame->end->format('M d');
-            // $data['sales_stat_breakdown'] = $this->getSalesStatBreakdown($this->frequency, $orders);
-            // $data['order_stat_breakdown'] = $this->getOrdersStatBreakdown($this->frequency, $orders);
-            $data['sales_stat_breakdown'] = [['value' => 'Sun', 'amount' => 455.58], ['value' => 'Mon', 'amount' => 4552], ['value' => 'Tue', 'amount' => 45005], ['value' => 'Wed', 'amount' => 4505,], ['value' => 'Thu', 'amount' => 455], ['value' => 'Fri', 'amount' => 4550], ['value' => 'Sat', 'amount' => 455]];
-            $data['order_stat_breakdown'] = [['value' => 'Sun', 'amount' => 455], ['value' => 'Mon', 'amount' => 4552], ['value' => 'Tue', 'amount' => 45005], ['value' => 'Wed', 'amount' => 4505], ['value' => 'Thu', 'amount' => 455], ['value' => 'Fri', 'amount' => 4550], ['value' => 'Sat', 'amount' => 455]];
+
+            $data['sales_stat_breakdown'] = $this->getWeeklyStatForSales($orders);
+            $data['order_stat_breakdown'] = $this->getWeeklyStatForOrderCount($orders);
         }
 
         if ($this->frequency == self::MONTH_BASE) {
             $data['timeline'] = $this->timeFrame->start->format('F');
             $data['day'] = $this->timeFrame->start->format('Y-m-d');
 
-            $data['sales_stat_breakdown'] = [['value' => 1, 'amount' => 11.22], ['value' => 2, 'amount' => 1121], ['value' => 3, 'amount' => 112.2], ['value' => 4, 'amount' => 11], ['value' => 5, 'amount' => 11]];
-            $data['order_stat_breakdown'] = [['value' => 1, 'amount' => 10], ['value' => 2, 'amount' => 22], ['value' => 3, 'amount' => 11], ['value' => 4, 'amount' => 111], ['value' => 5, 'amount' => 101]];
+            $data['sales_stat_breakdown'] = $this->getMonthlyStatForSales($orders);
+            $data['order_stat_breakdown'] = $this->getMonthlyStatForSale($orders);
         }
 
         if ($this->frequency == self::YEAR_BASE) {
@@ -54,7 +55,7 @@ class Basic extends PartnerSale
 
             list($payable_to, $payable_amount) = $this->payableTo($orders->sum('shebaReceivable'), $orders->sum('spPayable'));
             $data['payable_to'] = $payable_to;
-            $data['payable_amount'] = $payable_amount;
+            $data['payable_amount'] = (double)$payable_amount;
         }
 
         return $data;
@@ -63,17 +64,64 @@ class Basic extends PartnerSale
     private function payableTo($sheba_receivable, $sp_payable)
     {
         if (!$sheba_receivable && !$sp_payable) return [null, 0];
-        elseif ($sheba_receivable > $sp_payable) return ['sheba', $sheba_receivable];
-        elseif ($sp_payable > $sheba_receivable) return ['partner', $sp_payable];
+        elseif ($sheba_receivable) return ['sheba', $sheba_receivable];
+        elseif ($sp_payable) return ['partner', $sp_payable];
     }
 
-    private function getSalesStatBreakdown($frequency, $orders)
+    private function getWeeklyStatForSales($orders)
     {
-        dd($frequency, $orders);
+        $data = [];
+        foreach ($this->weekDays as $item) {
+            $data[$item] = ['value' => $item, 'amount' => 0];
+        }
+
+        $orders->each(function ($order) use (&$data) {
+            $data[$order->closed_at->format('D')]['amount'] += $order->totalPrice;
+        });
+
+        return collect($data)->values()->all();
     }
 
-    private function getOrdersStatBreakdown($frequency, $orders)
+    private function getWeeklyStatForOrderCount($orders)
     {
-        dd($frequency, $orders);
+        $data = [];
+        foreach ($this->weekDays as $item) {
+            $data[$item] = ['value' => $item, 'amount' => 0];
+        }
+
+        $orders->each(function ($order) use (&$data) {
+            $data[$order->closed_at->format('D')]['amount'] += 1;
+        });
+
+        return collect($data)->values()->all();
+    }
+
+    private function getMonthlyStatForSales($orders)
+    {
+        $data = [];
+        for ($i = 1; $i <= $this->timeFrame->start->daysInMonth; $i++) {
+            $data[$i] = ['value' => $i, 'amount' => 0];
+        }
+
+        $orders->each(function ($order) use (&$data) {
+            $a = (int)$order->closed_at->format('d');
+            $data[$a]['amount'] += $order->totalPrice;
+        });
+
+        return collect($data)->values()->all();
+    }
+
+    private function getMonthlyStatForSale($orders)
+    {
+        $data = [];
+        for ($i = 1; $i <= $this->timeFrame->start->dayOfMonth; $i++) {
+            $data[$i] = ['value' => $i, 'amount' => 0];
+        }
+
+        $orders->each(function ($order) use (&$data) {
+            $data[(int)$order->closed_at->format('d')]['amount'] += 1;
+        });
+
+        return collect($data)->values()->all();
     }
 }

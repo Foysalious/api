@@ -445,5 +445,6 @@ return [
         'pending' => 'Pending',
         'approved' => 'Approved',
         'rejected' => 'Rejected'
-    ]
+    ],
+    'WEEK_DAYS' => ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 ];
