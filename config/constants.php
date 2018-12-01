@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'STARTING_YEAR' => '2017',
     'HOTLINE' => '09639 - 444 000',
     'SERVICE_VARIABLE_TYPES' => ['Fixed' => 'Fixed', 'Options' => 'Options', 'Custom' => 'Custom'],
     'PARTNER_STATUSES' => [
