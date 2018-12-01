@@ -21,10 +21,12 @@ class OfferDetailsTransformer extends TransformerAbstract
         $target_type = strtolower(snake_case(str_replace("App\\Models\\", '', $offer->target_type)));
         $is_applied = isset($offer->customer_id) && $target_type == 'voucher' ? !!Promotion::isApplied($offer->customer_id, $offer->target_id)->count() : false;
         $category_id = $this->getCategoryId($offer, $target_type);
+        $category = $this->getCategory($category_id);
         return [
             'id' => $offer->id,
             'thumb' => $offer->thumb,
             'banner' => $offer->app_banner,
+            'original_banner' => $offer->banner,
             'title' => $offer->title,
             'structured_title' => $offer->structured_title,
             'short_description' => $offer->short_description,
@@ -43,7 +45,8 @@ class OfferDetailsTransformer extends TransformerAbstract
             'is_amount_percent' => $this->isAmountPercent($offer, $target_type),
             'has_cap' => $this->getCapStatus($offer, $target_type),
             'category_id' => $category_id,
-            'category_slug' => $this->getCategorySlug($category_id),
+            'category_slug' => $category ? $category->slug : null,
+            'is_category_master' => $category ? !$category->parent_id : false,
             'service_slug' => $target_type == 'service' ? $this->getServiceSlug($offer->target_id) : null
         ];
     }
@@ -110,11 +113,11 @@ class OfferDetailsTransformer extends TransformerAbstract
         }
     }
 
-    private function getCategorySlug($category_id)
+    private function getCategory($category_id)
     {
         try {
             if ($category_id) {
-                return Category::find($category_id)->slug;
+                return Category::find($category_id);
             } else {
                 return null;
             }
