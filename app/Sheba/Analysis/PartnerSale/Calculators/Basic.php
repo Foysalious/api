@@ -99,13 +99,12 @@ class Basic extends PartnerSale
     private function getMonthlyStatForSales($orders)
     {
         $data = [];
-        for ($i = 1; $i <= $this->timeFrame->start->daysInMonth; $i++) {
+        for ($i = 1; $i <= cal_days_in_month(CAL_GREGORIAN, $this->timeFrame->start->month, $this->timeFrame->start->year); $i++) {
             $data[$i] = ['value' => $i, 'amount' => 0];
         }
 
         $orders->each(function ($order) use (&$data) {
-            $a = (int)$order->closed_at->format('d');
-            $data[$a]['amount'] += $order->totalPrice;
+            $data[intval($order->closed_at->format('d'))]['amount'] += $order->totalPrice;
         });
 
         return collect($data)->values()->all();
@@ -114,12 +113,12 @@ class Basic extends PartnerSale
     private function getMonthlyStatForSale($orders)
     {
         $data = [];
-        for ($i = 1; $i <= $this->timeFrame->start->dayOfMonth; $i++) {
+        for ($i = 1; $i <= cal_days_in_month(CAL_GREGORIAN, $this->timeFrame->start->month, $this->timeFrame->start->year); $i++) {
             $data[$i] = ['value' => $i, 'amount' => 0];
         }
 
         $orders->each(function ($order) use (&$data) {
-            $data[(int)$order->closed_at->format('d')]['amount'] += 1;
+            $data[intval($order->closed_at->format('d'))]['amount'] += 1;
         });
 
         return collect($data)->values()->all();

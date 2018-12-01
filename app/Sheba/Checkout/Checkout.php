@@ -46,6 +46,7 @@ class Checkout
     public function placeOrder($request)
     {
         $this->setModifier($this->customer);
+        $hyperlocal = false;
         if ($request->has('location')) {
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$request->location);
             $this->orderData['location_id'] = (int)$request->location;
@@ -56,6 +57,7 @@ class Checkout
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time);
             $partner_list->setGeo($geo->lat, $geo->lng);
             $hyper_local = HyperLocal::insidePolygon($geo->lat, $geo->lng)->with('location')->first();
+            $hyperlocal = true;
             if ($hyper_local) {
                 $this->orderData['location_id'] = $hyper_local->location->id;
                 $this->orderData['location'] = $hyper_local->location;
@@ -65,6 +67,10 @@ class Checkout
         if ($partner_list->hasPartners) {
             $partner = $partner_list->partners->first();
             $data = $this->makeOrderData($request);
+            if (!$hyper_local) {
+                $this->orderData['location_id'] = $partner_list->location;
+                $this->orderData['location'] = Location::find($partner_list->location);
+            }
             $data['payment_method'] = $request->payment_method == 'cod' ? 'cash-on-delivery' : ucwords($request->payment_method);
             $data['job_services'] = $this->createJobService($partner->services, $partner_list->selected_services, $data);
             $rent_car_ids = array_map('intval', explode(',', env('RENT_CAR_IDS')));
