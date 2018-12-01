@@ -94,7 +94,7 @@ class PartnerList
     {
         if ($service instanceof RentACarServiceObject) {
             $location = $this->api->get('/v2/locations/current?lat=' . $service->pickUpLocationLat . '&lng=' . $service->pickUpLocationLng);
-            return $location ? $this->location->id : null;
+            return $location ? $location->id : null;
         } else {
             return $this->location;
         }
