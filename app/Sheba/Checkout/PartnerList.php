@@ -204,6 +204,7 @@ class PartnerList
     {
         $hyper_local = HyperLocal::insidePolygon($this->lat, $this->lng)->with('location')->first();
         if (!$hyper_local) throw new HyperLocationNotFoundException("lat : $this->lat, lng: $this->lng");
+        $this->location = $hyper_local->location->id;
         $this->partners = $this->findPartnersByService($partner_id)->reject(function ($partner) {
             return $partner->geo_informations == null;
         });
