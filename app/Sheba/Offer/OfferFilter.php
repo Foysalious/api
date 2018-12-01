@@ -24,7 +24,7 @@ class OfferFilter
         $this->customer = $customer;
     }
 
-    public function setCategory(Category $category)
+    public function setCategory(Category $category = null)
     {
         $this->category = $category;
     }
