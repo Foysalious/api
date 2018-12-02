@@ -37,7 +37,6 @@ class OrderController extends Controller
             $resource = new Item($data->job, new JobTransformer());
             return response()->json($fractal->createData($resource)->toArray());
         } catch (\Throwable $e) {
-            dd($e);
             return response()->json(['data' => null]);
         }
     }
