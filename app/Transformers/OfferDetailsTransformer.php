@@ -97,7 +97,9 @@ class OfferDetailsTransformer extends TransformerAbstract
             case 'voucher':
                 $rules = json_decode($offer->target->rules);
                 $count = isset($rules->categories) && is_array($rules->categories) ? count($rules->categories) : 0;
-                return $count == 1 ? (int)$rules->categories[0] : null;
+                if ($count == 1) return (int)$rules->categories[0];
+                elseif ($count == 2) return $this->isVoucherCategoriesRentACar($rules->categories) ? (int)$rules->categories[0] : null;
+                else return null;
             case 'reward':
                 if ($offer->target->categoryNoConstraints && $offer->target->categoryNoConstraints->count() > 0) {
                     return null;
@@ -111,6 +113,15 @@ class OfferDetailsTransformer extends TransformerAbstract
             default:
                 return null;
         }
+    }
+
+    private function isVoucherCategoriesRentACar($voucher_categories)
+    {
+        $rent_a_car_categories = array_map('intval', explode(',', env('RENT_CAR_IDS')));
+        foreach ($voucher_categories as $voucher_category) {
+            if (!in_array($voucher_category, $rent_a_car_categories)) return false;
+        }
+        return true;
     }
 
     private function getCategory($category_id)
