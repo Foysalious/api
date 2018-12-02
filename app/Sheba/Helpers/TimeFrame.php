@@ -24,6 +24,11 @@ class TimeFrame
         return [$this->start, $this->end];
     }
 
+    public function hasDates()
+    {
+        return !(empty($this->start) || empty($this->end));
+    }
+
     public function forAMonth($month, $year)
     {
         $start_end_date = findStartEndDateOfAMonth($month, $year);
@@ -60,6 +65,8 @@ class TimeFrame
     public function forCurrentWeek($week_start = null)
     {
         Carbon::setWeekStartsAt($week_start ?: Carbon::SUNDAY);
+        Carbon::setWeekEndsAt(Carbon::SATURDAY);
+
         $this->start = Carbon::now()->startOfWeek();
         $this->end = Carbon::now()->endOfWeek();
         return $this;
@@ -72,18 +79,23 @@ class TimeFrame
         return $this;
     }
 
-    public function forSomeWeekFromNow($week = 1, $week_start = null, $week_end = null)
+    public function forAWeek(Carbon $date, $week_start = null, $week_end = null)
     {
-        if($week == 0) return $this->forCurrentWeek($week_start);
-        else if($week > 0) $date = Carbon::today()->addWeeks($week);
-        else $date = Carbon::today()->subWeeks(abs($week));
-
         Carbon::setWeekStartsAt($week_start ?: Carbon::SUNDAY);
         Carbon::setWeekEndsAt($week_end ?: Carbon::SATURDAY);
 
         $this->start = $date->copy()->startOfWeek();
         $this->end = $date->endOfWeek();
         return $this;
+    }
+
+    public function forSomeWeekFromNow($week = 1, $week_start = null, $week_end = null)
+    {
+        if ($week == 0) return $this->forCurrentWeek($week_start);
+        else if ($week > 0) $date = Carbon::today()->addWeeks($week);
+        else $date = Carbon::today()->subWeeks(abs($week));
+
+        return $this->forAWeek($date);
     }
 
     public function hasDateBetween(Carbon $date)
