@@ -47,8 +47,10 @@ class PromotionController extends Controller
         try {
             $this->validate($request, [
                 'category' => 'required|numeric',
-                'location' => 'required|numeric',
-                'sales_channel' => 'required|string'
+                'sales_channel' => 'required|string',
+                'lat' => 'sometimes|string',
+                'lng' => 'sometimes|string',
+                'location' => 'sometimes|numeric'
             ]);
             /** @var Customer $customer */
             $customer = $request->customer->load(['promotions' => function ($q) {
@@ -56,10 +58,15 @@ class PromotionController extends Controller
                     $q->select('id', 'code', 'amount', 'is_amount_percentage', 'cap', 'rules', 'start_date', 'end_date', 'is_referral', 'max_order', 'max_customer');
                 }]);
             }]);
+            $location = $request->location;
+            if ($request->has('lat') && $request->has('lng')) {
+                $hyper_local = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                $location = $hyper_local ? $hyper_local->location->id : $location;
+            }
             $valid_promos = collect();
             foreach ($customer->promotions as $promotion) {
                 $result = voucher($promotion->voucher->code)
-                    ->check($request->category, null, $request->location, $customer, null, $request->sales_channel)
+                    ->check($request->category, null, (int)$location, $customer, null, $request->sales_channel)
                     ->reveal();
                 if ($result['is_valid']) $valid_promos->push($promotion->voucher);
             }

@@ -14,6 +14,7 @@ use App\Repositories\PartnerServiceRepository;
 use App\Sheba\Partner\PartnerAvailable;
 use Carbon\Carbon;
 use DB;
+use Dingo\Api\Routing\Helpers;
 use Sheba\Checkout\Services\RentACarServiceObject;
 use Sheba\Checkout\Services\ServiceObject;
 use Sheba\Location\Coords;
@@ -25,11 +26,12 @@ use Sheba\ModificationFields;
 
 class PartnerList
 {
+    use Helpers;
     use DispatchesJobs;
     public $partners;
     public $hasPartners = false;
     public $selected_services;
-    private $location;
+    public $location;
     private $hyperLocation;
     private $date;
     private $time;
@@ -88,6 +90,16 @@ class PartnerList
         return $selected_services;
     }
 
+    private function getCalculatedLocation(ServiceObject $service)
+    {
+        if ($service instanceof RentACarServiceObject) {
+            $location = $this->api->get('/v2/locations/current?lat=' . $service->pickUpLocationLat . '&lng=' . $service->pickUpLocationLng);
+            return $location ? $location->id : null;
+        } else {
+            return $this->location;
+        }
+    }
+
     private function getServiceIds()
     {
         $service_ids = collect();
@@ -104,6 +116,7 @@ class PartnerList
     public function find($partner_id = null)
     {
         if ($this->location) {
+            $this->location = $this->getCalculatedLocation($this->selected_services->first());
             $start = microtime(true);
             $this->partners = $this->findPartnersByServiceAndLocation($partner_id);
             $time_elapsed_secs = microtime(true) - $start;
@@ -191,6 +204,7 @@ class PartnerList
     {
         $hyper_local = HyperLocal::insidePolygon($this->lat, $this->lng)->with('location')->first();
         if (!$hyper_local) throw new HyperLocationNotFoundException("lat : $this->lat, lng: $this->lng");
+        $this->location = $hyper_local->location->id;
         $this->partners = $this->findPartnersByService($partner_id)->reject(function ($partner) {
             return $partner->geo_informations == null;
         });

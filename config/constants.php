@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'STARTING_YEAR' => '2017',
     'HOTLINE' => '09639 - 444 000',
     'SERVICE_VARIABLE_TYPES' => ['Fixed' => 'Fixed', 'Options' => 'Options', 'Custom' => 'Custom'],
     'PARTNER_STATUSES' => [
@@ -451,5 +452,6 @@ return [
         'pending' => 'Pending',
         'approved' => 'Approved',
         'rejected' => 'Rejected'
-    ]
+    ],
+    'WEEK_DAYS' => ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 ];

@@ -48,22 +48,17 @@ class Checkout
         $this->setModifier($this->customer);
         if ($request->has('location')) {
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$request->location);
-            $this->orderData['location_id'] = (int)$request->location;
-            $this->orderData['location'] = Location::find((int)$request->location);
         } else {
             $address = $this->customer->delivery_addresses()->where('id', (int)$request->address_id)->first();
             $geo = json_decode($address->geo_informations);
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time);
             $partner_list->setGeo($geo->lat, $geo->lng);
-            $hyper_local = HyperLocal::insidePolygon($geo->lat, $geo->lng)->with('location')->first();
-            if ($hyper_local) {
-                $this->orderData['location_id'] = $hyper_local->location->id;
-                $this->orderData['location'] = $hyper_local->location;
-            }
         }
         $partner_list->find($request->partner);
         if ($partner_list->hasPartners) {
             $partner = $partner_list->partners->first();
+            $this->orderData['location_id'] = $partner_list->location;
+            $this->orderData['location'] = Location::find($partner_list->location);
             $data = $this->makeOrderData($request);
             $data['payment_method'] = $request->payment_method == 'cod' ? 'cash-on-delivery' : ucwords($request->payment_method);
             $data['job_services'] = $this->createJobService($partner->services, $partner_list->selected_services, $data);

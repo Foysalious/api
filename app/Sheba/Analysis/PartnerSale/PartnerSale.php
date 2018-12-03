@@ -14,7 +14,7 @@ abstract class PartnerSale
     /** @var TimeFrame */
     protected $timeFrame;
     /** @var Partner */
-    private $partner;
+    protected $partner;
     /** @var PartnerSale */
     protected $next;
 

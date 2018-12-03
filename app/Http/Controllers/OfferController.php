@@ -34,7 +34,7 @@ class OfferController extends Controller
                 $model_name = "App\\Models\\" . ucwords($request->user_type);
                 $user = $model_name::with('orders', 'promotions')->where('id', (int)$request->user)->where('remember_token', $request->remember_token)->first();
             }
-            $offers = OfferShowcase::active()->valid()->get();
+            $offers = OfferShowcase::active()->valid()->orderBy('end_date')->get();
             if (count($offers) == 0) return api_response($request, null, 404);
             $offer_filter = new OfferFilter($offers);
             if ($user) $offer_filter->setCustomer($user);

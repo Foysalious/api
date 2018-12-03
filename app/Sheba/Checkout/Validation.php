@@ -34,11 +34,13 @@ class Validation
             return 0;
         }
         $category_id = $selected_services->pluck('category_id')->unique()->toArray();
-//        $location = Location::where('id', (int)$this->request->location)->published()->first();
-//        if (!$location) {
-//            $this->message = "Selected location is not valid";
-//            return 0;
-//        } else
+        if ($this->request->has('location')) {
+            $location = Location::where('id', (int)$this->request->location)->published()->first();
+            if (!$location) {
+                $this->message = "Selected location is not valid";
+                return 0;
+            }
+        }
         if (count($category_id) > 1) {
             $this->message = "You can select only one category";
             return 0;

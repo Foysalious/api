@@ -8,7 +8,9 @@
 
 namespace App\Transformers;
 
+use App\Models\Category;
 use App\Models\Promotion;
+use App\Models\Service;
 use League\Fractal\TransformerAbstract;
 
 class OfferDetailsTransformer extends TransformerAbstract
@@ -18,10 +20,13 @@ class OfferDetailsTransformer extends TransformerAbstract
 
         $target_type = strtolower(snake_case(str_replace("App\\Models\\", '', $offer->target_type)));
         $is_applied = isset($offer->customer_id) && $target_type == 'voucher' ? !!Promotion::isApplied($offer->customer_id, $offer->target_id)->count() : false;
+        $category_id = $this->getCategoryId($offer, $target_type);
+        $category = $this->getCategory($category_id);
         return [
             'id' => $offer->id,
             'thumb' => $offer->thumb,
-            'banner' => $offer->banner,
+            'banner' => $offer->app_banner,
+            'original_banner' => $offer->banner,
             'title' => $offer->title,
             'structured_title' => $offer->structured_title,
             'short_description' => $offer->short_description,
@@ -39,7 +44,10 @@ class OfferDetailsTransformer extends TransformerAbstract
             'voucher_title' => $target_type == 'voucher' ? $offer->voucher ? $offer->voucher->title : null : null,
             'is_amount_percent' => $this->isAmountPercent($offer, $target_type),
             'has_cap' => $this->getCapStatus($offer, $target_type),
-            'category_id' => $this->getCategoryId($offer, $target_type)
+            'category_id' => $category_id,
+            'category_slug' => $category ? $category->slug : null,
+            'is_category_master' => $category ? !$category->parent_id : false,
+            'service_slug' => $target_type == 'service' ? $this->getServiceSlug($offer->target_id) : null
         ];
     }
 
@@ -89,7 +97,9 @@ class OfferDetailsTransformer extends TransformerAbstract
             case 'voucher':
                 $rules = json_decode($offer->target->rules);
                 $count = isset($rules->categories) && is_array($rules->categories) ? count($rules->categories) : 0;
-                return $count == 1 ? (int)$rules->categories[0] : null;
+                if ($count == 1) return (int)$rules->categories[0];
+                elseif ($count == 2) return $this->isVoucherCategoriesRentACar($rules->categories) ? (int)$rules->categories[0] : null;
+                else return null;
             case 'reward':
                 if ($offer->target->categoryNoConstraints && $offer->target->categoryNoConstraints->count() > 0) {
                     return null;
@@ -102,6 +112,41 @@ class OfferDetailsTransformer extends TransformerAbstract
                 return (int)$offer->target_id;
             default:
                 return null;
+        }
+    }
+
+    private function isVoucherCategoriesRentACar($voucher_categories)
+    {
+        $rent_a_car_categories = array_map('intval', explode(',', env('RENT_CAR_IDS')));
+        foreach ($voucher_categories as $voucher_category) {
+            if (!in_array($voucher_category, $rent_a_car_categories)) return false;
+        }
+        return true;
+    }
+
+    private function getCategory($category_id)
+    {
+        try {
+            if ($category_id) {
+                return Category::find($category_id);
+            } else {
+                return null;
+            }
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    private function getServiceSlug($service_id)
+    {
+        try {
+            if ($service_id) {
+                return Service::find($service_id)->slug;
+            } else {
+                return null;
+            }
+        } catch (\Throwable $e) {
+            return null;
         }
     }
 }
