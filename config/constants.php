@@ -271,6 +271,12 @@ return [
             'prefix' => 'A',
             'department' => 'AC'
         ],
+        'Bondhu' => [
+            'name' => 'Bondhu',
+            'short_name' => 'AC',
+            'prefix' => 'A',
+            'department' => 'AC'
+        ]
     ],
     'SERVICE_UNITS' => ['ft', 'sft', 'hour', 'kg', 'meal', 'person', 'piece', 'rft', 'seat', 'strip', 'km'],
     'FEEDBACK_STATUSES' => [
