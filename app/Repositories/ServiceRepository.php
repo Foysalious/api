@@ -320,14 +320,12 @@ class ServiceRepository
         }]);
     }
 
-    public function getpartnerServicePartnerDiscount($services, $location)
+    public function getpartnerServicePartnerDiscount($services)
     {
-        return $services->load(['partnerServices' => function ($q) use ($location) {
+        return $services->load(['partnerServices' => function ($q) {
             $q->published()
-                ->with(['partner' => function ($q) use ($location) {
-                    $q->published()->with('walletSetting')->whereHas('locations', function ($query) use ($location) {
-                        $query->where('id', $location);
-                    });
+                ->with(['partner' => function ($q) {
+                    $q->published()->with('walletSetting');
                 }])
                 ->with(['discounts' => function ($q) {
                     $q->where([
