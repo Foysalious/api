@@ -141,14 +141,13 @@ class CategoryController extends Controller
             $category = ((int)$request->is_business ? $category->publishedForBusiness() : $category->published())->first();
             if ($category != null) {
                 list($offset, $limit) = calculatePagination($request);
-                $location = $request->location != '' ? $request->location : 4;
                 $scope = [];
                 if ($request->has('scope')) $scope = $this->serviceRepository->getServiceScope($request->scope);
                 if ($category->parent_id == null) {
                     if ((int)$request->is_business) {
-                        $services = $this->categoryRepository->getServicesOfCategory((Category::where('parent_id', $category->id)->publishedForBusiness()->orderBy('order')->get())->pluck('id')->toArray(), $location, $offset, $limit);
+                        $services = $this->categoryRepository->getServicesOfCategory((Category::where('parent_id', $category->id)->publishedForBusiness()->orderBy('order')->get())->pluck('id')->toArray(), $offset, $limit);
                     } else {
-                        $services = $this->categoryRepository->getServicesOfCategory($category->children->sortBy('order')->pluck('id'), $location, $offset, $limit);
+                        $services = $this->categoryRepository->getServicesOfCategory($category->children->sortBy('order')->pluck('id'), $offset, $limit);
                     }
                     $services = $this->serviceRepository->addServiceInfo($services, $scope);
                 } else {
@@ -158,7 +157,7 @@ class CategoryController extends Controller
                         if ((int)\request()->is_business) $q->publishedForBusiness();
                         else $q->published();
                     }]);
-                    $services = $this->serviceRepository->getPartnerServicesAndPartners($category->services, $location)->each(function ($service) {
+                    $services = $this->serviceRepository->getPartnerServicesAndPartners($category->services)->each(function ($service) {
                         list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
                         removeRelationsAndFields($service);
                     });

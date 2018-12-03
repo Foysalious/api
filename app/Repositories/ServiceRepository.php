@@ -311,13 +311,9 @@ class ServiceRepository
         });
     }
 
-    public function getPartnerServicesAndPartners($services, $location)
+    public function getPartnerServicesAndPartners($services)
     {
-        return $services->load(['partners' => function ($q) use ($location) {
-            $q->published()->whereHas('locations', function ($query) use ($location) {
-                $query->where('id', $location);
-            });
-        }]);
+        return $services->load('partners');
     }
 
     public function getpartnerServicePartnerDiscount($services, $location)
