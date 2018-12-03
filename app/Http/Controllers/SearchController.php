@@ -46,8 +46,7 @@ class SearchController extends Controller
             if (count($services) == 0)
                 return api_response($request, null, 404);
             else {
-                $location = $request->has('location') ? $request->location : 4;
-                $services = $this->serviceRepository->getpartnerServicePartnerDiscount($services, $location);
+                $services = $this->serviceRepository->getpartnerServicePartnerDiscount($services);
                 $services = $this->serviceRepository->addServiceInfo($services, ['start_price', 'reviews']);
             }
             return api_response($request, null, 200, ['services' => $services]);

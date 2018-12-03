@@ -16,6 +16,25 @@ class Event extends Action
 
     public function isEligible()
     {
-        return $this->rule->check($this->params);
+        return $this->rule->check($this->params) && $this->filterConstraints();
+    }
+
+    private function filterConstraints()
+    {
+        $job = $this->params[0]->job;
+        $partner = $this->params[0]->job->partnerOrder->partner;
+        $is_constraints_passed = true;
+
+        foreach ($this->reward->constraints->groupBy('constraint_type') as $key => $type) {
+            $ids = $type->pluck('constraint_id')->toArray();
+
+            if ($key == 'App\Models\Category') {
+                $is_constraints_passed = $is_constraints_passed && in_array($job->category_id, $ids);
+            } elseif ($key == 'App\Models\PartnerSubscriptionPackage') {
+                $is_constraints_passed = $is_constraints_passed && in_array($partner->package_id, $ids);
+            }
+        }
+
+        return $is_constraints_passed;
     }
 }
