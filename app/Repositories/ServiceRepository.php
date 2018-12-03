@@ -303,9 +303,7 @@ class ServiceRepository
     {
         return $partnerServices->filter(function ($partner_service, $key) {
             if ($partner_service->partner != null) {
-                if ((double)$partner_service->partner->wallet > (double)$partner_service->partner->walletSetting->min_wallet_threshold) {
-                    return true;
-                }
+                return $partner_service->partner->hasAppropriateCreditLimit();
             }
             return false;
         });

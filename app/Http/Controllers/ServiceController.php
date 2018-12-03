@@ -28,7 +28,6 @@ class ServiceController extends Controller
     {
         try {
             list($offset, $limit) = calculatePagination($request);
-            $location = $request->has('location') ? $request->location : 4;
             $services = Service::select('id', 'name', 'bn_name', 'unit', 'category_id', 'thumb', 'slug', 'min_quantity', 'banner', 'variable_type');
             $scope = ['start_price'];
             if ($request->has('is_business')) $services = $services->publishedForBusiness();
