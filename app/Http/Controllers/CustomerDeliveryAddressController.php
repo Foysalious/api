@@ -172,9 +172,9 @@ class CustomerDeliveryAddressController extends Controller
     {
         try{
             $this->validate($request,[
-                'customer_phone_number' => 'required|mobile:bd'
+                'mobile' => 'required|mobile:bd'
             ]);
-            $profile= Profile::where('mobile','+88'.$request->customer_phone_number)->first();
+            $profile= Profile::where('mobile','+88'.$request->mobile)->first();
             $customer = Customer::where('profile_id',$profile->id)->first();
             $customer_order_addresses = $customer->orders()->selectRaw('delivery_address,count(*) as c')->groupBy('delivery_address')->orderBy('c', 'desc')->get();
             $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'address')->get()->map(function ($customer_delivery_address) use ($customer_order_addresses) {
