@@ -16,11 +16,13 @@ class CategoryRepository
         $this->reviewRepository = new ReviewRepository();
     }
 
-    public function getServicesOfCategory($category_ids, $offset, $limit)
+    public function getServicesOfCategory($category_ids, $location, $offset, $limit)
     {
-        $services = Service::with(['partnerServices' => function ($q) {
-            $q->where([['is_published', 1], ['is_verified', 1]])->with(['partner' => function ($q) {
-                $q->where('status', 'Verified');
+        $services = Service::with(['partnerServices' => function ($q) use ($location) {
+            $q->where([['is_published', 1], ['is_verified', 1]])->with(['partner' => function ($q) use ($location) {
+                $q->where('status', 'Verified')->whereHas('locations', function ($query) use ($location) {
+                    $query->where('id', $location);
+                });
             }]);
         }])->select('id', 'category_id', 'name', 'bn_name', 'thumb', 'banner', 'app_thumb', 'app_banner', 'slug', 'min_quantity', 'short_description', 'description', 'variable_type', 'variables', 'faqs')
             ->whereIn('category_id', $category_ids)->skip($offset)->take($limit);
