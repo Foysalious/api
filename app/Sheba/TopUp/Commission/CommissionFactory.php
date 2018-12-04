@@ -27,10 +27,7 @@ class CommissionFactory
         \App\Models\Affiliate::class
     ];
 
-    /**
-     * @param @id
-     * @throws \Exception
-     */
+
     public function getById($id)
     {
         if(!in_array($id, $this->getConstants())) {
@@ -39,14 +36,11 @@ class CommissionFactory
         return app($this->classes[$id - 1]);
     }
 
-    /**
-     * @param $name
-     * @throws \Exception
-     */
+
     public function getByName($name)
     {
         if(!in_array($name, $this->agent_classes)) {
-            throw new \Exception('Invalid Commission Model');
+            throw new \Exception('Invalid Top Up Commission');
         }
         $id = array_search($name, $this->agent_classes);
         return app($this->classes[$id]);
