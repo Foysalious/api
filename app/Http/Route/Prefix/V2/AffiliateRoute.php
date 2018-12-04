@@ -20,6 +20,7 @@ class AffiliateRoute
             $api->get('top-up/validate/ssl', 'SslController@validateTopUp');
             $api->get('top-up/ssl/balance', 'SslController@checkBalance');
             $api->get('top-up/history', 'AffiliateController@topUpHistory');
+            $api->post('place-order', 'OrderController@placeOrderFromBondhu');
             $api->get('customer-delivery-address', 'CustomerDeliveryAddressController@getDeliveryInfoForAffiliate');
             $api->get('customer-info', 'AffiliateController@getCustomerInfo');
             $api->post('top-up-test', 'TopUpController@topUpTest');
