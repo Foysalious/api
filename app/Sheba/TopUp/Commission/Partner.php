@@ -1,6 +1,6 @@
-<?php namespace App\Sheba\TopUp\Commission;
+<?php namespace Sheba\TopUp\Commission;
 
-use App\Sheba\TopUp\TopUpCommission;
+use Sheba\TopUp\TopUpCommission;
 
 class Partner extends TopUpCommission
 {

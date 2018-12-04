@@ -1,12 +1,10 @@
-<?php namespace App\Sheba\TopUp;
+<?php namespace Sheba\TopUp;
 
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
-use Sheba\TopUp\TopUpAgent;
 
 abstract class TopUpCommission
 {
-
     protected $topUpOrder;
     protected $agent;
     protected $vendor;
@@ -32,8 +30,28 @@ abstract class TopUpCommission
 
     public function storeAgentsCommission()
     {
-        $this->topUpOrder->agent_commission =  $this->agent->calculateCommission($this->topUpOrder->amount, $this->vendor);
+        $this->topUpOrder->agent_commission =  $this->calculateCommission($this->topUpOrder->amount, $this->vendor);
         $this->topUpOrder->save();
+    }
+
+    public function calculateCommission($amount, TopUpVendor $topup_vendor)
+    {
+        return (double)$amount * ($this->getVendorAgentCommission($topup_vendor) / 100);
+    }
+
+    public function calculateAmbassadorCommission($amount, TopUpVendor $topup_vendor)
+    {
+        return (double)$amount * ($this->getVendorAmbassadorCommission($topup_vendor) / 100);
+    }
+
+    public function getVendorAgentCommission($topup_vendor)
+    {
+        return (double)$topup_vendor->commissions()->where('type', get_class($this->agent))->first()->agent_commission;
+    }
+
+    public function getVendorAmbassadorCommission($topup_vendor)
+    {
+        return (double)$topup_vendor->commissions()->where('type', get_class($this->agent))->first()->ambassador_commission;
     }
 
     abstract public function disburse();

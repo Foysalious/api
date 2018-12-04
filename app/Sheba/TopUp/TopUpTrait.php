@@ -1,7 +1,6 @@
 <?php namespace Sheba\TopUp;
 
 use App\Models\TopUpVendor;
-use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\Vendor\VendorFactory;
 
 trait TopUpTrait
@@ -24,6 +23,12 @@ trait TopUpTrait
     {
         $this->creditWallet($amount);
         $this->walletTransaction(['amount' => $amount, 'type' => 'Credit', 'log' => $log]);
+    }
+
+    public function deductFromAmbassador($amount, $log)
+    {
+        $this->debitWallet($amount);
+        $this->walletTransaction(['amount' => $amount, 'type' => 'Debit', 'log' => $log]);
     }
 
     public function calculateCommission($amount, TopUpVendor $topup_vendor)
