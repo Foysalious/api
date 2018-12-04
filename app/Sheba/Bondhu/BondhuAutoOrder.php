@@ -9,6 +9,7 @@
 namespace App\Sheba\Bondhu;
 
 
+use App\Exceptions\ApiValidationException;
 use App\Http\Requests\BondhuOrderRequest;
 use App\Models\Affiliation;
 use App\Models\Customer;
@@ -54,8 +55,9 @@ class BondhuAutoOrder
 
     public function setAffiliation()
     {
+        throw new ApiValidationException(json_encode($this->request->affiliate));
         $affiliation = new Affiliation([
-            'affiliate_id' => $this->request->affiliate['id'],
+            'affiliate_id' => $this->request->affiliate->id,
             'customer_name' => $this->profile->name,
             'customer_mobile' => $this->profile->mobile,
             'service' => $this->service_category,
