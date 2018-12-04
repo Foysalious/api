@@ -76,9 +76,7 @@ class TopUp
         $this->withCreateModificationField($topUpOrder);
         $topUpOrder->save();
 
-        $commission = new CommissionFactory();
-        $commission = $commission->getByName($topUpOrder->agent_type)->setAgent($this->agent)->setTopUpOrder($topUpOrder)->setTopUpVendor($this->model);
-        dd($commission);
+        (new CommissionFactory())->getByName($topUpOrder->agent_type)->setAgent($this->agent)->setTopUpOrder($topUpOrder)->setTopUpVendor($this->model)->disburse();
     }
 
     public function processFailedTopUp(TopUpOrder $topUpOrder, TopUpFailResponse $topUpFailResponse)
