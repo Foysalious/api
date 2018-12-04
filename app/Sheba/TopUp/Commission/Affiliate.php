@@ -10,5 +10,11 @@ class Affiliate extends TopUpCommission
     public function disburse()
     {
        $this->storeAgentsCommission();
+       $this->calculateAmbassadorCommission();
+    }
+
+    private function calculateAmbassadorCommission() {
+        $this->topUpOrder->ambassador_commission =  $this->agent->calculateAmbassadorCommission($this->topUpOrder->amount, $this->vendor);
+        $this->topUpOrder->save();
     }
 }

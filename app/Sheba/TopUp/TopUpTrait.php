@@ -31,8 +31,18 @@ trait TopUpTrait
         return (double)$amount * ($this->agentCommission($topup_vendor) / 100);
     }
 
+    public function calculateAmbassadorCommission($amount, TopUpVendor $topup_vendor)
+    {
+        return (double)$amount * ($this->ambassadorCommission($topup_vendor) / 100);
+    }
+
     public function agentCommission($topup_vendor)
     {
         return (double)$topup_vendor->commissions()->where('type', get_class($this))->first()->agent_commission;
+    }
+
+    public function ambassadorCommission($topup_vendor)
+    {
+        return (double)$topup_vendor->commissions()->where('type', get_class($this))->first()->ambassador_commission;
     }
 }
