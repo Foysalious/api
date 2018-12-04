@@ -498,3 +498,21 @@ if (!function_exists('pamel_case')) {
         return ucfirst(camel_case($string));
     }
 }
+
+if (!function_exists('scramble_string'))
+{
+    /**
+     * Returns scrambled string replaced by '*'
+     *
+     *
+     * @param $scramble_ratio = The ratio (in percentage) by which the visible portion of the string is shown
+     * @return String
+     */
+    function scramble_string($str, $scramble_ratio = 15)
+    {
+        $len = strlen($str);
+        $number_of_words_visible = (int) ceil(($scramble_ratio * $len) / 100);
+        $number_of_words_hidden = $len - ($number_of_words_visible * 2);
+        return substr($str,0,$number_of_words_visible).str_repeat('*',$number_of_words_hidden).substr($str,$len-$number_of_words_visible,$len);
+    }
+}
