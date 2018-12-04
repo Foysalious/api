@@ -16,16 +16,19 @@ class Affiliate extends TopUpCommission
     public function setAgent(TopUpAgent $agent)
     {
         $this->agent = $agent;
+        return $this;
     }
 
     public function setTopUpOrder(TopUpOrder $topUpOrder)
     {
         $this->topUpOrder = $topUpOrder;
+        return $this;
     }
 
     public function setTopUpVendor(TopUpVendor $topUpVendor)
     {
         $this->vendor = $topUpVendor;
+        return $this;
     }
 
     public function disburse()
