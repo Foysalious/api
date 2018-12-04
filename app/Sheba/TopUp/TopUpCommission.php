@@ -15,16 +15,19 @@ abstract class TopUpCommission
     public function setAgent(TopUpAgent $agent)
     {
         $this->agent = $agent;
+        return $this->agent;
     }
 
     public function setTopUpOrder(TopUpOrder $topUpOrder)
     {
         $this->topUpOrder = $topUpOrder;
+        return $this->agent;
     }
 
     public function setTopUpVendor(TopUpVendor $topUpVendor)
     {
         $this->vendor = $topUpVendor;
+        return $this->agent;
     }
 
     public function calculateCommission($amount, TopUpVendor $topup_vendor)
