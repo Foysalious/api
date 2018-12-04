@@ -40,6 +40,7 @@ class TopUp
         if ($this->agent->wallet >= $amount) {
             $mobile_number = formatMobile($mobile_number);
             $response = $this->vendor->recharge($mobile_number, $amount, $type);
+            dd($response);
             if ($response->hasSuccess()) {
                 $response = $response->getSuccess();
                 dd($response);
