@@ -8,8 +8,6 @@
 
 namespace App\Sheba\Bondhu;
 
-
-use App\Exceptions\ApiValidationException;
 use App\Http\Requests\BondhuOrderRequest;
 use App\Models\Affiliation;
 use App\Models\Customer;
@@ -25,6 +23,9 @@ class BondhuAutoOrder
     public function __construct(BondhuOrderRequest $request)
     {
         $this->request = $request;
+        if (!isset($this->request->affiliate->id)) {
+            $this->request->affiliate = Affiliation::find($this->request->affiliate);
+        }
     }
 
     public function setServiceCategoryName()
@@ -56,7 +57,7 @@ class BondhuAutoOrder
     public function setAffiliation()
     {
         $affiliation = new Affiliation([
-            'affiliate_id' => isset($this->request->affiliate->id) ? $this->request->affiliate->id : $this->request->affiliate,
+            'affiliate_id' => $this->request->affiliate->id,
             'customer_name' => $this->profile->name,
             'customer_mobile' => $this->profile->mobile,
             'service' => $this->service_category,
