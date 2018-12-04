@@ -579,7 +579,7 @@ class AffiliateController extends Controller
 
                 return api_response($request, $customer_name, 200, ['name' => $customer_name]);
             }
-            return api_response($request, [], 404, ['message' => 'User not found.']);
+            return api_response($request, [], 404, ['message' => 'Customer not found.']);
         }catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
