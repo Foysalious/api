@@ -565,24 +565,20 @@ class AffiliateController extends Controller
 
     public function getCustomerInfo(Request $request)
     {
-        try {
-            try{
-                $this->validate($request,[
-                    'mobile' => 'required|mobile:bd'
-                ]);
-                $profile= Profile::where('mobile','+88'.$request->mobile)->first();
+        try{
+            $this->validate($request,[
+                'mobile' => 'required|mobile:bd'
+            ]);
+            $profile= Profile::where('mobile','+88'.$request->mobile)->first();
+            if(!is_null($profile)) {
                 $customer_name = $profile->name;
 
                 return api_response($request, $customer_name, 200, ['name' => $customer_name]);
-            }catch (ValidationException $e) {
-                $message = getValidationErrorMessage($e->validator->errors()->all());
-                return api_response($request, $message, 400, ['message' => $message]);
-            } catch (\Throwable $e) {
-                app('sentry')->captureException($e);
-                return api_response($request, null, 500);
             }
-
-            return response()->json(['code' => 200, 'data' => $topup_data, 'total_topups' => $total_topups, 'offset' => $offset]);
+            return api_response($request, [], 404,['addresses'=>[]]);
+        }catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
