@@ -12,7 +12,6 @@ namespace App\Sheba\Bondhu;
 use App\Http\Requests\BondhuOrderRequest;
 use App\Models\Affiliation;
 use App\Models\Customer;
-use App\Models\CustomerDeliveryAddress;
 use App\Models\Profile;
 use App\Models\Service;
 use App\Sheba\Checkout\Checkout;
@@ -56,7 +55,7 @@ class BondhuAutoOrder
     public function setAffiliation()
     {
         $affiliation = new Affiliation([
-            'affiliate_id' => $this->request->affiliate->id,
+            'affiliate_id' => $this->request->affiliate['id'],
             'customer_name' => $this->profile->name,
             'customer_mobile' => $this->profile->mobile,
             'service' => $this->service_category,

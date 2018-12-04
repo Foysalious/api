@@ -1,6 +1,5 @@
 <?php namespace App\Http\Route\Prefix\V2;
 
-use App\Sheba\TopUp\Commission\Affiliate;
 
 class AffiliateRoute
 {
