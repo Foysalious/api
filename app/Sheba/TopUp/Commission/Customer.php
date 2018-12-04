@@ -38,5 +38,6 @@ class Customer extends TopUpCommission
     public function disburse()
     {
         $this->topUpOrder->agent_commission =  $this->agent->calculateCommission($this->topUpOrder->amount, $this->vendor);
+        $this->topUpOrder->save();
     }
 }
