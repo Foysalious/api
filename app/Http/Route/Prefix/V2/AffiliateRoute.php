@@ -19,6 +19,7 @@ class AffiliateRoute
             $api->get('top-up/ssl/balance', 'SslController@checkBalance');
             $api->get('top-up/history', 'AffiliateController@topUpHistory');
             $api->get('customer-delivery-address', 'CustomerDeliveryAddressController@getDeliveryInfoForAffiliate');
+            $api->get('customer-info', 'AffiliateController@getCustomerInfo');
         });
         $api->get('affiliates/faq', 'FaqController@getAffiliateFaqs');
     }

@@ -303,9 +303,7 @@ class ServiceRepository
     {
         return $partnerServices->filter(function ($partner_service, $key) {
             if ($partner_service->partner != null) {
-                if ((double)$partner_service->partner->wallet > (double)$partner_service->partner->walletSetting->min_wallet_threshold) {
-                    return true;
-                }
+                return $partner_service->partner->hasAppropriateCreditLimit();
             }
             return false;
         });
@@ -320,14 +318,12 @@ class ServiceRepository
         }]);
     }
 
-    public function getpartnerServicePartnerDiscount($services, $location)
+    public function getpartnerServicePartnerDiscount($services)
     {
-        return $services->load(['partnerServices' => function ($q) use ($location) {
+        return $services->load(['partnerServices' => function ($q) {
             $q->published()
-                ->with(['partner' => function ($q) use ($location) {
-                    $q->published()->with('walletSetting')->whereHas('locations', function ($query) use ($location) {
-                        $query->where('id', $location);
-                    });
+                ->with(['partner' => function ($q) {
+                    $q->published()->with('walletSetting');
                 }])
                 ->with(['discounts' => function ($q) {
                     $q->where([

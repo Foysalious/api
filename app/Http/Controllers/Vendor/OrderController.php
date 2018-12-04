@@ -17,6 +17,7 @@ use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use Sheba\Voucher\Creator\Referral;
 
 class OrderController extends Controller
 {
@@ -37,7 +38,6 @@ class OrderController extends Controller
             $resource = new Item($data->job, new JobTransformer());
             return response()->json($fractal->createData($resource)->toArray());
         } catch (\Throwable $e) {
-            dd($e);
             return response()->json(['data' => null]);
         }
     }
@@ -96,6 +96,7 @@ class OrderController extends Controller
         $customer->profile_id = $profile->id;
         $customer->remember_token = str_random(255);
         $customer->save();
+        new Referral($customer);
         return $customer;
     }
 }

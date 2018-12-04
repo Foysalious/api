@@ -24,15 +24,14 @@ class PerformanceController extends Controller
             $performance->setPartner($request->partner)->setTimeFrame($time_frame)->calculate();
 
             $data = [
-                'timeline' => $time_frame->start->toDateString() . ' - ' . $time_frame->end->toDateString()
-            ] + $performance->getData()->toArray();
+                    'timeline' => $time_frame->start->toDateString() . ' - ' . $time_frame->end->toDateString()
+                ] + $performance->getData()->toArray();
 
             return api_response($request, $performance, 200, ['data' => $data]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -45,7 +44,7 @@ class PerformanceController extends Controller
     private function getTimeFrame(Request $request)
     {
         $time_frame = new TimeFrame();
-        if($request->of == "week") {
+        if ($request->of == "week") {
             $time_frame->forSomeWeekFromNow($request->week);
         } else if ($request->of == "month") {
             $time_frame->forAMonth($request->month, $request->year);

@@ -89,6 +89,7 @@ class JobController extends Controller
             $job_collection->put('preferred_time', $job->readable_preferred_time);
             $job_collection->put('category_id', $job->category ? $job->category->id : null);
             $job_collection->put('category_name', $job->category ? $job->category->name : null);
+            $job_collection->put('partner_id', $job->partnerOrder->partner->id);
             $job_collection->put('partner_name', $job->partnerOrder->partner->name);
             $job_collection->put('status', $job->status);
             $job_collection->put('rating', $job->review ? $job->review->rating : null);

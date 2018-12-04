@@ -62,7 +62,7 @@ class OfferDetailsTransformer extends TransformerAbstract
                 }
                 return $data;
             default:
-                return 'Price ';
+                return 'Save Upto ';
 
         }
     }
