@@ -12,17 +12,17 @@ abstract class TopUpCommission
     protected $vendor;
     protected $amount;
 
-    protected function setAgent(TopUpAgent $agent)
+    public function setAgent(TopUpAgent $agent)
     {
         $this->agent = $agent;
     }
 
-    protected function setTopUpOrder(TopUpOrder $topUpOrder)
+    public function setTopUpOrder(TopUpOrder $topUpOrder)
     {
         $this->topUpOrder = $topUpOrder;
     }
 
-    protected function setTopUpVendor(TopUpVendor $topUpVendor)
+    public function setTopUpVendor(TopUpVendor $topUpVendor)
     {
         $this->vendor = $topUpVendor;
     }
