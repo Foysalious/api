@@ -83,7 +83,6 @@ class TopUp
 
     public function processFailedTopUp(TopUpOrder $topUpOrder, TopUpFailResponse $topUpFailResponse)
     {
-        dd("Test");
         if ($topUpOrder->isFailed()) return true;
         DB::transaction(function () use ($topUpOrder, $topUpFailResponse) {
             $this->model = $topUpOrder->vendor;
