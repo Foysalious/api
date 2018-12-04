@@ -40,10 +40,8 @@ class TopUp
         if ($this->agent->wallet >= $amount) {
             $mobile_number = formatMobile($mobile_number);
             $response = $this->vendor->recharge($mobile_number, $amount, $type);
-            dd($response);
             if ($response->hasSuccess()) {
                 $response = $response->getSuccess();
-                dd($response);
                 DB::transaction(function () use ($response, $mobile_number, $amount) {
                     $this->placeTopUpOrder($response, $mobile_number, $amount);
                     $amount_after_commission = $amount - $this->agent->calculateCommission($amount, $this->model);
