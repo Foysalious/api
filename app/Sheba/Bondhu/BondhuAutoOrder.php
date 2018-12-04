@@ -18,7 +18,7 @@ use App\Sheba\Checkout\Checkout;
 class BondhuAutoOrder
 {
     private $service_category, $profile, $affiliation;
-    public $order, $customer,$request;
+    public $order, $customer, $request, $affiliate;
 
     public function __construct(BondhuOrderRequest $request)
     {
@@ -26,6 +26,7 @@ class BondhuAutoOrder
         if (!isset($this->request->affiliate->id)) {
             $this->request->affiliate = Affiliation::find($this->request->affiliate);
         }
+        $this->affiliate = $this->request->affiliate;
     }
 
     public function setServiceCategoryName()
@@ -57,7 +58,7 @@ class BondhuAutoOrder
     public function setAffiliation()
     {
         $affiliation = new Affiliation([
-            'affiliate_id' => $this->request->affiliate->id,
+            'affiliate_id' => $this->affiliate->id,
             'customer_name' => $this->profile->name,
             'customer_mobile' => $this->profile->mobile,
             'service' => $this->service_category,
@@ -87,8 +88,8 @@ class BondhuAutoOrder
                     'location' => $this->request->location,
                     'name' => $this->profile->name,
                     'mobile' => $this->profile->mobile,
-                    'created_by' => $this->request->affiliate->id,
-                    'created_by_name' => $this->request->affiliate->name
+                    'created_by' => $this->affiliate->id,
+                    'created_by_name' => $this->affiliate->name
                 ]
             );
             $this->request->merge(['address_id' => $customer_address->id]);
@@ -99,8 +100,8 @@ class BondhuAutoOrder
     {
         $this->request->merge([
             'affiliation_id' => $this->affiliation->id,
-            'created_by' => $this->request->affiliate->id,
-            'created_by_name' => 'Affiliate - ' . $this->request->affiliate->profile->name,
+            'created_by' => $this->affiliate->id,
+            'created_by_name' => 'Affiliate - ' . $this->affiliate->profile->name,
         ]);
     }
 
