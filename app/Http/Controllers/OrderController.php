@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Http\Requests\BondhuOrderRequest;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\PartnerOrder;
@@ -8,15 +9,16 @@ use App\Repositories\JobServiceRepository;
 use App\Repositories\NotificationRepository;
 use App\Repositories\OrderRepository;
 use App\Repositories\SmsHandler;
+use App\Sheba\Bondhu\BondhuAutoOrder;
 use App\Sheba\Checkout\Checkout;
 use App\Sheba\Checkout\OnlinePayment;
 use App\Sheba\Checkout\Validation;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Redis;
-use DB;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\ShebaPayment;
 
@@ -105,6 +107,47 @@ class OrderController extends Controller
             $sentry->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function placeOrderFromBondhu(BondhuOrderRequest $request, $affiliate, BondhuAutoOrder $bondhuAutoOrder)
+    {
+        try {
+            if ($bondhuAutoOrder->setServiceCategoryName()) {
+                $order = $payment = $link = null;
+                DB::beginTransaction();
+                $order = $bondhuAutoOrder->setCustomer()->setAffiliation()->generateOrder()->order;
+                if ($order) {
+                    if ($order->voucher_id) $this->updateVouchers($order, $bondhuAutoOrder->customer);
+                    if ($request->payment_method !== 'cod') {
+                        /** @var Payment $payment */
+                        $payment = $this->getPayment($request->payment_method, $order);
+                        if ($payment) {
+                            $link = $payment->redirect_url;
+                            $payment = $payment->getFormattedPayment();
+                        }
+                    }
+                    $this->sendNotifications($bondhuAutoOrder->customer, $order);
+                    DB::commit();
+                    return api_response($request, $order, 200, ['link' => $link, 'job_id' => $order->jobs->first()->id,
+                        'order_code' => $order->code(), 'payment' => $payment]);
+                } else {
+                    DB::rollback();
+                    return api_response($request, null, 400, ['message' => 'Order can not be created']);
+                }
+            } else {
+                return api_response($request, null, 400, ['message' => 'Service is invalid']);
+            }
+
+        } catch (QueryException $e) {
+            DB::rollback();
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500, ['message' => $e->getMessage()]);
+        } catch (\Throwable $exception) {
+            DB::rollback();
+            app('sentry')->captureException($exception);
+            return api_response($request, null, 500, ['message' => $exception->getMessage()]);
+        }
+
     }
 
     private function updateVouchers($order, Customer $customer)

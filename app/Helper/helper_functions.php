@@ -169,7 +169,7 @@ if (!function_exists('api_response')) {
         if ($external_response != null) {
             $public_response = array_merge($public_response, $external_response);
         }
-        if (class_basename($request) == 'Request') {
+        if (class_basename($request) == 'Request' || $request instanceof \App\Http\Requests\ApiRequest) {
             return response()->json($public_response);
         } else {
             return $internal_response;
@@ -488,12 +488,11 @@ if (!function_exists('createOptionsFromOptionVariables')) {
 if (!function_exists('trim_phone_number')) {
     function trim_phone_number($number, $index_number = '0')
     {
-        return  strstr($number, $index_number);
+        return strstr($number, $index_number);
     }
 }
 
-if (!function_exists('pamel_case'))
-{
+if (!function_exists('pamel_case')) {
     function pamel_case($string)
     {
         return ucfirst(camel_case($string));
