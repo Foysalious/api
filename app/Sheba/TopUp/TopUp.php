@@ -95,7 +95,7 @@ class TopUp
         });
     }
 
-    private function refund(TopUpOrder $topUpOrder)
+    public function refund(TopUpOrder $topUpOrder)
     {
         $amount = $topUpOrder->amount;
         /** @var TopUpAgent $agent */
@@ -107,10 +107,11 @@ class TopUp
             $this->sendRefundNotificationToAffiliate($topUpOrder, $log);
 
             $ambassador = $topUpOrder->agent->ambassador;
-            dd($ambassador);
-            $ambassador_commission = $ambassador->deductFromAmbassador($amount, $this->model);
-            $topUpOrder->ambassador_commission = 0.0;
-            $ambassador->deductFromAmbassador($ambassador_commission, "$ambassador_commission has been deducted due to refund top up.");
+            if(!is_null($ambassador)) {
+                $ambassador_commission = $ambassador->deductFromAmbassador($amount, $this->model);
+                $topUpOrder->ambassador_commission = 0.0;
+                $ambassador->deductFromAmbassador($ambassador_commission, "$ambassador_commission has been deducted due to refund top up.");
+            }
         }
     }
 
