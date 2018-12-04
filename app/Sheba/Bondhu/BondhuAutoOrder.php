@@ -17,8 +17,8 @@ use App\Sheba\Checkout\Checkout;
 
 class BondhuAutoOrder
 {
-    private $request, $service_category, $profile, $affiliation;
-    public $order, $customer;
+    private $service_category, $profile, $affiliation;
+    public $order, $customer,$request;
 
     public function __construct(BondhuOrderRequest $request)
     {
