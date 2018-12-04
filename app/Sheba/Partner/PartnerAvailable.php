@@ -31,7 +31,7 @@ class PartnerAvailable
                 return 0;
             }
         }
-        
+
         return 1;
     }
 
@@ -47,6 +47,9 @@ class PartnerAvailable
         $working_day = $this->partner->workingHours->where('day', $day)->first();
         if (!$working_day) return false;
         $start_time = Carbon::parse(explode('-', $time)[0]);
-        return $start_time->gte(Carbon::parse($working_day->start_time)) && $start_time->lte(Carbon::parse($working_day->end_time));
+        $working_hour_start_time = Carbon::parse($working_day->start_time);
+        $working_hour_end_time = Carbon::parse($working_day->end_time);
+        $is_available = ($working_hour_end_time->notEqualTo($start_time) && $start_time->between($working_hour_start_time, $working_hour_end_time, true));
+        return $is_available ? 1 : 0;
     }
 }
