@@ -17,6 +17,9 @@ class Affiliate extends TopUpCommission
     }
 
     private function storeWalletTransaction(){
-        $this->agent->ambassador->creditWallet($this->amount);
-        $this->agent->ambassador->walletTransaction(['amount' => $this->amount, 'type' => 'Credit', 'log' => "$this->amount Tk. has been gifted from agent id: {$this->agent->id}"]);}
+        if($this->agent->ambassador) {
+            $this->agent->ambassador->creditWallet($this->amount);
+            $this->agent->ambassador->walletTransaction(['amount' => $this->amount, 'type' => 'Credit', 'log' => "$this->amount Tk. has been gifted from agent id: {$this->agent->id}"]);
+        }
+    }
 }
