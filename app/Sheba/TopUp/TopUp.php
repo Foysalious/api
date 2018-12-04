@@ -77,6 +77,7 @@ class TopUp
         $topUpOrder->save();
 
         $commission = new CommissionFactory();
+        dd($commission->getByName($topUpOrder->agent_type));
         $commission->getByName($topUpOrder->agent_type)->setAgent($this->agent)->setTopUpOrder($topUpOrder)->setTopUpVendor($this->model)->disburse();
     }
 
