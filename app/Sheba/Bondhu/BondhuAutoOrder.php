@@ -55,9 +55,8 @@ class BondhuAutoOrder
 
     public function setAffiliation()
     {
-        throw new ApiValidationException(json_encode($this->request->affiliate));
         $affiliation = new Affiliation([
-            'affiliate_id' => $this->request->affiliate->id,
+            'affiliate_id' => isset($this->request->affiliate->id) ? $this->request->affiliate->id : $this->request->affiliate,
             'customer_name' => $this->profile->name,
             'customer_mobile' => $this->profile->mobile,
             'service' => $this->service_category,
