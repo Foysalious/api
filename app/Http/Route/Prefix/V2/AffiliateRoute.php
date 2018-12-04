@@ -1,5 +1,7 @@
 <?php namespace App\Http\Route\Prefix\V2;
 
+use App\Sheba\TopUp\Commission\Affiliate;
+
 class AffiliateRoute
 {
     public function set($api)
@@ -21,6 +23,7 @@ class AffiliateRoute
             $api->post('place-order', 'OrderController@placeOrderFromBondhu');
             $api->get('customer-delivery-address', 'CustomerDeliveryAddressController@getDeliveryInfoForAffiliate');
             $api->get('customer-info', 'AffiliateController@getCustomerInfo');
+            $api->post('top-up-test', 'TopUpController@topUpTest');
         });
         $api->get('affiliates/faq', 'FaqController@getAffiliateFaqs');
     }

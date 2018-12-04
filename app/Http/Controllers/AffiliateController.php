@@ -482,7 +482,10 @@ class AffiliateController extends Controller
                     'id' => $service->id,
                     'name' => $service->name,
                     'bangla_name' => empty($service->bn_name) ? null : $service->bn_name,
-                    'image' => $service->app_thumb
+                    'image' => $service->app_thumb,
+                    'min_quantity' => $service->min_quantity,
+                    'unit' => $service->unit,
+                    'category_id' => $service->category_id
                 ];
             });
             return api_response($request, $services, 200, ['services' => $services]);
@@ -516,8 +519,8 @@ class AffiliateController extends Controller
     {
         try {
             $rules = [
-                'from'  => 'date_format:Y-m-d',
-                'to'    => 'date_format:Y-m-d|required_with:from'
+                'from' => 'date_format:Y-m-d',
+                'to' => 'date_format:Y-m-d|required_with:from'
             ];
 
             $validator = Validator::make($request->all(), $rules);
@@ -529,13 +532,13 @@ class AffiliateController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $topups = Affiliate::find($affiliate)->topups();
 
-            if (isset($request->from) && $request->from !== "null") $topups = $topups->whereBetween('created_at', [$request->from." 00:00:00", $request->to." 23:59:59"]);
+            if (isset($request->from) && $request->from !== "null") $topups = $topups->whereBetween('created_at', [$request->from . " 00:00:00", $request->to . " 23:59:59"]);
             if (isset($request->vendor_id) && $request->vendor_id !== "null") $topups = $topups->where('vendor_id', $request->vendor_id);
-            if (isset($request->status) && $request->status !== "null")  $topups = $topups->where('status', $request->status);
+            if (isset($request->status) && $request->status !== "null") $topups = $topups->where('status', $request->status);
             if (isset($request->q) && $request->q !== "null") $topups = $topups->where('payee_mobile', 'LIKE', '%' . $request->q . '%');
 
             $total_topups = $topups->count();
-            $topups = $topups->with('vendor')->skip($offset)->take($limit)->orderBy('created_at','desc')->get();
+            $topups = $topups->with('vendor')->skip($offset)->take($limit)->orderBy('created_at', 'desc')->get();
 
             $topup_data = [];
             foreach ($topups as $topup) {
@@ -566,12 +569,12 @@ class AffiliateController extends Controller
 
     public function getCustomerInfo(Request $request)
     {
-        try{
-            $this->validate($request,[
+        try {
+            $this->validate($request, [
                 'mobile' => 'required|mobile:bd'
             ]);
-            $profile= Profile::where('mobile','+88'.$request->mobile)->first();
-            if(!is_null($profile)) {
+            $profile = Profile::where('mobile', '+88' . $request->mobile)->first();
+            if (!is_null($profile)) {
                 $customer_name = $profile->name;
 
                 return api_response($request, $customer_name, 200, ['name' => $customer_name]);

@@ -2,6 +2,7 @@
 
 use App\Models\Affiliate;
 use App\Models\TopUpOrder;
+use App\Sheba\TopUp\Commission\CommissionFactory;
 use Sheba\ModificationFields;
 use DB;
 use Sheba\TopUp\Vendor\Response\TopUpFailResponse;
@@ -39,8 +40,10 @@ class TopUp
         if ($this->agent->wallet >= $amount) {
             $mobile_number = formatMobile($mobile_number);
             $response = $this->vendor->recharge($mobile_number, $amount, $type);
+            dd($response);
             if ($response->hasSuccess()) {
                 $response = $response->getSuccess();
+                dd($response);
                 DB::transaction(function () use ($response, $mobile_number, $amount) {
                     $this->placeTopUpOrder($response, $mobile_number, $amount);
                     $amount_after_commission = $amount - $this->agent->calculateCommission($amount, $this->model);
@@ -69,15 +72,20 @@ class TopUp
         $topUpOrder->transaction_details = json_encode($response->transactionDetails);
         $topUpOrder->vendor_id = $this->model->id;
         $topUpOrder->sheba_commission = ($amount * $this->model->sheba_commission) / 100;
-        $topUpOrder->agent_commission = $this->agent->calculateCommission($amount, $this->model);
+        $topUpOrder->agent_commission = 0.00;
 
         $this->setModifier($this->agent);
         $this->withCreateModificationField($topUpOrder);
         $topUpOrder->save();
+
+        $commission = new CommissionFactory();
+        $commission = $commission->getByName($topUpOrder->agent_type);
+        dd($commission);
     }
 
     public function processFailedTopUp(TopUpOrder $topUpOrder, TopUpFailResponse $topUpFailResponse)
     {
+        dd("Test");
         if ($topUpOrder->isFailed()) return true;
         DB::transaction(function () use ($topUpOrder, $topUpFailResponse) {
             $this->model = $topUpOrder->vendor;
