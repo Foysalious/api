@@ -29,6 +29,13 @@ class BondhuAutoOrder
         $this->affiliate = $this->request->affiliate;
     }
 
+    public function place()
+    {
+        $this->setCustomer();
+        $this->setAffiliation();
+        return $this->generateOrder();
+    }
+
     public function setServiceCategoryName()
     {
         $services = json_decode($this->request->services);
@@ -76,7 +83,7 @@ class BondhuAutoOrder
         $order = new Checkout($this->customer);
         $order = $order->placeOrder($this->request);
         $this->order = $order;
-        return $this;
+        return $order;
     }
 
     private function setAddress()
