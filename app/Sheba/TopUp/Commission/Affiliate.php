@@ -1,20 +1,25 @@
-<?php namespace App\Sheba\TopUp\Commission;
+<?php namespace Sheba\TopUp\Commission;
 
-use App\Models\TopUpOrder;
-use App\Models\TopUpVendor;
-use App\Sheba\TopUp\TopUpCommission;
-use Sheba\TopUp\TopUpAgent;
+use Sheba\TopUp\TopUpCommission;
 
 class Affiliate extends TopUpCommission
 {
     public function disburse()
     {
        $this->storeAgentsCommission();
-       $this->calculateAmbassadorCommission();
+       $this->storeAmbassadorCommission();
+       $this->storeWalletTransaction();
     }
 
-    private function calculateAmbassadorCommission() {
-        $this->topUpOrder->ambassador_commission =  $this->agent->calculateAmbassadorCommission($this->topUpOrder->amount, $this->vendor);
+    private function storeAmbassadorCommission() {
+        $this->topUpOrder->ambassador_commission =  $this->calculateAmbassadorCommission($this->topUpOrder->amount, $this->vendor);
         $this->topUpOrder->save();
+    }
+
+    private function storeWalletTransaction(){
+        if($this->agent->ambassador) {
+            $this->agent->ambassador->creditWallet($this->amount);
+            $this->agent->ambassador->walletTransaction(['amount' => $this->amount, 'type' => 'Credit', 'log' => "$this->amount Tk. has been gifted from agent id: {$this->agent->id}"]);
+        }
     }
 }

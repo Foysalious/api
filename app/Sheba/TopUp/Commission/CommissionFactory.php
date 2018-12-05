@@ -1,66 +1,19 @@
-<?php
-/**
- * Created by PhpStorm.
- * User: Tech Land
- * Date: 12/4/2018
- * Time: 12:40 PM
- */
-
-namespace App\Sheba\TopUp\Commission;
+<?php namespace Sheba\TopUp\Commission;
 
 
 class CommissionFactory
 {
-    const CUSTOMER = 1;
-    const PARTNER = 2;
-    const AFFILIATE = 3;
-
-    private $classes = [
-        Customer::class,
-        Partner::class,
-        Affiliate::class
-    ];
-
-    private $agent_classes = [
-        \App\Models\Customer::class,
-        \App\Models\Partner::class,
-        \App\Models\Affiliate::class
-    ];
-
-
-    public function getById($id)
-    {
-        if(!in_array($id, $this->getConstants())) {
-            throw new \Exception('Invalid Commission Model');
-        }
-        return app($this->classes[$id - 1]);
-    }
-
-
-    public function getByName($name)
-    {
-        if(!in_array($name, $this->agent_classes)) {
-            throw new \Exception('Invalid Top Up Commission');
-        }
-        $id = array_search($name, $this->agent_classes);
-        return app($this->classes[$id]);
-    }
-
     /**
-     * @param $name
-     * @throws \Exception
+     * @return Affiliate|Customer|Partner
      */
-    public function getIdByName($name)
+    public function getAgentCommission($agent)
     {
-        if(!in_array($name, $this->agent_classes)) {
-            throw new \Exception('Invalid Commission Model');
+        if ($agent instanceof \App\Models\Customer) {
+            return new Customer();
+        } elseif ($agent instanceof \App\Models\Partner) {
+            return new Partner();
+        } else {
+            return new Affiliate();
         }
-        return array_search($name, $this->agent_classes);
-    }
-
-    private function getConstants()
-    {
-        $oClass = new \ReflectionClass(__CLASS__);
-        return $oClass->getConstants();
     }
 }
