@@ -1,7 +1,5 @@
 <?php namespace App\Http\Controllers;
 
-use App\Http\Validators\MobileNumberValidator;
-use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use Carbon\Carbon;
@@ -10,7 +8,10 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\TopUp\TopUp;
-use Sheba\TopUp\TopUpJob;
+use Sheba\TopUp\Jobs\TopUpExcelJob;
+use Sheba\TopUp\Jobs\TopUpJob;
+use Sheba\TopUp\TopUpExcel;
+use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\Response\Ssl\SslFailResponse;
 use Sheba\TopUp\Vendor\VendorFactory;
 use Storage;
@@ -47,7 +48,7 @@ class TopUpController extends Controller
         }
     }
 
-    public function topUp(Request $request, VendorFactory $vendor, TopUp $top_up)
+    public function topUp(Request $request, VendorFactory $vendor, TopUpRequest $top_up_request)
     {
         try {
             $this->validate($request, [
@@ -57,24 +58,16 @@ class TopUpController extends Controller
                 'amount' => 'required|min:10|max:1000|numeric'
             ]);
 
-            if ($request->affiliate) {
-                $agent = $request->affiliate;
-            } elseif ($request->customer) {
-                $agent = $request->customer;
-            } elseif ($request->partner) {
-                $agent = $request->partner;
-            }
+            $agent = $this->getAgent($request);
 
             if ($agent->wallet < (double)$request->amount) return api_response($request, null, 403, ['message' => "You don't have sufficient balance to recharge."]);
             $vendor = $vendor->getById($request->vendor_id);
             if (!$vendor->isPublished()) return api_response($request, null, 403, ['message' => 'Sorry, we don\'t support this operator at this moment']);
 
-            dispatch(new TopUpJob($agent, $request->vendor_id, $request->mobile, $request->amount, $request->connection_type));
+            $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type);
+            dispatch(new TopUpJob($agent, $request->vendor_id, $top_up_request));
 
             return api_response($request, null, 200, ['message' => "Recharge Request Successful"]);
-
-            // $response = $top_up->setAgent($agent)->setVendor($vendor)->recharge($request->mobile, $request->amount, $request->connection_type);
-            // return $response ? api_response($request, null, 200, ['message' => "Recharge Successful"]) : api_response($request, null, 500, ['message' => "Recharge Unsuccessful"]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -94,16 +87,8 @@ class TopUpController extends Controller
                 'amount' => 'required|min:10|max:1000|numeric'
             ]);
 
-            if ($request->affiliate) {
-                $agent = $request->affiliate;
-            } elseif ($request->customer) {
-                $agent = $request->customer;
-            } elseif ($request->partner) {
-                $agent = $request->partner;
-            }
+            $agent = $this->getAgent($request);
 
-//            $top_up->refund(TopUpOrder::find(5));
-//
             if ($agent->wallet < (double)$request->amount) return api_response($request, null, 403, ['message' => "You don't have sufficient balance to recharge."]);
             $vendor = $vendor->getById($request->vendor_id);
             $top_up->setAgent($agent)->setVendor($vendor)->recharge($request->mobile, $request->amount, $request->connection_type);
@@ -114,7 +99,6 @@ class TopUpController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -145,7 +129,7 @@ class TopUpController extends Controller
         }
     }
 
-    public function bulkTopUp(Request $request, VendorFactory $vendor, TopUp $topUp)
+    public function bulkTopUp(Request $request, VendorFactory $vendor, TopUpRequest $top_up_request)
     {
         try {
             $this->validate($request, ['file' => 'required|file']);
@@ -157,41 +141,26 @@ class TopUpController extends Controller
                 return api_response($request, null, 400, ['message' => 'File type not support']);
             }
 
-            $valid_topups   = collect([]);
-            $failed_topups  = collect([]);
+            $agent = $this->getAgent($request);
 
-            Excel::selectSheets('data')->load($request->file, function ($reader) use ($vendor, $valid_topups, $failed_topups) {
-                })->get()->each(function ($value, $key) use ($vendor, $valid_topups, $failed_topups) {
-                    $value["mobile"] = BDMobileFormatter::format($value->mobile);
-                    $value["vendor_id"] = $vendor->getIdByName($value->operator);
+            $file = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
+            $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
 
-                    $vendor = $vendor->getById($value["vendor_id"]);
+            $data = Excel::selectSheets(TopUpExcel::SHEET)->load($file_path)->get();
+            $total = $data->count();
+            $data->each(function ($value, $key) use ($vendor, $agent, $file_path, $top_up_request, $total) {
+                $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
+                $type_field = TopUpExcel::TYPE_COLUMN_TITLE;
+                $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
+                $amount_field = TopUpExcel::VENDOR_COLUMN_TITLE;
 
-                    if (!$vendor->isPublished()) {
-                        $value['failed_reason'] = 'Unsupported operator';
-                        $failed_topups->push($value);
-                        return true;
-                    }
-
-                    if (!(new MobileNumberValidator())->validateBangladeshi($value["mobile"])) {
-                        $value['failed_reason'] = 'Invalid mobile number';
-                        $failed_topups->push($value);
-                        return true;
-                    }
-                    
-                    $valid_topups->push($value);
+                $vendor_id = $vendor->getIdByName($value->$operator_field);
+                $request = $top_up_request->setType($value->$type_field)
+                    ->setMobile(BDMobileFormatter::format($value->$mobile_field))->setAmount($value->$amount_field);
+                dispatch(new TopUpExcelJob($agent, $vendor_id, $request, $file_path, $key + 2, $total));
             });
 
-            $agent = null;
-            if ($request->affiliate) $agent = $request->affiliate;
-            elseif ($request->customer) $agent = $request->customer;
-            elseif ($request->partner) $agent = $request->partner;
-
-            foreach ($valid_topups as $topup) {
-                dispatch(new TopUpJob($agent, $topup->vendor_id, $topup->mobile, $topup->amount, $topup->connection_type));
-            }
-
-            $response_msg = "We have initiated " . $valid_topups->count() . " of your requested top-up and will be transferred shortly. " . $failed_topups->count() . " of your requested top-up is unsuccessful";
+            $response_msg = "Your top-up request has been received and will be transferred and notified shortly.";
             return api_response($request, null, 200, ['message' => $response_msg]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -200,5 +169,12 @@ class TopUpController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function getAgent(Request $request)
+    {
+        if ($request->affiliate) return $request->affiliate;
+        elseif ($request->customer) return $request->customer;
+        elseif ($request->partner) return $request->partner;
     }
 }

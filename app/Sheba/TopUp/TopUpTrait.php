@@ -16,7 +16,9 @@ trait TopUpTrait
     {
         $vendor = (new VendorFactory())->getById($vendor_id);
         /** @var $this TopUpAgent */
-        (new TopUp())->setAgent($this)->setVendor($vendor)->recharge($mobile_number, $amount, $type);
+
+        $request = (new TopUpRequest())->setMobile($mobile_number)->setAmount($amount)->setType($type);
+        (new TopUp())->setAgent($this)->setVendor($vendor)->recharge($request);
     }
 
     public function refund($amount, $log)

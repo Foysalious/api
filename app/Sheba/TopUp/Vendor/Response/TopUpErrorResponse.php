@@ -5,8 +5,8 @@ namespace Sheba\TopUp\Vendor\Response;
 
 class TopUpErrorResponse
 {
-    private $errorCode;
-    private $errorMessage;
+    protected $errorCode;
+    protected $errorMessage;
 
     public function __get($name)
     {

@@ -2,6 +2,7 @@
 
 namespace Sheba\TopUp\Vendor\Internal;
 
+use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\Response\SslResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 use SoapClient;
@@ -21,27 +22,26 @@ class SslClient
     }
 
     /**
-     * @param $mobile_number
-     * @param $amount
-     * @param $type
+     * @param TopUpRequest $top_up_request
      * @return TopUpResponse
      * @throws SoapFault
      */
-    public function recharge($mobile_number, $amount, $type): TopUpResponse
+    public function recharge(TopUpRequest $top_up_request): TopUpResponse
     {
         try {
             ini_set("soap.wsdl_cache_enabled", '0'); // disabling WSDL cache
             $client = new SoapClient($this->topUpUrl);
             $guid = randomString(20, 1, 1);
-            $operator_id = $this->getOperatorId($mobile_number);
-            $connection_type = $type;
+            $mobile = $top_up_request->getMobile();
+            $operator_id = $this->getOperatorId($mobile);
+            $connection_type = $top_up_request->getType();
             $sender_id = "redwan@sslwireless.com";
             $priority = 1;
             $s_url = "http://192.168.69.178:88/virtualrecharge/client/reply.php?s=1";
             $f_url = config('sheba.api_url') . '/v2/top-up/fail/ssl';
             $calling_method = "GET";
             $create_recharge_response = $client->CreateRecharge($this->clientId, $this->clientPassword, $guid, $operator_id,
-                $mobile_number, $amount, $connection_type, $sender_id, $priority, $s_url, $f_url, $calling_method);
+                $mobile, $top_up_request->getAmount(), $connection_type, $sender_id, $priority, $s_url, $f_url, $calling_method);
             $vr_guid = $create_recharge_response->vr_guid;
             $recharge_response = $client->InitRecharge($this->clientId, $this->clientPassword, $guid, $vr_guid);
             $recharge_response->guid = $guid;

@@ -3,6 +3,7 @@
 use App\Models\TopUpRechargeHistory;
 use App\Models\TopUpVendor;
 use Carbon\Carbon;
+use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
 abstract class Vendor
@@ -25,7 +26,7 @@ abstract class Vendor
         return $this->model->is_published;
     }
 
-    abstract function recharge($mobile_number, $amount, $type): TopUpResponse;
+    abstract function recharge(TopUpRequest $top_up_request): TopUpResponse;
 
     public function deductAmount($amount)
     {
