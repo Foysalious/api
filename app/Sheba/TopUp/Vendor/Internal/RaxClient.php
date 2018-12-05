@@ -3,6 +3,7 @@
 namespace Sheba\TopUp\Vendor\Internal;
 
 use GuzzleHttp\Client;
+use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\Response\RaxResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
@@ -38,15 +39,15 @@ class RaxClient
         return $this;
     }
 
-    public function recharge($mobile_number, $amount, $type): TopUpResponse
+    public function recharge(TopUpRequest $top_up_request): TopUpResponse
     {
-        $response = $this->call($this->makeInputString(getOriginalMobileNumber($mobile_number), $amount, $type));
+        $response = $this->call($this->makeInputString($top_up_request));
         $rax_response = new RaxResponse();
         $rax_response->setResponse($response);
         return $rax_response;
     }
 
-    private function makeInputString($mobile_number, $amount, $type)
+    private function makeInputString(TopUpRequest $top_up_request)
     {
         $input = '<?xml version="1.0"?><COMMAND>';
         $input .= '<DATE></DATE>';
@@ -57,11 +58,11 @@ class RaxClient
         $input .= '<PASSWORD></PASSWORD>';
         $input .= '<EXTCODE></EXTCODE>';
         $input .= '<EXTREFNUM></EXTREFNUM>';
-        $input .= "<MSISDN2>$mobile_number</MSISDN2>";
-        $input .= "<AMOUNT>$amount</AMOUNT>";
+        $input .= "<MSISDN2>" . getOriginalMobileNumber($top_up_request->getMobile()) . "</MSISDN2>";
+        $input .= "<AMOUNT>" . $top_up_request->getAmount() . "</AMOUNT>";
         $input .= '<LANGUAGE1>1</LANGUAGE1>';
         $input .= '<LANGUAGE2>0</LANGUAGE2>';
-        $input .= $this->calculateTypeParams($type);
+        $input .= $this->calculateTypeParams($top_up_request->getType());
         $input .= '</COMMAND>';
         return $input;
     }

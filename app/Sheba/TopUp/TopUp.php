@@ -2,10 +2,14 @@
 
 use App\Models\Affiliate;
 use App\Models\TopUpOrder;
+use App\Models\TopUpVendor;
 use Sheba\ModificationFields;
 use DB;
+use Sheba\TopUp\Vendor\Response\TopUpErrorResponse;
 use Sheba\TopUp\Vendor\Response\TopUpFailResponse;
+use Sheba\TopUp\Vendor\Response\TopUpResponse;
 use Sheba\TopUp\Vendor\Response\TopUpSuccessResponse;
+use Sheba\TopUp\Vendor\Response\TopUpSystemErrorResponse;
 use Sheba\TopUp\Vendor\Vendor;
 use Sheba\TopUp\Vendor\VendorFactory;
 
@@ -14,105 +18,163 @@ class TopUp
     use ModificationFields;
     /** @var Vendor */
     private $vendor;
-    /** @var \App\Models\TopUpVendor */
+    /** @var TopUpVendor */
     private $model;
     /** @var TopUpAgent */
     private $agent;
 
     private $isSuccessful;
 
+    /** @var TopUpResponse */
+    private $response;
+
+    /** @var TopUpValidator */
+    private $validator;
+
+    public function __construct(TopUpValidator $validator)
+    {
+        $this->validator = $validator;
+    }
+
+    /**
+     * @param TopUpAgent $agent
+     * @return $this
+     */
     public function setAgent(TopUpAgent $agent)
     {
         $this->agent = $agent;
+        $this->validator->setAgent($agent);
         return $this;
     }
 
+    /**
+     * @param Vendor $model
+     * @return $this
+     */
     public function setVendor(Vendor $model)
     {
         $this->vendor = $model;
         $this->model = $this->vendor->getModel();
+        $this->validator->setVendor($model);
         return $this;
     }
 
-    public function recharge($mobile_number, $amount, $type)
+    /**
+     * @param TopUpRequest $top_up_request
+     */
+    public function recharge(TopUpRequest $top_up_request)
     {
-        if ($this->agent->wallet >= $amount) {
-            $mobile_number = formatMobile($mobile_number);
-            $response = $this->vendor->recharge($mobile_number, $amount, $type);
-            if ($response->hasSuccess()) {
-                $response = $response->getSuccess();
-                DB::transaction(function () use ($response, $mobile_number, $amount) {
-                    $this->placeTopUpOrder($response, $mobile_number, $amount);
-                    $amount_after_commission = $amount - $this->agent->calculateCommission($amount, $this->model);
-                    $this->agent->topUpTransaction($amount_after_commission, $amount . " has been topped up to " . $mobile_number);
-                    $this->vendor->deductAmount($amount);
-                    $this->isSuccessful = true;
-                });
-            }
+        if($this->validator->setRequest($top_up_request)->validate()->hasError()) return;
+
+        $this->response = $this->vendor->recharge($top_up_request);
+        if ($this->response->hasSuccess()) {
+            $response = $this->response->getSuccess();
+            DB::transaction(function () use ($response, $top_up_request) {
+                $this->placeTopUpOrder($response, $top_up_request->getMobile(), $top_up_request->getAmount());
+                $amount_after_commission = $top_up_request->getAmount() - $this->agent->calculateCommission($top_up_request->getAmount(), $this->model);
+                $this->agent->topUpTransaction($amount_after_commission, $top_up_request->getAmount() . " has been topped up to " . $top_up_request->getMobile());
+                $this->vendor->deductAmount($top_up_request->getAmount());
+                $this->isSuccessful = true;
+            });
         }
     }
 
+    /**
+     * @return bool
+     */
     public function isNotSuccessful()
     {
         return !$this->isSuccessful;
     }
 
-    private function placeTopUpOrder(TopUpSuccessResponse $response, $mobile_number, $amount)
+    /**
+     * @return TopUpErrorResponse
+     */
+    public function getError()
     {
-        $topUpOrder = new TopUpOrder();
-        $topUpOrder->agent_type = "App\\Models\\" . class_basename($this->agent);
-        $topUpOrder->agent_id = $this->agent->id;
-        $topUpOrder->payee_mobile = $mobile_number;
-        $topUpOrder->amount = $amount;
-        $topUpOrder->status = 'Successful';
-        $topUpOrder->transaction_id = $response->transactionId;
-        $topUpOrder->transaction_details = json_encode($response->transactionDetails);
-        $topUpOrder->vendor_id = $this->model->id;
-        $topUpOrder->sheba_commission = ($amount * $this->model->sheba_commission) / 100;
-        $topUpOrder->agent_commission = $this->agent->calculateCommission($amount, $this->model);
-
-        $this->setModifier($this->agent);
-        $this->withCreateModificationField($topUpOrder);
-        $topUpOrder->save();
+        if($this->validator->hasError()) {
+            return $this->validator->getError();
+        } else if(!$this->response->hasSuccess()) {
+            return $this->response->getError();
+        } else {
+            if(!$this->isSuccessful) return new TopUpSystemErrorResponse();
+        }
+        return new TopUpErrorResponse();
     }
 
-    public function processFailedTopUp(TopUpOrder $topUpOrder, TopUpFailResponse $topUpFailResponse)
+    /**
+     * @param TopUpSuccessResponse $response
+     * @param $mobile_number
+     * @param $amount
+     */
+    private function placeTopUpOrder(TopUpSuccessResponse $response, $mobile_number, $amount)
     {
-        if ($topUpOrder->isFailed()) return true;
-        DB::transaction(function () use ($topUpOrder, $topUpFailResponse) {
-            $this->model = $topUpOrder->vendor;
-            $topUpOrder->status = 'Failed';
-            $topUpOrder->transaction_details = json_encode($topUpFailResponse->getFailedTransactionDetails());
+        $top_up_order = new TopUpOrder();
+        $top_up_order->agent_type = "App\\Models\\" . class_basename($this->agent);
+        $top_up_order->agent_id = $this->agent->id;
+        $top_up_order->payee_mobile = $mobile_number;
+        $top_up_order->amount = $amount;
+        $top_up_order->status = 'Successful';
+        $top_up_order->transaction_id = $response->transactionId;
+        $top_up_order->transaction_details = json_encode($response->transactionDetails);
+        $top_up_order->vendor_id = $this->model->id;
+        $top_up_order->sheba_commission = ($amount * $this->model->sheba_commission) / 100;
+        $top_up_order->agent_commission = $this->agent->calculateCommission($amount, $this->model);
+
+        $this->setModifier($this->agent);
+        $this->withCreateModificationField($top_up_order);
+        $top_up_order->save();
+    }
+
+    /**
+     * @param TopUpOrder $top_up_order
+     * @param TopUpFailResponse $top_up_fail_response
+     * @return bool
+     */
+    public function processFailedTopUp(TopUpOrder $top_up_order, TopUpFailResponse $top_up_fail_response)
+    {
+        if ($top_up_order->isFailed()) return true;
+        DB::transaction(function () use ($top_up_order, $top_up_fail_response) {
+            $this->model = $top_up_order->vendor;
+            $top_up_order->status = 'Failed';
+            $top_up_order->transaction_details = json_encode($top_up_fail_response->getFailedTransactionDetails());
             $this->setModifier($this->agent);
-            $this->withUpdateModificationField($topUpOrder);
-            $topUpOrder->update();
-            $this->refund($topUpOrder);
-            $vendor = new VendorFactory ();
-            $vendor = $vendor->getById($topUpOrder->vendor_id);
-            $vendor->refill($topUpOrder->amount);
+            $this->withUpdateModificationField($top_up_order);
+            $top_up_order->update();
+            $this->refund($top_up_order);
+            $vendor = new VendorFactory();
+            $vendor = $vendor->getById($top_up_order->vendor_id);
+            $vendor->refill($top_up_order->amount);
         });
     }
 
-    private function refund(TopUpOrder $topUpOrder)
+    /**
+     * @param TopUpOrder $top_up_order
+     */
+    private function refund(TopUpOrder $top_up_order)
     {
-        $amount = $topUpOrder->amount;
+        $amount = $top_up_order->amount;
         /** @var TopUpAgent $agent */
-        $agent = $topUpOrder->agent;
+        $agent = $top_up_order->agent;
         $amount_after_commission = round($amount - $agent->calculateCommission($amount, $this->model), 2);
-        $log = "Your recharge TK $amount to $topUpOrder->payee_mobile has failed, TK $amount_after_commission is refunded in your account.";
+        $log = "Your recharge TK $amount to $top_up_order->payee_mobile has failed, TK $amount_after_commission is refunded in your account.";
         $agent->refund($amount_after_commission, $log);
-        if ($topUpOrder->agent instanceof Affiliate) $this->sendRefundNotificationToAffiliate($topUpOrder, $log);
+        if ($top_up_order->agent instanceof Affiliate) $this->sendRefundNotificationToAffiliate($top_up_order, $log);
     }
 
-    private function sendRefundNotificationToAffiliate(TopUpOrder $topUpOrder, $title)
+    /**
+     * @param TopUpOrder $top_up_order
+     * @param $title
+     */
+    private function sendRefundNotificationToAffiliate(TopUpOrder $top_up_order, $title)
     {
         try {
-            notify()->affiliate($topUpOrder->agent)->send([
+            notify()->affiliate($top_up_order->agent)->send([
                 "title" => $title,
-                "link" => url("affiliate/" . $topUpOrder->agent->id),
+                "link" => url("affiliate/" . $top_up_order->agent->id),
                 "type" => 'warning',
                 "event_type" => 'App\Models\Affiliate',
-                "event_id" => $topUpOrder->agent->id
+                "event_id" => $top_up_order->agent->id
             ]);
         } catch (\Throwable $e) {
         }
