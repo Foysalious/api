@@ -290,11 +290,35 @@ class PartnerController extends Controller
             $assigned_resource_ids = $jobs->whereIn('status', [constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Schedule_Due']])->pluck('resource_id')->unique();
             $unassigned_resource_ids = $resource_ids->diff($assigned_resource_ids);
             $sales_stats = (new PartnerSalesStatistics($request->partner))->calculate();
-            $info = array('todays_jobs' => $jobs->filter(function ($job, $key) {
-                return $job->schedule_date == Carbon::now()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined']);
-            })->count(), 'tomorrows_jobs' => $jobs->filter(function ($job, $key) {
-                return $job->schedule_date == Carbon::tomorrow()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined']);
-            })->count(), 'accepted_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Accepted'])->count(), 'schedule_due_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Schedule_Due'])->count(), 'process_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Process'])->count(), 'served_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Served'])->count(), 'serve_due_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Serve_Due'])->count(), 'total_ongoing_orders' => (new JobList($partner))->ongoing()->count(), 'total_open_complains' => $partner->complains->whereIn('status', ['Observation', 'Open'])->count(), 'total_resources' => $resource_ids->count(), 'assigned_resources' => $assigned_resource_ids->count(), 'unassigned_resources' => $unassigned_resource_ids->count(), 'bkash_no' => $partner->bkash_no, 'balance' => $partner->totalWalletAmount(), 'credit' => (double)$partner->wallet, 'bonus' => round($partner->bonusWallet(), 2), 'is_credit_limit_exceed' => $partner->isCreditLimitExceed(), 'geo_informations' => $partner->geo_informations, 'today' => $sales_stats->today->sale, 'week' => $sales_stats->week->sale, 'month' => $sales_stats->month->sale, 'reward_point' => $partner->reward_point, 'has_reward_campaign' => count($partner_reward->upcoming()) > 0 ? 1 : 0);
+            $info = [
+                'todays_jobs' => $jobs->filter(function ($job, $key) {
+                    return $job->schedule_date == Carbon::now()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined']);
+                })->count(),
+                'tomorrows_jobs' => $jobs->filter(function ($job, $key) {
+                    return $job->schedule_date == Carbon::tomorrow()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined']);
+                })->count(),
+                'accepted_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Accepted'])->count(),
+                'schedule_due_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Schedule_Due'])->count(),
+                'process_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Process'])->count(),
+                'served_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Served'])->count(),
+                'serve_due_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Serve_Due'])->count(),
+                'total_ongoing_orders' => (new JobList($partner))->ongoing()->count(),
+                'total_open_complains' => $partner->complains->whereIn('status', ['Observation', 'Open'])->count(),
+                'total_resources' => $resource_ids->count(),
+                'assigned_resources' => $assigned_resource_ids->count(),
+                'unassigned_resources' => $unassigned_resource_ids->count(),
+                'bkash_no' => $partner->bkash_no,
+                'balance' => $partner->totalWalletAmount(),
+                'credit' => (double)$partner->wallet,
+                'bonus' => round($partner->bonusWallet(), 2),
+                'is_credit_limit_exceed' => $partner->isCreditLimitExceed(),
+                'geo_informations' => $partner->geo_informations,
+                'today' => $sales_stats->today->sale,
+                'week' => $sales_stats->week->sale,
+                'month' => $sales_stats->month->sale,
+                'reward_point' => $partner->reward_point,
+                'has_reward_campaign' => count($partner_reward->upcoming()) > 0 ? 1 : 0
+            ];
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
