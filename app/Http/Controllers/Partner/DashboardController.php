@@ -9,11 +9,12 @@ use App\Http\Controllers\Controller;
 use Sheba\Analysis\PartnerPerformance\PartnerPerformance;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
 use Sheba\Helpers\TimeFrame;
+use Sheba\Reward\PartnerReward;
 use Sheba\Subscription\Partner\PartnerSubscriber;
 
 class DashboardController extends Controller
 {
-    public function get(Request $request, PartnerPerformance $performance)
+    public function get(Request $request, PartnerPerformance $performance, PartnerReward $partner_reward)
     {
         try {
             $partner = $request->partner;
@@ -29,15 +30,17 @@ class DashboardController extends Controller
             $dashboard = [
                 'name' => $partner->name,
                 'logo' => $partner->logo,
-                'current_subscription_package' => array(
+                'geo_informations' => $partner->geo_informations,
+                'current_subscription_package' => [
                     'name' => $partner->subscription->name,
                     'name_bn' => $partner->subscription->name_bn
-                ),
+                ],
                 'badge' => $partner->subscription->badge_thumb,
                 'rating' => $rating,
                 'status' => constants('PARTNER_STATUSES_SHOW')[$partner['status']]['partner'],
                 'balance' => $partner->totalWalletAmount(),
                 'credit' => $partner->wallet,
+                'bonus' => round($partner->bonusWallet(), 2),
                 'is_credit_limit_exceed' => $partner->isCreditLimitExceed(),
                 'is_on_leave' => $partner->runningLeave() ? 1 : 0,
                 'bonus_credit' => $partner->bonusWallet(),
@@ -93,7 +96,8 @@ class DashboardController extends Controller
                     'package_name_bn' => $upgradable_package->name_bn,
                     'package_badge' => $upgradable_package->badge,
                     'package_usp_bn' => json_decode($upgradable_package->usps, 1)['usp_bn']
-                ] : null
+                ] : null,
+                'has_reward_campaign' => count($partner_reward->upcoming()) > 0 ? 1 : 0
             ];
             return api_response($request, $dashboard, 200, ['data' => $dashboard]);
         } catch (\Throwable $e) {
