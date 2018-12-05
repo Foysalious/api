@@ -9,6 +9,7 @@
 namespace App\Sheba\Bondhu;
 
 use App\Http\Requests\BondhuOrderRequest;
+use App\Models\Affiliate;
 use App\Models\Affiliation;
 use App\Models\Customer;
 use App\Models\Profile;
@@ -24,7 +25,7 @@ class BondhuAutoOrder
     {
         $this->request = $request;
         if (!isset($this->request->affiliate->id)) {
-            $this->request->affiliate = Affiliation::find($this->request->affiliate);
+            $this->request->affiliate = Affiliate::find($this->request->affiliate);
         }
         $this->affiliate = $this->request->affiliate;
     }
