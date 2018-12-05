@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Exceptions\HyperLocationNotFoundException;
 use App\Http\Requests\BondhuOrderRequest;
 use App\Models\Customer;
 use App\Models\Order;
@@ -95,6 +96,8 @@ class OrderController extends Controller
                     'order_code' => $order->code(), 'payment' => $payment]);
             }
             return api_response($request, $order, 500);
+        } catch (HyperLocationNotFoundException $e) {
+            return api_response($request, null, 400, ['message' => "You're out of service area"]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
@@ -138,14 +141,16 @@ class OrderController extends Controller
                 return api_response($request, null, 400, ['message' => 'Service is invalid']);
             }
 
+        } catch (HyperLocationNotFoundException $e) {
+            return api_response($request, null, 400, ['message' => 'You\'re out of service area']);
         } catch (QueryException $e) {
             DB::rollback();
             app('sentry')->captureException($e);
-            return api_response($request, null, 500, ['message' => $e->getMessage()]);
+            return api_response($request, null, 500);
         } catch (\Throwable $exception) {
             DB::rollback();
             app('sentry')->captureException($exception);
-            return api_response($request, null, 500, ['message' => $exception->getMessage()]);
+            return api_response($request, null, 500);
         }
 
     }
