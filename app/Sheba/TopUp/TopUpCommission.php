@@ -25,8 +25,8 @@ abstract class TopUpCommission
     public function setTopUpOrder(TopUpOrder $topUpOrder)
     {
         $this->topUpOrder = $topUpOrder;
-        $this->agent = $this->setAgent($topUpOrder->agent);
-        $this->vendor = $this->setAgent($topUpOrder->vendor);
+        $this->setAgent($topUpOrder->agent);
+        $this->setTopUpVendor($topUpOrder->vendor);
         return $this;
     }
 
