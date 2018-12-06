@@ -8,4 +8,9 @@ class Customer extends TopUpCommission
     {
        $this->storeAgentsCommission();
     }
+
+    public function refund()
+    {
+        // TODO: Implement refund() method.
+    }
 }

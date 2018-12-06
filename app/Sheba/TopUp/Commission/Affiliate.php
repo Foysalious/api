@@ -22,4 +22,9 @@ class Affiliate extends TopUpCommission
             $this->agent->ambassador->walletTransaction(['amount' => $this->amount, 'type' => 'Credit', 'log' => "$this->amount Tk. has been gifted from agent id: {$this->agent->id}"]);
         }
     }
+
+    public function refund()
+    {
+        // TODO: Implement refund() method.
+    }
 }

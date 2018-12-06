@@ -12,12 +12,10 @@ abstract class TopUpCommission
 
     /**
      * @param TopUpAgent $agent
-     * @return $this
      */
     public function setAgent(TopUpAgent $agent)
     {
         $this->agent = $agent;
-        return $this;
     }
 
     /**
@@ -27,17 +25,17 @@ abstract class TopUpCommission
     public function setTopUpOrder(TopUpOrder $topUpOrder)
     {
         $this->topUpOrder = $topUpOrder;
+        $this->agent = $this->setAgent($topUpOrder->agent);
+        $this->vendor = $this->setAgent($topUpOrder->vendor);
         return $this;
     }
 
     /**
      * @param TopUpVendor $topUpVendor
-     * @return $this
      */
     public function setTopUpVendor(TopUpVendor $topUpVendor)
     {
         $this->vendor = $topUpVendor;
-        return $this;
     }
 
     public function storeAgentsCommission()
@@ -85,4 +83,6 @@ abstract class TopUpCommission
     }
 
     abstract public function disburse();
+
+    abstract public function refund();
 }

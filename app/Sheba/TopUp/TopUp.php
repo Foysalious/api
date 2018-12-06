@@ -124,8 +124,10 @@ class TopUp
         $this->setModifier($this->agent);
         $this->withCreateModificationField($top_up_order);
         $top_up_order->save();
-        (new CommissionFactory())->getAgentCommission($this->agent)
-            ->setAgent($this->agent)->setTopUpOrder($top_up_order)->setTopUpVendor($this->model)->disburse();
+
+        $top_up_order->agent = $this->agent;
+        $top_up_order->vendor = $this->model;
+        $this->agent->getAgentCommission()->setTopUpOrder($top_up_order)->disburse();
     }
 
     /**
