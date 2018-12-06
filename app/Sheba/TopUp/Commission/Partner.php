@@ -11,6 +11,6 @@ class Partner extends TopUpCommission
 
     public function refund()
     {
-        // TODO: Implement refund() method.
+        $this->refundAgentsCommission();
     }
 }

@@ -162,7 +162,7 @@ class Affiliate extends Model implements TopUpAgent
         return $query->where('vendor_id', $operator);
     }
 
-    public function getAgentCommission()
+    public function getCommission()
     {
         return new \Sheba\TopUp\Commission\Affiliate();
     }

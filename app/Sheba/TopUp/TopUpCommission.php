@@ -84,6 +84,20 @@ abstract class TopUpCommission
         return (double)$topup_vendor->commissions()->where('type', get_class($this->agent))->first()->ambassador_commission;
     }
 
+    public function refundAgentsCommission()
+    {
+        $amount = $this->topUpOrder->amount;
+        $amount_after_commission = round($amount - $this->calculateCommission($amount, $this->topUpOrder->vendor), 2);
+        $log = "Your recharge TK $amount to {$this->topUpOrder->payee_mobile} has failed, TK $amount_after_commission is refunded in your account.";
+        $this->refundUser($amount_after_commission, $log);
+    }
+
+    public function refundUser($amount, $log)
+    {
+        $this->agent->creditWallet($amount);
+        $this->agent->walletTransaction(['amount' => $amount, 'type' => 'Credit', 'log' => $log]);
+    }
+
     abstract public function disburse();
 
     abstract public function refund();

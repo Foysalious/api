@@ -11,6 +11,6 @@ class Customer extends TopUpCommission
 
     public function refund()
     {
-        // TODO: Implement refund() method.
+        $this->refundAgentsCommission();
     }
 }

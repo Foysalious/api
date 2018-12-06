@@ -127,7 +127,8 @@ class TopUp
 
         $top_up_order->agent = $this->agent;
         $top_up_order->vendor = $this->model;
-        $this->agent->getAgentCommission()->setTopUpOrder($top_up_order)->disburse();
+
+        $this->agent->getCommission()->setTopUpOrder($top_up_order)->disburse();
     }
 
     /**
@@ -157,41 +158,6 @@ class TopUp
      */
     public function refund(TopUpOrder $top_up_order)
     {
-        $amount = $top_up_order->amount;
-        /** @var TopUpAgent $agent */
-        $agent = $top_up_order->agent;
-        $amount_after_commission = round($amount - $agent->calculateCommission($amount, $top_up_order->vendor), 2);
-        $log = "Your recharge TK $amount to $top_up_order->payee_mobile has failed, TK $amount_after_commission is refunded in your account.";
-        $agent->refund($amount_after_commission, $log);
-
-        if ($top_up_order->agent instanceof Affiliate) {
-            $this->sendRefundNotificationToAffiliate($top_up_order, $log);
-
-            $ambassador = $top_up_order->agent->ambassador;
-            if(!is_null($ambassador)) {
-                $ambassador_commission = $top_up_order->ambassador_commission;
-                $top_up_order->ambassador_commission = 0.0;
-                $top_up_order->save();
-                $ambassador->deductFromAmbassador($ambassador_commission, "$ambassador_commission Tk. has been deducted due to refund top up.");
-            }
-        }
-    }
-
-    /**
-     * @param TopUpOrder $top_up_order
-     * @param $title
-     */
-    private function sendRefundNotificationToAffiliate(TopUpOrder $top_up_order, $title)
-    {
-        try {
-            notify()->affiliate($top_up_order->agent)->send([
-                "title" => $title,
-                "link" => url("affiliate/" . $top_up_order->agent->id),
-                "type" => 'warning',
-                "event_type" => 'App\Models\Affiliate',
-                "event_id" => $top_up_order->agent->id
-            ]);
-        } catch (\Throwable $e) {
-        }
+        $top_up_order->agent->getCommission()->setTopUpOrder($top_up_order)->refund();
     }
 }
