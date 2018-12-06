@@ -158,7 +158,7 @@ class TopUp
         $amount = $top_up_order->amount;
         /** @var TopUpAgent $agent */
         $agent = $top_up_order->agent;
-        $amount_after_commission = round($amount - $agent->calculateCommission($amount, $this->model), 2);
+        $amount_after_commission = round($amount - $agent->calculateCommission($amount, $top_up_order->vendor), 2);
         $log = "Your recharge TK $amount to $top_up_order->payee_mobile has failed, TK $amount_after_commission is refunded in your account.";
         $agent->refund($amount_after_commission, $log);
 
@@ -167,9 +167,10 @@ class TopUp
 
             $ambassador = $top_up_order->agent->ambassador;
             if(!is_null($ambassador)) {
-                $ambassador_commission = $ambassador->deductFromAmbassador($amount, $this->model);
+                $ambassador_commission = $top_up_order->ambassador_commission;
                 $top_up_order->ambassador_commission = 0.0;
-                $ambassador->deductFromAmbassador($ambassador_commission, "$ambassador_commission has been deducted due to refund top up.");
+                $top_up_order->save();
+                $ambassador->deductFromAmbassador($ambassador_commission, "$ambassador_commission Tk. has been deducted due to refund top up.");
             }
         }
     }
