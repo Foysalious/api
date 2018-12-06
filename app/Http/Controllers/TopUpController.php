@@ -94,6 +94,8 @@ class TopUpController extends Controller
             $topUprequest = $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type);
             $top_up->setAgent($agent)->setVendor($vendor)->recharge($topUprequest);
 
+            $top_up->setAgent($agent)->setVendor($vendor)->refund(TopUpOrder::find(18207));
+
             if (!$vendor->isPublished()) return api_response($request, null, 403, ['message' => 'Sorry, we don\'t support this operator at this moment']);
 
             return api_response($request, null, 200, ['message' => "Recharge Request Successful"]);
