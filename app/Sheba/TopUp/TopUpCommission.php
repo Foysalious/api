@@ -13,7 +13,7 @@ abstract class TopUpCommission
     /**
      * @param TopUpAgent $agent
      */
-    public function setAgent(TopUpAgent $agent)
+    protected function setAgent(TopUpAgent $agent)
     {
         $this->agent = $agent;
     }
@@ -35,12 +35,12 @@ abstract class TopUpCommission
     /**
      * @param TopUpVendor $topUpVendor
      */
-    public function setTopUpVendor(TopUpVendor $topUpVendor)
+    protected function setTopUpVendor(TopUpVendor $topUpVendor)
     {
         $this->vendor = $topUpVendor;
     }
 
-    public function storeAgentsCommission()
+    protected function storeAgentsCommission()
     {
         $this->topUpOrder->agent_commission =  $this->calculateCommission($this->topUpOrder->amount, $this->vendor);
         $this->topUpOrder->save();
@@ -51,7 +51,7 @@ abstract class TopUpCommission
      * @param TopUpVendor $topup_vendor
      * @return float|int
      */
-    public function calculateCommission($amount, TopUpVendor $topup_vendor)
+    protected function calculateCommission($amount, TopUpVendor $topup_vendor)
     {
         return (double)$amount * ($this->getVendorAgentCommission($topup_vendor) / 100);
     }
@@ -61,7 +61,7 @@ abstract class TopUpCommission
      * @param TopUpVendor $topup_vendor
      * @return float|int
      */
-    public function calculateAmbassadorCommission($amount, TopUpVendor $topup_vendor)
+    protected function calculateAmbassadorCommission($amount, TopUpVendor $topup_vendor)
     {
         return (double)$amount * ($this->getVendorAmbassadorCommission($topup_vendor) / 100);
     }
@@ -70,7 +70,7 @@ abstract class TopUpCommission
      * @param $topup_vendor
      * @return float
      */
-    public function getVendorAgentCommission($topup_vendor)
+    private function getVendorAgentCommission($topup_vendor)
     {
         return (double)$topup_vendor->commissions()->where('type', get_class($this->agent))->first()->agent_commission;
     }
@@ -79,12 +79,12 @@ abstract class TopUpCommission
      * @param $topup_vendor
      * @return float
      */
-    public function getVendorAmbassadorCommission($topup_vendor)
+    private function getVendorAmbassadorCommission($topup_vendor)
     {
         return (double)$topup_vendor->commissions()->where('type', get_class($this->agent))->first()->ambassador_commission;
     }
 
-    public function refundAgentsCommission()
+    protected function refundAgentsCommission()
     {
         $amount = $this->topUpOrder->amount;
         $amount_after_commission = round($amount - $this->calculateCommission($amount, $this->topUpOrder->vendor), 2);
@@ -92,7 +92,7 @@ abstract class TopUpCommission
         $this->refundUser($amount_after_commission, $log);
     }
 
-    public function refundUser($amount, $log)
+    private function refundUser($amount, $log)
     {
         $this->agent->creditWallet($amount);
         $this->agent->walletTransaction(['amount' => $amount, 'type' => 'Credit', 'log' => $log]);
