@@ -2,6 +2,7 @@
 
 use App\Exceptions\HyperLocationNotFoundException;
 use App\Http\Requests\BondhuOrderRequest;
+use App\Models\Affiliate;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\PartnerOrder;
@@ -114,7 +115,7 @@ class OrderController extends Controller
 
     public function placeOrderFromBondhu(BondhuOrderRequest $request, $affiliate, BondhuAutoOrder $bondhuAutoOrder)
     {
-        if ($request->affiliate->is_suspended) {
+        if (Affiliate::find($affiliate)->is_suspended) {
             return api_response($request, null, 400, ['message' => 'You\'re suspended can not place order now']);
         }
         try {
