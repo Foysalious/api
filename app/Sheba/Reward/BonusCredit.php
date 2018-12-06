@@ -28,7 +28,7 @@ class BonusCredit
         return $this;
     }
 
-    public function deduct($amount)
+    public function deduct($amount, $log = '')
     {
         $original_amount = $amount;
         $bonuses = $this->user->bonuses()->valid()->orderBy('valid_till')->get();
@@ -45,16 +45,20 @@ class BonusCredit
             }
             $this->updateExistingBonus($bonus);
         }
+
         if ($amount < $original_amount) $this->saveLog($original_amount - $amount);
+
         return $amount;
     }
 
-    private function saveLog($amount)
+    private function saveLog($amount, $log = '')
     {
         $data = $this->getSpentInfo();
         $data['user_type'] = "App\\Models\\" . class_basename($this->user);
         $data['user_id'] = $this->user->id;
         $data['amount'] = $amount;
+        $data['log'] = $log;
+        $data['valid_till'] = null;
         $this->logRepo->storeDebitLog($data);
     }
 

@@ -24,6 +24,7 @@ use DB;
 use Illuminate\Http\Request;
 use Sheba\Checkout\Services\ServiceObject;
 use Sheba\ModificationFields;
+use Sheba\RequestIdentification;
 use Sheba\Voucher\VoucherSuggester;
 
 class Checkout
@@ -242,6 +243,7 @@ class Checkout
         $customer_delivery_address = $this->getDeliveryAddress($data, $partner);
         $order->delivery_address = $customer_delivery_address != null ? $customer_delivery_address->address : null;
         $order->delivery_address_id = $customer_delivery_address != null ? $customer_delivery_address->id : null;
+        $order->fill((new RequestIdentification())->get());
         $order->save();
         return $order;
     }

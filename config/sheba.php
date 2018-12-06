@@ -14,9 +14,7 @@ return [
     //'revision' => file_get_contents(base_path()."/revision"),
     'order_code_start' => 8000,
     'job_code_start' => 16000,
-    'portals' => [
-        'admin-portal', 'partner-portal', 'manager-app', 'customer-app', 'customer-portal', 'resource-portal', 'resource-app', 'bondhu-app', 'automatic'
-    ],
+    'portals' => ['admin-portal', 'partner-portal', 'manager-app', 'customer-app', 'customer-portal', 'resource-portal', 'resource-app', 'bondhu-app', 'bondhu-portal', 'automatic'],
     'push_notification_topic_name' => [
         'customer' => env('CUSTOMER_TOPIC_NAME', 'customer_'),
         'resource' => env('RESOURCE_TOPIC_NAME', 'resource_'),
