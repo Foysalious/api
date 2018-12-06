@@ -23,7 +23,7 @@ class Event extends Action implements AmountCalculator
 
     public function isEligible()
     {
-        return $this->isOrderServedAndPaid() && $this->rule->check($this->params) && $this->filterConstraints();
+        return $this->isValidCreatedDate() && $this->isOrderServedAndPaid() && $this->rule->check($this->params) && $this->filterConstraints();
     }
 
     private function filterConstraints()
@@ -50,6 +50,12 @@ class Event extends Action implements AmountCalculator
         $partner_order = $job->partnerOrder->calculate(true);
 
         return $job->status == constants('JOB_STATUSES')['Served'] && $partner_order->paymentStatus == "Paid";
+    }
+
+    private function isValidCreatedDate()
+    {
+        $order = $this->params[0];
+        return $order->created_at->between($this->reward->start_time, $this->reward->end_time);
     }
 
     public function calculateAmount()
