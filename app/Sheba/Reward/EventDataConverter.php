@@ -55,6 +55,11 @@ class EventDataConverter
                                     'Serve_Due'     => 'Serve Due'
                                 ],
                                 'is_multi_selectable' => 1
+                            ],
+                            'created_from' => [
+                                'type' => 'select',
+                                'possible_value' => indexedArrayToAssociative(config('sheba.portals'), config('sheba.portals')),
+                                'is_multi_selectable' => 1
                             ]
                         ]
                     ],
