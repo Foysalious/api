@@ -272,6 +272,30 @@ return [
             'prefix' => 'A',
             'department' => 'AC'
         ],
+        'Othoba' => [
+            'name' => 'Othoba',
+            'short_name' => 'DC',
+            'prefix' => 'D',
+            'department' => 'CC'
+        ],
+        'Daraz' => [
+            'name' => 'Daraz',
+            'short_name' => 'DC',
+            'prefix' => 'D',
+            'department' => 'CC'
+        ],
+        'Pickaboo' => [
+            'name' => 'Pickaboo',
+            'short_name' => 'DC',
+            'prefix' => 'D',
+            'department' => 'CC'
+        ],
+        'E-Shop' => [
+            'name' => 'E-Shop',
+            'short_name' => 'DC',
+            'prefix' => 'D',
+            'department' => 'CC'
+        ],
         'Bondhu' => [
             'name' => 'Bondhu',
             'short_name' => 'AC',
