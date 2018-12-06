@@ -114,6 +114,9 @@ class OrderController extends Controller
 
     public function placeOrderFromBondhu(BondhuOrderRequest $request, $affiliate, BondhuAutoOrder $bondhuAutoOrder)
     {
+        if ($request->affiliate->is_suspended) {
+            return api_response($request, null, 400, ['message' => 'You\'re suspended can not place order now']);
+        }
         try {
             if ($bondhuAutoOrder->setServiceCategoryName()) {
                 $order = $payment = $link = null;
