@@ -128,7 +128,7 @@ class TopUp
         $top_up_order->agent = $this->agent;
         $top_up_order->vendor = $this->model;
 
-        $this->agent->getAgentCommission()->setTopUpOrder($top_up_order)->disburse();
+        $this->agent->getCommission()->setTopUpOrder($top_up_order)->disburse();
     }
 
     /**
@@ -158,6 +158,6 @@ class TopUp
      */
     public function refund(TopUpOrder $top_up_order)
     {
-        $top_up_order->agent->getAgentCommission()->setTopUpOrder($top_up_order)->refund();
+        $top_up_order->agent->getCommission()->setTopUpOrder($top_up_order)->refund();
     }
 }

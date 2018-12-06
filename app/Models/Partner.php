@@ -449,7 +449,7 @@ class Partner extends Model implements Rewardable, TopUpAgent
         return $jobs->where('status', constants('JOB_STATUSES')['Not_Responded']);
     }
 
-    public function getAgentCommission()
+    public function getCommission()
     {
         return new \Sheba\TopUp\Commission\Partner();
     }

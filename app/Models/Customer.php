@@ -180,7 +180,7 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
         $this->walletTransaction(['amount' => $amount, 'type' => 'Debit', 'log' => $log]);
     }
 
-    public function getAgentCommission()
+    public function getCommission()
     {
         return new \Sheba\TopUp\Commission\Customer();
     }

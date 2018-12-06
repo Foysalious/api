@@ -32,6 +32,7 @@ class Affiliate extends TopUpCommission
 
     public function refund()
     {
+        $this->refundAgentsCommission();
         $amount = $this->topUpOrder->amount;
         $amount_after_commission = round($amount - $this->calculateCommission($amount, $this->topUpOrder->vendor), 2);
         $log = "Your recharge TK $amount to {$this->topUpOrder->payee_mobile} has failed, TK $amount_after_commission is refunded in your account.";
