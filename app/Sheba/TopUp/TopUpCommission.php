@@ -27,6 +27,8 @@ abstract class TopUpCommission
         $this->topUpOrder = $topUpOrder;
         $this->setAgent($topUpOrder->agent);
         $this->setTopUpVendor($topUpOrder->vendor);
+        unset($topUpOrder->agent);
+        unset($topUpOrder->vendor);
         return $this;
     }
 
@@ -40,7 +42,6 @@ abstract class TopUpCommission
 
     public function storeAgentsCommission()
     {
-        dd($this->topUpOrder);
         $this->topUpOrder->agent_commission =  $this->calculateCommission($this->topUpOrder->amount, $this->vendor);
         $this->topUpOrder->save();
     }
