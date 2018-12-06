@@ -40,6 +40,7 @@ abstract class TopUpCommission
 
     public function storeAgentsCommission()
     {
+        dd($this->topUpOrder);
         $this->topUpOrder->agent_commission =  $this->calculateCommission($this->topUpOrder->amount, $this->vendor);
         $this->topUpOrder->save();
     }
