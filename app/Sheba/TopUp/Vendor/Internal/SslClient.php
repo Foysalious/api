@@ -82,7 +82,7 @@ class SslClient
         $mobile_number = formatMobile($mobile_number);
         if (preg_match("/^(\+88017)/", $mobile_number)) {
             return 1;
-        } elseif (preg_match("/^(\+88019)/", $mobile_number)) {
+        } elseif (preg_match("/^(\+88019)/", $mobile_number) || preg_match("/^(\+88014)/", $mobile_number)) {
             return 2;
         } elseif (preg_match("/^(\+88015)/", $mobile_number)) {
             return 5;

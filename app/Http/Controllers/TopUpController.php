@@ -38,7 +38,7 @@ class TopUpController extends Controller
                 if ($vendor->is_published) $error_message .= ',' . $vendor->name;
             }
             $regular_expression = array(
-                'typing' => "^(013|13|018|18|016|16|017|17|019|19|015|15)",
+                'typing' => "^(013|13|014|14|018|18|016|16|017|17|019|19|015|15)",
                 'from_contact' => "^(?:\+?88)?01[16|8]\d{8}$",
                 'error_message' => $error_message . '.'
             );
@@ -157,7 +157,7 @@ class TopUpController extends Controller
                 $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
                 $amount_field = TopUpExcel::AMOUNT_COLUMN_TITLE;
 
-                if(!$value->$operator_field) return;
+                if (!$value->$operator_field) return;
 
                 $vendor_id = $vendor->getIdByName($value->$operator_field);
                 $request = $top_up_request->setType($value->$type_field)
