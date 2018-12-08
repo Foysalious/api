@@ -164,6 +164,8 @@ class Service extends Model
             $query->publishedForBackendOnly();
         })->orWhere(function ($query) {
             $query->publishedForBusiness();
+        })->orWhere(function ($query) {
+            $query->publishedForBondhu();
         });
     }
 
