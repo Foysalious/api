@@ -1,12 +1,11 @@
-<?php
-
-namespace App\Http\Controllers\Partner;
+<?php namespace App\Http\Controllers\Partner;
 
 use App\Repositories\ReviewRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Sheba\Analysis\PartnerPerformance\PartnerPerformance;
+use Sheba\Analysis\PartnerSale\PartnerSale;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Reward\PartnerReward;
@@ -23,7 +22,6 @@ class DashboardController extends Controller
 
             $rating = (new ReviewRepository)->getAvgRating($partner->reviews);
             $rating = (string)(is_null($rating) ? 0 : $rating);
-
             $successful_jobs = $partner->notCancelledJobs();
             $sales_stats = (new PartnerSalesStatistics($partner))->calculate();
             $upgradable_package = (new PartnerSubscriber($partner))->getUpgradablePackage();
@@ -57,15 +55,15 @@ class DashboardController extends Controller
                 'sales' => [
                     'today' => [
                         'timeline' => date("jS F", strtotime(Carbon::today())),
-                        'amount' => $sales_stats->today->sale
+                        'amount' => $sales_stats->today->orderTotalPrice
                     ],
                     'week' => [
                         'timeline' => date("jS F", strtotime(Carbon::today()->startOfWeek())) . "-" . date("jS F", strtotime(Carbon::today())),
-                        'amount' => $sales_stats->week->sale
+                        'amount' => $sales_stats->week->orderTotalPrice
                     ],
                     'month' => [
                         'timeline' => date("jS F", strtotime(Carbon::today()->startOfMonth())) . "-" . date("jS F", strtotime(Carbon::today())),
-                        'amount' => $sales_stats->month->sale
+                        'amount' => $sales_stats->month->orderTotalPrice
                     ]
                 ],
                 'weekly_performance' => [
