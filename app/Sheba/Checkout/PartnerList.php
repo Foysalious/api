@@ -144,6 +144,7 @@ class PartnerList
 
         $start = microtime(true);
         if (!$this->skipAvailability) $this->addAvailability();
+        elseif ($this->partners->count() > 1) $this->rejectShebaHelpDesk();
         $time_elapsed_secs = microtime(true) - $start;
         //dump("filter partner by availability: " . $time_elapsed_secs * 1000);
         $this->calculateHasPartner();
@@ -249,7 +250,7 @@ class PartnerList
         $this->partners->each(function ($partner) {
             $partner['is_available'] = $this->isWithinPreparationTime($partner) && (new PartnerAvailable($partner))->available($this->date, $this->time, $this->selectedCategory) ? 1 : 0;
         });
-        $this->rejectShebaHelpDesk();
+        if ($this->getAvailablePartners()->count() > 1) $this->rejectShebaHelpDesk();
     }
 
     public function isWithinPreparationTime($partner)
@@ -462,15 +463,20 @@ class PartnerList
         return array($option, $variables);
     }
 
-    private function rejectShebaHelpDesk()
+    /**
+     * @return mixed
+     */
+    private function getAvailablePartners()
     {
-        $available_partners = $this->partners->filter(function ($partner, $key) {
+        return $this->partners->filter(function ($partner, $key) {
             return $partner->is_available == 1;
         });
-        if ($available_partners->count() > 1) {
-            $this->partners = $this->partners->reject(function ($partner) {
-                return $partner->id == 1809;
-            });
-        }
+    }
+
+    private function rejectShebaHelpDesk()
+    {
+        $this->partners = $this->partners->reject(function ($partner) {
+            return $partner->id == 1809;
+        });
     }
 }
