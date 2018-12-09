@@ -710,7 +710,7 @@ class PartnerController extends Controller
 
     private function getSelectColumnsOfService()
     {
-        return ['services.id', 'name', 'is_published_for_backend', 'variable_type', 'services.min_quantity', 'services.variables', 'is_verified', 'is_published'];
+        return ['services.id', 'name', 'is_published_for_backend', 'variable_type', 'services.min_quantity', 'services.variables', 'is_verified', 'is_published', 'app_thumb'];
     }
 
     private function getSelectColumnsOfCategory()
