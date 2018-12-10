@@ -65,7 +65,7 @@ class TopUp
      */
     public function recharge(TopUpRequest $top_up_request)
     {
-        if($this->validator->setRequest($top_up_request)->validate()->hasError()) return;
+        if ($this->validator->setRequest($top_up_request)->validate()->hasError()) return;
 
         $this->response = $this->vendor->recharge($top_up_request);
         if ($this->response->hasSuccess()) {
@@ -93,12 +93,12 @@ class TopUp
      */
     public function getError()
     {
-        if($this->validator->hasError()) {
+        if ($this->validator->hasError()) {
             return $this->validator->getError();
-        } else if(!$this->response->hasSuccess()) {
+        } else if (!$this->response->hasSuccess()) {
             return $this->response->getError();
         } else {
-            if(!$this->isSuccessful) return new TopUpSystemErrorResponse();
+            if (!$this->isSuccessful) return new TopUpSystemErrorResponse();
         }
         return new TopUpErrorResponse();
     }
