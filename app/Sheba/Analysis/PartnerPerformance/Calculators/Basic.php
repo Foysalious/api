@@ -3,6 +3,9 @@
 use App\Models\Job;
 use App\Models\JobNoResponseLog;
 use App\Models\JobScheduleDueLog;
+use Sheba\Analysis\PartnerPerformance\Data\InnerData;
+use Sheba\Analysis\PartnerPerformance\Data\OuterData;
+use Sheba\Analysis\PartnerPerformance\Data\PartnerPerformanceData;
 use Sheba\Analysis\PartnerPerformance\PartnerPerformance;
 use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Helpers\TimeFrame;
@@ -20,19 +23,27 @@ class Basic extends PartnerPerformance
         $timely_accepted = $this->getDataOf('timely_accepted');
         $timely_processed = $this->getDataOf('timely_processed');
 
+        return (new PartnerPerformanceData())
+            ->setCompleted($completed)
+            ->setNoComplain($complain)
+            ->setTimelyAccepted($timely_accepted)
+            ->setTimelyProcessed($timely_processed)
+            ->setOrderReceived($this->getOrderCreatedCountOn($this->timeFrame))
+            ->toArray();
+
         return collect([
-            'score' => ($completed['rate'] + $complain['rate'] + $timely_accepted['rate'] + $timely_processed['rate']) / 4,
+            'score' => ($completed->getRate() + $complain->getRate() + $timely_accepted->getRate() + $timely_processed->getRate()) / 4,
             'summary' => [
                 'order_received' => $this->getOrderCreatedCountOn($this->timeFrame),
-                'completed' => $completed['total'],
-                'no_complain' => $complain['total'],
-                'timely_accepted' => $timely_accepted['total'],
-                'timely_processed' => $timely_processed['total']
+                'completed' => $completed->getTotal(),
+                'no_complain' => $complain->getTotal(),
+                'timely_accepted' => $timely_accepted->getTotal(),
+                'timely_processed' => $timely_processed->getTotal()
             ],
-            'completed' => $completed,
-            'no_complain' => $complain,
-            'timely_accepted' => $timely_accepted,
-            'timely_processed' => $timely_processed
+            'completed' => $completed->toArray(),
+            'no_complain' => $complain->toArray(),
+            'timely_accepted' => $timely_accepted->toArray(),
+            'timely_processed' => $timely_processed->toArray()
         ]);
     }
 
@@ -42,25 +53,17 @@ class Basic extends PartnerPerformance
 
         $previous = $this->isCalculatingWeekly() ? $this->getPreviousDataByWeekly($of) : $this->getPreviousDataByMonthly($of);
 
+        /** @var InnerData $data */
         $data = $this->$func_name($this->timeFrame);
 
-        $last = end($previous);
-
-        return [
-            'total' => $data['value'],
-            'rate' => $rate = $data['rate'],
-            'last_rate' => $last_rate = $last['rate'],
-            'is_improved' => $last_rate < $rate ? true : false,
-            'last_rate_difference' => abs($rate - $last_rate),
-            'previous' => $previous
-        ];
+        return (new OuterData())->setInnerData($data)->setPrevious($previous);
     }
 
     private function getDataOfCompleted(TimeFrame $time_frame)
     {
         $order_closed = $this->getOrderClosedCountOn($time_frame);
         $order_created = $this->getOrderCreatedCountOn($time_frame);
-        return ['value' => $order_closed, 'rate' => $order_created ? ($order_closed / $order_created) : 0];
+        return (new InnerData())->setValue($order_closed)->setDenominator($order_created);
     }
 
     private function getDataOfComplain(TimeFrame $time_frame)
@@ -68,7 +71,7 @@ class Basic extends PartnerPerformance
         $complain = Complain::against($this->partner)->createdAtBetween($time_frame)->count();
         $order_closed = $this->getOrderClosedCountOn($time_frame);
         $without_complain = $order_closed - $complain;
-        return ['value' => $without_complain, 'rate' => $order_closed ? ($without_complain / $order_closed) : 0];
+        return (new InnerData())->setValue($without_complain)->setDenominator($order_closed);
     }
 
     private function getDataOfTimelyAccepted(TimeFrame $time_frame)
@@ -77,7 +80,7 @@ class Basic extends PartnerPerformance
         $not_responded = JobNoResponseLog::whereIn('job_id', $jobs_served)->count();
         $order_closed = $this->getOrderClosedCountOn($time_frame);
         $timely_accepted = $order_closed - $not_responded;
-        return ['value' => $timely_accepted, 'rate' => $order_closed ? ($timely_accepted / $order_closed) : 0];
+        return (new InnerData())->setValue($timely_accepted)->setDenominator($order_closed);
     }
 
     private function getDataOfTimelyProcessed(TimeFrame $time_frame)
@@ -86,7 +89,7 @@ class Basic extends PartnerPerformance
         $schedule_due = JobScheduleDueLog::whereIn('job_id', $jobs_served)->count();
         $order_closed = $this->getOrderClosedCountOn($time_frame);
         $timely_processed = $order_closed - $schedule_due;
-        return ['value' => $timely_processed, 'rate' => $order_closed ? ($timely_processed / $order_closed) : 0];
+        return (new InnerData())->setValue($timely_processed)->setDenominator($order_closed);
     }
 
     private function getPreviousDataByWeekly($of)
@@ -104,7 +107,8 @@ class Basic extends PartnerPerformance
                     'start' => $week_start_date->toDateString(),
                     'end' => $week_end_date->toDateString()
                 ],
-            ] + $this->$func_name(new TimeFrame($week_start_date, $week_end_date));
+                'data' => $this->$func_name(new TimeFrame($week_start_date, $week_end_date))
+            ];
 
             $week_start_date->addWeek();
             $week_end_date->addWeek();
@@ -126,8 +130,9 @@ class Basic extends PartnerPerformance
                 'date_range' => [
                     'start' => $month_start_date->toDateString(),
                     'end' => $month_end_date->toDateString()
-                ]
-            ] + $this->$func_name(new TimeFrame($month_start_date, $month_end_date));
+                ],
+                'data' => $this->$func_name(new TimeFrame($month_start_date, $month_end_date))
+            ];
             $month_start_date->addMonth();
             $month_end_date->addMonth();
         }

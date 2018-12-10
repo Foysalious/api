@@ -70,22 +70,22 @@ class DashboardController extends Controller
                     'timeline' => date("jS F", strtotime(Carbon::today()->startOfWeek())) . "-" . date("jS F", strtotime(Carbon::today())),
                     'successfully_completed' => [
                         'count' => $performanceStats['completed']['total'],
-                        'performance' => $performanceStats['completed']['rate'],
+                        'performance' => $this->formatRate($performanceStats['completed']['rate']),
                         'is_improved' => $performanceStats['completed']['is_improved']
                     ],
                     'completed_without_complain' => [
                         'count' => $performanceStats['no_complain']['total'],
-                        'performance' => $performanceStats['no_complain']['rate'],
+                        'performance' => $this->formatRate($performanceStats['no_complain']['rate']),
                         'is_improved' => $performanceStats['no_complain']['is_improved']
                     ],
                     'timely_accepted' => [
                         'count' => $performanceStats['timely_accepted']['total'],
-                        'performance' => $performanceStats['timely_accepted']['rate'],
+                        'performance' => $this->formatRate($performanceStats['timely_accepted']['rate']),
                         'is_improved' => $performanceStats['timely_accepted']['is_improved']
                     ],
                     'timely_started' => [
                         'count' => $performanceStats['timely_processed']['total'],
-                        'performance' => $performanceStats['timely_processed']['rate'],
+                        'performance' => $this->formatRate($performanceStats['timely_processed']['rate']),
                         'is_improved' => $performanceStats['timely_processed']['is_improved']
                     ]
                 ],
@@ -102,5 +102,12 @@ class DashboardController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function formatRate($rate)
+    {
+        if ($rate < 0) return 0;
+        if ($rate > 100) return 100;
+        return $rate;
     }
 }
