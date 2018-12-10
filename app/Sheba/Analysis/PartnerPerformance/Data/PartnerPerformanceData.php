@@ -58,5 +58,22 @@ class PartnerPerformanceData
         return $this;
     }
 
+    public function toArray()
+    {
+        return collect([
+            'score' => ($this->completed->getRate() + $this->no_complain->getRate() + $this->timely_accepted->getRate() + $this->timely_processed->getRate()) / 4,
+            'summary' => [
+                'order_received' => $this->order_received,
+                'completed' => $this->completed->getTotal(),
+                'no_complain' => $this->no_complain->getTotal(),
+                'timely_accepted' => $this->timely_accepted->getTotal(),
+                'timely_processed' => $this->timely_processed->getTotal()
+            ],
+            'completed' => $this->completed->toArray(),
+            'no_complain' => $this->no_complain->toArray(),
+            'timely_accepted' => $this->timely_accepted->toArray(),
+            'timely_processed' => $this->timely_processed->toArray()
+        ]);
+    }
 
 }

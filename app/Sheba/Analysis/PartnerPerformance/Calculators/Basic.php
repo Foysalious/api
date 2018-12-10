@@ -18,33 +18,32 @@ class Basic extends PartnerPerformance
 
     protected function get()
     {
-        $completed = $this->getDataOf('completed');
-        $complain = $this->getDataOf('complain');
-        $timely_accepted = $this->getDataOf('timely_accepted');
-        $timely_processed = $this->getDataOf('timely_processed');
+//        $completed = $this->getDataOf('completed');
+//        $complain = $this->getDataOf('complain');
+//        $timely_accepted = $this->getDataOf('timely_accepted');
+//        $timely_processed = $this->getDataOf('timely_processed');
 
         return (new PartnerPerformanceData())
-            ->setCompleted($completed)
-            ->setNoComplain($complain)
-            ->setTimelyAccepted($timely_accepted)
-            ->setTimelyProcessed($timely_processed)
-            ->setOrderReceived($this->getOrderCreatedCountOn($this->timeFrame))
-            ->toArray();
+            ->setCompleted($this->getDataOf('completed'))
+            ->setNoComplain($this->getDataOf('complain'))
+            ->setTimelyAccepted($this->getDataOf('timely_accepted'))
+            ->setTimelyProcessed($this->getDataOf('timely_processed'))
+            ->setOrderReceived($this->getOrderCreatedCountOn($this->timeFrame));
 
-        return collect([
-            'score' => ($completed->getRate() + $complain->getRate() + $timely_accepted->getRate() + $timely_processed->getRate()) / 4,
-            'summary' => [
-                'order_received' => $this->getOrderCreatedCountOn($this->timeFrame),
-                'completed' => $completed->getTotal(),
-                'no_complain' => $complain->getTotal(),
-                'timely_accepted' => $timely_accepted->getTotal(),
-                'timely_processed' => $timely_processed->getTotal()
-            ],
-            'completed' => $completed->toArray(),
-            'no_complain' => $complain->toArray(),
-            'timely_accepted' => $timely_accepted->toArray(),
-            'timely_processed' => $timely_processed->toArray()
-        ]);
+//        return collect([
+//            'score' => ($completed->getRate() + $complain->getRate() + $timely_accepted->getRate() + $timely_processed->getRate()) / 4,
+//            'summary' => [
+//                'order_received' => $this->getOrderCreatedCountOn($this->timeFrame),
+//                'completed' => $completed->getTotal(),
+//                'no_complain' => $complain->getTotal(),
+//                'timely_accepted' => $timely_accepted->getTotal(),
+//                'timely_processed' => $timely_processed->getTotal()
+//            ],
+//            'completed' => $completed->toArray(),
+//            'no_complain' => $complain->toArray(),
+//            'timely_accepted' => $timely_accepted->toArray(),
+//            'timely_processed' => $timely_processed->toArray()
+//        ]);
     }
 
     private function getDataOf($of)
