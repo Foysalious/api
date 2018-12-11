@@ -17,6 +17,7 @@ use App\Sheba\Bondhu\AffiliateStatus;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\ModificationFields;
 use Sheba\PartnerPayment\PartnerPaymentValidatorFactory;
 use Sheba\Reports\ExcelHandler;
 use Validator;
@@ -24,6 +25,8 @@ use DB;
 
 class AffiliateController extends Controller
 {
+    use ModificationFields;
+
     private $fileRepository;
     private $locationRepository;
     private $affiliateRepository;
@@ -417,6 +420,8 @@ class AffiliateController extends Controller
             if ($error = $payment_validator->hasError()) return api_response($request, null, 400, ['message' => $error]);
             $affiliate = $request->affiliate;
             if ($this->ifTransactionAlreadyExists($request->transaction_id)) return api_response($request, null, 403, ['message' => 'Transaction id already exists']);
+
+            $this->setModifier($affiliate);
             $this->recharge($affiliate, $payment_validator);
             return api_response($request, null, 200, ['message' => "Moneybag refilled."]);
         } catch (\Throwable $e) {

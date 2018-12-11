@@ -3,8 +3,12 @@
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 
+use Sheba\ModificationFields;
+
 abstract class TopUpCommission
 {
+    use ModificationFields;
+
     protected $topUpOrder;
     protected $agent;
     protected $vendor;
@@ -90,6 +94,7 @@ abstract class TopUpCommission
 
     protected function refundAgentsCommission()
     {
+        $this->setModifier($this->agent);
         $amount = $this->topUpOrder->amount;
         $amount_after_commission = round($amount - $this->calculateCommission($amount, $this->topUpOrder->vendor), 2);
         $log = "Your recharge TK $amount to {$this->topUpOrder->payee_mobile} has failed, TK $amount_after_commission is refunded in your account.";

@@ -19,6 +19,7 @@ class MockTransactionValidator implements TransactionValidator
     {
         return false;
     }
+
     public function __get($property)
     {
         if (property_exists($this, $property)) {
