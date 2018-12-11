@@ -201,7 +201,12 @@ class CategoryController extends Controller
                         if ((int)\request()->is_business) $q->publishedForBusiness();
                         else $q->published();
                     }]);
-                    $services = $this->serviceRepository->getPartnerServicesAndPartners($category->services, $location)->each(function ($service) {
+                    $serviceFiltered = $category->services->filter(function($service) use ($location ) {
+                        $service->whereHas('location', function ($q) use ($location) {
+                            $q->where('locations.id', $location);
+                        });
+                    });
+                    $services = $this->serviceRepository->getPartnerServicesAndPartners($serviceFiltered, $location)->each(function ($service) {
                         list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
                         removeRelationsAndFields($service);
                     });
@@ -213,6 +218,7 @@ class CategoryController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
