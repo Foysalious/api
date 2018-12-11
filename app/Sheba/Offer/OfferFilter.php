@@ -4,6 +4,7 @@ namespace Sheba\Offer;
 
 use App\Models\Category;
 use App\Models\Customer;
+use App\Models\Location;
 use App\Models\OfferShowcase;
 use App\Models\Voucher;
 use Sheba\Voucher\VoucherRule;
@@ -13,6 +14,7 @@ class OfferFilter
     private $offers;
     private $customer;
     private $category;
+    private $location;
 
     public function __construct($offers)
     {
@@ -27,6 +29,11 @@ class OfferFilter
     public function setCategory(Category $category = null)
     {
         $this->category = $category;
+    }
+
+    public function setLocation(Location $location = null)
+    {
+        $this->location = $location;
     }
 
     public function filter()
@@ -94,6 +101,11 @@ class OfferFilter
                         continue;
                     }
                 }
+            }
+            if($this->location) {
+               $locations = $offer->locations->pluck('id')->toArray();
+               if(!in_array($this->location->id, $locations))
+                   unset($this->offers[$key]);
             }
         }
         return $this->offers;
