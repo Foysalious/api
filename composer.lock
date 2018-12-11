@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "1e6f8560afe93e63769f17fe65208180",
+    "content-hash": "4cf7e5139843fd1e92b3e46b1202fcd1",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -2842,7 +2842,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://arnabrahman@bitbucket.org/startern/sheba_dal.git",
+                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
                 "reference": "727882897a2829026fcff22eaad7a124708cb4a3"
             },
             "require": {
@@ -2906,8 +2906,8 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://arnabrahman@bitbucket.org/startern/sheba_voucher.git",
-                "reference": "7cbf3a4e275a9452bfda424c5260aa261e213cd6"
+                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_voucher.git",
+                "reference": "911a486de168fc823b879d668295fe2b2d8572e2"
             },
             "require": {
                 "php": ">=5.4"
@@ -2931,7 +2931,7 @@
                 }
             ],
             "description": "Voucher for Sheba.",
-            "time": "2018-09-09T10:19:26+00:00"
+            "time": "2018-12-11T06:20:32+00:00"
         },
         {
             "name": "sunra/php-simple-html-dom-parser",
@@ -5395,6 +5395,7 @@
         "ext-json": "*",
         "ext-curl": "*",
         "ext-soap": "*",
+        "ext-calendar": "*",
         "ext-simplexml": "*"
     },
     "platform-dev": []
