@@ -48,7 +48,7 @@ abstract class PartnerPerformance
      */
     public function getData()
     {
-        return $this->data;
+        return $this->data->toArray();
     }
 
     protected function isCalculatingWeekly()

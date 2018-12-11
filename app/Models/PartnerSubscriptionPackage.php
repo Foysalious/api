@@ -63,7 +63,7 @@ class PartnerSubscriptionPackage extends Model implements SubscriptionPackage
     public function originalPricePerDay($billing_type = 'monthly')
     {
         $day = $billing_type == 'monthly' ? 30 : 365;
-        return $this->originalPrice() / $day;
+        return $this->originalPrice($billing_type) / $day;
     }
 
     public function runningDiscount($billing_type = 'monthly')

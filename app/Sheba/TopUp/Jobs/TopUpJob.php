@@ -45,7 +45,7 @@ class TopUpJob extends Job implements ShouldQueue
             $this->topUp->setAgent($this->agent)->setVendor($this->vendor);
 
             $this->topUp->recharge($this->topUpRequest);
-            if($this->topUp->isNotSuccessful()) {
+            if ($this->topUp->isNotSuccessful()) {
                 $this->takeUnsuccessfulAction();
             } else {
                 $this->takeSuccessfulAction();
@@ -74,10 +74,6 @@ class TopUpJob extends Job implements ShouldQueue
      */
     private function notifyAgentAboutFailure()
     {
-        notify($this->agent)->send([
-            "title" => 'Your top up to ' . $this->topUpRequest->getMobile() . ' has been failed.',
-            "link" => '',
-            "type" => notificationType('Danger')
-        ]);
+        notify($this->agent)->send(["title" => 'Your top up to ' . $this->topUpRequest->getMobile() . ' has been failed.', "link" => '', "type" => notificationType('Danger')]);
     }
 }

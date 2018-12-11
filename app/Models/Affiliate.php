@@ -3,6 +3,7 @@
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Location\Distance\TransactionMethod;
+use Sheba\ModificationFields;
 use Sheba\Payment\Wallet;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
@@ -11,6 +12,8 @@ class Affiliate extends Model implements TopUpAgent
 {
     use TopUpTrait;
     use Wallet;
+    use ModificationFields;
+
     protected $guarded = ['id'];
     protected $dates = ['last_suspended_at'];
     protected $casts = ['wallet' => 'double', 'is_ambassador' => 'int', 'is_suspended' => 'int', 'total_gifted_amount' => 'double'];
@@ -134,7 +137,7 @@ class Affiliate extends Model implements TopUpAgent
 
     public function walletTransaction($data)
     {
-        $this->transactions()->save(new AffiliateTransaction(array_merge($data, createAuthor($this))));
+        $this->transactions()->save(new AffiliateTransaction($this->withCreateModificationField($data)));
     }
 
     public function isAmbassador()

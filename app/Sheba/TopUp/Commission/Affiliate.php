@@ -7,21 +7,24 @@ class Affiliate extends TopUpCommission
 {
     public function disburse()
     {
-       $this->storeAgentsCommission();
-       $this->storeAmbassadorCommission();
-       $this->storeWalletTransaction();
+        $this->storeAgentsCommission();
+        if ($this->agent->ambassador) {
+            $this->storeAmbassadorCommission();
+            $this->storeAmbassadorWalletTransaction();
+        }
     }
 
-    private function storeAmbassadorCommission() {
-        $this->topUpOrder->ambassador_commission =  $this->calculateAmbassadorCommission($this->topUpOrder->amount, $this->vendor);
+    private function storeAmbassadorCommission()
+    {
+        $this->topUpOrder->ambassador_commission = $this->calculateAmbassadorCommission($this->topUpOrder->amount, $this->vendor);
         $this->topUpOrder->save();
     }
 
-    private function storeWalletTransaction(){
-        if($this->agent->ambassador) {
-            $this->agent->ambassador->creditWallet($this->amount);
-            $this->agent->ambassador->walletTransaction(['amount' => $this->amount, 'type' => 'Credit', 'log' => "$this->amount Tk. has been gifted from agent id: {$this->agent->id}"]);
-        }
+    private function storeAmbassadorWalletTransaction()
+    {
+        $this->agent->ambassador->creditWallet($this->topUpOrder->ambassador_commission);
+        $log = "{$this->agent->profile->name} gifted {$this->topUpOrder->ambassador_commission} Tk. for {$this->topUpOrder->amount} Tk. topup";;
+        $this->agent->ambassador->walletTransaction(['amount' => $this->topUpOrder->ambassador_commission, 'type' => 'Credit', 'log' => $log]);
     }
 
     private function deductFromAmbassador($amount, $log)
@@ -39,7 +42,7 @@ class Affiliate extends TopUpCommission
         $this->sendRefundNotification($log);
 
         $ambassador = $this->topUpOrder->agent->ambassador;
-        if(!is_null($ambassador)) {
+        if (!is_null($ambassador)) {
             $ambassador_commission = $this->topUpOrder->ambassador_commission;
             $this->topUpOrder->ambassador_commission = 0.0;
             $this->topUpOrder->save();
@@ -50,14 +53,14 @@ class Affiliate extends TopUpCommission
     private function sendRefundNotification($title)
     {
         try {
-            notify()->affiliate($this->topUpOrder->agent)->send([
-                "title" => $title,
-                "link" => url("affiliate/" . $this->topUpOrder->agent->id),
-                "type" => 'warning',
-                "event_type" => 'App\Models\Affiliate',
-                "event_id" => $this->topUpOrder->agent->id
-            ]);
-        } catch (\Throwable $e) {
-        }
+            notify()->affiliate($this->topUpOrder->agent)
+                ->send([
+                    "title" => $title,
+                    "link" => url("affiliate/" . $this->topUpOrder->agent->id),
+                    "type" => 'warning',
+                    "event_type" => 'App\Models\Affiliate',
+                    "event_id" => $this->topUpOrder->agent->id
+                ]);
+        } catch (\Throwable $e) {}
     }
 }
