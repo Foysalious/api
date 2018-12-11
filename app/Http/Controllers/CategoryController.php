@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\HyperLocal;
+use App\Models\Location;
 use App\Models\ScheduleSlot;
 use App\Models\Service;
 use App\Repositories\CategoryRepository;
@@ -11,6 +13,7 @@ use App\Sheba\Queries\Category\StartPrice;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Dingo\Api\Routing\Helpers;
+use Illuminate\Support\Facades\DB;
 use Redis;
 
 class CategoryController extends Controller
@@ -28,18 +31,40 @@ class CategoryController extends Controller
     public function index(Request $request)
     {
         try {
+            $this->validate($request, [
+                'location' => 'sometimes|numeric',
+                'lat' => 'sometimes|numeric',
+                'lng' => 'required_with:lat'
+            ]);
             $with = '';
+            $location = null;
+            if($request->has('location') ) {
+                $location = Location::find($request->location);
+            } else if($request->has('lat')) {
+                $hyperLocation= HyperLocal::insidePolygon((double) $request->lat, (double)$request->lng)->with('location')->first();
+                if(!is_null($hyperLocation)) $location = $hyperLocation->location;
+            }
             $categories = Category::where('parent_id', null)->orderBy('order')->select('id', 'name', 'bn_name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id');
             if ($request->has('with')) {
                 $with = $request->with;
                 if ($with == 'children') {
-                    $categories->with(['children' => function ($q) {
+                    $categories->with(['children' => function ($q) use($location) {
+                        $q->whereHas('locations' , function($q) use ($location) {
+                            $q->where('locations.id', $location->id);
+                        });
                         $q->orderBy('order');
                     }]);
                 }
             }
+
             $categories = $request->has('is_business') && (int)$request->is_business ? $categories->publishedForBusiness() : $categories->published();
             $categories = $categories->get();
+            if($location) {
+                $categories = $categories->filter(function($category) use ($location){
+                    $locations = $category->locations()->pluck('id')->toArray();
+                    return in_array($location->id, $locations);
+                });
+            }
             foreach ($categories as &$category) {
                 if ($with == 'children') {
                     $category->children->sortBy('order')->each(function (&$child) {
@@ -49,6 +74,7 @@ class CategoryController extends Controller
             }
             return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -89,9 +115,25 @@ class CategoryController extends Controller
     public function getSecondaries($category, Request $request)
     {
         try {
+            $this->validate($request, [
+                'location' => 'sometimes|numeric',
+                'lat' => 'sometimes|numeric',
+                'lng' => 'required_with:lat'
+            ]);
+            $location = null;
             $category = Category::find($category);
-            $location = $request->location;
-            $children = $category->children;
+            if($request->has('location') ) {
+                $location = Location::find($request->location);
+            } else if($request->has('lat')) {
+                $hyperLocation= HyperLocal::insidePolygon((double) $request->lat, (double)$request->lng)->with('location')->first();
+                if(!is_null($hyperLocation)) $location = $hyperLocation->location;
+            }
+            if($location) {
+                $children = $category->children->filter(function($secondary) use($location) {
+                    $locations = $secondary->locations()->pluck('id')->toArray();
+                    return in_array($location->id, $locations);
+                });
+            }
             if (count($children) != 0) {
                 $children = $children->each(function (&$child) use ($location) {
                     removeRelationsAndFields($child);
@@ -102,6 +144,7 @@ class CategoryController extends Controller
             } else
                 return api_response($request, null, 404);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

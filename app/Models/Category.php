@@ -101,4 +101,8 @@ class Category extends Model
         return in_array($this->id, array_map('intval', explode(',', env('RENT_CAR_IDS')))) ? 1 : 0;
     }
 
+    public function locations()
+    {
+        return $this->belongsToMany(Location::class, 'location_category');
+    }
 }
