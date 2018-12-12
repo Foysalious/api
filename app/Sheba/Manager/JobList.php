@@ -1,7 +1,4 @@
-<?php
-
-namespace Sheba\Manager;
-
+<?php namespace Sheba\Manager;
 
 use App\Models\Partner;
 use Carbon\Carbon;
@@ -62,5 +59,4 @@ class JobList
         }
         return $jobs_without_resource->merge($final_jobs);
     }
-
 }

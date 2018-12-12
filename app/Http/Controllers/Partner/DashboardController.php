@@ -8,6 +8,7 @@ use Sheba\Analysis\PartnerPerformance\PartnerPerformance;
 use Sheba\Analysis\PartnerSale\PartnerSale;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
 use Sheba\Helpers\TimeFrame;
+use Sheba\Manager\JobList;
 use Sheba\Reward\PartnerReward;
 use Sheba\Subscription\Partner\PartnerSubscriber;
 
@@ -46,10 +47,12 @@ class DashboardController extends Controller
                 'bkash_no' => $partner->bkash_no,
                 'current_stats' => [
                     'total_order' => $partner->orders()->count(),
+                    'total_ongoing_order' => (new JobList($partner))->ongoing()->count(),
                     'today_order' => $partner->todayJobs($successful_jobs)->count(),
                     'tomorrow_order' => $partner->tomorrowJobs($successful_jobs)->count(),
                     'not_responded' => $partner->notRespondedJobs($successful_jobs)->count(),
                     'schedule_due' => $partner->scheduleDueJobs($successful_jobs)->count(),
+                    'serve_due' => 100,
                     'complain' => $partner->complains()->count()
                 ],
                 'sales' => [
