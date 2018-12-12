@@ -195,18 +195,16 @@ class CategoryController extends Controller
                     }
                     $services = $this->serviceRepository->addServiceInfo($services, $scope);
                 } else {
-                    $category = $category->load(['services' => function ($q) use ($offset, $limit) {
+                    $category = $category->load(['services' => function ($q) use ($offset, $limit, $location) {
+                        $q->whereHas('locations', function ($query) use ($location) {
+                            $query->where('locations.id', $location);
+                        });
                         $q->select('id', 'category_id', 'unit', 'name', 'bn_name', 'thumb', 'app_thumb', 'app_banner',
                             'short_description', 'description', 'banner', 'faqs', 'variables', 'variable_type', 'min_quantity')->orderBy('order')->skip($offset)->take($limit);
                         if ((int)\request()->is_business) $q->publishedForBusiness();
                         else $q->published();
                     }]);
-                    $serviceFiltered = $category->services->filter(function($service) use ($location ) {
-                        $service->whereHas('location', function ($q) use ($location) {
-                            $q->where('locations.id', $location);
-                        });
-                    });
-                    $services = $this->serviceRepository->getPartnerServicesAndPartners($serviceFiltered, $location)->each(function ($service) {
+                    $services = $this->serviceRepository->getPartnerServicesAndPartners($category->services, $location)->each(function ($service) {
                         list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
                         removeRelationsAndFields($service);
                     });
