@@ -736,8 +736,9 @@ class PartnerController extends Controller
                 if (is_null($master_category['sub_categories'])) $master_category['sub_categories'] = collect([]);
                 $master_category['sub_categories']->push(['id' => $category->id, 'name' => $category->name, 'app_thumb' => $category->app_thumb, 'icon' => $category->icon, 'icon_png' => $category->icon_png]);
             }
-            return $master_categories;
+            return api_response($request, $master_categories,  200,['categories' => $master_categories]);
         } catch (\Throwable $exception) {
+            dd($exception);
             app('sentry')->captureException($exception);
             return api_response($request, null, 500);
         }
