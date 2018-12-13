@@ -512,7 +512,7 @@ class PartnerController extends Controller
                     }
                     $categories->push(['id' => $category->id, 'name' => $category->name, 'app_thumb' => $category->app_thumb, 'services' => $services]);
                 }
-                
+
                 if (count($categories) > 0) {
                     $hasCarRental = $categories->filter(function ($category) {
                         return in_array($category['id'], $this->rentCarCategoryIds);
@@ -736,9 +736,8 @@ class PartnerController extends Controller
                 if (is_null($master_category['sub_categories'])) $master_category['sub_categories'] = collect([]);
                 $master_category['sub_categories']->push(['id' => $category->id, 'name' => $category->name, 'app_thumb' => $category->app_thumb, 'icon' => $category->icon, 'icon_png' => $category->icon_png]);
             }
-            return api_response($request, $master_categories,200, ['categories' => $master_categories]);
+            return api_response($request, $master_categories,  200,['categories' => $master_categories]);
         } catch (\Throwable $exception) {
-            dd($exception);
             app('sentry')->captureException($exception);
             return api_response($request, null, 500);
         }

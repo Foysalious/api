@@ -15,8 +15,11 @@ class PartnerOrder extends Model
     public $totalMaterialPrice;
     public $totalMaterialCost;
     public $totalPrice;
+    public $gmv;
     public $totalCost;
     public $grossAmount;
+    public $serviceCharge;
+    public $totalCommission;
     public $roundingCutOff;
     public $paid;
     public $due;
@@ -37,6 +40,8 @@ class PartnerOrder extends Model
     public $totalCostWithoutDiscount;
     public $deliveryCharge;
     public $isCalculated;
+    public $revenue_percent = 0;
+    public $service_charge_percent = 0;
 
     protected $guarded = ['id'];
     protected $dates = ['closed_at', 'closed_and_paid_at'];
@@ -84,6 +89,9 @@ class PartnerOrder extends Model
         $this->calculateStatus();
         $this->totalDiscount = $this->jobDiscounts + $this->discount;
         $this->_calculateRoundingCutOff();
+        $this->gmv = floatValFormat($this->jobPrices);
+        $this->serviceCharge = floatValFormat($this->gmv - ($this->totalCostWithoutDiscount + $this->totalPartnerDiscount));
+        $this->service_charge_percent = floatValFormat($this->gmv > 0 ? ($this->serviceCharge * 100) / $this->gmv : 0);
         $this->grossAmount = floatValFormat($this->totalPrice - $this->discount - $this->roundingCutOff);
         $this->paid = $this->sheba_collection + $this->partner_collection;
         $this->due = floatValFormat($this->grossAmount - $this->paid);
@@ -168,6 +176,7 @@ class PartnerOrder extends Model
         $this->totalPrice += $job->grossPrice;
         $this->totalCostWithoutDiscount += $job->totalCostWithoutDiscount;
         $this->totalCost += $job->totalCost;
+        $this->totalCommission += $job->commission;
         $this->totalDiscountedCost += $job->totalCost;
         $this->jobDiscounts += $job->discount;
         $this->totalPartnerDiscount += $job->discountContributionPartner;
@@ -222,6 +231,7 @@ class PartnerOrder extends Model
         $this->totalMaterialCost = 0;
         $this->totalPrice = 0;
         $this->totalCost = 0;
+        $this->totalCommission = 0;
         $this->totalDiscountedCost = 0;
         $this->jobDiscounts = 0;
         $this->jobPrices = 0;

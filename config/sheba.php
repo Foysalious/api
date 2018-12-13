@@ -81,5 +81,6 @@ return [
         ['#194F68', '#57CA85'],
         ['#5B247A', '#1BCEDF'],
         ['#00B8BA', '#00FFED']
-    ]
+    ],
+    'screen' => ['home', 'eshop']
 ];
