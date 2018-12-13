@@ -30,4 +30,14 @@ class Slider extends Model
     {
         return $query->ForBusiness()->sort()->get();
     }
+
+    public function slides()
+    {
+        return $this->belongsToMany(Slide::class, 'slider_slide')->withPivot(['location_id','order']);
+    }
+
+    public function sliderPortals()
+    {
+        return $this->hasMany(SliderPortal::class);
+    }
 }
