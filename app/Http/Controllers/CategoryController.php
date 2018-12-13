@@ -134,6 +134,8 @@ class CategoryController extends Controller
                     return in_array($location->id, $locations);
                 });
             }
+            else
+                $children = $category->children;
             if (count($children) != 0) {
                 $children = $children->each(function (&$child) use ($location) {
                     removeRelationsAndFields($child);
