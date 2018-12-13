@@ -400,11 +400,11 @@ class Partner extends Model implements Rewardable, TopUpAgent
     {
         if (is_null($jobs)) {
             return $this->notCancelledJobs()->filter(function ($job, $key) {
-                return $job->schedule_date == Carbon::now()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined']);
+                return $job->schedule_date == Carbon::now()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined', 'Not Responded']);
             });
         }
         return $jobs->filter(function ($job, $key) {
-            return $job->schedule_date == Carbon::now()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined']);
+            return $job->schedule_date == Carbon::now()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined', 'Not Responded']);
         });
     }
 
@@ -416,7 +416,7 @@ class Partner extends Model implements Rewardable, TopUpAgent
             });
         }
         return $jobs->filter(function ($job, $key) {
-            return $job->schedule_date == Carbon::now()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined']);
+            return $job->schedule_date == Carbon::tomorrow()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined']);
         });
     }
 
