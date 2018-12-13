@@ -49,9 +49,11 @@ class CategoryController extends Controller
                 $with = $request->with;
                 if ($with == 'children') {
                     $categories->with(['children' => function ($q) use($location) {
-                        $q->whereHas('locations' , function($q) use ($location) {
-                            $q->where('locations.id', $location->id);
-                        });
+                        if(!is_null($location)) {
+                            $q->whereHas('locations' , function($q) use ($location) {
+                                $q->where('locations.id', $location->id);
+                            });
+                        }   
                         $q->orderBy('order');
                     }]);
                 }
@@ -186,7 +188,17 @@ class CategoryController extends Controller
             $category = ((int)$request->is_business ? $category->publishedForBusiness() : $category->published())->first();
             if ($category != null) {
                 list($offset, $limit) = calculatePagination($request);
-                $location = $request->location != '' ? $request->location : 4;
+                if($request->has('location')) {
+                    $location = $request->location != '' ? $request->location : 4;
+                } else {
+                    if($request->has('lat') && $request->has('lng')) {
+                        $hyperLocation= HyperLocal::insidePolygon((double) $request->lat, (double)$request->lng)->with('location')->first();
+                        if(!is_null($hyperLocation)) $location = $hyperLocation->location->id;
+                        else return api_response($request, null, 404);
+                    }
+                    else $location = 4;
+                }
+
                 $scope = [];
                 if ($request->has('scope')) $scope = $this->serviceRepository->getServiceScope($request->scope);
                 if ($category->parent_id == null) {
