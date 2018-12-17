@@ -23,7 +23,7 @@ class OperationController extends Controller
             }, 'basicInformations']);
             $working_hours = $partner->workingHours()->select('id', 'partner_id', 'day', 'start_time', 'end_time')->get();
             $final = collect($partner)->only(['id', 'name']);
-            $final->put('address', $partner->basicInformations->address);
+            $final->put('address', $partner->address);
             $final->put('working_schedule', $working_hours);
             $final->put('locations', $partner->locations->each(function ($location) {
                 removeRelationsAndFields($location);
