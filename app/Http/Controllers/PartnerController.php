@@ -727,7 +727,7 @@ class PartnerController extends Controller
     {
         try {
             $categories = Category::child()->published()->orWhere('is_published_for_business', 1)->whereDoesntHave('partners', function ($query) use ($request) {
-                return $query->where('partner_id', '<>', $request->partner->id);
+                return $query->where('partner_id', $request->partner->id);
             })->get();
             $master_categories = Category::publishedForAll()->select('id', 'name', 'app_thumb', 'icon', 'icon_png')->get();
 
