@@ -96,6 +96,13 @@ class Category extends Model
         });
     }
 
+    public function scopePublishedOrPublishedForBusiness($query)
+    {
+        return $query->where(function ($query){
+            return $query->where('publication_status', 1)->orWhere('is_published_for_business', 1);
+        });
+    }
+
     public function isRentCar()
     {
         return in_array($this->id, array_map('intval', explode(',', env('RENT_CAR_IDS')))) ? 1 : 0;

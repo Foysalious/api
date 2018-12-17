@@ -726,7 +726,7 @@ class PartnerController extends Controller
     public function untaggedCategories(Request $request)
     {
         try {
-            $categories = Category::child()->published()->orWhere('is_published_for_business', 1)->whereDoesntHave('partners', function ($query) use ($request) {
+            $categories = Category::child()->publishedOrPublishedForBusiness()->whereDoesntHave('partners', function ($query) use ($request) {
                 return $query->where('partner_id', $request->partner->id);
             })->get();
             $master_categories = Category::publishedForAll()->select('id', 'name', 'app_thumb', 'icon', 'icon_png')->get();
