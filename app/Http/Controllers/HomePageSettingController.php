@@ -23,16 +23,17 @@ class HomePageSettingController extends Controller
 
             $setting_key = '';
             if($request->has('portal_name' && $request->has('screen') && $request->has('location'))) {
-                $setting_key = 'settings_'.$request->portal_name.'_'.$request->screen."_".$request->location;
+                $portal_name = snake_case(camel_case($request->portal_name));
+                $setting_key = 'laravel:ScreenSetting::'.$portal_name.'_'.$request->screen."_".$request->location;
             }
 
             if ($request->for == 'app_json' || $request->for == 'app_json_revised') {
-                $settings = json_decode(Redis::get('settings_customer-app_home_4'));
+                    $settings = json_decode(Redis::get('laravel:ScreenSetting::customer_app_home_4'));
             } else {
                 if($setting_key!=='')
                     $settings = json_decode(Redis::get($setting_key));
                 else
-                    $settings = json_decode(Redis::get('settings_customer-app_home_4'));
+                    $settings = json_decode(Redis::get('laravel:ScreenSetting::customer_app_home_4'));
             }
 
             if(!is_null($settings))
@@ -44,10 +45,10 @@ class HomePageSettingController extends Controller
 
 // This are previous codes, kept for QA Purposes
 
-            //                    $settings = json_decode(Redis::get('app_settings'));
+//                    $settings = json_decode(Redis::get('app_settings'));
 //                    return api_response($request, $settings, 200, ['settings' => $settings]);
 
-            //                        $for = $this->getPublishedFor($request->for);
+//                        $for = $this->getPublishedFor($request->for);
 //                        $settings = HomepageSetting::$for()->select('id', 'order', 'item_type', 'item_id', 'updated_at')->orderBy('order')->get();
 //                        foreach ($settings as $setting) {
 //                            $setting->item_type = str_replace('App\Models\\', "", $setting->item_type);
