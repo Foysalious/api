@@ -30,30 +30,22 @@ class Partner extends Model implements Rewardable, TopUpAgent
 
     public function admins()
     {
-        return $this->belongsToMany(Resource::class)
-            ->where('resource_type', constants('RESOURCE_TYPES')['Admin'])
-            ->withPivot($this->resourcePivotColumns);
+        return $this->belongsToMany(Resource::class)->where('resource_type', constants('RESOURCE_TYPES')['Admin'])->withPivot($this->resourcePivotColumns);
     }
 
     public function operationResources()
     {
-        return $this->belongsToMany(Resource::class)
-            ->where('resource_type', constants('RESOURCE_TYPES')['Operation'])
-            ->withPivot($this->resourcePivotColumns);
+        return $this->belongsToMany(Resource::class)->where('resource_type', constants('RESOURCE_TYPES')['Operation'])->withPivot($this->resourcePivotColumns);
     }
 
     public function financeResources()
     {
-        return $this->belongsToMany(Resource::class)
-            ->where('resource_type', constants('RESOURCE_TYPES')['Finance'])
-            ->withPivot($this->resourcePivotColumns);
+        return $this->belongsToMany(Resource::class)->where('resource_type', constants('RESOURCE_TYPES')['Finance'])->withPivot($this->resourcePivotColumns);
     }
 
     public function handymanResources()
     {
-        return $this->belongsToMany(Resource::class)
-            ->where('resource_type', constants('RESOURCE_TYPES')['Handyman'])
-            ->withPivot($this->resourcePivotColumns);
+        return $this->belongsToMany(Resource::class)->where('resource_type', constants('RESOURCE_TYPES')['Handyman'])->withPivot($this->resourcePivotColumns);
     }
 
     public function resources()
@@ -200,10 +192,8 @@ class Partner extends Model implements Rewardable, TopUpAgent
 
     public function getContactNumber()
     {
-        if ($operation_resource = $this->operationResources()->first())
-            return $operation_resource->profile->mobile;
-        if ($admin_resource = $this->admins()->first())
-            return $admin_resource->profile->mobile;
+        if ($operation_resource = $this->operationResources()->first()) return $operation_resource->profile->mobile;
+        if ($admin_resource = $this->admins()->first()) return $admin_resource->profile->mobile;
         return null;
     }
 
@@ -262,12 +252,7 @@ class Partner extends Model implements Rewardable, TopUpAgent
 
         $result = [];
 
-        collect(
-            DB::table('category_partner_resource')->select('partner_resource_id')
-                ->whereIn('partner_resource_id', array_keys($partner_resource_ids))
-                ->where('category_id', $category)
-                ->get()
-        )->pluck('partner_resource_id')->each(function ($partner_resource_id) use ($partner_resource_ids, &$result) {
+        collect(DB::table('category_partner_resource')->select('partner_resource_id')->whereIn('partner_resource_id', array_keys($partner_resource_ids))->where('category_id', $category)->get())->pluck('partner_resource_id')->each(function ($partner_resource_id) use ($partner_resource_ids, &$result) {
             $result[] = $partner_resource_ids[$partner_resource_id];
         });
 
@@ -411,42 +396,49 @@ class Partner extends Model implements Rewardable, TopUpAgent
         });
     }
 
-    public function todayJobs($jobs = null) {
-        if(is_null($jobs)) {
+    public function todayJobs($jobs = null)
+    {
+        if (is_null($jobs)) {
             return $this->notCancelledJobs()->filter(function ($job, $key) {
-                return $job->schedule_date == Carbon::now()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined']);
+                return $job->schedule_date == Carbon::now()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined', 'Not Responded']);
             });
         }
         return $jobs->filter(function ($job, $key) {
-            return $job->schedule_date == Carbon::now()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined']);
+            return $job->schedule_date == Carbon::now()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined', 'Not Responded']);
         });
     }
 
     public function tomorrowJobs($jobs = null)
     {
-        if(is_null($jobs)) {
+        if (is_null($jobs)) {
             return $this->notCancelledJobs()->filter(function ($job, $key) {
                 return $job->schedule_date == Carbon::tomorrow()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined']);
             });
         }
         return $jobs->filter(function ($job, $key) {
-            return $job->schedule_date == Carbon::now()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined']);
+            return $job->schedule_date == Carbon::tomorrow()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined']);
         });
     }
 
     public function notRespondedJobs($jobs = null)
     {
-        if(is_null($jobs))
-            return $this->notCancelledJobs()->where('status', constants('JOB_STATUSES')['Not_Responded']);
+        if (is_null($jobs)) return $this->notCancelledJobs()->where('status', constants('JOB_STATUSES')['Not_Responded']);
 
         return $jobs->where('status', constants('JOB_STATUSES')['Not_Responded']);
     }
 
-    public function scheduleDueJobs($jobs = null){
-        if(is_null($jobs))
-            return $this->notCancelledJobs()->where('status', constants('JOB_STATUSES')['Schedule_Due']);
+    public function scheduleDueJobs($jobs = null)
+    {
+        if (is_null($jobs)) return $this->notCancelledJobs()->where('status', constants('JOB_STATUSES')['Schedule_Due']);
 
         return $jobs->where('status', constants('JOB_STATUSES')['Not_Responded']);
+    }
+
+    public function serveDueJobs($jobs = null)
+    {
+        if (is_null($jobs)) return $this->notCancelledJobs()->where('status', constants('JOB_STATUSES')['Serve_Due']);
+
+        return $jobs->where('status', constants('JOB_STATUSES')['Serve_Due']);
     }
 
     public function getCommission()
