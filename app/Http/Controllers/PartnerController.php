@@ -136,7 +136,7 @@ class PartnerController extends Controller
     {
         try {
             if ($partner = Partner::find((int)$partner)) {
-                $services = $partner->services()->select($this->getSelectColumnsOfService())->where('category_id', $request->category)->published()->get();
+                $services = $partner->services()->select($this->getSelectColumnsOfService())->where('category_id', $request->category)->publishedForAll()->get();
                 if (count($services) > 0) {
                     $services->each(function (&$service) {
                         $variables = json_decode($service->variables);
@@ -660,7 +660,7 @@ class PartnerController extends Controller
         try {
             if ($partner = Partner::find((int)$partner)) {
                 $registered_services = $partner->services()->where('category_id', $request->category)->publishedForAll()->get()->pluck('id')->toArray();
-                
+
                 $addable_services = Service::where('category_id', $request->category)->select($this->getSelectColumnsOfAddableService())->whereNotIn('id', $registered_services)->publishedForAll()->get();
 
                 if (count($addable_services) > 0) {
