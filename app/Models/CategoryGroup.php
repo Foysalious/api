@@ -20,6 +20,4 @@ class CategoryGroup extends Model
     {
         return $q->where('is_published_for_web', 1);
     }
-
-
 }

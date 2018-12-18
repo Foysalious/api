@@ -63,7 +63,7 @@ class OfferShowcase extends Model
     }
 
     public function locations() {
-        return $this->belongsToMany(Location::class,'location_offer_showcase');
+        return $this->belongsToMany(Location::class);
     }
 
 }
