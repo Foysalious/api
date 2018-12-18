@@ -95,6 +95,7 @@ class PartnerOrderRepository
         $all_jobs = collect();
         foreach ($jobs->groupBy('partner_order_id') as $jobs) {
             $jobs[0]->partner_order->calculate(true);
+            if ($jobs[0]->cancelRequests->where('status', 'Pending')->count() > 0) continue;
             $job = $jobs[0];
             $services = collect();
             if (count($job->jobServices) == 0) {
@@ -282,7 +283,7 @@ class PartnerOrderRepository
         $partner_order['total_jobs'] = count($partner_order->jobs);
         $partner_order['order_status'] = $job->status;
         $partner_order['isRentCar'] = $job->isRentCar();
-        $partner_order['is_on_premise'] =  $job->site == 'partner' ? 1 : 0;
+        $partner_order['is_on_premise'] = $job->site == 'partner' ? 1 : 0;
         return $partner_order;
     }
 
