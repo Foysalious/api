@@ -22,7 +22,7 @@ class HomePageSettingController extends Controller
                 'screen' => 'in:' . implode(',', $screens),
             ]);
             $setting_key = null;
-            $location = null;
+            $location = '';
             if ($request->has('location')) {
                 $location = $request->location;
             } elseif ($request->has('lat') && $request->has('lng')) {
@@ -34,7 +34,7 @@ class HomePageSettingController extends Controller
             } else {
                 $setting_key = 'ScreenSetting::customer_app_home_';
             }
-            $setting_key .= $location ? $location : 4;
+            $setting_key .= $location;
             $settings = $store->get($setting_key);
             return $settings ? api_response($request, json_decode($settings), 200, ['settings' => json_decode($settings)]) : api_response($request, null, 404);
         } catch (ValidationException $e) {
