@@ -30,11 +30,10 @@ class HomePageSettingController extends Controller
                 if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
             }
             if ($request->has('portal') && $request->has('screen')) {
-                $setting_key = 'ScreenSetting::' . snake_case(camel_case($request->portal)) . '_' . $request->screen . "_";
+                $setting_key = 'ScreenSetting::' . snake_case(camel_case($request->portal)) . '_' . $request->screen . "_" . $location;
             } else {
-                $setting_key = 'ScreenSetting::customer_app_home_';
+                $setting_key = 'ScreenSetting::customer_app_home_4';
             }
-            $setting_key .= $location;
             $settings = $store->get($setting_key);
             return $settings ? api_response($request, json_decode($settings), 200, ['settings' => json_decode($settings)]) : api_response($request, null, 404);
         } catch (ValidationException $e) {
