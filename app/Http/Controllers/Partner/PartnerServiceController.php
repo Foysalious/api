@@ -186,6 +186,7 @@ class PartnerServiceController extends Controller
         $data['min_prices'] = isset($variables->min_prices) ? json_encode($variables->min_prices) : null;
         $data['base_prices'] = isset($variables->base_prices) ? json_encode($variables->base_prices) : null;
         $data['base_quantity'] = isset($variables->base_quantity) ? json_encode($variables->base_quantity) : null;
+        $data['is_published'] = 1;
         $this->setModifier($request->manager_resource);
         $pivot_data = $this->withBothModificationFields($data);
         $partner->services()->save($service, $pivot_data);
