@@ -69,38 +69,37 @@ class ShebaController extends Controller
         try {
             if ($request->has('is_business') && (int)$request->is_business) {
                 $portal_name = 'manager-app';
-                if(!$request->has('location')) $location = 4;
+                if (!$request->has('location')) $location = 4;
                 else $location = $request->location;
                 $screen = 'eshop';
-                $sliderPortal = SliderPortal::with('sliders')->whereHas('sliders',function($query) use ($location) {
-                    $query->where('is_published',1);
-                })->where('portal_name',$portal_name)->where('screen',$screen)->first();
+                $sliderPortal = SliderPortal::with('slider')->whereHas('slider', function ($query) use ($location) {
+                    $query->where('is_published', 1);
+                })->where('portal_name', $portal_name)->where('screen', $screen)->first();
 
-                $slider = $sliderPortal->sliders->whereHas('slides',function($q) use ($location) {
-                    $q->where('slider_slide.location_id',$location);
-                    $q->orderBy('order','desc');
+                $slider = $sliderPortal->slider->whereHas('slides', function ($q) use ($location) {
+                    $q->where('slider_slide.location_id', $location);
+                    $q->orderBy('order', 'desc');
                 })->first();
-            }
-            else {
-                if($request->has('location')) {
+            } else {
+                if ($request->has('location')) {
                     $location = $request->location;
                 } else {
-                    if($request->has('lat') && $request->has('lng')) {
-                        $hyperLocation= HyperLocal::insidePolygon((double) $request->lat, (double)$request->lng)->with('location')->first();
-                        if(!is_null($hyperLocation)) $location = $hyperLocation->location->id;
+                    if ($request->has('lat') && $request->has('lng')) {
+                        $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                        if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
                     }
                 }
-                $sliderPortal = SliderPortal::with('sliders')->whereHas('sliders',function($query) use ($location) {
-                    $query->where('is_published',1);
-                })->where('portal_name',$request->portal)->where('screen',$request->screen)->first();
+                $sliderPortal = SliderPortal::with('slider')->whereHas('slider', function ($query) use ($location) {
+                    $query->where('is_published', 1);
+                })->where('portal_name', $request->portal)->where('screen', $request->screen)->first();
 
-                $slider = $sliderPortal->sliders->whereHas('slides',function($q) use ($location) {
-                    $q->where('slider_slide.location_id',$location);
-                    $q->orderBy('order','desc');
+                $slider = $sliderPortal->slider->whereHas('slides', function ($q) use ($location) {
+                    $q->where('slider_slide.location_id', $location);
+                    $q->orderBy('order', 'desc');
                 })->first();
             }
 
-            if(!is_null($slider)) {
+            if (!is_null($slider)) {
                 return api_response($request, $slider->slides, 200, ['images' => $slider->slides]);
             } else
                 return api_response($request, null, 404);

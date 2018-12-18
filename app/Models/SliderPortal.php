@@ -8,7 +8,7 @@ class SliderPortal extends Model
 {
     protected  $table = 'slider_portal';
 
-    public function sliders()
+    public function slider()
     {
         return $this->belongsTo(Slider::class,'slider_id');
     }
