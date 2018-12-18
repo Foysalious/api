@@ -9,6 +9,7 @@ use App\Models\Location;
 use App\Models\Service;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
+use Carbon\Carbon;
 use Dingo\Api\Routing\Helpers;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -333,7 +334,8 @@ class CategoryController extends Controller
                         'response_time_max' => 120,
                         'commission' => $partner->commission,
                         'category_id' => $category,
-                        'partner_id' => $partner->id
+                        'partner_id' => $partner->id,
+                        'created_at' => Carbon::now()
                     ], $by));
                 }
             }
