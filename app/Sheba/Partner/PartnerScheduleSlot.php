@@ -218,6 +218,6 @@ class PartnerScheduleSlot
             $booked_schedule->end->gt($start_time) && $booked_schedule->end->lt($end_time) ||
             $booked_schedule->start->lt($start_time) && $booked_schedule->end->gt($start_time) ||
             $booked_schedule->start->lt($end_time) && $booked_schedule->end->gt($end_time) ||
-            $booked_schedule->start->eq($end_time) && $booked_schedule->end->eq($end_time);
+            $booked_schedule->start->eq($start_time) && $booked_schedule->end->eq($end_time);
     }
 }
