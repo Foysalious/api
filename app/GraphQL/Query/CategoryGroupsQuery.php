@@ -25,6 +25,9 @@ class CategoryGroupsQuery extends Query
         return [
             'id' => ['name' => 'id', 'type' => Type::listOf(Type::int())],
             'for' => ['name' => 'for', 'type' => Type::string()],
+            'location' =>['name' => 'location', 'type' => Type::int()],
+            'lat' =>['name' => 'lat', 'type' => Type::float()],
+            'lng' =>['name' => 'lng', 'type' => Type::float()],
         ];
     }
 
@@ -32,6 +35,7 @@ class CategoryGroupsQuery extends Query
     {
         $category_group = CategoryGroup::query();
         $where = function ($query) use ($args) {
+
             if (isset($args['id'])) {
                 $query->whereIn('id', $args['id']);
             }
@@ -39,6 +43,26 @@ class CategoryGroupsQuery extends Query
                 $for = 'publishedFor' . ucwords($args['for']);
                 $query->$for();
             }
+
+            if(isset($args['location'])) {
+                $location = $args['location'];
+
+                $query->whereHas('locations' , function($q) use ($location) {
+                    $q->where('locations.id', $location);
+                });
+            } else if(isset($args['lat']) && isset($args['lng']))  {
+                $lat = $args['lat'];
+                $lng = $args['lng'];
+                $query->whereHas('locations' , function($q) use ($lat, $lng) {
+                    $hyperLocation= HyperLocal::insidePolygon((double) $lat, (double) $lng)->with('location')->first();
+                    if(!is_null($hyperLocation)) {
+                        $location = $hyperLocation->location;
+                        $q->where('locations.id', $location->id);
+                    }
+                });
+            }
+
+
         };
         $fields = $info->getFieldSelection(1);
         if (in_array('categories', $fields)) $category_group = $category_group->with('categories');
