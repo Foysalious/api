@@ -10,6 +10,11 @@ class Slide extends Model
 
     public function sliders()
     {
-        return $this->belongsToMany(Slider::class)->withPivot(['location_id','order']);
+        return $this->belongsToMany(Slider::class)->withPivot(['location_id', 'order']);
+    }
+
+    public function target()
+    {
+        return $this->morphTo();
     }
 }
