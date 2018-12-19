@@ -143,7 +143,7 @@ class PromotionController extends Controller
         try {
             $customer = $request->customer;
             $location = $request->location;
-            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$location);
+            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $location ? (int)$location : null);
             if ($request->has('lat') && $request->has('lng')) {
                 $partner_list->setGeo((double)$request->lat, (double)$request->lng);
                 $hyper_local = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
