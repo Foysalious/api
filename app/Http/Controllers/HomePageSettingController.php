@@ -14,12 +14,12 @@ class HomePageSettingController extends Controller
     {
         try {
             $this->validate($request, [
-                'for' => 'required|string|in:app,web,app_json,app_json_revised'
+                'for' => 'string|in:app,web,app_json,app_json_revised'
             ]);
             if ($request->for == 'app_json') {
                 $settings = json_decode(Redis::get('app_settings'));
                 return api_response($request, $settings, 200, ['settings' => $settings]);
-            } else if ($request->for == 'app_json_revised') {
+            } else if (!$request->for || $request->for == 'app_json_revised') {
                 $settings = json_decode(Redis::get('app_settings_revised'));
                 return api_response($request, $settings, 200, ['settings' => $settings]);
             }
