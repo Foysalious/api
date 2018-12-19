@@ -8,6 +8,7 @@ use App\Models\HomepageSetting;
 use App\Sheba\Queries\Category\StartPrice;
 use Illuminate\Contracts\Validation\ValidationException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CategoryGroupController extends Controller
 {
@@ -16,16 +17,30 @@ class CategoryGroupController extends Controller
         try {
             $this->validate($request, [
                 'for' => 'sometimes|required|string|in:app,web',
-                'name' => 'sometimes|required|string'
+                'name' => 'sometimes|required|string',
+                'location' => 'sometimes|numeric',
+                'lat' => 'sometimes|numeric',
+                'lng' => 'required_with:lat'
             ]);
-            $location = $request->has('location') ? $request->location : 4;
+            $location = null;
+            if($request->has('location') ) {
+                $location = Location::find($request->location)->id;
+            } else if($request->has('lat')) {
+                $hyperLocation= HyperLocal::insidePolygon((double) $request->lat, (double)$request->lng)->with('location')->first();
+                if(!is_null($hyperLocation)) $location = $hyperLocation->location->id;
+            }
+            $location = !is_null($location) ? $location: 4;
             $for = $this->getPublishedFor($request->for);
             if ($request->has('name')) {
                 $categories = $this->getCategoryByColumn('name', $request->name, $location);
                 return $categories ? api_response($request, $categories, 200, ['category' => $categories]) : api_response($request, null, 404);
             }
             $with = '';
-            $categoryGroups = CategoryGroup::$for()->select('id', 'name', 'app_thumb', 'app_banner')->get();
+            $categoryGroups = CategoryGroup::$for()->select('id', 'name', 'app_thumb', 'app_banner')
+                             ->whereHas('locations',function($query) use ($location) {
+                                 $query->where('locations.id',$location);
+                             })
+                            ->get();
 
             if ($request->has('with')) {
                 $with = $request->with;
@@ -41,7 +56,6 @@ class CategoryGroupController extends Controller
                         unset($category_group->categories);
                     });
                 }
-
             }
             return count($categoryGroups) > 0 ? api_response($request, $categoryGroups, 200, ['categories' => $categoryGroups]) : api_response($request, null, 404);
         } catch (ValidationException $e) {
