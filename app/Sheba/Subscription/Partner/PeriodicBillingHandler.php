@@ -37,10 +37,14 @@ class PeriodicBillingHandler
         $last_billed_date = $this->partner->last_billed_date;
 
         if ($this->partner->billing_type == "monthly") {
-            if ($this->partner->billing_start_date->day <= $this->today->daysInMonth) {
-                $new_bill_date = Carbon::createFromDate($this->today->year, $this->today->month, $this->partner->billing_start_date->day);
+            $next_billed_date_month = (($last_billed_date->month + 1) % 12) ?: 12;
+            $next_billed_date_year = $last_billed_date->year + ($last_billed_date->month == 12);
+            $new_bill_date = Carbon::createFromDate($next_billed_date_year, $next_billed_date_month, 1);
+
+            if ($this->partner->billing_start_date->day <= $new_bill_date->daysInMonth) {
+                $new_bill_date->day($this->partner->billing_start_date->day);
             } else {
-                $new_bill_date = $this->today->copy()->endOfMonth();
+                $new_bill_date->day = $new_bill_date->daysInMonth;
             }
         } elseif ($this->partner->billing_type == "yearly") {
             $new_bill_date = $last_billed_date->copy()->addYear(1);
