@@ -49,8 +49,12 @@ class CategoryController extends Controller
             if($location){
                 $categories= $categories->whereHas('locations',function($q) use ($location) {
                     $q->where('locations.id', $location->id);
-                })->whereHas('allChildren',function($q){
-                    $q->has('publishedServices','>',0);
+                })->has('allChildren','>',0);
+
+                $categories = $categories->whereHas('allChildren',function($q) use ($location){
+                    $q->whereHas('locations', function($query) use ($location) {
+                        $query->where('locations.id',$location->id);
+                    });
                 });
             }
 
@@ -80,6 +84,7 @@ class CategoryController extends Controller
             }
             return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -136,11 +141,19 @@ class CategoryController extends Controller
             if($location) {
                 $children = $category->children->filter(function($secondary) use($location) {
                     $locations = $secondary->locations()->pluck('id')->toArray();
-                    return in_array($location->id, $locations) && $secondary->has('publishedServices','>',0);
+                    return in_array($location->id, $locations);
                 });
             }
             else
                 $children = $category->children;
+
+            $children->filter(function($category) use ($location) {
+              $category->services->filter(function($service) use ($location){
+                  $service->whereHas('locations',function($q) use ($location){
+                      $q->where('locations.id',$location->id);
+                  });
+              });
+            });
 
             if (count($children) != 0) {
                 $children = $children->each(function (&$child) use ($location) {
