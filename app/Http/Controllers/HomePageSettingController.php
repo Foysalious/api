@@ -84,6 +84,6 @@ class HomePageSettingController extends Controller
             });
         }
         $categories = $categories->select('id', 'parent_id', 'name', 'thumb', 'slug', 'banner', 'icon_png')->get();
-        return array('slider' => $slider->data, 'categories' => $categories, 'category_groups' => $category_groups);
+        return array('slider' => $slider->data, 'categories' => $categories, 'category_groups' => $category_groups->values()->all());
     }
 }
