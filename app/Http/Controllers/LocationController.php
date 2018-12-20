@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\City;
 use App\Models\HyperLocal;
 use App\Models\Location;
+use App\Models\Partner;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -92,6 +95,28 @@ class LocationController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function getPartnerServiceLocations(Request $request, $partner)
+    {
+        $geo_info = json_decode(Partner::find($request->partner)->geo_informations);
+        if ($geo_info) {
+            $hyper_locations = HyperLocal::insideCircle($geo_info);
+            return api_response($request, null, 200, ['locations' => $hyper_locations]);
+        } else {
+            return api_response($request, null, 404);
+        }
+
+    }
+
+    private function getOriginsForDistanceMatrix($locations)
+    {
+        $origins = '';
+        foreach ($locations as $location) {
+            $geo_info = json_decode($location->geo_informations);
+            $origins .= "$geo_info->lat,$geo_info->lng|";
+        }
+        return rtrim($origins, "|");
     }
 
     /**
