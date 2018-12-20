@@ -445,4 +445,10 @@ class Partner extends Model implements Rewardable, TopUpAgent
     {
         return new \Sheba\TopUp\Commission\Partner();
     }
+
+    public function getHyperLocation()
+    {
+        $geo = json_decode($this->geo_informations);
+        return HyperLocal::insidePolygon($geo->lat, $geo->lng)->first();
+    }
 }
