@@ -67,7 +67,7 @@ class RentACarServiceObject extends ServiceObject
                 $this->destinationLocationLat = $destination->lat;
                 $this->destinationLocationLng = $destination->lng;
             }
-            if (in_array($this->destinationThana->district_id, config('sheba.rent_a_car_pickup_district_ids'))) {
+            if ($this->pickUpThana->district_id == $this->destinationThana->district_id) {
                 throw new HyperLocationNotFoundException("Got " . $this->destinationThana->name . '(' . $this->destinationThana->id . ') for destination');
             }
             if (isset($this->service->destination_address)) $this->destinationAddress = $this->service->destination_address;
