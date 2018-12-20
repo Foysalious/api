@@ -16,4 +16,13 @@ class AffiliateTransaction extends Model
     {
         return $this->morphTo();
     }
+
+    public function scopeEarning($query)
+    {
+        return $query->where([
+            ['type', '=', 'Credit'],
+            ['log', 'NOT LIKE', '%Moneybag Refilled%'],
+            ['log', 'NOT LIKE', '%Manually Received%']
+        ]);
+    }
 }

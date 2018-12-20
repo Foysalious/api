@@ -2,6 +2,7 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Helpers\TimeFrame;
 use Sheba\Location\Distance\TransactionMethod;
 use Sheba\ModificationFields;
 use Sheba\Payment\Wallet;
@@ -105,7 +106,17 @@ class Affiliate extends Model implements TopUpAgent
 
     public function earningAmount()
     {
-        return $this->transactions->where('type', 'Credit')->sum('amount');
+        $earning = $this->transactions()->earning()->sum('amount');
+        return $earning ? (double)$earning : 0;
+    }
+
+    public function earningAmountDateBetween(TimeFrame $time_frame)
+    {
+        $earning = $this->transactions()->earning()
+            ->whereBetween('created_at', $time_frame->getArray())
+            ->sum('amount');
+
+        return $earning ? (double)$earning : 0;
     }
 
     public function ambassador()
