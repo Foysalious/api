@@ -46,6 +46,7 @@ class CustomerDeliveryAddressController extends Controller
     {
         try {
             $request->merge(['address' => trim($request->address), 'mobile' => trim(str_replace(' ', '', $request->mobile))]);
+            $this->validate($request, ['address' => 'required|string']);
             $customer = $request->customer;
             $hyper_local = $request->has('lat') && $request->has('lng');
             if (!$hyper_local) {
@@ -85,27 +86,24 @@ class CustomerDeliveryAddressController extends Controller
     public function update($customer, $delivery_address, Request $request)
     {
         try {
+            $request->merge(['address' => trim($request->address)]);
+            $this->validate($request, ['address' => 'required|string']);
             $customer = $request->customer;
             $delivery_address = CustomerDeliveryAddress::find((int)$delivery_address);
             if (!$delivery_address) return api_response($request, null, 404, ['message' => 'Address not found']);
-            if ($delivery_address->customer_id != $customer->id) return api_response($request, null, 403);
-            $addresses = $customer->delivery_addresses;
-            $address_validator = new AddressValidator();
+            if ($delivery_address->customer_id != $customer->id) return api_response($request, null, 403, ['message' => "This is not your address."]);
             if (!$request->has('lat') && !$request->has('lng')) {
                 $geo = (new Geo())->geoCodeFromPlace($request->address);
                 if ($geo) $request->merge(['lat' => $geo['lat'], 'lng' => $geo['lng']]);
             }
             if ($request->has('lat') && $request->has('lng')) {
-//                if ($address_validator->isAddressLocationExists($addresses, new Coords((double)$request->lat, (double)$request->lng))) return api_response($request, null, 400, ['message' => "There is already a address exits at this location!"]);
                 $hyper_local = HyperLocal::insidePolygon($request->lat, $request->lng)->with('location')->first();
                 if (!$hyper_local) return api_response($request, null, 400, ['message' => "You're out of our service area."]);
-                //$delivery_address->geo_informations = json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]);
                 $request->merge(["geo_informations" => json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng])]);
             }
             $new_address = $delivery_address->replicate();
             $this->_store($customer, $new_address, $request);
             $this->_delete($customer, $delivery_address);
-
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -168,13 +166,13 @@ class CustomerDeliveryAddressController extends Controller
 
     public function getDeliveryInfoForAffiliate(Request $request)
     {
-        try{
-            $this->validate($request,[
+        try {
+            $this->validate($request, [
                 'mobile' => 'required|mobile:bd'
             ]);
-            $profile= Profile::where('mobile','+88'.$request->mobile)->first();
-            if(!is_null($profile)) {
-                $customer = Customer::where('profile_id',$profile->id)->first();
+            $profile = Profile::where('mobile', '+88' . $request->mobile)->first();
+            if (!is_null($profile)) {
+                $customer = Customer::where('profile_id', $profile->id)->first();
                 $customer_order_addresses = $customer->orders()->selectRaw('delivery_address,count(*) as c')->groupBy('delivery_address')->orderBy('c', 'desc')->get();
                 $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'address')->get()->map(function ($customer_delivery_address) use ($customer_order_addresses) {
                     $customer_delivery_address["address"] = scramble_string($customer_delivery_address["address"]);
@@ -182,8 +180,8 @@ class CustomerDeliveryAddressController extends Controller
                 });
                 return api_response($request, $customer_delivery_addresses, 200, ['addresses' => $customer_delivery_addresses]);
             }
-            return api_response($request, [], 404,['addresses'=>[]]);
-        }catch (ValidationException $e) {
+            return api_response($request, [], 404, ['addresses' => []]);
+        } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
