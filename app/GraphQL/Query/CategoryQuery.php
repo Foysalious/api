@@ -3,6 +3,7 @@
 namespace App\GraphQL\Query;
 
 use App\Models\Category;
+use App\Models\HyperLocal;
 use GraphQL;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
