@@ -81,6 +81,7 @@ class Route
                 $api->get('', 'ServiceController@index');
             });
             $api->group(['prefix' => 'locations'], function ($api) {
+                $api->get('/', 'LocationController@index');
                 $api->get('{location}/partners', 'PartnerController@findPartners');
                 $api->get('current', 'LocationController@getCurrent');
             });

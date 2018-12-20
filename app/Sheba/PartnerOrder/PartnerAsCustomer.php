@@ -1,17 +1,13 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Tech Land
- * Date: 10/30/2018
- * Time: 6:17 PM
- */
 
 namespace App\Sheba\PartnerOrder;
 
 
 use App\Models\Customer;
+use App\Models\CustomerDeliveryAddress;
 use App\Models\Profile;
 use Illuminate\Http\Request;
+use Sheba\Voucher\Creator\Referral;
 
 class PartnerAsCustomer
 {
@@ -25,25 +21,29 @@ class PartnerAsCustomer
 
     public function getCustomerProfile()
     {
-        try {
-            return Customer::where('profile_id', $this->resource->profile_id)->firstOrFail();
-        } catch (\Throwable $exception) {
-            return $this->createCustomerProfile();
-        }
-
-
+        $customer = Customer::where('profile_id', $this->resource->profile_id)->first();
+        if (!$customer) $customer = $this->createCustomerProfile();
+        return $customer;
     }
 
     public function createCustomerProfile()
     {
-        try {
-            $profile = Profile::findOrFail($this->resource->profile_id);
-            $data = ['profile_id' => $profile->id, 'remember_token' => str_random(255), 'created_by' => 0, 'created_by_name' => $profile->name];
-            $customer = Customer::create($data);
-            return $customer;
-        } catch (\Throwable $exception) {
-            app('sentry')->captureException($exception);
-            return false;
-        }
+        $profile = Profile::findOrFail($this->resource->profile_id);
+        $data = ['profile_id' => $profile->id, 'remember_token' => str_random(255)];
+        $customer = Customer::create($data);
+        new Referral($customer);
+        $this->createCustomerDeliveryAddressFromPartnerAddress($customer);
+        return $customer;
+    }
+
+    private function createCustomerDeliveryAddressFromPartnerAddress(Customer $customer)
+    {
+        $delivery_address = new CustomerDeliveryAddress();
+        $delivery_address->address = $this->partner->address;
+        $delivery_address->name = 'Office';
+        $delivery_address->customer_id = $customer->id;
+        $delivery_address->geo_informations = $this->partner->geo_inforamtion;
+        $delivery_address->location_id = $this->partner->getHyperLocation()->location_id;
+        $delivery_address->save();
     }
 }
