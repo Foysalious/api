@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Jobs\SendFaqEmail;
 use App\Models\AppVersion;
 use App\Models\Category;
+use App\Models\HyperLocal;
 use App\Models\Job;
 use App\Models\OfferShowcase;
 use App\Models\Payment;
 use App\Models\Resource;
 use App\Models\Service;
 use App\Models\Slider;
+use App\Models\SliderPortal;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
 use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -65,16 +67,54 @@ class ShebaController extends Controller
     public function getImages(Request $request)
     {
         try {
-            $images = Slider::select('id', 'image_link', 'small_image_link', 'target_link', 'target_type', 'target_id');
             if ($request->has('is_business') && (int)$request->is_business) {
-                $images = $images->showBusiness()->map(function ($image) {
-                    $image['target_type'] = $image['target_type'] ? explode('\\', $image['target_type'])[2] : null;
-                    return $image;
-                });
+                $portal_name = 'manager-app';
+                if (!$request->has('location')) $location = 4;
+                else $location = $request->location;
+                $screen = 'eshop';
+                $sliderPortal = SliderPortal::with('slider')->whereHas('slider', function ($query) use ($location) {
+                    $query->where('is_published', 1);
+                })->where('portal_name', $portal_name)->where('screen', $screen)->first();
+
+                $slider = $sliderPortal->slider->whereHas('slides', function ($q) use ($location) {
+                    $q->where('slider_slide.location_id', $location);
+                    $q->orderBy('order', 'desc');
+                })->first();
             } else {
-                $images = $images->show();
+                if ($request->has('location')) {
+                    $location = $request->location;
+                } else {
+                    if ($request->has('lat') && $request->has('lng')) {
+                        $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                        if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
+                    }
+                }
+                $sliderPortal = SliderPortal::with('slider')->whereHas('slider', function ($query) use ($location) {
+                    $query->where('is_published', 1);
+                })->where('portal_name', $request->portal)->where('screen', $request->screen)->first();
+
+                $slider = $sliderPortal->slider->whereHas('slides', function ($q) use ($location) {
+                    $q->where('slider_slide.location_id', $location);
+                    $q->orderBy('order', 'desc');
+                })->first();
             }
-            return count($images) > 0 ? api_response($request, $images, 200, ['images' => $images]) : api_response($request, null, 404);
+
+            if (!is_null($slider)) {
+                return api_response($request, $slider->slides, 200, ['images' => $slider->slides]);
+            } else
+                return api_response($request, null, 404);
+
+// Previous Codes, Left Written Until QA
+//            $images = Slider::select('id', 'image_link', 'small_image_link', 'target_link', 'target_type', 'target_id');
+//            if ($request->has('is_business') && (int)$request->is_business) {
+//                $images = $images->showBusiness()->map(function ($image) {
+//                    $image['target_type'] = $image['target_type'] ? explode('\\', $image['target_type'])[2] : null;
+//                    return $image;
+//                });
+//            } else {
+//                $images = $images->show();
+//            }
+//            return count($images) > 0 ? api_response($request, $images, 200, ['images' => $images]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }

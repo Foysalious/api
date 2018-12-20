@@ -49,6 +49,7 @@ class PartnerRoute
             $api->post('operations', 'Partner\OperationController@store');
             $api->post('register', 'CustomerController@store');
             $api->post('categories', 'Partner\OperationController@saveCategories');
+            $api->post('add-categories', 'CategoryController@addCategories');
             $api->post('top-up', 'TopUpController@topUp');
             $api->get('search', 'SearchController@search');
             $api->group(['prefix' => 'subscriptions'], function ($api) {

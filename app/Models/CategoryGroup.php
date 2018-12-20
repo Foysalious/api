@@ -21,5 +21,7 @@ class CategoryGroup extends Model
         return $q->where('is_published_for_web', 1);
     }
 
-
+    public function locations() {
+        return $this->belongsToMany(Location::class);
+    }
 }

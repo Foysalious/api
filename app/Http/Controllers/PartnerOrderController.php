@@ -73,7 +73,10 @@ class PartnerOrderController extends Controller
             $this->validate($request, ['sort' => 'sometimes|required|string|in:created_at,created_at:asc,created_at:desc,schedule_date,schedule_date:asc,schedule_date:desc', 'getCount' => 'sometimes|required|numeric|in:1']);
             if ($request->has('getCount')) {
                 $partner = $request->partner->load(['jobs' => function ($q) {
-                    $q->status(array(constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']))->select('jobs.id', 'jobs.status', 'jobs.partner_order_id');
+                    $q->status(array(constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']))->select('jobs.id', 'jobs.status', 'jobs.partner_order_id')
+                        ->whereDoesntHave('cancelRequests', function ($q) {
+                            $q->where('status', 'Pending');
+                        });
                 }]);
                 $partner_orders = $partner->jobs->groupBy('partner_order_id');
                 return api_response($request, $partner_orders->count(), 200, ['total_new_orders' => $partner_orders->count()]);
@@ -291,7 +294,7 @@ class PartnerOrderController extends Controller
                 'remember_token' => 'required|string',
                 'partner' => 'required'
             ]);
-            $partner=$request->partner;
+            $partner = $request->partner;
             $partner_order = $request->partner_order;
             $manager_resource = $request->manager_resource;
             $job = $partner_order->jobs->whereIn('status', array(constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Serve_Due'], constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process']))->first();

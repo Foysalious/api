@@ -4,7 +4,9 @@ use App\Exceptions\HyperLocationNotFoundException;
 use App\Models\Category;
 use App\Models\CategoryPartner;
 use App\Models\DeliveryChargeUpdateRequest;
+use App\Models\HyperLocal;
 use App\Models\Job;
+use App\Models\Location;
 use App\Models\Partner;
 use App\Models\PartnerResource;
 use App\Models\PartnerService;
@@ -136,7 +138,7 @@ class PartnerController extends Controller
     {
         try {
             if ($partner = Partner::find((int)$partner)) {
-                $services = $partner->services()->select($this->getSelectColumnsOfService())->where('category_id', $request->category)->published()->get();
+                $services = $partner->services()->select($this->getSelectColumnsOfService())->where('category_id', $request->category)->publishedForAll()->get();
                 if (count($services) > 0) {
                     $services->each(function (&$service) {
                         $variables = json_decode($service->variables);
@@ -658,11 +660,23 @@ class PartnerController extends Controller
     public function getAddableServices($partner, $category, Request $request)
     {
         try {
+            $location = null;
+            if($request->has('location') ) {
+                $location = Location::find($request->location);
+            } else if($request->has('lat')&&$request->has('lng')) {
+                $hyperLocation= HyperLocal::insidePolygon((double) $request->lat, (double)$request->lng)->with('location')->first();
+                if(!is_null($hyperLocation)) $location = $hyperLocation->location;
+            }
             if ($partner = Partner::find((int)$partner)) {
-                $registered_services = $partner->services()->where('category_id', $request->category)->published()->get()->pluck('id')->toArray();
+                $registered_services = $partner->services()->where('category_id', $request->category)->publishedForAll()->get()->pluck('id')->toArray();
 
                 $addable_services = Service::where('category_id', $request->category)->select($this->getSelectColumnsOfAddableService())->whereNotIn('id', $registered_services)->publishedForAll()->get();
-
+                if(!is_null($location)) {
+                    $addable_services = $addable_services->filter(function($service) use ($location) {
+                        $locations = $service->locations->pluck('id')->toArray();
+                        return in_array($location->id, $locations);
+                    });
+                }
                 if (count($addable_services) > 0) {
                     return api_response($request, null, 200, ['addable_services' => $addable_services]);
                 } else {
@@ -726,10 +740,33 @@ class PartnerController extends Controller
     public function untaggedCategories(Request $request)
     {
         try {
+            $location = null;
+            if($request->has('location') ) {
+                $location = Location::find($request->location);
+            } else if($request->has('lat')&&$request->has('lng')) {
+                $hyperLocation= HyperLocal::insidePolygon((double) $request->lat, (double)$request->lng)->with('location')->first();
+                if(!is_null($hyperLocation)) $location = $hyperLocation->location;
+            }
+
             $categories = Category::child()->publishedOrPublishedForBusiness()->whereDoesntHave('partners', function ($query) use ($request) {
                 return $query->where('partner_id', $request->partner->id);
-            })->get();
-            $master_categories = Category::publishedForAll()->select('id', 'name', 'app_thumb', 'icon', 'icon_png')->get();
+            });
+
+            $master_categories = Category::publishedForAll()->select('id', 'name', 'app_thumb', 'icon', 'icon_png');
+
+            if($location)
+            {
+                $categories = $categories->whereHas('locations',function ($q) use ($location) {
+                    $q->where('locations.id',$location->id);
+                });
+
+                $master_categories = $master_categories->whereHas('locations',function ($q) use ($location) {
+                    $q->where('locations.id',$location->id);
+                });
+            }
+
+            $categories = $categories->get();
+            $master_categories = $master_categories->get();
 
             foreach ($categories as $category) {
                 $master_category = $master_categories->where('id', $category->parent_id)->first();
@@ -738,6 +775,7 @@ class PartnerController extends Controller
             }
             return api_response($request, $master_categories,  200,['categories' => $master_categories]);
         } catch (\Throwable $exception) {
+            dd($exception);
             app('sentry')->captureException($exception);
             return api_response($request, null, 500);
         }

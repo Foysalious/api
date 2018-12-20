@@ -3,13 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\CategoryPartner;
 use App\Models\HyperLocal;
 use App\Models\Location;
 use App\Models\Service;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
+use Carbon\Carbon;
 use Dingo\Api\Routing\Helpers;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class CategoryController extends Controller
 {
@@ -305,6 +308,45 @@ class CategoryController extends Controller
                 return (!empty($review->review) && $review->rating == 5);
             })->unique('customer_id')->sortByDesc('id')->splice($offset, $limit)->values()->all();
             return count($reviews) > 0 ? api_response($request, $reviews, 200, ['reviews' => $reviews]) : api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function addCategories(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'categories' => "required|string"
+            ]);
+            $partner = $request->partner;
+            $manager_resource = $request->manager_resource;
+            $by = ["created_by" => $manager_resource->id, "created_by_name" => "Resource - " . $manager_resource->profile->name];
+            $categories = explode(',', $request->categories);
+            $partner_categories = CategoryPartner::where('partner_id', $partner->id)->whereIn('category_id', $categories)->get();
+            $category_partners = [];
+            foreach ($categories as $category) {
+                $has_category_partner = $partner_categories->where('category_id', (int)$category)->first();
+                if (!$has_category_partner) {
+                    array_push($category_partners, array_merge([
+                        'response_time_min' => 60,
+                        'response_time_max' => 120,
+                        'commission' => $partner->commission,
+                        'category_id' => $category,
+                        'partner_id' => $partner->id,
+                        'created_at' => Carbon::now()
+                    ], $by));
+                }
+            }
+            CategoryPartner::insert($category_partners);
+            return api_response($request, null, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

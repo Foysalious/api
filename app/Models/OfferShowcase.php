@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 class OfferShowcase extends Model
 {
     protected $guarded = ['id'];
+    protected $dates = ['start_date', 'end_date'];
 
     public function scopeActive($q)
     {
@@ -16,6 +17,11 @@ class OfferShowcase extends Model
     {
         $now = Carbon::now();
         return $q->where('start_date', '<=', $now)->where('end_date', '>=', $now);
+    }
+
+    public function isInValidationTime()
+    {
+        return Carbon::now()->lessThanOrEqualTo($this->end_date);
     }
 
     public function voucher()
@@ -37,6 +43,7 @@ class OfferShowcase extends Model
     {
         return $this->morphTo();
     }
+
     public function type()
     {
         return strtolower(snake_case(str_replace("App\\Models\\", '', $this->target_type)));
@@ -62,8 +69,9 @@ class OfferShowcase extends Model
         return $this->type() == 'category_group' ? 1 : 0;
     }
 
-    public function locations() {
-        return $this->belongsToMany(Location::class,'location_offer_showcase');
+    public function locations()
+    {
+        return $this->belongsToMany(Location::class);
     }
 
 }
