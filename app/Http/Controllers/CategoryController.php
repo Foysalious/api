@@ -47,11 +47,9 @@ class CategoryController extends Controller
             $categories = Category::where('parent_id', null)->orderBy('order');
 
             if($location){
-                $categories= $categories ->whereHas('locations',function($q) use ($location) {
+                $categories= $categories->whereHas('locations',function($q) use ($location) {
                     $q->where('locations.id', $location->id);
-                })->whereHas('allChildren', function ($q) {
-                    $q->has('publishedServices')->published();
-                });
+                })->has('allChildren');
             }
 
             $categories= $categories->select('id', 'name', 'bn_name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id');
