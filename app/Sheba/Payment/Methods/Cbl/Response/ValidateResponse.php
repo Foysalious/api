@@ -15,11 +15,17 @@ class ValidateResponse extends PaymentMethodResponse
 
     public function getSuccess(): PaymentMethodSuccessResponse
     {
-        // TODO: Implement getSuccess() method.
+        $success = new PaymentMethodSuccessResponse();
+        $success->id = $this->response->tran_id;
+        $success->details = $this->response;
+        return $success;
     }
 
     public function getError(): PaymentMethodErrorResponse
     {
-        // TODO: Implement getError() method.
+        $error = new PaymentMethodErrorResponse();
+        $error->id = isset($this->response->tran_id) ? $this->response->tran_id : null;
+        $error->details = $this->response;
+        return $error;
     }
 }

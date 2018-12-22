@@ -21,6 +21,7 @@ class CblController extends Controller
             ]);
 
             $xml = simplexml_load_string($request->xmlmsg);
+            dd($xml);
             $invoice = "SHEBA_CBL_" . $xml->OrderID . '_' . $xml->SessionID;
             $pay_charge = Cache::store('redis')->get("paycharge::$invoice");
             if (!$pay_charge) return redirect(config('sheba.front_url'));
