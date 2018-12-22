@@ -112,6 +112,30 @@ class LocationController extends Controller
 
     }
 
+    public function validateLocation(Request $request)
+    {
+        try {
+            $this->validate($request, ['lat' => 'required|numeric', 'lng' => 'required|numeric', 'radius' => 'required|numeric']);
+            $geo_info = new \stdClass();
+            $geo_info->lat = $request->lat;
+            $geo_info->lng = $request->lng;
+            $geo_info->radius = $request->radius;
+            $hyper_locations = HyperLocal::insideCircle($geo_info)
+                ->with('location')
+                ->get()
+                ->filter(function ($item) {
+                    return !empty($item->location);
+                })->pluck('location');
+            if ($hyper_locations->count() > 0) {
+                return api_response($request, null, 200, ['locations' => $hyper_locations, 'geo_info' => $geo_info]);
+            } else {
+                return api_response($request, null, 400, ['message' => 'Outside service location']);
+            }
+        } catch (ValidationException $e) {
+            return api_response($request, $request, 400, ['message' => getValidationErrorMessage($e->validator->messages()->all())]);
+        }
+    }
+
     private function getOriginsForDistanceMatrix($locations)
     {
         $origins = '';
