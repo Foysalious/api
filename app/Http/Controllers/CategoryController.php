@@ -12,6 +12,7 @@ use App\Repositories\ServiceRepository;
 use Carbon\Carbon;
 use Dingo\Api\Routing\Helpers;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class CategoryController extends Controller
@@ -42,12 +43,21 @@ class CategoryController extends Controller
                 $hyperLocation= HyperLocal::insidePolygon((double) $request->lat, (double)$request->lng)->with('location')->first();
                 if(!is_null($hyperLocation)) $location = $hyperLocation->location;
             }
+
             $categories = Category::where('parent_id', null)->orderBy('order');
+
             if($location){
-                $categories= $categories ->whereHas('locations',function($q) use ($location) {
+                $categories= $categories->whereHas('locations',function($q) use ($location) {
                     $q->where('locations.id', $location->id);
+                })->has('allChildren','>',0);
+
+                $categories = $categories->whereHas('allChildren',function($q) use ($location){
+                    $q->whereHas('locations', function($query) use ($location) {
+                        $query->where('locations.id',$location->id);
+                    });
                 });
             }
+
             $categories= $categories->select('id', 'name', 'bn_name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id');
             if ($request->has('with')) {
                 $with = $request->with;
@@ -74,6 +84,7 @@ class CategoryController extends Controller
             }
             return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -135,6 +146,15 @@ class CategoryController extends Controller
             }
             else
                 $children = $category->children;
+
+            $children->filter(function($category) use ($location) {
+              $category->services->filter(function($service) use ($location){
+                  $service->whereHas('locations',function($q) use ($location){
+                      $q->where('locations.id',$location->id);
+                  });
+              });
+            });
+
             if (count($children) != 0) {
                 $children = $children->each(function (&$child) use ($location) {
                     removeRelationsAndFields($child);
@@ -145,6 +165,7 @@ class CategoryController extends Controller
             } else
                 return api_response($request, null, 404);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
