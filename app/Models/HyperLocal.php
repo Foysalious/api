@@ -31,8 +31,7 @@ class HyperLocal extends Eloquent
                 'type' => "Point",
                 'coordinates' => [(double)$geo_info->lng, (double)$geo_info->lat]
             ],
-            '$minDistance' => 0,
-            '$maxDistance' => (double)($geo_info->radius) / 6378.16
+            '$maxDistance' => (double)($geo_info->radius) * 1000
         ]);
     }
 }
