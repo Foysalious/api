@@ -24,18 +24,7 @@ class CustomerDeliveryAddressController extends Controller
             $customer = $request->customer;
             $location = null;
             $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'location_id', 'address', 'name', 'geo_informations')->get();
-            if ($request->has('partner')) {
-                $partner = Partner::find(233);
-                $partner_geo = json_decode($partner->geo_informations);
-                $to = new Coords(floatval($partner_geo->lat), floatval($partner_geo->lng), $partner->id);
-                $distance = (new Distance(DistanceStrategy::$VINCENTY))->matrix();
-                $customer_delivery_addresses = $customer_delivery_addresses->reject(function ($customer_delivery_address) {
-                    return $customer_delivery_address->geo_informations == null;
-                })->where('geo_informations', '<>', null)->filter(function ($customer_delivery_address) use ($distance, $to) {
-                    $address_geo = json_decode($customer_delivery_address->geo_informations);
-                    $current = new Coords($address_geo->lat, $address_geo->lng);
-                });
-            } elseif ($request->has('lat') && $request->has('lng')) {
+            if ($request->has('lat') && $request->has('lng')) {
                 $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first();
                 if ($hyper_location) $location = $hyper_location->location;
                 if ($location == null) return api_response($request, null, 404, ['message' => "No address at this location"]);
@@ -48,6 +37,19 @@ class CustomerDeliveryAddressController extends Controller
                 return $customer_delivery_address;
             });
             if ($location) $customer_delivery_addresses = $customer_delivery_addresses->where('location_id', $location->id);
+            if ($request->has('partner')) {
+                $partner = Partner::find((int)$request->partner);
+                $partner_geo = json_decode($partner->geo_informations);
+                $to = [new Coords(floatval($partner_geo->lat), floatval($partner_geo->lng), $partner->id)];
+                $distance = (new Distance(DistanceStrategy::$VINCENTY))->matrix();
+                $customer_delivery_addresses = $customer_delivery_addresses->reject(function ($customer_delivery_address) {
+                    return $customer_delivery_address->geo_informations == null;
+                })->filter(function ($customer_delivery_address) use ($distance, $to, $partner_geo) {
+                    $address_geo = $customer_delivery_address->geo_informations;
+                    $current = new Coords($address_geo['lat'], $address_geo['lng']);
+                    return $distance->from([$current])->to($to)->sortedDistance()[0][$to[0]->id] <= (double)$partner_geo->radius * 1000;
+                });
+            }
             $customer_delivery_addresses = $customer_delivery_addresses->sortByDesc('count')->values()->all();
             return api_response($request, $customer_delivery_addresses, 200, ['addresses' => $customer_delivery_addresses,
                 'name' => $customer->profile->name, 'mobile' => $customer->profile->mobile]);
