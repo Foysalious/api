@@ -26,7 +26,7 @@ class HyperLocal extends Eloquent
 
     public function scopeInsideCircle($query, $geo_info)
     {
-        return $query->where('geometry', 'geoWithin', [
+        return $query->where('geometry', 'geoIntersects', [
             '$centerSphere' => [
                 [
                     (double)$geo_info->lng,
