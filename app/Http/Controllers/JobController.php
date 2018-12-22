@@ -427,6 +427,7 @@ class JobController extends Controller
                 'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl,partner_wallet'
             ]);
             $order_adapter = new OrderAdapter($request->job->partnerOrder);
+            dd((new ShebaPayment($request->payment_method )));
             $payment = (new ShebaPayment($request->has('payment_method') ? $request->payment_method : 'online'))->init($order_adapter->getPayable());
             return api_response($request, $payment, 200, ['link' => $payment->redirect_url, 'payment' => $payment->getFormattedPayment()]);
         } catch (ValidationException $e) {

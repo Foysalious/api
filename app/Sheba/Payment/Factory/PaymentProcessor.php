@@ -1,7 +1,7 @@
 <?php namespace Sheba\Payment\Factory;
 
 use Sheba\Payment\Methods\Bkash\Bkash;
-use Sheba\Payment\Methods\Cbl;
+use Sheba\Payment\Methods\Cbl\Cbl;
 use Sheba\Payment\Methods\Cod;
 use Sheba\Payment\Methods\PartnerWallet;
 use Sheba\Payment\Methods\Ssl\Ssl;
@@ -38,7 +38,7 @@ class PaymentProcessor
 
     /**
      * @param $method
-     * @return Bkash|Cbl|Cod|Ssl|Wallet
+     * @return Bkash|Cbl|Cod|Ssl|Wallet|PartnerWallet
      * @throws \ReflectionException
      */
     private function getMethod($method)

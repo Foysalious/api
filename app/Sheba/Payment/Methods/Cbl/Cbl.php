@@ -1,10 +1,14 @@
-<?php namespace Sheba\Payment\Methods;
+<?php namespace Sheba\Payment\Methods\Cbl;
 
 use App\Models\Payable;
+use App\Models\Payment;
+use App\Models\PaymentDetail;
 use Carbon\Carbon;
 use Cache;
-
+use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\Payment\PayChargable;
+use Sheba\RequestIdentification;
+use DB;
 
 class Cbl extends PaymentMethod
 {
@@ -17,6 +21,7 @@ class Cbl extends PaymentMethod
     private $declineUrl;
 
     private $message;
+    CONST NAME = 'cbl';
 
     public function __construct()
     {
@@ -32,8 +37,26 @@ class Cbl extends PaymentMethod
 
     public function init(Payable $payable)
     {
-        $response = $this->postQW($this->makeOrderCreateData($payable));
+        $payment = new Payment();
+        $user = $payable->user;
+        $invoice = "SHEBA_SSL_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, 1, 1);
+        DB::transaction(function () use ($payment, $payable, $invoice, $user) {
+            $payment->payable_id = $payable->id;
+            $payment->transaction_id = $invoice;
+            $payment->status = 'initiated';
+            $payment->valid_till = Carbon::tomorrow();
+            $this->setModifier($user);
+            $payment->fill((new RequestIdentification())->get());
+            $this->withCreateModificationField($payment);
+            $payment->save();
+            $payment_details = new PaymentDetail();
+            $payment_details->payment_id = $payment->id;
+            $payment_details->method = self::NAME;
+            $payment_details->amount = $payable->amount;
+            $payment_details->save();
 
+        });
+        $response = $this->postQW($this->makeOrderCreateData($payable));
         $order_id = reset($response->Response->Order->OrderID);
         $session_id = reset($response->Response->Order->SessionID);
         $url = reset($response->Response->Order->URL);
