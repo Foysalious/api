@@ -3,12 +3,15 @@
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
+use App\Models\Partner;
 use App\Models\Profile;
 use App\Sheba\Address\AddressValidator;
 use App\Sheba\Geo;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Location\Coords;
+use Sheba\Location\Distance\Distance;
+use Sheba\Location\Distance\DistanceStrategy;
 use Sheba\ModificationFields;
 
 class CustomerDeliveryAddressController extends Controller
@@ -20,13 +23,25 @@ class CustomerDeliveryAddressController extends Controller
         try {
             $customer = $request->customer;
             $location = null;
-            if ($request->has('lat') && $request->has('lng')) {
+            $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'location_id', 'address', 'name', 'geo_informations')->get();
+            if ($request->has('partner')) {
+                $partner = Partner::find(233);
+                $partner_geo = json_decode($partner->geo_informations);
+                $to = new Coords(floatval($partner_geo->lat), floatval($partner_geo->lng), $partner->id);
+                $distance = (new Distance(DistanceStrategy::$VINCENTY))->matrix();
+                $customer_delivery_addresses = $customer_delivery_addresses->reject(function ($customer_delivery_address) {
+                    return $customer_delivery_address->geo_informations == null;
+                })->where('geo_informations', '<>', null)->filter(function ($customer_delivery_address) use ($distance, $to) {
+                    $address_geo = json_decode($customer_delivery_address->geo_informations);
+                    $current = new Coords($address_geo->lat, $address_geo->lng);
+                });
+            } elseif ($request->has('lat') && $request->has('lng')) {
                 $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first();
                 if ($hyper_location) $location = $hyper_location->location;
                 if ($location == null) return api_response($request, null, 404, ['message' => "No address at this location"]);
             }
             $customer_order_addresses = $customer->orders()->selectRaw('delivery_address,count(*) as c')->groupBy('delivery_address')->orderBy('c', 'desc')->get();
-            $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'location_id', 'address', 'name', 'geo_informations')->get()->map(function ($customer_delivery_address) use ($customer_order_addresses) {
+            $customer_delivery_addresses = $customer_delivery_addresses->map(function ($customer_delivery_address) use ($customer_order_addresses) {
                 $customer_delivery_address['count'] = $this->getOrderCount($customer_order_addresses, $customer_delivery_address);
                 $geo = json_decode($customer_delivery_address['geo_informations']);
                 $customer_delivery_address['geo_informations'] = $geo ? array('lat' => (double)$geo->lat, 'lng' => (double)$geo->lng) : null;
