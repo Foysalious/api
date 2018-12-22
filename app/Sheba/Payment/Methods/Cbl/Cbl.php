@@ -5,6 +5,7 @@ use App\Models\Payment;
 use App\Models\PaymentDetail;
 use Carbon\Carbon;
 use Cache;
+use Sheba\Payment\Methods\Cbl\Response\InitResponse;
 use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\Payment\PayChargable;
 use Sheba\RequestIdentification;
@@ -34,8 +35,7 @@ class Cbl extends PaymentMethod
         $this->cancelUrl = config('payment.cbl.urls.cancel');
         $this->declineUrl = config('payment.cbl.urls.decline');
     }
-
-    public function init(Payable $payable)
+    public function init(Payable $payable): Payment
     {
         $payment = new Payment();
         $user = $payable->user;
@@ -57,37 +57,51 @@ class Cbl extends PaymentMethod
 
         });
         $response = $this->postQW($this->makeOrderCreateData($payable));
-        $order_id = reset($response->Response->Order->OrderID);
-        $session_id = reset($response->Response->Order->SessionID);
-        $url = reset($response->Response->Order->URL);
-
-
-        if (!$order_id || !$session_id) return null;
-
-        $invoice = "SHEBA_CBL_" . $order_id . '_' . $session_id;
-        $response->name = 'online';
-        $payment_info = [
-            'transaction_id' => $invoice,
-            'id' => $payable->id,
-            'type' => $payable->type,
-            'pay_chargable' => serialize($payable),
-            'link' => $url . "?ORDERID=" . $order_id . "&SESSIONID=" . $session_id . "",
-            'method_info' => $response,
-            'order_id' => $order_id,
-            'session_id' => $session_id
-        ];
-        Cache::store('redis')->put("paycharge::$invoice", json_encode($payment_info), Carbon::tomorrow());
-        array_forget($payment_info, 'pay_chargable');
-        array_forget($payment_info, 'method_info');
-        return $payment_info;
+        $init_response = new InitResponse();
+        $init_response->setResponse($response);
+        if ($init_response->hasSuccess()) {
+            $success = $init_response->getSuccess();
+            $payment->transaction_details = json_encode($success->details);
+            $payment->redirect_url = $success->redirect_url;
+        } else {
+            $error = $init_response->getError();
+            $this->paymentRepository->setPayment($payment);
+            $this->paymentRepository->changeStatus(['to' => 'initiation_failed', 'from' => $payment->status,
+                'transaction_details' => json_encode($error->details)]);
+            $payment->status = 'initiation_failed';
+            $payment->transaction_details = json_encode($error->details);
+        }
+        $payment->update();
+        return $payment;
+//        dd($response);
+//        return $payment;
+//        $order_id = reset($response->Response->Order->OrderID);
+//        $session_id = reset($response->Response->Order->SessionID);
+//        $url = reset($response->Response->Order->URL);
+//
+//
+//        if (!$order_id || !$session_id) return null;
+//
+//        $invoice = "SHEBA_CBL_" . $order_id . '_' . $session_id;
+//        $response->name = 'online';
+//        $payment_info = [
+//            'transaction_id' => $invoice,
+//            'id' => $payable->id,
+//            'type' => $payable->type,
+//            'pay_chargable' => serialize($payable),
+//            'link' => $url . "?ORDERID=" . $order_id . "&SESSIONID=" . $session_id . "",
+//            'method_info' => $response,
+//            'order_id' => $order_id,
+//            'session_id' => $session_id
+//        ];
+//        Cache::store('redis')->put("paycharge::$invoice", json_encode($payment_info), Carbon::tomorrow());
+//        array_forget($payment_info, 'pay_chargable');
+//        array_forget($payment_info, 'method_info');
+//        return $payment_info;
     }
 
-    /**
-     * @param $payment
-     * @return null
-     * @throws \Exception
-     */
-    public function validate($payment)
+
+    public function validate(Payment $payment)
     {
         $xml = $this->postQW($this->makeOrderInfoData($payment));
         $status = $xml->Response->Order->row->Orderstatus;
@@ -122,7 +136,7 @@ class Cbl extends PaymentMethod
         return $this->$name;
     }
 
-    private function makeOrderCreateData(PayChargable $payable)
+    private function makeOrderCreateData(Payable $payable)
     {
         $data = '<?xml version="1.0" encoding="UTF-8"?>';
         $data .= "<TKKPG>";
