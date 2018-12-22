@@ -245,7 +245,7 @@ class CategoryController extends Controller
                         removeRelationsAndFields($service);
                     });
                 }
-                $services->filter(function($service) use ($location){
+                $services = $services->filter(function($service) use ($location){
                     $locations = $service->locations()->pluck('id')->toArray();
                     return in_array($location, $locations);
                 });
