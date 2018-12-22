@@ -775,7 +775,6 @@ class PartnerController extends Controller
             }
             return api_response($request, $master_categories,  200,['categories' => $master_categories]);
         } catch (\Throwable $exception) {
-            dd($exception);
             app('sentry')->captureException($exception);
             return api_response($request, null, 500);
         }
