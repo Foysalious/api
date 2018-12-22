@@ -209,6 +209,7 @@ class PartnerList
         $this->partners = $this->findPartnersByService($partner_id)->reject(function ($partner) {
             return $partner->geo_informations == null;
         });
+        if ($this->partners->count() == 0) return $this->partners;
         $current = new Coords($this->lat, $this->lng);
         $to = $this->partners->map(function ($partner) {
             $geo = json_decode($partner->geo_informations);
