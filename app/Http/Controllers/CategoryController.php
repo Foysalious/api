@@ -246,11 +246,13 @@ class CategoryController extends Controller
                     });
                 }
 
-                 $services->filter(function($service) use ($location){
-                    $locations = $service->locations()->pluck('id')->toArray();
-                    dd($locations, $location);
-                    return in_array($location, $locations);
-                });
+                if($location) {
+                    $services->filter(function($service) use ($location){
+                        $locations = $service->locations()->pluck('id')->toArray();
+                        return in_array($location, $locations);
+                    });
+                }
+
                 $category = collect($category)->only(['name', 'banner', 'parent_id', 'app_banner']);
                 $category['services'] = $this->serviceQuestionSet($services);
                 return api_response($request, null, 200, ['category' => $category]);
