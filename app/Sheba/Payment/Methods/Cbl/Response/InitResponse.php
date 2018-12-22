@@ -20,7 +20,7 @@ class InitResponse extends PaymentMethodResponse
         $success = new PaymentMethodSuccessResponse();
         $success->id = $this->response->Response->Order->SessionID->__toString();
         $success->details = $this->response;
-        $success->redirect_url = $this->response->Response->Order->URL->__toString();
+        $success->redirect_url = $this->response->Response->Order->URL->__toString() . "?ORDERID=" . $this->response->Response->Order->OrderID->__toString() . "&SESSIONID=" . $this->response->Response->Order->SessionID->__toString() . "";
         return $success;
     }
 
