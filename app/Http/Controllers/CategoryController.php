@@ -245,8 +245,10 @@ class CategoryController extends Controller
                         removeRelationsAndFields($service);
                     });
                 }
-                $services = $services->filter(function($service) use ($location){
+
+                 $services->filter(function($service) use ($location){
                     $locations = $service->locations()->pluck('id')->toArray();
+                    dd($locations, $location);
                     return in_array($location, $locations);
                 });
                 $category = collect($category)->only(['name', 'banner', 'parent_id', 'app_banner']);
