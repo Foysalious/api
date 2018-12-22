@@ -45,13 +45,15 @@ class CategoryController extends Controller
             }
 
             $categories = Category::where('parent_id', null)->orderBy('order');
-
+            //dd($categories->get()[0]->allChildren[0]->publishedServices);
             if($location){
                 $categories= $categories->whereHas('locations',function($q) use ($location) {
                     $q->where('locations.id', $location->id);
-                })->has('allChildren','>',0);
+                });
 
                 $categories = $categories->whereHas('allChildren',function($q) use ($location){
+                    $q->published();
+                    $q->has('publishedServices','>',0);
                     $q->whereHas('locations', function($query) use ($location) {
                         $query->where('locations.id',$location->id);
                     });
@@ -84,7 +86,6 @@ class CategoryController extends Controller
             }
             return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -147,13 +148,14 @@ class CategoryController extends Controller
             else
                 $children = $category->children;
 
-            $children->filter(function($category) use ($location) {
-              $category->services->filter(function($service) use ($location){
-                  $service->whereHas('locations',function($q) use ($location){
-                      $q->where('locations.id',$location->id);
-                  });
-              });
-            });
+            if($location) {
+                $children->filter(function($category) use ($location) {
+                    $category->services->filter(function($service) use ($location){
+                        $locations = $service->locations->pluck('id')->toArray();
+                        return in_array($location->id, $locations);
+                    });
+                });
+            }
 
             if (count($children) != 0) {
                 $children = $children->each(function (&$child) use ($location) {
@@ -216,6 +218,7 @@ class CategoryController extends Controller
                     else $location = 4;
                 }
 
+
                 $scope = [];
                 if ($request->has('scope')) $scope = $this->serviceRepository->getServiceScope($request->scope);
                 if ($category->parent_id == null) {
@@ -240,6 +243,14 @@ class CategoryController extends Controller
                         removeRelationsAndFields($service);
                     });
                 }
+
+                if($location) {
+                    $services->filter(function($service) use ($location){
+                        $locations = $service->locations()->pluck('id')->toArray();
+                        return in_array($location, $locations);
+                    });
+                }
+
                 $category = collect($category)->only(['name', 'banner', 'parent_id', 'app_banner']);
                 $category['services'] = $this->serviceQuestionSet($services);
                 return api_response($request, null, 200, ['category' => $category]);
