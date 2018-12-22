@@ -6,6 +6,7 @@ use App\Models\PaymentDetail;
 use Carbon\Carbon;
 use Cache;
 use Sheba\Payment\Methods\Cbl\Response\InitResponse;
+use Sheba\Payment\Methods\Cbl\Response\ValidateResponse;
 use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\Payment\PayChargable;
 use Sheba\RequestIdentification;
@@ -35,11 +36,12 @@ class Cbl extends PaymentMethod
         $this->cancelUrl = config('payment.cbl.urls.cancel');
         $this->declineUrl = config('payment.cbl.urls.decline');
     }
+
     public function init(Payable $payable): Payment
     {
         $payment = new Payment();
         $user = $payable->user;
-        $invoice = "SHEBA_SSL_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, 1, 1);
+        $invoice = "SHEBA_CBL_";
         DB::transaction(function () use ($payment, $payable, $invoice, $user) {
             $payment->payable_id = $payable->id;
             $payment->transaction_id = $invoice;
@@ -54,7 +56,6 @@ class Cbl extends PaymentMethod
             $payment_details->method = self::NAME;
             $payment_details->amount = $payable->amount;
             $payment_details->save();
-
         });
         $response = $this->postQW($this->makeOrderCreateData($payable));
         $init_response = new InitResponse();
@@ -62,6 +63,7 @@ class Cbl extends PaymentMethod
         if ($init_response->hasSuccess()) {
             $success = $init_response->getSuccess();
             $payment->transaction_details = json_encode($success->details);
+            $payment->transaction_id = "SHEBA_CBL_" . $invoice . $success->id;
             $payment->redirect_url = $success->redirect_url;
         } else {
             $error = $init_response->getError();
@@ -73,38 +75,17 @@ class Cbl extends PaymentMethod
         }
         $payment->update();
         return $payment;
-//        dd($response);
-//        return $payment;
-//        $order_id = reset($response->Response->Order->OrderID);
-//        $session_id = reset($response->Response->Order->SessionID);
-//        $url = reset($response->Response->Order->URL);
-//
-//
-//        if (!$order_id || !$session_id) return null;
-//
-//        $invoice = "SHEBA_CBL_" . $order_id . '_' . $session_id;
-//        $response->name = 'online';
-//        $payment_info = [
-//            'transaction_id' => $invoice,
-//            'id' => $payable->id,
-//            'type' => $payable->type,
-//            'pay_chargable' => serialize($payable),
-//            'link' => $url . "?ORDERID=" . $order_id . "&SESSIONID=" . $session_id . "",
-//            'method_info' => $response,
-//            'order_id' => $order_id,
-//            'session_id' => $session_id
-//        ];
-//        Cache::store('redis')->put("paycharge::$invoice", json_encode($payment_info), Carbon::tomorrow());
-//        array_forget($payment_info, 'pay_chargable');
-//        array_forget($payment_info, 'method_info');
-//        return $payment_info;
     }
 
 
     public function validate(Payment $payment)
     {
         $xml = $this->postQW($this->makeOrderInfoData($payment));
+        $validation_response = new ValidateResponse();
+        $validation_response->setResponse($xml);
+        $validation_response->setPayment($payment);
         $status = $xml->Response->Order->row->Orderstatus;
+        dd($validation_response->hasSuccess());
         if (!$status) {
             $this->message = 'Validation Failed. Response status is ' . $status;
             return null;
@@ -146,7 +127,7 @@ class Cbl extends PaymentMethod
         $data .= "<Order>";
         $data .= "<OrderType>Purchase</OrderType>";
         $data .= "<Merchant>$this->merchantId</Merchant>";
-        $data .= "<Amount>" . $payable->amount * 100 . "</Amount>";
+        $data .= "<Amount>" . $payable->amount . "</Amount>";
         $data .= "<Currency>050</Currency>";
         $data .= "<Description>blah blah blah</Description>";
         $data .= "<ApproveURL>" . htmlentities($this->acceptUrl) . "</ApproveURL>";
