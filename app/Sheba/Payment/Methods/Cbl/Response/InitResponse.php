@@ -12,22 +12,22 @@ class InitResponse extends PaymentMethodResponse
 
     public function hasSuccess()
     {
-        return isset($this->response->Response) && $this->response->Response->status == '00';
+        return isset($this->response->Response) && $this->response->Response->Status == '00';
     }
 
     public function getSuccess(): PaymentMethodSuccessResponse
     {
         $success = new PaymentMethodSuccessResponse();
-        $success->id = $this->response->Response->Order->SessionID;
+        $success->id = $this->response->Response->Order->SessionID->__toString();
         $success->details = $this->response;
-        $success->redirect_url = $this->response->Response->Order->URL;
+        $success->redirect_url = $this->response->Response->Order->URL->__toString();
         return $success;
     }
 
     public function getError(): PaymentMethodErrorResponse
     {
         $error = new PaymentMethodErrorResponse();
-        $error->id = isset($this->response->Response->Order->SessionID) ? $this->response->Response->Order->SessionID : null;
+        $error->id = isset($this->response->Response->Order->SessionID) ? $this->response->Response->Order->SessionID->__toString() : null;
         $error->details = $this->response;
         return $error;
     }

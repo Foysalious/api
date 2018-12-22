@@ -35,6 +35,7 @@ class Cbl extends PaymentMethod
         $this->cancelUrl = config('payment.cbl.urls.cancel');
         $this->declineUrl = config('payment.cbl.urls.decline');
     }
+
     public function init(Payable $payable): Payment
     {
         $payment = new Payment();
@@ -54,7 +55,6 @@ class Cbl extends PaymentMethod
             $payment_details->method = self::NAME;
             $payment_details->amount = $payable->amount;
             $payment_details->save();
-
         });
         $response = $this->postQW($this->makeOrderCreateData($payable));
         $init_response = new InitResponse();
@@ -73,31 +73,6 @@ class Cbl extends PaymentMethod
         }
         $payment->update();
         return $payment;
-//        dd($response);
-//        return $payment;
-//        $order_id = reset($response->Response->Order->OrderID);
-//        $session_id = reset($response->Response->Order->SessionID);
-//        $url = reset($response->Response->Order->URL);
-//
-//
-//        if (!$order_id || !$session_id) return null;
-//
-//        $invoice = "SHEBA_CBL_" . $order_id . '_' . $session_id;
-//        $response->name = 'online';
-//        $payment_info = [
-//            'transaction_id' => $invoice,
-//            'id' => $payable->id,
-//            'type' => $payable->type,
-//            'pay_chargable' => serialize($payable),
-//            'link' => $url . "?ORDERID=" . $order_id . "&SESSIONID=" . $session_id . "",
-//            'method_info' => $response,
-//            'order_id' => $order_id,
-//            'session_id' => $session_id
-//        ];
-//        Cache::store('redis')->put("paycharge::$invoice", json_encode($payment_info), Carbon::tomorrow());
-//        array_forget($payment_info, 'pay_chargable');
-//        array_forget($payment_info, 'method_info');
-//        return $payment_info;
     }
 
 
