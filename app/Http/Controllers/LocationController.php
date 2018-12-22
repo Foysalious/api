@@ -6,8 +6,6 @@ use App\Models\City;
 use App\Models\HyperLocal;
 use App\Models\Location;
 use App\Models\Partner;
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use MongoDB\Collection;
@@ -102,7 +100,6 @@ class LocationController extends Controller
     {
         $geo_info = json_decode(Partner::find($request->partner)->geo_informations);
         if ($geo_info) {
-            Collection::get('hyper_local')->createIndex(['geometry' => '2dsphere']);
             $hyper_locations = HyperLocal::insideCircle($geo_info)->get();
             return api_response($request, null, 200, ['locations' => $hyper_locations]);
         } else {
