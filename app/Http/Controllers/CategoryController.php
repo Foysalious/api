@@ -86,7 +86,6 @@ class CategoryController extends Controller
             }
             return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -150,11 +149,10 @@ class CategoryController extends Controller
                 $children = $category->children;
 
             if($location) {
-                $children = $children->filter(function($category) use ($location) {
+                $children->filter(function($category) use ($location) {
                     $category->services->filter(function($service) use ($location){
-                        $service->whereHas('locations',function($q) use ($location){
-                            $q->where('locations.id',$location->id);
-                        });
+                        $locations = $service->locations->pluck('id')->toArray();
+                        return in_array($location->id, $locations);
                     });
                 });
             }
@@ -260,7 +258,6 @@ class CategoryController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
