@@ -48,6 +48,7 @@ class PartnerRoute
             $api->get('operations', 'Partner\OperationController@index');
             $api->post('operations', 'Partner\OperationController@store');
             $api->post('register', 'CustomerController@store');
+            $api->get('categories','CategoryController@getPartnerLocationCategory');
             $api->post('categories', 'Partner\OperationController@saveCategories');
             $api->post('add-categories', 'CategoryController@addCategories');
             $api->post('top-up', 'TopUpController@topUp');

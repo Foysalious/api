@@ -103,7 +103,7 @@ class Category extends Model
 
     public function scopePublishedOrPublishedForBusiness($query)
     {
-        return $query->where(function ($query){
+        return $query->where(function ($query) {
             return $query->where('publication_status', 1)->orWhere('is_published_for_business', 1);
         });
     }
@@ -116,5 +116,25 @@ class Category extends Model
     public function locations()
     {
         return $this->belongsToMany(Location::class);
+    }
+
+    public function sub()
+    {
+        return $this->hasMany(Category::class, 'parent_id')->published();
+    }
+
+    public function scopeLocationWise($query_, $hyper_locations)
+    {
+        return $query_->select('id', 'icon_png', 'name')->whereHas('locations', function ($q) use ($hyper_locations) {
+            $q->whereIn('id', $hyper_locations);
+        })->whereHas('sub', function ($qa) use ($hyper_locations) {
+            $qa->whereHas('locations', function ($query) use ($hyper_locations) {
+                $query->whereIn('id', $hyper_locations);
+            });
+        })->with(['children' => function ($qa) use ($hyper_locations) {
+            $qa->whereHas('locations', function ($query) use ($hyper_locations) {
+                $query->whereIn('id', $hyper_locations);
+            });
+        }]);
     }
 }
