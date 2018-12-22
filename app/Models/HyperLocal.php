@@ -26,13 +26,13 @@ class HyperLocal extends Eloquent
 
     public function scopeInsideCircle($query, $geo_info)
     {
+
         return $query->where('geometry', 'nearSphere', [
             '$geometry' => [
                 'type' => 'Point',
                 'coordinates' => [(double)$geo_info->lng, (double)$geo_info->lat],
             ],
-            '$minDistance' => 0,
-            '$maxDistance' => (double)$geo_info->radius / 6371
+            '$maxDistance' => (double)$geo_info->radius
         ]);
     }
 }
