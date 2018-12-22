@@ -6,6 +6,7 @@ use App\Models\PaymentDetail;
 use Carbon\Carbon;
 use Cache;
 use Sheba\Payment\Methods\Cbl\Response\InitResponse;
+use Sheba\Payment\Methods\Cbl\Response\ValidateResponse;
 use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\Payment\PayChargable;
 use Sheba\RequestIdentification;
@@ -79,7 +80,11 @@ class Cbl extends PaymentMethod
     public function validate(Payment $payment)
     {
         $xml = $this->postQW($this->makeOrderInfoData($payment));
+        $validation_response = new ValidateResponse();
+        $validation_response->setResponse($xml);
+        $validation_response->setPayment($payment);
         $status = $xml->Response->Order->row->Orderstatus;
+        dd($validation_response->hasSuccess());
         if (!$status) {
             $this->message = 'Validation Failed. Response status is ' . $status;
             return null;
