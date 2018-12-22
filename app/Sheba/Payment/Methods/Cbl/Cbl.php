@@ -41,7 +41,7 @@ class Cbl extends PaymentMethod
     {
         $payment = new Payment();
         $user = $payable->user;
-        $invoice = "SHEBA_SSL_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, 1, 1);
+        $invoice = "SHEBA_CBL_";
         DB::transaction(function () use ($payment, $payable, $invoice, $user) {
             $payment->payable_id = $payable->id;
             $payment->transaction_id = $invoice;
@@ -63,6 +63,7 @@ class Cbl extends PaymentMethod
         if ($init_response->hasSuccess()) {
             $success = $init_response->getSuccess();
             $payment->transaction_details = json_encode($success->details);
+            $payment->transaction_id = "SHEBA_CBL_" . $invoice . $success->id;
             $payment->redirect_url = $success->redirect_url;
         } else {
             $error = $init_response->getError();
@@ -126,7 +127,7 @@ class Cbl extends PaymentMethod
         $data .= "<Order>";
         $data .= "<OrderType>Purchase</OrderType>";
         $data .= "<Merchant>$this->merchantId</Merchant>";
-        $data .= "<Amount>" . $payable->amount * 100 . "</Amount>";
+        $data .= "<Amount>" . $payable->amount . "</Amount>";
         $data .= "<Currency>050</Currency>";
         $data .= "<Description>blah blah blah</Description>";
         $data .= "<ApproveURL>" . htmlentities($this->acceptUrl) . "</ApproveURL>";
