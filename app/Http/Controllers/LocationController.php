@@ -101,7 +101,8 @@ class LocationController extends Controller
         $geo_info = json_decode(Partner::find($request->partner)->geo_informations);
         if ($geo_info) {
             $hyper_locations = HyperLocal::insideCircle($geo_info)->get();
-            return api_response($request, null, 200, ['locations' => $hyper_locations]);
+            $locations = HyperLocal::with('location')->get();
+            return api_response($request, null, 200, ['locations' => $hyper_locations, 'all' => $locations]);
         } else {
             return api_response($request, null, 404);
         }
