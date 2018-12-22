@@ -32,7 +32,7 @@ class HyperLocal extends Eloquent
                     (double)$geo_info->lng,
                     (double)$geo_info->lat
                 ],
-                (double) $geo_info->radius
+                (double)$geo_info->radius * 1000
 //                / 6378.16
             ]
         ]);
