@@ -26,6 +26,9 @@ class InitResponse extends PaymentMethodResponse
 
     public function getError(): PaymentMethodErrorResponse
     {
-        // TODO: Implement getError() method.
+        $error = new PaymentMethodErrorResponse();
+        $error->id = isset($this->response->Response->Order->SessionID) ? $this->response->Response->Order->SessionID : null;
+        $error->details = $this->response;
+        return $error;
     }
 }
