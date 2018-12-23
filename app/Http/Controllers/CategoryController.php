@@ -150,6 +150,10 @@ class CategoryController extends Controller
 
             if($location) {
                 $children = $children->filter(function(&$category) use ($location) {
+                    dd($category->services->filter(function($service) use ($location){
+                        $locations = $service->locations->pluck('id')->toArray();
+                        return in_array($location->id, $locations);
+                    })->count());
                     return $category->services->filter(function($service) use ($location){
                         $locations = $service->locations->pluck('id')->toArray();
                         return in_array($location->id, $locations);
