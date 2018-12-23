@@ -22,7 +22,7 @@ class CblController extends Controller
             $sheba_payment = new ShebaPayment('cbl');
             $payment = $sheba_payment->complete($payment);
             $payable = $payment->payable;
-            return redirect($payable->success_url . '?invoice_id=' . $request->tran_id);
+            return redirect($payable->success_url . '?invoice_id=' . $invoice);
         } catch (\Throwable $e) {
             $xml = simplexml_load_string($request->xmlmsg);
             $invoice = "SHEBA_CBL_" . $xml->SessionID;
