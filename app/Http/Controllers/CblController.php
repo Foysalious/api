@@ -2,36 +2,33 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Payment;
 use Illuminate\Http\Request;
-use Sheba\Payment\PayChargable;
 use Sheba\Payment\ShebaPayment;
-use Cache;
 
 
 class CblController extends Controller
 {
     public function validateCblPGR(Request $request)
     {
-        /** @var PayChargable $pay_chargable */
-        $pay_chargable = null;
-        $invoice = '';
         try {
             $this->validate($request, [
                 'xmlmsg' => 'required|string',
             ]);
-
             $xml = simplexml_load_string($request->xmlmsg);
-            $invoice = "SHEBA_CBL_" . $xml->OrderID . '_' . $xml->SessionID;
-            $pay_charge = Cache::store('redis')->get("paycharge::$invoice");
-            if (!$pay_charge) return redirect(config('sheba.front_url'));
-            $pay_charge = json_decode($pay_charge);
-            $pay_chargable = unserialize($pay_charge->pay_chargable);
-            $pay_charge = new ShebaPayment('cbl');
-            $pay_charge->complete($invoice);
-        } catch (\Exception $e) {
+            $invoice = "SHEBA_CBL_" . $xml->SessionId->__toString();
+            $payment = Payment::where('transaction_id', $invoice)->valid()->first();
+            if (!$payment) return redirect(config('sheba.front_url'));
+            $sheba_payment = new ShebaPayment('cbl');
+            $payment = $sheba_payment->complete($payment);
+            $payable = $payment->payable;
+            return redirect($payable->success_url . '?invoice_id=' . $invoice);
+        } catch (\Throwable $e) {
+            $xml = simplexml_load_string($request->xmlmsg);
+            $invoice = "SHEBA_CBL_" . $xml->SessionID;
+            $payment = Payment::where('transaction_id', $invoice)->valid()->first();
             app('sentry')->captureException($e);
+            return redirect($payment->payable->success_url . '?invoice_id=' . $invoice);
         }
-
-        return redirect($pay_chargable->redirectUrl . '?invoice_id=' . $invoice);
     }
 }
