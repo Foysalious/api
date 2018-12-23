@@ -245,7 +245,8 @@ class CategoryController extends Controller
                 }
 
                 if($location) {
-                    $services->filter(function($service) use ($location){
+                    $services = collect($services);
+                    $services = $services->filter(function($service) use ($location){
                         $locations = $service->locations()->pluck('id')->toArray();
                         return in_array($location, $locations);
                     });
@@ -258,6 +259,7 @@ class CategoryController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
