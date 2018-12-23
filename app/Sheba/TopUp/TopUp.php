@@ -62,7 +62,6 @@ class TopUp
 
     /**
      * @param TopUpRequest $top_up_request
-     * @param TopUpTransaction $transaction
      */
     public function recharge(TopUpRequest $top_up_request)
     {
