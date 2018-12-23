@@ -4,11 +4,9 @@ use App\Models\Payable;
 use App\Models\Payment;
 use App\Models\PaymentDetail;
 use Carbon\Carbon;
-use Cache;
 use Sheba\Payment\Methods\Cbl\Response\InitResponse;
 use Sheba\Payment\Methods\Cbl\Response\ValidateResponse;
 use Sheba\Payment\Methods\PaymentMethod;
-use Sheba\Payment\PayChargable;
 use Sheba\RequestIdentification;
 use DB;
 
@@ -41,7 +39,7 @@ class Cbl extends PaymentMethod
     {
         $payment = new Payment();
         $user = $payable->user;
-        $invoice = "SHEBA_CBL_";
+        $invoice = "SHEBA_CBL_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, 1, 1);
         DB::transaction(function () use ($payment, $payable, $invoice, $user) {
             $payment->payable_id = $payable->id;
             $payment->transaction_id = $invoice;
@@ -63,7 +61,7 @@ class Cbl extends PaymentMethod
         if ($init_response->hasSuccess()) {
             $success = $init_response->getSuccess();
             $payment->transaction_details = json_encode($success->details);
-            $payment->transaction_id = "SHEBA_CBL_" . $invoice . $success->id;
+            $payment->transaction_id = 'SHEBA_CBL_' . $success->id;
             $payment->redirect_url = $success->redirect_url;
         } else {
             $error = $init_response->getError();
@@ -85,8 +83,8 @@ class Cbl extends PaymentMethod
         $validation_response->setResponse($xml);
         $validation_response->setPayment($payment);
         $status = $xml->Response->Order->row->Orderstatus;
-        dd($validation_response->hasSuccess());
         if (!$status) {
+            dd($validation_response->hasSuccess());
             $this->message = 'Validation Failed. Response status is ' . $status;
             return null;
         }

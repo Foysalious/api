@@ -16,7 +16,7 @@ class CblController extends Controller
                 'xmlmsg' => 'required|string',
             ]);
             $xml = simplexml_load_string($request->xmlmsg);
-            $invoice = "SHEBA_CBL_" . $xml->SessionID;
+            $invoice = "SHEBA_CBL_" . $xml->SessionId->__toString();
             $payment = Payment::where('transaction_id', $invoice)->valid()->first();
             if (!$payment) return redirect(config('sheba.front_url'));
             $sheba_payment = new ShebaPayment('cbl');
