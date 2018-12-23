@@ -66,7 +66,6 @@ class TopUp
     public function recharge(TopUpRequest $top_up_request)
     {
         if ($this->validator->setRequest($top_up_request)->validate()->hasError()) return;
-
         $this->response = $this->vendor->recharge($top_up_request);
         if ($this->response->hasSuccess()) {
             $response = $this->response->getSuccess();
@@ -111,6 +110,7 @@ class TopUp
      * @param TopUpSuccessResponse $response
      * @param $mobile_number
      * @param $amount
+     * @return TopUpOrder
      */
     private function placeTopUpOrder(TopUpSuccessResponse $response, $mobile_number, $amount)
     {
