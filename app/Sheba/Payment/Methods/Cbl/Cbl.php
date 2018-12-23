@@ -79,12 +79,13 @@ class Cbl extends PaymentMethod
     public function validate(Payment $payment)
     {
         $xml = $this->postQW($this->makeOrderInfoData($payment));
+        dd($xml);
         $validation_response = new ValidateResponse();
         $validation_response->setResponse($xml);
         $validation_response->setPayment($payment);
         $status = $xml->Response->Order->row->Orderstatus;
+        dd($validation_response->hasSuccess());
         if (!$status) {
-            dd($validation_response->hasSuccess());
             $this->message = 'Validation Failed. Response status is ' . $status;
             return null;
         }
@@ -105,16 +106,6 @@ class Cbl extends PaymentMethod
         ];
     }
 
-    public function getError(): PayChargeMethodError
-    {
-        // TODO: Implement getError() method.
-    }
-
-    public function __get($name)
-    {
-        return $this->$name;
-    }
-
     private function makeOrderCreateData(Payable $payable)
     {
         $data = '<?xml version="1.0" encoding="UTF-8"?>';
@@ -125,7 +116,7 @@ class Cbl extends PaymentMethod
         $data .= "<Order>";
         $data .= "<OrderType>Purchase</OrderType>";
         $data .= "<Merchant>$this->merchantId</Merchant>";
-        $data .= "<Amount>" . $payable->amount . "</Amount>";
+        $data .= "<Amount>" . ($payable->amount * 100) . "</Amount>";
         $data .= "<Currency>050</Currency>";
         $data .= "<Description>blah blah blah</Description>";
         $data .= "<ApproveURL>" . htmlentities($this->acceptUrl) . "</ApproveURL>";
@@ -135,8 +126,9 @@ class Cbl extends PaymentMethod
         return $data;
     }
 
-    private function makeOrderInfoData($payment)
+    private function makeOrderInfoData(Payment $payment)
     {
+        $details = json_decode($payment->transaction_details);
         $data = '<?xml version="1.0" encoding="UTF-8"?>';
         $data .= "<TKKPG>";
         $data .= "<Request>";
@@ -144,9 +136,9 @@ class Cbl extends PaymentMethod
         $data .= "<Language>EN</Language>";
         $data .= "<Order>";
         $data .= "<Merchant>$this->merchantId</Merchant>";
-        $data .= "<OrderID>" . $payment->order_id . "</OrderID>";
+        $data .= "<OrderID>" . $details->Response->Order->OrderID . "</OrderID>";
         $data .= "</Order>";
-        $data .= "<SessionID>" . $payment->session_id . "</SessionID>";
+        $data .= "<SessionID>" . $details->Response->Order->SessionID . "</SessionID>";
         $data .= "<ShowParams>true</ShowParams>";
         $data .= "<ShowOperations>false</ShowOperations>";
         $data .= "<ClassicView>true</ClassicView>";
