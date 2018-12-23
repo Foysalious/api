@@ -139,24 +139,27 @@ class CategoryController extends Controller
                 $hyperLocation= HyperLocal::insidePolygon((double) $request->lat, (double)$request->lng)->with('location')->first();
                 if(!is_null($hyperLocation)) $location = $hyperLocation->location;
             }
-            
+
             if($location) {
-                $children = $category->children->filter(function($secondary) use($location) {
-                    $locations = $secondary->locations()->pluck('id')->toArray();
-                    return in_array($location->id, $locations);
-                });
+                $children = $category->load(['children' => function ($q) {
+                    $q->whereHas('services', function ($q) {
+                        $q->published()->whereHas('locations', function ($q) {
+                            $q->where('locations.id', 4);
+                        });
+                    });
+                }])->children;
             }
             else
                 $children = $category->children;
 
-            if($location) {
-                $children = $children->filter(function(&$category) use ($location) {
-                    return $category->services->filter(function($service) use ($location){
-                        $locations = $service->locations->pluck('id')->toArray();
-                        return in_array($location->id, $locations);
-                    })->count();
-                });
-            }
+//            if($location) {
+//                $children = $children->filter(function(&$category) use ($location) {
+//                    return $category->services->filter(function($service) use ($location){
+//                        $locations = $service->locations->pluck('id')->toArray();
+//                        return in_array($location->id, $locations);
+//                    })->count();
+//                });
+//            }
 
             if (count($children) != 0) {
                 $children = $children->each(function (&$child) use ($location) {
