@@ -225,11 +225,11 @@ class ShebaController extends Controller
     {
         try {
             $this->validate($request, [
-                'user_id' => 'required',
-                'user_type' => 'required|in:customer',
-                'remember_token' => 'required',
-                'paycharge_type' => 'required|in:order,recharge',
-                'payment_method' => 'required|in:online,bkash',
+                'user_id' => 'numeric',
+                'user_type' => 'in:customer',
+                'remember_token' => 'string',
+                'paycharge_type' => 'in:order,recharge',
+                'payment_method' => 'in:online,bkash',
                 'job_id' => 'sometimes|required',
             ]);
             $payment = Payment::where('transaction_id', $transactionID)->whereIn('status', ['failed', 'validated', 'completed'])->first();

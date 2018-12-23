@@ -33,5 +33,7 @@ class PaymentDetail extends Model
             return 'Wallet';
         elseif ($this->method == 'bkash')
             return 'Bkash';
+        elseif ($this->method == 'cbl')
+            return 'Cbl';
     }
 }
