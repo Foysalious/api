@@ -19,8 +19,7 @@ class Cbl extends PaymentMethod
     private $acceptUrl;
     private $cancelUrl;
     private $declineUrl;
-
-    private $message;
+    
     CONST NAME = 'cbl';
 
     public function __construct()
@@ -98,18 +97,6 @@ class Cbl extends PaymentMethod
         }
         $payment->update();
         return $payment;
-    }
-
-    public function formatTransactionData($method_response)
-    {
-        return [
-            'name' => 'Online',
-            'details' => [
-                'transaction_id' => $method_response->transaction_id,
-                'gateway' => "cbl",
-                'details' => $method_response
-            ]
-        ];
     }
 
     private function makeOrderCreateData(Payable $payable)
