@@ -82,6 +82,7 @@ class Cbl extends PaymentMethod
         $validation_response = new ValidateResponse();
         $validation_response->setResponse($xml);
         $validation_response->setPayment($payment);
+        $this->paymentRepository->setPayment($payment);
         if ($validation_response->hasSuccess()) {
             $success = $validation_response->getSuccess();
             $this->paymentRepository->changeStatus(['to' => 'validated', 'from' => $payment->status,
