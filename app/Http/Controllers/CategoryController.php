@@ -151,7 +151,7 @@ class CategoryController extends Controller
             }
             else
                 $children = $category->children;
-            
+
             if (count($children) != 0) {
                 $children = $children->each(function (&$child) use ($location) {
                     removeRelationsAndFields($child);

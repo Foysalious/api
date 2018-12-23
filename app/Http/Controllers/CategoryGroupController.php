@@ -77,12 +77,33 @@ class CategoryGroupController extends Controller
     public function show($id, Request $request)
     {
         try {
-            $location = $request->location;
-            $category_group = CategoryGroup::with('categories')->where('id', $id)->select('id', 'name')->first();
+            $this->validate($request, [
+                'location' => 'sometimes|numeric',
+                'lat' => 'sometimes|numeric',
+                'lng' => 'required_with:lat'
+            ]);
+            $location = null;
+            if($request->has('location') ) {
+                $location = Location::find($request->location)->id;
+            } else if($request->has('lat')) {
+                $hyperLocation= HyperLocal::insidePolygon((double) $request->lat, (double)$request->lng)->with('location')->first();
+                if(!is_null($hyperLocation)) $location = $hyperLocation->location->id;
+            }
+            if($location)
+                $category_group = CategoryGroup::with(['categories'=> function($q) use ($location){
+                    $q->whereHas('services', function ($q) use ($location){
+                        $q->published()->whereHas('locations', function ($q) use ($location) {
+                            $q->where('locations.id', $location);
+                        });
+                    });
+                }])->where('id', $id)->select('id', 'name')->first();
+            else
+                $category_group = CategoryGroup::with('categories')->where('id', $id)->select('id', 'name')->first();
             if ($category_group != null) {
                 $categories = $category_group->categories->each(function ($category) use ($location) {
                     removeRelationsAndFields($category);
                 });
+
                 if (count($categories) > 0) {
                     $category_group['position_at_home'] = null;
                     removeRelationsAndFields($category_group);
@@ -92,6 +113,7 @@ class CategoryGroupController extends Controller
             }
             return api_response($request, null, 404);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
