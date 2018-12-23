@@ -139,8 +139,7 @@ class CategoryController extends Controller
                 $hyperLocation= HyperLocal::insidePolygon((double) $request->lat, (double)$request->lng)->with('location')->first();
                 if(!is_null($hyperLocation)) $location = $hyperLocation->location;
             }
-
-            dd($category->children[0]->services);
+            
             if($location) {
                 $children = $category->children->filter(function($secondary) use($location) {
                     $locations = $secondary->locations()->pluck('id')->toArray();
