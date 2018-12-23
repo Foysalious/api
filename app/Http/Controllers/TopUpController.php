@@ -78,34 +78,6 @@ class TopUpController extends Controller
         }
     }
 
-    public function topUpTest(Request $request, VendorFactory $vendor, TopUp $top_up, TopUpRequest $top_up_request)
-    {
-        try {
-            $this->validate($request, [
-                'mobile' => 'required|string|mobile:bd',
-                'connection_type' => 'required|in:prepaid,postpaid',
-                'vendor_id' => 'required|exists:topup_vendors,id',
-                'amount' => 'required|min:10|max:1000|numeric'
-            ]);
-
-            $agent = $this->getAgent($request);
-            if ($agent->wallet < (double)$request->amount) return api_response($request, null, 403, ['message' => "You don't have sufficient balance to recharge."]);
-            $vendor = $vendor->getById($request->vendor_id);
-            $topUprequest = $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type);
-            $top_up->setAgent($agent)->setVendor($vendor)->recharge($topUprequest);
-
-            if (!$vendor->isPublished()) return api_response($request, null, 403, ['message' => 'Sorry, we don\'t support this operator at this moment']);
-
-            return api_response($request, null, 200, ['message' => "Recharge Request Successful"]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
     public function sslFail(Request $request, SslFailResponse $error_response, TopUp $top_up)
     {
         try {
@@ -180,5 +152,36 @@ class TopUpController extends Controller
         if ($request->affiliate) return $request->affiliate;
         elseif ($request->customer) return $request->customer;
         elseif ($request->partner) return $request->partner;
+    }
+
+    /**
+     * TEST CONTROLLER FOR TOPUP TEST
+     */
+    public function topUpTest(Request $request, VendorFactory $vendor, TopUp $top_up, TopUpRequest $top_up_request)
+    {
+        try {
+            $this->validate($request, [
+                'mobile' => 'required|string|mobile:bd',
+                'connection_type' => 'required|in:prepaid,postpaid',
+                'vendor_id' => 'required|exists:topup_vendors,id',
+                'amount' => 'required|min:10|max:1000|numeric'
+            ]);
+
+            $agent = $this->getAgent($request);
+            if ($agent->wallet < (double)$request->amount) return api_response($request, null, 403, ['message' => "You don't have sufficient balance to recharge."]);
+            $vendor = $vendor->getById($request->vendor_id);
+            $topUprequest = $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type);
+            $top_up->setAgent($agent)->setVendor($vendor)->recharge($topUprequest);
+
+            if (!$vendor->isPublished()) return api_response($request, null, 403, ['message' => 'Sorry, we don\'t support this operator at this moment']);
+
+            return api_response($request, null, 200, ['message' => "Recharge Request Successful"]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 }

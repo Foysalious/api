@@ -8,6 +8,7 @@ use Sheba\Dal\Complain\Model as Complain;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
+use Sheba\TopUp\TopUpTransaction;
 use Sheba\Voucher\VoucherCodeGenerator;
 use DB;
 
@@ -383,10 +384,10 @@ class Partner extends Model implements Rewardable, TopUpAgent
         return $this->hasMany(ImpressionDeduction::class);
     }
 
-    public function topUpTransaction($amount, $log)
+    public function topUpTransaction(TopUpTransaction $transaction)
     {
-        $this->debitWallet($amount);
-        $this->walletTransaction(['amount' => $amount, 'type' => 'Debit', 'log' => $log]);
+        $this->debitWallet($transaction->getAmount());
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
     }
 
     public function notCancelledJobs()

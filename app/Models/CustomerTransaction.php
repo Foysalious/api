@@ -1,8 +1,4 @@
-<?php
-
-
-namespace App\Models;
-
+<?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
@@ -21,5 +17,4 @@ class CustomerTransaction extends Model
     {
         return $this->belongsTo(PartnerOrder::class);
     }
-
 }

@@ -10,7 +10,7 @@ class ValidateResponse extends PaymentMethodResponse
 
     public function hasSuccess()
     {
-        return isset($this->response->Response->Order->row->Orderstatus) && $this->response->Response->Order->row->Orderstatus->__toString() == 'CREATED';
+        return isset($this->response->Response->Order->row->Orderstatus) && $this->response->Response->Order->row->Orderstatus->__toString() == 'APPROVED';
     }
 
     public function getSuccess(): PaymentMethodSuccessResponse
