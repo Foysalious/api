@@ -141,26 +141,17 @@ class CategoryController extends Controller
             }
 
             if($location) {
-                $children = $category->load(['children' => function ($q) {
-                    $q->whereHas('services', function ($q) {
-                        $q->published()->whereHas('locations', function ($q) {
-                            $q->where('locations.id', 4);
+                $children = $category->load(['children' => function ($q) use ($location){
+                    $q->whereHas('services', function ($q) use ($location){
+                        $q->published()->whereHas('locations', function ($q) use ($location) {
+                            $q->where('locations.id', $location->id);
                         });
                     });
                 }])->children;
             }
             else
                 $children = $category->children;
-
-//            if($location) {
-//                $children = $children->filter(function(&$category) use ($location) {
-//                    return $category->services->filter(function($service) use ($location){
-//                        $locations = $service->locations->pluck('id')->toArray();
-//                        return in_array($location->id, $locations);
-//                    })->count();
-//                });
-//            }
-
+            
             if (count($children) != 0) {
                 $children = $children->each(function (&$child) use ($location) {
                     removeRelationsAndFields($child);

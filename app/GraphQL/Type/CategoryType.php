@@ -105,9 +105,6 @@ class CategoryType extends GraphQlType
                         $query->where('locations.id',$location);
                     });
                 }
-                $q->whereHas('locations',function($query) use ($location){
-                    $query->where('locations.id',$location);
-                });
             }
         }]);
         return $root->services ? $root->services : null;
