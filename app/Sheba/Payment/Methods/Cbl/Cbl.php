@@ -4,11 +4,9 @@ use App\Models\Payable;
 use App\Models\Payment;
 use App\Models\PaymentDetail;
 use Carbon\Carbon;
-use Cache;
 use Sheba\Payment\Methods\Cbl\Response\InitResponse;
 use Sheba\Payment\Methods\Cbl\Response\ValidateResponse;
 use Sheba\Payment\Methods\PaymentMethod;
-use Sheba\Payment\PayChargable;
 use Sheba\RequestIdentification;
 use DB;
 
@@ -21,8 +19,7 @@ class Cbl extends PaymentMethod
     private $acceptUrl;
     private $cancelUrl;
     private $declineUrl;
-
-    private $message;
+    
     CONST NAME = 'cbl';
 
     public function __construct()
@@ -41,7 +38,7 @@ class Cbl extends PaymentMethod
     {
         $payment = new Payment();
         $user = $payable->user;
-        $invoice = "SHEBA_CBL_";
+        $invoice = "SHEBA_CBL_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, 1, 1);
         DB::transaction(function () use ($payment, $payable, $invoice, $user) {
             $payment->payable_id = $payable->id;
             $payment->transaction_id = $invoice;
@@ -63,7 +60,7 @@ class Cbl extends PaymentMethod
         if ($init_response->hasSuccess()) {
             $success = $init_response->getSuccess();
             $payment->transaction_details = json_encode($success->details);
-            $payment->transaction_id = "SHEBA_CBL_" . $invoice . $success->id;
+            $payment->transaction_id = 'SHEBA_CBL_' . $success->id;
             $payment->redirect_url = $success->redirect_url;
         } else {
             $error = $init_response->getError();
@@ -84,37 +81,22 @@ class Cbl extends PaymentMethod
         $validation_response = new ValidateResponse();
         $validation_response->setResponse($xml);
         $validation_response->setPayment($payment);
-        $status = $xml->Response->Order->row->Orderstatus;
-        dd($validation_response->hasSuccess());
-        if (!$status) {
-            $this->message = 'Validation Failed. Response status is ' . $status;
-            return null;
+        $this->paymentRepository->setPayment($payment);
+        if ($validation_response->hasSuccess()) {
+            $success = $validation_response->getSuccess();
+            $this->paymentRepository->changeStatus(['to' => 'validated', 'from' => $payment->status,
+                'transaction_details' => $payment->transaction_details]);
+            $payment->status = 'validated';
+            $payment->transaction_details = json_encode($success->details);
+        } else {
+            $error = $validation_response->getError();
+            $this->paymentRepository->changeStatus(['to' => 'validation_failed', 'from' => $payment->status,
+                'transaction_details' => $payment->transaction_details]);
+            $payment->status = 'validation_failed';
+            $payment->transaction_details = json_encode($error->details);
         }
-        $res = json_decode(json_encode($xml->Response));
-        $res->transaction_id = $payment->transaction_id;
-        return $res;
-    }
-
-    public function formatTransactionData($method_response)
-    {
-        return [
-            'name' => 'Online',
-            'details' => [
-                'transaction_id' => $method_response->transaction_id,
-                'gateway' => "cbl",
-                'details' => $method_response
-            ]
-        ];
-    }
-
-    public function getError(): PayChargeMethodError
-    {
-        // TODO: Implement getError() method.
-    }
-
-    public function __get($name)
-    {
-        return $this->$name;
+        $payment->update();
+        return $payment;
     }
 
     private function makeOrderCreateData(Payable $payable)
@@ -127,7 +109,7 @@ class Cbl extends PaymentMethod
         $data .= "<Order>";
         $data .= "<OrderType>Purchase</OrderType>";
         $data .= "<Merchant>$this->merchantId</Merchant>";
-        $data .= "<Amount>" . $payable->amount . "</Amount>";
+        $data .= "<Amount>" . ($payable->amount * 100) . "</Amount>";
         $data .= "<Currency>050</Currency>";
         $data .= "<Description>blah blah blah</Description>";
         $data .= "<ApproveURL>" . htmlentities($this->acceptUrl) . "</ApproveURL>";
@@ -137,8 +119,9 @@ class Cbl extends PaymentMethod
         return $data;
     }
 
-    private function makeOrderInfoData($payment)
+    private function makeOrderInfoData(Payment $payment)
     {
+        $details = json_decode($payment->transaction_details);
         $data = '<?xml version="1.0" encoding="UTF-8"?>';
         $data .= "<TKKPG>";
         $data .= "<Request>";
@@ -146,9 +129,9 @@ class Cbl extends PaymentMethod
         $data .= "<Language>EN</Language>";
         $data .= "<Order>";
         $data .= "<Merchant>$this->merchantId</Merchant>";
-        $data .= "<OrderID>" . $payment->order_id . "</OrderID>";
+        $data .= "<OrderID>" . $details->Response->Order->OrderID . "</OrderID>";
         $data .= "</Order>";
-        $data .= "<SessionID>" . $payment->session_id . "</SessionID>";
+        $data .= "<SessionID>" . $details->Response->Order->SessionID . "</SessionID>";
         $data .= "<ShowParams>true</ShowParams>";
         $data .= "<ShowOperations>false</ShowOperations>";
         $data .= "<ClassicView>true</ClassicView>";

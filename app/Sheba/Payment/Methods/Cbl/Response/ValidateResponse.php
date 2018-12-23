@@ -10,14 +10,13 @@ class ValidateResponse extends PaymentMethodResponse
 
     public function hasSuccess()
     {
-        dd($this->response);
-        return isset($this->response->Response->Order->row->Orderstatus) && $this->response->Response->Order->row->Orderstatus;
+        return isset($this->response->Response->Order->row->Orderstatus) && $this->response->Response->Order->row->Orderstatus->__toString() == 'CREATED';
     }
 
     public function getSuccess(): PaymentMethodSuccessResponse
     {
         $success = new PaymentMethodSuccessResponse();
-        $success->id = $this->response->tran_id;
+        $success->id = $this->response->Response->Order->row->SessionID->__toString();
         $success->details = $this->response;
         return $success;
     }
@@ -25,7 +24,7 @@ class ValidateResponse extends PaymentMethodResponse
     public function getError(): PaymentMethodErrorResponse
     {
         $error = new PaymentMethodErrorResponse();
-        $error->id = isset($this->response->tran_id) ? $this->response->tran_id : null;
+        $error->id = isset($this->response->Response->Order->row->SessionID) ? $this->response->Response->Order->row->SessionID->__toString() : null;
         $error->details = $this->response;
         return $error;
     }
