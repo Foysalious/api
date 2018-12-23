@@ -140,7 +140,7 @@ class CategoryController extends Controller
                 if(!is_null($hyperLocation)) $location = $hyperLocation->location;
             }
 
-            dd($category->children()->pluck('id'));
+            dd($category->children[0]->services);
             if($location) {
                 $children = $category->children->filter(function($secondary) use($location) {
                     $locations = $secondary->locations()->pluck('id')->toArray();
