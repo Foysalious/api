@@ -79,19 +79,24 @@ class Cbl extends PaymentMethod
     public function validate(Payment $payment)
     {
         $xml = $this->postQW($this->makeOrderInfoData($payment));
-        dd($xml);
         $validation_response = new ValidateResponse();
         $validation_response->setResponse($xml);
         $validation_response->setPayment($payment);
-        $status = $xml->Response->Order->row->Orderstatus;
-        dd($validation_response->hasSuccess());
-        if (!$status) {
-            $this->message = 'Validation Failed. Response status is ' . $status;
-            return null;
+        if ($validation_response->hasSuccess()) {
+            $success = $validation_response->getSuccess();
+            $this->paymentRepository->changeStatus(['to' => 'validated', 'from' => $payment->status,
+                'transaction_details' => $payment->transaction_details]);
+            $payment->status = 'validated';
+            $payment->transaction_details = json_encode($success->details);
+        } else {
+            $error = $validation_response->getError();
+            $this->paymentRepository->changeStatus(['to' => 'validation_failed', 'from' => $payment->status,
+                'transaction_details' => $payment->transaction_details]);
+            $payment->status = 'validation_failed';
+            $payment->transaction_details = json_encode($error->details);
         }
-        $res = json_decode(json_encode($xml->Response));
-        $res->transaction_id = $payment->transaction_id;
-        return $res;
+        $payment->update();
+        return $payment;
     }
 
     public function formatTransactionData($method_response)
