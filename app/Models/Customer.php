@@ -13,29 +13,8 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
     use TopUpTrait;
     use Wallet;
 
-    protected $fillable = [
-        'name',
-        'mobile',
-        'email',
-        'password',
-        'fb_id',
-        'mobile_verified',
-        'email_verified',
-        'address',
-        'gender',
-        'dob',
-        'pro_pic',
-        'wallet',
-        'created_by',
-        'created_by_name',
-        'updated_by',
-        'updated_by_name',
-        'remember_token',
-        'reference_code', 'referrer_id', 'profile_id'
-    ];
-    protected $hidden = [
-        'password', 'remember_token',
-    ];
+    protected $fillable = ['name', 'mobile', 'email', 'password', 'fb_id', 'mobile_verified', 'email_verified', 'address', 'gender', 'dob', 'pro_pic', 'wallet', 'created_by', 'created_by_name', 'updated_by', 'updated_by_name', 'remember_token', 'reference_code', 'referrer_id', 'profile_id'];
+    protected $hidden = ['password', 'remember_token',];
     protected $casts = ['wallet' => 'double'];
 
     public function mobiles()
@@ -174,10 +153,11 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
         return (double)$this->bonuses()->where('status', 'valid')->sum('amount');
     }
 
-    public function topUpTransaction($amount, $log)
+    public function topUpTransaction($amount, $log, TopUpOrder $top_order)
     {
         $this->debitWallet($amount);
-        $this->walletTransaction(['amount' => $amount, 'type' => 'Debit', 'log' => $log]);
+        $wallet_transaction_data = ['event_type' => get_class($top_order), 'event_id' => $top_order->id, 'amount' => $amount, 'type' => 'Debit', 'log' => $log];
+        $this->walletTransaction($wallet_transaction_data);
     }
 
     public function getCommission()

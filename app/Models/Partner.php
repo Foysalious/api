@@ -383,7 +383,7 @@ class Partner extends Model implements Rewardable, TopUpAgent
         return $this->hasMany(ImpressionDeduction::class);
     }
 
-    public function topUpTransaction($amount, $log)
+    public function topUpTransaction($amount, $log, TopUpOrder $top_up_order)
     {
         $this->debitWallet($amount);
         $this->walletTransaction(['amount' => $amount, 'type' => 'Debit', 'log' => $log]);

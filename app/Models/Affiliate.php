@@ -140,7 +140,7 @@ class Affiliate extends Model implements TopUpAgent
         return $vouchers ? $vouchers->first() : null;
     }
 
-    public function topUpTransaction($amount, $log)
+    public function topUpTransaction($amount, $log, TopUpOrder $top_order)
     {
         $this->debitWallet($amount);
         $this->walletTransaction(['amount' => $amount, 'type' => 'Debit', 'log' => $log]);
