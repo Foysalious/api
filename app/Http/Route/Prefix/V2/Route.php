@@ -5,7 +5,6 @@ class Route
     public function set($api)
     {
         $api->group(['prefix' => 'v2', 'namespace' => 'App\Http\Controllers'], function ($api) {
-            $api->get('partner-locations/{partner}', 'LocationController@getPartnerServiceLocations');
             $api->get('validate-location','LocationController@validateLocation');
             $api->get('partners', 'PartnerLocationController@getPartners');
             $api->post('subscription', 'PushSubscriptionController@store');
