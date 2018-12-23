@@ -8,6 +8,7 @@ use Sheba\ModificationFields;
 use Sheba\Payment\Wallet;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
+use Sheba\TopUp\TopUpTransaction;
 
 class Affiliate extends Model implements TopUpAgent
 {
@@ -140,10 +141,10 @@ class Affiliate extends Model implements TopUpAgent
         return $vouchers ? $vouchers->first() : null;
     }
 
-    public function topUpTransaction($amount, $log, TopUpOrder $top_order)
+    public function topUpTransaction(TopUpTransaction $transaction)
     {
-        $this->debitWallet($amount);
-        $this->walletTransaction(['amount' => $amount, 'type' => 'Debit', 'log' => $log]);
+        $this->debitWallet($transaction->getAmount());
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
     }
 
     public function walletTransaction($data)

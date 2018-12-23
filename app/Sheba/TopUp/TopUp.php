@@ -62,6 +62,7 @@ class TopUp
 
     /**
      * @param TopUpRequest $top_up_request
+     * @param TopUpTransaction $transaction
      */
     public function recharge(TopUpRequest $top_up_request)
     {
@@ -74,7 +75,10 @@ class TopUp
                 $top_up_order = $this->placeTopUpOrder($response, $top_up_request->getMobile(), $top_up_request->getAmount());
                 $amount_after_commission = $top_up_request->getAmount() - $this->agent->calculateCommission($top_up_request->getAmount(), $this->model);
                 $log = $top_up_request->getAmount() . " has been topped up to " . $top_up_request->getMobile();
-                $this->agent->topUpTransaction($amount_after_commission, $log, $top_up_order);
+
+                $transaction = new TopUpTransaction;
+                $transaction->setAmount($amount_after_commission)->setLog($log)->setTopUpOrder($top_up_order);
+                $this->agent->topUpTransaction($transaction);
                 $this->vendor->deductAmount($top_up_request->getAmount());
                 $this->isSuccessful = true;
             });

@@ -6,6 +6,7 @@ use Sheba\Payment\Wallet;
 use Sheba\Reward\Rewardable;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
+use Sheba\TopUp\TopUpTransaction;
 use Sheba\Voucher\VoucherCodeGenerator;
 
 class Customer extends Authenticatable implements Rechargable, Rewardable, TopUpAgent
@@ -153,10 +154,17 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
         return (double)$this->bonuses()->where('status', 'valid')->sum('amount');
     }
 
-    public function topUpTransaction($amount, $log, TopUpOrder $top_order)
+    public function topUpTransaction(TopUpTransaction $transaction)
     {
-        $this->debitWallet($amount);
-        $wallet_transaction_data = ['event_type' => get_class($top_order), 'event_id' => $top_order->id, 'amount' => $amount, 'type' => 'Debit', 'log' => $log];
+        $this->debitWallet($transaction->getAmount());
+        $wallet_transaction_data = [
+            'event_type' => get_class($transaction->getTopUpOrder()),
+            'event_id' => $transaction->getTopUpOrder()->id,
+            'amount' => $transaction->getAmount(),
+            'type' => 'Debit',
+            'log' => $transaction->log()
+        ];
+
         $this->walletTransaction($wallet_transaction_data);
     }
 
