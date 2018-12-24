@@ -39,7 +39,7 @@ class CustomerFavoriteController extends Controller
                         $q->where('locations.id', $location);
                     });
                 });
-                $q->whereHas('categories', function($q) use ($location) {
+                $q->whereHas('category', function($q) use ($location) {
                     $q->whereHas('locations', function ($q) use ($location) {
                         $q->where('locations.id', $location);
                     });
