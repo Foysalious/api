@@ -118,7 +118,7 @@ class Category extends Model
         return $this->belongsToMany(Location::class);
     }
 
-    public function sub()
+    public function subCat()
     {
         return $this->hasMany(Category::class, 'parent_id')->published();
     }
@@ -126,16 +126,20 @@ class Category extends Model
     public function scopeLocationWise($query_, $hyper_locations)
     {
         return $query_->select('id', 'icon_png', 'name')
-            ->whereHas('locations', function ($q) use ($hyper_locations) {
-            $q->whereIn('locations.id', $hyper_locations);
-        })->whereHas('sub', function ($qa) use ($hyper_locations) {
-            $qa->whereHas('locations', function ($query) use ($hyper_locations) {
-                $query->whereIn('locations.id', $hyper_locations);
-            });
-        })->with(['children' => function ($qa) use ($hyper_locations) {
-            $qa->whereHas('locations', function ($query) use ($hyper_locations) {
-                $query->whereIn('locations.id', $hyper_locations);
-            });
-        }]);
+            ->whereExists(function ($q) use ($hyper_locations) {
+                $q->from('category_location')->whereIn('location_id', $hyper_locations)->whereRaw('category_id=categories.id');
+            })->whereExists(function ($qa) use ($hyper_locations) {
+                $qa->from('categories as cat')->whereRaw('cat.parent_id=categories.id')->whereExists(
+                    function ($q) use ($hyper_locations) {
+                        $q->from('category_location')->whereIn('location_id', $hyper_locations)->whereRaw('category_id=categories.id');
+                    }
+                );
+            })->with(['children' => function ($qa) use ($hyper_locations) {
+                $qa->whereExists(
+                    function ($q) use ($hyper_locations) {
+                        $q->from('category_location')->whereIn('location_id', $hyper_locations)->whereRaw('category_id=categories.id');
+                    }
+                )->select('id', 'name', 'parent_id');
+            }]);
     }
 }

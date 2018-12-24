@@ -397,6 +397,9 @@ class CategoryController extends Controller
                     return !empty($item->location);
                 })->pluck('location')->pluck('id');
             $category = Category::locationWise($hyper_locations)->get();
+            $category=$category->filter(function ($item) {
+                return $item->children->count() > 0;
+            });
             if ($category->count() > 0) {
                 return api_response($request, $request, 200, ['data' => ['categories' => $category]]);
             } else {
