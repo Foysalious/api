@@ -11,6 +11,7 @@ class PartnerRoute
                 $api->get('locations', 'PartnerController@getLocations');
                 $api->get('locations/all', 'LocationController@getPartnerServiceLocations');
                 $api->get('categories', 'PartnerController@getCategories');
+                $api->get('categories/all','CategoryController@getPartnerLocationCategory');
                 $api->get('categories/{category}/services', 'PartnerController@getServices');
                 $api->get('categories/{category}/addable-services', 'PartnerController@getAddableServices');
             });
@@ -18,7 +19,6 @@ class PartnerRoute
         });
         $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
             $api->get('dashboard', 'Partner\DashboardController@get');
-
             $api->group(['prefix' => 'e-shop'], function ($api) {
                 $api->group(['prefix' => 'order'], function ($api) {
                     $api->get('/', 'EShopOrderController@index');
@@ -49,7 +49,6 @@ class PartnerRoute
             $api->get('operations', 'Partner\OperationController@index');
             $api->post('operations', 'Partner\OperationController@store');
             $api->post('register', 'CustomerController@store');
-            $api->get('categories','CategoryController@getPartnerLocationCategory');
             $api->post('categories', 'Partner\OperationController@saveCategories');
             $api->post('add-categories', 'CategoryController@addCategories');
             $api->post('top-up', 'TopUpController@topUp');

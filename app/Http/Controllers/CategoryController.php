@@ -37,36 +37,36 @@ class CategoryController extends Controller
             ]);
             $with = '';
             $location = null;
-            if($request->has('location') ) {
+            if ($request->has('location')) {
                 $location = Location::find($request->location);
-            } else if($request->has('lat')) {
-                $hyperLocation= HyperLocal::insidePolygon((double) $request->lat, (double)$request->lng)->with('location')->first();
-                if(!is_null($hyperLocation)) $location = $hyperLocation->location;
+            } else if ($request->has('lat')) {
+                $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                if (!is_null($hyperLocation)) $location = $hyperLocation->location;
             }
 
             $categories = Category::where('parent_id', null)->orderBy('order');
             //dd($categories->get()[0]->allChildren[0]->publishedServices);
-            if($location){
-                $categories= $categories->whereHas('locations',function($q) use ($location) {
+            if ($location) {
+                $categories = $categories->whereHas('locations', function ($q) use ($location) {
                     $q->where('locations.id', $location->id);
                 });
 
-                $categories = $categories->whereHas('allChildren',function($q) use ($location){
+                $categories = $categories->whereHas('allChildren', function ($q) use ($location) {
                     $q->published();
-                    $q->has('publishedServices','>',0);
-                    $q->whereHas('locations', function($query) use ($location) {
-                        $query->where('locations.id',$location->id);
+                    $q->has('publishedServices', '>', 0);
+                    $q->whereHas('locations', function ($query) use ($location) {
+                        $query->where('locations.id', $location->id);
                     });
                 });
             }
 
-            $categories= $categories->select('id', 'name', 'bn_name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id');
+            $categories = $categories->select('id', 'name', 'bn_name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id');
             if ($request->has('with')) {
                 $with = $request->with;
                 if ($with == 'children') {
-                    $categories->with(['children' => function ($q) use($location) {
-                        if(!is_null($location)) {
-                            $q->whereHas('locations' , function($q) use ($location) {
+                    $categories->with(['children' => function ($q) use ($location) {
+                        if (!is_null($location)) {
+                            $q->whereHas('locations', function ($q) use ($location) {
                                 $q->where('locations.id', $location->id);
                             });
                         }
@@ -133,26 +133,25 @@ class CategoryController extends Controller
             ]);
             $location = null;
             $category = Category::find($category);
-            if($request->has('location') ) {
+            if ($request->has('location')) {
                 $location = Location::find($request->location);
-            } else if($request->has('lat')) {
-                $hyperLocation= HyperLocal::insidePolygon((double) $request->lat, (double)$request->lng)->with('location')->first();
-                if(!is_null($hyperLocation)) $location = $hyperLocation->location;
+            } else if ($request->has('lat')) {
+                $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                if (!is_null($hyperLocation)) $location = $hyperLocation->location;
             }
 
-            if($location) {
-                $children = $category->load(['children' => function ($q) use ($location){
-                    $q->whereHas('locations',function($q) use ($location){
-                        $q->where('locations.id',$location->id);
+            if ($location) {
+                $children = $category->load(['children' => function ($q) use ($location) {
+                    $q->whereHas('locations', function ($q) use ($location) {
+                        $q->where('locations.id', $location->id);
                     });
-                    $q->whereHas('services', function ($q) use ($location){
+                    $q->whereHas('services', function ($q) use ($location) {
                         $q->published()->whereHas('locations', function ($q) use ($location) {
                             $q->where('locations.id', $location->id);
                         });
                     });
                 }])->children;
-            }
-            else
+            } else
                 $children = $category->children;
 
             if (count($children) != 0) {
@@ -205,15 +204,14 @@ class CategoryController extends Controller
             $category = ((int)$request->is_business ? $category->publishedForBusiness() : $category->published())->first();
             if ($category != null) {
                 list($offset, $limit) = calculatePagination($request);
-                if($request->has('location')) {
+                if ($request->has('location')) {
                     $location = $request->location != '' ? $request->location : 4;
                 } else {
-                    if($request->has('lat') && $request->has('lng')) {
-                        $hyperLocation= HyperLocal::insidePolygon((double) $request->lat, (double)$request->lng)->with('location')->first();
-                        if(!is_null($hyperLocation)) $location = $hyperLocation->location->id;
+                    if ($request->has('lat') && $request->has('lng')) {
+                        $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                        if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
                         else return api_response($request, null, 404);
-                    }
-                    else $location = 4;
+                    } else $location = 4;
                 }
 
 
@@ -242,9 +240,9 @@ class CategoryController extends Controller
                     });
                 }
 
-                if($location) {
+                if ($location) {
                     $services = collect($services);
-                    $services = $services->filter(function($service) use ($location){
+                    $services = $services->filter(function ($service) use ($location) {
                         $locations = $service->locations()->pluck('id')->toArray();
                         return in_array($location, $locations);
                     });
@@ -382,6 +380,23 @@ class CategoryController extends Controller
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
+        }
+    }
+
+    public function getPartnerLocationCategory(Request $request, $partner)
+    {
+        $geo_info = json_decode($request->partner->geo_informations);
+        $hyper_locations = HyperLocal::insideCircle($geo_info)
+            ->with('location')
+            ->get()
+            ->filter(function ($item) {
+                return !empty($item->location);
+            })->pluck('location')->pluck('id');
+        $category = Category::locationWise($hyper_locations)->get();
+        if ($category->count() > 0) {
+            return api_response($request, $request, 200, ['data' => ['categories' => $category]]);
+        } else {
+            return api_response($request, null, 404);
         }
     }
 }
