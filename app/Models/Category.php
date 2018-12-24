@@ -125,15 +125,16 @@ class Category extends Model
 
     public function scopeLocationWise($query_, $hyper_locations)
     {
-        return $query_->select('id', 'icon_png', 'name')->whereHas('locations', function ($q) use ($hyper_locations) {
-            $q->whereIn('id', $hyper_locations);
+        return $query_->select('id', 'icon_png', 'name')
+            ->whereHas('locations', function ($q) use ($hyper_locations) {
+            $q->whereIn('locations.id', $hyper_locations);
         })->whereHas('sub', function ($qa) use ($hyper_locations) {
             $qa->whereHas('locations', function ($query) use ($hyper_locations) {
-                $query->whereIn('id', $hyper_locations);
+                $query->whereIn('locations.id', $hyper_locations);
             });
         })->with(['children' => function ($qa) use ($hyper_locations) {
             $qa->whereHas('locations', function ($query) use ($hyper_locations) {
-                $query->whereIn('id', $hyper_locations);
+                $query->whereIn('locations.id', $hyper_locations);
             });
         }]);
     }

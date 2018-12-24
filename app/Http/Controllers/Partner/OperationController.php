@@ -176,8 +176,8 @@ class OperationController extends Controller
             array_push($category_partners, array_merge(['response_time_min' => 60, 'response_time_max' => 120,
                 'commission' => $partner->commission, 'category_id' => $category->id], $by));
             $category->load(['services' => function ($q) use ($location) {
-                $q->whereExists(function ($que) use ($location) {
-                    $que->from('location_service')->where('location_id', $location)->whereRaw('service_id=services.id');
+                $q->whereHas('locations', function ($query) use ($location) {
+                    $query->whereIn('locations.id', $location);
                 })->publishedForAll();
             }]);
             foreach ($category->services as $service) {
