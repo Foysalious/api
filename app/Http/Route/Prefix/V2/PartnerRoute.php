@@ -32,7 +32,7 @@ class PartnerRoute
                 $api->get('/location/{location}', 'PartnerController@getLocationWiseCategory');
                 $api->group(['prefix' => '{category}'], function ($api) {
                     $api->get('/', 'PartnerController@getSecondaryCategory');
-                    $api->get('/services', 'partnerController@getLocationWiseCategoryService');
+                    $api->get('/services', 'PartnerController@getLocationWiseCategoryService');
                     $api->post('/update', 'PartnerController@updateSecondaryCategory');
                     $api->get('/services/{service}', 'PartnerController@serviceOption');
                     $api->post('/services/{service}', 'PartnerController@changePublicationStatus');
