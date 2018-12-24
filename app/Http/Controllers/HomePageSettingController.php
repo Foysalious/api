@@ -78,7 +78,9 @@ class HomePageSettingController extends Controller
         $categories = Category::published()->where('parent_id', null)->with(['children' => function ($q) use ($location) {
             $q->select('id', 'parent_id', 'name', 'slug', 'icon_png');
             if ($location) {
-                $q->whereHas('publishedServices', function ($q) use ($location) {
+                $q->whereHas('locations', function ($q) use ($location) {
+                    $q->where('locations.id', $location);
+                })->whereHas('publishedServices', function ($q) use ($location) {
                     $q->whereHas('locations', function ($q) use ($location) {
                         $q->where('locations.id', $location);
                     });
