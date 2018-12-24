@@ -17,7 +17,7 @@ class PartnerAvailable
 
     public function available($date, $preferred_time, Category $category)
     {
-        if ($this->_partnerOnLeave($date)) {
+        if ($this->_partnerOnLeave($date, $preferred_time)) {
             return 0;
         }
 
@@ -35,9 +35,9 @@ class PartnerAvailable
         return 1;
     }
 
-    private function _partnerOnLeave($date)
+    private function _partnerOnLeave($date, $preferred_time)
     {
-        $date = $date . ' ' . date('H:i:s');
+        $date = $date . ' ' . explode('-', $preferred_time)[0];
         return $this->partner->runningLeave($date) != null ? true : false;
     }
 
