@@ -210,7 +210,7 @@ class OperationController extends Controller
                 }
             }
         }catch (\Throwable $exception){
-            
+
         }
         return array($services, $category_partners);
     }
