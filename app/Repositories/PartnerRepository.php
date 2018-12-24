@@ -117,7 +117,7 @@ class PartnerRepository
 
     public function getLocations()
     {
-        $geo_info = json_decode(Partner::find($this->partner)->geo_informations);
+        $geo_info = json_decode($this->partner->geo_informations);
         if ($geo_info) {
             $hyper_locations = HyperLocal::insideCircle($geo_info)
                 ->with('location')
