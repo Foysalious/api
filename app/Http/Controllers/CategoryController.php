@@ -11,6 +11,7 @@ use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
 use Carbon\Carbon;
 use Dingo\Api\Routing\Helpers;
+use Dompdf\Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -385,18 +386,22 @@ class CategoryController extends Controller
 
     public function getPartnerLocationCategory(Request $request, $partner)
     {
-        $geo_info = json_decode($request->partner->geo_informations);
-        $hyper_locations = HyperLocal::insideCircle($geo_info)
-            ->with('location')
-            ->get()
-            ->filter(function ($item) {
-                return !empty($item->location);
-            })->pluck('location')->pluck('id');
-        $category = Category::locationWise($hyper_locations)->get();
-        if ($category->count() > 0) {
-            return api_response($request, $request, 200, ['data' => ['categories' => $category]]);
-        } else {
-            return api_response($request, null, 404);
+        try {
+            $geo_info = json_decode($request->partner->geo_informations);
+            $hyper_locations = HyperLocal::insideCircle($geo_info)
+                ->with('location')
+                ->get()
+                ->filter(function ($item) {
+                    return !empty($item->location);
+                })->pluck('location')->pluck('id');
+            $category = Category::locationWise($hyper_locations)->get();
+            if ($category->count() > 0) {
+                return api_response($request, $request, 200, ['data' => ['categories' => $category]]);
+            } else {
+                return api_response($request, null, 404);
+            }
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500, ['message' => $e->getMessage()]);
         }
     }
 }

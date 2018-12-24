@@ -11,13 +11,13 @@ class PartnerRoute
                 $api->get('locations', 'PartnerController@getLocations');
                 $api->get('locations/all', 'LocationController@getPartnerServiceLocations');
                 $api->get('categories', 'PartnerController@getCategories');
-                $api->get('categories/all','CategoryController@getPartnerLocationCategory');
                 $api->get('categories/{category}/services', 'PartnerController@getServices');
                 $api->get('categories/{category}/addable-services', 'PartnerController@getAddableServices');
             });
             $api->get('rewards/faqs', 'Partner\PartnerRewardController@getFaqs');
         });
         $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
+
             $api->get('dashboard', 'Partner\DashboardController@get');
             $api->group(['prefix' => 'e-shop'], function ($api) {
                 $api->group(['prefix' => 'order'], function ($api) {
@@ -26,8 +26,10 @@ class PartnerRoute
                 });
             });
             $api->group(['prefix' => 'categories'], function ($api) {
+                $api->get('/all','CategoryController@getPartnerLocationCategory');
                 $api->get('/tree', 'PartnerController@getCategoriesTree');
                 $api->get('/untagged', 'PartnerController@untaggedCategories');
+                $api->get('/location/{location}','PartnerController@getLocationWiseCategory');
                 $api->group(['prefix' => '{category}'], function ($api) {
                     $api->get('/', 'PartnerController@getSecondaryCategory');
                     $api->post('/update', 'PartnerController@updateSecondaryCategory');
