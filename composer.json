@@ -16,7 +16,6 @@
     "dingo/api": "1.0.*@dev",
     "tymon/jwt-auth": "0.5.*",
     "predis/predis": "^1.1",
-    "sentry/sentry-laravel": "^0.7.0",
     "facebook/php-ads-sdk": "^2.9",
     "tinify/tinify": "^1.5",
     "jenssegers/mongodb": "^3.2",
@@ -35,7 +34,8 @@
     "ext-calendar": "*",
     "ext-simplexml": "*",
     "maatwebsite/excel": "~2.1.0",
-    "league/fractal": "^0.17.0"
+    "league/fractal": "^0.17.0",
+    "sentry/sentry-laravel": "^0.11.0"
   },
   "require-dev": {
     "fzaninotto/faker": "~1.4",

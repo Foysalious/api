@@ -3,9 +3,11 @@
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\CategoryPartner;
+use App\Models\HyperLocal;
 use App\Models\Partner;
 use App\Models\PartnerResource;
 use App\Models\PartnerWorkingHour;
+use App\Repositories\PartnerRepository;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use DB;
@@ -42,9 +44,9 @@ class OperationController extends Controller
     {
         try {
             $this->validate($request, [
-                'address'           => "sometimes|required|string",
-                'locations'         => "sometimes|required",
-                'working_schedule'  => "sometimes|required",
+                'address' => "sometimes|required|string",
+                'locations' => "sometimes|required",
+                'working_schedule' => "sometimes|required",
                 'is_home_delivery_available' => "sometimes|required",
                 'is_on_premise_available' => "sometimes|required",
                 'delivery_charge' => "sometimes|required",
@@ -89,9 +91,9 @@ class OperationController extends Controller
                     $partner->workingHours()->delete();
                     foreach (json_decode($request->working_schedule) as $working_schedule) {
                         $partner->workingHours()->save(new PartnerWorkingHour([
-                            'day'        => $working_schedule->day,
+                            'day' => $working_schedule->day,
                             'start_time' => $working_schedule->start_time,
-                            'end_time'   => $working_schedule->end_time
+                            'end_time' => $working_schedule->end_time
                         ]));
                     }
                 }
@@ -169,11 +171,14 @@ class OperationController extends Controller
     {
         $services = [];
         $category_partners = [];
+        $location = (new PartnerRepository($partner))->getLocations();
         foreach ($categories as $category) {
             array_push($category_partners, array_merge(['response_time_min' => 60, 'response_time_max' => 120,
                 'commission' => $partner->commission, 'category_id' => $category->id], $by));
-            $category->load(['services' => function ($q) {
-                $q->publishedForAll();
+            $category->load(['services' => function ($q) use ($location) {
+                $q->whereExists(function ($que) use ($location) {
+                    $que->from('location_service')->where('location_id', $location)->whereRaw('service_id=services.id');
+                })->publishedForAll();
             }]);
             foreach ($category->services as $service) {
                 if ($service->variable_type == 'Fixed') {

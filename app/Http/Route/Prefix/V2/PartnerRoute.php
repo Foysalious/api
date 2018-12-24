@@ -17,8 +17,8 @@ class PartnerRoute
             $api->get('rewards/faqs', 'Partner\PartnerRewardController@getFaqs');
         });
         $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
-            $api->get('dashboard', 'Partner\DashboardController@get');
 
+            $api->get('dashboard', 'Partner\DashboardController@get');
             $api->group(['prefix' => 'e-shop'], function ($api) {
                 $api->group(['prefix' => 'order'], function ($api) {
                     $api->get('/', 'EShopOrderController@index');
@@ -26,10 +26,13 @@ class PartnerRoute
                 });
             });
             $api->group(['prefix' => 'categories'], function ($api) {
+                $api->get('/all', 'CategoryController@getPartnerLocationCategory');
                 $api->get('/tree', 'PartnerController@getCategoriesTree');
                 $api->get('/untagged', 'PartnerController@untaggedCategories');
+                $api->get('/location/{location}', 'PartnerController@getLocationWiseCategory');
                 $api->group(['prefix' => '{category}'], function ($api) {
                     $api->get('/', 'PartnerController@getSecondaryCategory');
+                    $api->get('/services', 'PartnerController@getLocationWiseCategoryService');
                     $api->post('/update', 'PartnerController@updateSecondaryCategory');
                     $api->get('/services/{service}', 'PartnerController@serviceOption');
                     $api->post('/services/{service}', 'PartnerController@changePublicationStatus');
@@ -49,7 +52,6 @@ class PartnerRoute
             $api->get('operations', 'Partner\OperationController@index');
             $api->post('operations', 'Partner\OperationController@store');
             $api->post('register', 'CustomerController@store');
-            $api->get('categories','CategoryController@getPartnerLocationCategory');
             $api->post('categories', 'Partner\OperationController@saveCategories');
             $api->post('add-categories', 'CategoryController@addCategories');
             $api->post('top-up', 'TopUpController@topUp');

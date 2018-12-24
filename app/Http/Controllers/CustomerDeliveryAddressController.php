@@ -194,7 +194,9 @@ class CustomerDeliveryAddressController extends Controller
                 $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'address')->get()->map(function ($customer_delivery_address) use ($customer_order_addresses) {
                     $customer_delivery_address["address"] = scramble_string($customer_delivery_address["address"]);
                     return $customer_delivery_address;
-                });
+                })->filter(function ($customer_delivery_address) {
+                    return $customer_delivery_address->address != null;
+                })->values()->all();
                 return api_response($request, $customer_delivery_addresses, 200, ['addresses' => $customer_delivery_addresses]);
             }
             return api_response($request, [], 404, ['addresses' => []]);
