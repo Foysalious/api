@@ -75,8 +75,15 @@ class HomePageSettingController extends Controller
         $settings = collect($settings);
         $slider = $settings->where('item_type', 'Slider')->first();
         $category_groups = $settings->where('item_type', 'CategoryGroup')->sortBy('order');
-        $categories = Category::published()->where('parent_id', null)->with(['children' => function ($q) {
+        $categories = Category::published()->where('parent_id', null)->with(['children' => function ($q) use ($location) {
             $q->select('id', 'parent_id', 'name', 'slug', 'icon_png');
+            if ($location) {
+                $q->whereHas('publishedServices', function ($q) use ($location) {
+                    $q->whereHas('locations', function ($q) use ($location) {
+                        $q->where('locations.id', $location);
+                    });
+                });
+            }
         }]);
         if ($location) {
             $categories->whereHas('locations', function ($q) use ($location) {
