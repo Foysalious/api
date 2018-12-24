@@ -142,6 +142,9 @@ class CategoryController extends Controller
 
             if($location) {
                 $children = $category->load(['children' => function ($q) use ($location){
+                    $q->whereHas('locations',function($q) use ($location){
+                        $q->where('locations.id',$location->id);
+                    });
                     $q->whereHas('services', function ($q) use ($location){
                         $q->published()->whereHas('locations', function ($q) use ($location) {
                             $q->where('locations.id', $location->id);
