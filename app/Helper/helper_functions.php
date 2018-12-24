@@ -510,6 +510,7 @@ if (!function_exists('scramble_string')) {
     function scramble_string($str, $scramble_ratio = 15)
     {
         $str = \Sheba\BanglaToEnglish::convert($str);
+        $str=preg_replace('/[\x00-\x1F\x7F]/u', '', $str);
         $len = strlen($str);
         $number_of_words_visible = (int)ceil(($scramble_ratio * $len) / 100);
         $number_of_words_hidden = $len - ($number_of_words_visible * 2);

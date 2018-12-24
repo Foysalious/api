@@ -168,22 +168,24 @@ class CustomerDeliveryAddressController extends Controller
 
     public function getDeliveryInfoForAffiliate(Request $request)
     {
-        try{
-            $this->validate($request,[
+        try {
+            $this->validate($request, [
                 'mobile' => 'required|mobile:bd'
             ]);
-            $profile= Profile::where('mobile','+88'.$request->mobile)->first();
-            if(!is_null($profile)) {
-                $customer = Customer::where('profile_id',$profile->id)->first();
+            $profile = Profile::where('mobile', '+88' . $request->mobile)->first();
+            if (!is_null($profile)) {
+                $customer = Customer::where('profile_id', $profile->id)->first();
                 $customer_order_addresses = $customer->orders()->selectRaw('delivery_address,count(*) as c')->groupBy('delivery_address')->orderBy('c', 'desc')->get();
                 $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'address')->get()->map(function ($customer_delivery_address) use ($customer_order_addresses) {
                     $customer_delivery_address["address"] = scramble_string($customer_delivery_address["address"]);
                     return $customer_delivery_address;
-                });
+                })->filter(function ($customer_delivery_address) {
+                    return $customer_delivery_address->address != null;
+                })->values()->all();
                 return api_response($request, $customer_delivery_addresses, 200, ['addresses' => $customer_delivery_addresses]);
             }
-            return api_response($request, [], 404,['addresses'=>[]]);
-        }catch (ValidationException $e) {
+            return api_response($request, [], 404, ['addresses' => []]);
+        } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
