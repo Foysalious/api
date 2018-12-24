@@ -81,10 +81,10 @@ class OperationController extends Controller
                     $partner_info['geo_informations'] = json_encode([
                         'lat' => $request->lat,
                         'lng' => $request->lng,
-                        'radius' => $request->has('radius') ? $request->radius : (json_decode($partner->geo_informations)->radius ?: '10')
+                        'radius' => $request->has('radius') ? ($request->radius)/1000 : ((json_decode($partner->geo_informations)->radius)/1000 ?: '10')
                     ]);
                 }
-
+                
                 $partner->update($partner_info);
 
                 if ($request->has('working_schedule')) {
