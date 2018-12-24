@@ -18,7 +18,11 @@ class ProfileCompletionController extends Controller
             if (!empty($partner->basicInformations->address)) $complete_count++;
             if (!empty($partner->logo)) $complete_count++;
             if (count($partner->workingHours) > 0) $complete_count++;
-            #if (count($partner->locations) > 0) $complete_count++;
+            if (!empty($partner->geo_informations)) {
+                $complete_count++;
+            }else {
+                if (count($partner->locations) > 0) $complete_count++;
+            }
             if (count($partner->categories) > 0) $complete_count++;
             if (count($partner->services) > 0) $complete_count++;
             if (count($partner->admins) > 0) $complete_count++;
