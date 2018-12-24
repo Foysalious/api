@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\CategoryPartner;
@@ -12,7 +10,7 @@ use App\Repositories\ServiceRepository;
 use Carbon\Carbon;
 use Dingo\Api\Routing\Helpers;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use DB;
 use Illuminate\Validation\ValidationException;
 
 class CategoryController extends Controller
@@ -35,32 +33,34 @@ class CategoryController extends Controller
                 'lat' => 'sometimes|numeric',
                 'lng' => 'required_with:lat'
             ]);
+
             $with = '';
             $location = null;
-            if($request->has('location') ) {
+
+            if ($request->has('location')) {
                 $location = Location::find($request->location);
-            } else if($request->has('lat')) {
-                $hyperLocation= HyperLocal::insidePolygon((double) $request->lat, (double)$request->lng)->with('location')->first();
-                if(!is_null($hyperLocation)) $location = $hyperLocation->location;
+            } else if ($request->has('lat')) {
+                $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                if (!is_null($hyperLocation)) $location = $hyperLocation->location;
             }
 
             $categories = Category::where('parent_id', null)->orderBy('order');
-            //dd($categories->get()[0]->allChildren[0]->publishedServices);
-            if($location){
-                $categories= $categories->whereHas('locations',function($q) use ($location) {
+
+            if ($location) {
+                $categories = $categories->whereHas('locations', function ($q) use ($location) {
                     $q->where('locations.id', $location->id);
                 });
-
-                $categories = $categories->whereHas('allChildren',function($q) use ($location){
+                $categories = $categories->whereHas('allChildren', function ($q) use ($location) {
                     $q->published();
-                    $q->has('publishedServices','>',0);
-                    $q->whereHas('locations', function($query) use ($location) {
-                        $query->where('locations.id',$location->id);
+                    $q->has('publishedServices', '>', 0);
+                    $q->whereHas('locations', function ($query) use ($location) {
+                        $query->where('locations.id', $location->id);
                     });
                 });
             }
 
             $categories= $categories->select('id', 'name', 'bn_name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id');
+
             if ($request->has('with')) {
                 $with = $request->with;
                 if ($with == 'children') {
@@ -140,19 +140,18 @@ class CategoryController extends Controller
                 if(!is_null($hyperLocation)) $location = $hyperLocation->location;
             }
 
-            if($location) {
-                $children = $category->load(['children' => function ($q) use ($location){
-                    $q->whereHas('locations',function($q) use ($location){
-                        $q->where('locations.id',$location->id);
+            if ($location) {
+                $children = $category->load(['children' => function ($q) use ($location) {
+                    $q->whereHas('locations', function ($q) use ($location) {
+                        $q->where('locations.id', $location->id);
                     });
-                    $q->whereHas('services', function ($q) use ($location){
+                    $q->whereHas('services', function ($q) use ($location) {
                         $q->published()->whereHas('locations', function ($q) use ($location) {
                             $q->where('locations.id', $location->id);
                         });
                     });
                 }])->children;
-            }
-            else
+            } else
                 $children = $category->children;
 
             if (count($children) != 0) {
