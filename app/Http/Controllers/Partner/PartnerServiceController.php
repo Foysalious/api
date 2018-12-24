@@ -70,22 +70,11 @@ class PartnerServiceController extends Controller
     {
         try {
             $partner = $request->partner;
-            $service = Service::find((int)$request->id);
-            if (!$service) return api_response($request, null, 404, ['message' => 'Service not found']);
-            if ($partner->services()->find($service->id)) return api_response($request, null, 403, ['message' => 'Service already added.']);
-            if (!$partner->categories()->find($service->category_id)) return api_response($request, null, 403, ['message' => 'Category not added.']);
-            /**@var Service $service * */
-            $variables = json_decode($service->variables);
-            $data = [];
-            $data['description'] = $service->description;
-            $data['prices'] = $service->isOptions() ? json_encode($variables->prices) : $variables->price;
-            $data['options'] = $service->isOptions() ? createOptionsFromOptionVariables($variables) : null;
-            $data['min_prices'] = isset($variables->min_prices) ? json_encode($variables->min_prices) : null;
-            $data['base_prices'] = isset($variables->base_prices) ? json_encode($variables->base_prices) : null;
-            $data['base_quantity'] = isset($variables->base_quantity) ? json_encode($variables->base_quantity) : null;
-            $this->setModifier($request->manager_resource);
-            $pivot_data = $this->withBothModificationFields($data);
-            $partner->services()->save($service, $pivot_data);
+            $service_ids = explode(',', $request->id);
+            foreach ($service_ids as $service_id) {
+               $response = $this->validateAndStoreIndividualService($service_id, $partner, $request);
+               if(!is_null($response)) return $response;
+            }
             return api_response($request, 1, 200);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -180,5 +169,26 @@ class PartnerServiceController extends Controller
         $pivot_data = $service->pivot;
         $data = $this->withUpdateModificationField($data);
         $pivot_data->update($data);
+    }
+
+    public function validateAndStoreIndividualService($service_id, $partner, $request)
+    {
+        $service = Service::find((int)$service_id);
+        if (!$service) return api_response($request, null, 404, ['message' => 'Service not found']);
+        if ($partner->services()->find($service->id)) return api_response($request, null, 403, ['message' => 'Service already added.','service_id' => $service_id]);
+        if (!$partner->categories()->find($service->category_id)) return api_response($request, null, 403, ['message' => 'Category not added.']);
+        /**@var Service $service * */
+        $variables = json_decode($service->variables);
+        $data = [];
+        $data['description'] = $service->description;
+        $data['prices'] = $service->isOptions() ? json_encode($variables->prices) : $variables->price;
+        $data['options'] = $service->isOptions() ? createOptionsFromOptionVariables($variables) : null;
+        $data['min_prices'] = isset($variables->min_prices) ? json_encode($variables->min_prices) : null;
+        $data['base_prices'] = isset($variables->base_prices) ? json_encode($variables->base_prices) : null;
+        $data['base_quantity'] = isset($variables->base_quantity) ? json_encode($variables->base_quantity) : null;
+        $data['is_published'] = 1;
+        $this->setModifier($request->manager_resource);
+        $pivot_data = $this->withBothModificationFields($data);
+        $partner->services()->save($service, $pivot_data);
     }
 }

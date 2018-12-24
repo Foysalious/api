@@ -39,6 +39,11 @@ class Category extends Model
         return $this->hasMany(Category::class, 'parent_id')->has('publishedServices', '>', 0)->published();
     }
 
+    public function allChildren()
+    {
+        return $this->hasMany(Category::class, 'parent_id');
+    }
+
     public function services()
     {
         return $this->hasMany(Service::class);
@@ -96,9 +101,45 @@ class Category extends Model
         });
     }
 
+    public function scopePublishedOrPublishedForBusiness($query)
+    {
+        return $query->where(function ($query) {
+            return $query->where('publication_status', 1)->orWhere('is_published_for_business', 1);
+        });
+    }
+
     public function isRentCar()
     {
         return in_array($this->id, array_map('intval', explode(',', env('RENT_CAR_IDS')))) ? 1 : 0;
     }
 
+    public function locations()
+    {
+        return $this->belongsToMany(Location::class);
+    }
+
+    public function subCat()
+    {
+        return $this->hasMany(Category::class, 'parent_id')->published();
+    }
+
+    public function scopeLocationWise($query_, $hyper_locations)
+    {
+        return $query_->select('id', 'icon_png', 'name')
+            ->whereExists(function ($q) use ($hyper_locations) {
+                $q->from('category_location')->whereIn('location_id', $hyper_locations)->whereRaw('category_id=categories.id');
+            })->whereExists(function ($qa) use ($hyper_locations) {
+                $qa->from('categories as cat')->whereRaw('cat.parent_id=categories.id')->whereExists(
+                    function ($q) use ($hyper_locations) {
+                        $q->from('category_location')->whereIn('location_id', $hyper_locations)->whereRaw('category_id=categories.id');
+                    }
+                );
+            })->with(['children' => function ($qa) use ($hyper_locations) {
+                $qa->whereExists(
+                    function ($q) use ($hyper_locations) {
+                        $q->from('category_location')->whereIn('location_id', $hyper_locations)->whereRaw('category_id=categories.id');
+                    }
+                )->select('id', 'name', 'parent_id');
+            }]);
+    }
 }

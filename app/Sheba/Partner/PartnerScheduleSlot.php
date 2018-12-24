@@ -34,7 +34,7 @@ class PartnerScheduleSlot
     public function __construct()
     {
         $this->shebaSlots = $this->getShebaSlots();
-        $this->today = Carbon::now();
+        $this->today = Carbon::now()->addMinutes(15);
     }
 
     private function getShebaSlots()
@@ -194,7 +194,6 @@ class PartnerScheduleSlot
 
     private function formatSlots(Carbon $day, $slots)
     {
-        $current_time = Carbon::now();
         foreach ($slots as &$slot) {
             $slot['key'] = $slot['start'] . '-' . $slot['end'];
             $start = Carbon::parse($day->toDateString() . ' ' . $slot['start']);
@@ -204,7 +203,7 @@ class PartnerScheduleSlot
             $slot_end = humanReadableShebaTime($slot['end']);
             $slot['start'] = $slot_start;
             $slot['end'] = $slot_end;
-            $slot['is_valid'] = $start > $current_time ? 1 : 0;
+            $slot['is_valid'] = $start > $this->today ? 1 : 0;
         }
         return $slots;
     }

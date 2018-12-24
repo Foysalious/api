@@ -3,14 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\City;
+use App\Models\HyperLocal;
 use App\Models\Location;
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
+use App\Models\Partner;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Sheba\Location\Coords;
-use Sheba\Location\Distance\Distance;
-use Sheba\Location\Distance\DistanceStrategy;
 
 class LocationController extends Controller
 {
@@ -74,62 +71,68 @@ class LocationController extends Controller
             $this->validate($request, [
                 'lat' => 'required|numeric',
                 'lng' => 'required|numeric',
+                'service' => 'string',
+                'category' => 'string',
             ]);
-//            $hyper_local = HyperLocal::insidePolygon($request->lat, $request->lng)->with('location')->first();
-//            if ($hyper_local) {
-//                return api_response($request, $hyper_local->location, 200, ['location' => collect($hyper_local->location)->only(['id', 'name'])]);
-//            } else {
-//                return api_response($request, null, 404);
-//            }
-            $current = new Coords($request->lat, $request->lng);
-            $locations = Location::whereNotNull('geo_informations')->published()->get();
-            $to = $locations->map(function ($location) {
-                $geo = json_decode($location->geo_informations);
-                return new Coords(floatval($geo->lat), floatval($geo->lng), $location->id);
-            })->toArray();
-            $distance = (new Distance(DistanceStrategy::$VINCENTY))->matrix();
-            $results = $distance->from([$current])->to($to)->sortedDistance()[0];
-            $final = collect();
-            foreach ($results as $key => $result) {
-                $location = $locations->where('id', $key)->first();
-                if ($result <= (double)json_decode($location->geo_informations)->radius * 1000) {
-                    $final->push($location);
-                    break;
-                }
+            $hyper_local = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+            if ($hyper_local) {
+                $location = $hyper_local->location;
+                return api_response($request, $location, 200,
+                    [
+                        'location' => collect($location)->only(['id', 'name']),
+                        'service' => $request->has('service') ? $this->calculateModelAvailability($request->service, 'Service', $location) : [],
+                        'category' => $request->has('category') ? $this->calculateModelAvailability($request->category, 'Category', $location) : [],
+                    ]);
+            } else {
+                return api_response($request, null, 404);
             }
-            if ($final->count() == 0) {
-                $final->push($locations->where('id', array_keys($results)[0])->first());
-            }
-            return api_response($request, $final->first(), 200, ['location' => collect($final->first())->only(['id', 'name'])]);
-//            $current = new Coords($request->lat, $request->lng);
-//            $to = $hyper_locals->filter(function ($hyper_local) {
-//                return $hyper_local->location->publication_status == 1;
-//            })->map(function ($hyper_local) {
-//                $geo = json_decode($hyper_local->location->geo_informations);
-//                return new Coords(floatval($geo->lat), floatval($geo->lng), $hyper_local->location->id);
-//            })->toArray();
-//            dd($to);
-//            $distance = (new Distance(DistanceStrategy::$VINCENTY))->matrix();
-//            $results = $distance->from([$current])->to($to)->sortedDistance()[0];
-//            $final = collect();
-//            foreach ($results as $key => $result) {
-//                dd($result);
-//                $location = $locations->where('id', $key)->first();
-//                if ($result <= (double)json_decode($location->geo_informations)->radius * 1000) {
-//                    $final->push($location);
-//                    break;
-//                }
-//            }
-//            if ($final->count() == 0) {
-//                $final->push($locations->where('id', array_keys($results)[0])->first());
-//            }
-//            return api_response($request, $final->first(), 200, ['location' => collect($final->first())->only(['id', 'name'])]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
+        }
+    }
+
+    public function getPartnerServiceLocations(Request $request, $partner)
+    {
+        $geo_info = json_decode(Partner::find($request->partner)->geo_informations);
+        if ($geo_info) {
+            $hyper_locations = HyperLocal::insideCircle($geo_info)
+                ->with('location')
+                ->get()
+                ->filter(function ($item) {
+                    return !empty($item->location);
+                })->pluck('location');
+            return api_response($request, null, 200, ['locations' => $hyper_locations, 'geo_info' => $geo_info]);
+        } else {
+            return api_response($request, null, 404);
+        }
+
+    }
+
+    public function validateLocation(Request $request)
+    {
+        try {
+            $this->validate($request, ['lat' => 'required|numeric', 'lng' => 'required|numeric', 'radius' => 'required|numeric']);
+            $geo_info = new \stdClass();
+            $geo_info->lat = $request->lat;
+            $geo_info->lng = $request->lng;
+            $geo_info->radius = $request->radius;
+            $hyper_locations = HyperLocal::insideCircle($geo_info)
+                ->with('location')
+                ->get()
+                ->filter(function ($item) {
+                    return !empty($item->location);
+                })->pluck('location');
+            if ($hyper_locations->count() > 0) {
+                return api_response($request, null, 200, ['locations' => $hyper_locations, 'geo_info' => $geo_info]);
+            } else {
+                return api_response($request, null, 400, ['message' => 'Outside service location']);
+            }
+        } catch (ValidationException $e) {
+            return api_response($request, $request, 400, ['message' => getValidationErrorMessage($e->validator->messages()->all())]);
         }
     }
 
@@ -143,28 +146,26 @@ class LocationController extends Controller
         return rtrim($origins, "|");
     }
 
-    private function getDistanceCalculationResult($lat, $lng, $origins)
+    /**
+     * @param $input_ids
+     * @param $model_name
+     * @param $location
+     * @return array
+     */
+    private function calculateModelAvailability($input_ids, $model_name, $location)
     {
-        $client = new Client();
-        try {
-            $res = $client->request('GET', 'https://maps.googleapis.com/maps/api/distancematrix/json',
-                [
-                    'query' => ['origins' => $origins, 'destinations' => "$lat,$lng", 'key' => env('GOOGLE_DISTANCEMATRIX_KEY')]
-                ]);
-            return json_decode($res->getBody());
-        } catch (RequestException $e) {
-            return null;
+        $final_services = [];
+        $ids = json_decode($input_ids);
+        if ($ids) {
+            $ids = array_map('intval', $ids);
+            $model_name = "App\\Models\\" . ucwords($model_name);
+            $models = $model_name::whereIn('id', $ids)->whereHas('locations', function ($q) use ($location) {
+                $q->where('locations.id', $location->id);
+            })->get();
+            foreach ($ids as $id) {
+                array_push($final_services, ['id' => (int)$id, 'is_available' => $models->where('id', $id)->first() ? 1 : 0]);
+            }
         }
+        return $final_services;
     }
-
-    private function calculateDistance(Request $request, $geo_info)
-    {
-        $lat1 = $geo_info->lat;
-        $lng1 = $geo_info->lng;
-        $lat2 = $request->lat;
-        $lng2 = $request->lng;
-
-        return ROUND((6371.0 * ACOS(SIN($lat1 * PI() / 180) * SIN($lat2 * PI() / 180) + COS($lat1 * PI() / 180) * COS($lat2 * PI() / 180) * COS(($lng1 * PI() / 180) - ($lng2 * PI() / 180)))), 2);
-    }
-
 }

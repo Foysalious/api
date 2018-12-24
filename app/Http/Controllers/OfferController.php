@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Customer;
+use App\Models\HyperLocal;
+use App\Models\Location;
 use App\Models\OfferShowcase;
 use App\Models\User;
 use App\Transformers\OfferDetailsTransformer;
@@ -27,18 +29,27 @@ class OfferController extends Controller
                 'user' => 'numeric',
                 'user_type' => 'string|in:customer',
                 'remember_token' => 'required_with:user|string',
-                'category' => 'numeric'
+                'category' => 'numeric',
+                'lat' => 'sometimes|numeric',
+                'lng' => 'required_with:lat'
             ]);
-            $user = $category = null;
+            $user = $category = $location = null;
             if ($request->has('user') && $request->has('user_type') && $request->has('remember_token')) {
                 $model_name = "App\\Models\\" . ucwords($request->user_type);
                 $user = $model_name::with('orders', 'promotions')->where('id', (int)$request->user)->where('remember_token', $request->remember_token)->first();
+            }
+            if($request->has('location')) {
+                $location = Location::find($request->location);
+            } else if($request->has('lat')) {
+                $hyperLocation= HyperLocal::insidePolygon((double) $request->lat, (double)$request->lng)->with('location')->first();
+                if(!is_null($hyperLocation)) $location = $hyperLocation->location;
             }
             $offers = OfferShowcase::active()->valid()->orderBy('end_date')->get();
             if (count($offers) == 0) return api_response($request, null, 404);
             $offer_filter = new OfferFilter($offers);
             if ($user) $offer_filter->setCustomer($user);
             if ($request->has('category')) $offer_filter->setCategory(Category::find((int)$request->category));
+            if($location) $offer_filter->setLocation($location);
             $offers = $offer_filter->filter()->sortByDesc('amount');
             $manager = new Manager();
             $manager->setSerializer(new ArraySerializer());

@@ -3,9 +3,11 @@
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\CategoryPartner;
+use App\Models\HyperLocal;
 use App\Models\Partner;
 use App\Models\PartnerResource;
 use App\Models\PartnerWorkingHour;
+use App\Repositories\PartnerRepository;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use DB;
@@ -23,7 +25,7 @@ class OperationController extends Controller
             }, 'basicInformations']);
             $working_hours = $partner->workingHours()->select('id', 'partner_id', 'day', 'start_time', 'end_time')->get();
             $final = collect($partner)->only(['id', 'name']);
-            $final->put('address', $partner->basicInformations->address);
+            $final->put('address', $partner->address);
             $final->put('working_schedule', $working_hours);
             $final->put('locations', $partner->locations->each(function ($location) {
                 removeRelationsAndFields($location);
@@ -42,9 +44,9 @@ class OperationController extends Controller
     {
         try {
             $this->validate($request, [
-                'address'           => "sometimes|required|string",
-                'locations'         => "sometimes|required",
-                'working_schedule'  => "sometimes|required",
+                'address' => "sometimes|required|string",
+                'locations' => "sometimes|required",
+                'working_schedule' => "sometimes|required",
                 'is_home_delivery_available' => "sometimes|required",
                 'is_on_premise_available' => "sometimes|required",
                 'delivery_charge' => "sometimes|required",
@@ -79,7 +81,7 @@ class OperationController extends Controller
                     $partner_info['geo_informations'] = json_encode([
                         'lat' => $request->lat,
                         'lng' => $request->lng,
-                        'radius' => $request->has('radius') ? $request->radius : (json_decode($partner->geo_informations)->radius ?: '10')
+                        'radius' => $request->has('radius') ? ($request->radius) / 1000 : ((json_decode($partner->geo_informations)->radius) / 1000 ?: '10')
                     ]);
                 }
 
@@ -89,9 +91,9 @@ class OperationController extends Controller
                     $partner->workingHours()->delete();
                     foreach (json_decode($request->working_schedule) as $working_schedule) {
                         $partner->workingHours()->save(new PartnerWorkingHour([
-                            'day'        => $working_schedule->day,
+                            'day' => $working_schedule->day,
                             'start_time' => $working_schedule->start_time,
-                            'end_time'   => $working_schedule->end_time
+                            'end_time' => $working_schedule->end_time
                         ]));
                     }
                 }
@@ -169,39 +171,46 @@ class OperationController extends Controller
     {
         $services = [];
         $category_partners = [];
-        foreach ($categories as $category) {
-            array_push($category_partners, array_merge(['response_time_min' => 60, 'response_time_max' => 120,
-                'commission' => $partner->commission, 'category_id' => $category->id], $by));
-            $category->load(['services' => function ($q) {
-                $q->publishedForAll();
-            }]);
-            foreach ($category->services as $service) {
-                if ($service->variable_type == 'Fixed') {
-                    $options = null;
-                    $price = json_decode($service->variables)->price;
-                } else {
-                    $options = '';
-                    foreach (json_decode($service->variables)->options as $key => $option) {
-                        $input = explode(',', $option->answers);
-                        $output = implode(',', array_map(
-                            function ($value, $key) {
-                                return sprintf("%s", $key);
-                            }, $input, array_keys($input)
-                        ));
-                        $output = '[' . $output . '],';
-                        $options .= $output;
+        $location = (new PartnerRepository($partner))->getLocations()->pluck('id');
+        try{
+            foreach ($categories as $category) {
+                array_push($category_partners, array_merge(['response_time_min' => 60, 'response_time_max' => 120,
+                    'commission' => $partner->commission, 'category_id' => $category->id], $by));
+                $category->load(['services' => function ($q) use ($location) {
+                    $q->whereExists(function ($query) use ($location) {
+                        $query->from('location_service')->whereIn('location_id', $location)->whereRaw('service_id=services.id');
+                    })->publishedForAll();
+                }]);
+                foreach ($category->services as $service) {
+                    if ($service->variable_type == 'Fixed') {
+                        $options = null;
+                        $price = json_decode($service->variables)->price;
+                    } else {
+                        $options = '';
+                        foreach (json_decode($service->variables)->options as $key => $option) {
+                            $input = explode(',', $option->answers);
+                            $output = implode(',', array_map(
+                                function ($value, $key) {
+                                    return sprintf("%s", $key);
+                                }, $input, array_keys($input)
+                            ));
+                            $output = '[' . $output . '],';
+                            $options .= $output;
+                        }
+                        $options = '[' . substr($options, 0, -1) . ']';
+                        $price = ($service->variable_type == 'Options') ? json_encode(json_decode($service->variables)->prices) : "Custom";
                     }
-                    $options = '[' . substr($options, 0, -1) . ']';
-                    $price = ($service->variable_type == 'Options') ? json_encode(json_decode($service->variables)->prices) : "Custom";
+                    array_push($services, array_merge($by, [
+                        'description' => $service->description,
+                        'options' => $options,
+                        'prices' => $price,
+                        'is_published' => 1,
+                        'service_id' => $service->id
+                    ]));
                 }
-                array_push($services, array_merge($by, [
-                    'description' => $service->description,
-                    'options' => $options,
-                    'prices' => $price,
-                    'is_published' => 1,
-                    'service_id' => $service->id
-                ]));
             }
+        }catch (\Throwable $exception){
+            
         }
         return array($services, $category_partners);
     }

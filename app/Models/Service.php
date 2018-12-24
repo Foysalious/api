@@ -221,4 +221,9 @@ class Service extends Model
     {
         return $query->where('is_published_for_bondhu', 1);
     }
+
+    public function locations()
+    {
+        return $this->belongsToMany(Location::class);
+    }
 }

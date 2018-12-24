@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 
 use App\Models\Category;
+use App\Models\HyperLocal;
 use App\Models\Partner;
 
 class PartnerRepository
@@ -113,6 +114,22 @@ class PartnerRepository
     public function hasAppropriateCreditLimit()
     {
         return (double)$this->partner->wallet >= (double)$this->partner->walletSetting->min_wallet_threshold;
+    }
+
+    public function getLocations()
+    {
+        $geo_info = json_decode($this->partner->geo_informations);
+        if ($geo_info) {
+            $hyper_locations = HyperLocal::insideCircle($geo_info)
+                ->with('location')
+                ->get()
+                ->filter(function ($item) {
+                    return !empty($item->location);
+                })->pluck('location');
+            return $hyper_locations;
+        } else {
+            return [];
+        }
     }
 }
 

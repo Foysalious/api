@@ -3,9 +3,7 @@
 class TopUpRequest
 {
     private $mobile;
-
     private $amount;
-
     private $type;
 
     /**

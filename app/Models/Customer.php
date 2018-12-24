@@ -6,6 +6,7 @@ use Sheba\Payment\Wallet;
 use Sheba\Reward\Rewardable;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
+use Sheba\TopUp\TopUpTransaction;
 use Sheba\Voucher\VoucherCodeGenerator;
 
 class Customer extends Authenticatable implements Rechargable, Rewardable, TopUpAgent
@@ -13,29 +14,8 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
     use TopUpTrait;
     use Wallet;
 
-    protected $fillable = [
-        'name',
-        'mobile',
-        'email',
-        'password',
-        'fb_id',
-        'mobile_verified',
-        'email_verified',
-        'address',
-        'gender',
-        'dob',
-        'pro_pic',
-        'wallet',
-        'created_by',
-        'created_by_name',
-        'updated_by',
-        'updated_by_name',
-        'remember_token',
-        'reference_code', 'referrer_id', 'profile_id'
-    ];
-    protected $hidden = [
-        'password', 'remember_token',
-    ];
+    protected $fillable = ['name', 'mobile', 'email', 'password', 'fb_id', 'mobile_verified', 'email_verified', 'address', 'gender', 'dob', 'pro_pic', 'wallet', 'created_by', 'created_by_name', 'updated_by', 'updated_by_name', 'remember_token', 'reference_code', 'referrer_id', 'profile_id'];
+    protected $hidden = ['password', 'remember_token',];
     protected $casts = ['wallet' => 'double'];
 
     public function mobiles()
@@ -174,10 +154,18 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
         return (double)$this->bonuses()->where('status', 'valid')->sum('amount');
     }
 
-    public function topUpTransaction($amount, $log)
+    public function topUpTransaction(TopUpTransaction $transaction)
     {
-        $this->debitWallet($amount);
-        $this->walletTransaction(['amount' => $amount, 'type' => 'Debit', 'log' => $log]);
+        $this->debitWallet($transaction->getAmount());
+        $wallet_transaction_data = [
+            'event_type' => get_class($transaction->getTopUpOrder()),
+            'event_id' => $transaction->getTopUpOrder()->id,
+            'amount' => $transaction->getAmount(),
+            'type' => 'Debit',
+            'log' => $transaction->getLog()
+        ];
+
+        $this->walletTransaction($wallet_transaction_data);
     }
 
     public function getCommission()

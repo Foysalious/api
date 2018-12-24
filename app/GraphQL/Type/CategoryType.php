@@ -2,6 +2,7 @@
 
 namespace App\GraphQL\Type;
 
+use App\Models\HyperLocal;
 use App\Models\ScheduleSlot;
 use Carbon\Carbon;
 use GraphQL;
@@ -56,6 +57,9 @@ class CategoryType extends GraphQlType
             'services' => [
                 'args' => [
                     'id' => ['type' => Type::listOf(Type::int())],
+                    'location_id' => ['type' => Type::int()],
+                    'lat' =>['name' => 'lat', 'type' => Type::float()],
+                    'lng' =>['name' => 'lng', 'type' => Type::float()],
                 ],
                 'type' => Type::listOf(GraphQL::type('Service'))
             ],
@@ -87,6 +91,20 @@ class CategoryType extends GraphQlType
             }
             if (isset($args['id'])) {
                 $q->whereIn('id', $args['id']);
+            }
+            if (isset($args['location_id'])) {
+                $location = $args['location_id'];
+                $q->whereHas('locations',function($query) use ($location){
+                    $query->where('locations.id',$location);
+                });
+            } else if (isset($args['lat']) && isset($args['lng'])) {
+                $hyperLocation= HyperLocal::insidePolygon((double) $args['lat'], (double) $args['lng'])->with('location')->first();
+                if(!is_null($hyperLocation)) {
+                    $location = $hyperLocation->location->id;
+                    $q->whereHas('locations',function($query) use ($location){
+                        $query->where('locations.id',$location);
+                    });
+                }
             }
         }]);
         return $root->services ? $root->services : null;

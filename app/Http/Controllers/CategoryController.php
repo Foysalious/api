@@ -1,17 +1,18 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\Category;
-use App\Models\ScheduleSlot;
+use App\Models\CategoryPartner;
+use App\Models\HyperLocal;
+use App\Models\Location;
 use App\Models\Service;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
-use App\Sheba\Queries\Category\StartPrice;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 use Dingo\Api\Routing\Helpers;
-use Redis;
+use Dompdf\Exception;
+use Illuminate\Http\Request;
+use DB;
+use Illuminate\Validation\ValidationException;
 
 class CategoryController extends Controller
 {
@@ -28,18 +29,57 @@ class CategoryController extends Controller
     public function index(Request $request)
     {
         try {
+            $this->validate($request, [
+                'location' => 'sometimes|numeric',
+                'lat' => 'sometimes|numeric',
+                'lng' => 'required_with:lat'
+            ]);
+
             $with = '';
-            $categories = Category::where('parent_id', null)->orderBy('order')->select('id', 'name', 'bn_name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id');
+            $location = null;
+            if ($request->has('location')) {
+                $location = Location::find($request->location);
+            } else if ($request->has('lat')) {
+                $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                if (!is_null($hyperLocation)) $location = $hyperLocation->location;
+            }
+
+            $categories = Category::where('parent_id', null)->orderBy('order');
+            if ($location) {
+                $categories = $categories->whereHas('locations', function ($q) use ($location) {
+                    $q->where('locations.id', $location->id);
+                });
+                $categories = $categories->whereHas('allChildren', function ($q) use ($location) {
+                    $q->published();
+                    $q->has('publishedServices', '>', 0);
+                    $q->whereHas('locations', function ($query) use ($location) {
+                        $query->where('locations.id', $location->id);
+                    });
+                });
+            }
+            $categories = $categories->select('id', 'name', 'bn_name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id');
+
             if ($request->has('with')) {
                 $with = $request->with;
                 if ($with == 'children') {
-                    $categories->with(['children' => function ($q) {
+                    $categories->with(['children' => function ($q) use ($location) {
+                        if (!is_null($location)) {
+                            $q->whereHas('locations', function ($q) use ($location) {
+                                $q->where('locations.id', $location->id);
+                            });
+                            $q->whereHas('services', function ($q) use ($location) {
+                                $q->published()->whereHas('locations', function ($q) use ($location) {
+                                    $q->where('locations.id', $location->id);
+                                });
+                            });
+                        }
                         $q->orderBy('order');
                     }]);
                 }
             }
             $categories = $request->has('is_business') && (int)$request->is_business ? $categories->publishedForBusiness() : $categories->published();
             $categories = $categories->get();
+
             foreach ($categories as &$category) {
                 if ($with == 'children') {
                     $category->children->sortBy('order')->each(function (&$child) {
@@ -89,9 +129,34 @@ class CategoryController extends Controller
     public function getSecondaries($category, Request $request)
     {
         try {
+            $this->validate($request, [
+                'location' => 'sometimes|numeric',
+                'lat' => 'sometimes|numeric',
+                'lng' => 'required_with:lat'
+            ]);
+            $location = null;
             $category = Category::find($category);
-            $location = $request->location;
-            $children = $category->children;
+            if ($request->has('location')) {
+                $location = Location::find($request->location);
+            } else if ($request->has('lat')) {
+                $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                if (!is_null($hyperLocation)) $location = $hyperLocation->location;
+            }
+
+            if ($location) {
+                $children = $category->load(['children' => function ($q) use ($location) {
+                    $q->whereHas('locations', function ($q) use ($location) {
+                        $q->where('locations.id', $location->id);
+                    });
+                    $q->whereHas('services', function ($q) use ($location) {
+                        $q->published()->whereHas('locations', function ($q) use ($location) {
+                            $q->where('locations.id', $location->id);
+                        });
+                    });
+                }])->children;
+            } else
+                $children = $category->children;
+
             if (count($children) != 0) {
                 $children = $children->each(function (&$child) use ($location) {
                     removeRelationsAndFields($child);
@@ -102,6 +167,7 @@ class CategoryController extends Controller
             } else
                 return api_response($request, null, 404);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -141,7 +207,17 @@ class CategoryController extends Controller
             $category = ((int)$request->is_business ? $category->publishedForBusiness() : $category->published())->first();
             if ($category != null) {
                 list($offset, $limit) = calculatePagination($request);
-                $location = $request->location != '' ? $request->location : 4;
+                if ($request->has('location')) {
+                    $location = $request->location != '' ? $request->location : 4;
+                } else {
+                    if ($request->has('lat') && $request->has('lng')) {
+                        $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                        if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
+                        else return api_response($request, null, 404);
+                    } else $location = 4;
+                }
+
+
                 $scope = [];
                 if ($request->has('scope')) $scope = $this->serviceRepository->getServiceScope($request->scope);
                 if ($category->parent_id == null) {
@@ -152,7 +228,10 @@ class CategoryController extends Controller
                     }
                     $services = $this->serviceRepository->addServiceInfo($services, $scope);
                 } else {
-                    $category = $category->load(['services' => function ($q) use ($offset, $limit) {
+                    $category = $category->load(['services' => function ($q) use ($offset, $limit, $location) {
+                        $q->whereHas('locations', function ($query) use ($location) {
+                            $query->where('locations.id', $location);
+                        });
                         $q->select('id', 'category_id', 'unit', 'name', 'bn_name', 'thumb', 'app_thumb', 'app_banner',
                             'short_description', 'description', 'banner', 'faqs', 'variables', 'variable_type', 'min_quantity')->orderBy('order')->skip($offset)->take($limit);
                         if ((int)\request()->is_business) $q->publishedForBusiness();
@@ -163,6 +242,15 @@ class CategoryController extends Controller
                         removeRelationsAndFields($service);
                     });
                 }
+
+                if ($location) {
+                    $services = collect($services);
+                    $services = $services->filter(function ($service) use ($location) {
+                        $locations = $service->locations()->pluck('id')->toArray();
+                        return in_array($location, $locations);
+                    });
+                }
+
                 $category = collect($category)->only(['name', 'banner', 'parent_id', 'app_banner']);
                 $category['services'] = $this->serviceQuestionSet($services);
                 return api_response($request, null, 200, ['category' => $category]);
@@ -170,6 +258,7 @@ class CategoryController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -255,6 +344,69 @@ class CategoryController extends Controller
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
+        }
+    }
+
+    public function addCategories(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'categories' => "required|string"
+            ]);
+            $partner = $request->partner;
+            $manager_resource = $request->manager_resource;
+            $by = ["created_by" => $manager_resource->id, "created_by_name" => "Resource - " . $manager_resource->profile->name];
+            $categories = explode(',', $request->categories);
+            $partner_categories = CategoryPartner::where('partner_id', $partner->id)->whereIn('category_id', $categories)->get();
+            $category_partners = [];
+            foreach ($categories as $category) {
+                $has_category_partner = $partner_categories->where('category_id', (int)$category)->first();
+                if (!$has_category_partner) {
+                    array_push($category_partners, array_merge([
+                        'response_time_min' => 60,
+                        'response_time_max' => 120,
+                        'commission' => $partner->commission,
+                        'category_id' => $category,
+                        'partner_id' => $partner->id,
+                        'created_at' => Carbon::now()
+                    ], $by));
+                }
+            }
+            CategoryPartner::insert($category_partners);
+            return api_response($request, null, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getPartnerLocationCategory(Request $request, $partner)
+    {
+        try {
+            $geo_info = json_decode($request->partner->geo_informations);
+            $hyper_locations = HyperLocal::insideCircle($geo_info)
+                ->with('location')
+                ->get()
+                ->filter(function ($item) {
+                    return !empty($item->location);
+                })->pluck('location')->pluck('id');
+            $category = Category::locationWise($hyper_locations)->get();
+            $category=$category->filter(function ($item) {
+                return $item->children->count() > 0;
+            });
+            if ($category->count() > 0) {
+                return api_response($request, $request, 200, ['data' => ['categories' => $category]]);
+            } else {
+                return api_response($request, null, 404);
+            }
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500, ['message' => $e->getMessage()]);
         }
     }
 }

@@ -34,7 +34,7 @@ return [
         'PSP' => 2,
         'LSP' => 1
     ],
-    'rent_a_car_pickup_district_ids' => [1],
+    'rent_a_car_pickup_district_ids' => [1, 43],
     'partner_packages_on_partner_list' => [
         'ESP' => 2,
         'PSP' => 6,
@@ -81,5 +81,6 @@ return [
         ['#194F68', '#57CA85'],
         ['#5B247A', '#1BCEDF'],
         ['#00B8BA', '#00FFED']
-    ]
+    ],
+    'screen' => ['home', 'eshop']
 ];
