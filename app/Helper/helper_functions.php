@@ -499,8 +499,7 @@ if (!function_exists('pamel_case')) {
     }
 }
 
-if (!function_exists('scramble_string'))
-{
+if (!function_exists('scramble_string')) {
     /**
      * Returns scrambled string replaced by '*'
      *
@@ -510,9 +509,11 @@ if (!function_exists('scramble_string'))
      */
     function scramble_string($str, $scramble_ratio = 15)
     {
+        $str = \Sheba\BanglaToEnglish::convert($str);
+        $str=preg_replace('/[\x00-\x1F\x7F]/u', '', $str);
         $len = strlen($str);
-        $number_of_words_visible = (int) ceil(($scramble_ratio * $len) / 100);
+        $number_of_words_visible = (int)ceil(($scramble_ratio * $len) / 100);
         $number_of_words_hidden = $len - ($number_of_words_visible * 2);
-        return substr($str,0,$number_of_words_visible).str_repeat('*',$number_of_words_hidden).substr($str,$len-$number_of_words_visible,$len);
+        return substr($str, 0, $number_of_words_visible) . str_repeat('*', $number_of_words_hidden) . substr($str, $len - $number_of_words_visible, $len);
     }
 }
