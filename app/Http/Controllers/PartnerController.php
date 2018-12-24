@@ -661,18 +661,18 @@ class PartnerController extends Controller
     {
         try {
             $location = null;
-            if($request->has('location') ) {
+            if ($request->has('location')) {
                 $location = Location::find($request->location);
-            } else if($request->has('lat')&&$request->has('lng')) {
-                $hyperLocation= HyperLocal::insidePolygon((double) $request->lat, (double)$request->lng)->with('location')->first();
-                if(!is_null($hyperLocation)) $location = $hyperLocation->location;
+            } else if ($request->has('lat') && $request->has('lng')) {
+                $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                if (!is_null($hyperLocation)) $location = $hyperLocation->location;
             }
             if ($partner = Partner::find((int)$partner)) {
                 $registered_services = $partner->services()->where('category_id', $request->category)->publishedForAll()->get()->pluck('id')->toArray();
 
                 $addable_services = Service::where('category_id', $request->category)->select($this->getSelectColumnsOfAddableService())->whereNotIn('id', $registered_services)->publishedForAll()->get();
-                if(!is_null($location)) {
-                    $addable_services = $addable_services->filter(function($service) use ($location) {
+                if (!is_null($location)) {
+                    $addable_services = $addable_services->filter(function ($service) use ($location) {
                         $locations = $service->locations->pluck('id')->toArray();
                         return in_array($location->id, $locations);
                     });
@@ -688,6 +688,42 @@ class PartnerController extends Controller
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
+        }
+    }
+
+    public function getLocationWiseCategory(Request $request, $partner, $location)
+    {
+        try {
+            $categories = $request->partner->categories()
+                ->published()
+                ->where('is_verified', 1)
+                ->select('categories.name', 'categories.id')
+                ->whereExists(function ($query) use ($location) {
+                    $query->from('category_location')->where('location_id', $location)->whereRaw('category_id=categories.id');
+                })->get();
+            return api_response($request, $request, 200, ['categories' => $categories]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getLocationWiseCategoryService(Request $request, $partner, $category)
+    {
+        try {
+            $location = $request->location;
+            $service = $request->partner
+                ->services()
+                ->whereExists(function ($query) use ($location) {
+                    $query->from('location_service')->where('location_id', $location);
+                })
+                ->where('category_id', $category)
+                ->where('is_published', 1)
+                ->where('is_verified', 1)
+                ->select('services.id', 'services.name', 'services.variable_type')
+                ->get();
+            return api_response($request, $request, 200, ['services' => $service]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500, ['message' => $e->getMessage()]);
         }
     }
 
@@ -741,11 +777,11 @@ class PartnerController extends Controller
     {
         try {
             $location = null;
-            if($request->has('location') ) {
+            if ($request->has('location')) {
                 $location = Location::find($request->location);
-            } else if($request->has('lat')&&$request->has('lng')) {
-                $hyperLocation= HyperLocal::insidePolygon((double) $request->lat, (double)$request->lng)->with('location')->first();
-                if(!is_null($hyperLocation)) $location = $hyperLocation->location;
+            } else if ($request->has('lat') && $request->has('lng')) {
+                $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                if (!is_null($hyperLocation)) $location = $hyperLocation->location;
             }
 
             $categories = Category::child()->publishedOrPublishedForBusiness()->whereDoesntHave('partners', function ($query) use ($request) {
@@ -754,14 +790,13 @@ class PartnerController extends Controller
 
             $master_categories = Category::publishedForAll()->select('id', 'name', 'app_thumb', 'icon', 'icon_png');
 
-            if($location)
-            {
-                $categories = $categories->whereHas('locations',function ($q) use ($location) {
-                    $q->where('locations.id',$location->id);
+            if ($location) {
+                $categories = $categories->whereHas('locations', function ($q) use ($location) {
+                    $q->where('locations.id', $location->id);
                 });
 
-                $master_categories = $master_categories->whereHas('locations',function ($q) use ($location) {
-                    $q->where('locations.id',$location->id);
+                $master_categories = $master_categories->whereHas('locations', function ($q) use ($location) {
+                    $q->where('locations.id', $location->id);
                 });
             }
 
@@ -773,7 +808,7 @@ class PartnerController extends Controller
                 if (is_null($master_category['sub_categories'])) $master_category['sub_categories'] = collect([]);
                 $master_category['sub_categories']->push(['id' => $category->id, 'name' => $category->name, 'app_thumb' => $category->app_thumb, 'icon' => $category->icon, 'icon_png' => $category->icon_png]);
             }
-            return api_response($request, $master_categories,  200,['categories' => $master_categories]);
+            return api_response($request, $master_categories, 200, ['categories' => $master_categories]);
         } catch (\Throwable $exception) {
             app('sentry')->captureException($exception);
             return api_response($request, null, 500);
