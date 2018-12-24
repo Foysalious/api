@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\CategoryPartner;
@@ -13,7 +11,7 @@ use Carbon\Carbon;
 use Dingo\Api\Routing\Helpers;
 use Dompdf\Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use DB;
 use Illuminate\Validation\ValidationException;
 
 class CategoryController extends Controller
@@ -36,6 +34,7 @@ class CategoryController extends Controller
                 'lat' => 'sometimes|numeric',
                 'lng' => 'required_with:lat'
             ]);
+
             $with = '';
             $location = null;
             if ($request->has('location')) {
@@ -46,12 +45,10 @@ class CategoryController extends Controller
             }
 
             $categories = Category::where('parent_id', null)->orderBy('order');
-            //dd($categories->get()[0]->allChildren[0]->publishedServices);
             if ($location) {
                 $categories = $categories->whereHas('locations', function ($q) use ($location) {
                     $q->where('locations.id', $location->id);
                 });
-
                 $categories = $categories->whereHas('allChildren', function ($q) use ($location) {
                     $q->published();
                     $q->has('publishedServices', '>', 0);
@@ -60,8 +57,8 @@ class CategoryController extends Controller
                     });
                 });
             }
-
             $categories = $categories->select('id', 'name', 'bn_name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id');
+
             if ($request->has('with')) {
                 $with = $request->with;
                 if ($with == 'children') {
@@ -69,6 +66,11 @@ class CategoryController extends Controller
                         if (!is_null($location)) {
                             $q->whereHas('locations', function ($q) use ($location) {
                                 $q->where('locations.id', $location->id);
+                            });
+                            $q->whereHas('services', function ($q) use ($location) {
+                                $q->published()->whereHas('locations', function ($q) use ($location) {
+                                    $q->where('locations.id', $location->id);
+                                });
                             });
                         }
                         $q->orderBy('order');
