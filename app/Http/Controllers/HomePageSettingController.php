@@ -90,7 +90,9 @@ class HomePageSettingController extends Controller
                 $q->where('locations.id', $location);
             });
         }
-        $categories = $categories->select('id', 'parent_id', 'name', 'thumb', 'slug', 'banner', 'icon_png')->get();
+        $categories = $categories->select('id', 'parent_id', 'name', 'thumb', 'slug', 'banner', 'icon_png')->get()->reject(function ($category) {
+            return count($category->children) == 0;
+        })->values()->all();
         return array('slider' => $slider->data, 'categories' => $categories, 'category_groups' => $category_groups->values()->all());
     }
 }
