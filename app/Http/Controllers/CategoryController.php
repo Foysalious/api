@@ -67,6 +67,11 @@ class CategoryController extends Controller
                             $q->whereHas('locations', function ($q) use ($location) {
                                 $q->where('locations.id', $location->id);
                             });
+                            $q->whereHas('services', function ($q) use ($location) {
+                                $q->published()->whereHas('locations', function ($q) use ($location) {
+                                    $q->where('locations.id', $location->id);
+                                });
+                            });
                         }
                         $q->orderBy('order');
                     }]);
