@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\CustomerFavorite;
+use App\Models\HyperLocal;
 use App\Models\Job;
+use App\Models\Location;
 use App\Models\Service;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -14,15 +16,43 @@ class CustomerFavoriteController extends Controller
 {
     public function index($customer, Request $request)
     {
+        $this->validate($request,[
+            'location' => 'sometimes|numeric',
+            'lat' => 'sometimes|numeric',
+            'lng' => 'required_with:lat'
+        ]);
         $customer = $request->customer;
         list($offset, $limit) = calculatePagination($request);
-        $customer->load(['favorites' => function ($q) use ($offset, $limit) {
-            $q->with(['services', 'partner' => function ($q) {
+
+        $location = null;
+        if($request->has('location') ) {
+            $location = Location::find($request->location)->id;
+        } else if($request->has('lat')) {
+            $hyperLocation= HyperLocal::insidePolygon((double) $request->lat, (double)$request->lng)->with('location')->first();
+            if(!is_null($hyperLocation)) $location = $hyperLocation->location->id;
+        }
+
+        $customer->load(['favorites' => function ($q) use ($offset, $limit, $location) {
+            if($location) {
+                $q->whereHas('services', function($q) use ($location) {
+                    $q->whereHas('locations', function ($q) use ($location) {
+                        $q->where('locations.id', $location);
+                    });
+                });
+                $q->whereHas('categories', function($q) use ($location) {
+                    $q->whereHas('locations', function ($q) use ($location) {
+                        $q->where('locations.id', $location);
+                    });
+                });
+            }
+            $q->with(['services', 'partner' => function ($q) use ($location){
                 $q->select('id', 'name', 'logo');
-            }, 'category' => function ($q) {
+            }, 'category' => function ($q) use ($location) {
+                if($location)
                 $q->select('id', 'parent_id', 'name', 'slug', 'icon_png', 'icon_color')->with('parent');
             }])->orderBy('id', 'desc')->skip($offset)->take($limit);
         }]);
+
         $favorites = $customer->favorites->each(function (&$favorite, $key) {
             $services = [];
             $favorite['category_name'] = $favorite->category->name;
@@ -47,6 +77,7 @@ class CustomerFavoriteController extends Controller
             removeRelationsAndFields($favorite);
             $favorite['services'] = $services;
         });
+
         if (count($customer->favorites) > 0) {
             return api_response($request, null, 200, ['favorites' => $favorites]);
         } else {
