@@ -241,7 +241,6 @@ class Checkout
         $order->created_by_name = $data['created_by_name'];
         $order->partner_id = isset($data['partner_id']) ? $data['partner_id'] : null;
         $customer_delivery_address = $this->getDeliveryAddress($data, $partner);
-        $order->delivery_address = $customer_delivery_address != null ? $customer_delivery_address->address : null;
         $order->delivery_address_id = $customer_delivery_address != null ? $customer_delivery_address->id : null;
         $order->fill((new RequestIdentification())->get());
         $order->save();
