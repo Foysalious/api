@@ -26,12 +26,13 @@ class PartnerRoute
                 });
             });
             $api->group(['prefix' => 'categories'], function ($api) {
-                $api->get('/all','CategoryController@getPartnerLocationCategory');
+                $api->get('/all', 'CategoryController@getPartnerLocationCategory');
                 $api->get('/tree', 'PartnerController@getCategoriesTree');
                 $api->get('/untagged', 'PartnerController@untaggedCategories');
-                $api->get('/location/{location}','PartnerController@getLocationWiseCategory');
+                $api->get('/location/{location}', 'PartnerController@getLocationWiseCategory');
                 $api->group(['prefix' => '{category}'], function ($api) {
                     $api->get('/', 'PartnerController@getSecondaryCategory');
+                    $api->get('/services', 'partnerController@getLocationWiseCategoryService');
                     $api->post('/update', 'PartnerController@updateSecondaryCategory');
                     $api->get('/services/{service}', 'PartnerController@serviceOption');
                     $api->post('/services/{service}', 'PartnerController@changePublicationStatus');

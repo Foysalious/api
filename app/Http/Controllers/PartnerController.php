@@ -693,17 +693,38 @@ class PartnerController extends Controller
 
     public function getLocationWiseCategory(Request $request, $partner, $location)
     {
-        $categories = $request->partner->categories()
-            ->published()
-            ->where('is_verified', 1)
-            ->whereExists(function ($query) use ($location) {
-                $query->from('location_service')->where('location_id', $location);
-            })->with(['services' => function ($query) use ($location) {
-                $query->whereExists(function ($q) use ($location) {
-                    $q->from('location_services')->where('location_id', $location);
-                });
-            }])->get();
-        return response()->json(['categories' => $categories]);
+        try {
+            $categories = $request->partner->categories()
+                ->published()
+                ->where('is_verified', 1)
+                ->select('categories.name', 'categories.id')
+                ->whereExists(function ($query) use ($location) {
+                    $query->from('category_location')->where('location_id', $location)->whereRaw('category_id=categories.id');
+                })->get();
+            return api_response($request, $request, 200, ['categories' => $categories]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getLocationWiseCategoryService(Request $request, $partner, $category)
+    {
+        try {
+            $location = $request->location;
+            $service = $request->partner
+                ->services()
+                ->whereExists(function ($query) use ($location) {
+                    $query->from('location_service')->where('location_id', $location);
+                })
+                ->where('category_id', $category)
+                ->where('is_published', 1)
+                ->where('is_verified', 1)
+                ->select('services.id', 'services.name', 'services.variable_type')
+                ->get();
+            return api_response($request, $request, 200, ['services' => $service]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500, ['message' => $e->getMessage()]);
+        }
     }
 
     private function formatServiceQuestions($options)
