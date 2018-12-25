@@ -47,9 +47,8 @@ class Checkout
     public function placeOrder($request)
     {
         $this->setModifier($this->customer);
-        if ($request->has('location')) {
-            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$request->location);
-        } else {
+
+        if ($request->has('address_id')) {
             $address = $this->customer->delivery_addresses()->where('id', (int)$request->address_id)->first();
             if ($address->mobile != formatMobile(trim($request->mobile))) {
                 $new_address = $address->replicate();
@@ -57,17 +56,23 @@ class Checkout
                 $new_address->name = trim($request->name);
                 $address = $this->customer->delivery_addresses()->save($new_address);
             }
+        }
+
+        if ($request->has('location')) {
+            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$request->location);
+        } else {
             $geo = json_decode($address->geo_informations);
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time);
             $partner_list->setGeo($geo->lat, $geo->lng);
         }
+
         $partner_list->find($request->partner);
         if ($partner_list->hasPartners) {
             $partner = $partner_list->partners->first();
             $this->orderData['location_id'] = $partner_list->location;
             $this->orderData['location'] = Location::find($partner_list->location);
             $data = $this->makeOrderData($request);
-            if (!$request->has('location')) {
+            if ($request->has('address_id')) {
                 $data['address_id'] = $address->id;
             }
 
