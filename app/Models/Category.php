@@ -21,7 +21,7 @@ class Category extends Model
 
     public function scopePublished($query)
     {
-        return $query->where('publication_status', 1);
+        return $query->where('categories.publication_status', 1);
     }
 
     public function scopeChild($query)
@@ -51,7 +51,7 @@ class Category extends Model
 
     public function publishedServices()
     {
-        return $this->hasMany(Service::class)->published();
+        return $this->hasMany(Service::class)->where('services.publication_status',1);
     }
 
     public function reviews()

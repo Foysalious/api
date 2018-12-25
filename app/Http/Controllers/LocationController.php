@@ -162,14 +162,18 @@ class LocationController extends Controller
             $models = $model::whereIn('id', $ids)->whereHas('locations', function ($q) use ($location) {
                 $q->where('locations.id', $location->id);
             });
+            $models = $models->get();
             if ($model_name == 'Category') {
-                $models = $models->whereHas('children', function ($q) use ($location) {
-                    $q->whereHas('locations', function ($q) use ($location) {
-                        $q->where('locations.id', $location);
-                    });
+                $models = $models->load('children.locations');
+                $models = $models->filter(function ($category) use ($location) {
+                    foreach ($category->children as $children) {
+                        if (in_array($location->id, $children->locations->pluck('id')->toArray())) {
+                            return true;
+                        }
+                    }
+                    return false;
                 });
             }
-            $models = $models->get();
             foreach ($ids as $id) {
                 array_push($final_services, ['id' => (int)$id, 'is_available' => $models->where('id', $id)->first() ? 1 : 0]);
             }
