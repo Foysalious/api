@@ -7,6 +7,7 @@ use App\Models\CategoryGroup;
 use App\Models\HomepageSetting;
 use App\Models\HyperLocal;
 use App\Models\Location;
+use App\Models\ScreenSettingElement;
 use App\Sheba\Queries\Category\StartPrice;
 use Illuminate\Contracts\Validation\ValidationException;
 use Illuminate\Http\Request;
@@ -125,7 +126,7 @@ class CategoryGroupController extends Controller
             $q->has('services', '>', 0);
         }])->where($column, 'like', '%' . $value . '%')->select('id', 'name', 'banner')->first();
         if ($category_group != null) {
-            $setting = HomepageSetting::where([['item_type', 'App\\Models\\CategoryGroup'], ['item_id', $category_group->id]])->first();
+            $setting = ScreenSettingElement::where([['item_type', 'App\\Models\\CategoryGroup'], ['item_id', $category_group->id]])->first();
             if ($setting != null) {
                 $category_group['position_at_home'] = $setting ? $setting->order : null;
                 $categories = $category_group->categories->each(function ($category) use ($location) {
