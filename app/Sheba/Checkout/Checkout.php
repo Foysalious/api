@@ -54,7 +54,7 @@ class Checkout
             if($address->mobile != formatMobile(trim($request->mobile))) {
                 $address->mobile = formatMobile(trim($request->mobile));
                 $address->name = trim($request->name);
-                $address = $this->customer->delivery_addresses()->create($address);
+                $address = $this->customer->delivery_addresses()->save($address);
             }
             $geo = json_decode($address->geo_informations);
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time);
@@ -94,8 +94,8 @@ class Checkout
         if ($request->has('resource')) {
             $data['resource_id'] = $request->resource;
         }
-        //$data['delivery_mobile'] = formatMobile(trim($request->mobile));
-        //$data['delivery_name'] = $request->has('name') ? $request->name : '';
+        $data['delivery_mobile'] = formatMobile(trim($request->mobile));
+        $data['delivery_name'] = $request->has('name') ? $request->name : '';
         $data['sales_channel'] = $request->sales_channel;
         $data['date'] = $request->date;
         $data['time'] = $request->time;
