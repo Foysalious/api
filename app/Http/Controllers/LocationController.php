@@ -158,10 +158,18 @@ class LocationController extends Controller
         $ids = json_decode($input_ids);
         if ($ids) {
             $ids = array_map('intval', $ids);
-            $model_name = "App\\Models\\" . ucwords($model_name);
-            $models = $model_name::whereIn('id', $ids)->whereHas('locations', function ($q) use ($location) {
+            $model = "App\\Models\\" . ucwords($model_name);
+            $models = $model::whereIn('id', $ids)->whereHas('locations', function ($q) use ($location) {
                 $q->where('locations.id', $location->id);
-            })->get();
+            });
+            if ($model_name == 'Category') {
+                $models = $models->whereHas('children', function ($q) use ($location) {
+                    $q->whereHas('locations', function ($q) use ($location) {
+                        $q->where('locations.id', $location);
+                    });
+                });
+            }
+            $models = $models->get();
             foreach ($ids as $id) {
                 array_push($final_services, ['id' => (int)$id, 'is_available' => $models->where('id', $id)->first() ? 1 : 0]);
             }
