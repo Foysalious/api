@@ -203,21 +203,23 @@ class CategoryController extends Controller
     public function getServices($category, Request $request)
     {
         try {
-            $category = Category::where('id', $category);
+            if ($request->has('location')) {
+                $location = $request->location != '' ? $request->location : 4;
+            } else {
+                if ($request->has('lat') && $request->has('lng')) {
+                    $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                    if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
+                    else return api_response($request, null, 404);
+                } else $location = 4;
+            }
+
+
+            $category = Category::where('id', $category)->whereHas('locations', function($q) use ($location) {
+                $q->where('locations.id',$location);
+            });
             $category = ((int)$request->is_business ? $category->publishedForBusiness() : $category->published())->first();
             if ($category != null) {
                 list($offset, $limit) = calculatePagination($request);
-                if ($request->has('location')) {
-                    $location = $request->location != '' ? $request->location : 4;
-                } else {
-                    if ($request->has('lat') && $request->has('lng')) {
-                        $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
-                        if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
-                        else return api_response($request, null, 404);
-                    } else $location = 4;
-                }
-
-
                 $scope = [];
                 if ($request->has('scope')) $scope = $this->serviceRepository->getServiceScope($request->scope);
                 if ($category->parent_id == null) {
@@ -251,9 +253,12 @@ class CategoryController extends Controller
                     });
                 }
 
-                $category = collect($category)->only(['name', 'banner', 'parent_id', 'app_banner']);
-                $category['services'] = $this->serviceQuestionSet($services);
-                return api_response($request, null, 200, ['category' => $category]);
+                if($services->count()>0) {
+                    $category = collect($category)->only(['name', 'banner', 'parent_id', 'app_banner']);
+                    $category['services'] = $this->serviceQuestionSet($services);
+                    return api_response($request, null, 200, ['category' => $category]);
+                } else
+                    return api_response($request, null, 404);
             } else {
                 return api_response($request, null, 404);
             }
