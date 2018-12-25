@@ -51,10 +51,11 @@ class Checkout
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$request->location);
         } else {
             $address = $this->customer->delivery_addresses()->where('id', (int)$request->address_id)->first();
-            if($address->mobile != formatMobile(trim($request->mobile))) {
-                $address->mobile = formatMobile(trim($request->mobile));
-                $address->name = trim($request->name);
-                $address = $this->customer->delivery_addresses()->save($address);
+            if ($address->mobile != formatMobile(trim($request->mobile))) {
+                $new_address = $address->replicate();
+                $new_address->mobile = formatMobile(trim($request->mobile));
+                $new_address->name = trim($request->name);
+                $address = $this->customer->delivery_addresses()->save($new_address);
             }
             $geo = json_decode($address->geo_informations);
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time);
