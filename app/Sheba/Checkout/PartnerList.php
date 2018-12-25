@@ -154,11 +154,11 @@ class PartnerList
     private function findPartnersByServiceAndLocation($partner_id = null)
     {
         $this->partners = $this->findPartnersByService($partner_id);
-        // $this->partners->load('locations');
+        $this->partners->load('locations');
         return $this->partners->filter(function ($partner) {
-            // return $partner->locations->where('id', $this->location)->count() > 0;
-            $is_partner_has_coverage = $partner->geo_informations && in_array($this->location, HyperLocal::insideCircle(json_decode($partner->geo_informations))->pluck('location_id')->toArray());
-            return $is_partner_has_coverage;
+            return $partner->locations->where('id', $this->location)->count() > 0;
+            // $is_partner_has_coverage = $partner->geo_informations && in_array($this->location, HyperLocal::insideCircle(json_decode($partner->geo_informations))->pluck('location_id')->toArray());
+            // return $is_partner_has_coverage;
         });
     }
 
