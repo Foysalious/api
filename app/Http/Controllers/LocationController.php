@@ -74,19 +74,18 @@ class LocationController extends Controller
                 'service' => 'string',
                 'category' => 'string',
             ]);
-            //$hyper_local = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
-            //if ($hyper_local) {
-                //$location = $hyper_local->location;
-                $location = Location::find(109);
+            $hyper_local = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+            if ($hyper_local) {
+                $location = $hyper_local->location;
                 return api_response($request, $location, 200,
                     [
                         'location' => collect($location)->only(['id', 'name']),
-                        //'service' => $request->has('service') ? $this->calculateModelAvailability($request->service, 'Service', $location) : [],
+                        'service' => $request->has('service') ? $this->calculateModelAvailability($request->service, 'Service', $location) : [],
                         'category' => $request->has('category') ? $this->calculateModelAvailability($request->category, 'Category', $location) : [],
                     ]);
-            /*} else {
+            } else {
                 return api_response($request, null, 404);
-            }*/
+            }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
