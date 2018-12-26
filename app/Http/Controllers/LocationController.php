@@ -74,18 +74,19 @@ class LocationController extends Controller
                 'service' => 'string',
                 'category' => 'string',
             ]);
-            $hyper_local = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
-            if ($hyper_local) {
-                $location = $hyper_local->location;
+            //$hyper_local = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+            //if ($hyper_local) {
+                //$location = $hyper_local->location;
+                $location = Location::find(109);
                 return api_response($request, $location, 200,
                     [
                         'location' => collect($location)->only(['id', 'name']),
-                        'service' => $request->has('service') ? $this->calculateModelAvailability($request->service, 'Service', $location) : [],
+                        //'service' => $request->has('service') ? $this->calculateModelAvailability($request->service, 'Service', $location) : [],
                         'category' => $request->has('category') ? $this->calculateModelAvailability($request->category, 'Category', $location) : [],
                     ]);
-            } else {
+            /*} else {
                 return api_response($request, null, 404);
-            }
+            }*/
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -164,10 +165,11 @@ class LocationController extends Controller
             });
             $models = $models->get();
             if ($model_name == 'Category') {
-                $models = $models->load('children.locations');
+                $models = $models->load('children.locations', 'services.locations');
                 $models = $models->filter(function ($category) use ($location) {
-                    foreach ($category->children as $children) {
-                        if (in_array($location->id, $children->locations->pluck('id')->toArray())) {
+                    $children = $category->isParent() ? $category->children : $category->services;
+                    foreach ($children as $child) {
+                        if (in_array($location->id, $child->locations->pluck('id')->toArray())) {
                             return true;
                         }
                     }
