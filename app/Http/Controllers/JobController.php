@@ -74,14 +74,17 @@ class JobController extends Controller
             }]);
 
             $job->partnerOrder->calculate(true);
+            if(!$job->partnerOrder->order->deliveryAddress) {
+                $job->partnerOrder->order->deliveryAddress = $job->partnerOrder->order->getTempAddress();
+            }
             $job_collection = collect();
             $job_collection->put('id', $job->id);
             $job_collection->put('resource_name', $job->resource ? $job->resource->profile->name : null);
             $job_collection->put('resource_picture', $job->resource ? $job->resource->profile->pro_pic : null);
             $job_collection->put('resource_mobile', $job->resource ? $job->resource->profile->mobile : null);
-            $job_collection->put('delivery_address', $job->partnerOrder->order->delivery_address);
-            $job_collection->put('delivery_name', $job->partnerOrder->order->delivery_name);
-            $job_collection->put('delivery_mobile', $job->partnerOrder->order->delivery_mobile);
+            $job_collection->put('delivery_address', $job->partnerOrder->order->deliveryAddress->address);
+            $job_collection->put('delivery_name', $job->partnerOrder->order->deliveryAddress->name);
+            $job_collection->put('delivery_mobile', $job->partnerOrder->order->deliveryAddress->mobile);
             $job_collection->put('additional_information', $job->job_additional_info);
             $job_collection->put('schedule_date', $job->schedule_date);
             $job_collection->put('schedule_date_readable', (Carbon::parse($job->schedule_date))->format('jS F, Y'));
