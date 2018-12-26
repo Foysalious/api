@@ -1,7 +1,4 @@
-<?php
-
-namespace App\Repositories;
-
+<?php namespace App\Repositories;
 
 use App\Models\Service;
 
@@ -28,12 +25,18 @@ class CategoryRepository
             $q->where('locations.id', $location);
         })->select('id', 'category_id', 'name', 'bn_name', 'thumb', 'banner', 'app_thumb', 'app_banner', 'slug', 'min_quantity', 'short_description', 'description', 'variable_type', 'variables', 'faqs')
             ->whereIn('category_id', $category_ids)->skip($offset)->take($limit);
-        $services = (int)request()->get('is_business') ? $services->publishedForBusiness()->get() : $services->published()->get();
+
+        if (request()->get('is_for_backend')) {
+            $services = $services->publishedForAll()->get();
+        } else {
+            $services = (int)request()->get('is_business') ? $services->publishedForBusiness()->get() : $services->published()->get();
+        }
+
         $final_services = [];
         foreach ($services as $service) {
             array_push($final_services, $service);
         }
+
         return $final_services;
     }
-
 }
