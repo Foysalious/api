@@ -1,14 +1,8 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\CustomerFavorite;
 use App\Models\Job;
 use App\Models\JobCancelReason;
-use App\Models\Partner;
-use App\Models\Resource;
-use App\Repositories\JobCancelLogRepository;
-use App\Sheba\JobStatus;
 use App\Sheba\UserRequestInformation;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;

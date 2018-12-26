@@ -39,7 +39,7 @@ class Order extends Model
 
     public function deliveryAddress()
     {
-        return $this->hasOne(CustomerDeliveryAddress::class, 'id', 'delivery_address_id');
+        return $this->hasOne(CustomerDeliveryAddress::class, 'id', 'delivery_address_id')->withTrashed();
     }
 
     public function calculate($price_only = false)
