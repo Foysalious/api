@@ -1,5 +1,8 @@
 <?php namespace App\Models;
 
+use Sheba\Location\Coords;
+use Sheba\Location\Distance\Distance;
+use Sheba\Location\Distance\DistanceStrategy;
 use Sheba\Reward\Rewardable;
 use Sheba\Subscription\Partner\PartnerSubscriber;
 use Sheba\Payment\Wallet;
@@ -451,5 +454,13 @@ class Partner extends Model implements Rewardable, TopUpAgent
     {
         $geo = json_decode($this->geo_informations);
         return HyperLocal::insidePolygon($geo->lat, $geo->lng)->first();
+    }
+
+    public function hasCoverageOn(Coords $coords)
+    {
+        $geo = json_decode($this->geo_informations);
+        $partner_coord = new Coords(floatval($geo->lat), floatval($geo->lng));
+        $distance = (new Distance(DistanceStrategy::$VINCENTY))->linear();
+        return $distance->to($coords)->from($partner_coord)->isWithin($geo->radius * 1000);
     }
 }

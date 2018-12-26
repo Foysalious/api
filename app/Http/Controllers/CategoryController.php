@@ -4,6 +4,7 @@ use App\Models\Category;
 use App\Models\CategoryPartner;
 use App\Models\HyperLocal;
 use App\Models\Location;
+use App\Models\Partner;
 use App\Models\Service;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
@@ -13,6 +14,7 @@ use Dompdf\Exception;
 use Illuminate\Http\Request;
 use DB;
 use Illuminate\Validation\ValidationException;
+use Sheba\Location\Coords;
 
 class CategoryController extends Controller
 {
@@ -213,10 +215,10 @@ class CategoryController extends Controller
                 } else $location = 4;
             }
 
-
             $category = Category::where('id', $category)->whereHas('locations', function($q) use ($location) {
                 $q->where('locations.id',$location);
             });
+
             $category = ((int)$request->is_business ? $category->publishedForBusiness() : $category->published())->first();
             if ($category != null) {
                 list($offset, $limit) = calculatePagination($request);
@@ -239,7 +241,10 @@ class CategoryController extends Controller
                         if ((int)\request()->is_business) $q->publishedForBusiness();
                         else $q->published();
                     }]);
-                    $services = $this->serviceRepository->getPartnerServicesAndPartners($category->services, $location)->each(function ($service) {
+                    $services = $this->serviceRepository->getPartnerServicesAndPartners($category->services, $location)->each(function ($service) use ($request) {
+                        $service->partners = $service->partners->filter(function (Partner $partner) use ($request) {
+                            return $partner->hasCoverageOn(new Coords((double)$request->lat, (double)$request->lng));
+                        });
                         list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
                         removeRelationsAndFields($service);
                     });
@@ -263,7 +268,6 @@ class CategoryController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
