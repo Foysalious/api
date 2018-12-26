@@ -123,4 +123,15 @@ class Order extends Model
 
     }
 
+    /** @TODO Remove */
+    public function getTempAddress()
+    {
+        $location = json_decode($this->location->geo_informations);
+        $delivery_address = (new CustomerDeliveryAddress());
+        $delivery_address->name = $this->delivery_name;
+        $delivery_address->mobile = $this->delivery_mobile;
+        $delivery_address->address = $this->delivery_address;
+        $delivery_address->geo_informations = json_encode(["lat" => $location->lat, "lng" => $location->lng]);
+        return $delivery_address;
+    }
 }

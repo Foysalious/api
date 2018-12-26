@@ -262,16 +262,17 @@ class PartnerOrderRepository
         } else {
             $job = $partner_order->jobs->first();
         }
+        if(!$partner_order->order->deliveryAddress) $partner_order->order->deliveryAddress = $partner_order->order->getTempAddress();
         $partner_order->calculate(true);
         $partner_order['code'] = $partner_order->code();
-        $partner_order['customer_name'] = $partner_order->order->delivery_name;
-        $partner_order['customer_mobile'] = $partner_order->order->delivery_mobile;
+        $partner_order['customer_name'] = $partner_order->order->deliveryAddress->name;
+        $partner_order['customer_mobile'] = $partner_order->order->deliveryAddress->mobile;
         $partner_order['resource_picture'] = $job->resource ? $job->resource->profile->pro_pic : null;
         $partner_order['resource_mobile'] = $job->resource ? $job->resource->profile->mobile : null;
         $partner_order['category_app_banner'] = $job->category ? $job->category->app_banner : null;
         $partner_order['category_banner'] = $job->category ? $job->category->banner : null;
         $partner_order['rating'] = $job->review ? (double)$job->review->rating : null;
-        $partner_order['address'] = $partner_order->order->delivery_address;
+        $partner_order['address'] = $partner_order->order->deliveryAddress->address;
         $partner_order['location'] = $partner_order->order->location->name;
         $partner_order['total_price'] = (double)$partner_order->totalPrice;
         $partner_order['due_amount'] = (double)$partner_order->due;
