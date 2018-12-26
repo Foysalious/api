@@ -131,5 +131,4 @@ class BondhuAutoOrder
         $customer->save();
         return $customer;
     }
-
 }
