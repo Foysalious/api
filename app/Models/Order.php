@@ -37,6 +37,11 @@ class Order extends Model
         return $this->belongsTo(Location::class);
     }
 
+    public function deliveryAddress()
+    {
+        return $this->hasOne(CustomerDeliveryAddress::class, 'id', 'delivery_address_id');
+    }
+
     public function calculate($price_only = false)
     {
         $this->totalPrice = 0;
