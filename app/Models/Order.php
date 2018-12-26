@@ -133,6 +133,7 @@ class Order extends Model
     {
         $location = json_decode($this->location->geo_informations);
         $delivery_address = (new CustomerDeliveryAddress());
+        $delivery_address->customer_id = $this->customer_id;
         $delivery_address->name = $this->delivery_name;
         $delivery_address->mobile = $this->delivery_mobile;
         $delivery_address->address = $this->delivery_address;
