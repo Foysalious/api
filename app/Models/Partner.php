@@ -435,7 +435,7 @@ class Partner extends Model implements Rewardable, TopUpAgent
     {
         if (is_null($jobs)) return $this->notCancelledJobs()->where('status', constants('JOB_STATUSES')['Schedule_Due']);
 
-        return $jobs->where('status', constants('JOB_STATUSES')['Not_Responded']);
+        return $jobs->where('status', constants('JOB_STATUSES')['Schedule_Due']);
     }
 
     public function serveDueJobs($jobs = null)
