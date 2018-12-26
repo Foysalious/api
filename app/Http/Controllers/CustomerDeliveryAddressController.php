@@ -62,7 +62,8 @@ class CustomerDeliveryAddressController extends Controller
     public function store($customer, Request $request)
     {
         try {
-            $request->merge(['address' => trim($request->address), 'mobile' => trim(str_replace(' ', '', $request->mobile))]);
+            $mobile = trim(str_replace(' ', '', $request->mobile));
+            $request->merge(['address' => trim($request->address), 'mobile' => $mobile ?: $request->customer->profile->mobile]);
             $this->validate($request, ['address' => 'required|string']);
             $customer = $request->customer;
             $hyper_local = $request->has('lat') && $request->has('lng');
@@ -82,6 +83,7 @@ class CustomerDeliveryAddressController extends Controller
             $delivery_address = $this->_store($customer, $new_address, $request);
             return api_response($request, 1, 200, ['address' => $delivery_address->id]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
