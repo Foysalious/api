@@ -61,6 +61,7 @@ class PartnerList
         //dump("add selected service info: " . $time_elapsed_secs * 1000);
         $this->partnerServiceRepository = new PartnerServiceRepository();
         $this->skipAvailability = 0;
+        $this->checkForRentACarPickUpGeo();
     }
 
     public function setGeo($lat, $lng)
@@ -74,6 +75,17 @@ class PartnerList
     {
         $this->skipAvailability = $availability;
         return $this;
+    }
+
+    private function checkForRentACarPickUpGeo()
+    {
+        if($this->selectedCategory->isRentCar()) {
+            $service = $this->selected_services->first();
+            if($service->pickUpLocationLat && $service->pickUpLocationLng) {
+                $this->setGeo($service->pickUpLocationLat, $service->pickUpLocationLng);
+                $this->location = null;
+            }
+        }
     }
 
     /**
