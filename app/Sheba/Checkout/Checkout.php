@@ -47,20 +47,35 @@ class Checkout
     public function placeOrder($request)
     {
         $this->setModifier($this->customer);
+
+        if ($request->has('address_id')) {
+            $address = $this->customer->delivery_addresses()->where('id', (int)$request->address_id)->first();
+            if ($address->mobile != formatMobile(trim($request->mobile))) {
+                $new_address = $address->replicate();
+                $new_address->mobile = formatMobile(trim($request->mobile));
+                $new_address->name = trim($request->name);
+                $address = $this->customer->delivery_addresses()->save($new_address);
+            }
+        }
+
         if ($request->has('location')) {
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$request->location);
         } else {
-            $address = $this->customer->delivery_addresses()->where('id', (int)$request->address_id)->first();
             $geo = json_decode($address->geo_informations);
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time);
             $partner_list->setGeo($geo->lat, $geo->lng);
         }
+
         $partner_list->find($request->partner);
         if ($partner_list->hasPartners) {
             $partner = $partner_list->partners->first();
             $this->orderData['location_id'] = $partner_list->location;
             $this->orderData['location'] = Location::find($partner_list->location);
             $data = $this->makeOrderData($request);
+            if ($request->has('address_id')) {
+                $data['address_id'] = $address->id;
+            }
+
             $data['payment_method'] = $request->payment_method == 'cod' ? 'cash-on-delivery' : ucwords($request->payment_method);
             $data['job_services'] = $this->createJobService($partner->services, $partner_list->selected_services, $data);
             $rent_car_ids = array_map('intval', explode(',', env('RENT_CAR_IDS')));
@@ -88,7 +103,7 @@ class Checkout
         $data['customer_id'] = $this->customer->id;
         if ($request->has('resource')) {
             $data['resource_id'] = $request->resource;
-        };
+        }
         $data['delivery_mobile'] = formatMobile(trim($request->mobile));
         $data['delivery_name'] = $request->has('name') ? $request->name : '';
         $data['sales_channel'] = $request->sales_channel;

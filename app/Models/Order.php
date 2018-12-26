@@ -37,6 +37,11 @@ class Order extends Model
         return $this->belongsTo(Location::class);
     }
 
+    public function deliveryAddress()
+    {
+        return $this->hasOne(CustomerDeliveryAddress::class, 'id', 'delivery_address_id')->withTrashed();
+    }
+
     public function calculate($price_only = false)
     {
         $this->totalPrice = 0;
@@ -123,4 +128,16 @@ class Order extends Model
 
     }
 
+    /** @TODO Remove */
+    public function getTempAddress()
+    {
+        $location = json_decode($this->location->geo_informations);
+        $delivery_address = (new CustomerDeliveryAddress());
+        $delivery_address->customer_id = $this->customer_id;
+        $delivery_address->name = $this->delivery_name;
+        $delivery_address->mobile = $this->delivery_mobile;
+        $delivery_address->address = $this->delivery_address;
+        $delivery_address->geo_informations = json_encode(["lat" => $location->lat, "lng" => $location->lng]);
+        return $delivery_address;
+    }
 }

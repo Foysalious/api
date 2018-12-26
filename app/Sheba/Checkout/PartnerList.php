@@ -61,6 +61,7 @@ class PartnerList
         //dump("add selected service info: " . $time_elapsed_secs * 1000);
         $this->partnerServiceRepository = new PartnerServiceRepository();
         $this->skipAvailability = 0;
+        $this->checkForRentACarPickUpGeo();
     }
 
     public function setGeo($lat, $lng)
@@ -74,6 +75,17 @@ class PartnerList
     {
         $this->skipAvailability = $availability;
         return $this;
+    }
+
+    private function checkForRentACarPickUpGeo()
+    {
+        if($this->selectedCategory->isRentCar()) {
+            $service = $this->selected_services->first();
+            if($service->pickUpLocationLat && $service->pickUpLocationLng) {
+                $this->setGeo($service->pickUpLocationLat, $service->pickUpLocationLng);
+                $this->location = null;
+            }
+        }
     }
 
     /**
@@ -154,12 +166,14 @@ class PartnerList
     private function findPartnersByServiceAndLocation($partner_id = null)
     {
         $this->partners = $this->findPartnersByService($partner_id);
-        // $this->partners->load('locations');
+        $this->partners->load('locations');
         return $this->partners->filter(function ($partner) {
-            // return $partner->locations->where('id', $this->location)->count() > 0;
-            return true;
-            $is_partner_has_coverage = $partner->geo_informations && in_array($this->location, HyperLocal::insideCircle(json_decode($partner->geo_informations))->pluck('location_id')->toArray());
-            return $is_partner_has_coverage;
+            /** Do not delete this code, will be used for later, range will be fetched using hyper local. */
+//            $is_partner_has_coverage = $partner->geo_informations && in_array($this->location, HyperLocal::insideCircle(json_decode($partner->geo_informations))->pluck('location_id')->toArray());
+//            return $is_partner_has_coverage;]
+            return $partner->locations->where('id', $this->location)->count() > 0;
+            // $is_partner_has_coverage = $partner->geo_informations && in_array($this->location, HyperLocal::insideCircle(json_decode($partner->geo_informations))->pluck('location_id')->toArray());
+            // return $is_partner_has_coverage;
         });
     }
 
