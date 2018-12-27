@@ -92,9 +92,12 @@ class ResourceJobRepository
     public function addJobInformationForAPI($jobs)
     {
         foreach ($jobs as $job) {
-            $job['delivery_name'] = $job->partner_order->order->delivery_name;
-            $job['delivery_mobile'] = $job->partner_order->order->delivery_mobile;
-            $job['delivery_address'] = $job->partner_order->order->delivery_address;
+            if(!$job->partner_order->order->deliveryAddress) {
+                $job->partner_order->order->deliveryAddress = $job->partner_order->order->getTempAddress();
+            }
+            $job['delivery_name'] = $job->partner_order->order->deliveryAddress->name;
+            $job['delivery_mobile'] = $job->partner_order->order->deliveryAddress->mobile;
+            $job['delivery_address'] = $job->partner_order->order->deliveryAddress->address;
             $job['schedule_date_timestamp'] = (Carbon::parse($job->schedule_date))->timestamp;
             $job['schedule_timestamp'] = $job->partner_order->getVersion() == 'v2' ? Carbon::parse($job->schedule_date . ' ' . explode('-', $job->preferred_time)[0])->timestamp : Carbon::parse($job->schedule_date)->timestamp;
             $job['service_unit_price'] = (double)$job->service_unit_price;

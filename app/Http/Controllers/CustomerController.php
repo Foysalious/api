@@ -504,10 +504,18 @@ class CustomerController extends Controller
         try {
             $request->merge(['mobile' => formatMobile($request->mobile)]);
             $this->validate($request, [
-                'mobile' => 'required|string|mobile:bd|unique:profiles,mobile',
+                'mobile' => 'required|string|mobile:bd',
                 'name' => 'required|string'
             ], ['mobile' => 'Invalid mobile number!']);
-            $profile = $this->profileRepository->store(['mobile' => $request->mobile, 'name' => $request->name]);
+
+            $profile = $this->profileRepository->getIfExist($request->mobile, 'mobile');
+            if(!$profile) {
+                $profile = $this->profileRepository->store(['mobile' => $request->mobile, 'name' => $request->name]);
+            } else {
+                if($profile->customer)
+                    return api_response($request, null, 400, ['message' => "User already exists."]);
+            }
+
             $customer = new Customer();
             $customer->remember_token = str_random(255);
             $customer->profile_id = $profile->id;

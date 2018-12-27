@@ -107,9 +107,12 @@ class PartnerOrderRepository
                     $services->push(array('name' => $jobService->service->name, 'variables' => $variables, 'quantity' => (double)$jobService->quantity));
                 }
             }
+            if(!$jobs[0]->partner_order->order->deliveryAddress) {
+                $jobs[0]->partner_order->order->deliveryAddress = $jobs[0]->partner_order->order->getTempAddress();
+            }
             $order = collect([
-                'customer_name' => $jobs[0]->partner_order->order->delivery_name,
-                'address' => $jobs[0]->partner_order->order->delivery_address,
+                'customer_name' => $jobs[0]->partner_order->order->deliveryAddress->name,
+                'address' => $jobs[0]->partner_order->order->deliveryAddress->address,
                 'location_name' => $jobs[0]->partner_order->order->location->name,
                 'created_at' => $jobs[0]->partner_order->created_at->timestamp,
                 'created_at_readable' => $jobs[0]->partner_order->created_at->diffForHumans(),

@@ -45,8 +45,8 @@ class OuterData
             'total' => $this->getTotal(),
             'rate' => $this->getRate(),
             'last_rate' => $last->getFormattedRate(),
-            'is_improved' => $last->getRate() <= $this->innerData->getRate() ? true : false,
-            'last_rate_difference' => abs($this->innerData->getRate() - $last->getRate()),
+            'is_improved' => $last->getRate() <= $this->getRate() ? true : false,
+            'last_rate_difference' => abs($this->getRate() - $last->getFormattedRate()),
             'previous' => $this->formatPrevious($this->previous)
         ];
     }

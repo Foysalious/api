@@ -48,7 +48,7 @@ class Checkout
     {
         $this->setModifier($this->customer);
 
-        if ($request->has('address_id')) {
+        if ($request->has('address_id') && !empty($request->address_id)) {
             $address = $this->customer->delivery_addresses()->where('id', (int)$request->address_id)->first();
             if ($address->mobile != formatMobile(trim($request->mobile))) {
                 $new_address = $address->replicate();
@@ -72,7 +72,7 @@ class Checkout
             $this->orderData['location_id'] = $partner_list->location;
             $this->orderData['location'] = Location::find($partner_list->location);
             $data = $this->makeOrderData($request);
-            if ($request->has('address_id')) {
+            if ($request->has('address_id') && !empty($request->address_id)) {
                 $data['address_id'] = $address->id;
             }
 
