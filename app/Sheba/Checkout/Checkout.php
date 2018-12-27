@@ -72,7 +72,7 @@ class Checkout
             $this->orderData['location_id'] = $partner_list->location;
             $this->orderData['location'] = Location::find($partner_list->location);
             $data = $this->makeOrderData($request);
-            if ($request->has('address_id')) {
+            if ($request->has('address_id') && !empty($request->address_id)) {
                 $data['address_id'] = $address->id;
             }
 
