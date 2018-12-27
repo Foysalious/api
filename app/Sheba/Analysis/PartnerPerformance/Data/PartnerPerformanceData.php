@@ -75,5 +75,4 @@ class PartnerPerformanceData
             'timely_processed' => $this->timely_processed->toArray()
         ]);
     }
-
 }
