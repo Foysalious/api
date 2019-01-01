@@ -48,8 +48,15 @@ class CategoryGroupController extends Controller
             if ($request->has('with')) {
                 $with = $request->with;
                 if ($with == 'categories') {
-                    $categoryGroups->load(['categories' => function ($query) {
-                        return $query;
+                    $categoryGroups->load(['categories' => function ($query) use ($location) {
+                        return $query->published()
+                            ->whereHas('services', function ($q) use ($location) {
+                                $q->published()->whereHas('locations', function ($q) use ($location) {
+                                    $q->where('locations.id', $location);
+                                });
+                            })->whereHas('locations', function ($query) use ($location) {
+                                $query->where('locations.id', $location);
+                            });
                     }]);
                     $categoryGroups = $categoryGroups->each(function ($category_group) {
                         $category_group->categories->each(function ($category) {
