@@ -37,6 +37,7 @@ class EkshebaController extends Controller
                     $user = $response->data;
                     $customer = $authenticate->setName($user->name_en)->setMobile($user->mobile)->setaffiliate()->getaffiliate();
                     $customer->name = $user->name_en;
+                    $customer->eksheba_token = $request->eksheba_token;
                     $customer->auth_token = $customer->remember_token;
                     return api_response($request, null, 200,  ['user'=> $customer]);
                 }
