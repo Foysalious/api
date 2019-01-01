@@ -278,6 +278,7 @@ class ServiceRepository
     {
         foreach ($services as $service) {
             $service->partnerServices = $this->_filterByPartnerAndWallet($service->partnerServices);
+
             if (array_search('start_price', $scope) !== false) {
                 $service = $this->getStartPrice($service);
             }
@@ -303,6 +304,7 @@ class ServiceRepository
     {
         return $partnerServices->filter(function ($partner_service, $key) {
             if ($partner_service->partner != null) {
+
                 return $partner_service->partner->hasAppropriateCreditLimit();
             }
             return false;

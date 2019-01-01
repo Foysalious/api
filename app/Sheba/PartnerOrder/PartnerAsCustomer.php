@@ -23,6 +23,8 @@ class PartnerAsCustomer
     {
         $customer = Customer::where('profile_id', $this->resource->profile_id)->first();
         if (!$customer) $customer = $this->createCustomerProfile();
+        $address_count = $customer->delivery_addresses()->where('location_id', $this->partner->getHyperLocation()->location->id)->count();
+        if ($address_count == 0) $this->createCustomerDeliveryAddressFromPartnerAddress($customer);
         return $customer;
     }
 
