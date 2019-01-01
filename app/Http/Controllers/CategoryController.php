@@ -204,6 +204,7 @@ class CategoryController extends Controller
 
     public function getServices($category, Request $request)
     {
+        ini_set('memory_limit', '2048M');
         try {
             if ($request->has('location')) {
                 $location = $request->location != '' ? $request->location : 4;
