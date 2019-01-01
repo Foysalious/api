@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\HyperLocationNotFoundException;
 use App\Sheba\Checkout\PartnerList;
+use App\Sheba\Checkout\Validation;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -22,6 +23,10 @@ class PartnerLocationController extends Controller
                 'lat' => 'required|numeric',
                 'lng' => 'required|numeric',
             ]);
+            $validation = new Validation($request);
+            if (!$validation->isValid()) {
+                return api_response($request, $validation->message, 400, ['message' => $validation->message]);
+            }
             $partner = $request->has('partner') ? $request->partner : null;
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time);
             $partner_list->setGeo($request->lat, $request->lng)->setAvailability((int)$request->skip_availability)->find($partner);
