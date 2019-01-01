@@ -250,11 +250,11 @@ class CategoryController extends Controller
                 if ($location) {
                     $services = collect($services);
                     $services = $services->filter(function ($service) use ($location) {
-                        $locations = $service->locations()->pluck('id')->toArray();
+                        $locations = $service->locations->pluck('id')->toArray();
+                        removeRelationsAndFields($service);
                         return in_array($location, $locations);
                     });
                 }
-
                 if ($services->count() > 0) {
                     $category = collect($category)->only(['name', 'banner', 'parent_id', 'app_banner']);
                     $category['services'] = $this->serviceQuestionSet($services);
