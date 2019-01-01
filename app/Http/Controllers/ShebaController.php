@@ -273,7 +273,7 @@ class ShebaController extends Controller
                 ),
                 array(
                     'name' => 'City Bank',
-                    'is_published' => 1,
+                    'is_published' => 0,
                     'description' => '',
                     'asset' => 'cbl',
                     'method_name' => 'cbl'
