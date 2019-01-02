@@ -58,7 +58,8 @@ class Cors2MiddleWare
             "https://securepay.sslcommerz.com",
             "https://sandbox.thecitybank.com:4443",
             "http://bondhu.sheba.xyz",
-            "https://bondhu.sheba.xyz"
+            "https://bondhu.sheba.xyz",
+            "https://api.sheba.xyz",
         ];
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Credentials'] = 'true';
