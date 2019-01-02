@@ -36,7 +36,7 @@ class CustomerDeliveryAddressController extends Controller
                 return $customer_delivery_address;
             });
             if ($location) $customer_delivery_addresses = $customer_delivery_addresses->where('location_id', $location->id);
-            if ($request->has('partner')) {
+            if ($request->has('partner') && (int)$request->partner) {
                 $partner = Partner::find((int)$request->partner);
                 $partner_geo = json_decode($partner->geo_informations);
                 $to = [new Coords(floatval($partner_geo->lat), floatval($partner_geo->lng), $partner->id)];
@@ -237,11 +237,10 @@ class CustomerDeliveryAddressController extends Controller
             $this->validate($request, [
                 'mobile' => 'required|mobile:bd'
             ]);
-            $profile = Profile::where('mobile', '+88' . $request->mobile)->first();
-            if (!is_null($profile)) {
-                $customer = Customer::where('profile_id', $profile->id)->first();
-                $customer_order_addresses = $customer->orders()->selectRaw('delivery_address,count(*) as c')->groupBy('delivery_address')->orderBy('c', 'desc')->get();
-                $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'address')->get()->map(function ($customer_delivery_address) use ($customer_order_addresses) {
+            $profile = Profile::where('mobile', formatMobile($request->mobile))->first();
+            if ($profile && $profile->customer) {
+                $customer = $profile->customer;
+                $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'address')->get()->map(function ($customer_delivery_address) {
                     $customer_delivery_address["address"] = scramble_string($customer_delivery_address["address"]);
                     return $customer_delivery_address;
                 })->filter(function ($customer_delivery_address) {
