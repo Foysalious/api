@@ -8,7 +8,7 @@ class CustomerDeliveryAddress extends Model
     use SoftDeletes;
 
     protected $table = 'customer_delivery_addresses';
-    protected $fillable = ['name', 'mobile', 'address'];
+    protected $fillable = ['name', 'mobile', 'address', 'created_by', 'created_by_name'];
     protected $dates = ['deleted_at'];
 
     public function customer()

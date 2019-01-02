@@ -84,11 +84,11 @@ class BondhuAutoOrder
         if (!$this->request->has('address_id')) {
             $customer_address = $this->customer->delivery_addresses()->create([
                 'address' => $this->request->address,
-                'location' => $this->request->location,
+                'location_id' => $this->request->location,
                 'name' => $this->profile->name,
                 'mobile' => $this->profile->mobile,
                 'created_by' => $this->affiliate->id,
-                'created_by_name' => $this->affiliate->name
+                'created_by_name' =>  'Affiliate - ' . $this->affiliate->profile->name
             ]);
             $this->request->merge(['address_id' => $customer_address->id]);
         }
