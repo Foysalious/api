@@ -5,7 +5,6 @@ use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
 use App\Models\Partner;
 use App\Models\Profile;
-use App\Sheba\Address\AddressValidator;
 use App\Sheba\Geo;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -37,7 +36,7 @@ class CustomerDeliveryAddressController extends Controller
                 return $customer_delivery_address;
             });
             if ($location) $customer_delivery_addresses = $customer_delivery_addresses->where('location_id', $location->id);
-            if ($request->has('partner')) {
+            if ($request->has('partner') && (int)$request->partner) {
                 $partner = Partner::find((int)$request->partner);
                 $partner_geo = json_decode($partner->geo_informations);
                 $to = [new Coords(floatval($partner_geo->lat), floatval($partner_geo->lng), $partner->id)];
@@ -53,6 +52,56 @@ class CustomerDeliveryAddressController extends Controller
             $customer_delivery_addresses = $customer_delivery_addresses->sortByDesc('count')->values()->all();
             return api_response($request, $customer_delivery_addresses, 200, ['addresses' => $customer_delivery_addresses,
                 'name' => $customer->profile->name, 'mobile' => $customer->profile->mobile]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function filterAddress($customer, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'lat' => 'required|numeric',
+                'lng' => 'required|numeric',
+                'partner' => 'sometimes|numeric',
+            ]);
+            $customer = $request->customer;
+            $location = null;
+            $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'location_id', 'address', 'name', 'geo_informations')->get();
+            $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first();
+            if ($hyper_location) $location = $hyper_location->location;
+            if ($location == null) return api_response($request, null, 404, ['message' => "No address at this location"]);
+            $customer_order_addresses = $customer->orders()->selectRaw('delivery_address,count(*) as c')->groupBy('delivery_address')->orderBy('c', 'desc')->get();
+            $customer_delivery_addresses = $customer_delivery_addresses->map(function ($customer_delivery_address) use ($customer_order_addresses) {
+                $customer_delivery_address['count'] = $this->getOrderCount($customer_order_addresses, $customer_delivery_address);
+                $geo = json_decode($customer_delivery_address['geo_informations']);
+                $customer_delivery_address['geo_informations'] = $geo ? array('lat' => (double)$geo->lat, 'lng' => (double)$geo->lng) : null;
+                $customer_delivery_address['is_valid'] = 1;
+                return $customer_delivery_address;
+            });
+            if ($location) $customer_delivery_addresses = $customer_delivery_addresses->where('location_id', $location->id);
+            if ($request->has('partner')) {
+                $partner = Partner::find((int)$request->partner);
+                $partner_geo = json_decode($partner->geo_informations);
+                $to = [new Coords(floatval($partner_geo->lat), floatval($partner_geo->lng), $partner->id)];
+                $distance = (new Distance(DistanceStrategy::$VINCENTY))->matrix();
+                $customer_delivery_addresses = $customer_delivery_addresses->reject(function ($customer_delivery_address) {
+                    return $customer_delivery_address->geo_informations == null;
+                })->map(function ($customer_delivery_address) use ($distance, $to, $partner_geo) {
+                    $address_geo = $customer_delivery_address->geo_informations;
+                    $current = new Coords($address_geo['lat'], $address_geo['lng']);
+                    $inside_radius = ($distance->from([$current])->to($to)->sortedDistance()[0][$to[0]->id] <= (double)$partner_geo->radius * 1000) ? 1 : 0;
+                    $customer_delivery_address['is_valid'] = $inside_radius;
+                    return $customer_delivery_address;
+                });
+            }
+            $customer_delivery_addresses = $customer_delivery_addresses->sortByDesc('count')->values()->all();
+            return api_response($request, $customer_delivery_addresses, 200, ['addresses' => $customer_delivery_addresses,
+                'name' => $customer->profile->name, 'mobile' => $customer->profile->mobile]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -83,7 +132,6 @@ class CustomerDeliveryAddressController extends Controller
             $delivery_address = $this->_store($customer, $new_address, $request);
             return api_response($request, 1, 200, ['address' => $delivery_address->id]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -189,11 +237,10 @@ class CustomerDeliveryAddressController extends Controller
             $this->validate($request, [
                 'mobile' => 'required|mobile:bd'
             ]);
-            $profile = Profile::where('mobile', '+88' . $request->mobile)->first();
-            if (!is_null($profile)) {
-                $customer = Customer::where('profile_id', $profile->id)->first();
-                $customer_order_addresses = $customer->orders()->selectRaw('delivery_address,count(*) as c')->groupBy('delivery_address')->orderBy('c', 'desc')->get();
-                $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'address')->get()->map(function ($customer_delivery_address) use ($customer_order_addresses) {
+            $profile = Profile::where('mobile', formatMobile($request->mobile))->first();
+            if ($profile && $profile->customer) {
+                $customer = $profile->customer;
+                $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'address')->get()->map(function ($customer_delivery_address) {
                     $customer_delivery_address["address"] = scramble_string($customer_delivery_address["address"]);
                     return $customer_delivery_address;
                 })->filter(function ($customer_delivery_address) {

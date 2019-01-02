@@ -32,6 +32,7 @@ class CustomerRoute
 
                 $api->group(['prefix' => 'delivery-addresses'], function ($api) {
                     $api->get('/', 'CustomerDeliveryAddressController@index');
+                    $api->get('filter', 'CustomerDeliveryAddressController@filterAddress');
                     $api->post('/', 'CustomerDeliveryAddressController@store');
                     $api->post('{delivery_address}', 'CustomerDeliveryAddressController@update');
                     $api->delete('{delivery_address}', 'CustomerDeliveryAddressController@destroy');
