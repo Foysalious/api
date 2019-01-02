@@ -6,7 +6,9 @@ use App\Repositories\CustomerRepository;
 use App\Repositories\ProfileRepository;
 use App\Sheba\Bondhu\BondhuAutoOrder;
 use App\Sheba\Eksheba\EkshebaAuthenticate;
+use App\Sheba\Eksheba\EkshebaOrder;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -37,7 +39,7 @@ class EkshebaController extends Controller
                     $user = $response->data;
                     $customer = $authenticate->setName($user->name_en)->setMobile($user->mobile)->setaffiliate()->getaffiliate();
                     $customer->name = $user->name_en;
-                    $customer->eksheba_token = $request->eksheba_token;
+                    $customer->eksheba_token = $response->data->token;
                     $customer->auth_token = $customer->remember_token;
                     return api_response($request, null, 200,  ['user'=> $customer]);
                 }
@@ -50,9 +52,14 @@ class EkshebaController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500, ['message'=> $e->getMessage()]);
         }
-
     }
 
+    public function saveEkshebaData(Request $request, EkshebaOrder $order)
+    {
+        $response = $order->generateOrder($request->token,$request->name,$request->amount);
+        return api_response($request, null, 200,  [$response]);
+    }
+    
     private function _getEkshebaUserInfo($eksheba_token)
     {
         try {
