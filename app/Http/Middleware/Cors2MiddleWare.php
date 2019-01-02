@@ -58,6 +58,7 @@ class Cors2MiddleWare
             "https://securepay.sslcommerz.com",
             "https://sandbox.thecitybank.com:4443",
             "https://epay.thecitybank.com:7788",
+            "https://epay.thecitybank.com:443",
             "http://bondhu.sheba.xyz",
             "https://bondhu.sheba.xyz",
             "https://api.sheba.xyz",
