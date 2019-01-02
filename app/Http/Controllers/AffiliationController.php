@@ -26,8 +26,8 @@ class AffiliationController extends Controller
     public function newIndex($affiliate, Request $request)
     {
         list($offset, $limit) = calculatePagination($request);
-        \Illuminate\Support\Facades\DB::enableQueryLog();
-        $affiliate = Affiliate::with(['affiliations' => function ($q) use ($offset, $limit, $affiliate, $request)  {
+        $affiliation_counts = 0;
+        $affiliate = Affiliate::with(['affiliations' => function ($q) use ($offset, $limit, $affiliate, $request, &$affiliation_counts)  {
             if (isset($request->status) && $request->status !== "null") $q->where('status', $request->status);
             if (isset($request->q) && $request->q !== "null") {
                 $q->where(function($query) use ($request){
@@ -45,8 +45,9 @@ class AffiliationController extends Controller
                         ['type', 'Credit'],
                         ['affiliate_id', $affiliate]
                     ]);
-                }])->orderBy('id', 'desc')
-                ->skip($offset)->take($limit);
+                }])->orderBy('id', 'desc');
+            $affiliation_counts = $q->count();
+            $q->skip($offset)->take($limit);
         }])->select('id')->where('id', $affiliate)->first();
         if (count($affiliate->affiliations) != 0) {
             $affiliations = $affiliate->affiliations;
@@ -58,7 +59,7 @@ class AffiliationController extends Controller
                 }
                 array_forget($affiliation, 'transactions');
             }
-            return api_response($request, $affiliate->affiliations, 200, ['affiliations' => $affiliations]);
+            return api_response($request, $affiliate->affiliations, 200, ['affiliations' => $affiliations,  'offset' => (int) $offset, 'total_refers'=>$affiliation_counts]);
         } else {
             return api_response($request, null, 404);
         }
