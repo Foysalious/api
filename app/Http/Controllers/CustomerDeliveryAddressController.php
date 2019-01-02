@@ -189,9 +189,9 @@ class CustomerDeliveryAddressController extends Controller
             $this->validate($request, [
                 'mobile' => 'required|mobile:bd'
             ]);
-            $profile = Profile::where('mobile', '+88' . $request->mobile)->first();
-            if (!is_null($profile)) {
-                $customer = Customer::where('profile_id', $profile->id)->first();
+            $profile = Profile::where('mobile', formatMobile($request->mobile))->first();
+            if ($profile && $profile->customer) {
+                $customer = $profile->customer;
                 $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'address')->get()->map(function ($customer_delivery_address) {
                     $customer_delivery_address["address"] = scramble_string($customer_delivery_address["address"]);
                     return $customer_delivery_address;
