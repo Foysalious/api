@@ -1,6 +1,5 @@
 <?php namespace App\Http\Route\Prefix\V2;
 
-
 class AffiliateRoute
 {
     public function set($api)
@@ -24,7 +23,6 @@ class AffiliateRoute
             $api->get('customer-info', 'AffiliateController@getCustomerInfo');
             $api->post('top-up-test', 'TopUpController@topUpTest');
         });
-        $api->post('eksheba/save','EkshebaController@saveEkshebaData');
         $api->get('affiliates/faq', 'FaqController@getAffiliateFaqs');
     }
 }
