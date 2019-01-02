@@ -37,7 +37,7 @@ class CustomerDeliveryAddressController extends Controller
                 return $customer_delivery_address;
             });
             if ($location) $customer_delivery_addresses = $customer_delivery_addresses->where('location_id', $location->id);
-            if ($request->has('partner')) {
+            if ($request->has('partner') && (int)$request->partner) {
                 $partner = Partner::find((int)$request->partner);
                 $partner_geo = json_decode($partner->geo_informations);
                 $to = [new Coords(floatval($partner_geo->lat), floatval($partner_geo->lng), $partner->id)];
