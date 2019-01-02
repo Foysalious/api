@@ -24,6 +24,7 @@ class AffiliateRoute
             $api->get('customer-info', 'AffiliateController@getCustomerInfo');
             $api->post('top-up-test', 'TopUpController@topUpTest');
         });
+        $api->post('eksheba/save','EkshebaController@saveEkshebaData');
         $api->get('affiliates/faq', 'FaqController@getAffiliateFaqs');
     }
 }

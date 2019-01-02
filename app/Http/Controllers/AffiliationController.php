@@ -26,7 +26,19 @@ class AffiliationController extends Controller
     public function newIndex($affiliate, Request $request)
     {
         list($offset, $limit) = calculatePagination($request);
-        $affiliate = Affiliate::with(['affiliations' => function ($q) use ($offset, $limit, $affiliate) {
+        \Illuminate\Support\Facades\DB::enableQueryLog();
+        $affiliate = Affiliate::with(['affiliations' => function ($q) use ($offset, $limit, $affiliate, $request)  {
+            if (isset($request->status) && $request->status !== "null") $q->where('status', $request->status);
+            if (isset($request->q) && $request->q !== "null") {
+                $q->where(function($query) use ($request){
+                    $query->where('customer_mobile', 'LIKE', '%' . $request->q . '%')
+                        ->orWhere('customer_name','LIKE','%'.$request->q.'%')
+                        ->orWhere('service','LIKE','%'.$request->q.'%');
+                });
+            }
+            if (isset($request->from) && $request->from !== "null")
+                $q->whereBetween('created_at', [$request->from . " 00:00:00", $request->to . " 23:59:59"]);
+
             $q->select('id', 'affiliate_id', 'customer_name', 'customer_mobile', 'service', 'status', 'is_fake', 'reject_reason', DB::raw('DATE_FORMAT(created_at, "%Y-%m-%d") as referred_date'))
                 ->with(['transactions' => function ($q) use ($affiliate) {
                     $q->where([
