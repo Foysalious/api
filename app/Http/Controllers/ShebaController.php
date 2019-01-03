@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Jobs\SendFaqEmail;
 use App\Models\AppVersion;
@@ -69,17 +67,10 @@ class ShebaController extends Controller
         try {
             if ($request->has('is_business') && (int)$request->is_business) {
                 $portal_name = 'manager-app';
+                $screen = 'eshop';
+
                 if (!$request->has('location')) $location = 4;
                 else $location = $request->location;
-                $screen = 'eshop';
-                $sliderPortal = SliderPortal::with('slider')->whereHas('slider', function ($query) use ($location) {
-                    $query->where('is_published', 1);
-                })->where('portal_name', $portal_name)->where('screen', $screen)->first();
-
-                $slider = $sliderPortal->slider->whereHas('slides', function ($q) use ($location) {
-                    $q->where('slider_slide.location_id', $location);
-                    $q->orderBy('order', 'desc');
-                })->first();
             } else {
                 if ($request->has('location')) {
                     $location = $request->location;
@@ -89,35 +80,51 @@ class ShebaController extends Controller
                         if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
                     }
                 }
-                $sliderPortal = SliderPortal::with('slider')->whereHas('slider', function ($query) use ($location) {
-                    $query->where('is_published', 1);
-                })->where('portal_name', $request->portal)->where('screen', $request->screen)->first();
 
-                $slider = $sliderPortal->slider->whereHas('slides', function ($q) use ($location) {
-                    $q->where('slider_slide.location_id', $location);
-                    $q->orderBy('order', 'desc');
-                })->first();
+                $portal_name = $request->portal;
+                $screen = $request->screen;
             }
 
-            if (!is_null($slider)) {
-                return api_response($request, $slider->slides, 200, ['images' => $slider->slides]);
-            } else
-                return api_response($request, null, 404);
+            $slider = $this->getSliderWithSlides($location, $portal_name, $screen);
 
-// Previous Codes, Left Written Until QA
-//            $images = Slider::select('id', 'image_link', 'small_image_link', 'target_link', 'target_type', 'target_id');
-//            if ($request->has('is_business') && (int)$request->is_business) {
-//                $images = $images->showBusiness()->map(function ($image) {
-//                    $image['target_type'] = $image['target_type'] ? explode('\\', $image['target_type'])[2] : null;
-//                    return $image;
-//                });
-//            } else {
-//                $images = $images->show();
-//            }
-//            return count($images) > 0 ? api_response($request, $images, 200, ['images' => $images]) : api_response($request, null, 404);
+            if (!is_null($slider)) return api_response($request, $slider->slides, 200, ['images' => $slider->slides]);
+            else return api_response($request, null, 404);
+
+           /**
+            * Previous Codes, Left Written Until QA
+            *
+            * $images = Slider::select('id', 'image_link', 'small_image_link', 'target_link', 'target_type', 'target_id');
+           if ($request->has('is_business') && (int)$request->is_business) {
+               $images = $images->showBusiness()->map(function ($image) {
+                   $image['target_type'] = $image['target_type'] ? explode('\\', $image['target_type'])[2] : null;
+                   return $image;
+               });
+           } else {
+               $images = $images->show();
+           }
+           return count($images) > 0 ? api_response($request, $images, 200, ['images' => $images]) : api_response($request, null, 404);*/
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param $location
+     * @param $portal_name
+     * @param $screen
+     * @return Slider
+     */
+    private function getSliderWithSlides($location, $portal_name, $screen)
+    {
+        $sliderPortal = SliderPortal::with('slider')->whereHas('slider', function ($query) use ($location) {
+            $query->where('is_published', 1);
+        })->where('portal_name', $portal_name)->where('screen', $screen)->first();
+
+        $slider = $sliderPortal->slider()->with(['slides' => function ($q) use ($location) {
+            $q->where('location_id', $location)->orderBy('order');
+        }])->first();
+
+        return $slider;
     }
 
     public function getSimilarOffer($offer)
@@ -292,5 +299,4 @@ class ShebaController extends Controller
             return api_response($request, null, 500);
         }
     }
-
 }
