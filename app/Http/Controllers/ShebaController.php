@@ -90,19 +90,19 @@ class ShebaController extends Controller
             if (!is_null($slider)) return api_response($request, $slider->slides, 200, ['images' => $slider->slides]);
             else return api_response($request, null, 404);
 
-           /**
-            * Previous Codes, Left Written Until QA
-            *
-            * $images = Slider::select('id', 'image_link', 'small_image_link', 'target_link', 'target_type', 'target_id');
-           if ($request->has('is_business') && (int)$request->is_business) {
-               $images = $images->showBusiness()->map(function ($image) {
-                   $image['target_type'] = $image['target_type'] ? explode('\\', $image['target_type'])[2] : null;
-                   return $image;
-               });
-           } else {
-               $images = $images->show();
-           }
-           return count($images) > 0 ? api_response($request, $images, 200, ['images' => $images]) : api_response($request, null, 404);*/
+            /**
+             * Previous Codes, Left Written Until QA
+             *
+             * $images = Slider::select('id', 'image_link', 'small_image_link', 'target_link', 'target_type', 'target_id');
+             * if ($request->has('is_business') && (int)$request->is_business) {
+             * $images = $images->showBusiness()->map(function ($image) {
+             * $image['target_type'] = $image['target_type'] ? explode('\\', $image['target_type'])[2] : null;
+             * return $image;
+             * });
+             * } else {
+             * $images = $images->show();
+             * }
+             * return count($images) > 0 ? api_response($request, $images, 200, ['images' => $images]) : api_response($request, null, 404);*/
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
@@ -263,6 +263,7 @@ class ShebaController extends Controller
     public function getPayments(Request $request)
     {
         try {
+            $version_code = (int)$request->header('Version-Code');
             $payments = array(
                 array(
                     'name' => 'Sheba Credit',
@@ -280,7 +281,7 @@ class ShebaController extends Controller
                 ),
                 array(
                     'name' => 'City Bank',
-                    'is_published' => 0,
+                    'is_published' => $version_code ? ($version_code > 30112 ? 1 : 0) : 1,
                     'description' => '',
                     'asset' => 'cbl',
                     'method_name' => 'cbl'
