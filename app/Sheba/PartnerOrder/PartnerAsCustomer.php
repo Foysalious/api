@@ -40,7 +40,7 @@ class PartnerAsCustomer
 
     private function createCustomerDeliveryAddressFromPartnerAddress(Customer $customer)
     {
-        $geo = json_decode($this->partner->geo_inforamtions);
+        $geo = json_decode($this->partner->geo_informations);
         $delivery_address = new CustomerDeliveryAddress();
         $delivery_address->address = $this->partner->address;
         $delivery_address->name = 'Office';
