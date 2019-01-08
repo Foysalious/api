@@ -135,8 +135,7 @@ class OrderController extends Controller
                     }
                     $this->sendNotifications($bondhuAutoOrder->customer, $order);
                     DB::commit();
-                    return api_response($request, $order, 200, ['link' => $link, 'job_id' => $order->jobs->first()->id,
-                        'order_code' => $order->code(), 'payment' => $payment]);
+                    return api_response($request, $order, 200, ['link' => $link, 'job_id' => $order->jobs->first()->id, 'order_code' => $order->code(), 'payment' => $payment]);
                 } else {
                     DB::rollback();
                     return api_response($request, null, 400, ['message' => 'Order can not be created']);
@@ -144,7 +143,6 @@ class OrderController extends Controller
             } else {
                 return api_response($request, null, 400, ['message' => 'Service is invalid']);
             }
-
         } catch (HyperLocationNotFoundException $e) {
             return api_response($request, null, 400, ['message' => 'You\'re out of service area']);
         } catch (QueryException $e) {
@@ -156,7 +154,6 @@ class OrderController extends Controller
             app('sentry')->captureException($exception);
             return api_response($request, null, 500);
         }
-
     }
 
     private function updateVouchers($order, Customer $customer)

@@ -1,12 +1,4 @@
-<?php
-/**
- * Created by PhpStorm.
- * User: Tech Land
- * Date: 12/3/2018
- * Time: 6:01 PM
- */
-
-namespace App\Sheba\Bondhu;
+<?php namespace App\Sheba\Bondhu;
 
 use App\Http\Requests\BondhuOrderRequest;
 use App\Models\Affiliate;
@@ -90,16 +82,14 @@ class BondhuAutoOrder
     private function setAddress()
     {
         if (!$this->request->has('address_id')) {
-            $customer_address = $this->customer->delivery_addresses()->create(
-                [
-                    'address' => $this->request->address,
-                    'location' => $this->request->location,
-                    'name' => $this->profile->name,
-                    'mobile' => $this->profile->mobile,
-                    'created_by' => $this->affiliate->id,
-                    'created_by_name' => $this->affiliate->name
-                ]
-            );
+            $customer_address = $this->customer->delivery_addresses()->create([
+                'address' => $this->request->address,
+                'location_id' => $this->request->location,
+                'name' => $this->profile->name,
+                'mobile' => $this->profile->mobile,
+                'created_by' => $this->affiliate->id,
+                'created_by_name' =>  'Affiliate - ' . $this->affiliate->profile->name
+            ]);
             $this->request->merge(['address_id' => $customer_address->id]);
         }
     }
@@ -109,7 +99,7 @@ class BondhuAutoOrder
         $this->request->merge([
             'affiliation_id' => $this->affiliation->id,
             'created_by' => $this->affiliate->id,
-            'created_by_name' => 'Affiliate - ' . $this->affiliate->profile->name,
+            'created_by_name' => 'Affiliate - ' . $this->affiliate->profile->name
         ]);
     }
 
@@ -131,5 +121,4 @@ class BondhuAutoOrder
         $customer->save();
         return $customer;
     }
-
 }

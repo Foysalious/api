@@ -490,7 +490,9 @@ class AffiliateController extends Controller
                     'image' => $service->app_thumb,
                     'min_quantity' => $service->min_quantity,
                     'unit' => $service->unit,
-                    'category_id' => $service->category_id
+                    'category_id' => $service->category_id,
+                    'banner' => $service->banner,
+                    'description' => $service->description
                 ];
             });
             return api_response($request, $services, 200, ['services' => $services]);

@@ -79,9 +79,9 @@ class PartnerList
 
     private function checkForRentACarPickUpGeo()
     {
-        if($this->selectedCategory->isRentCar()) {
+        if ($this->selectedCategory->isRentCar()) {
             $service = $this->selected_services->first();
-            if($service->pickUpLocationLat && $service->pickUpLocationLng) {
+            if ($service->pickUpLocationLat && $service->pickUpLocationLng) {
                 $this->setGeo($service->pickUpLocationLat, $service->pickUpLocationLng);
                 $this->location = null;
             }
@@ -153,10 +153,12 @@ class PartnerList
         $this->filterByOption();
         $time_elapsed_secs = microtime(true) - $start;
         //dump("filter partner by option: " . $time_elapsed_secs * 1000);
-
         $start = microtime(true);
         if (!$this->skipAvailability) $this->addAvailability();
         elseif ($this->partners->count() > 1) $this->rejectShebaHelpDesk();
+        $this->partners = $this->partners->filter(function ($partner) {
+            return $this->hasResourcesForTheCategory($partner);
+        });
         $time_elapsed_secs = microtime(true) - $start;
         //dump("filter partner by availability: " . $time_elapsed_secs * 1000);
         $this->calculateHasPartner();
@@ -168,6 +170,9 @@ class PartnerList
         $this->partners = $this->findPartnersByService($partner_id);
         $this->partners->load('locations');
         return $this->partners->filter(function ($partner) {
+            /** Do not delete this code, will be used for later, range will be fetched using hyper local. */
+//            $is_partner_has_coverage = $partner->geo_informations && in_array($this->location, HyperLocal::insideCircle(json_decode($partner->geo_informations))->pluck('location_id')->toArray());
+//            return $is_partner_has_coverage;]
             return $partner->locations->where('id', $this->location)->count() > 0;
             // $is_partner_has_coverage = $partner->geo_informations && in_array($this->location, HyperLocal::insideCircle(json_decode($partner->geo_informations))->pluck('location_id')->toArray());
             // return $is_partner_has_coverage;
@@ -191,12 +196,28 @@ class PartnerList
                 ->groupBy('partner_id')->havingRaw('c=' . count($this->selectedServiceIds));
         })->whereDoesntHave('leaves', function ($q) {
             $q->where('end', null)->orWhere([['start', '<=', Carbon::now()], ['end', '>=', Carbon::now()->addDays(7)]]);
-        })->published()
+        })->with(['handymanResources' => function ($q) {
+            $q->verified();
+        }])->published()
             ->select('partners.id', 'partners.current_impression', 'partners.geo_informations', 'partners.address', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet', 'partners.package_id');
         if ($partner_id != null) {
             $query = $query->where('partners.id', $partner_id);
         }
         return $query->get();
+    }
+
+    private function hasResourcesForTheCategory($partner)
+    {
+        $partner_resource_ids = [];
+        $partner->handymanResources->map(function ($resource) use (&$partner_resource_ids) {
+            $partner_resource_ids[$resource->pivot->id] = $resource;
+        });
+        $result = [];
+        collect(DB::table('category_partner_resource')->select('partner_resource_id')->whereIn('partner_resource_id', array_keys($partner_resource_ids))
+            ->where('category_id', $this->selectedCategory->id)->get())->pluck('partner_resource_id')->each(function ($partner_resource_id) use ($partner_resource_ids, &$result) {
+            $result[] = $partner_resource_ids[$partner_resource_id];
+        });
+        return count($result) > 0 ? 1 : 0;
     }
 
     private function getContactNumber($partner)

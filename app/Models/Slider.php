@@ -5,39 +5,25 @@ use Illuminate\Database\Eloquent\Model;
 class Slider extends Model
 {
     protected $guarded = ['id'];
+    protected $slidePivotColumns = ['location_id', 'order'];
 
-    public function scopeActive($query)
+    public function getSettingsName()
     {
-        return $query->where('is_active', 1);
-    }
-
-    public function scopeForBusiness($query)
-    {
-        return $query->where('is_active_for_business', 1);
-    }
-
-    public function scopeSort($query)
-    {
-        return $query->orderBy('order');
-    }
-
-    public function scopeShow($query)
-    {
-        return $query->active()->sort()->get();
-    }
-
-    public function scopeShowBusiness($query)
-    {
-        return $query->ForBusiness()->sort()->get();
-    }
-
-    public function slides()
-    {
-        return $this->belongsToMany(Slide::class, 'slider_slide')->withPivot(['location_id','order']);
+        return 'Slider';
     }
 
     public function sliderPortals()
     {
         return $this->hasMany(SliderPortal::class);
+    }
+
+    public function slides()
+    {
+        return $this->belongsToMany(Slide::class, 'slider_slide')->withPivot($this->slidePivotColumns);
+    }
+
+    public function scopePublished($query)
+    {
+        return $query->where('is_published', 1);
     }
 }

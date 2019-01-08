@@ -103,6 +103,7 @@ class Route
                 });
             });
             $api->get('updates', 'UpdateController@getUpdates');
+            $api->get('ek-sheba/authenticate','EkshebaController@authenticate');
         });
         return $api;
     }

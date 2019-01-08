@@ -181,7 +181,7 @@ class PartnerScheduleSlot
             foreach ($this->shebaSlots as $slot) {
                 if (!$slot['is_available']) continue;
                 $start_time = Carbon::parse($date_string . ' ' . $slot->start);
-                $end_time = Carbon::parse($date_string . ' ' . $slot->end)->addMinutes($this->category->book_resource_minutes);
+                $end_time = Carbon::parse($date_string . ' ' . $slot->start)->addMinutes($this->category->book_resource_minutes);
                 $booked_resources = collect();
                 foreach ($bookedSchedules as $booked_schedule) {
                     if ($this->hasBookedSchedule($booked_schedule, $start_time, $end_time)) $booked_resources->push($booked_schedule->resource_id);
