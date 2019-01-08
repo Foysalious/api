@@ -6,6 +6,7 @@ use App\Exceptions\HyperLocationNotFoundException;
 use App\Jobs\DeductPartnerImpression;
 use App\Models\Category;
 use App\Models\Customer;
+use App\Models\Event;
 use App\Models\HyperLocal;
 use App\Models\ImpressionDeduction;
 use App\Models\Partner;
@@ -23,6 +24,7 @@ use Sheba\Location\Distance\DistanceStrategy;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Sheba\Checkout\PartnerSort;
 use Sheba\ModificationFields;
+use Sheba\RequestIdentification;
 
 class PartnerList
 {
@@ -44,6 +46,7 @@ class PartnerList
     public $selectedCategory;
     private $rentCarCategoryIds;
     private $selectedServiceIds;
+    private $notFoundValues;
     use ModificationFields;
 
     public function __construct($services, $date, $time, $location = null)
@@ -62,6 +65,13 @@ class PartnerList
         $this->partnerServiceRepository = new PartnerServiceRepository();
         $this->skipAvailability = 0;
         $this->checkForRentACarPickUpGeo();
+        $this->notFoundValues = [
+            'service' => [],
+            'location' => [],
+            'credit' => [],
+            'options' => [],
+            'handyman' => []
+        ];
     }
 
     public function setGeo($lat, $lng)
@@ -159,6 +169,7 @@ class PartnerList
         $this->partners = $this->partners->filter(function ($partner) {
             return $this->hasResourcesForTheCategory($partner);
         });
+        $this->notFoundValues['handyman'] = $this->getPartnerIds();
         $time_elapsed_secs = microtime(true) - $start;
         //dump("filter partner by availability: " . $time_elapsed_secs * 1000);
         $this->calculateHasPartner();
@@ -239,11 +250,15 @@ class PartnerList
     private function findPartnersByServiceAndGeo($partner_id = null)
     {
         $hyper_local = HyperLocal::insidePolygon($this->lat, $this->lng)->with('location')->first();
-        if (!$hyper_local) throw new HyperLocationNotFoundException("lat : $this->lat, lng: $this->lng");
+        if (!$hyper_local) {
+            $this->saveNotFoundEvent();
+            throw new HyperLocationNotFoundException("lat : $this->lat, lng: $this->lng");
+        }
         $this->location = $hyper_local->location->id;
         $this->partners = $this->findPartnersByService($partner_id)->reject(function ($partner) {
             return $partner->geo_informations == null;
         });
+        $this->notFoundValues['service'] = $this->getPartnerIds();
         if ($this->partners->count() == 0) return $this->partners;
         $current = new Coords($this->lat, $this->lng);
         $to = $this->partners->map(function ($partner) {
@@ -252,9 +267,11 @@ class PartnerList
         })->toArray();
         $distance = (new Distance(DistanceStrategy::$VINCENTY))->matrix();
         $results = $distance->from([$current])->to($to)->sortedDistance()[0];
-        return $this->partners->filter(function ($partner) use ($results) {
+        $this->partners = $this->partners->filter(function ($partner) use ($results) {
             return $results[$partner->id] <= (double)json_decode($partner->geo_informations)->radius * 1000;
         });
+        $this->notFoundValues['location'] = $this->getPartnerIds();
+        return $this->partners;
     }
 
     private function filterByOption()
@@ -267,6 +284,7 @@ class PartnerList
                 });
             }
         }
+        $this->notFoundValues['options'] = $this->getPartnerIds();
     }
 
     private function filterByCreditLimit()
@@ -278,6 +296,7 @@ class PartnerList
             /** @var Partner $partner */
             return $partner->hasAppropriateCreditLimit();
         });
+        $this->notFoundValues['credit'] = $this->getPartnerIds();
     }
 
     private function addAvailability()
@@ -366,7 +385,7 @@ class PartnerList
     {
         if (request()->has('screen') && request()->get('screen') == 'partner_list'
             && in_array(request()->header('Portal-Name'), ['customer-portal', 'customer-app', 'manager-app', 'manager-portal'])) {
-            $partners = $this->partners->pluck('id')->toArray();
+            $partners = $this->getPartnerIds();
             $impression_deduction = new ImpressionDeduction();
             $impression_deduction->category_id = $this->selectedCategory->id;
             $impression_deduction->location_id = $this->location;
@@ -476,6 +495,8 @@ class PartnerList
     {
         if (count($this->partners) > 0) {
             $this->hasPartners = true;
+        } else {
+            $this->saveNotFoundEvent();
         }
     }
 
@@ -515,4 +536,40 @@ class PartnerList
             return $partner->id == 1809;
         });
     }
+
+    private function getPartnerIds()
+    {
+        return $this->partners->pluck('id')->toArray();
+    }
+
+    public function saveNotFoundEvent()
+    {
+        $event = new Event();
+        $event->tag = 'no_partner_found';
+        $event->value = $this->getNotFoundValues();
+        if (\request()->hasHeader('User-Id')) $this->setModifier(Customer::find(\request()->header('User-Id')));
+        $event->fill((new RequestIdentification)->get());
+        $event->save();
+
+    }
+
+    public function getNotFoundValues()
+    {
+        return json_encode(
+            array_merge($this->notFoundValues, [
+                'request' => [
+                    'services' => $this->selected_services->map(function ($service) {
+                        return [
+                            'id' => $service->id,
+                            'option' => $service->option,
+                            'quantity' => $service->quantity
+                        ];
+                    }),
+                    'lat' => $this->lat,
+                    'lng' => $this->lng
+                ]
+            ])
+        );
+    }
+
 }
