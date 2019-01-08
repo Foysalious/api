@@ -569,7 +569,9 @@ class PartnerList
                         ];
                     }),
                     'lat' => $this->lat,
-                    'lng' => $this->lng
+                    'lng' => $this->lng,
+                    'location' => $this->location,
+                    'origin' => request()->header('Origin')
                 ]
             ])
         );
