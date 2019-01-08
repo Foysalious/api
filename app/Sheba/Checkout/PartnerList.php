@@ -547,10 +547,13 @@ class PartnerList
         $event = new Event();
         $event->tag = 'no_partner_found';
         $event->value = $this->getNotFoundValues();
-        if (\request()->hasHeader('User-Id')) $this->setModifier(Customer::find(\request()->header('User-Id')));
+        if (\request()->hasHeader('User-Id')) {
+            $this->setModifier(Customer::find(\request()->header('User-Id')));
+            $this->withCreateModificationField($event);
+        }
         $event->fill((new RequestIdentification)->get());
+        $event->created_at = Carbon::now();
         $event->save();
-
     }
 
     public function getNotFoundValues()

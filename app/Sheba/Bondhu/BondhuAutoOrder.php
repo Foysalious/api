@@ -4,6 +4,7 @@ use App\Http\Requests\BondhuOrderRequest;
 use App\Models\Affiliate;
 use App\Models\Affiliation;
 use App\Models\Customer;
+use App\Models\Location;
 use App\Models\Profile;
 use App\Models\Service;
 use App\Sheba\Checkout\Checkout;
@@ -82,13 +83,16 @@ class BondhuAutoOrder
     private function setAddress()
     {
         if (!$this->request->has('address_id')) {
+            $location = Location::find((int)$this->request->location);
+            $geo = json_decode($location->geo_informations);
             $customer_address = $this->customer->delivery_addresses()->create([
                 'address' => $this->request->address,
                 'location_id' => $this->request->location,
+                'geo_informations' => json_encode(['lat' => $geo->lat, 'lng' => $geo->lng]),
                 'name' => $this->profile->name,
                 'mobile' => $this->profile->mobile,
                 'created_by' => $this->affiliate->id,
-                'created_by_name' =>  'Affiliate - ' . $this->affiliate->profile->name
+                'created_by_name' => 'Affiliate - ' . $this->affiliate->profile->name
             ]);
             $this->request->merge(['address_id' => $customer_address->id]);
         }
