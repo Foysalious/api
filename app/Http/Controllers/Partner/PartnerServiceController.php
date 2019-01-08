@@ -21,7 +21,7 @@ class PartnerServiceController extends Controller
         }])->get();
         $master_categories = collect();
         foreach ($partner_services as $partner_service) {
-            if (!$partner_service->service->publication_status && !$partner_service->service->is_published_for_backend) continue;
+            if (!$partner_service->service->publication_status) continue;
 
             $master_category = $partner_service->service->category->parent;
             $master_category_in_collection = $master_categories->where('id', $master_category->id)->first();
