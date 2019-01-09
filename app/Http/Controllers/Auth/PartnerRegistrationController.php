@@ -136,6 +136,7 @@ class PartnerRegistrationController extends Controller
                 if (isset($data['billing_type']) && isset($data['package_id'])) $partner->subscribe($data['package_id'], $data['billing_type']);
             });
         } catch (QueryException $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return null;
         }
@@ -161,5 +162,51 @@ class PartnerRegistrationController extends Controller
         PartnerWalletSetting::create(array_merge(['partner_id' => $partner->id, 'security_money' => 5000], $by));
     }
 
+    public function registerReferAffiliate(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'company_name' => 'required|string',
+                'from' => 'string|in:' . implode(',', constants('FROM')),
+                'mobile' => 'required',
+                'name' => 'required'
+            ]);
+
+            $mobile = formatMobile($request->mobile);
+            if ($profile = $this->profileRepository->ifExist($mobile, 'mobile')) {
+                $resource = $profile->resource;
+                if (!$resource) $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
+            } else {
+                $profile = $this->profileRepository->registerMobile(array_merge($request->all(), ['mobile' => $mobile]));
+                $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
+            }
+           // if ($resource->partnerResources->count() > 0) return api_response($request, null, 403, ['message' => 'You already have a company!']);
+            $request['package_id'] = env('LIGHT_PACKAGE_ID');
+            $request['billing_type'] = 'monthly';
+            $data = $this->makePartnerCreateData($request);
+
+            if ($partner = $this->createPartner($resource, $data)) {
+                $info = $this->profileRepository->getProfileInfo('resource', Profile::find($profile->id));
+                /**
+                 * LOGIC CHANGE - PARTNER REWARD MOVE TO WAITING STATUS
+                 *
+                 * app('\Sheba\PartnerAffiliation\RewardHandler')->setPartner($partner)->onBoarded();
+                 */
+                return api_response($request, null, 200, ['info' => $info]);
+            } else {
+                return api_response($request, null, 500);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 
 }
