@@ -20,8 +20,8 @@ class ShebaController extends Controller
     {
         try {
             $this->validate($request, [
-                'category' => 'required|numeric',
-                'partner' => 'required|numeric',
+                'category' => 'sometimes|numeric',
+                'partner' => 'sometimes|numeric',
                 'limit' => 'sometimes|numeric|min:1',
             ]);
             $limit = $request->has('limit') ? $request->limit : 1;

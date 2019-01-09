@@ -549,13 +549,15 @@ class PartnerList
         $event->tag = 'no_partner_found';
         $event->value = $this->getNotFoundValues();
         $event->fill((new RequestIdentification)->get());
-        if (\request()->hasHeader('User-Id')) {
-            if ($event->portal_name == 'bondhu-app') {
-                $event->created_by_type = "App\\Models\\Affiliate";
+        if ($event->portal_name == 'bondhu-app') {
+            $event->created_by_type = "App\\Models\\Affiliate";
+            if (\request()->hasHeader('User-Id')) {
                 $event->created_by = \request()->header('User-Id');
                 $event->created_by_name = "Affiliate - " . Affiliate::find((int)\request()->header('User-Id'))->profile->name;
-            } elseif ($event->portal_name == 'customer-app' || $event->portal_name == 'customer-portal') {
-                $event->created_by_type = "App\\Models\\Customer";
+            }
+        } elseif ($event->portal_name == 'customer-app' || $event->portal_name == 'customer-portal') {
+            $event->created_by_type = "App\\Models\\Customer";
+            if (\request()->hasHeader('User-Id')) {
                 $event->created_by = \request()->header('User-Id');
                 $event->created_by_name = "Customer - " . Customer::find((int)\request()->header('User-Id'))->profile->name;
             }
