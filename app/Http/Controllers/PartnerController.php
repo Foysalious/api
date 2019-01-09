@@ -499,6 +499,10 @@ class PartnerController extends Controller
                 foreach ($partner->categories as $category) {
                     $services = $partner->services()->select('services.id', 'name', 'variable_type', 'services.min_quantity', 'services.variables')
                         ->where('category_id', $category->id)
+                        ->where(function($q){
+                            $q->where('publication_status',1);
+                            $q->oRwhere('is_published_for_backend',1);
+                        })
                         ->wherePivot('is_published', 1)->wherePivot('is_verified', 1)
                         ->publishedForAll()
                         ->get();
