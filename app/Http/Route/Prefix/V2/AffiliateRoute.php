@@ -20,6 +20,7 @@ class AffiliateRoute
             $api->get('top-up/history', 'AffiliateController@topUpHistory');
             $api->post('place-order', 'OrderController@placeOrderFromBondhu');
             $api->get('customer-delivery-address', 'CustomerDeliveryAddressController@getDeliveryInfoForAffiliate');
+            $api->post('customer-delivery-address', 'CustomerDeliveryAddressController@storeDeliveryAddressForAffiliate');
             $api->get('customer-info', 'AffiliateController@getCustomerInfo');
             $api->post('top-up-test', 'TopUpController@topUpTest');
         });
