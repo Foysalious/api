@@ -1,20 +1,28 @@
 <?php namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\Controller;
+
 use App\Models\Category;
 use App\Models\CategoryPartner;
 use App\Models\HyperLocal;
 use App\Models\Partner;
+use App\Models\PartnerGeoChangeLog;
 use App\Models\PartnerResource;
 use App\Models\PartnerWorkingHour;
+
 use App\Repositories\PartnerRepository;
+
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use DB;
+use Sheba\ModificationFields;
 use Sheba\Partner\StatusChanger;
+use Sheba\RequestIdentification;
 
 class OperationController extends Controller
 {
+    use ModificationFields;
+
     public function index($partner, Request $request)
     {
         try {
@@ -57,6 +65,8 @@ class OperationController extends Controller
             }
 
             $partner = $request->partner;
+            $this->setModifier($partner);
+
             return $this->saveInDatabase($partner, $request) ? api_response($request, $partner, 200) : api_response($request, $partner, 500);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -78,11 +88,20 @@ class OperationController extends Controller
                 if ($request->has('locations')) $partner->locations()->sync(json_decode($request->locations));
                 if ($request->has('address')) $partner_info['address'] = $request->address;
                 if ($request->has('lat') && $request->has('lng')) {
+                    $old_geo_informations = $partner->geo_informations;
                     $partner_info['geo_informations'] = json_encode([
                         'lat' => $request->lat,
                         'lng' => $request->lng,
                         'radius' => $request->has('radius') ? ($request->radius) / 1000 : ((json_decode($partner->geo_informations)->radius) / 1000 ?: '10')
                     ]);
+
+                    $geo_change_log_data = [
+                        'old_geo_informations' => $old_geo_informations,
+                        'new_geo_informations' => $partner_info['geo_informations'],
+                        'log' => 'Partner Geo Information Updated'
+                    ];
+
+                    $partner->geoChangeLogs()->save(new PartnerGeoChangeLog($this->withCreateModificationField((new RequestIdentification())->set($geo_change_log_data))));
                 }
 
                 $partner->update($partner_info);

@@ -463,4 +463,9 @@ class Partner extends Model implements Rewardable, TopUpAgent
         $distance = (new Distance(DistanceStrategy::$VINCENTY))->linear();
         return $distance->to($coords)->from($partner_coord)->isWithin($geo->radius * 1000);
     }
+
+    public function geoChangeLogs()
+    {
+        return $this->hasMany(PartnerGeoChangeLog::class);
+    }
 }
