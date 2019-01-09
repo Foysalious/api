@@ -46,7 +46,7 @@ class Checkout
 
     public function placeOrder($request)
     {
-        $this->setModifier($this->customer);
+        $this->setModifier($this->customer)   ;
 
         if ($request->has('address_id') && !empty($request->address_id)) {
             $address = $this->customer->delivery_addresses()->where('id', (int)$request->address_id)->first();

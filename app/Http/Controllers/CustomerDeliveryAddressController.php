@@ -246,9 +246,14 @@ class CustomerDeliveryAddressController extends Controller
                     return $address->geo_informations == null;
                 })->map(function ($customer_delivery_address) {
                     $customer_delivery_address["address"] = scramble_string($customer_delivery_address["address"]);
-                    array_forget($customer_delivery_address, 'geo_informations');
+                    $customer_delivery_address['geo_informations'] = json_decode($customer_delivery_address['geo_informations']);
                     return $customer_delivery_address;
-                })->filter(function ($customer_delivery_address) {
+                })->filter(function ($customer_delivery_address) use ($request) {
+                    if($request->has('lat') && $request->has('lng')) {
+                        $geo_informations= $customer_delivery_address['geo_informations'];
+                        if((float) $request->lat !== $geo_informations->lat ||  (float) $request->lng !== $geo_informations->lng)
+                            return false;
+                    }
                     return $customer_delivery_address->address != null;
                 })->values()->all();
                 return api_response($request, $customer_delivery_addresses, 200, ['addresses' => $customer_delivery_addresses]);
