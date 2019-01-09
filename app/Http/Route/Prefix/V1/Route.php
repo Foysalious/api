@@ -8,7 +8,7 @@ class Route
     public function set($api)
     {
         $api->group(['prefix' => 'v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
-            $api->group(['prefix' => 'vendors'], function ($api) {
+            $api->group(['prefix' => 'vendors','middleware' => ['vendor.auth']], function ($api) {
                 $api->get('times', 'Vendor\ShebaController@getTimes');
                 $api->get('categories', 'Vendor\CategoryController@index');
                 $api->get('categories/{category}/secondaries', 'Vendor\CategoryController@get');

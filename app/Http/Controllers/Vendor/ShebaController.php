@@ -8,6 +8,7 @@ use App\Transformers\CustomSerializer;
 use App\Transformers\TimeTransformer;
 use Dingo\Api\Routing\Helpers;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 
@@ -29,8 +30,16 @@ class ShebaController extends Controller
             $fractal->setSerializer(new CustomSerializer());
             $resource = new Collection($times, new TimeTransformer());
             return response()->json($fractal->createData($resource)->toArray());
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return response()->json(['data' => null, 'message' => $message]);
         } catch (\Throwable $e) {
-            return response()->json(['data' => null]);
+            $sentry = app('sentry');
+            $sentry->captureException($e);
+            return response()->json(['data' => null, 'message' => 'Something went wrong']);
         }
     }
 }

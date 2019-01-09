@@ -66,5 +66,6 @@ class Kernel extends HttpKernel {
         'partner_resource.auth' => \App\Http\Middleware\PartnerResourceAuthMiddleware::class,
         'resource_job.auth' => \App\Http\Middleware\ResourceJobAuthMiddleware::class,
         'admin.auth' => \App\Http\Middleware\AdminAuthMiddleware::class,
+        'vendor.auth' => \App\Http\Middleware\VendorMiddleware::class,
     ];
 }
