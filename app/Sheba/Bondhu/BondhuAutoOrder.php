@@ -4,6 +4,7 @@ use App\Http\Requests\BondhuOrderRequest;
 use App\Models\Affiliate;
 use App\Models\Affiliation;
 use App\Models\Customer;
+use App\Models\CustomerDeliveryAddress;
 use App\Models\Location;
 use App\Models\Profile;
 use App\Models\Service;
@@ -85,15 +86,15 @@ class BondhuAutoOrder
         if (!$this->request->has('address_id')) {
             $location = Location::find((int)$this->request->location);
             $geo = json_decode($location->geo_informations);
-            $customer_address = $this->customer->delivery_addresses()->create([
-                'address' => $this->request->address,
-                'location_id' => $this->request->location,
-                'geo_informations' => json_encode(['lat' => $geo->lat, 'lng' => $geo->lng]),
-                'name' => $this->profile->name,
-                'mobile' => $this->profile->mobile,
-                'created_by' => $this->affiliate->id,
-                'created_by_name' => 'Affiliate - ' . $this->affiliate->profile->name
-            ]);
+            $customer_address = new CustomerDeliveryAddress();
+            $customer_address->address = $this->request->address;
+            $customer_address->location_id = $this->request->location;
+            $customer_address->geo_informations = json_encode(['lat' => $geo->lat, 'lng' => $geo->lng]);
+            $customer_address->name = $this->profile->name;
+            $customer_address->created_by = $this->affiliate->id;
+            $customer_address->created_by_name = 'Affiliate - ' . $this->affiliate->profile->name;
+            $customer_address->customer_id = $this->customer->id;
+            $customer_address->save();
             $this->request->merge(['address_id' => $customer_address->id]);
         }
     }
