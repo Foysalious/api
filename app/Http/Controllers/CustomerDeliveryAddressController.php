@@ -134,6 +134,7 @@ class CustomerDeliveryAddressController extends Controller
             $delivery_address = $this->_store($customer, $new_address, $request);
             return api_response($request, 1, 200, ['address' => $delivery_address->id]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -246,9 +247,14 @@ class CustomerDeliveryAddressController extends Controller
                     return $address->geo_informations == null;
                 })->map(function ($customer_delivery_address) {
                     $customer_delivery_address["address"] = scramble_string($customer_delivery_address["address"]);
-                    array_forget($customer_delivery_address, 'geo_informations');
+                    $customer_delivery_address['geo_informations'] = json_decode($customer_delivery_address['geo_informations']);
                     return $customer_delivery_address;
-                })->filter(function ($customer_delivery_address) {
+                })->filter(function ($customer_delivery_address) use ($request) {
+                    if($request->has('lat') && $request->has('lng')) {
+                        $geo_informations= $customer_delivery_address['geo_informations'];
+                        if((float) $request->lat !== $geo_informations->lat ||  (float) $request->lng !== $geo_informations->lng)
+                            return false;
+                    }
                     return $customer_delivery_address->address != null;
                 })->values()->all();
                 return api_response($request, $customer_delivery_addresses, 200, ['addresses' => $customer_delivery_addresses]);
@@ -258,6 +264,46 @@ class CustomerDeliveryAddressController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function storeDeliveryAddressForAffiliate(Request $request)
+    {
+        $profile = Profile::where('mobile', formatMobile($request->mobile))->first();
+        if ($profile && $profile->customer) {
+            $customer = $profile->customer;
+            return $this->storeForAffiliate($customer,$request);
+        }
+        return api_response($request, [], 404, ['addresses' => []]);
+    }
+
+    public function storeForAffiliate($customer, Request $request)
+    {
+        try {
+            $mobile = trim(str_replace(' ', '', $request->mobile));
+            $request->merge(['address' => trim($request->address), 'mobile' => $mobile ?: $request->customer->profile->mobile]);
+            $this->validate($request, ['address' => 'required|string']);
+
+            $hyper_local = $request->has('lat') && $request->has('lng');
+                if (!$hyper_local) {
+                if ($geo = (new Geo())->geoCodeFromPlace($request->address)) {
+                    $request->merge(['lat' => $geo['lat'], 'lng' => $geo['lng']]);
+                    $request->merge(["geo_informations" => json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng])]);
+                }
+            }
+            if ($hyper_local) {
+                $hyper_local = HyperLocal::insidePolygon($request->lat, $request->lng)->with('location')->first();
+                if (!$hyper_local) return api_response($request, null, 400, ['message' => "You're out of our service area."]);
+                $request->merge(["geo_informations" => json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng])]);
+            }
+            $request->merge(["location_id" => $hyper_local ? $hyper_local->location_id : null]);
+            $new_address = new CustomerDeliveryAddress();
+            $delivery_address = $this->_store($customer, $new_address, $request);
+            return api_response($request, 1, 200, ['address' => $delivery_address->id]);
+        } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
