@@ -58,6 +58,7 @@ class Route
             $api->group(['prefix' => 'register'], function ($api) {
                 $api->post('gmail', 'Auth\GoogleController@register');
                 $api->post('kit/partner', 'Auth\PartnerRegistrationController@register');
+                $api->post('affiliate-refer', 'Auth\PartnerRegistrationController@registerReferAffiliate');
             });
             $api->get('times', 'ScheduleTimeController@index');
             $api->get('settings', 'HomePageSettingController@index');
