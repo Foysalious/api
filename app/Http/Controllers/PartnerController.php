@@ -138,7 +138,13 @@ class PartnerController extends Controller
     {
         try {
             if ($partner = Partner::find((int)$partner)) {
-                $services = $partner->services()->select($this->getSelectColumnsOfService())->where('category_id', $request->category)->publishedForAll()->get();
+
+                $services = $partner->services()->select($this->getSelectColumnsOfService())->where('category_id', $request->category)
+                    ->where(function($q) {
+                        $q->where('publication_status',1);
+                        $q->orWhere('is_published_for_backend',1);
+                    })
+                    ->get();
                 if (count($services) > 0) {
                     $services->each(function (&$service) {
                         $variables = json_decode($service->variables);

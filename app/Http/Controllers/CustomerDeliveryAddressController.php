@@ -287,7 +287,7 @@ class CustomerDeliveryAddressController extends Controller
             $this->validate($request, ['address' => 'required|string']);
 
             $hyper_local = $request->has('lat') && $request->has('lng');
-            if (!$hyper_local) {
+                if (!$hyper_local) {
                 if ($geo = (new Geo())->geoCodeFromPlace($request->address)) {
                     $request->merge(['lat' => $geo['lat'], 'lng' => $geo['lng']]);
                     $request->merge(["geo_informations" => json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng])]);
