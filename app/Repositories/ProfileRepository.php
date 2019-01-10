@@ -199,11 +199,14 @@ class ProfileRepository
 
     public function registerMobile($info)
     {
-        $profile = Profile::create([
+
+        $data = [
             'mobile' => $info['mobile'],
             'mobile_verified' => 1,
             "remember_token" => str_random(255)
-        ]);
+        ];
+        if(isset($info['name'])) $data['name'] = $info['name'];
+        $profile = Profile::create($data);
         return Profile::find($profile->id);
     }
 

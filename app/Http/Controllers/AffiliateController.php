@@ -607,7 +607,6 @@ class AffiliateController extends Controller
             if (!is_null($profile)) {
                 $customer_name = $profile->name;
                 $resource = Resource::where('profile_id',$profile->id)->first();
-
                 if($resource){
                     $token = $resource->remember_token;
                     $resource_informations = [
@@ -630,7 +629,11 @@ class AffiliateController extends Controller
                     }
                     return api_response($request, $customer_name, 200, ['data' => $resource_informations]);
                 } else {
-                    return api_response($request, $customer_name, 200, ['name' => $customer_name]);
+                    $resource_informations = [
+                        'name' => $profile->name,
+                        'image' => $profile->pro_pic,
+                    ];
+                    return api_response($request, $customer_name, 200, ['data' => $resource_informations]);
                 }
             }
             return api_response($request, [], 404, null);
