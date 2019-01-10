@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Affiliate;
 use App\Models\Customer;
+use App\Models\Resource;
 use App\Repositories\ProfileRepository;
 use Closure;
 use ErrorException;
@@ -34,6 +35,8 @@ class ProfileAuthMiddleware
                     $avatar = Customer::where('remember_token', $request->input('remember_token'))->first();
                 } elseif ($from == 'affiliate') {
                     $avatar = Affiliate::where('remember_token', $request->input('remember_token'))->first();
+                } elseif ($from == 'resource') {
+                    $avatar = Resource::where('remember_token', $request->input('remember_token'))->first();
                 }
                 if ($avatar != null) {
                     if ($avatar->id == $request->id) {
