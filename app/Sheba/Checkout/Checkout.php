@@ -180,7 +180,6 @@ class Checkout
                 }
             });
         } catch (QueryException $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return false;
         }

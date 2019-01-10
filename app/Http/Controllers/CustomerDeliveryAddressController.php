@@ -82,7 +82,7 @@ class CustomerDeliveryAddressController extends Controller
                 $customer_delivery_address['is_valid'] = 1;
                 return $customer_delivery_address;
             });
-            if ($location) $customer_delivery_addresses = $customer_delivery_addresses->where('location_id', $location->id);
+//            if ($location) $customer_delivery_addresses = $customer_delivery_addresses->where('location_id', $location->id);
             if ($request->has('partner') && (int)$request->partner > 0) {
                 $partner = Partner::find((int)$request->partner);
                 $partner_geo = json_decode($partner->geo_informations);
@@ -134,7 +134,6 @@ class CustomerDeliveryAddressController extends Controller
             $delivery_address = $this->_store($customer, $new_address, $request);
             return api_response($request, 1, 200, ['address' => $delivery_address->id]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -303,7 +302,6 @@ class CustomerDeliveryAddressController extends Controller
             $delivery_address = $this->_store($customer, $new_address, $request);
             return api_response($request, 1, 200, ['address' => $delivery_address->id]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
