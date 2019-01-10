@@ -67,7 +67,6 @@ class CategoryController extends Controller
             ]);
             $client = new Client();
             $response = $client->get(config('sheba.api_url') . '/v1/categories/' . $category . '/services?location=' . $request->location . '&lat=' . $request->lat . '&lng=' . $request->lng);
-            dd(json_decode($response->getBody()));
             $data = json_decode($response->getBody());
             $category = $data->category;
             $services = $category->services;
