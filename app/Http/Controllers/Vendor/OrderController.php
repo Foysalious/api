@@ -73,14 +73,14 @@ class OrderController extends Controller
             }
             $order = new Checkout($customer);
             $address = (new AddressValidator())->isAddressNameExists($customer->delivery_addresses, $request->address);
-            if ($address) $request->merge(['address_id' => $address->id]);
-            else {
+            if (!$address) {
                 $address = new CustomerDeliveryAddress();
                 $address->address = $request->address;
                 $address->name = $request->name;
                 $address->geo_informations = json_encode(['lat' => $request->lat, 'lng' => $request->lng]);
                 $address->location_id = $hyper_local->location->id;
                 $address->customer_id = $customer->id;
+                $address->mobile = formatMobile($request->mobile);
                 $address->save();
             }
             $request->merge(['address_id' => $address->id]);
