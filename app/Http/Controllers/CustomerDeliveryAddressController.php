@@ -82,7 +82,7 @@ class CustomerDeliveryAddressController extends Controller
                 $customer_delivery_address['is_valid'] = 1;
                 return $customer_delivery_address;
             });
-            if ($location) $customer_delivery_addresses = $customer_delivery_addresses->where('location_id', $location->id);
+//            if ($location) $customer_delivery_addresses = $customer_delivery_addresses->where('location_id', $location->id);
             if ($request->has('partner') && (int)$request->partner > 0) {
                 $partner = Partner::find((int)$request->partner);
                 $partner_geo = json_decode($partner->geo_informations);
