@@ -378,9 +378,9 @@ class PartnerList
 
     public function setBadgeName($badge)
     {
-        if($badge === 'gold') return 'LSP';
+        if($badge === 'gold') return 'ESP';
         else if($badge === 'silver') return 'PSP';
-        else return 'ESP';
+        else return 'LSP';
     }
 
     public function sortByShebaPartnerPriority()
