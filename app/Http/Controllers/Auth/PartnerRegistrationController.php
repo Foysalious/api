@@ -168,12 +168,13 @@ class PartnerRegistrationController extends Controller
             $this->validate($request, [
                 'company_name' => 'required|string',
                 'from' => 'string|in:' . implode(',', constants('FROM')),
-                'mobile' => 'required',
+                'mobile' => 'required|mobile:bd',
                 'name' => 'required'
             ]);
 
             $mobile = formatMobile($request->mobile);
             if ($profile = $this->profileRepository->ifExist($mobile, 'mobile')) {
+                if($profile->name === "" || $profile->name === null) { $profile->name = $request->name;  $profile->save(); }
                 $resource = $profile->resource;
                 if (!$resource) $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
             } else {
@@ -181,7 +182,7 @@ class PartnerRegistrationController extends Controller
                 $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
             }
            // if ($resource->partnerResources->count() > 0) return api_response($request, null, 403, ['message' => 'You already have a company!']);
-            $request['package_id'] = env('LIGHT_PACKAGE_ID');
+            $request['package_id'] = env('LITE_PACKAGE_ID');
             $request['billing_type'] = 'monthly';
             $data = $this->makePartnerCreateData($request);
 
