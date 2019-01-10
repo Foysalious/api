@@ -21,6 +21,7 @@ class JobTransformer extends TransformerAbstract
             'order_code' => $job->order_code,
             'original_price' => $job->original_price,
             'discounted_price' => $job->price,
+            'status' => constants('JOB_STATUSES_SHOW')[$job->status]['customer'],
             'discount' => $job->discount,
             'is_due' => $job->isDue,
             'resource' => array(

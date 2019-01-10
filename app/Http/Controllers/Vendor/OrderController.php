@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Vendor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\CustomerDeliveryAddress;
+use App\Models\HyperLocal;
 use App\Models\Job;
 use App\Models\Profile;
 use App\Sheba\Address\AddressValidator;
@@ -15,6 +17,7 @@ use Carbon\Carbon;
 use Dingo\Api\Routing\Helpers;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Voucher\Creator\Referral;
@@ -45,7 +48,7 @@ class OrderController extends Controller
     public function placeOrder(Request $request)
     {
         try {
-            $request->merge(['mobile' => trim($request->mobile)]);
+            $request->merge(['mobile' => trim(formatMobile($request->mobile))]);
             $this->validate($request, [
                 'lat' => 'required|numeric',
                 'lng' => 'required|numeric',
@@ -58,8 +61,7 @@ class OrderController extends Controller
                 'is_on_premise' => 'sometimes|numeric',
                 'name' => 'required'
             ], ['mobile' => 'Invalid mobile number!']);
-            $location = $this->api->get('v2/locations/current?lat=' . $request->lat . '&lng=' . $request->lng);
-            $request->merge(['location' => $location->id]);
+            $hyper_local = HyperLocal::insidePolygon($request->lat, $request->lng)->first();
             $request->merge(['payment_method' => 'cod']);
             $profile = Profile::where('mobile', $request->mobile)->first();
             if ($profile) {
@@ -72,10 +74,28 @@ class OrderController extends Controller
             $order = new Checkout($customer);
             $address = (new AddressValidator())->isAddressNameExists($customer->delivery_addresses, $request->address);
             if ($address) $request->merge(['address_id' => $address->id]);
+            else {
+                $address = new CustomerDeliveryAddress();
+                $address->address = $request->address;
+                $address->name = $request->name;
+                $address->geo_informations = json_encode(['lat' => $request->lat, 'lng' => $request->lng]);
+                $address->location_id = $hyper_local->location->id;
+                $address->customer_id = $customer->id;
+                $address->save();
+            }
+            $request->merge(['address_id' => $address->id]);
+            $request->merge(['sales_channel' => 'store']);
             $order = $order->placeOrder($request);
-            if ($order) return response()->json(['data' => ['code' => 200, 'message' => 'successful']]);
+            if ($order) return response()->json(['data' => ['code' => 200, 'id' => $order->partnerOrders[0]->jobs[0]->id, 'message' => 'successful']]);
             else    return response()->json(['data' => null]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return response()->json(['data' => null, 'message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return response()->json(['data' => null]);
         }
     }

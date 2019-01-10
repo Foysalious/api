@@ -46,7 +46,7 @@ class Checkout
 
     public function placeOrder($request)
     {
-        $this->setModifier($this->customer)   ;
+        $this->setModifier($this->customer);
 
         if ($request->has('address_id') && !empty($request->address_id)) {
             $address = $this->customer->delivery_addresses()->where('id', (int)$request->address_id)->first();
@@ -57,7 +57,6 @@ class Checkout
                 $address = $this->customer->delivery_addresses()->save($new_address);
             }
         }
-
         if ($request->has('location')) {
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$request->location);
         } else {
@@ -75,7 +74,6 @@ class Checkout
             if ($request->has('address_id') && !empty($request->address_id)) {
                 $data['address_id'] = $address->id;
             }
-
             $data['payment_method'] = $request->payment_method == 'cod' ? 'cash-on-delivery' : ucwords($request->payment_method);
             $data['job_services'] = $this->createJobService($partner->services, $partner_list->selected_services, $data);
             $rent_car_ids = array_map('intval', explode(',', env('RENT_CAR_IDS')));
@@ -182,6 +180,7 @@ class Checkout
                 }
             });
         } catch (QueryException $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return false;
         }
