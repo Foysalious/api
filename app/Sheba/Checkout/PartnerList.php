@@ -251,7 +251,7 @@ class PartnerList
     {
         $hyper_local = HyperLocal::insidePolygon($this->lat, $this->lng)->with('location')->first();
         if (!$hyper_local) {
-            $this->saveNotFoundEvent();
+            $this->saveNotFoundEvent(1);
             throw new HyperLocationNotFoundException("lat : $this->lat, lng: $this->lng");
         }
         $this->location = $hyper_local->location->id;
@@ -542,11 +542,11 @@ class PartnerList
         return $this->partners->pluck('id')->toArray();
     }
 
-    public function saveNotFoundEvent()
+    public function saveNotFoundEvent($is_out_of_service = 0)
     {
         $event = new Event();
         $event->tag = 'no_partner_found';
-        $event->value = $this->getNotFoundValues();
+        $event->value = $this->getNotFoundValues($is_out_of_service);
         if (\request()->hasHeader('User-Id')) {
             $this->setModifier(Customer::find(\request()->header('User-Id')));
             $this->withCreateModificationField($event);
@@ -556,7 +556,7 @@ class PartnerList
         $event->save();
     }
 
-    public function getNotFoundValues()
+    public function getNotFoundValues($is_out_of_service)
     {
         return json_encode(
             array_merge($this->notFoundValues, [
@@ -571,6 +571,9 @@ class PartnerList
                     'lat' => $this->lat,
                     'lng' => $this->lng,
                     'location' => $this->location,
+                    'date' => $this->date,
+                    'time' => $this->time,
+                    'is_out' => $is_out_of_service,
                     'origin' => request()->header('Origin')
                 ]
             ])
