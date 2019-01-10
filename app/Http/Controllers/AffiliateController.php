@@ -617,15 +617,17 @@ class AffiliateController extends Controller
                             'token' => $token
                         ]
                     ];
-
                     if($resource->partners) {
+
                         $resource_informations['partner'] = [
                             'id' => $resource->partners[0]->id,
                             'name' => $resource->partners[0]->name,
-                            'lat' => json_decode($resource->partners[0]->geo_informations)->lat,
-                            'lng' => json_decode($resource->partners[0]->geo_informations)->lng,
-                            'radius' => json_decode($resource->partners[0]->geo_informations)->radius,
                         ];
+                        if($resource->partners[0]->geo_informations) {
+                            $resource_informations['lat'] = json_decode($resource->partners[0]->geo_informations)->lat;
+                            $resource_informations['lng'] = json_decode($resource->partners[0]->geo_informations)->lng;
+                            $resource_informations['radius'] = json_decode($resource->partners[0]->geo_informations)->radius;
+                        }
                     }
                     return api_response($request, $customer_name, 200, ['data' => $resource_informations]);
                 } else {
@@ -641,7 +643,6 @@ class AffiliateController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
