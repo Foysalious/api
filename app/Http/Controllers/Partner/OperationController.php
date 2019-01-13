@@ -91,8 +91,8 @@ class OperationController extends Controller
                     $old_geo_informations = $partner->geo_informations;
                     $partner_info['geo_informations'] = json_encode([
                         'lat' => $request->lat,
-                        'lng' => $request->lng,
-                        'radius' => $request->has('radius') ? ($request->radius) / 1000 : ((json_decode($partner->geo_informations)->radius) / 1000 ?: '10')
+                        'lng' => $request->lng
+                        #'radius' => $request->has('radius') ? ($request->radius) / 1000 : ((json_decode($partner->geo_informations)->radius) / 1000 ?: '10')
                     ]);
 
                     $geo_change_log_data = [
