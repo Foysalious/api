@@ -23,16 +23,18 @@ class PartnerController extends Controller
                 'lng' => 'required|numeric',
                 'services' => 'required'
             ]);
-            $location = $this->api->get('v2/locations/current?lat=' . $request->lat . '&lng=' . $request->lng);
-            $partners = $this->api->get('v2/locations/' . $location->id . '/partners?services=' . $request->services . '&filter=sheba&skip_availability=1');
+            $partners = $this->api->get('v2/partners?lat=' . (double)$request->lat . '&lng=' . (double)$request->lng . '&services=' . $request->services . '&filter=sheba&skip_availability=1');
             if ($partners) {
                 $fractal = new Manager();
                 $fractal->setSerializer(new CustomSerializer());
                 $resource = new Collection($partners, new PartnerListTransformer());
                 return response()->json($fractal->createData($resource)->toArray());
+            } else {
+                app('sentry')->captureException(new \Exception('partner fetch wrong'));
+                return response()->json(['data' => null]);
             }
-            return response()->json(['data' => null]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return response()->json(['data' => null]);
         }
     }

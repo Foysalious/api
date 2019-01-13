@@ -17,13 +17,13 @@ class LocationController extends Controller
             $cities = City::whereHas('locations', function ($q) {
                 $q->published();
             })->with(['locations' => function ($q) {
-                $q->select('id', 'city_id', 'name', 'geo_informations');
+                $q->select('id', 'city_id', 'name', 'geo_informations')->published();
             }])->select('id', 'name')->get();
             foreach ($cities as $city) {
                 foreach ($city->locations as &$location) {
                     if ($location->geo_informations) {
                         $geo = json_decode($location->geo_informations);
-                        $location->center = isset($geo->center) ? $geo->center : null;
+                        $location->center = isset($geo->center) ? $geo->center : json_decode(json_encode(['lat' => (double)$geo->lat, 'lng' => (double)$geo->lng]));
                         array_forget($location, 'geo_informations');
                     }
                 }
