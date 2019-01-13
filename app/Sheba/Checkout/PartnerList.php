@@ -252,7 +252,7 @@ class PartnerList
     {
         $hyper_local = HyperLocal::insidePolygon($this->lat, $this->lng)->with('location')->first();
         if (!$hyper_local) {
-            $this->saveNotFoundEvent();
+            $this->saveNotFoundEvent(1);
             throw new HyperLocationNotFoundException("lat : $this->lat, lng: $this->lng");
         }
         $this->location = $hyper_local->location->id;
@@ -378,8 +378,8 @@ class PartnerList
 
     public function setBadgeName($badge)
     {
-        if($badge === 'gold') return 'ESP';
-        else if($badge === 'silver') return 'PSP';
+        if ($badge === 'gold') return 'ESP';
+        else if ($badge === 'silver') return 'PSP';
         else return 'LSP';
     }
 
@@ -550,11 +550,11 @@ class PartnerList
         return $this->partners->pluck('id')->toArray();
     }
 
-    public function saveNotFoundEvent()
+    public function saveNotFoundEvent($is_out_of_service = 0)
     {
         $event = new Event();
         $event->tag = 'no_partner_found';
-        $event->value = $this->getNotFoundValues();
+        $event->value = $this->getNotFoundValues($is_out_of_service);
         $event->fill((new RequestIdentification)->get());
         if ($event->portal_name == 'bondhu-app') {
             $event->created_by_type = "App\\Models\\Affiliate";
@@ -573,7 +573,7 @@ class PartnerList
         $event->save();
     }
 
-    public function getNotFoundValues()
+    public function getNotFoundValues($is_out_of_service)
     {
         return json_encode(
             array_merge($this->notFoundValues, [
@@ -587,11 +587,11 @@ class PartnerList
                     }),
                     'lat' => $this->lat,
                     'lng' => $this->lng,
+                    'location' => $this->location,
                     'date' => $this->date,
                     'time' => $this->time,
-                    'location' => $this->location,
-                    'origin' => request()->header('Origin'),
-                    'user-id' => \request()->header('User-Id')
+                    'is_out' => $is_out_of_service,
+                    'origin' => request()->header('Origin')
                 ]
             ])
         );
