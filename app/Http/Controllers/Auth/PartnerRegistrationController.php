@@ -180,7 +180,7 @@ class PartnerRegistrationController extends Controller
                 $profile = $this->profileRepository->registerMobile(array_merge($request->all(), ['mobile' => $mobile]));
                 $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
             }
-           // if ($resource->partnerResources->count() > 0) return api_response($request, null, 403, ['message' => 'You already have a company!']);
+            if ($resource->partnerResources->count() > 0) return api_response($request, null, 403, ['message' => 'You already have a company!']);
             $request['package_id'] = env('LITE_PACKAGE_ID');
             $request['billing_type'] = 'monthly';
             $data = $this->makePartnerCreateData($request);
