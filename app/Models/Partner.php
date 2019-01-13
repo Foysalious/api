@@ -278,6 +278,11 @@ class Partner extends Model implements Rewardable, TopUpAgent
         return $this->belongsTo(PartnerAffiliation::class, 'affiliation_id');
     }
 
+    public function affiliate()
+    {
+        return $this->belongsTo(Affiliate::class);
+    }
+
     public function hasAppropriateCreditLimit()
     {
         return (double)$this->wallet >= (double)$this->walletSetting->min_wallet_threshold;

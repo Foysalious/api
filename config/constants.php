@@ -477,5 +477,6 @@ return [
         'approved' => 'Approved',
         'rejected' => 'Rejected'
     ],
-    'WEEK_DAYS' => ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    'WEEK_DAYS' => ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+    'MODERATOR_DISTANCE_THRESHOLD'=>500
 ];
