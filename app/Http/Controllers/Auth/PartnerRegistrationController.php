@@ -80,7 +80,7 @@ class PartnerRegistrationController extends Controller
     {
         $data = ['name' => $request->company_name];
         if ($request->has('from')) {
-            if ($request->from == 'manager-app') $data['registration_channel'] = constants('PARTNER_ACQUISITION_CHANNEL')['App'];
+            if ($request->from == 'manager-app' || $request->from == 'affiliation-app') $data['registration_channel'] = constants('PARTNER_ACQUISITION_CHANNEL')['App'];
             elseif ($request->from == 'manager-web') $data['registration_channel'] = constants('PARTNER_ACQUISITION_CHANNEL')['Web'];
         } else {
             $data['registration_channel'] = constants('PARTNER_ACQUISITION_CHANNEL')['App'];
