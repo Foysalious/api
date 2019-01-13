@@ -560,13 +560,13 @@ class PartnerList
             $event->created_by_type = "App\\Models\\Affiliate";
             if (\request()->hasHeader('User-Id')) {
                 $event->created_by = \request()->header('User-Id');
-                $event->created_by_name = "Affiliate - " . Affiliate::find((int)\request()->header('User-Id'))->profile->name;
+                $event->created_by_name = "Affiliate - " . (Affiliate::find((int)\request()->header('User-Id')))->profile->name;
             }
         } elseif ($event->portal_name == 'customer-app' || $event->portal_name == 'customer-portal') {
             $event->created_by_type = "App\\Models\\Customer";
             if (\request()->hasHeader('User-Id')) {
                 $event->created_by = \request()->header('User-Id');
-                $event->created_by_name = "Customer - " . Customer::find((int)\request()->header('User-Id'))->profile->name;
+                $event->created_by_name = "Customer - " . (Customer::find((int)\request()->header('User-Id')))->profile->name;
             }
         }
         $event->created_at = Carbon::now();
