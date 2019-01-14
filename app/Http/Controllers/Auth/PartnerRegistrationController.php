@@ -189,6 +189,7 @@ class PartnerRegistrationController extends Controller
             $request['affiliate_id'] = (int) $affiliate;
             //if ($resource->partnerResources->count() > 0) return api_response($request, null, 403, ['message' => 'You already have a company!']);
             if(count($resource->partners)>0) {
+
                 $partnerWithAffiliate = (($resource->partners[0]->affiliate_id === (int) $affiliate) && ($resource->partners[0]->status === 'Onboarded'));
                 if(!$partnerWithAffiliate || $this->liteFormCompleted($profile,$resource)) return api_response($request, null, 403, ['message' => 'This company already referred!']);
                 else {
@@ -227,10 +228,10 @@ class PartnerRegistrationController extends Controller
     }
 
     private function liteFormCompleted($profile, $resource)
-    {
+    {   
         if(count($resource->partners)=== 0) return false;
         if($profile->name && $profile->mobile && $profile->pro_pic
-            && $resource->partners[0]->name && $resource->partners[0]->radius && count($resource->partners[0]->categories)>0)
+            && $resource->partners[0]->name && $resource->partners[0]->geo_informations && count($resource->partners[0]->categories)>0)
             return true;
         else
             return false;
