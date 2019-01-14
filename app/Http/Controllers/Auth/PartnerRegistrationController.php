@@ -80,7 +80,7 @@ class PartnerRegistrationController extends Controller
     {
         $data = ['name' => $request->company_name];
         if ($request->has('from')) {
-            if ($request->from == 'manager-app') $data['registration_channel'] = constants('PARTNER_ACQUISITION_CHANNEL')['App'];
+            if ($request->from == 'manager-app' || $request->from == 'affiliation-app') $data['registration_channel'] = constants('PARTNER_ACQUISITION_CHANNEL')['App'];
             elseif ($request->from == 'manager-web') $data['registration_channel'] = constants('PARTNER_ACQUISITION_CHANNEL')['Web'];
         } else {
             $data['registration_channel'] = constants('PARTNER_ACQUISITION_CHANNEL')['App'];
@@ -88,6 +88,9 @@ class PartnerRegistrationController extends Controller
         if ($request->has('billing_type') && $request->has('package_id')) {
             $data['billing_type'] = $request->billing_type;
             $data['package_id'] = $request->package_id;
+        }
+        if($request->has('affiliate_id')) {
+            $data['affiliate_id'] = $request->affiliate_id;
         }
         return $data;
     }
@@ -136,6 +139,7 @@ class PartnerRegistrationController extends Controller
                 if (isset($data['billing_type']) && isset($data['package_id'])) $partner->subscribe($data['package_id'], $data['billing_type']);
             });
         } catch (QueryException $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return null;
         }
@@ -161,7 +165,7 @@ class PartnerRegistrationController extends Controller
         PartnerWalletSetting::create(array_merge(['partner_id' => $partner->id, 'security_money' => 5000], $by));
     }
 
-    public function registerReferAffiliate(Request $request)
+    public function registerReferAffiliate($affiliate, Request $request)
     {
         try {
             $this->validate($request, [
@@ -180,9 +184,23 @@ class PartnerRegistrationController extends Controller
                 $profile = $this->profileRepository->registerMobile(array_merge($request->all(), ['mobile' => $mobile]));
                 $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
             }
-           // if ($resource->partnerResources->count() > 0) return api_response($request, null, 403, ['message' => 'You already have a company!']);
             $request['package_id'] = env('LITE_PACKAGE_ID');
             $request['billing_type'] = 'monthly';
+            $request['affiliate_id'] = (int) $affiliate;
+            //if ($resource->partnerResources->count() > 0) return api_response($request, null, 403, ['message' => 'You already have a company!']);
+            if(count($resource->partners)>0) {
+                $partnerWithAffiliate = (($resource->partners[0]->affiliate_id === (int) $affiliate) && ($resource->partners[0]->status === 'Onboarded'));
+                if(!$partnerWithAffiliate || $this->liteFormCompleted($profile,$resource)) return api_response($request, null, 403, ['message' => 'This company already referred!']);
+                else {
+                    $data = $this->makePartnerCreateData($request);
+                    $partner = $resource->partners[0];
+                    $partner->update($data);
+                    $info = $this->profileRepository->getProfileInfo('resource', Profile::find($profile->id));
+                    return api_response($request, null, 200, ['info' => $info]);
+                }
+            }
+
+
             $data = $this->makePartnerCreateData($request);
 
             if ($partner = $this->createPartner($resource, $data)) {
@@ -206,6 +224,16 @@ class PartnerRegistrationController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function liteFormCompleted($profile, $resource)
+    {
+        if(count($resource->partners)=== 0) return false;
+        if($profile->name && $profile->mobile && $profile->pro_pic
+            && $resource->partners[0]->name && $resource->partners[0]->radius && count($resource->partners[0]->categories)>0)
+            return true;
+        else
+            return false;
     }
 
 }
