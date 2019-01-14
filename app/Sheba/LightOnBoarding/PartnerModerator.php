@@ -55,7 +55,7 @@ class PartnerModerator
 
     private function validateRequest($data)
     {
-        if ($this->partner->moderation_status) {
+        if ($this->partner->moderation_status && $this->partner->moderation_status != 'pending') {
             throw  new InvalidModeratorException('This partner is already moderated');
         }
         if ($this->moderatorRole == 'moderator') {
