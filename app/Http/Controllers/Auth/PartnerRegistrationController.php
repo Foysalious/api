@@ -89,6 +89,9 @@ class PartnerRegistrationController extends Controller
             $data['billing_type'] = $request->billing_type;
             $data['package_id'] = $request->package_id;
         }
+        if($request->has('affiliate_id')) {
+            $data['affiliate_id'] = $request->affiliate_id;
+        }
         return $data;
     }
 
@@ -161,7 +164,7 @@ class PartnerRegistrationController extends Controller
         PartnerWalletSetting::create(array_merge(['partner_id' => $partner->id, 'security_money' => 5000], $by));
     }
 
-    public function registerReferAffiliate(Request $request)
+    public function registerReferAffiliate($affiliate, Request $request)
     {
         try {
             $this->validate($request, [
@@ -180,9 +183,15 @@ class PartnerRegistrationController extends Controller
                 $profile = $this->profileRepository->registerMobile(array_merge($request->all(), ['mobile' => $mobile]));
                 $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
             }
-            if ($resource->partnerResources->count() > 0) return api_response($request, null, 403, ['message' => 'You already have a company!']);
+            //if ($resource->partnerResources->count() > 0) return api_response($request, null, 403, ['message' => 'You already have a company!']);
+            if(count($resource->partners)>0) {
+                $partnerWithAffiliate = (($resource->partners[0]->affiliate_id === (int) $affiliate) && ($resource->partners[0]->status === 'Onboarded'));
+                if(!$partnerWithAffiliate) return api_response($request, null, 403, ['message' => 'This company already referred!']);
+            }
+
             $request['package_id'] = env('LITE_PACKAGE_ID');
             $request['billing_type'] = 'monthly';
+            $request['affiliate_id'] = (int) $affiliate;
             $data = $this->makePartnerCreateData($request);
 
             if ($partner = $this->createPartner($resource, $data)) {
@@ -203,6 +212,7 @@ class PartnerRegistrationController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
