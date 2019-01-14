@@ -30,11 +30,7 @@ class CategoryController extends Controller
     public function index(Request $request)
     {
         try {
-            $this->validate($request, [
-                'location' => 'sometimes|numeric',
-                'lat' => 'sometimes|numeric',
-                'lng' => 'required_with:lat'
-            ]);
+            $this->validate($request, ['location' => 'sometimes|numeric', 'lat' => 'sometimes|numeric', 'lng' => 'required_with:lat']);
 
             $with = '';
             $location = null;
@@ -79,8 +75,12 @@ class CategoryController extends Controller
             $categories = $request->has('is_business') && (int)$request->is_business ? $categories->publishedForBusiness() : $categories->published();
             $categories = $categories->get();
 
-            foreach ($categories as &$category) {
+            foreach ($categories as $key => &$category) {
                 if ($with == 'children') {
+                    if ($category->children->isEmpty()) {
+                        $categories->forget($key);
+                        continue;
+                    }
                     $category->children->sortBy('order')->each(function (&$child) {
                         removeRelationsAndFields($child);
                     });
@@ -128,11 +128,7 @@ class CategoryController extends Controller
     public function getSecondaries($category, Request $request)
     {
         try {
-            $this->validate($request, [
-                'location' => 'sometimes|numeric',
-                'lat' => 'sometimes|numeric',
-                'lng' => 'required_with:lat'
-            ]);
+            $this->validate($request, ['location' => 'sometimes|numeric', 'lat' => 'sometimes|numeric', 'lng' => 'required_with:lat']);
             $location = null;
             $category = Category::find($category);
             if ($request->has('location')) {
@@ -175,8 +171,7 @@ class CategoryController extends Controller
     {
         $category = Category::find($category);
         $parent = $category->parent()->select('id', 'name', 'thumb', 'banner')->first();
-        if ($parent)
-            return response()->json(['parent' => $parent, 'msg' => 'successful', 'code' => 200]);
+        if ($parent) return response()->json(['parent' => $parent, 'msg' => 'successful', 'code' => 200]);
         return response()->json(['msg' => 'not found', 'code' => 404]);
     }
 
@@ -207,8 +202,7 @@ class CategoryController extends Controller
             } else {
                 if ($request->has('lat') && $request->has('lng')) {
                     $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
-                    if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
-                    else return api_response($request, null, 404);
+                    if (!is_null($hyperLocation)) $location = $hyperLocation->location->id; else return api_response($request, null, 404);
                 } else $location = 4;
             }
 
@@ -233,10 +227,8 @@ class CategoryController extends Controller
                         $q->whereHas('locations', function ($query) use ($location) {
                             $query->where('locations.id', $location);
                         });
-                        $q->select('id', 'category_id', 'unit', 'name', 'bn_name', 'thumb', 'app_thumb', 'app_banner',
-                            'short_description', 'description', 'banner', 'faqs', 'variables', 'variable_type', 'min_quantity')->orderBy('order')->skip($offset)->take($limit);
-                        if ((int)\request()->is_business) $q->publishedForBusiness();
-                        else $q->published();
+                        $q->select('id', 'category_id', 'unit', 'name', 'bn_name', 'thumb', 'app_thumb', 'app_banner', 'short_description', 'description', 'banner', 'faqs', 'variables', 'variable_type', 'min_quantity')->orderBy('order')->skip($offset)->take($limit);
+                        if ((int)\request()->is_business) $q->publishedForBusiness(); else $q->published();
                     }]);
                     $services = $this->serviceRepository->getPartnerServicesAndPartners($category->services, $location)->each(function ($service) use ($request) {
                         $service->partners = $service->partners->filter(function (Partner $partner) use ($request) {
@@ -356,9 +348,7 @@ class CategoryController extends Controller
     public function addCategories(Request $request)
     {
         try {
-            $this->validate($request, [
-                'categories' => "required|string"
-            ]);
+            $this->validate($request, ['categories' => "required|string"]);
             $partner = $request->partner;
             $manager_resource = $request->manager_resource;
             $by = ["created_by" => $manager_resource->id, "created_by_name" => "Resource - " . $manager_resource->profile->name];
@@ -368,14 +358,7 @@ class CategoryController extends Controller
             foreach ($categories as $category) {
                 $has_category_partner = $partner_categories->where('category_id', (int)$category)->first();
                 if (!$has_category_partner) {
-                    array_push($category_partners, array_merge([
-                        'response_time_min' => 60,
-                        'response_time_max' => 120,
-                        'commission' => $partner->commission,
-                        'category_id' => $category,
-                        'partner_id' => $partner->id,
-                        'created_at' => Carbon::now()
-                    ], $by));
+                    array_push($category_partners, array_merge(['response_time_min' => 60, 'response_time_max' => 120, 'commission' => $partner->commission, 'category_id' => $category, 'partner_id' => $partner->id, 'created_at' => Carbon::now()], $by));
                 }
             }
             CategoryPartner::insert($category_partners);
@@ -396,10 +379,7 @@ class CategoryController extends Controller
     {
         try {
             $geo_info = json_decode($request->partner->geo_informations);
-            $hyper_locations = HyperLocal::insideCircle($geo_info)
-                ->with('location')
-                ->get()
-                ->filter(function ($item) {
+            $hyper_locations = HyperLocal::insideCircle($geo_info)->with('location')->get()->filter(function ($item) {
                     return !empty($item->location);
                 })->pluck('location')->pluck('id');
             $category = Category::locationWise($hyper_locations)->get();
