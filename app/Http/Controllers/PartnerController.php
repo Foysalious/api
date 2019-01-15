@@ -810,6 +810,11 @@ class PartnerController extends Controller
             if ($location) {
                 $categories = $categories->whereHas('locations', function ($q) use ($location) {
                     $q->where('locations.id', $location->id);
+                    $q->whereHas('services', function ($q) use ($location) {
+                        $q->published()->whereHas('locations', function ($q) use ($location) {
+                            $q->where('locations.id', $location->id);
+                        });
+                    });
                 });
 
                 $master_categories = $master_categories->whereHas('locations', function ($q) use ($location) {
