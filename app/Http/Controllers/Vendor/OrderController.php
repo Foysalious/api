@@ -37,9 +37,10 @@ class OrderController extends Controller
             $job = $this->api->get('/v2/customers/' . $customer->id . '/jobs/' . $order . '?remember_token=' . $customer->remember_token);
             $fractal = new Manager();
             $fractal->setSerializer(new CustomSerializer());
-            $resource = new Item($job, new JobTransformer());
+            $resource = new Item(json_decode($job->toJson()), new JobTransformer());
             return response()->json($fractal->createData($resource)->toArray());
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return response()->json(['data' => null]);
         }
     }
