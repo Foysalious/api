@@ -197,6 +197,7 @@ class PartnerRegistrationController extends Controller
                     if(!$partnerWithAffiliate || $this->liteFormCompleted($profile,$resource)) return api_response($request, null, 403, ['message' => 'This company already referred!']);
                     else {
                         $data = $this->makePartnerCreateData($request);
+                        $data['moderation_status'] = 'pending';
                         $partner = $resource->partners[0];
                         $partner->update($data);
                         $info = $this->profileRepository->getProfileInfo('resource', Profile::find($profile->id));
@@ -206,6 +207,7 @@ class PartnerRegistrationController extends Controller
 
 
             $data = $this->makePartnerCreateData($request);
+            $data['moderation_status'] = 'pending';
             if ($partner = $this->createPartner($resource, $data)) {
                 $info = $this->profileRepository->getProfileInfo('resource', Profile::find($profile->id));
                 /**
