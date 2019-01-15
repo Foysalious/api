@@ -804,6 +804,7 @@ class PartnerController extends Controller
                 return $query->where('partner_id', $request->partner->id);
             });
 
+
             $master_categories = Category::publishedForAll()->select('id', 'name', 'app_thumb', 'icon', 'icon_png');
 
             if ($location) {
@@ -813,6 +814,18 @@ class PartnerController extends Controller
 
                 $master_categories = $master_categories->whereHas('locations', function ($q) use ($location) {
                     $q->where('locations.id', $location->id);
+                });
+
+                $categories = $categories->whereHas('allChildren', function ($q) use ($location, $request) {
+                    $request->has('is_business') && (int)$request->is_business ? $q->publishedForBusiness() : $q->published();
+                    $q->whereHas('locations', function ($query) use ($location) {
+                        $query->where('locations.id', $location->id);
+                    });
+                    $q->whereHas('services', function ($q) use ($location) {
+                        $q->published()->whereHas('locations', function ($q) use ($location) {
+                            $q->where('locations.id', $location->id);
+                        });
+                    });
                 });
             }
 
@@ -826,6 +839,7 @@ class PartnerController extends Controller
             }
             return api_response($request, $master_categories, 200, ['categories' => $master_categories]);
         } catch (\Throwable $exception) {
+            dd($exception);
             app('sentry')->captureException($exception);
             return api_response($request, null, 500);
         }
