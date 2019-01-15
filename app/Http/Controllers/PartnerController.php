@@ -810,12 +810,7 @@ class PartnerController extends Controller
             if ($location) {
                 $categories = $categories->whereHas('locations', function ($q) use ($location) {
                     $q->where('locations.id', $location->id);
-                })->whereHas('services', function ($q) use ($location) {
-                    $q->published()->whereHas('locations', function ($q) use ($location) {
-                        $q->where('locations.id', $location->id);
-                    });
-                });;
-
+                });
 
                 $master_categories = $master_categories->whereHas('locations', function ($q) use ($location) {
                     $q->where('locations.id', $location->id);
@@ -826,12 +821,13 @@ class PartnerController extends Controller
                     $q->whereHas('locations', function ($query) use ($location) {
                         $query->where('locations.id', $location->id);
                     });
-
                     $q->whereHas('services', function ($q) use ($location) {
                         $q->published()->whereHas('locations', function ($q) use ($location) {
                             $q->where('locations.id', $location->id);
                         });
-                    });
+                    })->whereDoesntHave('partners', function ($query) use ($request) {
+                        return $query->where('partner_id', $request->partner->id);
+                    });;
                 });
             }
 
