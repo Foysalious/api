@@ -720,15 +720,21 @@ class PartnerController extends Controller
     public function getLocationWiseCategoryService(Request $request, $partner, $category)
     {
         try {
-            $location = $request->location;
+            $location = null;
+            if ($request->has('location')) {
+                $location = Location::find($request->location);
+            } else if ($request->has('lat') && $request->has('lng')) {
+                $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                if (!is_null($hyperLocation)) $location = $hyperLocation->location;
+            }
+
             $service = $request->partner
                 ->services()
-                ->whereExists(function ($query) use ($location) {
-                    $query->from('location_service')->where('location_id', $location);
+                ->whereHas('locations',function($query) use ($location){
+                    $query->where('id',$location->id);
                 })
                 ->where('category_id', $category)
                 ->where('is_published', 1)
-                ->where('is_verified', 1)
                 ->select('services.id', 'services.name', 'services.variable_type')
                 ->get();
             return api_response($request, $request, 200, ['services' => $service]);
