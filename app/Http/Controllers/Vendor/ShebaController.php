@@ -26,9 +26,20 @@ class ShebaController extends Controller
             ]);
             $limit = $request->has('limit') ? $request->limit : 1;
             $times = $this->api->get('v2/times?category=' . $request->category . '&partner=' . $request->partner . '&limit=' . $limit);
+            $final = [];
+            foreach ($times as $time) {
+                $slots = [];
+                foreach ($time['slots'] as $slot) {
+                    if ($slot['is_valid'] && $slot['is_available']) array_push($slots, $slot);
+                }
+                if (count($slots) > 0) {
+                    $time['slots'] = $slots;
+                    array_push($final, $time);
+                }
+            }
             $fractal = new Manager();
             $fractal->setSerializer(new CustomSerializer());
-            $resource = new Collection($times, new TimeTransformer());
+            $resource = new Collection($final, new TimeTransformer());
             return response()->json($fractal->createData($resource)->toArray());
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

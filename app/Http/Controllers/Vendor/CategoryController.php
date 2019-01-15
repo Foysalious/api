@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Transformers\CategoryTransformer;
 use App\Transformers\CustomSerializer;
 use App\Transformers\ServiceTransformer;
+use Dingo\Api\Routing\Helpers;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
@@ -14,6 +15,8 @@ use League\Fractal\Resource\Collection;
 
 class CategoryController extends Controller
 {
+    use Helpers;
+
     public function index(Request $request)
     {
         try {
@@ -22,10 +25,7 @@ class CategoryController extends Controller
                 'lat' => 'sometimes|numeric',
                 'lng' => 'required_with:lat'
             ]);
-            $client = new Client();
-            $response = $client->get(config('sheba.api_url') . '/v1/categories?location=' . $request->locatrion . '&lat=' . $request->lat . '&lng=' . $request->lng);
-            $data = json_decode($response->getBody());
-            $categories = $data->categories;
+            $categories = $this->api->get('/v1/categories?location=' . $request->locatrion . '&lat=' . $request->lat . '&lng=' . $request->lng);
             $fractal = new Manager();
             $resource = new Collection($categories, new CategoryTransformer());
             return response()->json($fractal->createData($resource)->toArray());
@@ -43,11 +43,8 @@ class CategoryController extends Controller
                 'lat' => 'sometimes|numeric',
                 'lng' => 'required_with:lat'
             ]);
-            $client = new Client();
-            $response = $client->get(config('sheba.api_url') . '/v1/categories/' . $category . '/secondaries?location=' . $request->locatrion . '&lat=' . $request->lat . '&lng=' . $request->lng);
-            $data = json_decode($response->getBody());
-            $category = $data->category;
-            $categories = $category->secondaries;
+            $category = $this->api->get('/v1/categories/' . $category . '/secondaries?location=' . $request->locatrion . '&lat=' . $request->lat . '&lng=' . $request->lng);
+            $categories = $category['secondaries'];
             $fractal = new Manager();
             $resource = new Collection($categories, new CategoryTransformer());
             return response()->json($fractal->createData($resource)->toArray());
@@ -65,11 +62,8 @@ class CategoryController extends Controller
                 'lat' => 'sometimes|numeric',
                 'lng' => 'required_with:lat'
             ]);
-            $client = new Client();
-            $response = $client->get(config('sheba.api_url') . '/v1/categories/' . $category . '/services?location=' . $request->location . '&lat=' . $request->lat . '&lng=' . $request->lng);
-            $data = json_decode($response->getBody());
-            $category = $data->category;
-            $services = $category->services;
+            $category = $this->api->get('/v1/categories/' . $category . '/services?location=' . $request->location . '&lat=' . $request->lat . '&lng=' . $request->lng);
+            $services = $category['services'];
             $fractal = new Manager();
             $fractal->setSerializer(new CustomSerializer());
             $resource = new Collection($services, new ServiceTransformer());

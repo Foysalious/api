@@ -19,6 +19,7 @@ class ServiceTransformer extends TransformerAbstract
             'description' => $service->description,
             'faqs' => $service->faqs,
             'type' => $service->variable_type,
+            'min_quantity' => (double)$service->min_quantity,
         ];
     }
 

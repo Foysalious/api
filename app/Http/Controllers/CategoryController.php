@@ -250,7 +250,7 @@ class CategoryController extends Controller
                 if ($services->count() > 0) {
                     $category = collect($category)->only(['name', 'banner', 'parent_id', 'app_banner']);
                     $category['services'] = $this->serviceQuestionSet($services);
-                    return api_response($request, null, 200, ['category' => $category]);
+                    return api_response($request, $category, 200, ['category' => $category]);
                 } else
                     return api_response($request, null, 404);
             } else {
