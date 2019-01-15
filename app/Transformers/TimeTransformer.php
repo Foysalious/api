@@ -14,7 +14,7 @@ class TimeTransformer extends TransformerAbstract
     public function transform($time)
     {
         return [
-            'value' => $time['value'],
+            'date' => $time['value'],
         ];
     }
 
