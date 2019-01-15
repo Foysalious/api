@@ -86,7 +86,7 @@ class OrderController extends Controller
             $request->merge(['address_id' => $address->id]);
             $request->merge(['sales_channel' => 'store']);
             $order = $order->placeOrder($request);
-            if ($order) return response()->json(['data' => ['id' => $order->partnerOrders[0]->jobs[0]->id, 'message' => 'SUCCESSFUL']]);
+            if ($order) return response()->json(['data' => ['order_id' => $order->partnerOrders[0]->jobs[0]->id, 'message' => 'SUCCESSFUL']]);
             else return response()->json(['data' => null]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
