@@ -32,6 +32,7 @@ class OrderController extends Controller
             $request->merge(['mobile' => formatMobile($request->mobile)]);
             $job = Job::find((int)$order);
             $job->load('partnerOrder.order.customer');
+            if ($request->vendor->id !== $job->partnerOrder->order->vendor_id) return response()->json(['data' => null]);
             $customer = $job->partnerOrder->order->customer;
             $job = $this->api->get('/v2/customers/' . $customer->id . '/jobs/' . $order . '?remember_token=' . $customer->remember_token);
             $fractal = new Manager();
