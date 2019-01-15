@@ -33,12 +33,10 @@ class OrderController extends Controller
             $job = Job::find((int)$order);
             $job->load('partnerOrder.order.customer');
             $customer = $job->partnerOrder->order->customer;
-            $client = new Client();
-            $response = $client->get(config('sheba.api_url') . '/v2/customers/' . $customer->id . '/jobs/' . $order . '?remember_token=' . $customer->remember_token);
-            $data = json_decode($response->getBody());
+            $job = $this->api->get('/v2/customers/' . $customer->id . '/jobs/' . $order . '?remember_token=' . $customer->remember_token);
             $fractal = new Manager();
             $fractal->setSerializer(new CustomSerializer());
-            $resource = new Item($data->job, new JobTransformer());
+            $resource = new Item($job, new JobTransformer());
             return response()->json($fractal->createData($resource)->toArray());
         } catch (\Throwable $e) {
             return response()->json(['data' => null]);
@@ -62,7 +60,7 @@ class OrderController extends Controller
                 'name' => 'required'
             ], ['mobile' => 'Invalid mobile number!']);
             $hyper_local = HyperLocal::insidePolygon($request->lat, $request->lng)->first();
-            $request->merge(['payment_method' => 'cod']);
+            $request->merge(['payment_method' => 'cod', 'vendor_id' => $request->vendor->id, 'sales_channel' => 'Store']);
             $profile = Profile::where('mobile', $request->mobile)->first();
             if ($profile) {
                 $customer = $profile->customer;
@@ -84,7 +82,6 @@ class OrderController extends Controller
                 $address->save();
             }
             $request->merge(['address_id' => $address->id]);
-            $request->merge(['sales_channel' => 'store']);
             $order = $order->placeOrder($request);
             if ($order) return response()->json(['data' => ['order_id' => $order->partnerOrders[0]->jobs[0]->id, 'message' => 'SUCCESSFUL']]);
             else return response()->json(['data' => null]);
