@@ -624,9 +624,9 @@ class AffiliateController extends Controller
                             'name' => $resource->partners[0]->name,
                         ];
                         if($resource->partners[0]->geo_informations) {
-                            $resource_informations['lat'] = json_decode($resource->partners[0]->geo_informations)->lat;
-                            $resource_informations['lng'] = json_decode($resource->partners[0]->geo_informations)->lng;
-                            $resource_informations['radius'] = json_decode($resource->partners[0]->geo_informations)->radius;
+                            $resource_informations['partner']['lat'] = json_decode($resource->partners[0]->geo_informations)->lat;
+                            $resource_informations['partner']['lng'] = json_decode($resource->partners[0]->geo_informations)->lng;
+                            $resource_informations['partner']['radius'] = json_decode($resource->partners[0]->geo_informations)->radius;
                         }
                     }
                     return api_response($request, $customer_name, 200, ['data' => $resource_informations]);
