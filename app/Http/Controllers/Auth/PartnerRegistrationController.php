@@ -133,6 +133,9 @@ class PartnerRegistrationController extends Controller
                 $partner = $partner->fill(array_merge($data, $by));
                 $partner->save();
                 $partner->resources()->attach($resource->id, array_merge($by, ['resource_type' => 'Admin']));
+                if((int) $data['package_id'] === 4)
+                    $partner->resources()->attach($resource->id, array_merge($by, ['resource_type' => 'Handyman']));
+
                 $partner->basicInformations()->save(new PartnerBasicInformation(array_merge($by, ['is_verified' => 0])));
                 (new Referral($partner));
                 $this->walletSetting($partner, $by);
@@ -187,23 +190,22 @@ class PartnerRegistrationController extends Controller
             $request['package_id'] = env('LITE_PACKAGE_ID');
             $request['billing_type'] = 'monthly';
             $request['affiliate_id'] = (int) $affiliate;
-            //if ($resource->partnerResources->count() > 0) return api_response($request, null, 403, ['message' => 'You already have a company!']);
-            if(count($resource->partners)>0) {
+            if ($resource->partnerResources->count() > 0) return api_response($request, null, 403, ['message' => 'You already have a company!']);
+                if(count($resource->partners)>0) {
 
-                $partnerWithAffiliate = (($resource->partners[0]->affiliate_id === (int) $affiliate) && ($resource->partners[0]->status === 'Onboarded'));
-                if(!$partnerWithAffiliate || $this->liteFormCompleted($profile,$resource)) return api_response($request, null, 403, ['message' => 'This company already referred!']);
-                else {
-                    $data = $this->makePartnerCreateData($request);
-                    $partner = $resource->partners[0];
-                    $partner->update($data);
-                    $info = $this->profileRepository->getProfileInfo('resource', Profile::find($profile->id));
-                    return api_response($request, null, 200, ['info' => $info]);
+                    $partnerWithAffiliate = (($resource->partners[0]->affiliate_id === (int) $affiliate) && ($resource->partners[0]->status === 'Onboarded'));
+                    if(!$partnerWithAffiliate || $this->liteFormCompleted($profile,$resource)) return api_response($request, null, 403, ['message' => 'This company already referred!']);
+                    else {
+                        $data = $this->makePartnerCreateData($request);
+                        $partner = $resource->partners[0];
+                        $partner->update($data);
+                        $info = $this->profileRepository->getProfileInfo('resource', Profile::find($profile->id));
+                        return api_response($request, null, 200, ['info' => $info]);
+                    }
                 }
-            }
 
 
             $data = $this->makePartnerCreateData($request);
-
             if ($partner = $this->createPartner($resource, $data)) {
                 $info = $this->profileRepository->getProfileInfo('resource', Profile::find($profile->id));
                 /**
