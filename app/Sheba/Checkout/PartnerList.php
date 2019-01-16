@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Sheba\Checkout;
+<?php namespace App\Sheba\Checkout;
 
 use App\Exceptions\HyperLocationNotFoundException;
 use App\Jobs\DeductPartnerImpression;
@@ -242,7 +240,6 @@ class PartnerList
         return null;
     }
 
-
     /**
      * @param null $partner_id
      * @return mixed
@@ -378,9 +375,10 @@ class PartnerList
 
     public function setBadgeName($badge)
     {
-        if ($badge === 'gold') return 'ESP';
-        else if ($badge === 'silver') return 'PSP';
-        else return 'LSP';
+        $partner_showable_badge = constants('PARTNER_BADGE');
+        if ($badge === $partner_showable_badge['gold']) return 'ESP';
+        else if ($badge === $partner_showable_badge['silver']) return 'PSP';
+        else return $badge;
     }
 
     public function sortByShebaPartnerPriority()
@@ -596,5 +594,4 @@ class PartnerList
             ])
         );
     }
-
 }
