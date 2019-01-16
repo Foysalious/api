@@ -373,12 +373,17 @@ class PartnerList
         }
     }
 
+    /**
+     * @param $badge
+     * @return string
+     */
     public function setBadgeName($badge)
     {
         $partner_showable_badge = constants('PARTNER_BADGE');
+
         if ($badge === $partner_showable_badge['gold']) return 'ESP';
         else if ($badge === $partner_showable_badge['silver']) return 'PSP';
-        else return $badge;
+        else return 'LSP';
     }
 
     public function sortByShebaPartnerPriority()
