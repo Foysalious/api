@@ -380,7 +380,7 @@ class PartnerList
     {
         if ($badge === 'gold') return 'ESP';
         else if ($badge === 'silver') return 'PSP';
-        else return 'LSP';
+        else return 'lalala lala';
     }
 
     public function sortByShebaPartnerPriority()
