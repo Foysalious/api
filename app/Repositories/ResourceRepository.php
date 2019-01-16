@@ -20,9 +20,11 @@ class ResourceRepository
         foreach ($partners as $partner) {
             if ($avatar->isManager($partner)) {
                 $categories = $partner->categories;
-                $partner = collect($partner)->only(['id', 'name','address' , 'sub_domain', 'mobile', 'email', 'status','geo_informations','logo']);
+                $geo_informations = json_decode($partner->geo_informations);
+                $partner = collect($partner)->only(['id', 'name','address' , 'sub_domain', 'mobile', 'email', 'status','logo']);
                 $partner->put('is_verified', $partner->get('status') == 'Verified' ? 1 : 0);
-                $partner->put('categories', $categories);
+                $partner->put('is_category_tagged', count($categories) > 0 ?  true : false);
+                $partner->put('geo_informations',$geo_informations);
                 return $partner;
             }
         }

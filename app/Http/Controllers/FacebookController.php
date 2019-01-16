@@ -132,7 +132,7 @@ class FacebookController extends Controller
 //            if ($code_data == false) {
 //                return api_response($request, null, 401);
 //            }
-            $code_data['mobile'] = $request->mobile;
+            $code_data['mobile'] = formatMobile($request->mobile);
             $from = $this->profileRepository->getAvatar($request->from);
             $profile = $this->profileRepository->ifExist($code_data['mobile'], 'mobile');
             if ($profile == false) {
