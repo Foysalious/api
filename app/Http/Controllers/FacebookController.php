@@ -125,14 +125,14 @@ class FacebookController extends Controller
     {
         try {
             $this->validate($request, [
-                'code' => "required",
+                //'code' => "required",
                 'from' => 'required|string|in:' . implode(',', constants('FROM'))
             ]);
-            $code_data = $this->fbKit->authenticateKit($request->code);
-            if ($code_data == false) {
-                return api_response($request, null, 401);
-            }
-            $code_data['mobile'] = formatMobile($code_data['mobile']);
+//            $code_data = $this->fbKit->authenticateKit($request->code);
+//            if ($code_data == false) {
+//                return api_response($request, null, 401);
+//            }
+            $code_data['mobile'] = $request->mobile;
             $from = $this->profileRepository->getAvatar($request->from);
             $profile = $this->profileRepository->ifExist($code_data['mobile'], 'mobile');
             if ($profile == false) {
