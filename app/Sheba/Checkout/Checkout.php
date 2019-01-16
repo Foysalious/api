@@ -46,7 +46,7 @@ class Checkout
 
     public function placeOrder($request)
     {
-        $this->setModifier($this->customer)   ;
+        $this->setModifier($this->customer);
 
         if ($request->has('address_id') && !empty($request->address_id)) {
             $address = $this->customer->delivery_addresses()->where('id', (int)$request->address_id)->first();
@@ -57,7 +57,6 @@ class Checkout
                 $address = $this->customer->delivery_addresses()->save($new_address);
             }
         }
-
         if ($request->has('location')) {
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$request->location);
         } else {
@@ -75,7 +74,6 @@ class Checkout
             if ($request->has('address_id') && !empty($request->address_id)) {
                 $data['address_id'] = $address->id;
             }
-
             $data['payment_method'] = $request->payment_method == 'cod' ? 'cash-on-delivery' : ucwords($request->payment_method);
             $data['job_services'] = $this->createJobService($partner->services, $partner_list->selected_services, $data);
             $rent_car_ids = array_map('intval', explode(',', env('RENT_CAR_IDS')));
@@ -131,7 +129,7 @@ class Checkout
         if ($request->has('partner_id')) {
             $data['partner_id'] = $request->partner_id;
         }
-
+        $data['vendor_id'] = $request->has('vendor_id') ? $request->vendor_id : null;
         $data['pap_visitor_id'] = $request->has('pap_visitor_id') ? $request->pap_visitor_id : null;
         $data['created_by'] = $created_by = $request->has('created_by') ? $request->created_by : $this->customer->id;
         $data['created_by_name'] = $created_by_name = $request->has('created_by_name') ? $request->created_by_name : 'Customer - ' . $this->customer->profile->name;
@@ -255,6 +253,7 @@ class Checkout
         $order->created_by = $data['created_by'];
         $order->created_by_name = $data['created_by_name'];
         $order->partner_id = isset($data['partner_id']) ? $data['partner_id'] : null;
+        $order->vendor_id = $data['vendor_id'];
         $customer_delivery_address = $this->getDeliveryAddress($data, $partner);
         $order->delivery_address_id = $customer_delivery_address != null ? $customer_delivery_address->id : null;
         $order->fill((new RequestIdentification())->get());

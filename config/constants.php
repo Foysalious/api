@@ -477,5 +477,10 @@ return [
         'approved' => 'Approved',
         'rejected' => 'Rejected'
     ],
-    'WEEK_DAYS' => ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    'WEEK_DAYS' => ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+    'PARTNER_BADGE' => [
+        'silver' => 'silver',
+        'gold'   => 'gold'
+    ],
+    'MODERATOR_DISTANCE_THRESHOLD'=>500
 ];

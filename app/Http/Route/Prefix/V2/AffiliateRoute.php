@@ -22,7 +22,11 @@ class AffiliateRoute
             $api->get('customer-delivery-address', 'CustomerDeliveryAddressController@getDeliveryInfoForAffiliate');
             $api->post('customer-delivery-address', 'CustomerDeliveryAddressController@storeDeliveryAddressForAffiliate');
             $api->get('customer-info', 'AffiliateController@getCustomerInfo');
+            $api->get('personal-info', 'AffiliateController@getPersonalInformation');
             $api->post('top-up-test', 'TopUpController@topUpTest');
+            $api->post('moderate/{partner_id}/accept','Partner\\PartnerOnBoardingController@acceptRequest');
+            $api->post('moderate/{partner_id}/reject','Partner\\PartnerOnBoardingController@rejectRequest');
+            $api->post('refer', 'Auth\PartnerRegistrationController@registerReferAffiliate');
         });
         $api->post('eksheba/save','EkshebaController@saveEkshebaData');
         $api->get('affiliates/faq', 'FaqController@getAffiliateFaqs');

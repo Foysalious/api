@@ -1,9 +1,8 @@
-<?php
-
-namespace App\Sheba\Checkout;
+<?php namespace App\Sheba\Checkout;
 
 use App\Exceptions\HyperLocationNotFoundException;
 use App\Jobs\DeductPartnerImpression;
+use App\Models\Affiliate;
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Event;
@@ -209,8 +208,8 @@ class PartnerList
             $q->where('end', null)->orWhere([['start', '<=', Carbon::now()], ['end', '>=', Carbon::now()->addDays(7)]]);
         })->with(['handymanResources' => function ($q) {
             $q->verified();
-        }])->published()
-            ->select('partners.id', 'partners.current_impression', 'partners.geo_informations', 'partners.address', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet', 'partners.package_id');
+        }])->published()->where('package_id', '<>', config('sheba.partner_packages_on_partner_list')['LITE'])
+            ->select('partners.id', 'partners.current_impression', 'partners.geo_informations', 'partners.address', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet', 'partners.package_id', 'partners.badge');
         if ($partner_id != null) {
             $query = $query->where('partners.id', $partner_id);
         }
@@ -240,7 +239,6 @@ class PartnerList
         }
         return null;
     }
-
 
     /**
      * @param null $partner_id
@@ -365,7 +363,7 @@ class PartnerList
             $partner['total_jobs_of_category'] = $partner->jobs->first() ? $partner->jobs->first()->total_jobs_of_category : 0;
             $partner['total_completed_orders'] = $partner->jobs->first() ? $partner->jobs->first()->total_completed_orders : 0;
             $partner['contact_no'] = $this->getContactNumber($partner);
-            $partner['subscription_type'] = $partner->subscription ? $partner->subscription->name : null;
+            $partner['subscription_type'] = $this->setBadgeName($partner->badge);
             $partner['total_working_days'] = $partner->workingHours ? $partner->workingHours->count() : 0;
             $partner['rating'] = $partner->reviews->first() ? (double)$partner->reviews->first()->avg_rating : 0;
             $partner['total_ratings'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_ratings : 0;
@@ -373,6 +371,19 @@ class PartnerList
             $partner['total_compliments'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_compliments : 0;
             $partner['total_experts'] = $partner->handymanResources->first() ? (int)$partner->handymanResources->first()->total_experts : 0;
         }
+    }
+
+    /**
+     * @param $badge
+     * @return string
+     */
+    public function setBadgeName($badge)
+    {
+        $partner_showable_badge = constants('PARTNER_BADGE');
+
+        if ($badge === $partner_showable_badge['gold']) return 'ESP';
+        else if ($badge === $partner_showable_badge['silver']) return 'PSP';
+        else return 'LSP';
     }
 
     public function sortByShebaPartnerPriority()
@@ -547,11 +558,20 @@ class PartnerList
         $event = new Event();
         $event->tag = 'no_partner_found';
         $event->value = $this->getNotFoundValues($is_out_of_service);
-        if (\request()->hasHeader('User-Id')) {
-            $this->setModifier(Customer::find(\request()->header('User-Id')));
-            $this->withCreateModificationField($event);
-        }
         $event->fill((new RequestIdentification)->get());
+        if ($event->portal_name == 'bondhu-app') {
+            $event->created_by_type = "App\\Models\\Affiliate";
+            if (\request()->hasHeader('User-Id')) {
+                $event->created_by = \request()->header('User-Id');
+                $event->created_by_name = "Affiliate - " . (Affiliate::find((int)\request()->header('User-Id')))->profile->name;
+            }
+        } elseif ($event->portal_name == 'customer-app' || $event->portal_name == 'customer-portal') {
+            $event->created_by_type = "App\\Models\\Customer";
+            if (\request()->hasHeader('User-Id')) {
+                $event->created_by = \request()->header('User-Id');
+                $event->created_by_name = "Customer - " . (Customer::find((int)\request()->header('User-Id')))->profile->name;
+            }
+        }
         $event->created_at = Carbon::now();
         $event->save();
     }
@@ -579,5 +599,4 @@ class PartnerList
             ])
         );
     }
-
 }

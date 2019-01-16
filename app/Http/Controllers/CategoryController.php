@@ -86,7 +86,13 @@ class CategoryController extends Controller
                     });
                 }
             }
-            return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories]) : api_response($request, null, 404);
+
+            $categories_final = array();
+            foreach ($categories as $category) {
+                array_push($categories_final, $category);
+            }
+
+            return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories_final]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -250,7 +256,7 @@ class CategoryController extends Controller
                 if ($services->count() > 0) {
                     $category = collect($category)->only(['name', 'banner', 'parent_id', 'app_banner']);
                     $category['services'] = $this->serviceQuestionSet($services);
-                    return api_response($request, null, 200, ['category' => $category]);
+                    return api_response($request, $category, 200, ['category' => $category]);
                 } else
                     return api_response($request, null, 404);
             } else {

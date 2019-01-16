@@ -134,7 +134,6 @@ class CustomerDeliveryAddressController extends Controller
             $delivery_address = $this->_store($customer, $new_address, $request);
             return api_response($request, 1, 200, ['address' => $delivery_address->id]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -303,7 +302,6 @@ class CustomerDeliveryAddressController extends Controller
             $delivery_address = $this->_store($customer, $new_address, $request);
             return api_response($request, 1, 200, ['address' => $delivery_address->id]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

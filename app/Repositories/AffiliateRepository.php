@@ -5,7 +5,6 @@ namespace App\Repositories;
 
 class AffiliateRepository
 {
-
     public function sortAgents($request, $agents)
     {
         $sortBy = 'name';

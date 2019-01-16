@@ -94,7 +94,9 @@ class ProfileRepository
                 $info['order_count'] = $avatar->orders->count();
                 $info['voucher_code'] = constants('APP_VOUCHER');
                 $info['referrer_id'] = $avatar->referrer_id;
-            } elseif ($from == 'resource') {
+            } elseif ($from == 'resource') {;
+                $info['is_handyman'] = !isResourceAdmin($avatar->partnerResources->pluck('resource_type')->toArray());
+                $info['is_profile_avatar_default'] = (getProfileDefaultAvatar() === $avatar->profile->pro_pic);
                 $info['is_verified'] = $avatar->is_verified;
                 $info['partners'] = $avatar->partners->unique('partner_id')->count();
                 $info['partner'] = (new ResourceRepository($avatar))->getPartner($avatar);
@@ -199,11 +201,14 @@ class ProfileRepository
 
     public function registerMobile($info)
     {
-        $profile = Profile::create([
+
+        $data = [
             'mobile' => $info['mobile'],
             'mobile_verified' => 1,
             "remember_token" => str_random(255)
-        ]);
+        ];
+        if(isset($info['name'])) $data['name'] = $info['name'];
+        $profile = Profile::create($data);
         return Profile::find($profile->id);
     }
 

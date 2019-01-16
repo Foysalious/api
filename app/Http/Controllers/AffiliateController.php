@@ -5,6 +5,7 @@ use App\Models\AffiliateTransaction;
 use App\Models\Affiliation;
 use App\Models\PartnerAffiliation;
 use App\Models\PartnerTransaction;
+use App\Models\Resource;
 use App\Models\Service;
 use App\Models\Customer;
 use App\Models\Profile;
@@ -587,6 +588,57 @@ class AffiliateController extends Controller
                 return api_response($request, $customer_name, 200, ['name' => $customer_name]);
             }
             return api_response($request, [], 404, ['message' => 'Customer not found.']);
+        }catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getPersonalInformation(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'mobile' => 'required|mobile:bd'
+            ]);
+            $profile = Profile::where('mobile', '+88' . $request->mobile)->first();
+            if (!is_null($profile)) {
+                $customer_name = $profile->name;
+                $resource = Resource::where('profile_id',$profile->id)->first();
+                if($resource){
+                    $token = $resource->remember_token;
+                    $resource_informations = [
+                        'name' => $profile->name,
+                        'image' => $profile->pro_pic,
+                        'resource' => [
+                            'id' => $resource->id,
+                            'token' => $token
+                        ]
+                    ];
+                    if($resource->partners) {
+
+                        $resource_informations['partner'] = [
+                            'id' => $resource->partners[0]->id,
+                            'name' => $resource->partners[0]->name,
+                        ];
+                        if($resource->partners[0]->geo_informations) {
+                            $resource_informations['partner']['lat'] = json_decode($resource->partners[0]->geo_informations)->lat;
+                            $resource_informations['partner']['lng'] = json_decode($resource->partners[0]->geo_informations)->lng;
+                            $resource_informations['partner']['radius'] = json_decode($resource->partners[0]->geo_informations)->radius;
+                        }
+                    }
+                    return api_response($request, $customer_name, 200, ['data' => $resource_informations]);
+                } else {
+                    $resource_informations = [
+                        'name' => $profile->name,
+                        'image' => $profile->pro_pic,
+                    ];
+                    return api_response($request, $customer_name, 200, ['data' => $resource_informations]);
+                }
+            }
+            return api_response($request, [], 404, null);
         }catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
