@@ -92,6 +92,9 @@ class PartnerRegistrationController extends Controller
         if($request->has('affiliate_id')) {
             $data['affiliate_id'] = $request->affiliate_id;
         }
+        if($request->has('address')) {
+            $data['address'] = $request->address;
+        }
         return $data;
     }
 
@@ -133,7 +136,7 @@ class PartnerRegistrationController extends Controller
                 $partner = $partner->fill(array_merge($data, $by));
                 $partner->save();
                 $partner->resources()->attach($resource->id, array_merge($by, ['resource_type' => 'Admin']));
-                if((int) $data['package_id'] === 4)
+                if(isset($data['package_id']) &&(int) $data['package_id'] === 4)
                     $partner->resources()->attach($resource->id, array_merge($by, ['resource_type' => 'Handyman']));
 
                 $partner->basicInformations()->save(new PartnerBasicInformation(array_merge($by, ['is_verified' => 0])));
@@ -142,7 +145,6 @@ class PartnerRegistrationController extends Controller
                 if (isset($data['billing_type']) && isset($data['package_id'])) $partner->subscribe($data['package_id'], $data['billing_type']);
             });
         } catch (QueryException $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return null;
         }
