@@ -517,3 +517,18 @@ if (!function_exists('scramble_string')) {
         return substr($str, 0, $number_of_words_visible) . str_repeat('*', $number_of_words_hidden) . substr($str, $len - $number_of_words_visible, $len);
     }
 }
+
+if (!function_exists('isResourceAdmin')) {
+    /**
+     * Returns true if resource is admin, else return false if handyman
+     *
+     *
+     * @param array $resource_types
+     * @return String
+     */
+    function isResourceAdmin($resource_types = array())
+    {
+        return (array_intersect($resource_types, ['Admin', 'Operation', 'Finance', 'Management', 'Owner'])) ? true : false;
+    }
+}
+
