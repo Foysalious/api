@@ -95,8 +95,9 @@ class PartnerRegistrationController extends Controller
                 return api_response($request, null, 403, ['message' => "Unauthorized."]);
             }
             $profile = $resource->profile;
-
-            if ($resource->partnerResources->count() > 0) return api_response($request, null, 403, ['message' => 'You already have a company!']);
+            $profile->name = $request->name;
+            $profile->save();
+            //if ($resource->partnerResources->count() > 0) return api_response($request, null, 403, ['message' => 'You already have a company!']);
 
             $data = $this->makePartnerCreateData($request);
             if ($partner = $this->createPartner($resource, $data)) {
