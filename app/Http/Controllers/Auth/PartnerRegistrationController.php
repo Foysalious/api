@@ -183,7 +183,7 @@ class PartnerRegistrationController extends Controller
                 $partner = $partner->fill(array_merge($data, $by));
                 $partner->save();
                 $partner->resources()->attach($resource->id, array_merge($by, ['resource_type' => 'Admin']));
-                if(isset($data['package_id']) &&(int) $data['package_id'] === 4)
+                if(isset($data['package_id']) &&(int) $data['package_id'] === env('LITE_PACKAGE_ID'))
                     $partner->resources()->attach($resource->id, array_merge($by, ['resource_type' => 'Handyman']));
 
                 $partner->basicInformations()->save(new PartnerBasicInformation(array_merge($by, ['is_verified' => 0])));

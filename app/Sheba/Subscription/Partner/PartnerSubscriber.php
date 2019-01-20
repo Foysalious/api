@@ -80,9 +80,6 @@ class PartnerSubscriber extends ShebaSubscriber
     public function getUpgradablePackage()
     {
         $upgradable_package = PartnerSubscriptionPackage::where('id', '>', $this->partner->subscription->id)->orderBy('id')->take(1)->first();
-
-        if (!$upgradable_package) return PartnerSubscriptionPackage::find(self::basicSubscriptionPackageId);
-        else if ($upgradable_package && ($upgradable_package->id == env('LITE_PACKAGE_ID'))) return null;
-        else return $upgradable_package;
+        return $upgradable_package;
     }
 }
