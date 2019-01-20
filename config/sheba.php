@@ -38,8 +38,7 @@ return [
     'partner_packages_on_partner_list' => [
         'ESP' => 2,
         'PSP' => 6,
-        'LSP' => 2,
-        'LITE' => 4
+        'LSP' => 2
     ],
     'partner_statuses' => [
 
@@ -83,5 +82,6 @@ return [
         ['#5B247A', '#1BCEDF'],
         ['#00B8BA', '#00FFED']
     ],
-    'screen' => ['home', 'eshop']
+    'screen' => ['home', 'eshop'],
+    'partner_lite_packages_id' => env('LITE_PACKAGE_ID')
 ];

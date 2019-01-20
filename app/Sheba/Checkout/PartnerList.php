@@ -208,7 +208,7 @@ class PartnerList
             $q->where('end', null)->orWhere([['start', '<=', Carbon::now()], ['end', '>=', Carbon::now()->addDays(7)]]);
         })->with(['handymanResources' => function ($q) {
             $q->verified();
-        }])->published()->where('package_id', '<>', config('sheba.partner_packages_on_partner_list')['LITE'])
+        }])->published()->where('package_id', '<>', config('sheba.partner_lite_packages_id'))
             ->select('partners.id', 'partners.current_impression', 'partners.geo_informations', 'partners.address', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet', 'partners.package_id', 'partners.badge');
         if ($partner_id != null) {
             $query = $query->where('partners.id', $partner_id);
