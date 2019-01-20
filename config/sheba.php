@@ -30,9 +30,9 @@ return [
         'manager' => 'notification_sound'
     ],
     'partner_packages' => [
-        'ESP' => 3,
-        'PSP' => 2,
-        'LSP' => 1
+        'ESP' => 4,
+        'PSP' => 3,
+        'LSP' => 2
     ],
     'rent_a_car_pickup_district_ids' => [1, 43],
     'partner_packages_on_partner_list' => [
