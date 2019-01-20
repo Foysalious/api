@@ -6,9 +6,13 @@ namespace App\Repositories;
 use App\Models\Category;
 use App\Models\HyperLocal;
 use App\Models\Partner;
+use App\Models\PartnerWorkingHour;
+use Sheba\ModificationFields;
 
 class PartnerRepository
 {
+    use ModificationFields;
+
     private $partner;
     private $serviceRepo;
 
@@ -129,6 +133,20 @@ class PartnerRepository
             return $hyper_locations;
         } else {
             return [];
+        }
+    }
+
+    public function saveDefaultWorkingHours($by)
+    {
+        $default_working_days = getDefaultWorkingDays();
+        $default_working_hours = getDefaultWorkingHours();
+
+        foreach ($default_working_days as $day) {
+            $this->partner->workingHours()->save(new PartnerWorkingHour( array_merge($by, [
+                'day' => $day,
+                'start_time' => $default_working_hours->start_time,
+                'end_time' => $default_working_hours->end_time
+            ])));
         }
     }
 }

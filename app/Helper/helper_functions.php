@@ -532,3 +532,31 @@ if (!function_exists('isResourceAdmin')) {
     }
 }
 
+if (!function_exists('getDefaultWorkingDays')) {
+    /**
+     * Returns default working days of sheba
+     *
+     *
+     * @return array
+     */
+    function getDefaultWorkingDays()
+    {
+        return ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+    }
+}
+
+if (!function_exists('getDefaultWorkingHours')) {
+    /**
+     * Returns default working days of sheba
+     *
+     *
+     * @return object
+     */
+    function getDefaultWorkingHours()
+    {
+        return (object) [
+            'start_time' => '09:00:00',
+            'end_time' => '18:00:00'
+        ];
+    }
+}

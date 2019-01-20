@@ -10,6 +10,7 @@ use App\Models\PartnerSubscriptionPackage;
 use App\Models\PartnerWalletSetting;
 use App\Models\Profile;
 use App\Models\Resource;
+use App\Repositories\PartnerRepository;
 use App\Repositories\ProfileRepository;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -89,16 +90,16 @@ class PartnerRegistrationController extends Controller
             ]);
 
             $resource = Resource::find($request->resource_id);
-            if(!($resource && $resource->remember_token == $request->remember_token)) {
-                return api_response($request, null, 403, ['message' => "Unauthorized."]);
-            }
+//            if(!($resource && $resource->remember_token == $request->remember_token)) {
+//                return api_response($request, null, 403, ['message' => "Unauthorized."]);
+//            }
 
             $profile = $resource->profile;
             $profile->name = $request->name;
             $profile->save();
 
-            if ($resource->partnerResources->count() > 0)
-                return api_response($request, null, 403, ['message' => 'You already have a company!']);
+//            if ($resource->partnerResources->count() > 0)
+//                return api_response($request, null, 403, ['message' => 'You already have a company!']);
 
             $request['package_id'] = env('LITE_PACKAGE_ID');
             $request['billing_type'] = 'monthly';
@@ -122,6 +123,7 @@ class PartnerRegistrationController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -187,8 +189,10 @@ class PartnerRegistrationController extends Controller
                 $partner = $partner->fill(array_merge($data, $by));
                 $partner->save();
                 $partner->resources()->attach($resource->id, array_merge($by, ['resource_type' => 'Admin']));
-                if(isset($data['package_id']) &&(int) $data['package_id'] === 4)
+                if(isset($data['package_id']) &&(int) $data['package_id'] === 4) {
                     $partner->resources()->attach($resource->id, array_merge($by, ['resource_type' => 'Handyman']));
+                    (new PartnerRepository($partner))->saveDefaultWorkingHours($by);
+                }
 
                 $partner->basicInformations()->save(new PartnerBasicInformation(array_merge($by, ['is_verified' => 0])));
                 (new Referral($partner));
