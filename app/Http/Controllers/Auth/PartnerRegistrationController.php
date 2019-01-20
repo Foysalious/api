@@ -90,16 +90,16 @@ class PartnerRegistrationController extends Controller
             ]);
 
             $resource = Resource::find($request->resource_id);
-//            if(!($resource && $resource->remember_token == $request->remember_token)) {
-//                return api_response($request, null, 403, ['message' => "Unauthorized."]);
-//            }
+            if(!($resource && $resource->remember_token == $request->remember_token)) {
+                return api_response($request, null, 403, ['message' => "Unauthorized."]);
+            }
 
             $profile = $resource->profile;
             $profile->name = $request->name;
             $profile->save();
 
-//            if ($resource->partnerResources->count() > 0)
-//                return api_response($request, null, 403, ['message' => 'You already have a company!']);
+            if ($resource->partnerResources->count() > 0)
+                return api_response($request, null, 403, ['message' => 'You already have a company!']);
 
             $request['package_id'] = env('LITE_PACKAGE_ID');
             $request['billing_type'] = 'monthly';
