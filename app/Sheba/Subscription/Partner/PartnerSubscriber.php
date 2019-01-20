@@ -1,6 +1,4 @@
-<?php
-
-namespace Sheba\Subscription\Partner;
+<?php namespace Sheba\Subscription\Partner;
 
 use App\Models\Partner;
 use App\Models\PartnerSubscriptionPackage;
@@ -12,6 +10,7 @@ use DB;
 class PartnerSubscriber extends ShebaSubscriber
 {
     private $partner;
+    const basicSubscriptionPackageId = 1;
 
     public function __construct(Partner $partner)
     {
@@ -80,6 +79,10 @@ class PartnerSubscriber extends ShebaSubscriber
 
     public function getUpgradablePackage()
     {
-        return PartnerSubscriptionPackage::where('id', '>', $this->partner->subscription->id)->orderBy('id')->take(1)->first();
+        $upgradable_package = PartnerSubscriptionPackage::where('id', '>', $this->partner->subscription->id)->orderBy('id')->take(1)->first();
+
+        if (!$upgradable_package) return PartnerSubscriptionPackage::find(self::basicSubscriptionPackageId);
+        else if ($upgradable_package && ($upgradable_package->id == env('LITE_PACKAGE_ID'))) return null;
+        else return $upgradable_package;
     }
 }

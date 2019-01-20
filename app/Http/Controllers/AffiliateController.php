@@ -617,8 +617,7 @@ class AffiliateController extends Controller
                             'token' => $token
                         ]
                     ];
-                    if($resource->partners) {
-
+                    if(count($resource->partners)>0) {
                         $resource_informations['partner'] = [
                             'id' => $resource->partners[0]->id,
                             'name' => $resource->partners[0]->name,
