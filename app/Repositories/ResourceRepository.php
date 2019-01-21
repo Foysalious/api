@@ -27,6 +27,10 @@ class ResourceRepository
                 $partner->put('geo_informations',$geo_informations);
                 return $partner;
             }
+            if(!$avatar->isManager($partner)) {
+                $partner = collect($partner)->only(['id', 'name','logo']);
+                return $partner;
+            }
         }
         return null;
     }

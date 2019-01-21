@@ -75,6 +75,7 @@ class OperationController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -120,6 +121,11 @@ class OperationController extends Controller
 
                 $category_partner_info = [];
                 $should_update_category_partner = 0;
+
+                if($partner->package_id === env('partner_lite_packages_id')) {
+                    $request->is_on_premise_available = true;
+                }
+
                 if ($request->has('is_home_delivery_available') && $request->has('delivery_charge')) {
                     $category_partner_info['is_home_delivery_applied'] = $request->is_home_delivery_available;
                     $category_partner_info['delivery_charge'] = $request->is_home_delivery_available ? $request->delivery_charge : 0;
