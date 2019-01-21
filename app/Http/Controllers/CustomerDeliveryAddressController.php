@@ -3,6 +3,7 @@
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
+use App\Models\Location;
 use App\Models\Partner;
 use App\Models\Profile;
 use App\Sheba\Geo;
@@ -69,17 +70,21 @@ class CustomerDeliveryAddressController extends Controller
             $customer = $request->customer;
             $location = null;
             $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'location_id', 'address', 'name', 'geo_informations')->get();
-            $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first();
-            if ($hyper_location) $location = $hyper_location->location;
+            /*$hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first();
+            if ($hyper_location) $location = $hyper_location->location;*/
+            $location = Location::find(1);
             if ($location == null) return api_response($request, null, 404, ['message' => "No address at this location"]);
             $customer_order_addresses = $customer->orders()->selectRaw('delivery_address,count(*) as c')->groupBy('delivery_address')->orderBy('c', 'desc')->get();
+            $target = new Coords((double)$request->lat, (double)$request->lng);
             $customer_delivery_addresses = $customer_delivery_addresses->reject(function ($address) {
                 return $address->geo_informations == null;
-            })->map(function ($customer_delivery_address) use ($customer_order_addresses) {
+            })->map(function ($customer_delivery_address) use ($customer_order_addresses, $target) {
                 $customer_delivery_address['count'] = $this->getOrderCount($customer_order_addresses, $customer_delivery_address);
                 $geo = json_decode($customer_delivery_address['geo_informations']);
                 $customer_delivery_address['geo_informations'] = $geo ? array('lat' => (double)$geo->lat, 'lng' => (double)$geo->lng) : null;
                 $customer_delivery_address['is_valid'] = 1;
+                $address = new Coords($customer_delivery_address['geo_informations']['lat'], $customer_delivery_address['geo_informations']['lng']);
+                $customer_delivery_address['is_same'] = $address->isSameTo($target);
                 return $customer_delivery_address;
             });
 //            if ($location) $customer_delivery_addresses = $customer_delivery_addresses->where('location_id', $location->id);
@@ -105,9 +110,15 @@ class CustomerDeliveryAddressController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function get()
+    {
+
     }
 
     public function store($customer, Request $request)

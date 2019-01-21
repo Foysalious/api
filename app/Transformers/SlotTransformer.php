@@ -12,9 +12,7 @@ class SlotTransformer extends TransformerAbstract
     {
         return [
             'key' => $slot['key'],
-            'value' => $slot['value'],
-            'is_valid' => $slot['is_valid'],
-            'is_available' => $slot['is_available'],
+            'value' => $slot['value']
         ];
     }
 }

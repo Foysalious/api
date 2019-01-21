@@ -38,7 +38,8 @@ return [
     'partner_packages_on_partner_list' => [
         'ESP' => 2,
         'PSP' => 6,
-        'LSP' => 2
+        'LSP' => 2,
+        'LITE' => 4
     ],
     'partner_statuses' => [
 

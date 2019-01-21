@@ -517,3 +517,46 @@ if (!function_exists('scramble_string')) {
         return substr($str, 0, $number_of_words_visible) . str_repeat('*', $number_of_words_hidden) . substr($str, $len - $number_of_words_visible, $len);
     }
 }
+
+if (!function_exists('isResourceAdmin')) {
+    /**
+     * Returns true if resource is admin, else return false if handyman
+     *
+     *
+     * @param array $resource_types
+     * @return String
+     */
+    function isResourceAdmin($resource_types = array())
+    {
+        return (array_intersect($resource_types, ['Admin', 'Operation', 'Finance', 'Management', 'Owner'])) ? true : false;
+    }
+}
+
+if (!function_exists('getDefaultWorkingDays')) {
+    /**
+     * Returns default working days of sheba
+     *
+     *
+     * @return array
+     */
+    function getDefaultWorkingDays()
+    {
+        return ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+    }
+}
+
+if (!function_exists('getDefaultWorkingHours')) {
+    /**
+     * Returns default working days of sheba
+     *
+     *
+     * @return object
+     */
+    function getDefaultWorkingHours()
+    {
+        return (object) [
+            'start_time' => '09:00:00',
+            'end_time' => '18:00:00'
+        ];
+    }
+}

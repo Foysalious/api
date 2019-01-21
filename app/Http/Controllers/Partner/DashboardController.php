@@ -100,6 +100,7 @@ class DashboardController extends Controller
                 ] : null,
                 'has_reward_campaign' => count($partner_reward->upcoming()) > 0 ? 1 : 0
             ];
+
             return api_response($request, $dashboard, 200, ['data' => $dashboard]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

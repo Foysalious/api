@@ -19,8 +19,12 @@ class ResourceRepository
         $partners = $this->resource->partners->unique();
         foreach ($partners as $partner) {
             if ($avatar->isManager($partner)) {
-                $partner = collect($partner)->only(['id', 'name', 'sub_domain', 'mobile', 'email', 'status']);
+                $categories = $partner->categories;
+                $geo_informations = json_decode($partner->geo_informations);
+                $partner = collect($partner)->only(['id', 'name','address' , 'sub_domain', 'mobile', 'email', 'status','logo']);
                 $partner->put('is_verified', $partner->get('status') == 'Verified' ? 1 : 0);
+                $partner->put('is_category_tagged', count($categories) > 0 ?  true : false);
+                $partner->put('geo_informations',$geo_informations);
                 return $partner;
             }
         }

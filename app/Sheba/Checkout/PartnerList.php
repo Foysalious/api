@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Sheba\Checkout;
+<?php namespace App\Sheba\Checkout;
 
 use App\Exceptions\HyperLocationNotFoundException;
 use App\Jobs\DeductPartnerImpression;
@@ -210,8 +208,8 @@ class PartnerList
             $q->where('end', null)->orWhere([['start', '<=', Carbon::now()], ['end', '>=', Carbon::now()->addDays(7)]]);
         })->with(['handymanResources' => function ($q) {
             $q->verified();
-        }])->published()
-            ->select('partners.id', 'partners.current_impression', 'partners.geo_informations', 'partners.address', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet', 'partners.package_id');
+        }])->published()->where('package_id', '<>', config('sheba.partner_packages_on_partner_list')['LITE'])
+            ->select('partners.id', 'partners.current_impression', 'partners.geo_informations', 'partners.address', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet', 'partners.package_id', 'partners.badge');
         if ($partner_id != null) {
             $query = $query->where('partners.id', $partner_id);
         }
@@ -241,7 +239,6 @@ class PartnerList
         }
         return null;
     }
-
 
     /**
      * @param null $partner_id
@@ -366,7 +363,8 @@ class PartnerList
             $partner['total_jobs_of_category'] = $partner->jobs->first() ? $partner->jobs->first()->total_jobs_of_category : 0;
             $partner['total_completed_orders'] = $partner->jobs->first() ? $partner->jobs->first()->total_completed_orders : 0;
             $partner['contact_no'] = $this->getContactNumber($partner);
-            $partner['subscription_type'] = $this->setBadgeName($partner->badge);
+            // $partner['subscription_type'] = $this->setBadgeName($partner->badge);
+            $partner['subscription_type'] = $partner->subscription ? $partner->subscription->name : null;
             $partner['total_working_days'] = $partner->workingHours ? $partner->workingHours->count() : 0;
             $partner['rating'] = $partner->reviews->first() ? (double)$partner->reviews->first()->avg_rating : 0;
             $partner['total_ratings'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_ratings : 0;
@@ -376,10 +374,16 @@ class PartnerList
         }
     }
 
-    public function setBadgeName($badge)
+    /**
+     * @param $badge
+     * @return string
+     */
+    private function setBadgeName($badge)
     {
-        if ($badge === 'gold') return 'ESP';
-        else if ($badge === 'silver') return 'PSP';
+        $partner_showable_badge = constants('PARTNER_BADGE');
+
+        if ($badge === $partner_showable_badge['gold']) return 'ESP';
+        else if ($badge === $partner_showable_badge['silver']) return 'PSP';
         else return 'LSP';
     }
 
@@ -596,5 +600,4 @@ class PartnerList
             ])
         );
     }
-
 }
