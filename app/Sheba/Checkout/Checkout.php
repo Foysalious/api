@@ -181,7 +181,7 @@ class Checkout
             });
         } catch (QueryException $e) {
             app('sentry')->captureException($e);
-            return false;
+            throw  $e;
         }
         return $order;
     }

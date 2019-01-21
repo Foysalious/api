@@ -140,9 +140,9 @@ class PartnerController extends Controller
             if ($partner = Partner::find((int)$partner)) {
 
                 $services = $partner->services()->select($this->getSelectColumnsOfService())->where('category_id', $request->category)
-                    ->where(function($q) {
-                        $q->where('publication_status',1);
-                        $q->orWhere('is_published_for_backend',1);
+                    ->where(function ($q) {
+                        $q->where('publication_status', 1);
+                        $q->orWhere('is_published_for_backend', 1);
                     })
                     ->get();
                 if (count($services) > 0) {
@@ -490,23 +490,31 @@ class PartnerController extends Controller
     public function getCategories($partner, Request $request)
     {
         try {
-            $partner = Partner::with(['categories' => function ($query) {
-                return $query->published()->wherePivot('is_verified', 1);
-            }])->find($partner);
-
+            $partner = Partner::find($partner);
+            if (!$partner->isLite()) {
+                $partner = $partner->load(['categories' => function ($query) {
+                    return $query->published()->wherePivot('is_verified', 1);
+                }]);
+            } else {
+                $partner = $partner->load(['categories' => function ($query) {
+                    return $query->published();
+                }]);
+            }
             if ($partner) {
                 $categories = collect();
                 foreach ($partner->categories as $category) {
                     $services = $partner->services()->select('services.id', 'name', 'variable_type', 'services.min_quantity', 'services.variables')
                         ->where('category_id', $category->id)
-                        ->where(function($q){
-                            $q->where('publication_status',1);
-                            $q->oRwhere('is_published_for_backend',1);
+                        ->where(function ($q) {
+                            $q->where('publication_status', 1);
+                            $q->oRwhere('is_published_for_backend', 1);
                         })
-                        ->wherePivot('is_published', 1)->wherePivot('is_verified', 1)
-                        ->publishedForAll()
-                        ->get();
-
+                        ->wherePivot('is_published', 1)
+                        ->publishedForAll();
+                    if (!$partner->isLite()) {
+                        $services = $services->wherePivot('is_verified', 1);
+                    }
+                    $services = $services->get();
                     if (count($services) > 0) {
                         $services->each(function (&$service) {
                             $variables = json_decode($service->variables);
@@ -522,7 +530,7 @@ class PartnerController extends Controller
                             removeRelationsAndFields($service);
                         });
                     }
-                    $categories->push(['id' => $category->id, 'name' => $category->name, 'app_thumb' => $category->app_thumb, 'services' => $services]);
+                    $categories->push(['id' => $category->id, 'name' => $category->name, 'app_thumb' => $category->app_thumb, 'services' => $services, 'is_verified' => $category->pivot->is_verified]);
                 }
 
                 if (count($categories) > 0) {
@@ -538,6 +546,7 @@ class PartnerController extends Controller
 
             return api_response($request, null, 404);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -730,8 +739,8 @@ class PartnerController extends Controller
 
             $service = $request->partner
                 ->services()
-                ->whereHas('locations',function($query) use ($location){
-                    $query->where('id',$location->id);
+                ->whereHas('locations', function ($query) use ($location) {
+                    $query->where('id', $location->id);
                 })
                 ->where('category_id', $category)
                 ->where('is_published', 1)

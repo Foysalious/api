@@ -473,4 +473,9 @@ class Partner extends Model implements Rewardable, TopUpAgent
     {
         return $this->hasMany(PartnerGeoChangeLog::class);
     }
+
+    public function isLite()
+    {
+        return $this->packege_id == config('sheba.partner_lite_packages_id');
+    }
 }
