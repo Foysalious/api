@@ -25,6 +25,10 @@ class ResourceRepository
                 $partner->put('categories', $categories);
                 return $partner;
             }
+            if(!$avatar->isManager($partner)) {
+                $partner = collect($partner)->only(['id', 'name','logo']);
+                return $partner;
+            }
         }
         return null;
     }

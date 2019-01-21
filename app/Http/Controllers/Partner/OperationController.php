@@ -194,8 +194,14 @@ class OperationController extends Controller
         $location = (new PartnerRepository($partner))->getLocations()->pluck('id');
         try{
             foreach ($categories as $category) {
-                array_push($category_partners, array_merge(['response_time_min' => 60, 'response_time_max' => 120,
-                    'commission' => $partner->commission, 'category_id' => $category->id], $by));
+
+                $current_category_partner = ['response_time_min' => 60, 'response_time_max' => 120,
+                    'commission' => $partner->commission, 'category_id' => $category->id];
+
+                if($partner->package_id === config('sheba.partner_lite_packages_id'))
+                    $current_category_partner['is_partner_premise_applied'] = true;
+
+                array_push($category_partners, array_merge($current_category_partner, $by));
                 $category->load(['services' => function ($q) use ($location) {
                     $q->whereExists(function ($query) use ($location) {
                         $query->from('location_service')->whereIn('location_id', $location)->whereRaw('service_id=services.id');
