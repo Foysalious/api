@@ -473,14 +473,23 @@ class PartnerController extends Controller
     {
         try {
             $partner = Partner::find($partner);
-            if ($partner) {
-                $locations = collect();
-                foreach ($partner->locations as $location) {
-                    $locations->push(array('id' => $location->id, 'name' => $location->name));
-                }
-                if (count($locations) > 0) return api_response($request, $locations, 200, ['locations' => $locations]);
-            }
-            return api_response($request, null, 404);
+            if (!$partner) return api_response($request, null, 404);
+
+            $geo_info = json_decode($partner->geo_informations);
+            if (!$geo_info) return api_response($request, null, 404);
+
+            $locations = collect();
+
+            HyperLocal::insideCircle($geo_info)->with('location')->get()
+                ->pluck('location')
+                ->filter()
+                ->each(function ($location) use (&$locations) {
+                    $locations->push(['id' => $location->id, 'name' => $location->name]);
+                });
+
+            if ($locations->count() == 0) return api_response($request, null, 404);
+
+            return api_response($request, $locations, 200, ['locations' => $locations]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

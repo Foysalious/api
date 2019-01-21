@@ -109,7 +109,6 @@ class LocationController extends Controller
         } else {
             return api_response($request, null, 404);
         }
-
     }
 
     public function validateLocation(Request $request)
