@@ -132,10 +132,18 @@ class PartnerModerator
     private function setPartnerData($status)
     {
         $this->partner->moderation_status = $status;
-        if ($this->moderatorRole == 'moderator') {
-            $this->partner->affiliation_cost = $this->affiliationRewards->getTotalCost();
-        } else if ($this->moderatorRole == 'admin') {
-            $this->partner->affiliation_cost = $this->affiliationRewards->getAffiliationCost();
+        if ($status == 'accepted') {
+            if ($this->moderatorRole == 'moderator') {
+                $this->partner->affiliation_cost = $this->affiliationRewards->getTotalCost();
+            } else if ($this->moderatorRole == 'admin') {
+                $this->partner->affiliation_cost = $this->affiliationRewards->getAffiliationCost();
+            }
+        } else {
+            if ($this->moderatorRole == 'moderator') {
+                $this->partner->affiliation_cost = $this->affiliationRewards->getModerationCost();
+            } else if ($this->moderatorRole == 'admin') {
+                $this->partner->affiliation_cost = 0;
+            }
         }
         $this->partner->save();
     }

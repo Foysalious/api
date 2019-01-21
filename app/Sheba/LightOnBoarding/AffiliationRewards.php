@@ -7,8 +7,8 @@ use Sheba\ModificationFields;
 class AffiliationRewards
 {
     use ModificationFields;
-    private $moderationCost = 60;
-    private $affiliationCost = 20;
+    private $moderationCost = 10;
+    private $affiliationCost = 10;
     private $moderator, $affiliate;
     private $requestIdentification;
 
