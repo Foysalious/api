@@ -1,7 +1,4 @@
-<?php
-
-namespace Sheba\Checkout;
-
+<?php namespace Sheba\Checkout;
 
 class PartnerSort
 {
@@ -26,7 +23,6 @@ class PartnerSort
         $this->silverPartnerCount = config('sheba.partner_packages_on_partner_list')['PSP'];
         $this->bronzePartnerCount = config('sheba.partner_packages_on_partner_list')['LSP'];
         $this->setPartners();
-
     }
 
     private function setPartners()
