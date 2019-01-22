@@ -189,7 +189,7 @@ class PartnerRegistrationController extends Controller
                 $partner = $partner->fill(array_merge($data, $by));
                 $partner->save();
                 $partner->resources()->attach($resource->id, array_merge($by, ['resource_type' => 'Admin']));
-                if(isset($data['package_id']) &&(int) $data['package_id'] === env('LITE_PACKAGE_ID')) {
+                if(isset($data['package_id']) && $data['package_id'] == env('LITE_PACKAGE_ID')) {
                     $partner->resources()->attach($resource->id, array_merge($by, ['resource_type' => 'Handyman']));
                     (new PartnerRepository($partner))->saveDefaultWorkingHours($by);
                 }
