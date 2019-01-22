@@ -512,6 +512,6 @@ class Partner extends Model implements Rewardable, TopUpAgent
 
     public function isLite()
     {
-        return $this->packege_id == config('sheba.partner_lite_packages_id');
+        return $this->package_id == (int)config('sheba.partner_lite_packages_id');
     }
 }
