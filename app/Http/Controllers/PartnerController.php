@@ -80,7 +80,7 @@ class PartnerController extends Controller
             }, 'reviews' => function($q) {
                 $q->with(['rates' => function($q) {
                    $q->select('review_id', 'review_type', 'rate_answer_id')->where('rate_question_id', self::COMPLIMENT_QUESTION_ID)->with(['answer' => function($q) {
-                       $q->select('id', 'answer');
+                       $q->select('id', 'answer', 'badge', 'asset');
                    }]);
                 }]);
             }, 'jobs' => function ($q) {
@@ -139,6 +139,8 @@ class PartnerController extends Controller
                 return [
                     'id' => $index,
                     'name' => $answer->first()->answer->answer,
+                    'badge' => $answer->first()->answer->badge,
+                    'asset' => $answer->first()->answer->asset,
                     'count' => $answer->count(),
                 ];
             });
