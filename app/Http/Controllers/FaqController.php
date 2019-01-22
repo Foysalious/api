@@ -55,17 +55,15 @@ class FaqController extends Controller
                     'questions' => array(
                         array(
                             'question_bn' => 'কিভাবে সার্ভিস প্রোভাইডার রেফার কাজ করে?',
-                            'answer_bn' => 'আপনি কোন ব্যাবসায়ী বন্ধুকে রেফার করলে সেই রেফার ক্রিত নম্বার এ একটি মাসেজ এর মাধ্যমে সেবা মানেজার অ্যাপ এর লিঙ্ক পাঠানো হবে। আপনার বন্ধুকে সেই অ্যাপটি ডাউনলোড করে অ্যাপটি ইন্সটল করতে হবে। ডাউনলোড সম্পন্ন হলে অ্যাপ এর মাধ্যমে সার্ভিস প্রোভাইডার হিসাবে রেজিস্টার করতে হবে। সকল আবশ্যক তথ্য প্রদানের পর আপনার রেফের ক্রিত বন্ধুটি Ready to Verified হবে। সে সেবা দ্বারা ভেরিফাইড হওয়ার পর আপনি প্রথম কিস্তি বোনাস পাবেন। আপনার বন্ধুটি প্রথম দুটি কাজ সফল ভাবে সম্পন করলে আপনি বাকি বোনাস পায়ে যাবেন।',
+                            'answer_bn' => 'আপনি আপনার বন্ধু অ্যাপ এর মাধ্যমে আপনার ব্যবসায়ী বন্ধুকে সেবাতে লাইট পাকেজে রেজিস্টার করতে পারবেন। আপনার বন্ধুটি সেবাতে রেজিস্টার করাতে তার নাম, ফোন, ব্যাবাসায়ীর নাম, ব্যাবসার ঠিকানা, তার লোকেশন ও তার ছবি প্রদান করে তাকে সেবাতে রেজিস্টার করাতে পারেন।',
                             'question_en' => 'How does service provider referral work?  ',
-                            'answer_en'=> 'When you refer your business man friend, it will develop and send a massage to your friend phone with a link of Sheba Manager APP. Manger App need to download and install to his phone. He needs to get registered by giving all the valid necessary information. Sheba team will verify the service provider and he will able to serve. After completing verification, you will get first step of bonus. After completing two successful job Bondhu will get the bonus.'
+                            'answer_en'=> ' You can register your businessman friend to Sheba.xyz as Lite Service Provider. To on board you can register your friend to Sheba by giving information like Name, Phone Number, Business Name, Business Address, Location and Friend picture.'
                         ),
                         array(
                             'question_bn' => 'কিভাবে আপনার ব্যাবসায়ী বন্ধুকে রেফার করে টাকা আয় করবেন?',
-                            'answer_bn' => 'আপনি আপনার বন্ধু অ্যাপ এর মাধ্যমে আপনার ব্যাবসায়ী বন্ধুকে রেফার করতে পারবেন। আপনার বন্ধুর নাম, ফোন নং এবং সার্ভিস নাম প্রদান করে আপনি তাকে সেবাতে রেফার করতে পারবেন। আর প্রতিটি সফল রেফের এ আপনি পাবেন ১৪০ টাকা বোনাস। এই বোনাস আপনি পাবেন দুটি কিস্তিতে- (১) রেজিস্টারড বন্ধুটি যখন সেবা দ্বারা ভেরিফাইড হবে তখন বোনাস পাবেন ৪২টাকা। (২) দুটি সফল সার্ভিস প্রদান করলে বন্ধু পাবে বাকি ৯৮ টাকা।',
+                            'answer_bn' => 'আপনার রেজিস্টার কৃত সার্ভিস প্রোভাইডার সেবা বন্ধু মডারেটর ধারা ভেরিফাইড হলে আপনি পাবেন ১০টাকা বোনাস।',
                             'question_en' => 'How to refer your businessman friend? ',
-                            'answer_en' => 'You can refer your business man friend in sheba.xyz via Bondhu App. By providing your friend name, phone no and company name him in sheba as Service Provider. You will get TK140 in every successful refer. You will get the bonus in two steps –
-- After complete his verification you will get Tk 42 as bonus.
-- After completing two successful work Bondhu will get TK 98 as final bonus.',
+                            'answer_en' => 'If your registered friend verified by sheba bondhu modarator, you will get 10tk as bonus.',
                         ),
                     )
                 ),
