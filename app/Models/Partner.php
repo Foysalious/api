@@ -27,6 +27,15 @@ class Partner extends Model implements Rewardable, TopUpAgent
     protected $categoryPivotColumns = ['id', 'experience', 'preparation_time_minutes', 'response_time_min', 'response_time_max', 'commission', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at', 'is_home_delivery_applied', 'is_partner_premise_applied', 'delivery_charge'];
     protected $servicePivotColumns = ['id', 'description', 'options', 'prices', 'min_prices', 'base_prices', 'base_quantity', 'is_published', 'discount', 'discount_start_date', 'discount_start_date', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
 
+    private $resourceTypes;
+
+
+    public function __construct($attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->resourceTypes = constants('RESOURCE_TYPES');
+    }
+
     public function basicInformations()
     {
         return $this->hasOne(PartnerBasicInformation::class);
@@ -177,6 +186,33 @@ class Partner extends Model implements Rewardable, TopUpAgent
             return $this->mobile;
         }
         return $this->email;
+    }
+
+    public function getFirstOperationResource()
+    {
+        if($this->resources) {
+            return $this->resources->where('pivot.resource_type', $this->resourceTypes['Operation'])->first();
+        } else {
+            return $this->admins->first();
+        }
+    }
+
+    public function getFirstAdminResource()
+    {
+        if($this->resources) {
+            return $this->resources->where('pivot.resource_type', $this->resourceTypes['Admin'])->first();
+        } else {
+            return $this->admins->first();
+        }
+    }
+
+    public function getContactResource()
+    {
+        if ($operation_resource = $this->getFirstOperationResource())
+            return $operation_resource;
+        if ($admin_resource = $this->getFirstAdminResource())
+            return $admin_resource;
+        return null;
     }
 
     public function generateReferral()
