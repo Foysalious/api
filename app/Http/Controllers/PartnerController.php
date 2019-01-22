@@ -144,11 +144,15 @@ class PartnerController extends Controller
                     'count' => $answer->count(),
                 ];
             });
+            $group_rating = $partner->reviews->groupBy('rating')->map(function ($rate){
+                return $rate->count();
+            });
             $info->put('compliments', $compliment_counts->values());
             $info->put('total_resources', $partner->resources->count());
             $info->put('total_jobs', $partner->jobs->count());
             $info->put('total_rating', $partner->reviews->count());
             $info->put('avg_rating', $this->reviewRepository->getAvgRating($partner->reviews));
+            $info->put('group_rating', $group_rating);
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
             dd($e);
