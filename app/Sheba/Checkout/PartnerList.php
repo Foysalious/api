@@ -213,7 +213,7 @@ class PartnerList
         $query = Partner::WhereHas('categories', function ($q) use ($category_ids, $has_premise, $has_home_delivery, $isNotLite) {
             $q->whereIn('categories.id', $category_ids);
             if ($isNotLite) {
-                $q->where('categories.is_verified', 1);
+                $q->where('category_partner.is_verified', 1);
             }
             if (request()->has('has_home_delivery')) $q->where('category_partner.is_home_delivery_applied', $has_home_delivery);
             if (request()->has('has_premise')) $q->where('category_partner.is_partner_premise_applied', $has_premise);
