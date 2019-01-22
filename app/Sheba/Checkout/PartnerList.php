@@ -218,22 +218,24 @@ class PartnerList
             if (request()->has('has_home_delivery')) $q->where('category_partner.is_home_delivery_applied', $has_home_delivery);
             if (request()->has('has_premise')) $q->where('category_partner.is_partner_premise_applied', $has_premise);
             if (!request()->has('has_home_delivery') && !request()->has('has_premise')) $q->where('category_partner.is_home_delivery_applied', 1);
-        })->whereHas('services', function ($query) use ($isNotLite) {
-            $query->whereHas('category', function ($q) {
-                $q->published();
-            })->select(DB::raw('count(*) as c'))->whereIn('services.id', $this->selectedServiceIds)->where('partner_service.is_published', 1)
-                ->publishedForAll()
-                ->groupBy('partner_id')->havingRaw('c=' . count($this->selectedServiceIds));
-            if ($isNotLite) {
-                $query->where('partner_service.is_verified', 1);
-            }
-        })->whereDoesntHave('leaves', function ($q) {
-            $q->where('end', null)->orWhere([['start', '<=', Carbon::now()], ['end', '>=', Carbon::now()->addDays(7)]]);
-        })->with(['handymanResources' => function ($q) use ($isNotLite) {
-            if ($isNotLite) {
-                $q->verified();
-            }
-        }])->published()->where('package_id', '<>', config('sheba.partner_lite_packages_id'))
+        })
+            ->whereHas('services', function ($query) use ($isNotLite) {
+                $query->whereHas('category', function ($q) {
+                    $q->published();
+                })->select(DB::raw('count(*) as c'))->whereIn('services.id', $this->selectedServiceIds)->where('partner_service.is_published', 1)
+                    ->publishedForAll()
+                    ->groupBy('partner_id')->havingRaw('c=' . count($this->selectedServiceIds));
+                if ($isNotLite) {
+                    $query->where('partner_service.is_verified', 1);
+                }
+            })->whereDoesntHave('leaves', function ($q) {
+                $q->where('end', null)->orWhere([['start', '<=', Carbon::now()], ['end', '>=', Carbon::now()->addDays(7)]]);
+            })->with(['handymanResources' => function ($q) use ($isNotLite) {
+                if ($isNotLite) {
+                    $q->verified();
+                }
+            }])
+            ->published()
             ->select('partners.id', 'partners.current_impression', 'partners.geo_informations', 'partners.address', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet', 'partners.package_id', 'partners.badge');
         if ($isNotLite) {
             $query->where('package_id', '<>', config('sheba.partner_lite_packages_id'));

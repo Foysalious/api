@@ -45,6 +45,8 @@ class PartnerController extends Controller
     private $discountRepository;
     private $rentCarCategoryIds;
 
+    const COMPLIMENT_QUESTION_ID = 2;
+
     public function __construct()
     {
         $this->serviceRepository = new ServiceRepository();
@@ -75,7 +77,13 @@ class PartnerController extends Controller
             if ($partner == null) return api_response($request, null, 404);
             $partner->load(['workingHours', 'categories' => function ($q) {
                 $q->select('categories.id', 'name', 'thumb', 'icon', 'categories.slug')->where('category_partner.is_verified', 1);
-            }, 'reviews', 'jobs' => function ($q) {
+            }, 'reviews' => function($q) {
+                $q->with(['rates' => function($q) {
+                   $q->select('review_id', 'review_type', 'rate_answer_id')->where('rate_question_id', self::COMPLIMENT_QUESTION_ID)->with(['answer' => function($q) {
+                       $q->select('id', 'answer');
+                   }]);
+                }]);
+            }, 'jobs' => function ($q) {
                 $q->whereHas('resource', function ($query) {
                     $query->verified();
                 })->with(['resource' => function ($q) {
@@ -86,6 +94,8 @@ class PartnerController extends Controller
             }, 'services' => function ($q) {
                 $q->where('partner_service.is_verified', 1);
             }, 'locations']);
+
+
             $locations = $partner->locations;
             $info = collect($partner)->only(['id', 'name', 'mobile', 'description', 'email', 'verified_at', 'status', 'logo', 'address', 'created_at']);
             $working_info = [];
@@ -99,7 +109,7 @@ class PartnerController extends Controller
             $job_with_review = $partner->jobs->where('status', 'Served')->filter(function ($job) {
                 return $job->resource_id != null && $job->review != null;
             });
-            $resource_jobs = $job_with_review->groupBy('resource_id');
+            $resource_jobs = $job_with_review->groupBy('resource_id')->take(1);
             $all_resources = collect();
             foreach ($resource_jobs as $resource_job) {
                 if ($partner_resource = PartnerResource::where('partner_id', $partner->id)->where('resource_id', $resource_job[0]->resource_id)->first() && $resource_job[0]->resource->is_verified) {
@@ -122,13 +132,24 @@ class PartnerController extends Controller
             $info->put('categories', $partner->categories->each(function ($category) {
                 removeRelationsAndFields($category);
             }));
-            $info->put('compliments', []);;
+
+            $compliment_counts = $partner->reviews->pluck('rates')->filter(function($rate) {
+                return $rate->count();
+            })->flatten()->groupBy('rate_answer_id')->map(function($answer, $index) {
+                return [
+                    'id' => $index,
+                    'name' => $answer->first()->answer->answer,
+                    'count' => $answer->count(),
+                ];
+            });
+            $info->put('compliments', $compliment_counts->values());
             $info->put('total_resources', $partner->resources->count());
             $info->put('total_jobs', $partner->jobs->count());
             $info->put('total_rating', $partner->reviews->count());
             $info->put('avg_rating', $this->reviewRepository->getAvgRating($partner->reviews));
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
