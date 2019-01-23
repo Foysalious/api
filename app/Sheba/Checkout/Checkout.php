@@ -134,6 +134,7 @@ class Checkout
         $data['created_by'] = $created_by = $request->has('created_by') ? $request->created_by : $this->customer->id;
         $data['created_by_name'] = $created_by_name = $request->has('created_by_name') ? $request->created_by_name : 'Customer - ' . $this->customer->profile->name;
         $this->orderData = array_merge($this->orderData, $data);
+        
         return $this->orderData;
     }
 

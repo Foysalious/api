@@ -138,39 +138,23 @@ class PartnerList
     {
         if ($this->location) {
             $this->location = $this->getCalculatedLocation($this->selected_services->first());
-            $start = microtime(true);
             $this->partners = $this->findPartnersByServiceAndLocation($partner_id);
-            $time_elapsed_secs = microtime(true) - $start;
-            // dump("filter partner by service,location,category: " . $time_elapsed_secs * 1000);
         } else {
             $this->partners = $this->findPartnersByServiceAndGeo($partner_id);
         }
-        $start = microtime(true);
         $this->filterByCreditLimit();
-        $time_elapsed_secs = microtime(true) - $start;
-        //dump("filter partner by credit: " . $time_elapsed_secs * 1000);
-
-        $start = microtime(true);
         $this->partners->load(['services' => function ($q) {
             $q->whereIn('service_id', $this->selectedServiceIds);
         }, 'categories' => function ($q) {
             $q->where('categories.id', $this->selectedCategory->id);
         }]);
-        $time_elapsed_secs = microtime(true) - $start;
-        //dump("load partner service and category: " . $time_elapsed_secs * 1000);
-        $start = microtime(true);
         $this->filterByOption();
-        $time_elapsed_secs = microtime(true) - $start;
-        //dump("filter partner by option: " . $time_elapsed_secs * 1000);
-        $start = microtime(true);
         if (!$this->skipAvailability) $this->addAvailability();
         elseif ($this->partners->count() > 1) $this->rejectShebaHelpDesk();
         $this->partners = $this->partners->filter(function ($partner) {
             return $this->hasResourcesForTheCategory($partner);
         });
         $this->notFoundValues['handyman'] = $this->getPartnerIds();
-        $time_elapsed_secs = microtime(true) - $start;
-        //dump("filter partner by availability: " . $time_elapsed_secs * 1000);
         $this->calculateHasPartner();
     }
 
@@ -178,14 +162,28 @@ class PartnerList
     private function findPartnersByServiceAndLocation($partner_id = null)
     {
         $this->partners = $this->findPartnersByService($partner_id);
+
         $this->partners->load('locations');
         return $this->partners->filter(function ($partner) {
             /** Do not delete this code, will be used for later, range will be fetched using hyper local. */
-//            $is_partner_has_coverage = $partner->geo_informations && in_array($this->location, HyperLocal::insideCircle(json_decode($partner->geo_informations))->pluck('location_id')->toArray());
-//            return $is_partner_has_coverage;]
-            return $partner->locations->where('id', $this->location)->count() > 0;
             // $is_partner_has_coverage = $partner->geo_informations && in_array($this->location, HyperLocal::insideCircle(json_decode($partner->geo_informations))->pluck('location_id')->toArray());
-            // return $is_partner_has_coverage;
+            //return $is_partner_has_coverage;
+
+            $locations = $partner->locations;
+            if ($locations->isEmpty()) {
+                $locations = HyperLocal::insideCircle(json_decode($partner->geo_informations))
+                    ->with('location')
+                    ->get()
+                    ->pluck('location')
+                    ->filter();
+            }
+
+            return $locations->where('id', $this->location)->count() > 0;
+
+            /**
+             * DISABLE THIS CHECK, AND MOVE TO GEO INFORMATION
+             */
+            // return $partner->locations->where('id', $this->location)->count() > 0;
         });
     }
 
