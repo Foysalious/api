@@ -105,7 +105,7 @@ class PartnerController extends Controller
                 })->with(['resource' => function ($q) {
                     $q->select('resources.id', 'profile_id', 'is_verified')->with('profile');
                 }, 'review' => function ($q) {
-                    $q->select('id', 'job_id', 'resource_id', 'customer_id', 'rating', 'review')->with('customer.profile');
+                    $q->select('id', 'job_id', 'resource_id', 'customer_id', 'rating', 'review','service_id','created_at')->with('customer.profile');
                 }]);
             }, 'services' => function ($q) {
                 $q->where('partner_service.is_verified', 1);
@@ -163,9 +163,7 @@ class PartnerController extends Controller
                 $final['customer_pic'] = $job->review->customer->profile->pro_pic;
                 if($job->review->service)
                     $final['service_name'] = $job->review->service->name;
-                else
-                    $final['service_name'] = "";
-                $final['date'] = $job->review->created_at;
+                $final['date'] = $job->review->created_at->format('F Y');
                 $final['review'] = $job->review->review;
                 removeRelationsAndFields($final);
                 array_push($reviews, $final);
