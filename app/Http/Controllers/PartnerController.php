@@ -163,7 +163,7 @@ class PartnerController extends Controller
                 $final['customer_pic'] = $job->review->customer->profile->pro_pic;
                 if($job->review->service)
                     $final['service_name'] = $job->review->service->name;
-                $final['date'] = $job->review->created_at->format('F Y');
+                $final['date'] = $job->review->created_at->format('F d, Y');
                 $final['review'] = $job->review->review;
                 removeRelationsAndFields($final);
                 array_push($reviews, $final);
