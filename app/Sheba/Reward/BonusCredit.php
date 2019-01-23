@@ -46,7 +46,7 @@ class BonusCredit
             $this->updateExistingBonus($bonus);
         }
 
-        if ($amount < $original_amount) $this->saveLog($original_amount - $amount);
+        if ($amount < $original_amount) $this->saveLog($original_amount - $amount, $log);
 
         return $amount;
     }
