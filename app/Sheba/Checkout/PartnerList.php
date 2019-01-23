@@ -238,10 +238,10 @@ class PartnerList
                     $q->verified();
                 }
             }])
-            ->published()
             ->select('partners.id', 'partners.current_impression', 'partners.geo_informations', 'partners.address', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet', 'partners.package_id', 'partners.badge');
         if ($isNotLite) {
-            $query->where('package_id', '<>', config('sheba.partner_lite_packages_id'));
+            $query->where('package_id', '<>', config('sheba.partner_lite_packages_id'))
+                ->verified();
         }
         if ($this->partner) {
             $query = $query->where('partners.id', $this->partner->id);
