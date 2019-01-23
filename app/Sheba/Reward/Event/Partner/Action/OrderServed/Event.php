@@ -13,12 +13,30 @@ use Sheba\Reward\Rewardable;
 
 class Event extends Action implements AmountCalculator
 {
+    /**
+     * @param BaseRule $rule
+     * @return $this | Action
+     * @throws RulesTypeMismatchException
+     */
     public function setRule(BaseRule $rule)
     {
         if (!($rule instanceof Rule))
             throw new RulesTypeMismatchException("Order served event must have a order serve event rule");
 
         return parent::setRule($rule);
+    }
+
+    public function isEligible()
+    {
+        return $this->rule->check($this->params) && $this->filterConstraints();
+    }
+
+    public function calculateAmount()
+    {
+        $payment_amount = $this->params[0]->calculate(true)->totalPrice;
+        $amount = ($payment_amount * $this->reward->amount) / 100;
+
+        return ($this->reward->cap && ($amount > $this->reward->cap)) ? $this->reward->cap : $amount;
     }
 
     private function filterConstraints()
@@ -38,18 +56,5 @@ class Event extends Action implements AmountCalculator
         }
 
         return $is_constraints_passed;
-    }
-
-    public function isEligible()
-    {
-        return $this->rule->check($this->params) && $this->filterConstraints();
-    }
-
-    public function calculateAmount()
-    {
-        $payment_amount = $this->params[0]->calculate(true)->totalPrice;
-        $amount = ($payment_amount * $this->reward->amount) / 100;
-
-        return ($this->reward->cap && ($amount > $this->reward->cap)) ? $this->reward->cap : $amount;
     }
 }
