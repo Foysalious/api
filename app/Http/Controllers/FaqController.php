@@ -55,15 +55,15 @@ class FaqController extends Controller
                     'questions' => array(
                         array(
                             'question_bn' => 'কিভাবে সার্ভিস প্রোভাইডার রেফার কাজ করে?',
-                            'answer_bn' => 'আপনি আপনার বন্ধু অ্যাপ এর মাধ্যমে আপনার ব্যবসায়ী বন্ধুকে সেবাতে লাইট পাকেজে রেজিস্টার করতে পারবেন। আপনার বন্ধুটি সেবাতে রেজিস্টার করাতে তার নাম, ফোন, ব্যাবাসায়ীর নাম, ব্যাবসার ঠিকানা, তার লোকেশন ও তার ছবি প্রদান করে তাকে সেবাতে রেজিস্টার করাতে পারেন।',
+                            'answer_bn' => 'আপনি আপনার বন্ধু অ্যাপ এর মাধ্যমে আপনার ব্যবসায়ী বন্ধুকে সেবাতে লাইট প্যাকেজ রেজিস্টার করতে পারবেন। আপনার বন্ধু্কে সেবাতে রেজিস্টার করাতে তার নাম, ফোন, ব্যবসায়ীর নাম, ব্যবসার ঠিকানা, তার লোকেশন ও তার ছবি প্রদান করে তাকে সেবাতে রেজিস্টার করাতে পারেন।',
                             'question_en' => 'How does service provider referral work?  ',
-                            'answer_en'=> ' You can register your businessman friend to Sheba.xyz as Lite Service Provider. To on board you can register your friend to Sheba by giving information like Name, Phone Number, Business Name, Business Address, Location and Friend picture.'
+                            'answer_en'=> ' You can register your businessman friend to Sheba.xyz as Lite Service Provider. To on board you can register your friend to Sheba by giving information like Name, Phone Number, Business Name, Business Address, Location and Friend\'s picture.'
                         ),
                         array(
                             'question_bn' => 'কিভাবে আপনার ব্যাবসায়ী বন্ধুকে রেফার করে টাকা আয় করবেন?',
-                            'answer_bn' => 'আপনার রেজিস্টার কৃত সার্ভিস প্রোভাইডার সেবা বন্ধু মডারেটর ধারা ভেরিফাইড হলে আপনি পাবেন ১০টাকা বোনাস।',
+                            'answer_bn' => 'আপনার রেজিস্টার কৃত সার্ভিস প্রোভাইডার সেবা বন্ধু মডারেটর দ্বারা ভেরিফাইড হলে আপনি পাবেন ১০টাকা বোনাস।',
                             'question_en' => 'How to refer your businessman friend? ',
-                            'answer_en' => 'If your registered friend verified by sheba bondhu modarator, you will get 10tk as bonus.',
+                            'answer_en' => 'If your registered friend is verified by sheba bondhu moderator, you will get 10tk as bonus.',
                         ),
                     )
                 ),
