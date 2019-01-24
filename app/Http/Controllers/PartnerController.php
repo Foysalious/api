@@ -95,9 +95,9 @@ class PartnerController extends Controller
                 $q->select('categories.id', 'name', 'thumb', 'icon', 'categories.slug')->where('category_partner.is_verified', 1);
             }, 'reviews' => function($q) {
                 $q->with(['rates' => function($q) {
-                   $q->select('review_id', 'review_type', 'rate_answer_id')->where('rate_question_id', self::COMPLIMENT_QUESTION_ID)->with(['answer' => function($q) {
-                       $q->select('id', 'answer', 'badge', 'asset');
-                   }]);
+                    $q->select('review_id', 'review_type', 'rate_answer_id')->where('rate_question_id', self::COMPLIMENT_QUESTION_ID)->with(['answer' => function($q) {
+                        $q->select('id', 'answer', 'badge', 'asset');
+                    }]);
                 }]);
             }, 'jobs' => function ($q) {
                 $q->whereHas('resource', function ($query) {
@@ -117,9 +117,9 @@ class PartnerController extends Controller
             foreach ($partner->workingHours as $workingHour) {
                 array_push($working_info,
                     array('day' => $workingHour->day,
-                    'hour' => (Carbon::parse($workingHour->start_time))->format('g:i A') . '-' . (Carbon::parse($workingHour->end_time))->format('g:i A'),
-                    'is_today' =>$workingHour->day === $this->days[Carbon::now()->dayOfWeek],
-                    'is_closed' => false));
+                        'hour' => (Carbon::parse($workingHour->start_time))->format('g:i A') . '-' . (Carbon::parse($workingHour->end_time))->format('g:i A'),
+                        'is_today' =>$workingHour->day === $this->days[Carbon::now()->dayOfWeek],
+                        'is_closed' => false));
             }
             $partner_not_available_days = array_diff( $this->days,$partner->workingHours->pluck('day')->toArray());
 
@@ -138,22 +138,33 @@ class PartnerController extends Controller
             $job_with_review = $partner->jobs->where('status', 'Served')->filter(function ($job) {
                 return $job->resource_id != null && $job->review != null;
             });
-            $resource_jobs = $job_with_review->groupBy('resource_id')->take(1);
-            $all_resources = collect();
-            foreach ($resource_jobs as $resource_job) {
-                if ($partner_resource = PartnerResource::where('partner_id', $partner->id)
-                        ->where('resource_id', $resource_job[0]->resource_id)->first() && $resource_job[0]->resource->is_verified) {
-                        $resource = PartnerResource::where('partner_id', $partner->id)
-                            ->where('resource_id', $resource_job[0]->resource_id)->first()->resource;
 
-                        $all_resources->push(collect(['name' => $resource_job[0]->resource->profile->name,
-                        'mobile' => $resource_job[0]->resource->profile->mobile, 'picture' => $resource_job[0]->resource->profile->pro_pic,
-                        'total_rating' => $resource_job->count(), 'avg_rating' => round($resource_job->avg('review.rating'), 2),
-                        'served_jobs' => $resource->totalServedJobs()]));
-                }
-            }
-            $all_resources = $all_resources->sortByDesc('avg_rating')->take(4);
-            $info->put('resources', $all_resources->values()->all());
+//            $resource_jobs = $job_with_review->groupBy('resource_id')->take(1);
+//            $all_resources = collect();
+//            foreach ($resource_jobs as $resource_job) {
+//                if ($partner_resource = PartnerResource::where('partner_id', $partner->id)
+//                        ->where('resource_id', $resource_job[0]->resource_id)->first() && $resource_job[0]->resource->is_verified) {
+//                        $resource = PartnerResource::where('partner_id', $partner->id)
+//                            ->where('resource_id', $resource_job[0]->resource_id)->first()->resource;
+//
+//                            $all_resources->push(collect(['name' => $resource_job[0]->resource->profile->name,
+//                                'mobile' => $resource_job[0]->resource->profile->mobile, 'picture' => $resource_job[0]->resource->profile->pro_pic,
+//                                'total_rating' => $resource_job->count(), 'avg_rating' => round($resource_job->avg('review.rating'), 2),
+//                                'served_jobs' => $resource->totalServedJobs()]));
+//
+//
+//                }
+//            }
+            $resources = PartnerResource::join('resources','resources.id','=','partner_resource.resource_id')
+                ->join('profiles','resources.profile_id','=','profiles.id')
+                ->join('reviews','reviews.resource_id','=','resources.id')
+                ->where('reviews.partner_id',$partner->id)
+                ->where('partner_resource.partner_id',$partner->id)
+                ->groupBy('partner_resource.id')
+                ->selectRaw('distinct(resources.id), profiles.name, profiles.mobile, profiles.pro_pic, avg(reviews.rating) as avg_rating, count(rating) as total_rating, (select count(jobs.id) from jobs where jobs.status = "Served" and jobs.resource_id = resources.id) as served_jobs')
+                ->orderBy(DB::raw('avg(reviews.rating)'),'desc')
+                ->get();
+            $info->put('resources', $resources);
             $reviews = [];
             $job_with_review->filter(function ($job) {
                 return $job->review->rating >= 4 && ($job->review->review_title != null || $job->review->review != '');
@@ -169,13 +180,15 @@ class PartnerController extends Controller
             });
             $info->put('reviews', $reviews);
             $info->put('categories', $partner->categories->each(function ($category) use ($location) {
+                $category->service_count = $category->services()->published()->count();
                 if($location)
                 {
                     if(in_array($location,$category->locations->pluck('id')->toArray())) {
                         $category->available = true;
                     }
-                    else
+                    else{
                         $category->available = false;
+                    }
                 }
                 removeRelationsAndFields($category);
             }));
@@ -195,8 +208,8 @@ class PartnerController extends Controller
                 return $rate->count();
             });
             for($i=1; $i<=5 ; $i++) {
-               if(!isset($group_rating[$i]))
-                   $group_rating[$i] = 0;
+                if(!isset($group_rating[$i]))
+                    $group_rating[$i] = 0;
             }
             $info->put('compliments', $compliment_counts->values());
             $info->put('total_resources', $partner->resources()->selectRaw('count(distinct resource_id) as total_resources')->first()->total_resources);

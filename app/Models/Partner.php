@@ -525,4 +525,9 @@ class Partner extends Model implements Rewardable, TopUpAgent
     {
         return $this->subscription->name;
     }
+
+    public function getTopFiveResources()
+    {
+        return $this->resources()->reviews()->groupBy('resource_id')->orderBy('avg(reviews.rating)')->select('id, avg(reviews.rating)')->get();
+    }
 }
