@@ -148,7 +148,7 @@ class PartnerController extends Controller
 
                         $all_resources->push(collect(['name' => $resource_job[0]->resource->profile->name,
                         'mobile' => $resource_job[0]->resource->profile->mobile, 'picture' => $resource_job[0]->resource->profile->pro_pic,
-                        'total_rating' => $resource_job->count(), 'avg_rating' => round($resource_job->avg('review.rating'), 1),
+                        'total_rating' => $resource_job->count(), 'avg_rating' => round($resource_job->avg('review.rating'), 2),
                         'served_jobs' => $resource->totalServedJobs()]));
                 }
             }
@@ -202,7 +202,7 @@ class PartnerController extends Controller
             $info->put('total_resources', $partner->resources()->selectRaw('count(distinct resource_id) as total_resources')->first()->total_resources);
             $info->put('total_jobs', $partner->jobs->count());
             $info->put('total_rating', $partner->reviews->count());
-            $info->put('avg_rating', $this->reviewRepository->getAvgRating($partner->reviews));
+            $info->put('avg_rating', round($this->reviewRepository->getAvgRating($partner->reviews), 1));
             $info->put('group_rating', $group_rating);
             $info->put('master_category_names', $serving_master_categories);
             $info->put('badge', $badge);
