@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\HyperLocal;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Cache;
 
@@ -63,7 +64,7 @@ class HomePageSettingController extends Controller
     public function getCar(Request $request)
     {
         try {
-            $settings = json_decode(\Illuminate\Support\Facades\Redis::get('car_settings'));
+            $settings = json_decode(Redis::get('car_settings'));
             return api_response($request, $settings, 200, ['settings' => $settings]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
