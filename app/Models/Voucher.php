@@ -19,6 +19,11 @@ class Voucher extends Model
         return $this->orders->where('customer_id', $customer)->count();
     }
 
+    public function usedCustomerCount()
+    {
+        return $this->orders->groupBy('customer_id')->count();
+    }
+
     public function promotions()
     {
         return $this->hasMany(Promotion::class);
