@@ -224,7 +224,7 @@ class PartnerList
         })
             ->whereHas('services', function ($query) use ($isNotLite) {
                 $query->whereHas('category', function ($q) {
-                    $q->published();
+                    $q->publishedOrPublishedForBusiness();
                 })->select(DB::raw('count(*) as c'))->whereIn('services.id', $this->selectedServiceIds)->where('partner_service.is_published', 1)
                     ->publishedForAll()
                     ->groupBy('partner_id')->havingRaw('c=' . count($this->selectedServiceIds));
@@ -246,6 +246,7 @@ class PartnerList
         if ($this->partner) {
             $query = $query->where('partners.id', $this->partner->id);
         }
+        
         return $query->get();
     }
 

@@ -9,13 +9,14 @@ use Sheba\PartnerAffiliation\PartnerAffiliationRejectReasons;
 
 class PartnerAffiliationController extends Controller
 {
-    public function store(Request $request)
+    public function store(Request $request, PartnerAffiliationCreator $creator)
     {
         try {
-            if ($error = (new PartnerAffiliationCreateValidator)->validate($request)) return api_response($request, null, $error['code'], ["msg" => $error['msg']]);
+            $creator->setData($request->all());
+            if ($error = $creator->hasError())
+                return api_response($request, null, $error['code'], ["msg" => $error['msg']]);
 
-            (new PartnerAffiliationCreator)->create($request->all());
-
+            $creator->create();
             $message = ['en' => 'Your refer have been submitted.', 'bd' => 'আপনার রেফারেন্সটি গ্রহন করা হয়েছে ।'];
             return api_response($request, null, 200, ["msg" => $message]);
         } catch (\Throwable $e) {
@@ -27,9 +28,10 @@ class PartnerAffiliationController extends Controller
     public function index(Request $request)
     {
         try {
+            list($offset, $limit) = calculatePagination($request);
             $partner_affiliations = PartnerAffiliation::with(['transactions' => function ($q) {
                 $q->where('type', 'Credit');
-            }])->where('affiliate_id', $request->affiliate->id)->get();
+            }])->where('affiliate_id', $request->affiliate->id)->skip($offset)->take($limit)->get();
 
             if (!$partner_affiliations->count()) return api_response($request, null, 404, ['affiliations' => []]);
 

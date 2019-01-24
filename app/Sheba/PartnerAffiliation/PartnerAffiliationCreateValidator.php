@@ -7,35 +7,48 @@ use Illuminate\Http\Request;
 
 class PartnerAffiliationCreateValidator
 {
-    public function validate(Request $request)
+    private $data;
+
+    public function setData($data)
     {
-        if ($error = $this->hasNecessaryFields($request)) return $error;
-        if ($error = $this->isResourceExist($request)) return $error;
-        if ($error = $this->isOngoingLead($request)) return $error;
+        $this->data = $data;
+        return $this;
+    }
+
+    public function hasError()
+    {
+        if ($error = $this->hasNecessaryFields()) return $error;
+        if ($error = $this->isResourceExist()) return $error;
+        if ($error = $this->isOngoingLead()) return $error;
         return false;
     }
 
-    private function hasNecessaryFields(Request $request)
+    private function hasKey($key)
     {
-        if (!$request->has('resource_mobile')) return ['code' => 400, 'msg' => ['en' => 'Mobile number is mandatory', 'bd' => 'মোবাইল নং প্রদান করা আবর্শক']];
-        if (!$request->has('resource_name')) return ['code' => 400, 'msg' => ['en' => 'Name is mandatory', 'bd' => 'নাম প্রদান আবর্শক']];
-        if (!$request->has('company_name')) return ['code' => 400, 'msg' => ['en' => 'Company name is mandatory', 'bd' => 'কোম্পানি নাম প্রদান আবর্শক']];
+        return array_key_exists($key, $this->data);
+    }
+
+    private function hasNecessaryFields()
+    {
+        if (!$this->hasKey('resource_mobile')) return ['code' => 400, 'msg' => ['en' => 'Mobile number is mandatory', 'bd' => 'মোবাইল নং প্রদান করা আবর্শক']];
+        if (!$this->hasKey('resource_name')) return ['code' => 400, 'msg' => ['en' => 'Name is mandatory', 'bd' => 'নাম প্রদান আবর্শক']];
+        if (!$this->hasKey('company_name')) return ['code' => 400, 'msg' => ['en' => 'Company name is mandatory', 'bd' => 'কোম্পানি নাম প্রদান আবর্শক']];
         return false;
     }
 
-    private function isResourceExist(Request $request)
+    private function isResourceExist()
     {
-        if (!BangladeshiMobileValidator::validate($request->resource_mobile)) return ['code' => 400, 'msg' => ['en' => 'Number format does not match', 'bd' => 'Number format does not match']];
-        $profile = Profile::where('mobile', formatMobile($request->resource_mobile))->first();
-        if($profile) {
-            if ($profile->resource) return ['code' => 400, 'msg' => ['en' => 'Sorry! your referral number already exists.', 'bd' => 'দুঃখিত !!! আপনার রেফার ক্রিত নাম্বারটি সেবাতে নিবন্ধিত।']];
-        }
+        if (!BangladeshiMobileValidator::validate($this->data['resource_mobile']))
+            return ['code' => 400, 'msg' => ['en' => 'Number format does not match', 'bd' => 'Number format does not match']];
+        $profile = Profile::where('mobile', formatMobile($this->data['resource_mobile']))->first();
+        if($profile && $profile->resource)
+                return ['code' => 400, 'msg' => ['en' => 'Sorry! your referral number already exists.', 'bd' => 'দুঃখিত !!! আপনার রেফার ক্রিত নাম্বারটি সেবাতে নিবন্ধিত।']];
         return false;
     }
 
-    private function isOngoingLead(Request $request)
+    private function isOngoingLead()
     {
-        $partner_affiliation = PartnerAffiliation::where('resource_mobile', formatMobile($request->resource_mobile))
+        $partner_affiliation = PartnerAffiliation::where('resource_mobile', formatMobile($this->data['resource_mobile']))
             ->where(function ($q) {
                 $q->whereIn('status', [PartnerAffiliationStatuses::$successful, PartnerAffiliationStatuses::$pending])
                     ->orWhere(function ($q) {
