@@ -73,6 +73,7 @@ class PartnerList
             'options' => [],
             'handyman' => []
         ];
+        $this->isNotLite = true;
     }
 
     public function setGeo($lat, $lng)
