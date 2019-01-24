@@ -114,23 +114,28 @@ class PartnerController extends Controller
             $locations = $partner->locations;
             $info = collect($partner)->only(['id', 'name', 'mobile', 'description', 'email', 'verified_at', 'status', 'logo', 'address', 'created_at']);
             $working_info = [];
-            foreach ($partner->workingHours as $workingHour) {
-                array_push($working_info,
-                    array('day' => $workingHour->day,
-                        'hour' => (Carbon::parse($workingHour->start_time))->format('g:i A') . '-' . (Carbon::parse($workingHour->end_time))->format('g:i A'),
-                        'is_today' =>$workingHour->day === $this->days[Carbon::now()->dayOfWeek],
-                        'is_closed' => false));
-            }
-            $partner_not_available_days = array_diff( $this->days,$partner->workingHours->pluck('day')->toArray());
 
-            foreach ($partner_not_available_days as $not_available_day) {
-                array_push($working_info,
-                    array('day' => $not_available_day,
-                        'hour' => null,
-                        'is_today' =>$workingHour->day === $this->days[Carbon::now()->dayOfWeek],
-                        'is_closed' => true));
-            }
+//            $partner_not_available_days = array_diff( $this->days,$partner->workingHours->pluck('day')->toArray());
 
+            foreach ($this->days as $day) {
+                $current_day = $partner->workingHours->filter(function($working_day) use ($day) {
+                    return $day === $working_day->day;
+                })->first();
+                if($current_day) {
+                    array_push($working_info,
+                        array('day' => $current_day->day,
+                            'hour' => (Carbon::parse($current_day->start_time))->format('g:i A') . '-' . (Carbon::parse($current_day->end_time))->format('g:i A'),
+                            'is_today' =>$current_day->day === $this->days[Carbon::now()->dayOfWeek],
+                            'is_closed' => false));
+                } else{
+                    array_push($working_info,
+                        array('day' => $day,
+                            'hour' => null,
+                            'is_today' =>$day === $this->days[Carbon::now()->dayOfWeek],
+                            'is_closed' => true));
+                }
+            }
+            
             $info->put('working_days', $working_info);
             $info->put('is_available', in_array(date('l'), collect($working_info)->pluck('day')->toArray()) ? 1 : 0);
             $info->put('total_locations', $locations->count());
@@ -213,7 +218,7 @@ class PartnerController extends Controller
                     $group_rating[$i] = 0;
             }
             $info->put('compliments', $compliment_counts->values());
-            $info->put('total_resources', $partner->resources()->selectRaw('count(distinct resource_id) as total_resources')->first()->total_resources);
+            $info->put('total_resources', $partner->resources()->verified()->selectRaw('count(distinct resource_id) as total_resources')->first()->total_resources);
             $info->put('total_jobs', $partner->jobs->count());
             $info->put('total_rating', $partner->reviews->count());
             $info->put('avg_rating', round($this->reviewRepository->getAvgRating($partner->reviews), 1));
