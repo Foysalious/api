@@ -105,7 +105,7 @@ class PartnerController extends Controller
                 })->with(['resource' => function ($q) {
                     $q->select('resources.id', 'profile_id', 'is_verified')->with('profile');
                 }, 'review' => function ($q) {
-                    $q->select('id', 'job_id', 'resource_id', 'customer_id', 'rating', 'review','service_id','created_at')->with('customer.profile');
+                    $q->select('id', 'job_id', 'resource_id', 'customer_id', 'rating', 'review','category_id','created_at')->with('customer.profile');
                 }]);
             }, 'services' => function ($q) {
                 $q->where('partner_service.is_verified', 1);
@@ -161,8 +161,7 @@ class PartnerController extends Controller
                 $final = $job->review;
                 $final['customer_name'] = $job->review->customer->profile->name;
                 $final['customer_pic'] = $job->review->customer->profile->pro_pic;
-                if($job->review->service)
-                    $final['service_name'] = $job->review->service->name;
+                $final['category_name'] = $job->review->category->name;
                 $final['date'] = $job->review->created_at->format('F d, Y');
                 $final['review'] = $job->review->review;
                 removeRelationsAndFields($final);
@@ -200,7 +199,7 @@ class PartnerController extends Controller
                    $group_rating[$i] = 0;
             }
             $info->put('compliments', $compliment_counts->values());
-            $info->put('total_resources', $partner->resources->count());
+            $info->put('total_resources', $partner->resources()->selectRaw('count(distinct resource_id) as total_resources')->first()->total_resources);
             $info->put('total_jobs', $partner->jobs->count());
             $info->put('total_rating', $partner->reviews->count());
             $info->put('avg_rating', $this->reviewRepository->getAvgRating($partner->reviews));
