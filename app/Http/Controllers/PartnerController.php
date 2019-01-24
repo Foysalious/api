@@ -163,6 +163,7 @@ class PartnerController extends Controller
                 ->groupBy('partner_resource.id')
                 ->selectRaw('distinct(resources.id), profiles.name, profiles.mobile, profiles.pro_pic, avg(reviews.rating) as avg_rating, count(rating) as total_rating, (select count(jobs.id) from jobs where jobs.status = "Served" and jobs.resource_id = resources.id) as served_jobs')
                 ->orderBy(DB::raw('avg(reviews.rating)'),'desc')
+                ->take(5)
                 ->get();
             $info->put('resources', $resources);
             $reviews = [];
