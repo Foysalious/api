@@ -11,7 +11,10 @@ class LitePartnerOnBoardingController extends Controller
     public function index(Request $request)
     {
         try {
-            $affiliate = $request->affiliate->load('onboardedPartners.resources.profile');
+            list($offset, $limit) = calculatePagination($request);
+            $affiliate = $request->affiliate->load(['onboardedPartners' => function($q) use ($offset, $limit) {
+                $q->offset($offset)->limit($limit)->with('resources.profile');
+            }]);
             $partners = $affiliate->onboardedPartners->map(function (Partner $partner) {
                 $resource = $partner->getFirstAdminResource();
                 return [
