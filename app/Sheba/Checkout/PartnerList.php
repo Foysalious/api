@@ -199,7 +199,7 @@ class PartnerList
             if (!request()->has('has_home_delivery') && !request()->has('has_premise')) $q->where('category_partner.is_home_delivery_applied', 1);
         })->whereHas('services', function ($query) {
             $query->whereHas('category', function ($q) {
-                $q->published();
+                $q->publishedOrPublishedForBusiness();
             })->select(DB::raw('count(*) as c'))->whereIn('services.id', $this->selectedServiceIds)->where([['partner_service.is_published', 1], ['partner_service.is_verified', 1]])->publishedForAll()
                 ->groupBy('partner_id')->havingRaw('c=' . count($this->selectedServiceIds));
         })->whereDoesntHave('leaves', function ($q) {
@@ -211,6 +211,7 @@ class PartnerList
         if ($partner_id != null) {
             $query = $query->where('partners.id', $partner_id);
         }
+        
         return $query->get();
     }
 
