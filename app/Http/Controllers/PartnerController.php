@@ -200,7 +200,7 @@ class PartnerController extends Controller
                    $group_rating[$i] = 0;
             }
             $info->put('compliments', $compliment_counts->values());
-            $info->put('total_resources', $partner->resources->count());
+            $info->put('total_resources', $partner->resources()->selectRaw('count(distinct resource_id) as total_resources')->first()->total_resources);
             $info->put('total_jobs', $partner->jobs->count());
             $info->put('total_rating', $partner->reviews->count());
             $info->put('avg_rating', $this->reviewRepository->getAvgRating($partner->reviews));
