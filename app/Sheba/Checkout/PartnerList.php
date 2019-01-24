@@ -204,7 +204,7 @@ class PartnerList
         if ($partner_id) {
             $this->partner = Partner::find($partner_id);
         }
-        $this->isNotLite = isset($this->partner) && !$this->partner->isLite();
+        $this->isNotLite = isset($this->partner) ? !$this->partner->isLite() : true;
     }
 
     private function findPartnersByService()
