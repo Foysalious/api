@@ -12,6 +12,10 @@ abstract class Event
     /** @var ActionRule | CampaignRule */
     protected $rule;
 
+    /**
+     * @param Rule $rule
+     * @return $this
+     */
     public function setRule(Rule $rule)
     {
         $this->rule = $rule;

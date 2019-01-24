@@ -40,12 +40,14 @@ class EventDataConverter
                         'parameters' => [
                             'amount' => [
                                 'type'  => 'number',
-                                'min'   => 0
+                                'min'   => 0,
+                                'class' => 'Sheba\Reward\Event\Partner\Action\OrderServed\Parameter\Amount'
                             ],
                             'portals' => [
                                 'type' => 'select',
                                 'possible_value' => indexedArrayToAssociative(config('sheba.portals'), config('sheba.portals')),
-                                'is_multi_selectable' => 1
+                                'is_multi_selectable' => 1,
+                                'class' => 'Sheba\Reward\Event\Partner\Action\OrderServed\Parameter\Portal'
                             ],
                             'excluded_status' => [
                                 'type' => 'select',
@@ -54,12 +56,26 @@ class EventDataConverter
                                     'Schedule_Due'  => 'Schedule Due',
                                     'Serve_Due'     => 'Serve Due'
                                 ],
-                                'is_multi_selectable' => 1
+                                'is_multi_selectable' => 1,
+                                'class' => 'Sheba\Reward\Event\Partner\Action\OrderServed\Parameter\ExcludedStatus'
                             ],
                             'created_from' => [
                                 'type' => 'select',
                                 'possible_value' => indexedArrayToAssociative(config('sheba.portals'), config('sheba.portals')),
-                                'is_multi_selectable' => 1
+                                'is_multi_selectable' => 1,
+                                'class' => 'Sheba\Reward\Event\Partner\Action\OrderServed\Parameter\CreatedFrom'
+                            ],
+                            'sales_channels' => [
+                                'type' => 'select',
+                                'possible_value' => getSalesChannels(),
+                                'is_multi_selectable' => 1,
+                                'class' => 'Sheba\Reward\Event\Partner\Action\OrderServed\Parameter\SalesChannel'
+                            ],
+                            'excluded_sales_channels' => [
+                                'type' => 'select',
+                                'possible_value' => getSalesChannels(),
+                                'is_multi_selectable' => 1,
+                                'class' => 'Sheba\Reward\Event\Partner\Action\OrderServed\Parameter\ExcludedSalesChannel'
                             ]
                         ]
                     ],
@@ -153,6 +169,14 @@ class EventDataConverter
         $detail_type = $this->formatDetailType($reward->detail_type);
 
         return $this->event[$target_type][$detail_type][$detail_name]['rule_class'];
+    }
+
+    public function getParams(Reward $reward, $detail_name)
+    {
+        $target_type = $this->formatTargetType($reward->target_type);
+        $detail_type = $this->formatDetailType($reward->detail_type);
+
+        return $this->event[$target_type][$detail_type][$detail_name]['parameters'];
     }
 
     private function formatTargetType($target_type)

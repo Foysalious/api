@@ -43,7 +43,8 @@ abstract class EventInitiator
     {
         $event_class = $this->eventDataConverter->getEventClass($this->reward, $this->eventName);
         $rule_class = $this->eventDataConverter->getRuleClass($this->reward, $this->eventName);
-        $rule = new $rule_class($this->eventRule);
+        $params = $this->eventDataConverter->getParams($this->reward, $this->eventName);
+        $rule = new $rule_class($this->eventRule, $params);
         $this->event = new $event_class();
         $this->setupEvent();
         $this->event->setRule($rule)->setReward($this->reward);
