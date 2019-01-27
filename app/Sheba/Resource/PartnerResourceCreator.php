@@ -98,7 +98,7 @@ class PartnerResourceCreator
     private function createNotificationData($resource)
     {
         return [
-            "title" => $this->partner->name . " updated $resource->name profile. Mobile: " . $resource->profile->mobile,
+            "title" => $this->partner->name . "  has added a new resource. Name: $resource->name , Mobile: " . $resource->profile->mobile,
             "link" => config('sheba.admin_url') . "/partners/" . $this->partner->id . "#tab_2",
             "type" => notificationType('Warning'),
             "event_type" => get_class($this->partner),
