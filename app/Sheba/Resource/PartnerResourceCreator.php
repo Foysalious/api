@@ -99,7 +99,7 @@ class PartnerResourceCreator
     {
         return [
             "title" => $this->partner->name . " updated $resource->name profile. Mobile: " . $resource->profile->mobile,
-            "link" => config('sheba.admin_url') . "partners/" . $this->partner->id . "#tab_2",
+            "link" => config('sheba.admin_url') . "/partners/" . $this->partner->id . "#tab_2",
             "type" => notificationType('Warning'),
             "event_type" => get_class($this->partner),
             "event_id" => $this->partner->id
