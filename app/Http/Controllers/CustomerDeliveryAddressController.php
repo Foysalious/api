@@ -23,7 +23,7 @@ class CustomerDeliveryAddressController extends Controller
         try {
             $customer = $request->customer;
             $location = null;
-            $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'location_id', 'address', 'name', 'geo_informations', 'landmark')->get();
+            $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'location_id', 'address', 'name', 'geo_informations', 'flat_no')->get();
             if ($request->has('lat') && $request->has('lng')) {
                 $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first();
                 if ($hyper_location) $location = $hyper_location->location;
@@ -69,7 +69,7 @@ class CustomerDeliveryAddressController extends Controller
             ]);
             $customer = $request->customer;
             $location = null;
-            $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'location_id', 'address', 'name', 'geo_informations', 'landmark')->get();
+            $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'location_id', 'address', 'name', 'geo_informations', 'flat_no')->get();
             /*$hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first();
             if ($hyper_location) $location = $hyper_location->location;*/
             $location = Location::find(1);
@@ -253,7 +253,7 @@ class CustomerDeliveryAddressController extends Controller
             $profile = Profile::where('mobile', formatMobile($request->mobile))->first();
             if ($profile && $profile->customer) {
                 $customer = $profile->customer;
-                $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'address', 'geo_informations')->get()->reject(function ($address) {
+                $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'address', 'geo_informations', 'flat_no')->get()->reject(function ($address) {
                     return $address->geo_informations == null;
                 })->map(function ($customer_delivery_address) {
                     $customer_delivery_address["address"] = scramble_string($customer_delivery_address["address"]);
