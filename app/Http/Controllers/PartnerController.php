@@ -234,7 +234,6 @@ class PartnerController extends Controller
             $info->put('geo_informations',json_decode($geo_informations));
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -661,7 +660,6 @@ class PartnerController extends Controller
 
             return api_response($request, null, 404);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -965,7 +963,6 @@ class PartnerController extends Controller
             }
             return api_response($request, $master_categories, 200, ['categories' => $master_categories]);
         } catch (\Throwable $exception) {
-            dd($exception);
             app('sentry')->captureException($exception);
             return api_response($request, null, 500);
         }
