@@ -182,9 +182,9 @@ class PersonalInformationController extends Controller
         $img1 = Image::make($front);
         $img2 = Image::make($back);
         $width = 1920;
-        $first_image_height = (($width / $img1->height()) * $img1->height());
+        $first_image_height = (int)(($width / $img1->height()) * $img1->height());
         $img1->resize($width, $first_image_height);
-        $second_image_height = (($width / $img2->height()) * $img2->height());
+        $second_image_height = (int)(($width / $img2->height()) * $img2->height());
         $img2->resize($width, $second_image_height);
         $canvas = Image::canvas(2000, $first_image_height + $second_image_height + 50, '#FCFEFF');
         $canvas->insert($img1, 'top', 12, 17);
