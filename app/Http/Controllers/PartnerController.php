@@ -135,7 +135,7 @@ class PartnerController extends Controller
                             'is_closed' => true));
                 }
             }
-            
+
             $info->put('working_days', $working_info);
             $info->put('is_available', in_array(date('l'), collect($working_info)->pluck('day')->toArray()) ? 1 : 0);
             $info->put('total_locations', $locations->count());
@@ -165,11 +165,17 @@ class PartnerController extends Controller
                 ->join('reviews','reviews.resource_id','=','resources.id')
                 ->where('reviews.partner_id',$partner->id)
                 ->where('partner_resource.partner_id',$partner->id)
+                ->where('resources.is_verified',1)
                 ->groupBy('partner_resource.id')
-                ->selectRaw('distinct(resources.id), profiles.name, profiles.mobile, profiles.pro_pic, avg(reviews.rating) as avg_rating, count(rating) as total_rating, (select count(jobs.id) from jobs where jobs.status = "Served" and jobs.resource_id = resources.id) as served_jobs')
+                ->selectRaw('distinct(resources.id), profiles.name, profiles.mobile, profiles.pro_pic,  avg(reviews.rating) as avg_rating, count(rating) as total_rating, (select count(jobs.id) from jobs where jobs.status = "Served" and jobs.resource_id = resources.id) as served_jobs')
                 ->orderBy(DB::raw('avg(reviews.rating)'),'desc')
                 ->take(5)
                 ->get();
+
+            foreach ($resources as $resource) {
+                $resource['avg_rating'] = (float) round($resource->avg_rating,2);
+            }
+
             $info->put('resources', $resources);
             $reviews = [];
             $job_with_review->filter(function ($job) {
@@ -853,7 +859,7 @@ class PartnerController extends Controller
                 })
                 ->where('category_id', $category)
                 ->where('is_published', 1)
-                ->select('services.id', 'services.name', 'services.variable_type')
+                ->select('services.id', 'services.name', 'services.variable_type', 'services.app_thumb')
                 ->get();
             return api_response($request, $request, 200, ['services' => $service]);
         } catch (\Throwable $e) {
