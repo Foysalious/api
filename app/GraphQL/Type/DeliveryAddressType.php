@@ -18,7 +18,7 @@ class DeliveryAddressType extends GraphQlType
             'id' => ['type' => Type::int()],
             'name' => ['type' => Type::string()],
             'address' => ['type' => Type::string()],
-            'landmark' => ['type' => Type::string()],
+            'falt_no' => ['type' => Type::string()],
             'lat' => ['type' => Type::string()],
             'lng' => ['type' => Type::string()],
         ];
