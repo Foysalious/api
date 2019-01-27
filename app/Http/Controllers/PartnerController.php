@@ -744,7 +744,7 @@ class PartnerController extends Controller
                 })
                 ->where('category_id', $category)
                 ->where('is_published', 1)
-                ->select('services.id', 'services.name', 'services.variable_type')
+                ->select('services.id', 'services.name', 'services.variable_type', 'services.app_thumb')
                 ->get();
             return api_response($request, $request, 200, ['services' => $service]);
         } catch (\Throwable $e) {
