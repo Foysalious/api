@@ -79,7 +79,7 @@ class PartnerResourceCreator
 
     private function notifyPMTeam($resource)
     {
-        if ($this->isProfileComplete($resource))
+//        if ($this->isProfileComplete($resource))
             notify()->department(9)->send($this->createNotificationData($resource));
     }
 
