@@ -120,6 +120,7 @@ class OperationController extends Controller
 
                 $category_partner_info = [];
                 $should_update_category_partner = 0;
+
                 if ($request->has('is_home_delivery_available') && $request->has('delivery_charge')) {
                     $category_partner_info['is_home_delivery_applied'] = $request->is_home_delivery_available;
                     $category_partner_info['delivery_charge'] = $request->is_home_delivery_available ? $request->delivery_charge : 0;

@@ -46,6 +46,8 @@ class PartnerList
     private $rentCarCategoryIds;
     private $selectedServiceIds;
     private $notFoundValues;
+    private $isNotLite;
+    private $partner;
     use ModificationFields;
 
     public function __construct($services, $date, $time, $location = null)
@@ -136,13 +138,24 @@ class PartnerList
      */
     public function find($partner_id = null)
     {
+        $this->setPartner($partner_id);
         if ($this->location) {
             $this->location = $this->getCalculatedLocation($this->selected_services->first());
-            $this->partners = $this->findPartnersByServiceAndLocation($partner_id);
+            $start = microtime(true);
+            $this->partners = $this->findPartnersByServiceAndLocation();
+            $time_elapsed_secs = microtime(true) - $start;
+            // dump("filter partner by service,location,category: " . $time_elapsed_secs * 1000);
         } else {
-            $this->partners = $this->findPartnersByServiceAndGeo($partner_id);
+            $this->partners = $this->findPartnersByServiceAndGeo();
         }
-        $this->filterByCreditLimit();
+
+        if ($this->isNotLite) {
+            $start = microtime(true);
+            $this->filterByCreditLimit();
+            $time_elapsed_secs = microtime(true) - $start;
+            //dump("filter partner by credit: " . $time_elapsed_secs * 1000);
+        }
+
         $this->partners->load(['services' => function ($q) {
             $q->whereIn('service_id', $this->selectedServiceIds);
         }, 'categories' => function ($q) {
@@ -159,10 +172,9 @@ class PartnerList
     }
 
 
-    private function findPartnersByServiceAndLocation($partner_id = null)
+    private function findPartnersByServiceAndLocation()
     {
-        $this->partners = $this->findPartnersByService($partner_id);
-
+        $this->partners = $this->findPartnersByService();
         $this->partners->load('locations');
         return $this->partners->filter(function ($partner) {
             /** Do not delete this code, will be used for later, range will be fetched using hyper local. */
@@ -187,29 +199,52 @@ class PartnerList
         });
     }
 
-    private function findPartnersByService($partner_id = null)
+    private function setPartner($partner_id)
+    {
+        if ($partner_id) {
+            $this->partner = Partner::find($partner_id);
+        }
+        $this->isNotLite = isset($this->partner) ? !$this->partner->isLite() : true;
+    }
+
+    private function findPartnersByService()
     {
         $has_premise = (int)request()->get('has_premise');
         $has_home_delivery = (int)request()->get('has_home_delivery');
         $category_ids = [$this->selectedCategory->id];
-        $query = Partner::WhereHas('categories', function ($q) use ($category_ids, $has_premise, $has_home_delivery) {
-            $q->whereIn('categories.id', $category_ids)->where('category_partner.is_verified', 1);
+        $isNotLite = $this->isNotLite;
+        $query = Partner::WhereHas('categories', function ($q) use ($category_ids, $has_premise, $has_home_delivery, $isNotLite) {
+            $q->whereIn('categories.id', $category_ids);
+            if ($isNotLite) {
+                $q->where('category_partner.is_verified', 1);
+            }
             if (request()->has('has_home_delivery')) $q->where('category_partner.is_home_delivery_applied', $has_home_delivery);
             if (request()->has('has_premise')) $q->where('category_partner.is_partner_premise_applied', $has_premise);
             if (!request()->has('has_home_delivery') && !request()->has('has_premise')) $q->where('category_partner.is_home_delivery_applied', 1);
-        })->whereHas('services', function ($query) {
-            $query->whereHas('category', function ($q) {
-                $q->publishedOrPublishedForBusiness();
-            })->select(DB::raw('count(*) as c'))->whereIn('services.id', $this->selectedServiceIds)->where([['partner_service.is_published', 1], ['partner_service.is_verified', 1]])->publishedForAll()
-                ->groupBy('partner_id')->havingRaw('c=' . count($this->selectedServiceIds));
-        })->whereDoesntHave('leaves', function ($q) {
-            $q->where('end', null)->orWhere([['start', '<=', Carbon::now()], ['end', '>=', Carbon::now()->addDays(7)]]);
-        })->with(['handymanResources' => function ($q) {
-            $q->verified();
-        }])->published()->where('package_id', '<>', config('sheba.partner_lite_packages_id'))
+        })
+            ->whereHas('services', function ($query) use ($isNotLite) {
+                $query->whereHas('category', function ($q) {
+                    $q->publishedOrPublishedForBusiness();
+                })->select(DB::raw('count(*) as c'))->whereIn('services.id', $this->selectedServiceIds)->where('partner_service.is_published', 1)
+                    ->publishedForAll()
+                    ->groupBy('partner_id')->havingRaw('c=' . count($this->selectedServiceIds));
+                if ($isNotLite) {
+                    $query->where('partner_service.is_verified', 1);
+                }
+            })->whereDoesntHave('leaves', function ($q) {
+                $q->where('end', null)->orWhere([['start', '<=', Carbon::now()], ['end', '>=', Carbon::now()->addDays(7)]]);
+            })->with(['handymanResources' => function ($q) use ($isNotLite) {
+                if ($isNotLite) {
+                    $q->verified();
+                }
+            }])
             ->select('partners.id', 'partners.current_impression', 'partners.geo_informations', 'partners.address', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet', 'partners.package_id', 'partners.badge');
-        if ($partner_id != null) {
-            $query = $query->where('partners.id', $partner_id);
+        if ($isNotLite) {
+            $query->where('package_id', '<>', config('sheba.partner_lite_packages_id'))
+                ->verified();
+        }
+        if ($this->partner) {
+            $query = $query->where('partners.id', $this->partner->id);
         }
         
         return $query->get();
@@ -244,7 +279,7 @@ class PartnerList
      * @return mixed
      * @throws HyperLocationNotFoundException
      */
-    private function findPartnersByServiceAndGeo($partner_id = null)
+    private function findPartnersByServiceAndGeo()
     {
         $hyper_local = HyperLocal::insidePolygon($this->lat, $this->lng)->with('location')->first();
         if (!$hyper_local) {
@@ -252,7 +287,7 @@ class PartnerList
             throw new HyperLocationNotFoundException("lat : $this->lat, lng: $this->lng");
         }
         $this->location = $hyper_local->location->id;
-        $this->partners = $this->findPartnersByService($partner_id)->reject(function ($partner) {
+        $this->partners = $this->findPartnersByService()->reject(function ($partner) {
             return $partner->geo_informations == null;
         });
         $this->notFoundValues['service'] = $this->getPartnerIds();

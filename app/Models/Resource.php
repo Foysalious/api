@@ -100,4 +100,11 @@ class Resource extends Model
     {
         return $this->belongsToMany(Category::class);
     }
+
+    public function totalServedJobs()
+    {
+        return $this->jobs->filter(function($job) {
+            return $job->status === 'Served';
+        })->count();
+    }
 }

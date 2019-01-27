@@ -14,6 +14,12 @@ class AffiliationRewards
     private $moderator, $affiliate;
     private $requestIdentification;
 
+    public function __construct()
+    {
+        $this->moderationCost = constants('AFFILIATION_LITE_ONBOARD_MODERATION_REWARD');
+        $this->affiliationCost = constants('AFFILIATION_LITE_ONBOARD_REWARD');
+    }
+
     public function setAffiliate($affiliate)
     {
         if (!empty($affiliate)) {

@@ -79,7 +79,7 @@ class PartnerResourceCreator
 
     private function notifyPMTeam($resource)
     {
-        if ($this->isProfileComplete($resource))
+//        if ($this->isProfileComplete($resource))
             notify()->department(9)->send($this->createNotificationData($resource));
     }
 
@@ -98,9 +98,11 @@ class PartnerResourceCreator
     private function createNotificationData($resource)
     {
         return [
-            "title" => $this->partner->name . " updated $resource->name profile. Mobile: " . $resource->profile->mobile,
-            "link" => config('sheba.admin_url') . "partners/" . $this->partner->id . "#tab_2",
-            "type" => notificationType('Warning')
+            "title" => $this->partner->name . "  has added a new resource. Name: $resource->name , Mobile: " . $resource->profile->mobile,
+            "link" => config('sheba.admin_url') . "/partners/" . $this->partner->id . "#tab_2",
+            "type" => notificationType('Warning'),
+            "event_type" => get_class($this->partner),
+            "event_id" => $this->partner->id
         ];
     }
 

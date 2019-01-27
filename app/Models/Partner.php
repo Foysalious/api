@@ -27,6 +27,15 @@ class Partner extends Model implements Rewardable, TopUpAgent
     protected $categoryPivotColumns = ['id', 'experience', 'preparation_time_minutes', 'response_time_min', 'response_time_max', 'commission', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at', 'is_home_delivery_applied', 'is_partner_premise_applied', 'delivery_charge'];
     protected $servicePivotColumns = ['id', 'description', 'options', 'prices', 'min_prices', 'base_prices', 'base_quantity', 'is_published', 'discount', 'discount_start_date', 'discount_start_date', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
 
+    private $resourceTypes;
+
+
+    public function __construct($attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->resourceTypes = constants('RESOURCE_TYPES');
+    }
+
     public function basicInformations()
     {
         return $this->hasOne(PartnerBasicInformation::class);
@@ -177,6 +186,33 @@ class Partner extends Model implements Rewardable, TopUpAgent
             return $this->mobile;
         }
         return $this->email;
+    }
+
+    public function getFirstOperationResource()
+    {
+        if($this->resources) {
+            return $this->resources->where('pivot.resource_type', $this->resourceTypes['Operation'])->first();
+        } else {
+            return $this->admins->first();
+        }
+    }
+
+    public function getFirstAdminResource()
+    {
+        if($this->resources) {
+            return $this->resources->where('pivot.resource_type', $this->resourceTypes['Admin'])->first();
+        } else {
+            return $this->admins->first();
+        }
+    }
+
+    public function getContactResource()
+    {
+        if ($operation_resource = $this->getFirstOperationResource())
+            return $operation_resource;
+        if ($admin_resource = $this->getFirstAdminResource())
+            return $admin_resource;
+        return null;
     }
 
     public function generateReferral()
@@ -472,5 +508,26 @@ class Partner extends Model implements Rewardable, TopUpAgent
     public function geoChangeLogs()
     {
         return $this->hasMany(PartnerGeoChangeLog::class);
+    }
+
+    public function isLite()
+    {
+        return $this->package_id == (int)config('sheba.partner_lite_packages_id');
+    }
+
+    public function servingMasterCategories()
+    {
+        $serving_master_category_ids = array_unique($this->categories->pluck('parent_id')->toArray());
+        return implode(", ",Category::whereIn('id',$serving_master_category_ids)->pluck('name')->toArray());
+    }
+
+    public function getBadge()
+    {
+        return $this->subscription->name;
+    }
+
+    public function getTopFiveResources()
+    {
+        return $this->resources()->reviews()->groupBy('resource_id')->orderBy('avg(reviews.rating)')->select('id, avg(reviews.rating)')->get();
     }
 }
