@@ -13,7 +13,7 @@ class LitePartnerOnBoardingController extends Controller
         try {
             list($offset, $limit) = calculatePagination($request);
             $affiliate = $request->affiliate->load(['onboardedPartners' => function($q) use ($offset, $limit) {
-                $q->offset($offset)->limit($limit)->with('resources.profile');
+                $q->offset($offset)->limit($limit)->with('resources.profile')->orderBy('created_at', 'desc');
             }]);
             $partners = $affiliate->onboardedPartners->map(function (Partner $partner) {
                 $resource = $partner->getFirstAdminResource();
