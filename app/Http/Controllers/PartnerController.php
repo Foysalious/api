@@ -112,7 +112,7 @@ class PartnerController extends Controller
             }, 'locations']);
 
             $locations = $partner->locations;
-            $info = collect($partner)->only(['id', 'name', 'mobile', 'description', 'email', 'verified_at', 'status', 'logo', 'address', 'created_at']);
+            $info = collect($partner)->only(['id', 'name', 'sub_domain', 'mobile', 'description', 'email', 'verified_at', 'status', 'logo', 'address', 'created_at']);
             $working_info = [];
 
 //            $partner_not_available_days = array_diff( $this->days,$partner->workingHours->pluck('day')->toArray());
