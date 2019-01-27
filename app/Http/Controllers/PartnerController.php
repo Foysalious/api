@@ -44,6 +44,9 @@ class PartnerController extends Controller
     private $partnerOrderRepository;
     private $discountRepository;
     private $rentCarCategoryIds;
+    private $days;
+
+    const COMPLIMENT_QUESTION_ID = 2;
 
     public function __construct()
     {
@@ -54,6 +57,7 @@ class PartnerController extends Controller
         $this->partnerServiceRepository = new PartnerServiceRepository();
         $this->discountRepository = new DiscountRepository();
         $this->rentCarCategoryIds = array_map('intval', explode(',', env('RENT_CAR_IDS')));
+        $this->days = constants('WEEK_DAYS');
     }
 
     public function index()
@@ -67,31 +71,71 @@ class PartnerController extends Controller
     public function show($partner, Request $request)
     {
         try {
+
+            $location = null;
+            if($request->has('location') ) {
+                $location = Location::find($request->location)->id;
+            } else if($request->has('lat')) {
+                $hyperLocation= HyperLocal::insidePolygon((double) $request->lat, (double)$request->lng)->with('location')->first();
+                if(!is_null($hyperLocation)) $location = $hyperLocation->location->id;
+            }
+
             $partner_request = $partner;
             $partner = Partner::where([['id', (int)$partner_request], ['status', 'Verified']])->first();
             if ($partner == null) {
                 $partner = Partner::where([['sub_domain', $partner_request], ['status', 'Verified']])->first();
             }
             if ($partner == null) return api_response($request, null, 404);
+
+            $serving_master_categories = $partner->servingMasterCategories();
+            $badge = $partner->getBadge();
+            $geo_informations = $partner->geo_informations;
+
             $partner->load(['workingHours', 'categories' => function ($q) {
                 $q->select('categories.id', 'name', 'thumb', 'icon', 'categories.slug')->where('category_partner.is_verified', 1);
-            }, 'reviews', 'jobs' => function ($q) {
+            }, 'reviews' => function($q) {
+                $q->with(['rates' => function($q) {
+                    $q->select('review_id', 'review_type', 'rate_answer_id')->where('rate_question_id', self::COMPLIMENT_QUESTION_ID)->with(['answer' => function($q) {
+                        $q->select('id', 'answer', 'badge', 'asset');
+                    }]);
+                }]);
+            }, 'jobs' => function ($q) {
                 $q->whereHas('resource', function ($query) {
                     $query->verified();
                 })->with(['resource' => function ($q) {
                     $q->select('resources.id', 'profile_id', 'is_verified')->with('profile');
                 }, 'review' => function ($q) {
-                    $q->select('id', 'job_id', 'resource_id', 'customer_id', 'rating', 'review')->with('customer.profile');
+                    $q->select('id', 'job_id', 'resource_id', 'customer_id', 'rating', 'review','category_id','created_at')->with('customer.profile');
                 }]);
             }, 'services' => function ($q) {
                 $q->where('partner_service.is_verified', 1);
             }, 'locations']);
+
             $locations = $partner->locations;
-            $info = collect($partner)->only(['id', 'name', 'mobile', 'description', 'email', 'verified_at', 'status', 'logo', 'address', 'created_at']);
+            $info = collect($partner)->only(['id', 'name', 'sub_domain', 'mobile', 'description', 'email', 'verified_at', 'status', 'logo', 'address', 'created_at']);
             $working_info = [];
-            foreach ($partner->workingHours as $workingHour) {
-                array_push($working_info, array('day' => $workingHour->day, 'hour' => (Carbon::parse($workingHour->start_time))->format('g:i A') . '-' . (Carbon::parse($workingHour->end_time))->format('g:i A')));
+
+//            $partner_not_available_days = array_diff( $this->days,$partner->workingHours->pluck('day')->toArray());
+
+            foreach ($this->days as $day) {
+                $current_day = $partner->workingHours->filter(function($working_day) use ($day) {
+                    return $day === $working_day->day;
+                })->first();
+                if($current_day) {
+                    array_push($working_info,
+                        array('day' => $current_day->day,
+                            'hour' => (Carbon::parse($current_day->start_time))->format('g:i A') . '-' . (Carbon::parse($current_day->end_time))->format('g:i A'),
+                            'is_today' =>$current_day->day === $this->days[Carbon::now()->dayOfWeek],
+                            'is_closed' => false));
+                } else{
+                    array_push($working_info,
+                        array('day' => $day,
+                            'hour' => null,
+                            'is_today' =>$day === $this->days[Carbon::now()->dayOfWeek],
+                            'is_closed' => true));
+                }
             }
+
             $info->put('working_days', $working_info);
             $info->put('is_available', in_array(date('l'), collect($working_info)->pluck('day')->toArray()) ? 1 : 0);
             $info->put('total_locations', $locations->count());
@@ -99,34 +143,95 @@ class PartnerController extends Controller
             $job_with_review = $partner->jobs->where('status', 'Served')->filter(function ($job) {
                 return $job->resource_id != null && $job->review != null;
             });
-            $resource_jobs = $job_with_review->groupBy('resource_id');
-            $all_resources = collect();
-            foreach ($resource_jobs as $resource_job) {
-                if ($partner_resource = PartnerResource::where('partner_id', $partner->id)->where('resource_id', $resource_job[0]->resource_id)->first() && $resource_job[0]->resource->is_verified) {
-                    $all_resources->push(collect(['name' => $resource_job[0]->resource->profile->name, 'mobile' => $resource_job[0]->resource->profile->mobile, 'picture' => $resource_job[0]->resource->profile->pro_pic, 'total_rating' => $resource_job->count(), 'avg_rating' => round($resource_job->avg('review.rating'), 2),]));
-                }
+
+//            $resource_jobs = $job_with_review->groupBy('resource_id')->take(1);
+//            $all_resources = collect();
+//            foreach ($resource_jobs as $resource_job) {
+//                if ($partner_resource = PartnerResource::where('partner_id', $partner->id)
+//                        ->where('resource_id', $resource_job[0]->resource_id)->first() && $resource_job[0]->resource->is_verified) {
+//                        $resource = PartnerResource::where('partner_id', $partner->id)
+//                            ->where('resource_id', $resource_job[0]->resource_id)->first()->resource;
+//
+//                            $all_resources->push(collect(['name' => $resource_job[0]->resource->profile->name,
+//                                'mobile' => $resource_job[0]->resource->profile->mobile, 'picture' => $resource_job[0]->resource->profile->pro_pic,
+//                                'total_rating' => $resource_job->count(), 'avg_rating' => round($resource_job->avg('review.rating'), 2),
+//                                'served_jobs' => $resource->totalServedJobs()]));
+//
+//
+//                }
+//            }
+            $resources = PartnerResource::join('resources','resources.id','=','partner_resource.resource_id')
+                ->join('profiles','resources.profile_id','=','profiles.id')
+                ->join('reviews','reviews.resource_id','=','resources.id')
+                ->where('reviews.partner_id',$partner->id)
+                ->where('partner_resource.partner_id',$partner->id)
+                ->where('resources.is_verified',1)
+                ->groupBy('partner_resource.id')
+                ->selectRaw('distinct(resources.id), profiles.name, profiles.mobile, profiles.pro_pic,  avg(reviews.rating) as avg_rating, count(rating) as total_rating, (select count(jobs.id) from jobs where jobs.status = "Served" and jobs.resource_id = resources.id) as served_jobs')
+                ->orderBy(DB::raw('avg(reviews.rating)'),'desc')
+                ->take(5)
+                ->get();
+
+            foreach ($resources as $resource) {
+                $resource['avg_rating'] = (float) round($resource->avg_rating,2);
             }
-            $all_resources = $all_resources->sortByDesc('avg_rating')->take(4);
-            $info->put('resources', $all_resources->values()->all());
+
+            $info->put('resources', $resources);
             $reviews = [];
             $job_with_review->filter(function ($job) {
-                return $job->review->rating >= 4 && ($job->review->review != null || $job->review->review != '');
+                return $job->review->rating >= 4 && ($job->review->review_title != null || $job->review->review != '');
             })->each(function ($job) use (&$reviews) {
                 $final = $job->review;
                 $final['customer_name'] = $job->review->customer->profile->name;
                 $final['customer_pic'] = $job->review->customer->profile->pro_pic;
+                $final['category_name'] = $job->review->category->name;
+                $final['date'] = $job->review->created_at->format('F d, Y');
+                $final['review'] = $job->review->review;
                 removeRelationsAndFields($final);
                 array_push($reviews, $final);
             });
             $info->put('reviews', $reviews);
-            $info->put('categories', $partner->categories->each(function ($category) {
+            $info->put('categories', $partner->categories->each(function ($category) use ($location) {
+                $category->service_count = $category->services()->published()->count();
+                if($location)
+                {
+                    if(in_array($location,$category->locations->pluck('id')->toArray())) {
+                        $category->available = true;
+                    }
+                    else{
+                        $category->available = false;
+                    }
+                }
                 removeRelationsAndFields($category);
             }));
-            $info->put('compliments', []);;
-            $info->put('total_resources', $partner->resources->count());
+
+            $compliment_counts = $partner->reviews->pluck('rates')->filter(function($rate) {
+                return $rate->count();
+            })->flatten()->groupBy('rate_answer_id')->map(function($answer, $index) {
+                return [
+                    'id' => $index,
+                    'name' => $answer->first()->answer->answer,
+                    'badge' => $answer->first()->answer->badge,
+                    'asset' => $answer->first()->answer->asset,
+                    'count' => $answer->count(),
+                ];
+            });
+            $group_rating = $partner->reviews->groupBy('rating')->map(function ($rate){
+                return $rate->count();
+            });
+            for($i=1; $i<=5 ; $i++) {
+                if(!isset($group_rating[$i]))
+                    $group_rating[$i] = 0;
+            }
+            $info->put('compliments', $compliment_counts->values());
+            $info->put('total_resources', $partner->resources()->verified()->selectRaw('count(distinct resource_id) as total_resources')->first()->total_resources);
             $info->put('total_jobs', $partner->jobs->count());
             $info->put('total_rating', $partner->reviews->count());
-            $info->put('avg_rating', $this->reviewRepository->getAvgRating($partner->reviews));
+            $info->put('avg_rating', round($this->reviewRepository->getAvgRating($partner->reviews), 1));
+            $info->put('group_rating', $group_rating);
+            $info->put('master_category_names', $serving_master_categories);
+            $info->put('badge', $badge);
+            $info->put('geo_informations',json_decode($geo_informations));
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -140,9 +245,9 @@ class PartnerController extends Controller
             if ($partner = Partner::find((int)$partner)) {
 
                 $services = $partner->services()->select($this->getSelectColumnsOfService())->where('category_id', $request->category)
-                    ->where(function($q) {
-                        $q->where('publication_status',1);
-                        $q->orWhere('is_published_for_backend',1);
+                    ->where(function ($q) {
+                        $q->where('publication_status', 1);
+                        $q->orWhere('is_published_for_backend', 1);
                     })
                     ->get();
                 if (count($services) > 0) {
@@ -473,14 +578,23 @@ class PartnerController extends Controller
     {
         try {
             $partner = Partner::find($partner);
-            if ($partner) {
-                $locations = collect();
-                foreach ($partner->locations as $location) {
-                    $locations->push(array('id' => $location->id, 'name' => $location->name));
-                }
-                if (count($locations) > 0) return api_response($request, $locations, 200, ['locations' => $locations]);
-            }
-            return api_response($request, null, 404);
+            if (!$partner) return api_response($request, null, 404);
+
+            $geo_info = json_decode($partner->geo_informations);
+            if (!$geo_info) return api_response($request, null, 404);
+
+            $locations = collect();
+
+            HyperLocal::insideCircle($geo_info)->with('location')->get()
+                ->pluck('location')
+                ->filter()
+                ->each(function ($location) use (&$locations) {
+                    $locations->push(['id' => $location->id, 'name' => $location->name]);
+                });
+
+            if ($locations->count() == 0) return api_response($request, null, 404);
+
+            return api_response($request, $locations, 200, ['locations' => $locations]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -490,23 +604,31 @@ class PartnerController extends Controller
     public function getCategories($partner, Request $request)
     {
         try {
-            $partner = Partner::with(['categories' => function ($query) {
-                return $query->published()->wherePivot('is_verified', 1);
-            }])->find($partner);
-
+            $partner = Partner::find($partner);
+            if (!$partner->isLite()) {
+                $partner = $partner->load(['categories' => function ($query) {
+                    return $query->published()->wherePivot('is_verified', 1);
+                }]);
+            } else {
+                $partner = $partner->load(['categories' => function ($query) {
+                    return $query->published();
+                }]);
+            }
             if ($partner) {
                 $categories = collect();
                 foreach ($partner->categories as $category) {
                     $services = $partner->services()->select('services.id', 'name', 'variable_type', 'services.min_quantity', 'services.variables')
                         ->where('category_id', $category->id)
-                        ->where(function($q){
-                            $q->where('publication_status',1);
-                            $q->oRwhere('is_published_for_backend',1);
+                        ->where(function ($q) {
+                            $q->where('publication_status', 1);
+                            $q->oRwhere('is_published_for_backend', 1);
                         })
-                        ->wherePivot('is_published', 1)->wherePivot('is_verified', 1)
-                        ->publishedForAll()
-                        ->get();
-
+                        ->wherePivot('is_published', 1)
+                        ->publishedForAll();
+                    if (!$partner->isLite()) {
+                        $services = $services->wherePivot('is_verified', 1);
+                    }
+                    $services = $services->get();
                     if (count($services) > 0) {
                         $services->each(function (&$service) {
                             $variables = json_decode($service->variables);
@@ -522,7 +644,7 @@ class PartnerController extends Controller
                             removeRelationsAndFields($service);
                         });
                     }
-                    $categories->push(['id' => $category->id, 'name' => $category->name, 'app_thumb' => $category->app_thumb, 'services' => $services]);
+                    $categories->push(['id' => $category->id, 'name' => $category->name, 'app_thumb' => $category->app_thumb, 'services' => $services, 'is_verified' => $category->pivot->is_verified]);
                 }
 
                 if (count($categories) > 0) {
@@ -730,12 +852,12 @@ class PartnerController extends Controller
 
             $service = $request->partner
                 ->services()
-                ->whereHas('locations',function($query) use ($location){
-                    $query->where('id',$location->id);
+                ->whereHas('locations', function ($query) use ($location) {
+                    $query->where('id', $location->id);
                 })
                 ->where('category_id', $category)
                 ->where('is_published', 1)
-                ->select('services.id', 'services.name', 'services.variable_type')
+                ->select('services.id', 'services.name', 'services.variable_type', 'services.app_thumb')
                 ->get();
             return api_response($request, $request, 200, ['services' => $service]);
         } catch (\Throwable $e) {
@@ -841,7 +963,6 @@ class PartnerController extends Controller
             }
             return api_response($request, $master_categories, 200, ['categories' => $master_categories]);
         } catch (\Throwable $exception) {
-            dd($exception);
             app('sentry')->captureException($exception);
             return api_response($request, null, 500);
         }

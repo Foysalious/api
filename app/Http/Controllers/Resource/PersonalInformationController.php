@@ -179,15 +179,16 @@ class PersonalInformationController extends Controller
 
     private function mergeFrontAndBackNID($front, $back)
     {
-        $weight = 227;
-        $height = 155;
         $img1 = Image::make($front);
         $img2 = Image::make($back);
-        $img1->resize($weight, $height);
-        $img2->resize($weight, $height);
-        $canvas = Image::canvas(251, 359, '#FCFEFF');
+        $width = 1920;
+        $first_image_height = (int)(($width / $img1->height()) * $img1->height());
+        $img1->resize($width, $first_image_height);
+        $second_image_height = (int)(($width / $img2->height()) * $img2->height());
+        $img2->resize($width, $second_image_height);
+        $canvas = Image::canvas(2000, $first_image_height + $second_image_height + 50, '#FCFEFF');
         $canvas->insert($img1, 'top', 12, 17);
-        $canvas->insert($img2, 'top', 12, 34 + $height);
+        $canvas->insert($img2, 'top', 12, 34 + $first_image_height);
         $canvas->encode('png');
         return $canvas;
     }

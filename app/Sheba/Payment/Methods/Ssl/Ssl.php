@@ -47,7 +47,7 @@ class Ssl extends PaymentMethod
         $data['success_url'] = $this->successUrl;
         $data['fail_url'] = $this->failUrl;
         $data['cancel_url'] = $this->cancelUrl;
-        $data['emi_option'] = 0;
+        $data['emi_option'] = 1;
         $data['tran_id'] = $invoice;
         $user = $payable->user;
         $data['cus_name'] = $user->profile->name;

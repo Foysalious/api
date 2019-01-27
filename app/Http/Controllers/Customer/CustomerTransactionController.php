@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\PartnerOrder;
 use Illuminate\Http\Request;
 
 class CustomerTransactionController extends Controller
@@ -40,6 +41,7 @@ class CustomerTransactionController extends Controller
                 }
                 removeRelationsAndFields($transaction);
             });
+
             foreach ($bonus_logs as $bonus_log) {
                 if ($bonus_log->type == 'Credit') $transactions = $this->formatCreditBonusTransaction($bonus_log, $transactions);
                 else $transactions = $this->formatDebitBonusTransaction($bonus_log, $transactions);

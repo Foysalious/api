@@ -2,21 +2,23 @@
 
 use App\Models\Affiliate;
 use App\Models\AffiliateTransaction;
+
 use Sheba\ModificationFields;
 
 class AffiliationRewards
 {
     use ModificationFields;
-    private $moderationCost = 60;
-    private $affiliationCost = 20;
+    
+    private $moderationCost = 10;
+    private $affiliationCost = 10;
     private $moderator, $affiliate;
     private $requestIdentification;
 
     public function __construct()
     {
-
+        $this->moderationCost = constants('AFFILIATION_LITE_ONBOARD_MODERATION_REWARD');
+        $this->affiliationCost = constants('AFFILIATION_LITE_ONBOARD_REWARD');
     }
-
 
     public function setAffiliate($affiliate)
     {
@@ -109,6 +111,4 @@ class AffiliationRewards
         $this->moderator->wallet += $this->getModerationCost();
         $this->moderator->update();
     }
-
-
 }

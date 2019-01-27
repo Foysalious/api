@@ -30,16 +30,15 @@ return [
         'manager' => 'notification_sound'
     ],
     'partner_packages' => [
-        'ESP' => 3,
-        'PSP' => 2,
-        'LSP' => 1
+        'ESP' => 4,
+        'PSP' => 3,
+        'LSP' => 2
     ],
     'rent_a_car_pickup_district_ids' => [1, 43],
     'partner_packages_on_partner_list' => [
         'ESP' => 2,
         'PSP' => 6,
-        'LSP' => 2,
-        'LITE' => 4
+        'LSP' => 2
     ],
     'partner_statuses' => [
 
@@ -83,5 +82,6 @@ return [
         ['#5B247A', '#1BCEDF'],
         ['#00B8BA', '#00FFED']
     ],
-    'screen' => ['home', 'eshop']
+    'screen' => ['home', 'eshop'],
+    'partner_lite_packages_id' => env('LITE_PACKAGE_ID')
 ];

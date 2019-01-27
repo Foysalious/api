@@ -41,6 +41,11 @@ class Affiliate extends Model implements TopUpAgent
         return $this->hasMany(PartnerAffiliation::class);
     }
 
+    public function onboardedPartners()
+    {
+        return $this->hasMany(Partner::class);
+    }
+
     public function suspensions()
     {
         return $this->hasMany(AffiliateSuspension::class);

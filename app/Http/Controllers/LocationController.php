@@ -105,11 +105,14 @@ class LocationController extends Controller
                 ->filter(function ($item) {
                     return !empty($item->location);
                 })->pluck('location');
+            $hyper_locations = $hyper_locations->map(function ($location) {
+                unset($location->geo_informations);
+                return $location;
+            });
             return api_response($request, null, 200, ['locations' => $hyper_locations, 'geo_info' => $geo_info]);
         } else {
             return api_response($request, null, 404);
         }
-
     }
 
     public function validateLocation(Request $request)

@@ -24,8 +24,9 @@ class AffiliateRoute
             $api->get('customer-info', 'AffiliateController@getCustomerInfo');
             $api->get('personal-info', 'AffiliateController@getPersonalInformation');
             $api->post('top-up-test', 'TopUpController@topUpTest');
-            $api->post('moderate/{partner_id}/accept','Partner\\PartnerOnBoardingController@acceptRequest');
-            $api->post('moderate/{partner_id}/reject','Partner\\PartnerOnBoardingController@rejectRequest');
+            $api->get('onboarded-partners', 'Affiliate\\LitePartnerOnBoardingController@index');
+            $api->post('moderate/{partner_id}/accept', 'Affiliate\\LitePartnerOnBoardingController@acceptRequest');
+            $api->post('moderate/{partner_id}/reject', 'Affiliate\\LitePartnerOnBoardingController@rejectRequest');
             $api->post('refer', 'Auth\PartnerRegistrationController@registerReferAffiliate');
         });
         $api->post('eksheba/save','EkshebaController@saveEkshebaData');

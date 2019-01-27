@@ -1,10 +1,10 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\HyperLocal;
+
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Cache;
 
@@ -63,7 +63,7 @@ class HomePageSettingController extends Controller
     public function getCar(Request $request)
     {
         try {
-            $settings = json_decode(\Illuminate\Support\Facades\Redis::get('car_settings'));
+            $settings = json_decode(Redis::get('car_settings'));
             return api_response($request, $settings, 200, ['settings' => $settings]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
@@ -72,6 +72,7 @@ class HomePageSettingController extends Controller
 
     public function formatWeb(array $settings, $location)
     {
+        $customer_category_orders = [1, 3, 73, 101, 183, 184, 226, 186, 221, 224, 185, 225, 226, 235, 236];
         $settings = collect($settings);
         $slider = $settings->where('item_type', 'Slider')->first();
         $category_groups = $settings->where('item_type', 'CategoryGroup')->sortBy('order');
@@ -87,14 +88,19 @@ class HomePageSettingController extends Controller
                 });
             }
         }]);
+
         if ($location) {
             $categories->whereHas('locations', function ($q) use ($location) {
                 $q->where('locations.id', $location);
             });
         }
+
         $categories = $categories->select('id', 'parent_id', 'name', 'thumb', 'slug', 'banner', 'icon_png')->get()->reject(function ($category) {
             return count($category->children) == 0;
+        })->sortBy(function ($category) use ($customer_category_orders) {
+            return array_search($category->getKey(), $customer_category_orders);
         })->values()->all();
-        return array('slider' => $slider->data, 'categories' => $categories, 'category_groups' => $category_groups->values()->all());
+
+        return ['slider' => $slider->data, 'categories' => $categories, 'category_groups' => $category_groups->values()->all()];
     }
 }

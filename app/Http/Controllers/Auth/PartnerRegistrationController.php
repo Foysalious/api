@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers\Auth;
+<?php namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\FacebookAccountKit;
@@ -11,6 +9,8 @@ use App\Models\PartnerBasicInformation;
 use App\Models\PartnerSubscriptionPackage;
 use App\Models\PartnerWalletSetting;
 use App\Models\Profile;
+use App\Models\Resource;
+use App\Repositories\PartnerRepository;
 use App\Repositories\ProfileRepository;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -50,7 +50,59 @@ class PartnerRegistrationController extends Controller
                 $profile = $this->profileRepository->registerMobile(array_merge($request->all(), ['mobile' => $mobile]));
                 $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
             }
+
             if ($resource->partnerResources->count() > 0) return api_response($request, null, 403, ['message' => 'You already have a company!']);
+
+            $data = $this->makePartnerCreateData($request);
+            if ($partner = $this->createPartner($resource, $data)) {
+                $info = $this->profileRepository->getProfileInfo('resource', Profile::find($profile->id));
+                /**
+                 * LOGIC CHANGE - PARTNER REWARD MOVE TO WAITING STATUS
+                 *
+                 * app('\Sheba\PartnerAffiliation\RewardHandler')->setPartner($partner)->onBoarded();
+                 */
+                return api_response($request, null, 200, ['info' => $info]);
+            } else {
+                return api_response($request, null, 500);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function registerByResource(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'resource_id' => 'required|int',
+                'remember_token' => 'required|string',
+                'company_name' => 'required|string',
+                'from' => 'string|in:' . implode(',', constants('FROM')),
+                'package_id' => 'exists:partner_subscription_packages,id',
+                'billing_type' => 'in:monthly,yearly'
+            ]);
+
+            $resource = Resource::find($request->resource_id);
+            if(!($resource && $resource->remember_token == $request->remember_token)) {
+                return api_response($request, null, 403, ['message' => "Unauthorized."]);
+            }
+
+            $profile = $resource->profile;
+            $profile->name = $request->name;
+            $profile->save();
+
+            if ($resource->partnerResources->count() > 0)
+                return api_response($request, null, 403, ['message' => 'You already have a company!']);
+
+            $request['package_id'] = env('LITE_PACKAGE_ID');
+            $request['billing_type'] = 'monthly';
 
             $data = $this->makePartnerCreateData($request);
             if ($partner = $this->createPartner($resource, $data)) {
@@ -91,6 +143,9 @@ class PartnerRegistrationController extends Controller
         }
         if($request->has('affiliate_id')) {
             $data['affiliate_id'] = $request->affiliate_id;
+        }
+        if($request->has('address')) {
+            $data['address'] = $request->address;
         }
         return $data;
     }
@@ -133,8 +188,10 @@ class PartnerRegistrationController extends Controller
                 $partner = $partner->fill(array_merge($data, $by));
                 $partner->save();
                 $partner->resources()->attach($resource->id, array_merge($by, ['resource_type' => 'Admin']));
-                if((int) $data['package_id'] === 4)
+                if(isset($data['package_id']) && $data['package_id'] == env('LITE_PACKAGE_ID')) {
                     $partner->resources()->attach($resource->id, array_merge($by, ['resource_type' => 'Handyman']));
+                    (new PartnerRepository($partner))->saveDefaultWorkingHours($by);
+                }
 
                 $partner->basicInformations()->save(new PartnerBasicInformation(array_merge($by, ['is_verified' => 0])));
                 (new Referral($partner));
@@ -142,7 +199,6 @@ class PartnerRegistrationController extends Controller
                 if (isset($data['billing_type']) && isset($data['package_id'])) $partner->subscribe($data['package_id'], $data['billing_type']);
             });
         } catch (QueryException $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return null;
         }
@@ -239,5 +295,4 @@ class PartnerRegistrationController extends Controller
         else
             return false;
     }
-
 }
