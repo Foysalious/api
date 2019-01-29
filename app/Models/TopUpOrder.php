@@ -37,11 +37,18 @@ class TopUpOrder extends Model
         return $this->status == 'Failed';
     }
 
-    public function scopeBetween($query, $from, $to) {
-        return $query->whereBetween('created_at',[$from,$to]);
+    public function isSuccess()
+    {
+        return $this->status == 'Success';
     }
 
-    public function scopeOperator($query, $vendor_id) {
-        return $query->where('vendor_id',$vendor_id);
+    public function scopeBetween($query, $from, $to)
+    {
+        return $query->whereBetween('created_at', [$from, $to]);
+    }
+
+    public function scopeOperator($query, $vendor_id)
+    {
+        return $query->where('vendor_id', $vendor_id);
     }
 }

@@ -119,7 +119,7 @@ class TopUp
         $top_up_order->agent_id = $this->agent->id;
         $top_up_order->payee_mobile = $mobile_number;
         $top_up_order->amount = $amount;
-        $top_up_order->status = 'Successful';
+        $top_up_order->status = $this->vendor->getTopUpInitialStatus();
         $top_up_order->transaction_id = $response->transactionId;
         $top_up_order->transaction_details = json_encode($response->transactionDetails);
         $top_up_order->vendor_id = $this->model->id;

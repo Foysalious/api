@@ -25,6 +25,11 @@ trait Ssl
         return $this->ssl->recharge($top_up_request);
     }
 
+    public function getTopUpInitialStatus()
+    {
+        return config('topup.status.pending');
+    }
+
     /**
      * @param $amount
      * @throws \Exception
