@@ -482,8 +482,9 @@ class AffiliateController extends Controller
     public function getServicesInfo($affiliate, Request $request)
     {
         try {
-            list($offset, $limit) = calculatePagination($request);
-            $services = Service::PublishedForBondhu()->skip($offset)->take($limit)->get()->map(function ($service) {
+//            list($offset, $limit) = calculatePagination($request);
+//            $services = Service::PublishedForBondhu()->skip($offset)->take($limit)->get();
+            $services = Service::PublishedForBondhu()->get()->map(function ($service) {
                 return [
                     'id' => $service->id,
                     'name' => $service->name,
