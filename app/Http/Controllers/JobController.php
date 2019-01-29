@@ -282,8 +282,8 @@ class JobController extends Controller
 
     protected function canTakeReview($job)
     {
-        if($job->delivered_date) {
-            $closed_date = Carbon::parse($job->delivered_date);
+        if($job->partnerOrder->closed_at) {
+            $closed_date = Carbon::parse($job->partnerOrder->closed_at);
             $now = Carbon::now();
             $difference = $closed_date->diffInDays($now);
             return $difference < constants('CUSTOMER_REVIEW_OPEN_DAY_LIMIT');
