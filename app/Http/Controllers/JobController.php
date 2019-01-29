@@ -108,6 +108,14 @@ class JobController extends Controller
             $job_collection->put('estimated_distance', $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_distance : null);
             $job_collection->put('estimated_time', $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_time : null);
 
+            if($job->delivered_date)
+            {
+                $closed_date = Carbon::parse($job->delivered_date);
+                $now = Carbon::now();
+                $difference = $closed_date->diffInDays($now);
+                $job_collection->put('can_take_review', $difference < constants('CUSTOMER_REVIEW_OPEN_DAY_LIMIT'));
+            }
+
             if (count($job->jobServices) == 0) {
                 $services = collect();
                 $variables = json_decode($job->service_variables);
