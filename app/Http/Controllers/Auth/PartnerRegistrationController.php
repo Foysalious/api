@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers\Auth;
+<?php namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\FacebookAccountKit;
@@ -12,6 +10,7 @@ use App\Models\PartnerSubscriptionPackage;
 use App\Models\PartnerWalletSetting;
 use App\Models\Profile;
 use App\Models\Resource;
+use App\Repositories\PartnerRepository;
 use App\Repositories\ProfileRepository;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -94,10 +93,16 @@ class PartnerRegistrationController extends Controller
             if(!($resource && $resource->remember_token == $request->remember_token)) {
                 return api_response($request, null, 403, ['message' => "Unauthorized."]);
             }
+
             $profile = $resource->profile;
             $profile->name = $request->name;
             $profile->save();
-            if ($resource->partnerResources->count() > 0) return api_response($request, null, 403, ['message' => 'You already have a company!']);
+
+            if ($resource->partnerResources->count() > 0)
+                return api_response($request, null, 403, ['message' => 'You already have a company!']);
+
+            $request['package_id'] = env('LITE_PACKAGE_ID');
+            $request['billing_type'] = 'monthly';
 
             $data = $this->makePartnerCreateData($request);
             if ($partner = $this->createPartner($resource, $data)) {
@@ -183,8 +188,10 @@ class PartnerRegistrationController extends Controller
                 $partner = $partner->fill(array_merge($data, $by));
                 $partner->save();
                 $partner->resources()->attach($resource->id, array_merge($by, ['resource_type' => 'Admin']));
-                if(isset($data['package_id']) &&(int) $data['package_id'] === env('LITE_PACKAGE_ID'))
+                if(isset($data['package_id']) && $data['package_id'] == env('LITE_PACKAGE_ID')) {
                     $partner->resources()->attach($resource->id, array_merge($by, ['resource_type' => 'Handyman']));
+                    (new PartnerRepository($partner))->saveDefaultWorkingHours($by);
+                }
 
                 $partner->basicInformations()->save(new PartnerBasicInformation(array_merge($by, ['is_verified' => 0])));
                 (new Referral($partner));
@@ -288,5 +295,4 @@ class PartnerRegistrationController extends Controller
         else
             return false;
     }
-
 }

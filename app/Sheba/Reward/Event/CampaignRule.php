@@ -11,11 +11,12 @@ abstract class CampaignRule extends Rule
     /**
      * CampaignRule constructor.
      * @param $rule
+     * @param array $params
      * @throws RulesValueMismatchException
      */
-    public function __construct($rule)
+    public function __construct($rule, $params)
     {
-        parent::__construct($rule);
+        parent::__construct($rule, $params);
 
         if (!property_exists($this->rule, 'target')) throw new RulesValueMismatchException('Target must be present');
         $this->target->value = $this->rule->target;

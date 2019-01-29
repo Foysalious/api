@@ -20,10 +20,30 @@ class Coords
         return new Coords($lat_radian, $lng_radian, $this->id);
     }
 
+    public function isSameTo(Coords $target)
+    {
+        $this->stringify();
+        $target->stringify();
+        return $this->lat == $target->lat && $this->lng == $target->lng;
+    }
+
     public function __get($property)
     {
         if (property_exists($this, $property)) {
             return $this->$property;
         }
+    }
+
+    private function round($precision = 8)
+    {
+        $this->lat = round($this->lat, $precision);
+        $this->lng = round($this->lng, $precision);
+    }
+
+    private function stringify($precision = 8)
+    {
+        $this->round($precision);
+        $this->lat = str_pad($this->lat, $precision + 3, '0');
+        $this->lng = str_pad($this->lng, $precision + 3, '0');
     }
 }

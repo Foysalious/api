@@ -12,21 +12,19 @@ class SslController extends Controller
 {
     public function validatePayment(Request $request)
     {
+        $redirect_url = config('sheba.front_url');
         try {
-            if (empty($request->headers->get('referer'))) {
+            /*if (empty($request->headers->get('referer'))) {
                 return api_response($request, null, 400);
-            };
-            $payment = Payment::where('transaction_id', $request->tran_id)->valid()->first();
-            if (!$payment) return redirect(config('sheba.front_url'));
-            $sheba_payment = new ShebaPayment('online');
-            $payment = $sheba_payment->complete($payment);
-            $payable = $payment->payable;
-            return redirect($payable->success_url . '?invoice_id=' . $request->tran_id);
+            };*/
+            $payment = Payment::where('transaction_id', $request->tran_id)->valid()->notCompleted()->first();
+            if (!$payment) throw new \Exception('Payment not found to validate.');
+            $redirect_url = $payment->payable->success_url . '?invoice_id=' . $request->tran_id;
+            (new ShebaPayment('online'))->complete($payment);
         } catch (\Throwable $e) {
-            $payment = Payment::where('transaction_id', $request->tran_id)->valid()->first();
             app('sentry')->captureException($e);
-            return redirect($payment->payable->success_url . '?invoice_id=' . $request->tran_id);
         }
+        return redirect($redirect_url);
     }
 
     public function validateTopUp(Request $request)

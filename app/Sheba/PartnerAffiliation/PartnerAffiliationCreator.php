@@ -3,51 +3,70 @@
 use App\Models\PartnerAffiliation;
 use App\Repositories\NotificationRepository;
 use App\Repositories\SmsHandler;
+use Illuminate\Http\Request;
 use Sheba\ModificationFields;
 
 class PartnerAffiliationCreator
 {
     use ModificationFields;
 
-    public function create($data)
+    private $notificationRepo;
+    private $validator;
+
+    private $data;
+
+    public function __construct(NotificationRepository $notification_repo, PartnerAffiliationCreateValidator $validator)
     {
-        $partner_affiliation_data = $this->partnerAffiliationCreateData($data);
+        $this->notificationRepo = $notification_repo;
+        $this->validator = $validator;
+    }
+
+    public function setData($data)
+    {
+        $this->data = $data;
+        $this->validator->setData($data);
+        return $this;
+    }
+
+    public function hasError()
+    {
+        return $this->validator->hasError();
+    }
+
+    public function create()
+    {
+        $partner_affiliation_data = $this->partnerAffiliationCreateData();
         $partner_affiliation = PartnerAffiliation::create($partner_affiliation_data);
-        $this->sendNotification($partner_affiliation);
-        $this->sendSms($data);
+
+        try {
+            $this->sendNotification($partner_affiliation);
+            $this->sendSms();
+        } catch (\Throwable $e) { }
+
         return $partner_affiliation;
     }
 
-    private function partnerAffiliationCreateData($data)
+    private function partnerAffiliationCreateData()
     {
-        $this->setModifier($data['affiliate']);
+        $this->setModifier($this->data['affiliate']);
         return $this->withBothModificationFields([
-            'affiliate_id' => $data['affiliate']->id,
-            'resource_mobile' => formatMobile($data['resource_mobile']),
-            'resource_name' => $data['resource_name'],
-            'company_name' => $data['company_name']
+            'affiliate_id' => $this->data['affiliate']->id,
+            'resource_mobile' => formatMobile($this->data['resource_mobile']),
+            'resource_name' => $this->data['resource_name'],
+            'company_name' => $this->data['company_name']
         ]);
     }
 
     private function sendNotification($partner_affiliation)
     {
-        try {
-            (new NotificationRepository())->forPartnerAffiliation($partner_affiliation->affiliate, $partner_affiliation);
-        } catch (\Throwable $e) {
-
-        }
+        $this->notificationRepo->forPartnerAffiliation($partner_affiliation->affiliate, $partner_affiliation);
     }
 
-    private function sendSms($data)
+    private function sendSms()
     {
-        try {
-            $affiliate = $data['affiliate']->profile->name ?: $data['affiliate']->profile->name;
-            (new SmsHandler('partner-affiliation-create'))->send($data['resource_mobile'], [
-                'affiliate' => $affiliate
-            ]);
-        } catch (\Throwable $e) {
-
-        }
-
+        $affiliate = $this->data['affiliate']->profile->name ?: $this->data['affiliate']->profile->name;
+        (new SmsHandler('partner-affiliation-create'))->send($this->data['resource_mobile'], [
+            'affiliate' => $affiliate
+        ]);
     }
 }

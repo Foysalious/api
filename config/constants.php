@@ -482,5 +482,7 @@ return [
         'silver' => 'silver',
         'gold'   => 'gold'
     ],
-    'MODERATOR_DISTANCE_THRESHOLD'=>500
+    'MODERATOR_DISTANCE_THRESHOLD'=>500,
+    'AFFILIATION_LITE_ONBOARD_REWARD' => 10,
+    'AFFILIATION_LITE_ONBOARD_MODERATION_REWARD' => 10,
 ];

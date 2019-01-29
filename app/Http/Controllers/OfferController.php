@@ -44,7 +44,7 @@ class OfferController extends Controller
                 $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
                 if (!is_null($hyperLocation)) $location = $hyperLocation->location;
             }
-            $offers = OfferShowcase::active()->valid()->orderBy('end_date')->get();
+            $offers = OfferShowcase::active()->valid()->actual()->orderBy('end_date')->get();
             if (count($offers) == 0) return api_response($request, null, 404);
             $offer_filter = new OfferFilter($offers);
             if ($user) $offer_filter->setCustomer($user);

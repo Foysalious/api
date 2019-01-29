@@ -38,7 +38,13 @@ class Payment extends Model
 
     public function scopeValid($query)
     {
-        return $query->where('status', '<>', 'validation_failed')->where('status', '<>', 'initiation_failed');
+        return $query->where('status', '<>', 'validation_failed')
+            ->where('status', '<>', 'initiation_failed');
+    }
+
+    public function scopeNotCompleted($query)
+    {
+        return $query->where('status', '<>', 'completed');
     }
 
     public function canComplete()
