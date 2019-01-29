@@ -107,15 +107,7 @@ class JobController extends Controller
             $job_collection->put('drop_off_time', $job->carRentalJobDetail ? (Carbon::parse($job->carRentalJobDetail->drop_off_time)->format('g:i A')) : null);
             $job_collection->put('estimated_distance', $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_distance : null);
             $job_collection->put('estimated_time', $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_time : null);
-
-            if($job->delivered_date) {
-                $closed_date = Carbon::parse($job->delivered_date);
-                $now = Carbon::now();
-                $difference = $closed_date->diffInDays($now);
-                $job_collection->put('can_take_review', $difference < constants('CUSTOMER_REVIEW_OPEN_DAY_LIMIT'));
-            } else {
-                $job_collection->put('can_take_review', false);
-            }
+            $job_collection->put('can_take_review', $this->canTakeReview($job));
 
             if (count($job->jobServices) == 0) {
                 $services = collect();
@@ -279,12 +271,25 @@ class JobController extends Controller
                         'order_code' => $order->code(),
                         'created_at' => $job->created_at->format('Y-m-d'),
                         'created_at_timestamp' => $job->created_at->timestamp,
+                        'can_take_review' => $this->canTakeReview($job),
                         'message' => (new JobLogs($job))->getOrderMessage()
                     )));
                 }
             }
         }
         return $all_jobs;
+    }
+
+    protected function canTakeReview($job)
+    {
+        if($job->delivered_date) {
+            $closed_date = Carbon::parse($job->delivered_date);
+            $now = Carbon::now();
+            $difference = $closed_date->diffInDays($now);
+            return $difference < constants('CUSTOMER_REVIEW_OPEN_DAY_LIMIT');
+        } else {
+            return false;
+        }
     }
 
     public function getInfo($customer, $job, Request $request)
