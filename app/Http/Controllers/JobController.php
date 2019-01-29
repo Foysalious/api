@@ -115,6 +115,10 @@ class JobController extends Controller
                 $difference = $closed_date->diffInDays($now);
                 $job_collection->put('can_take_review', $difference < constants('CUSTOMER_REVIEW_OPEN_DAY_LIMIT'));
             }
+            else
+            {
+                $job_collection->put('can_take_review', false);
+            }
 
             if (count($job->jobServices) == 0) {
                 $services = collect();
