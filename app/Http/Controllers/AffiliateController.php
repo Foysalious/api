@@ -562,20 +562,24 @@ class AffiliateController extends Controller
                     $topup_request = $data->getTopUpRequest();
                     array_push($queued_topups, [
                         'payee_mobile' => $topup_request->getMobile(),
+                        'payee_name' => 'N/A',
                         'amount' => (double)$topup_request->getAmount(),
                         'operator' => $data->getVendor()->name,
                         'status' => config('topup.status.pending')['sheba'],
-                        'created_at' => Carbon::now()->format('jS M, Y h:i A')
+                        'created_at' => Carbon::now()->format('jS M, Y h:i A'),
+                        'created_at_raw' => Carbon::now()->format('Y-m-d h:i:s')
                     ]);
                 }
             }
             foreach ($topups as $topup) {
                 $topup = [
                     'payee_mobile' => $topup->payee_mobile,
+                    'payee_name' => $topup->payee_name ? $topup->payee_name : 'N/A',
                     'amount' => $topup->amount,
                     'operator' => $topup->vendor->name,
-                    'status' => $topup->status,
-                    'created_at' => $topup->created_at->format('jS M, Y h:i A')
+                    'status' => $topup->status  ,
+                    'created_at' => $topup->created_at->format('jS M, Y h:i A'),
+                    'created_at_raw' => $topup->created_at->format('Y-m-d h:i:s')
                 ];
                 array_push($topup_data, $topup);
             }

@@ -29,6 +29,8 @@ class TopUpJob extends Job implements ShouldQueue
         $this->agent = $agent;
         $this->topUpRequest = $top_up_request;
         $this->vendorId = $vendor;
+        $this->connection = 'topup';
+        $this->queue = 'topup';
     }
 
     /**

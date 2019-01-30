@@ -231,9 +231,16 @@ class PartnerController extends Controller
             $info->put('group_rating', $group_rating);
             $info->put('master_category_names', $serving_master_categories);
             $info->put('badge', $badge);
-            $info->put('geo_informations',json_decode($geo_informations));
+            $geo_informations = json_decode($geo_informations);
+            $geo_informations = array(
+                'lat' => (float) $geo_informations->lat,
+                'lng' => (float) $geo_informations->lng,
+                'radius' => (float) $geo_informations->radius,
+            );
+            $info->put('geo_informations',$geo_informations);
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
