@@ -48,13 +48,6 @@ class PartnerList
     private $notFoundValues;
     private $isNotLite;
     private $partner;
-
-    /** @header **/
-    private $portal_name;
-    private $user_id;
-    private $version_code;
-    private $user_agent;
-
     use ModificationFields;
 
     public function __construct($services, $date, $time, $location = null)
@@ -80,11 +73,6 @@ class PartnerList
             'options' => [],
             'handyman' => []
         ];
-
-        $this->portal_name = request()->header('portal-name');
-        $this->user_id = request()->header('user-id');
-        $this->version_code = request()->header('version-code');
-        $this->user_agent = request()->header('user-agent');
     }
 
     public function setGeo($lat, $lng)
@@ -410,9 +398,7 @@ class PartnerList
             $partner['total_completed_orders'] = $partner->jobs->first() ? $partner->jobs->first()->total_completed_orders : 0;
             $partner['contact_no'] = $this->getContactNumber($partner);
             // $partner['subscription_type'] = $this->setBadgeName($partner->badge);
-            $this->resolveVersionWiseBadge($partner);
-
-//            $partner['subscription_type'] = $partner->subscription ? $partner->subscription->name : null;
+            $partner['subscription_type'] = $partner->subscription ? $partner->subscription->name : null;
             $partner['total_working_days'] = $partner->workingHours ? $partner->workingHours->count() : 0;
             $partner['rating'] = $partner->reviews->first() ? (double)$partner->reviews->first()->avg_rating : 0;
             $partner['total_ratings'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_ratings : 0;
@@ -435,41 +421,6 @@ class PartnerList
         else return 'LSP';
     }
 
-
-    /**
-     * @param $partner
-     * @return Partner $partner
-     */
-    private function resolveVersionWiseBadge(Partner &$partner)
-    {
-        $this->resolveUserAgent();
-        if($this->user_agent) {
-            switch ($this->user_agent) {
-                case 'android' && $this->version_code <= 30115:
-                        $partner['subscription_type'] = $this->setBadgeName($partner->badge);
-                    break;
-                default:
-                    $partner['badge'] = $partner->badge;
-                    break;
-            }
-        }
-        return $partner;
-    }
-
-    private function resolveUserAgent()
-    {
-        if($this->user_agent) {
-            $possible_user_agents = ['android','ios'];
-            $this->user_agent = strtolower($this->user_agent);
-            foreach ($possible_user_agents as $possible_user_agent) {
-                if(strpos($this->user_agent, $possible_user_agent) !== false) {
-                    $this->user_agent = $possible_user_agent;
-                    break;
-                }
-            }
-        }
-    }
-    
     public function sortByShebaPartnerPriority()
     {
         $this->partners = (new PartnerSort($this->partners))->get();
