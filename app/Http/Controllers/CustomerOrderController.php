@@ -53,14 +53,14 @@ class CustomerOrderController extends Controller
                 $others = $all_jobs->diff($cancelled_served_jobs);
                 $all_jobs = $others->merge($cancelled_served_jobs);
 
-                //dd(Job::find($all_jobs[0]['job_id'])->partnerOrder);
-
                 $all_jobs->map(function ($job) {
                     $order_job = Job::find($job['job_id']);
                     $job['can_pay'] = $this->canPay($order_job);
                     $job['can_take_review'] = $this->canTakeReview($order_job);
                     return $job;
                 });
+
+
 
             } else {
                 $all_jobs = collect();
@@ -72,6 +72,7 @@ class CustomerOrderController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch ( \Throwable $e ) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -91,7 +92,14 @@ class CustomerOrderController extends Controller
 
     protected function canPay($job)
     {
-        return false;
+        $due = $job->partnerOrder->calculate(true)->due;
+        $status = $job->status;
+
+        if(in_array($status, ['Served', 'Declined', 'Cancelled']))
+            return false;
+        else {
+            return $due > 0;
+        }
     }
 
     private function getInformation($orders)
