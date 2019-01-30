@@ -108,7 +108,7 @@ class JobController extends Controller
             $job_collection->put('estimated_distance', $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_distance : null);
             $job_collection->put('estimated_time', $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_time : null);
             $job_collection->put('can_take_review', $this->canTakeReview($job));
-            $job_collection->put('can_take_review', $this->canPay($job));
+            $job_collection->put('can_pay', $this->canPay($job));
 
             if (count($job->jobServices) == 0) {
                 $services = collect();
