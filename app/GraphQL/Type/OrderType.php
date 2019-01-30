@@ -252,7 +252,7 @@ class OrderType extends GraphQlType
 
     protected function resolveDeliveryAddressField($root)
     {
-        return $root->order->delivery_address;
+        return $root->order->deliveryAddress->address;
     }
 
     protected function resolveDeliveryNameField($root)
