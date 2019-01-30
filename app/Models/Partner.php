@@ -126,6 +126,11 @@ class Partner extends Model implements Rewardable, TopUpAgent
         return $this->hasMany(PartnerOrder::class);
     }
 
+    public function todayOrders()
+    {
+        return $this->hasMany(PartnerOrder::class)->whereDate('created_at', '=', Carbon::today());
+    }
+
     public function walletSetting()
     {
         return $this->hasOne(PartnerWalletSetting::class);
