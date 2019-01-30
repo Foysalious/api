@@ -295,7 +295,14 @@ class JobController extends Controller
 
     protected function canPay($job)
     {
-        return false;
+        $due = $job->partnerOrder->calculate(true)->due;
+        $status = $job->status;
+
+        if(in_array($status, ['Served', 'Declined', 'Cancelled']))
+            return false;
+        else {
+            return $due > 0;
+        }
     }
 
     public function getInfo($customer, $job, Request $request)
