@@ -17,10 +17,11 @@ class SslController extends Controller
             /*if (empty($request->headers->get('referer'))) {
                 return api_response($request, null, 400);
             };*/
-            $payment = Payment::where('transaction_id', $request->tran_id)->valid()->notCompleted()->first();
+            /** @var Payment $payment */
+            $payment = Payment::where('transaction_id', $request->tran_id)->valid()->first();
             if (!$payment) throw new \Exception('Payment not found to validate.');
             $redirect_url = $payment->payable->success_url . '?invoice_id=' . $request->tran_id;
-            (new ShebaPayment('online'))->complete($payment);
+            if (!$payment->isComplete()) (new ShebaPayment('online'))->complete($payment);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
         }
