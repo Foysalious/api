@@ -91,6 +91,11 @@ class Category extends Model
         return $query->where('is_published_for_business', 1);
     }
 
+    public function scopePublishedForPartner($query)
+    {
+        return $query->where('is_published_for_partner', 1);
+    }
+
     public function scopePublishedForAll($query)
     {
         return $query->where('parent_id')->where(function ($query) {
@@ -102,6 +107,13 @@ class Category extends Model
     {
         return $query->where(function ($query) {
             return $query->where('publication_status', 1)->orWhere('is_published_for_business', 1);
+        });
+    }
+
+    public function scopePublishedForAny($query)
+    {
+        return $query->where(function ($query) {
+            return $query->where('publication_status', 1)->orWhere('is_published_for_business', 1)->orWhere('is_published_for_partner', 1);
         });
     }
 

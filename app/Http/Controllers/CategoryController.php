@@ -29,6 +29,20 @@ class CategoryController extends Controller
 
     public function index(Request $request)
     {
+        $filter_publication = function ($q) use ($request) {
+            $is_business = $request->has('is_business') && (int)$request->is_business;
+            $is_partner = ($request->has('is_partner') && (int)$request->is_partner)
+                || in_array($request->header('portal-name'), ['manager-app', 'bondhu-app']);
+
+            if($is_business) {
+                $q->publishedForBusiness();
+            } else if($is_partner) {
+                $q->publishedForPartner();
+            } else {
+                $q->published();
+            }
+        };
+
         try {
             $this->validate($request, ['location' => 'sometimes|numeric', 'lat' => 'sometimes|numeric', 'lng' => 'required_with:lat']);
 
@@ -45,8 +59,8 @@ class CategoryController extends Controller
                 $categories = $categories->whereHas('locations', function ($q) use ($location) {
                     $q->where('locations.id', $location->id);
                 });
-                $categories = $categories->whereHas('allChildren', function ($q) use ($location, $request) {
-                    $request->has('is_business') && (int)$request->is_business ? $q->publishedForBusiness() : $q->published();
+                $categories = $categories->whereHas('allChildren', function ($q) use ($location, $request, $filter_publication) {
+                    $filter_publication($q);
                     $q->whereHas('locations', function ($query) use ($location) {
                         $query->where('locations.id', $location->id);
                     });
@@ -72,7 +86,8 @@ class CategoryController extends Controller
                     }]);
                 }
             }
-            $categories = $request->has('is_business') && (int)$request->is_business ? $categories->publishedForBusiness() : $categories->published();
+            $filter_publication($categories);
+            //$categories = $request->has('is_business') && (int)$request->is_business ? $categories->publishedForBusiness() : $categories->published();
             $categories = $categories->get();
 
             foreach ($categories as $key => &$category) {
