@@ -67,7 +67,7 @@ class TopUpController extends Controller
             if (!$vendor->isPublished()) return api_response($request, null, 403, ['message' => 'Sorry, we don\'t support this operator at this moment']);
 
             $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type);
-            dispatch(new TopUpJob($agent, $request->vendor_id, $top_up_request));
+            dispatch((new TopUpJob($agent, $request->vendor_id, $top_up_request))->onQueue("topup_" . preg_replace('/^\+88/', '', $agent->profile->mobile)));
 
             return api_response($request, null, 200, ['message' => "Recharge Request Successful"]);
         } catch (ValidationException $e) {

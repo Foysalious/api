@@ -23,6 +23,7 @@ use Sheba\PartnerPayment\PartnerPaymentValidatorFactory;
 use Sheba\Reports\ExcelHandler;
 use Validator;
 use DB;
+use Redis;
 
 class AffiliateController extends Controller
 {
@@ -551,6 +552,8 @@ class AffiliateController extends Controller
             $topups = $topups->with('vendor')->skip($offset)->take($limit)->orderBy('created_at', 'desc')->get();
 
             $topup_data = [];
+            $queue_jobs = Redis::lrange('queues:topup_' . preg_replace('/^\+88/', '', $affiliate->profile->mobile), 0, -1);
+
             foreach ($topups as $topup) {
                 $topup = [
                     'payee_mobile' => $topup->payee_mobile,
@@ -590,7 +593,7 @@ class AffiliateController extends Controller
                 return api_response($request, $customer_name, 200, ['name' => $customer_name]);
             }
             return api_response($request, [], 404, ['message' => 'Customer not found.']);
-        }catch (ValidationException $e) {
+        } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
@@ -608,8 +611,8 @@ class AffiliateController extends Controller
             $profile = Profile::where('mobile', '+88' . $request->mobile)->first();
             if (!is_null($profile)) {
                 $customer_name = $profile->name;
-                $resource = Resource::where('profile_id',$profile->id)->first();
-                if($resource){
+                $resource = Resource::where('profile_id', $profile->id)->first();
+                if ($resource) {
                     $token = $resource->remember_token;
                     $resource_informations = [
                         'name' => $profile->name,
@@ -619,12 +622,12 @@ class AffiliateController extends Controller
                             'token' => $token
                         ]
                     ];
-                    if(count($resource->partners)>0) {
+                    if (count($resource->partners) > 0) {
                         $resource_informations['partner'] = [
                             'id' => $resource->partners[0]->id,
                             'name' => $resource->partners[0]->name,
                         ];
-                        if($resource->partners[0]->geo_informations) {
+                        if ($resource->partners[0]->geo_informations) {
                             $resource_informations['partner']['lat'] = json_decode($resource->partners[0]->geo_informations)->lat;
                             $resource_informations['partner']['lng'] = json_decode($resource->partners[0]->geo_informations)->lng;
                             $resource_informations['partner']['radius'] = json_decode($resource->partners[0]->geo_informations)->radius;
@@ -640,7 +643,7 @@ class AffiliateController extends Controller
                 }
             }
             return api_response($request, [], 404, null);
-        }catch (ValidationException $e) {
+        } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
