@@ -258,7 +258,7 @@ class PartnerList
         if ($this->partner) {
             $query = $query->where('partners.id', $this->partner->id);
         }
-        
+
         return $query->get();
     }
 
@@ -446,13 +446,14 @@ class PartnerList
         if($this->user_agent) {
             switch ($this->user_agent) {
                 case 'android' && $this->version_code <= 30115:
-                        $partner['subscription_type'] = $this->setBadgeName($partner->badge);
+                    $partner['subscription_type'] = $this->setBadgeName($partner->badge);
                     break;
                 default:
-                    $partner['badge'] = $partner->badge;
+                    $partner['subscription_type'] =  $partner->subscription ? $partner->subscription->name : null;
                     break;
             }
         }
+        $partner['badge'] = $partner->badge;
         return $partner;
     }
 
@@ -469,7 +470,7 @@ class PartnerList
             }
         }
     }
-    
+
     public function sortByShebaPartnerPriority()
     {
         $this->partners = (new PartnerSort($this->partners))->get();
