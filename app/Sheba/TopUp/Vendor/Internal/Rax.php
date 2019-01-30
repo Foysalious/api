@@ -25,6 +25,6 @@ trait Rax
 
     public function getTopUpInitialStatus()
     {
-        return config('topup.status.successful');
+        return config('topup.status.successful')['sheba'];
     }
 }
