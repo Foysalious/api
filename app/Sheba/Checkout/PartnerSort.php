@@ -19,7 +19,6 @@ class PartnerSort
         $this->sortedPartners = collect();
         $this->partners = $partners;
         $this->packagesWithBadgeOrder = config('sheba.partner_package_and_badge_order_on_partner_list');
-        $this->sortPartnersByPackageAndBadge();
       //  $this->filterPartnersByPackage();
 //        $this->weights = config('sheba.weight_on_partner_list');
 //        $this->goldPartnerCount = config('sheba.partner_packages_on_partner_list')['ESP'];
@@ -53,6 +52,7 @@ class PartnerSort
 //        $this->bronzePartners = $this->bronzePartners->count() > 0 ? $this->calculateTotalWeight($this->bronzePartners)->splice(0, $this->bronzePartnerCount) : collect();
 //        $this->sortedPartners = $this->sortedPartners->merge($this->goldPartners)->merge($this->silverPartners)->merge($this->bronzePartners);
        // $this->sortedPartners = $this->calculateTotalWeight($this->partners);
+        $this->sortPartnersByPackageAndBadge();
         return $this->sortedPartners->count() > 0 ? $this->sortedPartners : $this->shebaHelpDesk;
     }
 
@@ -104,12 +104,13 @@ class PartnerSort
     {
         foreach ($this->packagesWithBadgeOrder as $order) {
             $order = (object) $order;
-            $current_sorted_partners =$this->partners->filter(function($partner) use ($order) {
+            $current_sorted_partners = $this->partners->filter(function($partner) use ($order) {
                 return ($partner->badge === $order->badge) && ($partner->subscription->name === $order->package);
             });
             if($current_sorted_partners->count()>0)
                 $current_sorted_partners = $this->calculateTotalWeight($current_sorted_partners);
             $this->sortedPartners = $this->sortedPartners->merge($current_sorted_partners);
         }
+        $this->shebaHelpDesk = $this->partners->where('id', 1809);
     }
 }

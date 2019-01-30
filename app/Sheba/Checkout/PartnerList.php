@@ -50,10 +50,10 @@ class PartnerList
     private $partner;
 
     /** @header **/
-    private $portal_name;
-    private $user_id;
-    private $version_code;
-    private $user_agent;
+    private $portalName;
+    private $userId;
+    private $versionCode;
+    private $userAgent;
 
     use ModificationFields;
 
@@ -81,10 +81,10 @@ class PartnerList
             'handyman' => []
         ];
 
-        $this->portal_name = request()->header('portal-name');
-        $this->user_id = request()->header('user-id');
-        $this->version_code = request()->header('version-code');
-        $this->user_agent = request()->header('user-agent');
+        $this->portalName = request()->header('portal-name');
+        $this->userId = request()->header('user-id');
+        $this->versionCode = request()->header('version-code');
+        $this->userAgent = request()->header('user-agent');
     }
 
     public function setGeo($lat, $lng)
@@ -458,9 +458,9 @@ class PartnerList
     private function resolveVersionWiseBadge(Partner &$partner)
     {
         $this->resolveUserAgent();
-        if($this->user_agent) {
-            switch ($this->user_agent) {
-                case 'android' && $this->version_code <= 30115:
+        if($this->userAgent) {
+            switch ($this->userAgent) {
+                case 'android' && $this->versionCode <= 30115:
                     $partner['subscription_type'] = $this->setBadgeName($partner->badge);
                     break;
                 default:
@@ -474,12 +474,12 @@ class PartnerList
 
     private function resolveUserAgent()
     {
-        if($this->user_agent) {
+        if($this->userAgent) {
             $possible_user_agents = ['android','ios'];
-            $this->user_agent = strtolower($this->user_agent);
+            $this->userAgent = strtolower($this->userAgent);
             foreach ($possible_user_agents as $possible_user_agent) {
-                if(strpos($this->user_agent, $possible_user_agent) !== false) {
-                    $this->user_agent = $possible_user_agent;
+                if(strpos($this->userAgent, $possible_user_agent) !== false) {
+                    $this->userAgent = $possible_user_agent;
                     break;
                 }
             }
