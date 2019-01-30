@@ -148,7 +148,7 @@ class TopUp
         if ($top_up_order->isFailed()) return true;
         DB::transaction(function () use ($top_up_order, $top_up_fail_response) {
             $this->model = $top_up_order->vendor;
-            $top_up_order->status = config('topup.status.failed');
+            $top_up_order->status = config('topup.status.failed')['sheba'];
             $top_up_order->transaction_details = json_encode($top_up_fail_response->getFailedTransactionDetails());
             $this->setModifier($this->agent);
             $this->withUpdateModificationField($top_up_order);
@@ -169,7 +169,7 @@ class TopUp
     {
         if ($top_up_order->isSuccess()) return true;
         DB::transaction(function () use ($top_up_order, $success_response) {
-            $top_up_order->staus = config('topup.status.successful');
+            $top_up_order->staus = config('topup.status.successful')['sheba'];
             $top_up_order->transaction_details = json_encode($success_response->getSuccessfulTransactionDetails());
             $top_up_order->update();
         });

@@ -553,20 +553,22 @@ class AffiliateController extends Controller
             $topups = $topups->with('vendor')->skip($offset)->take($limit)->orderBy('created_at', 'desc')->get();
 
             $topup_data = [];
-            $queued_jobs = Redis::lrange('queues:topup_' . preg_replace('/^\+88/', '', $request->affiliate->profile->mobile), 0, -1);
+            $queued_jobs = Redis::lrange('queues:topup', 0, -1);
             $queued_topups = [];
             foreach ($queued_jobs as $queued_job) {
                 /** @var TopUpJob $data */
                 $data = unserialize(json_decode($queued_job)->data->command);
-                $topup_request = $data->getTopUpRequest();
-                $topup_vendor = $data->getVendor();
-                array_push($queued_topups, [
-                    'payee_mobile' => $topup_request->getMobile(),
-                    'amount' => (double)$topup_request->getAmount(),
-                    'operator' => $data->getVendor()->name,
-                    'status' => 'Queued',
-                    'created_at' => Carbon::now()->format('jS M, Y h:i A')
-                ]);
+                if ($data->getAgent()->id == $affiliate) {
+                    $topup_request = $data->getTopUpRequest();
+                    $topup_vendor = $data->getVendor();
+                    array_push($queued_topups, [
+                        'payee_mobile' => $topup_request->getMobile(),
+                        'amount' => (double)$topup_request->getAmount(),
+                        'operator' => $data->getVendor()->name,
+                        'status' => config('topup.status.pending')['sheba'],
+                        'created_at' => Carbon::now()->format('jS M, Y h:i A')
+                    ]);
+                }
             }
             foreach ($topups as $topup) {
                 $topup = [
