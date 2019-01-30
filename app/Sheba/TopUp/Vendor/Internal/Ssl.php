@@ -27,7 +27,7 @@ trait Ssl
 
     public function getTopUpInitialStatus()
     {
-        return config('topup.status.pending');
+        return config('topup.status.pending')['sheba'];
     }
 
     /**
