@@ -229,7 +229,6 @@ class AffiliateController extends Controller
 
             $query1 = Affiliate::agentsWithFilter($request, 'affiliations');
             $query2 = Affiliate::agentsWithFilter($request, 'partner_affiliations');
-
             $agents = collect(array_merge($query1->get()->toArray(), $query2->get()->toArray()))->groupBy('id')
                 ->map(function ($data) {
                     $dataSet = $data[0];
@@ -240,7 +239,7 @@ class AffiliateController extends Controller
                     return $dataSet;
                 })->values();
 
-            if (isset($q) && !empty($q)) {
+            if (isset($q)) {
                 $agents = $agents->filter(function ($data) use ($q) {
                     return str_contains($data['name'], $q);
                 });
