@@ -1,10 +1,8 @@
-<?php
-
-namespace App\Jobs;
+<?php namespace App\Jobs;
 
 use App\Http\Requests\Request;
 use App\Jobs\Job;
-use App\library\Sms;
+use App\Library\Sms;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
