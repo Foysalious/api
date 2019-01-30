@@ -10,6 +10,7 @@ use App\Models\Service;
 use App\Models\Customer;
 use App\Models\Profile;
 use App\Models\TopUpOrder;
+use App\Models\TopUpVendor;
 use App\Repositories\AffiliateRepository;
 use App\Repositories\FileRepository;
 use App\Repositories\LocationRepository;
@@ -21,6 +22,7 @@ use Illuminate\Validation\ValidationException;
 use Sheba\ModificationFields;
 use Sheba\PartnerPayment\PartnerPaymentValidatorFactory;
 use Sheba\Reports\ExcelHandler;
+use Sheba\TopUp\Jobs\TopUpJob;
 use Validator;
 use DB;
 use Redis;
@@ -552,8 +554,21 @@ class AffiliateController extends Controller
             $topups = $topups->with('vendor')->skip($offset)->take($limit)->orderBy('created_at', 'desc')->get();
 
             $topup_data = [];
-            $queue_jobs = Redis::lrange('queues:topup_' . preg_replace('/^\+88/', '', $affiliate->profile->mobile), 0, -1);
-
+            $queued_jobs = Redis::lrange('queues:topup_' . preg_replace('/^\+88/', '', $request->affiliate->profile->mobile), 0, -1);
+            $queued_topups = [];
+            foreach ($queued_jobs as $queued_job) {
+                /** @var TopUpJob $data */
+                $data = unserialize(json_decode($queued_job)->data->command);
+                $topup_request = $data->getTopUpRequest();
+                $topup_vendor = $data->getVendor();
+                array_push($queued_topups, [
+                    'payee_mobile' => $topup_request->getMobile(),
+                    'amount' => (double)$topup_request->getAmount(),
+                    'operator' => $data->getVendor()->name,
+                    'status' => 'Queued',
+                    'created_at' => Carbon::now()->format('jS M, Y h:i A')
+                ]);
+            }
             foreach ($topups as $topup) {
                 $topup = [
                     'payee_mobile' => $topup->payee_mobile,
@@ -564,7 +579,7 @@ class AffiliateController extends Controller
                 ];
                 array_push($topup_data, $topup);
             }
-
+            $topup_data = array_merge($queued_topups, $topup_data);
             if ($request->has('content_type') && $request->content_type == 'excel') {
                 $excel = (new ExcelHandler());
                 $excel->setName('Topup History');

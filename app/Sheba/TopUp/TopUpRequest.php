@@ -29,7 +29,7 @@ class TopUpRequest
      */
     public function getAmount()
     {
-        return $this->amount;
+        return (double)$this->amount;
     }
 
     /**
