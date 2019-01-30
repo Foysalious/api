@@ -11,4 +11,9 @@ class Mock extends Vendor
     {
         // TODO: Implement recharge() method.
     }
+
+    function getTopUpInitialStatus()
+    {
+        // TODO: Implement getTopUpInitialStatus() method.
+    }
 }
