@@ -6,6 +6,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Sheba\TopUp\TopUp;
+use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\VendorFactory;
 
@@ -28,6 +29,8 @@ class TopUpJob extends Job implements ShouldQueue
         $this->agent = $agent;
         $this->topUpRequest = $top_up_request;
         $this->vendorId = $vendor;
+        $this->connection = 'topup';
+        $this->queue = 'topup';
     }
 
     /**
@@ -93,4 +96,13 @@ class TopUpJob extends Job implements ShouldQueue
     {
         return TopUpVendor::find($this->vendorId);
     }
+
+    /**
+     * @return TopUpAgent
+     */
+    public function getAgent()
+    {
+        return $this->agent;
+    }
+
 }

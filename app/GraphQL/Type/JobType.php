@@ -42,6 +42,8 @@ class JobType extends GraphQlType
             'is_on_premise' => ['type' => Type::int()],
             'is_favorite' => ['type' => Type::int()],
             'customerFavorite' => ['type' => GraphQL::type('CustomerFavorite')],
+            'can_take_review' => ['type' => Type::boolean()],
+            'can_pay' => ['type' => Type::boolean()],
         ];
     }
 
@@ -167,6 +169,30 @@ class JobType extends GraphQlType
             }
         } else {
             return null;
+        }
+    }
+
+    protected function resolveCanTakeReviewField($root, $args)
+    {
+        if($root->partnerOrder->closed_at) {
+            $closed_date = Carbon::parse($root->partnerOrder->closed_at);
+            $now = Carbon::now();
+            $difference = $closed_date->diffInDays($now);
+            return $difference < constants('CUSTOMER_REVIEW_OPEN_DAY_LIMIT');
+        } else {
+            return false;
+        }
+    }
+
+    protected function resolveCanPayField($root, $args)
+    {
+        $due = $root->partnerOrder->calculate(true)->due;
+        $status = $root->status;
+
+        if(in_array($status, ['Served', 'Declined', 'Cancelled']))
+            return false;
+        else {
+            return $due > 0;
         }
     }
 

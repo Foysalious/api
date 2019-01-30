@@ -67,7 +67,7 @@ class TopUpController extends Controller
             if (!$vendor->isPublished()) return api_response($request, null, 403, ['message' => 'Sorry, we don\'t support this operator at this moment']);
 
             $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type);
-            dispatch((new TopUpJob($agent, $request->vendor_id, $top_up_request))->onQueue("topup_" . preg_replace('/^\+88/', '', $agent->profile->mobile)));
+            dispatch((new TopUpJob($agent, $request->vendor_id, $top_up_request)));
 
             return api_response($request, null, 200, ['message' => "Recharge Request Successful"]);
         } catch (ValidationException $e) {
@@ -110,9 +110,6 @@ class TopUpController extends Controller
             $data = $request->all();
             $filename = Carbon::now()->timestamp . str_random(6) . '.json';
             Storage::disk('s3')->put("topup/success/ssl/$filename", json_encode($data));
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $data]);
-            $sentry->captureException(new \Exception('SSL topup fail'));
             $success_response->setResponse($data);
             $top_up->processSuccessfulTopUp($success_response->getTopUpOrder(), $success_response);
             return api_response($request, 1, 200);

@@ -80,7 +80,6 @@ class PartnerList
             'options' => [],
             'handyman' => []
         ];
-
         $this->portalName = request()->header('portal-name');
         $this->userId = request()->header('user-id');
         $this->versionCode = request()->header('version-code');
@@ -425,9 +424,7 @@ class PartnerList
             $partner['total_completed_orders'] = $partner->jobs->first() ? $partner->jobs->first()->total_completed_orders : 0;
             $partner['contact_no'] = $this->getContactNumber($partner);
             // $partner['subscription_type'] = $this->setBadgeName($partner->badge);
-            $this->resolveVersionWiseBadge($partner);
-
-//            $partner['subscription_type'] = $partner->subscription ? $partner->subscription->name : null;
+            $partner['subscription_type'] = $partner->subscription ? $partner->subscription->name : null;
             $partner['total_working_days'] = $partner->workingHours ? $partner->workingHours->count() : 0;
             $partner['rating'] = $partner->reviews->first() ? (double)$partner->reviews->first()->avg_rating : 0;
             $partner['total_ratings'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_ratings : 0;
@@ -449,7 +446,6 @@ class PartnerList
         else if ($badge === $partner_showable_badge['silver']) return 'PSP';
         else return 'LSP';
     }
-
 
     /**
      * @param $partner

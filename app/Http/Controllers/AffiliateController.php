@@ -232,7 +232,6 @@ class AffiliateController extends Controller
 
             $query1 = Affiliate::agentsWithFilter($request, 'affiliations');
             $query2 = Affiliate::agentsWithFilter($request, 'partner_affiliations');
-
             $agents = collect(array_merge($query1->get()->toArray(), $query2->get()->toArray()))->groupBy('id')
                 ->map(function ($data) {
                     $dataSet = $data[0];
@@ -243,7 +242,7 @@ class AffiliateController extends Controller
                     return $dataSet;
                 })->values();
 
-            if (isset($q) && !empty($q)) {
+            if (isset($q)) {
                 $agents = $agents->filter(function ($data) use ($q) {
                     return str_contains($data['name'], $q);
                 });
@@ -554,28 +553,33 @@ class AffiliateController extends Controller
             $topups = $topups->with('vendor')->skip($offset)->take($limit)->orderBy('created_at', 'desc')->get();
 
             $topup_data = [];
-            $queued_jobs = Redis::lrange('queues:topup_' . preg_replace('/^\+88/', '', $request->affiliate->profile->mobile), 0, -1);
+            $queued_jobs = Redis::lrange('queues:topup', 0, -1);
             $queued_topups = [];
             foreach ($queued_jobs as $queued_job) {
                 /** @var TopUpJob $data */
                 $data = unserialize(json_decode($queued_job)->data->command);
-                $topup_request = $data->getTopUpRequest();
-                $topup_vendor = $data->getVendor();
-                array_push($queued_topups, [
-                    'payee_mobile' => $topup_request->getMobile(),
-                    'amount' => (double)$topup_request->getAmount(),
-                    'operator' => $data->getVendor()->name,
-                    'status' => 'Queued',
-                    'created_at' => Carbon::now()->format('jS M, Y h:i A')
-                ]);
+                if ($data->getAgent()->id == $affiliate) {
+                    $topup_request = $data->getTopUpRequest();
+                    array_push($queued_topups, [
+                        'payee_mobile' => $topup_request->getMobile(),
+                        'payee_name' => 'N/A',
+                        'amount' => (double)$topup_request->getAmount(),
+                        'operator' => $data->getVendor()->name,
+                        'status' => config('topup.status.pending')['sheba'],
+                        'created_at' => Carbon::now()->format('jS M, Y h:i A'),
+                        'created_at_raw' => Carbon::now()->format('Y-m-d h:i:s')
+                    ]);
+                }
             }
             foreach ($topups as $topup) {
                 $topup = [
                     'payee_mobile' => $topup->payee_mobile,
+                    'payee_name' => $topup->payee_name ? $topup->payee_name : 'N/A',
                     'amount' => $topup->amount,
                     'operator' => $topup->vendor->name,
-                    'status' => $topup->status,
-                    'created_at' => $topup->created_at->format('jS M, Y h:i A')
+                    'status' => $topup->status  ,
+                    'created_at' => $topup->created_at->format('jS M, Y h:i A'),
+                    'created_at_raw' => $topup->created_at->format('Y-m-d h:i:s')
                 ];
                 array_push($topup_data, $topup);
             }
