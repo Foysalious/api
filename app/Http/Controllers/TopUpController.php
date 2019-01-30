@@ -110,9 +110,6 @@ class TopUpController extends Controller
             $data = $request->all();
             $filename = Carbon::now()->timestamp . str_random(6) . '.json';
             Storage::disk('s3')->put("topup/success/ssl/$filename", json_encode($data));
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $data]);
-            $sentry->captureException(new \Exception('SSL topup fail'));
             $success_response->setResponse($data);
             $top_up->processSuccessfulTopUp($success_response->getTopUpOrder(), $success_response);
             return api_response($request, 1, 200);
