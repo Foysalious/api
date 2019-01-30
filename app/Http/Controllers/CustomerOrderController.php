@@ -52,9 +52,20 @@ class CustomerOrderController extends Controller
                 });
                 $others = $all_jobs->diff($cancelled_served_jobs);
                 $all_jobs = $others->merge($cancelled_served_jobs);
+
+                //dd(Job::find($all_jobs[0]['job_id'])->partnerOrder);
+
+                $all_jobs->map(function ($job) {
+                    $order_job = Job::find($job['job_id']);
+                    $job['can_pay'] = $this->canPay($order_job);
+                    $job['can_take_review'] = $this->canTakeReview($order_job);
+                    return $job;
+                });
+
             } else {
                 $all_jobs = collect();
             }
+
             return count($all_jobs) > 0 ? api_response($request, $all_jobs, 200, ['orders' => $all_jobs->values()->all()]) : api_response($request, null, 404);
         } catch ( ValidationException $e ) {
             app('sentry')->captureException($e);
@@ -64,6 +75,23 @@ class CustomerOrderController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    protected function canTakeReview($job)
+    {
+        if($job->partnerOrder->closed_at) {
+            $closed_date = Carbon::parse($job->partnerOrder->closed_at);
+            $now = Carbon::now();
+            $difference = $closed_date->diffInDays($now);
+            return $difference < constants('CUSTOMER_REVIEW_OPEN_DAY_LIMIT');
+        } else {
+            return false;
+        }
+    }
+
+    protected function canPay($job)
+    {
+        return false;
     }
 
     private function getInformation($orders)

@@ -108,6 +108,7 @@ class JobController extends Controller
             $job_collection->put('estimated_distance', $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_distance : null);
             $job_collection->put('estimated_time', $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_time : null);
             $job_collection->put('can_take_review', $this->canTakeReview($job));
+            $job_collection->put('can_pay', $this->canPay($job));
 
             if (count($job->jobServices) == 0) {
                 $services = collect();
@@ -271,7 +272,7 @@ class JobController extends Controller
                         'order_code' => $order->code(),
                         'created_at' => $job->created_at->format('Y-m-d'),
                         'created_at_timestamp' => $job->created_at->timestamp,
-                        'can_take_review' => $this->canTakeReview($job),
+                        //'can_take_review' => $this->canTakeReview($job),
                         'message' => (new JobLogs($job))->getOrderMessage()
                     )));
                 }
@@ -290,6 +291,11 @@ class JobController extends Controller
         } else {
             return false;
         }
+    }
+
+    protected function canPay($job)
+    {
+        return false;
     }
 
     public function getInfo($customer, $job, Request $request)
