@@ -560,7 +560,6 @@ class AffiliateController extends Controller
                 $data = unserialize(json_decode($queued_job)->data->command);
                 if ($data->getAgent()->id == $affiliate) {
                     $topup_request = $data->getTopUpRequest();
-                    $topup_vendor = $data->getVendor();
                     array_push($queued_topups, [
                         'payee_mobile' => $topup_request->getMobile(),
                         'amount' => (double)$topup_request->getAmount(),
