@@ -58,6 +58,8 @@ class SettingsController extends Controller
     {
         $review = $job->review;
 
+        dd($review);
+
         if(!is_null($review) && $review->rating > 0) {
             return false;
         } else if($job->partnerOrder->closed_at) {
