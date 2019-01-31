@@ -38,6 +38,8 @@ class SettingsController extends Controller
                 $job = null;
             }
 
+            dd($job);
+
             if ($job && $partner_order->closed_at != null && $job->review == null) {
                 $info['id'] = $job->id;
                 $info['resource_name'] = trim($job->resource ? $job->resource->profile->name : null);
@@ -64,8 +66,6 @@ class SettingsController extends Controller
             $closed_date = Carbon::parse($job->partnerOrder->closed_at);
             $now = Carbon::now();
             $difference = $closed_date->diffInDays($now);
-
-            dd($difference < constants('CUSTOMER_REVIEW_OPEN_DAY_LIMIT'));
 
             return $difference < constants('CUSTOMER_REVIEW_OPEN_DAY_LIMIT');
         } else {
