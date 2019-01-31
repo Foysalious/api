@@ -58,14 +58,14 @@ class SettingsController extends Controller
     {
         $review = $job->review;
 
-        dd($review);
-
         if(!is_null($review) && $review->rating > 0) {
             return false;
         } else if($job->partnerOrder->closed_at) {
             $closed_date = Carbon::parse($job->partnerOrder->closed_at);
             $now = Carbon::now();
             $difference = $closed_date->diffInDays($now);
+
+            dd($difference < constants('CUSTOMER_REVIEW_OPEN_DAY_LIMIT'));
 
             return $difference < constants('CUSTOMER_REVIEW_OPEN_DAY_LIMIT');
         } else {
