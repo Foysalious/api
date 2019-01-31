@@ -20,6 +20,7 @@ class JobType extends GraphQlType
             'completed_at' => ['type' => Type::string()],
             'additional_information' => ['type' => Type::string()],
             'price' => ['type' => Type::float()],
+            'due' => ['type' => Type::float()],
             'status' => ['type' => Type::string()],
             'pickup_address' => ['type' => Type::string()],
             'pickup_area' => ['type' => Type::string()],
@@ -120,6 +121,11 @@ class JobType extends GraphQlType
         return (double)$partnerOrder->totalPrice;
     }
 
+    protected function resolveDueField($root, $args)
+    {
+        return (double)$root->partnerOrder->calculate(true)->due;
+    }
+
     protected function resolveComplainsField($root, $args, $fields)
     {
         return $root->complains->where('accessor_id', 1);
@@ -174,10 +180,20 @@ class JobType extends GraphQlType
 
     protected function resolveCanTakeReviewField($root, $args)
     {
-        if($root->partnerOrder->closed_at) {
-            $closed_date = Carbon::parse($root->partnerOrder->closed_at);
+        return $this->canTakeReview($root);
+    }
+
+    protected function canTakeReview($job)
+    {
+        $review = $job->review;
+
+        if(!is_null($review) && $review->rating > 0) {
+            return false;
+        } else if($job->partnerOrder->closed_at) {
+            $closed_date = Carbon::parse($job->partnerOrder->closed_at);
             $now = Carbon::now();
             $difference = $closed_date->diffInDays($now);
+
             return $difference < constants('CUSTOMER_REVIEW_OPEN_DAY_LIMIT');
         } else {
             return false;

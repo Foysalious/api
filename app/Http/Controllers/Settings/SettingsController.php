@@ -34,7 +34,7 @@ class SettingsController extends Controller
             $partner_order = $customer->partnerOrders->first();
             $job = $partner_order ? $partner_order->jobs->first() : null;
 
-            if($this->canTakeReview($job)) {
+            if(!$this->canTakeReview($job)) {
                 $job = null;
             }
 
@@ -56,10 +56,15 @@ class SettingsController extends Controller
 
     protected function canTakeReview($job)
     {
-        if($job->partnerOrder->closed_at) {
+        $review = $job->review;
+
+        if(!is_null($review) && $review->rating > 0) {
+            return false;
+        } else if($job->partnerOrder->closed_at) {
             $closed_date = Carbon::parse($job->partnerOrder->closed_at);
             $now = Carbon::now();
             $difference = $closed_date->diffInDays($now);
+
             return $difference < constants('CUSTOMER_REVIEW_OPEN_DAY_LIMIT');
         } else {
             return false;
