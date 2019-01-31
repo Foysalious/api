@@ -23,6 +23,7 @@ use Sheba\Location\Distance\DistanceStrategy;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Sheba\Checkout\PartnerSort;
 use Sheba\ModificationFields;
+use Sheba\Partner\BadgeResolver;
 use Sheba\RequestIdentification;
 
 class PartnerList
@@ -51,9 +52,8 @@ class PartnerList
 
     /** @header **/
     private $portalName;
-    private $userId;
-    private $versionCode;
-    private $userAgent;
+
+    private $badgeResolver;
 
     use ModificationFields;
 
@@ -82,9 +82,6 @@ class PartnerList
         ];
 
         $this->portalName = request()->header('portal-name');
-        $this->userId = request()->header('user-id');
-        $this->versionCode = request()->header('version-code');
-        $this->userAgent = request()->header('user-agent');
     }
 
     public function setGeo($lat, $lng)
@@ -425,7 +422,7 @@ class PartnerList
             $partner['total_completed_orders'] = $partner->jobs->first() ? $partner->jobs->first()->total_completed_orders : 0;
             $partner['contact_no'] = $this->getContactNumber($partner);
             // $partner['subscription_type'] = $this->setBadgeName($partner->badge);
-            $this->resolveVersionWiseBadge($partner);
+            $partner->getBadge();
 
 //            $partner['subscription_type'] = $partner->subscription ? $partner->subscription->name : null;
             $partner['total_working_days'] = $partner->workingHours ? $partner->workingHours->count() : 0;
@@ -434,55 +431,6 @@ class PartnerList
             $partner['total_five_star_ratings'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_five_star_ratings : 0;
             $partner['total_compliments'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_compliments : 0;
             $partner['total_experts'] = $partner->handymanResources->first() ? (int)$partner->handymanResources->first()->total_experts : 0;
-        }
-    }
-
-    /**
-     * @param $badge
-     * @return string
-     */
-    private function setBadgeName($badge)
-    {
-        $partner_showable_badge = constants('PARTNER_BADGE');
-
-        if ($badge === $partner_showable_badge['gold']) return 'ESP';
-        else if ($badge === $partner_showable_badge['silver']) return 'PSP';
-        else return 'LSP';
-    }
-
-
-    /**
-     * @param $partner
-     * @return Partner $partner
-     */
-    private function resolveVersionWiseBadge(Partner &$partner)
-    {
-        $this->resolveUserAgent();
-        if($this->userAgent) {
-            switch ($this->userAgent) {
-                case 'android' && $this->versionCode <= 30115:
-                    $partner['subscription_type'] = $this->setBadgeName($partner->badge);
-                    break;
-                default:
-                    $partner['subscription_type'] =  $partner->subscription ? $partner->subscription->name : null;
-                    break;
-            }
-        }
-        $partner['badge'] = $partner->badge;
-        return $partner;
-    }
-
-    private function resolveUserAgent()
-    {
-        if($this->userAgent) {
-            $possible_user_agents = ['android','ios'];
-            $this->userAgent = strtolower($this->userAgent);
-            foreach ($possible_user_agents as $possible_user_agent) {
-                if(strpos($this->userAgent, $possible_user_agent) !== false) {
-                    $this->userAgent = $possible_user_agent;
-                    break;
-                }
-            }
         }
     }
 

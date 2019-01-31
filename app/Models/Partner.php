@@ -3,6 +3,7 @@
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
+use Sheba\Partner\BadgeResolver;
 use Sheba\Reward\Rewardable;
 use Sheba\Subscription\Partner\PartnerSubscriber;
 use Sheba\Payment\Wallet;
@@ -528,7 +529,7 @@ class Partner extends Model implements Rewardable, TopUpAgent
 
     public function getBadge()
     {
-        return $this->subscription->name;
+        (new BadgeResolver())->setPartner($this)->resolve();
     }
 
     public function getTopFiveResources()
