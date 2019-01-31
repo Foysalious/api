@@ -3,6 +3,7 @@
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
+use Sheba\Partner\BadgeResolver;
 use Sheba\Reward\Rewardable;
 use Sheba\Subscription\Partner\PartnerSubscriber;
 use Sheba\Payment\Wallet;
@@ -124,6 +125,11 @@ class Partner extends Model implements Rewardable, TopUpAgent
     public function partnerOrders()
     {
         return $this->hasMany(PartnerOrder::class);
+    }
+
+    public function todayOrders()
+    {
+        return $this->hasMany(PartnerOrder::class)->whereDate('created_at', '=', Carbon::today());
     }
 
     public function walletSetting()
@@ -521,10 +527,16 @@ class Partner extends Model implements Rewardable, TopUpAgent
         return implode(", ",Category::whereIn('id',$serving_master_category_ids)->pluck('name')->toArray());
     }
 
-    public function getBadge()
+    public function resolveBadge()
     {
-        return $this->subscription->name;
+        return (new BadgeResolver())->setPartner($this)->resolveVersionWiseBadge()->getBadge();
     }
+
+    public function resolveSubscriptionType()
+    {
+        return (new BadgeResolver())->setPartner($this)->resolveVersionWiseBadge()->getSubscriptionType();
+    }
+
 
     public function getTopFiveResources()
     {

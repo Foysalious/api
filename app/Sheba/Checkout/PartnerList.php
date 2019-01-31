@@ -23,6 +23,7 @@ use Sheba\Location\Distance\DistanceStrategy;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Sheba\Checkout\PartnerSort;
 use Sheba\ModificationFields;
+use Sheba\Partner\BadgeResolver;
 use Sheba\RequestIdentification;
 
 class PartnerList
@@ -48,6 +49,12 @@ class PartnerList
     private $notFoundValues;
     private $isNotLite;
     private $partner;
+
+    /** @header **/
+    private $portalName;
+
+    private $badgeResolver;
+
     use ModificationFields;
 
     public function __construct($services, $date, $time, $location = null)
@@ -73,6 +80,8 @@ class PartnerList
             'options' => [],
             'handyman' => []
         ];
+
+        $this->portalName = request()->header('portal-name');
     }
 
     public function setGeo($lat, $lng)
@@ -148,7 +157,6 @@ class PartnerList
         } else {
             $this->partners = $this->findPartnersByServiceAndGeo();
         }
-
         if ($this->isNotLite) {
             $start = microtime(true);
             $this->filterByCreditLimit();
@@ -156,6 +164,12 @@ class PartnerList
             //dump("filter partner by credit: " . $time_elapsed_secs * 1000);
         }
 
+        if (!in_array($this->portalName, ['partner-portal', 'manager-app'])) {
+            $start = microtime(true);
+            $this->filterByDailyOrderLimit();
+            $time_elapsed_secs = microtime(true) - $start;
+            //dump("filter partner by order limit: " . $time_elapsed_secs * 1000);
+        }
         $this->partners->load(['services' => function ($q) {
             $q->whereIn('service_id', $this->selectedServiceIds);
         }, 'categories' => function ($q) {
@@ -170,7 +184,6 @@ class PartnerList
         $this->notFoundValues['handyman'] = $this->getPartnerIds();
         $this->calculateHasPartner();
     }
-
 
     private function findPartnersByServiceAndLocation()
     {
@@ -214,17 +227,16 @@ class PartnerList
         $category_ids = [$this->selectedCategory->id];
         $isNotLite = $this->isNotLite;
         $query = Partner::WhereHas('categories', function ($q) use ($category_ids, $has_premise, $has_home_delivery, $isNotLite) {
-            $q->whereIn('categories.id', $category_ids);
-            if ($isNotLite) {
-                $q->where('category_partner.is_verified', 1);
-            }
-            if (request()->has('has_home_delivery')) $q->where('category_partner.is_home_delivery_applied', $has_home_delivery);
-            if (request()->has('has_premise')) $q->where('category_partner.is_partner_premise_applied', $has_premise);
-            if (!request()->has('has_home_delivery') && !request()->has('has_premise')) $q->where('category_partner.is_home_delivery_applied', 1);
-        })
-            ->whereHas('services', function ($query) use ($isNotLite) {
+                $q->whereIn('categories.id', $category_ids);
+                if ($isNotLite) {
+                    $q->where('category_partner.is_verified', 1);
+                }
+                if (request()->has('has_home_delivery')) $q->where('category_partner.is_home_delivery_applied', $has_home_delivery);
+                if (request()->has('has_premise')) $q->where('category_partner.is_partner_premise_applied', $has_premise);
+                if (!request()->has('has_home_delivery') && !request()->has('has_premise')) $q->where('category_partner.is_home_delivery_applied', 1);
+            })->whereHas('services', function ($query) use ($isNotLite) {
                 $query->whereHas('category', function ($q) {
-                    $q->publishedOrPublishedForBusiness();
+                    $q->publishedForAny();
                 })->select(DB::raw('count(*) as c'))->whereIn('services.id', $this->selectedServiceIds)->where('partner_service.is_published', 1)
                     ->publishedForAll()
                     ->groupBy('partner_id')->havingRaw('c=' . count($this->selectedServiceIds));
@@ -237,16 +249,15 @@ class PartnerList
                 if ($isNotLite) {
                     $q->verified();
                 }
-            }])
-            ->select('partners.id', 'partners.current_impression', 'partners.geo_informations', 'partners.address', 'partners.name', 'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet', 'partners.package_id', 'partners.badge');
+            }])->select('partners.id', 'partners.current_impression', 'partners.geo_informations', 'partners.address', 'partners.name',
+                'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet', 'partners.package_id', 'partners.badge',
+                'partners.order_limit');
         if ($isNotLite) {
-            $query->where('package_id', '<>', config('sheba.partner_lite_packages_id'))
-                ->verified();
+            $query->where('package_id', '<>', config('sheba.partner_lite_packages_id'))->verified();
         }
         if ($this->partner) {
             $query = $query->where('partners.id', $this->partner->id);
         }
-
         return $query->get();
     }
 
@@ -275,7 +286,6 @@ class PartnerList
     }
 
     /**
-     * @param null $partner_id
      * @return mixed
      * @throws HyperLocationNotFoundException
      */
@@ -329,6 +339,20 @@ class PartnerList
             return $partner->hasAppropriateCreditLimit();
         });
         $this->notFoundValues['credit'] = $this->getPartnerIds();
+    }
+
+    private function filterByDailyOrderLimit()
+    {
+        $this->partners->load(['todayOrders' => function($q) {
+            $q->select('id', 'partner_id');
+        }]);
+
+        $this->partners = $this->partners->filter(function ($partner, $key) {
+            /** @var Partner $partner */
+            if(is_null($partner->order_limit)) return true;
+            return $partner->todayOrders->count() < $partner->order_limit;
+        });
+        $this->notFoundValues['order_limit'] = $this->getPartnerIds();
     }
 
     private function addAvailability()
@@ -397,8 +421,8 @@ class PartnerList
             $partner['total_jobs_of_category'] = $partner->jobs->first() ? $partner->jobs->first()->total_jobs_of_category : 0;
             $partner['total_completed_orders'] = $partner->jobs->first() ? $partner->jobs->first()->total_completed_orders : 0;
             $partner['contact_no'] = $this->getContactNumber($partner);
-            // $partner['subscription_type'] = $this->setBadgeName($partner->badge);
-            $partner['subscription_type'] = $partner->subscription ? $partner->subscription->name : null;
+            $partner['badge'] = $partner->resolveBadge();
+            $partner['subscription_type'] = $partner->resolveSubscriptionType();
             $partner['total_working_days'] = $partner->workingHours ? $partner->workingHours->count() : 0;
             $partner['rating'] = $partner->reviews->first() ? (double)$partner->reviews->first()->avg_rating : 0;
             $partner['total_ratings'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_ratings : 0;
@@ -406,19 +430,6 @@ class PartnerList
             $partner['total_compliments'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_compliments : 0;
             $partner['total_experts'] = $partner->handymanResources->first() ? (int)$partner->handymanResources->first()->total_experts : 0;
         }
-    }
-
-    /**
-     * @param $badge
-     * @return string
-     */
-    private function setBadgeName($badge)
-    {
-        $partner_showable_badge = constants('PARTNER_BADGE');
-
-        if ($badge === $partner_showable_badge['gold']) return 'ESP';
-        else if ($badge === $partner_showable_badge['silver']) return 'PSP';
-        else return 'LSP';
     }
 
     public function sortByShebaPartnerPriority()
@@ -611,7 +622,7 @@ class PartnerList
         $event->save();
     }
 
-    public function getNotFoundValues($is_out_of_service)
+    private function getNotFoundValues($is_out_of_service)
     {
         return json_encode(
             array_merge($this->notFoundValues, [
