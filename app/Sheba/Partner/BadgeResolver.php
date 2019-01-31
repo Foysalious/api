@@ -40,8 +40,8 @@ class BadgeResolver
     {
         $this->resolveUserAgent();
         if($this->userAgent) {
-            switch ($this->userAgent) {
-                case 'android' && $this->versionCode <= 30115:
+            switch (true) {
+                case $this->userAgent === 'android' && $this->versionCode <= 30115:
                     $this->subscription_type = $this->setBadgeName($this->partner->badge);
                     break;
                 default:
