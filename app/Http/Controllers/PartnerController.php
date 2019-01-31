@@ -88,7 +88,7 @@ class PartnerController extends Controller
             if ($partner == null) return api_response($request, null, 404);
 
             $serving_master_categories = $partner->servingMasterCategories();
-            $badge = $partner->getBadge();
+            $badge = $partner->resolveBadge();
             $geo_informations = $partner->geo_informations;
 
             $partner->load(['workingHours', 'categories' => function ($q) {

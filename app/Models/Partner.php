@@ -527,10 +527,16 @@ class Partner extends Model implements Rewardable, TopUpAgent
         return implode(", ",Category::whereIn('id',$serving_master_category_ids)->pluck('name')->toArray());
     }
 
-    public function getBadge()
+    public function resolveBadge()
     {
-        (new BadgeResolver())->setPartner($this)->resolve();
+        return (new BadgeResolver())->setPartner($this)->resolveVersionWiseBadge()->getBadge();
     }
+
+    public function resolveSubscriptionType()
+    {
+        return (new BadgeResolver())->setPartner($this)->resolveVersionWiseBadge()->getSubscriptionType();
+    }
+
 
     public function getTopFiveResources()
     {

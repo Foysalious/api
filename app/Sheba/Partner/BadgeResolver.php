@@ -16,6 +16,9 @@ class BadgeResolver
     private $versionCode;
     private $userAgent;
 
+    private $badge;
+    private $subscription_type;
+
     public function __construct()
     {
         $this->portalName = request()->header('portal-name');
@@ -33,30 +36,21 @@ class BadgeResolver
         return $this;
     }
 
-    public function resolve()
-    {
-        $this->resolveVersionWiseBadge($this->partner);
-    }
-
-    /**
-     * @param $partner
-     * @return Partner $partner
-     */
-    private function resolveVersionWiseBadge(Partner &$partner)
+    public function resolveVersionWiseBadge()
     {
         $this->resolveUserAgent();
         if($this->userAgent) {
             switch ($this->userAgent) {
                 case 'android' && $this->versionCode <= 30115:
-                    $partner['subscription_type'] = $this->setBadgeName($partner->badge);
+                    $this->subscription_type = $this->setBadgeName($this->partner->badge);
                     break;
                 default:
-                    $partner['subscription_type'] =  $partner->subscription ? $partner->subscription->name : null;
+                    $this->subscription_type =  $this->partner->subscription ? $this->partner->subscription->name : null;
                     break;
             }
         }
-        $partner['badge'] = $partner->badge;
-        return $partner;
+        $this->badge = $this->partner->badge;
+        return $this;
     }
 
     private function resolveUserAgent()
@@ -84,5 +78,21 @@ class BadgeResolver
         if ($badge === $partner_showable_badge['gold']) return 'ESP';
         else if ($badge === $partner_showable_badge['silver']) return 'PSP';
         else return 'LSP';
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getBadge()
+    {
+        return $this->badge;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getSubscriptionType()
+    {
+        return $this->subscription_type;
     }
 }
