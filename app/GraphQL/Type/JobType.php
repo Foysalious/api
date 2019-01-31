@@ -20,6 +20,7 @@ class JobType extends GraphQlType
             'completed_at' => ['type' => Type::string()],
             'additional_information' => ['type' => Type::string()],
             'price' => ['type' => Type::float()],
+            'due' => ['type' => Type::float()],
             'status' => ['type' => Type::string()],
             'pickup_address' => ['type' => Type::string()],
             'pickup_area' => ['type' => Type::string()],
@@ -118,6 +119,11 @@ class JobType extends GraphQlType
         $partnerOrder = $root->partnerOrder;
         $partnerOrder->calculate(true);
         return (double)$partnerOrder->totalPrice;
+    }
+
+    protected function resolveDueField($root, $args)
+    {
+        return (double)$root->partnerOrder->calculate(true)->due;
     }
 
     protected function resolveComplainsField($root, $args, $fields)
