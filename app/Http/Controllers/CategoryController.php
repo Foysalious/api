@@ -71,7 +71,7 @@ class CategoryController extends Controller
             if ($request->has('with')) {
                 $with = $request->with;
                 if ($with == 'children') {
-                    $categories->with(['children' => function ($q) use ($location) {
+                    $categories->with(['children' => function ($q) use ($location, $filter_publication) {
                         if (!is_null($location)) {
                             $q->whereHas('locations', function ($q) use ($location) {
                                 $q->where('locations.id', $location->id);
@@ -82,6 +82,7 @@ class CategoryController extends Controller
                                 });
                             });
                         }
+                        $filter_publication($q);
                         $q->orderBy('order');
                     }]);
                 }
