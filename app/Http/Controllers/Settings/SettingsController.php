@@ -34,11 +34,11 @@ class SettingsController extends Controller
             $partner_order = $customer->partnerOrders->first();
             $job = $partner_order ? $partner_order->jobs->first() : null;
 
+            dd($job);
+
             if($this->canTakeReview($job)) {
                 $job = null;
             }
-
-            dd($job);
 
             if ($job && $partner_order->closed_at != null && $job->review == null) {
                 $info['id'] = $job->id;
