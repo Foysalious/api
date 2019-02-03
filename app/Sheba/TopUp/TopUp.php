@@ -169,7 +169,7 @@ class TopUp
     {
         if ($top_up_order->isSuccess()) return true;
         DB::transaction(function () use ($top_up_order, $success_response) {
-            $top_up_order->staus = config('topup.status.successful')['sheba'];
+            $top_up_order->status = config('topup.status.successful')['sheba'];
             $top_up_order->transaction_details = json_encode($success_response->getSuccessfulTransactionDetails());
             $top_up_order->update();
         });
