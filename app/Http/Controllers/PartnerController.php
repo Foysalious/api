@@ -1,6 +1,8 @@
 <?php namespace App\Http\Controllers;
 
 use App\Exceptions\HyperLocationNotFoundException;
+use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
+use App\Exceptions\RentACar\PickUpAddressNotFoundException;
 use App\Models\Category;
 use App\Models\CategoryPartner;
 use App\Models\DeliveryChargeUpdateRequest;
@@ -73,11 +75,11 @@ class PartnerController extends Controller
         try {
 
             $location = null;
-            if($request->has('location') ) {
+            if ($request->has('location')) {
                 $location = Location::find($request->location)->id;
-            } else if($request->has('lat')) {
-                $hyperLocation= HyperLocal::insidePolygon((double) $request->lat, (double)$request->lng)->with('location')->first();
-                if(!is_null($hyperLocation)) $location = $hyperLocation->location->id;
+            } else if ($request->has('lat')) {
+                $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
             }
 
             $partner_request = $partner;
@@ -93,9 +95,9 @@ class PartnerController extends Controller
 
             $partner->load(['workingHours', 'categories' => function ($q) {
                 $q->select('categories.id', 'name', 'thumb', 'icon', 'categories.slug')->where('category_partner.is_verified', 1);
-            }, 'reviews' => function($q) {
-                $q->with(['rates' => function($q) {
-                    $q->select('review_id', 'review_type', 'rate_answer_id')->where('rate_question_id', self::COMPLIMENT_QUESTION_ID)->with(['answer' => function($q) {
+            }, 'reviews' => function ($q) {
+                $q->with(['rates' => function ($q) {
+                    $q->select('review_id', 'review_type', 'rate_answer_id')->where('rate_question_id', self::COMPLIMENT_QUESTION_ID)->with(['answer' => function ($q) {
                         $q->select('id', 'answer', 'badge', 'asset');
                     }]);
                 }]);
@@ -105,7 +107,7 @@ class PartnerController extends Controller
                 })->with(['resource' => function ($q) {
                     $q->select('resources.id', 'profile_id', 'is_verified')->with('profile');
                 }, 'review' => function ($q) {
-                    $q->select('id', 'job_id', 'resource_id', 'customer_id', 'rating', 'review','category_id','created_at')->with('customer.profile');
+                    $q->select('id', 'job_id', 'resource_id', 'customer_id', 'rating', 'review', 'category_id', 'created_at')->with('customer.profile');
                 }]);
             }, 'services' => function ($q) {
                 $q->where('partner_service.is_verified', 1);
@@ -118,20 +120,20 @@ class PartnerController extends Controller
 //            $partner_not_available_days = array_diff( $this->days,$partner->workingHours->pluck('day')->toArray());
 
             foreach ($this->days as $day) {
-                $current_day = $partner->workingHours->filter(function($working_day) use ($day) {
+                $current_day = $partner->workingHours->filter(function ($working_day) use ($day) {
                     return $day === $working_day->day;
                 })->first();
-                if($current_day) {
+                if ($current_day) {
                     array_push($working_info,
                         array('day' => $current_day->day,
                             'hour' => (Carbon::parse($current_day->start_time))->format('g:i A') . '-' . (Carbon::parse($current_day->end_time))->format('g:i A'),
-                            'is_today' =>$current_day->day === $this->days[Carbon::now()->dayOfWeek],
+                            'is_today' => $current_day->day === $this->days[Carbon::now()->dayOfWeek],
                             'is_closed' => false));
-                } else{
+                } else {
                     array_push($working_info,
                         array('day' => $day,
                             'hour' => null,
-                            'is_today' =>$day === $this->days[Carbon::now()->dayOfWeek],
+                            'is_today' => $day === $this->days[Carbon::now()->dayOfWeek],
                             'is_closed' => true));
                 }
             }
@@ -160,20 +162,20 @@ class PartnerController extends Controller
 //
 //                }
 //            }
-            $resources = PartnerResource::join('resources','resources.id','=','partner_resource.resource_id')
-                ->join('profiles','resources.profile_id','=','profiles.id')
-                ->join('reviews','reviews.resource_id','=','resources.id')
-                ->where('reviews.partner_id',$partner->id)
-                ->where('partner_resource.partner_id',$partner->id)
-                ->where('resources.is_verified',1)
+            $resources = PartnerResource::join('resources', 'resources.id', '=', 'partner_resource.resource_id')
+                ->join('profiles', 'resources.profile_id', '=', 'profiles.id')
+                ->join('reviews', 'reviews.resource_id', '=', 'resources.id')
+                ->where('reviews.partner_id', $partner->id)
+                ->where('partner_resource.partner_id', $partner->id)
+                ->where('resources.is_verified', 1)
                 ->groupBy('partner_resource.id')
                 ->selectRaw('distinct(resources.id), profiles.name, profiles.mobile, profiles.pro_pic,  avg(reviews.rating) as avg_rating, count(rating) as total_rating, (select count(jobs.id) from jobs where jobs.status = "Served" and jobs.resource_id = resources.id) as served_jobs')
-                ->orderBy(DB::raw('avg(reviews.rating)'),'desc')
+                ->orderBy(DB::raw('avg(reviews.rating)'), 'desc')
                 ->take(5)
                 ->get();
 
             foreach ($resources as $resource) {
-                $resource['avg_rating'] = (float) round($resource->avg_rating,2);
+                $resource['avg_rating'] = (float)round($resource->avg_rating, 2);
             }
 
             $info->put('resources', $resources);
@@ -193,21 +195,19 @@ class PartnerController extends Controller
             $info->put('reviews', $reviews);
             $info->put('categories', $partner->categories->each(function ($category) use ($location) {
                 $category->service_count = $category->services()->published()->count();
-                if($location)
-                {
-                    if(in_array($location,$category->locations->pluck('id')->toArray())) {
+                if ($location) {
+                    if (in_array($location, $category->locations->pluck('id')->toArray())) {
                         $category->available = true;
-                    }
-                    else{
+                    } else {
                         $category->available = false;
                     }
                 }
                 removeRelationsAndFields($category);
             }));
 
-            $compliment_counts = $partner->reviews->pluck('rates')->filter(function($rate) {
+            $compliment_counts = $partner->reviews->pluck('rates')->filter(function ($rate) {
                 return $rate->count();
-            })->flatten()->groupBy('rate_answer_id')->map(function($answer, $index) {
+            })->flatten()->groupBy('rate_answer_id')->map(function ($answer, $index) {
                 return [
                     'id' => $index,
                     'name' => $answer->first()->answer->answer,
@@ -216,11 +216,11 @@ class PartnerController extends Controller
                     'count' => $answer->count(),
                 ];
             });
-            $group_rating = $partner->reviews->groupBy('rating')->map(function ($rate){
+            $group_rating = $partner->reviews->groupBy('rating')->map(function ($rate) {
                 return $rate->count();
             });
-            for($i=1; $i<=5 ; $i++) {
-                if(!isset($group_rating[$i]))
+            for ($i = 1; $i <= 5; $i++) {
+                if (!isset($group_rating[$i]))
                     $group_rating[$i] = 0;
             }
             $info->put('compliments', $compliment_counts->values());
@@ -233,11 +233,11 @@ class PartnerController extends Controller
             $info->put('badge', $badge);
             $geo_informations = json_decode($geo_informations);
             $geo_informations = array(
-                'lat' => (float) $geo_informations->lat,
-                'lng' => (float) $geo_informations->lng,
-                'radius' => (float) $geo_informations->radius,
+                'lat' => (float)$geo_informations->lat,
+                'lng' => (float)$geo_informations->lng,
+                'radius' => (float)$geo_informations->radius,
             );
-            $info->put('geo_informations',$geo_informations);
+            $info->put('geo_informations', $geo_informations);
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
             dd($e);
@@ -572,6 +572,10 @@ class PartnerController extends Controller
             return api_response($request, null, 404, ['message' => 'No partner found.']);
         } catch (HyperLocationNotFoundException $e) {
             return api_response($request, null, 400, ['message' => 'Your are out of service area.']);
+        } catch (PickUpAddressNotFoundException $e) {
+            return api_response($request, null, 400, ['message' => 'This service isn\'t available at this location.']);
+        } catch (DestinationCitySameAsPickupException $e) {
+            return api_response($request, null, 400, ['message' => 'Please try with inside city for this location.']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
