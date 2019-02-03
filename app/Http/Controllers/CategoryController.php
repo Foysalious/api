@@ -93,6 +93,8 @@ class CategoryController extends Controller
 
             foreach ($categories as $key => &$category) {
                 if ($with == 'children') {
+                    $category->children = $category->allChildren;
+                    unset($category->allChildren);
                     if ($category->children->isEmpty()) {
                         $categories->forget($key);
                         continue;
