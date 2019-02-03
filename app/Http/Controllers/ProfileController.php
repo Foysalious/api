@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Repositories\FileRepository;
 use App\Repositories\ProfileRepository;
@@ -48,5 +46,16 @@ class ProfileController extends Controller
             'photo' => 'required|mimes:jpeg,png'
         ]);
         return $validator->fails() ? $validator->errors()->all()[0] : false;
+    }
+
+    public function checkProfileExistence(Request $request)
+    {
+        $mobile = formatMobile($request->mobile);
+        $profile = $this->profileRepo->getIfExist($mobile, 'mobile');
+
+        if (!$profile)
+            return api_response($request, null, 404, ['message' => 'Profile not exists']);
+
+        return api_response($request, $profile, 200, ['info' => $profile]);
     }
 }
