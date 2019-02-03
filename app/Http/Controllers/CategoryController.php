@@ -71,7 +71,7 @@ class CategoryController extends Controller
             if ($request->has('with')) {
                 $with = $request->with;
                 if ($with == 'children') {
-                    $categories->with(['children' => function ($q) use ($location, $filter_publication) {
+                    $categories->with(['allChildren' => function ($q) use ($location, $filter_publication) {
                         if (!is_null($location)) {
                             $q->whereHas('locations', function ($q) use ($location) {
                                 $q->where('locations.id', $location->id);
