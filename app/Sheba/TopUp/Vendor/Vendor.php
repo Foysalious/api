@@ -28,6 +28,8 @@ abstract class Vendor
 
     abstract function recharge(TopUpRequest $top_up_request): TopUpResponse;
 
+    abstract function getTopUpInitialStatus();
+
     public function deductAmount($amount)
     {
         $this->model->amount -= $amount;

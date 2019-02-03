@@ -186,6 +186,7 @@ if (!function_exists('calculatePagination')) {
         return array($offset, $limit);
     }
 }
+
 if (!function_exists('calculatePaginationNew')) {
 
     function calculatePaginationNew($request)
@@ -195,6 +196,7 @@ if (!function_exists('calculatePaginationNew')) {
         return array($page, $limit);
     }
 }
+
 if (!function_exists('calculateSort')) {
 
     function calculateSort($request, $default = 'id')
@@ -204,6 +206,7 @@ if (!function_exists('calculateSort')) {
         return array($offset, $limit);
     }
 }
+
 if (!function_exists('getRangeFormat')) {
     function getRangeFormat($request, $param = 'range')
     {
@@ -226,6 +229,7 @@ if (!function_exists('getRangeFormat')) {
         }
     }
 }
+
 if (!function_exists('createAuthorWithType')) {
     function createAuthorWithType($author)
     {
@@ -437,7 +441,6 @@ if (!function_exists('getSalesChannels')) {
     }
 }
 
-
 if (!function_exists('formatDateRange')) {
     /**
      * Return Date Range Formatted
@@ -467,6 +470,7 @@ if (!function_exists('formatDateRange')) {
         }
     }
 }
+
 if (!function_exists('createOptionsFromOptionVariables')) {
 
     function createOptionsFromOptionVariables($variables)
@@ -485,6 +489,7 @@ if (!function_exists('createOptionsFromOptionVariables')) {
         return '[' . substr($options, 0, -1) . ']';
     }
 }
+
 if (!function_exists('trim_phone_number')) {
     function trim_phone_number($number, $index_number = '0')
     {

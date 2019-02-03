@@ -13,6 +13,7 @@ use Sheba\TopUp\Jobs\TopUpExcelJob;
 use Sheba\TopUp\Jobs\TopUpJob;
 use Sheba\TopUp\TopUpExcel;
 use Sheba\TopUp\TopUpRequest;
+use Sheba\TopUp\Vendor\Response\Ipn\Ssl\SslSuccessResponse;
 use Sheba\TopUp\Vendor\Response\Ssl\SslFailResponse;
 use Sheba\TopUp\Vendor\VendorFactory;
 use Storage;
@@ -66,7 +67,7 @@ class TopUpController extends Controller
             if (!$vendor->isPublished()) return api_response($request, null, 403, ['message' => 'Sorry, we don\'t support this operator at this moment']);
 
             $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type);
-            dispatch(new TopUpJob($agent, $request->vendor_id, $top_up_request));
+            dispatch((new TopUpJob($agent, $request->vendor_id, $top_up_request)));
 
             return api_response($request, null, 200, ['message' => "Recharge Request Successful"]);
         } catch (ValidationException $e) {
@@ -89,6 +90,28 @@ class TopUpController extends Controller
             $sentry->captureException(new \Exception('SSL topup fail'));
             $error_response->setResponse($data);
             $top_up->processFailedTopUp($error_response->getTopUpOrder(), $error_response);
+            return api_response($request, 1, 200);
+        } catch (QueryException $e) {
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all()]);
+            $sentry->captureException($e);
+            return api_response($request, null, 500);
+        } catch (\Throwable $e) {
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all()]);
+            $sentry->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function sslSuccess(Request $request, SslSuccessResponse $success_response, TopUp $top_up)
+    {
+        try {
+            $data = $request->all();
+            $filename = Carbon::now()->timestamp . str_random(6) . '.json';
+            Storage::disk('s3')->put("topup/success/ssl/$filename", json_encode($data));
+            $success_response->setResponse($data);
+            $top_up->processSuccessfulTopUp($success_response->getTopUpOrder(), $success_response);
             return api_response($request, 1, 200);
         } catch (QueryException $e) {
             $sentry = app('sentry');

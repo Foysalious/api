@@ -43,6 +43,14 @@ return [
     'partner_statuses' => [
 
     ],
+    'partner_package_and_badge_order_on_partner_list' =>[
+        ['package' => 'ESP', 'badge' => 'gold'],
+        ['package' => 'ESP', 'badge' => 'silver'],
+        ['package' => 'PSP', 'badge' => 'silver'],
+        ['package' => 'ESP', 'badge' => null],
+        ['package' => 'PSP', 'badge' => null],
+        ['package' => 'LSP', 'badge' => null],
+    ],
     'weight_on_partner_list' => [
         'impression' => 0.3,
         'capacity' => 0.2,

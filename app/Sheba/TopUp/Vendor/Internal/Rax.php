@@ -22,4 +22,9 @@ trait Rax
         $this->setup();
         return $this->rax->setPin($this->pin)->setMId($this->mid)->recharge($top_up_request);
     }
+
+    public function getTopUpInitialStatus()
+    {
+        return config('topup.status.successful')['sheba'];
+    }
 }

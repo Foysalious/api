@@ -5,7 +5,7 @@ class Route
     public function set($api)
     {
         $api->group(['prefix' => 'v2', 'namespace' => 'App\Http\Controllers'], function ($api) {
-            $api->get('validate-location','LocationController@validateLocation');
+            $api->get('validate-location', 'LocationController@validateLocation');
             $api->get('partners', 'PartnerLocationController@getPartners');
             $api->post('subscription', 'PushSubscriptionController@store');
             $api->get('car-rental-info', 'ShebaController@sendCarRentalInfo');
@@ -18,6 +18,7 @@ class Route
             $api->post('password/reset', 'Auth\PasswordController@reset');
             $api->post('events', 'EventController@store');
             $api->get('top-up/fail/ssl', 'TopUpController@sslFail');
+            $api->get('top-up/success/ssl', 'TopUpController@sslSuccess');
             $api->group(['prefix' => 'wallet'], function ($api) {
                 $api->post('recharge', 'WalletController@recharge');
                 $api->post('purchase', 'WalletController@purchase');
@@ -104,7 +105,7 @@ class Route
                 });
             });
             $api->get('updates', 'UpdateController@getUpdates');
-            $api->get('ek-sheba/authenticate','EkshebaController@authenticate');
+            $api->get('ek-sheba/authenticate', 'EkshebaController@authenticate');
         });
         return $api;
     }

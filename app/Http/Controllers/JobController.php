@@ -107,6 +107,8 @@ class JobController extends Controller
             $job_collection->put('drop_off_time', $job->carRentalJobDetail ? (Carbon::parse($job->carRentalJobDetail->drop_off_time)->format('g:i A')) : null);
             $job_collection->put('estimated_distance', $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_distance : null);
             $job_collection->put('estimated_time', $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_time : null);
+            $job_collection->put('can_take_review', $this->canTakeReview($job));
+            $job_collection->put('can_pay', $this->canPay($job));
 
             if (count($job->jobServices) == 0) {
                 $services = collect();
@@ -270,12 +272,42 @@ class JobController extends Controller
                         'order_code' => $order->code(),
                         'created_at' => $job->created_at->format('Y-m-d'),
                         'created_at_timestamp' => $job->created_at->timestamp,
+                        //'can_take_review' => $this->canTakeReview($job),
                         'message' => (new JobLogs($job))->getOrderMessage()
                     )));
                 }
             }
         }
         return $all_jobs;
+    }
+
+    protected function canTakeReview($job)
+    {
+        $review = $job->review;
+
+        if(!is_null($review) && $review->rating > 0) {
+            return false;
+        } else if($job->partnerOrder->closed_at) {
+            $closed_date = Carbon::parse($job->partnerOrder->closed_at);
+            $now = Carbon::now();
+            $difference = $closed_date->diffInDays($now);
+
+            return $difference < constants('CUSTOMER_REVIEW_OPEN_DAY_LIMIT');
+        } else {
+            return false;
+        }
+    }
+
+    protected function canPay($job)
+    {
+        $due = $job->partnerOrder->calculate(true)->due;
+        $status = $job->status;
+
+        if(in_array($status, ['Served', 'Declined', 'Cancelled']))
+            return false;
+        else {
+            return $due > 0;
+        }
     }
 
     public function getInfo($customer, $job, Request $request)

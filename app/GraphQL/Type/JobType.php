@@ -20,6 +20,7 @@ class JobType extends GraphQlType
             'completed_at' => ['type' => Type::string()],
             'additional_information' => ['type' => Type::string()],
             'price' => ['type' => Type::float()],
+            'due' => ['type' => Type::float()],
             'status' => ['type' => Type::string()],
             'pickup_address' => ['type' => Type::string()],
             'pickup_area' => ['type' => Type::string()],
@@ -42,6 +43,8 @@ class JobType extends GraphQlType
             'is_on_premise' => ['type' => Type::int()],
             'is_favorite' => ['type' => Type::int()],
             'customerFavorite' => ['type' => GraphQL::type('CustomerFavorite')],
+            'can_take_review' => ['type' => Type::boolean()],
+            'can_pay' => ['type' => Type::boolean()],
         ];
     }
 
@@ -118,6 +121,11 @@ class JobType extends GraphQlType
         return (double)$partnerOrder->totalPrice;
     }
 
+    protected function resolveDueField($root, $args)
+    {
+        return (double)$root->partnerOrder->calculate(true)->due;
+    }
+
     protected function resolveComplainsField($root, $args, $fields)
     {
         return $root->complains->where('accessor_id', 1);
@@ -167,6 +175,40 @@ class JobType extends GraphQlType
             }
         } else {
             return null;
+        }
+    }
+
+    protected function resolveCanTakeReviewField($root, $args)
+    {
+        return $this->canTakeReview($root);
+    }
+
+    protected function canTakeReview($job)
+    {
+        $review = $job->review;
+
+        if(!is_null($review) && $review->rating > 0) {
+            return false;
+        } else if($job->partnerOrder->closed_at) {
+            $closed_date = Carbon::parse($job->partnerOrder->closed_at);
+            $now = Carbon::now();
+            $difference = $closed_date->diffInDays($now);
+
+            return $difference < constants('CUSTOMER_REVIEW_OPEN_DAY_LIMIT');
+        } else {
+            return false;
+        }
+    }
+
+    protected function resolveCanPayField($root, $args)
+    {
+        $due = $root->partnerOrder->calculate(true)->due;
+        $status = $root->status;
+
+        if(in_array($status, ['Served', 'Declined', 'Cancelled']))
+            return false;
+        else {
+            return $due > 0;
         }
     }
 

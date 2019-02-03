@@ -6,6 +6,7 @@ use Sheba\TopUp\Commission\CommissionFactory;
 use App\Models\TopUpVendor;
 use Sheba\ModificationFields;
 use DB;
+use Sheba\TopUp\Vendor\Response\Ipn\SuccessResponse;
 use Sheba\TopUp\Vendor\Response\TopUpErrorResponse;
 use Sheba\TopUp\Vendor\Response\TopUpFailResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
@@ -119,7 +120,7 @@ class TopUp
         $top_up_order->agent_id = $this->agent->id;
         $top_up_order->payee_mobile = $mobile_number;
         $top_up_order->amount = $amount;
-        $top_up_order->status = 'Successful';
+        $top_up_order->status = $this->vendor->getTopUpInitialStatus();
         $top_up_order->transaction_id = $response->transactionId;
         $top_up_order->transaction_details = json_encode($response->transactionDetails);
         $top_up_order->vendor_id = $this->model->id;
@@ -147,7 +148,7 @@ class TopUp
         if ($top_up_order->isFailed()) return true;
         DB::transaction(function () use ($top_up_order, $top_up_fail_response) {
             $this->model = $top_up_order->vendor;
-            $top_up_order->status = 'Failed';
+            $top_up_order->status = config('topup.status.failed')['sheba'];
             $top_up_order->transaction_details = json_encode($top_up_fail_response->getFailedTransactionDetails());
             $this->setModifier($this->agent);
             $this->withUpdateModificationField($top_up_order);
@@ -156,6 +157,21 @@ class TopUp
             $vendor = new VendorFactory();
             $vendor = $vendor->getById($top_up_order->vendor_id);
             $vendor->refill($top_up_order->amount);
+        });
+    }
+
+    /**
+     * @param TopUpOrder $top_up_order
+     * @param SuccessResponse $success_response
+     * @return bool
+     */
+    public function processSuccessfulTopUp(TopUpOrder $top_up_order, SuccessResponse $success_response)
+    {
+        if ($top_up_order->isSuccess()) return true;
+        DB::transaction(function () use ($top_up_order, $success_response) {
+            $top_up_order->status = config('topup.status.successful')['sheba'];
+            $top_up_order->transaction_details = json_encode($success_response->getSuccessfulTransactionDetails());
+            $top_up_order->update();
         });
     }
 

@@ -34,6 +34,10 @@ class SettingsController extends Controller
             $partner_order = $customer->partnerOrders->first();
             $job = $partner_order ? $partner_order->jobs->first() : null;
 
+            if(!$this->canTakeReview($job)) {
+                $job = null;
+            }
+
             if ($job && $partner_order->closed_at != null && $job->review == null) {
                 $info['id'] = $job->id;
                 $info['resource_name'] = trim($job->resource ? $job->resource->profile->name : null);
@@ -47,6 +51,23 @@ class SettingsController extends Controller
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
+        }
+    }
+
+    protected function canTakeReview($job)
+    {
+        $review = $job->review;
+
+        if(!is_null($review) && $review->rating > 0) {
+            return false;
+        } else if($job->partnerOrder->closed_at) {
+            $closed_date = Carbon::parse($job->partnerOrder->closed_at);
+            $now = Carbon::now();
+            $difference = $closed_date->diffInDays($now);
+
+            return $difference < constants('CUSTOMER_REVIEW_OPEN_DAY_LIMIT');
+        } else {
+            return false;
         }
     }
 

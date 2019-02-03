@@ -1,10 +1,12 @@
 <?php namespace Sheba\TopUp\Jobs;
 
 use App\Jobs\Job;
+use App\Models\TopUpVendor;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Sheba\TopUp\TopUp;
+use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\VendorFactory;
 
@@ -27,6 +29,8 @@ class TopUpJob extends Job implements ShouldQueue
         $this->agent = $agent;
         $this->topUpRequest = $top_up_request;
         $this->vendorId = $vendor;
+        $this->connection = 'topup';
+        $this->queue = 'topup';
     }
 
     /**
@@ -76,4 +80,29 @@ class TopUpJob extends Job implements ShouldQueue
     {
         notify($this->agent)->send(["title" => 'Your top up to ' . $this->topUpRequest->getMobile() . ' has been failed.', "link" => '', "type" => notificationType('Danger')]);
     }
+
+    /**
+     * @return TopUpRequest
+     */
+    public function getTopUpRequest()
+    {
+        return $this->topUpRequest;
+    }
+
+    /**
+     * @return TopUpVendor
+     */
+    public function getVendor()
+    {
+        return TopUpVendor::find($this->vendorId);
+    }
+
+    /**
+     * @return TopUpAgent
+     */
+    public function getAgent()
+    {
+        return $this->agent;
+    }
+
 }
