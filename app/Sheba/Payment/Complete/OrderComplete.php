@@ -44,7 +44,7 @@ class OrderComplete extends PaymentComplete
             $this->payment->transaction_details = null;
             $this->payment->update();
 
-            $partner_order->method = strtolower($paymentDetail->readable_method);
+            $partner_order->payment_method = strtolower($paymentDetail->readable_method);
             $partner_order->update();
         } catch (RequestException $e) {
             $this->paymentRepository->changeStatus(['to' => 'failed', 'from' => $this->payment->status,
