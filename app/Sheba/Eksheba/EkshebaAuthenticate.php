@@ -1,12 +1,4 @@
-<?php
-/**
- * Created by PhpStorm.
- * User: Tech Land
- * Date: 12/3/2018
- * Time: 6:01 PM
- */
-
-namespace App\Sheba\Eksheba;
+<?php namespace App\Sheba\Eksheba;
 
 use App\Http\Requests\BondhuOrderRequest;
 use App\Repositories\affiliateRepository;
