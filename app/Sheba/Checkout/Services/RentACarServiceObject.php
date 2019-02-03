@@ -4,6 +4,8 @@ namespace Sheba\Checkout\Services;
 
 
 use App\Exceptions\HyperLocationNotFoundException;
+use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
+use App\Exceptions\RentACar\PickUpAddressNotFoundException;
 use App\Models\Thana;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -43,7 +45,7 @@ class RentACarServiceObject extends ServiceObject
             $this->pickUpLocationLng = $this->pickUpThana->lng;
         }
         if (!in_array($this->pickUpThana->district_id, config('sheba.rent_a_car_pickup_district_ids'))) {
-            throw new HyperLocationNotFoundException("Got " . $this->pickUpThana->name . '(' . $this->pickUpThana->id . ') for pickup');
+            throw new PickUpAddressNotFoundException("Got " . $this->pickUpThana->name . '(' . $this->pickUpThana->id . ') for pickup');
         }
         if (isset($this->service->pick_up_address)) $this->pickUpAddress = $this->service->pick_up_address;
 
@@ -68,7 +70,7 @@ class RentACarServiceObject extends ServiceObject
                 $this->destinationLocationLng = $destination->lng;
             }
             if ($this->pickUpThana->district_id == $this->destinationThana->district_id) {
-                throw new HyperLocationNotFoundException("Got " . $this->destinationThana->name . '(' . $this->destinationThana->id . ') for destination');
+                throw new DestinationCitySameAsPickupException("Got " . $this->destinationThana->name . '(' . $this->destinationThana->id . ') for destination');
             }
             if (isset($this->service->destination_address)) $this->destinationAddress = $this->service->destination_address;
         }
