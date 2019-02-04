@@ -20,7 +20,7 @@ class PartnerSort
         $this->partners = $partners;
         $this->packagesWithBadgeOrder = config('sheba.partner_package_and_badge_order_on_partner_list');
       //  $this->filterPartnersByPackage();
-//        $this->weights = config('sheba.weight_on_partner_list');
+        $this->weights = config('sheba.weight_on_partner_list');
 //        $this->goldPartnerCount = config('sheba.partner_packages_on_partner_list')['ESP'];
 //        $this->silverPartnerCount = config('sheba.partner_packages_on_partner_list')['PSP'];
 //        $this->bronzePartnerCount = config('sheba.partner_packages_on_partner_list')['LSP'];
