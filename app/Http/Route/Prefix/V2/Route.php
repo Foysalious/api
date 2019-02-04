@@ -110,7 +110,7 @@ class Route
             /**
              * PROFILE EXISTENCE CHECK. PUBLIC API
              */
-            $api->get('profile-information', 'ProfileController@checkProfileExistence');
+            $api->get('get-profile-info', 'ProfileController@getProfile');
         });
         return $api;
     }

@@ -48,13 +48,15 @@ class ProfileController extends Controller
         return $validator->fails() ? $validator->errors()->all()[0] : false;
     }
 
-    public function checkProfileExistence(Request $request)
+    public function getProfile(Request $request)
     {
         $mobile = formatMobile($request->mobile);
         $profile = $this->profileRepo->getIfExist($mobile, 'mobile');
 
-        if (!$profile)
-            return api_response($request, null, 404, ['message' => 'Profile not exists']);
+        if (!$profile) {
+            $data = ['name' => $request->name, 'mobile' => $mobile];
+            $profile = $this->profileRepo->store($data);
+        }
 
         return api_response($request, $profile, 200, ['info' => $profile]);
     }

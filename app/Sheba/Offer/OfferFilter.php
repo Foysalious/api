@@ -102,7 +102,7 @@ class OfferFilter
                     }
                 }
             }
-            if($this->location) {
+            if ($this->location) {
                $locations = $offer->locations->pluck('id')->toArray();
                if(!in_array($this->location->id, $locations))
                    unset($this->offers[$key]);
