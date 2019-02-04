@@ -68,7 +68,7 @@ class JobController extends Controller
             }]);
 
             $job->partnerOrder->calculate(true);
-            if(!$job->partnerOrder->order->deliveryAddress) {
+            if (!$job->partnerOrder->order->deliveryAddress) {
                 $job->partnerOrder->order->deliveryAddress = $job->partnerOrder->order->getTempAddress();
             }
             $job_collection = collect();
@@ -283,11 +283,12 @@ class JobController extends Controller
 
     protected function canTakeReview($job)
     {
+        if (!$job) return false;
         $review = $job->review;
 
-        if(!is_null($review) && $review->rating > 0) {
+        if (!is_null($review) && $review->rating > 0) {
             return false;
-        } else if($job->partnerOrder->closed_at) {
+        } else if ($job->partnerOrder->closed_at) {
             $closed_date = Carbon::parse($job->partnerOrder->closed_at);
             $now = Carbon::now();
             $difference = $closed_date->diffInDays($now);
@@ -303,7 +304,7 @@ class JobController extends Controller
         $due = $job->partnerOrder->calculate(true)->due;
         $status = $job->status;
 
-        if(in_array($status, ['Served', 'Declined', 'Cancelled']))
+        if (in_array($status, ['Served', 'Declined', 'Cancelled']))
             return false;
         else {
             return $due > 0;

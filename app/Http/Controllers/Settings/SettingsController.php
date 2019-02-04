@@ -1,7 +1,4 @@
-<?php
-
-namespace App\Http\Controllers\Settings;
-
+<?php namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
@@ -34,7 +31,7 @@ class SettingsController extends Controller
             $partner_order = $customer->partnerOrders->first();
             $job = $partner_order ? $partner_order->jobs->first() : null;
 
-            if(!$this->canTakeReview($job)) {
+            if (!$this->canTakeReview($job)) {
                 $job = null;
             }
 
@@ -56,11 +53,12 @@ class SettingsController extends Controller
 
     protected function canTakeReview($job)
     {
+        if (!$job) return false;
         $review = $job->review;
 
-        if(!is_null($review) && $review->rating > 0) {
+        if (!is_null($review) && $review->rating > 0) {
             return false;
-        } else if($job->partnerOrder->closed_at) {
+        } else if ($job->partnerOrder->closed_at) {
             $closed_date = Carbon::parse($job->partnerOrder->closed_at);
             $now = Carbon::now();
             $difference = $closed_date->diffInDays($now);
@@ -76,11 +74,7 @@ class SettingsController extends Controller
         try {
             /** @var Customer $customer */
             $customer = $request->customer;
-            $settings = array(
-                'credit' => $customer->shebaCredit(),
-                'rating' => round($customer->customerReviews->avg('rating'), 2),
-                'pending_order' => $customer->partnerOrders->where('closed_and_paid_at', null)->where('cancelled_at', null)->count()
-            );
+            $settings = array('credit' => $customer->shebaCredit(), 'rating' => round($customer->customerReviews->avg('rating'), 2), 'pending_order' => $customer->partnerOrders->where('closed_and_paid_at', null)->where('cancelled_at', null)->count());
             return api_response($request, $settings, 200, ['settings' => $settings]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
