@@ -13,6 +13,7 @@ use App\Models\Partner;
 use App\Models\PartnerResource;
 use App\Models\PartnerService;
 use App\Models\PartnerServicePricesUpdate;
+use App\Models\ReviewQuestionAnswer;
 use App\Models\Service;
 use App\Repositories\DiscountRepository;
 use App\Repositories\NotificationRepository;
@@ -107,7 +108,8 @@ class PartnerController extends Controller
                 })->with(['resource' => function ($q) {
                     $q->select('resources.id', 'profile_id', 'is_verified')->with('profile');
                 }, 'review' => function ($q) {
-                    $q->select('id', 'job_id', 'resource_id', 'customer_id', 'rating', 'review', 'category_id', 'created_at')->with('customer.profile');
+                    $q->select('id', 'job_id', 'resource_id', 'customer_id', 'rating', 'review', 'category_id', 'created_at')
+                        ->with('customer.profile');
                 }]);
             }, 'services' => function ($q) {
                 $q->where('partner_service.is_verified', 1);
@@ -117,7 +119,7 @@ class PartnerController extends Controller
             $info = collect($partner)->only(['id', 'name', 'sub_domain', 'mobile', 'description', 'email', 'verified_at', 'status', 'logo', 'address', 'created_at']);
             $working_info = [];
 
-//            $partner_not_available_days = array_diff( $this->days,$partner->workingHours->pluck('day')->toArray());
+            //$partner_not_available_days = array_diff( $this->days,$partner->workingHours->pluck('day')->toArray());
 
             foreach ($this->days as $day) {
                 $current_day = $partner->workingHours->filter(function ($working_day) use ($day) {
@@ -146,22 +148,23 @@ class PartnerController extends Controller
                 return $job->resource_id != null && $job->review != null;
             });
 
-//            $resource_jobs = $job_with_review->groupBy('resource_id')->take(1);
-//            $all_resources = collect();
-//            foreach ($resource_jobs as $resource_job) {
-//                if ($partner_resource = PartnerResource::where('partner_id', $partner->id)
-//                        ->where('resource_id', $resource_job[0]->resource_id)->first() && $resource_job[0]->resource->is_verified) {
-//                        $resource = PartnerResource::where('partner_id', $partner->id)
-//                            ->where('resource_id', $resource_job[0]->resource_id)->first()->resource;
-//
-//                            $all_resources->push(collect(['name' => $resource_job[0]->resource->profile->name,
-//                                'mobile' => $resource_job[0]->resource->profile->mobile, 'picture' => $resource_job[0]->resource->profile->pro_pic,
-//                                'total_rating' => $resource_job->count(), 'avg_rating' => round($resource_job->avg('review.rating'), 2),
-//                                'served_jobs' => $resource->totalServedJobs()]));
-//
-//
-//                }
-//            }
+            /*$resource_jobs = $job_with_review->groupBy('resource_id')->take(1);
+            $all_resources = collect();
+            foreach ($resource_jobs as $resource_job) {
+                if ($partner_resource = PartnerResource::where('partner_id', $partner->id)
+                        ->where('resource_id', $resource_job[0]->resource_id)->first() && $resource_job[0]->resource->is_verified) {
+                        $resource = PartnerResource::where('partner_id', $partner->id)
+                            ->where('resource_id', $resource_job[0]->resource_id)->first()->resource;
+
+                            $all_resources->push(collect(['name' => $resource_job[0]->resource->profile->name,
+                                'mobile' => $resource_job[0]->resource->profile->mobile, 'picture' => $resource_job[0]->resource->profile->pro_pic,
+                                'total_rating' => $resource_job->count(), 'avg_rating' => round($resource_job->avg('review.rating'), 2),
+                                'served_jobs' => $resource->totalServedJobs()]));
+
+
+                }
+            }*/
+
             $resources = PartnerResource::join('resources', 'resources.id', '=', 'partner_resource.resource_id')
                 ->join('profiles', 'resources.profile_id', '=', 'profiles.id')
                 ->join('reviews', 'reviews.resource_id', '=', 'resources.id')
@@ -179,20 +182,31 @@ class PartnerController extends Controller
             }
 
             $info->put('resources', $resources);
+
+            $partner_review = $partner->reviews()->pluck('id')->toArray();
+            $partner_review = ReviewQuestionAnswer::where('review_type', 'App\Models\Review')
+                ->whereIn('review_id', $partner_review)
+                ->where('rate_answer_text', '<>', '')
+                ->orderBy('created_at', 'desc')
+                ->take(5)
+                ->pluck('rate_answer_text', 'review_id')
+                ->toArray();
+
             $reviews = [];
-            $job_with_review->filter(function ($job) {
-                return $job->review->rating >= 4 && ($job->review->review_title != null || $job->review->review != '');
-            })->each(function ($job) use (&$reviews) {
+            $job_with_review->filter(function ($job) use ($partner_review) {
+                return $job->review->rating >= 4 && in_array($job->review->id, array_keys($partner_review));
+            })->each(function ($job) use (&$reviews, $partner_review) {
                 $final = $job->review;
                 $final['customer_name'] = $job->review->customer->profile->name;
                 $final['customer_pic'] = $job->review->customer->profile->pro_pic;
                 $final['category_name'] = $job->review->category->name;
                 $final['date'] = $job->review->created_at->format('F d, Y');
-                $final['review'] = $job->review->review;
+                $final['review'] = $partner_review[$job->review->id];
                 removeRelationsAndFields($final);
                 array_push($reviews, $final);
             });
             $info->put('reviews', $reviews);
+
             $info->put('categories', $partner->categories->each(function ($category) use ($location) {
                 $category->service_count = $category->services()->published()->count();
                 if ($location) {
