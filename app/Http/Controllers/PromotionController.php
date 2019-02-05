@@ -13,6 +13,8 @@ use App\Sheba\Checkout\PartnerList;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Voucher\ApplicableVoucherFinder;
+use Sheba\Voucher\CheckParams;
 use Sheba\Voucher\PromotionList;
 use Sheba\Voucher\VoucherSuggester;
 
@@ -233,5 +235,37 @@ class PromotionController extends Controller
         })->sortByDesc(function ($promotion) {
             return $promotion['priority'];
         })->values()->all();
+    }
+
+    public function getAllApplicable(ApplicableVoucherFinder $finder, Request $request, CheckParams $params, $customer)
+    {
+        try {
+            $customer = $request->customer;
+            $location = $request->location;
+            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $location ? (int)$location : null);
+            if ($request->has('lat') && $request->has('lng')) {
+                $partner_list->setGeo((double)$request->lat, (double)$request->lng);
+                $hyper_local = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                $location = $hyper_local ? $hyper_local->location->id : $location;
+            }
+            $order_amount = $this->calculateOrderAmount($partner_list, $request->partner);
+            if (!$order_amount) return api_response($request, null, 403);
+
+            $params = $params->setPartner($request->partner)->setCustomer($customer)
+                ->setCategory($partner_list->selected_services[0]->serviceModel->category_id)
+                ->setLocation($location)->setOrderAmount($order_amount)->setSalesChannel($request->sales_channel);
+
+            $result = $finder->getAll($params);
+
+            if (count($result)) {
+                return api_response($request, 1, 200, ['promotions' => $result]);
+            } else {
+                return api_response($request, null, 404);
+            }
+
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 }
