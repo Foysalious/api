@@ -251,7 +251,7 @@ class CategoryController extends Controller
                         $q->whereHas('locations', function ($query) use ($location) {
                             $query->where('locations.id', $location);
                         });
-                        $q->select('id', 'category_id', 'unit', 'name', 'slug', 'bn_name', 'thumb', 'app_thumb', 'app_banner', 'short_description', 'description', 'banner', 'faqs', 'variables', 'variable_type', 'min_quantity')->orderBy('order')->skip($offset)->take($limit);
+                        $q->select('id', 'category_id', 'unit', 'name', 'bn_name', 'thumb', 'app_thumb', 'app_banner', 'short_description', 'description', 'banner', 'faqs', 'variables', 'variable_type', 'min_quantity')->orderBy('order')->skip($offset)->take($limit);
                         if ((int)\request()->is_business) $q->publishedForBusiness(); else $q->published();
                     }]);
                     $services = $this->serviceRepository->getPartnerServicesAndPartners($category->services, $location)->each(function ($service) use ($request) {
@@ -272,7 +272,7 @@ class CategoryController extends Controller
                     });
                 }
                 if ($services->count() > 0) {
-                    $category = collect($category)->only(['name', 'banner', 'parent_id', 'app_banner']);
+                    $category = collect($category)->only(['name', 'slug' ,'banner', 'parent_id', 'app_banner']);
                     $category['services'] = $this->serviceQuestionSet($services);
                     return api_response($request, $category, 200, ['category' => $category]);
                 } else
