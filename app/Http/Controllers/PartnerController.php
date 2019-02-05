@@ -181,7 +181,7 @@ class PartnerController extends Controller
             $info->put('resources', $resources);
             $reviews = [];
             $job_with_review->filter(function ($job) {
-                return $job->review->rating >= 4 && ($job->review->review_title != null || $job->review->review != '');
+                return $job->review->rating >= 4 && ($job->review->review_title != '' || $job->review->review != '');
             })->each(function ($job) use (&$reviews) {
                 $final = $job->review;
                 $final['customer_name'] = $job->review->customer->profile->name;
