@@ -134,5 +134,10 @@ class PartnerRoute
             $api->get('sales', 'Partner\SalesStatisticsController@index');
             $api->get('performance', 'Partner\PerformanceController@index');
         });
+        $api->group(['prefix' => 'campaigns'], function ($api) {
+            $api->group(['prefix' => 'sms'], function ($api) {
+                $api->get('/settings', 'SmsCampaignController@getSettings');
+            });
+        });
     }
 }
