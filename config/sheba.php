@@ -52,12 +52,12 @@ return [
         ['package' => 'LSP', 'badge' => null],
     ],
     'weight_on_partner_list' => [
-        'impression' => 0.3,
-        'capacity' => 0.2,
-        'orders' => 0.15,
-        'price' => 0.15,
-        'avg_rating' => 0.12,
-        'total_ratings' => 0.08
+        'impression' => 0.1,
+        'capacity' => 0.1,
+        'orders' => 0.05,
+        'price' => 0.2,
+        'avg_rating' => 0.5,
+        'total_ratings' => 0.05
     ],
     'promo_applicable_sales_channels' => ['Web', 'App', 'App-iOS', 'E-Shop'],
     'category_colors' => [
