@@ -63,11 +63,26 @@ class Voucher extends Model
         return $this->owner_type == "App\\Models\\Affiliate";
     }
 
+    /**
+     * Scope a query to only include voucher.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeBySheba($query)
+    {
+        return $query->where('is_created_by_sheba', 1);
+    }
+
+
+    /**
+     * Scope a query to only include voucher.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
     public function scopeValid($query)
     {
-        return $query->where([
-            ['valid_till', '>=', Carbon::now()],
-            ['is_valid', 1]
-        ]);
+        return $query->whereRaw('((NOW() BETWEEN start_date AND end_date) OR (NOW() >= start_date AND end_date IS NULL))');
     }
 }
