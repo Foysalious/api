@@ -5,8 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 
 use App\Http\Requests;
+use Sheba\Sms\InfoBip;
 
-class SmsCampaignController extends Controller
+class SmsCampaignOrderController extends Controller
 {
     public function getSettings(Request $request)
     {
@@ -16,5 +17,10 @@ class SmsCampaignController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function testInfoBip(Requests\SmsCampaignRequest $request)
+    {
+
     }
 }

@@ -9,7 +9,9 @@ use App\Models\DeliveryChargeUpdateRequest;
 use App\Models\HyperLocal;
 use App\Models\Job;
 use App\Models\Location;
+use App\Models\Order;
 use App\Models\Partner;
+use App\Models\PartnerOrder;
 use App\Models\PartnerResource;
 use App\Models\PartnerService;
 use App\Models\PartnerServicePricesUpdate;
@@ -435,6 +437,7 @@ class PartnerController extends Controller
                 'process_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Process'])->count(),
                 'served_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Served'])->count(),
                 'serve_due_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Serve_Due'])->count(),
+                'cancelled_jobs' => $jobs->where('status', constants('JOB_STATUSES')['Cancelled'])->count(),
                 'total_ongoing_orders' => (new JobList($partner))->ongoing()->count(),
                 'total_open_complains' => $partner->complains->whereIn('status', ['Observation', 'Open'])->count(),
                 'total_resources' => $resource_ids->count(),
@@ -1029,6 +1032,35 @@ class PartnerController extends Controller
         $new = ['is_home_delivery_applied' => $request->has('is_home_delivery_applied') ? 1 : 0, 'is_partner_premise_applied' => $request->has('on_premise') ? 1 : 0, 'delivery_charge' => $request->has('is_home_delivery_applied') ? $request->delivery_charge : 0];
 
         return [$old, $new];
+    }
+
+    public function getServedCustomers($partner, Request $request)
+    {
+        try{
+            $order_ids = PartnerOrder::where('partner_id',$partner)->whereNotNull('closed_at')->pluck('order_id');
+            $orders = Order::whereIn('id',$order_ids)->with(['customer.profile','jobs.category'])->get();
+            $served_customers = [];
+            foreach ($orders as $order) {
+                if($order)
+                if($order->customer && $order->jobs)
+                if($order->customer->profile && $order->jobs) {
+                    $jobs = $order->jobs;
+                    if(isset($jobs[0])) {
+                        $customer_info = [
+                            'name'  =>$order->customer->profile->name,
+                            'mobile' => $order->customer->profile->mobile,
+                            'image'=> $order->customer->profile->pro_pic,
+                            'category' => $jobs[0]->category->name
+                        ];
+                    }
+                    array_push($served_customers,$customer_info);
+                }
+            }
+            return api_response($request, $served_customers, 200, ['customers' => $served_customers]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 }
 
