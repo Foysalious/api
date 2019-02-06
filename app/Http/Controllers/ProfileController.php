@@ -50,14 +50,19 @@ class ProfileController extends Controller
 
     public function getProfile(Request $request)
     {
-        $mobile = formatMobile($request->mobile);
-        $profile = $this->profileRepo->getIfExist($mobile, 'mobile');
+        if ($request->has('mobile') && $request->has('name')) {
+            $mobile = formatMobile($request->mobile);
+            $profile = $this->profileRepo->getIfExist($mobile, 'mobile');
 
-        if (!$profile) {
-            $data = ['name' => $request->name, 'mobile' => $mobile];
-            $profile = $this->profileRepo->store($data);
+            if (!$profile) {
+                $data = ['name' => $request->name, 'mobile' => $mobile];
+                $profile = $this->profileRepo->store($data);
+            }
+            return api_response($request, $profile, 200, ['info' => $profile]);
+        } elseif ($request->has('profile_id')) {
+            $profile = $this->profileRepo->getIfExist($request->profile_id, 'id');
+            $profile=$profile->toArray();
+            return api_response($request, $profile, 200, ['info' => $profile]);
         }
-
-        return api_response($request, $profile, 200, ['info' => $profile]);
     }
 }
