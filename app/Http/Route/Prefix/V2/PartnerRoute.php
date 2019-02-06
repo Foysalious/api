@@ -6,7 +6,7 @@ class PartnerRoute
     {
         $api->group(['prefix' => 'partners'], function ($api) {
             $api->get('performance-faqs', 'FaqController@getPartnerPerformanceFaqs');
-            $api->group(['prefix' => '{partner}'], function ($api) {
+            $api->group(['prefix' => '{partner} '], function ($api) {
                 $api->get('/', 'PartnerController@show');
                 $api->get('locations', 'PartnerController@getLocations');
                 $api->get('locations/all', 'LocationController@getPartnerServiceLocations');
@@ -133,10 +133,11 @@ class PartnerRoute
             });
             $api->get('sales', 'Partner\SalesStatisticsController@index');
             $api->get('performance', 'Partner\PerformanceController@index');
-        });
-        $api->group(['prefix' => 'campaigns'], function ($api) {
-            $api->group(['prefix' => 'sms'], function ($api) {
-                $api->get('/settings', 'SmsCampaignController@getSettings');
+            $api->group(['prefix' => 'campaigns'], function ($api) {
+                $api->group(['prefix' => 'sms'], function ($api) {
+                    $api->get('/settings', 'SmsCampaignOrderController@getSettings');
+                    $api->get('/test-infobip', 'SmsCampaignOrderController@testInfoBip');
+                });
             });
         });
     }
