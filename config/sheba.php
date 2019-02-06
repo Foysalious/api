@@ -91,5 +91,5 @@ return [
         ['#00B8BA', '#00FFED']
     ],
     'screen' => ['home', 'eshop'],
-    'partner_lite_packages_id' => env('LITE_PACKAGE_ID')
+    'partner_lite_packages_id' => env('LITE_PACKAGE_ID'),
 ];

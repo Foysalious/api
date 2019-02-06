@@ -488,5 +488,10 @@ return [
     'CUSTOMER_REVIEW_OPEN_DAY_LIMIT' => 14,
     'SMS_CAMPAIGN' => [
         'rate_per_sms' => 0.35
+    ],
+    'SMS_CAMPAIGN_RECEIVER_STATUSES' => [
+        'pending' => 'pending',
+        'successful' => 'successful',
+        'failed' => 'failed',
     ]
 ];
