@@ -255,7 +255,16 @@ class PromotionController extends Controller
                 ->setCategory($partner_list->selected_services[0]->serviceModel->category_id)
                 ->setLocation($location)->setOrderAmount($order_amount)->setSalesChannel($request->sales_channel);
 
-            $result = $finder->getAll($params);
+            $result = $finder->getAll($params)->map(function ($item) {
+                return [
+                    'id' => $item->voucher->id,
+                    'code' => $item->voucher->code,
+                    'applicable_amount' => $item->amount,
+                    'voucher_amount' => $item->voucher->amount,
+                    'is_percentage' => $item->voucher->is_percentage,
+                    'cap' => $item->voucher->cap
+                ];
+            });
 
             if (count($result)) {
                 return api_response($request, 1, 200, ['promotions' => $result]);
