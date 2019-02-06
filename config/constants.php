@@ -487,6 +487,6 @@ return [
     'AFFILIATION_LITE_ONBOARD_MODERATION_REWARD' => 10,
     'CUSTOMER_REVIEW_OPEN_DAY_LIMIT' => 14,
     'SMS_CAMPAIGN' => [
-        'rate_per_sms' => 0.30
+        'rate_per_sms' => 0.35
     ]
 ];
