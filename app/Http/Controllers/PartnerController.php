@@ -1041,6 +1041,8 @@ class PartnerController extends Controller
             $orders = Order::whereIn('id',$order_ids)->with(['customer.profile','jobs.category'])->get();
             $served_customers = [];
             foreach ($orders as $order) {
+                if($order)
+                if($order->customer && $order->jobs)
                 if($order->customer->profile && $order->jobs) {
                     $jobs = $order->jobs;
                     if(isset($jobs[0])) {
@@ -1052,7 +1054,7 @@ class PartnerController extends Controller
                     }
                     array_push($served_customers,$customer_info);
                 }
-            } 
+            }
             return api_response($request, $served_customers, 200, ['customers' => $served_customers]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
