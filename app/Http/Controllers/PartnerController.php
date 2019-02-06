@@ -1049,6 +1049,7 @@ class PartnerController extends Controller
                         $customer_info = [
                             'name'  =>$order->customer->profile->name,
                             'mobile' => $order->customer->profile->mobile,
+                            'image'=> $order->customer->profile->pro_pic,
                             'category' => $jobs[0]->category->name
                         ];
                     }

@@ -19,16 +19,8 @@ class SmsCampaignOrderController extends Controller
         }
     }
 
-    public function testInfoBip(InfoBip $infoBip)
+    public function testInfoBip(Requests\SmsCampaignRequest $request)
     {
-//        dd($infoBip->get('/sms/2/logs',['messageId' => ['1549429193082862573','1549432543288106571']]));
-        dd($infoBip->post('/sms/2/text/single',[
-            'from' => 'Sheba.xyz',
-            'to' => [
-                '8801869715616',
-                '8801678242962'
-            ],
-            'text' => 'test sms too them'
-        ]));
+
     }
 }

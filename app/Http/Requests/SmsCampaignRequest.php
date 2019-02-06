@@ -26,7 +26,8 @@ class SmsCampaignRequest extends Request
         return [
             'title' => 'required',
             'message' => 'required',
-            'numbers' => 'required'
+            'customers' => 'required|array',
+            'customers.mobile' => 'required|mobile:bd'
         ];
     }
 }
