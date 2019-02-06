@@ -1052,7 +1052,7 @@ class PartnerController extends Controller
                     }
                     array_push($served_customers,$customer_info);
                 }
-            }
+            } 
             return api_response($request, $served_customers, 200, ['customers' => $served_customers]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
