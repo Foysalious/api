@@ -2,23 +2,29 @@
 
 
 use App\Models\SmsCampaignOrder;
+use App\Sheba\SmsCampaign\InfoBip\SmsHandler;
+use Sheba\SmsCampaign\InfoBip\InfoBip;
 
 class SmsCampaign
 {
-    public function __construct()
+    private $smsHandler;
+    public function __construct(SmsHandler $smsHandler)
     {
-        
+        $this->smsHandler = $smsHandler;
     }
 
     public function createOrder()
     {
-        $order = [
-
-        ];
+//        $this->smsHandler->sendBulkMessages($to, $message);
     }
 
-    public function processSmsLogs()
-    {
-        
-    }
+//    public function sendBulkMessage($to,$message)
+//    {
+//        $this->smsHandler->sendBulkMessages($to, $message)
+//    }
+//
+//    public function processSmsLogs()
+//    {
+//
+//    }
 }

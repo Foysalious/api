@@ -26,7 +26,7 @@ class SmsCampaignRequest extends Request
         return [
             'title' => 'required',
             'message' => 'required',
-            'customers' => 'required'
+            'numbers' => 'required'
         ];
     }
 }

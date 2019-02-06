@@ -139,6 +139,7 @@ class PartnerRoute
                     $api->get('/test-infobip', 'SmsCampaignOrderController@testInfoBip');
                 });
             });
+            $api->get('served-customers', 'PartnerController@getServedCustomers');
         });
     }
 }
