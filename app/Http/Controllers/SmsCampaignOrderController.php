@@ -103,6 +103,18 @@ class SmsCampaignOrderController extends Controller
             return api_response($request, null, 500, ['message' => $e->getMessage(), 'code' => $code ? $code : 500]);
         }
     }
+
+    public function getFaq($partner, Request $request)
+    {
+        try{
+
+            return api_response($request, null, 200, ['details' => $data]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            $code = $e->getCode();
+            return api_response($request, null, 500, ['message' => $e->getMessage(), 'code' => $code ? $code : 500]);
+        }
+    }
     
     public function processQueue(SmsLogs $smsLogs, SmsHandler $smsHandler)
     {
