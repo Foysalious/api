@@ -21,7 +21,7 @@ class SmsCampaignOrderController extends Controller
         }
     }
 
-    public function testInfoBip($partner_id, Requests\SmsCampaignRequest $request, SmsCampaign $campaign)
+    public function create($partner_id, Requests\SmsCampaignRequest $request, SmsCampaign $campaign)
     {
         try {
             $requests = $request->all();
