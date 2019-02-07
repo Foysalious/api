@@ -136,7 +136,9 @@ class PartnerRoute
             $api->group(['prefix' => 'campaigns'], function ($api) {
                 $api->group(['prefix' => 'sms'], function ($api) {
                     $api->get('/settings', 'SmsCampaignOrderController@getSettings');
-                    $api->post('/test-infobip', 'SmsCampaignOrderController@testInfoBip');
+                    $api->post('/create', 'SmsCampaignOrderController@create');
+                    $api->get('/templates', 'SmsCampaignOrderController@getTemplates');
+                    $api->get('/history', 'SmsCampaignOrderController@getHistory');
                     $api->get('/test-queue-run', 'SmsCampaignOrderController@processQueue');
                 });
             });

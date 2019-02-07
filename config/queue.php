@@ -61,10 +61,10 @@ return [
             'queue' => 'topup',
             'expire' => 60
         ],
-        'sms_campaign_queue' => [
+        'sms_campaign' => [
             'driver' => 'redis',
             'connection' => 'default',
-            'queue' => 'sms_campaign_queue',
+            'queue' => 'sms_campaign',
             'expire' => 60
         ]
     ],

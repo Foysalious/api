@@ -33,7 +33,7 @@ class SmsCampaign
         $this->title = $request['title'];
         $this->message = $request['message'];
         $this->partner = $request['partner'];
-        $this->sms_count = strlen($request['message']) % 160;
+        $this->sms_count = strlen($request['message']) > 160 ? strlen($request['message']) % 160 : 1;
         $this->setModifier($request['manager_resource']);
         return $this;
     }

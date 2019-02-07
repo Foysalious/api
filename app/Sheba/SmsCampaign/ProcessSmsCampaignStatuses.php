@@ -26,8 +26,8 @@ class ProcessSmsCampaignStatuses extends Job implements ShouldQueue
     public function __construct(SmsCampaignOrderReceiver $campaign_order_receiver)
     {
         $this->campaignOrderReceiver = $campaign_order_receiver;
-        $this->connection = 'sms_campaign_queue';
-        $this->queue = 'sms_campaign_queue';
+        $this->connection = 'sms_campaign';
+        $this->queue = 'sms_campaign';
     }
 
     /**
@@ -57,8 +57,7 @@ class ProcessSmsCampaignStatuses extends Job implements ShouldQueue
 
     private function isSuccessfullySent(SmsHandler $handler)
     {
-        if (strpos($this->getOrderStatus($handler), 'DELIVERED') !== false)
-            return true;
+        if (strpos($this->getOrderStatus($handler), 'DELIVERED') !== false) return true;
         return false;
     }
 }
