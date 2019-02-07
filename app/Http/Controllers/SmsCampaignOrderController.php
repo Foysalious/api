@@ -68,11 +68,12 @@ class SmsCampaignOrderController extends Controller
                 $current_history = [
                     'id'=>$item->id,
                     'name' => $item->title,
-                    'cost' => $item->order_receivers()->where('status','successful')->sum('sms_count') * $item->rate_per_sms
+                    'cost' => $item->order_receivers()->where('status','successful')->sum('sms_count') * $item->rate_per_sms,
+                    'created_at' => $item->created_at->format('Y-m-d H:i:s')
                 ];
                 array_push($total_history, $current_history);
            }
-           dd($total_history);
+            return api_response($request, null, 200, ['history' => $total_history]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             $code = $e->getCode();
