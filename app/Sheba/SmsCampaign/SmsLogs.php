@@ -1,6 +1,7 @@
 <?php namespace Sheba\SmsCampaign;
 
 use App\Models\SmsCampaignOrderReceiver;
+use Sheba\SmsCampaign\Jobs\ProcessSmsCampaignStatusJob;
 
 class SmsLogs
 {
@@ -8,7 +9,7 @@ class SmsLogs
     {
         $logs = SmsCampaignOrderReceiver::where('status', constants('SMS_CAMPAIGN_RECEIVER_STATUSES.pending'))->get();
         foreach ($logs as $log) {
-            dispatch((new ProcessSmsCampaignStatuses($log)));
+            dispatch((new ProcessSmsCampaignStatusJob($log)));
         }
     }
 }

@@ -140,6 +140,7 @@ class PartnerRoute
                     $api->get('/templates', 'SmsCampaignOrderController@getTemplates');
                     $api->get('/history', 'SmsCampaignOrderController@getHistory');
                     $api->get('/history/{history_id}/details', 'SmsCampaignOrderController@getHistoryDetails');
+                    $api->get('/faq','FaqController@getPartnerSmsCampaignFaq');
                     $api->get('/test-queue-run', 'SmsCampaignOrderController@processQueue');
                 });
             });
