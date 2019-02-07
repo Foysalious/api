@@ -40,32 +40,43 @@ class SmsCampaign
     
     public function createOrder()
     {
-        $response = (object) $this->smsHandler->sendBulkMessages($this->mobileNumbers, $this->message);
-        $campaign_order_data = array(
-            'title' => $this->title,
-            'message' => $this->message,
-            'partner_id' => $this->partner->id,
-            'rate_per_sms' => constants('SMS_CAMPAIGN.rate_per_sms'),
-            'bulk_id' => isset($response->bulkId) ? $response->bulkId : null
-        );
-        $campaign_order = SmsCampaignOrder::create($this->withBothModificationFields($campaign_order_data));
-        $amount_to_be_deducted = 0.0;
-        foreach($response->messages as $index => $message) {
-            $message = (object) $message;
-            $amount_to_be_deducted += ($this->sms_count * constants('SMS_CAMPAIGN.rate_per_sms'));
-            $orderDetails = [
-                'sms_campaign_order_id' => $campaign_order->id,
-                'receiver_number' => $message->to,
-                'receiver_name' => $this->customers[$index]['name'],
-                'message_id' => $message->messageId,
-                'status' => constants('SMS_CAMPAIGN_RECEIVER_STATUSES.pending'),
-                'sms_count' => $this->sms_count
-            ];
-            SmsCampaignOrderReceiver::create($this->withBothModificationFields($orderDetails));
-        }
-        $this->partner->debitWallet($amount_to_be_deducted);
-        $this->partner->walletTransaction(['amount' => $amount_to_be_deducted, 'type' => 'Debit', 'log' => $amount_to_be_deducted."BDT. has been deducted 
+        if($this->partnerHasEnoughBalance()) {
+            $response = (object) $this->smsHandler->sendBulkMessages($this->mobileNumbers, $this->message);
+            $campaign_order_data = array(
+                'title' => $this->title,
+                'message' => $this->message,
+                'partner_id' => $this->partner->id,
+                'rate_per_sms' => constants('SMS_CAMPAIGN.rate_per_sms'),
+                'bulk_id' => isset($response->bulkId) ? $response->bulkId : null
+            );
+            $campaign_order = SmsCampaignOrder::create($this->withBothModificationFields($campaign_order_data));
+            $amount_to_be_deducted = 0.0;
+            foreach($response->messages as $index => $message) {
+                $message = (object) $message;
+                $amount_to_be_deducted += ($this->sms_count * constants('SMS_CAMPAIGN.rate_per_sms'));
+                $orderDetails = [
+                    'sms_campaign_order_id' => $campaign_order->id,
+                    'receiver_number' => $message->to,
+                    'receiver_name' => $this->customers[$index]['name'],
+                    'message_id' => $message->messageId,
+                    'status' => constants('SMS_CAMPAIGN_RECEIVER_STATUSES.pending'),
+                    'sms_count' => $this->sms_count
+                ];
+                SmsCampaignOrderReceiver::create($this->withBothModificationFields($orderDetails));
+            }
+            $this->partner->debitWallet($amount_to_be_deducted);
+            $this->partner->walletTransaction(['amount' => $amount_to_be_deducted, 'type' => 'Debit', 'log' => $amount_to_be_deducted."BDT. has been deducted
                                             for creating ".$this->title.' sms campaign from your wallet.']);
-        return true;
+            (new SmsLogs())->processLogs($this->smsHandler);
+            return true;
+        }
+        return false;
+    }
+
+    public function partnerHasEnoughBalance()
+    {
+        $amount_to_be_deducted_per_message = ($this->sms_count * constants('SMS_CAMPAIGN.rate_per_sms'));
+        $total_amount_to_be_deducted = count($this->mobileNumbers) * $amount_to_be_deducted_per_message;
+        return $this->partner->wallet >= $total_amount_to_be_deducted ? true : false;
     }
 }

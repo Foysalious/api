@@ -28,10 +28,16 @@ class SmsCampaignOrderController extends Controller
     {
         try {
             $requests = $request->all();
-            if($campaign->formatRequest($requests)->createOrder())
-                return api_response($request, null, 200, ['message' => "Campaign created successfully"]);
-            else
-                return api_response($request, null, 500, ['message' =>'Failed to create campaign', 'code' => 500]);
+            $campaign = $campaign->formatRequest($requests);
+            if($campaign->partnerHasEnoughBalance()){
+                if($campaign->createOrder()) {
+                    return api_response($request, null, 200, ['message' => "Campaign created successfully"]);
+                }
+                return api_response($request, null, 200, ['message' =>'Failed to create campaign',
+                                                                                        'error_code'=> 'unknown_error', 'code' => 500]);
+            }
+            return api_response($request, null, 200, ['message' =>'Insufficient Balance On Partner Wallet',
+                                                                    'error_code' => 'insufficient_balance' , 'code' => 200]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             $code = $e->getCode();
@@ -63,9 +69,9 @@ class SmsCampaignOrderController extends Controller
     public function getHistory($partner, Request $request)
     {
         try {
-           $history = SmsCampaignOrder::where('partner_id',$partner)->with('order_receivers')->get();
-           $total_history = [];
-           foreach ($history as $item) {
+            $history = SmsCampaignOrder::where('partner_id',$partner)->with('order_receivers')->get();
+            $total_history = [];
+            foreach ($history as $item) {
                 $current_history = [
                     'id'=>$item->id,
                     'name' => $item->title,
@@ -73,7 +79,7 @@ class SmsCampaignOrderController extends Controller
                     'created_at' => $item->created_at->format('Y-m-d H:i:s')
                 ];
                 array_push($total_history, $current_history);
-           }
+            }
             return api_response($request, null, 200, ['history' => $total_history]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -115,7 +121,7 @@ class SmsCampaignOrderController extends Controller
             return api_response($request, null, 500, ['message' => $e->getMessage(), 'code' => $code ? $code : 500]);
         }
     }
-    
+
     public function processQueue(SmsLogs $smsLogs, SmsHandler $smsHandler)
     {
         $smsLogs->processLogs($smsHandler);
