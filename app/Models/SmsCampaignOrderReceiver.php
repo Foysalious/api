@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class SmsCampaignOrderReceiver extends Model
 {
-    protected $fillable = ['sms_campaign_order_id',',receiver_number','receiver_name','status', 'message_id', 'sms_count', "created_by", "created_by_name",
+    protected $fillable = ['sms_campaign_order_id','receiver_number','receiver_name','status', 'message_id', 'sms_count', "created_by", "created_by_name",
         "updated_by", "updated_by_name"];
 
     public function smsCampaignOrder()
