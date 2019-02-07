@@ -192,6 +192,7 @@ class FaqController extends Controller
             return api_response($request, null, 500);
         }
     }
+    
     public function getPartnerPerformanceFaqs(Request $request){
         try {
             $faqs = array(
@@ -335,5 +336,24 @@ class FaqController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function getPartnerSmsCampaignFaq($partner, Request $request)
+    {
+        try{
+            $faqs = array(
+                array(
+                    'question_en' => null,
+                    'question_bn' => 'এখানে মার্কেটিং কেন করবো?',
+                    'answer_en' => null,
+                    'answer_bn' => 'সহজেই ব্যবসা বার্তা পৌঁছে দিন কাস্টমারের কাছে। আপনার সুবিধা মত সময়ে ও বাজেটে স্বল্পমূল্যে কার্যকরী মার্কেটিং  '
+                ),
+            );
+            return api_response($request, $faqs, 200, ['faqs' => $faqs]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
     }
 }

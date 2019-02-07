@@ -27,7 +27,11 @@ class SmsHandler
     public function getSingleMessage($message_id)
     {
         try {
-            return $this->infoBip->get('/sms/2/logs', ['messageId' => $message_id])['results'][0];
+            $response = $this->infoBip->get('/sms/2/logs', ['messageId' => $message_id]);
+            if(isset($response['results']))
+                if(isset($response['results'][0]))
+                    return $response['results'][0];
+            else return null;
         } catch (GuzzleException $e) {
             app('sentry')->captureException($e);
             $code = $e->getCode();
