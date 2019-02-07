@@ -43,7 +43,7 @@ class SmsCampaignOrderController extends Controller
     {
         try {
             $partner = Partner::find($partner);
-            $url_to_shorten = config('sheba.front_url').'/'.$partner->sub_domain;
+            $url_to_shorten = config('sheba.front_url').'/partners/'.$partner->sub_domain;
             $deep_link = $shortenUrl->shorten('bit.ly',$url_to_shorten)['link'];
             $templates =  config('sms_campaign_templates');
             foreach ($templates as $key=>$template) {
