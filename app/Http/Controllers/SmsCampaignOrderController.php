@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Partner;
+use App\Models\SmsCampaignOrder;
 use App\Sheba\SmsCampaign\InfoBip\SmsHandler;
 use Illuminate\Http\Request;
 
@@ -51,6 +52,27 @@ class SmsCampaignOrderController extends Controller
                 $templates[$key]=$template;
             }
             return api_response($request, null, 200, ['templates' => $templates]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            $code = $e->getCode();
+            return api_response($request, null, 500, ['message' => $e->getMessage(), 'code' => $code ? $code : 500]);
+        }
+    }
+
+    public function getHistory($partner, Request $request)
+    {
+        try {
+           $history = SmsCampaignOrder::where('partner_id',$partner)->with('order_receivers')->get();
+           $total_history = [];
+           foreach ($history as $item) {
+                $current_history = [
+                    'id'=>$item->id,
+                    'name' => $item->title,
+                    'cost' => $item->order_receivers()->where('status','successful')->sum('sms_count') * $item->rate_per_sms
+                ];
+                array_push($total_history, $current_history);
+           }
+           dd($total_history);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             $code = $e->getCode();

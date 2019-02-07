@@ -13,4 +13,9 @@ class SmsCampaignOrder extends Model
     {
         return $this->belongsTo(Partner::class);
     }
+
+    public function order_receivers()
+    {
+        return $this->hasMany(SmsCampaignOrderReceiver::class);
+    }
 }
