@@ -1,13 +1,4 @@
-<?php
-/**
- * Created by PhpStorm.
- * User: Tech Land
- * Date: 2/6/2019
- * Time: 1:49 PM
- */
-
-namespace App\Sheba\SmsCampaign\InfoBip;
-
+<?php namespace App\Sheba\SmsCampaign\InfoBip;
 
 use GuzzleHttp\Exception\GuzzleException;
 use Sheba\SmsCampaign\InfoBip\InfoBip;
@@ -23,11 +14,7 @@ class SmsHandler
 
     public function sendBulkMessages($to, $message)
     {
-        $body = [
-            'from' => 'Sheba.xyz',
-            'to' => $to,
-            'text' => $message
-        ];
+        $body = ['from' => 'Sheba.xyz', 'to' => $to, 'text' => $message];
         try {
             return $this->infoBip->post('/sms/2/text/single', $body);
         } catch (GuzzleException $e) {
@@ -58,5 +45,4 @@ class SmsHandler
             return api_response(request()->all(), null, 500, ['message' => $e->getMessage(), 'code' => $code ? $code : 500]);
         }
     }
-    
 }
