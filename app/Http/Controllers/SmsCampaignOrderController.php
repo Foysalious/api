@@ -44,14 +44,15 @@ class SmsCampaignOrderController extends Controller
         try {
             $partner = Partner::find($partner);
             $url_to_shorten = config('sheba.front_url').'/partners/'.$partner->sub_domain;
-            $deep_link = $shortenUrl->shorten('bit.ly',$url_to_shorten)['link'];
-            $templates =  config('sms_campaign_templates');
-            foreach ($templates as $key=>$template) {
-                $template = (object) $template;
-                $template->deeplink = $deep_link;
-                $templates[$key]=$template;
+
+            if(!$partner->bitly_url) {
+                $deep_link = $shortenUrl->shorten('bit.ly',$url_to_shorten)['link'];
+                $partner->bitly_url = $deep_link;
+                $partner->save();
             }
-            return api_response($request, null, 200, ['templates' => $templates]);
+            $deep_link = $partner->bitly_url;
+            $templates =  config('sms_campaign_templates');
+            return api_response($request, null, 200, ['templates' => $templates, 'deep_link' => $deep_link]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             $code = $e->getCode();
