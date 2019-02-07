@@ -18,4 +18,24 @@ class SmsCampaignOrder extends Model
     {
         return $this->hasMany(SmsCampaignOrderReceiver::class);
     }
+
+    public function getTotalCostAttribute()
+    {
+        return ($this->order_receivers()->where('status',constants('SMS_CAMPAIGN_RECEIVER_STATUSES.successful'))->sum('sms_count') * $this->rate_per_sms);
+    }
+
+    public function getSuccessfulMessagesAttribute()
+    {
+        return $this->order_receivers()->where('status',constants('SMS_CAMPAIGN_RECEIVER_STATUSES.successful'))->count();
+    }
+
+    public function getFailedMessagesAttribute()
+    {
+        return $this->order_receivers()->where('status',constants('SMS_CAMPAIGN_RECEIVER_STATUSES.failed'))->count();
+    }
+
+    public function getTotalMessagesAttribute()
+    {
+        return $this->order_receivers()->count();
+    }
 }

@@ -68,12 +68,34 @@ class SmsCampaignOrderController extends Controller
                 $current_history = [
                     'id'=>$item->id,
                     'name' => $item->title,
-                    'cost' => $item->order_receivers()->where('status','successful')->sum('sms_count') * $item->rate_per_sms,
+                    'cost' => $item->total_cost,
                     'created_at' => $item->created_at->format('Y-m-d H:i:s')
                 ];
                 array_push($total_history, $current_history);
            }
             return api_response($request, null, 200, ['history' => $total_history]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            $code = $e->getCode();
+            return api_response($request, null, 500, ['message' => $e->getMessage(), 'code' => $code ? $code : 500]);
+        }
+    }
+
+    public function getHistoryDetails($partner, $history, Request $request)
+    {
+        try{
+            $details = SmsCampaignOrder::find($history);
+            $data = [
+                'id' => $details->id,
+                'total_cost' => $details->total_cost,
+                'message' => $details->message,
+                'total_messages_requested' => $details->total_messages,
+                'successfully_sent' => $details->successful_messages,
+                'sms_count' => $details->order_receivers[0]->sms_count,
+                'sms_rate' => $details->rate_per_sms,
+                'created_at' => $details->created_at->format('Y-m-d H:i:s')
+            ];
+            return api_response($request, null, 200, ['details' => $data]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             $code = $e->getCode();
