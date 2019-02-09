@@ -14,10 +14,11 @@ use Illuminate\Http\Request;
 use DB;
 use Illuminate\Validation\ValidationException;
 use Sheba\Location\Coords;
+use Sheba\ModificationFields;
 
 class CategoryController extends Controller
 {
-    use Helpers;
+    use Helpers, ModificationFields;
     private $categoryRepository;
     private $serviceRepository;
 
@@ -375,14 +376,20 @@ class CategoryController extends Controller
             $this->validate($request, ['categories' => "required|string"]);
             $partner = $request->partner;
             $manager_resource = $request->manager_resource;
-            $by = ["created_by" => $manager_resource->id, "created_by_name" => "Resource - " . $manager_resource->profile->name];
+            $this->setModifier($manager_resource);
             $categories = explode(',', $request->categories);
             $partner_categories = CategoryPartner::where('partner_id', $partner->id)->whereIn('category_id', $categories)->get();
             $category_partners = [];
             foreach ($categories as $category) {
                 $has_category_partner = $partner_categories->where('category_id', (int)$category)->first();
                 if (!$has_category_partner) {
-                    array_push($category_partners, array_merge(['response_time_min' => 60, 'response_time_max' => 120, 'commission' => $partner->commission, 'category_id' => $category, 'partner_id' => $partner->id, 'created_at' => Carbon::now()], $by));
+                    array_push($category_partners, $this->withCreateModificationField([
+                        'response_time_min' => 60,
+                        'response_time_max' => 120,
+                        'commission' => $partner->commission,
+                        'category_id' => $category,
+                        'partner_id' => $partner->id
+                    ]));
                 }
             }
             CategoryPartner::insert($category_partners);
