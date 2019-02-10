@@ -160,7 +160,9 @@ class PromotionController extends Controller
                 $voucher = $result['voucher'];
                 $promotion = new PromotionList($request->customer);
                 list($promotion, $msg) = $promotion->add($result['voucher']);
+                dd($promotion);
                 $promo = array('amount' => (double)$result['amount'], 'code' => $voucher->code, 'id' => $voucher->id, 'title' => $voucher->title);
+
                 if ($promotion) return api_response($request, 1, 200, ['promotion' => $promo]);
                 else return api_response($request, null, 403, ['message' => $msg]);
             } else {
