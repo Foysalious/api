@@ -526,7 +526,6 @@ class PartnerController extends Controller
     public function findPartners(Request $request, $location)
     {
         try {
-            $start = microtime(true);
             $this->validate($request, [
                 'date' => 'sometimes|required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
                 'time' => 'sometimes|required|string',
@@ -540,8 +539,6 @@ class PartnerController extends Controller
             if (!$validation->isValid()) {
                 return api_response($request, $validation->message, 400, ['message' => $validation->message]);
             }
-            $time_elapsed_secs = microtime(true) - $start;
-            //dump("validation: " . $time_elapsed_secs);
 
             $partner = $request->has('partner') ? $request->partner : null;
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$location);
@@ -555,15 +552,8 @@ class PartnerController extends Controller
                 return api_response($request, $is_available, 200, ['is_available' => $is_available, 'available_partners' => count($available_partners)]);
             }
             if ($partner_list->hasPartners) {
-                $start = microtime(true);
                 $partner_list->addPricing();
-                $time_elapsed_secs = microtime(true) - $start;
-                //dump("partner pricing: " . $time_elapsed_secs * 1000);
-
-                $start = microtime(true);
                 $partner_list->addInfo();
-                $time_elapsed_secs = microtime(true) - $start;
-                //dump("total_jobs,total_jobs_of_cat,ongoing_jobs,contact_no,subscription info: " . $time_elapsed_secs * 1000);
 
                 if ($request->has('filter') && $request->filter == 'sheba') {
                     $partner_list->sortByShebaPartnerPriority();
