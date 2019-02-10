@@ -25,6 +25,7 @@ class Basic extends PartnerPerformance
 
         return (new PartnerPerformanceData())
             ->setCompleted($this->getDataOf('completed'))
+            ->setCancelled($this->getOrderCancelledCountOn($this->timeFrame))
             ->setNoComplain($this->getDataOf('complain'))
             ->setTimelyAccepted($this->getDataOf('timely_accepted'))
             ->setTimelyProcessed($this->getDataOf('timely_processed'))
@@ -64,6 +65,7 @@ class Basic extends PartnerPerformance
         $order_created = $this->getOrderCreatedCountOn($time_frame);
         return (new InnerData())->setValue($order_closed)->setDenominator($order_created);
     }
+
 
     private function getDataOfComplain(TimeFrame $time_frame)
     {
@@ -156,11 +158,16 @@ class Basic extends PartnerPerformance
         return $data;
     }
 
+    private function getOrderCancelledCountOn(TimeFrame $time_frame)
+    {
+        return $this->partner->orders()->cancelledAtBetween($time_frame)->count();
+    }
+
     private function getJobsServedOn(TimeFrame $time_frame)
     {
         $key = $this->getKey($time_frame);
         if (array_key_exists($key, $this->jobServedIds)) return $this->jobServedIds[$key];
-        $data = Job::select('id')->whereIn('partner_order_id', function($q) {
+        $data = Job::select('id')->whereIn('partner_order_id', function ($q) {
             return $q->select('id')->from('partner_orders')->where('partner_id', $this->partner->id);
         })->deliveredAtBetween($time_frame)->pluck('id')->toArray();
         $this->jobServedIds[$key] = $data;
