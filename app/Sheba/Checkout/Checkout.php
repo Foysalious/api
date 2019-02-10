@@ -366,8 +366,6 @@ class Checkout
     private function getVoucherData($job_services, $data, $partner)
     {
         try {
-            if (!$this->isVoucherAutoApplicable($job_services, $data)) return $data;
-
             $order_amount = $job_services->map(function ($job_service) {
                     return $job_service->unit_price * $job_service->quantity;
                 })->sum() + (double)$partner->categories->first()->pivot->delivery_charge;
