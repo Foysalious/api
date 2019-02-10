@@ -253,8 +253,11 @@ class CategoryController extends Controller
                             $query->where('locations.id', $location);
                         });
                         $q->select('id', 'category_id', 'unit', 'name', 'bn_name', 'thumb', 'app_thumb', 'app_banner', 'short_description', 'description', 'banner', 'faqs', 'variables', 'variable_type', 'min_quantity')->orderBy('order')->skip($offset)->take($limit);
-                        if ((int)\request()->is_business) $q->publishedForBusiness(); else $q->published();
+                        if ((int)\request()->is_business) $q->publishedForBusiness();
+                        elseif ((int)\request()->is_for_backend) $q->publishedForAll();
+                        else $q->published();
                     }]);
+
                     $services = $this->serviceRepository->getPartnerServicesAndPartners($category->services, $location)->each(function ($service) use ($request) {
                         $service->partners = $service->partners->filter(function (Partner $partner) use ($request) {
                             return $partner->hasCoverageOn(new Coords((double)$request->lat, (double)$request->lng));
