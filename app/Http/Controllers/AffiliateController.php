@@ -374,14 +374,15 @@ class AffiliateController extends Controller
     public function getTransactions($affiliate, Request $request)
     {
         try {
+            list($offset, $limit) = calculatePagination($request);
             $affiliate = $request->affiliate;
-            $affiliate->load(['transactions' => function ($q) {
+            $affiliate->load(['transactions' => function ($q) use ($offset, $limit) {
                 $q->select('id', 'affiliate_id', 'affiliation_id', 'type', 'log', 'amount', DB::raw('DATE_FORMAT(created_at, "%M %d, %Y at %h:%i %p") as time'))->orderBy('id', 'desc');
             }]);
             if ($affiliate->transactions != null) {
                 $transactions = $affiliate->transactions;
-                $credit = $transactions->where('type', 'Credit')->values()->all();
-                $debit = $transactions->where('type', 'Debit')->values()->all();
+                $credit = $transactions->where('type', 'Credit')->splice($offset, $limit)->values()->all();
+                $debit = $transactions->where('type', 'Debit')->splice($offset, $limit)->values()->all();
                 return api_response($request, $affiliate->transactions, 200, ['credit' => $credit, 'debit' => $debit]);
             } else {
                 return api_response($request, null, 404);
