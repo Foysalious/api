@@ -1038,7 +1038,7 @@ class PartnerController extends Controller
     {
         try{
             $order_ids = PartnerOrder::where('partner_id',$partner)->whereNotNull('closed_at')->pluck('order_id');
-            $orders = Order::whereIn('id',$order_ids)->with(['customer.profile','jobs.category'])->get();
+            $orders = Order::whereIn('id',$order_ids)->with(['customer.profile','jobs.category'])->distinct('customer_id')->get();
             $served_customers = [];
             foreach ($orders as $order) {
                 if($order)
