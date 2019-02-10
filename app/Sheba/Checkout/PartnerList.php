@@ -194,6 +194,7 @@ class PartnerList
             // $is_partner_has_coverage = $partner->geo_informations && in_array($this->location, HyperLocal::insideCircle(json_decode($partner->geo_informations))->pluck('location_id')->toArray());
             //return $is_partner_has_coverage;
 
+            if (!$partner->geo_informations) return false;
             $locations = $partner->locations;
             if ($locations->isEmpty()) {
                 $locations = HyperLocal::insideCircle(json_decode($partner->geo_informations))
