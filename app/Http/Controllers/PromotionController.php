@@ -256,9 +256,14 @@ class PromotionController extends Controller
                 ->setCategory($partner_list->selected_services[0]->serviceModel->category_id)
                 ->setLocation($location)->setOrderAmount($order_amount)->setSalesChannel($request->sales_channel);
 
+            $added_promos = Promotion::select('id', 'voucher_id')->where('customer_id', $customer->id)->get()->map(function ($item) {
+                return $item->voucher_id;
+            })->toArray();
+
+
             $result = $finder->getAll($params)->filter(function ($item) {
                 if(isset($item['voucher'])) return $item;
-            })->map(function ($item) {
+            })->map(function ($item) use ($customer, $added_promos) {
                 $voucher_item = [
                     'id' => $item['voucher']->id,
                     'code' => $item['voucher']->code,
@@ -266,6 +271,7 @@ class PromotionController extends Controller
                     'voucher_amount' => $item['voucher']->amount,
                     'is_percentage' => $item['voucher']->is_amount_percentage,
                     'cap' => $item['voucher']->cap,
+                    'is_added' => in_array($item['voucher']->id, $added_promos)
                 ];
                 return $voucher_item;
             });
