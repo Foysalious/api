@@ -95,6 +95,7 @@ class SmsCampaignOrderController extends Controller
             $data = [
                 'id' => $details->id,
                 'total_cost' => $details->total_cost,
+                'title' => $details->title,
                 'message' => $details->message,
                 'total_messages_requested' => $details->total_messages,
                 'successfully_sent' => $details->successful_messages,
@@ -122,8 +123,8 @@ class SmsCampaignOrderController extends Controller
         }
     }
 
-    public function processQueue(SmsLogs $smsLogs, SmsHandler $smsHandler)
+    public function processQueue(SmsLogs $smsLogs)
     {
-        $smsLogs->processLogs($smsHandler);
+        $smsLogs->processLogs();
     }
 }

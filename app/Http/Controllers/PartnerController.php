@@ -1038,24 +1038,41 @@ class PartnerController extends Controller
     {
         try{
             $order_ids = PartnerOrder::where('partner_id',$partner)->whereNotNull('closed_at')->pluck('order_id');
-            $orders = Order::whereIn('id',$order_ids)->with(['customer.profile','jobs.category'])->get();
+            $orders = Order::whereIn('id',$order_ids)->with(['customer.profile','jobs.category'])->groupBy('customer_id')->get();
             $served_customers = [];
             foreach ($orders as $order) {
+                $customer_info = [];
                 if($order)
-                if($order->customer && $order->jobs)
-                if($order->customer->profile && $order->jobs) {
-                    $jobs = $order->jobs;
-                    if(isset($jobs[0])) {
-                        $customer_info = [
-                            'name'  =>$order->customer->profile->name,
-                            'mobile' => $order->customer->profile->mobile,
-                            'image'=> $order->customer->profile->pro_pic,
-                            'category' => $jobs[0]->category->name
-                        ];
-                    }
+                    if($order->customer && $order->jobs)
+                        if($order->customer->profile && $order->jobs) {
+                            $jobs = $order->jobs;
+                            if(isset($jobs[0])) {
+                                $customer_info = [
+                                    'name'  =>$order->customer->profile->name,
+                                    'mobile' => $order->customer->profile->mobile,
+                                    'image'=> $order->customer->profile->pro_pic,
+                                    'category' => $jobs[0]->category->name
+                                ];
+                            }
+                        }
+                if(count($customer_info)>0)
                     array_push($served_customers,$customer_info);
-                }
             }
+
+            $served_customers = [
+                 [
+                    'name'  => 'Sakib',
+                    'mobile' =>'+8801869715616',
+                    'image'=> 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/profiles/avatar/default.jpg',
+                    'category' =>'Moving Homes'
+                ],
+                [
+                    'name'  => 'Sakib',
+                    'mobile' =>'+8801620011003',
+                    'image'=> 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/profiles/avatar/default.jpg',
+                    'category' =>'Moving Homes'
+                ],
+            ];
             return api_response($request, $served_customers, 200, ['customers' => $served_customers]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
