@@ -25,8 +25,11 @@ class Promotion extends Model
 
     public function scopeIsApplied($query, $customer_id, $voucher_id)
     {
-        return $query
-            ->where('customer_id', $customer_id)
-            ->where('voucher_id', $voucher_id);
+        return $query->where('customer_id', $customer_id)->where('voucher_id', $voucher_id);
+    }
+
+    public function scopeAdded($query, $voucher_id)
+    {
+        return $query->where('voucher_id', $voucher_id);
     }
 }
