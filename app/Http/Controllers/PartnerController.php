@@ -1037,6 +1037,7 @@ class PartnerController extends Controller
                         if($order->customer->profile && $order->jobs) {
                             $jobs = $order->jobs;
                             if(isset($jobs[0])) {
+                                if($order->customer->profile->mobile)
                                 $customer_info = [
                                     'name'  =>$order->customer->profile->name,
                                     'mobile' => $order->customer->profile->mobile,
