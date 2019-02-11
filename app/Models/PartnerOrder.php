@@ -278,6 +278,10 @@ class PartnerOrder extends Model
     {
         $query->dateBetween('closed_at', $time_frame);
     }
+    public function scopeCancelledAtBetween($query, TimeFrame $time_frame)
+    {
+        $query->dateBetween('cancelled_at', $time_frame);
+    }
 
     public function scopeOf($query, $partner)
     {

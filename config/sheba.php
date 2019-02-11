@@ -43,7 +43,7 @@ return [
     'partner_statuses' => [
 
     ],
-    'partner_package_and_badge_order_on_partner_list' =>[
+    'partner_package_and_badge_order_on_partner_list' => [
         ['package' => 'ESP', 'badge' => 'gold'],
         ['package' => 'ESP', 'badge' => 'silver'],
         ['package' => 'PSP', 'badge' => 'silver'],
@@ -59,7 +59,7 @@ return [
         'avg_rating' => 0.5,
         'total_ratings' => 0.05
     ],
-    'promo_applicable_sales_channels' => ['Web', 'App', 'App-iOS', 'E-Shop'],
+    'promo_applicable_sales_channels' => ['Web', 'App', 'App-iOS', 'E-Shop', 'Call-Center'],
     'category_colors' => [
         1 => '#78B9EB',
         3 => '#D5B4EB',

@@ -3,6 +3,7 @@
 class PartnerPerformanceData
 {
     private $completed;
+    private $cancelled;
     private $no_complain;
     private $timely_accepted;
     private $timely_processed;
@@ -15,6 +16,12 @@ class PartnerPerformanceData
     public function setCompleted($completed)
     {
         $this->completed = $completed;
+        return $this;
+    }
+
+    public function setCancelled($cancelled)
+    {
+        $this->cancelled = $cancelled;
         return $this;
     }
 
@@ -65,6 +72,7 @@ class PartnerPerformanceData
             'summary' => [
                 'order_received' => $this->order_received,
                 'completed' => $this->completed->getTotal(),
+                'cancelled' => $this->cancelled,
                 'no_complain' => $this->no_complain->getTotal(),
                 'timely_accepted' => $this->timely_accepted->getTotal(),
                 'timely_processed' => $this->timely_processed->getTotal()
