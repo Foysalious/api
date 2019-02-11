@@ -64,12 +64,9 @@ class PartnerList
         $this->time = $time;
         $this->rentCarServicesId = array_map('intval', explode(',', env('RENT_CAR_SERVICE_IDS')));
         $this->rentCarCategoryIds = array_map('intval', explode(',', env('RENT_CAR_IDS')));
-        $start = microtime(true);
         $this->selectedCategory = Service::find((int)$services[0]->id)->category;
         $this->selected_services = $this->getSelectedServices($services);
         $this->selectedServiceIds = $this->getServiceIds();
-        $time_elapsed_secs = microtime(true) - $start;
-        //dump("add selected service info: " . $time_elapsed_secs * 1000);
         $this->partnerServiceRepository = new PartnerServiceRepository();
         $this->skipAvailability = 0;
         $this->checkForRentACarPickUpGeo();
@@ -150,18 +147,12 @@ class PartnerList
         $this->setPartner($partner_id);
         if ($this->location) {
             $this->location = $this->getCalculatedLocation($this->selected_services->first());
-            $start = microtime(true);
             $this->partners = $this->findPartnersByServiceAndLocation();
-            $time_elapsed_secs = microtime(true) - $start;
-            // dump("filter partner by service,location,category: " . $time_elapsed_secs * 1000);
         } else {
             $this->partners = $this->findPartnersByServiceAndGeo();
         }
         if ($this->isNotLite) {
-            $start = microtime(true);
             $this->filterByCreditLimit();
-            $time_elapsed_secs = microtime(true) - $start;
-            //dump("filter partner by credit: " . $time_elapsed_secs * 1000);
         }
 
         if (!in_array($this->portalName, ['partner-portal', 'manager-app'])) {
@@ -195,14 +186,11 @@ class PartnerList
             //return $is_partner_has_coverage;
 
             if (!$partner->geo_informations) return false;
-            $locations = $partner->locations;
-            if ($locations->isEmpty()) {
-                $locations = HyperLocal::insideCircle(json_decode($partner->geo_informations))
-                    ->with('location')
-                    ->get()
-                    ->pluck('location')
-                    ->filter();
-            }
+            $locations = HyperLocal::insideCircle(json_decode($partner->geo_informations))
+                ->with('location')
+                ->get()
+                ->pluck('location')
+                ->filter();
 
             return $locations->where('id', $this->location)->count() > 0;
 
