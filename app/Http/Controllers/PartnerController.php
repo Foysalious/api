@@ -1027,7 +1027,7 @@ class PartnerController extends Controller
     public function getServedCustomers($partner, Request $request)
     {
         try{
-            $order_ids = PartnerOrder::where('partner_id',$partner)->whereNotNull('closed_at')->pluck('order_id');
+            $order_ids = PartnerOrder::where('partner_id',$partner)->whereNotNull('closed_and_paid_at')->pluck('order_id');
             $orders = Order::whereIn('id',$order_ids)->with(['customer.profile','jobs.category'])->orderBy('created_at','desc')->get();
 
             $served_customers = collect();
@@ -1040,12 +1040,12 @@ class PartnerController extends Controller
                             if(isset($jobs[0])) {
                                 if($order->customer->profile->mobile) {
                                     if(!$served_customers->contains('mobile',$order->customer->profile->mobile))
-                                    $customer_info = [
-                                        'name'  =>$order->customer->profile->name,
-                                        'mobile' => $order->customer->profile->mobile,
-                                        'image'=> $order->customer->profile->pro_pic,
-                                        'category' => $jobs[0]->category->name
-                                    ];
+                                        $customer_info = [
+                                            'name'  =>$order->customer->profile->name,
+                                            'mobile' => $order->customer->profile->mobile,
+                                            'image'=> $order->customer->profile->pro_pic,
+                                            'category' => $jobs[0]->category->name
+                                        ];
                                 }
 
                             }
