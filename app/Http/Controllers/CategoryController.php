@@ -14,10 +14,11 @@ use Illuminate\Http\Request;
 use DB;
 use Illuminate\Validation\ValidationException;
 use Sheba\Location\Coords;
+use Sheba\ModificationFields;
 
 class CategoryController extends Controller
 {
-    use Helpers;
+    use Helpers, ModificationFields;
     private $categoryRepository;
     private $serviceRepository;
 
@@ -252,8 +253,11 @@ class CategoryController extends Controller
                             $query->where('locations.id', $location);
                         });
                         $q->select('id', 'category_id', 'unit', 'name', 'bn_name', 'thumb', 'app_thumb', 'app_banner', 'short_description', 'description', 'banner', 'faqs', 'variables', 'variable_type', 'min_quantity')->orderBy('order')->skip($offset)->take($limit);
-                        if ((int)\request()->is_business) $q->publishedForBusiness(); else $q->published();
+                        if ((int)\request()->is_business) $q->publishedForBusiness();
+                        elseif ((int)\request()->is_for_backend) $q->publishedForAll();
+                        else $q->published();
                     }]);
+
                     $services = $this->serviceRepository->getPartnerServicesAndPartners($category->services, $location)->each(function ($service) use ($request) {
                         $service->partners = $service->partners->filter(function (Partner $partner) use ($request) {
                             return $partner->hasCoverageOn(new Coords((double)$request->lat, (double)$request->lng));
@@ -272,7 +276,7 @@ class CategoryController extends Controller
                     });
                 }
                 if ($services->count() > 0) {
-                    $category = collect($category)->only(['name', 'banner', 'parent_id', 'app_banner']);
+                    $category = collect($category)->only(['name', 'slug' ,'banner', 'parent_id', 'app_banner']);
                     $category['services'] = $this->serviceQuestionSet($services);
                     return api_response($request, $category, 200, ['category' => $category]);
                 } else
@@ -375,14 +379,20 @@ class CategoryController extends Controller
             $this->validate($request, ['categories' => "required|string"]);
             $partner = $request->partner;
             $manager_resource = $request->manager_resource;
-            $by = ["created_by" => $manager_resource->id, "created_by_name" => "Resource - " . $manager_resource->profile->name];
+            $this->setModifier($manager_resource);
             $categories = explode(',', $request->categories);
             $partner_categories = CategoryPartner::where('partner_id', $partner->id)->whereIn('category_id', $categories)->get();
             $category_partners = [];
             foreach ($categories as $category) {
                 $has_category_partner = $partner_categories->where('category_id', (int)$category)->first();
                 if (!$has_category_partner) {
-                    array_push($category_partners, array_merge(['response_time_min' => 60, 'response_time_max' => 120, 'commission' => $partner->commission, 'category_id' => $category, 'partner_id' => $partner->id, 'created_at' => Carbon::now()], $by));
+                    array_push($category_partners, $this->withCreateModificationField([
+                        'response_time_min' => 60,
+                        'response_time_max' => 120,
+                        'commission' => $partner->commission,
+                        'category_id' => $category,
+                        'partner_id' => $partner->id
+                    ]));
                 }
             }
             CategoryPartner::insert($category_partners);

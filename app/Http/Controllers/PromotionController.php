@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\HyperLocal;
@@ -13,6 +11,8 @@ use App\Sheba\Checkout\PartnerList;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Voucher\ApplicableVoucherFinder;
+use Sheba\Voucher\CheckParams;
 use Sheba\Voucher\PromotionList;
 use Sheba\Voucher\VoucherSuggester;
 
@@ -159,6 +159,7 @@ class PromotionController extends Controller
                 $promotion = new PromotionList($request->customer);
                 list($promotion, $msg) = $promotion->add($result['voucher']);
                 $promo = array('amount' => (double)$result['amount'], 'code' => $voucher->code, 'id' => $voucher->id, 'title' => $voucher->title);
+
                 if ($promotion) return api_response($request, 1, 200, ['promotion' => $promo]);
                 else return api_response($request, null, 403, ['message' => $msg]);
             } else {
@@ -233,5 +234,55 @@ class PromotionController extends Controller
         })->sortByDesc(function ($promotion) {
             return $promotion['priority'];
         })->values()->all();
+    }
+
+    public function getAllApplicable(ApplicableVoucherFinder $finder, Request $request, CheckParams $params, $customer)
+    {
+        try {
+            $customer = $request->customer;
+            $location = $request->location;
+            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, $location ? (int)$location : null);
+            if ($request->has('lat') && $request->has('lng')) {
+                $partner_list->setGeo((double)$request->lat, (double)$request->lng);
+                $hyper_local = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                $location = $hyper_local ? $hyper_local->location->id : $location;
+            }
+            $order_amount = $this->calculateOrderAmount($partner_list, $request->partner);
+            if (!$order_amount) return api_response($request, null, 403);
+
+            $params = $params->setPartner($request->partner)->setCustomer($customer)
+                ->setCategory($partner_list->selected_services[0]->serviceModel->category_id)
+                ->setLocation($location)->setOrderAmount($order_amount)->setSalesChannel($request->sales_channel);
+
+            $added_promos = Promotion::select('id', 'voucher_id')->where('customer_id', $customer->id)->get()->map(function ($item) {
+                return $item->voucher_id;
+            })->toArray();
+
+
+            $result = $finder->getAll($params)->filter(function ($item) {
+                if(isset($item['voucher'])) return $item;
+            })->map(function ($item) use ($customer, $added_promos) {
+                $voucher_item = [
+                    'id' => $item['voucher']->id,
+                    'code' => $item['voucher']->code,
+                    'applicable_amount' => $item['amount'],
+                    'voucher_amount' => $item['voucher']->amount,
+                    'is_percentage' => $item['voucher']->is_amount_percentage,
+                    'cap' => $item['voucher']->cap,
+                    'is_added' => in_array($item['voucher']->id, $added_promos)
+                ];
+                return $voucher_item;
+            });
+
+            if (count($result)) {
+                return api_response($request, 1, 200, ['promotions' => $result]);
+            } else {
+                return api_response($request, null, 404);
+            }
+
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 }

@@ -60,7 +60,8 @@ class Checkout
         if ($request->has('location')) {
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$request->location);
         } else {
-            $geo = json_decode($address->geo_informations);
+            if ((int)$request->is_on_premise) $geo = json_decode((Partner::find((int)$request->partner))->geo_informations);
+            else $geo = json_decode($address->geo_informations);
             $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time);
             $partner_list->setGeo($geo->lat, $geo->lng);
         }
@@ -134,7 +135,7 @@ class Checkout
         $data['created_by'] = $created_by = $request->has('created_by') ? $request->created_by : $this->customer->id;
         $data['created_by_name'] = $created_by_name = $request->has('created_by_name') ? $request->created_by_name : 'Customer - ' . $this->customer->profile->name;
         $this->orderData = array_merge($this->orderData, $data);
-        
+
         return $this->orderData;
     }
 
@@ -365,8 +366,6 @@ class Checkout
     private function getVoucherData($job_services, $data, $partner)
     {
         try {
-            if (!$this->isVoucherAutoApplicable($job_services, $data)) return $data;
-
             $order_amount = $job_services->map(function ($job_service) {
                     return $job_service->unit_price * $job_service->quantity;
                 })->sum() + (double)$partner->categories->first()->pivot->delivery_charge;

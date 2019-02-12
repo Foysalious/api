@@ -50,7 +50,7 @@ class PartnerList
     private $isNotLite;
     private $partner;
 
-    /** @header **/
+    /** @header * */
     private $portalName;
 
     private $badgeResolver;
@@ -64,12 +64,9 @@ class PartnerList
         $this->time = $time;
         $this->rentCarServicesId = array_map('intval', explode(',', env('RENT_CAR_SERVICE_IDS')));
         $this->rentCarCategoryIds = array_map('intval', explode(',', env('RENT_CAR_IDS')));
-        $start = microtime(true);
         $this->selectedCategory = Service::find((int)$services[0]->id)->category;
         $this->selected_services = $this->getSelectedServices($services);
         $this->selectedServiceIds = $this->getServiceIds();
-        $time_elapsed_secs = microtime(true) - $start;
-        //dump("add selected service info: " . $time_elapsed_secs * 1000);
         $this->partnerServiceRepository = new PartnerServiceRepository();
         $this->skipAvailability = 0;
         $this->checkForRentACarPickUpGeo();
@@ -77,6 +74,7 @@ class PartnerList
             'service' => [],
             'location' => [],
             'credit' => [],
+            'order_limit' => [],
             'options' => [],
             'handyman' => []
         ];
@@ -150,20 +148,13 @@ class PartnerList
         $this->setPartner($partner_id);
         if ($this->location) {
             $this->location = $this->getCalculatedLocation($this->selected_services->first());
-            $start = microtime(true);
             $this->partners = $this->findPartnersByServiceAndLocation();
-            $time_elapsed_secs = microtime(true) - $start;
-            // dump("filter partner by service,location,category: " . $time_elapsed_secs * 1000);
         } else {
             $this->partners = $this->findPartnersByServiceAndGeo();
         }
         if ($this->isNotLite) {
-            $start = microtime(true);
             $this->filterByCreditLimit();
-            $time_elapsed_secs = microtime(true) - $start;
-            //dump("filter partner by credit: " . $time_elapsed_secs * 1000);
         }
-
         if (!in_array($this->portalName, ['partner-portal', 'manager-app'])) {
             $start = microtime(true);
             $this->filterByDailyOrderLimit();
@@ -188,28 +179,19 @@ class PartnerList
     private function findPartnersByServiceAndLocation()
     {
         $this->partners = $this->findPartnersByService();
+        $this->notFoundValues['service'] = $this->getPartnerIds();
         $this->partners->load('locations');
-        return $this->partners->filter(function ($partner) {
-            /** Do not delete this code, will be used for later, range will be fetched using hyper local. */
-            // $is_partner_has_coverage = $partner->geo_informations && in_array($this->location, HyperLocal::insideCircle(json_decode($partner->geo_informations))->pluck('location_id')->toArray());
-            //return $is_partner_has_coverage;
-
-            $locations = $partner->locations;
-            if ($locations->isEmpty()) {
-                $locations = HyperLocal::insideCircle(json_decode($partner->geo_informations))
-                    ->with('location')
-                    ->get()
-                    ->pluck('location')
-                    ->filter();
-            }
-
+        $this->partners = $this->partners->filter(function ($partner) {
+            if (!$partner->geo_informations) return false;
+            $locations = HyperLocal::insideCircle(json_decode($partner->geo_informations))
+                ->with('location')
+                ->get()
+                ->pluck('location')
+                ->filter();
             return $locations->where('id', $this->location)->count() > 0;
-
-            /**
-             * DISABLE THIS CHECK, AND MOVE TO GEO INFORMATION
-             */
-            // return $partner->locations->where('id', $this->location)->count() > 0;
         });
+        $this->notFoundValues['location'] = $this->getPartnerIds();
+        return $this->partners;
     }
 
     private function setPartner($partner_id)
@@ -227,31 +209,31 @@ class PartnerList
         $category_ids = [$this->selectedCategory->id];
         $isNotLite = $this->isNotLite;
         $query = Partner::WhereHas('categories', function ($q) use ($category_ids, $has_premise, $has_home_delivery, $isNotLite) {
-                $q->whereIn('categories.id', $category_ids);
-                if ($isNotLite) {
-                    $q->where('category_partner.is_verified', 1);
-                }
-                if (request()->has('has_home_delivery')) $q->where('category_partner.is_home_delivery_applied', $has_home_delivery);
-                if (request()->has('has_premise')) $q->where('category_partner.is_partner_premise_applied', $has_premise);
-                if (!request()->has('has_home_delivery') && !request()->has('has_premise')) $q->where('category_partner.is_home_delivery_applied', 1);
-            })->whereHas('services', function ($query) use ($isNotLite) {
-                $query->whereHas('category', function ($q) {
-                    $q->publishedForAny();
-                })->select(DB::raw('count(*) as c'))->whereIn('services.id', $this->selectedServiceIds)->where('partner_service.is_published', 1)
-                    ->publishedForAll()
-                    ->groupBy('partner_id')->havingRaw('c=' . count($this->selectedServiceIds));
-                if ($isNotLite) {
-                    $query->where('partner_service.is_verified', 1);
-                }
-            })->whereDoesntHave('leaves', function ($q) {
-                $q->where('end', null)->orWhere([['start', '<=', Carbon::now()], ['end', '>=', Carbon::now()->addDays(7)]]);
-            })->with(['handymanResources' => function ($q) use ($isNotLite) {
-                if ($isNotLite) {
-                    $q->verified();
-                }
-            }])->select('partners.id', 'partners.current_impression', 'partners.geo_informations', 'partners.address', 'partners.name',
-                'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet', 'partners.package_id', 'partners.badge',
-                'partners.order_limit');
+            $q->whereIn('categories.id', $category_ids);
+            if ($isNotLite) {
+                $q->where('category_partner.is_verified', 1);
+            }
+            if (request()->has('has_home_delivery')) $q->where('category_partner.is_home_delivery_applied', $has_home_delivery);
+            if (request()->has('has_premise')) $q->where('category_partner.is_partner_premise_applied', $has_premise);
+            if (!request()->has('has_home_delivery') && !request()->has('has_premise')) $q->where('category_partner.is_home_delivery_applied', 1);
+        })->whereHas('services', function ($query) use ($isNotLite) {
+            $query->whereHas('category', function ($q) {
+                $q->publishedForAny();
+            })->select(DB::raw('count(*) as c'))->whereIn('services.id', $this->selectedServiceIds)->where('partner_service.is_published', 1)
+                ->publishedForAll()
+                ->groupBy('partner_id')->havingRaw('c=' . count($this->selectedServiceIds));
+            if ($isNotLite) {
+                $query->where('partner_service.is_verified', 1);
+            }
+        })->whereDoesntHave('leaves', function ($q) {
+            $q->where('end', null)->orWhere([['start', '<=', Carbon::now()], ['end', '>=', Carbon::now()->addDays(7)]]);
+        })->with(['handymanResources' => function ($q) use ($isNotLite) {
+            if ($isNotLite) {
+                $q->verified();
+            }
+        }])->select('partners.id', 'partners.current_impression', 'partners.geo_informations', 'partners.address', 'partners.name',
+            'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet', 'partners.package_id', 'partners.badge',
+            'partners.order_limit');
         if ($isNotLite) {
             $query->where('package_id', '<>', config('sheba.partner_lite_packages_id'))->verified();
         }
@@ -343,13 +325,13 @@ class PartnerList
 
     private function filterByDailyOrderLimit()
     {
-        $this->partners->load(['todayOrders' => function($q) {
+        $this->partners->load(['todayOrders' => function ($q) {
             $q->select('id', 'partner_id');
         }]);
 
         $this->partners = $this->partners->filter(function ($partner, $key) {
             /** @var Partner $partner */
-            if(is_null($partner->order_limit)) return true;
+            if (is_null($partner->order_limit)) return true;
             return $partner->todayOrders->count() < $partner->order_limit;
         });
         $this->notFoundValues['order_limit'] = $this->getPartnerIds();
@@ -607,13 +589,13 @@ class PartnerList
         $event->fill((new RequestIdentification)->get());
         if ($event->portal_name == 'bondhu-app') {
             $event->created_by_type = "App\\Models\\Affiliate";
-            if (\request()->hasHeader('User-Id')) {
+            if (\request()->hasHeader('User-Id') && request()->header('User-Id')) {
                 $event->created_by = \request()->header('User-Id');
                 $event->created_by_name = "Affiliate - " . (Affiliate::find((int)\request()->header('User-Id')))->profile->name;
             }
         } elseif ($event->portal_name == 'customer-app' || $event->portal_name == 'customer-portal') {
             $event->created_by_type = "App\\Models\\Customer";
-            if (\request()->hasHeader('User-Id')) {
+            if (\request()->hasHeader('User-Id') && request()->header('User-Id')) {
                 $event->created_by = \request()->header('User-Id');
                 $event->created_by_name = "Customer - " . (Customer::find((int)\request()->header('User-Id')))->profile->name;
             }

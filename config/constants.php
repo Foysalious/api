@@ -510,5 +510,10 @@ return [
             'text' => 'Other',
             'value' => 'other'
         ]
+    ],
+    'SMS_CAMPAIGN_RECEIVER_STATUSES' => [
+        'pending' => 'pending',
+        'successful' => 'successful',
+        'failed' => 'failed',
     ]
 ];

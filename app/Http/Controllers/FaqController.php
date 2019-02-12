@@ -192,6 +192,7 @@ class FaqController extends Controller
             return api_response($request, null, 500);
         }
     }
+    
     public function getPartnerPerformanceFaqs(Request $request){
         try {
             $faqs = array(
@@ -335,5 +336,42 @@ class FaqController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function getPartnerSmsCampaignFaq($partner, Request $request)
+    {
+        try{
+            $faqs = array(
+                array(
+                    'question_en' => null,
+                    'question_bn' => 'SMS মার্কেটিং কি?',
+                    'answer_en' => null,
+                    'answer_bn' => 'আপনার ব্যবসার প্রচার-প্রসার করতে SMS মার্কেটিং টুলটি ব্যবহার করুন।'
+                ),
+                array(
+                    'question_en' => null,
+                    'question_bn' => 'কি কি বিষয়ে মার্কেটিং করব?',
+                    'answer_en' => null,
+                    'answer_bn' => 'নতুন অফার, প্রমোশন, ডিসকাউন্ট ইত্যাদি বিষয়ের উপর মার্কেটিং করতে পারেন।'
+                ),
+                array(
+                    'question_en' => null,
+                    'question_bn' => 'এখানে মার্কেটিং কেন করবো?',
+                    'answer_en' => null,
+                    'answer_bn' => 'সহজেই ব্যবসা বার্তা পৌঁছে দিন কাস্টমারের কাছে। আপনার সুবিধা মত সময়ে ও বাজেটে স্বল্পমূল্যে কার্যকরী মার্কেটিং  '
+                ),
+                array(
+                    'question_en' => null,
+                    'question_bn' => 'কাদেরকে SMS পাঠাতে পারব?',
+                    'answer_en' => null,
+                    'answer_bn' => 'আপনার ফোনবুকে থাকা যেকোনো সচল নাম্বারে আপনি SMS পাঠাতে পারবেন। '
+                ),
+            );
+            return api_response($request, $faqs, 200, ['faqs' => $faqs]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
     }
 }
