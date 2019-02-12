@@ -74,7 +74,7 @@ class SmsCampaignOrderController extends Controller
     public function getHistory($partner, Request $request)
     {
         try {
-            $history = SmsCampaignOrder::where('partner_id',$partner)->with('order_receivers')->get();
+            $history = SmsCampaignOrder::where('partner_id',$partner)->with('order_receivers')->orderBy('created_at','desc')->get();
             $total_history = [];
             foreach ($history as $item) {
                 $current_history = [
