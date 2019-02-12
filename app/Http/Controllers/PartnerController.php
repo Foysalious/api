@@ -1049,6 +1049,14 @@ class PartnerController extends Controller
                 if(count($customer_info)>0)
                     array_push($served_customers,$customer_info);
             }
+            $served_customers = [
+                [
+                    'name' => 'sakib',
+                    'mobile' => '01869715616',
+                    'image' => 'test',
+                    'category' => 'Appliance'
+                ]
+            ];
             return api_response($request, $served_customers, 200, ['customers' => $served_customers]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
