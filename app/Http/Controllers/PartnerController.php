@@ -1027,7 +1027,7 @@ class PartnerController extends Controller
     public function getServedCustomers($partner, Request $request)
     {
         try{
-            $order_ids = PartnerOrder::where('partner_id',$partner)->whereNotNull('closed_at')->pluck('order_id');
+            $order_ids = PartnerOrder::where('partner_id',$partner)->whereNotNull('closed_and_paid_at')->pluck('order_id');
             $orders = Order::whereIn('id',$order_ids)->with(['customer.profile','jobs.category'])->orderBy('created_at','desc')->get();
 
             $served_customers = collect();
