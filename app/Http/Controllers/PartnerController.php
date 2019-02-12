@@ -1028,7 +1028,7 @@ class PartnerController extends Controller
     {
         try{
             $order_ids = PartnerOrder::where('partner_id',$partner)->whereNotNull('closed_at')->pluck('order_id');
-            $orders = Order::whereIn('id',$order_ids)->with(['customer.profile','jobs.category'])->orderBy('created_at','desc')->get();
+            $orders = Order::whereIn('id',$order_ids)->with(['customer.profile','jobs.category'])->groupBy('customer_id')->get();
 
             $served_customers = collect();
             foreach ($orders as $order) {
@@ -1040,12 +1040,12 @@ class PartnerController extends Controller
                             if(isset($jobs[0])) {
                                 if($order->customer->profile->mobile) {
                                     if(!$served_customers->contains('mobile',$order->customer->profile->mobile))
-                                    $customer_info = [
-                                        'name'  =>$order->customer->profile->name,
-                                        'mobile' => $order->customer->profile->mobile,
-                                        'image'=> $order->customer->profile->pro_pic,
-                                        'category' => $jobs[0]->category->name
-                                    ];
+                                        $customer_info = [
+                                            'name'  =>$order->customer->profile->name,
+                                            'mobile' => $order->customer->profile->mobile,
+                                            'image'=> $order->customer->profile->pro_pic,
+                                            'category' => $jobs[0]->category->name
+                                        ];
                                 }
 
                             }
