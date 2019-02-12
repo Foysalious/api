@@ -61,18 +61,16 @@ class CustomerOrderController extends Controller
                 });
 
 
-
             } else {
                 $all_jobs = collect();
             }
 
             return count($all_jobs) > 0 ? api_response($request, $all_jobs, 200, ['orders' => $all_jobs->values()->all()]) : api_response($request, null, 404);
-        } catch ( ValidationException $e ) {
+        } catch (ValidationException $e) {
             app('sentry')->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch ( \Throwable $e ) {
-            dd($e);
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -82,9 +80,9 @@ class CustomerOrderController extends Controller
     {
         $review = $job->review;
 
-        if(!is_null($review) && $review->rating > 0) {
+        if (!is_null($review) && $review->rating > 0) {
             return false;
-        } else if($job->partnerOrder->closed_at) {
+        } else if ($job->partnerOrder->closed_at) {
             $closed_date = Carbon::parse($job->partnerOrder->closed_at);
             $now = Carbon::now();
             $difference = $closed_date->diffInDays($now);
@@ -100,7 +98,7 @@ class CustomerOrderController extends Controller
         $due = $job->partnerOrder->calculate(true)->due;
         $status = $job->status;
 
-        if(in_array($status, ['Served', 'Declined', 'Cancelled']))
+        if (in_array($status, ['Served', 'Declined', 'Cancelled']))
             return false;
         else {
             return $due > 0;
@@ -147,7 +145,7 @@ class CustomerOrderController extends Controller
             removeRelationsAndFields($partner_order);
             $partner_order['jobs'] = $final;
             return api_response($request, $partner_order, 200, ['orders' => $partner_order]);
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -171,8 +169,8 @@ class CustomerOrderController extends Controller
             'preferred_time' => $job->preferred_time ? humanReadableShebaTime($job->preferred_time) : null,
             'readable_status' => constants('JOB_STATUSES_SHOW')[$job->status]['customer'],
             'status' => $job->status,
-            'is_on_premise' => (int) $job->isOnPremise(),
-            'customer_favorite' => !empty($job->customerFavorite) ? $job->customerFavorite->id: null,
+            'is_on_premise' => (int)$job->isOnPremise(),
+            'customer_favorite' => !empty($job->customerFavorite) ? $job->customerFavorite->id : null,
             'isRentCar' => $job->isRentCar(),
             'status_color' => constants('JOB_STATUSES_COLOR')[$job->status]['customer'],
             'partner_name' => $partnerOrder->partner->name,

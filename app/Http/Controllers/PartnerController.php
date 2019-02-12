@@ -254,7 +254,6 @@ class PartnerController extends Controller
             $info->put('geo_informations', $geo_informations);
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
