@@ -480,10 +480,35 @@ return [
     'WEEK_DAYS' => ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
     'PARTNER_BADGE' => [
         'silver' => 'silver',
-        'gold'   => 'gold'
+        'gold' => 'gold'
     ],
-    'MODERATOR_DISTANCE_THRESHOLD'=>500,
+    'MODERATOR_DISTANCE_THRESHOLD' => 500,
     'AFFILIATION_LITE_ONBOARD_REWARD' => 10,
     'AFFILIATION_LITE_ONBOARD_MODERATION_REWARD' => 10,
     'CUSTOMER_REVIEW_OPEN_DAY_LIMIT' => 14,
+    'SMS_CAMPAIGN' => [
+        'rate_per_sms' => 0.30
+    ],
+    'LITE_PARTNER_REJECT_REASON' => [
+        [
+            'text' => 'Fake Request',
+            'value' => 'fake_request'
+        ],
+        [
+            'text' => 'Wrong Address',
+            'value' => 'wrong_address'
+        ],
+        [
+            'text' => 'Incorrect Service Category',
+            'value' => 'incorrect_service_category'
+        ],
+        [
+            'text' => 'Invalid Service',
+            'value' => 'invalid_service'
+        ],
+        [
+            'text' => 'Other',
+            'value' => 'other'
+        ]
+    ]
 ];
