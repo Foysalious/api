@@ -1028,8 +1028,9 @@ class PartnerController extends Controller
     {
         try{
             $order_ids = PartnerOrder::where('partner_id',$partner)->whereNotNull('closed_at')->pluck('order_id');
-            $orders = Order::whereIn('id',$order_ids)->with(['customer.profile','jobs.category'])->groupBy('customer_id')->get();
-            $served_customers = [];
+            $orders = Order::whereIn('id',$order_ids)->with(['customer.profile','jobs.category'])->orderBy('created_at','desc')->get();
+
+            $served_customers = collect();
             foreach ($orders as $order) {
                 $customer_info = [];
                 if($order)
@@ -1037,17 +1038,20 @@ class PartnerController extends Controller
                         if($order->customer->profile && $order->jobs) {
                             $jobs = $order->jobs()->orderBy('created_at','desc')->get();
                             if(isset($jobs[0])) {
-                                if($order->customer->profile->mobile)
-                                $customer_info = [
-                                    'name'  =>$order->customer->profile->name,
-                                    'mobile' => $order->customer->profile->mobile,
-                                    'image'=> $order->customer->profile->pro_pic,
-                                    'category' => $jobs[0]->category->name
-                                ];
+                                if($order->customer->profile->mobile) {
+                                    if(!$served_customers->contains('mobile',$order->customer->profile->mobile))
+                                    $customer_info = [
+                                        'name'  =>$order->customer->profile->name,
+                                        'mobile' => $order->customer->profile->mobile,
+                                        'image'=> $order->customer->profile->pro_pic,
+                                        'category' => $jobs[0]->category->name
+                                    ];
+                                }
+
                             }
                         }
                 if(count($customer_info)>0)
-                    array_push($served_customers,$customer_info);
+                    $served_customers->push($customer_info);
             }
             return api_response($request, $served_customers, 200, ['customers' => $served_customers]);
         } catch (\Throwable $e) {
