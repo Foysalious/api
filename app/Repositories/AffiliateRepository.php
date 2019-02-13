@@ -35,8 +35,8 @@ class AffiliateRepository
                 return $qu->where('moderation_status', 'rejected')->orWhere('moderation_status', 'approved');
             });
             if ($query) {
-                $q->where(function ($query) {
-                    return $query->where('name', 'LIKE', '%' . $query . '%')->orWhere('mobile', 'LIKE', '%' . $query . '%');
+                $q->where(function ($qu) use ($query) {
+                    return $qu->where('name', 'LIKE', '%' . $query . '%')->orWhere('mobile', 'LIKE', '%' . $query . '%');
                 });
             }
         }]);
