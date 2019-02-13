@@ -99,4 +99,30 @@ class LitePartnerOnBoardingController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function litePartnerDetails(Request $request, AffiliateRepository $repo)
+    {
+        try {
+            $this->validate($request, [
+                'partner_id' => 'required|numeric'
+            ]);
+            $partner = Partner::find($request->partner_id);
+            $affiliate = $repo->moderatedPartner($request, 'pending');
+
+            if (!is_null($partner)) {
+                if($affiliate->id == $partner->moderator_id) {
+                    $partner = $repo->mapForModerationApi($partner);
+                    return api_response($request, $partner, 200, ['name' => $partner]);
+                }
+                else api_response($request, [], 403, ['message' => 'Partner is not moderated by you.']);
+            }
+            return api_response($request, [], 404, ['message' => 'Partner not found.']);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }

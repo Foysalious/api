@@ -29,6 +29,7 @@ class AffiliateRoute
             $api->get('lite-sp-reject-reasons', 'Affiliate\\LitePartnerOnBoardingController@rejectReason');
             $api->get('lite-sp-pending', 'Affiliate\\LitePartnerOnBoardingController@litePartners');
             $api->get('lite-sp-history', 'Affiliate\\LitePartnerOnBoardingController@history');
+            $api->get('lite-sp-details', 'Affiliate\\LitePartnerOnBoardingController@litePartnerDetails');
             $api->post('moderate/{partner_id}/accept', 'Affiliate\\LitePartnerOnBoardingController@acceptRequest');
             $api->post('moderate/{partner_id}/reject', 'Affiliate\\LitePartnerOnBoardingController@rejectRequest');
             $api->post('refer', 'Auth\PartnerRegistrationController@registerReferAffiliate');
