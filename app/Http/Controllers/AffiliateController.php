@@ -81,7 +81,9 @@ class AffiliateController extends Controller
     public function getStatus($affiliate, Request $request)
     {
         try {
-            $affiliate = Affiliate::where('id', $affiliate)->select('verification_status', 'is_suspended', 'ambassador_code', 'is_ambassador')->first();
+            $affiliate = Affiliate::where('id', $affiliate)
+                ->select('verification_status', 'is_suspended', 'ambassador_code', 'is_ambassador', 'is_moderator')
+                ->first();
             return $affiliate != null ? response()->json(['code' => 200, 'affiliate' => $affiliate]) : response()->json(['code' => 404, 'msg' => 'Not found!']);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
