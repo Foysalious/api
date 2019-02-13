@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\Partner;
+use App\Sheba\LightOnBoarding\PartnerModerator;
 
 class AffiliateRepository
 {
@@ -27,8 +28,7 @@ class AffiliateRepository
         list($offset, $limit) = calculatePagination($request);
         $query = $request->get('query');
         return $request->affiliate->load(['onboardedPartners' => function ($q) use ($offset, $limit, $status, $query) {
-            $q->offset($offset)->limit($limit)
-                ->with('resources.profile')->orderBy('created_at', 'desc')->where('package_id', 1);
+            $q->with('resources.profile')->orderBy('created_at', 'desc')->where('package_id', 1);
             if ($status == 'pending') {
                 $q->where(function ($qu) {
                     $qu->where('moderation_status', 'pending')->orWhereNull('moderation_status');
@@ -36,7 +36,7 @@ class AffiliateRepository
             } else {
                 $q->where(function ($qu) {
                     return $qu->where('moderation_status', 'rejected')->orWhere('moderation_status', 'approved');
-                });
+                })->offset($offset)->limit($limit);
             }
             if ($query) {
                 $q->where(function ($qu) use ($query) {
@@ -48,7 +48,7 @@ class AffiliateRepository
         }]);
     }
 
-    public function mapForModerationApi(Partner $partner)
+    public function mapForModerationApi(Partner $partner, $source = null)
     {
         $resource = $partner->getFirstAdminResource();
         $geo_info = json_decode($partner->geo_informations);
@@ -69,7 +69,8 @@ class AffiliateRepository
             'created_at' => $partner->created_at->toDateTimeString(),
             'services' => $partner->services()->select('services.id', 'services.name')->get()->map(function ($service) {
                 return ['name' => $service->name, 'id' => $service->id];
-            })
+            }),
+            'distance' => $source && $geo_info ? PartnerModerator::calculateDistance($source, (array)$geo_info) : 9999999999
         ];
     }
 }
