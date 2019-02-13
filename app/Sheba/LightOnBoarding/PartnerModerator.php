@@ -97,7 +97,10 @@ class PartnerModerator
         try {
             if ($this->validateRequest($data)) {
                 DB::beginTransaction();
-                $this->setPartnerData('rejected');
+                if (!isset($data['reject_reason'])) {
+                    $data['reject_reason'] = 'Not Set';
+                }
+                $this->setPartnerData('rejected', $data['reject_reason']);
                 if ($this->moderatorRole == 'moderator') {
                     $this->affiliationRewards->setModerator($this->moderator)
                         ->payModerator($this->partner, 'reject');
@@ -119,7 +122,7 @@ class PartnerModerator
         if (!empty($partner->geo_informations)) {
             $geo_info = json_decode($partner->geo_informations, true);
             $partner_radius = $geo_info['radius'] * 1000; // From KM to Meter
-            $dist = $this->calculateDistance($source, $geo_info);
+            $dist = self::calculateDistance($source, $geo_info);
             if ($dist < $partner_radius && $dist <= $this->distanceThreshold) {
             } else {
                 throw new ModeratorDistanceExceedException();
@@ -129,7 +132,7 @@ class PartnerModerator
         }
     }
 
-    private function setPartnerData($status)
+    private function setPartnerData($status, $reason = null)
     {
         $this->partner->moderation_status = $status;
         if ($status == 'accepted') {
@@ -139,6 +142,7 @@ class PartnerModerator
                 $this->partner->affiliation_cost = $this->affiliationRewards->getAffiliationCost();
             }
         } else {
+            $this->partner->moderation_log = $reason;
             if ($this->moderatorRole == 'moderator') {
                 $this->partner->affiliation_cost = $this->affiliationRewards->getModerationCost();
             } else if ($this->moderatorRole == 'admin') {
@@ -148,9 +152,9 @@ class PartnerModerator
         $this->partner->save();
     }
 
-    private function calculateDistance($source, $dest)
+    public static function calculateDistance($source, $dest)
     {
-        return $this->vincentyGreatCircleDistance(floatval($source['lat']), floatval($source['lng']), floatval($dest['lat']), floatval($dest['lng']));
+        return self::vincentyGreatCircleDistance(floatval($source['lat']), floatval($source['lng']), floatval($dest['lat']), floatval($dest['lng']));
     }
 
     /**
@@ -163,7 +167,7 @@ class PartnerModerator
      * @param float $earthRadius Mean earth radius in [m]
      * @return float Distance between points in [m] (same as earthRadius)
      */
-    public static function vincentyGreatCircleDistance(
+    private static function vincentyGreatCircleDistance(
         $latitudeFrom, $longitudeFrom, $latitudeTo, $longitudeTo, $earthRadius = 6371000.0)
     {
         // convert from degrees to radians
