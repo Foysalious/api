@@ -25,11 +25,14 @@ class AffiliateRoute
             $api->get('personal-info', 'AffiliateController@getPersonalInformation');
             $api->post('top-up-test', 'TopUpController@topUpTest');
             $api->get('onboarded-partners', 'Affiliate\\LitePartnerOnBoardingController@index');
+            $api->get('lite-sp-reject-reasons', 'Affiliate\\LitePartnerOnBoardingController@rejectReason');
+            $api->get('lite-sp-pending', 'Affiliate\\LitePartnerOnBoardingController@litePartners');
+            $api->get('lite-sp-history', 'Affiliate\\LitePartnerOnBoardingController@history');
             $api->post('moderate/{partner_id}/accept', 'Affiliate\\LitePartnerOnBoardingController@acceptRequest');
             $api->post('moderate/{partner_id}/reject', 'Affiliate\\LitePartnerOnBoardingController@rejectRequest');
             $api->post('refer', 'Auth\PartnerRegistrationController@registerReferAffiliate');
         });
-        $api->post('eksheba/save','EkshebaController@saveEkshebaData');
+        $api->post('eksheba/save', 'EkshebaController@saveEkshebaData');
         $api->get('affiliates/faq', 'FaqController@getAffiliateFaqs');
     }
 }
