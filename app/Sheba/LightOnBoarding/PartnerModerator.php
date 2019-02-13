@@ -122,7 +122,7 @@ class PartnerModerator
         if (!empty($partner->geo_informations)) {
             $geo_info = json_decode($partner->geo_informations, true);
             $partner_radius = $geo_info['radius'] * 1000; // From KM to Meter
-            $dist = $this->calculateDistance($source, $geo_info);
+            $dist = self::calculateDistance($source, $geo_info);
             if ($dist < $partner_radius && $dist <= $this->distanceThreshold) {
             } else {
                 throw new ModeratorDistanceExceedException();
@@ -152,9 +152,9 @@ class PartnerModerator
         $this->partner->save();
     }
 
-    private function calculateDistance($source, $dest)
+    public static function calculateDistance($source, $dest)
     {
-        return $this->vincentyGreatCircleDistance(floatval($source['lat']), floatval($source['lng']), floatval($dest['lat']), floatval($dest['lng']));
+        return self::vincentyGreatCircleDistance(floatval($source['lat']), floatval($source['lng']), floatval($dest['lat']), floatval($dest['lng']));
     }
 
     /**
@@ -167,7 +167,7 @@ class PartnerModerator
      * @param float $earthRadius Mean earth radius in [m]
      * @return float Distance between points in [m] (same as earthRadius)
      */
-    public static function vincentyGreatCircleDistance(
+    private static function vincentyGreatCircleDistance(
         $latitudeFrom, $longitudeFrom, $latitudeTo, $longitudeTo, $earthRadius = 6371000.0)
     {
         // convert from degrees to radians
