@@ -184,6 +184,25 @@ class FaqController extends Controller
 
                     )
                 ),
+                array(
+                    'group_label_bn' => 'মডারেটর',
+                    'group_label_en' => 'Moderator',
+                    'group_name' => 'moderator',
+                    'questions' => array(
+                        array(
+                            'question_bn' => 'মডারেটর কে?',
+                            'answer_bn' => ' মডারেটর এমন একজন ব্যাক্তি যে সার্ভিস প্রোভাইডারের তথ্যের সত্যতা যাচাই করেন। এডমিন হতে মডারেটর নিয়োগ করা হয়।',
+                            'question_en' => 'Who is the Moderator?',
+                            'answer_en'=> 'Moderator is the person who has the authority to moderate service provider information. Moderator is assigned by Sheba.xyz Admin.'
+                        ),
+                        array(
+                            'question_bn' => 'সার্ভিস প্রোভাইডার মডারেট করব কিভাবে?',
+                            'answer_bn' => 'আপনাকে কোন সার্ভিস প্রোভাইডার মডারেট করতে এসাইন করা হলে আপনি আপনার মডারেটর প্যানেল এ তাকে দেখতে পাবেন।',
+                            'question_en' => 'How can I moderate any Service Provider?',
+                            'answer_en'=> 'If any Service Provider assigned to the moderator for moderation that service provider will show in moderator panel. Moderator has to go to the Service Provider location confirm that the data given by Service provider is valid. If data is not valid then the moderator can reject the Service Provider with proper reason.'
+                        ),
+                    )
+                ),
             );
 
             return api_response($request, $faqs, 200, ['faqs' => $faqs]);
