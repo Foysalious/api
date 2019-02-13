@@ -72,6 +72,7 @@ class AffiliateRepository
         if (!$isDetails) {
             $details['distance'] = $source && $geo_info ? PartnerModerator::calculateDistance($source, (array)$geo_info) : 9999999999;
         } else {
+            $details['geo_informations'] = $partner->geo_informations ? json_decode($partner->geo_informations) : '';
             $details ['services'] = $partner->services()->select('services.id', 'services.name')->get()->map(function ($service) {
                 return ['name' => $service->name, 'id' => $service->id];
             });
