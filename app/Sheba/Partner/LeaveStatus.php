@@ -25,7 +25,6 @@ class LeaveStatus
     public function getCurrentStatus()
     {
         $leave = $this->partner->runningLeave();
-        dd(2, $leave);
         return [
             'status' => $leave ? true : false,
             'on_leave_from' => $leave ? $leave->start->format('Y-m-d h:i:s') : null
@@ -34,7 +33,6 @@ class LeaveStatus
 
     public function changeStatus()
     {
-        #dd(1, $this->partner->runningLeave());
         if($leave = $this->partner->runningLeave())
             $this->endLeave($leave);
         else
@@ -57,7 +55,7 @@ class LeaveStatus
         }
 
         $partner_leave = $this->partner->leaves()->save(new PartnerLeave($this->withCreateModificationField($data)));
-        //$this->notifyPMAndSBUForPartnerLeave($partner_leave, $data['start'], $data['end']);
+        $this->notifyPMAndSBUForPartnerLeave($partner_leave, $data['start'], $data['end']);
     }
 
 
