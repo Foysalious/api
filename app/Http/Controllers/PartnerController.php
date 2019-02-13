@@ -36,6 +36,7 @@ use Redis;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
 use Sheba\Manager\JobList;
 use Sheba\ModificationFields;
+use Sheba\Partner\LeaveStatus;
 use Sheba\Reward\PartnerReward;
 use Validator;
 
@@ -502,6 +503,8 @@ class PartnerController extends Controller
             $info->put('total_services', $partner->services->count());
             $info->put('total_resources', $partner->resources->count());
             $info->put('wallet', $partner->wallet);
+            $info->put('leave_status',  (new LeaveStatus($partner))->getCurrentStatus());
+
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -1055,6 +1058,17 @@ class PartnerController extends Controller
             }
             return api_response($request, $served_customers, 200, ['customers' => $served_customers]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function changeLeaveStatus($partner, Request $request)
+    {
+        try {
+            return (new LeaveStatus(Partner::find($partner)))->changeStatus()->getCurrentStatus();
+        } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
