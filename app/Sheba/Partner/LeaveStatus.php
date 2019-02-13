@@ -24,7 +24,7 @@ class LeaveStatus
 
     public function getCurrentStatus()
     {
-        $leave = $this->partner->runningLeave();  
+        $leave = $this->partner->runningLeave();
         return [
             'status' => $leave ? true : false,
             'on_leave_from' => $leave ? $leave->start->format('Y-m-d h:i:s') : null
