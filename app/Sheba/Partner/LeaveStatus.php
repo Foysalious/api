@@ -24,17 +24,17 @@ class LeaveStatus
 
     public function getCurrentStatus()
     {
-        dd($this->partner->runningLeave());
+        $leave = $this->partner->runningLeave();
         return [
-            'status' => $this->partner->runningLeave() ? true : false,
-            'on_leave_from' => $this->partner->runningLeave() ? $this->partner->runningLeave()->start->format('Y-m-d h:i:s') : null
+            'status' => $leave ? true : false,
+            'on_leave_from' => $leave ? $leave->start->format('Y-m-d h:i:s') : null
         ];
     }
 
     public function changeStatus()
     {
-        if($this->partner->runningLeave())
-            $this->endLeave($this->partner->runningLeave()->id);
+        if($leave = $this->partner->runningLeave())
+            $this->endLeave($leave);
         else
             $this->leave();
 
@@ -64,9 +64,8 @@ class LeaveStatus
         $leave->update($this->withUpdateModificationField($data));
     }
 
-    private function endLeave($id)
+    private function endLeave(PartnerLeave $leave)
     {
-        $leave = PartnerLeave::find($id);
         if($leave->isRunning()) {
             $this->_update($leave, ['end' => Carbon::now()]);
         }

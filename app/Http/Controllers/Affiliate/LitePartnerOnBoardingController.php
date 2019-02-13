@@ -66,24 +66,26 @@ class LitePartnerOnBoardingController extends Controller
         }
     }
 
-    public function litePartners(Request $request, AffiliateRepository $repo)
+    public function rejectReason(Request $request)
+    {
+        $reasons = constants('LITE_PARTNER_REJECT_REASON');
+        return api_response($request, $reasons, 200, ['reasons' => $reasons]);
+    }
+
+    public function litePartners(PartnerOnBoardModerationRequest $request, AffiliateRepository $repo)
     {
         try {
+            list($offset, $limit) = calculatePagination($request);
             $affiliate = $repo->moderatedPartner($request, 'pending');
-            $partners = $affiliate->onboardedPartners->map(function (Partner $partner) use ($repo) {
-                return $repo->mapForModerationApi($partner);
-            });
+            $source = ['lat' => $request->get('lat'), 'lng' => $request->get('lng')];
+            $partners = $affiliate->onboardedPartners->map(function (Partner $partner) use ($repo, $source) {
+                return $repo->mapForModerationApi($partner, $source);
+            })->sortByDesc('distance')->forPage(($offset - 1), $limit)->values();
             return api_response($request, $partners, 200, ['partners' => $partners]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-    }
-
-    public function rejectReason(Request $request)
-    {
-        $reasons = constants('LITE_PARTNER_REJECT_REASON');
-        return api_response($request, $reasons, 200, ['reasons' => $reasons]);
     }
 
     public function history(Request $request, AffiliateRepository $repo)

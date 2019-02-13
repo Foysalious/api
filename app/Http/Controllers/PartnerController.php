@@ -1066,7 +1066,8 @@ class PartnerController extends Controller
     public function changeLeaveStatus($partner, Request $request)
     {
         try {
-            return (new LeaveStatus(Partner::find($partner)))->changeStatus()->getCurrentStatus();
+            $status = (new LeaveStatus(Partner::find($partner)))->changeStatus()->getCurrentStatus();
+            return api_response($request, $status, 200, ['status' => $status]);
         } catch (\Throwable $e) {
             dd($e);
             app('sentry')->captureException($e);
