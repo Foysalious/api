@@ -375,11 +375,6 @@ class Checkout
                     ->check($data['category_id'], $partner->id, $data['location_id'], $data['customer_id'], $order_amount, $data['sales_channel'])
                     ->reveal();
                 if ($result['is_valid']) $valid = 1;
-            } else {
-                $voucherSuggester = new VoucherSuggester(app(Voucher::class), app(Customer::class));
-                $voucherSuggester->init($this->customer, $data['category_id'], $partner->id, $data['location_id'], $order_amount, $data['sales_channel']);
-                $result = $voucherSuggester->suggest();
-                if ($result) $valid = 1;
             }
             if ($valid) {
                 $data['discount'] = (double)$result['amount'];
