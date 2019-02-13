@@ -113,7 +113,7 @@ class LitePartnerOnBoardingController extends Controller
 
             if (!is_null($partner)) {
                 if($affiliate->id == $partner->moderator_id) {
-                    $partner = $repo->mapForModerationApi($partner);
+                    $partner = $repo->mapForModerationApi($partner, null , true);
                     return api_response($request, $partner, 200, ['name' => $partner]);
                 }
                 else api_response($request, [], 403, ['message' => 'Partner is not moderated by you.']);
