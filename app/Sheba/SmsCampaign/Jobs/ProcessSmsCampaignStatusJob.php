@@ -42,9 +42,14 @@ class ProcessSmsCampaignStatusJob extends Job implements ShouldQueue
                 $this->campaignOrderReceiver->status = constants('SMS_CAMPAIGN_RECEIVER_STATUSES.successful');
                 $this->campaignOrderReceiver->save();
             } else {
-                $this->campaignOrderReceiver->status = constants('SMS_CAMPAIGN_RECEIVER_STATUSES.failed');
-                $this->campaignOrderReceiver->save();
-                $this->campaignOrderReceiver->refundIfFailed();
+                if($this->isPending($handler)) {
+                    $this->campaignOrderReceiver->status = constants('SMS_CAMPAIGN_RECEIVER_STATUSES.pending');
+                    $this->campaignOrderReceiver->save();
+                } else{
+                    $this->campaignOrderReceiver->status = constants('SMS_CAMPAIGN_RECEIVER_STATUSES.failed');
+                    $this->campaignOrderReceiver->save();
+                    $this->campaignOrderReceiver->refundIfFailed();
+                }
             }
         }
     }
@@ -54,12 +59,19 @@ class ProcessSmsCampaignStatusJob extends Job implements ShouldQueue
         $response = ($sms_handler->getSingleMessage($this->campaignOrderReceiver->message_id));
         if($response)
             return $response['status']['name'];
-        return 'FAILED';
+        return 'PENDING';
     }
 
     private function isSuccessfullySent(SmsHandler $handler)
     {
         if (strpos($this->getOrderStatus($handler), 'DELIVERED') !== false)
+            return true;
+        return false;
+    }
+
+    private function isPending(SmsHandler $handler)
+    {
+        if (strpos($this->getOrderStatus($handler), 'PENDING') !== false)
             return true;
         return false;
     }

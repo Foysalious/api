@@ -97,7 +97,10 @@ class PartnerModerator
         try {
             if ($this->validateRequest($data)) {
                 DB::beginTransaction();
-                $this->setPartnerData('rejected');
+                if (!isset($data['reject_reason'])) {
+                    $data['reject_reason'] = 'Not Set';
+                }
+                $this->setPartnerData('rejected', $data['reject_reason']);
                 if ($this->moderatorRole == 'moderator') {
                     $this->affiliationRewards->setModerator($this->moderator)
                         ->payModerator($this->partner, 'reject');
@@ -129,7 +132,7 @@ class PartnerModerator
         }
     }
 
-    private function setPartnerData($status)
+    private function setPartnerData($status, $reason = null)
     {
         $this->partner->moderation_status = $status;
         if ($status == 'accepted') {
@@ -139,6 +142,7 @@ class PartnerModerator
                 $this->partner->affiliation_cost = $this->affiliationRewards->getAffiliationCost();
             }
         } else {
+            $this->partner->moderation_log = $reason;
             if ($this->moderatorRole == 'moderator') {
                 $this->partner->affiliation_cost = $this->affiliationRewards->getModerationCost();
             } else if ($this->moderatorRole == 'admin') {

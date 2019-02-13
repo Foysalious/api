@@ -3,6 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PartnerOnBoardModerationRequest;
 use App\Models\Partner;
+use App\Repositories\AffiliateRepository;
 use Illuminate\Http\Request;
 use App\Sheba\LightOnBoarding\PartnerModerator;
 
@@ -12,7 +13,7 @@ class LitePartnerOnBoardingController extends Controller
     {
         try {
             list($offset, $limit) = calculatePagination($request);
-            $affiliate = $request->affiliate->load(['onboardedPartners' => function($q) use ($offset, $limit) {
+            $affiliate = $request->affiliate->load(['onboardedPartners' => function ($q) use ($offset, $limit) {
                 $q->offset($offset)->limit($limit)->with('resources.profile')->orderBy('created_at', 'desc');
             }]);
             $partners = $affiliate->onboardedPartners->map(function (Partner $partner) {
@@ -62,6 +63,40 @@ class LitePartnerOnBoardingController extends Controller
             app('sentry')->captureException($e);
             $code = $e->getCode();
             return api_response($request, null, 500, ['message' => $e->getMessage(), 'code' => $code ? $code : 500]);
+        }
+    }
+
+    public function litePartners(Request $request, AffiliateRepository $repo)
+    {
+        try {
+            $affiliate = $repo->moderatedPartner($request, 'pending');
+            $partners = $affiliate->onboardedPartners->map(function (Partner $partner) use ($repo) {
+                return $repo->mapForModerationApi($partner);
+            });
+            return api_response($request, $partners, 200, ['partners' => $partners]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function rejectReason(Request $request)
+    {
+        $reasons = constants('LITE_PARTNER_REJECT_REASON');
+        return api_response($request, $reasons, 200, ['reasons' => $reasons]);
+    }
+
+    public function history(Request $request, AffiliateRepository $repo)
+    {
+        try {
+            $affiliate = $repo->moderatedPartner($request);
+            $partners = $affiliate->onboardedPartners->map(function (Partner $partner) use ($repo) {
+                return $repo->mapForModerationApi($partner);
+            });
+            return api_response($request, $partners, 200, ['partners' => $partners]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
         }
     }
 }

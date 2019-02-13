@@ -36,6 +36,7 @@ use Redis;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
 use Sheba\Manager\JobList;
 use Sheba\ModificationFields;
+use Sheba\Partner\LeaveStatus;
 use Sheba\Reward\PartnerReward;
 use Validator;
 
@@ -502,6 +503,8 @@ class PartnerController extends Controller
             $info->put('total_services', $partner->services->count());
             $info->put('total_resources', $partner->resources->count());
             $info->put('wallet', $partner->wallet);
+            $info->put('leave_status',  (new LeaveStatus($partner))->getCurrentStatus());
+
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -1027,44 +1030,45 @@ class PartnerController extends Controller
     public function getServedCustomers($partner, Request $request)
     {
         try{
-            $order_ids = PartnerOrder::where('partner_id',$partner)->whereNotNull('closed_at')->pluck('order_id');
-            $orders = Order::whereIn('id',$order_ids)->with(['customer.profile','jobs.category'])->groupBy('customer_id')->get();
-            $served_customers = [];
+            $order_ids = PartnerOrder::where('partner_id',$partner)->whereNotNull('closed_and_paid_at')->pluck('order_id');
+            $orders = Order::whereIn('id',$order_ids)->with(['customer.profile','jobs.category'])->orderBy('created_at','desc')->get();
+
+            $served_customers = collect();
             foreach ($orders as $order) {
                 $customer_info = [];
                 if($order)
                     if($order->customer && $order->jobs)
                         if($order->customer->profile && $order->jobs) {
-                            $jobs = $order->jobs;
+                            $jobs = $order->jobs()->orderBy('created_at','desc')->get();
                             if(isset($jobs[0])) {
-                                $customer_info = [
-                                    'name'  =>$order->customer->profile->name,
-                                    'mobile' => $order->customer->profile->mobile,
-                                    'image'=> $order->customer->profile->pro_pic,
-                                    'category' => $jobs[0]->category->name
-                                ];
+                                if($order->customer->profile->mobile) {
+                                    if(!$served_customers->contains('mobile',$order->customer->profile->mobile))
+                                        $customer_info = [
+                                            'name'  =>$order->customer->profile->name,
+                                            'mobile' => $order->customer->profile->mobile,
+                                            'image'=> $order->customer->profile->pro_pic,
+                                            'category' => $jobs[0]->category->name
+                                        ];
+                                }
+
                             }
                         }
                 if(count($customer_info)>0)
-                    array_push($served_customers,$customer_info);
+                    $served_customers->push($customer_info);
             }
-
-            $served_customers = [
-                 [
-                    'name'  => 'Sakib',
-                    'mobile' =>'+8801869715616',
-                    'image'=> 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/profiles/avatar/default.jpg',
-                    'category' =>'Moving Homes'
-                ],
-                [
-                    'name'  => 'Sakib',
-                    'mobile' =>'+8801620011003',
-                    'image'=> 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/profiles/avatar/default.jpg',
-                    'category' =>'Moving Homes'
-                ],
-            ];
             return api_response($request, $served_customers, 200, ['customers' => $served_customers]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function changeLeaveStatus($partner, Request $request)
+    {
+        try {
+            return (new LeaveStatus(Partner::find($partner)))->changeStatus()->getCurrentStatus();
+        } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

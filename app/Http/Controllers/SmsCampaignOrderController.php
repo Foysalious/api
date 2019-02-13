@@ -50,14 +50,19 @@ class SmsCampaignOrderController extends Controller
         try {
             $partner = Partner::find($partner);
             $url_to_shorten = config('sheba.front_url').'/partners/'.$partner->sub_domain;
-
             if(!$partner->bitly_url) {
                 $deep_link = $shortenUrl->shorten('bit.ly',$url_to_shorten)['link'];
                 $partner->bitly_url = $deep_link;
                 $partner->save();
             }
             $deep_link = $partner->bitly_url;
+
             $templates =  config('sms_campaign_templates');
+            foreach ($templates as $index => $template) {
+                $template = (object) $template;
+                $template->message.=' '.$deep_link;
+                $templates[$index] = $template;
+            }
             return api_response($request, null, 200, ['templates' => $templates, 'deep_link' => $deep_link]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -69,7 +74,7 @@ class SmsCampaignOrderController extends Controller
     public function getHistory($partner, Request $request)
     {
         try {
-            $history = SmsCampaignOrder::where('partner_id',$partner)->with('order_receivers')->get();
+            $history = SmsCampaignOrder::where('partner_id',$partner)->with('order_receivers')->orderBy('created_at','desc')->get();
             $total_history = [];
             foreach ($history as $item) {
                 $current_history = [
@@ -103,18 +108,6 @@ class SmsCampaignOrderController extends Controller
                 'sms_rate' => $details->rate_per_sms,
                 'created_at' => $details->created_at->format('Y-m-d H:i:s')
             ];
-            return api_response($request, null, 200, ['details' => $data]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            $code = $e->getCode();
-            return api_response($request, null, 500, ['message' => $e->getMessage(), 'code' => $code ? $code : 500]);
-        }
-    }
-
-    public function getFaq($partner, Request $request)
-    {
-        try{
-
             return api_response($request, null, 200, ['details' => $data]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
