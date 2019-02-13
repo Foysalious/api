@@ -22,6 +22,7 @@ class AffiliateRoute
             $api->get('customer-delivery-address', 'CustomerDeliveryAddressController@getDeliveryInfoForAffiliate');
             $api->post('customer-delivery-address', 'CustomerDeliveryAddressController@storeDeliveryAddressForAffiliate');
             $api->get('customer-info', 'AffiliateController@getCustomerInfo');
+            $api->get('partner-info', 'AffiliateController@getPartnerInfo');
             $api->get('personal-info', 'AffiliateController@getPersonalInformation');
             $api->post('top-up-test', 'TopUpController@topUpTest');
             $api->get('onboarded-partners', 'Affiliate\\LitePartnerOnBoardingController@index');

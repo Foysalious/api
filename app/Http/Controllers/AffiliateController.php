@@ -8,6 +8,7 @@ use App\Models\PartnerTransaction;
 use App\Models\Resource;
 use App\Models\Service;
 use App\Models\Customer;
+use App\Models\Partner;
 use App\Models\Profile;
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
@@ -609,6 +610,29 @@ class AffiliateController extends Controller
             $profile = Profile::where('mobile', '+88' . $request->mobile)->first();
             if (!is_null($profile)) {
                 $customer_name = $profile->name;
+
+                return api_response($request, $customer_name, 200, ['name' => $customer_name]);
+            }
+            return api_response($request, [], 404, ['message' => 'Customer not found.']);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getPartnerInfo(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'partner_id' => 'required|numeric'
+            ]);
+            $partner = Partner::find($request->partner_id);
+            dd($partner->affiliate_id, $partner->moderator_id);
+            if (!is_null($partner)) {
+                $customer_name = $partner->name;
 
                 return api_response($request, $customer_name, 200, ['name' => $customer_name]);
             }
