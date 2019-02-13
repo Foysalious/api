@@ -28,7 +28,7 @@ class SmsCampaignOrderController extends Controller
     {
         try {
             $requests = $request->all();
-            return api_response($request, null, 200, ['requests' =>$requests, 'code' => 200]);
+            if(!isset($requests['partner'])) $requests['partner'] = Partner::find($partner_id);
             $campaign = $campaign->formatRequest($requests);
             if($campaign->partnerHasEnoughBalance()){
                 if($campaign->createOrder()) {
