@@ -2,8 +2,6 @@
 
 namespace App\Repositories;
 
-
-use App\Models\HyperLocal;
 use App\Models\Partner;
 
 class AffiliateRepository
@@ -31,12 +29,20 @@ class AffiliateRepository
         return $request->affiliate->load(['onboardedPartners' => function ($q) use ($offset, $limit, $status, $query) {
             $q->offset($offset)->limit($limit)
                 ->with('resources.profile')->orderBy('created_at', 'desc')->where('package_id', 1);
-            $status == 'pending' ? $q->where('moderation_status', $status) : $q->where(function ($qu) {
-                return $qu->where('moderation_status', 'rejected')->orWhere('moderation_status', 'approved');
-            });
+            if ($status == 'pending') {
+                $q->where(function ($qu) {
+                    $qu->where('moderation_status', 'pending')->orWhereNull('moderation_status');
+                });
+            } else {
+                $q->where(function ($qu) {
+                    return $qu->where('moderation_status', 'rejected')->orWhere('moderation_status', 'approved');
+                });
+            }
             if ($query) {
                 $q->where(function ($qu) use ($query) {
-                    return $qu->where('name', 'LIKE', '%' . $query . '%')->orWhere('mobile', 'LIKE', '%' . $query . '%');
+                    return $qu->where('name', 'LIKE', '%' . $query . '%')->orWhereHas('resources.profile', function ($qq) use ($query) {
+                        $qq->where('mobile', 'LIKE', '%' . $query . '%');
+                    });
                 });
             }
         }]);
@@ -55,11 +61,15 @@ class AffiliateRepository
                 'name' => $resource->profile->name,
                 'mobile' => $resource->profile->mobile,
             ],
+            'address' => $partner->address,
             'location' => $location ? $location->name : null,
             'location_id' => $location ? $location->id : null,
             'moderation_status' => $partner->moderation_status,
             'income' => $partner->moderation_status == 'approved' ? constants('AFFILIATION_LITE_ONBOARD_REWARD') : 0,
-            'created_at' => $partner->created_at->toDateTimeString()
+            'created_at' => $partner->created_at->toDateTimeString(),
+            'services' => $partner->services()->select('services.id', 'services.name')->get()->map(function ($service) {
+                return ['name' => $service->name, 'id' => $service->id];
+            })
         ];
     }
 }
