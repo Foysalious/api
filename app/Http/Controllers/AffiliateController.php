@@ -632,7 +632,6 @@ class AffiliateController extends Controller
                 'partner_id' => 'required|numeric'
             ]);
             $partner = Partner::find($request->partner_id);
-            dd($partner->affiliate_id, $partner->moderator_id);
             if (!is_null($partner)) {
                 $customer_name = $partner->name;
 
