@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Repositories;
+<?php namespace App\Repositories;
 
 use App\Models\HyperLocal;
 use App\Models\Partner;
@@ -78,4 +76,6 @@ class AffiliateRepository
                 return ['name' => $service->name, 'id' => $service->id];
             });
         }
+        return $details;
     }
+}
