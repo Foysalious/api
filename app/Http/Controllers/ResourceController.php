@@ -5,15 +5,20 @@ namespace App\Http\Controllers;
 
 
 use App\Models\PartnerResource;
+use App\Models\Profile;
+use App\Models\Resource;
 use App\Repositories\ProfileRepository;
 use App\Repositories\ReviewRepository;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use DB;
 
 class ResourceController extends Controller
 {
     private $reviewRepository;
     private $profileRepo;
+
+    const REPTO_IP = '172.18.0.2';
 
     public function __construct()
     {
@@ -92,6 +97,44 @@ class ResourceController extends Controller
             return api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function trainingStatusUpdate(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'mobile' => 'required',
+                'is_trained' => 'required'
+            ]);
+            /*$resource =  Profile::whereHas('resource', function ($q) use ($request){
+                $q->where('profiles.mobile', '+8801673786771')->get();
+            });
+            dd($resource);*/
+
+            /*$resource =  DB::table('resources')
+                ->join('profiles', 'profiles.id', '=', 'resources.profile_id')
+                ->where('profiles.mobile', '=', $request->mobile)
+                ->first();
+
+            $resource->update(['is_trained' => $request->is_trained]);
+
+            dd($resource);*/
+
+            if ($request->ip() != self::REPTO_IP){
+                $message = 'Your IP Is Incorrect';
+                return api_response($request,$message,500, ['message' => $message]);
+            }
+
+            $profile = Profile::where('mobile', $request->mobile)->first();
+            $profile->resource->update(['is_trained' => $request->is_trained]);
+
+            return api_response($request, 1, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
     }
