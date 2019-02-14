@@ -80,7 +80,7 @@ class LitePartnerOnBoardingController extends Controller
             $source = ['lat' => $request->get('lat'), 'lng' => $request->get('lng')];
             $partners = $affiliate->onboardedPartners->map(function (Partner $partner) use ($repo, $source) {
                 return $repo->mapForModerationApi($partner, $source);
-            })->sortByDesc('distance')->forPage(($offset - 1), $limit)->values();
+            })->sortBy('distance')->forPage(($offset - 1), $limit)->values();
             return api_response($request, $partners, 200, ['partners' => $partners]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
