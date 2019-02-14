@@ -48,12 +48,12 @@ class AffiliateRepository
         }]);
     }
 
-    public function mapForModerationApi(Partner $partner, $source = null)
+    public function mapForModerationApi(Partner $partner, $source = null, $isDetails = null)
     {
         $resource = $partner->getFirstAdminResource();
         $geo_info = json_decode($partner->geo_informations);
         $location = $geo_info ? $partner->locations->first() : null;
-        return [
+        $details = [
             'id' => $partner->id,
             'name' => $partner->name,
             'resource' => !$resource ? null : [
@@ -62,15 +62,21 @@ class AffiliateRepository
                 'mobile' => $resource->profile->mobile,
             ],
             'address' => $partner->address,
+            'logo' => $partner->logo,
             'location' => $location ? $location->name : null,
             'location_id' => $location ? $location->id : null,
             'moderation_status' => $partner->moderation_status,
             'income' => $partner->moderation_status == 'approved' ? constants('AFFILIATION_LITE_ONBOARD_REWARD') : 0,
             'created_at' => $partner->created_at->toDateTimeString(),
-            'services' => $partner->services()->select('services.id', 'services.name')->get()->map(function ($service) {
-                return ['name' => $service->name, 'id' => $service->id];
-            }),
-            'distance' => $source && $geo_info ? PartnerModerator::calculateDistance($source, (array)$geo_info) : 9999999999
         ];
+        if (!$isDetails) {
+            $details['distance'] = $source && $geo_info ? PartnerModerator::calculateDistance($source, (array)$geo_info) : 9999999999;
+        } else {
+            $details['geo_informations'] = $partner->geo_informations ? json_decode($partner->geo_informations) : '';
+            $details ['services'] = $partner->services()->select('services.id', 'services.name')->get()->map(function ($service) {
+                return ['name' => $service->name, 'id' => $service->id];
+            });
+        }
+        return $details;
     }
 }

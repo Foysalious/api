@@ -503,7 +503,7 @@ class PartnerController extends Controller
             $info->put('total_services', $partner->services->count());
             $info->put('total_resources', $partner->resources->count());
             $info->put('wallet', $partner->wallet);
-            $info->put('leave_status',  (new LeaveStatus($partner))->getCurrentStatus());
+            $info->put('leave_status', (new LeaveStatus($partner))->getCurrentStatus());
 
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
@@ -582,9 +582,9 @@ class PartnerController extends Controller
         } catch (HyperLocationNotFoundException $e) {
             return api_response($request, null, 400, ['message' => 'Your are out of service area.']);
         } catch (PickUpAddressNotFoundException $e) {
-            return api_response($request, null, 400, ['message' => 'This service isn\'t available at this location.']);
+            return api_response($request, null, 700, ['message' => 'This service isn\'t available at this location.']);
         } catch (DestinationCitySameAsPickupException $e) {
-            return api_response($request, null, 400, ['message' => 'Please try with inside city for this location.']);
+            return api_response($request, null, 701, ['message' => 'Please try with inside city for this location.']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -1029,31 +1029,31 @@ class PartnerController extends Controller
 
     public function getServedCustomers($partner, Request $request)
     {
-        try{
-            $order_ids = PartnerOrder::where('partner_id',$partner)->whereNotNull('closed_and_paid_at')->pluck('order_id');
-            $orders = Order::whereIn('id',$order_ids)->with(['customer.profile','jobs.category'])->orderBy('created_at','desc')->get();
+        try {
+            $order_ids = PartnerOrder::where('partner_id', $partner)->whereNotNull('closed_and_paid_at')->pluck('order_id');
+            $orders = Order::whereIn('id', $order_ids)->with(['customer.profile', 'jobs.category'])->orderBy('created_at', 'desc')->get();
 
             $served_customers = collect();
             foreach ($orders as $order) {
                 $customer_info = [];
-                if($order)
-                    if($order->customer && $order->jobs)
-                        if($order->customer->profile && $order->jobs) {
-                            $jobs = $order->jobs()->orderBy('created_at','desc')->get();
-                            if(isset($jobs[0])) {
-                                if($order->customer->profile->mobile) {
-                                    if(!$served_customers->contains('mobile',$order->customer->profile->mobile))
+                if ($order)
+                    if ($order->customer && $order->jobs)
+                        if ($order->customer->profile && $order->jobs) {
+                            $jobs = $order->jobs()->orderBy('created_at', 'desc')->get();
+                            if (isset($jobs[0])) {
+                                if ($order->customer->profile->mobile) {
+                                    if (!$served_customers->contains('mobile', $order->customer->profile->mobile))
                                         $customer_info = [
-                                            'name'  =>$order->customer->profile->name,
+                                            'name' => $order->customer->profile->name,
                                             'mobile' => $order->customer->profile->mobile,
-                                            'image'=> $order->customer->profile->pro_pic,
+                                            'image' => $order->customer->profile->pro_pic,
                                             'category' => $jobs[0]->category->name
                                         ];
                                 }
 
                             }
                         }
-                if(count($customer_info)>0)
+                if (count($customer_info) > 0)
                     $served_customers->push($customer_info);
             }
             return api_response($request, $served_customers, 200, ['customers' => $served_customers]);
@@ -1066,7 +1066,8 @@ class PartnerController extends Controller
     public function changeLeaveStatus($partner, Request $request)
     {
         try {
-            return (new LeaveStatus(Partner::find($partner)))->changeStatus()->getCurrentStatus();
+            $status = (new LeaveStatus(Partner::find($partner)))->changeStatus()->getCurrentStatus();
+            return api_response($request, $status, 200, ['status' => $status]);
         } catch (\Throwable $e) {
             dd($e);
             app('sentry')->captureException($e);

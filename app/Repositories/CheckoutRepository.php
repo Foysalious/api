@@ -467,9 +467,11 @@ class CheckoutRepository
     public function sendConfirmation($customer, $order)
     {
         $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
-        (new SmsHandler('order-created'))->send($customer->profile->mobile, [
-            'order_code' => $order->code()
-        ]);
+        if (!in_array($order->portal_name, config('sheba.stopped_sms_portal_for_customer'))) {
+            (new SmsHandler('order-created'))->send($customer->profile->mobile, [
+                'order_code' => $order->code()
+            ]);
+        }
         (new NotificationRepository())->send($order);
     }
 
