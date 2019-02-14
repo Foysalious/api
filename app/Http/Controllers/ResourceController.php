@@ -18,7 +18,7 @@ class ResourceController extends Controller
     private $reviewRepository;
     private $profileRepo;
 
-    const REPTO_IP = '172.18.0.2';
+    const REPTO_IP = '172.18.0.5';
 
     public function __construct()
     {
@@ -108,7 +108,7 @@ class ResourceController extends Controller
                 'mobile' => 'required',
                 'is_trained' => 'required'
             ]);
-
+            dd($request->ip());
             if ($request->ip() != self::REPTO_IP){
                 $message = 'Your IP Is Incorrect';
                 return api_response($request,$message,500, ['message' => $message]);
