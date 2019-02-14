@@ -41,9 +41,6 @@ return [
         'PSP' => 6,
         'LSP' => 2
     ],
-    'partner_statuses' => [
-
-    ],
     'partner_package_and_badge_order_on_partner_list' => [
         ['package' => 'ESP', 'badge' => 'gold'],
         ['package' => 'ESP', 'badge' => 'silver'],
@@ -93,4 +90,12 @@ return [
     ],
     'screen' => ['home', 'eshop'],
     'partner_lite_packages_id' => env('LITE_PACKAGE_ID'),
+    'rent_a_car' => [
+        'inside_city' => [
+            'category' => [222]
+        ],
+        'outside_city' => [
+            'category' => [223]
+        ]
+    ]
 ];

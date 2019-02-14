@@ -1,6 +1,8 @@
 <?php namespace App\Http\Requests;
 
 
+use App\Models\Affiliate;
+
 class PartnerOnBoardModerationRequest extends ApiRequest
 {
     /**
@@ -10,6 +12,9 @@ class PartnerOnBoardModerationRequest extends ApiRequest
      */
     public function authorize()
     {
+        if ($this->affiliate && is_string($this->affiliate)) {
+            $this->affiliate = Affiliate::find($this->affiliate);
+        }
         return true;
     }
 
