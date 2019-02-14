@@ -108,25 +108,11 @@ class ResourceController extends Controller
                 'mobile' => 'required',
                 'is_trained' => 'required'
             ]);
-            /*$resource =  Profile::whereHas('resource', function ($q) use ($request){
-                $q->where('profiles.mobile', '+8801673786771')->get();
-            });
-            dd($resource);*/
-
-            /*$resource =  DB::table('resources')
-                ->join('profiles', 'profiles.id', '=', 'resources.profile_id')
-                ->where('profiles.mobile', '=', $request->mobile)
-                ->first();
-
-            $resource->update(['is_trained' => $request->is_trained]);
-
-            dd($resource);*/
 
             if ($request->ip() != self::REPTO_IP){
                 $message = 'Your IP Is Incorrect';
                 return api_response($request,$message,500, ['message' => $message]);
             }
-
             $profile = Profile::where('mobile', $request->mobile)->first();
             $profile->resource->update(['is_trained' => $request->is_trained]);
 
