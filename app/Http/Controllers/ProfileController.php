@@ -58,10 +58,13 @@ class ProfileController extends Controller
                 $data = ['name' => $request->name, 'mobile' => $mobile];
                 $profile = $this->profileRepo->store($data);
             }
+            $profile=$profile->toArray();
+            unset($profile['password']);
             return api_response($request, $profile, 200, ['info' => $profile]);
         } elseif ($request->has('profile_id')) {
             $profile = $this->profileRepo->getIfExist($request->profile_id, 'id');
             $profile=$profile->toArray();
+            unset($profile['password']);
             return api_response($request, $profile, 200, ['info' => $profile]);
         }
     }
