@@ -21,7 +21,7 @@
                     <td>{{ $topup['amount'] }}</td>
                     <td>{{ $topup['operator'] }}</td>
                     <td>{{ $topup['status'] }}</td>
-                    <td>{{ $topup['created_at'] }}</td>
+                    <td>{{ $topup['created_at_raw'] }}</td>
                 </tr>
             @endforeach
         </table>
