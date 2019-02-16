@@ -8,15 +8,14 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Sheba\Sms\Sms;
 
-#use App\Library\Sms;
-
 class SendOrderConfirmationSms extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
 
     private $customer;
     private $order;
-    private $sms; /** @var Sms */
+    private $sms;
+    /** @var Sms */
 
     /**
      * Create a new job instance.
@@ -42,6 +41,5 @@ class SendOrderConfirmationSms extends Job implements ShouldQueue
         $message = "Thanks for placing order at Sheba.xyz. Order ID: " . $this->order->code() . ". Plz check email for details or log into www.sheba.xyz. Helpline: 16516";
 
         $this->sms->shoot($this->order->delivery_mobile, $message);
-        #Sms::send_single_message($this->order->delivery_mobile, $message);
     }
 }

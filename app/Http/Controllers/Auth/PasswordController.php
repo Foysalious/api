@@ -1,6 +1,5 @@
 <?php namespace App\Http\Controllers\Auth;
 
-#use App\Library\Sms;
 use App\Http\Controllers\Controller;
 use App\Models\Profile;
 use Illuminate\Http\Request;
@@ -123,7 +122,5 @@ class PasswordController extends Controller
     {
         $sms = new Sms(); //app(Sms::class);
         $sms->shoot($mobile, 'Your password reset code is ' . $reset_token . ' . This code will be valid for only 10 minutes.');
-
-        // Sms::send_single_message($mobile, 'Your password reset code is ' . $reset_token . ' . This code will be valid for only 10 minutes.');
     }
 }
