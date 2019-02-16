@@ -106,7 +106,7 @@ class AffiliationRewards
             'type' => 'Credit',
             'is_gifted' => 1,
             'affiliate_id' => $this->ambassador->id,
-            'log' => $affiliate_identity . 'gifted ' . $this->getAmbassadorCost() . ' tk for reference: $affiliation_id and order: $order_code',
+            'log' => $affiliate_identity . 'gifted ' . $this->getAmbassadorCost() . ' tk for reference a partner, id: ' . $ref->id . ' ',
             'amount' => $this->getAmbassadorCost()
         ];
         $affiliate_transaction = new AffiliateTransaction($this->withCreateModificationField($data));
