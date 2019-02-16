@@ -1,17 +1,18 @@
-<?php
+<?php namespace App\Repositories;
 
-namespace App\Repositories;
-
-use App\Library\Sms;
+#use App\Library\Sms;
 use App\Models\SmsTemplate;
+use Sheba\Sms\Sms;
 
 class SmsHandler
 {
     private $template;
+    private $sms; /** @var Sms */
 
     public function __construct($event_name)
     {
         $this->template = SmsTemplate::where('event_name', $event_name)->first();
+        $this->sms = new Sms();//app(Sms::class);
     }
 
     public function send($mobile, $variables)
@@ -23,7 +24,8 @@ class SmsHandler
             foreach ($variables as $variable => $value) {
                 $message = str_replace("{{" . $variable. "}}", $value, $message);
             }
-            Sms::send_single_message($mobile, $message); //SMS***
+            #Sms::send_single_message($mobile, $message); //SMS***
+            $this->sms->shoot($mobile, $message);
         }
     }
 

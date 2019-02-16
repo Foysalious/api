@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e8e8586b07a86923a630818ac40fdb1e",
+    "content-hash": "d71b54bf3745cd3c1fc14f91dc724b8b",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -2911,6 +2911,35 @@
             "time": "2018-11-13T15:53:38+00:00"
         },
         {
+            "name": "sheba/sms",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_sms.git",
+                "reference": "1d6b85c6d62c6745993eac085269d56292b348a5"
+            },
+            "require": {
+                "ext-curl": "*"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Sheba\\Sms\\": "src"
+                }
+            },
+            "license": [
+                "proprietary"
+            ],
+            "authors": [
+                {
+                    "name": "Shafiqul Islam",
+                    "email": "shafiq.startern@gmail.com"
+                }
+            ],
+            "description": "Sms for Sheba",
+            "time": "2019-02-13T12:19:18+00:00"
+        },
+        {
             "name": "sheba/voucher",
             "version": "dev-master",
             "source": {
@@ -5395,7 +5424,8 @@
         "dingo/api": 20,
         "sheba/dal": 20,
         "sheba/voucher": 20,
-        "sheba/notification": 20
+        "sheba/notification": 20,
+        "sheba/sms": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,

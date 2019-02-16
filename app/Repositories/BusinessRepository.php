@@ -1,16 +1,18 @@
-<?php
-
-namespace App\Repositories;
+<?php namespace App\Repositories;
 
 use App\Jobs\SendBusinessRequestEmail;
-use App\Library\Sms;
+
 use App\Models\Business;
 use App\Models\JoinRequest;
 use App\Models\Member;
 use App\Models\Profile;
+
 use DB;
+
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Foundation\Bus\DispatchesJobs;
+
+#use App\Library\Sms;
 
 class BusinessRepository
 {

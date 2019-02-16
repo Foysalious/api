@@ -1,9 +1,8 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Library\Sms;
+#use App\Library\Sms;
+use Sheba\Sms\Sms;
 use Validator;
 
 class SmsController extends Controller
@@ -22,7 +21,8 @@ class SmsController extends Controller
                     if ($msg = $this->_validateSend($request)) {
                         return api_response($request, null, 500, ['error' => $msg]);
                     }
-                    Sms::send_single_message($request->mobile, "Download Sheba Bondhu App https://play.google.com/store/apps/details?id=xyz.sheba.bondhu&hl=en");
+                    (new Sms())->shoot($request->mobile, "Download Sheba Bondhu App https://play.google.com/store/apps/details?id=xyz.sheba.bondhu&hl=en");
+                    #Sms::send_single_message($request->mobile, "Download Sheba Bondhu App https://play.google.com/store/apps/details?id=xyz.sheba.bondhu&hl=en");
                     return api_response($request, null, 200);
                 }
             }

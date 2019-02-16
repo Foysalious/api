@@ -8,22 +8,25 @@ use Sheba\ModificationFields;
 class AffiliationRewards
 {
     use ModificationFields;
-    
+
     private $moderationCost = 10;
     private $affiliationCost = 10;
-    private $moderator, $affiliate;
+    private $ambassadorCost = 10;
+    private $moderator, $affiliate, $ambassador;
     private $requestIdentification;
 
     public function __construct()
     {
         $this->moderationCost = constants('AFFILIATION_LITE_ONBOARD_MODERATION_REWARD');
         $this->affiliationCost = constants('AFFILIATION_LITE_ONBOARD_REWARD');
+        $this->ambassadorCost = constants('AFFILIATION_LITE_ONBOARD_AMBASSADOR_REWARD');
     }
 
     public function setAffiliate($affiliate)
     {
         if (!empty($affiliate)) {
             $this->affiliate = $affiliate;
+            $this->ambassador = $affiliate->ambassador;
             return $this;
         } else {
             throw new \Exception('Affiliate is not set for partner');
@@ -47,7 +50,16 @@ class AffiliationRewards
     {
         $this->affiliateWalletUpdate();
         $this->affiliationTransaction($ref);
+        $this->payAmbassador($ref);
         return $this;
+    }
+
+    private function payAmbassador($ref)
+    {
+        if ($this->ambassador) {
+            $this->ambassadorWalletUpdate();
+            $this->affiliationAmbassadorTransaction($ref);
+        }
     }
 
     public function getModerationCost()
@@ -60,9 +72,14 @@ class AffiliationRewards
         return $this->affiliationCost;
     }
 
+    public function getAmbassadorCost()
+    {
+        return $this->ambassadorCost;
+    }
+
     public function getTotalCost()
     {
-        return $this->getAffiliationCost() + $this->getModerationCost();
+        return $this->getAffiliationCost() + $this->getModerationCost() + $this->getAmbassadorCost();
     }
 
     private function affiliationTransaction($ref)
@@ -75,6 +92,22 @@ class AffiliationRewards
             'type' => "Credit",
             'log' => $log,
             'amount' => $this->getAffiliationCost()
+        ];
+        $affiliate_transaction = new AffiliateTransaction($this->withCreateModificationField($data));
+        $affiliate_transaction->save();
+    }
+
+    private function affiliationAmbassadorTransaction($ref)
+    {
+        $affiliate_identity = ($this->affiliate->name ?: $this->affiliate->mobile) ?: "#$this->affiliate->id";
+        $data = [
+            'affiliation_type' => get_class($ref),
+            'affiliation_id' => $ref->id,
+            'type' => 'Credit',
+            'is_gifted' => 1,
+            'affiliate_id' => $this->ambassador->id,
+            'log' => $affiliate_identity . 'gifted ' . $this->getAmbassadorCost() . ' tk for reference a partner, id: ' . $ref->id . ' ',
+            'amount' => $this->getAmbassadorCost()
         ];
         $affiliate_transaction = new AffiliateTransaction($this->withCreateModificationField($data));
         $affiliate_transaction->save();
@@ -110,5 +143,11 @@ class AffiliationRewards
     {
         $this->moderator->wallet += $this->getModerationCost();
         $this->moderator->update();
+    }
+
+    private function ambassadorWalletUpdate()
+    {
+        $this->ambassador->wallet += $this->getAmbassadorCost();
+        $this->ambassador->update();
     }
 }

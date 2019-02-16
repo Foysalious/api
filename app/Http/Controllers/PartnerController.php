@@ -2,7 +2,8 @@
 
 use App\Exceptions\HyperLocationNotFoundException;
 use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
-use App\Exceptions\RentACar\PickUpAddressNotFoundException;
+use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
+use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
 use App\Models\Category;
 use App\Models\CategoryPartner;
 use App\Models\DeliveryChargeUpdateRequest;
@@ -581,10 +582,12 @@ class PartnerController extends Controller
             return api_response($request, null, 404, ['message' => 'No partner found.']);
         } catch (HyperLocationNotFoundException $e) {
             return api_response($request, null, 400, ['message' => 'Your are out of service area.']);
-        } catch (PickUpAddressNotFoundException $e) {
-            return api_response($request, null, 700, ['message' => 'This service isn\'t available at this location.']);
+        } catch (InsideCityPickUpAddressNotFoundException $e) {
+            return api_response($request, null, 400, ['message' => 'Please try with outside city for this location.', 'code' => 700]);
+        } catch (OutsideCityPickUpAddressNotFoundException $e) {
+            return api_response($request, null, 400, ['message' => 'This service isn\'t available at this location.', 'code' => 701]);
         } catch (DestinationCitySameAsPickupException $e) {
-            return api_response($request, null, 701, ['message' => 'Please try with inside city for this location.']);
+            return api_response($request, null, 400, ['message' => 'Please try with inside city for this location.', 'code' => 702]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -1069,7 +1072,6 @@ class PartnerController extends Controller
             $status = (new LeaveStatus(Partner::find($partner)))->changeStatus()->getCurrentStatus();
             return api_response($request, $status, 200, ['status' => $status]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

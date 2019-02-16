@@ -39,6 +39,7 @@ class ServiceObject
         $this->service = $service;
         $this->googleCalculatedCarService = array_map('intval', explode(',', env('RENT_CAR_SERVICE_IDS')));
         $this->build();
+        $this->setQuantity();
     }
 
     public function __get($name)
@@ -50,7 +51,6 @@ class ServiceObject
     {
         $this->setService();
         $this->setCommonObject();
-        $this->setQuantity();
     }
 
     public function setCommonObject()

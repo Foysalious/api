@@ -1,11 +1,14 @@
 <?php namespace Sheba\TopUp\Jobs;
 
-use App\Library\Sms;
+#use App\Library\Sms;
 use Excel;
 use Maatwebsite\Excel\Readers\LaravelExcelReader;
 
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
+
+use Sheba\Sms\Sms;
+
 use Sheba\TopUp\TopUpExcel;
 use Sheba\TopUp\TopUpRequest;
 
@@ -16,6 +19,7 @@ class TopUpExcelJob extends TopUpJob
     private $file;
     private $row;
     private $totalRow;
+    private $sms; /** @var Sms */
 
     /** @var LaravelExcelReader */
     private $excel = null;
@@ -23,9 +27,11 @@ class TopUpExcelJob extends TopUpJob
     public function __construct($agent, $vendor, TopUpRequest $top_up_request, $file, $row, $total_row)
     {
         parent::__construct($agent, $vendor, $top_up_request);
+
         $this->file = $file;
         $this->row = $row;
         $this->totalRow = $total_row;
+        $this->sms = new Sms(); //app(Sms::class);
     }
 
     /**
@@ -69,7 +75,8 @@ class TopUpExcelJob extends TopUpJob
             $file_path = $this->saveFileToCDN($this->file, getBulkTopUpFolder(), $file_name);
             unlink($this->file);
             $msg = "Your top up request has been processed. You can find the results here: " . $file_path;
-            Sms::send_single_message($this->agent->profile->mobile, $msg);
+            $this->sms->shoot($this->agent->profile->mobile, $msg);
+            #Sms::send_single_message($this->agent->profile->mobile, $msg);
         }
     }
 }
