@@ -3,7 +3,6 @@
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\FacebookAccountKit;
 
-#use App\Library\Sms;
 use App\Models\Partner;
 use App\Models\PartnerAffiliation;
 use App\Models\PartnerBasicInformation;
@@ -168,7 +167,6 @@ class PartnerRegistrationController extends Controller
         $partner = $this->store($resource, $data, $by, $partner);
         if ($partner) {
             $this->sms->shoot($resource->profile->mobile, "You have successfully completed your registration at Sheba.xyz. Please complete your profile to start serving orders.");
-            // Sms::send_single_message($resource->profile->mobile, "You have successfully completed your registration at Sheba.xyz. Please complete your profile to start serving orders.");
         }
 
         return $partner;
@@ -298,12 +296,9 @@ class PartnerRegistrationController extends Controller
     }
 
     private function liteFormCompleted($profile, $resource)
-    {   
-        if(count($resource->partners)=== 0) return false;
-        if($profile->name && $profile->mobile && $profile->pro_pic
-            && $resource->partners[0]->name && $resource->partners[0]->geo_informations && count($resource->partners[0]->categories)>0)
-            return true;
-        else
-            return false;
+    {
+        if (count($resource->partners) === 0) return false;
+        if ($profile->name && $profile->mobile && $profile->pro_pic && $resource->partners[0]->name && $resource->partners[0]->geo_informations && count($resource->partners[0]->categories) > 0) return true;
+        else return false;
     }
 }
