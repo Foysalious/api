@@ -79,7 +79,7 @@ class AffiliationRewards
 
     public function getTotalCost()
     {
-        return $this->getAffiliationCost() + $this->getModerationCost();
+        return $this->getAffiliationCost() + $this->getModerationCost() + $this->getAmbassadorCost();
     }
 
     private function affiliationTransaction($ref)
