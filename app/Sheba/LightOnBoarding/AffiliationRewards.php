@@ -99,14 +99,14 @@ class AffiliationRewards
 
     private function affiliationAmbassadorTransaction($ref)
     {
-        $affiliate_identity = ($this->affiliate->name ?: $this->affiliate->mobile) ?: "#$this->affiliate->id";
+        $affiliate_identity = ($this->affiliate->name ?: $this->affiliate->mobile) ?: "#" . $this->affiliate->id;
         $data = [
             'affiliation_type' => get_class($ref),
             'affiliation_id' => $ref->id,
             'type' => 'Credit',
             'is_gifted' => 1,
             'affiliate_id' => $this->ambassador->id,
-            'log' => $affiliate_identity . 'gifted ' . $this->getAmbassadorCost() . ' tk for reference a partner, id: ' . $ref->id . ' ',
+            'log' => $affiliate_identity . ' gifted ' . $this->getAmbassadorCost() . ' tk for reference a partner, id: ' . $ref->id . ' ',
             'amount' => $this->getAmbassadorCost()
         ];
         $affiliate_transaction = new AffiliateTransaction($this->withCreateModificationField($data));
