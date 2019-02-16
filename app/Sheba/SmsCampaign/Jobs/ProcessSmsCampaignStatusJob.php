@@ -10,6 +10,8 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
+use Sheba\SmsCampaign\Refund;
+
 class ProcessSmsCampaignStatusJob extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
@@ -18,6 +20,8 @@ class ProcessSmsCampaignStatusJob extends Job implements ShouldQueue
     private $campaignOrderReceiver;
     /** @var SmsHandler $smsHandler */
     private $smsHandler;
+    /** @var Refund $refund */
+    private $refund;
 
     /**
      * Create a new job instance.
@@ -27,6 +31,8 @@ class ProcessSmsCampaignStatusJob extends Job implements ShouldQueue
     public function __construct(SmsCampaignOrderReceiver $campaign_order_receiver)
     {
         $this->campaignOrderReceiver = $campaign_order_receiver;
+        $this->refund = new Refund();
+
         $this->connection = 'sms_campaign';
         $this->queue = 'sms_campaign';
     }
@@ -36,6 +42,7 @@ class ProcessSmsCampaignStatusJob extends Job implements ShouldQueue
      *
      * @param SmsHandler $handler
      * @return void
+     * @throws \Exception
      */
     public function handle(SmsHandler $handler)
     {
@@ -50,7 +57,10 @@ class ProcessSmsCampaignStatusJob extends Job implements ShouldQueue
                 } else {
                     $this->campaignOrderReceiver->status = constants('SMS_CAMPAIGN_RECEIVER_STATUSES.failed');
                     $this->campaignOrderReceiver->save();
-                    $this->campaignOrderReceiver->refundIfFailed();
+
+                    $refund_receiver = $this->campaignOrderReceiver->smsCampaignOrder->partner;
+                    $sms_count = $this->campaignOrderReceiver->sms_count;
+                    $this->refund->setRefundReceiver($refund_receiver)->setNumberOfSms($sms_count)->adjustWallet();
                 }
             }
         }
