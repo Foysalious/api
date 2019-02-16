@@ -99,7 +99,7 @@ class AffiliationRewards
 
     private function affiliationAmbassadorTransaction($ref)
     {
-        $affiliate_identity = ($this->affiliate->name ?: $this->affiliate->mobile) ?: "#" . $this->affiliate->id;
+        $affiliate_identity = ($this->affiliate->profile->name ?: $this->affiliate->profile->mobile) ?: "#" . $this->affiliate->id;
         $data = [
             'affiliation_type' => get_class($ref),
             'affiliation_id' => $ref->id,
