@@ -9,7 +9,7 @@ class SmsLogs
     {
         $logs = SmsCampaignOrderReceiver::where('status', constants('SMS_CAMPAIGN_RECEIVER_STATUSES.pending'))->get();
         foreach ($logs as $log) {
-            dispatch((new ProcessSmsCampaignStatusJob($log)));
+            dispatch(new ProcessSmsCampaignStatusJob($log));
         }
     }
 }
