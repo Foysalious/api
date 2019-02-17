@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\FacebookAccountKit;
-use App\Library\Sms;
+
 use App\Models\Partner;
 use App\Models\PartnerAffiliation;
 use App\Models\PartnerBasicInformation;
@@ -10,11 +10,15 @@ use App\Models\PartnerSubscriptionPackage;
 use App\Models\PartnerWalletSetting;
 use App\Models\Profile;
 use App\Models\Resource;
+
 use App\Repositories\PartnerRepository;
 use App\Repositories\ProfileRepository;
+
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+
+use Sheba\Sms\Sms;
 use Sheba\Voucher\Creator\Referral;
 use DB;
 
@@ -22,11 +26,13 @@ class PartnerRegistrationController extends Controller
 {
     private $fbKit;
     private $profileRepository;
+    private $sms; /** @var Sms */
 
     public function __construct()
     {
         $this->fbKit = new FacebookAccountKit();
         $this->profileRepository = new ProfileRepository();
+        $this->sms = new Sms();//app(Sms::class);
     }
 
     public function register(Request $request)
@@ -159,7 +165,10 @@ class PartnerRegistrationController extends Controller
         $by = ["created_by" => $resource->id, "created_by_name" => "Resource - " . $resource->profile->name];
         $partner = new Partner();
         $partner = $this->store($resource, $data, $by, $partner);
-        if ($partner) Sms::send_single_message($resource->profile->mobile, "You have successfully completed your registration at Sheba.xyz. Please complete your profile to start serving orders.");
+        if ($partner) {
+            $this->sms->shoot($resource->profile->mobile, "You have successfully completed your registration at Sheba.xyz. Please complete your profile to start serving orders.");
+        }
+
         return $partner;
     }
 
@@ -287,12 +296,9 @@ class PartnerRegistrationController extends Controller
     }
 
     private function liteFormCompleted($profile, $resource)
-    {   
-        if(count($resource->partners)=== 0) return false;
-        if($profile->name && $profile->mobile && $profile->pro_pic
-            && $resource->partners[0]->name && $resource->partners[0]->geo_informations && count($resource->partners[0]->categories)>0)
-            return true;
-        else
-            return false;
+    {
+        if (count($resource->partners) === 0) return false;
+        if ($profile->name && $profile->mobile && $profile->pro_pic && $resource->partners[0]->name && $resource->partners[0]->geo_informations && count($resource->partners[0]->categories) > 0) return true;
+        else return false;
     }
 }

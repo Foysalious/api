@@ -1,12 +1,16 @@
 <?php namespace Sheba\SmsCampaign\Jobs;
 
 use App\Jobs\Job;
+
 use App\Models\SmsCampaignOrderReceiver;
-use App\Sheba\SmsCampaign\InfoBip\SmsHandler;
+
+use App\Sheba\SmsCampaign\SmsHandler;
+
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Sheba\SmsCampaign\SmsLogs;
+
+use Sheba\SmsCampaign\Refund;
 
 class ProcessSmsCampaignStatusJob extends Job implements ShouldQueue
 {
@@ -16,6 +20,8 @@ class ProcessSmsCampaignStatusJob extends Job implements ShouldQueue
     private $campaignOrderReceiver;
     /** @var SmsHandler $smsHandler */
     private $smsHandler;
+    /** @var Refund $refund */
+    private $refund;
 
     /**
      * Create a new job instance.
@@ -25,6 +31,8 @@ class ProcessSmsCampaignStatusJob extends Job implements ShouldQueue
     public function __construct(SmsCampaignOrderReceiver $campaign_order_receiver)
     {
         $this->campaignOrderReceiver = $campaign_order_receiver;
+        $this->refund = new Refund();
+
         $this->connection = 'sms_campaign';
         $this->queue = 'sms_campaign';
     }
@@ -34,6 +42,7 @@ class ProcessSmsCampaignStatusJob extends Job implements ShouldQueue
      *
      * @param SmsHandler $handler
      * @return void
+     * @throws \Exception
      */
     public function handle(SmsHandler $handler)
     {
@@ -42,13 +51,16 @@ class ProcessSmsCampaignStatusJob extends Job implements ShouldQueue
                 $this->campaignOrderReceiver->status = constants('SMS_CAMPAIGN_RECEIVER_STATUSES.successful');
                 $this->campaignOrderReceiver->save();
             } else {
-                if($this->isPending($handler)) {
+                if ($this->isPending($handler)) {
                     $this->campaignOrderReceiver->status = constants('SMS_CAMPAIGN_RECEIVER_STATUSES.pending');
                     $this->campaignOrderReceiver->save();
-                } else{
+                } else {
                     $this->campaignOrderReceiver->status = constants('SMS_CAMPAIGN_RECEIVER_STATUSES.failed');
                     $this->campaignOrderReceiver->save();
-                    $this->campaignOrderReceiver->refundIfFailed();
+
+                    $refund_receiver = $this->campaignOrderReceiver->smsCampaignOrder->partner;
+                    $sms_count = $this->campaignOrderReceiver->sms_count;
+                    $this->refund->setRefundReceiver($refund_receiver)->setNumberOfSms($sms_count)->adjustWallet();
                 }
             }
         }
@@ -57,22 +69,19 @@ class ProcessSmsCampaignStatusJob extends Job implements ShouldQueue
     private function getOrderStatus(SmsHandler $sms_handler)
     {
         $response = ($sms_handler->getSingleMessage($this->campaignOrderReceiver->message_id));
-        if($response)
-            return $response['status']['name'];
+        if ($response) return $response->status->name;
         return 'PENDING';
     }
 
     private function isSuccessfullySent(SmsHandler $handler)
     {
-        if (strpos($this->getOrderStatus($handler), 'DELIVERED') !== false)
-            return true;
+        if (strpos($this->getOrderStatus($handler), 'DELIVERED') !== false) return true;
         return false;
     }
 
     private function isPending(SmsHandler $handler)
     {
-        if (strpos($this->getOrderStatus($handler), 'PENDING') !== false)
-            return true;
+        if (strpos($this->getOrderStatus($handler), 'PENDING') !== false) return true;
         return false;
     }
 }

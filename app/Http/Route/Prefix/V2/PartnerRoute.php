@@ -145,6 +145,9 @@ class PartnerRoute
                 });
             });
             $api->get('served-customers', 'PartnerController@getServedCustomers');
+            $api->post('change-leave-status', 'PartnerController@changeLeaveStatus');
         });
+
+        $api->post('training-status-update', 'ResourceController@trainingStatusUpdate');
     }
 }

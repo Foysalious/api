@@ -8,6 +8,7 @@ use App\Models\PartnerTransaction;
 use App\Models\Resource;
 use App\Models\Service;
 use App\Models\Customer;
+use App\Models\Partner;
 use App\Models\Profile;
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
@@ -80,7 +81,9 @@ class AffiliateController extends Controller
     public function getStatus($affiliate, Request $request)
     {
         try {
-            $affiliate = Affiliate::where('id', $affiliate)->select('verification_status', 'is_suspended', 'ambassador_code', 'is_ambassador')->first();
+            $affiliate = Affiliate::where('id', $affiliate)
+                ->select('verification_status', 'is_suspended', 'ambassador_code', 'is_ambassador', 'is_moderator')
+                ->first();
             return $affiliate != null ? response()->json(['code' => 200, 'affiliate' => $affiliate]) : response()->json(['code' => 404, 'msg' => 'Not found!']);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -545,17 +548,24 @@ class AffiliateController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $topups = Affiliate::find($affiliate)->topups();
 
+            $is_excel_report = ($request->has('content_type') && $request->content_type == 'excel') ? true : false;
+
             if (isset($request->from) && $request->from !== "null") $topups = $topups->whereBetween('created_at', [$request->from . " 00:00:00", $request->to . " 23:59:59"]);
             if (isset($request->vendor_id) && $request->vendor_id !== "null") $topups = $topups->where('vendor_id', $request->vendor_id);
             if (isset($request->status) && $request->status !== "null") $topups = $topups->where('status', $request->status);
             if (isset($request->q) && $request->q !== "null") $topups = $topups->where('payee_mobile', 'LIKE', '%' . $request->q . '%');
 
             $total_topups = $topups->count();
+            if ($is_excel_report) {
+                $offset = 0;
+                $limit  = 100000;
+            }
             $topups = $topups->with('vendor')->skip($offset)->take($limit)->orderBy('created_at', 'desc')->get();
 
             $topup_data = [];
             $queued_jobs = Redis::lrange('queues:topup', 0, -1);
             $queued_topups = [];
+
             foreach ($queued_jobs as $queued_job) {
                 /** @var TopUpJob $data */
                 $data = unserialize(json_decode($queued_job)->data->command);
@@ -572,6 +582,7 @@ class AffiliateController extends Controller
                     ]);
                 }
             }
+
             foreach ($topups as $topup) {
                 $topup = [
                     'payee_mobile' => $topup->payee_mobile,
@@ -584,8 +595,10 @@ class AffiliateController extends Controller
                 ];
                 array_push($topup_data, $topup);
             }
+
             $topup_data = array_merge($queued_topups, $topup_data);
-            if ($request->has('content_type') && $request->content_type == 'excel') {
+
+            if ($is_excel_report) {
                 $excel = (new ExcelHandler());
                 $excel->setName('Topup History');
                 $excel->setViewFile('topup_history');
@@ -609,6 +622,28 @@ class AffiliateController extends Controller
             $profile = Profile::where('mobile', '+88' . $request->mobile)->first();
             if (!is_null($profile)) {
                 $customer_name = $profile->name;
+
+                return api_response($request, $customer_name, 200, ['name' => $customer_name]);
+            }
+            return api_response($request, [], 404, ['message' => 'Customer not found.']);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getPartnerInfo(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'partner_id' => 'required|numeric'
+            ]);
+            $partner = Partner::find($request->partner_id);
+            if (!is_null($partner)) {
+                $customer_name = $partner->name;
 
                 return api_response($request, $customer_name, 200, ['name' => $customer_name]);
             }

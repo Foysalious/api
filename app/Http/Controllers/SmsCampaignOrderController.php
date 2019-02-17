@@ -1,13 +1,11 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\Partner;
 use App\Models\SmsCampaignOrder;
-use App\Sheba\SmsCampaign\InfoBip\SmsHandler;
-use Illuminate\Http\Request;
 
-use App\Http\Requests;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+
 use Sheba\SmsCampaign\SmsCampaign;
 use Sheba\SmsCampaign\SmsLogs;
 use Sheba\UrlShortener\ShortenUrl;
@@ -24,20 +22,36 @@ class SmsCampaignOrderController extends Controller
         }
     }
 
-    public function create($partner_id, Requests\SmsCampaignRequest $request, SmsCampaign $campaign)
+    public function create($partner_id, Request $request, SmsCampaign $campaign)
     {
         try {
+            if ($request->has('customers') && $request->has('param_type')) {
+                $customers = json_decode(request()->customers, true);
+                $request['customers'] = $customers;
+            }
+            $this->validate($request, [
+                'title' => 'required',
+                'message' => 'required',
+                'customers' => 'required|array',
+                'customers.*.mobile' => 'required|mobile:bd'
+            ]);
+
             $requests = $request->all();
             $campaign = $campaign->formatRequest($requests);
-            if($campaign->partnerHasEnoughBalance()){
-                if($campaign->createOrder()) {
+
+            if ($campaign->partnerHasEnoughBalance()) {
+                if ($campaign->createOrder()) {
                     return api_response($request, null, 200, ['message' => "Campaign created successfully"]);
                 }
-                return api_response($request, null, 200, ['message' =>'Failed to create campaign',
-                                                                                        'error_code'=> 'unknown_error', 'code' => 500]);
+                return api_response($request, null, 200, ['message' => 'Failed to create campaign', 'error_code' => 'unknown_error', 'code' => 500]);
             }
-            return api_response($request, null, 200, ['message' =>'Insufficient Balance On Partner Wallet',
-                                                                    'error_code' => 'insufficient_balance' , 'code' => 200]);
+            return api_response($request, null, 200, ['message' => 'Insufficient Balance On Partner Wallet', 'error_code' => 'insufficient_balance', 'code' => 200]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             $code = $e->getCode();

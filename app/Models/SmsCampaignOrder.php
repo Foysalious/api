@@ -1,13 +1,10 @@
-<?php
-
-namespace App\Models;
+<?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
 class SmsCampaignOrder extends Model
 {
-    protected $fillable = ['title','message','partner_id','rate_per_sms', 'bulk_id', "created_by", "created_by_name",
-                            "updated_by", "updated_by_name"];
+    protected $guarded = ['id'];
 
     public function partner()
     {
@@ -21,17 +18,17 @@ class SmsCampaignOrder extends Model
 
     public function getTotalCostAttribute()
     {
-        return ($this->order_receivers()->where('status',constants('SMS_CAMPAIGN_RECEIVER_STATUSES.successful'))->sum('sms_count') * $this->rate_per_sms);
+        return ($this->order_receivers()->where('status', constants('SMS_CAMPAIGN_RECEIVER_STATUSES.successful'))->sum('sms_count') * $this->rate_per_sms);
     }
 
     public function getSuccessfulMessagesAttribute()
     {
-        return $this->order_receivers()->where('status',constants('SMS_CAMPAIGN_RECEIVER_STATUSES.successful'))->count();
+        return $this->order_receivers()->where('status', constants('SMS_CAMPAIGN_RECEIVER_STATUSES.successful'))->count();
     }
 
     public function getFailedMessagesAttribute()
     {
-        return $this->order_receivers()->where('status',constants('SMS_CAMPAIGN_RECEIVER_STATUSES.failed'))->count();
+        return $this->order_receivers()->where('status', constants('SMS_CAMPAIGN_RECEIVER_STATUSES.failed'))->count();
     }
 
     public function getTotalMessagesAttribute()
