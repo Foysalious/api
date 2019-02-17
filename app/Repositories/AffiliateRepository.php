@@ -26,7 +26,7 @@ class AffiliateRepository
     {
         list($offset, $limit) = calculatePagination($request);
         $query = $request->get('query');
-        return $request->affiliate->load(['onboardedPartners' => function ($q) use ($offset, $limit, $status, $query) {
+        return $request->affiliate->load(['moderatedPartners' => function ($q) use ($offset, $limit, $status, $query) {
             $q->with('resources.profile')->orderBy('created_at', 'desc')->where('package_id', 1);
             if ($status == 'pending') {
                 $q->where(function ($qu) {
