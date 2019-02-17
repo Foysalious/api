@@ -18,7 +18,8 @@ class SmsCampaignOrder extends Model
 
     public function getTotalCostAttribute()
     {
-        return ($this->order_receivers()->where('status', constants('SMS_CAMPAIGN_RECEIVER_STATUSES.successful'))->sum('sms_count') * $this->rate_per_sms);
+        return ($this->order_receivers()->whereIn('status', [constants('SMS_CAMPAIGN_RECEIVER_STATUSES.successful'),constants('SMS_CAMPAIGN_RECEIVER_STATUSES.pending')])
+                ->sum('sms_count') * $this->rate_per_sms);
     }
 
     public function getSuccessfulMessagesAttribute()
