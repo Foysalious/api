@@ -1,7 +1,4 @@
-<?php
-
-namespace App\Http\Route\Prefix\V1;
-
+<?php namespace App\Http\Route\Prefix\V1;
 
 class Route
 {

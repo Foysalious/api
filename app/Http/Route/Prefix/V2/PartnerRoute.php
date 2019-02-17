@@ -6,7 +6,7 @@ class PartnerRoute
     {
         $api->group(['prefix' => 'partners'], function ($api) {
             $api->get('performance-faqs', 'FaqController@getPartnerPerformanceFaqs');
-            $api->group(['prefix' => '{partner} '], function ($api) {
+            $api->group(['prefix' => '{partner}'], function ($api) {
                 $api->get('/', 'PartnerController@show');
                 $api->get('locations', 'PartnerController@getLocations');
                 $api->get('locations/all', 'LocationController@getPartnerServiceLocations');
@@ -16,8 +16,8 @@ class PartnerRoute
             });
             $api->get('rewards/faqs', 'Partner\PartnerRewardController@getFaqs');
         });
-        $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
 
+        $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
             $api->get('dashboard', 'Partner\DashboardController@get');
             $api->group(['prefix' => 'e-shop'], function ($api) {
                 $api->group(['prefix' => 'order'], function ($api) {
