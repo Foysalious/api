@@ -78,7 +78,7 @@ class LitePartnerOnBoardingController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $affiliate = $repo->moderatedPartner($request, 'pending');
             $source = ['lat' => $request->get('lat'), 'lng' => $request->get('lng')];
-            $partners = $affiliate->onboardedPartners->map(function (Partner $partner) use ($repo, $source) {
+            $partners = $affiliate->moderatedPartners->map(function (Partner $partner) use ($repo, $source) {
                 return $repo->mapForModerationApi($partner, $source);
             })->sortBy('distance')->forPage(($offset - 1), $limit)->values();
             return api_response($request, $partners, 200, ['partners' => $partners]);
@@ -92,7 +92,7 @@ class LitePartnerOnBoardingController extends Controller
     {
         try {
             $affiliate = $repo->moderatedPartner($request);
-            $partners = $affiliate->onboardedPartners->map(function (Partner $partner) use ($repo) {
+            $partners = $affiliate->moderatedPartners->map(function (Partner $partner) use ($repo) {
                 return $repo->mapForModerationApi($partner);
             });
             return api_response($request, $partners, 200, ['partners' => $partners]);
