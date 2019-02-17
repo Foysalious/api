@@ -59,18 +59,11 @@ class SmsCampaignOrderController extends Controller
         }
     }
 
-    public function getTemplates($partner, ShortenUrl $shortenUrl, Request $request)
+    public function getTemplates($partner, Request $request)
     {
         try {
             $partner = Partner::find($partner);
-            $url_to_shorten = config('sheba.front_url').'/partners/'.$partner->sub_domain;
-            if(!$partner->bitly_url) {
-                $deep_link = $shortenUrl->shorten('bit.ly',$url_to_shorten)['link'];
-                $partner->bitly_url = $deep_link;
-                $partner->save();
-            }
-            $deep_link = $partner->bitly_url;
-
+            $deep_link = config('sheba.front_url').'/partners/'.$partner->sub_domain;;
             $templates =  config('sms_campaign_templates');
             foreach ($templates as $index => $template) {
                 $template = (object) $template;
@@ -83,6 +76,17 @@ class SmsCampaignOrderController extends Controller
             $code = $e->getCode();
             return api_response($request, null, 500, ['message' => $e->getMessage(), 'code' => $code ? $code : 500]);
         }
+    }
+
+    public function getDeepLink($partner, ShortenUrl $shortenUrl)
+    {
+        $url_to_shorten = config('sheba.front_url').'/partners/'.$partner->sub_domain;
+        if(!$partner->bitly_url) {
+            $deep_link = $shortenUrl->shorten('bit.ly',$url_to_shorten)['link'];
+            $partner->bitly_url = $deep_link;
+            $partner->save();
+        }
+        return $partner->bitly_url;
     }
 
     public function getHistory($partner, Request $request)
