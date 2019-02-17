@@ -184,6 +184,25 @@ class FaqController extends Controller
 
                     )
                 ),
+                array(
+                    'group_label_bn' => 'মডারেটর',
+                    'group_label_en' => 'Moderator',
+                    'group_name' => 'moderator',
+                    'questions' => array(
+                        array(
+                            'question_bn' => 'মডারেটর কে?',
+                            'answer_bn' => ' মডারেটর এমন একজন ব্যাক্তি যে সার্ভিস প্রোভাইডারের তথ্যের সত্যতা যাচাই করেন। এডমিন হতে মডারেটর নিয়োগ করা হয়।',
+                            'question_en' => 'Who is the Moderator?',
+                            'answer_en'=> 'Moderator is the person who has the authority to moderate service provider information. Moderator is assigned by Sheba.xyz Admin.'
+                        ),
+                        array(
+                            'question_bn' => 'সার্ভিস প্রোভাইডার মডারেট করব কিভাবে?',
+                            'answer_bn' => 'আপনাকে কোন সার্ভিস প্রোভাইডার মডারেট করতে এসাইন করা হলে আপনি আপনার মডারেটর প্যানেল এ তাকে দেখতে পাবেন।',
+                            'question_en' => 'How can I moderate any Service Provider?',
+                            'answer_en'=> 'If any Service Provider assigned to the moderator for moderation that service provider will show in moderator panel. Moderator has to go to the Service Provider location confirm that the data given by Service provider is valid. If data is not valid then the moderator can reject the Service Provider with proper reason.'
+                        ),
+                    )
+                ),
             );
 
             return api_response($request, $faqs, 200, ['faqs' => $faqs]);
@@ -192,6 +211,7 @@ class FaqController extends Controller
             return api_response($request, null, 500);
         }
     }
+    
     public function getPartnerPerformanceFaqs(Request $request){
         try {
             $faqs = array(
@@ -335,5 +355,42 @@ class FaqController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function getPartnerSmsCampaignFaq($partner, Request $request)
+    {
+        try{
+            $faqs = array(
+                array(
+                    'question_en' => null,
+                    'question_bn' => 'SMS মার্কেটিং কি?',
+                    'answer_en' => null,
+                    'answer_bn' => 'আপনার ব্যবসার প্রচার-প্রসার করতে SMS মার্কেটিং টুলটি ব্যবহার করুন।'
+                ),
+                array(
+                    'question_en' => null,
+                    'question_bn' => 'কি কি বিষয়ে মার্কেটিং করব?',
+                    'answer_en' => null,
+                    'answer_bn' => 'নতুন অফার, প্রমোশন, ডিসকাউন্ট ইত্যাদি বিষয়ের উপর মার্কেটিং করতে পারেন।'
+                ),
+                array(
+                    'question_en' => null,
+                    'question_bn' => 'এখানে মার্কেটিং কেন করবো?',
+                    'answer_en' => null,
+                    'answer_bn' => 'সহজেই ব্যবসা বার্তা পৌঁছে দিন কাস্টমারের কাছে। আপনার সুবিধা মত সময়ে ও বাজেটে স্বল্পমূল্যে কার্যকরী মার্কেটিং  '
+                ),
+                array(
+                    'question_en' => null,
+                    'question_bn' => 'কাদেরকে SMS পাঠাতে পারব?',
+                    'answer_en' => null,
+                    'answer_bn' => 'আপনার ফোনবুকে থাকা যেকোনো সচল নাম্বারে আপনি SMS পাঠাতে পারবেন। '
+                ),
+            );
+            return api_response($request, $faqs, 200, ['faqs' => $faqs]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
     }
 }

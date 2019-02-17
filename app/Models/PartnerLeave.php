@@ -22,8 +22,8 @@ class PartnerLeave extends Model
     public function isRunning($date = null)
     {
         $date = ($date) ? (($date instanceof Carbon) ? $date : new Carbon($date)) : Carbon::now();
-        $end = (!$this->end) ? $date->addDay(1) : $this->end;
-        return $date->between($this->start, $end);
+        $end = (!$this->end) ? $date->copy()->addDay(1) : $this->end;
+        return $date->between($this->start, $end, false);
     }
 
     public function isUpcoming()

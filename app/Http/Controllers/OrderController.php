@@ -174,9 +174,12 @@ class OrderController extends Controller
             $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
             $partner = $order->partnerOrders->first()->partner;
             if ((bool)env('SEND_ORDER_CREATE_SMS')) {
-                (new SmsHandler('order-created'))->send($customer->profile->mobile, [
-                    'order_code' => $order->code()
-                ]);
+                if (!in_array($order->portal_name, config('sheba.stopped_sms_portal_for_customer'))) {
+                    (new SmsHandler('order-created'))->send($customer->profile->mobile, [
+                        'order_code' => $order->code()
+                    ]);
+                }
+
                 if (!$order->jobs->first()->resource_id) {
                     (new SmsHandler('order-created-to-partner'))->send($partner->getContactNumber(), [
                         'order_code' => $order->code(), 'partner_name' => $partner->name

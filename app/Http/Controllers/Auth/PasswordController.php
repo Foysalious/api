@@ -1,13 +1,11 @@
-<?php
+<?php namespace App\Http\Controllers\Auth;
 
-namespace App\Http\Controllers\Auth;
-
-use App\Library\Sms;
 use App\Http\Controllers\Controller;
 use App\Models\Profile;
 use Illuminate\Http\Request;
 use Cache;
 use Illuminate\Validation\ValidationException;
+use Sheba\Sms\Sms;
 use Validator;
 use Redis;
 use Mail;
@@ -122,6 +120,7 @@ class PasswordController extends Controller
 
     private function sendPasswordResetSms($mobile, $reset_token)
     {
-        Sms::send_single_message($mobile, 'Your password reset code is ' . $reset_token . ' . This code will be valid for only 10 minutes.');
+        $sms = new Sms(); //app(Sms::class);
+        $sms->shoot($mobile, 'Your password reset code is ' . $reset_token . ' . This code will be valid for only 10 minutes.');
     }
 }

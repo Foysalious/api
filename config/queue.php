@@ -27,19 +27,19 @@ return [
     */
     'connections' => [
         'sync' => [
-            'driver' => 'sync',
+            'driver' => 'sync'
         ],
         'database' => [
             'driver' => 'database',
             'table' => 'jobs',
             'queue' => 'default',
-            'expire' => 60,
+            'expire' => 60
         ],
         'beanstalkd' => [
             'driver' => 'beanstalkd',
             'host' => 'localhost',
             'queue' => 'default',
-            'ttr' => 60,
+            'ttr' => 60
         ],
         'sqs' => [
             'driver' => 'sqs',
@@ -47,19 +47,25 @@ return [
             'secret' => 'your-secret-key',
             'prefix' => 'https://sqs.us-east-1.amazonaws.com/your-account-id',
             'queue' => 'your-queue-name',
-            'region' => 'us-east-1',
+            'region' => 'us-east-1'
         ],
         'redis' => [
             'driver' => 'redis',
             'connection' => 'default',
             'queue' => 'api_queue',
-            'expire' => 60,
+            'expire' => 60
         ],
         'topup' => [
             'driver' => 'redis',
             'connection' => 'default',
             'queue' => 'topup',
-            'expire' => 60,
+            'expire' => 60
+        ],
+        'sms_campaign' => [
+            'driver' => 'redis',
+            'connection' => 'default',
+            'queue' => 'sms_campaign',
+            'expire' => 60
         ]
     ],
 

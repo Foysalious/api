@@ -15,6 +15,7 @@ return [
     'order_code_start' => 8000,
     'job_code_start' => 16000,
     'portals' => ['admin-portal', 'partner-portal', 'manager-app', 'customer-app', 'customer-portal', 'resource-portal', 'resource-app', 'bondhu-app', 'bondhu-portal', 'automatic'],
+    'stopped_sms_portal_for_customer' => ['customer-app', 'customer-portal'],
     'push_notification_topic_name' => [
         'customer' => env('CUSTOMER_TOPIC_NAME', 'customer_'),
         'resource' => env('RESOURCE_TOPIC_NAME', 'resource_'),
@@ -40,10 +41,7 @@ return [
         'PSP' => 6,
         'LSP' => 2
     ],
-    'partner_statuses' => [
-
-    ],
-    'partner_package_and_badge_order_on_partner_list' =>[
+    'partner_package_and_badge_order_on_partner_list' => [
         ['package' => 'ESP', 'badge' => 'gold'],
         ['package' => 'ESP', 'badge' => 'silver'],
         ['package' => 'PSP', 'badge' => 'silver'],
@@ -59,7 +57,7 @@ return [
         'avg_rating' => 0.5,
         'total_ratings' => 0.05
     ],
-    'promo_applicable_sales_channels' => ['Web', 'App', 'App-iOS', 'E-Shop'],
+    'promo_applicable_sales_channels' => ['Web', 'App', 'App-iOS', 'E-Shop', 'Call-Center'],
     'category_colors' => [
         1 => '#78B9EB',
         3 => '#D5B4EB',
@@ -91,5 +89,13 @@ return [
         ['#00B8BA', '#00FFED']
     ],
     'screen' => ['home', 'eshop'],
-    'partner_lite_packages_id' => env('LITE_PACKAGE_ID')
+    'partner_lite_packages_id' => env('LITE_PACKAGE_ID'),
+    'rent_a_car' => [
+        'inside_city' => [
+            'category' => [222]
+        ],
+        'outside_city' => [
+            'category' => [223]
+        ]
+    ]
 ];

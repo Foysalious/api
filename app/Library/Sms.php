@@ -1,14 +1,12 @@
-<?php
+<?php namespace App\Library;
 
-namespace App\Library;
-
-class Sms {
-
+class Sms
+{
     public static function send_single_message($mobile, $message)
     {
         $user = env('SMS_USER');
         $pass = env('SMS_PASSWORD');
-        $sid  = env('SMS_SID');
+        $sid = env('SMS_SID');
         $url = "http://sms.sslwireless.com/pushapi/dynamic/server.php";
         $param = "user=$user&pass=$pass&sms[0][0]= $mobile &sms[0][1]=" . urlencode($message) . "&sms[1][2]=123456790&sid=$sid";
         $crl = curl_init();

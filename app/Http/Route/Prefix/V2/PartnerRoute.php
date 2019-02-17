@@ -16,8 +16,8 @@ class PartnerRoute
             });
             $api->get('rewards/faqs', 'Partner\PartnerRewardController@getFaqs');
         });
-        $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
 
+        $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
             $api->get('dashboard', 'Partner\DashboardController@get');
             $api->group(['prefix' => 'e-shop'], function ($api) {
                 $api->group(['prefix' => 'order'], function ($api) {
@@ -133,6 +133,21 @@ class PartnerRoute
             });
             $api->get('sales', 'Partner\SalesStatisticsController@index');
             $api->get('performance', 'Partner\PerformanceController@index');
+            $api->group(['prefix' => 'campaigns'], function ($api) {
+                $api->group(['prefix' => 'sms'], function ($api) {
+                    $api->get('/settings', 'SmsCampaignOrderController@getSettings');
+                    $api->post('/create', 'SmsCampaignOrderController@create');
+                    $api->get('/templates', 'SmsCampaignOrderController@getTemplates');
+                    $api->get('/history', 'SmsCampaignOrderController@getHistory');
+                    $api->get('/history/{history_id}/details', 'SmsCampaignOrderController@getHistoryDetails');
+                    $api->get('/faq','FaqController@getPartnerSmsCampaignFaq');
+                    $api->get('/test-queue-run', 'SmsCampaignOrderController@processQueue');
+                });
+            });
+            $api->get('served-customers', 'PartnerController@getServedCustomers');
+            $api->post('change-leave-status', 'PartnerController@changeLeaveStatus');
         });
+
+        $api->post('training-status-update', 'ResourceController@trainingStatusUpdate');
     }
 }

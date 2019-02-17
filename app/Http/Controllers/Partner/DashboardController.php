@@ -9,6 +9,7 @@ use Sheba\Analysis\PartnerSale\PartnerSale;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Manager\JobList;
+use Sheba\Partner\LeaveStatus;
 use Sheba\Reward\PartnerReward;
 use Sheba\Subscription\Partner\PartnerSubscriber;
 
@@ -98,7 +99,8 @@ class DashboardController extends Controller
                     'package_badge' => $upgradable_package->badge,
                     'package_usp_bn' => json_decode($upgradable_package->usps, 1)['usp_bn']
                 ] : null,
-                'has_reward_campaign' => count($partner_reward->upcoming()) > 0 ? 1 : 0
+                'has_reward_campaign' => count($partner_reward->upcoming()) > 0 ? 1 : 0,
+                'leave_info'=>(new LeaveStatus($partner))->getCurrentStatus()
             ];
 
             return api_response($request, $dashboard, 200, ['data' => $dashboard]);
