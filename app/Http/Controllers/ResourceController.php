@@ -1,8 +1,6 @@
 <?php
 
-
 namespace App\Http\Controllers;
-
 
 use App\Models\PartnerResource;
 use App\Models\Profile;
@@ -18,8 +16,9 @@ class ResourceController extends Controller
     private $reviewRepository;
     private $profileRepo;
 
-    #const REPTO_IP = '172.18.0.5';
-    const REPTO_IP = '103.4.146.66';
+    const REPTO_IP = '52.89.162.43';
+
+    #const REPTO_IP = '103.4.146.66';
 
     public function __construct()
     {
@@ -110,10 +109,10 @@ class ResourceController extends Controller
                 'is_trained' => 'required'
             ]);
 
-            /*if ($request->ip() != self::REPTO_IP){
+            if ($request->ip() != self::REPTO_IP) {
                 $message = 'Your IP Is Incorrect';
-                return api_response($request,$message,500, ['message' => $message]);
-            }*/
+                return api_response($request, $message, 500, ['message' => $message]);
+            }
             $profile = Profile::where('mobile', $request->mobile)->first();
             $profile->resource->update(['is_trained' => $request->is_trained]);
 
