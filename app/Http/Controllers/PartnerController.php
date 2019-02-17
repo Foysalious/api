@@ -1053,7 +1053,6 @@ class PartnerController extends Controller
                                             'category' => $jobs[0]->category->name
                                         ];
                                 }
-
                             }
                         }
                 if (count($customer_info) > 0)

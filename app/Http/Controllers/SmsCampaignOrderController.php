@@ -118,12 +118,15 @@ class SmsCampaignOrderController extends Controller
                 'message' => $details->message,
                 'total_messages_requested' => $details->total_messages,
                 'successfully_sent' => $details->successful_messages,
+                'messages_pending' => $details->pending_messages,
+                'messages_failed' => $details->failed_messages,
                 'sms_count' => $details->order_receivers[0]->sms_count,
                 'sms_rate' => $details->rate_per_sms,
                 'created_at' => $details->created_at->format('Y-m-d H:i:s')
             ];
             return api_response($request, null, 200, ['details' => $data]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             $code = $e->getCode();
             return api_response($request, null, 500, ['message' => $e->getMessage(), 'code' => $code ? $code : 500]);
