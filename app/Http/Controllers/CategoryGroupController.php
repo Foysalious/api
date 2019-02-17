@@ -135,8 +135,13 @@ class CategoryGroupController extends Controller
             $setting = ScreenSettingElement::where([['item_type', 'App\\Models\\CategoryGroup'], ['item_id', $category_group->id]])->first();
             if ($setting != null) {
                 $category_group['position_at_home'] = $setting ? $setting->order : null;
-                $categories = $category_group->categories->each(function ($category) use ($location) {
-                    removeRelationsAndFields($category);
+                $categories = collect();
+                $category_group->categories->each(function ($category) use ($location, $categories) {
+                    if(in_array($location, $category->locations()->pluck('id')->toArray()))
+                    {
+                        $categories->push($category);
+                        removeRelationsAndFields($category);
+                    }
                 });
                 if (count($categories) > 0) {
                     $category_group['secondaries'] = $categories;
