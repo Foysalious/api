@@ -245,7 +245,7 @@ class AffiliateController extends Controller
                     return $dataSet;
                 })->values();
 
-            if (isset($q)) {
+            if (isset($q) & !empty($q)) {
                 $agents = $agents->filter(function ($data) use ($q) {
                     return str_contains($data['name'], $q);
                 });
