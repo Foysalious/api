@@ -2887,7 +2887,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_notification.git",
-                "reference": "62b9fe5dd5e416002cd2213cee1259b7d47104ab"
+                "reference": "32916bec8e6aee6af313d47590735a76b80649f0"
             },
             "require": {
                 "php": ">=5.4"
@@ -2911,7 +2911,7 @@
                 }
             ],
             "description": "Sheba notifications.",
-            "time": "2018-11-13T15:53:38+00:00"
+            "time": "2019-02-13T13:26:06+00:00"
         },
         {
             "name": "sheba/sms",
