@@ -102,12 +102,13 @@ class Job extends Model
     public function calculate($price_only = false)
     {
         //$this->commissionRate = $this->partnerOrder->partner->categories()->find($this->service->category->id)->pivot->commission;
-        $costRate = 1 - ($this->commission_rate / 100);
+        $cost_rate = 1 - ($this->commission_rate / 100);
+        $material_cost_rate = 1 - (config('sheba.material_commission_rate') / 100);
 
         $this->servicePrice = formatTaka(($this->service_unit_price * $this->service_quantity) + $this->calculateServicePrice());
-        $this->serviceCost = formatTaka($this->servicePrice * $costRate);
+        $this->serviceCost = formatTaka($this->servicePrice * $cost_rate);
         $this->materialPrice = formatTaka($this->calculateMaterialPrice());
-        $this->materialCost = formatTaka($this->materialPrice * $costRate);
+        $this->materialCost = formatTaka($this->materialPrice * $material_cost_rate);
         $this->totalCostWithoutDiscount = formatTaka($this->serviceCost + $this->materialCost + $this->delivery_charge);
         $this->totalPriceWithoutVat = formatTaka($this->servicePrice + $this->materialPrice + $this->delivery_charge);
         //$this->totalPrice = formatTaka($this->totalPriceWithoutVat + $this->vat); // later

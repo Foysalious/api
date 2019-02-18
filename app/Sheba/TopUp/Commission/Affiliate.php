@@ -16,7 +16,7 @@ class Affiliate extends TopUpCommission
 
     private function storeAmbassadorCommission()
     {
-        $this->topUpOrder->ambassador_commission = $this->calculateAmbassadorCommission($this->topUpOrder->amount, $this->vendor);
+        $this->topUpOrder->ambassador_commission = $this->calculateAmbassadorCommission($this->topUpOrder->amount);
         $this->topUpOrder->save();
     }
 
@@ -37,7 +37,7 @@ class Affiliate extends TopUpCommission
     {
         $this->refundAgentsCommission();
         $amount = $this->topUpOrder->amount;
-        $amount_after_commission = round($amount - $this->calculateCommission($amount, $this->topUpOrder->vendor), 2);
+        $amount_after_commission = round($amount - $this->calculateCommission($amount), 2);
         $log = "Your recharge TK $amount to {$this->topUpOrder->payee_mobile} has failed, TK $amount_after_commission is refunded in your account.";
         $this->sendRefundNotification($log);
 
