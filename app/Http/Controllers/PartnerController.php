@@ -1033,34 +1033,20 @@ class PartnerController extends Controller
     public function getServedCustomers($partner, Request $request)
     {
         try {
-            $order_ids = PartnerOrder::where('partner_id', $partner)->whereNotNull('closed_and_paid_at')->orderBy('closed_and_paid_at','desc')->pluck('order_id');
-            $orders = collect();
-            foreach($order_ids as $order_id ) {
-                $orders->push(Order::where('id', $order_id)->with(['customer.profile', 'jobs.category'])->first());
-            }
-
+            $partner_orders = PartnerOrder::where('partner_id', $partner)->whereNotNull('closed_and_paid_at')
+                ->with(['jobs' => function ($q) {
+                    $q->with('category');
+                }, 'order.customer.profile'])->orderBy('closed_and_paid_at', 'desc')->get();
             $served_customers = collect();
-            foreach ($orders as $order) {
-                $customer_info = [];
-                if ($order)
-                    if ($order->customer && $order->jobs)
-                        if ($order->customer->profile && $order->jobs) {
-                            $jobs = $order->jobs()->orderBy('closed_and_paid_at', 'desc')->get();
-
-                            if (isset($jobs[0])) {
-                                if ($order->customer->profile->mobile) {
-                                    if (!$served_customers->contains('mobile', $order->customer->profile->mobile))
-                                        $customer_info = [
-                                            'name' => $order->customer->profile->name,
-                                            'mobile' => $order->customer->profile->mobile,
-                                            'image' => $order->customer->profile->pro_pic,
-                                            'category' => $jobs[0]->category->name
-                                        ];
-                                }
-                            }
-                        }
-                if (count($customer_info) > 0)
-                    $served_customers->push($customer_info);
+            foreach ($partner_orders as $partner_order) {
+                if (!$partner_order->order->customer || !$partner_order->order->customer->profile->mobile) continue;
+                if (!$served_customers->contains('mobile', $partner_order->order->customer->profile->mobile))
+                    $served_customers->push([
+                        'name' => $partner_order->order->customer->profile->name,
+                        'mobile' => $partner_order->order->customer->profile->mobile,
+                        'image' => $partner_order->order->customer->profile->pro_pic,
+                        'category' => $partner_order->jobs[0]->category->name
+                    ]);
             }
             return api_response($request, $served_customers, 200, ['customers' => $served_customers]);
         } catch (\Throwable $e) {

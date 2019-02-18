@@ -2852,7 +2852,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "44014b5aef00b9e3cc139588d1b6905ca2f81092"
+                "reference": "36cd261531f22cbf2046ff865c20c5b93c2c636b"
             },
             "require": {
                 "php": ">=5.4"
@@ -2860,11 +2860,14 @@
             "type": "library",
             "autoload": {
                 "files": [
-                    "src/Helpers/functions.php"
+                    "src/Extras/Helpers/functions.php"
                 ],
                 "psr-4": {
                     "Sheba\\Dal\\": "src/"
-                }
+                },
+                "classmap": [
+                    "migrations"
+                ]
             },
             "license": [
                 "proprietary"
@@ -2876,7 +2879,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2019-01-24T06:28:06+00:00"
+            "time": "2019-02-16T11:59:54+00:00"
         },
         {
             "name": "sheba/notification",
@@ -2884,7 +2887,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_notification.git",
-                "reference": "62b9fe5dd5e416002cd2213cee1259b7d47104ab"
+                "reference": "32916bec8e6aee6af313d47590735a76b80649f0"
             },
             "require": {
                 "php": ">=5.4"
@@ -2908,7 +2911,7 @@
                 }
             ],
             "description": "Sheba notifications.",
-            "time": "2018-11-13T15:53:38+00:00"
+            "time": "2019-02-13T13:26:06+00:00"
         },
         {
             "name": "sheba/sms",
@@ -4932,6 +4935,7 @@
                 "mock",
                 "xunit"
             ],
+            "abandoned": true,
             "time": "2015-10-02T06:51:40+00:00"
         },
         {
