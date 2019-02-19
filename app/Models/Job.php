@@ -103,7 +103,7 @@ class Job extends Model
     {
         //$this->commissionRate = $this->partnerOrder->partner->categories()->find($this->service->category->id)->pivot->commission;
         $cost_rate = 1 - ($this->commission_rate / 100);
-        $material_cost_rate = 1 - (config('sheba.material_commission_rate') / 100);
+        $material_cost_rate = 1 - ($this->material_commission_rate / 100);
 
         $this->servicePrice = formatTaka(($this->service_unit_price * $this->service_quantity) + $this->calculateServicePrice());
         $this->serviceCost = formatTaka($this->servicePrice * $cost_rate);

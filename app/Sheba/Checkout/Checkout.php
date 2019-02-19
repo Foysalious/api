@@ -165,6 +165,7 @@ class Checkout
                     'job_additional_info' => $data['additional_information'],
                     'category_answers' => $data['category_answers'],
                     'commission_rate' => Category::find($data['category_id'])->commission($partner_order->partner_id),
+                    'material_commission_rate' => config('sheba.material_commission_rate'),
                     'discount' => isset($data['discount']) ? $data['discount'] : 0,
                     'sheba_contribution' => isset($data['sheba_contribution']) ? $data['sheba_contribution'] : 0,
                     'partner_contribution' => isset($data['partner_contribution']) ? $data['partner_contribution'] : 0,
