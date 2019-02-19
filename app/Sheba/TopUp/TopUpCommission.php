@@ -12,6 +12,7 @@ abstract class TopUpCommission
 
     /** @var TopUpOrder */
     protected $topUpOrder;
+    /** @var TopUpAgent */
     protected $agent;
     /** @var TopUpVendor */
     protected $vendor;
@@ -62,7 +63,8 @@ abstract class TopUpCommission
     protected function setVendorCommission()
     {
         $commissions = $this->vendor->commissions()->where('type', get_class($this->agent));
-        $commission_of_individual = $commissions->where('type_id', $this->agent->id)->first();
+        $commissions_copy = clone $commissions;
+        $commission_of_individual = $commissions_copy->where('type_id', $this->agent->id)->first();
         $this->vendorCommission = $commission_of_individual ?: $commissions->whereNull('type_id')->first();
         return $this;
     }
@@ -74,6 +76,11 @@ abstract class TopUpCommission
     {
         $this->topUpOrder->agent_commission = $this->calculateCommission($this->topUpOrder->amount);
         $this->topUpOrder->save();
+
+        $transaction = (new TopUpTransaction())->setAmount($this->amount - $this->topUpOrder->agent_commission)
+            ->setLog($this->amount . " has been topped up to " . $this->topUpOrder->payee_mobile)
+            ->setTopUpOrder($this->topUpOrder);
+        $this->agent->topUpTransaction($transaction);
     }
 
     /**

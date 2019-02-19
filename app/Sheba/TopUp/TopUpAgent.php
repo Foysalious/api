@@ -12,5 +12,8 @@ interface TopUpAgent
 
     public function calculateCommission($amount, TopUpVendor $topup_vendor);
 
+    /**
+     * @return TopUpCommission
+     */
     public function getCommission();
 }
