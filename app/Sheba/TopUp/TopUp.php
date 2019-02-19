@@ -72,12 +72,7 @@ class TopUp
             $response = $this->response->getSuccess();
             DB::transaction(function () use ($response, $top_up_request) {
                 $top_up_order = $this->placeTopUpOrder($response, $top_up_request->getMobile(), $top_up_request->getAmount());
-                $amount_after_commission = $top_up_request->getAmount() - $this->agent->calculateCommission($top_up_request->getAmount(), $this->model);
-                $log = $top_up_request->getAmount() . " has been topped up to " . $top_up_request->getMobile();
-
-                $transaction = new TopUpTransaction;
-                $transaction->setAmount($amount_after_commission)->setLog($log)->setTopUpOrder($top_up_order);
-                $this->agent->topUpTransaction($transaction);
+                $this->agent->getCommission()->setTopUpOrder($top_up_order)->disburse();
                 $this->vendor->deductAmount($top_up_request->getAmount());
                 $this->isSuccessful = true;
             });
@@ -132,8 +127,6 @@ class TopUp
 
         $top_up_order->agent = $this->agent;
         $top_up_order->vendor = $this->model;
-
-        $this->agent->getCommission()->setTopUpOrder($top_up_order)->disburse();
 
         return $top_up_order;
     }
