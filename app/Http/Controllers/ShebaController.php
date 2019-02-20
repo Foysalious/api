@@ -27,10 +27,10 @@ class ShebaController extends Controller
     private $serviceRepository;
     private $reviewRepository;
 
-    public function __construct()
+    public function __construct(ServiceRepository $service_repo, ReviewRepository $review_repo)
     {
-        $this->serviceRepository = new ServiceRepository();
-        $this->reviewRepository = new ReviewRepository();
+        $this->serviceRepository = $service_repo;
+        $this->reviewRepository = $review_repo;
     }
 
     public function getInfo()

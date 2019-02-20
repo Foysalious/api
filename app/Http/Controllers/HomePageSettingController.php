@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Cache;
+use Sheba\AppSettings\HomePageSetting\Getters\Getter as HomePageSettingGetter;
 
 class HomePageSettingController extends Controller
 {
@@ -53,6 +54,44 @@ class HomePageSettingController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function indexNew(Request $request, HomePageSettingGetter $getter)
+    {
+        try {
+            $portals = config('sheba.portals');
+            $screens = config('sheba.screen');
+            $this->validate($request, [
+                'portal' => 'in:' . implode(',', $portals),
+                'screen' => 'in:' . implode(',', $screens),
+                'location' => 'numeric',
+                'lat' => 'numeric',
+                'lng' => 'numeric'
+            ]);
+
+            $getter->setLocation($this->getLocationId($request))
+                ->setPortal($request->portal)->setScreen($request->screen);
+            $settings = $getter->getSettings()->get();
+            return api_response($request, $settings, 200, ['settings' => $settings]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    private function getLocationId(Request $request)
+    {
+        $location = '';
+        if ($request->has('location')) {
+            $location = (int)$request->location;
+        } elseif ($request->has('lat') && $request->has('lng')) {
+            $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+            if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
+        }
+        return $location;
     }
 
     private function getPublishedFor($for)
