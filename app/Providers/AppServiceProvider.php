@@ -8,6 +8,7 @@ use Sheba\Voucher\VoucherCodeServiceProvider;
 use Sheba\Voucher\VoucherSuggesterServiceProvider;
 use Sheba\Analysis\PartnerPerformance\Providers\ServiceProvider as PartnerPerformanceServiceProvider;
 use Sheba\Analysis\PartnerSale\Providers\ServiceProvider as PartnerSaleServiceProvider;
+use Sheba\AppSettings\HomePageSetting\Getters\Provider as HomePageSettingGettersProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -34,5 +35,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->register(partnerPerformanceServiceProvider::class);
         $this->app->register(PartnerSaleServiceProvider::class);
         $this->app->register(SmsServiceProvider::class);
+        $this->app->register(HomePageSettingGettersProvider::class);
     }
 }

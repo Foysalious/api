@@ -63,6 +63,7 @@ class Route
             });
             $api->get('times', 'ScheduleTimeController@index');
             $api->get('settings', 'HomePageSettingController@index');
+            $api->get('settings-new', 'HomePageSettingController@indexNew');
             $api->get('settings/top-up', 'TopUpController@getVendor');
             $api->get('settings/car', 'HomePageSettingController@getCar');
             $api->get('home-grids', 'HomeGridController@index');
