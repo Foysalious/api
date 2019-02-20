@@ -71,7 +71,7 @@ class HomePageSettingController extends Controller
 
             $getter->setLocation($this->getLocationId($request))
                 ->setPortal($request->portal)->setScreen($request->screen);
-            $settings = $getter->getSettings()->toJson();
+            $settings = $getter->getSettings()->get();
             return api_response($request, $settings, 200, ['settings' => $settings]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

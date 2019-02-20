@@ -11,7 +11,6 @@ class Provider extends ServiceProvider
      */
     public function register()
     {
-        parent::register();
         $this->app->bind(Getter::class, function ($app) {
             return $app->make(Mock::class);
         });
