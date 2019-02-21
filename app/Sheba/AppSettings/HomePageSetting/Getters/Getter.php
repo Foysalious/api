@@ -1,6 +1,6 @@
 <?php namespace Sheba\AppSettings\HomePageSetting\Getters;
 
-use Sheba\AppSettings\HomePageSetting\Settings;
+use Sheba\AppSettings\HomePageSetting\DS\Setting;
 
 abstract class Getter
 {
@@ -38,5 +38,5 @@ abstract class Getter
         return $this;
     }
 
-    abstract public function getSettings() : Settings;
+    abstract public function getSettings() : Setting;
 }

@@ -1,6 +1,8 @@
-<?php namespace Sheba\AppSettings\HomePageSetting;
+<?php namespace Sheba\AppSettings\HomePageSetting\Supported;
 
-class Targets
+use Sheba\AppSettings\HomePageSetting\Exceptions\UnsupportedTarget;
+
+class Targets extends Constants
 {
     const MASTER_CATEGORY = "master_category";
     const SECONDARY_CATEGORY = "secondary_category";
@@ -13,4 +15,13 @@ class Targets
     const OFFER = "offer";
     const SUBSCRIPTION_LIST = "subscription_list";
     const SUBSCRIPTION_SERVICE = "subscription_service";
+
+    /**
+     * @param $target
+     * @throws UnsupportedTarget
+     */
+    protected static function throwException($target)
+    {
+        throw new UnsupportedTarget($target);
+    }
 }
