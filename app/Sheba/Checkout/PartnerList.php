@@ -620,21 +620,27 @@ class PartnerList
         $event->tag = 'no_partner_found';
         $event->value = $this->getNotFoundValues($is_out_of_service);
         $event->fill((new RequestIdentification)->get());
+        $user_id = $this->getUserId();
         if ($event->portal_name == 'bondhu-app') {
             $event->created_by_type = "App\\Models\\Affiliate";
-            if (\request()->hasHeader('User-Id') && request()->header('User-Id')) {
-                $event->created_by = \request()->header('User-Id');
-                $event->created_by_name = "Affiliate - " . (Affiliate::find((int)\request()->header('User-Id')))->profile->name;
+            if ($user_id) {
+                $event->created_by = $user_id;
+                $event->created_by_name = "Affiliate - " . (Affiliate::find($user_id))->profile->name;
             }
         } elseif ($event->portal_name == 'customer-app' || $event->portal_name == 'customer-portal') {
             $event->created_by_type = "App\\Models\\Customer";
-            if (\request()->hasHeader('User-Id') && request()->header('User-Id')) {
+            if ($user_id) {
                 $event->created_by = \request()->header('User-Id');
-                $event->created_by_name = "Customer - " . (Customer::find((int)\request()->header('User-Id')))->profile->name;
+                $event->created_by_name = "Customer - " . (Customer::find($user_id))->profile->name;
             }
         }
         $event->created_at = Carbon::now();
         $event->save();
+    }
+
+    private function getUserId()
+    {
+        return request()->hasHeader('User-Id') && request()->header('User-Id') != null ? (int)request()->header('User-Id') : null;
     }
 
     private function getNotFoundValues($is_out_of_service)

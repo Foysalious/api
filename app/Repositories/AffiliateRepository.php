@@ -61,12 +61,12 @@ class AffiliateRepository
                 'mobile' => $resource->profile->mobile,
             ],
             'address' => $partner->address,
+            'logo' => $resource->profile->pro_pic,
             'location' => $location ? $location->location->name : null,
             'location_id' => $location ? $location->location_id : null,
             'moderation_status' => $partner->moderation_status,
             'income' => $partner->moderation_status == 'approved' ? constants('AFFILIATION_LITE_ONBOARD_REWARD') : 0,
-            'created_at' => $partner->created_at->toDateTimeString(),
-
+            'created_at' => $partner->created_at->toDateTimeString()
         ];
         if (!$isDetails) {
             $details['distance'] = $source && $geo_info ? PartnerModerator::calculateDistance($source, (array)$geo_info) : 9999999999;

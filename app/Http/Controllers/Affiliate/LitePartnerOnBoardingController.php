@@ -111,7 +111,6 @@ class LitePartnerOnBoardingController extends Controller
             ]);
             $partner = Partner::find($request->partner_id);
             $affiliate = $repo->moderatedPartner($request, 'pending');
-
             if (!is_null($partner)) {
                 if($affiliate->id == $partner->moderator_id) {
                     $partner = $repo->mapForModerationApi($partner, null , true);
