@@ -42,6 +42,37 @@ class PartnerListRequest
         return $this;
     }
 
+    public function setLocation($location_id)
+    {
+        $this->location = $location_id;
+        return $this;
+    }
+
+    public function setGeo($lat, $lng)
+    {
+        $this->lat = (double)$lat;
+        $this->lng = (double)$lng;
+        return $this;
+    }
+
+    public function setScheduleDate($date)
+    {
+        $this->scheduleDate = $date;
+        return $this;
+    }
+
+    public function setScheduleTime($time)
+    {
+        $this->scheduleTime = $time;
+        return $this;
+    }
+
+    public function setAvailabilityCheck($skipAvailabilityCheck)
+    {
+        $this->skipAvailabilityCheck = $skipAvailabilityCheck;
+        return $this;
+    }
+
     public function prepareObject()
     {
         $services = json_decode($this->request->services);
@@ -79,13 +110,6 @@ class PartnerListRequest
             $selected_services->push($service);
         }
         return $selected_services;
-    }
-
-    public function setGeo($lat, $lng)
-    {
-        $this->lat = (double)$lat;
-        $this->lng = (double)$lng;
-        return $this;
     }
 
     private function getServiceIds()

@@ -22,6 +22,7 @@ use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use DB;
 use Illuminate\Http\Request;
+use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Checkout\Services\ServiceObject;
 use Sheba\ModificationFields;
 use Sheba\RequestIdentification;
@@ -35,6 +36,7 @@ class Checkout
     private $voucherRepository;
     private $partnerServiceRepository;
     private $orderData;
+    private $partnerListRequest;
 
     public function __construct($customer)
     {
@@ -42,6 +44,7 @@ class Checkout
         $this->customerRepository = new CustomerRepository();
         $this->voucherRepository = new VoucherRepository();
         $this->partnerServiceRepository = new PartnerServiceRepository();
+        $this->partnerListRequest = new PartnerListRequest();
     }
 
     public function placeOrder($request)
@@ -57,15 +60,13 @@ class Checkout
                 $address = $this->customer->delivery_addresses()->save($new_address);
             }
         }
-        if ($request->has('location')) {
-            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$request->location);
-        } else {
+        $this->partnerListRequest->setRequest($request);
+        if (!$request->has('location')) {
             if ((int)$request->is_on_premise) $geo = json_decode((Partner::find((int)$request->partner))->geo_informations);
             else $geo = json_decode($address->geo_informations);
-            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time);
-            $partner_list->setGeo($geo->lat, $geo->lng);
+            $this->partnerListRequest->setGeo($geo->lat, $geo->lng);
         }
-
+        $partner_list = new PartnerList();
         $partner_list->find($request->partner);
         if ($partner_list->hasPartners) {
             $partner = $partner_list->partners->first();

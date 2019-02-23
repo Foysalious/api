@@ -103,7 +103,7 @@ class PartnerList
             $q->where('categories.id', $this->partnerListRequest->selectedCategory->id);
         }]);
         $this->filterByOption();
-        if (!$this->skipAvailability) $this->addAvailability();
+        if (!$this->partnerListRequest->skipAvailabilityCheck) $this->addAvailability();
         elseif ($this->partners->count() > 1) $this->rejectShebaHelpDesk();
         $this->partners = $this->partners->filter(function ($partner) {
             return $this->hasResourcesForTheCategory($partner);
