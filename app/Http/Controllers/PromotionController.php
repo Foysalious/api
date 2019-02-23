@@ -144,7 +144,7 @@ class PromotionController extends Controller
         try {
             $customer = $request->customer;
             $location = $request->location;
-            $partnerListRequest->setRequest($request);
+            $partnerListRequest->setRequest($request)->prepareObject();
             if ($request->has('lat') && $request->has('lng')) {
                 $hyper_local = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
                 $location = $hyper_local ? $hyper_local->location->id : $location;
@@ -174,7 +174,7 @@ class PromotionController extends Controller
     public function autoApplyPromotion($customer, Request $request, VoucherSuggester $voucherSuggester, PartnerListRequest $partnerListRequest)
     {
         try {
-            $partnerListRequest->setRequest($request);
+            $partnerListRequest->setRequest($request)->prepareObject();
             $partner_list = new PartnerList();
             $location = $request->location;
             if ($request->has('lat') && $request->has('lng')) {
@@ -249,7 +249,7 @@ class PromotionController extends Controller
         try {
             $customer = $request->customer;
             $location = $request->location;
-            $partnerListRequest->setRequest($request);
+            $partnerListRequest->setRequest($request)->prepareObject();
             if ($request->has('lat') && $request->has('lng')) {
                 $hyper_local = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
                 $location = $hyper_local ? $hyper_local->location->id : $location;

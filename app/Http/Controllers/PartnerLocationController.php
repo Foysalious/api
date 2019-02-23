@@ -29,7 +29,7 @@ class PartnerLocationController extends Controller
             $validation = new Validation($request);
             if (!$validation->isValid()) return api_response($request, $validation->message, 400, ['message' => $validation->message]);
             $partner = $request->has('partner') ? $request->partner : null;
-            $partnerListRequest->setRequest($request);
+            $partnerListRequest->setRequest($request)->prepareObject();
             $partner_list = new PartnerList();
             $partner_list->setPartnerListRequest($partnerListRequest)->find($partner);
             if ($request->has('isAvailable')) {
