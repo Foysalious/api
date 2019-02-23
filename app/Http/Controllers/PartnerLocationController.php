@@ -8,10 +8,11 @@ use App\Sheba\Checkout\Validation;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Checkout\Requests\PartnerListRequest;
 
 class PartnerLocationController extends Controller
 {
-    public function getPartners(Request $request)
+    public function getPartners(Request $request, PartnerListRequest $partnerListRequest)
     {
         try {
             $this->validate($request, [
@@ -28,9 +29,9 @@ class PartnerLocationController extends Controller
             $validation = new Validation($request);
             if (!$validation->isValid()) return api_response($request, $validation->message, 400, ['message' => $validation->message]);
             $partner = $request->has('partner') ? $request->partner : null;
+            $partnerListRequest->setRequest($request)->prepareObject();
             $partner_list = new PartnerList();
-            $partner_list->setServices(json_decode($request->services))->setScheduleDate($request->date)->setScheduleTime($request->time)
-                ->setGeo($request->lat, $request->lng)->setAvailability($request->skip_availability)->find($partner);
+            $partner_list->setPartnerListRequest($partnerListRequest)->find($partner);
             if ($request->has('isAvailable')) {
                 $partners = $partner_list->partners;
                 $available_partners = $partners->filter(function ($partner) {
@@ -65,7 +66,6 @@ class PartnerLocationController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
