@@ -23,14 +23,16 @@ use Sheba\Location\Distance\DistanceStrategy;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Sheba\Checkout\PartnerSort;
 use Sheba\ModificationFields;
-use Sheba\Partner\BadgeResolver;
 use Sheba\RequestIdentification;
 
 class PartnerList
 {
     use Helpers;
     use DispatchesJobs;
+    /** @var Partner[] */
     public $partners;
+    /** @var Partner */
+    private $partner;
     public $hasPartners = false;
     public $selected_services;
     public $location;
@@ -48,7 +50,6 @@ class PartnerList
     private $selectedServiceIds;
     private $notFoundValues;
     private $isNotLite;
-    private $partner;
 
     /** @header * */
     private $portalName;
@@ -57,19 +58,12 @@ class PartnerList
 
     use ModificationFields;
 
-    public function __construct($services, $date, $time, $location = null)
+    public function __construct()
     {
-        $this->location = $location;
-        $this->date = $date;
-        $this->time = $time;
         $this->rentCarServicesId = array_map('intval', explode(',', env('RENT_CAR_SERVICE_IDS')));
         $this->rentCarCategoryIds = array_map('intval', explode(',', env('RENT_CAR_IDS')));
-        $this->selectedCategory = Service::find((int)$services[0]->id)->category;
-        $this->selected_services = $this->getSelectedServices($services);
-        $this->selectedServiceIds = $this->getServiceIds();
         $this->partnerServiceRepository = new PartnerServiceRepository();
         $this->skipAvailability = 0;
-        $this->checkForRentACarPickUpGeo();
         $this->notFoundValues = [
             'service' => [],
             'location' => [],
@@ -78,8 +72,31 @@ class PartnerList
             'options' => [],
             'handyman' => []
         ];
+    }
 
-        $this->portalName = request()->header('portal-name');
+    public function setServices($services)
+    {
+        $this->selectedCategory = $this->getCategory($services);
+        $this->selected_services = $this->getSelectedServices($services);
+        return $this;
+    }
+
+    public function setScheduleDate($date)
+    {
+        $this->date = $date;
+        return $this;
+    }
+
+    public function setScheduleTime($time)
+    {
+        $this->time = $time;
+        return $this;
+    }
+
+    public function setLocation($location_id)
+    {
+        $this->location = (int)$location_id;
+        return $this;
     }
 
     public function setGeo($lat, $lng)
@@ -95,7 +112,12 @@ class PartnerList
         return $this;
     }
 
-    private function checkForRentACarPickUpGeo()
+    private function getCategory($services)
+    {
+        return (Service::find((int)$services[0]->id))->category;
+    }
+
+    private function setRentACarPickUpGeo()
     {
         if ($this->selectedCategory->isRentCar()) {
             $service = $this->selected_services->first();
@@ -145,6 +167,7 @@ class PartnerList
      */
     public function find($partner_id = null)
     {
+        $this->processData();
         $this->setPartner($partner_id);
         if ($this->location) {
             $this->location = $this->getCalculatedLocation($this->selected_services->first());
@@ -176,6 +199,24 @@ class PartnerList
         $this->calculateHasPartner();
     }
 
+    public function processData()
+    {
+        $this->selectedServiceIds = $this->getServiceIds();
+        $this->portalName = $this->getPortalName();
+        $this->setRentACarPickUpGeo();
+    }
+
+    private function getPortalName()
+    {
+        return request()->header('portal-name');
+    }
+
+    private function setPartner($partner_id)
+    {
+        if ($partner_id) $this->partner = Partner::find((int)$partner_id);
+        $this->isNotLite = isset($this->partner) ? !$this->partner->isLite() : true;
+    }
+
     private function findPartnersByServiceAndLocation()
     {
         $this->partners = $this->findPartnersByService();
@@ -192,14 +233,6 @@ class PartnerList
         });
         $this->notFoundValues['location'] = $this->getPartnerIds();
         return $this->partners;
-    }
-
-    private function setPartner($partner_id)
-    {
-        if ($partner_id) {
-            $this->partner = Partner::find($partner_id);
-        }
-        $this->isNotLite = isset($this->partner) ? !$this->partner->isLite() : true;
     }
 
     private function findPartnersByService()

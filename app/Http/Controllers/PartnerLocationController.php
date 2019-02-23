@@ -22,14 +22,15 @@ class PartnerLocationController extends Controller
                 'partner' => 'sometimes|required',
                 'lat' => 'required|numeric',
                 'lng' => 'required|numeric',
+                'skip_availability' => 'numeric',
+                'filter' => 'string|in:sheba',
             ]);
             $validation = new Validation($request);
-            if (!$validation->isValid()) {
-                return api_response($request, $validation->message, 400, ['message' => $validation->message]);
-            }
+            if (!$validation->isValid()) return api_response($request, $validation->message, 400, ['message' => $validation->message]);
             $partner = $request->has('partner') ? $request->partner : null;
-            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time);
-            $partner_list->setGeo($request->lat, $request->lng)->setAvailability((int)$request->skip_availability)->find($partner);
+            $partner_list = new PartnerList();
+            $partner_list->setServices(json_decode($request->services))->setScheduleDate($request->date)->setScheduleTime($request->time)
+                ->setGeo($request->lat, $request->lng)->setAvailability($request->skip_availability)->find($partner);
             if ($request->has('isAvailable')) {
                 $partners = $partner_list->partners;
                 $available_partners = $partners->filter(function ($partner) {
@@ -64,6 +65,7 @@ class PartnerLocationController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

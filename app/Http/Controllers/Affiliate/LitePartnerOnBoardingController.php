@@ -6,6 +6,7 @@ use App\Models\Partner;
 use App\Repositories\AffiliateRepository;
 use Illuminate\Http\Request;
 use App\Sheba\LightOnBoarding\PartnerModerator;
+use Illuminate\Validation\ValidationException;
 
 class LitePartnerOnBoardingController extends Controller
 {

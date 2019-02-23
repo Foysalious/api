@@ -106,6 +106,9 @@ class Route
             });
             $api->get('updates', 'UpdateController@getUpdates');
             $api->get('ek-sheba/authenticate', 'EkshebaController@authenticate');
+            $api->group(['prefix' => 'subscriptions'], function ($api) {
+                $api->get('partners', 'Subscription\CustomerSubscriptionController@findPartners');
+            });
         });
         return $api;
     }
