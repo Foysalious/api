@@ -1,5 +1,7 @@
 <?php namespace Sheba\AppSettings\HomePageSetting\Getters;
 
+use Sheba\AppSettings\HomePageSetting\DS\Builders\ItemBuilder;
+use Sheba\AppSettings\HomePageSetting\DS\Builders\SectionBuilder;
 use Sheba\AppSettings\HomePageSetting\DS\Setting;
 
 abstract class Getter
@@ -7,6 +9,17 @@ abstract class Getter
     protected $location;
     protected $screen;
     protected $portal;
+
+    /** @var SectionBuilder */
+    protected $sectionBuilder;
+    /** @var ItemBuilder */
+    protected $itemBuilder;
+
+    public function __construct(SectionBuilder $section_builder, ItemBuilder $item_builder)
+    {
+        $this->sectionBuilder = $section_builder;
+        $this->itemBuilder = $item_builder;
+    }
 
     /**
      * @param mixed $location

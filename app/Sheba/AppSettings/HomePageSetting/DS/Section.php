@@ -9,6 +9,7 @@ class Section
     protected $type;
     protected $id;
     protected $name;
+    protected $height;
     /** @var  Carbon */
     protected $updatedAt;
     /** @var  array */
@@ -17,7 +18,6 @@ class Section
     /**
      * @param string $type
      * @return Section
-     * @throws UnsupportedSection
      */
     public function setType($type)
     {
@@ -43,6 +43,16 @@ class Section
     public function setName($name)
     {
         $this->name = $name;
+        return $this;
+    }
+
+    /**
+     * @param int $height
+     * @return Section
+     */
+    public function setHeight($height)
+    {
+        $this->height = $height;
         return $this;
     }
 
