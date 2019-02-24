@@ -103,11 +103,11 @@ class PartnerList
             $q->where('categories.id', $this->partnerListRequest->selectedCategory->id);
         }]);
         $this->filterByOption();
-        if (!$this->partnerListRequest->skipAvailabilityCheck) $this->addAvailability();
-        elseif ($this->partners->count() > 1) $this->rejectShebaHelpDesk();
         $this->partners = $this->partners->filter(function ($partner) {
             return $this->hasResourcesForTheCategory($partner);
         });
+        if (!$this->partnerListRequest->skipAvailabilityCheck) $this->addAvailability();
+        elseif ($this->partners->count() > 1) $this->rejectShebaHelpDesk();
         $this->notFoundValues['handyman'] = $this->getPartnerIds();
         $this->calculateHasPartner();
     }
@@ -411,7 +411,6 @@ class PartnerList
             return $partner->is_available == 1;
         });
         $this->partners = $available_partners->merge($unavailable_partners);
-        $this->rejectShebaHelpDesk();
     }
 
     protected function calculateServicePricingAndBreakdownOfPartner($partner)
