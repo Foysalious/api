@@ -1,25 +1,19 @@
 <?php namespace Sheba\AppSettings\HomePageSetting\Getters;
 
-use Carbon\Carbon;
-use Sheba\AppSettings\HomePageSetting\DS\Item;
-use Sheba\AppSettings\HomePageSetting\DS\Section;
+use App\Models\Category;
+use App\Models\CategoryGroup;
+use App\Models\OfferShowcase;
+use App\Models\Voucher;
+use Sheba\AppSettings\HomePageSetting\DS\ItemSet;
 use Sheba\AppSettings\HomePageSetting\DS\Setting;
-use Sheba\AppSettings\HomePageSetting\Supported\Sections;
-use Sheba\AppSettings\HomePageSetting\Supported\Targets;
 
 class Mock extends Getter
 {
-    private $icon = 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/categories_images/icons_png/1543400128_tiwnn.png';
-    private $thumb = 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Sub-catagory/10/150.jpg';
-    private $banner = 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/categories_images/banners/1495262683_home_appliances_.png';
-    private $updatedAt;
-
     /**
      * @return Setting
      */
     public function getSettings() : Setting
     {
-        $this->updatedAt = Carbon::parse('2019-01-01');
         $setting = new Setting();
         $setting->push($this->menu());
         $setting->push($this->categories());
@@ -33,80 +27,69 @@ class Mock extends Getter
         return $setting;
     }
 
-    /**
-     * @return Section
-     */
     private function menu()
     {
-        $section = new Section();
-        $section->setType(Sections::MENU)->setName("Menu")->setUpdatedAt($this->updatedAt);
-        $category_group = (new Item())->setTargetType(Targets::CATEGORY_GROUP)->setTargetId(1)->setName('Beast Deal')->setIcon($this->icon)->setUpdatedAt($this->updatedAt);
-        $top_up = (new Item())->setTargetType(Targets::TOP_UP)->setName('Top Up')->setIcon($this->icon)->setUpdatedAt($this->updatedAt);
-        $favourites = (new Item())->setTargetType(Targets::FAVOURITES)->setName('Favourites')->setIcon($this->icon)->setUpdatedAt($this->updatedAt);
-        $offer_list = (new Item())->setTargetType(Targets::OFFER_LIST)->setName('Offers')->setIcon($this->icon)->setUpdatedAt($this->updatedAt);
-        $subscription_list = (new Item())->setTargetType(Targets::SUBSCRIPTION_LIST)->setName('Subscription')->setIcon($this->icon)->setUpdatedAt($this->updatedAt);
-        $section->pushItem($category_group)->pushItem($top_up)->pushItem($favourites)->pushItem($offer_list)->pushItem($subscription_list);
-        return $section;
+        $items = (new ItemSet())->push($this->itemBuilder->buildCategoryGroup(CategoryGroup::find(1)))
+            ->push($this->itemBuilder->buildTopUp())
+            ->push($this->itemBuilder->buildFavourites())
+            ->push($this->itemBuilder->buildOfferList())
+            ->push($this->itemBuilder->buildSubscriptionList());
+        return $this->sectionBuilder->buildMenu($items);
     }
 
     private function categories()
     {
-        $section = (new Section())->setType(Sections::MASTER_CATEGORIES)->setName("Our Categories")->setUpdatedAt($this->updatedAt);
+        $items = new ItemSet();
+        $category = $this->itemBuilder->buildCategory(Category::find(1));
         for ($i=1; $i<=30; $i++) {
-            $section->pushItem((new Item())->setTargetId(1)->setTargetType(Targets::MASTER_CATEGORY)->setName('Appliance Repair')->setIcon($this->icon)->setAppThumb($this->thumb)->setUpdatedAt($this->updatedAt));
+            $items->push($category);
         }
-        return $section;
+        return $this->sectionBuilder->buildCategories($items);
     }
 
     private function subscriptionBanner()
     {
-        $section = (new Section())->setType(Sections::BANNER)->setUpdatedAt($this->updatedAt);
-        $section->pushItem((new Item())->setTargetType(Targets::SUBSCRIPTION_LIST)->setAppBanner($this->banner)->setHeight(200)->setUpdatedAt($this->updatedAt));
-        return $section;
+        $items = (new ItemSet())->push($this->itemBuilder->buildSubscriptionList());
+        return $this->sectionBuilder->buildBanner($items, 300);
     }
 
     private function offerList()
     {
-        $section = (new Section())->setType(Sections::OFFER_LIST)->setUpdatedAt($this->updatedAt);
-        return $section;
+        return $this->sectionBuilder->buildOfferList();
     }
 
     private function mediumBanner()
     {
-        $section = (new Section())->setType(Sections::BANNER)->setUpdatedAt($this->updatedAt);
-        $section->pushItem((new Item())->setTargetType(Targets::OFFER_LIST)->setAppBanner($this->banner)->setHeight(300)->setUpdatedAt($this->updatedAt));
-        return $section;
+        $items = (new ItemSet())->push($this->itemBuilder->buildOffer(OfferShowcase::find(1)));
+        return $this->sectionBuilder->buildBanner($items, 300);
     }
 
     private function subscriptionList()
     {
-        $section = (new Section())->setType(Sections::SUBSCRIPTION_LIST)->setUpdatedAt($this->updatedAt);
-        return $section;
+        return $this->sectionBuilder->buildSubscriptionList();
     }
 
     private function bigBanner()
     {
-        $section = (new Section())->setType(Sections::BANNER)->setUpdatedAt($this->updatedAt);
-        $section->pushItem((new Item())->setTargetType(Targets::OFFER)->setAppBanner($this->banner)->setHeight(400)->setUpdatedAt($this->updatedAt));
-        return $section;
+        $items = (new ItemSet())->push($this->itemBuilder->buildOffer(OfferShowcase::find(1)));
+        return $this->sectionBuilder->buildBanner($items, 400);
     }
 
     private function categoryGroup()
     {
-        $section = (new Section())->setType(Sections::BANNER)->setUpdatedAt($this->updatedAt);
-        for ($i=1; $i<=10; $i++) {
-            $section->pushItem((new Item())->setTargetType(Targets::SECONDARY_CATEGORY)->setAppThumb($this->thumb)->setName('Ac')->setUpdatedAt($this->updatedAt));
+        $category_group = CategoryGroup::find(1);
+        $items = new ItemSet();
+        foreach ($category_group->categories as $category) {
+            $items->push($this->itemBuilder->buildCategory($category));
         }
-        return $section;
+        return $this->sectionBuilder->buildCategoryGroup($category_group, $items);
     }
 
     private function smallBannerArray()
     {
-        $section = (new Section())->setType(Sections::BANNER)->setUpdatedAt($this->updatedAt);
-        $mc = (new Item())->setTargetType(Targets::MASTER_CATEGORY)->setTargetId(1)->setAppBanner($this->banner)->setHeight(200)->setUpdatedAt($this->updatedAt);
-        $sc = (new Item())->setTargetType(Targets::SECONDARY_CATEGORY)->setTargetId(10)->setAppBanner($this->banner)->setHeight(200)->setUpdatedAt($this->updatedAt);
-        $voucher = (new Item())->setTargetType(Targets::VOUCHER)->setAppBanner($this->banner)->setVoucherCode('KHELAHOBE')->setHeight(200)->setUpdatedAt($this->updatedAt);
-        $section->pushItem($mc)->pushItem($sc)->pushItem($voucher);
-        return $section;
+        $items = (new ItemSet())->push($this->itemBuilder->buildCategory(Category::find(1)))
+            ->push($this->itemBuilder->buildCategory(Category::find(10)))
+            ->push($this->itemBuilder->buildVoucher(Voucher::where('code', 'KHELAHOBE')->first()));
+        return $this->sectionBuilder->buildBanner($items, 200);
     }
 }
