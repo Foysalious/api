@@ -565,3 +565,15 @@ if (!function_exists('getDefaultWorkingHours')) {
         ];
     }
 }
+
+if (!function_exists('antiCases')) {
+    /**
+     * @param $value
+     * @return string
+     */
+    function antiCases($value)
+    {
+        $value = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $value));
+        return ucwords(str_replace(['_', '-'], ' ', $value));
+    }
+}
