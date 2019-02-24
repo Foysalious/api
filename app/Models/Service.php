@@ -48,6 +48,11 @@ class Service extends Model
         return $this->belongsToMany(Partner::class)->withPivot($this->servicePivotColumns);
     }
 
+    public function subscription()
+    {
+        return $this->hasOne(ServiceSubscription::class);
+    }
+
     public function reviews()
     {
         return $this->hasMany(Review::class);

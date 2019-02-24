@@ -35,7 +35,6 @@ class PartnerListRequest
     private $onPremise;
     private $subscriptionType;
 
-
     public function __get($name)
     {
         return $this->$name;
@@ -194,5 +193,8 @@ class PartnerListRequest
         return $this->subscriptionType == config('sheba.subscription_type.customer.monthly')['name'];
     }
 
-
+    public function getSubscriptionQuantity()
+    {
+        return count($this->scheduleDate);
+    }
 }

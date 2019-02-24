@@ -30,16 +30,8 @@ class CustomerSubscriptionController extends Controller
             $partner = $request->has('partner') ? $request->partner : null;
             $request->merge(['date' => json_decode($request->date)]);
             $partnerListRequest->setRequest($request)->prepareObject();
-            $partner_list = new PartnerList();
+            $partner_list = new SubscriptionPartnerList();
             $partner_list->setPartnerListRequest($partnerListRequest)->find($partner);
-            if ($request->has('isAvailable')) {
-                $partners = $partner_list->partners;
-                $available_partners = $partners->filter(function ($partner) {
-                    return $partner->is_available == 1;
-                });
-                $is_available = count($available_partners) != 0 ? 1 : 0;
-                return api_response($request, $is_available, 200, ['is_available' => $is_available, 'available_partners' => count($available_partners)]);
-            }
             if ($partner_list->hasPartners) {
                 $partner_list->addPricing();
                 $partner_list->addInfo();
@@ -66,7 +58,6 @@ class CustomerSubscriptionController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

@@ -31,30 +31,30 @@ class PartnerList
     /** @var Partner[] */
     public $partners;
     /** @var Partner */
-    private $partner;
+    protected $partner;
     public $hasPartners = false;
     public $selected_services;
     public $location;
-    private $hyperLocation;
-    private $date;
-    private $time;
-    private $lat;
-    private $lng;
-    private $partnerServiceRepository;
-    private $rentCarServicesId;
-    private $skipAvailability;
+    protected $hyperLocation;
+    protected $date;
+    protected $time;
+    protected $lat;
+    protected $lng;
+    protected $partnerServiceRepository;
+    protected $rentCarServicesId;
+    protected $skipAvailability;
     /** @var Category */
     public $selectedCategory;
-    private $rentCarCategoryIds;
-    private $selectedServiceIds;
-    private $notFoundValues;
-    private $isNotLite;
+    protected $rentCarCategoryIds;
+    protected $selectedServiceIds;
+    protected $notFoundValues;
+    protected $isNotLite;
 
     /** @header * */
-    private $portalName;
-    private $badgeResolver;
+    protected $portalName;
+    protected $badgeResolver;
     /** @var PartnerListRequest */
-    private $partnerListRequest;
+    protected $partnerListRequest;
 
     use ModificationFields;
 
@@ -414,7 +414,7 @@ class PartnerList
         $this->rejectShebaHelpDesk();
     }
 
-    private function calculateServicePricingAndBreakdownOfPartner($partner)
+    protected function calculateServicePricingAndBreakdownOfPartner($partner)
     {
         $total_service_price = [
             'discount' => 0,
@@ -429,7 +429,6 @@ class PartnerList
             $schedule_date_time = Carbon::parse($this->partnerListRequest->scheduleDate[0] . ' ' . $this->partnerListRequest->scheduleStartTime);
             $discount = new Discount();
             $discount->setServiceObj($selected_service)->setServicePivot($service->pivot)->setScheduleDateTime($schedule_date_time)->initialize();
-            $discount->calculateServiceDiscount();
             $service = [];
             $service['discount'] = $discount->discount;
             $service['cap'] = $discount->cap;
@@ -442,9 +441,7 @@ class PartnerList
             $service['sheba_contribution'] = $discount->sheba_contribution;
             $service['partner_contribution'] = $discount->partner_contribution;
             $service['is_min_price_applied'] = $discount->original_price == $discount->min_price ? 1 : 0;
-            if ($discount->original_price == $discount->min_price) {
-                $total_service_price['is_min_price_applied'] = 1;
-            }
+            if ($discount->original_price == $discount->min_price) $total_service_price['is_min_price_applied'] = 1;
             $total_service_price['discount'] += $service['discount'];
             $total_service_price['discounted_price'] += $service['discounted_price'];
             $total_service_price['original_price'] += $service['original_price'];
@@ -463,8 +460,6 @@ class PartnerList
         $total_service_price['discounted_price'] += $delivery_charge;
         $total_service_price['original_price'] += $delivery_charge;
         $total_service_price['delivery_charge'] = $delivery_charge;
-        $total_service_price['has_home_delivery'] = (int)$category_pivot->is_home_delivery_applied ? 1 : 0;
-        $total_service_price['has_premise_available'] = (int)$category_pivot->is_partner_premise_applied ? 1 : 0;
         return $total_service_price;
     }
 
@@ -477,7 +472,7 @@ class PartnerList
         }
     }
 
-    private function getVariableOptionOfService(Service $service, Array $option)
+    protected function getVariableOptionOfService(Service $service, Array $option)
     {
         if ($service->isOptions()) {
             $variables = [];

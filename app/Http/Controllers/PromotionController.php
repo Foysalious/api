@@ -219,7 +219,6 @@ class PromotionController extends Controller
                 $schedule_date_time = Carbon::parse(request()->get('date') . ' ' . explode('-', request()->get('time'))[0]);
                 $discount = new Discount();
                 $discount->setServiceObj($selected_service)->setServicePivot($service->pivot)->setScheduleDateTime($schedule_date_time)->initialize();
-                $discount->calculateServiceDiscount();
                 if ($discount->__get('hasDiscount')) return null;
                 $order_amount += $discount->__get('discounted_price');
             }

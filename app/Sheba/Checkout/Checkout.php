@@ -219,7 +219,6 @@ class Checkout
             $schedule_date_time = Carbon::parse($this->orderData['date'] . ' ' . explode('-', $this->orderData['time'])[0]);
             $discount = new Discount();
             $discount->setServiceObj($selected_service)->setServicePivot($service->pivot)->setScheduleDateTime($schedule_date_time)->initialize();
-            $discount->calculateServiceDiscount();
             $service_data = array(
                 'service_id' => $selected_service->id,
                 'quantity' => $selected_service->quantity,
