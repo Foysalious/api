@@ -4,9 +4,11 @@ namespace Sheba\Checkout\Requests;
 
 
 use App\Models\Category;
+use App\Models\Partner;
 use App\Models\Service;
 use Dingo\Api\Routing\Helpers;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Sheba\Checkout\Services\RentACarServiceObject;
 use Sheba\Checkout\Services\ServiceObject;
 
@@ -16,8 +18,10 @@ class PartnerListRequest
     private $request;
     /** @var Category */
     private $selectedCategory;
+    /** @var Partner */
+    private $selectedPartner;
     private $selectedServices;
-    public $location;
+    private $location;
     private $scheduleDate;
     private $scheduleTime;
     private $scheduleStartTime;
@@ -29,6 +33,7 @@ class PartnerListRequest
     private $portalName;
     private $homeDelivery;
     private $onPremise;
+    private $subscriptionType;
 
 
     public function __get($name)
@@ -57,7 +62,7 @@ class PartnerListRequest
 
     public function setScheduleDate($date)
     {
-        $this->scheduleDate = $date;
+        $this->scheduleDate = is_array($date) ? $date : [$date];
         return $this;
     }
 
@@ -73,22 +78,26 @@ class PartnerListRequest
         return $this;
     }
 
+    public function setPartner($partner_id)
+    {
+        $this->selectedPartner = Partner::find((int)$partner_id);
+    }
+
     public function prepareObject()
     {
         $services = json_decode($this->request->services);
         $this->selectedCategory = $this->getCategory($services);
         $this->selectedServices = $this->getSelectedServices($services);
-        $this->location = $this->request->location;
-        $this->scheduleDate = $this->request->date;
-        $this->scheduleTime = $this->request->time;
-        $this->scheduleStartTime = explode('-', $this->scheduleTime)[0];
-        $this->scheduleEndTime = explode('-', $this->scheduleTime)[1];
+        $this->setTime();
         $this->setHomeDelivery();
         $this->setOnPremise();
-        $this->setGeo($this->request->lat, $this->request->lng);
-        $this->skipAvailabilityCheck = (int)$this->request->skip_availability;
-        $this->selectedServiceIds = $this->getServiceIds();
         $this->setPortalName();
+        $this->setSubscriptionType();
+        if (!isset($this->location)) $this->setLocation($this->request->location);
+        if (!isset($this->scheduleDate)) $this->setScheduleDate($this->request->date);
+        if (!isset($this->lat) && !isset($this->lng)) $this->setGeo($this->request->lat, $this->request->lng);
+        if (!isset($this->skipAvailabilityCheck)) $this->setAvailabilityCheck((int)$this->request->skip_availability);
+        $this->selectedServiceIds = $this->getServiceIds();
         $this->setRentACarPickUpGeo();
         if ($this->location) $this->location = $this->setRentACarLocation($this->selectedServices->first());
     }
@@ -100,7 +109,7 @@ class PartnerListRequest
 
     /**
      * @param $services
-     * @return ServiceObject[]
+     * @return ServiceObject[]|Collection
      */
     private function getSelectedServices($services)
     {
@@ -159,5 +168,31 @@ class PartnerListRequest
     {
         $this->onPremise = $this->request->has('has_premise') ? (int)$this->request->get('has_premise') : null;
     }
+
+    private function setTime()
+    {
+        $this->scheduleTime = $this->request->time;
+        if ($this->scheduleTime) {
+            $time = explode('-', $this->scheduleTime);
+            $this->scheduleStartTime = $time[0];
+            $this->scheduleEndTime = $time[1];
+        }
+    }
+
+    private function setSubscriptionType()
+    {
+        $this->subscriptionType = strtolower($this->request->subscription_type);
+    }
+
+    public function isWeeklySubscription()
+    {
+        return $this->subscriptionType == config('sheba.subscription_type.customer.weekly')['name'];
+    }
+
+    public function isMonthlySubscription()
+    {
+        return $this->subscriptionType == config('sheba.subscription_type.customer.monthly')['name'];
+    }
+
 
 }

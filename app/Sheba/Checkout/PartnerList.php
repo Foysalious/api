@@ -157,6 +157,12 @@ class PartnerList
             if ($isNotLite) {
                 $query->where('partner_service.is_verified', 1);
             }
+            if ($this->partnerListRequest->isWeeklySubscription()) {
+                $query->where('partner_service.is_weekly_subscription_enable', 1);
+            }
+            if ($this->partnerListRequest->isMonthlySubscription()) {
+                $query->where('partner_service.is_monthly_subscription_enable', 1);
+            }
         })->whereDoesntHave('leaves', function ($q) {
             $q->where('end', null)->orWhere([['start', '<=', Carbon::now()], ['end', '>=', Carbon::now()->addDays(7)]]);
         })->with(['handymanResources' => function ($q) use ($isNotLite) {
@@ -269,7 +275,7 @@ class PartnerList
         $this->notFoundValues['order_limit'] = $this->getPartnerIds();
     }
 
-    private function addAvailability()
+    protected function addAvailability()
     {
         $this->partners->load(['workingHours', 'leaves']);
         $this->partners->each(function ($partner) {
@@ -278,12 +284,12 @@ class PartnerList
         if ($this->getAvailablePartners()->count() > 1) $this->rejectShebaHelpDesk();
     }
 
-    public function isWithinPreparationTime($partner)
+    private function isWithinPreparationTime($partner)
     {
         $category_preparation_time_minutes = $partner->categories->where('id', $this->partnerListRequest->selectedCategory->id)->first()->pivot->preparation_time_minutes;
         if ($category_preparation_time_minutes == 0) return 1;
-        $start_time = Carbon::parse($this->partnerListRequest->scheduleDate . ' ' . $this->partnerListRequest->scheduleStartTime);
-        $end_time = Carbon::parse($this->partnerListRequest->scheduleDate . ' ' . $this->partnerListRequest->scheduleEndTime);
+        $start_time = Carbon::parse($this->partnerListRequest->scheduleDate[0] . ' ' . $this->partnerListRequest->scheduleStartTime);
+        $end_time = Carbon::parse($this->partnerListRequest->scheduleDate[0] . ' ' . $this->partnerListRequest->scheduleEndTime);
         $preparation_time = Carbon::createFromTime(Carbon::now()->hour)->addMinute(61)->addMinute($category_preparation_time_minutes);
         return $preparation_time->lte($start_time) || $preparation_time->between($start_time, $end_time) ? 1 : 0;
     }
@@ -420,7 +426,7 @@ class PartnerList
         $category_pivot = $partner->categories->first()->pivot;
         foreach ($this->partnerListRequest->selectedServices as $selected_service) {
             $service = $partner->services->where('id', $selected_service->id)->first();
-            $schedule_date_time = Carbon::parse($this->partnerListRequest->scheduleDate . ' ' . $this->partnerListRequest->scheduleStartTime);
+            $schedule_date_time = Carbon::parse($this->partnerListRequest->scheduleDate[0] . ' ' . $this->partnerListRequest->scheduleStartTime);
             $discount = new Discount();
             $discount->setServiceObj($selected_service)->setServicePivot($service->pivot)->setScheduleDateTime($schedule_date_time)->initialize();
             $discount->calculateServiceDiscount();
@@ -557,7 +563,7 @@ class PartnerList
                     'lat' => $this->partnerListRequest->lat,
                     'lng' => $this->partnerListRequest->lng,
                     'location' => $this->partnerListRequest->location,
-                    'date' => $this->partnerListRequest->scheduleDate,
+                    'date' => $this->partnerListRequest->scheduleDate[0],
                     'time' => $this->partnerListRequest->scheduleTime,
                     'is_out' => $is_out_of_service,
                     'origin' => request()->header('Origin')
