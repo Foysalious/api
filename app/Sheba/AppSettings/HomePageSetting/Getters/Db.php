@@ -1,14 +1,14 @@
 <?php namespace Sheba\AppSettings\HomePageSetting\Getters;
 
-use Sheba\AppSettings\HomePageSetting\Settings;
+use Sheba\AppSettings\HomePageSetting\DS\Setting;
 
 class Db extends Getter
 {
     /**
-     * @return Settings
+     * @return Setting
      */
-    public function getSettings() : Settings
+    public function getSettings() : Setting
     {
-        return new Settings();
+        return new Setting();
     }
 }

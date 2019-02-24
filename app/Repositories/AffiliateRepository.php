@@ -61,7 +61,7 @@ class AffiliateRepository
                 'mobile' => $resource->profile->mobile,
             ],
             'address' => $partner->address,
-            'logo' => $partner->logo,
+            'logo' => $resource->profile->pro_pic,
             'location' => $location ? $location->location->name : null,
             'location_id' => $location ? $location->location_id : null,
             'moderation_status' => $partner->moderation_status,

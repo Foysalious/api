@@ -1,18 +1,26 @@
 <?php namespace Sheba\AppSettings\HomePageSetting\Getters;
 
 use Carbon\Carbon;
-use Sheba\AppSettings\HomePageSetting\Sections;
-use Sheba\AppSettings\HomePageSetting\Settings;
-use Sheba\AppSettings\HomePageSetting\Targets;
+use Sheba\AppSettings\HomePageSetting\DS\Item;
+use Sheba\AppSettings\HomePageSetting\DS\Section;
+use Sheba\AppSettings\HomePageSetting\DS\Setting;
+use Sheba\AppSettings\HomePageSetting\Supported\Sections;
+use Sheba\AppSettings\HomePageSetting\Supported\Targets;
 
 class Mock extends Getter
 {
+    private $icon = 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/categories_images/icons_png/1543400128_tiwnn.png';
+    private $thumb = 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Sub-catagory/10/150.jpg';
+    private $banner = 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/categories_images/banners/1495262683_home_appliances_.png';
+    private $updatedAt;
+
     /**
-     * @return Settings
+     * @return Setting
      */
-    public function getSettings() : Settings
+    public function getSettings() : Setting
     {
-        $setting = new Settings();
+        $this->updatedAt = Carbon::parse('2019-01-01');
+        $setting = new Setting();
         $setting->push($this->menu());
         $setting->push($this->categories());
         $setting->push($this->subscriptionBanner());
@@ -25,162 +33,80 @@ class Mock extends Getter
         return $setting;
     }
 
+    /**
+     * @return Section
+     */
     private function menu()
     {
-        return [
-            'type' => Sections::MENU,
-            'items' => [
-                [
-                    'type' => Targets::CATEGORY_GROUP,
-                    'id' => 1,
-                    'name' => 'Beast Deal',
-                    'icon' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/categories_images/icons_png/1543400128_tiwnn.png',
-                ], [
-                    'type' => Targets::TOP_UP,
-                    'name' => 'Top Up',
-                    'icon' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/categories_images/icons_png/1543400128_tiwnn.png',
-                ], [
-                    'type' => Targets::FAVOURITES,
-                    'name' => 'Favourites',
-                    'icon' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/categories_images/icons_png/1543400128_tiwnn.png',
-                ], [
-                    'type' => Targets::OFFER_LIST,
-                    'name' => 'Offers',
-                    'icon' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/categories_images/icons_png/1543400128_tiwnn.png',
-                ], [
-                    'type' => Targets::SUBSCRIPTION_LIST,
-                    'name' => 'Subscription',
-                    'icon' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/categories_images/icons_png/1543400128_tiwnn.png',
-                ]
-            ],
-            'updated_at' => Carbon::parse('2019-01-01')
-        ];
+        $section = new Section();
+        $section->setType(Sections::MENU)->setName("Menu")->setUpdatedAt($this->updatedAt);
+        $category_group = (new Item())->setTargetType(Targets::CATEGORY_GROUP)->setTargetId(1)->setName('Beast Deal')->setIcon($this->icon)->setUpdatedAt($this->updatedAt);
+        $top_up = (new Item())->setTargetType(Targets::TOP_UP)->setName('Top Up')->setIcon($this->icon)->setUpdatedAt($this->updatedAt);
+        $favourites = (new Item())->setTargetType(Targets::FAVOURITES)->setName('Favourites')->setIcon($this->icon)->setUpdatedAt($this->updatedAt);
+        $offer_list = (new Item())->setTargetType(Targets::OFFER_LIST)->setName('Offers')->setIcon($this->icon)->setUpdatedAt($this->updatedAt);
+        $subscription_list = (new Item())->setTargetType(Targets::SUBSCRIPTION_LIST)->setName('Subscription')->setIcon($this->icon)->setUpdatedAt($this->updatedAt);
+        $section->pushItem($category_group)->pushItem($top_up)->pushItem($favourites)->pushItem($offer_list)->pushItem($subscription_list);
+        return $section;
     }
 
     private function categories()
     {
-        $items = [];
+        $section = (new Section())->setType(Sections::MASTER_CATEGORIES)->setName("Our Categories")->setUpdatedAt($this->updatedAt);
         for ($i=1; $i<=30; $i++) {
-            $items[] = [
-                'id' => 1,
-                'name' => 'Appliance Repair',
-                'icon' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/categories_images/icons_png/1543400128_tiwnn.png',
-                'app_thumb' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Sub-catagory/10/150.jpg'
-            ];
+            $section->pushItem((new Item())->setTargetId(1)->setTargetType(Targets::MASTER_CATEGORY)->setName('Appliance Repair')->setIcon($this->icon)->setAppThumb($this->thumb)->setUpdatedAt($this->updatedAt));
         }
-        return [
-            'type' => Sections::MASTER_CATEGORIES,
-            'items' => $items,
-            'updated_at' => Carbon::parse('2019-01-01')
-        ];
+        return $section;
     }
 
     private function subscriptionBanner()
     {
-        return [
-            'type' => Sections::BANNER,
-            'items' => [
-                [
-                    'type' => Targets::SUBSCRIPTION_LIST,
-                    'banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/categories_images/banners/1495262683_home_appliances_.png',
-                    'height' => 200,
-                ]
-            ],
-            'updated_at' => Carbon::parse('2019-01-01')
-        ];
+        $section = (new Section())->setType(Sections::BANNER)->setUpdatedAt($this->updatedAt);
+        $section->pushItem((new Item())->setTargetType(Targets::SUBSCRIPTION_LIST)->setAppBanner($this->banner)->setHeight(200)->setUpdatedAt($this->updatedAt));
+        return $section;
     }
 
     private function offerList()
     {
-        return [
-            'type' => Sections::OFFER_LIST,
-            'items' => [],
-            'updated_at' => Carbon::parse('2019-01-01')
-        ];
+        $section = (new Section())->setType(Sections::OFFER_LIST)->setUpdatedAt($this->updatedAt);
+        return $section;
     }
 
     private function mediumBanner()
     {
-        return [
-            'type' => Sections::BANNER,
-            'items' => [
-                [
-                    'type' => Targets::SUBSCRIPTION_LIST,
-                    'banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/categories_images/banners/1495262683_home_appliances_.png',
-                    'height' => 300,
-                ]
-            ],
-            'is_flash' => true,
-            'updated_at' => Carbon::parse('2019-01-01')
-        ];
+        $section = (new Section())->setType(Sections::BANNER)->setUpdatedAt($this->updatedAt);
+        $section->pushItem((new Item())->setTargetType(Targets::OFFER_LIST)->setAppBanner($this->banner)->setHeight(300)->setUpdatedAt($this->updatedAt));
+        return $section;
     }
 
     private function subscriptionList()
     {
-        return [
-            'type' => Sections::SUBSCRIPTION_LIST,
-            'items' => [],
-            'updated_at' => Carbon::parse('2019-01-01')
-        ];
+        $section = (new Section())->setType(Sections::SUBSCRIPTION_LIST)->setUpdatedAt($this->updatedAt);
+        return $section;
     }
 
     private function bigBanner()
     {
-        return [
-            'type' => Sections::BANNER,
-            'items' => [
-                [
-                    'type' => null,
-                    'banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/categories_images/banners/1495262683_home_appliances_.png',
-                    'height' => 400,
-                ]
-            ],
-            'updated_at' => Carbon::parse('2019-01-01')
-        ];
+        $section = (new Section())->setType(Sections::BANNER)->setUpdatedAt($this->updatedAt);
+        $section->pushItem((new Item())->setTargetType(Targets::OFFER)->setAppBanner($this->banner)->setHeight(400)->setUpdatedAt($this->updatedAt));
+        return $section;
     }
 
     private function categoryGroup()
     {
-        $items = [];
-        for ($i=1; $i<=30; $i++) {
-            $items[] = [
-                'id' => 10,
-                'name' => 'Ac',
-                'icon' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/categories_images/icons_png/1543400128_tiwnn.png',
-                'app_thumb' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Sub-catagory/10/150.jpg'
-            ];
+        $section = (new Section())->setType(Sections::BANNER)->setUpdatedAt($this->updatedAt);
+        for ($i=1; $i<=10; $i++) {
+            $section->pushItem((new Item())->setTargetType(Targets::SECONDARY_CATEGORY)->setAppThumb($this->thumb)->setName('Ac')->setUpdatedAt($this->updatedAt));
         }
-        return [
-            'type' => Sections::CATEGORY_GROUP,
-            'id' => 1,
-            'name' => 'Trending Services',
-            'categories' => $items
-        ];
+        return $section;
     }
 
     private function smallBannerArray()
     {
-        return [
-            'type' => Sections::BANNER,
-            'items' => [
-                [
-                    'type' => Targets::MASTER_CATEGORY,
-                    'id' => 1,
-                    'banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/categories_images/banners/1495262683_home_appliances_.png',
-                    'height' => 200,
-                ], [
-                    'type' => Targets::SECONDARY_CATEGORY,
-                    'id' => 10,
-                    'banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/categories_images/banners/1495262683_home_appliances_.png',
-                    'height' => 200,
-                ], [
-                    'type' => Targets::VOUCHER,
-                    'id' => 1,
-                    'code' => 'KHELAHOBE',
-                    'banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/categories_images/banners/1495262683_home_appliances_.png',
-                    'height' => 200,
-                ]
-            ]
-        ];
+        $section = (new Section())->setType(Sections::BANNER)->setUpdatedAt($this->updatedAt);
+        $mc = (new Item())->setTargetType(Targets::MASTER_CATEGORY)->setTargetId(1)->setAppBanner($this->banner)->setHeight(200)->setUpdatedAt($this->updatedAt);
+        $sc = (new Item())->setTargetType(Targets::SECONDARY_CATEGORY)->setTargetId(10)->setAppBanner($this->banner)->setHeight(200)->setUpdatedAt($this->updatedAt);
+        $voucher = (new Item())->setTargetType(Targets::VOUCHER)->setAppBanner($this->banner)->setVoucherCode('KHELAHOBE')->setHeight(200)->setUpdatedAt($this->updatedAt);
+        $section->pushItem($mc)->pushItem($sc)->pushItem($voucher);
+        return $section;
     }
 }
