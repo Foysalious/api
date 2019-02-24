@@ -44,6 +44,11 @@ class Checkout
         $this->partnerServiceRepository = new PartnerServiceRepository();
     }
 
+    /**
+     * @param $request
+     * @return Order|null
+     * @throws \App\Exceptions\HyperLocationNotFoundException
+     */
     public function placeOrder($request)
     {
         $this->setModifier($this->customer);
