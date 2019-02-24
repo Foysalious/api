@@ -72,27 +72,6 @@ class SubscriptionController extends Controller
         }
     }
 
-
-    public function all(Request $request)
-    {
-        try{
-            $subscriptions = ServiceSubscription::all();
-            foreach ($subscriptions as $subscription) {
-                $service = removeRelationsAndFields($subscription->service);
-                list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
-                $subscription = removeRelationsAndFields($subscription);
-                $subscription['max_price'] = $service['max_price'];
-                $subscription['min_price'] = $service['min_price'];
-                $subscription['thumb'] = $service['thumb'];
-                $subscription['banner'] = $service['banner'];
-            }
-            return api_response($request, $subscriptions, 200, ['subscriptions' => $subscriptions]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
     public function show($serviceSubscription, Request $request)
     {
         try{
