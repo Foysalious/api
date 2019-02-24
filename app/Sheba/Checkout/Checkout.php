@@ -47,6 +47,11 @@ class Checkout
         $this->partnerListRequest = new PartnerListRequest();
     }
 
+    /**
+     * @param $request
+     * @return Order|null
+     * @throws \App\Exceptions\HyperLocationNotFoundException
+     */
     public function placeOrder($request)
     {
         $this->setModifier($this->customer);

@@ -195,6 +195,11 @@ class Service extends Model
         return $this->morphToMany(Tag::class, 'taggable');
     }
 
+    public function serviceSubscription()
+    {
+        return $this->hasOne(ServiceSubscription::class);
+    }
+
     public function isOptions()
     {
         return $this->variable_type == 'Options';

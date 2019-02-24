@@ -27,10 +27,10 @@ class ShebaController extends Controller
     private $serviceRepository;
     private $reviewRepository;
 
-    public function __construct()
+    public function __construct(ServiceRepository $service_repo, ReviewRepository $review_repo)
     {
-        $this->serviceRepository = new ServiceRepository();
-        $this->reviewRepository = new ReviewRepository();
+        $this->serviceRepository = $service_repo;
+        $this->reviewRepository = $review_repo;
     }
 
     public function getInfo()
@@ -292,6 +292,25 @@ class ShebaController extends Controller
                     'description' => '',
                     'asset' => 'ssl',
                     'method_name' => 'online'
+                )
+            );
+            return api_response($request, $payments, 200, ['payments' => $payments]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getSubscriptionPayments(Request $request)
+    {
+        try {
+            $payments = array(
+                array(
+                    'name' => 'Sheba Credit',
+                    'is_published' => 1,
+                    'description' => '',
+                    'asset' => 'sheba_credit',
+                    'method_name' => 'wallet'
                 )
             );
             return api_response($request, $payments, 200, ['payments' => $payments]);

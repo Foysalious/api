@@ -54,6 +54,7 @@ class PartnerHandler
         }
         return collect([
             'is_available' => count($resource_ids) > $booked_schedules->pluck('resource_id')->unique()->count() ? 1 : 0
+          'available_resources' => array_diff($resource_ids, $booked_resources)
         ]);
     }
 }
