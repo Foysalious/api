@@ -11,4 +11,9 @@ class ServiceSubscription extends Model
     {
         return $this->belongsTo(Service::class);
     }
+
+    public function getParentCategoryAttribute()
+    {
+        return $this->service->category->parent->id;
+    }
 }
