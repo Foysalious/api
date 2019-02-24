@@ -53,8 +53,8 @@ class PartnerHandler
             $booked_schedules = $booked_schedules->merge($booked);
         }
         return collect([
-            'is_available' => count($resource_ids) > $booked_schedules->pluck('resource_id')->unique()->count() ? 1 : 0
-          'available_resources' => array_diff($resource_ids, $booked_resources)
+            'is_available' => count($resource_ids) > $booked_schedules->pluck('resource_id')->unique()->count() ? 1 : 0,
+            'available_resources' => array_diff($resource_ids, $booked_schedules->pluck('resource_id')->unique()->toArray())
         ]);
     }
 }
