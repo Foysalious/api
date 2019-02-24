@@ -31,7 +31,13 @@ class SubscriptionController extends Controller
                     'bn_name' => $category->parent->bn_name,
                     'slug' => $category->parent->slug,
                     'short_description' => $category->parent->slug,
-                    'subscriptions' =>  $category->services->pluck('serviceSubscription')
+                    'subscriptions' =>  $category->services->map(function($service){
+                        list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
+                        $subscription = $service->serviceSubscription;
+                        $subscription['max_price'] = $service['max_price'];
+                        $subscription['min_price'] = $service['min_price'];
+                        return $subscription;
+                    }),
                 ];
                 $parents->push($parent);
             }
