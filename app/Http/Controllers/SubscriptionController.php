@@ -38,6 +38,8 @@ class SubscriptionController extends Controller
                         $subscription = removeRelationsAndFields($subscription);
                         $subscription['max_price'] = $service['max_price'];
                         $subscription['min_price'] = $service['min_price'];
+                        $subscription['thumb'] = $service['thumb'];
+                        $subscription['banner'] = $service['banner'];
                         return $subscription;
                     }),
                 ];
@@ -60,6 +62,8 @@ class SubscriptionController extends Controller
             list($service['max_price'], $service['min_price']) = $this->getPriceRange($serviceSubscription->service);
             $serviceSubscription['min_price'] = $service['min_price'];
             $serviceSubscription['max_price'] = $service['max_price'];
+            $serviceSubscription['thumb'] = $serviceSubscription->service['thumb'];
+            $serviceSubscription['banner'] = $serviceSubscription->service['banner'];
             removeRelationsAndFields($serviceSubscription);
             return api_response($request, $serviceSubscription, 200, ['details' => $serviceSubscription]);
         } catch (\Throwable $e) {

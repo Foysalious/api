@@ -284,6 +284,8 @@ class CategoryController extends Controller
                         list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
                         $subscription->min_price = $service->min_price;
                         $subscription->max_price = $service->max_price;
+                        $subscription['thumb'] = $service['thumb'];
+                        $subscription['banner'] = $service['banner'];
                         removeRelationsAndFields($subscription);
                         $subscriptions->push($subscription);
                     }
