@@ -1,0 +1,14 @@
+<?php namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class ServiceSubscription extends Model
+{
+    public $timestamps = false;
+    protected $guarded = ['id'];
+
+    public function service()
+    {
+        return $this->belongsTo(Service::class);
+    }
+}

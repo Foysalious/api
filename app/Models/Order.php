@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Models;
+<?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Order\StatusCalculator;
@@ -30,6 +28,11 @@ class Order extends Model
     public function partnerOrders()
     {
         return $this->hasMany(PartnerOrder::class);
+    }
+
+    public function subscription()
+    {
+        return $this->belongsTo(SubscriptionOrder::class);
     }
 
     public function location()
