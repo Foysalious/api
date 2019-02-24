@@ -1,9 +1,11 @@
 <?php namespace Sheba\AppSettings\HomePageSetting\DS;
 
 use ArrayAccess;
+use ArrayIterator;
 use Illuminate\Contracts\Support\Arrayable;
+use IteratorAggregate;
 
-class ItemSet implements Arrayable, ArrayAccess
+class ItemSet implements Arrayable, ArrayAccess, IteratorAggregate
 {
     /** @var array */
     protected $items = [];
@@ -70,5 +72,15 @@ class ItemSet implements Arrayable, ArrayAccess
     public function offsetUnset($key)
     {
         unset($this->items[$key]);
+    }
+
+    /**
+     * Get an iterator for the items.
+     *
+     * @return ArrayIterator
+     */
+    public function getIterator()
+    {
+        return new ArrayIterator($this->items);
     }
 }
