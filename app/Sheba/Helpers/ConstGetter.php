@@ -6,19 +6,19 @@ trait ConstGetter
 {
     public static function getWithKeys()
     {
-        $class = new ReflectionClass(__CLASS__);
+        $class = new ReflectionClass(static::class);
         return $class->getConstants();
     }
 
     public static function get()
     {
-        return array_values(self::getWithKeys());
+        return array_values(static::getWithKeys());
     }
 
     public static function getWithMadeKeys()
     {
         $result = [];
-        foreach (self::get() as $item) {
+        foreach (static::get() as $item) {
             $result[$item] = antiCases($item);
         }
         return $result;
