@@ -18,7 +18,6 @@ class Section
     /**
      * @param string $type
      * @return Section
-     * @throws UnsupportedSection
      */
     public function setType($type)
     {
