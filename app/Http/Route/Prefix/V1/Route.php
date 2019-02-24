@@ -70,9 +70,6 @@ class Route
                 $api->get('{category}/services', 'CategoryController@getServices');
                 $api->get('{category}/master', 'CategoryController@getMaster');
             });
-            $api->group(['prefix' => 'subscriptions'], function ($api) {
-                $api->get('/', 'SubscriptionController@index');
-            });
             $api->group(['prefix' => 'service'], function ($api) {
                 $api->get('{service}/get-prices', 'ServiceController@getPrices');
                 $api->get('{service}/location/{location}/partners', 'ServiceController@getPartners');

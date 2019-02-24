@@ -10,6 +10,7 @@ class Route
             $api->post('subscription', 'PushSubscriptionController@store');
             $api->get('car-rental-info', 'ShebaController@sendCarRentalInfo');
             $api->get('payments', 'ShebaController@getPayments');
+            $api->get('subscription-payments', 'ShebaController@getSubscriptionPayments');
             $api->get('butcher-info', 'ShebaController@sendButcherInfo');
             $api->post('service-requests', 'ServiceRequestController@store');
             $api->post('transactions/{transactionID}', 'ShebaController@checkTransactionStatus');
@@ -83,6 +84,10 @@ class Route
             });
             $api->group(['prefix' => 'services'], function ($api) {
                 $api->get('', 'ServiceController@index');
+            });
+            $api->group(['prefix' => 'subscriptions'], function ($api) {
+                $api->get('/', 'SubscriptionController@index');
+                $api->get('/{id}', 'SubscriptionController@show');
             });
             $api->group(['prefix' => 'locations'], function ($api) {
                 $api->get('/', 'LocationController@index');
