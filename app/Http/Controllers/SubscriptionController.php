@@ -57,6 +57,9 @@ class SubscriptionController extends Controller
             $serviceSubscription = ServiceSubscription::find((int) $serviceSubscription);
             $options = $this->serviceQuestionSet($serviceSubscription->service);
             $serviceSubscription['questions'] = $options;
+            list($service['max_price'], $service['min_price']) = $this->getPriceRange($serviceSubscription->service);
+            $serviceSubscription['min_price'] = $service['min_price'];
+            $serviceSubscription['max_price'] = $service['max_price'];
             removeRelationsAndFields($serviceSubscription);
             return api_response($request, $serviceSubscription, 200, ['details' => $serviceSubscription]);
         } catch (\Throwable $e) {
