@@ -87,6 +87,7 @@ class Route
             });
             $api->group(['prefix' => 'subscriptions'], function ($api) {
                 $api->get('/', 'SubscriptionController@index');
+                $api->get('/faq', 'FaqController@getSubscriptionFaq');
                 $api->get('/{id}', 'SubscriptionController@show');
             });
             $api->group(['prefix' => 'locations'], function ($api) {
