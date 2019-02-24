@@ -32,8 +32,10 @@ class SubscriptionController extends Controller
                     'slug' => $category->parent->slug,
                     'short_description' => $category->parent->slug,
                     'subscriptions' =>  $category->services->map(function($service){
+                        $service = removeRelationsAndFields($service);
                         list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
                         $subscription = $service->serviceSubscription;
+                        $subscription = removeRelationsAndFields($subscription);
                         $subscription['max_price'] = $service['max_price'];
                         $subscription['min_price'] = $service['min_price'];
                         return $subscription;
@@ -41,14 +43,52 @@ class SubscriptionController extends Controller
                 ];
                 $parents->push($parent);
             }
-
-            return api_response($request, $category, 200, ['category' => $parents]);
+            return api_response($request, $parents, 200, ['category' => $parents]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
+
+    public function show($serviceSubscription, Request $request)
+    {
+        try{
+            $serviceSubscription = ServiceSubscription::find((int) $serviceSubscription);
+            $options = $this->serviceQuestionSet($serviceSubscription->service);
+            $serviceSubscription['questions'] = $options;
+            removeRelationsAndFields($serviceSubscription);
+            return api_response($request, $serviceSubscription, 200, ['details' => $serviceSubscription]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    private function serviceQuestionSet($service)
+    {
+        $questions = null;
+        if ($service->variable_type == 'Options') {
+            $questions = json_decode($service->variables)->options;
+            foreach ($questions as &$question) {
+                $question = collect($question);
+                $question->put('input_type', $this->resolveInputTypeField($question->get('answers')));
+                $question->put('screen', count($questions) > 3 ? 'slide' : 'normal');
+                $explode_answers = explode(',', $question->get('answers'));
+                $question->put('answers', $explode_answers);
+            }
+            if (count($questions) == 1) {
+                $questions[0]->put('input_type', 'selectbox');
+            }
+        }
+        return $questions;
+    }
+
+    private function resolveInputTypeField($answers)
+    {
+        $answers = explode(',', $answers);
+        return count($answers) <= 4 ? "radiobox" : "dropdown";
+    }
 
     private function getPriceRange(Service $service)
     {
