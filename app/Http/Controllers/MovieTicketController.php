@@ -5,15 +5,17 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 
 use App\Http\Requests;
+use Sheba\MovieTicket\MovieTicket;
 use Sheba\MovieTicket\Vendor\BlockBuster;
+use Sheba\MovieTicket\Vendor\VendorManager;
 
 class MovieTicketController extends Controller
 {
     /**
-     * @throws \Exception
+     * @param VendorManager $vendorManager
      */
-    public function test()
+    public function test(MovieTicket $movieTicket)
     {
-        dd(new BlockBuster('dev'));
+        dd($movieTicket->initVendor()->getAvailableTickets());
     }
 }
