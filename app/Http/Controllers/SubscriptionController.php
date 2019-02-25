@@ -99,7 +99,7 @@ class SubscriptionController extends Controller
                     foreach ($answers[0] as $index => $answer) {
                         $breakdown = array(
                             'name' => $answer,
-                            'index' => array( $index ),
+                            'indexes' => array( $index ),
                             'min_price' => $service['min_price'],
                             'max_price' => $service['max_price']
                         );
