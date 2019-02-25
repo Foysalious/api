@@ -186,13 +186,13 @@ class SubscriptionController extends Controller
         $result = array();
 
         // concat each array from tmp with each element from $arrays[$i]
-        foreach ($arrays[$i] as $v) {
+        foreach ($arrays[$i] as $array_index => $v) {
             foreach ($tmp as $index => $t) {
                 $result[] = is_array($t) ?
                     array_merge(array($v), $t) :
                     array(
                         'name' => $v ." - ". $t,
-                        'indexes'=>array($i, $index),
+                        'indexes'=>array($array_index, $index),
                         'min_price' => $min_price,
                         'max_price' => $max_price
                     );
