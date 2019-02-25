@@ -83,6 +83,7 @@ class SubscriptionController extends Controller
             $serviceSubscription['max_price'] = $service['max_price'];
             $serviceSubscription['thumb'] = $serviceSubscription->service['thumb'];
             $serviceSubscription['banner'] = $serviceSubscription->service['banner'];
+            $serviceSubscription['unit'] = $serviceSubscription->service['unit'];
             removeRelationsAndFields($serviceSubscription);
             return api_response($request, $serviceSubscription, 200, ['details' => $serviceSubscription]);
         } catch (\Throwable $e) {
