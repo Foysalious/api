@@ -81,9 +81,9 @@ class SubscriptionController extends Controller
             $serviceSubscription['questions'] = json_encode($options, true);
             $answers = collect();
             if($options)
-            foreach ($options as $option) {
-                $answers->push($option["answers"]);
-            }
+                foreach ($options as $option) {
+                    $answers->push($option["answers"]);
+                }
 
             list($service['max_price'], $service['min_price']) = $this->getPriceRange($serviceSubscription->service);
             $serviceSubscription['min_price'] = $service['min_price'];
@@ -92,6 +92,11 @@ class SubscriptionController extends Controller
             $serviceSubscription['banner'] = $serviceSubscription->service['banner'];
             $serviceSubscription['unit'] = $serviceSubscription->service['unit'];
             $serviceSubscription['service_min_quantity'] = $serviceSubscription->service['min_quantity'];
+            $serviceSubscription['structured_description'] =  [
+                'All of our partners are background verified.',
+                'They will ensure 100% satisfaction'
+            ];
+            $serviceSubscription['offers'] = $this->getDiscountOffers($serviceSubscription);
             if($options) {
                 if(count($answers) > 1)
                     $serviceSubscription['service_breakdown'] =   $this->breakdown_service_with_min_max_price($answers,$service['min_price'],$service['max_price']);
@@ -122,7 +127,6 @@ class SubscriptionController extends Controller
             removeRelationsAndFields($serviceSubscription);
             return api_response($request, $serviceSubscription, 200, ['details' => $serviceSubscription]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -202,5 +206,26 @@ class SubscriptionController extends Controller
         }
 
         return $result;
+    }
+
+    private function getDiscountOffers($subscription) {
+        $offer_short_text = "Subscribe & save upto ";
+        $amount = $subscription->is_discount_amount_percentage ? $subscription->discount_amount . '%' : '৳' . $subscription->discount_amount;
+        if($subscription->service->unit)
+            $unit =$subscription->service->unit;
+
+        $offer_short_text .= $amount;
+        $offer_long_text = 'Save '.$amount;
+
+        if($subscription->service->unit)
+        {
+            $offer_short_text.='/'.$unit;
+            $offer_long_text.= ' in every '.$unit;
+        }
+        $offer_long_text.=' by subscribing!';
+        return [
+            'short_text' => $offer_short_text,
+            'long_text' => $offer_long_text
+        ];
     }
 }
