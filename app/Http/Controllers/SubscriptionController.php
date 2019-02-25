@@ -52,7 +52,6 @@ class SubscriptionController extends Controller
         }
     }
 
-
     public function all(Request $request)
     {
         try{
@@ -78,12 +77,18 @@ class SubscriptionController extends Controller
         try{
             $serviceSubscription = ServiceSubscription::find((int) $serviceSubscription);
             $options = $this->serviceQuestionSet($serviceSubscription->service);
-            $serviceSubscription['questions'] = $options;
+            $serviceSubscription['questions'] = json_encode($options, true);
+            $answers = collect();
+            foreach ($options as $option) {
+                $answers->push($option["answers"]);
+            }
             list($service['max_price'], $service['min_price']) = $this->getPriceRange($serviceSubscription->service);
             $serviceSubscription['min_price'] = $service['min_price'];
             $serviceSubscription['max_price'] = $service['max_price'];
             $serviceSubscription['thumb'] = $serviceSubscription->service['thumb'];
             $serviceSubscription['banner'] = $serviceSubscription->service['banner'];
+            $serviceSubscription['unit'] = $serviceSubscription->service['unit'];
+            $serviceSubscription['service_breakdown'] =   $this->breakdown_service_with_min_max_price($answers,$service['min_price'],$service['max_price']);
             removeRelationsAndFields($serviceSubscription);
             return api_response($request, $serviceSubscription, 200, ['details' => $serviceSubscription]);
         } catch (\Throwable $e) {
@@ -136,5 +141,35 @@ class SubscriptionController extends Controller
         } catch (\Throwable $e) {
             return array(0, 0);
         }
+    }
+
+    private function breakdown_service_with_min_max_price($arrays, $min_price, $max_price, $i = 0) {
+        if (!isset($arrays[$i])) {
+            return array();
+        }
+        if ($i == count($arrays) - 1) {
+            return $arrays[$i];
+        }
+
+        // get combinations from subsequent arrays
+        $tmp = $this->breakdown_service_with_min_max_price($arrays, $min_price, $max_price, $i + 1);
+
+        $result = array();
+
+        // concat each array from tmp with each element from $arrays[$i]
+        foreach ($arrays[$i] as $v) {
+            foreach ($tmp as $index => $t) {
+                $result[] = is_array($t) ?
+                    array_merge(array($v), $t) :
+                    array(
+                        'name' => $v ." - ". $t,
+                        'indexes'=>array($i, $index),
+                        'min_price' => $min_price,
+                        'max_price' => $max_price
+                    );
+            }
+        }
+
+        return $result;
     }
 }
