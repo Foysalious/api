@@ -12,10 +12,11 @@ class Mock extends Getter
     /**
      * @return Setting
      */
-    public function getSettings() : Setting
+    public function getSettings(): Setting
     {
         $setting = new Setting();
         $setting->push($this->menu());
+        $setting->push($this->slider());
         $setting->push($this->categories());
         $setting->push($this->subscriptionBanner());
         $setting->push($this->offerList());
@@ -25,6 +26,14 @@ class Mock extends Getter
         $setting->push($this->categoryGroup());
         $setting->push($this->smallBannerArray());
         return $setting;
+    }
+
+    private function slider()
+    {
+        $items = (new ItemSet())->push($this->itemBuilder->buildCategory(Category::find(1)))
+            ->push($this->itemBuilder->buildCategory(Category::find(10)))
+            ->push($this->itemBuilder->buildVoucher(Voucher::where('code', 'KHELAHOBE')->first()));
+        return $this->sectionBuilder->buildSlider($items);
     }
 
     private function menu()
@@ -41,7 +50,7 @@ class Mock extends Getter
     {
         $items = new ItemSet();
         $category = $this->itemBuilder->buildCategory(Category::find(1));
-        for ($i=1; $i<=30; $i++) {
+        for ($i = 1; $i <= 30; $i++) {
             $items->push($category);
         }
         return $this->sectionBuilder->buildCategories($items);

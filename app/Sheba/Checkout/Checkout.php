@@ -65,31 +65,31 @@ class Checkout
                 $address = $this->customer->delivery_addresses()->save($new_address);
             }
         }
-        $this->partnerListRequest->setRequest($request);
         if (!$request->has('location')) {
             if ((int)$request->is_on_premise) $geo = json_decode((Partner::find((int)$request->partner))->geo_informations);
             else $geo = json_decode($address->geo_informations);
             $this->partnerListRequest->setGeo($geo->lat, $geo->lng);
         }
+        $this->partnerListRequest->setRequest($request);
         $partner_list = new PartnerList();
         $partner_list->find($request->partner);
         if ($partner_list->hasPartners) {
             $partner = $partner_list->partners->first();
-            $this->orderData['location_id'] = $partner_list->location;
-            $this->orderData['location'] = Location::find($partner_list->location);
+            $this->orderData['location_id'] = $partner_list->partnerListRequest->location;
+            $this->orderData['location'] = Location::find($partner_list->partnerListRequest->location);
             $data = $this->makeOrderData($request);
             if ($request->has('address_id') && !empty($request->address_id)) {
                 $data['address_id'] = $address->id;
             }
             $data['payment_method'] = $request->payment_method == 'cod' ? 'cash-on-delivery' : ucwords($request->payment_method);
-            $data['job_services'] = $this->createJobService($partner->services, $partner_list->selected_services, $data);
+            $data['job_services'] = $this->createJobService($partner->services, $partner_list->partnerListRequest->selectedServices, $data);
             $rent_car_ids = array_map('intval', explode(',', env('RENT_CAR_IDS')));
             if (in_array($partner_list->selectedCategory->id, $rent_car_ids)) {
-                $data['car_rental_job_detail'] = $this->createCarRentalDetail($partner_list->selected_services[0]);
+                $data['car_rental_job_detail'] = $this->createCarRentalDetail($partner_list->partnerListRequest->selectedServices[0]);
             }
-            $data['category_id'] = $partner_list->selectedCategory->id;
+            $data['category_id'] = $partner_list->partnerListRequest->selectedCategory->id;
             $data = $this->getVoucherData($data['job_services'], $data, $partner);
-            if ($order = $this->storeInDB($data, $partner_list->selected_services, $partner)) {
+            if ($order = $this->storeInDB($data, $partner_list->partnerListRequest->selectedServices, $partner)) {
                 if (isset($data['email'])) {
                     $this->updateProfile($order->customer, $data['email']);
                 }

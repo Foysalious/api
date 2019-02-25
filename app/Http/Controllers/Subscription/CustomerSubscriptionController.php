@@ -8,6 +8,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Checkout\Requests\PartnerListRequest;
+use Sheba\Checkout\Requests\SubscriptionOrderRequest;
+use Sheba\Checkout\SubscriptionOrder;
 
 class CustomerSubscriptionController extends Controller
 {
@@ -59,5 +61,35 @@ class CustomerSubscriptionController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function placeSubscriptionRequest(Request $request, SubscriptionOrderRequest $subscriptionOrderRequest, SubscriptionOrder $subscriptionOrder)
+    {
+        try {
+            $this->validate($request, [
+                'date' => 'required|string',
+                'time' => 'sometimes|required|string',
+                'services' => 'required|string',
+                'partner' => 'required|numeric',
+                'address_id' => 'required|numeric',
+                'subscription_type' => 'required|string',
+                'sales_channel' => 'required|string',
+            ]);
+            $subscriptionOrderRequest->setRequest($request)->prepareObject();
+            $subscriptionOrder = $subscriptionOrder->setSubscriptionRequest($subscriptionOrderRequest)->place();
+            return api_response($request, $subscriptionOrder, 200, ['payment' => [
+                'transaction_id' => "ADAD",
+                'id' => 10,
+                'type' => "subscription_order",
+                'link' => "www.sheba.xyz"
+            ]]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
     }
 }

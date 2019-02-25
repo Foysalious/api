@@ -46,6 +46,9 @@ class CustomerRoute
                         $api->get('/', 'CustomerOrderController@show');
                     });
                 });
+                $api->group(['prefix' => 'subscriptions'], function ($api) {
+                    $api->post('/', 'Subscription\CustomerSubscriptionController@placeSubscriptionRequest');
+                });
                 $api->group(['prefix' => 'jobs'], function ($api) {
                     $api->get('/', 'JobController@index');
                     $api->get('cancel-reason', 'JobController@cancelReason');

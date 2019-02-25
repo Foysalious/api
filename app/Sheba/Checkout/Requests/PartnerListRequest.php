@@ -15,25 +15,25 @@ use Sheba\Checkout\Services\ServiceObject;
 class PartnerListRequest
 {
     use Helpers;
-    private $request;
+    protected $request;
     /** @var Category */
-    private $selectedCategory;
+    protected $selectedCategory;
     /** @var Partner */
-    private $selectedPartner;
-    private $selectedServices;
-    private $location;
-    private $scheduleDate;
-    private $scheduleTime;
-    private $scheduleStartTime;
-    private $scheduleEndTime;
-    private $lat;
-    private $lng;
-    private $skipAvailabilityCheck;
-    private $selectedServiceIds;
-    private $portalName;
-    private $homeDelivery;
-    private $onPremise;
-    private $subscriptionType;
+    protected $selectedPartner;
+    protected $selectedServices;
+    protected $location;
+    protected $scheduleDate;
+    protected $scheduleTime;
+    protected $scheduleStartTime;
+    protected $scheduleEndTime;
+    protected $lat;
+    protected $lng;
+    protected $skipAvailabilityCheck;
+    protected $selectedServiceIds;
+    protected $portalName;
+    protected $homeDelivery;
+    protected $onPremise;
+    protected $subscriptionType;
 
     public function __get($name)
     {
@@ -61,7 +61,7 @@ class PartnerListRequest
 
     public function setScheduleDate($date)
     {
-        $this->scheduleDate = is_array($date) ? $date : [$date];
+        $this->scheduleDate = is_array($date) ? $date : (json_decode($date) ? json_decode($date) : [$date]);
         return $this;
     }
 
@@ -80,6 +80,7 @@ class PartnerListRequest
     public function setPartner($partner_id)
     {
         $this->selectedPartner = Partner::find((int)$partner_id);
+        return $this;
     }
 
     public function prepareObject()
@@ -93,6 +94,7 @@ class PartnerListRequest
         $this->setPortalName();
         $this->setSubscriptionType();
         if (!isset($this->location)) $this->setLocation($this->request->location);
+        if (!isset($this->selectedPartner)) $this->setPartner($this->request->partner);
         if (!isset($this->scheduleDate)) $this->setScheduleDate($this->request->date);
         if (!isset($this->lat) && !isset($this->lng)) $this->setGeo($this->request->lat, $this->request->lng);
         if (!isset($this->skipAvailabilityCheck)) $this->setAvailabilityCheck((int)$this->request->skip_availability);
@@ -185,6 +187,7 @@ class PartnerListRequest
 
     public function isWeeklySubscription()
     {
+        if (!isset($this->subscriptionType)) $this->setSubscriptionType();
         return $this->subscriptionType == config('sheba.subscription_type.customer.weekly')['name'];
     }
 
