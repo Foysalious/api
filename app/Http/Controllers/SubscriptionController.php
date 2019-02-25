@@ -79,19 +79,48 @@ class SubscriptionController extends Controller
             $options = $this->serviceQuestionSet($serviceSubscription->service);
             $serviceSubscription['questions'] = json_encode($options, true);
             $answers = collect();
+            if($options)
             foreach ($options as $option) {
                 $answers->push($option["answers"]);
             }
+
             list($service['max_price'], $service['min_price']) = $this->getPriceRange($serviceSubscription->service);
             $serviceSubscription['min_price'] = $service['min_price'];
             $serviceSubscription['max_price'] = $service['max_price'];
             $serviceSubscription['thumb'] = $serviceSubscription->service['thumb'];
             $serviceSubscription['banner'] = $serviceSubscription->service['banner'];
             $serviceSubscription['unit'] = $serviceSubscription->service['unit'];
-            $serviceSubscription['service_breakdown'] =   $this->breakdown_service_with_min_max_price($answers,$service['min_price'],$service['max_price']);
+            if($options) {
+                if(count($answers) > 1)
+                    $serviceSubscription['service_breakdown'] =   $this->breakdown_service_with_min_max_price($answers,$service['min_price'],$service['max_price']);
+                else
+                {
+                    $total_breakdown = array();
+                    foreach ($answers[0] as $index => $answer) {
+                        $breakdown = array(
+                            'name' => $answer,
+                            'indexes' => array( $index ),
+                            'min_price' => $service['min_price'],
+                            'max_price' => $service['max_price']
+                        );
+                        array_push($total_breakdown,$breakdown);
+                    }
+                    $serviceSubscription['service_breakdown'] = $total_breakdown;
+                }
+
+            }
+            else {
+                $serviceSubscription['service_breakdown'] =   array(
+                    'name' => $serviceSubscription->service->name,
+                    'indexes'=> null,
+                    'min_price' => $service['min_price'],
+                    'max_price' => $service['max_price']
+                );
+            }
             removeRelationsAndFields($serviceSubscription);
             return api_response($request, $serviceSubscription, 200, ['details' => $serviceSubscription]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
