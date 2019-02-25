@@ -12,10 +12,12 @@ use Sheba\MovieTicket\Vendor\VendorManager;
 class MovieTicketController extends Controller
 {
     /**
-     * @param VendorManager $vendorManager
+     * @param MovieTicket $movieTicket
      */
-    public function test(MovieTicket $movieTicket)
+    public function test(MovieTicket $movieTicket, Request $request)
     {
-        dd($movieTicket->initVendor()->getAvailableTickets());
+        $availableMovies = $movieTicket->initVendor()->getAvailableTickets();
+        return api_response($request, $availableMovies, 200, ['movies' => $availableMovies]);
+
     }
 }
