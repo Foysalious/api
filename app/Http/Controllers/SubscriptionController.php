@@ -64,6 +64,7 @@ class SubscriptionController extends Controller
                 $subscription['min_price'] = $service['min_price'];
                 $subscription['thumb'] = $service['thumb'];
                 $subscription['banner'] = $service['banner'];
+                $subscription['unit'] = $service['unit'];
             }
             return api_response($request, $subscriptions, 200, ['subscriptions' => $subscriptions]);
         } catch (\Throwable $e) {
