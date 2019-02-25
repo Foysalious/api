@@ -86,6 +86,7 @@ class Section
             'data' => $items ? $items : null,
             'updated_at' => $this->updatedAt ? $this->updatedAt->toDateTimeString() : null,
             'updated_at_timestamp' => $this->updatedAt ? $this->updatedAt->timestamp : null,
+            'height' => $this->height
         ];
     }
 

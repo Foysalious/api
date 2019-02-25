@@ -13,7 +13,6 @@ class Sections extends Constants
     const CATEGORY_GROUP = "category_group";
     const OFFER_LIST = "offer_list";
     const SUBSCRIPTION_LIST = "subscription_list";
-
     /**
      * @param $section
      * @throws UnsupportedSection

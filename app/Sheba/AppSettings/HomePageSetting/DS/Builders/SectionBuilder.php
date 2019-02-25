@@ -43,8 +43,12 @@ class SectionBuilder
     public function buildOfferList()
     {
         return (new Section())->setType(Sections::OFFER_LIST)->setUpdatedAt($this->mockUpdatedAt);
-    }
 
+    }
+    public function buildSlider(ItemSet $item_set){
+       $section = (new Section())->setType(Sections::SLIDER)->setUpdatedAt($this->mockUpdatedAt);
+        return $this->setItems($section, $item_set);
+    }
     public function buildCategoryGroup(CategoryGroup $category_group, ItemSet $categories)
     {
         $section = (new Section())->setName($category_group->name)->setId($category_group->id)
