@@ -110,12 +110,12 @@ class SubscriptionController extends Controller
 
             }
             else {
-                $serviceSubscription['service_breakdown'] =   array(
+                $serviceSubscription['service_breakdown'] =   array(array(
                     'name' => $serviceSubscription->service->name,
                     'indexes'=> null,
                     'min_price' => $service['min_price'],
                     'max_price' => $service['max_price']
-                );
+                ));
             }
             removeRelationsAndFields($serviceSubscription);
             return api_response($request, $serviceSubscription, 200, ['details' => $serviceSubscription]);
