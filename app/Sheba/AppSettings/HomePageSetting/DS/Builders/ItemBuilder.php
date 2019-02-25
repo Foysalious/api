@@ -3,6 +3,7 @@
 use App\Models\Category;
 use App\Models\CategoryGroup;
 use App\Models\OfferShowcase;
+use App\Models\Slide;
 use App\Models\Voucher;
 use Carbon\Carbon;
 use Sheba\AppSettings\HomePageSetting\DS\Item;
@@ -76,5 +77,8 @@ class ItemBuilder
         return (new Item())->setTargetType(Targets::VOUCHER)->setTargetId($voucher->id)
             ->setAppBanner($this->mockBanner)->setVoucherCode($voucher->code)
             ->setUpdatedAt($this->mockUpdatedAt);
+    }
+    public function buildSlide(Slide $slider){
+
     }
 }
