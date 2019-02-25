@@ -91,6 +91,7 @@ class SubscriptionController extends Controller
             $serviceSubscription['thumb'] = $serviceSubscription->service['thumb'];
             $serviceSubscription['banner'] = $serviceSubscription->service['banner'];
             $serviceSubscription['unit'] = $serviceSubscription->service['unit'];
+            $serviceSubscription['service_min_quantity'] = $serviceSubscription->service['min_quantity'];
             if($options) {
                 if(count($answers) > 1)
                     $serviceSubscription['service_breakdown'] =   $this->breakdown_service_with_min_max_price($answers,$service['min_price'],$service['max_price']);
