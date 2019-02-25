@@ -3,7 +3,6 @@
 use App\Models\PartnerOrder;
 use App\Models\Payable;
 use Carbon\Carbon;
-use Sheba\Payment\PayChargable;
 
 class OrderAdapter implements PayableAdapter
 {
