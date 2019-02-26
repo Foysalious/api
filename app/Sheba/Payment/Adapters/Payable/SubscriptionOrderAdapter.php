@@ -2,6 +2,7 @@
 
 
 use App\Models\Payable;
+use Carbon\Carbon;
 
 class SubscriptionOrderAdapter implements PayableAdapter
 {
@@ -20,12 +21,11 @@ class SubscriptionOrderAdapter implements PayableAdapter
         $payable->type_id = $this->subscriptionOrder->id;
         $payable->user_id = $this->subscriptionOrder->customer_id;
         $payable->user_type = "App\\Models\\Customer";
-        $payable->amount = (double)$this->partnerOrder->due;
-        $payable->completion_type = $this->isAdvancedPayment ? 'advanced_order' : "order";
-        $payable->success_url = config('sheba.front_url') . '/orders/' . $this->partnerOrder->jobs()->where('status', '<>', constants('JOB_STATUSES')['Cancelled'])->first()->id;
+        $payable->amount = (double)json_decode($this->subscriptionOrder->service_details)->discounted_price;
+        $payable->completion_type = "order";
+        $payable->success_url = config('sheba.front_url') . '/orders/' . $this->subscriptionOrder->id;
         $payable->created_at = Carbon::now();
         $payable->save();
-
         return $payable;
     }
 }

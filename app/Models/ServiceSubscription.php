@@ -7,16 +7,6 @@ class ServiceSubscription extends Model
     public $timestamps = false;
     protected $guarded = ['id'];
 
-    public function isPercentage()
-    {
-        return (int)$this->is_discount_amount_percentage;
-    }
-
-    public function hasCap()
-    {
-        return $this->cap > 0;
-    }
-
     public function service()
     {
         return $this->belongsTo(Service::class);
@@ -25,5 +15,10 @@ class ServiceSubscription extends Model
     public function getParentCategoryAttribute()
     {
         return $this->service->category->parent->id;
+    }
+
+    public function discounts()
+    {
+        return $this->hasMany(ServiceSubscriptionDiscount::class);
     }
 }

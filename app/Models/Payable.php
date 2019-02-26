@@ -18,6 +18,8 @@ class Payable extends Model
             return 'order';
         } else if ($this->type == 'wallet_recharge') {
             return 'recharge';
+        } else if ($this->type == 'subscription_order') {
+            return 'subscription_order';
         }
     }
 

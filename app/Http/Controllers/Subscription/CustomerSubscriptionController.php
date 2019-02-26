@@ -94,13 +94,7 @@ class CustomerSubscriptionController extends Controller
     {
         try {
             $this->validate($request, [
-                'date' => 'required|string',
-                'time' => 'sometimes|required|string',
-                'services' => 'required|string',
-                'partner' => 'required|numeric',
-                'address_id' => 'required|numeric',
-                'subscription_type' => 'required|string',
-                'sales_channel' => 'required|string',
+                'payment_method' => 'required|string|in:online,bkash,wallet',
             ]);
             $subscription_order = \App\Models\SubscriptionOrder::find($subscription);
             $order_adapter = new SubscriptionOrderAdapter();

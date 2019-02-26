@@ -23,7 +23,7 @@ class SubscriptionPartnerList extends PartnerList
         foreach ($this->partnerListRequest->selectedServices as $selected_service) {
             $service = $partner->services->where('id', $selected_service->id)->first();
             $discount = new SubscriptionPrice();
-            $discount->setServiceObj($selected_service)->setServicePivot($service->pivot)->initialize();
+            $discount->setType($this->partnerListRequest->subscriptionType)->setServiceObj($selected_service)->setServicePivot($service->pivot)->initialize();
             $service = [];
             $service['discount'] = $discount->discount;
             $service['cap'] = $discount->cap;
