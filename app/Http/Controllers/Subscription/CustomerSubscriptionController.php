@@ -11,6 +11,7 @@ use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Checkout\Requests\SubscriptionOrderRequest;
 use Sheba\Checkout\SubscriptionOrder;
 use Sheba\Payment\Adapters\Payable\SubscriptionOrderAdapter;
+use Sheba\Payment\ShebaPayment;
 
 class CustomerSubscriptionController extends Controller
 {
@@ -90,16 +91,17 @@ class CustomerSubscriptionController extends Controller
         }
     }
 
-    public function clearPayment(Request $request, $subscription, $customer)
+    public function clearPayment(Request $request, $customer, $subscription)
     {
         try {
             $this->validate($request, [
                 'payment_method' => 'required|string|in:online,bkash,wallet',
             ]);
-            $subscription_order = \App\Models\SubscriptionOrder::find($subscription);
+            $subscription_order = \App\Models\SubscriptionOrder::find((int)$subscription);
             $order_adapter = new SubscriptionOrderAdapter();
-            $order_adapter->setModelForPayable($subscription_order)->getPayable();
-//            $payment = (new ShebaPayment($request->has('payment_method') ? $request->payment_method : 'online'))->init($order_adapter->getPayable());
+            $payable = $order_adapter->setModelForPayable($subscription_order)->getPayable();
+            $payment = (new ShebaPayment($request->payment_method))->init($payable);
+            return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);

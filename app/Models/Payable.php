@@ -41,4 +41,16 @@ class Payable extends Model
         return $this->morphTo();
     }
 
+    public function getPayableModel()
+    {
+        $model = "App\\Models\\";
+        if ($this->type == 'partner_order') {
+            $model .= 'PartnerOrder';
+        } elseif ($this->type == 'subscription_order') {
+            $model .= 'SubscriptionOrder';
+        }
+        return $model;
+
+    }
+
 }
