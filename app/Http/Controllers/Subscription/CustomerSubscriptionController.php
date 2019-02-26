@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers\Subscription;
+<?php namespace App\Http\Controllers\Subscription;
 
 use App\Exceptions\HyperLocationNotFoundException;
 use App\Http\Controllers\Controller;
@@ -11,7 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Checkout\Requests\SubscriptionOrderRequest;
-use \App\Models\SubscriptionOrder;
+use App\Models\SubscriptionOrder as SubscriptionOrderModel;
+use Sheba\Checkout\SubscriptionOrder;
 use Sheba\Payment\Adapters\Payable\SubscriptionOrderAdapter;
 use Sheba\Payment\ShebaPayment;
 
@@ -99,7 +98,7 @@ class CustomerSubscriptionController extends Controller
             $this->validate($request, [
                 'payment_method' => 'required|string|in:online,bkash,wallet',
             ]);
-            $subscription_order = SubscriptionOrder::find((int)$subscription);
+            $subscription_order = SubscriptionOrderModel::find((int)$subscription);
             $order_adapter = new SubscriptionOrderAdapter();
             $payable = $order_adapter->setModelForPayable($subscription_order)->getPayable();
             $payment = (new ShebaPayment($request->payment_method))->init($payable);
@@ -118,7 +117,7 @@ class CustomerSubscriptionController extends Controller
         try {
             $customer = $request->customer;
             $subscription_orders_list = collect([]);
-            $subscription_orders = SubscriptionOrder::where('customer_id', (int)$customer->id)->get();
+            $subscription_orders = SubscriptionOrderModel::where('customer_id', (int)$customer->id)->get();
             foreach ($subscription_orders as $subscription_order){
                 $served_orders = $subscription_order->orders->map(function ($order){
                     return $order->partnerOrders->where('cancelled_at', null)->filter(function ($partner_order){
