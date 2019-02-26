@@ -110,7 +110,7 @@ class CustomerSubscriptionController extends Controller
         }
     }
 
-    public function getSubscriptionOrders(Request $request)
+    public function getSubscriptionLists(Request $request)
     {
         $subscription_orders = [
             [
@@ -120,6 +120,7 @@ class CustomerSubscriptionController extends Controller
                 "billing_cycle" =>  "weekly",
                 "subscription_period" =>  "Feb 01 -  Feb 07",
                 "completed_orders" =>  12,
+                "is_active" => 1,
                 "partner" =>
                     [
                         "id" => 3,
@@ -128,12 +129,13 @@ class CustomerSubscriptionController extends Controller
                     ]
                 ],
             [
-                'id' => 983,
+                'id' => 3,
                 "name" =>  "Pure Milk",
                 "app_thumb" =>  "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/bulk/jpg/Services/983/150.jpg",
                 "billing_cycle" =>  "weekly",
                 "subscription_period" =>  "Feb 01 -  Feb 07",
                 "completed_orders" =>  12,
+                "is_active" => 0,
                 "partner" =>
                     [
                         "id" => 2336,
