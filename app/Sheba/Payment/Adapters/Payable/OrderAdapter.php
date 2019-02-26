@@ -47,4 +47,9 @@ class OrderAdapter implements PayableAdapter
             $this->userType = "App\\Models\\Customer";
         }
     }
+
+    public function setModelForPayable($model)
+    {
+        // TODO: Implement setModelForPayable() method.
+    }
 }

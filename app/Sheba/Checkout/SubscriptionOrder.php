@@ -2,6 +2,7 @@
 
 
 use App\Http\Controllers\Subscription\SubscriptionPartnerList;
+use App\Models\Partner;
 use Sheba\Checkout\Requests\SubscriptionOrderRequest;
 
 class SubscriptionOrder
@@ -30,7 +31,7 @@ class SubscriptionOrder
         $subscription_order->category_id = $this->subscriptionOrderRequest->selectedCategory->id;
         $subscription_order->billing_cycle_start = $this->subscriptionOrderRequest->billingCycleStart;
         $subscription_order->billing_cycle_end = $this->subscriptionOrderRequest->billingCycleEnd;
-        $subscription_order->service_details = json_encode($partner->breakdown);
+        $subscription_order->service_details = $this->formatServiceDetails($partner);
         $subscription_order->schedules = $this->formatSchedules();
         $subscription_order->status = 'requested';
         $subscription_order->save();
@@ -52,5 +53,11 @@ class SubscriptionOrder
             array_push($schedules, ['date' => $date, 'time' => $this->subscriptionOrderRequest->scheduleTime]);
         }
         return json_encode($schedules);
+    }
+
+    private function formatServiceDetails(Partner $partner)
+    {
+        removeRelationsAndFields($partner);
+        return $partner->toJson();
     }
 }

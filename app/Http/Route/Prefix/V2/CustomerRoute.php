@@ -48,6 +48,7 @@ class CustomerRoute
                 });
                 $api->group(['prefix' => 'subscriptions'], function ($api) {
                     $api->post('/', 'Subscription\CustomerSubscriptionController@placeSubscriptionRequest');
+                    $api->get('{subscription}/payment', 'Subscription\CustomerSubscriptionController@clearPayment');
                 });
                 $api->group(['prefix' => 'jobs'], function ($api) {
                     $api->get('/', 'JobController@index');

@@ -10,6 +10,7 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Checkout\Requests\SubscriptionOrderRequest;
 use Sheba\Checkout\SubscriptionOrder;
+use Sheba\Payment\Adapters\Payable\SubscriptionOrderAdapter;
 
 class CustomerSubscriptionController extends Controller
 {
@@ -77,11 +78,8 @@ class CustomerSubscriptionController extends Controller
             ]);
             $subscriptionOrderRequest->setRequest($request)->prepareObject();
             $subscriptionOrder = $subscriptionOrder->setSubscriptionRequest($subscriptionOrderRequest)->place();
-            return api_response($request, $subscriptionOrder, 200, ['payment' => [
-                'transaction_id' => "ADAD",
-                'id' => 10,
-                'type' => "subscription_order",
-                'link' => "www.sheba.xyz"
+            return api_response($request, $subscriptionOrder, 200, ['order' => [
+                'id' => $subscriptionOrder->id
             ]]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -90,6 +88,30 @@ class CustomerSubscriptionController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
 
+    public function clearPayment(Request $request, $subscription, $customer)
+    {
+        try {
+            $this->validate($request, [
+                'date' => 'required|string',
+                'time' => 'sometimes|required|string',
+                'services' => 'required|string',
+                'partner' => 'required|numeric',
+                'address_id' => 'required|numeric',
+                'subscription_type' => 'required|string',
+                'sales_channel' => 'required|string',
+            ]);
+            $subscription_order = \App\Models\SubscriptionOrder::find($subscription);
+            $order_adapter = new SubscriptionOrderAdapter();
+            $order_adapter->setModelForPayable($subscription_order)->getPayable();
+//            $payment = (new ShebaPayment($request->has('payment_method') ? $request->payment_method : 'online'))->init($order_adapter->getPayable());
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 }
