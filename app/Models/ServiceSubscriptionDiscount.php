@@ -5,15 +5,24 @@ use Illuminate\Database\Eloquent\Model;
 class ServiceSubscriptionDiscount extends Model
 {
     protected $guarded = ['id'];
+    protected $dates = ['start_date', 'end_date'];
+    protected $casts = ['discount_amount' => 'double', 'is_discount_amount_percentage' => 'int'];
 
-    public function isPercentage()
+    public function serviceSubscription()
     {
-        return (int)$this->is_discount_amount_percentage;
+        return $this->belongsTo(ServiceSubscription::class);
     }
 
-    public function hasCap()
+    public function scopeSubscriptionType($query, $subscription_type)
     {
-        return $this->cap > 0;
+        return $query->where('subscription_type', $subscription_type);
     }
 
+    public function scopeValid($query)
+    {
+        return $query->where([
+            ['start_date', '<=', Carbon::now()],
+            ['end_date', '>=', Carbon::now()]
+        ]);
+    }
 }
