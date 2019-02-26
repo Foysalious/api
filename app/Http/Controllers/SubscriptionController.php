@@ -57,9 +57,13 @@ class SubscriptionController extends Controller
                         return $subscription;
                     }),
                 ];
-                $parents->push($parent);
+                if(count($parent['subscriptions']) > 0)
+                    $parents->push($parent);
             }
-            return api_response($request, $parents, 200, ['category' => $parents]);
+            if(count($parents)>0)
+                return api_response($request, $parents, 200, ['category' => $parents]);
+            else
+                return api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -94,7 +98,10 @@ class SubscriptionController extends Controller
                 $subscription['banner'] = $service['banner'];
                 $subscription['unit'] = $service['unit'];
             }
-            return api_response($request, $subscriptions, 200, ['subscriptions' => $subscriptions]);
+            if(count($subscriptions)>0)
+                return api_response($request, $subscriptions, 200, ['subscriptions' => $subscriptions]);
+            else
+                return api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
