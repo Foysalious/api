@@ -5,5 +5,5 @@ abstract class Vendor
 {
     abstract public function init();
 
-    abstract public function generateURIForAction($action);
+    abstract public function generateURIForAction($action, $params = []);
 }

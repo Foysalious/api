@@ -2,6 +2,8 @@
 
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\TransferStats;
 use Sheba\MovieTicket\Actions;
 
 class VendorManager
@@ -39,11 +41,21 @@ class VendorManager
         $this->vendor->init();
     }
 
-    public function get()
+    /**
+     * @param $action
+     * @param array $params
+     * @throws GuzzleException
+     */
+    public function get($action, $params = [])
     {
-        $response =  $this->httpClient->get($this->vendor->generateURIForAction(Actions::GET_MOVIE_LIST));
-        $body = $response->getBody()->getContents();
-        return $this->isJson($body) ? :$this->parse($body);
+        try {
+            $response = $this->httpClient->request('GET', $this->vendor->generateURIForAction($action, $params));
+            $body = $response->getBody()->getContents();
+            return $this->isJson($body) ? $body :$this->parse($body);
+        } catch (GuzzleException $e) {
+            throw $e;
+        }
+
     }
 
     private function parse ($fileContents) {

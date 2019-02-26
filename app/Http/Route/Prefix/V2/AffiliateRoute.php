@@ -36,6 +36,11 @@ class AffiliateRoute
         });
         $api->post('eksheba/save', 'EkshebaController@saveEkshebaData');
         $api->get('affiliates/faq', 'FaqController@getAffiliateFaqs');
-        $api->get('movie-ticket/test', 'MovieTicketController@test');
+        $api->group(['prefix' => 'movie-ticket'], function ($api) {
+            $api->get('movie-list', 'MovieTicketController@getAvailableTickets');
+            $api->get('theatre-list', 'MovieTicketController@getAvailableTheatres');
+            $api->get('theatre-seat-status', 'MovieTicketController@getTheatreSeatStatus');
+        });
+
     }
 }

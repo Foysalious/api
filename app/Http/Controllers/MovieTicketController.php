@@ -14,10 +14,28 @@ class MovieTicketController extends Controller
     /**
      * @param MovieTicket $movieTicket
      */
-    public function test(MovieTicket $movieTicket, Request $request)
+    public function getAvailableTickets(MovieTicket $movieTicket, Request $request)
     {
-        $availableMovies = $movieTicket->initVendor()->getAvailableTickets();
-        return api_response($request, $availableMovies, 200, ['movies' => $availableMovies]);
+        $movies = $movieTicket->initVendor()->getAvailableTickets();
+        return api_response($request, $movies, 200, ['movies' => $movies]);
+    }
 
+
+    /**
+     * @param MovieTicket $movieTicket
+     */
+    public function getAvailableTheatres(MovieTicket $movieTicket, Request $request)
+    {
+        $theatres = $movieTicket->initVendor()->getAvailableTheatres("00364","2019-02-10");
+        return api_response($request, $theatres, 200, ['theatres' => $theatres]);
+    }
+
+    /**
+     * @param MovieTicket $movieTicket
+     */
+    public function getTheatreSeatStatus(MovieTicket $movieTicket, Request $request)
+    {
+        $status = $movieTicket->initVendor()->getTheatreSeatStatus("1902100500364","Show_03");
+        return api_response($request, $status, 200, ['status' => $status]);
     }
 }

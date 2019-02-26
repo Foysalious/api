@@ -28,9 +28,12 @@ class BlockBuster extends Vendor
         $this->connectionMode = $connection_mode;
     }
 
-    private function getSercretKey()
+    private function getSecretKey($params = [])
     {
-        $cur_random_value = (new TransactionGenerator())->generate();$string = "password=$this->password&trxid=$cur_random_value&format=xml";
+        $cur_random_value = (new TransactionGenerator())->generate();
+        $string = "password=$this->password&trxid=$cur_random_value";
+        $string = $this->addParamsToUrl($string, $params);
+        $string .= '&format=xml';
         $BBC_Codero_Key_Generate = (new KeyEncryptor())->encrypt_cbc($string,$this->key);
         $BBC_Request_KEY_VALUE =urlencode($BBC_Codero_Key_Generate);
         return $BBC_Request_KEY_VALUE;
@@ -58,7 +61,7 @@ class BlockBuster extends Vendor
         } else {
             throw new \Exception('Invalid connection mode');
         }
-        $this->secretKey = $this->getSercretKey();
+        $this->secretKey = $this->getSecretKey();
     }
 
     /**
@@ -66,15 +69,33 @@ class BlockBuster extends Vendor
      * @return string
      * @throws \Exception
      */
-    public function generateURIForAction($action)
+    public function generateURIForAction($action, $params = [])
     {
         switch ($action) {
             case Actions::GET_MOVIE_LIST:
-                return $this->apiUrl.'/MovieList.php?username='.$this->userName.'&request_id='.$this->secretKey;
+                $api_url = $this->apiUrl.'/MovieList.php?username='.$this->userName.'&request_id='.$this->secretKey;
+                break;
+            case Actions::GET_THEATRE_LIST:
+                $this->secretKey = $this->getSecretKey($params);
+                $api_url =  $this->apiUrl.'MovieSchedule.php?username='.$this->userName.'&request_id='.$this->secretKey;
+                break;
+            case Actions::GET_THEATRE_SEAT_STATUS:
+                $this->secretKey = $this->getSecretKey($params);
+                $api_url =  $this->apiUrl.'MovieScheduleTheatreSeatStatus.php?username='.$this->userName.'&request_id='.$this->secretKey;
                 break;
             default:
                 throw new \Exception('Invalid Action');
                 break;
         }
+//        dd((new KeyEncryptor())->decrypt_cbc($this->secretKey, $this->key));
+        return $api_url;
+    }
+
+    private function addParamsToUrl($url, $params)
+    {
+        foreach ($params as $key => $value) {
+            $url .='&'.$key.'='.$value;
+        }
+        return $url;
     }
 }
