@@ -182,4 +182,89 @@ class CustomerSubscriptionController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function getSubscriptionOrderDetails(Request $request)
+    {
+
+
+        $subscription_order_details = [
+            [
+                'service_id' => 3,
+                "service_name" =>  "Pure Milk",
+                "app_thumb" =>  "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/bulk/jpg/Services/983/150.jpg",
+                'partner_id' => 2097,
+                'logo' => "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/partners/logos/1527658222_khaas_food.png",
+                'partner_name' => "Khaas Food",
+                "subscription_details" =>
+                    [
+                        "type" => "monthly",
+                        "subscription_period" =>  "Feb 01 -  Feb 07",
+                        "frequency " => "12 Orders/Month Current",
+                        "subscription_fee " => "$2,500",
+                        "preferred_time" => "10.00 - 01.00 P.M.",
+                        "price" =>  200,
+                        "discount" => 20,
+                        "total" => 180,
+                        "paid_on" => "15 - Feb, 2019"
+                    ]
+                ],
+            [
+                'service_id' => 3,
+                "service_name" =>  "Pure Milk",
+                "app_thumb" =>  "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/bulk/jpg/Services/983/150.jpg",
+                'partner_id' => 2097,
+                'logo' => "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/partners/logos/1527658222_khaas_food.png",
+                'partner_name' => "Khaas Food",
+                "subscription_details" =>
+                    [
+                        "type" => "monthly",
+                        "subscription_period" =>  "Feb 01 -  Feb 07",
+                        "frequency " => "12 Orders/Month Current",
+                        "subscription_fee " => "$2,500",
+                        "preferred_time" => "10.00 - 01.00 P.M.",
+                        "price" =>  200,
+                        "discount" => 20,
+                        "total" => 180,
+                        "paid_on" => "15 - Feb, 2019"
+                    ]
+            ],
+        ];
+
+        return api_response($request, $subscription_order_details, 200, ['subscription_order_details' => $subscription_order_details]);
+        try {
+            $partner = $request->has('partner') ? $request->partner : null;
+            $request->merge(['date' => json_decode($request->date)]);
+            #$partnerListRequest->setRequest($request)->prepareObject();
+            $partner_list = new SubscriptionPartnerList();
+            $partner_list->setPartnerListRequest($partnerListRequest)->find($partner);
+            if ($partner_list->hasPartners) {
+                $partner_list->addPricing();
+                $partner_list->addInfo();
+                if ($request->has('filter') && $request->filter == 'sheba') {
+                    $partner_list->sortByShebaPartnerPriority();
+                } else {
+                    $partner_list->sortByShebaSelectedCriteria();
+                }
+                $partners = $partner_list->partners;
+                $partners->each(function ($partner, $key) {
+                    $partner['rating'] = round($partner->rating, 2);
+                    array_forget($partner, 'wallet');
+                    array_forget($partner, 'package_id');
+                    array_forget($partner, 'geo_informations');
+                    removeRelationsAndFields($partner);
+                });
+                return api_response($request, $partners, 200, ['partners' => $partners->values()->all()]);
+            }
+            return api_response($request, null, 404, ['message' => 'No partner found.']);
+        } catch (HyperLocationNotFoundException $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 400, ['message' => 'Your are out of service area.']);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }

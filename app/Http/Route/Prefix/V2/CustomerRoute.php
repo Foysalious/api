@@ -50,7 +50,7 @@ class CustomerRoute
                     $api->post('/', 'Subscription\CustomerSubscriptionController@placeSubscriptionRequest');
                     $api->get('{subscription}/payment', 'Subscription\CustomerSubscriptionController@clearPayment');
                     $api->get('order-lists', 'Subscription\CustomerSubscriptionController@getSubscriptionLists');
-                    $api->get('{subscription}/details', 'Subscription\CustomerSubscriptionController@getSubscriptionLists');
+                    $api->get('{subscription}/details', 'Subscription\CustomerSubscriptionController@getSubscriptionOrderDetails');
                 });
                 $api->group(['prefix' => 'jobs'], function ($api) {
                     $api->get('/', 'JobController@index');
