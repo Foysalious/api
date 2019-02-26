@@ -159,9 +159,7 @@ class CustomerSubscriptionController extends Controller
 
     public function getSubscriptionOrderDetails(Request $request)
     {
-
-
-        $subscription_order_details = [
+        /*$subscription_order_details = [
             [
                 'service_id' => 3,
                 "service_name" =>  "Pure Milk",
@@ -183,10 +181,10 @@ class CustomerSubscriptionController extends Controller
                     ]
                 ]
         ];
-        return api_response($request, $subscription_order_details, 200, ['subscription_order_details' => $subscription_order_details]);
+        return api_response($request, $subscription_order_details, 200, ['subscription_order_details' => $subscription_order_details]);*/
         try {
             $customer = $request->customer;
-            $subscription_orders_list = collect([]);
+            $subscription_order_details = collect([]);
             $subscription_orders = SubscriptionOrder::where('customer_id', (int)$customer->id)->get();
             foreach ($subscription_orders as $subscription_order){
                 $served_orders = $subscription_order->orders->map(function ($order){
@@ -219,7 +217,7 @@ class CustomerSubscriptionController extends Controller
                 ];
                 $subscription_orders_list->push($orders_list);
             }
-            return api_response($request, $subscription_orders_list, 200, ['subscription_orders_list' => $subscription_orders_list]);
+            return api_response($request, $subscription_order_details, 200, ['subscription_order_details' => $subscription_order_details]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
