@@ -13,7 +13,7 @@ interface TopUpAgent
     public function calculateCommission($amount, TopUpVendor $topup_vendor);
 
     /**
-     * @return TopUpCommission
+     * @return MovieTicketCommission
      */
     public function getCommission();
 }

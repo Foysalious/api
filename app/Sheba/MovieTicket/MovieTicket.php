@@ -1,99 +1,178 @@
-<?php namespace Sheba\MovieTicket;
+<?php namespace Sheba\TopUp;
 
-
-use GuzzleHttp\Exception\GuzzleException;
-use Sheba\MovieTicket\Vendor\BlockBuster;
-use Sheba\MovieTicket\Vendor\Vendor;
-use Sheba\MovieTicket\Vendor\VendorManager;
+use App\Models\Affiliate;
+use App\Models\TopUpOrder;
+use Illuminate\Support\Facades\DB;
+use Sheba\MovieTicket\MovieAgent;
+use App\Models\TopUpVendor;
+use Sheba\ModificationFields;
+use Sheba\TopUp\Vendor\Response\Ipn\SuccessResponse;
+use Sheba\TopUp\Vendor\Response\TopUpErrorResponse;
+use Sheba\TopUp\Vendor\Response\TopUpFailResponse;
+use Sheba\TopUp\Vendor\Response\TopUpResponse;
+use Sheba\TopUp\Vendor\Response\TopUpSuccessResponse;
+use Sheba\TopUp\Vendor\Response\TopUpSystemErrorResponse;
+use Sheba\TopUp\Vendor\Vendor;
+use Sheba\TopUp\Vendor\VendorFactory;
 
 class MovieTicket
 {
-    /** @var VendorManager $vendorManager **/
-    private $vendorManager;
+    use ModificationFields;
+    /** @var Vendor */
+    private $vendor;
+    /** @var TopUpVendor */
+    private $model;
+    /** @var MovieAgent */
+    private $agent;
 
-    public function __construct(VendorManager $vendorManager)
+    private $isSuccessful;
+
+    /** @var MovieResponse */
+    private $response;
+
+    /** @var TopUpValidator */
+    private $validator;
+
+    public function __construct(TopUpValidator $validator)
     {
-       $this->vendorManager = $vendorManager;
+        $this->validator = $validator;
     }
 
-    public function initVendor() {
-        $this->vendorManager->setVendor(new BlockBuster('dev'))->initVendor();
+    /**
+     * @param MovieAgent $agent
+     * @return $this
+     */
+    public function setAgent(MovieAgent $agent)
+    {
+        $this->agent = $agent;
+        $this->validator->setAgent($agent);
         return $this;
     }
 
-    public function getAvailableTickets() {
-        $availableMovies = $this->vendorManager->get(Actions::GET_MOVIE_LIST);
-        $movies=[];
-        foreach ($availableMovies->children() as $child){
-            $child = json_decode(json_encode($child),true);
-            if($child['MovieStatus'] === "1")
-                $movies[]=$child;
-        }
-        return  $movies;
-    }
-
-
     /**
-     * @param $movie_id
-     * @param $request_date
-     * @return array
-     * @throws GuzzleException
+     * @param Vendor $model
+     * @return $this
      */
-    public function getAvailableTheatres($movie_id, $request_date)
+    public function setVendor(Vendor $model)
     {
-        try {
-            $availableTheatres = $this->vendorManager->get(Actions::GET_THEATRE_LIST, ['MovieID' => $movie_id, 'RequestDate' => $request_date]);
-            $theatres=[];
-            foreach ($availableTheatres->children() as $child){
-                $theatres[]=$child;
-            }
-            return  $theatres;
-        } catch (GuzzleException $e) {
-            throw $e;
-        }
+        $this->vendor = $model;
+        $this->model = $this->vendor->getModel();
+        $this->validator->setVendor($model);
+        return $this;
     }
 
     /**
-     * @param $dtmid
-     * @param $slot
-     * @return array
-     * @throws GuzzleException
+     * @param TopUpRequest $top_up_request
      */
-    public function getTheatreSeatStatus($dtmid, $slot)
+    public function recharge(TopUpRequest $top_up_request)
     {
-        try {
-            $seatStatus = $this->vendorManager->get(Actions::GET_THEATRE_SEAT_STATUS, ['DTMID' => $dtmid, 'slot' => $slot]);
-            return  $seatStatus->children()[0];
-        } catch (GuzzleException $e) {
-            throw $e;
+        if ($this->validator->setRequest($top_up_request)->validate()->hasError()) return;
+        $this->response = $this->vendor->recharge($top_up_request);
+        if ($this->response->hasSuccess()) {
+            $response = $this->response->getSuccess();
+            DB::transaction(function () use ($response, $top_up_request) {
+                $top_up_order = $this->placeTopUpOrder($response, $top_up_request->getMobile(), $top_up_request->getAmount());
+                $this->agent->getCommission()->setTopUpOrder($top_up_order)->disburse();
+                $this->vendor->deductAmount($top_up_request->getAmount());
+                $this->isSuccessful = true;
+            });
         }
     }
 
     /**
-     * @param array $data
-     * @return array
-     * @throws GuzzleException
+     * @return bool
      */
-    public function bookSeats($data = array()) {
-        try {
-            $bookingResponse = $this->vendorManager->get(Actions::REQUEST_MOVIE_TICKET_SEAT, $data);
-            return  $bookingResponse;
-        } catch (GuzzleException $e) {
-            throw $e;
-        }
+    public function isNotSuccessful()
+    {
+        return !$this->isSuccessful;
     }
 
     /**
-     * @param array $data
-     * @return array
-     * @throws GuzzleException
+     * @return TopUpErrorResponse
      */
-    public function updateMovieTicketStatus($data = array()) {
-        try {
-            $bookingResponse = $this->vendorManager->get(Actions::UPDATE_MOVIE_SEAT_STATUS, $data);
-            return  $bookingResponse;
-        } catch (GuzzleException $e) {
-            throw $e;
+    public function getError()
+    {
+        if ($this->validator->hasError()) {
+            return $this->validator->getError();
+        } else if (!$this->response->hasSuccess()) {
+            return $this->response->getError();
+        } else {
+            if (!$this->isSuccessful) return new TopUpSystemErrorResponse();
         }
+        return new TopUpErrorResponse();
+    }
+
+    /**
+     * @param TopUpSuccessResponse $response
+     * @param $mobile_number
+     * @param $amount
+     * @return TopUpOrder
+     */
+    private function placeTopUpOrder(TopUpSuccessResponse $response, $mobile_number, $amount)
+    {
+        $top_up_order = new TopUpOrder();
+        $top_up_order->agent_type = "App\\Models\\" . class_basename($this->agent);
+        $top_up_order->agent_id = $this->agent->id;
+        $top_up_order->payee_mobile = $mobile_number;
+        $top_up_order->amount = $amount;
+        $top_up_order->status = $this->vendor->getTopUpInitialStatus();
+        $top_up_order->transaction_id = $response->transactionId;
+        $top_up_order->transaction_details = json_encode($response->transactionDetails);
+        $top_up_order->vendor_id = $this->model->id;
+        $top_up_order->sheba_commission = ($amount * $this->model->sheba_commission) / 100;
+
+        $this->setModifier($this->agent);
+        $this->withCreateModificationField($top_up_order);
+        $top_up_order->save();
+
+        $top_up_order->agent = $this->agent;
+        $top_up_order->vendor = $this->model;
+
+        return $top_up_order;
+    }
+
+    /**
+     * @param TopUpOrder $top_up_order
+     * @param TopUpFailResponse $top_up_fail_response
+     * @return bool
+     */
+    public function processFailedTopUp(TopUpOrder $top_up_order, TopUpFailResponse $top_up_fail_response)
+    {
+        if ($top_up_order->isFailed()) return true;
+        DB::transaction(function () use ($top_up_order, $top_up_fail_response) {
+            $this->model = $top_up_order->vendor;
+            $top_up_order->status = config('topup.status.failed')['sheba'];
+            $top_up_order->transaction_details = json_encode($top_up_fail_response->getFailedTransactionDetails());
+            $this->setModifier($this->agent);
+            $this->withUpdateModificationField($top_up_order);
+            $top_up_order->update();
+            $this->refund($top_up_order);
+            $vendor = new VendorFactory();
+            $vendor = $vendor->getById($top_up_order->vendor_id);
+            $vendor->refill($top_up_order->amount);
+        });
+    }
+
+    /**
+     * @param TopUpOrder $top_up_order
+     * @param SuccessResponse $success_response
+     * @return bool
+     */
+    public function processSuccessfulTopUp(TopUpOrder $top_up_order, SuccessResponse $success_response)
+    {
+        if ($top_up_order->isSuccess()) return true;
+        DB::transaction(function () use ($top_up_order, $success_response) {
+            $top_up_order->status = config('topup.status.successful')['sheba'];
+            $top_up_order->transaction_details = json_encode($success_response->getSuccessfulTransactionDetails());
+            $top_up_order->update();
+        });
+    }
+
+    /**
+     * @param TopUpOrder $top_up_order
+     */
+    public function refund(TopUpOrder $top_up_order)
+    {
+        $top_up_order->agent->getCommission()->setTopUpOrder($top_up_order)->refund();
     }
 }

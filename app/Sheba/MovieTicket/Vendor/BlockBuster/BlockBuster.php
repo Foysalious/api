@@ -2,6 +2,8 @@
 
 
 use Sheba\MovieTicket\Actions;
+use Sheba\MovieTicket\MovieTicketRequest;
+use Sheba\MovieTicket\Response\MovieResponse;
 use Sheba\MovieTicket\TransactionGenerator;
 use Sheba\MovieTicket\Vendor\BlockBuster\KeyEncryptor;
 
@@ -94,7 +96,6 @@ class BlockBuster extends Vendor
                 break;
         }
 //        dd((new KeyEncryptor())->decrypt_cbc($this->secretKey, $this->key));
-//        dd($api_url);
         return $api_url;
     }
 
@@ -104,5 +105,10 @@ class BlockBuster extends Vendor
             $url .='&'.$key.'='.$value;
         }
         return $url;
+    }
+
+    function buyTicket(MovieTicketRequest $movieTicketRequest): MovieResponse
+    {
+
     }
 }

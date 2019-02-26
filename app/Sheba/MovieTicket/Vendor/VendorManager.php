@@ -1,11 +1,7 @@
 <?php namespace Sheba\MovieTicket\Vendor;
 
-
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\TransferStats;
-use Sheba\MovieTicket\Actions;
-
 class VendorManager
 {
     /**
