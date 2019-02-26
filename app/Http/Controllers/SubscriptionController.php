@@ -12,16 +12,30 @@ class SubscriptionController extends Controller
     public function index(Request $request)
     {
         try{
+            if ($request->has('location')) {
+                $location = $request->location != '' ? $request->location : 4;
+            } else {
+                if ($request->has('lat') && $request->has('lng')) {
+                    $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                    if (!is_null($hyperLocation)) $location = $hyperLocation->location->id; else return api_response($request, null, 404);
+                } else $location = 4;
+            }
+
             $categories = Category::whereNotNull('parent_id')->whereHas('services', function($q) {
                 $q->whereHas('serviceSubscription',function($query) {
                     return $query->whereNotNull('id');
                 });
-            })->with(['services'=>function($q){
+            })->with(['services'=>function($q) use ($location) {
                 $q->whereHas('serviceSubscription',function($query) {
                     return $query->whereNotNull('id');
                 });
+                $q->whereHas('locations', function ($q) use ($location) {
+                    $q->where('locations.id', $location);
+                });
                 $q->with('serviceSubscription');
-            }])->get();
+            }])->whereHas('locations', function ($q) use ($location) {
+                $q->where('locations.id', $location);
+            })->get();
 
             $parents = collect();
             foreach ($categories as $category) {
@@ -55,8 +69,22 @@ class SubscriptionController extends Controller
     public function all(Request $request)
     {
         try{
+            if ($request->has('location')) {
+                $location = $request->location != '' ? $request->location : 4;
+            } else {
+                if ($request->has('lat') && $request->has('lng')) {
+                    $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                    if (!is_null($hyperLocation)) $location = $hyperLocation->location->id; else return api_response($request, null, 404);
+                } else $location = 4;
+            }
+
             $subscriptions = ServiceSubscription::all();
-            foreach ($subscriptions as $subscription) {
+            foreach ($subscriptions as $index => $subscription) {
+                if(!in_array($location,$subscription->service->locations->pluck('id')->toArray()))
+                {
+                    array_forget($subscriptions,$index);
+                    continue;
+                }
                 $service = removeRelationsAndFields($subscription->service);
                 list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
                 $subscription = removeRelationsAndFields($subscription);
@@ -76,7 +104,18 @@ class SubscriptionController extends Controller
     public function show($serviceSubscription, Request $request)
     {
         try{
+            if ($request->has('location')) {
+                $location = $request->location != '' ? $request->location : 4;
+            } else {
+                if ($request->has('lat') && $request->has('lng')) {
+                    $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                    if (!is_null($hyperLocation)) $location = $hyperLocation->location->id; else return api_response($request, null, 404);
+                } else $location = 4;
+            }
+
             $serviceSubscription = ServiceSubscription::find((int) $serviceSubscription);
+            if(!in_array($location,$serviceSubscription->service->locations->pluck('id')->toArray()))
+                return api_response($request, null, 404);
             $options = $this->serviceQuestionSet($serviceSubscription->service);
             $serviceSubscription['questions'] = json_encode($options, true);
             $answers = collect();
@@ -127,6 +166,7 @@ class SubscriptionController extends Controller
             removeRelationsAndFields($serviceSubscription);
             return api_response($request, $serviceSubscription, 200, ['details' => $serviceSubscription]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
