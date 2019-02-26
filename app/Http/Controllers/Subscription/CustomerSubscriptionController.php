@@ -112,7 +112,7 @@ class CustomerSubscriptionController extends Controller
         }
     }
 
-    public function index(Request $request)
+    public function index(Request $request, $customer)
     {
         try {
             $customer = $request->customer;
@@ -156,66 +156,47 @@ class CustomerSubscriptionController extends Controller
         }
     }
 
-    public function getSubscriptionOrderDetails(Request $request)
+    public function show(Request $request, $customer, $subscription)
     {
-        /*$subscription_order_details = [
-            [
-                'service_id' => 3,
-                "service_name" =>  "Pure Milk",
-                "app_thumb" =>  "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/bulk/jpg/Services/983/150.jpg",
-                'partner_id' => 2097,
-                'logo' => "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/partners/logos/1527658222_khaas_food.png",
-                'partner_name' => "Khaas Food",
+        try {
+            $customer = $request->customer;
+            $subscription_order = SubscriptionOrderModel::find((int)$subscription);
+
+            $served_orders = $subscription_order->orders->map(function ($order){
+                return $order->partnerOrders->where('cancelled_at', null)->filter(function ($partner_order){
+                    return $partner_order->closed_and_paid_at != null;
+                });
+            })->flatten()->count();
+
+            $service_details = json_decode($subscription_order->service_details);
+            $service_details_breakdown = $service_details->breakdown['0'];
+            $service = Service::find((int)$service_details_breakdown->id);
+            $schedules = collect(json_decode($subscription_order->schedules));
+
+            $subscription_order_details = [
+                'service_id' => $service->id,
+                "service_name" =>  $service->name,
+                "app_thumb" => $service->app_thumb,
+                "partner_id" => $subscription_order->partner_id,
+                "partner_name" =>  $service_details->name,
+                "logo" =>  $service_details->logo,
                 "subscription_details" =>
                     [
-                        "type" => "monthly",
-                        "subscription_period" =>  "Feb 01 -  Feb 07",
-                        "frequency " => "12 Orders/Month Current",
-                        "subscription_fee " => "$2,500",
-                        "preferred_time" => "10.00 - 01.00 P.M.",
+                        "billing_cycle" => $subscription_order->billing_cycle,
+                        "subscription_period" =>  Carbon::parse($subscription_order->billing_cycle_start)->format('M j') .' - '. Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
+                        "total_orders" => $subscription_order->orders->count(),
+                        "completed_orders" =>  $served_orders,
+                        "preferred_time" => $schedules->first()->time,
+
+                        "subscription_fee " => 2500,
                         "price" =>  200,
                         "discount" => 20,
                         "total" => 180,
-                        "paid_on" => "15 - Feb, 2019"
+
+                        "paid_on" => $subscription_order->created_at->format('M-j, Y')
                     ]
-                ]
-        ];
-        return api_response($request, $subscription_order_details, 200, ['subscription_order_details' => $subscription_order_details]);*/
-        try {
-            $customer = $request->customer;
-            $subscription_order_details = collect([]);
-            $subscription_orders = SubscriptionOrder::where('customer_id', (int)$customer->id)->get();
-            foreach ($subscription_orders as $subscription_order){
-                $served_orders = $subscription_order->orders->map(function ($order){
-                    return $order->partnerOrders->where('cancelled_at', null)->filter(function ($partner_order){
-                        return $partner_order->closed_and_paid_at != null;
-                    });
-                })->flatten()->count();
-                #dd($served_orders);
+            ];
 
-                #$schedules = collect(json_decode($subscription_order->schedules));
-
-                $service_details = json_decode($subscription_order->service_details);
-                $service_details_breakdown = $service_details->breakdown['0'];
-                $service = Service::find((int)$service_details_breakdown->id);
-
-                $orders_list = [
-                    'subscription_order_id' => $subscription_order->id,
-                    "service_name" =>  $service->name,
-                    "app_thumb" => $service->app_thumb,
-                    "billing_cycle" =>  $subscription_order->billing_cycle,
-                    "subscription_period" =>  Carbon::parse($subscription_order->billing_cycle_start)->format('M j') .' - '. Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
-                    "completed_orders" =>  $served_orders .'/'. $subscription_order->orders->count(),
-                    "is_active" => Carbon::parse($subscription_order->billing_cycle_end) >= Carbon::today() ? 1 : 0,
-                    "partner" =>
-                        [
-                            "id" => $subscription_order->partner_id,
-                            "name" =>  $service_details->name,
-                            "logo" =>  $service_details->logo,
-                        ]
-                ];
-                $subscription_orders_list->push($orders_list);
-            }
             return api_response($request, $subscription_order_details, 200, ['subscription_order_details' => $subscription_order_details]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
