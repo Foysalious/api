@@ -2,9 +2,9 @@
 
 use App\Models\PartnerOrder;
 use App\Models\PaymentDetail;
+use App\Models\SubscriptionOrder;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
-use Sheba\Checkout\SubscriptionOrder;
 use Sheba\RequestIdentification;
 
 class OrderComplete extends PaymentComplete
@@ -20,7 +20,6 @@ class OrderComplete extends PaymentComplete
             $payable_model = $model::find((int)$payable->type_id);
             $customer = $payable->user;
             foreach ($this->payment->paymentDetails as $paymentDetail) {
-                dd($payable_model);
                 if ($payable_model instanceof PartnerOrder) {
                     $has_error = $this->clearPartnerOrderPayment($payable_model, $customer, $paymentDetail, $has_error);
                 } else {
@@ -32,7 +31,6 @@ class OrderComplete extends PaymentComplete
             $this->payment->status = 'completed';
             $this->payment->transaction_details = null;
             $this->payment->update();
-
             $payable_model->payment_method = strtolower($paymentDetail->readable_method);
             $payable_model->update();
         } catch (RequestException $e) {
@@ -82,9 +80,7 @@ class OrderComplete extends PaymentComplete
             $payable_model->status = 'paid';
             $payable_model->sheba_collection = (double)$paymentDetail->amount;
             $payable_model->update();
-            dd($payable_model);
         } catch (\Throwable $e) {
-
             $has_error = false;
         }
         return $has_error;
