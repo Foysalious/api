@@ -25,4 +25,14 @@ class ServiceSubscriptionDiscount extends Model
             ['end_date', '>=', Carbon::now()]
         ]);
     }
+
+    public function isPercentage()
+    {
+        return (int)$this->is_discount_amount_percentage;
+    }
+
+    public function hasCap()
+    {
+        return $this->cap > 0;
+    }
 }

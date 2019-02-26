@@ -21,11 +21,14 @@ class SubscriptionOrder
         $subscription_order = new \App\Models\SubscriptionOrder();
         $subscription_order->billing_cycle = $this->subscriptionOrderRequest->subscriptionType;
         $subscription_order->customer_id = $this->subscriptionOrderRequest->customer->id;
-        $subscription_order->location_id = $this->subscriptionOrderRequest->location;
+        $subscription_order->location_id = $this->subscriptionOrderRequest->address->location_id;
         $subscription_order->delivery_address_id = $this->subscriptionOrderRequest->address->id;
         $subscription_order->location_id = $this->subscriptionOrderRequest->address->location_id;
         $subscription_order->sales_channel = $this->subscriptionOrderRequest->salesChannel;
         $subscription_order->partner_id = $this->subscriptionOrderRequest->selectedPartner->id;
+        $subscription_order->delivery_mobile = $this->subscriptionOrderRequest->deliveryMobile;
+        $subscription_order->delivery_name = $this->subscriptionOrderRequest->deliveryName;
+        $subscription_order->additional_info = $this->subscriptionOrderRequest->additionalInfo;
         $subscription_order->discount = $partner->discount;
         $subscription_order->discount_percentage = $partner->breakdown[0]['is_percentage'];
         $subscription_order->category_id = $this->subscriptionOrderRequest->selectedCategory->id;

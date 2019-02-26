@@ -5,6 +5,7 @@ namespace Sheba\Checkout\Requests;
 
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
+use App\Models\HyperLocal;
 use Carbon\Carbon;
 
 class SubscriptionOrderRequest extends PartnerListRequest
@@ -20,6 +21,10 @@ class SubscriptionOrderRequest extends PartnerListRequest
     /** @var $billingCycleEnd Carbon */
     private $billingCycleEnd;
 
+    private $deliveryName;
+    private $deliveryMobile;
+    private $additionalInfo;
+
     public function __get($name)
     {
         return $this->$name;
@@ -30,6 +35,9 @@ class SubscriptionOrderRequest extends PartnerListRequest
         $this->setCustomer();
         $this->setAddress();
         $this->setSalesChannel();
+        $this->setDeliveryName();
+        $this->setDeliveryMobile();
+        $this->setAdditionalInfo();
         $this->setGeo($this->geo->lat, $this->geo->lng);
         parent::prepareObject();
         $this->calculateBillingCycle();
@@ -56,6 +64,21 @@ class SubscriptionOrderRequest extends PartnerListRequest
         $this->salesChannel = $this->request->sales_channel;
     }
 
+    private function setDeliveryName()
+    {
+        $this->deliveryName = $this->request->name;
+    }
+
+    private function setDeliveryMobile()
+    {
+        $this->deliveryMobile = $this->request->mobile;
+    }
+
+    private function setAdditionalInfo()
+    {
+        $this->additionalInfo = $this->request->additional_info;
+    }
+
     private function calculateBillingCycle()
     {
         $this->billingCycleStart = Carbon::now();
@@ -67,5 +90,4 @@ class SubscriptionOrderRequest extends PartnerListRequest
         $days = $this->isWeeklySubscription() ? 7 : 30;
         return $this->billingCycleStart->copy()->addDays($days);
     }
-
 }
