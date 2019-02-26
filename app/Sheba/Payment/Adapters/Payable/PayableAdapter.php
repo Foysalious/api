@@ -8,4 +8,6 @@ use App\Models\Payable;
 interface PayableAdapter
 {
     public function getPayable(): Payable;
+
+    public function setModelForPayable($model);
 }

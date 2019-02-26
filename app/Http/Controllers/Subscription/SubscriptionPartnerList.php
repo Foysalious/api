@@ -23,7 +23,7 @@ class SubscriptionPartnerList extends PartnerList
         foreach ($this->partnerListRequest->selectedServices as $selected_service) {
             $service = $partner->services->where('id', $selected_service->id)->first();
             $discount = new SubscriptionPrice();
-            $discount->setServiceObj($selected_service)->setServicePivot($service->pivot)->initialize();
+            $discount->setType($this->partnerListRequest->subscriptionType)->setServiceObj($selected_service)->setServicePivot($service->pivot)->initialize();
             $service = [];
             $service['discount'] = $discount->discount;
             $service['cap'] = $discount->cap;
@@ -62,6 +62,8 @@ class SubscriptionPartnerList extends PartnerList
         $total_service_price['original_price'] *= $total_service_price['total_quantity'];
         $total_service_price['delivery_charge'] *= $total_service_price['total_quantity'];
         $total_service_price['discount'] *= $total_service_price['total_quantity'];
+        $total_service_price['has_home_delivery'] = (int)$category_pivot->is_home_delivery_applied ? 1 : 0;
+        $total_service_price['has_premise_available'] = (int)$category_pivot->is_partner_premise_applied ? 1 : 0;
         return $total_service_price;
     }
 
