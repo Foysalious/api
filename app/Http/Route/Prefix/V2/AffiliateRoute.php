@@ -40,6 +40,8 @@ class AffiliateRoute
             $api->get('movie-list', 'MovieTicketController@getAvailableTickets');
             $api->get('theatre-list', 'MovieTicketController@getAvailableTheatres');
             $api->get('theatre-seat-status', 'MovieTicketController@getTheatreSeatStatus');
+            $api->get('book-tickets', 'MovieTicketController@bookTickets');
+            $api->get('update-status', 'MovieTicketController@updateTicketStatus');
         });
 
     }

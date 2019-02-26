@@ -26,7 +26,7 @@ class MovieTicketController extends Controller
      */
     public function getAvailableTheatres(MovieTicket $movieTicket, Request $request)
     {
-        $theatres = $movieTicket->initVendor()->getAvailableTheatres("00364","2019-02-10");
+        $theatres = $movieTicket->initVendor()->getAvailableTheatres("00350","2019-02-08");
         return api_response($request, $theatres, 200, ['theatres' => $theatres]);
     }
 
@@ -35,7 +35,32 @@ class MovieTicketController extends Controller
      */
     public function getTheatreSeatStatus(MovieTicket $movieTicket, Request $request)
     {
-        $status = $movieTicket->initVendor()->getTheatreSeatStatus("1902100500364","Show_03");
+        $status = $movieTicket->initVendor()->getTheatreSeatStatus("1902080700350","Show_02");
         return api_response($request, $status, 200, ['status' => $status]);
+    }
+
+
+    public function bookTickets(MovieTicket $movieTicket, Request $request)
+    {
+        $bookingResponse = $movieTicket->initVendor()->bookSeats([
+            'DTMSID' => '190208070035002',
+            'SeatClass'=>'E-REAR',
+            'Seat'=>'2',
+            'CusName'=>'Sakibur Rahaman',
+            'CusEmail'=>'sakib.cse11.cuet@gmail.com',
+            'CusMobile'=>'+8801869715616'
+        ]);
+        return api_response($request, $bookingResponse, 200, ['status' => $bookingResponse]);
+    }
+
+    public function updateTicketStatus(MovieTicket $movieTicket, Request $request)
+    {
+        $bookingResponse = $movieTicket->initVendor()->updateMovieTicketStatus([
+            'trx_id' => 'SHB155116984400001630',
+            'DTMSID'=>'180310060030701',
+            'LID'=>'WEB1520624021209297',
+            'ConfirmStatus'=>'CONFIRM',
+        ]);
+        return api_response($request, $bookingResponse, 200, ['status' => $bookingResponse]);
     }
 }

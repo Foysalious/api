@@ -31,7 +31,8 @@ class BlockBuster extends Vendor
     private function getSecretKey($params = [])
     {
         $cur_random_value = (new TransactionGenerator())->generate();
-        $string = "password=$this->password&trxid=$cur_random_value";
+        $string = "password=$this->password";
+        if(!isset($params['trx_id'])) $string .= "&trxid=$cur_random_value";
         $string = $this->addParamsToUrl($string, $params);
         $string .= '&format=xml';
         $BBC_Codero_Key_Generate = (new KeyEncryptor())->encrypt_cbc($string,$this->key);
@@ -71,23 +72,29 @@ class BlockBuster extends Vendor
      */
     public function generateURIForAction($action, $params = [])
     {
+        $this->secretKey = $this->getSecretKey($params);
         switch ($action) {
             case Actions::GET_MOVIE_LIST:
                 $api_url = $this->apiUrl.'/MovieList.php?username='.$this->userName.'&request_id='.$this->secretKey;
                 break;
             case Actions::GET_THEATRE_LIST:
-                $this->secretKey = $this->getSecretKey($params);
                 $api_url =  $this->apiUrl.'MovieSchedule.php?username='.$this->userName.'&request_id='.$this->secretKey;
                 break;
             case Actions::GET_THEATRE_SEAT_STATUS:
-                $this->secretKey = $this->getSecretKey($params);
                 $api_url =  $this->apiUrl.'MovieScheduleTheatreSeatStatus.php?username='.$this->userName.'&request_id='.$this->secretKey;
+                break;
+            case Actions::REQUEST_MOVIE_TICKET_SEAT:
+                $api_url =  $this->apiUrl.'MovieSeatBookingRequest.php?username='.$this->userName.'&request_id='.$this->secretKey;
+                break;
+            case Actions::UPDATE_MOVIE_SEAT_STATUS:
+                $api_url =  $this->apiUrl.'MovieSeatUpdateStatus.php?username='.$this->userName.'&request_id='.$this->secretKey;
                 break;
             default:
                 throw new \Exception('Invalid Action');
                 break;
         }
 //        dd((new KeyEncryptor())->decrypt_cbc($this->secretKey, $this->key));
+//        dd($api_url);
         return $api_url;
     }
 
