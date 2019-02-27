@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Subscription;
+
 use App\Exceptions\HyperLocationNotFoundException;
 use App\Http\Controllers\Controller;
 use App\Models\Service;
@@ -96,7 +97,7 @@ class CustomerSubscriptionController extends Controller
     {
         try {
             $this->validate($request, [
-                'payment_method' => 'required|string|in:online,bkash,wallet',
+                'payment_method' => 'required|string|in:online,bkash,wallet,cbl',
             ]);
             $subscription_order = SubscriptionOrder::find((int)$subscription);
             $order_adapter = new SubscriptionOrderAdapter();
@@ -176,8 +177,8 @@ class CustomerSubscriptionController extends Controller
                 "service_name" => $service->name,
                 "app_thumb" => $service->app_thumb,
                 "partner_id" => $subscription_order->partner_id,
-                "partner_name" =>  $service_details->name,
-                "logo" =>  $service_details->logo,
+                "partner_name" => $service_details->name,
+                "logo" => $service_details->logo,
                 "billing_cycle" => $subscription_order->billing_cycle,
                 "subscription_period" => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
                 "total_orders" => $subscription_order->orders->count(),
