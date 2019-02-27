@@ -4,6 +4,7 @@ use App\Models\Job;
 use App\Models\JobService;
 use App\Models\Order;
 use App\Models\PartnerOrder;
+use App\Models\PartnerOrderPayment;
 use App\Models\Service;
 use App\Models\ServiceSubscriptionDiscount;
 use Sheba\Checkout\ShebaOrderInterface;
@@ -18,6 +19,7 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
     private $subscriptionOrder;
     private $partnerServiceDetails;
     private $deliveryCharge;
+    private $totalSchedules;
 
     public function __construct(SubscriptionOrderInterface $subscriptionOrder)
     {
@@ -49,7 +51,7 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
         $this->setModifier($this->subscriptionOrder->customer);
         $this->setCalculatedProperties();
         DB::transaction(function () {
-            foreach ($this->subscriptionOrder->schedules() as $schedule) {
+            foreach ($this->totalSchedules as $schedule) {
                 $order = $this->createOrder();
                 $partner_order = $this->createPartnerOrder($order);
                 $job = $this->createJob($partner_order, $schedule);
@@ -62,6 +64,7 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
 
     private function setCalculatedProperties()
     {
+        $this->setTotalSchedules();
         $this->setPartnerServiceDetails();
         $this->setDeliveryCharge();
     }
@@ -74,9 +77,13 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
 
     private function setDeliveryCharge()
     {
-        $this->deliveryCharge = $this->partnerServiceDetails->delivery_charge / count($this->partnerServiceDetails->breakdown);
+        $this->deliveryCharge = $this->partnerServiceDetails->delivery_charge / count($this->totalSchedules);
     }
 
+    private function setTotalSchedules()
+    {
+        $this->totalSchedules = $this->subscriptionOrder->schedules();
+    }
 
     private function createOrder(): Order
     {
@@ -100,8 +107,20 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
         $partner_order->order_id = $order->id;
         $partner_order->partner_id = $this->subscriptionOrder->partner_id;
         $partner_order->payment_method = $this->subscriptionOrder->payment_method;
+        $partner_order->sheba_collection = (int)$this->partnerServiceDetails->discounted_price > 0 ? $this->partnerServiceDetails->discounted_price / count($this->totalSchedules) : 0;
         $this->withCreateModificationField($partner_order);
         $partner_order->save();
+//        $partner_order_payment = new PartnerOrderPayment();
+//        $partner_order_payment->partner_order_id = $partner_order->id;
+//        $partner_order_payment->transaction_type = 'Debit';
+//        $partner_order_payment->amount = $partner_order->sheba_collection;
+//        $partner_order_payment->log = 'advanced payment';
+//        $partner_order_payment->collected_by = 'Sheba';
+//        $partner_order_payment->transaction_detail = json_encode($paymentDetail->formatPaymentDetail());
+//        $partner_order_payment->method = ucfirst($paymentDetail->method);
+//        $this->withCreateModificationField($partner_order_payment);
+//        $partner_order_payment->fill((new RequestIdentification())->get());
+//        $partner_order_payment->save();
         return $partner_order;
     }
 
@@ -118,8 +137,6 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
         $job->category_answers = $this->subscriptionOrder->additional_info;
         $job->commission_rate = $this->subscriptionOrder->category->commission($this->subscriptionOrder->partner_id);
         $job->material_commission_rate = config('sheba.material_commission_rate');
-        $job->discount = $this->subscriptionOrder->discount;
-        $job->discount_percentage = $this->subscriptionOrder->discount_percentage;
         $job->status = constants('JOB_STATUSES')['Pending'];
         $job->delivery_charge = $this->deliveryCharge;
         $this->withCreateModificationField($job);

@@ -63,6 +63,7 @@ class CustomerSubscriptionController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -89,7 +90,6 @@ class CustomerSubscriptionController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -101,7 +101,7 @@ class CustomerSubscriptionController extends Controller
             $this->validate($request, [
                 'payment_method' => 'required|string|in:online,bkash,wallet',
             ]);
-            $subscription_order = \App\Models\SubscriptionOrder::find((int)$subscription);
+            $subscription_order = SubscriptionOrder::find((int)$subscription);
             $order_adapter = new SubscriptionOrderAdapter();
             $payable = $order_adapter->setModelForPayable($subscription_order)->getPayable();
             $payment = (new ShebaPayment($request->payment_method))->init($payable);
@@ -120,14 +120,13 @@ class CustomerSubscriptionController extends Controller
         try {
             $customer = $request->customer;
             $subscription_orders_list = collect([]);
-            $subscription_orders = SubscriptionOrderModel::where('customer_id', (int)$customer->id)->get();
+            $subscription_orders = SubscriptionOrder::where('customer_id', (int)$customer->id)->get();
             foreach ($subscription_orders as $subscription_order) {
                 $served_orders = $subscription_order->orders->map(function ($order) {
                     return $order->partnerOrders->where('cancelled_at', null)->filter(function ($partner_order) {
                         return $partner_order->closed_and_paid_at != null;
                     });
                 })->flatten()->count();
-                #dd($served_orders);
 
                 #$schedules = collect(json_decode($subscription_order->schedules));
 
@@ -164,7 +163,6 @@ class CustomerSubscriptionController extends Controller
         try {
             $customer = $request->customer;
             $subscription_order = SubscriptionOrder::find((int)$subscription);
-
             $served_orders = $subscription_order->orders->map(function ($order) {
                 return $order->partnerOrders->where('cancelled_at', null)->filter(function ($partner_order) {
                     return $partner_order->closed_and_paid_at != null;
@@ -181,23 +179,21 @@ class CustomerSubscriptionController extends Controller
                 "service_name" => $service->name,
                 "app_thumb" => $service->app_thumb,
                 "partner_id" => $subscription_order->partner_id,
-                "partner_name" => $service_details->name,
-                "logo" => $service_details->logo,
-                "subscription_details" =>
-                    [
-                        "billing_cycle" => $subscription_order->billing_cycle,
-                        "subscription_period" => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
-                        "total_orders" => $subscription_order->orders->count(),
-                        "completed_orders" => $served_orders,
-                        "preferred_time" => $schedules->first()->time,
+                "partner_name" =>  $service_details->name,
+                "logo" =>  $service_details->logo,
+                "billing_cycle" => $subscription_order->billing_cycle,
+                "subscription_period" => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
+                "total_orders" => $subscription_order->orders->count(),
+                "completed_orders" => $served_orders,
+                "preferred_time" => $schedules->first()->time,
+                "days_left" => Carbon::today()->diffInDays(Carbon::parse($subscription_order->billing_cycle_end)),
 
-                        "subscription_fee " => 2500,
-                        "price" => 200,
-                        "discount" => 20,
-                        "total" => 180,
+                "subscription_fee " => 2500,
+                "price" => 200,
+                "discount" => 20,
+                "total" => 180,
 
-                        "paid_on" => $subscription_order->created_at->format('M-j, Y')
-                    ]
+                "paid_on" => $subscription_order->created_at->format('M-j, Y')
             ];
 
             return api_response($request, $subscription_order_details, 200, ['subscription_order_details' => $subscription_order_details]);
