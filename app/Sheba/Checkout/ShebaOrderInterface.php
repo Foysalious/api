@@ -4,6 +4,5 @@
 interface ShebaOrderInterface
 {
     public function partnerOrders();
-
     public function jobs();
 }
