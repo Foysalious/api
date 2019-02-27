@@ -178,9 +178,16 @@ class CustomerSubscriptionController extends Controller
                 'service_id' => $service->id,
                 "service_name" => $service->name,
                 "app_thumb" => $service->app_thumb,
+                'quantity' => (double)$service_details_breakdown->quantity,
                 "partner_id" => $subscription_order->partner_id,
                 "partner_name" => $service_details->name,
                 "logo" => $service_details->logo,
+
+                'customer_name' => $subscription_order->customer->profile->name,
+                'customer_mobile' => $subscription_order->customer->profile->mobile,
+                'address' => $subscription_order->deliveryAddress->address,
+                'location_name' => $subscription_order->location->name,
+
                 "billing_cycle" => $subscription_order->billing_cycle,
                 "subscription_period" => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
                 "total_orders" => $subscription_order->orders->count(),
