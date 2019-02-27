@@ -31,4 +31,14 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface
     {
         return json_decode($this->schedules);
     }
+
+    public function deliveryAddress()
+    {
+        return $this->hasOne(CustomerDeliveryAddress::class, 'id', 'delivery_address_id');
+    }
+
+    public function location()
+    {
+        return $this->belongsTo(Location::class);
+    }
 }
