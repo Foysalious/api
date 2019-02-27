@@ -84,6 +84,7 @@ class HomePageSettingController extends Controller
             } else {
                 $setting_key = 'NewScreenSetting::customer_app_home_4';
             }
+
             $settings = $store->get($setting_key);
             if ($settings) {
                 $settings = json_decode($settings);
