@@ -3,9 +3,10 @@
 
 use App\Http\Controllers\Subscription\SubscriptionPartnerList;
 use App\Models\Partner;
+use App\Models\SubscriptionOrder;
 use Sheba\Checkout\Requests\SubscriptionOrderRequest;
 
-class SubscriptionOrder
+class SubscriptionOrderPlace
 {
     private $subscriptionOrderRequest;
 
@@ -18,7 +19,7 @@ class SubscriptionOrder
     public function place()
     {
         $partner = $this->getPartner();
-        $subscription_order = new \App\Models\SubscriptionOrder();
+        $subscription_order = new SubscriptionOrder();
         $subscription_order->billing_cycle = $this->subscriptionOrderRequest->subscriptionType;
         $subscription_order->customer_id = $this->subscriptionOrderRequest->customer->id;
         $subscription_order->location_id = $this->subscriptionOrderRequest->address->location_id;

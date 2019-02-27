@@ -5,6 +5,7 @@ use App\Models\PaymentDetail;
 use App\Models\SubscriptionOrder;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use Sheba\Checkout\Adapters\SubscriptionOrderAdapter;
 use Sheba\RequestIdentification;
 
 class OrderComplete extends PaymentComplete
@@ -80,6 +81,8 @@ class OrderComplete extends PaymentComplete
             $payable_model->status = 'paid';
             $payable_model->sheba_collection = (double)$paymentDetail->amount;
             $payable_model->update();
+            $subscription_order = new SubscriptionOrderAdapter($payable_model);
+            $subscription_order->convertToOrder();
         } catch (\Throwable $e) {
             $has_error = false;
         }

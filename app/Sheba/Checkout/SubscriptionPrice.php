@@ -1,6 +1,4 @@
-<?php
-
-namespace Sheba\Checkout;
+<?php namespace Sheba\Checkout;
 
 
 use App\Models\ServiceSubscription;
@@ -22,7 +20,7 @@ class SubscriptionPrice extends Discount
         /** @var  $service_subscription ServiceSubscription */
         $service_subscription = $this->serviceObject->serviceModel->subscription;
         /** @var  $discount ServiceSubscriptionDiscount */
-        $discount = $service_subscription->discounts()->where('subscription_type', $this->subscriptionType)->first();
+        $discount = $service_subscription->discounts()->where('subscription_type', $this->subscriptionType)->valid()->first();
         if ($discount) {
             $this->hasDiscount = 1;
             $this->cap = (double)$discount->cap;
