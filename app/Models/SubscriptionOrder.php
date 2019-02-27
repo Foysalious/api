@@ -1,8 +1,9 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Checkout\SubscriptionOrderInterface;
 
-class SubscriptionOrder extends Model
+class SubscriptionOrder extends Model implements SubscriptionOrderInterface
 {
     protected $guarded = ['id'];
 
@@ -19,5 +20,15 @@ class SubscriptionOrder extends Model
     public function partner()
     {
         return $this->belongsTo(Partner::class);
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(Partner::class);
+    }
+
+    public function schedules()
+    {
+        return json_decode($this->schedules);
     }
 }

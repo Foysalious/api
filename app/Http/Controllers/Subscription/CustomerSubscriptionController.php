@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Checkout\Requests\SubscriptionOrderRequest;
-use Sheba\Checkout\SubscriptionOrder;
+use Sheba\Checkout\SubscriptionOrderPlace;
 use Sheba\Payment\Adapters\Payable\SubscriptionOrderAdapter;
 use Sheba\Payment\ShebaPayment;
 
@@ -65,7 +65,7 @@ class CustomerSubscriptionController extends Controller
         }
     }
 
-    public function placeSubscriptionRequest(Request $request, SubscriptionOrderRequest $subscriptionOrderRequest, SubscriptionOrder $subscriptionOrder)
+    public function placeSubscriptionRequest(Request $request, SubscriptionOrderRequest $subscriptionOrderRequest, SubscriptionOrderPlace $subscriptionOrder)
     {
         try {
             $this->validate($request, [
@@ -86,6 +86,7 @@ class CustomerSubscriptionController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
