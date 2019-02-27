@@ -214,7 +214,7 @@ class PromotionController extends Controller
             $order_amount = 0;
             $category_pivot = $partner->categories->first()->pivot;
             $delivery_charge = (double)$category_pivot->delivery_charge;
-            foreach ($partner_list->selected_services as $selected_service) {
+            foreach ($partnerListRequest->selectedServices as $selected_service) {
                 $service = $partner->services->where('id', $selected_service->id)->first();
                 $schedule_date_time = Carbon::parse(request()->get('date') . ' ' . explode('-', request()->get('time'))[0]);
                 $discount = new Discount();
