@@ -61,7 +61,7 @@ class ServiceObject
 
     public function setService()
     {
-        $this->serviceModel = Service::where('id', $this->service->id)->publishedForAll()->first();
+        $this->serviceModel = Service::with('subscription')->where('id', $this->service->id)->publishedForAll()->first();
     }
 
     protected function setQuantity()

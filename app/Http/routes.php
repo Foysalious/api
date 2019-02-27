@@ -1,5 +1,7 @@
 <?php
 
+use Sheba\Checkout\Adapters\SubscriptionOrderAdapter;
+
 Route::get('/', function () {
     return ['code' => 200, 'message' => "Success. This project will hold the api's"];
 });

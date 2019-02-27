@@ -1,9 +1,10 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Checkout\ShebaOrderInterface;
 use Sheba\Order\StatusCalculator;
 
-class Order extends Model
+class Order extends Model implements ShebaOrderInterface
 {
     protected $guarded = ['id'];
     public $totalPrice;
@@ -13,6 +14,11 @@ class Order extends Model
     public function jobs()
     {
         return $this->hasManyThrough(Job::class, PartnerOrder::class);
+    }
+
+    public function partnerOrders()
+    {
+        return $this->hasMany(PartnerOrder::class);
     }
 
     public function customer()
@@ -25,10 +31,6 @@ class Order extends Model
         return $this->hasMany(PartnerOrder::class);
     }
 
-    public function partnerOrders()
-    {
-        return $this->hasMany(PartnerOrder::class);
-    }
 
     public function subscription()
     {

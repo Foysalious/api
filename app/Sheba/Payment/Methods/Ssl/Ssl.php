@@ -68,7 +68,6 @@ class Ssl extends PaymentMethod
             $payment_details->method = self::NAME;
             $payment_details->amount = $payable->amount;
             $payment_details->save();
-
         });
         $response = $this->getSslSession($data);
         $init_response = new InitResponse();
