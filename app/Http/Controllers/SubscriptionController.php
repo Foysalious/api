@@ -92,19 +92,21 @@ class SubscriptionController extends Controller
                 }
                 $service = removeRelationsAndFields($subscription->service);
                 list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
+                $subscription['offers'] = $subscription->getDiscountOffers();
                 $subscription = removeRelationsAndFields($subscription);
                 $subscription['max_price'] = $service['max_price'];
                 $subscription['min_price'] = $service['min_price'];
                 $subscription['thumb'] = $service['thumb'];
                 $subscription['banner'] = $service['banner'];
                 $subscription['unit'] = $service['unit'];
-                $subscription['offers'] = $subscription->parseDiscountOffers();
+
             }
             if(count($subscriptions)>0)
                 return api_response($request, $subscriptions, 200, ['subscriptions' => $subscriptions]);
             else
                 return api_response($request, null, 404);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
