@@ -36,6 +36,8 @@ class OrderComplete extends PaymentComplete
             $payable_model->payment_method = strtolower($paymentDetail->readable_method);
             $payable_model->update();
         } catch (RequestException $e) {
+            $this->payment->payable->status = 'payment_failed';
+            $this->payment->payable->update();
             $this->paymentRepository->changeStatus(['to' => 'failed', 'from' => $this->payment->status,
                 'transaction_details' => $this->payment->transaction_details]);
             $this->payment->status = 'failed';
