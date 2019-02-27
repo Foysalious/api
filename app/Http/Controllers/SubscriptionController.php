@@ -260,6 +260,7 @@ class SubscriptionController extends Controller
         return $result;
     }
 
+
     private function getDiscountOffers($subscription) {
         $offer_short_text = "Subscribe & save upto ";
         $amount = $subscription->is_discount_amount_percentage ? $subscription->discount_amount . '%' : '৳' . $subscription->discount_amount;
