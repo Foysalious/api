@@ -98,6 +98,7 @@ class SubscriptionController extends Controller
                 $subscription['thumb'] = $service['thumb'];
                 $subscription['banner'] = $service['banner'];
                 $subscription['unit'] = $service['unit'];
+                $subscription['offers'] = $subscription->parseDiscountOffers();
             }
             if(count($subscriptions)>0)
                 return api_response($request, $subscriptions, 200, ['subscriptions' => $subscriptions]);
