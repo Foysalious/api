@@ -22,6 +22,7 @@ use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use DB;
 use Illuminate\Http\Request;
+use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Checkout\Services\ServiceObject;
 use Sheba\ModificationFields;
 use Sheba\RequestIdentification;
@@ -35,6 +36,7 @@ class Checkout
     private $voucherRepository;
     private $partnerServiceRepository;
     private $orderData;
+    private $partnerListRequest;
 
     public function __construct($customer)
     {
@@ -42,6 +44,7 @@ class Checkout
         $this->customerRepository = new CustomerRepository();
         $this->voucherRepository = new VoucherRepository();
         $this->partnerServiceRepository = new PartnerServiceRepository();
+        $this->partnerListRequest = new PartnerListRequest();
     }
 
     /**
@@ -62,33 +65,31 @@ class Checkout
                 $address = $this->customer->delivery_addresses()->save($new_address);
             }
         }
-        if ($request->has('location')) {
-            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$request->location);
-        } else {
+        if (!$request->has('location')) {
             if ((int)$request->is_on_premise) $geo = json_decode((Partner::find((int)$request->partner))->geo_informations);
             else $geo = json_decode($address->geo_informations);
-            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time);
-            $partner_list->setGeo($geo->lat, $geo->lng);
+            $this->partnerListRequest->setGeo($geo->lat, $geo->lng);
         }
-
-        $partner_list->find($request->partner);
+        $this->partnerListRequest->setRequest($request)->prepareObject();
+        $partner_list = new PartnerList();
+        $partner_list->setPartnerListRequest($this->partnerListRequest)->find($request->partner);
         if ($partner_list->hasPartners) {
             $partner = $partner_list->partners->first();
-            $this->orderData['location_id'] = $partner_list->location;
-            $this->orderData['location'] = Location::find($partner_list->location);
+            $this->orderData['location_id'] = $this->partnerListRequest->location;
+            $this->orderData['location'] = Location::find($this->partnerListRequest->location);
             $data = $this->makeOrderData($request);
             if ($request->has('address_id') && !empty($request->address_id)) {
                 $data['address_id'] = $address->id;
             }
             $data['payment_method'] = $request->payment_method == 'cod' ? 'cash-on-delivery' : ucwords($request->payment_method);
-            $data['job_services'] = $this->createJobService($partner->services, $partner_list->selected_services, $data);
+            $data['job_services'] = $this->createJobService($partner->services, $this->partnerListRequest->selectedServices, $data);
             $rent_car_ids = array_map('intval', explode(',', env('RENT_CAR_IDS')));
-            if (in_array($partner_list->selectedCategory->id, $rent_car_ids)) {
-                $data['car_rental_job_detail'] = $this->createCarRentalDetail($partner_list->selected_services[0]);
+            if (in_array($this->partnerListRequest->selectedCategory->id, $rent_car_ids)) {
+                $data['car_rental_job_detail'] = $this->createCarRentalDetail($this->partnerListRequest->selectedServices[0]);
             }
-            $data['category_id'] = $partner_list->selectedCategory->id;
+            $data['category_id'] = $this->partnerListRequest->selectedCategory->id;
             $data = $this->getVoucherData($data['job_services'], $data, $partner);
-            if ($order = $this->storeInDB($data, $partner_list->selected_services, $partner)) {
+            if ($order = $this->storeInDB($data, $this->partnerListRequest->selectedServices, $partner)) {
                 if (isset($data['email'])) {
                     $this->updateProfile($order->customer, $data['email']);
                 }
@@ -223,7 +224,6 @@ class Checkout
             $schedule_date_time = Carbon::parse($this->orderData['date'] . ' ' . explode('-', $this->orderData['time'])[0]);
             $discount = new Discount();
             $discount->setServiceObj($selected_service)->setServicePivot($service->pivot)->setScheduleDateTime($schedule_date_time)->initialize();
-            $discount->calculateServiceDiscount();
             $service_data = array(
                 'service_id' => $selected_service->id,
                 'quantity' => $selected_service->quantity,

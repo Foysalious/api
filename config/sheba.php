@@ -98,5 +98,16 @@ return [
         'outside_city' => [
             'category' => [223]
         ]
+    ],
+    'subscription_type' => [
+        'customer' =>
+            [
+                'weekly' => [
+                    'name' => 'weekly'
+                ],
+                'monthly' => [
+                    'name' => 'monthly'
+                ]
+            ]
     ]
 ];

@@ -46,6 +46,12 @@ class CustomerRoute
                         $api->get('/', 'CustomerOrderController@show');
                     });
                 });
+                $api->group(['prefix' => 'subscriptions'], function ($api) {
+                    $api->post('/', 'Subscription\CustomerSubscriptionController@placeSubscriptionRequest');
+                    $api->get('{subscription}/payment', 'Subscription\CustomerSubscriptionController@clearPayment');
+                    $api->get('order-lists', 'Subscription\CustomerSubscriptionController@index');
+                    $api->get('{subscription}/details', 'Subscription\CustomerSubscriptionController@show');
+                });
                 $api->group(['prefix' => 'jobs'], function ($api) {
                     $api->get('/', 'JobController@index');
                     $api->get('cancel-reason', 'JobController@cancelReason');

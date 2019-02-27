@@ -106,7 +106,8 @@ class ResourceController extends Controller
         try {
             $this->validate($request, [
                 'mobile' => 'required',
-                'is_trained' => 'required'
+                'is_trained' => 'boolean',
+                'certificates' => 'required',
             ]);
 
             if ($request->ip() != self::REPTO_IP) {
@@ -114,7 +115,7 @@ class ResourceController extends Controller
                 return api_response($request, $message, 500, ['message' => $message]);
             }
             $profile = Profile::where('mobile', $request->mobile)->first();
-            $profile->resource->update(['is_trained' => $request->is_trained]);
+            $profile->resource->update(['is_trained' => !empty($request->certificates) ? 1 : 0]);
 
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {

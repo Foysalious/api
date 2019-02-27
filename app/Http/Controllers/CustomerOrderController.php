@@ -189,7 +189,8 @@ class CustomerOrderController extends Controller
             'discount' => (double)$partnerOrder->totalDiscount,
             'discounted_price' => (double)$partnerOrder->totalPrice,
             'complain_count' => $job->customerComplains->count(),
-            'message' => (new JobLogs($job))->getOrderMessage()
+            'message' => (new JobLogs($job))->getOrderMessage(),
+            'subscription_order_id' => 1
         ));
     }
 }
