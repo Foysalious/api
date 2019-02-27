@@ -1,6 +1,6 @@
-<?php namespace Sheba\TopUp\Commission;
+<?php namespace Sheba\MovieTicket\Commission;
 
-use Sheba\TopUp\MovieTicketCommission;
+use Sheba\MovieTicket\MovieTicketCommission;
 
 class Customer extends MovieTicketCommission
 {

@@ -22,6 +22,30 @@ class AvailableItems
             'offer' => [
                 "name" => "Offer",
                 "model" => "App\\Models\\OfferShowcase"
+            ],
+            'offer_list' => [
+                "name" => "Offer List",
+                "model" => "App\\Models\\OfferList"
+            ],
+            'offer_group' => [
+                "name" => "Offer Group",
+                "model" => "App\\Models\\OfferGroup"
+            ],
+            'menu' => [
+                "name" => "Menu",
+                "model" => "App\\Models\\HomeMenu"
+            ],
+            'master_categories' => [
+                "name" => "Master Categories",
+                "model" => "App\\Models\\Category"
+            ],
+            'subscription_list' => [
+                "name" => "Subscription List",
+                "model" => "App\\Models\\SubscriptionOrder"
+            ],
+            'top_up' => [
+                "name" => "Top up",
+                "model" => "App\\Models\\TopUpOrder"
             ]
         ];
     }
@@ -44,7 +68,7 @@ class AvailableItems
     private function getKeyFromValues($items, $search)
     {
         foreach ($items as $key => $item) {
-            if($item == $search) return $key;
+            if ($item == $search) return $key;
         }
         throw new \InvalidArgumentException('Provided needle or haystack is not valid.');
     }
@@ -72,7 +96,7 @@ class AvailableItems
     private function mapAvailableItemsWithKey($key)
     {
         $items = [];
-        array_walk($this->items, function($item, $index) use (&$items, $key) {
+        array_walk($this->items, function ($item, $index) use (&$items, $key) {
             $items[$index] = $item[$key];
         });
         return $items;
