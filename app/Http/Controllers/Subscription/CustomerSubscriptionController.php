@@ -24,7 +24,6 @@ class CustomerSubscriptionController extends Controller
                 'date' => 'required|string',
                 'time' => 'sometimes|required|string',
                 'services' => 'required|string',
-                'isAvailable' => 'sometimes|required',
                 'partner' => 'sometimes|required',
                 'lat' => 'required|numeric',
                 'lng' => 'required|numeric',
@@ -34,6 +33,9 @@ class CustomerSubscriptionController extends Controller
             $partner = $request->has('partner') ? $request->partner : null;
             $request->merge(['date' => json_decode($request->date)]);
             $partnerListRequest->setRequest($request)->prepareObject();
+            if(!$partnerListRequest->isValid()){
+                return api_response($request, null, 400, ['message' => 'Wrong Day for subscription']);
+            }
             $partner_list = new SubscriptionPartnerList();
             $partner_list->setPartnerListRequest($partnerListRequest)->find($partner);
             if ($partner_list->hasPartners) {
