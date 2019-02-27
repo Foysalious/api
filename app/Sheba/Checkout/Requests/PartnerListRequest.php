@@ -193,11 +193,19 @@ class PartnerListRequest
 
     public function isMonthlySubscription()
     {
+        if (!isset($this->subscriptionType)) $this->setSubscriptionType();
         return $this->subscriptionType == config('sheba.subscription_type.customer.monthly')['name'];
     }
 
     public function getSubscriptionQuantity()
     {
         return count($this->scheduleDate);
+    }
+
+    public function isValid()
+    {
+        if ($this->isWeeklySubscription()) return $this->getSubscriptionQuantity() >= $this->selectedServices->first()->subscription->min_weekly_qty;
+        elseif ($this->isMonthlySubscription()) return $this->getSubscriptionQuantity() >= $this->selectedServices->first()->subscription->min_monthly_qty;
+        else return true;
     }
 }
