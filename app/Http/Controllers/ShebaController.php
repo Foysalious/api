@@ -304,6 +304,7 @@ class ShebaController extends Controller
     public function getSubscriptionPayments(Request $request)
     {
         try {
+            $version_code = (int)$request->header('Version-Code');
             $payments = array(
                 array(
                     'name' => 'Sheba Credit',
@@ -311,6 +312,27 @@ class ShebaController extends Controller
                     'description' => '',
                     'asset' => 'sheba_credit',
                     'method_name' => 'wallet'
+                ),
+                array(
+                    'name' => 'bKash Payment',
+                    'is_published' => 1,
+                    'description' => '',
+                    'asset' => 'bkash',
+                    'method_name' => 'bkash'
+                ),
+                array(
+                    'name' => 'City Bank',
+                    'is_published' => $version_code ? ($version_code > 30112 ? 1 : 0) : 1,
+                    'description' => '',
+                    'asset' => 'cbl',
+                    'method_name' => 'cbl'
+                ),
+                array(
+                    'name' => 'Other Debit/Credit',
+                    'is_published' => 1,
+                    'description' => '',
+                    'asset' => 'ssl',
+                    'method_name' => 'online'
                 )
             );
             return api_response($request, $payments, 200, ['payments' => $payments]);
