@@ -51,5 +51,29 @@ abstract class Getter
         return $this;
     }
 
-    abstract public function getSettings() : Setting;
+    /**
+     * @return mixed
+     */
+    public function getPortal()
+    {
+        return $this->portal;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getScreen()
+    {
+        return $this->screen;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getLocation()
+    {
+        return $this->location;
+    }
+
+    abstract public function getSettings(): Setting;
 }
