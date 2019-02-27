@@ -1,16 +1,19 @@
-<?php namespace Sheba\TopUp\Vendor;
-
-use App\Models\TopUpRechargeHistory;
-use App\Models\TopUpVendor;
-use Carbon\Carbon;
-use Sheba\TopUp\TopUpRequest;
-use Sheba\TopUp\Vendor\Response\TopUpResponse;
+<?php namespace Sheba\MovieTicket\Vendor;
+use App\Models\MovieTicketVendor;
+use Sheba\MovieTicket\MovieTicketRequest;
+use Sheba\MovieTicket\Response\MovieResponse;
 
 abstract class Vendor
 {
     protected $model;
 
-    public function  setModel(TopUpVendor $model)
+    abstract public function init();
+
+    abstract public function generateURIForAction($action, $params = []);
+
+    abstract function buyTicket(MovieTicketRequest $top_up_request): MovieResponse;
+
+    public function  setModel(MovieTicketVendor $model)
     {
         $this->model = $model;
         return $this;
@@ -25,10 +28,6 @@ abstract class Vendor
     {
         return $this->model->is_published;
     }
-
-    abstract function recharge(TopUpRequest $top_up_request): TopUpResponse;
-
-    abstract function getTopUpInitialStatus();
 
     public function deductAmount($amount)
     {
@@ -51,5 +50,4 @@ abstract class Vendor
         $recharge_history->amount = $amount;
         $recharge_history->save();
     }
-
 }
