@@ -56,23 +56,42 @@ class HomePageSettingController extends Controller
         }
     }
 
-    public function indexNew(Request $request, HomePageSettingGetter $getter)
+    public function indexNew(Request $request)
     {
         try {
+            /** @var \Illuminate\Contracts\Cache\Repository $store */
+            $store = Cache::store('redis');
             $portals = config('sheba.portals');
             $screens = config('sheba.screen');
             $this->validate($request, [
+                'for' => 'string|in:app,web,app_json,app_json_revised',
                 'portal' => 'in:' . implode(',', $portals),
                 'screen' => 'in:' . implode(',', $screens),
                 'location' => 'numeric',
                 'lat' => 'numeric',
                 'lng' => 'numeric'
             ]);
-
-            $getter->setLocation($this->getLocationId($request))
-                ->setPortal($request->portal)->setScreen($request->screen);
-            $settings = $getter->getSettings()->get();
-            return api_response($request, $settings, 200, ['settings' => $settings]);
+            $setting_key = null;
+            $location = '';
+            if ($request->has('location')) {
+                $location = (int)$request->location;
+            } elseif ($request->has('lat') && $request->has('lng')) {
+                $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
+            }
+            if ($request->has('portal') && $request->has('screen')) {
+                $setting_key = 'NewScreenSetting::' . snake_case(camel_case($request->portal)) . '_' . $request->screen . "_" . $location;
+            } else {
+                $setting_key = 'NewScreenSetting::customer_app_home_4';
+            }
+            $settings = $store->get($setting_key);
+            if ($settings) {
+                $settings = json_decode($settings);
+                if ($request->portal == 'customer-portal') $settings = $this->formatWeb($settings, $location);
+                return api_response($request, $settings, 200, ['settings' => $settings]);
+            } else {
+                return api_response($request, null, 404);
+            }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);

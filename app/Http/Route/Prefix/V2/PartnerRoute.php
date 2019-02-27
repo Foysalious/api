@@ -25,6 +25,13 @@ class PartnerRoute
                     $api->get('/{order}', 'EShopOrderController@show');
                 });
             });
+
+            $api->group(['prefix' => 'loans'], function ($api) {
+                $api->get('/', 'SpLoanController@getPersonalInformation');
+                $api->post('/', 'SpLoanController@storePersonalInformation');
+                $api->post('/upgrade', 'SpLoanController@update');
+            });
+
             $api->group(['prefix' => 'categories'], function ($api) {
                 $api->get('/all', 'CategoryController@getPartnerLocationCategory');
                 $api->get('/tree', 'PartnerController@getCategoriesTree');
