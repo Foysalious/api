@@ -187,12 +187,9 @@ class CustomerSubscriptionController extends Controller
                 "completed_orders" => $served_orders,
                 "preferred_time" => $schedules->first()->time,
                 "days_left" => Carbon::today()->diffInDays(Carbon::parse($subscription_order->billing_cycle_end)),
-
-                "subscription_fee " => 2500,
-                "price" => 200,
-                "discount" => 20,
-                "total" => 180,
-
+                'original_price' => $service_details->original_price,
+                'discount' => $service_details->discount,
+                'total_price' => $service_details->discounted_price,
                 "paid_on" => $subscription_order->created_at->format('M-j, Y')
             ];
 
