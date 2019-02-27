@@ -108,6 +108,7 @@ class PartnerOrderRepository
                 'customer_name' => $subscription_order->customer->profile->name,
                 'address' => $subscription_order->deliveryAddress->address,
                 'location_name' => $subscription_order->location->name,
+                'total_orders' => $subscription_order->orders->count(),
                 'original_price' => $service_details->original_price,
                 'discount' => $service_details->discount,
                 'total_price' => $service_details->discounted_price,
