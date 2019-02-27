@@ -92,18 +92,21 @@ class SubscriptionController extends Controller
                 }
                 $service = removeRelationsAndFields($subscription->service);
                 list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
+                $subscription['offers'] = $subscription->getDiscountOffers();
                 $subscription = removeRelationsAndFields($subscription);
                 $subscription['max_price'] = $service['max_price'];
                 $subscription['min_price'] = $service['min_price'];
                 $subscription['thumb'] = $service['thumb'];
                 $subscription['banner'] = $service['banner'];
                 $subscription['unit'] = $service['unit'];
+
             }
             if(count($subscriptions)>0)
                 return api_response($request, $subscriptions, 200, ['subscriptions' => $subscriptions]);
             else
                 return api_response($request, null, 404);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -143,7 +146,7 @@ class SubscriptionController extends Controller
                 'All of our partners are background verified.',
                 'They will ensure 100% satisfaction'
             ];
-            $serviceSubscription['offers'] = $this->getDiscountOffers($serviceSubscription) ;
+            $serviceSubscription['offers'] = $serviceSubscription->getDiscountOffers();
             if($options) {
                 if(count($answers) > 1)
                     $serviceSubscription['service_breakdown'] =   $this->breakdown_service_with_min_max_price($answers,$service['min_price'],$service['max_price']);
@@ -258,26 +261,5 @@ class SubscriptionController extends Controller
         }
 
         return $result;
-    }
-
-    private function getDiscountOffers($subscription) {
-        $offer_short_text = "Subscribe & save upto ";
-        $amount = $subscription->is_discount_amount_percentage ? $subscription->discount_amount . '%' : '৳' . $subscription->discount_amount;
-        if($subscription->service->unit)
-            $unit =$subscription->service->unit;
-
-        $offer_short_text .= $amount;
-        $offer_long_text = 'Save '.$amount;
-
-        if($subscription->service->unit)
-        {
-            $offer_short_text.='/'.$unit;
-            $offer_long_text.= ' in every '.$unit;
-        }
-        $offer_long_text.=' by subscribing!';
-        return [
-            'short_text' => $offer_short_text,
-            'long_text' => $offer_long_text
-        ];
     }
 }

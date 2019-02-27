@@ -42,12 +42,14 @@ class PartnerJobController extends Controller
                     }, 'resource.profile', 'review']);
                 }]);
             }]);
+
             $jobs = collect();
             $jobs_with_resource = collect();
             foreach ($partner->partnerOrders as $partnerOrder) {
                 foreach ($partnerOrder->jobs as $job) {
                     if ($job->cancelRequests->where('status', 'Pending')->count() > 0) continue;
                     $job['location'] = $partnerOrder->order->location->name;
+                    $job['subscription_orders'] = $partner->subscriptionOrders->where('status', 'converted')->count();
                     $job['service_unit_price'] = (double)$job->service_unit_price;
                     $job['discount'] = (double)$job->discount;
                     $job['code'] = $partnerOrder->order->code();
