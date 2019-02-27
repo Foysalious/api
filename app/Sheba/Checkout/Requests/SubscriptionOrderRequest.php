@@ -24,6 +24,7 @@ class SubscriptionOrderRequest extends PartnerListRequest
     private $deliveryName;
     private $deliveryMobile;
     private $additionalInfo;
+    private $totalOrdersInSubscription;
 
     public function __get($name)
     {
@@ -41,6 +42,7 @@ class SubscriptionOrderRequest extends PartnerListRequest
         $this->setGeo($this->geo->lat, $this->geo->lng);
         parent::prepareObject();
         $this->calculateBillingCycle();
+        $this->calculateOrdersInSubscription();
     }
 
     private function setCustomer()
@@ -89,5 +91,10 @@ class SubscriptionOrderRequest extends PartnerListRequest
     {
         $days = $this->isWeeklySubscription() ? 7 : 30;
         return $this->billingCycleStart->copy()->addDays($days);
+    }
+
+    private function calculateOrdersInSubscription()
+    {
+        $this->totalOrdersInSubscription = count($this->scheduleDate);
     }
 }

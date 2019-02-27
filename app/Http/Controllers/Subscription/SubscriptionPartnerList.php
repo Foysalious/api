@@ -49,7 +49,6 @@ class SubscriptionPartnerList extends PartnerList
             $service['unit'] = $selected_service->serviceModel->unit;
             list($option, $variables) = $this->getVariableOptionOfService($selected_service->serviceModel, $selected_service->option);
             $service['questions'] = json_decode($variables);
-            $total_service_price['total_quantity'] += $service['quantity'];
             array_push($services, $service);
         }
         array_add($partner, 'breakdown', $services);
@@ -57,7 +56,7 @@ class SubscriptionPartnerList extends PartnerList
         $total_service_price['discounted_price'] += $delivery_charge;
         $total_service_price['original_price'] += $delivery_charge;
         $total_service_price['delivery_charge'] = $delivery_charge;
-        $total_service_price['total_quantity'] *= $this->partnerListRequest->getSubscriptionQuantity();
+        $total_service_price['total_quantity'] = $this->partnerListRequest->totalOrdersInSubscription;
         $total_service_price['discounted_price'] *= $total_service_price['total_quantity'];
         $total_service_price['original_price'] *= $total_service_price['total_quantity'];
         $total_service_price['delivery_charge'] *= $total_service_price['total_quantity'];
