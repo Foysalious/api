@@ -216,8 +216,8 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
         $collection_in_each_order = $total_amount ? $total_amount / count($this->totalSchedules) : 0;
         $remaining_collection = $collection_in_each_order;
 
-        $partner_order_payment = $this->getPartnerOrderPayment($partner_order);
         if ($this->bonusPaymentDetail && $this->bonusPaymentDetail->amount > 0) {
+            $partner_order_payment = $this->getPartnerOrderPayment($partner_order);
             if ($this->bonusPaymentDetail->amount >= $collection_in_each_order) {
                 $remaining_collection -= $collection_in_each_order;
                 $this->bonusPaymentDetail->amount -= $collection_in_each_order;
