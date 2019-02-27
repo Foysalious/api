@@ -90,6 +90,11 @@ class PartnerOrderRepository
 
     public function getNewOrdersWithJobs($request)
     {
+        list($offset, $limit) = calculatePagination($request);
+        $jobs = (new PartnerRepository($request->partner))->jobs(array(constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']), $offset, $limit);
+        $all_partner_orders = collect();
+        $all_jobs = collect();
+
         $partner = $request->partner;
         $subscription_orders = $partner->subscriptionOrders->where('status', 'converted');
         foreach ($subscription_orders as $subscription_order){
@@ -98,7 +103,7 @@ class PartnerOrderRepository
             $service_details_breakdown = $service_details->breakdown['0'];
             $services = collect();
             $services->push(array('name' => $service_details_breakdown->name, 'quantity' => (double)$service_details_breakdown->quantity));
-            $order = collect([
+            $subscription = collect([
                 'id' => $subscription_order->id,
                 'customer_name' => $subscription_order->customer->profile->name,
                 'address' => $subscription_order->deliveryAddress->address,
@@ -112,13 +117,9 @@ class PartnerOrderRepository
                 'category_name' => $subscription_order->category->name,
                 'services' => $services
             ]);
-            return $order;
+            $all_partner_orders->push($subscription);
         }
-        dd($subscription_orders);
-        list($offset, $limit) = calculatePagination($request);
-        $jobs = (new PartnerRepository($request->partner))->jobs(array(constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']), $offset, $limit);
-        $all_partner_orders = collect();
-        $all_jobs = collect();
+
         foreach ($jobs->groupBy('partner_order_id') as $jobs) {
             $jobs[0]->partner_order->calculate(true);
             if ($jobs[0]->cancelRequests->where('status', 'Pending')->count() > 0) continue;
