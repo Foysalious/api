@@ -286,6 +286,7 @@ class CategoryController extends Controller
                         $subscription->max_price = $service->max_price;
                         $subscription['thumb'] = $service['thumb'];
                         $subscription['banner'] = $service['banner'];
+                        $subscription['offers'] = $subscription->getDiscountOffers();
                         removeRelationsAndFields($subscription);
                         $subscriptions->push($subscription);
                     }
