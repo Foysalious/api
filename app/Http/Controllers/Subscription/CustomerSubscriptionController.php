@@ -161,7 +161,6 @@ class CustomerSubscriptionController extends Controller
         try {
             $customer = $request->customer;
             $subscription_order = SubscriptionOrderModel::find((int)$subscription);
-
             $served_orders = $subscription_order->orders->map(function ($order){
                 return $order->partnerOrders->where('cancelled_at', null)->filter(function ($partner_order){
                     return $partner_order->closed_and_paid_at != null;
@@ -180,13 +179,14 @@ class CustomerSubscriptionController extends Controller
                 "partner_id" => $subscription_order->partner_id,
                 "partner_name" =>  $service_details->name,
                 "logo" =>  $service_details->logo,
-                "subscription_details" =>
+                "details" =>
                     [
                         "billing_cycle" => $subscription_order->billing_cycle,
                         "subscription_period" =>  Carbon::parse($subscription_order->billing_cycle_start)->format('M j') .' - '. Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
                         "total_orders" => $subscription_order->orders->count(),
                         "completed_orders" =>  $served_orders,
                         "preferred_time" => $schedules->first()->time,
+                        "days_left" => Carbon::today()->diffInDays(Carbon::parse($subscription_order->billing_cycle_end)),
 
                         "subscription_fee " => 2500,
                         "price" =>  200,
