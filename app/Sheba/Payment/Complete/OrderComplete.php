@@ -3,6 +3,7 @@
 use App\Models\PartnerOrder;
 use App\Models\PaymentDetail;
 use App\Models\SubscriptionOrder;
+use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Sheba\Checkout\Adapters\SubscriptionOrderAdapter;
@@ -80,6 +81,7 @@ class OrderComplete extends PaymentComplete
         try {
             $payable_model->status = 'paid';
             $payable_model->sheba_collection = (double)$paymentDetail->amount;
+            $payable_model->paid_at = Carbon::now();
             $payable_model->update();
             $subscription_order = new SubscriptionOrderAdapter($payable_model);
             $subscription_order->convertToOrder();

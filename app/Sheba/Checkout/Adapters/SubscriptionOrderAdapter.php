@@ -5,6 +5,8 @@ use App\Models\JobService;
 use App\Models\Order;
 use App\Models\PartnerOrder;
 use App\Models\PartnerOrderPayment;
+use App\Models\Payable;
+use App\Models\PaymentDetail;
 use App\Models\Service;
 use App\Models\ServiceSubscriptionDiscount;
 use Sheba\Checkout\ShebaOrderInterface;
@@ -20,6 +22,12 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
     private $partnerServiceDetails;
     private $deliveryCharge;
     private $totalSchedules;
+    /** @var PaymentDetail[] $paymentDetails */
+    private $paymentDetails;
+    /** @var PaymentDetail $bonusPaymentDetail */
+    private $bonusPaymentDetail;
+    /** @var PaymentDetail $otherPaymentDetail */
+    private $otherPaymentDetail;
 
     public function __construct(SubscriptionOrderInterface $subscriptionOrder)
     {
@@ -28,7 +36,7 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
 
     public function partnerOrders()
     {
-        if ($this->subscriptionOrder->orders->count() == 0) $this->createOrders();
+
     }
 
     public function jobs()
@@ -64,6 +72,7 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
 
     private function setCalculatedProperties()
     {
+        $this->setPaymentDetails();
         $this->setTotalSchedules();
         $this->setPartnerServiceDetails();
         $this->setDeliveryCharge();
@@ -83,6 +92,25 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
     private function setTotalSchedules()
     {
         $this->totalSchedules = $this->subscriptionOrder->schedules();
+    }
+
+    private function setPaymentDetails()
+    {
+        $this->paymentDetails = Payable::where('type_id', $this->subscriptionOrder->id)->where('type', 'subscription_order')->first()->payment->paymentDetails;
+        $this->setBonus();
+        $this->setOtherPaymentDetail();
+    }
+
+    private function setBonus()
+    {
+        $this->bonusPaymentDetail = $this->paymentDetails->where('method', 'bonus')->first();
+    }
+
+    private function setOtherPaymentDetail()
+    {
+        $this->otherPaymentDetail = $this->paymentDetails->reject(function ($payment_detail) {
+            return $payment_detail->method == 'bonus';
+        })->first();
     }
 
     private function createOrder(): Order
@@ -110,17 +138,7 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
         $partner_order->sheba_collection = (int)$this->partnerServiceDetails->discounted_price > 0 ? $this->partnerServiceDetails->discounted_price / count($this->totalSchedules) : 0;
         $this->withCreateModificationField($partner_order);
         $partner_order->save();
-//        $partner_order_payment = new PartnerOrderPayment();
-//        $partner_order_payment->partner_order_id = $partner_order->id;
-//        $partner_order_payment->transaction_type = 'Debit';
-//        $partner_order_payment->amount = $partner_order->sheba_collection;
-//        $partner_order_payment->log = 'advanced payment';
-//        $partner_order_payment->collected_by = 'Sheba';
-//        $partner_order_payment->transaction_detail = json_encode($paymentDetail->formatPaymentDetail());
-//        $partner_order_payment->method = ucfirst($paymentDetail->method);
-//        $this->withCreateModificationField($partner_order_payment);
-//        $partner_order_payment->fill((new RequestIdentification())->get());
-//        $partner_order_payment->save();
+        $this->createPartnerOrderPayment($partner_order);
         return $partner_order;
     }
 
@@ -190,6 +208,53 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
             $variables = '[]';
         }
         return array($option, $variables);
+    }
+
+    private function createPartnerOrderPayment(PartnerOrder $partner_order)
+    {
+        $total_amount = $this->subscriptionOrder->sheba_collection;
+        $collection_in_each_order = $total_amount ? $total_amount / count($this->totalSchedules) : 0;
+        $remaining_collection = $collection_in_each_order;
+
+        if ($this->bonusPaymentDetail && $this->bonusPaymentDetail->amount > 0) {
+            $partner_order_payment = $this->getPartnerOrderPayment($partner_order);
+            if ($this->bonusPaymentDetail->amount >= $collection_in_each_order) {
+                $remaining_collection -= $collection_in_each_order;
+                $this->bonusPaymentDetail->amount -= $collection_in_each_order;
+                $partner_order_payment->amount = $collection_in_each_order;
+            } else {
+                $remaining_collection = $collection_in_each_order - $this->bonusPaymentDetail->amount;
+                $partner_order_payment->amount = $this->bonusPaymentDetail->amount;
+                $this->bonusPaymentDetail->amount = 0;
+            }
+            $partner_order_payment->transaction_detail = json_encode($this->bonusPaymentDetail->formatPaymentDetail());
+            $partner_order_payment->method = ucfirst($this->bonusPaymentDetail->method);
+            $partner_order_payment->save();
+        }
+        if ($remaining_collection > 0 && $this->otherPaymentDetail) {
+            $partner_order_payment = $this->getPartnerOrderPayment($partner_order);
+            $partner_order_payment->amount = $remaining_collection;
+            $partner_order_payment->transaction_detail = json_encode($this->otherPaymentDetail->formatPaymentDetail());
+            $partner_order_payment->method = ucfirst($this->otherPaymentDetail->method);
+            $partner_order_payment->save();
+        }
+
+    }
+
+    /**
+     * @param PartnerOrder $partner_order
+     * @return PartnerOrderPayment
+     */
+    private function getPartnerOrderPayment(PartnerOrder $partner_order)
+    {
+        $partner_order_payment = new PartnerOrderPayment();
+        $partner_order_payment->partner_order_id = $partner_order->id;
+        $partner_order_payment->transaction_type = 'Debit';
+        $partner_order_payment->log = 'advanced payment';
+        $partner_order_payment->collected_by = 'Sheba';
+        $this->withCreateModificationField($partner_order_payment);
+        $partner_order_payment->fill((new RequestIdentification())->get());
+        return $partner_order_payment;
     }
 
 }
