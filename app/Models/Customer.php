@@ -172,4 +172,9 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
     {
         return new \Sheba\TopUp\Commission\Customer();
     }
+
+    public function subscriptions()
+    {
+        return $this->hasMany(SubscriptionOrder::class);
+    }
 }

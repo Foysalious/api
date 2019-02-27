@@ -24,7 +24,7 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface
 
     public function customer()
     {
-        return $this->belongsTo(Partner::class);
+        return $this->belongsTo(Customer::class);
     }
 
     public function schedules()
