@@ -143,7 +143,7 @@ class SubscriptionController extends Controller
                 'All of our partners are background verified.',
                 'They will ensure 100% satisfaction'
             ];
-            $serviceSubscription['offers'] = $this->getDiscountOffers($serviceSubscription);
+            $serviceSubscription['offers'] = $this->getDiscountOffers($serviceSubscription) ;
             if($options) {
                 if(count($answers) > 1)
                     $serviceSubscription['service_breakdown'] =   $this->breakdown_service_with_min_max_price($answers,$service['min_price'],$service['max_price']);
@@ -229,20 +229,25 @@ class SubscriptionController extends Controller
         if (!isset($arrays[$i])) {
             return array();
         }
-        if ($i == count($arrays) - 1) {
+
+        if ($i == count($arrays) - 1 ) {
             return $arrays[$i];
         }
 
-        // get combinations from subsequent arrays
         $tmp = $this->breakdown_service_with_min_max_price($arrays, $min_price, $max_price, $i + 1);
 
         $result = array();
 
-        // concat each array from tmp with each element from $arrays[$i]
         foreach ($arrays[$i] as $array_index => $v) {
+
             foreach ($tmp as $index => $t) {
                 $result[] = is_array($t) ?
-                    array_merge(array($v), $t) :
+                    array(
+                        'name' => $v. " - ". $t['name'],
+                        'indexes' => array_merge(array($array_index),$t['indexes']),
+                        'min_price' => $t['min_price'],
+                        'max_price' => $t['max_price'],
+                    ) :
                     array(
                         'name' => $v ." - ". $t,
                         'indexes'=>array($array_index, $index),
