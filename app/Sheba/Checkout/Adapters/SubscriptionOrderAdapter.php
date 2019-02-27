@@ -4,6 +4,7 @@ use App\Models\Job;
 use App\Models\JobService;
 use App\Models\Order;
 use App\Models\PartnerOrder;
+use App\Models\PartnerOrderPayment;
 use App\Models\Service;
 use App\Models\ServiceSubscriptionDiscount;
 use Sheba\Checkout\ShebaOrderInterface;
@@ -109,6 +110,17 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
         $partner_order->sheba_collection = (int)$this->partnerServiceDetails->discounted_price > 0 ? $this->partnerServiceDetails->discounted_price / count($this->totalSchedules) : 0;
         $this->withCreateModificationField($partner_order);
         $partner_order->save();
+//        $partner_order_payment = new PartnerOrderPayment();
+//        $partner_order_payment->partner_order_id = $partner_order->id;
+//        $partner_order_payment->transaction_type = 'Debit';
+//        $partner_order_payment->amount = $partner_order->sheba_collection;
+//        $partner_order_payment->log = 'advanced payment';
+//        $partner_order_payment->collected_by = 'Sheba';
+//        $partner_order_payment->transaction_detail = json_encode($paymentDetail->formatPaymentDetail());
+//        $partner_order_payment->method = ucfirst($paymentDetail->method);
+//        $this->withCreateModificationField($partner_order_payment);
+//        $partner_order_payment->fill((new RequestIdentification())->get());
+//        $partner_order_payment->save();
         return $partner_order;
     }
 

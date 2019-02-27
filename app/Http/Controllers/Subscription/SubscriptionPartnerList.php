@@ -56,7 +56,7 @@ class SubscriptionPartnerList extends PartnerList
         $total_service_price['discounted_price'] += $delivery_charge;
         $total_service_price['original_price'] += $delivery_charge;
         $total_service_price['delivery_charge'] = $delivery_charge;
-        $total_service_price['total_quantity'] = $this->partnerListRequest->totalOrdersInSubscription;
+        $total_service_price['total_quantity'] = count($this->partnerListRequest->scheduleDate);
         $total_service_price['discounted_price'] *= $total_service_price['total_quantity'];
         $total_service_price['original_price'] *= $total_service_price['total_quantity'];
         $total_service_price['delivery_charge'] *= $total_service_price['total_quantity'];
