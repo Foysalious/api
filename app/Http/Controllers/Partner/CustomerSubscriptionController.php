@@ -9,12 +9,12 @@ use Illuminate\Http\Request;
 
 class CustomerSubscriptionController extends Controller
 {
-    public function index(Request $request, $customer)
+    public function index(Request $request, $partner)
     {
         try {
-            $customer = $request->customer;
+            $partner = $request->partner;
             $subscription_orders_list = collect([]);
-            $subscription_orders = SubscriptionOrder::where('customer_id', (int)$customer->id)->get();
+            $subscription_orders = SubscriptionOrder::where('partner_id', (int)$partner->id)->get();
             foreach ($subscription_orders as $subscription_order) {
                 $served_orders = $subscription_order->orders->map(function ($order) {
                     return $order->partnerOrders->where('cancelled_at', null)->filter(function ($partner_order) {
@@ -40,7 +40,8 @@ class CustomerSubscriptionController extends Controller
                         [
                             "id" => $subscription_order->partner_id,
                             "name" => $service_details->name,
-                            "logo" => $service_details->logo,
+                            "mobile" => $subscription_order->partner->mobile,
+                            "logo" => $service_details->logo
                         ]
                 ];
                 $subscription_orders_list->push($orders_list);
@@ -102,7 +103,7 @@ class CustomerSubscriptionController extends Controller
                 'original_price' => $service_details->original_price,
                 'discount' => $service_details->discount,
                 'total_price' => $service_details->discounted_price,
-                "paid_on" => $subscription_order->created_at->format('M-j, Y'),
+                "paid_on" => !empty($subscription_order->paid_at) ? $subscription_order->paid_at->format('M-j, Y') : null,
                 "orders" => $partner_orders
             ];
 
