@@ -122,15 +122,17 @@ class CustomerSubscriptionController extends Controller
             $form_data = [
                 'remember_token' => $request->remember_token,
             ];
-            $url = env('SHEBA_BACKEND_URL') . "/bulk-accept-subscription-orders/$subscription->id";
+            $url = env('SHEBA_BACKEND_URL') . "/api/bulk-accept-subscription-orders/$subscription->id";
             #dd($url);
             $client = new Client();
             $response = $client->request('POST', $url, ['form_params' => $form_data]);
-            dd(json_decode($response->getBody()->getContents(), true));
-            return json_decode($response->getBody());
+            if ($response = json_decode($response->getBody())) {
+                return api_response($request, $response, $response->code);
+            }
+            return api_response($request, null, 500);
         }catch (RequestException $e) {
             app('sentry')->captureException($e);
-            return false;
+            return api_response($request, null, 500);
         }
     }
 }
