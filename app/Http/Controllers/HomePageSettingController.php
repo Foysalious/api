@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Cache;
-use Sheba\AppSettings\HomePageSetting\Getters\Getter as HomePageSettingGetter;
 
 class HomePageSettingController extends Controller
 {
@@ -84,11 +83,11 @@ class HomePageSettingController extends Controller
             } else {
                 $setting_key = 'NewScreenSetting::customer_app_home_4';
             }
-
             $settings = $store->get($setting_key);
             if ($settings) {
                 $settings = json_decode($settings);
                 if ($request->portal == 'customer-portal') $settings = $this->formatWeb($settings, $location);
+                if(empty($settings->sections)) return api_response($request, null, 404);
                 return api_response($request, $settings, 200, ['settings' => $settings]);
             } else {
                 return api_response($request, null, 404);
