@@ -38,7 +38,8 @@
     "league/fractal": "^0.17.0",
     "sentry/sentry-laravel": "^0.11.0",
     "ext-openssl": "^7.0",
-    "ext-mcrypt": "^7.0"
+    "ext-mcrypt": "^7.0",
+    "ext-redis": "*"
   },
   "require-dev": {
     "fzaninotto/faker": "~1.4",

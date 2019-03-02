@@ -12,7 +12,7 @@ class SubscriptionController extends Controller
 {
     public function index(Request $request)
     {
-        try{
+        try {
             if ($request->has('location')) {
                 $location = $request->location != '' ? $request->location : 4;
             } else {
@@ -22,12 +22,12 @@ class SubscriptionController extends Controller
                 } else $location = 4;
             }
 
-            $categories = Category::whereNotNull('parent_id')->whereHas('services', function($q) {
-                $q->whereHas('serviceSubscription',function($query) {
+            $categories = Category::whereNotNull('parent_id')->whereHas('services', function ($q) {
+                $q->whereHas('serviceSubscription', function ($query) {
                     return $query->whereNotNull('id');
                 });
-            })->with(['services'=>function($q) use ($location) {
-                $q->whereHas('serviceSubscription',function($query) {
+            })->with(['services' => function ($q) use ($location) {
+                $q->whereHas('serviceSubscription', function ($query) {
                     return $query->whereNotNull('id');
                 });
                 $q->whereHas('locations', function ($q) use ($location) {
@@ -40,26 +40,38 @@ class SubscriptionController extends Controller
 
             $parents = collect();
             foreach ($categories as $category) {
+                $subscriptions =  $category->services->map(function($service){
+                    $service = removeRelationsAndFields($service);
+                    list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
+                    $subscription = $service->serviceSubscription;
+                    $subscription = removeRelationsAndFields($subscription);
+                    $subscription['max_price'] = $service['max_price'];
+                    $subscription['min_price'] = $service['min_price'];
+                    $subscription['thumb'] = $service['thumb'];
+                    $subscription['banner'] = $service['banner'];
+                    return $subscription;
+                });
                 $parent =[
                     'id'=>$category->parent->id,
                     'name'=> $category->parent->name,
                     'bn_name' => $category->parent->bn_name,
                     'slug' => $category->parent->slug,
                     'short_description' => $category->parent->slug,
-                    'subscriptions' =>  $category->services->map(function($service){
-                        $service = removeRelationsAndFields($service);
-                        list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
-                        $subscription = $service->serviceSubscription;
-                        $subscription = removeRelationsAndFields($subscription);
-                        $subscription['max_price'] = $service['max_price'];
-                        $subscription['min_price'] = $service['min_price'];
-                        $subscription['thumb'] = $service['thumb'];
-                        $subscription['banner'] = $service['banner'];
-                        return $subscription;
-                    }),
+                    'subscriptions' => $subscriptions
                 ];
-                if(count($parent['subscriptions']) > 0)
-                    $parents->push($parent);
+                if(count($parent['subscriptions']) > 0) {
+                    $existingParent = $parents->filter(function($parent) use ($category) {
+                        if($parent['id'] === $category->parent->id) return $parent;
+                    });
+                    if(count($existingParent)>0) {
+                        foreach($subscriptions as $subscription) {
+                            $existingParent->first()['subscriptions']->push($subscription);
+                        }
+                    }
+                    else
+                        $parents->push($parent);
+                }
+
             }
             if(count($parents)>0)
                 return api_response($request, $parents, 200, ['category' => $parents]);
@@ -85,22 +97,23 @@ class SubscriptionController extends Controller
 
             $subscriptions = ServiceSubscription::all();
             foreach ($subscriptions as $index => $subscription) {
-                if(!in_array($location,$subscription->service->locations->pluck('id')->toArray()))
-                {
-                    array_forget($subscriptions,$index);
+                if (!in_array($location, $subscription->service->locations->pluck('id')->toArray())) {
+                    array_forget($subscriptions, $index);
                     continue;
                 }
                 $service = removeRelationsAndFields($subscription->service);
                 list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
+                $subscription['offers'] = $subscription->getDiscountOffers();
                 $subscription = removeRelationsAndFields($subscription);
                 $subscription['max_price'] = $service['max_price'];
                 $subscription['min_price'] = $service['min_price'];
                 $subscription['thumb'] = $service['thumb'];
                 $subscription['banner'] = $service['banner'];
                 $subscription['unit'] = $service['unit'];
+
             }
-            if(count($subscriptions)>0)
-                return api_response($request, $subscriptions, 200, ['subscriptions' => $subscriptions]);
+            if (count($subscriptions) > 0)
+                return api_response($request, $subscriptions, 200, ['subscriptions' => $subscriptions->values()->all()]);
             else
                 return api_response($request, null, 404);
         } catch (\Throwable $e) {
@@ -111,7 +124,7 @@ class SubscriptionController extends Controller
 
     public function show($serviceSubscription, Request $request)
     {
-        try{
+        try {
             if ($request->has('location')) {
                 $location = $request->location != '' ? $request->location : 4;
             } else {
@@ -121,13 +134,13 @@ class SubscriptionController extends Controller
                 } else $location = 4;
             }
 
-            $serviceSubscription = ServiceSubscription::find((int) $serviceSubscription);
-            if(!in_array($location,$serviceSubscription->service->locations->pluck('id')->toArray()))
+            $serviceSubscription = ServiceSubscription::find((int)$serviceSubscription);
+            if (!in_array($location, $serviceSubscription->service->locations->pluck('id')->toArray()))
                 return api_response($request, null, 404);
             $options = $this->serviceQuestionSet($serviceSubscription->service);
             $serviceSubscription['questions'] = json_encode($options, true);
             $answers = collect();
-            if($options)
+            if ($options)
                 foreach ($options as $option) {
                     $answers->push($option["answers"]);
                 }
@@ -139,34 +152,32 @@ class SubscriptionController extends Controller
             $serviceSubscription['banner'] = $serviceSubscription->service['banner'];
             $serviceSubscription['unit'] = $serviceSubscription->service['unit'];
             $serviceSubscription['service_min_quantity'] = $serviceSubscription->service['min_quantity'];
-            $serviceSubscription['structured_description'] =  [
+            $serviceSubscription['structured_description'] = [
                 'All of our partners are background verified.',
                 'They will ensure 100% satisfaction'
             ];
             $serviceSubscription['offers'] = $serviceSubscription->getDiscountOffers();
-            if($options) {
-                if(count($answers) > 1)
-                    $serviceSubscription['service_breakdown'] =   $this->breakdown_service_with_min_max_price($answers,$service['min_price'],$service['max_price']);
-                else
-                {
+            if ($options) {
+                if (count($answers) > 1)
+                    $serviceSubscription['service_breakdown'] = $this->breakdown_service_with_min_max_price($answers, $service['min_price'], $service['max_price']);
+                else {
                     $total_breakdown = array();
                     foreach ($answers[0] as $index => $answer) {
                         $breakdown = array(
                             'name' => $answer,
-                            'indexes' => array( $index ),
+                            'indexes' => array($index),
                             'min_price' => $service['min_price'],
                             'max_price' => $service['max_price']
                         );
-                        array_push($total_breakdown,$breakdown);
+                        array_push($total_breakdown, $breakdown);
                     }
                     $serviceSubscription['service_breakdown'] = $total_breakdown;
                 }
 
-            }
-            else {
-                $serviceSubscription['service_breakdown'] =   array(array(
+            } else {
+                $serviceSubscription['service_breakdown'] = array(array(
                     'name' => $serviceSubscription->service->name,
-                    'indexes'=> null,
+                    'indexes' => null,
                     'min_price' => $service['min_price'],
                     'max_price' => $service['max_price']
                 ));
@@ -225,12 +236,13 @@ class SubscriptionController extends Controller
         }
     }
 
-    private function breakdown_service_with_min_max_price($arrays, $min_price, $max_price, $i = 0) {
+    private function breakdown_service_with_min_max_price($arrays, $min_price, $max_price, $i = 0)
+    {
         if (!isset($arrays[$i])) {
             return array();
         }
 
-        if ($i == count($arrays) - 1 ) {
+        if ($i == count($arrays) - 1) {
             return $arrays[$i];
         }
 
@@ -243,14 +255,14 @@ class SubscriptionController extends Controller
             foreach ($tmp as $index => $t) {
                 $result[] = is_array($t) ?
                     array(
-                        'name' => $v. " - ". $t['name'],
-                        'indexes' => array_merge(array($array_index),$t['indexes']),
+                        'name' => $v . " - " . $t['name'],
+                        'indexes' => array_merge(array($array_index), $t['indexes']),
                         'min_price' => $t['min_price'],
                         'max_price' => $t['max_price'],
                     ) :
                     array(
-                        'name' => $v ." - ". $t,
-                        'indexes'=>array($array_index, $index),
+                        'name' => $v . " - " . $t,
+                        'indexes' => array($array_index, $index),
                         'min_price' => $min_price,
                         'max_price' => $max_price
                     );

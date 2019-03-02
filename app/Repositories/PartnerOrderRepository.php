@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\PartnerOrder;
+use App\Models\Service;
 use App\Sheba\JobTime;
 use Carbon\Carbon;
 
@@ -91,43 +92,76 @@ class PartnerOrderRepository
     {
         list($offset, $limit) = calculatePagination($request);
         $jobs = (new PartnerRepository($request->partner))->jobs(array(constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']), $offset, $limit);
+
         $all_partner_orders = collect();
         $all_jobs = collect();
-        foreach ($jobs->groupBy('partner_order_id') as $jobs) {
-            $jobs[0]->partner_order->calculate(true);
-            if ($jobs[0]->cancelRequests->where('status', 'Pending')->count() > 0) continue;
-            $job = $jobs[0];
+
+        $partner = $request->partner;
+        $subscription_orders = $partner->subscriptionOrders->where('status', 'converted');
+        foreach ($subscription_orders as $subscription_order){
+            $schedules = collect(json_decode($subscription_order->schedules));
+            $service_details = json_decode($subscription_order->service_details);
+            $service_details_breakdown = $service_details->breakdown['0'];
             $services = collect();
-            if (count($job->jobServices) == 0) {
-                $variables = json_decode($job->service_variables);
-                $services->push(array('name' => $job->service_name, 'variables' => $variables, 'quantity' => (double)$job->quantity));
-            } else {
-                foreach ($job->jobServices as $jobService) {
-                    $variables = json_decode($jobService->variables);
-                    $services->push(array('name' => $jobService->service->name, 'variables' => $variables, 'quantity' => (double)$jobService->quantity));
-                }
-            }
-            if(!$jobs[0]->partner_order->order->deliveryAddress) {
-                $jobs[0]->partner_order->order->deliveryAddress = $jobs[0]->partner_order->order->getTempAddress();
-            }
-            $order = collect([
-                'customer_name' => $jobs[0]->partner_order->order->deliveryAddress->name,
-                'address' => $jobs[0]->partner_order->order->deliveryAddress->address,
-                'location_name' => $jobs[0]->partner_order->order->location->name,
-                'created_at' => $jobs[0]->partner_order->created_at->timestamp,
-                'created_at_readable' => $jobs[0]->partner_order->created_at->diffForHumans(),
-                'code' => $jobs[0]->partner_order->code(),
-                'is_on_premise' => $jobs[0]->site == 'partner' ? 1 : 0,
-                'id' => $jobs[0]->partner_order->id,
-                'total_price' => (double)$jobs[0]->partner_order->totalPrice,
-                'discount' => (double)$jobs[0]->partner_order->totalDiscount,
-                'category_name' => $jobs[0]->category ? $jobs[0]->category->name : null,
-                'job_id' => $jobs[0]->id,
-                'schedule_date' => $jobs[0]->schedule_date,
-                'preferred_time' => $jobs[0]->readable_preferred_time,
+            $services->push(array('name' => $service_details_breakdown->name, 'quantity' => (double)$service_details_breakdown->quantity));
+            $subscription = collect([
+                'id' => $subscription_order->id,
+                'customer_name' => $subscription_order->customer->profile->name,
+                'address' => $subscription_order->deliveryAddress->address,
+                'location_name' => $subscription_order->location->name,
+                'billing_cycle' => $subscription_order->billing_cycle,
+                'total_orders' => $subscription_order->orders->count(),
+                'original_price' => $service_details->original_price,
+                'discount' => $service_details->discount,
+                'total_price' => $service_details->discounted_price,
+                'created_at' => $subscription_order->created_at->format('M-j, Y'),
+                "subscription_period" => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
+                "preferred_time" => $schedules->first()->time,
+                'category_name' => $subscription_order->category->name,
                 'services' => $services
             ]);
-            $all_partner_orders->push($order);
+            $all_partner_orders->push($subscription);
+        }
+
+        foreach ($jobs->groupBy('partner_order_id') as $jobs) {
+
+            if ($jobs[0]->partner_order->order->subscription_order_id == null){
+                $jobs[0]->partner_order->calculate(true);
+                if ($jobs[0]->cancelRequests->where('status', 'Pending')->count() > 0) continue;
+                $job = $jobs[0];
+                $services = collect();
+                if (count($job->jobServices) == 0) {
+                    $variables = json_decode($job->service_variables);
+                    $services->push(array('name' => $job->service_name, 'variables' => $variables, 'quantity' => (double)$job->quantity));
+                } else {
+                    foreach ($job->jobServices as $jobService) {
+                        $variables = json_decode($jobService->variables);
+                        $services->push(array('name' => $jobService->service->name, 'variables' => $variables, 'quantity' => (double)$jobService->quantity));
+                    }
+                }
+                if(!$jobs[0]->partner_order->order->deliveryAddress) {
+                    $jobs[0]->partner_order->order->deliveryAddress = $jobs[0]->partner_order->order->getTempAddress();
+                }
+
+                $order = collect([
+                    'customer_name' => $jobs[0]->partner_order->order->deliveryAddress->name,
+                    'address' => $jobs[0]->partner_order->order->deliveryAddress->address,
+                    'location_name' => $jobs[0]->partner_order->order->location->name,
+                    'created_at' => $jobs[0]->partner_order->created_at->timestamp,
+                    'created_at_readable' => $jobs[0]->partner_order->created_at->diffForHumans(),
+                    'code' => $jobs[0]->partner_order->code(),
+                    'is_on_premise' => $jobs[0]->site == 'partner' ? 1 : 0,
+                    'id' => $jobs[0]->partner_order->id,
+                    'total_price' => (double)$jobs[0]->partner_order->totalPrice,
+                    'discount' => (double)$jobs[0]->partner_order->totalDiscount,
+                    'category_name' => $jobs[0]->category ? $jobs[0]->category->name : null,
+                    'job_id' => $jobs[0]->id,
+                    'schedule_date' => $jobs[0]->schedule_date,
+                    'preferred_time' => $jobs[0]->readable_preferred_time,
+                    'services' => $services
+                ]);
+                $all_partner_orders->push($order);
+            }
         }
         list($field, $orderBy) = $this->getSortByFieldAdOrderFromRequest($request);
         $orderBy = $orderBy == 'asc' ? 'sortBy' : 'sortByDesc';

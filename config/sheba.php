@@ -109,5 +109,6 @@ return [
                     'name' => 'monthly'
                 ]
             ]
-    ]
+    ],
+    'sheba_help_desk_id' => 1809
 ];

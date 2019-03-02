@@ -53,9 +53,21 @@ class ServiceSubscription extends Model
             $offer_long_text.= "$unit";
         }
         $offer_long_text.=' by subscribing!';
+
+        $discount_amount_for_homepage = '';
+        if($discount_offer->cap === 0.0) $discount_amount_for_homepage.="  ৳$discount_offer->cap";
+        else $discount_amount_for_homepage .= $amount;
+        if($this->service->unit)
+        {
+            $discount_amount_for_homepage.= '/';
+            if($discount_offer->min_discount_qty) $discount_amount_for_homepage.="$discount_offer->min_discount_qty";
+            $discount_amount_for_homepage.= "$unit";
+        }
+
         return [
             'short_text' => $offer_short_text,
-            'long_text' => $offer_long_text
+            'long_text' => $offer_long_text,
+            'discount_amount_for_homepage' => $discount_amount_for_homepage
         ];
     }
 }

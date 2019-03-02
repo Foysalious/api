@@ -1,10 +1,13 @@
 <?php namespace Sheba\MovieTicket\Vendor;
 
-
+use Sheba\MovieTicket\Actions;
+use Sheba\MovieTicket\MovieTicketRequest;
+use Sheba\MovieTicket\Response\MovieResponse;
 use Sheba\MovieTicket\TransactionGenerator;
 use Sheba\MovieTicket\Vendor\BlockBuster\KeyEncryptor;
+use GuzzleHttp\Exception\GuzzleException;
 
-class BlockBuster
+class BlockBuster extends Vendor
 {
     // User Credentials
     private $userName;
@@ -14,24 +17,62 @@ class BlockBuster
     // API Urls
     private $apiUrl;
     private $imageServerUrl;
-    private $secret_key;
+    private $secretKey;
+    private $connectionMode;
+
+    private $httpClient;
 
     /**
      * BlockBuster constructor.
      * @param $connection_mode
-     * @throws \Exception
      */
-    public function __construct($connection_mode)
+    public function __construct($connection_mode = 'dev')
     {
         $this->imageServerUrl = config('blockbuster.image_server_url');
-        if($connection_mode === 'dev') {
+        $this->connectionMode = $connection_mode;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getHttpClient()
+    {
+        return $this->httpClient;
+    }
+
+    /**
+     * @param mixed $httpClient
+     */
+    public function setHttpClient($httpClient)
+    {
+        $this->httpClient = $httpClient;
+    }
+
+    private function getSecretKey($params = [])
+    {
+        $cur_random_value = (new TransactionGenerator())->generate();
+        $string = "password=$this->password";
+        if(!isset($params['trx_id'])) $string .= "&trxid=$cur_random_value";
+        $string = $this->addParamsToUrl($string, $params);
+        $string .= '&format=xml';
+        $BBC_Codero_Key_Generate = (new KeyEncryptor())->encrypt_cbc($string,$this->key);
+        $BBC_Request_KEY_VALUE =urlencode($BBC_Codero_Key_Generate);
+        return $BBC_Request_KEY_VALUE;
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function init()
+    {
+        if($this->connectionMode === 'dev') {
             // Connect to dev server with test credentials
             $this->userName = config('blockbuster.username_dev');
             $this->password = config('blockbuster.password_dev');
             $this->key = config('blockbuster.key_dev');
             $this->apiUrl = config('blockbuster.test_api_url');
 
-        } else if($connection_mode === 'production'){
+        } else if($this->connectionMode === 'production'){
             // Connect to live server with prod credentials
             $this->userName = config('blockbuster.username_live');
             $this->password = config('blockbuster.password_live');
@@ -41,15 +82,85 @@ class BlockBuster
         } else {
             throw new \Exception('Invalid connection mode');
         }
-
-        $this->secret_key = $this->getSercretKey();
+        $this->secretKey = $this->getSecretKey();
     }
 
-    private function getSercretKey()
+    /**
+     * @param $action
+     * @return string
+     * @throws \Exception
+     */
+    public function generateURIForAction($action, $params = [])
     {
-        $cur_random_value = (new TransactionGenerator())->generate();$string = "password=$this->password&trxid=$cur_random_value&format=xml";
-        $BBC_Codero_Key_Generate = (new KeyEncryptor())->encrypt_cbc($string,$this->key);
-        $BBC_Request_KEY_VALUE =urlencode($BBC_Codero_Key_Generate);
-        return $BBC_Request_KEY_VALUE;
+        $this->secretKey = $this->getSecretKey($params);
+        switch ($action) {
+            case Actions::GET_MOVIE_LIST:
+                $api_url = $this->apiUrl.'/MovieList.php?username='.$this->userName.'&request_id='.$this->secretKey;
+                break;
+            case Actions::GET_THEATRE_LIST:
+                $api_url =  $this->apiUrl.'MovieSchedule.php?username='.$this->userName.'&request_id='.$this->secretKey;
+                break;
+            case Actions::GET_THEATRE_SEAT_STATUS:
+                $api_url =  $this->apiUrl.'MovieScheduleTheatreSeatStatus.php?username='.$this->userName.'&request_id='.$this->secretKey;
+                break;
+            case Actions::REQUEST_MOVIE_TICKET_SEAT:
+                $api_url =  $this->apiUrl.'MovieSeatBookingRequest.php?username='.$this->userName.'&request_id='.$this->secretKey;
+                break;
+            case Actions::UPDATE_MOVIE_SEAT_STATUS:
+                $api_url =  $this->apiUrl.'MovieSeatUpdateStatus.php?username='.$this->userName.'&request_id='.$this->secretKey;
+                break;
+            default:
+                throw new \Exception('Invalid Action');
+                break;
+        }
+//        dd((new KeyEncryptor())->decrypt_cbc($this->secretKey, $this->key));
+        return $api_url;
+    }
+
+    private function addParamsToUrl($url, $params)
+    {
+        foreach ($params as $key => $value) {
+            $url .='&'.$key.'='.$value;
+        }
+        return $url;
+    }
+
+    function buyTicket(MovieTicketRequest $movieTicketRequest): MovieResponse
+    {
+        $response = $this->get();
+        $rax_response = new RaxResponse();
+        $rax_response->setResponse($response);
+        return $rax_response;
+    }
+
+    /**
+     * @param $action
+     * @param array $params
+     * @return \SimpleXMLElement
+     * @throws GuzzleException
+     */
+    public function get($action, $params = [])
+    {
+        try {
+            $response = $this->httpClient->request('GET', $this->vendor->generateURIForAction($action, $params));
+            $body = $response->getBody()->getContents();
+            return $this->isJson($body) ? $body :$this->parse($body);
+        } catch (GuzzleException $e) {
+            throw $e;
+        }
+
+    }
+
+    private function parse ($fileContents) {
+        $fileContents = str_replace(array("\n", "\r", "\t"), '', $fileContents);
+        $fileContents = trim(str_replace('"', "'", $fileContents));
+        $fileContents = trim(str_replace('&', "&amp;", $fileContents));
+        $simpleXml = simplexml_load_string($fileContents);
+        return $simpleXml;
+    }
+
+    function isJson($string) {
+        json_decode($string);
+        return (json_last_error() == JSON_ERROR_NONE);
     }
 }
