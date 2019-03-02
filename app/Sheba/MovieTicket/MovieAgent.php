@@ -1,7 +1,6 @@
 <?php namespace Sheba\MovieTicket;
 
-use App\Models\TopUpVendor;
-use Sheba\TopUp\MovieTicketTransaction;
+use App\Models\MovieTicketVendor;
 
 interface MovieAgent
 {
@@ -11,10 +10,10 @@ interface MovieAgent
 
     public function refund($amount, $log);
 
-    public function calculateCommission($amount, TopUpVendor $topup_vendor);
+    public function calculateMovieTicketCommission($amount, MovieTicketVendor $movieTicketVendor);
 
     /**
      * @return MovieTicketCommission
      */
-    public function getCommission();
+    public function getMovieTicketCommission();
 }

@@ -1,8 +1,6 @@
 <?php namespace Sheba\MovieTicket;
 
 use App\Http\Validators\MobileNumberValidator;
-use Sheba\MovieTicket\MovieAgent;
-use Sheba\MovieTicket\MovieTicketRequest;
 use Sheba\MovieTicket\Response\MovieTicketErrorResponse;
 use Sheba\MovieTicket\Response\MovieTicketWalletErrorResponse;
 use Sheba\MovieTicket\Vendor\Vendor;

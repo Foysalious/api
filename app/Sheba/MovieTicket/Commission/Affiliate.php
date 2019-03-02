@@ -15,15 +15,15 @@ class Affiliate extends MovieTicketCommission
 
     private function storeAmbassadorCommission()
     {
-        $this->topUpOrder->ambassador_commission = $this->calculateAmbassadorCommission($this->topUpOrder->amount);
-        $this->topUpOrder->save();
+        $this->movieTicketOrder->ambassador_commission = $this->calculateAmbassadorCommissionForMovieTicket($this->movieTicketOrder->amount);
+        $this->movieTicketOrder->save();
     }
 
     private function storeAmbassadorWalletTransaction()
     {
-        $this->agent->ambassador->creditWallet($this->topUpOrder->ambassador_commission);
-        $log = "{$this->agent->profile->name} gifted {$this->topUpOrder->ambassador_commission} Tk. for {$this->topUpOrder->amount} Tk. topup";;
-        $this->agent->ambassador->walletTransaction(['amount' => $this->topUpOrder->ambassador_commission, 'type' => 'Credit', 'log' => $log]);
+        $this->agent->ambassador->creditWallet($this->movieTicketOrder->ambassador_commission);
+        $log = "{$this->agent->profile->name} gifted {$this->movieTicketOrder->ambassador_commission} Tk. for {$this->movieTicketOrder->amount} Tk. topup";;
+        $this->agent->ambassador->walletTransaction(['amount' => $this->movieTicketOrder->ambassador_commission, 'type' => 'Credit', 'log' => $log]);
     }
 
     private function deductFromAmbassador($amount, $log)
@@ -35,16 +35,16 @@ class Affiliate extends MovieTicketCommission
     public function refund()
     {
         $this->refundAgentsCommission();
-        $amount = $this->topUpOrder->amount;
-        $amount_after_commission = round($amount - $this->calculateCommission($amount), 2);
-        $log = "Your recharge TK $amount to {$this->topUpOrder->payee_mobile} has failed, TK $amount_after_commission is refunded in your account.";
+        $amount = $this->movieTicketOrder->amount;
+        $amount_after_commission = round($amount - $this->calculateMovieTicketCommission($amount), 2);
+        $log = "Your recharge TK $amount to {$this->movieTicketOrder->payee_mobile} has failed, TK $amount_after_commission is refunded in your account.";
         $this->sendRefundNotification($log);
 
-        $ambassador = $this->topUpOrder->agent->ambassador;
+        $ambassador = $this->movieTicketOrder->agent->ambassador;
         if (!is_null($ambassador)) {
-            $ambassador_commission = $this->topUpOrder->ambassador_commission;
-            $this->topUpOrder->ambassador_commission = 0.0;
-            $this->topUpOrder->save();
+            $ambassador_commission = $this->movieTicketOrder->ambassador_commission;
+            $this->movieTicketOrder->ambassador_commission = 0.0;
+            $this->movieTicketOrder->save();
             $this->deductFromAmbassador($ambassador_commission, "$ambassador_commission Tk. has been deducted due to refund top up.");
         }
     }
@@ -52,13 +52,13 @@ class Affiliate extends MovieTicketCommission
     private function sendRefundNotification($title)
     {
         try {
-            notify()->affiliate($this->topUpOrder->agent)
+            notify()->affiliate($this->movieTicketOrder->agent)
                 ->send([
                     "title" => $title,
-                    "link" => url("affiliate/" . $this->topUpOrder->agent->id),
+                    "link" => url("affiliate/" . $this->movieTicketOrder->agent->id),
                     "type" => 'warning',
                     "event_type" => 'App\Models\Affiliate',
-                    "event_id" => $this->topUpOrder->agent->id
+                    "event_id" => $this->movieTicketOrder->agent->id
                 ]);
         } catch (\Throwable $e) {}
     }

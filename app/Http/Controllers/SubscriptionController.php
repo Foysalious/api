@@ -40,28 +40,40 @@ class SubscriptionController extends Controller
 
             $parents = collect();
             foreach ($categories as $category) {
-                $parent = [
-                    'id' => $category->parent->id,
-                    'name' => $category->parent->name,
+                $subscriptions =  $category->services->map(function($service){
+                    $service = removeRelationsAndFields($service);
+                    list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
+                    $subscription = $service->serviceSubscription;
+                    $subscription = removeRelationsAndFields($subscription);
+                    $subscription['max_price'] = $service['max_price'];
+                    $subscription['min_price'] = $service['min_price'];
+                    $subscription['thumb'] = $service['thumb'];
+                    $subscription['banner'] = $service['banner'];
+                    return $subscription;
+                });
+                $parent =[
+                    'id'=>$category->parent->id,
+                    'name'=> $category->parent->name,
                     'bn_name' => $category->parent->bn_name,
                     'slug' => $category->parent->slug,
                     'short_description' => $category->parent->slug,
-                    'subscriptions' => $category->services->map(function ($service) {
-                        $service = removeRelationsAndFields($service);
-                        list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
-                        $subscription = $service->serviceSubscription;
-                        $subscription = removeRelationsAndFields($subscription);
-                        $subscription['max_price'] = $service['max_price'];
-                        $subscription['min_price'] = $service['min_price'];
-                        $subscription['thumb'] = $service['thumb'];
-                        $subscription['banner'] = $service['banner'];
-                        return $subscription;
-                    }),
+                    'subscriptions' => $subscriptions
                 ];
-                if (count($parent['subscriptions']) > 0)
-                    $parents->push($parent);
+                if(count($parent['subscriptions']) > 0) {
+                    $existingParent = $parents->filter(function($parent) use ($category) {
+                        if($parent['id'] === $category->parent->id) return $parent;
+                    });
+                    if(count($existingParent)>0) {
+                        foreach($subscriptions as $subscription) {
+                            $existingParent->first()['subscriptions']->push($subscription);
+                        }
+                    }
+                    else
+                        $parents->push($parent);
+                }
+
             }
-            if (count($parents) > 0)
+            if(count($parents)>0)
                 return api_response($request, $parents, 200, ['category' => $parents]);
             else
                 return api_response($request, null, 404);
@@ -73,7 +85,7 @@ class SubscriptionController extends Controller
 
     public function all(Request $request)
     {
-        try {
+        try{
             if ($request->has('location')) {
                 $location = $request->location != '' ? $request->location : 4;
             } else {
