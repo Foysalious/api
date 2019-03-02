@@ -123,11 +123,11 @@ class CustomerSubscriptionController extends Controller
                 'remember_token' => $request->remember_token,
             ];
             $url = env('SHEBA_BACKEND_URL') . "/api/bulk-accept-subscription-orders/$subscription->id";
-            #dd($url);
             $client = new Client();
             $response = $client->request('POST', $url, ['form_params' => $form_data]);
+
             if ($response = json_decode($response->getBody())) {
-                return api_response($request, $response, $response->code);
+                return api_response($request, null, 200, ['message' => $response->msg]);
             }
             return api_response($request, null, 500);
         }catch (RequestException $e) {
