@@ -181,7 +181,25 @@ class CustomerSubscriptionController extends Controller
             });
 
             $service_details = json_decode($subscription_order->service_details);
+            $variables = collect();
+            foreach ($service_details->breakdown as $breakdown){
+                if (empty($breakdown->questions)){
+                    $data = [
+                        'quantity' => $breakdown->quantity,
+                        'questions' => null
+                    ];
+                } else{
+                    $data = [
+                        'quantity' => $breakdown->quantity,
+                        'questions' => $breakdown->questions[0]
+                    ];
+                }
+                $variables->push($data);
+            }
+
+            #dd($variables);
             $service_details_breakdown = $service_details->breakdown['0'];
+            #dd($service_details, $service_details_breakdown);
             $service = Service::find((int)$service_details_breakdown->id);
             $schedules = collect(json_decode($subscription_order->schedules));
 
@@ -189,6 +207,7 @@ class CustomerSubscriptionController extends Controller
                 'service_id' => $service->id,
                 "service_name" => $service->name,
                 "app_thumb" => $service->app_thumb,
+                "variables" => $variables,
                 'quantity' => (double)$service_details_breakdown->quantity,
                 "partner_id" => $subscription_order->partner_id,
                 "partner_name" => $service_details->name,
