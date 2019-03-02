@@ -7,8 +7,10 @@ use App\Models\PartnerOrder;
 use App\Models\PartnerOrderPayment;
 use App\Models\Payable;
 use App\Models\PaymentDetail;
+use App\Models\Resource;
 use App\Models\Service;
 use App\Models\ServiceSubscriptionDiscount;
+use App\Models\SubscriptionOrder;
 use Sheba\Checkout\ShebaOrderInterface;
 use Sheba\Checkout\SubscriptionOrderInterface;
 use Sheba\ModificationFields;
@@ -18,10 +20,11 @@ use DB;
 class SubscriptionOrderAdapter implements ShebaOrderInterface
 {
     use ModificationFields;
-    private $subscriptionOrder;
     private $partnerServiceDetails;
     private $deliveryCharge;
     private $totalSchedules;
+    /** @var SubscriptionOrder $subscriptionOrder */
+    private $subscriptionOrder;
     /** @var PaymentDetail[] $paymentDetails */
     private $paymentDetails;
     /** @var PaymentDetail $bonusPaymentDetail */
@@ -59,14 +62,17 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
         $this->setModifier($this->subscriptionOrder->customer);
         $this->setCalculatedProperties();
         DB::transaction(function () {
+            $jobs = collect();
             foreach ($this->totalSchedules as $schedule) {
                 $order = $this->createOrder();
                 $partner_order = $this->createPartnerOrder($order);
                 $job = $this->createJob($partner_order, $schedule);
+                $jobs->push($job);
                 $this->createJobServices($job);
             }
             $this->subscriptionOrder->status = 'converted';
             $this->subscriptionOrder->update();
+            $this->bookResources($jobs);
         });
     }
 
@@ -257,4 +263,30 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
         return $partner_order_payment;
     }
 
+    private function bookResources($jobs)
+    {
+        $resources = $this->getAvailableResources();
+        foreach ($jobs as $job) {
+            foreach ($resources as $resource) {
+                $resource_handler = scheduler($resource);
+                if ($resource_handler->isAvailable($job->schedule_date, $job->preferred_time_start)) {
+                    $resource_handler->book($job);
+                    break;
+                }
+            }
+        }
+    }
+
+    private function getAvailableResources()
+    {
+        $dates = [];
+        $schedules = $this->subscriptionOrder->schedules();
+        $time = explode('-', $schedules[0]->time)[0];
+        foreach ($schedules as $schedule) {
+            array_push($dates, $schedule->date);
+        }
+        $resources = (scheduler($this->subscriptionOrder->partner))
+            ->isAvailable($dates, $time, $this->subscriptionOrder->category)->get('available_resources');
+        return Resource::whereIn('id', $resources)->get();
+    }
 }
