@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\PartnerOrder;
+use App\Models\Service;
 use App\Sheba\JobTime;
 use Carbon\Carbon;
 
@@ -93,6 +94,34 @@ class PartnerOrderRepository
         $jobs = (new PartnerRepository($request->partner))->jobs(array(constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']), $offset, $limit);
         $all_partner_orders = collect();
         $all_jobs = collect();
+
+        $partner = $request->partner;
+        $subscription_orders = $partner->subscriptionOrders->where('status', 'converted');
+        foreach ($subscription_orders as $subscription_order){
+            $schedules = collect(json_decode($subscription_order->schedules));
+            $service_details = json_decode($subscription_order->service_details);
+            $service_details_breakdown = $service_details->breakdown['0'];
+            $services = collect();
+            $services->push(array('name' => $service_details_breakdown->name, 'quantity' => (double)$service_details_breakdown->quantity));
+            $subscription = collect([
+                'id' => $subscription_order->id,
+                'customer_name' => $subscription_order->customer->profile->name,
+                'address' => $subscription_order->deliveryAddress->address,
+                'location_name' => $subscription_order->location->name,
+                'billing_cycle' => $subscription_order->billing_cycle,
+                'total_orders' => $subscription_order->orders->count(),
+                'original_price' => $service_details->original_price,
+                'discount' => $service_details->discount,
+                'total_price' => $service_details->discounted_price,
+                'created_at' => $subscription_order->created_at->format('M-j, Y'),
+                "subscription_period" => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
+                "preferred_time" => $schedules->first()->time,
+                'category_name' => $subscription_order->category->name,
+                'services' => $services
+            ]);
+            $all_partner_orders->push($subscription);
+        }
+
         foreach ($jobs->groupBy('partner_order_id') as $jobs) {
             $jobs[0]->partner_order->calculate(true);
             if ($jobs[0]->cancelRequests->where('status', 'Pending')->count() > 0) continue;

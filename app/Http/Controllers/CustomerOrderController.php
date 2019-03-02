@@ -23,7 +23,7 @@ class CustomerOrderController extends Controller
             $for = $request->for;
             list($offset, $limit) = calculatePagination($request);
             $customer = $request->customer->load(['orders' => function ($q) use ($filter, $offset, $limit, $for) {
-                $q->select('id', 'customer_id', 'partner_id', 'location_id', 'sales_channel', 'delivery_name', 'delivery_mobile', 'delivery_address')->orderBy('id', 'desc')
+                $q->select('id', 'customer_id', 'partner_id', 'location_id', 'sales_channel', 'delivery_name', 'delivery_mobile', 'delivery_address', 'subscription_order_id')->orderBy('id', 'desc')
                     ->skip($offset)->take($limit);
                 if ($for == 'eshop') {
                     $q->whereNotNull('partner_id');
@@ -37,7 +37,7 @@ class CustomerOrderController extends Controller
                 }
                 $q->with(['partnerOrders' => function ($q) use ($filter, $offset, $limit) {
                     $q->with(['partner.resources.profile', 'order' => function ($q) {
-                        $q->select('id', 'sales_channel');
+                        $q->select('id', 'sales_channel', 'subscription_order_id');
                     }, 'jobs' => function ($q) {
                         $q->with(['statusChangeLogs', 'resource.profile', 'jobServices', 'customerComplains', 'category', 'review' => function ($q) {
                             $q->select('id', 'rating', 'job_id');
@@ -45,6 +45,7 @@ class CustomerOrderController extends Controller
                     }]);
                 }]);
             }]);
+
             if (count($customer->orders) > 0) {
                 $all_jobs = $this->getInformation($customer->orders);
                 $cancelled_served_jobs = $all_jobs->filter(function ($job) {
@@ -159,6 +160,7 @@ class CustomerOrderController extends Controller
         return collect(array(
             'id' => $partnerOrder->id,
             'job_id' => $job->id,
+            'subscription_order_id' => $partnerOrder->order->subscription_order_id,
             'category_name' => $category ? $category->name : null,
             'category_thumb' => $category ? $category->thumb : null,
             'schedule_date' => $job->schedule_date ? $job->schedule_date : null,
@@ -190,7 +192,6 @@ class CustomerOrderController extends Controller
             'discounted_price' => (double)$partnerOrder->totalPrice,
             'complain_count' => $job->customerComplains->count(),
             'message' => (new JobLogs($job))->getOrderMessage(),
-            'subscription_order_id' => 1
         ));
     }
 }

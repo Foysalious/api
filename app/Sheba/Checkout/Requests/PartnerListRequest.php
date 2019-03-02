@@ -204,8 +204,8 @@ class PartnerListRequest
 
     public function isValid()
     {
-        if ($this->isWeeklySubscription()) return $this->getSubscriptionQuantity() >= $this->selectedServices->first()->subscription->min_weekly_qty;
-        elseif ($this->isMonthlySubscription()) return $this->getSubscriptionQuantity() >= $this->selectedServices->first()->subscription->min_monthly_qty;
+        if ($this->isWeeklySubscription()) return $this->getSubscriptionQuantity() >= $this->selectedServices->first()->serviceModel->subscription->min_weekly_qty;
+        elseif ($this->isMonthlySubscription()) return $this->getSubscriptionQuantity() >= $this->selectedServices->first()->serviceModel->subscription->min_monthly_qty;
         else return true;
     }
 }

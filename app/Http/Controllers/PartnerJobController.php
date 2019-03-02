@@ -49,7 +49,6 @@ class PartnerJobController extends Controller
                 foreach ($partnerOrder->jobs as $job) {
                     if ($job->cancelRequests->where('status', 'Pending')->count() > 0) continue;
                     $job['location'] = $partnerOrder->order->location->name;
-                    $job['subscription_orders'] = $partner->subscriptionOrders->where('status', 'converted')->count();
                     $job['service_unit_price'] = (double)$job->service_unit_price;
                     $job['discount'] = (double)$job->discount;
                     $job['code'] = $partnerOrder->order->code();
@@ -112,7 +111,9 @@ class PartnerJobController extends Controller
                         ));
                     }
                 }
-                return api_response($request, $jobs, 200, ['jobs' => $jobs, 'resources' => $resources]);
+                $subscription_orders = $partner->subscriptionOrders->where('status', 'accepted')->count();
+
+                return api_response($request, $jobs, 200, ['jobs' => $jobs, 'resources' => $resources, 'subscription_orders'=> $subscription_orders]);
             } else {
                 return api_response($request, null, 404);
             }
