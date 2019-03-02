@@ -33,7 +33,7 @@ class CustomerSubscriptionController extends Controller
             $partner = $request->has('partner') ? $request->partner : null;
             $request->merge(['date' => json_decode($request->date)]);
             $partnerListRequest->setRequest($request)->prepareObject();
-            if(!$partnerListRequest->isValid()){
+            if (!$partnerListRequest->isValid()) {
                 return api_response($request, null, 400, ['message' => 'Wrong Day for subscription']);
             }
             $partner_list = new SubscriptionPartnerList();
@@ -53,6 +53,9 @@ class CustomerSubscriptionController extends Controller
                     array_forget($partner, 'package_id');
                     array_forget($partner, 'geo_informations');
                     removeRelationsAndFields($partner);
+                });
+                $partners = $partners->filter(function ($partner) {
+                    return $partner->is_available == 1 || $partner->id == config('sheba.sheba_help_desk_id');
                 });
                 return api_response($request, $partners, 200, ['partners' => $partners->values()->all()]);
             }
@@ -167,7 +170,7 @@ class CustomerSubscriptionController extends Controller
             $partner_orders = $subscription_order->orders->map(function ($order) {
                 return $order->lastPartnerOrder();
             });
-            $partner_orders = $partner_orders->map(function($partner_order){
+            $partner_orders = $partner_orders->map(function ($partner_order) {
                 return [
                     'id' => $partner_order->order->code(),
                     'is_completed' => $partner_order->closed_and_paid_at ? $partner_order->closed_and_paid_at->format('M-j a') : null,
@@ -175,19 +178,19 @@ class CustomerSubscriptionController extends Controller
                 ];
             });
 
-            $served_orders = $partner_orders->filter(function($partner_order){
+            $served_orders = $partner_orders->filter(function ($partner_order) {
                 return $partner_order['is_completed'] != null;
             });
 
             $service_details = json_decode($subscription_order->service_details);
             $variables = collect();
-            foreach ($service_details->breakdown as $breakdown){
-                if (empty($breakdown->questions)){
+            foreach ($service_details->breakdown as $breakdown) {
+                if (empty($breakdown->questions)) {
                     $data = [
                         'quantity' => $breakdown->quantity,
                         'questions' => null
                     ];
-                } else{
+                } else {
                     $data = [
                         'quantity' => $breakdown->quantity,
                         'questions' => $breakdown->questions[0]

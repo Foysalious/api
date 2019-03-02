@@ -1,12 +1,6 @@
 <?php
 
-
-use Sheba\Checkout\Adapters\SubscriptionOrderAdapter;
-
 Route::get('/', function () {
-//    dd(\App\Models\SubscriptionOrder::find(9));
-    $subscription_order = new SubscriptionOrderAdapter(\App\Models\SubscriptionOrder::find(9));
-    $subscription_order->convertToOrder();
     return ['code' => 200, 'message' => "Success. This project will hold the api's"];
 });
 $api = app('Dingo\Api\Routing\Router');
