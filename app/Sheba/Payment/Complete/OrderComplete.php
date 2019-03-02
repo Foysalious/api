@@ -36,6 +36,8 @@ class OrderComplete extends PaymentComplete
             $payable_model->payment_method = strtolower($paymentDetail->readable_method);
             $payable_model->update();
         } catch (RequestException $e) {
+            $this->payment->payable->status = 'payment_failed';
+            $this->payment->payable->update();
             $this->paymentRepository->changeStatus(['to' => 'failed', 'from' => $this->payment->status,
                 'transaction_details' => $this->payment->transaction_details]);
             $this->payment->status = 'failed';
@@ -83,11 +85,23 @@ class OrderComplete extends PaymentComplete
             $payable_model->sheba_collection = (double)$paymentDetail->amount;
             $payable_model->paid_at = Carbon::now();
             $payable_model->update();
-            $subscription_order = new SubscriptionOrderAdapter($payable_model);
-            $subscription_order->convertToOrder();
+            $this->convertToOrder($payable_model);
         } catch (\Throwable $e) {
             $has_error = false;
         }
         return $has_error;
+    }
+
+    /**
+     * @param SubscriptionOrder $payable_model
+     */
+    private function convertToOrder(SubscriptionOrder $payable_model)
+    {
+        try {
+            $subscription_order = new SubscriptionOrderAdapter($payable_model);
+            $subscription_order->convertToOrder();
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+        }
     }
 }

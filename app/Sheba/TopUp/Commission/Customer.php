@@ -1,8 +1,8 @@
 <?php namespace Sheba\TopUp\Commission;
 
-use Sheba\TopUp\TopUpCommission;
+use Sheba\TopUp\MovieTicketCommission;
 
-class Customer extends TopUpCommission
+class Customer extends MovieTicketCommission
 {
     public function disburse()
     {

@@ -7,12 +7,20 @@ use Sheba\Reward\Event\Rule as BaseRule;
 
 class Event extends Action implements AmountCalculator
 {
+    private $partner;
+
     public function setRule(BaseRule $rule)
     {
         if (!($rule instanceof Rule))
             throw new RulesTypeMismatchException("Partner creation bonus event must have a Partner creation bonus rules");
 
         return parent::setRule($rule);
+    }
+
+    public function setParams(array $params)
+    {
+        parent::setParams($params);
+        $this->partner = $this->params[0];
     }
 
     public function isEligible()
@@ -41,5 +49,11 @@ class Event extends Action implements AmountCalculator
     public function calculateAmount()
     {
         return $this->reward->amount;
+    }
+
+    public function getLogEvent()
+    {
+        $log = $this->reward->amount . ' ' . $this->reward->type . ' credited for ' . $this->reward->name . '(' . $this->reward->id . ') on partner id: ' . $this->partner->id;
+        return $log;
     }
 }
