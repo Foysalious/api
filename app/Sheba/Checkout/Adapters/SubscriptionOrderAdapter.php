@@ -176,9 +176,9 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
                 'min_price' => $service->min_price,
                 'sheba_contribution' => $service->sheba_contribution,
                 'partner_contribution' => $service->partner_contribution,
-                'discount_id' => $discount->id,
+                'discount_id' => $discount ? $discount->id : null,
                 'discount' => $service->discount,
-                'discount_percentage' => $discount->isPercentage() ? $discount->discount_amount : 0,
+                'discount_percentage' => $discount && $discount->isPercentage() ? $discount->discount_amount : 0,
                 'name' => $service->name,
                 'variable_type' => $serviceModel->variable_type,
             );
