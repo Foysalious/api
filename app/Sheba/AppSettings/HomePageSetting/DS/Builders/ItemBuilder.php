@@ -2,6 +2,7 @@
 
 use App\Models\Category;
 use App\Models\CategoryGroup;
+use App\Models\HomeMenu;
 use App\Models\OfferShowcase;
 use App\Models\Slide;
 use App\Models\Voucher;
@@ -31,26 +32,26 @@ class ItemBuilder
             ->setIcon($category_group->icon)
             ->setUpdatedAt($category_group->updated_at);
     }
-    
+
     public function buildTopUp()
     {
         return (new Item())->setTargetType(Targets::TOP_UP)->setName('Top Up')
             ->setIcon($this->mockIcon)->setUpdatedAt($this->mockUpdatedAt);
     }
-    
+
     public function buildFavourites()
     {
         return (new Item())->setTargetType(Targets::FAVOURITES)->setName('Favourites')
             ->setIcon($this->mockIcon)->setUpdatedAt($this->mockUpdatedAt);
     }
-    
+
     public function buildOfferList()
     {
         return (new Item())->setTargetType(Targets::OFFER_LIST)->setName('Offers')
             ->setIcon($this->mockIcon)->setAppBanner($this->mockBanner)
             ->setUpdatedAt($this->mockUpdatedAt);
     }
-    
+
     public function buildSubscriptionList()
     {
         return (new Item())->setTargetType(Targets::SUBSCRIPTION_LIST)->setName('Subscription')
@@ -63,7 +64,7 @@ class ItemBuilder
         $target = $category->isParent() ? Targets::MASTER_CATEGORY : Targets::SECONDARY_CATEGORY;
         return (new Item())->setTargetId($category->id)->setTargetType($target)->setIsParent($category->isParent())
             ->setName($category->name)->setIcon($category->icon_png)->setAppThumb($category->app_thumb)
-            ->setUpdatedAt($this->mockUpdatedAt);
+            ->setUpdatedAt($category->updated_at);
     }
 
     public function buildOffer(OfferShowcase $offer)
@@ -78,7 +79,16 @@ class ItemBuilder
             ->setAppBanner($this->mockBanner)->setVoucherCode($voucher->code)
             ->setUpdatedAt($this->mockUpdatedAt);
     }
-    public function buildSlide(Slide $slider){
 
+    public function buildSlide(Slide $slide)
+    {
+        return (new Item())->setIcon($slide->small_image_link)->setIconPng($slide->image_link);
+    }
+
+    public function buildMenu($element)
+    {
+
+        return (new Item())->setName($element->name)->setTargetType($element->item_type)->setTargetId($element->item_id)->setIcon($element->icon)->setUpdatedAt($element->updated_at);
     }
 }
+

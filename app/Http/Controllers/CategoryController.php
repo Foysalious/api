@@ -286,6 +286,7 @@ class CategoryController extends Controller
                         $subscription->max_price = $service->max_price;
                         $subscription['thumb'] = $service['thumb'];
                         $subscription['banner'] = $service['banner'];
+                        $subscription['offers'] = $subscription->getDiscountOffers();
                         removeRelationsAndFields($subscription);
                         $subscriptions->push($subscription);
                     }
@@ -295,6 +296,10 @@ class CategoryController extends Controller
                     $category = collect($category)->only(['name', 'slug' ,'banner', 'parent_id', 'app_banner']);
                     $category['services'] = $this->serviceQuestionSet($services);
                     $category['subscriptions'] = $subscriptions;
+                    $category['subscription_faq'] = [
+                        'title' => 'Subscribe & save money',
+                        'body' => 'Save BDT 20 in every meter by subscribing for one month!'
+                    ];
                     return api_response($request, $category, 200, ['category' => $category]);
                 } else
                     return api_response($request, null, 404);

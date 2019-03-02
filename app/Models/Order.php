@@ -1,18 +1,30 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Checkout\ShebaOrderInterface;
 use Sheba\Order\StatusCalculator;
 
-class Order extends Model
+class Order extends Model implements ShebaOrderInterface
 {
     protected $guarded = ['id'];
     public $totalPrice;
     public $due;
     public $profit;
+    private $statuses;
+
+    public function __construct()
+    {
+        $this->statuses = constants('ORDER_STATUSES');
+    }
 
     public function jobs()
     {
         return $this->hasManyThrough(Job::class, PartnerOrder::class);
+    }
+
+    public function partnerOrders()
+    {
+        return $this->hasMany(PartnerOrder::class);
     }
 
     public function customer()
@@ -25,10 +37,6 @@ class Order extends Model
         return $this->hasMany(PartnerOrder::class);
     }
 
-    public function partnerOrders()
-    {
-        return $this->hasMany(PartnerOrder::class);
-    }
 
     public function subscription()
     {
@@ -119,6 +127,14 @@ class Order extends Model
         if ($this->isCancelled()) return $this->jobs->last();
         return $this->jobs->filter(function ($job) {
             return $job->status != $this->jobStatuses['Cancelled'];
+        })->first();
+    }
+
+    public function lastPartnerOrder()
+    {
+        if ($this->isCancelled()) return $this->partnerOrders->last();
+        return $this->partnerOrders->filter(function ($partner_order) {
+            return is_null($partner_order->cancelled_at);
         })->first();
     }
 

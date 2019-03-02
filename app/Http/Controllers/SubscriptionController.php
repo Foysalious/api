@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\HyperLocal;
 use App\Models\Service;
 use App\Models\ServiceSubscription;
 use Illuminate\Http\Request;
@@ -11,27 +12,41 @@ class SubscriptionController extends Controller
 {
     public function index(Request $request)
     {
-        try{
-            $categories = Category::whereNotNull('parent_id')->whereHas('services', function($q) {
-                $q->whereHas('serviceSubscription',function($query) {
+        try {
+            if ($request->has('location')) {
+                $location = $request->location != '' ? $request->location : 4;
+            } else {
+                if ($request->has('lat') && $request->has('lng')) {
+                    $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                    if (!is_null($hyperLocation)) $location = $hyperLocation->location->id; else return api_response($request, null, 404);
+                } else $location = 4;
+            }
+
+            $categories = Category::whereNotNull('parent_id')->whereHas('services', function ($q) {
+                $q->whereHas('serviceSubscription', function ($query) {
                     return $query->whereNotNull('id');
                 });
-            })->with(['services'=>function($q){
-                $q->whereHas('serviceSubscription',function($query) {
+            })->with(['services' => function ($q) use ($location) {
+                $q->whereHas('serviceSubscription', function ($query) {
                     return $query->whereNotNull('id');
+                });
+                $q->whereHas('locations', function ($q) use ($location) {
+                    $q->where('locations.id', $location);
                 });
                 $q->with('serviceSubscription');
-            }])->get();
+            }])->whereHas('locations', function ($q) use ($location) {
+                $q->where('locations.id', $location);
+            })->get();
 
             $parents = collect();
             foreach ($categories as $category) {
-                $parent =[
-                    'id'=>$category->parent->id,
-                    'name'=> $category->parent->name,
+                $parent = [
+                    'id' => $category->parent->id,
+                    'name' => $category->parent->name,
                     'bn_name' => $category->parent->bn_name,
                     'slug' => $category->parent->slug,
                     'short_description' => $category->parent->slug,
-                    'subscriptions' =>  $category->services->map(function($service){
+                    'subscriptions' => $category->services->map(function ($service) {
                         $service = removeRelationsAndFields($service);
                         list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
                         $subscription = $service->serviceSubscription;
@@ -43,9 +58,13 @@ class SubscriptionController extends Controller
                         return $subscription;
                     }),
                 ];
-                $parents->push($parent);
+                if (count($parent['subscriptions']) > 0)
+                    $parents->push($parent);
             }
-            return api_response($request, $parents, 200, ['category' => $parents]);
+            if (count($parents) > 0)
+                return api_response($request, $parents, 200, ['category' => $parents]);
+            else
+                return api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -54,18 +73,37 @@ class SubscriptionController extends Controller
 
     public function all(Request $request)
     {
-        try{
+        try {
+            if ($request->has('location')) {
+                $location = $request->location != '' ? $request->location : 4;
+            } else {
+                if ($request->has('lat') && $request->has('lng')) {
+                    $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                    if (!is_null($hyperLocation)) $location = $hyperLocation->location->id; else return api_response($request, null, 404);
+                } else $location = 4;
+            }
+
             $subscriptions = ServiceSubscription::all();
-            foreach ($subscriptions as $subscription) {
+            foreach ($subscriptions as $index => $subscription) {
+                if (!in_array($location, $subscription->service->locations->pluck('id')->toArray())) {
+                    array_forget($subscriptions, $index);
+                    continue;
+                }
                 $service = removeRelationsAndFields($subscription->service);
                 list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
+                $subscription['offers'] = $subscription->getDiscountOffers();
                 $subscription = removeRelationsAndFields($subscription);
                 $subscription['max_price'] = $service['max_price'];
                 $subscription['min_price'] = $service['min_price'];
                 $subscription['thumb'] = $service['thumb'];
                 $subscription['banner'] = $service['banner'];
+                $subscription['unit'] = $service['unit'];
+
             }
-            return api_response($request, $subscriptions, 200, ['subscriptions' => $subscriptions]);
+            if (count($subscriptions) > 0)
+                return api_response($request, $subscriptions, 200, ['subscriptions' => $subscriptions->values()->all()]);
+            else
+                return api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -74,21 +112,64 @@ class SubscriptionController extends Controller
 
     public function show($serviceSubscription, Request $request)
     {
-        try{
-            $serviceSubscription = ServiceSubscription::find((int) $serviceSubscription);
+        try {
+            if ($request->has('location')) {
+                $location = $request->location != '' ? $request->location : 4;
+            } else {
+                if ($request->has('lat') && $request->has('lng')) {
+                    $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                    if (!is_null($hyperLocation)) $location = $hyperLocation->location->id; else return api_response($request, null, 404);
+                } else $location = 4;
+            }
+
+            $serviceSubscription = ServiceSubscription::find((int)$serviceSubscription);
+            if (!in_array($location, $serviceSubscription->service->locations->pluck('id')->toArray()))
+                return api_response($request, null, 404);
             $options = $this->serviceQuestionSet($serviceSubscription->service);
             $serviceSubscription['questions'] = json_encode($options, true);
             $answers = collect();
-            foreach ($options as $option) {
-                $answers->push($option["answers"]);
-            }
+            if ($options)
+                foreach ($options as $option) {
+                    $answers->push($option["answers"]);
+                }
+
             list($service['max_price'], $service['min_price']) = $this->getPriceRange($serviceSubscription->service);
             $serviceSubscription['min_price'] = $service['min_price'];
             $serviceSubscription['max_price'] = $service['max_price'];
             $serviceSubscription['thumb'] = $serviceSubscription->service['thumb'];
             $serviceSubscription['banner'] = $serviceSubscription->service['banner'];
             $serviceSubscription['unit'] = $serviceSubscription->service['unit'];
-            $serviceSubscription['service_breakdown'] =   $this->breakdown_service_with_min_max_price($answers,$service['min_price'],$service['max_price']);
+            $serviceSubscription['service_min_quantity'] = $serviceSubscription->service['min_quantity'];
+            $serviceSubscription['structured_description'] = [
+                'All of our partners are background verified.',
+                'They will ensure 100% satisfaction'
+            ];
+            $serviceSubscription['offers'] = $serviceSubscription->getDiscountOffers();
+            if ($options) {
+                if (count($answers) > 1)
+                    $serviceSubscription['service_breakdown'] = $this->breakdown_service_with_min_max_price($answers, $service['min_price'], $service['max_price']);
+                else {
+                    $total_breakdown = array();
+                    foreach ($answers[0] as $index => $answer) {
+                        $breakdown = array(
+                            'name' => $answer,
+                            'indexes' => array($index),
+                            'min_price' => $service['min_price'],
+                            'max_price' => $service['max_price']
+                        );
+                        array_push($total_breakdown, $breakdown);
+                    }
+                    $serviceSubscription['service_breakdown'] = $total_breakdown;
+                }
+
+            } else {
+                $serviceSubscription['service_breakdown'] = array(array(
+                    'name' => $serviceSubscription->service->name,
+                    'indexes' => null,
+                    'min_price' => $service['min_price'],
+                    'max_price' => $service['max_price']
+                ));
+            }
             removeRelationsAndFields($serviceSubscription);
             return api_response($request, $serviceSubscription, 200, ['details' => $serviceSubscription]);
         } catch (\Throwable $e) {
@@ -143,27 +224,33 @@ class SubscriptionController extends Controller
         }
     }
 
-    private function breakdown_service_with_min_max_price($arrays, $min_price, $max_price, $i = 0) {
+    private function breakdown_service_with_min_max_price($arrays, $min_price, $max_price, $i = 0)
+    {
         if (!isset($arrays[$i])) {
             return array();
         }
+
         if ($i == count($arrays) - 1) {
             return $arrays[$i];
         }
 
-        // get combinations from subsequent arrays
         $tmp = $this->breakdown_service_with_min_max_price($arrays, $min_price, $max_price, $i + 1);
 
         $result = array();
 
-        // concat each array from tmp with each element from $arrays[$i]
-        foreach ($arrays[$i] as $v) {
+        foreach ($arrays[$i] as $array_index => $v) {
+
             foreach ($tmp as $index => $t) {
                 $result[] = is_array($t) ?
-                    array_merge(array($v), $t) :
                     array(
-                        'name' => $v ." - ". $t,
-                        'indexes'=>array($i, $index),
+                        'name' => $v . " - " . $t['name'],
+                        'indexes' => array_merge(array($array_index), $t['indexes']),
+                        'min_price' => $t['min_price'],
+                        'max_price' => $t['max_price'],
+                    ) :
+                    array(
+                        'name' => $v . " - " . $t,
+                        'indexes' => array($array_index, $index),
                         'min_price' => $min_price,
                         'max_price' => $max_price
                     );

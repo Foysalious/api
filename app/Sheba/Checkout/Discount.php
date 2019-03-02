@@ -76,10 +76,11 @@ class Discount
         }
         $this->quantity = $this->serviceObject->quantity;
         $this->calculateOriginalPrice();
+        $this->calculateServiceDiscount();
         return $this;
     }
 
-    public function calculateServiceDiscount()
+    protected function calculateServiceDiscount()
     {
         if ($running_discount = PartnerServiceDiscount::where('partner_service_id', $this->servicePivot->id)->running()->first()) {
             $this->hasDiscount = 1;

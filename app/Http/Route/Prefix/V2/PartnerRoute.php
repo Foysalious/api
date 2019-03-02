@@ -68,6 +68,13 @@ class PartnerRoute
                 $api->post('/', 'Partner\PartnerSubscriptionController@store');
                 $api->post('/upgrade', 'Partner\PartnerSubscriptionController@update');
             });
+
+            $api->group(['prefix' => 'customer-subscriptions'], function ($api) {
+                $api->get('order-lists', 'Partner\CustomerSubscriptionController@index');
+                $api->get('{subscription}/details', 'Partner\CustomerSubscriptionController@show');
+                $api->post('{subscription}/bulk-accept ', 'Partner\CustomerSubscriptionController@bulkAccept');
+            });
+
             $api->group(['prefix' => 'resources'], function ($api) {
                 $api->post('/', 'Resource\PersonalInformationController@store');
                 $api->group(['prefix' => '{resource}', 'middleware' => ['partner_resource.auth']], function ($api) {

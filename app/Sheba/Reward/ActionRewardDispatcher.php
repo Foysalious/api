@@ -39,7 +39,7 @@ class ActionRewardDispatcher
             $event = $reward->setActionEvent($params)->actionEvent;
 
             if ($event->isEligible()) {
-                $this->disburseHandler->setReward($reward)->disburse($rewardable);
+                $this->disburseHandler->setReward($reward)->setEvent($event)->disburse($rewardable);
             }
         }
     }

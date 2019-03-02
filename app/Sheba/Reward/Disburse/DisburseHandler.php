@@ -10,6 +10,7 @@ use Sheba\Repositories\BonusRepository;
 use Sheba\Repositories\CustomerRepository;
 use Sheba\Repositories\PartnerRepository;
 use Sheba\Repositories\RewardLogRepository;
+use Sheba\Reward\Event;
 use Sheba\Reward\Rewardable;
 
 class DisburseHandler
@@ -20,6 +21,8 @@ class DisburseHandler
     private $reward;
     /** @var BonusRepository */
     private $bonusRepo;
+    /** @var Event $event */
+    private $event;
 
     public function __construct(RewardLogRepository $log_repository, BonusRepository $bonus_repository)
     {
@@ -33,6 +36,12 @@ class DisburseHandler
         return $this;
     }
 
+    public function setEvent(Event $event)
+    {
+        $this->event = $event;
+        return $this;
+    }
+
     /**
      * @param Rewardable $rewardable
      * @throws \Exception
@@ -40,7 +49,6 @@ class DisburseHandler
     public function disburse(Rewardable $rewardable)
     {
         $amount = $this->reward->getAmount();
-
         if ($amount > 0) {
             if ($this->reward->isValidityApplicable()) {
                 $this->bonusRepo->storeFromReward($rewardable, $this->reward, $amount);
@@ -63,8 +71,8 @@ class DisburseHandler
             }
         }
 
-        $log = $this->reward->name;
-        $this->storeRewardLog($rewardable, $log);
+        $reward_log = $this->event->getLogEvent();
+        $this->storeRewardLog($rewardable, $reward_log);
     }
 
     /**

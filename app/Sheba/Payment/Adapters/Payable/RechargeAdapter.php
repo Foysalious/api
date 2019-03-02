@@ -31,4 +31,9 @@ class RechargeAdapter implements PayableAdapter
         $payable->save();
         return $payable;
     }
+
+    public function setModelForPayable($model)
+    {
+        // TODO: Implement setModelForPayable() method.
+    }
 }
