@@ -121,6 +121,7 @@ class CustomerSubscriptionController extends Controller
             $customer = $request->customer;
             $subscription_orders_list = collect([]);
             $subscription_orders = SubscriptionOrder::where('customer_id', (int)$customer->id)->get();
+
             foreach ($subscription_orders as $subscription_order) {
                 $served_orders = $subscription_order->orders->map(function ($order) {
                     return $order->partnerOrders->where('cancelled_at', null)->filter(function ($partner_order) {
@@ -129,7 +130,6 @@ class CustomerSubscriptionController extends Controller
                 })->flatten()->count();
 
                 #$schedules = collect(json_decode($subscription_order->schedules));
-
                 $service_details = json_decode($subscription_order->service_details);
                 $service_details_breakdown = $service_details->breakdown['0'];
                 $service = Service::find((int)$service_details_breakdown->id);
@@ -146,7 +146,8 @@ class CustomerSubscriptionController extends Controller
                         [
                             "id" => $subscription_order->partner_id,
                             "name" => $service_details->name,
-                            "logo" => $service_details->logo,
+                            "mobile" => $subscription_order->partner->mobile,
+                            "logo" => $service_details->logo
                         ]
                 ];
                 $subscription_orders_list->push($orders_list);
