@@ -13,4 +13,6 @@ abstract class Action extends Event
         $this->params = $params;
         return $this;
     }
+
+    abstract function getLogEvent();
 }
