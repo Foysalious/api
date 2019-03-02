@@ -57,7 +57,8 @@ class Payment extends Model
             'transaction_id' => $this->transaction_id,
             'id' => $this->payable->type_id,
             'type' => $this->payable->readable_type,
-            'link' => $this->redirect_url
+            'link' => $this->redirect_url,
+            'success_url' => $this->success_url
         );
     }
 }
