@@ -72,6 +72,7 @@ class PartnerRoute
             $api->group(['prefix' => 'customer-subscriptions'], function ($api) {
                 $api->get('order-lists', 'Partner\CustomerSubscriptionController@index');
                 $api->get('{subscription}/details', 'Partner\CustomerSubscriptionController@show');
+                $api->post('{subscription}/bulk-accept ', 'Partner\CustomerSubscriptionController@bulkAccept');
             });
 
             $api->group(['prefix' => 'resources'], function ($api) {

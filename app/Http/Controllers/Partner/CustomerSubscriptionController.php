@@ -5,6 +5,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Service;
 use App\Models\SubscriptionOrder;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
 
 class CustomerSubscriptionController extends Controller
@@ -112,5 +114,28 @@ class CustomerSubscriptionController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function bulkAccept(Request $request, $partner, SubscriptionOrder $subscription)
+    {
+        $partner = $request->partner;
+        dd($partner, $subscription);
+       /* try {
+            $client = new Client();
+            $res = $client->request('POST', env('SHEBA_BACKEND_URL') . '/api/job/' . $job . '/reschedule',
+                [
+                    'form_params' => array_merge((new UserRequestInformation($request))->getInformationArray(), [
+                        'resource_id' => $request->resource->id,
+                        'remember_token' => $request->resource->remember_token,
+                        'schedule_date' => $request->schedule_date,
+                        'preferred_time' => $request->preferred_time,
+                        'created_by_type' => $this->created_by_type,
+                    ])
+                ]);
+            return json_decode($res->getBody());
+        } catch (RequestException $e) {
+            app('sentry')->captureException($e);
+            return false;
+        }*/
     }
 }
