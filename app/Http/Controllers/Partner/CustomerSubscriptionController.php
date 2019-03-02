@@ -118,24 +118,19 @@ class CustomerSubscriptionController extends Controller
 
     public function bulkAccept(Request $request, $partner, SubscriptionOrder $subscription)
     {
-        $partner = $request->partner;
-        dd($partner, $subscription);
-       /* try {
+        try {
+            $form_data = [
+                'remember_token' => $request->remember_token,
+            ];
+            $url = env('SHEBA_BACKEND_URL') . "/bulk-accept-subscription-orders/$subscription->id";
+            #dd($url);
             $client = new Client();
-            $res = $client->request('POST', env('SHEBA_BACKEND_URL') . '/api/job/' . $job . '/reschedule',
-                [
-                    'form_params' => array_merge((new UserRequestInformation($request))->getInformationArray(), [
-                        'resource_id' => $request->resource->id,
-                        'remember_token' => $request->resource->remember_token,
-                        'schedule_date' => $request->schedule_date,
-                        'preferred_time' => $request->preferred_time,
-                        'created_by_type' => $this->created_by_type,
-                    ])
-                ]);
-            return json_decode($res->getBody());
-        } catch (RequestException $e) {
+            $response = $client->request('POST', $url, ['form_params' => $form_data]);
+            dd(json_decode($response->getBody()->getContents(), true));
+            return json_decode($response->getBody());
+        }catch (RequestException $e) {
             app('sentry')->captureException($e);
             return false;
-        }*/
+        }
     }
 }
