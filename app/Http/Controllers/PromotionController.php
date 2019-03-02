@@ -183,7 +183,7 @@ class PromotionController extends Controller
             }
             $order_amount = $this->calculateOrderAmount($partnerListRequest, $request->partner);
             if (!$order_amount) return api_response($request, null, 403, ['message' => 'No partner available at this combination']);
-            $voucherSuggester->init($request->customer, $partner_list->selected_services[0]->serviceModel->category_id, $request->partner, (int)$location, $order_amount, $request->sales_channel);
+            $voucherSuggester->init($request->customer, $partnerListRequest->selectedCategory->id, $request->partner, (int)$location, $order_amount, $request->sales_channel);
             if ($promo = $voucherSuggester->suggest()) {
                 $applied_voucher = array('amount' => (int)$promo['amount'], 'code' => $promo['voucher']->code, 'id' => $promo['voucher']->id);
                 $valid_promos = $this->sortPromotionsByWeight($voucherSuggester->validPromos);
