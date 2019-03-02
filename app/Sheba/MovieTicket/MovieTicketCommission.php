@@ -32,7 +32,7 @@ abstract class MovieTicketCommission
      * @param MovieTicketOrder $movie_ticket_order
      * @return $this
      */
-    public function setTopUpOrder(MovieTicketOrder $movie_ticket_order)
+    public function setMovieTicketOrder(MovieTicketOrder $movie_ticket_order)
     {
         $this->movieTicketOrder = $movie_ticket_order;
         $this->amount = $this->movieTicketOrder->amount;
@@ -72,12 +72,12 @@ abstract class MovieTicketCommission
      */
     protected function storeAgentsCommission()
     {
-        $this->movieTicketOrder->agent_commission = $this->calculateCommission($this->movieTicketOrder->amount);
+        $this->movieTicketOrder->agent_commission = $this->calculateMovieTicketCommission($this->movieTicketOrder->amount);
         $this->movieTicketOrder->save();
 
         $transaction = (new MovieTicketTransaction())->setAmount($this->amount - $this->movieTicketOrder->agent_commission)
             ->setLog($this->amount . " has been topped up to " . $this->movieTicketOrder->payee_mobile)
-            ->setTopUpOrder($this->movieTicketOrder);
+            ->setMovieTicketOrder($this->movieTicketOrder);
         $this->agent->movieTicketTransaction($transaction);
     }
 
@@ -85,7 +85,7 @@ abstract class MovieTicketCommission
      * @param $amount
      * @return float|int
      */
-    protected function calculateCommission($amount)
+    protected function calculateMovieTicketCommission($amount)
     {
         return (double)$amount * ($this->getVendorAgentCommission() / 100);
     }
@@ -94,7 +94,7 @@ abstract class MovieTicketCommission
      * @param $amount
      * @return float|int
      */
-    protected function calculateAmbassadorCommission($amount)
+    protected function calculateAmbassadorCommissionForMovieTicket($amount)
     {
         return (double)$amount * ($this->getVendorAmbassadorCommission() / 100);
     }
@@ -119,7 +119,7 @@ abstract class MovieTicketCommission
     {
         $this->setModifier($this->agent);
         $amount = $this->movieTicketOrder->amount;
-        $amount_after_commission = round($amount - $this->calculateCommission($amount), 2);
+        $amount_after_commission = round($amount - $this->calculateMovieTicketCommission($amount), 2);
         $log = "Your recharge TK $amount to {$this->movieTicketOrder->payee_mobile} has failed, TK $amount_after_commission is refunded in your account.";
         $this->refundUser($amount_after_commission, $log);
     }

@@ -1,4 +1,4 @@
-<?php namespace Sheba\TopUp;
+<?php namespace Sheba\MovieTicket;
 
 use App\Models\MovieTicketOrder;
 
@@ -9,12 +9,12 @@ class MovieTicketTransaction
     private $movieTicketOrder;
 
     /**
-     * @param MovieTicketOrder $top_up_order
+     * @param MovieTicketOrder $movie_ticket_order
      * @return MovieTicketTransaction
      */
-    public function setTopUpOrder(MovieTicketOrder $top_up_order)
+    public function setMovieTicketOrder(MovieTicketOrder $movie_ticket_order)
     {
-        $this->topUpOrder = $top_up_order;
+        $this->movieTicketOrder = $movie_ticket_order;
         return $this;
     }
 

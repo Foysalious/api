@@ -1,5 +1,7 @@
 <?php namespace Sheba\MovieTicket\Vendor;
 use App\Models\MovieTicketVendor;
+use App\Sheba\MovieTicketRechargeHistory;
+use Carbon\Carbon;
 use Sheba\MovieTicket\MovieTicketRequest;
 use Sheba\MovieTicket\Response\MovieResponse;
 
@@ -44,7 +46,7 @@ abstract class Vendor
 
     protected function createNewRechargeHistory($amount, $vendor_id = null)
     {
-        $recharge_history = new TopUpRechargeHistory();
+        $recharge_history = new MovieTicketRechargeHistory();
         $recharge_history->recharge_date = Carbon::now();
         $recharge_history->vendor_id = $vendor_id ?: $this->model->id;
         $recharge_history->amount = $amount;

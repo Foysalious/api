@@ -1,11 +1,11 @@
 <?php namespace Sheba\MovieTicket\Vendor;
 
-
 use Sheba\MovieTicket\Actions;
 use Sheba\MovieTicket\MovieTicketRequest;
 use Sheba\MovieTicket\Response\MovieResponse;
 use Sheba\MovieTicket\TransactionGenerator;
 use Sheba\MovieTicket\Vendor\BlockBuster\KeyEncryptor;
+use GuzzleHttp\Exception\GuzzleException;
 
 class BlockBuster extends Vendor
 {
@@ -20,14 +20,32 @@ class BlockBuster extends Vendor
     private $secretKey;
     private $connectionMode;
 
+    private $httpClient;
+
     /**
      * BlockBuster constructor.
      * @param $connection_mode
      */
-    public function __construct($connection_mode)
+    public function __construct($connection_mode = 'dev')
     {
         $this->imageServerUrl = config('blockbuster.image_server_url');
         $this->connectionMode = $connection_mode;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getHttpClient()
+    {
+        return $this->httpClient;
+    }
+
+    /**
+     * @param mixed $httpClient
+     */
+    public function setHttpClient($httpClient)
+    {
+        $this->httpClient = $httpClient;
     }
 
     private function getSecretKey($params = [])
@@ -109,6 +127,40 @@ class BlockBuster extends Vendor
 
     function buyTicket(MovieTicketRequest $movieTicketRequest): MovieResponse
     {
+        $response = $this->get();
+        $rax_response = new RaxResponse();
+        $rax_response->setResponse($response);
+        return $rax_response;
+    }
 
+    /**
+     * @param $action
+     * @param array $params
+     * @return \SimpleXMLElement
+     * @throws GuzzleException
+     */
+    public function get($action, $params = [])
+    {
+        try {
+            $response = $this->httpClient->request('GET', $this->vendor->generateURIForAction($action, $params));
+            $body = $response->getBody()->getContents();
+            return $this->isJson($body) ? $body :$this->parse($body);
+        } catch (GuzzleException $e) {
+            throw $e;
+        }
+
+    }
+
+    private function parse ($fileContents) {
+        $fileContents = str_replace(array("\n", "\r", "\t"), '', $fileContents);
+        $fileContents = trim(str_replace('"', "'", $fileContents));
+        $fileContents = trim(str_replace('&', "&amp;", $fileContents));
+        $simpleXml = simplexml_load_string($fileContents);
+        return $simpleXml;
+    }
+
+    function isJson($string) {
+        json_decode($string);
+        return (json_last_error() == JSON_ERROR_NONE);
     }
 }

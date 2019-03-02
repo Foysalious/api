@@ -5,14 +5,18 @@ use Illuminate\Database\Eloquent\Model;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Location\Distance\TransactionMethod;
 use Sheba\ModificationFields;
+use Sheba\MovieTicket\MovieAgent;
+use Sheba\MovieTicket\MovieTicketTrait;
+use Sheba\MovieTicket\MovieTicketTransaction;
 use Sheba\Payment\Wallet;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
 
-class Affiliate extends Model implements TopUpAgent
+class Affiliate extends Model implements TopUpAgent, MovieAgent
 {
     use TopUpTrait;
+    use MovieTicketTrait;
     use Wallet;
     use ModificationFields;
 
@@ -190,5 +194,16 @@ class Affiliate extends Model implements TopUpAgent
     public function getCommission()
     {
         return new \Sheba\TopUp\Commission\Affiliate();
+    }
+
+    public function getMovieTicketCommission()
+    {
+        return new \Sheba\MovieTicket\Commission\Affiliate();
+    }
+
+    public function movieTicketTransaction(MovieTicketTransaction $transaction)
+    {
+        $this->debitWallet($transaction->getAmount());
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
     }
 }

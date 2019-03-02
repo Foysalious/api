@@ -1,26 +1,21 @@
-<?php namespace Sheba\TopUp;
+<?php namespace Sheba\MovieTicket;
 
-use App\Models\Affiliate;
-use App\Models\TopUpOrder;
+use App\Models\MovieTicketOrder;
+use App\Models\MovieTicketVendor;
 use Illuminate\Support\Facades\DB;
-use Sheba\MovieTicket\MovieAgent;
-use App\Models\TopUpVendor;
 use Sheba\ModificationFields;
-use Sheba\TopUp\Vendor\Response\Ipn\SuccessResponse;
-use Sheba\TopUp\Vendor\Response\TopUpErrorResponse;
-use Sheba\TopUp\Vendor\Response\TopUpFailResponse;
-use Sheba\TopUp\Vendor\Response\TopUpResponse;
-use Sheba\TopUp\Vendor\Response\TopUpSuccessResponse;
-use Sheba\TopUp\Vendor\Response\TopUpSystemErrorResponse;
-use Sheba\TopUp\Vendor\Vendor;
-use Sheba\TopUp\Vendor\VendorFactory;
+use Sheba\MovieTicket\Response\BlockBusterResponse;
+use Sheba\MovieTicket\Response\MovieResponse;
+use Sheba\MovieTicket\Response\MovieTicketErrorResponse;
+use Sheba\MovieTicket\Response\MovieTicketSuccessResponse;
+use Sheba\MovieTicket\Vendor\Vendor;
 
 class MovieTicket
 {
     use ModificationFields;
     /** @var Vendor */
     private $vendor;
-    /** @var TopUpVendor */
+    /** @var MovieTicketVendor */
     private $model;
     /** @var MovieAgent */
     private $agent;
@@ -30,10 +25,10 @@ class MovieTicket
     /** @var MovieResponse */
     private $response;
 
-    /** @var TopUpValidator */
+    /** @var MovieTicketValidator */
     private $validator;
 
-    public function __construct(TopUpValidator $validator)
+    public function __construct(MovieTicketValidator $validator)
     {
         $this->validator = $validator;
     }
@@ -62,18 +57,18 @@ class MovieTicket
     }
 
     /**
-     * @param TopUpRequest $top_up_request
+     * @param MovieTicketRequest $movie_ticket_request
      */
-    public function recharge(TopUpRequest $top_up_request)
+    public function buyTicket(MovieTicketRequest $movie_ticket_request)
     {
-        if ($this->validator->setRequest($top_up_request)->validate()->hasError()) return;
-        $this->response = $this->vendor->recharge($top_up_request);
+        if ($this->validator->setRequest($movie_ticket_request)->validate()->hasError()) return;
+        $this->response = $this->vendor->buyTicket($movie_ticket_request);
         if ($this->response->hasSuccess()) {
             $response = $this->response->getSuccess();
-            DB::transaction(function () use ($response, $top_up_request) {
-                $top_up_order = $this->placeTopUpOrder($response, $top_up_request->getMobile(), $top_up_request->getAmount());
-                $this->agent->getCommission()->setTopUpOrder($top_up_order)->disburse();
-                $this->vendor->deductAmount($top_up_request->getAmount());
+            DB::transaction(function () use ($response, $movie_ticket_request) {
+                $movie_ticket_order = $this->placeMovieTicketOrder($response, $movie_ticket_request->getMobile(), $movie_ticket_request->getAmount());
+                $this->agent->getMovieTicketCommission()->setMovieTicketOrder($movie_ticket_order)->disburse();
+                $this->vendor->deductAmount($movie_ticket_request->getAmount());
                 $this->isSuccessful = true;
             });
         }
@@ -88,7 +83,7 @@ class MovieTicket
     }
 
     /**
-     * @return TopUpErrorResponse
+     * @return MovieTicketErrorResponse
      */
     public function getError()
     {
@@ -97,82 +92,82 @@ class MovieTicket
         } else if (!$this->response->hasSuccess()) {
             return $this->response->getError();
         } else {
-            if (!$this->isSuccessful) return new TopUpSystemErrorResponse();
+            if (!$this->isSuccessful) return new MovieTicketErrorResponse();
         }
-        return new TopUpErrorResponse();
+        return new MovieTicketErrorResponse();
     }
 
     /**
-     * @param TopUpSuccessResponse $response
+     * @param MovieTicketSuccessResponse $response
      * @param $mobile_number
      * @param $amount
-     * @return TopUpOrder
+     * @return MovieTicketOrder
      */
-    private function placeTopUpOrder(TopUpSuccessResponse $response, $mobile_number, $amount)
+    private function placeMovieTicketOrder(MovieTicketSuccessResponse $response, $mobile_number, $amount)
     {
-        $top_up_order = new TopUpOrder();
-        $top_up_order->agent_type = "App\\Models\\" . class_basename($this->agent);
-        $top_up_order->agent_id = $this->agent->id;
-        $top_up_order->payee_mobile = $mobile_number;
-        $top_up_order->amount = $amount;
-        $top_up_order->status = $this->vendor->getTopUpInitialStatus();
-        $top_up_order->transaction_id = $response->transactionId;
-        $top_up_order->transaction_details = json_encode($response->transactionDetails);
-        $top_up_order->vendor_id = $this->model->id;
-        $top_up_order->sheba_commission = ($amount * $this->model->sheba_commission) / 100;
+        $movie_ticket_order = new MovieTicketOrder();
+        $movie_ticket_order->agent_type = "App\\Models\\" . class_basename($this->agent);
+        $movie_ticket_order->agent_id = $this->agent->id;
+        $movie_ticket_order->payee_mobile = $mobile_number;
+        $movie_ticket_order->amount = $amount;
+        $movie_ticket_order->status = 'confirmed';
+        $movie_ticket_order->transaction_id = $response->transactionId;
+        $movie_ticket_order->transaction_details = json_encode($response->transactionDetails);
+        $movie_ticket_order->vendor_id = $this->model->id;
+        $movie_ticket_order->sheba_commission = ($amount * $this->model->sheba_commission) / 100;
 
         $this->setModifier($this->agent);
-        $this->withCreateModificationField($top_up_order);
-        $top_up_order->save();
+        $this->withCreateModificationField($movie_ticket_order);
+        $movie_ticket_order->save();
 
-        $top_up_order->agent = $this->agent;
-        $top_up_order->vendor = $this->model;
+        $movie_ticket_order->agent = $this->agent;
+        $movie_ticket_order->vendor = $this->model;
 
-        return $top_up_order;
+        return $movie_ticket_order;
     }
 
+//    /**
+//     * @param MovieTicketOrder $movie_ticket_order
+//     * @param MovieTicketErrorResponse $top_up_fail_response
+//     * @return bool
+//     */
+//    public function processFailedTopUp(MovieTicketOrder $movie_ticket_order, MovieTicketErrorResponse $movieTicketErrorResponse)
+//    {
+//        if ($movie_ticket_order->isFailed()) return true;
+//        DB::transaction(function () use ($movie_ticket_order, $movieTicketErrorResponse) {
+//            $this->model = $movie_ticket_order->vendor;
+//            $movie_ticket_order->status = config('topup.status.failed')['sheba'];
+//            $movie_ticket_order->transaction_details = json_encode($movieTicketErrorResponse->getFailedTransactionDetails());
+//            $this->setModifier($this->agent);
+//            $this->withUpdateModificationField($movie_ticket_order);
+//            $movie_ticket_order->update();
+//            $this->refund($movie_ticket_order);
+//            $vendor = new VendorFactory();
+//            $vendor = $vendor->getById($movie_ticket_order->vendor_id);
+//            $vendor->refill($movie_ticket_order->amount);
+//        });
+//    }
+
     /**
-     * @param TopUpOrder $top_up_order
-     * @param TopUpFailResponse $top_up_fail_response
+     * @param MovieTicketOrder $movie_ticket_order
+     * @param BlockBusterResponse $success_response
      * @return bool
      */
-    public function processFailedTopUp(TopUpOrder $top_up_order, TopUpFailResponse $top_up_fail_response)
+    public function processSuccessfulMovieTicket(MovieTicketOrder $movieTicketOrder, BlockBusterResponse $success_response)
     {
-        if ($top_up_order->isFailed()) return true;
-        DB::transaction(function () use ($top_up_order, $top_up_fail_response) {
-            $this->model = $top_up_order->vendor;
-            $top_up_order->status = config('topup.status.failed')['sheba'];
-            $top_up_order->transaction_details = json_encode($top_up_fail_response->getFailedTransactionDetails());
-            $this->setModifier($this->agent);
-            $this->withUpdateModificationField($top_up_order);
-            $top_up_order->update();
-            $this->refund($top_up_order);
-            $vendor = new VendorFactory();
-            $vendor = $vendor->getById($top_up_order->vendor_id);
-            $vendor->refill($top_up_order->amount);
+        if ($movieTicketOrder->isSuccess()) return true;
+        DB::transaction(function () use ($movieTicketOrder, $success_response) {
+            $movieTicketOrder->status = 'confirmed';
+            $movieTicketOrder->transaction_details = json_encode($success_response->getSuccess());
+            $movieTicketOrder->update();
         });
     }
 
-    /**
-     * @param TopUpOrder $top_up_order
-     * @param SuccessResponse $success_response
-     * @return bool
-     */
-    public function processSuccessfulTopUp(TopUpOrder $top_up_order, SuccessResponse $success_response)
-    {
-        if ($top_up_order->isSuccess()) return true;
-        DB::transaction(function () use ($top_up_order, $success_response) {
-            $top_up_order->status = config('topup.status.successful')['sheba'];
-            $top_up_order->transaction_details = json_encode($success_response->getSuccessfulTransactionDetails());
-            $top_up_order->update();
-        });
-    }
-
-    /**
-     * @param TopUpOrder $top_up_order
-     */
-    public function refund(TopUpOrder $top_up_order)
-    {
-        $top_up_order->agent->getCommission()->setTopUpOrder($top_up_order)->refund();
-    }
+//    /**
+//     * @param TopUpOrder $movie_ticket_order
+//     */
+//    public function refund(TopUpOrder $movie_ticket_order)
+//    {
+//        $movie_ticket_order->agent->getCommission()->setTopUpOrder($movie_ticket_order)->refund();
+//    }
 }

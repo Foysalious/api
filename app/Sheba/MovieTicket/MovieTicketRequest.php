@@ -21,6 +21,7 @@ class MovieTicketRequest
     public function setEmail($email)
     {
         $this->email = $email;
+        return $this;
     }
 
     /**
@@ -37,6 +38,8 @@ class MovieTicketRequest
     public function setName($name)
     {
         $this->name = $name;
+        return $this;
+
     }
 
     /**
@@ -53,6 +56,8 @@ class MovieTicketRequest
     public function setMobile($mobile)
     {
         $this->mobile = $mobile;
+        return $this;
+
     }
 
     /**
@@ -69,5 +74,6 @@ class MovieTicketRequest
     public function setAmount($amount)
     {
         $this->amount = $amount;
+        return $this;
     }
 }

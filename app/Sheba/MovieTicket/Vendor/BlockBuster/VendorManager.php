@@ -1,4 +1,4 @@
-<?php namespace Sheba\MovieTicket\Vendor;
+<?php namespace Sheba\MovieTicket\Vendor\BlockBuster;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
