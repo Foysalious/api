@@ -65,15 +65,15 @@ class CustomerSubscriptionController extends Controller
             $partner_orders = $subscription_order->orders->map(function ($order) {
                 return $order->lastPartnerOrder();
             });
-            $partner_orders = $partner_orders->map(function($partner_order){
+            $partner_orders = $partner_orders->map(function ($partner_order) {
                 return [
                     'id' => $partner_order->order->code(),
                     'is_completed' => $partner_order->closed_and_paid_at ? $partner_order->closed_and_paid_at->format('M-j a') : null,
                     'cancelled_at' => $partner_order->cancelled_at ? Carbon::parse($partner_order->cancelled_at)->format('M-j h:i a') : null
-                    ];
+                ];
             });
 
-            $served_orders = $partner_orders->filter(function($partner_order){
+            $served_orders = $partner_orders->filter(function ($partner_order) {
                 return $partner_order['is_completed'] != null;
             });
 
@@ -130,7 +130,7 @@ class CustomerSubscriptionController extends Controller
                 return api_response($request, null, 200, ['message' => $response->msg]);
             }
             return api_response($request, null, 500);
-        }catch (RequestException $e) {
+        } catch (RequestException $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

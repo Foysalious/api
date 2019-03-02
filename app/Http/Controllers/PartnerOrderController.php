@@ -74,13 +74,22 @@ class PartnerOrderController extends Controller
             $this->validate($request, ['sort' => 'sometimes|required|string|in:created_at,created_at:asc,created_at:desc,schedule_date,schedule_date:asc,schedule_date:desc', 'getCount' => 'sometimes|required|numeric|in:1']);
             if ($request->has('getCount')) {
                 $partner = $request->partner->load(['jobs' => function ($q) {
-                    $q->status(array(constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']))->select('jobs.id', 'jobs.status', 'jobs.partner_order_id')
+                    $q->status(array(constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']))->select('jobs.id', 'jobs.partner_order_id')
                         ->whereDoesntHave('cancelRequests', function ($q) {
                             $q->where('status', 'Pending');
-                        });
+                        })->with(['partnerOrder' => function ($q) {
+                            $q->select('id', 'order_id')->with(['order' => function ($q) {
+                                $q->select('id', 'subscription_order_id');
+                            }]);
+                        }]);
                 }]);
-                $partner_orders = $partner->jobs->groupBy('partner_order_id');
-                return api_response($request, $partner_orders->count(), 200, ['total_new_orders' => $partner_orders->count()]);
+
+                $total_new_orders = $partner->jobs->pluck('partnerOrder')->unique()->pluck('order')
+                    ->groupBy('subscription_order_id')
+                    ->map(function ($order, $key) {
+                        return !empty($key) ? 1 : $order->count();
+                    })->sum();
+                return api_response($request, $total_new_orders, 200, ['total_new_orders' => $total_new_orders]);
             }
             $orders = $this->partnerOrderRepository->getNewOrdersWithJobs($request);
             return count($orders) > 0 ? api_response($request, $orders, 200, ['orders' => $orders]) : api_response($request, null, 404);
