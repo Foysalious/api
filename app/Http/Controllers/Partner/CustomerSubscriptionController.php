@@ -102,7 +102,7 @@ class CustomerSubscriptionController extends Controller
                 'original_price' => $service_details->original_price,
                 'discount' => $service_details->discount,
                 'total_price' => $service_details->discounted_price,
-                "paid_on" => $subscription_order->created_at->format('M-j, Y'),
+                "paid_on" => !empty($subscription_order->paid_at) ? $subscription_order->paid_at->format('M-j, Y') : null,
                 "orders" => $partner_orders
             ];
 
