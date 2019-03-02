@@ -62,7 +62,7 @@ class MovieTicket
     public function buyTicket(MovieTicketRequest $movie_ticket_request)
     {
         if ($this->validator->setRequest($movie_ticket_request)->validate()->hasError()) return;
-        $this->response = $this->vendor->buyTicket($movie_ticket_request);
+        $this->response = $this->vendor->buyTicket($movie_ticket_request->getBlockBusterResponse());
         if ($this->response->hasSuccess()) {
             $response = $this->response->getSuccess();
             DB::transaction(function () use ($response, $movie_ticket_request) {
@@ -108,11 +108,11 @@ class MovieTicket
         $movie_ticket_order = new MovieTicketOrder();
         $movie_ticket_order->agent_type = "App\\Models\\" . class_basename($this->agent);
         $movie_ticket_order->agent_id = $this->agent->id;
-        $movie_ticket_order->payee_mobile = $mobile_number;
+        $movie_ticket_order->reserver_mobile = $mobile_number;
         $movie_ticket_order->amount = $amount;
         $movie_ticket_order->status = 'confirmed';
         $movie_ticket_order->transaction_id = $response->transactionId;
-        $movie_ticket_order->transaction_details = json_encode($response->transactionDetails);
+        $movie_ticket_order->reservation_details = json_encode($response->transactionDetails);
         $movie_ticket_order->vendor_id = $this->model->id;
         $movie_ticket_order->sheba_commission = ($amount * $this->model->sheba_commission) / 100;
 

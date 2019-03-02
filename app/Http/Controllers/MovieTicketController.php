@@ -72,7 +72,7 @@ class MovieTicketController extends Controller
         ]);
         $response = json_decode(json_encode($bookingResponse));
         if ($agent->wallet < (double)$response->cost) return api_response($request, null, 403, ['message' => "You don't have sufficient balance to buy this ticket ."]);
-        $movieTicketRequest->setName('Sakib')->setEmail('sakib.cse11.cuet@gmail.com')->setAmount($request->amount)->setMobile($request->mobile);
+        $movieTicketRequest->setName('Sakib')->setEmail('sakib.cse11.cuet@gmail.com')->setAmount($request->amount)->setMobile($request->mobile)->setBlockBusterResponse($response);
         $vendor = $vendor->getById(1);
         $movieTicket->setAgent($agent)->setVendor($vendor)->buyTicket($movieTicketRequest);
         return api_response($request, $bookingResponse, 200, ['status' => $bookingResponse]);

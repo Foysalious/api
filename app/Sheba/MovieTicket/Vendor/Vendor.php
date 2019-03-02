@@ -2,7 +2,6 @@
 use App\Models\MovieTicketVendor;
 use App\Sheba\MovieTicketRechargeHistory;
 use Carbon\Carbon;
-use Sheba\MovieTicket\MovieTicketRequest;
 use Sheba\MovieTicket\Response\MovieResponse;
 
 abstract class Vendor
@@ -13,7 +12,7 @@ abstract class Vendor
 
     abstract public function generateURIForAction($action, $params = []);
 
-    abstract function buyTicket(MovieTicketRequest $top_up_request): MovieResponse;
+    abstract function buyTicket($movieTicketResponse): MovieResponse;
 
     public function  setModel(MovieTicketVendor $model)
     {

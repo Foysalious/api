@@ -2,6 +2,7 @@
 
 use Sheba\MovieTicket\Actions;
 use Sheba\MovieTicket\MovieTicketRequest;
+use Sheba\MovieTicket\Response\BlockBusterResponse;
 use Sheba\MovieTicket\Response\MovieResponse;
 use Sheba\MovieTicket\TransactionGenerator;
 use Sheba\MovieTicket\Vendor\BlockBuster\KeyEncryptor;
@@ -125,12 +126,11 @@ class BlockBuster extends Vendor
         return $url;
     }
 
-    function buyTicket(MovieTicketRequest $movieTicketRequest): MovieResponse
+    function buyTicket($response): MovieResponse
     {
-        $response = $this->get();
-        $rax_response = new RaxResponse();
-        $rax_response->setResponse($response);
-        return $rax_response;
+        $blockbuster_response = new BlockBusterResponse();
+        $blockbuster_response->setResponse($response);
+        return $blockbuster_response;
     }
 
     /**

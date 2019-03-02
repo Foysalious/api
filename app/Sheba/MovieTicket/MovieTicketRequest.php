@@ -6,6 +6,7 @@ class MovieTicketRequest
     private $mobile;
     private $amount;
     private $email;
+    private $blockBusterResponse;
 
     /**
      * @return mixed
@@ -76,4 +77,21 @@ class MovieTicketRequest
         $this->amount = $amount;
         return $this;
     }
+
+    /**
+     * @return mixed
+     */
+    public function getBlockBusterResponse()
+    {
+        return $this->blockBusterResponse;
+    }
+
+    /**
+     * @param mixed $blockBusterResponse
+     */
+    public function setBlockBusterResponse($blockBusterResponse)
+    {
+        $this->blockBusterResponse = $blockBusterResponse;
+    }
+
 }
