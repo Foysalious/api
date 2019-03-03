@@ -314,13 +314,6 @@ class ShebaController extends Controller
                     'method_name' => 'wallet'
                 ),
                 array(
-                    'name' => 'bKash Payment',
-                    'is_published' => 1,
-                    'description' => '',
-                    'asset' => 'bkash',
-                    'method_name' => 'bkash'
-                ),
-                array(
                     'name' => 'City Bank',
                     'is_published' => $version_code ? ($version_code > 30112 ? 1 : 0) : 1,
                     'description' => '',
