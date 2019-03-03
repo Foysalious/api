@@ -76,7 +76,7 @@ class HomePageSettingController extends Controller
                 $location = (int)$request->location;
             } elseif ($request->has('lat') && $request->has('lng')) {
                 $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
-                if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
+                if (!is_null($hyperLocation)) $location = $hyperLocation->location_id;
             }
             if ($request->has('portal') && $request->has('screen')) {
                 $setting_key = 'NewScreenSetting::' . snake_case(camel_case($request->portal)) . '_' . $request->screen . "_" . $location;
