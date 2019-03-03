@@ -72,12 +72,12 @@ class MovieTicketController extends Controller
 
     public function updateTicketStatus(MovieTicketManager $movieTicketManager, MovieTicket $movieTicket, Request $request, MovieTicketRequest $movieTicketRequest,VendorFactory $vendor)
     {
-//        $this->validate($request, [
-//            'trx_id' => 'required',
-//            'dtmsid' => 'required',
-//            'lid' => 'required',
-//            'confirm_status' => 'required'
-//        ]);
+        $this->validate($request, [
+            'trx_id' => 'required',
+            'dtmsid' => 'required',
+            'lid' => 'required',
+            'confirm_status' => 'required'
+        ]);
 
         $agent = $this->getAgent($request);
         $bookingResponse = $movieTicketManager->initVendor()->updateMovieTicketStatus([
