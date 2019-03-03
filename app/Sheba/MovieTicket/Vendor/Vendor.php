@@ -12,6 +12,8 @@ abstract class Vendor
 
     abstract public function generateURIForAction($action, $params = []);
 
+    abstract public function get($action, $params = []);
+
     abstract function buyTicket($movieTicketResponse): MovieResponse;
 
     public function  setModel(MovieTicketVendor $model)
