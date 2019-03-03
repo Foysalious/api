@@ -16,7 +16,8 @@ return [
     'job_code_start' => 16000,
     'material_commission_rate' => 2.0,
     'portals' => ['admin-portal', 'partner-portal', 'manager-app', 'customer-app', 'customer-portal', 'resource-portal', 'resource-app', 'bondhu-app', 'bondhu-portal', 'automatic'],
-    'stopped_sms_portal_for_customer' => ['customer-app', 'customer-portal'],
+    'send_order_create_sms' => env('SEND_ORDER_CREATE_SMS', true),
+    'stopped_sms_portal_for_customer' => ['customer-app', 'customer-portal', 'manager-app', 'manager-portal'],
     'push_notification_topic_name' => [
         'customer' => env('CUSTOMER_TOPIC_NAME', 'customer_'),
         'resource' => env('RESOURCE_TOPIC_NAME', 'resource_'),
