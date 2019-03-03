@@ -28,7 +28,7 @@ class ServiceSubscriptionDiscount extends Model
     }
 
     public function isValid() {
-        return $this->start_date >= Carbon::now() && $this->end_date <= Carbon::now();
+        return $this->start_date <= Carbon::now() && $this->end_date >= Carbon::now();
     }
 
     public function isPercentage()
