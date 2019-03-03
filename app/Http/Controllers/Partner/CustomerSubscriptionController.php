@@ -135,6 +135,7 @@ class CustomerSubscriptionController extends Controller
             $schedules = collect(json_decode($subscription_order->schedules));
 
             $subscription_order_details = [
+                "subscription_code" => $subscription_order->code(),
                 'service_id' => $service->id,
                 "service_name" => $service->name,
                 "app_thumb" => $service->app_thumb,
@@ -150,9 +151,9 @@ class CustomerSubscriptionController extends Controller
 
                 'customer_name' => $subscription_order->customer->profile->name,
                 'customer_mobile' => $subscription_order->customer->profile->mobile,
-                'address' => $subscription_order->deliveryAddress->address,
+                #'address' => $subscription_order->deliveryAddress->address,
                 'location_name' => $subscription_order->location->name,
-                'ordered_for' => $subscription_order->deliveryAddress->name,
+                #'ordered_for' => $subscription_order->deliveryAddress->name,
 
                 "billing_cycle" => $subscription_order->billing_cycle,
                 "subscription_period" => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
