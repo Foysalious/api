@@ -196,7 +196,6 @@ class CustomerSubscriptionController extends Controller
                 $variables->push($data);
             }
 
-            #dd($variables);
             $service_details_breakdown = $service_details->breakdown['0'];
             #dd($service_details, $service_details_breakdown);
             $service = Service::find((int)$service_details_breakdown->id);
@@ -207,6 +206,7 @@ class CustomerSubscriptionController extends Controller
                 "service_name" => $service->name,
                 "app_thumb" => $service->app_thumb,
                 "variables" => $variables,
+                "total_quantity" => $service_details->total_quantity,
                 'quantity' => (double)$service_details_breakdown->quantity,
                 "partner_id" => $subscription_order->partner_id,
                 "partner_name" => $service_details->name,
