@@ -155,10 +155,17 @@ class CustomerSubscriptionController extends Controller
                 $schedules = collect(json_decode($subscription_order->schedules));
 
                 $orders_list = [
-                    'subscription_order_id' => $subscription_order->id,
+                    'subscription_id' => $subscription_order->id,
+                    "subscription_code" => $subscription_order->code(),
                     "service_name" => $service->name,
                     "app_thumb" => $service->app_thumb,
                     "billing_cycle" => $subscription_order->billing_cycle,
+
+                    'customer_name' => $subscription_order->customer->profile->name,
+                    'customer_mobile' => $subscription_order->customer->profile->mobile,
+                    #'address' => $subscription_order->deliveryAddress->address,
+                    'location_name' => $subscription_order->location->name,
+                    #'ordered_for' => $subscription_order->deliveryAddress->name,
 
                     "total_orders" => $served_orders->count(),
                     "preferred_time" => $schedules->first()->time,
@@ -239,6 +246,7 @@ class CustomerSubscriptionController extends Controller
             $schedules = collect(json_decode($subscription_order->schedules));
 
             $subscription_order_details = [
+                "subscription_code" => $subscription_order->code(),
                 'service_id' => $service->id,
                 "service_name" => $service->name,
                 "app_thumb" => $service->app_thumb,
