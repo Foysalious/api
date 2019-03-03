@@ -6,7 +6,7 @@ use App\Jobs\Job;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Redis;
+use Illuminate\Support\Facades\Redis;
 use Mail;
 class SendEmailVerficationEmail extends Job implements ShouldQueue
 {
