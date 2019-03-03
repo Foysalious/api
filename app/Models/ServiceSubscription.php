@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class ServiceSubscription extends Model
@@ -32,9 +33,11 @@ class ServiceSubscription extends Model
         $discount_offers = $this->discounts()->orderBy('subscription_type','desc')->get();
         $offers = collect();
         foreach($discount_offers as $offer)
-            if($offer->service_subscription_id === $this->id && $offer->valid())
+        {
+            if($offer->service_subscription_id === $this->id && $offer->isValid())
                 $offers->push($offer);
-        if($offers)
+        }
+        if(count($offers)>0)
            return $this->parseDiscountOffers($offers[0]);
         else return null;
     }
