@@ -213,7 +213,7 @@ class CustomerSubscriptionController extends Controller
                 } else {
                     $data = [
                         'quantity' => $breakdown->quantity,
-                        'questions' => $breakdown->questions[0]
+                        'questions' => $breakdown->questions
                     ];
                 }
                 $variables->push($data);
