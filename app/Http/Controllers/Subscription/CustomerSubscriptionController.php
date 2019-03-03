@@ -162,7 +162,6 @@ class CustomerSubscriptionController extends Controller
             }
             return api_response($request, $subscription_orders_list, 200, ['subscription_orders_list' => $subscription_orders_list]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -173,9 +172,13 @@ class CustomerSubscriptionController extends Controller
         try {
             $customer = $request->customer;
             $subscription_order = SubscriptionOrder::find((int)$subscription);
+
+            /*$schedules = collect(json_decode($subscription_order->schedules));
+            dd($schedules);*/
             $partner_orders = $subscription_order->orders->map(function ($order) {
                 return $order->lastPartnerOrder();
             });
+            #dd($partner_orders);
             $partner_orders = $partner_orders->map(function ($partner_order) {
                 $last_job = $partner_order->order->lastJob();
                 return [
@@ -220,9 +223,11 @@ class CustomerSubscriptionController extends Controller
                 "variables" => $variables,
                 "total_quantity" => $service_details->total_quantity,
                 'quantity' => (double)$service_details_breakdown->quantity,
+                
                 "partner_id" => $subscription_order->partner_id,
                 "partner_name" => $service_details->name,
                 "partner_slug" => $subscription_order->partner->sub_domain,
+                "partner_mobile" => $subscription_order->partner->getContactNumber(),
                 "logo" => $service_details->logo,
 
                 'customer_name' => $subscription_order->customer->profile->name,
@@ -235,6 +240,7 @@ class CustomerSubscriptionController extends Controller
                 "subscription_period" => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
                 "total_orders" => $subscription_order->orders->count(),
                 "completed_orders" => $served_orders->count(),
+                "orders_left" => $subscription_order->orders->count() - $served_orders->count(),
                 "preferred_time" => $schedules->first()->time,
                 "days_left" => Carbon::today()->diffInDays(Carbon::parse($subscription_order->billing_cycle_end)),
                 'original_price' => $service_details->original_price,
