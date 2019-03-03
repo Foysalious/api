@@ -16,7 +16,7 @@ class CustomerSubscriptionController extends Controller
         try {
             $partner = $request->partner;
             $subscription_orders_list = collect([]);
-            $subscription_orders = SubscriptionOrder::where('partner_id', (int)$partner->id)->get();
+            $subscription_orders = SubscriptionOrder::where('partner_id', (int)$partner->id)->accepted()->get();
             foreach ($subscription_orders as $subscription_order) {
                 $partner_orders = $subscription_order->orders->map(function ($order) {
                     return $order->lastPartnerOrder();
