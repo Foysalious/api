@@ -126,6 +126,7 @@ class CustomerSubscriptionController extends Controller
             $subscription_orders = SubscriptionOrder::where('customer_id', (int)$customer->id)->get();
 
             foreach ($subscription_orders as $subscription_order) {
+
                 $served_orders = $subscription_order->orders->map(function ($order) {
                     return $order->partnerOrders->where('cancelled_at', null)->filter(function ($partner_order) {
                         return $partner_order->closed_and_paid_at != null;
@@ -173,13 +174,11 @@ class CustomerSubscriptionController extends Controller
             $customer = $request->customer;
             $subscription_order = SubscriptionOrder::find((int)$subscription);
 
-            /*$schedules = collect(json_decode($subscription_order->schedules));
-            dd($schedules);*/
             $partner_orders = $subscription_order->orders->map(function ($order) {
                 return $order->lastPartnerOrder();
             });
-            #dd($partner_orders);
-            $partner_orders = $partner_orders->map(function ($partner_order) {
+
+            $format_partner_orders = $partner_orders->map(function ($partner_order) {
                 $last_job = $partner_order->order->lastJob();
                 return [
                     'id' => $partner_order->order->code(),
@@ -190,15 +189,16 @@ class CustomerSubscriptionController extends Controller
                     'cancelled_at' => $partner_order->cancelled_at ? Carbon::parse($partner_order->cancelled_at)->format('M-j, h:i a') : null
                 ];
             });
+
             $next_order = [];
-            foreach ($partner_orders->toArray() as $partner_order){
+            foreach ($format_partner_orders->toArray() as $partner_order){
                 if (empty($partner_order['is_completed'])){
-                    $next_order = $partner_order['schedule_date']->format('M-j, Y');
+                    $next_order = getDayName($partner_order['schedule_date']);
                     break;
                 }
             }
 
-            $served_orders = $partner_orders->filter(function ($partner_order) {
+            $served_orders = $format_partner_orders->filter(function ($partner_order) {
                 return $partner_order['is_completed'] != null;
             });
 
@@ -258,7 +258,7 @@ class CustomerSubscriptionController extends Controller
                 'discount' => $service_details->discount,
                 'total_price' => $service_details->discounted_price,
                 "paid_on" => !empty($subscription_order->paid_at) ? Carbon::parse($subscription_order->paid_at)->format('M-j, Y') : null,
-                "orders" => $partner_orders
+                "orders" => $format_partner_orders
             ];
 
             return api_response($request, $subscription_order_details, 200, ['subscription_order_details' => $subscription_order_details]);

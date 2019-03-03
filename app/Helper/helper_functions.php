@@ -230,6 +230,22 @@ if (!function_exists('getRangeFormat')) {
     }
 }
 
+if (!function_exists('getDayName')) {
+    function getDayName($date)
+    {
+        $today = Carbon::today();
+        $tomorrow = Carbon::tomorrow();
+        switch (1) {
+            case $date->eq($today):
+                return "today";
+            case $date->eq($tomorrow):
+                return 'tomorrow';
+            default:
+                return $date->format('M-j, Y');
+        }
+    }
+}
+
 if (!function_exists('createAuthorWithType')) {
     function createAuthorWithType($author)
     {
