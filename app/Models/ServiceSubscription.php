@@ -29,9 +29,13 @@ class ServiceSubscription extends Model
     }
 
     public function getDiscountOffers() {
-        $discount_offers = $this->validDiscounts()->first()->discounts()->orderBy('subscription_type','desc')->get();
-        if($discount_offers)
-           return $this->parseDiscountOffers($discount_offers[0]);
+        $discount_offers = $this->discounts()->orderBy('subscription_type','desc')->get();
+        $offers = collect();
+        foreach($discount_offers as $offer)
+            if($offer->service_subscription_id === $this->id && $offer->valid())
+                $offers->push($offer);
+        if($offers)
+           return $this->parseDiscountOffers($offers[0]);
         else return null;
     }
 
