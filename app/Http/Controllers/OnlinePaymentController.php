@@ -7,7 +7,7 @@ use App\Sheba\Checkout\OnlinePayment;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
-use Redis;
+use Illuminate\Support\Facades\Redis;
 
 class OnlinePaymentController extends Controller
 {

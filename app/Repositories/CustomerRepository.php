@@ -11,7 +11,7 @@ use Mail;
 use Carbon\Carbon;
 use Hash;
 use JWTAuth;
-use Redis;
+use Illuminate\Support\Facades\Redis;
 
 class CustomerRepository
 {
