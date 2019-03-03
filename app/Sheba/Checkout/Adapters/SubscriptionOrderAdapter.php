@@ -270,12 +270,17 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
                 $resource_handler = scheduler($resource);
                 if ($resource_handler->isAvailable($job->schedule_date, $job->preferred_time_start)) {
                     $resource_handler->book($job);
+                    $job->resource_id = $resource->id;
+                    $job->update();
                     break;
                 }
             }
         }
     }
 
+    /**
+     * @return Resource[]
+     */
     private function getAvailableResources()
     {
         $dates = [];

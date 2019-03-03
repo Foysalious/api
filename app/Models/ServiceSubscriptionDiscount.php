@@ -27,6 +27,10 @@ class ServiceSubscriptionDiscount extends Model
         ]);
     }
 
+    public function isValid() {
+        return $this->start_date <= Carbon::now() && $this->end_date >= Carbon::now();
+    }
+
     public function isPercentage()
     {
         return (int)$this->is_discount_amount_percentage;

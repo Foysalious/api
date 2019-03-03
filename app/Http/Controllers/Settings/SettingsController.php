@@ -4,7 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Redis;
+use Illuminate\Support\Facades\Redis;
 
 class SettingsController extends Controller
 {

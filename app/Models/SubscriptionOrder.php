@@ -41,4 +41,28 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface
     {
         return $this->belongsTo(Location::class);
     }
+
+    public function scopeAccepted($query)
+    {
+        return $query->where('status', 'accepted');
+    }
+
+    public function channelCode()
+    {
+        if (in_array($this->sales_channel, ['Web', 'Call-Center', 'App', 'Facebook', 'App-iOS', 'E-Shop'])) {
+            $prefix = 'D';
+        } elseif ($this->sales_channel == 'B2B') {
+            $prefix = 'F';
+        } elseif ($this->sales_channel == 'Store') {
+            $prefix = 'S';
+        } else {
+            $prefix = 'A';
+        }
+        return $prefix;
+    }
+
+    public function code()
+    {
+        return $this->channelCode() . '-' . sprintf('%06d', $this->id);
+    }
 }

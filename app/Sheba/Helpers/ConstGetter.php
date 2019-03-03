@@ -19,7 +19,7 @@ trait ConstGetter
     {
         $result = [];
         foreach (static::get() as $item) {
-            $result[$item] = antiCases($item);
+            $result[$item] = normalizeCases($item);
         }
         return $result;
     }
