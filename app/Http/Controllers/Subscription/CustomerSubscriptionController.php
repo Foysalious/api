@@ -38,7 +38,10 @@ class CustomerSubscriptionController extends Controller
             }
             $partner_list = new SubscriptionPartnerList();
             $partner_list->setPartnerListRequest($partnerListRequest)->find($partner);
-            if ($partner_list->hasPartners) {
+            $partners = $partner_list->partners->filter(function ($partner) {
+                return $partner->is_available == 1 || $partner->id == config('sheba.sheba_help_desk_id');
+            });
+            if ($partners->count() > 0) {
                 $partner_list->addPricing();
                 $partner_list->addInfo();
                 if ($request->has('filter') && $request->filter == 'sheba') {
@@ -46,7 +49,6 @@ class CustomerSubscriptionController extends Controller
                 } else {
                     $partner_list->sortByShebaSelectedCriteria();
                 }
-                $partners = $partner_list->partners;
                 $partners->each(function ($partner, $key) {
                     $partner['rating'] = round($partner->rating, 2);
                     array_forget($partner, 'wallet');
@@ -54,9 +56,7 @@ class CustomerSubscriptionController extends Controller
                     array_forget($partner, 'geo_informations');
                     removeRelationsAndFields($partner);
                 });
-                $partners = $partners->filter(function ($partner) {
-                    return $partner->is_available == 1 || $partner->id == config('sheba.sheba_help_desk_id');
-                });
+
                 return api_response($request, $partners, 200, ['partners' => $partners->values()->all()]);
             }
             return api_response($request, null, 404, ['message' => 'No partner found.']);
