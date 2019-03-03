@@ -136,12 +136,17 @@ class CustomerSubscriptionController extends Controller
                 $service_details = json_decode($subscription_order->service_details);
                 $service_details_breakdown = $service_details->breakdown['0'];
                 $service = Service::find((int)$service_details_breakdown->id);
+                $schedules = collect(json_decode($subscription_order->schedules));
 
                 $orders_list = [
                     'subscription_order_id' => $subscription_order->id,
                     "service_name" => $service->name,
                     "app_thumb" => $service->app_thumb,
                     "billing_cycle" => $subscription_order->billing_cycle,
+
+                    "total_orders" => $served_orders,
+                    "preferred_time" => $schedules->first()->time,
+
                     "subscription_period" => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
                     "completed_orders" => $served_orders . '/' . $subscription_order->orders->count(),
                     "is_active" => Carbon::parse($subscription_order->billing_cycle_end) >= Carbon::today() ? 1 : 0,
@@ -157,6 +162,7 @@ class CustomerSubscriptionController extends Controller
             }
             return api_response($request, $subscription_orders_list, 200, ['subscription_orders_list' => $subscription_orders_list]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -216,6 +222,7 @@ class CustomerSubscriptionController extends Controller
                 'quantity' => (double)$service_details_breakdown->quantity,
                 "partner_id" => $subscription_order->partner_id,
                 "partner_name" => $service_details->name,
+                "partner_slug" => $subscription_order->partner->sub_domain,
                 "logo" => $service_details->logo,
 
                 'customer_name' => $subscription_order->customer->profile->name,
