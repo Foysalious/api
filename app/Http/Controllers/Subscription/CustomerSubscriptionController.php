@@ -171,10 +171,13 @@ class CustomerSubscriptionController extends Controller
                 return $order->lastPartnerOrder();
             });
             $partner_orders = $partner_orders->map(function ($partner_order) {
+                $last_job = $partner_order->order->lastJob();
                 return [
                     'id' => $partner_order->order->code(),
-                    'is_completed' => $partner_order->closed_and_paid_at ? $partner_order->closed_and_paid_at->format('M-j a') : null,
-                    'cancelled_at' => $partner_order->cancelled_at ? Carbon::parse($partner_order->cancelled_at)->format('M-j h:i a') : null
+                    'job_id' => $last_job->id,
+                    'preferred_time' => Carbon::parse($last_job->schedule_date)->format('M-j').', '.Carbon::parse($last_job->preferred_time_start)->format('h:ia'),
+                    'is_completed' => $partner_order->closed_and_paid_at ? $partner_order->closed_and_paid_at->format('M-j, h:ia') : null,
+                    'cancelled_at' => $partner_order->cancelled_at ? Carbon::parse($partner_order->cancelled_at)->format('M-j, h:i a') : null
                 ];
             });
 
