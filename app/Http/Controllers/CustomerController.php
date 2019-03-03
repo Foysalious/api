@@ -16,7 +16,7 @@ use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
 use Cache;
 use Illuminate\Validation\ValidationException;
-use Redis;
+use Illuminate\Support\Facades\Redis;
 use Sheba\Voucher\Creator\Referral;
 use Validator;
 use DB;

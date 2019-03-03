@@ -16,7 +16,7 @@ use JWTAuth;
 use JWTFactory;
 use App\Models\Customer;
 use Session;
-use Redis;
+use Illuminate\Support\Facades\Redis;
 use Hash;
 
 class LoginController extends Controller

@@ -7,7 +7,7 @@ use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Redis;
+use Illuminate\Support\Facades\Redis;
 use Cache;
 use Sheba\Payment\ShebaPayment;
 
