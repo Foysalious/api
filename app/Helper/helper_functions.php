@@ -233,7 +233,6 @@ if (!function_exists('getRangeFormat')) {
 if (!function_exists('getDayName')) {
     function getDayName($date)
     {
-        $date = Carbon::parse($date);
         $today = Carbon::today();
         $tomorrow = Carbon::tomorrow();
         switch (1) {
