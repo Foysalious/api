@@ -1,19 +1,14 @@
 <?php namespace Sheba\MovieTicket\Vendor\BlockBuster;
 
-use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use Sheba\MovieTicket\Vendor\Vendor;
+
 class VendorManager
 {
     /**
      * @var Vendor $vendor
      */
     private $vendor;
-    private $httpClient;
-
-    public function __construct(Client $client)
-    {
-        $this->httpClient = $client;
-    }
 
     /**
      * @return mixed
@@ -45,25 +40,10 @@ class VendorManager
     public function get($action, $params = [])
     {
         try {
-            $response = $this->httpClient->request('GET', $this->vendor->generateURIForAction($action, $params));
-            $body = $response->getBody()->getContents();
-            return $this->isJson($body) ? $body :$this->parse($body);
+            return $this->vendor->get($action,$params);
         } catch (GuzzleException $e) {
             throw $e;
         }
 
-    }
-
-    private function parse ($fileContents) {
-        $fileContents = str_replace(array("\n", "\r", "\t"), '', $fileContents);
-        $fileContents = trim(str_replace('"', "'", $fileContents));
-        $fileContents = trim(str_replace('&', "&amp;", $fileContents));
-        $simpleXml = simplexml_load_string($fileContents);
-        return $simpleXml;
-    }
-
-    function isJson($string) {
-        json_decode($string);
-        return (json_last_error() == JSON_ERROR_NONE);
     }
 }

@@ -5,7 +5,7 @@ use Sheba\MovieTicket\Vendor\BlockBuster;
 
 class MovieTicketManager
 {
-    /** @var VendorManager $vendorManager **/
+    /** @var BlockBuster\VendorManager $vendorManager **/
     private $vendorManager;
     private $movieTicket;
 
@@ -16,7 +16,7 @@ class MovieTicketManager
     }
 
     public function initVendor() {
-        $this->vendorManager->setVendor(new BlockBuster('dev'))->initVendor();
+        $this->vendorManager->setVendor(new BlockBuster())->initVendor();
         return $this;
     }
 
