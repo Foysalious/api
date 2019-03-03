@@ -155,7 +155,8 @@ class CustomerSubscriptionController extends Controller
                 $schedules = collect(json_decode($subscription_order->schedules));
 
                 $orders_list = [
-                    'subscription_order_id' => $subscription_order->id,
+                    'subscription_id' => $subscription_order->id,
+                    "subscription_code" => $subscription_order->code(),
                     "service_name" => $service->name,
                     "app_thumb" => $service->app_thumb,
                     "billing_cycle" => $subscription_order->billing_cycle,
