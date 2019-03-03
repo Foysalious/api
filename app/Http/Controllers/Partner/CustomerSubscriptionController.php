@@ -95,7 +95,6 @@ class CustomerSubscriptionController extends Controller
                     'id' => $partner_order->order->code(),
                     'job_id' => $last_job->id,
                     'partner_order_id' => $partner_order->id,
-                    'order_id' => $partner_order->order_id,
                     'schedule_date' => Carbon::parse($last_job->schedule_date)->format('M-j, Y'),
                     'preferred_time' => Carbon::parse($last_job->schedule_date)->format('M-j').', '.Carbon::parse($last_job->preferred_time_start)->format('h:ia'),
                     'is_completed' => $partner_order->closed_and_paid_at ? $partner_order->closed_and_paid_at->format('M-j, h:ia') : null,
