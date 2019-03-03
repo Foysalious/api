@@ -27,7 +27,11 @@ class MovieTicketController extends Controller
      */
     public function getAvailableTheatres(MovieTicketManager $movieTicket, Request $request)
     {
-        $theatres = $movieTicket->initVendor()->getAvailableTheatres("00350","2019-02-08");
+        $this->validate($request, [
+            'movie_id' => 'required',
+            'request_date' => 'required'
+        ]);
+        $theatres = $movieTicket->initVendor()->getAvailableTheatres($request->movie_id,$request->request_date);
         return api_response($request, $theatres, 200, ['theatres' => $this->convertToJson($theatres)]);
     }
 
@@ -36,53 +40,72 @@ class MovieTicketController extends Controller
      */
     public function getTheatreSeatStatus(MovieTicketManager $movieTicket, Request $request)
     {
-        $status = $movieTicket->initVendor()->getTheatreSeatStatus("1902080700350","Show_02");
+        $this->validate($request, [
+            'dtmid' => 'required',
+            'slot' => 'required'
+        ]);
+        $status = $movieTicket->initVendor()->getTheatreSeatStatus($request->dtmid,$request->slot);
         return api_response($request, $status, 200, ['status' => $this->convertToJson($status )]);
     }
 
 
     public function bookTickets(MovieTicketManager $movieTicket, Request $request)
     {
+        $this->validate($request, [
+            'dtmsid' => 'required',
+            'seat_class' => 'required',
+            'seat' => 'required',
+            'customer_name' => 'required',
+            'customer_email' => 'required',
+            'customer_mobile' => 'required|mobile:bd',
+        ]);
         $bookingResponse = $movieTicket->initVendor()->bookSeats([
-            'DTMSID' => '190208070035002',
-            'SeatClass'=>'E-REAR',
-            'Seat'=>'2',
-            'CusName'=>'Sakibur Rahaman',
-            'CusEmail'=>'sakib.cse11.cuet@gmail.com',
-            'CusMobile'=>'+8801869715616'
+            'DTMSID' => $request->dtmsid,
+            'SeatClass'=> $request->seat_class,
+            'Seat'=> $request->seat,
+            'CusName'=> $request->customer_name,
+            'CusEmail'=> $request->customer_email,
+            'CusMobile'=> $request->customer_mobile
         ]);
         return api_response($request, $bookingResponse, 200, ['status' => $bookingResponse]);
     }
 
     public function updateTicketStatus(MovieTicketManager $movieTicketManager, MovieTicket $movieTicket, Request $request, MovieTicketRequest $movieTicketRequest,VendorFactory $vendor)
     {
-//        $this->validate($request, [
-//            'mobile' => 'required|string|mobile:bd',
-//            'connection_type' => 'required|in:prepaid,postpaid',
-//            'vendor_id' => 'required|exists:topup_vendors,id',
-//            'amount' => 'required|min:10|max:1000|numeric'
-//        ]);
+        $this->validate($request, [
+            'trx_id' => 'required',
+            'dtmsid' => 'required',
+            'lid' => 'required',
+            'confirm_status' => 'required'
+        ]);
 
         $agent = $this->getAgent($request);
         $bookingResponse = $movieTicketManager->initVendor()->updateMovieTicketStatus([
-            'trx_id' => 'SHB155116984400001630',
-            'DTMSID'=>'180310060030701',
-            'LID'=>'WEB1520624021209297',
-            'ConfirmStatus'=>'CONFIRM',
+            'trx_id' => $request->trx_id,
+            'DTMSID'=>$request->dtmsid,
+            'LID'=>$request->lid,
+            'ConfirmStatus'=>$request->confirm_status,
         ]);
         $response = json_decode(json_encode($bookingResponse));
         if ($agent->wallet < (double)$response->cost) return api_response($request, null, 403, ['message' => "You don't have sufficient balance to buy this ticket ."]);
-        $movieTicketRequest->setName('Sakib')->setEmail('sakib.cse11.cuet@gmail.com')->setAmount($request->amount)->setMobile($request->mobile);
+        $movieTicketRequest->setName('Sakib')->setEmail('sakib.cse11.cuet@gmail.com')->setAmount($response->cost)->setMobile($request->mobile)->setBlockBusterResponse($response);
         $vendor = $vendor->getById(1);
         $movieTicket->setAgent($agent)->setVendor($vendor)->buyTicket($movieTicketRequest);
         return api_response($request, $bookingResponse, 200, ['status' => $bookingResponse]);
     }
 
+
+    /**
+     * @param Request $request
+     * @return mixed
+     * @throws \Exception
+     */
     private function getAgent(Request $request)
     {
         if ($request->affiliate) return $request->affiliate;
         elseif ($request->customer) return $request->customer;
         elseif ($request->partner) return $request->partner;
+        throw new \Exception('Invalid Agent');
     }
 
     private function  convertToJson($response) {

@@ -46,12 +46,12 @@ abstract class MovieTicketCommission
     }
 
     /**
-     * @param MovieTicketOrder $movieTicketOrder
+     * @param MovieTicketVendor $movieTicketVendor
      * @return MovieTicketCommission
      */
-    protected function setMovieTicketVendor(MovieTicketOrder $movieTicketOrder)
+    protected function setMovieTicketVendor(MovieTicketVendor $movieTicketVendor)
     {
-        $this->vendor = $movieTicketOrder;
+        $this->vendor = $movieTicketVendor;
         return $this;
     }
 
