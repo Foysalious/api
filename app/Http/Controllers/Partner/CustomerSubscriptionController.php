@@ -58,13 +58,13 @@ class CustomerSubscriptionController extends Controller
     public function show(Request $request, $partner, $subscription)
     {
         try {
-
             $partner = $request->partner;
             $subscription_order = SubscriptionOrder::find((int)$subscription);
-
+            #dd($subscription_order);
             $partner_orders = $subscription_order->orders->map(function ($order) {
                 return $order->lastPartnerOrder();
             });
+            #dd($partner_orders);
             $partner_orders = $partner_orders->map(function ($partner_order) {
                 return [
                     'id' => $partner_order->order->code(),
@@ -105,7 +105,7 @@ class CustomerSubscriptionController extends Controller
                 'original_price' => $service_details->original_price,
                 'discount' => $service_details->discount,
                 'total_price' => $service_details->discounted_price,
-                "paid_on" => !empty($subscription_order->paid_at) ? $subscription_order->paid_at->format('M-j, Y') : null,
+                "paid_on" => !empty($subscription_order->paid_at) ? Carbon::parse($subscription_order->paid_at)->format('M-j, Y') : null,
                 "orders" => $partner_orders
             ];
 

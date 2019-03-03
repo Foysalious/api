@@ -38,7 +38,10 @@ class CustomerSubscriptionController extends Controller
             }
             $partner_list = new SubscriptionPartnerList();
             $partner_list->setPartnerListRequest($partnerListRequest)->find($partner);
-            if ($partner_list->hasPartners) {
+            $partners = $partner_list->partners->filter(function ($partner) {
+                return $partner->is_available == 1 || $partner->id == config('sheba.sheba_help_desk_id');
+            });
+            if ($partners->count() > 0) {
                 $partner_list->addPricing();
                 $partner_list->addInfo();
                 if ($request->has('filter') && $request->filter == 'sheba') {
@@ -46,7 +49,6 @@ class CustomerSubscriptionController extends Controller
                 } else {
                     $partner_list->sortByShebaSelectedCriteria();
                 }
-                $partners = $partner_list->partners;
                 $partners->each(function ($partner, $key) {
                     $partner['rating'] = round($partner->rating, 2);
                     array_forget($partner, 'wallet');
@@ -54,9 +56,7 @@ class CustomerSubscriptionController extends Controller
                     array_forget($partner, 'geo_informations');
                     removeRelationsAndFields($partner);
                 });
-                $partners = $partners->filter(function ($partner) {
-                    return $partner->is_available == 1 || $partner->id == config('sheba.sheba_help_desk_id');
-                });
+
                 return api_response($request, $partners, 200, ['partners' => $partners->values()->all()]);
             }
             return api_response($request, null, 404, ['message' => 'No partner found.']);
@@ -136,12 +136,17 @@ class CustomerSubscriptionController extends Controller
                 $service_details = json_decode($subscription_order->service_details);
                 $service_details_breakdown = $service_details->breakdown['0'];
                 $service = Service::find((int)$service_details_breakdown->id);
+                $schedules = collect(json_decode($subscription_order->schedules));
 
                 $orders_list = [
                     'subscription_order_id' => $subscription_order->id,
                     "service_name" => $service->name,
                     "app_thumb" => $service->app_thumb,
                     "billing_cycle" => $subscription_order->billing_cycle,
+
+                    "total_orders" => $served_orders,
+                    "preferred_time" => $schedules->first()->time,
+
                     "subscription_period" => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
                     "completed_orders" => $served_orders . '/' . $subscription_order->orders->count(),
                     "is_active" => Carbon::parse($subscription_order->billing_cycle_end) >= Carbon::today() ? 1 : 0,
@@ -157,6 +162,7 @@ class CustomerSubscriptionController extends Controller
             }
             return api_response($request, $subscription_orders_list, 200, ['subscription_orders_list' => $subscription_orders_list]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -171,10 +177,13 @@ class CustomerSubscriptionController extends Controller
                 return $order->lastPartnerOrder();
             });
             $partner_orders = $partner_orders->map(function ($partner_order) {
+                $last_job = $partner_order->order->lastJob();
                 return [
                     'id' => $partner_order->order->code(),
-                    'is_completed' => $partner_order->closed_and_paid_at ? $partner_order->closed_and_paid_at->format('M-j a') : null,
-                    'cancelled_at' => $partner_order->cancelled_at ? Carbon::parse($partner_order->cancelled_at)->format('M-j h:i a') : null
+                    'job_id' => $last_job->id,
+                    'preferred_time' => Carbon::parse($last_job->schedule_date)->format('M-j').', '.Carbon::parse($last_job->preferred_time_start)->format('h:ia'),
+                    'is_completed' => $partner_order->closed_and_paid_at ? $partner_order->closed_and_paid_at->format('M-j, h:ia') : null,
+                    'cancelled_at' => $partner_order->cancelled_at ? Carbon::parse($partner_order->cancelled_at)->format('M-j, h:i a') : null
                 ];
             });
 
@@ -199,7 +208,6 @@ class CustomerSubscriptionController extends Controller
                 $variables->push($data);
             }
 
-            #dd($variables);
             $service_details_breakdown = $service_details->breakdown['0'];
             #dd($service_details, $service_details_breakdown);
             $service = Service::find((int)$service_details_breakdown->id);
@@ -210,9 +218,11 @@ class CustomerSubscriptionController extends Controller
                 "service_name" => $service->name,
                 "app_thumb" => $service->app_thumb,
                 "variables" => $variables,
+                "total_quantity" => $service_details->total_quantity,
                 'quantity' => (double)$service_details_breakdown->quantity,
                 "partner_id" => $subscription_order->partner_id,
                 "partner_name" => $service_details->name,
+                "partner_slug" => $subscription_order->partner->sub_domain,
                 "logo" => $service_details->logo,
 
                 'customer_name' => $subscription_order->customer->profile->name,
