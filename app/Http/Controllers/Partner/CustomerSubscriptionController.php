@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
+use Sheba\Subscription\Customer\OrderStatuses;
 
 class CustomerSubscriptionController extends Controller
 {
@@ -61,7 +62,7 @@ class CustomerSubscriptionController extends Controller
 
                     "subscription_period" => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
                     "completed_orders" => $served_orders->count() . '/' . $subscription_order->orders->count(),
-                    "is_active" => Carbon::parse($subscription_order->billing_cycle_end) >= Carbon::today() ? 1 : 0,
+                    "is_active" => $subscription_order->status == OrderStatuses::COMPLETED ? 1 : 0,
                     "partner" =>
                         [
                             "id" => $subscription_order->partner_id,
