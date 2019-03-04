@@ -1,15 +1,16 @@
 <?php namespace Sheba\MovieTicket;
 
 use GuzzleHttp\Exception\GuzzleException;
-use Sheba\MovieTicket\Vendor\BlockBuster;
+use Sheba\MovieTicket\Vendor\BlockBuster\BlockBuster;
+use Sheba\MovieTicket\Vendor\BlockBuster\VendorManager;
 
 class MovieTicketManager
 {
-    /** @var BlockBuster\VendorManager $vendorManager **/
+    /** @var VendorManager $vendorManager **/
     private $vendorManager;
     private $movieTicket;
 
-    public function __construct(BlockBuster\VendorManager $vendorManager, MovieTicket $movieTicket)
+    public function __construct(VendorManager $vendorManager, MovieTicket $movieTicket)
     {
        $this->vendorManager = $vendorManager;
        $this->movieTicket = $movieTicket;
