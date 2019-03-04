@@ -7,6 +7,7 @@ use App\Models\HyperLocal;
 use App\Models\Service;
 use App\Models\ServiceSubscription;
 use Illuminate\Http\Request;
+use Sheba\Subscription\ApproximatePriceCalculator;
 
 class SubscriptionController extends Controller
 {
@@ -83,7 +84,7 @@ class SubscriptionController extends Controller
         }
     }
 
-    public function all(Request $request)
+    public function all(Request $request, ApproximatePriceCalculator $approximatePriceCalculator)
     {
         try{
             if ($request->has('location')) {
@@ -102,11 +103,11 @@ class SubscriptionController extends Controller
                     continue;
                 }
                 $service = removeRelationsAndFields($subscription->service);
-                list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
+                $price_range = $approximatePriceCalculator->setSubscription($subscription)->getPriceRange();
                 $subscription['offers'] = $subscription->getDiscountOffers();
                 $subscription = removeRelationsAndFields($subscription);
-                $subscription['max_price'] = $service['max_price'];
-                $subscription['min_price'] = $service['min_price'];
+                $subscription['max_price'] = $price_range['max_price'] > 0 ? $price_range['max_price'] : 0;
+                $subscription['min_price'] = $price_range['min_price'] > 0 ? $price_range['min_price'] : 0;
                 $subscription['thumb'] = $service['thumb'];
                 $subscription['banner'] = $service['banner'];
                 $subscription['unit'] = $service['unit'];
@@ -117,12 +118,13 @@ class SubscriptionController extends Controller
             else
                 return api_response($request, null, 404);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function show($serviceSubscription, Request $request)
+    public function show($serviceSubscription,Request $request)
     {
         try {
             if ($request->has('location')) {
@@ -235,6 +237,33 @@ class SubscriptionController extends Controller
             return array(0, 0);
         }
     }
+
+    private function getPriceRangeNew(ServiceSubscription $subscription)
+    {
+        try {
+            $max_price = [];
+            $min_price = [];
+            $service = $subscription->service;
+            if ($service->partners->count() == 0) return array(0, 0);
+            foreach ($service->partners->where('status', 'Verified') as $partner) {
+                $partner_service = $partner->pivot;
+                if (!($partner_service->is_verified && $partner_service->is_published)) continue;
+                $prices = (array)json_decode($partner_service->prices);
+                $max = max($prices);
+                $min = min($prices);
+                array_push($max_price, $max);
+                array_push($min_price, $min);
+            }
+            $max_min_price = array((double)max($max_price) * $service->min_quantity, (double)min($min_price) * $service->min_quantity);
+            $offer = $subscription->getDiscountOffer('asc');
+            dd($subscription);
+            dd($offer);
+//            return array((double)max($max_price) * $service->min_quantity, (double)min($min_price) * $service->min_quantity);
+        } catch (\Throwable $e) {
+            return array(0, 0);
+        }
+    }
+
 
     private function breakdown_service_with_min_max_price($arrays, $min_price, $max_price, $i = 0)
     {

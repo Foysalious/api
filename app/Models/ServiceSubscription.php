@@ -37,7 +37,6 @@ class ServiceSubscription extends Model
             if($offer->service_subscription_id === $this->id && $offer->isValid())
                 $offers->push($offer);
         }
-//        dd($offers);
         if(count($offers)>0)
            return $this->parseDiscountOffers($offers[0]);
         else return null;
