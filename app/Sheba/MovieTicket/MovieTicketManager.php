@@ -45,7 +45,16 @@ class MovieTicketManager
             $availableTheatres = $this->vendorManager->get(Actions::GET_THEATRE_LIST, ['MovieID' => $movie_id, 'RequestDate' => $request_date]);
             $theatres=[];
             foreach ($availableTheatres->children() as $child){
-                $theatres[]=$child;
+                $child_parsed = $this->convertToJson($child);
+                $slots = [];
+                for($i = 1 ; $i<=5; $i++) {
+                    $key = 'Show_0'.$i;
+                    $slot = $child_parsed->{$key};
+                    if($slot !== 'No-Show')
+                        array_push($slots,['key' => $key, 'slot' =>$slot]);
+                }
+                $child_parsed->slots = $slots;
+                $theatres[]=$child_parsed;
             }
             return  $theatres;
         } catch (GuzzleException $e) {
@@ -96,4 +105,9 @@ class MovieTicketManager
             throw $e;
         }
     }
+
+    private function  convertToJson($response) {
+        return json_decode(json_encode($response));
+    }
+
 }
