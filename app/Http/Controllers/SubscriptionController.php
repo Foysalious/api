@@ -11,7 +11,7 @@ use Sheba\Subscription\ApproximatePriceCalculator;
 
 class SubscriptionController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, ApproximatePriceCalculator $approximatePriceCalculator)
     {
         try {
             if ($request->has('location')) {
@@ -41,13 +41,15 @@ class SubscriptionController extends Controller
 
             $parents = collect();
             foreach ($categories as $category) {
-                $subscriptions =  $category->services->map(function($service){
+                $subscriptions =  $category->services->map(function($service) use ($approximatePriceCalculator){
                     $service = removeRelationsAndFields($service);
                     list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
                     $subscription = $service->serviceSubscription;
+                    $price_range = $approximatePriceCalculator->setSubscription($subscription)->getPriceRange();
                     $subscription = removeRelationsAndFields($subscription);
-                    $subscription['max_price'] = $service['max_price'];
-                    $subscription['min_price'] = $service['min_price'];
+                    $subscription['max_price'] = $price_range['max_price'] > 0 ? $price_range['max_price'] : 0;
+                    $subscription['min_price'] = $price_range['min_price'] > 0 ? $price_range['min_price'] : 0;
+                    $subscription['price_applicable_for'] = $price_range['price_applicable_for'];
                     $subscription['thumb'] = $service['thumb'];
                     $subscription['banner'] = $service['banner'];
                     return $subscription;
@@ -103,11 +105,12 @@ class SubscriptionController extends Controller
                     continue;
                 }
                 $service = removeRelationsAndFields($subscription->service);
-                $price_range = $approximatePriceCalculator->setSubscription($subscription)->getPriceRange();
                 $subscription['offers'] = $subscription->getDiscountOffers();
+                $price_range = $approximatePriceCalculator->setSubscription($subscription)->getPriceRange();
                 $subscription = removeRelationsAndFields($subscription);
                 $subscription['max_price'] = $price_range['max_price'] > 0 ? $price_range['max_price'] : 0;
                 $subscription['min_price'] = $price_range['min_price'] > 0 ? $price_range['min_price'] : 0;
+                $subscription['price_applicable_for'] = $price_range['price_applicable_for'];
                 $subscription['thumb'] = $service['thumb'];
                 $subscription['banner'] = $service['banner'];
                 $subscription['unit'] = $service['unit'];
@@ -124,7 +127,7 @@ class SubscriptionController extends Controller
         }
     }
 
-    public function show($serviceSubscription,Request $request)
+    public function show($serviceSubscription,Request $request, ApproximatePriceCalculator $approximatePriceCalculator)
     {
         try {
             if ($request->has('location')) {
@@ -147,9 +150,10 @@ class SubscriptionController extends Controller
                     $answers->push($option["answers"]);
                 }
 
-            list($service['max_price'], $service['min_price']) = $this->getPriceRange($serviceSubscription->service);
-            $serviceSubscription['min_price'] = $service['min_price'];
-            $serviceSubscription['max_price'] = $service['max_price'];
+            $price_range = $approximatePriceCalculator->setSubscription($serviceSubscription)->getPriceRange();
+            $serviceSubscription['max_price'] = $price_range['max_price'] > 0 ? $price_range['max_price'] : 0;
+            $serviceSubscription['min_price'] = $price_range['min_price'] > 0 ? $price_range['min_price'] : 0;
+            $serviceSubscription['price_applicable_for'] = $price_range['price_applicable_for'];
             $serviceSubscription['thumb'] = $serviceSubscription->service['thumb'];
             $serviceSubscription['banner'] = $serviceSubscription->service['banner'];
             $serviceSubscription['unit'] = $serviceSubscription->service['unit'];
@@ -161,15 +165,15 @@ class SubscriptionController extends Controller
             $serviceSubscription['offers'] = $serviceSubscription->getDiscountOffers();
             if ($options) {
                 if (count($answers) > 1)
-                    $serviceSubscription['service_breakdown'] = $this->breakdown_service_with_min_max_price($answers, $service['min_price'], $service['max_price']);
+                    $serviceSubscription['service_breakdown'] = $this->breakdown_service_with_min_max_price($answers, $serviceSubscription['min_price'], $serviceSubscription['max_price']);
                 else {
                     $total_breakdown = array();
                     foreach ($answers[0] as $index => $answer) {
                         $breakdown = array(
                             'name' => $answer,
                             'indexes' => array($index),
-                            'min_price' => $service['min_price'],
-                            'max_price' => $service['max_price']
+                            'min_price' => $serviceSubscription['min_price'],
+                            'max_price' => $serviceSubscription['max_price']
                         );
                         array_push($total_breakdown, $breakdown);
                     }
@@ -180,8 +184,8 @@ class SubscriptionController extends Controller
                 $serviceSubscription['service_breakdown'] = array(array(
                     'name' => $serviceSubscription->service->name,
                     'indexes' => null,
-                    'min_price' => $service['min_price'],
-                    'max_price' => $service['max_price']
+                    'min_price' => $serviceSubscription['min_price'],
+                    'max_price' => $serviceSubscription['max_price']
                 ));
             }
             removeRelationsAndFields($serviceSubscription);
