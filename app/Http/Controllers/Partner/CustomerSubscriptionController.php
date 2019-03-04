@@ -154,7 +154,7 @@ class CustomerSubscriptionController extends Controller
 
                 'customer_name' => $subscription_order->customer->profile->name,
                 'customer_mobile' => $subscription_order->customer->profile->mobile,
-                #'address' => $subscription_order->deliveryAddress->address,
+                'address' => $subscription_order->deliveryAddress->address,
                 'location_name' => $subscription_order->location->name,
                 #'ordered_for' => $subscription_order->deliveryAddress->name,
 
