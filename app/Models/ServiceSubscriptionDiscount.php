@@ -7,7 +7,7 @@ class ServiceSubscriptionDiscount extends Model
 {
     protected $guarded = ['id'];
     protected $dates = ['start_date', 'end_date'];
-    protected $casts = ['discount_amount' => 'double', 'is_discount_amount_percentage' => 'int'];
+    protected $casts = ['discount_amount' => 'double', 'is_discount_amount_percentage' => 'int', 'cap' => 'double'];
 
     public function serviceSubscription()
     {
@@ -27,7 +27,8 @@ class ServiceSubscriptionDiscount extends Model
         ]);
     }
 
-    public function isValid() {
+    public function isValid()
+    {
         return $this->start_date <= Carbon::now() && $this->end_date >= Carbon::now();
     }
 
