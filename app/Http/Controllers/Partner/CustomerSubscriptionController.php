@@ -16,7 +16,7 @@ class CustomerSubscriptionController extends Controller
         try {
             $partner = $request->partner;
             $subscription_orders_list = collect([]);
-            $subscription_orders = SubscriptionOrder::where('partner_id', (int)$partner->id)->get();
+            $subscription_orders = SubscriptionOrder::where('partner_id', (int)$partner->id)->accepted()->get();
             foreach ($subscription_orders as $subscription_order) {
                 $partner_orders = $subscription_order->orders->map(function ($order) {
                     return $order->lastPartnerOrder();
@@ -94,9 +94,11 @@ class CustomerSubscriptionController extends Controller
                 return [
                     'id' => $partner_order->order->code(),
                     'job_id' => $last_job->id,
+                    'partner_order_id' => $partner_order->id,
                     'schedule_date' => Carbon::parse($last_job->schedule_date),
                     'preferred_time' => Carbon::parse($last_job->schedule_date)->format('M-j').', '.Carbon::parse($last_job->preferred_time_start)->format('h:ia'),
                     'is_completed' => $partner_order->closed_and_paid_at ? $partner_order->closed_and_paid_at->format('M-j, h:ia') : null,
+                    'completed_at' => $partner_order->closed_and_paid_at ? $partner_order->closed_and_paid_at->format('M-j, h:ia') : null,
                     'cancelled_at' => $partner_order->cancelled_at ? Carbon::parse($partner_order->cancelled_at)->format('M-j, h:i a') : null
                 ];
             });
@@ -135,6 +137,7 @@ class CustomerSubscriptionController extends Controller
             $schedules = collect(json_decode($subscription_order->schedules));
 
             $subscription_order_details = [
+                "subscription_code" => $subscription_order->code(),
                 'service_id' => $service->id,
                 "service_name" => $service->name,
                 "app_thumb" => $service->app_thumb,
@@ -150,9 +153,9 @@ class CustomerSubscriptionController extends Controller
 
                 'customer_name' => $subscription_order->customer->profile->name,
                 'customer_mobile' => $subscription_order->customer->profile->mobile,
-                'address' => $subscription_order->deliveryAddress->address,
+                #'address' => $subscription_order->deliveryAddress->address,
                 'location_name' => $subscription_order->location->name,
-                'ordered_for' => $subscription_order->deliveryAddress->name,
+                #'ordered_for' => $subscription_order->deliveryAddress->name,
 
                 "billing_cycle" => $subscription_order->billing_cycle,
                 "subscription_period" => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),

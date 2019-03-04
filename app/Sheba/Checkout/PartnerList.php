@@ -216,7 +216,7 @@ class PartnerList
             $this->saveNotFoundEvent(1);
             throw new HyperLocationNotFoundException("lat : $this->partnerListRequest->lat, lng: $this->partnerListRequest->lng");
         }
-        $this->partnerListRequest->setLocation($hyper_local->location->id);
+        $this->partnerListRequest->setLocation($hyper_local->location_id);
         $this->partners = $this->findPartnersByService()->reject(function ($partner) {
             return $partner->geo_informations == null;
         });

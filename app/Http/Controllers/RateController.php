@@ -8,7 +8,7 @@ use App\Models\ReviewQuestionAnswer;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use DB;
-use Redis;
+use Illuminate\Support\Facades\Redis;
 
 class RateController extends Controller
 {
