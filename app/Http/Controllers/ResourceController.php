@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\PartnerResource;
 use App\Models\Profile;
@@ -73,12 +71,7 @@ class ResourceController extends Controller
                 $review['order_code'] = $review->job->partner_order->code();
                 removeRelationsAndFields($review);
             }
-            $info = array(
-                'rating' => $resource['rating'],
-                'total_reviews' => $reviews->count(),
-                'reviews' => array_slice($reviews->toArray(), $offset, $limit),
-                'breakdown' => $breakdown
-            );
+            $info = array('rating' => $resource['rating'], 'total_reviews' => $reviews->count(), 'reviews' => array_slice($reviews->toArray(), $offset, $limit), 'breakdown' => $breakdown);
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -104,12 +97,10 @@ class ResourceController extends Controller
     public function trainingStatusUpdate(Request $request)
     {
         try {
-            #$request->certificates = [];
             $this->validate($request, [
                 'mobile' => 'required',
                 'is_trained' => 'boolean',
-                #'certificates' => 'required',
-                'certificates' => 'required|array',
+                'certificates' => 'required|array'
             ]);
 
             if ($request->ip() != self::REPTO_IP) {

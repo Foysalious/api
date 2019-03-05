@@ -48,7 +48,7 @@ class PartnerListRequest
 
     public function setLocation($location_id)
     {
-        $this->location = $location_id;
+        $this->location = (int)$location_id;
         return $this;
     }
 
