@@ -77,9 +77,9 @@ class PartnerListRequest
         return $this;
     }
 
-    public function setPartner($partner_id)
+    public function setPartner($partner)
     {
-        $this->selectedPartner = Partner::find((int)$partner_id);
+        $this->selectedPartner = $partner instanceof Partner ? $partner : Partner::find((int)$partner);
         return $this;
     }
 
@@ -172,8 +172,9 @@ class PartnerListRequest
 
     private function setTime()
     {
-        $this->scheduleTime = $this->request->time;
-        if ($this->scheduleTime) {
+        if ($this->scheduleTime) return;
+        if ($this->request->time) {
+            $this->scheduleTime = $this->request->time;
             $time = explode('-', $this->scheduleTime);
             $this->scheduleStartTime = $time[0];
             $this->scheduleEndTime = $time[1];
