@@ -77,9 +77,9 @@ class PartnerListRequest
         return $this;
     }
 
-    public function setPartner($partner_id)
+    public function setPartner($partner)
     {
-        $this->selectedPartner = Partner::find((int)$partner_id);
+        $this->selectedPartner = $partner instanceof Partner ? $partner : Partner::find((int)$partner);
         return $this;
     }
 
