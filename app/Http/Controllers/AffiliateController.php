@@ -232,28 +232,17 @@ class AffiliateController extends Controller
             $sort_order = $request->get('sort_order');
 
             list($offset, $limit) = calculatePagination($request);
-
-            $query1 = Affiliate::agentsWithFilter($request, 'affiliations');
-            $query2 = Affiliate::agentsWithFilter($request, 'partner_affiliations');
-            $agents = collect(array_merge($query1->get()->toArray(), $query2->get()->toArray()))->groupBy('id')
-                ->map(function ($data) {
-                    $dataSet = $data[0];
-                    if (isset($data[1])) {
-                        $dataSet['total_gifted_amount'] += $data[1]['total_gifted_amount'];
-                        $dataSet['total_gifted_number'] += $data[1]['total_gifted_number'];
-                    }
-                    return $dataSet;
-                })->values();
-
-            if (isset($q) & !empty($q)) {
-                $agents = $agents->filter(function ($data) use ($q) {
-                    return str_contains($data['name'], $q);
-                });
+            if (empty($range)) {
+                $query[] = $this->allAgents($request->affiliate);
             }
+            $query[] = Affiliate::agentsWithFilter($request, 'affiliations')->get()->toArray();
+            $query[] = Affiliate::agentsWithFilter($request, 'partner_affiliations')->get()->toArray();
 
-            if (isset($sort_order)) {
-                $agents = ($sort_order == 'asc') ? $agents->sortBy('total_gifted_amount') : $agents->sortByDesc('total_gifted_amount');
-            }
+            $agents = $this->mapAgents($query);
+
+            $agents = $this->filterAgents($q, $agents);
+
+            $agents = $this->sortAgents($sort_order, $agents);
 
             $agents = $agents->splice($offset, $limit)->toArray();
             if (count($agents) > 0) {
@@ -266,9 +255,63 @@ class AffiliateController extends Controller
             }
             return api_response($request, null, 404);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function mapAgents($query)
+    {
+        return collect(array_merge(...$query))->groupBy('id')
+            ->map(function ($data) {
+                $dataSet = $data[0];
+                if (isset($data[1])) {
+                    $dataSet['total_gifted_amount'] += $data[1]['total_gifted_amount'];
+                    $dataSet['total_gifted_number'] += $data[1]['total_gifted_number'];
+                }
+                if (isset($data[2])) {
+                    $dataSet['total_gifted_amount'] += $data[2]['total_gifted_amount'];
+                    $dataSet['total_gifted_number'] += $data[2]['total_gifted_number'];
+                }
+                return $dataSet;
+            })->values();
+    }
+
+    private function filterAgents($q, $agents)
+    {
+        if (isset($q) & !empty($q)) {
+            return $agents->filter(function ($data) use ($q) {
+                return str_contains($data['name'], $q);
+            });
+        }
+        return $agents;
+    }
+
+    private function allAgents($affiliate)
+    {
+        return $affiliate->agents->map(function ($agent) {
+            return [
+                'id' => $agent->id,
+                'profile_id' => $agent->profile_id,
+                'name' => $agent->profile->name,
+                'ambassador_id' => $agent->ambassador_id,
+                'picture' => $agent->profile->pro_pic,
+                'mobile' => $agent->profile->mobile,
+                'created_at' => $agent->created_at->toDateTimeString(),
+                'joined' => $agent->joined,
+                'total_gifted_amount' => 0,
+                'total_gifted_number' => 0
+            ];
+        })->toArray();
+    }
+
+    private function sortAgents($sort_order, $agents)
+    {
+        if (isset($sort_order)) {
+            return ($sort_order == 'asc') ? $agents->sortBy('total_gifted_amount') : $agents->sortByDesc('total_gifted_amount');
+        }
+        return $agents;
     }
 
     public function getGodFather($affiliate, Request $request)
@@ -558,7 +601,7 @@ class AffiliateController extends Controller
             $total_topups = $topups->count();
             if ($is_excel_report) {
                 $offset = 0;
-                $limit  = 100000;
+                $limit = 100000;
             }
             $topups = $topups->with('vendor')->skip($offset)->take($limit)->orderBy('created_at', 'desc')->get();
 
@@ -589,7 +632,7 @@ class AffiliateController extends Controller
                     'payee_name' => $topup->payee_name ? $topup->payee_name : 'N/A',
                     'amount' => $topup->amount,
                     'operator' => $topup->vendor->name,
-                    'status' => $topup->status  ,
+                    'status' => $topup->status,
                     'created_at' => $topup->created_at->format('jS M, Y h:i A'),
                     'created_at_raw' => $topup->created_at->format('Y-m-d h:i:s')
                 ];
