@@ -1,7 +1,4 @@
-<?php
-
-namespace Sheba\TopUp\Vendor\Response;
-
+<?php namespace Sheba\TopUp\Vendor\Response;
 
 class SslResponse extends TopUpResponse
 {
@@ -33,5 +30,4 @@ class SslResponse extends TopUpResponse
         $topup_error->errorMessage = $this->response->Message;
         return $topup_error;
     }
-
 }
