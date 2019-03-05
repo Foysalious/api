@@ -35,6 +35,9 @@ class PartnerRoute
 
                 $api->get('/finance-info', 'SpLoanController@getFinanceInformation');
                 $api->post('/finance-info', 'SpLoanController@getFusinessInformation');
+
+                $api->get('/nominee-info', 'SpLoanController@getNomineeInformation');
+                $api->post('/nominee-info', 'SpLoanController@getNomineeInformation');
             });
 
             $api->group(['prefix' => 'categories'], function ($api) {

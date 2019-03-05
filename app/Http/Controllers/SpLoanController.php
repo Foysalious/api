@@ -113,4 +113,32 @@ class SpLoanController extends Controller
         }
     }
 
+    public function getNomineeInformation($partner, Request $request)
+    {
+        try {
+            $partner = $request->partner;
+            $manager_resource = $request->manager_resource;
+            $profile = $manager_resource->profile;
+            $basic_informations = $partner->basicInformations;
+            $bank_informations = $partner->bankInformations;
+
+            $info = array(
+                'name' => $bank_informations->acc_name,
+                'mobile' => $basic_informations->acc_no,
+                'relation' => $partner->bank_name,
+                'picture' => $profile->pro_pic,
+                'granter' => [
+                    'name' => $bank_informations->acc_name,
+                    'mobile' => $basic_informations->acc_no,
+                    'relation' => $partner->bank_name,
+                    'picture' => $profile->pro_pic,
+                ]
+            );
+            return api_response($request, $info, 200, ['info' => $info]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
 }
