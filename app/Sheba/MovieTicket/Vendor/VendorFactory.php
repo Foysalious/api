@@ -2,6 +2,7 @@
 
 use App\Models\MovieTicketVendor;
 use ReflectionClass;
+use Sheba\MovieTicket\Vendor\BlockBuster\BlockBuster;
 
 class VendorFactory
 {

@@ -1,9 +1,9 @@
 <?php namespace Sheba\TopUp\Commission;
 
 use App\Models\TopUpOrder;
-use Sheba\MovieTicket\MovieTicketCommission;
+use Sheba\TopUp\TopUpCommission;
 
-class Affiliate extends MovieTicketCommission
+class Affiliate extends TopUpCommission
 {
     public function disburse()
     {
