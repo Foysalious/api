@@ -86,4 +86,31 @@ class SpLoanController extends Controller
         }
     }
 
+    public function getFinanceInformation($partner, Request $request)
+    {
+        try {
+            $partner = $request->partner;
+            $manager_resource = $request->manager_resource;
+            $profile = $manager_resource->profile;
+            $basic_informations = $partner->basicInformations;
+            $bank_informations = $partner->bankInformations;
+
+            $info = array(
+                'account_holder_name' => $bank_informations->acc_name,
+                'account_no' => $basic_informations->acc_no,
+                'bank_name' => $partner->bank_name,
+                'brunch' => $basic_informations->branch_name,
+                'account_type' => "Change",
+                'bkash' => [
+                    'account_no' => $partner->bkash_no,
+                    'account_type' => "Change"
+                ]
+            );
+            return api_response($request, $info, 200, ['info' => $info]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
 }
