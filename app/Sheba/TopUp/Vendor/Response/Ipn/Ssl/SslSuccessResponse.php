@@ -1,7 +1,4 @@
-<?php
-
-namespace Sheba\TopUp\Vendor\Response\Ipn\Ssl;
-
+<?php namespace Sheba\TopUp\Vendor\Response\Ipn\Ssl;
 
 use App\Models\TopUpOrder;
 use Sheba\TopUp\Vendor\Response\Ipn\SuccessResponse;
