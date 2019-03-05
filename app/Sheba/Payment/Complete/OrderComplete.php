@@ -2,8 +2,11 @@
 
 use App\Models\PartnerOrder;
 use App\Models\PaymentDetail;
+use App\Models\SubscriptionOrder;
+use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use Sheba\Checkout\Adapters\SubscriptionOrderAdapter;
 use Sheba\RequestIdentification;
 
 class OrderComplete extends PaymentComplete
@@ -14,28 +17,15 @@ class OrderComplete extends PaymentComplete
         try {
             if ($this->payment->isComplete()) return $this->payment;
             $this->paymentRepository->setPayment($this->payment);
-            $client = new Client();
             $payable = $this->payment->payable;
-            $partner_order = PartnerOrder::find((int)$payable->type_id);
+            $model = $payable->getPayableModel();
+            $payable_model = $model::find((int)$payable->type_id);
             $customer = $payable->user;
             foreach ($this->payment->paymentDetails as $paymentDetail) {
-                /* @var PaymentDetail $paymentDetail */
-                $res = $client->request('POST', config('sheba.admin_url') . '/api/partner-order/' . $partner_order->id . '/collect',
-                    [
-                        'form_params' => array_merge([
-                            'customer_id' => $customer->id,
-                            'remember_token' => $customer->remember_token,
-                            'sheba_collection' => (double)$paymentDetail->amount,
-                            'payment_method' => ucfirst($paymentDetail->method),
-                            'created_by_type' => 'App\\Models\\Customer',
-                            'transaction_detail' => json_encode($paymentDetail->formatPaymentDetail())
-                        ], (new RequestIdentification())->get())
-                    ]);
-                $response = json_decode($res->getBody());
-                if ($response->code == 200) {
-                    if (strtolower($paymentDetail->method) == 'wallet') dispatchReward()->run('wallet_cashback', $customer, $paymentDetail->amount, $partner_order);
+                if ($payable_model instanceof PartnerOrder) {
+                    $has_error = $this->clearPartnerOrderPayment($payable_model, $customer, $paymentDetail, $has_error);
                 } else {
-                    $has_error = true;
+                    $has_error = $this->clearSubscriptionPayment($payable_model, $paymentDetail, $has_error);
                 }
             }
             $this->paymentRepository->changeStatus(['to' => 'completed', 'from' => $this->payment->status,
@@ -43,10 +33,11 @@ class OrderComplete extends PaymentComplete
             $this->payment->status = 'completed';
             $this->payment->transaction_details = null;
             $this->payment->update();
-
-            $partner_order->payment_method = strtolower($paymentDetail->readable_method);
-            $partner_order->update();
+            $payable_model->payment_method = strtolower($paymentDetail->readable_method);
+            $payable_model->update();
         } catch (RequestException $e) {
+            $this->payment->payable->status = 'payment_failed';
+            $this->payment->payable->update();
             $this->paymentRepository->changeStatus(['to' => 'failed', 'from' => $this->payment->status,
                 'transaction_details' => $this->payment->transaction_details]);
             $this->payment->status = 'failed';
@@ -60,5 +51,57 @@ class OrderComplete extends PaymentComplete
             $this->payment->update();
         }
         return $this->payment;
+    }
+
+
+    private function clearPartnerOrderPayment(PartnerOrder $partner_order, $customer, PaymentDetail $paymentDetail, $has_error)
+    {
+        $client = new Client();
+        /* @var PaymentDetail $paymentDetail */
+        $res = $client->request('POST', config('sheba.admin_url') . '/api/partner-order/' . $partner_order->id . '/collect',
+            [
+                'form_params' => array_merge([
+                    'customer_id' => $customer->id,
+                    'remember_token' => $customer->remember_token,
+                    'sheba_collection' => (double)$paymentDetail->amount,
+                    'payment_method' => ucfirst($paymentDetail->method),
+                    'created_by_type' => 'App\\Models\\Customer',
+                    'transaction_detail' => json_encode($paymentDetail->formatPaymentDetail())
+                ], (new RequestIdentification())->get())
+            ]);
+        $response = json_decode($res->getBody());
+        if ($response->code == 200) {
+            if (strtolower($paymentDetail->method) == 'wallet') dispatchReward()->run('wallet_cashback', $customer, $paymentDetail->amount, $partner_order);
+        } else {
+            $has_error = true;
+        }
+        return $has_error;
+    }
+
+    private function clearSubscriptionPayment(SubscriptionOrder $payable_model, PaymentDetail $paymentDetail, $has_error)
+    {
+        try {
+            $payable_model->status = 'paid';
+            $payable_model->sheba_collection = (double)$paymentDetail->amount;
+            $payable_model->paid_at = Carbon::now();
+            $payable_model->update();
+            $this->convertToOrder($payable_model);
+        } catch (\Throwable $e) {
+            $has_error = false;
+        }
+        return $has_error;
+    }
+
+    /**
+     * @param SubscriptionOrder $payable_model
+     */
+    private function convertToOrder(SubscriptionOrder $payable_model)
+    {
+        try {
+            $subscription_order = new SubscriptionOrderAdapter($payable_model);
+            $subscription_order->convertToOrder();
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+        }
     }
 }

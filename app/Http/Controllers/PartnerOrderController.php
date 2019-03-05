@@ -15,6 +15,7 @@ use App\Sheba\Logs\PartnerOrderLogs;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
+use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Logs\JobLogs;
 use Validator;
 
@@ -73,13 +74,22 @@ class PartnerOrderController extends Controller
             $this->validate($request, ['sort' => 'sometimes|required|string|in:created_at,created_at:asc,created_at:desc,schedule_date,schedule_date:asc,schedule_date:desc', 'getCount' => 'sometimes|required|numeric|in:1']);
             if ($request->has('getCount')) {
                 $partner = $request->partner->load(['jobs' => function ($q) {
-                    $q->status(array(constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']))->select('jobs.id', 'jobs.status', 'jobs.partner_order_id')
+                    $q->status(array(constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']))->select('jobs.id', 'jobs.partner_order_id')
                         ->whereDoesntHave('cancelRequests', function ($q) {
                             $q->where('status', 'Pending');
-                        });
+                        })->with(['partnerOrder' => function ($q) {
+                            $q->select('id', 'order_id')->with(['order' => function ($q) {
+                                $q->select('id', 'subscription_order_id');
+                            }]);
+                        }]);
                 }]);
-                $partner_orders = $partner->jobs->groupBy('partner_order_id');
-                return api_response($request, $partner_orders->count(), 200, ['total_new_orders' => $partner_orders->count()]);
+
+                $total_new_orders = $partner->jobs->pluck('partnerOrder')->unique()->pluck('order')
+                    ->groupBy('subscription_order_id')
+                    ->map(function ($order, $key) {
+                        return !empty($key) ? 1 : $order->count();
+                    })->sum();
+                return api_response($request, $total_new_orders, 200, ['total_new_orders' => $total_new_orders]);
             }
             $orders = $this->partnerOrderRepository->getNewOrdersWithJobs($request);
             return count($orders) > 0 ? api_response($request, $orders, 200, ['orders' => $orders]) : api_response($request, null, 404);
@@ -286,7 +296,7 @@ class PartnerOrderController extends Controller
         }
     }
 
-    public function addService($partner, Request $request)
+    public function addService($partner, Request $request, PartnerListRequest $partnerListRequest)
     {
         try {
             $this->validate($request, [
@@ -299,12 +309,14 @@ class PartnerOrderController extends Controller
             $manager_resource = $request->manager_resource;
             $job = $partner_order->jobs->whereIn('status', array(constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Serve_Due'], constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process']))->first();
             if ($job == null) return api_response($request, null, 403, ['message' => "No valid job exists"]);
-            $partner_list = new PartnerList(json_decode($request->services), $job->schedule_date, $job->preferred_time_start . '-' . $job->preferred_time_end, $partner_order->order->location_id);
+            $partnerListRequest->setRequest($request)->setLocation($partner_order->order->location_id)->setScheduleDate($job->schedule_date)->setScheduleTime($job->preferred_time_start . '-' . $job->preferred_time_end)->prepareObject();
+            $partner_list = new PartnerList();
+            $partner_list->setPartnerListRequest($partnerListRequest);
             $partner_list->find($partner->id);
             $partner_list->addPricing();
             $partner = $partner_list->partners->first();
             $jobService_repo = new JobServiceRepository();
-            $job_services = $jobService_repo->setJob($job)->createJobService($partner->services, $partner_list->selected_services, ['created_by' => $manager_resource->id, 'created_by_name' => $manager_resource->profile->name]);
+            $job_services = $jobService_repo->setJob($job)->createJobService($partner->services, $partnerListRequest->selectedServices, ['created_by' => $manager_resource->id, 'created_by_name' => $manager_resource->profile->name]);
             if (!$jobService_repo->existInJob($job, $job_services)) {
                 $job->jobServices()->saveMany($job_services);
                 return api_response($request, null, 200);

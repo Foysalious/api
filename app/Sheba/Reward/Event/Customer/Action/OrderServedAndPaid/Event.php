@@ -13,12 +13,21 @@ use Sheba\Reward\Rewardable;
 
 class Event extends Action implements AmountCalculator
 {
+    private $rewardAmount;
+    private $order;
+
     public function setRule(BaseRule $rule)
     {
         if (!($rule instanceof Rule))
             throw new RulesTypeMismatchException("Order served abd paid event must have a order serve and paid event rule");
 
         return parent::setRule($rule);
+    }
+
+    public function setParams(array $params)
+    {
+        parent::setParams($params);
+        $this->order = $this->params[0]->calculate(true);
     }
 
     public function isEligible()
@@ -54,15 +63,23 @@ class Event extends Action implements AmountCalculator
 
     private function isValidCreatedDate()
     {
-        $order = $this->params[0];
+        $order = $this->order;
         return $order->created_at->between($this->reward->start_time, $this->reward->end_time);
     }
 
     public function calculateAmount()
     {
-        $payment_amount = $this->params[0]->calculate(true)->totalPrice;
+        $payment_amount = $this->order->totalPrice;
         $amount = ($payment_amount * $this->reward->amount) / 100;
 
-        return ($this->reward->cap && ($amount > $this->reward->cap)) ? $this->reward->cap : $amount;
+        $this->rewardAmount = ($this->reward->cap && ($amount > $this->reward->cap)) ? $this->reward->cap : $amount;
+        return $this->rewardAmount;
+    }
+
+    public function getLogEvent()
+    {
+        $reward_amount = $this->rewardAmount ?: $this->reward->amount;
+        $log = $reward_amount . ' ' . $this->reward->type . ' credited for ' . $this->reward->name . '(' . $this->reward->id . ') on ' . $this->order->code();
+        return $log;
     }
 }

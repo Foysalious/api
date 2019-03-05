@@ -18,6 +18,8 @@ class Payable extends Model
             return 'order';
         } else if ($this->type == 'wallet_recharge') {
             return 'recharge';
+        } else if ($this->type == 'subscription_order') {
+            return 'subscription_order';
         }
     }
 
@@ -37,6 +39,23 @@ class Payable extends Model
     public function user()
     {
         return $this->morphTo();
+    }
+
+    public function getPayableModel()
+    {
+        $model = "App\\Models\\";
+        if ($this->type == 'partner_order') {
+            $model .= 'PartnerOrder';
+        } elseif ($this->type == 'subscription_order') {
+            $model .= 'SubscriptionOrder';
+        }
+        return $model;
+
+    }
+
+    public function payment()
+    {
+        return $this->hasOne(Payment::class);
     }
 
 }

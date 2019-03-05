@@ -20,7 +20,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
-use Redis;
+use Illuminate\Support\Facades\Redis;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\ShebaPayment;
 
@@ -173,7 +173,7 @@ class OrderController extends Controller
         try {
             $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
             $partner = $order->partnerOrders->first()->partner;
-            if ((bool)env('SEND_ORDER_CREATE_SMS')) {
+            if ((bool)config('sheba.send_order_create_sms')) {
                 if (!in_array($order->portal_name, config('sheba.stopped_sms_portal_for_customer'))) {
                     (new SmsHandler('order-created'))->send($customer->profile->mobile, [
                         'order_code' => $order->code()

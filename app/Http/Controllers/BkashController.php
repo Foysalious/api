@@ -7,7 +7,7 @@ use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Redis;
+use Illuminate\Support\Facades\Redis;
 use Cache;
 use Sheba\Payment\ShebaPayment;
 
@@ -47,7 +47,7 @@ class BkashController extends Controller
         try {
             $this->validate($request, ['paymentID' => 'required']);
             $payment = Payment::where('transaction_id', $request->paymentID)->valid()->first();
-            if (!$payment) return api_response($request, null, 500);
+            if (!$payment) return api_response($request, null, 404, ['message' => 'Valid Payment not found.']);
             $sheba_payment = new ShebaPayment('bkash');
             $payment = $sheba_payment->complete($payment);
             $redirect_url = $payment->payable->success_url . '?invoice_id=' . $request->paymentID;

@@ -48,6 +48,11 @@ class Service extends Model
         return $this->belongsToMany(Partner::class)->withPivot($this->servicePivotColumns);
     }
 
+    public function subscription()
+    {
+        return $this->hasOne(ServiceSubscription::class);
+    }
+
     public function reviews()
     {
         return $this->hasMany(Review::class);
@@ -188,6 +193,11 @@ class Service extends Model
     public function tags()
     {
         return $this->morphToMany(Tag::class, 'taggable');
+    }
+
+    public function serviceSubscription()
+    {
+        return $this->hasOne(ServiceSubscription::class);
     }
 
     public function isOptions()

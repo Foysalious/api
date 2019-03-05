@@ -15,61 +15,54 @@ use App\Sheba\Partner\PartnerAvailable;
 use Carbon\Carbon;
 use DB;
 use Dingo\Api\Routing\Helpers;
-use Sheba\Checkout\Services\RentACarServiceObject;
-use Sheba\Checkout\Services\ServiceObject;
+use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Sheba\Checkout\PartnerSort;
 use Sheba\ModificationFields;
-use Sheba\Partner\BadgeResolver;
 use Sheba\RequestIdentification;
 
 class PartnerList
 {
     use Helpers;
     use DispatchesJobs;
+    /** @var Partner[] */
     public $partners;
+    /** @var Partner */
+    protected $partner;
     public $hasPartners = false;
     public $selected_services;
     public $location;
-    private $hyperLocation;
-    private $date;
-    private $time;
-    private $lat;
-    private $lng;
-    private $partnerServiceRepository;
-    private $rentCarServicesId;
-    private $skipAvailability;
+    protected $hyperLocation;
+    protected $date;
+    protected $time;
+    protected $lat;
+    protected $lng;
+    protected $partnerServiceRepository;
+    protected $rentCarServicesId;
+    protected $skipAvailability;
     /** @var Category */
     public $selectedCategory;
-    private $rentCarCategoryIds;
-    private $selectedServiceIds;
-    private $notFoundValues;
-    private $isNotLite;
-    private $partner;
+    protected $rentCarCategoryIds;
+    protected $selectedServiceIds;
+    protected $notFoundValues;
+    protected $isNotLite;
 
     /** @header * */
-    private $portalName;
-
-    private $badgeResolver;
+    protected $portalName;
+    protected $badgeResolver;
+    /** @var PartnerListRequest */
+    protected $partnerListRequest;
 
     use ModificationFields;
 
-    public function __construct($services, $date, $time, $location = null)
+    public function __construct()
     {
-        $this->location = $location;
-        $this->date = $date;
-        $this->time = $time;
         $this->rentCarServicesId = array_map('intval', explode(',', env('RENT_CAR_SERVICE_IDS')));
         $this->rentCarCategoryIds = array_map('intval', explode(',', env('RENT_CAR_IDS')));
-        $this->selectedCategory = Service::find((int)$services[0]->id)->category;
-        $this->selected_services = $this->getSelectedServices($services);
-        $this->selectedServiceIds = $this->getServiceIds();
         $this->partnerServiceRepository = new PartnerServiceRepository();
-        $this->skipAvailability = 0;
-        $this->checkForRentACarPickUpGeo();
         $this->notFoundValues = [
             'service' => [],
             'location' => [],
@@ -78,65 +71,12 @@ class PartnerList
             'options' => [],
             'handyman' => []
         ];
-
-        $this->portalName = request()->header('portal-name');
     }
 
-    public function setGeo($lat, $lng)
+    public function setPartnerListRequest(PartnerListRequest $partner_list_request)
     {
-        $this->lat = (double)$lat;
-        $this->lng = (double)$lng;
+        $this->partnerListRequest = $partner_list_request;
         return $this;
-    }
-
-    public function setAvailability($availability)
-    {
-        $this->skipAvailability = $availability;
-        return $this;
-    }
-
-    private function checkForRentACarPickUpGeo()
-    {
-        if ($this->selectedCategory->isRentCar()) {
-            $service = $this->selected_services->first();
-            if ($service->pickUpLocationLat && $service->pickUpLocationLng) {
-                $this->setGeo($service->pickUpLocationLat, $service->pickUpLocationLng);
-                $this->location = null;
-            }
-        }
-    }
-
-    /**
-     * @param $services
-     * @return ServiceObject[]
-     */
-    private function getSelectedServices($services)
-    {
-        $selected_services = collect();
-        foreach ($services as $service) {
-            $service = $this->selectedCategory->isRentCar() ? new RentACarServiceObject($service) : new ServiceObject($service);
-            $selected_services->push($service);
-        }
-        return $selected_services;
-    }
-
-    private function getCalculatedLocation(ServiceObject $service)
-    {
-        if ($service instanceof RentACarServiceObject) {
-            $location = $this->api->get('/v2/locations/current?lat=' . $service->pickUpLocationLat . '&lng=' . $service->pickUpLocationLng);
-            return $location ? $location->id : null;
-        } else {
-            return $this->location;
-        }
-    }
-
-    private function getServiceIds()
-    {
-        $service_ids = collect();
-        foreach ($this->selected_services as $selected_service) {
-            $service_ids->push($selected_service->id);
-        }
-        return $service_ids->unique()->toArray();
     }
 
     /**
@@ -146,8 +86,7 @@ class PartnerList
     public function find($partner_id = null)
     {
         $this->setPartner($partner_id);
-        if ($this->location) {
-            $this->location = $this->getCalculatedLocation($this->selected_services->first());
+        if ($this->partnerListRequest->location) {
             $this->partners = $this->findPartnersByServiceAndLocation();
         } else {
             $this->partners = $this->findPartnersByServiceAndGeo();
@@ -156,24 +95,27 @@ class PartnerList
             $this->filterByCreditLimit();
         }
         if (!in_array($this->portalName, ['partner-portal', 'manager-app'])) {
-            $start = microtime(true);
             $this->filterByDailyOrderLimit();
-            $time_elapsed_secs = microtime(true) - $start;
-            //dump("filter partner by order limit: " . $time_elapsed_secs * 1000);
         }
         $this->partners->load(['services' => function ($q) {
-            $q->whereIn('service_id', $this->selectedServiceIds);
+            $q->whereIn('service_id', $this->partnerListRequest->selectedServiceIds);
         }, 'categories' => function ($q) {
-            $q->where('categories.id', $this->selectedCategory->id);
+            $q->where('categories.id', $this->partnerListRequest->selectedCategory->id);
         }]);
         $this->filterByOption();
-        if (!$this->skipAvailability) $this->addAvailability();
-        elseif ($this->partners->count() > 1) $this->rejectShebaHelpDesk();
         $this->partners = $this->partners->filter(function ($partner) {
             return $this->hasResourcesForTheCategory($partner);
         });
+        if (!$this->partnerListRequest->skipAvailabilityCheck) $this->addAvailability();
+        elseif ($this->partners->count() > 1) $this->rejectShebaHelpDesk();
         $this->notFoundValues['handyman'] = $this->getPartnerIds();
         $this->calculateHasPartner();
+    }
+
+    private function setPartner($partner_id)
+    {
+        if ($partner_id) $this->partner = Partner::find((int)$partner_id);
+        $this->isNotLite = isset($this->partner) ? !$this->partner->isLite() : true;
     }
 
     private function findPartnersByServiceAndLocation()
@@ -188,42 +130,38 @@ class PartnerList
                 ->get()
                 ->pluck('location')
                 ->filter();
-            return $locations->where('id', $this->location)->count() > 0;
+            return $locations->where('id', $this->partnerListRequest->location)->count() > 0;
         });
         $this->notFoundValues['location'] = $this->getPartnerIds();
         return $this->partners;
     }
 
-    private function setPartner($partner_id)
-    {
-        if ($partner_id) {
-            $this->partner = Partner::find($partner_id);
-        }
-        $this->isNotLite = isset($this->partner) ? !$this->partner->isLite() : true;
-    }
-
     private function findPartnersByService()
     {
-        $has_premise = (int)request()->get('has_premise');
-        $has_home_delivery = (int)request()->get('has_home_delivery');
-        $category_ids = [$this->selectedCategory->id];
+        $category_ids = [$this->partnerListRequest->selectedCategory->id];
         $isNotLite = $this->isNotLite;
-        $query = Partner::WhereHas('categories', function ($q) use ($category_ids, $has_premise, $has_home_delivery, $isNotLite) {
+        $query = Partner::WhereHas('categories', function ($q) use ($category_ids, $isNotLite) {
             $q->whereIn('categories.id', $category_ids);
             if ($isNotLite) {
                 $q->where('category_partner.is_verified', 1);
             }
-            if (request()->has('has_home_delivery')) $q->where('category_partner.is_home_delivery_applied', $has_home_delivery);
-            if (request()->has('has_premise')) $q->where('category_partner.is_partner_premise_applied', $has_premise);
-            if (!request()->has('has_home_delivery') && !request()->has('has_premise')) $q->where('category_partner.is_home_delivery_applied', 1);
+            if ($this->partnerListRequest->homeDelivery) $q->where('category_partner.is_home_delivery_applied', $this->partnerListRequest->homeDelivery);
+            if ($this->partnerListRequest->onPremise) $q->where('category_partner.is_partner_premise_applied', $this->partnerListRequest->onPremise);
+            if (!$this->partnerListRequest->homeDelivery && !$this->partnerListRequest->onPremise) $q->where('category_partner.is_home_delivery_applied', 1);
         })->whereHas('services', function ($query) use ($isNotLite) {
             $query->whereHas('category', function ($q) {
                 $q->publishedForAny();
-            })->select(DB::raw('count(*) as c'))->whereIn('services.id', $this->selectedServiceIds)->where('partner_service.is_published', 1)
+            })->select(DB::raw('count(*) as c'))->whereIn('services.id', $this->partnerListRequest->selectedServiceIds)->where('partner_service.is_published', 1)
                 ->publishedForAll()
-                ->groupBy('partner_id')->havingRaw('c=' . count($this->selectedServiceIds));
+                ->groupBy('partner_id')->havingRaw('c=' . count($this->partnerListRequest->selectedServiceIds));
             if ($isNotLite) {
                 $query->where('partner_service.is_verified', 1);
+            }
+            if ($this->partnerListRequest->isWeeklySubscription()) {
+                $query->where('partner_service.is_weekly_subscription_enable', 1);
+            }
+            if ($this->partnerListRequest->isMonthlySubscription()) {
+                $query->where('partner_service.is_monthly_subscription_enable', 1);
             }
         })->whereDoesntHave('leaves', function ($q) {
             $q->where('end', null)->orWhere([['start', '<=', Carbon::now()], ['end', '>=', Carbon::now()->addDays(7)]]);
@@ -251,7 +189,7 @@ class PartnerList
         });
         $result = [];
         collect(DB::table('category_partner_resource')->select('partner_resource_id')->whereIn('partner_resource_id', array_keys($partner_resource_ids))
-            ->where('category_id', $this->selectedCategory->id)->get())->pluck('partner_resource_id')->each(function ($partner_resource_id) use ($partner_resource_ids, &$result) {
+            ->where('category_id', $this->partnerListRequest->selectedCategory->id)->get())->pluck('partner_resource_id')->each(function ($partner_resource_id) use ($partner_resource_ids, &$result) {
             $result[] = $partner_resource_ids[$partner_resource_id];
         });
         return count($result) > 0 ? 1 : 0;
@@ -273,18 +211,20 @@ class PartnerList
      */
     private function findPartnersByServiceAndGeo()
     {
-        $hyper_local = HyperLocal::insidePolygon($this->lat, $this->lng)->with('location')->first();
+        $hyper_local = HyperLocal::insidePolygon($this->partnerListRequest->lat, $this->partnerListRequest->lng)->with('location')->first();
         if (!$hyper_local) {
             $this->saveNotFoundEvent(1);
-            throw new HyperLocationNotFoundException("lat : $this->lat, lng: $this->lng");
+            $lat = $this->partnerListRequest->lat;
+            $lng = $this->partnerListRequest->lng;
+            throw new HyperLocationNotFoundException("lat : $lat, lng: $lng");
         }
-        $this->location = $hyper_local->location->id;
+        $this->partnerListRequest->setLocation($hyper_local->location_id);
         $this->partners = $this->findPartnersByService()->reject(function ($partner) {
             return $partner->geo_informations == null;
         });
         $this->notFoundValues['service'] = $this->getPartnerIds();
         if ($this->partners->count() == 0) return $this->partners;
-        $current = new Coords($this->lat, $this->lng);
+        $current = new Coords($this->partnerListRequest->lat, $this->partnerListRequest->lng);
         $to = $this->partners->map(function ($partner) {
             $geo = json_decode($partner->geo_informations);
             return new Coords(floatval($geo->lat), floatval($geo->lng), $partner->id);
@@ -300,7 +240,7 @@ class PartnerList
 
     private function filterByOption()
     {
-        foreach ($this->selected_services as $selected_service) {
+        foreach ($this->partnerListRequest->selectedServices as $selected_service) {
             if ($selected_service->serviceModel->isOptions()) {
                 $this->partners = $this->partners->filter(function ($partner, $key) use ($selected_service) {
                     $service = $partner->services->where('id', $selected_service->id)->first();
@@ -337,21 +277,21 @@ class PartnerList
         $this->notFoundValues['order_limit'] = $this->getPartnerIds();
     }
 
-    private function addAvailability()
+    protected function addAvailability()
     {
         $this->partners->load(['workingHours', 'leaves']);
         $this->partners->each(function ($partner) {
-            $partner['is_available'] = $this->isWithinPreparationTime($partner) && (new PartnerAvailable($partner))->available($this->date, $this->time, $this->selectedCategory) ? 1 : 0;
+            $partner['is_available'] = $this->isWithinPreparationTime($partner) && (new PartnerAvailable($partner))->available($this->partnerListRequest->scheduleDate, $this->partnerListRequest->scheduleTime, $this->partnerListRequest->selectedCategory) ? 1 : 0;
         });
         if ($this->getAvailablePartners()->count() > 1) $this->rejectShebaHelpDesk();
     }
 
-    public function isWithinPreparationTime($partner)
+    private function isWithinPreparationTime($partner)
     {
-        $category_preparation_time_minutes = $partner->categories->where('id', $this->selectedCategory->id)->first()->pivot->preparation_time_minutes;
+        $category_preparation_time_minutes = $partner->categories->where('id', $this->partnerListRequest->selectedCategory->id)->first()->pivot->preparation_time_minutes;
         if ($category_preparation_time_minutes == 0) return 1;
-        $start_time = Carbon::parse($this->date . ' ' . explode('-', $this->time)[0]);
-        $end_time = Carbon::parse($this->date . ' ' . explode('-', $this->time)[1]);
+        $start_time = Carbon::parse($this->partnerListRequest->scheduleDate[0] . ' ' . $this->partnerListRequest->scheduleStartTime);
+        $end_time = Carbon::parse($this->partnerListRequest->scheduleDate[0] . ' ' . $this->partnerListRequest->scheduleEndTime);
         $preparation_time = Carbon::createFromTime(Carbon::now()->hour)->addMinute(61)->addMinute($category_preparation_time_minutes);
         return $preparation_time->lte($start_time) || $preparation_time->between($start_time, $end_time) ? 1 : 0;
     }
@@ -368,14 +308,14 @@ class PartnerList
 
     public function addInfo()
     {
-        $category_ids = (string)$this->selectedCategory->id;
-        if (in_array($this->selectedCategory->id, $this->rentCarCategoryIds)) {
-            $category_ids = $this->selectedCategory->id == (int)env('RENT_CAR_OUTSIDE_ID') ? $category_ids . ",40" : $category_ids . ",38";
+        $category_ids = (string)$this->partnerListRequest->selectedCategory->id;
+        if (in_array($this->partnerListRequest->selectedCategory->id, $this->rentCarCategoryIds)) {
+            $category_ids = $this->partnerListRequest->selectedCategory->id == (int)env('RENT_CAR_OUTSIDE_ID') ? $category_ids . ",40" : $category_ids . ",38";
         }
         $this->partners->load(['workingHours', 'jobs' => function ($q) use ($category_ids) {
             $q->selectRaw("count(case when status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then status end) as total_jobs")
                 ->selectRaw("count(case when status in ('Accepted', 'Schedule Due', 'Process', 'Serve Due') then status end) as ongoing_jobs")
-                ->selectRaw("count(case when status in ('Served') and category_id=" . $this->selectedCategory->id . " then status end) as total_completed_orders")
+                ->selectRaw("count(case when status in ('Served') and category_id=" . $this->partnerListRequest->selectedCategory->id . " then status end) as total_completed_orders")
                 ->selectRaw("count(case when category_id in(" . $category_ids . ") and status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then category_id end) as total_jobs_of_category")
                 ->groupBy('partner_id');
         }, 'subscription' => function ($q) {
@@ -390,12 +330,12 @@ class PartnerList
                 ->selectRaw("count(case when rating=5 then reviews.id end) as total_five_star_ratings")
                 ->selectRaw("count(case when review_question_answer.review_type='App\\\Models\\\Review' and rating=5 then review_question_answer.id end) as total_compliments,reviews.partner_id")
                 ->leftJoin('review_question_answer', 'reviews.id', '=', 'review_question_answer.review_id')
-                ->where('category_id', $this->selectedCategory->id)
+                ->where('category_id', $this->partnerListRequest->selectedCategory->id)
                 ->groupBy('reviews.partner_id');
         }, 'handymanResources' => function ($q) {
             $q->selectRaw('count(distinct resources.id) as total_experts, partner_id')
                 ->verified()->join('category_partner_resource', 'category_partner_resource.partner_resource_id', '=', 'partner_resource.id')
-                ->where('category_partner_resource.category_id', $this->selectedCategory->id)->groupBy('partner_id');
+                ->where('category_partner_resource.category_id', $this->partnerListRequest->selectedCategory->id)->groupBy('partner_id');
         }]);
         foreach ($this->partners as $partner) {
             $partner['total_jobs'] = $partner->jobs->first() ? $partner->jobs->first()->total_jobs : 0;
@@ -426,10 +366,10 @@ class PartnerList
             && in_array(request()->header('Portal-Name'), ['customer-portal', 'customer-app', 'manager-app', 'manager-portal'])) {
             $partners = $this->getPartnerIds();
             $impression_deduction = new ImpressionDeduction();
-            $impression_deduction->category_id = $this->selectedCategory->id;
-            $impression_deduction->location_id = $this->location;
+            $impression_deduction->category_id = $this->partnerListRequest->selectedCategory->id;
+            $impression_deduction->location_id = $this->partnerListRequest->location;
             $serviceArray = [];
-            foreach ($this->selected_services as $service) {
+            foreach ($this->partnerListRequest->selectedServices as $service) {
                 array_push($serviceArray, [
                     'id' => $service->id,
                     'quantity' => $service->quantity,
@@ -439,7 +379,7 @@ class PartnerList
             $impression_deduction->order_details = json_encode(['services' => $serviceArray]);
             $customer = request()->hasHeader('User-Id') && request()->header('User-Id') ? Customer::find((int)request()->header('User-Id')) : null;
             if ($customer) $impression_deduction->customer_id = $customer->id;
-            $impression_deduction->portal_name = request()->header('Portal-Name');
+            $impression_deduction->portal_name = $this->partnerListRequest->portalName;
             $impression_deduction->ip = request()->ip();
             $impression_deduction->user_agent = request()->header('User-Agent');
             $impression_deduction->created_at = Carbon::now();
@@ -473,10 +413,9 @@ class PartnerList
             return $partner->is_available == 1;
         });
         $this->partners = $available_partners->merge($unavailable_partners);
-        $this->rejectShebaHelpDesk();
     }
 
-    private function calculateServicePricingAndBreakdownOfPartner($partner)
+    protected function calculateServicePricingAndBreakdownOfPartner($partner)
     {
         $total_service_price = [
             'discount' => 0,
@@ -486,12 +425,11 @@ class PartnerList
         ];
         $services = [];
         $category_pivot = $partner->categories->first()->pivot;
-        foreach ($this->selected_services as $selected_service) {
+        foreach ($this->partnerListRequest->selectedServices as $selected_service) {
             $service = $partner->services->where('id', $selected_service->id)->first();
-            $schedule_date_time = Carbon::parse($this->date . ' ' . explode('-', $this->time)[0]);
+            $schedule_date_time = Carbon::parse($this->partnerListRequest->scheduleDate[0] . ' ' . $this->partnerListRequest->scheduleStartTime);
             $discount = new Discount();
             $discount->setServiceObj($selected_service)->setServicePivot($service->pivot)->setScheduleDateTime($schedule_date_time)->initialize();
-            $discount->calculateServiceDiscount();
             $service = [];
             $service['discount'] = $discount->discount;
             $service['cap'] = $discount->cap;
@@ -504,9 +442,7 @@ class PartnerList
             $service['sheba_contribution'] = $discount->sheba_contribution;
             $service['partner_contribution'] = $discount->partner_contribution;
             $service['is_min_price_applied'] = $discount->original_price == $discount->min_price ? 1 : 0;
-            if ($discount->original_price == $discount->min_price) {
-                $total_service_price['is_min_price_applied'] = 1;
-            }
+            if ($discount->original_price == $discount->min_price) $total_service_price['is_min_price_applied'] = 1;
             $total_service_price['discount'] += $service['discount'];
             $total_service_price['discounted_price'] += $service['discounted_price'];
             $total_service_price['original_price'] += $service['original_price'];
@@ -539,7 +475,7 @@ class PartnerList
         }
     }
 
-    private function getVariableOptionOfService(Service $service, Array $option)
+    protected function getVariableOptionOfService(Service $service, Array $option)
     {
         if ($service->isOptions()) {
             $variables = [];
@@ -615,18 +551,18 @@ class PartnerList
         return json_encode(
             array_merge($this->notFoundValues, [
                 'request' => [
-                    'services' => $this->selected_services->map(function ($service) {
+                    'services' => $this->partnerListRequest->selectedServices->map(function ($service) {
                         return [
                             'id' => $service->id,
                             'option' => $service->option,
                             'quantity' => $service->quantity
                         ];
                     }),
-                    'lat' => $this->lat,
-                    'lng' => $this->lng,
-                    'location' => $this->location,
-                    'date' => $this->date,
-                    'time' => $this->time,
+                    'lat' => $this->partnerListRequest->lat,
+                    'lng' => $this->partnerListRequest->lng,
+                    'location' => $this->partnerListRequest->location,
+                    'date' => $this->partnerListRequest->scheduleDate[0],
+                    'time' => $this->partnerListRequest->scheduleTime,
                     'is_out' => $is_out_of_service,
                     'origin' => request()->header('Origin')
                 ]

@@ -360,6 +360,11 @@ class Partner extends Model implements Rewardable, TopUpAgent
         return $this->belongsTo(PartnerSubscriptionPackageDiscount::class, 'discount_id');
     }
 
+    public function subscriptionOrders()
+    {
+        return $this->hasMany(SubscriptionOrder::class);
+    }
+
     public function subscribe($package, $billing_type)
     {
         $package = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->partner->subscription;

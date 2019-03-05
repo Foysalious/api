@@ -101,8 +101,10 @@ class WalletController extends Controller
                         $user->debitWallet($remaining);
                         $transaction = $user->walletTransaction([
                             'amount' => $remaining,
-                            'type' => 'Debit', 'log' => 'Service Purchase.',
-                            'partner_order_id' => $partner_order->id,
+                            'type' => 'Debit',
+                            'log' => 'Service Purchase.',
+                            'event_type' => get_class($partner_order),
+                            'event_id' => $partner_order->id,
                             'created_at' => Carbon::now()
                         ]);
                     }

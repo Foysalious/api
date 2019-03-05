@@ -13,7 +13,7 @@ class RaxResponse extends TopUpResponse
 
     public function hasSuccess(): bool
     {
-        return $this->response->TXNSTATUS == 200;
+        return $this->response->status_code == 200;
     }
 
     public function getSuccess(): TopUpSuccessResponse

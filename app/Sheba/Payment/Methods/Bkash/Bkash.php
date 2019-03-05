@@ -5,7 +5,7 @@ use App\Models\Payment;
 use App\Models\PaymentDetail;
 use Carbon\Carbon;
 use Sheba\ModificationFields;
-use Redis;
+use Illuminate\Support\Facades\Redis;
 use Sheba\Payment\Methods\Bkash\Response\ExecuteResponse;
 use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\RequestIdentification;

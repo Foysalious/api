@@ -26,7 +26,7 @@ use Sheba\Reports\ExcelHandler;
 use Sheba\TopUp\Jobs\TopUpJob;
 use Validator;
 use DB;
-use Redis;
+use Illuminate\Support\Facades\Redis;
 
 class AffiliateController extends Controller
 {

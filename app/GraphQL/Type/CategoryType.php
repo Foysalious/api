@@ -9,7 +9,7 @@ use GraphQL;
 use \Folklore\GraphQL\Support\Type as GraphQlType;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
-use Redis;
+use Illuminate\Support\Facades\Redis;
 use DB;
 
 class CategoryType extends GraphQlType

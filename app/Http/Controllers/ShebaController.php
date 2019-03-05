@@ -27,10 +27,10 @@ class ShebaController extends Controller
     private $serviceRepository;
     private $reviewRepository;
 
-    public function __construct()
+    public function __construct(ServiceRepository $service_repo, ReviewRepository $review_repo)
     {
-        $this->serviceRepository = new ServiceRepository();
-        $this->reviewRepository = new ReviewRepository();
+        $this->serviceRepository = $service_repo;
+        $this->reviewRepository = $review_repo;
     }
 
     public function getInfo()
@@ -274,10 +274,44 @@ class ShebaController extends Controller
                 ),
                 array(
                     'name' => 'bKash Payment',
-                    'is_published' => 0,
+                    'is_published' => 1,
                     'description' => '',
                     'asset' => 'bkash',
                     'method_name' => 'bkash'
+                ),
+                array(
+                    'name' => 'City Bank',
+                    'is_published' => $version_code ? ($version_code > 30112 ? 1 : 0) : 1,
+                    'description' => '',
+                    'asset' => 'cbl',
+                    'method_name' => 'cbl'
+                ),
+                array(
+                    'name' => 'Other Debit/Credit',
+                    'is_published' => 1,
+                    'description' => '',
+                    'asset' => 'ssl',
+                    'method_name' => 'online'
+                )
+            );
+            return api_response($request, $payments, 200, ['payments' => $payments]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getSubscriptionPayments(Request $request)
+    {
+        try {
+            $version_code = (int)$request->header('Version-Code');
+            $payments = array(
+                array(
+                    'name' => 'Sheba Credit',
+                    'is_published' => 1,
+                    'description' => '',
+                    'asset' => 'sheba_credit',
+                    'method_name' => 'wallet'
                 ),
                 array(
                     'name' => 'City Bank',

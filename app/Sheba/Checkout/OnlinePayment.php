@@ -11,7 +11,7 @@ use App\Repositories\NotificationRepository;
 use App\Sheba\UserRequestInformation;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
-use Redis;
+use Illuminate\Support\Facades\Redis;
 use DB;
 
 class OnlinePayment

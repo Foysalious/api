@@ -33,8 +33,9 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
-use Redis;
+use Illuminate\Support\Facades\Redis;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
+use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Manager\JobList;
 use Sheba\ModificationFields;
 use Sheba\Partner\LeaveStatus;
@@ -529,7 +530,7 @@ class PartnerController extends Controller
         }
     }
 
-    public function findPartners(Request $request, $location)
+    public function findPartners(Request $request, $location, PartnerListRequest $partnerListRequest)
     {
         try {
             $this->validate($request, [
@@ -547,8 +548,9 @@ class PartnerController extends Controller
             }
 
             $partner = $request->has('partner') ? $request->partner : null;
-            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$location);
-            $partner_list->setAvailability($request->skip_availability)->find($partner);
+            $partnerListRequest->setRequest($request)->prepareObject();
+            $partner_list = new PartnerList();
+            $partner_list->setPartnerListRequest($partnerListRequest)->find($partner);
             if ($request->has('isAvailable')) {
                 $partners = $partner_list->partners;
                 $available_partners = $partners->filter(function ($partner) {

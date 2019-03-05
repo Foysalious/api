@@ -230,6 +230,22 @@ if (!function_exists('getRangeFormat')) {
     }
 }
 
+if (!function_exists('getDayName')) {
+    function getDayName($date)
+    {
+        $today = Carbon::today();
+        $tomorrow = Carbon::tomorrow();
+        switch (1) {
+            case $date->eq($today):
+                return "today";
+            case $date->eq($tomorrow):
+                return 'tomorrow';
+            default:
+                return $date->format('M-j, Y');
+        }
+    }
+}
+
 if (!function_exists('createAuthorWithType')) {
     function createAuthorWithType($author)
     {
@@ -563,5 +579,17 @@ if (!function_exists('getDefaultWorkingHours')) {
             'start_time' => '09:00:00',
             'end_time' => '18:00:00'
         ];
+    }
+}
+
+if (!function_exists('normalizeCases')) {
+    /**
+     * @param $value
+     * @return string
+     */
+    function normalizeCases($value)
+    {
+        $value = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $value));
+        return ucwords(str_replace(['_', '-'], ' ', $value));
     }
 }

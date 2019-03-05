@@ -10,6 +10,7 @@ class Route
             $api->post('subscription', 'PushSubscriptionController@store');
             $api->get('car-rental-info', 'ShebaController@sendCarRentalInfo');
             $api->get('payments', 'ShebaController@getPayments');
+            $api->get('subscription-payments', 'ShebaController@getSubscriptionPayments');
             $api->get('butcher-info', 'ShebaController@sendButcherInfo');
             $api->post('service-requests', 'ServiceRequestController@store');
             $api->post('transactions/{transactionID}', 'ShebaController@checkTransactionStatus');
@@ -63,6 +64,7 @@ class Route
             });
             $api->get('times', 'ScheduleTimeController@index');
             $api->get('settings', 'HomePageSettingController@index');
+            $api->get('settings-new', 'HomePageSettingController@indexNew');
             $api->get('settings/top-up', 'TopUpController@getVendor');
             $api->get('settings/car', 'HomePageSettingController@getCar');
             $api->get('home-grids', 'HomeGridController@index');
@@ -82,6 +84,13 @@ class Route
             });
             $api->group(['prefix' => 'services'], function ($api) {
                 $api->get('', 'ServiceController@index');
+            });
+            $api->group(['prefix' => 'subscriptions'], function ($api) {
+                $api->get('/', 'SubscriptionController@index');
+                $api->get('/partners', 'Subscription\CustomerSubscriptionController@getPartners');
+                $api->get('/faq', 'FaqController@getSubscriptionFaq');
+                $api->get('/all', 'SubscriptionController@all');
+                $api->get('/{id}', 'SubscriptionController@show');
             });
             $api->group(['prefix' => 'locations'], function ($api) {
                 $api->get('/', 'LocationController@index');
