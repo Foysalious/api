@@ -38,6 +38,9 @@ class PartnerRoute
 
                 $api->get('/nominee-info', 'SpLoanController@getNomineeInformation');
                 $api->post('/nominee-info', 'SpLoanController@getNomineeInformation');
+
+                $api->get('/documents', 'SpLoanController@getDocuments');
+                $api->post('/documents', 'SpLoanController@getDocuments');
             });
 
             $api->group(['prefix' => 'categories'], function ($api) {

@@ -127,12 +127,50 @@ class SpLoanController extends Controller
                 'mobile' => $basic_informations->acc_no,
                 'relation' => $partner->bank_name,
                 'picture' => $profile->pro_pic,
+                'nid_front_image' => $manager_resource->nid_image,
+                'nid_back_image' => $manager_resource->nid_image,
                 'granter' => [
                     'name' => $bank_informations->acc_name,
                     'mobile' => $basic_informations->acc_no,
                     'relation' => $partner->bank_name,
                     'picture' => $profile->pro_pic,
+                    'nid_front_image' => $manager_resource->nid_image,
+                    'nid_back_image' => $manager_resource->nid_image,
                 ]
+            );
+            return api_response($request, $info, 200, ['info' => $info]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getDocuments($partner, Request $request)
+    {
+        try {
+            $partner = $request->partner;
+            $manager_resource = $request->manager_resource;
+            $profile = $manager_resource->profile;
+            $basic_informations = $partner->basicInformations;
+            $bank_informations = $partner->bankInformations;
+
+            $info = array(
+                'picture' => $profile->pro_pic,
+                'nid_front_image' => $manager_resource->nid_image,
+                'nid_back_image' => $manager_resource->nid_image,
+                'birth_certificate' => $manager_resource->nid_image,
+                'nominee_document' => [
+                    'picture' => $profile->pro_pic,
+                    'nid_front_image' => $manager_resource->nid_image,
+                    'nid_back_image' => $manager_resource->nid_image,
+                    'birth_certificate' => $manager_resource->nid_image,
+                ],
+                'business_document' => [
+                    'tin_no_attachment' => $profile->tin_no,
+                    'trade_license_attachment' => $basic_informations->trade_license_attachment,
+                    'bank_statement_attachment' => $partner->nid_image
+                ],
+
             );
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
