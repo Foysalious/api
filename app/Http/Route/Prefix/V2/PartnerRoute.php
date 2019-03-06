@@ -31,16 +31,16 @@ class PartnerRoute
                 $api->post('/personal-info', 'SpLoanController@storePersonalInformation');
 
                 $api->get('/business-info', 'SpLoanController@getBusinessInformation');
-                $api->post('/business-info', 'SpLoanController@getBusinessInformation');
+                $api->post('/business-info', 'SpLoanController@storeBusinessInformation');
 
                 $api->get('/finance-info', 'SpLoanController@getFinanceInformation');
-                $api->post('/finance-info', 'SpLoanController@getFusinessInformation');
+                $api->post('/finance-info', 'SpLoanController@storeFusinessInformation');
 
                 $api->get('/nominee-info', 'SpLoanController@getNomineeInformation');
-                $api->post('/nominee-info', 'SpLoanController@getNomineeInformation');
+                $api->post('/nominee-info', 'SpLoanController@storeNomineeInformation');
 
                 $api->get('/documents', 'SpLoanController@getDocuments');
-                $api->post('/documents', 'SpLoanController@getDocuments');
+                $api->post('/documents', 'SpLoanController@storeDocuments');
             });
 
             $api->group(['prefix' => 'categories'], function ($api) {
