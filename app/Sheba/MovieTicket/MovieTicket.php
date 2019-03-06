@@ -28,6 +28,9 @@ class MovieTicket
     /** @var MovieTicketValidator */
     private $validator;
 
+    /** @var MovieTicketOrder $movieTicketOrder */
+    private $movieTicketOrder;
+
     public function __construct(MovieTicketValidator $validator)
     {
         $this->validator = $validator;
@@ -42,6 +45,14 @@ class MovieTicket
         $this->agent = $agent;
         $this->validator->setAgent($agent);
         return $this;
+    }
+
+    /**
+     * @return MovieTicketOrder
+     */
+    public function getMovieTicketOrder()
+    {
+        return $this->movieTicketOrder;
     }
 
     /**
@@ -70,6 +81,7 @@ class MovieTicket
                 $this->agent->getMovieTicketCommission()->setMovieTicketOrder($movie_ticket_order)->disburse();
                 $this->vendor->deductAmount($movie_ticket_request->getAmount());
                 $this->isSuccessful = true;
+                $this->movieTicketOrder = $movie_ticket_order;
             });
         }
     }
