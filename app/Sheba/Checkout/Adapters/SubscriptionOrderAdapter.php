@@ -37,9 +37,11 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
         $this->subscriptionOrder = $subscriptionOrder;
     }
 
-    public function setPaymentMethod(){
+    public function setPaymentMethod()
+    {
 
     }
+
     public function partnerOrders()
     {
 
@@ -132,7 +134,6 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
         $order->customer_id = $this->subscriptionOrder->customer_id;
         $order->delivery_address_id = $this->subscriptionOrder->delivery_address_id;
         $order->subscription_order_id = $this->subscriptionOrder->id;
-        $order->payment_method = strtolower($this->paymentDetails->last()->readable_method);
         $order->fill((new RequestIdentification())->get());
         $this->withCreateModificationField($order);
         $order->save();
@@ -144,7 +145,7 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
         $partner_order = new PartnerOrder();
         $partner_order->order_id = $order->id;
         $partner_order->partner_id = $this->subscriptionOrder->partner_id;
-        $partner_order->payment_method = $this->subscriptionOrder->payment_method;
+        $partner_order->payment_method = strtolower($this->paymentDetails->last()->readable_method);
         $partner_order->sheba_collection = (int)$this->partnerServiceDetails->discounted_price > 0 ? $this->partnerServiceDetails->discounted_price / count($this->totalSchedules) : 0;
         $this->withCreateModificationField($partner_order);
         $partner_order->save();
