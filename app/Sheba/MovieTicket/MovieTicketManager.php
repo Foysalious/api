@@ -26,6 +26,7 @@ class MovieTicketManager
         $movies=[];
         foreach ($availableMovies->children() as $child){
             $child = json_decode(json_encode($child),true);
+            $child['Banner'] = config('blockbuster.image_server_url').$child['Banner'];
             if($child['MovieStatus'] === "1")
                 $movies[]=$child;
         }
