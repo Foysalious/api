@@ -23,6 +23,7 @@ class MovieTicketController extends Controller
             $movies = $movieTicket->initVendor()->getAvailableTickets();
             return api_response($request, $movies, 200, ['movies' => $this->convertToJson($movies)]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
