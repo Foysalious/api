@@ -98,12 +98,14 @@ class SpLoanController extends Controller
             $info = array(
                 'account_holder_name' => $bank_informations->acc_name,
                 'account_no' => $basic_informations->acc_no,
-                'bank_name' => $partner->bank_name,
+                'bank_name' => $basic_informations->bank_name,
                 'brunch' => $basic_informations->branch_name,
-                'account_type' => "Change",
+                'acc_type' => $basic_informations->acc_type,
+                'acc_types' => constants('BANK_ACCOUNT_TYPE'),
                 'bkash' => [
-                    'account_no' => $partner->bkash_no,
-                    'account_type' => "Change"
+                    'bkash_no' => $partner->bkash_no,
+                    'bkash_account_type' => $partner->bkash_account_type,
+                    'bkash_account_types' => constants('BKASH_ACCOUNT_TYPE')
                 ]
             );
             return api_response($request, $info, 200, ['info' => $info]);
