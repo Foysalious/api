@@ -60,18 +60,18 @@ class SpLoanController extends Controller
             #dd($partner, $manager_resource, $profile, $basic_informations);
             $info = array(
                 'business_name' => $partner->name,
-                'business_type' => $basic_informations->company_type,
+                'business_type' => $partner->business_type,
                 'location' => $partner->address,
                 'establishment_year' => $basic_informations->establishment_year,
-                'full_time_employee' => 10,
-                'part_time_employee' => 100,
+                'full_time_employee' => $partner->full_time_employee,
+                'part_time_employee' => $partner->part_time_employee,
                 'business_expenses' => [
+                    'product_price' => 100,
                     'employee_salary' => 100,
                     'office_rent' => 100,
                     'utility_bills' => 100,
                     'marketing_cost' => 100,
-                    'other_costs' => 100,
-                    'price' => 100
+                    'other_costs' => 100
                 ],
                 'last_six_month_sell' => [
                     'avg_sell' => 100,
