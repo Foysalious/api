@@ -72,7 +72,23 @@ class MovieTicketManager
     {
         try {
             $seatStatus = $this->vendorManager->get(Actions::GET_THEATRE_SEAT_STATUS, ['DTMID' => $dtmid, 'slot' => $slot]);
-            return  $seatStatus->children()[0];
+            $seatStatus = $this->convertToJson($seatStatus->children()[0]);
+            $seat_classes = explode("|",$seatStatus->SeatClass);
+            $seat_prices = explode("|",$seatStatus->SeatClassTicketPrice);
+            $seats = array();
+            foreach($seat_classes as $index => $seat_class) {
+                $key_of_total_seats = 'Total_'.str_replace("-","_",$seat_class).'_Seat';
+                $key_of_available_seats = str_replace("-","_",$seat_class).'_Available_Seat';
+                $seat = array(
+                    'class' => $seat_class,
+                    'price' => $seat_prices[$index],
+                    'total_seats' => $seatStatus->{$key_of_total_seats},
+                    'available_seats' => $seatStatus->{$key_of_available_seats}
+                );
+                array_push($seats,$seat);
+            }
+            $seatStatus->seats = $seats;
+            return $seatStatus;
         } catch (GuzzleException $e) {
             throw $e;
         }
