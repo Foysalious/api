@@ -122,8 +122,8 @@ class MovieTicketController extends Controller
             $movieTicketRequest->setName($request->customer_name)->setEmail($request->customer_email)->setAmount($response->cost)->setMobile($request->customer_mobile)->setBlockBusterResponse($response);
             $vendor = $vendor->getById(1);
             $movieTicket->setAgent($agent)->setVendor($vendor)->buyTicket($movieTicketRequest);
-            return api_response($request, $bookingResponse, 200, ['status' => $bookingResponse
-            ]);
+            $bookingResponse->order_id = $movieTicket->getMovieTicketOrder()->id;
+            return api_response($request, $bookingResponse, 200, ['status' => $bookingResponse]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

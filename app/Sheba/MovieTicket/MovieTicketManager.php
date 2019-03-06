@@ -87,8 +87,12 @@ class MovieTicketManager
                 );
                 array_push($seats,$seat);
             }
-            $seatStatus->seats = $seats;
-            return $seatStatus;
+            $status = array(
+              'dtmsid' => $seatStatus->DTMSID,
+              'dtmid' => $seatStatus->DTMID,
+              'seats' => $seats
+            );
+            return $status;
         } catch (GuzzleException $e) {
             throw $e;
         }
