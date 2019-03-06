@@ -19,6 +19,7 @@ class SpLoanController extends Controller
             $manager_resource = $request->manager_resource;
             $profile = $manager_resource->profile;
             $basic_informations = $partner->basicInformations;
+            $bank_informations = $partner->bankInformations;
 
             #dd($partner, $manager_resource, $profile, $basic_informations);
             $info = array(
@@ -28,17 +29,16 @@ class SpLoanController extends Controller
                 'picture' => $profile->pro_pic,
                 'birthday' => $profile->dob,
                 'present_address' => $profile->address,
-                'permanent_address' => "Change",
-                'father_name' => $profile->father_name,
-                'spouse_name' => $profile->spouse_name,
-                'husband_name' => "Change",
-                'profession' => $profile->profession,
+                'permanent_address' =>$profile->permanent_address,
+                'father_name' => $manager_resource->father_name,
+                'spouse_name' => $manager_resource->spouse_name,
+                'occupation_lists' => constants('SUGGESTED_OCCUPATION'),
+                'occupation' => $profile->occupation,
                 'expenses' => [
-                    'family_cost_per_month' => "Change",
-                    'cost_per_month' => "Change",
-                    'total_asset' => "Change",
-                    'other_loan_installments_per_month' => "Change",
-                    'utility_bill' => "Change"
+                    'monthly_living_cost' => $profile->monthly_living_cost,
+                    'total_asset_amount' => $profile->total_asset_amount,
+                    'monthly_loan_installment_amount' => $profile->monthly_loan_installment_amount,
+                    'utility_bill_attachment' => $profile->utility_bill_attachment
                 ]
             );
             return api_response($request, $info, 200, ['info' => $info]);
