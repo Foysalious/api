@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
+use Sheba\Subscription\Customer\OrderStatuses;
 
 class CustomerSubscriptionController extends Controller
 {
@@ -42,7 +43,7 @@ class CustomerSubscriptionController extends Controller
                 $service_details_breakdown = $service_details->breakdown['0'];
                 $service = Service::find((int)$service_details_breakdown->id);
                 $schedules = collect(json_decode($subscription_order->schedules));
-
+                
                 $orders_list = [
                     'subscription_id' => $subscription_order->id,
                     "subscription_code" => $subscription_order->code(),
@@ -61,7 +62,7 @@ class CustomerSubscriptionController extends Controller
 
                     "subscription_period" => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
                     "completed_orders" => $served_orders->count() . '/' . $subscription_order->orders->count(),
-                    "is_active" => Carbon::parse($subscription_order->billing_cycle_end) >= Carbon::today() ? 1 : 0,
+                    "is_active" => $subscription_order->status == OrderStatuses::ACCEPTED ? 1 : 0,
                     "partner" =>
                         [
                             "id" => $subscription_order->partner_id,
@@ -153,7 +154,7 @@ class CustomerSubscriptionController extends Controller
 
                 'customer_name' => $subscription_order->customer->profile->name,
                 'customer_mobile' => $subscription_order->customer->profile->mobile,
-                #'address' => $subscription_order->deliveryAddress->address,
+                'address' => $subscription_order->deliveryAddress->address,
                 'location_name' => $subscription_order->location->name,
                 #'ordered_for' => $subscription_order->deliveryAddress->name,
 

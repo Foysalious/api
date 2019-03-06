@@ -516,5 +516,20 @@ return [
         'pending' => 'pending',
         'successful' => 'successful',
         'failed' => 'failed',
+    ],
+    'BANK_ACCOUNT_TYPE' => [
+        'savings' => ['en' => 'savings', 'bn' => 'সেভিংস'],
+        'current' => ['en' => 'current', 'bn' => 'কারেন্ট']
+    ],
+    'BKASH_ACCOUNT_TYPE' => [
+        'personal' => ['en' => 'personal', 'bn' => 'পার্সোনাল'],
+        'agent' => ['en' => 'agent', 'bn' => 'এজেন্ট'],
+        'merchant' => ['en' => 'merchant', 'bn' => 'মার্চেন্ট']
+    ],
+    'SUGGESTED_OCCUPATION' => [
+        'government_service' => ['en' => 'government_service', 'bn' => 'গভর্নমেন্ট সার্ভিস '],
+        'private_service' => ['en' => 'private_service', 'bn' => 'প্রাইভেট সার্ভিস'],
+        'business' => ['en' => 'business', 'bn' => 'বিজনেস'],
+        'other' => ['en' => 'other', 'bn' => 'অন্যান্য']
     ]
 ];

@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\Resource;
 use App\Repositories\CommentRepository;
@@ -309,7 +307,7 @@ class PartnerOrderController extends Controller
             $manager_resource = $request->manager_resource;
             $job = $partner_order->jobs->whereIn('status', array(constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Serve_Due'], constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process']))->first();
             if ($job == null) return api_response($request, null, 403, ['message' => "No valid job exists"]);
-            $partnerListRequest->setLocation($partner_order->order->location_id)->setScheduleDate($job->schedule_date)->setScheduleTime($job->preferred_time_start . '-' . $job->preferred_time_end)->prepareObject();
+            $partnerListRequest->setRequest($request)->setLocation($partner_order->order->location_id)->setScheduleDate($job->schedule_date)->setScheduleTime($job->preferred_time_start . '-' . $job->preferred_time_end)->prepareObject();
             $partner_list = new PartnerList();
             $partner_list->setPartnerListRequest($partnerListRequest);
             $partner_list->find($partner->id);

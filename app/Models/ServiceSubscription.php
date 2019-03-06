@@ -49,7 +49,7 @@ class ServiceSubscription extends Model
         if($this->service->unit)
             $unit =$this->service->unit;
 
-        if($discount_offer->cap === 0.0) $offer_short_text.=" upto ৳$discount_offer->cap";
+        if($discount_offer->cap != 0) $offer_short_text.=" upto ৳$discount_offer->cap";
         else $offer_short_text .= $amount;
         $offer_long_text = 'Save '.$amount;
 
@@ -62,7 +62,7 @@ class ServiceSubscription extends Model
         $offer_long_text.=' by subscribing!';
 
         $discount_amount_for_homepage = '';
-        if($discount_offer->cap === 0.0) $discount_amount_for_homepage.="  ৳$discount_offer->cap";
+        if($discount_offer->cap != 0) $discount_amount_for_homepage.="  ৳$discount_offer->cap";
         else $discount_amount_for_homepage .= $amount;
         if($this->service->unit)
         {

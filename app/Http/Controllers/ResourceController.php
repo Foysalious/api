@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\PartnerResource;
 use App\Models\Profile;
@@ -73,12 +71,7 @@ class ResourceController extends Controller
                 $review['order_code'] = $review->job->partner_order->code();
                 removeRelationsAndFields($review);
             }
-            $info = array(
-                'rating' => $resource['rating'],
-                'total_reviews' => $reviews->count(),
-                'reviews' => array_slice($reviews->toArray(), $offset, $limit),
-                'breakdown' => $breakdown
-            );
+            $info = array('rating' => $resource['rating'], 'total_reviews' => $reviews->count(), 'reviews' => array_slice($reviews->toArray(), $offset, $limit), 'breakdown' => $breakdown);
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -107,15 +100,16 @@ class ResourceController extends Controller
             $this->validate($request, [
                 'mobile' => 'required',
                 'is_trained' => 'boolean',
-                'certificates' => 'required',
+                'certificates' => 'required|array'
             ]);
 
             if ($request->ip() != self::REPTO_IP) {
                 $message = 'Your IP Is Incorrect';
                 return api_response($request, $message, 500, ['message' => $message]);
             }
+
             $profile = Profile::where('mobile', $request->mobile)->first();
-            $profile->resource->update(['is_trained' => !empty($request->certificates) ? 1 : 0]);
+            $profile->resource->update(['is_trained' => count($request->certificates) > 0 ? 1 : 0]);
 
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {

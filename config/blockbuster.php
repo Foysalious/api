@@ -1,5 +1,4 @@
 <?php
-
 return [
     'username_dev' => env('BLOCKBUSTER_USER_NAME_DEV'),
     'password_dev' => env('BLOCKBUSTER_USER_PASSWORD_DEV'),

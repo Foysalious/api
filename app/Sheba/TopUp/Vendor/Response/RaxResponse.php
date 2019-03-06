@@ -1,6 +1,4 @@
-<?php
-
-namespace Sheba\TopUp\Vendor\Response;
+<?php namespace Sheba\TopUp\Vendor\Response;
 
 class RaxResponse extends TopUpResponse
 {
@@ -13,7 +11,7 @@ class RaxResponse extends TopUpResponse
 
     public function hasSuccess(): bool
     {
-        return $this->response->status_code == 200;
+        return $this->response && $this->response->TXNSTATUS == 200;
     }
 
     public function getSuccess(): TopUpSuccessResponse
@@ -32,6 +30,4 @@ class RaxResponse extends TopUpResponse
         $topup_error->errorMessage = isset($this->response->MESSAGE) ? $this->response->MESSAGE : 'Error message not given.';
         return $topup_error;
     }
-
-
 }

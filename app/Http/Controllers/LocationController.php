@@ -46,16 +46,12 @@ class LocationController extends Controller
                 $locations = Location::select('id', 'name')->where('is_published_for_partner', 1)->orderBy('name')->get();
                 return response()->json(['locations' => $locations, 'code' => 200, 'msg' => 'successful']);
             }
-            $locations = Location::select('id', 'name')->where([
+            $locations = Location::select('id', 'name', 'geo_informations')->where([
                 ['name', 'NOT LIKE', '%Rest%'],
-                ['publication_status', 1]
-            ])->orderBy('name')->get();
-
-            Location::select('id', 'name')->where([
-                ['name', 'LIKE', '%Rest%'],
-                ['publication_status', 1]
-            ])->get()->each(function ($location, $key) use ($locations) {
-                $locations->push($location);
+                ['publication_status', 1],
+                ['geo_informations', 'LIKE', '%polygon%']
+            ])->orderBy('name')->get()->each(function ($location) {
+                array_forget($location, 'geo_informations');
             });
             return response()->json(['locations' => $locations, 'code' => 200, 'msg' => 'successful']);
         } catch (\Throwable $e) {

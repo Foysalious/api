@@ -1,15 +1,16 @@
 <?php namespace Sheba\MovieTicket;
 
 use GuzzleHttp\Exception\GuzzleException;
-use Sheba\MovieTicket\Vendor\BlockBuster;
+use Sheba\MovieTicket\Vendor\BlockBuster\BlockBuster;
+use Sheba\MovieTicket\Vendor\BlockBuster\VendorManager;
 
 class MovieTicketManager
 {
-    /** @var BlockBuster\VendorManager $vendorManager **/
+    /** @var VendorManager $vendorManager **/
     private $vendorManager;
     private $movieTicket;
 
-    public function __construct(BlockBuster\VendorManager $vendorManager, MovieTicket $movieTicket)
+    public function __construct(VendorManager $vendorManager, MovieTicket $movieTicket)
     {
        $this->vendorManager = $vendorManager;
        $this->movieTicket = $movieTicket;
@@ -25,6 +26,7 @@ class MovieTicketManager
         $movies=[];
         foreach ($availableMovies->children() as $child){
             $child = json_decode(json_encode($child),true);
+            $child['Banner'] = config('blockbuster.image_server_url').$child['Banner'];
             if($child['MovieStatus'] === "1")
                 $movies[]=$child;
         }
@@ -44,7 +46,16 @@ class MovieTicketManager
             $availableTheatres = $this->vendorManager->get(Actions::GET_THEATRE_LIST, ['MovieID' => $movie_id, 'RequestDate' => $request_date]);
             $theatres=[];
             foreach ($availableTheatres->children() as $child){
-                $theatres[]=$child;
+                $child_parsed = $this->convertToJson($child);
+                $slots = [];
+                for($i = 1 ; $i<=5; $i++) {
+                    $key = 'Show_0'.$i;
+                    $slot = $child_parsed->{$key};
+                    if($slot !== 'No-Show')
+                        array_push($slots,['key' => $key, 'slot' =>$slot]);
+                }
+                $child_parsed->slots = $slots;
+                $theatres[]=$child_parsed;
             }
             return  $theatres;
         } catch (GuzzleException $e) {
@@ -62,7 +73,27 @@ class MovieTicketManager
     {
         try {
             $seatStatus = $this->vendorManager->get(Actions::GET_THEATRE_SEAT_STATUS, ['DTMID' => $dtmid, 'slot' => $slot]);
-            return  $seatStatus->children()[0];
+            $seatStatus = $this->convertToJson($seatStatus->children()[0]);
+            $seat_classes = explode("|",$seatStatus->SeatClass);
+            $seat_prices = explode("|",$seatStatus->SeatClassTicketPrice);
+            $seats = array();
+            foreach($seat_classes as $index => $seat_class) {
+                $key_of_total_seats = 'Total_'.str_replace("-","_",$seat_class).'_Seat';
+                $key_of_available_seats = str_replace("-","_",$seat_class).'_Available_Seat';
+                $seat = array(
+                    'class' => $seat_class,
+                    'price' => round((float) $seat_prices[$index],2),
+                    'total_seats' => (int) $seatStatus->{$key_of_total_seats},
+                    'available_seats' => (int) $seatStatus->{$key_of_available_seats}
+                );
+                array_push($seats,$seat);
+            }
+            $status = array(
+              'dtmsid' => $seatStatus->DTMSID,
+              'dtmid' => $seatStatus->DTMID,
+              'seats' => $seats
+            );
+            return $status;
         } catch (GuzzleException $e) {
             throw $e;
         }
@@ -95,4 +126,9 @@ class MovieTicketManager
             throw $e;
         }
     }
+
+    private function  convertToJson($response) {
+        return json_decode(json_encode($response));
+    }
+
 }

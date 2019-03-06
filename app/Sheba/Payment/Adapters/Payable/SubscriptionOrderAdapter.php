@@ -23,7 +23,7 @@ class SubscriptionOrderAdapter implements PayableAdapter
         $payable->user_type = "App\\Models\\Customer";
         $payable->amount = (double)json_decode($this->subscriptionOrder->service_details)->discounted_price;
         $payable->completion_type = "order";
-        $payable->success_url = config('sheba.front_url') . '/orders/' . $this->subscriptionOrder->id;
+        $payable->success_url = config('sheba.front_url') . '/subscription-orders/' . $this->subscriptionOrder->id;
         $payable->created_at = Carbon::now();
         $payable->save();
         return $payable;

@@ -3,6 +3,7 @@
 use App\Models\Category;
 use App\Models\HyperLocal;
 
+use App\Models\Location;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
@@ -27,18 +28,29 @@ class HomePageSettingController extends Controller
             ]);
             $setting_key = null;
             $location = '';
+
             if ($request->has('location')) {
                 $location = (int)$request->location;
             } elseif ($request->has('lat') && $request->has('lng')) {
                 $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
                 if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
             }
-            if ($request->has('portal') && $request->has('screen')) {
+
+            /**
+             * TEMPORARY
+             * if ($request->has('portal') && $request->has('screen')) {
                 $setting_key = 'ScreenSetting::' . snake_case(camel_case($request->portal)) . '_' . $request->screen . "_" . $location;
             } else {
                 $setting_key = 'ScreenSetting::customer_app_home_4';
             }
-            $settings = $store->get($setting_key);
+            $settings = $store->get($setting_key);*/
+
+            $city = Location::find($location)->city_id;
+            $location_id = ($city == 1) ? 4 : 120;
+            $portal = ($request->get('portal') == 'customer-app') ? 'app' : 'web';
+
+            $settings = file_get_contents(base_path() . '/public/screen_setting/screen_setting_' . $portal . '_' . $location_id . '.json');
+
             if ($settings) {
                 $settings = json_decode($settings);
                 if ($request->portal == 'customer-portal') $settings = $this->formatWeb($settings, $location);

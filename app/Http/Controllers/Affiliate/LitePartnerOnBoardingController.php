@@ -81,7 +81,7 @@ class LitePartnerOnBoardingController extends Controller
             $source = ['lat' => $request->get('lat'), 'lng' => $request->get('lng')];
             $partners = $affiliate->moderatedPartners->map(function (Partner $partner) use ($repo, $source) {
                 return $repo->mapForModerationApi($partner, $source);
-            })->sortBy('distance')->forPage(($offset - 1), $limit)->values();
+            })->sortBy('distance')->forPage($offset + 1, $limit)->values();
             return api_response($request, $partners, 200, ['partners' => $partners]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -112,11 +112,10 @@ class LitePartnerOnBoardingController extends Controller
             $partner = Partner::find($request->partner_id);
             $affiliate = $repo->moderatedPartner($request, 'pending');
             if (!is_null($partner)) {
-                if($affiliate->id == $partner->moderator_id) {
-                    $partner = $repo->mapForModerationApi($partner, null , true);
+                if ($affiliate->id == $partner->moderator_id) {
+                    $partner = $repo->mapForModerationApi($partner, null, true);
                     return api_response($request, $partner, 200, ['name' => $partner]);
-                }
-                else api_response($request, [], 403, ['message' => 'Partner is not moderated by you.']);
+                } else api_response($request, [], 403, ['message' => 'Partner is not moderated by you.']);
             }
             return api_response($request, [], 404, ['message' => 'Partner not found.']);
         } catch (ValidationException $e) {

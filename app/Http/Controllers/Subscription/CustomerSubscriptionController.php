@@ -163,9 +163,9 @@ class CustomerSubscriptionController extends Controller
 
                     'customer_name' => $subscription_order->customer->profile->name,
                     'customer_mobile' => $subscription_order->customer->profile->mobile,
-                    #'address' => $subscription_order->deliveryAddress->address,
-                    'location_name' => $subscription_order->location->name,
-                    #'ordered_for' => $subscription_order->deliveryAddress->name,
+                    'address' => $subscription_order->deliveryAddress ? $subscription_order->deliveryAddress->address : "",
+                    'location_name' => $subscription_order->location ? $subscription_order->location->name : "",
+                    'ordered_for' => $subscription_order->deliveryAddress ? $subscription_order->deliveryAddress->name : "",
 
                     "total_orders" => $served_orders->count(),
                     "preferred_time" => $schedules->first()->time,
@@ -185,6 +185,7 @@ class CustomerSubscriptionController extends Controller
             }
             return api_response($request, $subscription_orders_list, 200, ['subscription_orders_list' => $subscription_orders_list]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -263,7 +264,7 @@ class CustomerSubscriptionController extends Controller
                 'customer_name' => $subscription_order->customer->profile->name,
                 'customer_mobile' => $subscription_order->customer->profile->mobile,
                 'address' => $subscription_order->deliveryAddress->address,
-                'location_name' => $subscription_order->location->name,
+                'location_name' => $subscription_order->location ?  $subscription_order->location->name : "",
                 'ordered_for' => $subscription_order->deliveryAddress->name,
 
                 "billing_cycle" => $subscription_order->billing_cycle,

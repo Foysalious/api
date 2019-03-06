@@ -1,4 +1,4 @@
-<?php namespace Sheba\MovieTicket\Vendor;
+<?php namespace Sheba\MovieTicket\Vendor\BlockBuster;
 
 use GuzzleHttp\Client;
 use Sheba\MovieTicket\Actions;
@@ -7,6 +7,7 @@ use Sheba\MovieTicket\Response\MovieResponse;
 use Sheba\MovieTicket\TransactionGenerator;
 use Sheba\MovieTicket\Vendor\BlockBuster\KeyEncryptor;
 use GuzzleHttp\Exception\GuzzleException;
+use Sheba\MovieTicket\Vendor\Vendor;
 
 class BlockBuster extends Vendor
 {
