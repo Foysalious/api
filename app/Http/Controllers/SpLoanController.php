@@ -125,19 +125,21 @@ class SpLoanController extends Controller
             $bank_informations = $partner->bankInformations;
 
             $info = array(
-                'name' => $bank_informations->acc_name,
-                'mobile' => $basic_informations->acc_no,
-                'relation' => $partner->bank_name,
+                'name' => $profile->acc_name,
+                'mobile' => $profile->acc_no,
+                'relation' => $profile->nominee_relation,
                 'picture' => $profile->pro_pic,
-                'nid_front_image' => $manager_resource->nid_image,
-                'nid_back_image' => $manager_resource->nid_image,
+
+                'nid_front_image' => $profile->nid_image,
+                'nid_back_image' => $profile->nid_image,
                 'granter' => [
-                    'name' => $bank_informations->acc_name,
-                    'mobile' => $basic_informations->acc_no,
-                    'relation' => $partner->bank_name,
+                    'name' => $profile->acc_name,
+                    'mobile' => $profile->acc_no,
+                    'relation' => $profile->granter_relation,
                     'picture' => $profile->pro_pic,
-                    'nid_front_image' => $manager_resource->nid_image,
-                    'nid_back_image' => $manager_resource->nid_image,
+                    
+                    'nid_front_image' => $profile->nid_image,
+                    'nid_back_image' => $profile->nid_image,
                 ]
             );
             return api_response($request, $info, 200, ['info' => $info]);
