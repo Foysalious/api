@@ -81,9 +81,9 @@ class MovieTicketManager
                 $key_of_available_seats = str_replace("-","_",$seat_class).'_Available_Seat';
                 $seat = array(
                     'class' => $seat_class,
-                    'price' => $seat_prices[$index],
-                    'total_seats' => $seatStatus->{$key_of_total_seats},
-                    'available_seats' => $seatStatus->{$key_of_available_seats}
+                    'price' => round((float) $seat_prices[$index],2),
+                    'total_seats' => (int) $seatStatus->{$key_of_total_seats},
+                    'available_seats' => (int) $seatStatus->{$key_of_available_seats}
                 );
                 array_push($seats,$seat);
             }
