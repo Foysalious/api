@@ -28,9 +28,19 @@ class PartnerRoute
 
             $api->group(['prefix' => 'loans'], function ($api) {
                 $api->get('/personal-info', 'SpLoanController@getPersonalInformation');
-                $api->post('/', 'SpLoanController@storePersonalInformation');
+                $api->post('/personal-info', 'SpLoanController@storePersonalInformation');
+
                 $api->get('/business-info', 'SpLoanController@getBusinessInformation');
-                $api->post('/upgrade', 'SpLoanController@update');
+                $api->post('/business-info', 'SpLoanController@storeBusinessInformation');
+
+                $api->get('/finance-info', 'SpLoanController@getFinanceInformation');
+                $api->post('/finance-info', 'SpLoanController@storeFusinessInformation');
+
+                $api->get('/nominee-info', 'SpLoanController@getNomineeInformation');
+                $api->post('/nominee-info', 'SpLoanController@storeNomineeInformation');
+
+                $api->get('/documents', 'SpLoanController@getDocuments');
+                $api->post('/documents', 'SpLoanController@storeDocuments');
             });
 
             $api->group(['prefix' => 'categories'], function ($api) {
