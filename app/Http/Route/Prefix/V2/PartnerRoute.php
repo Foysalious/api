@@ -41,6 +41,8 @@ class PartnerRoute
 
                 $api->get('/documents', 'SpLoanController@getDocuments');
                 $api->post('/documents', 'SpLoanController@storeDocuments');
+
+                $api->post('picture', 'SpLoanController@updatePicture');
             });
 
             $api->group(['prefix' => 'categories'], function ($api) {

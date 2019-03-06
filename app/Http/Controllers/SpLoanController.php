@@ -13,13 +13,12 @@ use DB;
 class SpLoanController extends Controller
 {
     use ModificationFields;
-    private $profileRepo;
-    private $fileRepo;
 
-    public function __construct(ProfileRepository $profile_repository, FileRepository $file_repository)
+    private $fileRepository;
+
+    public function __construct(FileRepository $file_repository)
     {
-        $this->profileRepo = $profile_repository;
-        $this->fileRepo = $file_repository;
+        $this->fileRepository = $file_repository;
     }
 
     public function getPersonalInformation($partner, Request $request)
@@ -224,6 +223,44 @@ class SpLoanController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function updatePicture($partner, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'picture' => 'required|mimes:jpeg,png'
+            ]);
+            $manager_resource = $request->manager_resource;
+            $profile = $manager_resource->profile;
+
+            $photo = $request->file('picture');
+
+            if (basename($profile->pro_pic) != 'default.jpg') {
+                $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
+                $this->fileRepository->deleteFileFromCDN($filename);
+            }
+           # $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id . '.' . $photo->extension();
+            $picture_link = $this->fileRepository->uploadToCDN($this->makeProfilePicName($profile, $photo), $photo, 'images/profiles/');
+            if ($picture_link != false) {
+                $profile->pro_pic = $picture_link;
+                $profile->update();
+                return api_response($request, $profile, 200, ['picture' => $profile->pro_pic]);
+            } else {
+                return api_response($request, null, 500);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    private function makeProfilePicName($profile, $photo)
+    {
+        return $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id . '.' . $photo->extension();
     }
 
 }
