@@ -128,35 +128,22 @@ class SpLoanController extends Controller
     public function updateBusinessInformation($partner, Request $request)
     {
         try {
-
             $partner = $request->partner;
-            $manager_resource = $request->manager_resource;
-            $profile = $manager_resource->profile;
             $basic_informations = $partner->basicInformations;
-            $bank_informations = $partner->bankInformations;
+            $partner_data =[
+                'business_type' => $request->business_type,
+                'address' => $request->address,
+                'full_time_employee' => $request->full_time_employee,
+                'part_time_employee' => $request->part_time_employee,
+                'sales_information' => $request->sales_information,
+                'business_additional_information' => $request->business_additional_information,
+            ];
+            $partner_basic_data = [
+                'establishment_year' => $request->establishment_year,
+            ];
 
-            $info = array(
-                'business_type' => $partner->business_type,
-                'location' => $partner->address,
-                'establishment_year' => $basic_informations->establishment_year,
-                'full_time_employee' => $partner->full_time_employee,
-                'part_time_employee' => $partner->part_time_employee,
-                'business_expenses' => [
-                    'product_price' => 100,
-                    'employee_salary' => 100,
-                    'office_rent' => 100,
-                    'utility_bills' => 100,
-                    'marketing_cost' => 100,
-                    'other_costs' => 100
-                ],
-                'last_six_month_sell' => [
-                    'avg_sell' => 100,
-                    'min_sell' => 100,
-                    'max_sell' => 100
-                ]
-            );
-            $profile->update($this->withBothModificationFields($info));
-            $manager_resource->update($this->withBothModificationFields($info));
+            $partner->update($this->withBothModificationFields($partner_data));
+            $basic_informations->update($this->withBothModificationFields($partner_basic_data));
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
