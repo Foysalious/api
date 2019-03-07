@@ -36,7 +36,7 @@ class ComplainController extends Controller
 
     public function index(Request $request, $job)
     {
-
+        $job = $job ?: $request->job_id;
         try {
             $this->validate($request, [
                 'for' => 'required|in:customer,partner'
@@ -44,18 +44,19 @@ class ComplainController extends Controller
             $job = Job::find($job);
             $job_status = $this->getJobStatus($job);
             $accessor = $this->accessorRepo->findByNameWithPublishedCategoryAndPreset(ucwords($request->for));
-            $accessor->where('subCategories', 1);
             $final_complains = collect();
             $final_presets = collect();
             $presets = $accessor->complainPresets->filter(function ($q) use ($job) {
-                return $q->subCategories->filter(function($cat)use($job){return $job->category_id==$cat->id;})->count()>0;
+                return $q->subCategories->filter(function ($cat) use ($job) {
+                        return $job->category_id == $cat->id;
+                    })->count() > 0;
             });
 
             foreach ($presets as $preset) {
                 $final_presets->push(collect($preset)->only(['id', 'name', 'category_id']));
             }
-            $categories=$accessor->complainCategories->filter(function($cat) use($job_status){
-                return $job_status==$cat->order_status;
+            $categories = $accessor->complainCategories->filter(function ($cat) use ($job_status) {
+                return $job_status == $cat->order_status;
             });
             foreach ($categories as $category) {
                 $final = collect($category)->only(['id', 'name']);
