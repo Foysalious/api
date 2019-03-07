@@ -1,25 +1,21 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use Illuminate\Validation\ValidationException;
-use App\Repositories\ProfileRepository;
 use App\Repositories\FileRepository;
+use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
-use Sheba\ModificationFields;
 use DB;
 
 class SpLoanController extends Controller
 {
     use ModificationFields;
-    private $profileRepo;
-    private $fileRepo;
 
-    public function __construct(ProfileRepository $profile_repository, FileRepository $file_repository)
+    private $fileRepository;
+
+    public function __construct(FileRepository $file_repository)
     {
-        $this->profileRepo = $profile_repository;
-        $this->fileRepo = $file_repository;
+        $this->fileRepository = $file_repository;
     }
 
     public function getPersonalInformation($partner, Request $request)
@@ -59,7 +55,7 @@ class SpLoanController extends Controller
         }
     }
 
-    public function storePersonalInformation($partner, Request $request)
+    public function updatePersonalInformation($partner, Request $request)
     {
         try {
 
@@ -125,6 +121,34 @@ class SpLoanController extends Controller
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function updateBusinessInformation($partner, Request $request)
+    {
+        try {
+            $partner = $request->partner;
+            $basic_informations = $partner->basicInformations;
+            $partner_data =[
+                'business_type' => $request->business_type,
+                'address' => $request->address,
+                'full_time_employee' => $request->full_time_employee,
+                'part_time_employee' => $request->part_time_employee,
+                'sales_information' => $request->sales_information,
+                'business_additional_information' => $request->business_additional_information,
+            ];
+            $partner_basic_data = [
+                'establishment_year' => $request->establishment_year,
+            ];
+
+            $partner->update($this->withBothModificationFields($partner_data));
+            $basic_informations->update($this->withBothModificationFields($partner_basic_data));
+            return api_response($request, 1, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
     }
@@ -224,6 +248,52 @@ class SpLoanController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function updateProfilePictures($partner, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'picture' => 'required|mimes:jpeg,png'
+            ]);
+            $manager_resource = $request->manager_resource;
+            $profile = $manager_resource->profile;
+            $image_for = $request->image_for;
+
+            $photo = $request->file('picture');
+            if (basename($profile->image_for) != 'default.jpg') {
+                $filename = substr($profile->{$image_for}, strlen(config('sheba.s3_url')));
+                $this->deleteOldImage($filename);
+            }
+
+            $picture_link = $this->fileRepository->uploadToCDN($this->makePicName($profile, $photo, $image_for), $photo,'images/profile/');
+
+            if ($picture_link != false) {
+                $data[$image_for] = $picture_link;
+                $profile->update($this->withUpdateModificationField($data));
+
+                return api_response($request, $profile, 200, ['picture' => $profile->{$image_for}]);
+            } else {
+                return api_response($request, null, 500);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    private function deleteOldImage($filename)
+    {
+        $old_image = substr($filename, strlen(config('sheba.s3_url')) );
+        $this->fileRepository->deleteFileFromCDN($old_image);
+    }
+
+    private function makePicName($profile, $photo, $image_for = 'profile')
+    {
+        return $filename = Carbon::now()->timestamp . '_'.$image_for.'_image_' . $profile->id . '.' . $photo->extension();
     }
 
 }
