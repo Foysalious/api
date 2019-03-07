@@ -34,19 +34,30 @@ class ComplainController extends Controller
         $this->complainRepo = $complain;
     }
 
-    public function index(Request $request)
+    public function index(Request $request, $job)
     {
+
         try {
             $this->validate($request, [
                 'for' => 'required|in:customer,partner'
             ]);
+            $job = Job::find($job);
+            $job_status = $this->getJobStatus($job);
             $accessor = $this->accessorRepo->findByNameWithPublishedCategoryAndPreset(ucwords($request->for));
+            $accessor->where('subCategories', 1);
             $final_complains = collect();
             $final_presets = collect();
-            foreach ($accessor->complainPresets as $preset) {
+            $presets = $accessor->complainPresets->filter(function ($q) use ($job) {
+                return $q->subCategories->filter(function($cat)use($job){return $job->category_id==$cat->id;})->count()>0;
+            });
+
+            foreach ($presets as $preset) {
                 $final_presets->push(collect($preset)->only(['id', 'name', 'category_id']));
             }
-            foreach ($accessor->complainCategories as $category) {
+            $categories=$accessor->complainCategories->filter(function($cat) use($job_status){
+                return $job_status==$cat->order_status;
+            });
+            foreach ($categories as $category) {
                 $final = collect($category)->only(['id', 'name']);
                 $final->put('presets', $final_presets->where('category_id', $category->id)->values()->all());
                 $final_complains->push($final);
@@ -61,6 +72,15 @@ class ComplainController extends Controller
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
+        }
+    }
+
+    private function getJobStatus($job)
+    {
+        if ($job->status === 'Cancelled' || $job->status === 'Closed') {
+            return 'closed';
+        } else {
+            return 'open';
         }
     }
 
