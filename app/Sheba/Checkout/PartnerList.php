@@ -590,4 +590,15 @@ class PartnerList
             ])
         );
     }
+
+    public function removeKeysFromPartner()
+    {
+        return $this->partners->each(function ($partner, $key) {
+            $partner['rating'] = round($partner->rating, 2);
+            array_forget($partner, 'wallet');
+            array_forget($partner, 'package_id');
+            array_forget($partner, 'geo_informations');
+            removeRelationsAndFields($partner);
+        });
+    }
 }

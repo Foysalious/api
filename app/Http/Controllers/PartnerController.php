@@ -562,23 +562,12 @@ class PartnerController extends Controller
             if ($partner_list->hasPartners) {
                 $partner_list->addPricing();
                 $partner_list->addInfo();
-
                 if ($request->has('filter') && $request->filter == 'sheba') {
                     $partner_list->sortByShebaPartnerPriority();
                 } else {
-                    $start = microtime(true);
                     $partner_list->sortByShebaSelectedCriteria();
-                    $time_elapsed_secs = microtime(true) - $start;
-                    //dump("sort by sheba criteria: " . $time_elapsed_secs * 1000);
                 }
-                $partners = $partner_list->partners;
-                $partners->each(function ($partner, $key) {
-                    $partner['rating'] = round($partner->rating, 2);
-                    array_forget($partner, 'wallet');
-                    array_forget($partner, 'package_id');
-                    array_forget($partner, 'geo_informations');
-                    removeRelationsAndFields($partner);
-                });
+                $partners = $partner_list->removeKeysFromPartner();
                 return api_response($request, $partners, 200, ['partners' => $partners->values()->all()]);
             }
             return api_response($request, null, 404, ['message' => 'No partner found.']);
