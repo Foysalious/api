@@ -105,6 +105,7 @@ class PartnerList
             $q->where('categories.id', $this->partnerListRequest->selectedCategory->id);
         }]);
         $this->filterByOption();
+        $this->partners->load([]);
         $this->partners = $this->partners->filter(function ($partner) {
             return $this->hasResourcesForTheCategory($partner);
         });
@@ -167,8 +168,11 @@ class PartnerList
             }
         })->whereDoesntHave('leaves', function ($q) {
             $q->where('end', null)->orWhere([['start', '<=', Carbon::now()], ['end', '>=', Carbon::now()->addDays(7)]]);
-        })->with(['handymanResources' => function ($q) use ($isNotLite) {
-            if ($isNotLite) {
+        })->with(['handymanResources' => function ($q) {
+            $q->selectRaw('count(distinct resources.id) as total_experts, partner_id')
+                ->join('category_partner_resource', 'category_partner_resource.partner_resource_id', '=', 'partner_resource.id')
+                ->where('category_partner_resource.category_id', $this->partnerListRequest->selectedCategory->id)->groupBy('partner_id');
+            if ($this->isNotLite) {
                 $q->verified();
             }
         }])->select('partners.id', 'partners.current_impression', 'partners.geo_informations', 'partners.address', 'partners.name',
@@ -185,16 +189,17 @@ class PartnerList
 
     private function hasResourcesForTheCategory($partner)
     {
-        $partner_resource_ids = [];
-        $partner->handymanResources->map(function ($resource) use (&$partner_resource_ids) {
-            $partner_resource_ids[$resource->pivot->id] = $resource;
-        });
-        $result = [];
-        collect(DB::table('category_partner_resource')->select('partner_resource_id')->whereIn('partner_resource_id', array_keys($partner_resource_ids))
-            ->where('category_id', $this->partnerListRequest->selectedCategory->id)->get())->pluck('partner_resource_id')->each(function ($partner_resource_id) use ($partner_resource_ids, &$result) {
-            $result[] = $partner_resource_ids[$partner_resource_id];
-        });
-        return count($result) > 0 ? 1 : 0;
+//        $partner_resource_ids = [];
+//        $partner->handymanResources->map(function ($resource) use (&$partner_resource_ids) {
+//            $partner_resource_ids[$resource->pivot->id] = $resource;
+//        });
+//        $result = [];
+//        collect(DB::table('category_partner_resource')->select('partner_resource_id')->whereIn('partner_resource_id', array_keys($partner_resource_ids))
+//            ->where('category_id', $this->partnerListRequest->selectedCategory->id)->get())->pluck('partner_resource_id')->each(function ($partner_resource_id) use ($partner_resource_ids, &$result) {
+//            $result[] = $partner_resource_ids[$partner_resource_id];
+//        });
+        $handyman_resources = $partner->handymanResources->first();
+        return $handyman_resources && (int)$handyman_resources->total_experts > 0 ? 1 : 0;
     }
 
     private function getContactNumber($partner)
@@ -404,10 +409,6 @@ class PartnerList
                 ->leftJoin('review_question_answer', 'reviews.id', '=', 'review_question_answer.review_id')
                 ->where('category_id', $this->partnerListRequest->selectedCategory->id)
                 ->groupBy('reviews.partner_id');
-        }, 'handymanResources' => function ($q) {
-            $q->selectRaw('count(distinct resources.id) as total_experts, partner_id')
-                ->verified()->join('category_partner_resource', 'category_partner_resource.partner_resource_id', '=', 'partner_resource.id')
-                ->where('category_partner_resource.category_id', $this->partnerListRequest->selectedCategory->id)->groupBy('partner_id');
         }]);
         foreach ($this->partners as $partner) {
             $partner['total_jobs'] = $partner->jobs->first() ? $partner->jobs->first()->total_completed_orders : 0;
