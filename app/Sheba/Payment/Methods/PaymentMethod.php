@@ -18,4 +18,6 @@ abstract class PaymentMethod
     abstract public function init(Payable $payable): Payment;
 
     abstract public function validate(Payment $payment);
+
+    abstract public function token(Payment $payment);
 }

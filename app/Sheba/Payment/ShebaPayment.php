@@ -42,4 +42,9 @@ class ShebaPayment
         }
         return $payment;
     }
+
+    public function token(Payment $payment)
+    {
+        $payment = $this->method->token($payment);
+    }
 }
