@@ -86,4 +86,15 @@ class BkashController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function token($paymentID, Request $request)
+    {
+        try {
+            $payment = Payment::where('transaction_id', $request->paymentID)->valid()->first();
+            (new ShebaPayment('bkash'))->token($payment);
+            dd($payment);
+        } catch (\Throwable $e) {
+            dd($e);
+        }
+    }
 }
