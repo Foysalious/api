@@ -192,7 +192,9 @@ class BlockBuster extends Vendor
     private function getMovieListResponse($response)
     {
         if($response->api_validation && $response->api_validation->status==="ok") {
-            return $response->api_response->movie_list;
+            if($response->api_response->status === "ok")
+                return $response->api_response->movie_list;
+            return $response->api_response;
         }
         throw new \Exception('Server error');
     }
@@ -205,7 +207,10 @@ class BlockBuster extends Vendor
     private function getTheatreListResponse($response)
     {
         if($response && $response->api_validation && $response->api_validation->status === "ok"){
-            return $response->api_response->movie_schedule;
+            if($response->api_response->status === "ok")
+                return $response->api_response->movie_schedule;
+            else
+                $response->api_response;
         }
         throw new \Exception('Server error');
     }
