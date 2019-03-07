@@ -28,19 +28,22 @@ class PartnerRoute
 
             $api->group(['prefix' => 'loans'], function ($api) {
                 $api->get('/personal-info', 'SpLoanController@getPersonalInformation');
-                $api->post('/personal-info', 'SpLoanController@storePersonalInformation');
+                $api->post('/personal-info', 'SpLoanController@updatePersonalInformation');
 
                 $api->get('/business-info', 'SpLoanController@getBusinessInformation');
-                $api->post('/business-info', 'SpLoanController@getBusinessInformation');
+                $api->post('/business-info', 'SpLoanController@updateBusinessInformation');
 
                 $api->get('/finance-info', 'SpLoanController@getFinanceInformation');
-                $api->post('/finance-info', 'SpLoanController@getFusinessInformation');
+                $api->post('/finance-info', 'SpLoanController@updateFusinessInformation');
 
                 $api->get('/nominee-info', 'SpLoanController@getNomineeInformation');
-                $api->post('/nominee-info', 'SpLoanController@getNomineeInformation');
+                $api->post('/nominee-info', 'SpLoanController@updateNomineeInformation');
 
                 $api->get('/documents', 'SpLoanController@getDocuments');
-                $api->post('/documents', 'SpLoanController@getDocuments');
+                $api->post('/documents', 'SpLoanController@updateDocuments');
+
+                $api->post('pictures', 'SpLoanController@updateProfilePictures');
+                #$api->post('picture', 'SpLoanController@updatePicture');
             });
 
             $api->group(['prefix' => 'categories'], function ($api) {

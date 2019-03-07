@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\MovieTicketOrder;
 use App\Models\MovieTicketVendor;
 use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
 
 use Sheba\MovieTicket\MovieTicket;
@@ -41,6 +42,12 @@ class MovieTicketController extends Controller
             ]);
             $theatres = $movieTicket->initVendor()->getAvailableTheatres($request->movie_id,$request->request_date);
             return api_response($request, $theatres, 200, ['theatres' => $this->convertToJson($theatres)]);
+        }   catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -60,6 +67,12 @@ class MovieTicketController extends Controller
             ]);
             $status = $movieTicket->initVendor()->getTheatreSeatStatus($request->dtmid,$request->slot);
             return api_response($request, $status, 200, ['status' => $this->convertToJson($status )]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -88,6 +101,12 @@ class MovieTicketController extends Controller
                 'CusMobile'=> $request->customer_mobile
             ]);
             return api_response($request, $bookingResponse, 200, ['status' => $bookingResponse]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -111,19 +130,27 @@ class MovieTicketController extends Controller
             ]);
 
             $agent = $this->getAgent($request);
-            if ($agent->wallet < (double)$request->cost) return api_response($request, null, 403, ['message' => "You don't have sufficient balance to buy this ticket."]);
+            if ($agent->wallet < (double) $request->cost) return api_response($request, null, 403, ['message' => "You don't have sufficient balance to buy this ticket."]);
             $bookingResponse = $movieTicketManager->initVendor()->updateMovieTicketStatus([
                 'trx_id' => $request->trx_id,
                 'DTMSID'=>$request->dtmsid,
-                'LID'=>$request->lid,
+                'ticket_id'=>$request->lid,
                 'ConfirmStatus'=>$request->confirm_status,
             ]);
-            $response = json_decode(json_encode($bookingResponse));
+            $response = $bookingResponse;
+            if($response->status === 'failed')
+                return api_response($request, $bookingResponse, 200, ['status' => $response]);
             $movieTicketRequest->setName($request->customer_name)->setEmail($request->customer_email)->setAmount($response->cost)->setMobile($request->customer_mobile)->setBlockBusterResponse($response);
             $vendor = $vendor->getById(1);
             $movieTicket->setAgent($agent)->setVendor($vendor)->buyTicket($movieTicketRequest);
             $bookingResponse->order_id = $movieTicket->getMovieTicketOrder()->id;
             return api_response($request, $bookingResponse, 200, ['status' => $bookingResponse]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

@@ -531,5 +531,10 @@ return [
         'private_service' => ['en' => 'private_service', 'bn' => 'প্রাইভেট সার্ভিস'],
         'business' => ['en' => 'business', 'bn' => 'বিজনেস'],
         'other' => ['en' => 'other', 'bn' => 'অন্যান্য']
+    ],
+    'GENDER' => [
+        'female' => ['en' => 'Female', 'bn' => 'মহিলা'],
+        'male' => ['en' => 'Male', 'bn' => 'পুরুষ'],
+        'other' => ['en' => 'Other', 'bn' => 'অন্যান্য']
     ]
 ];

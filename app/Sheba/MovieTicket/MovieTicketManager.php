@@ -22,14 +22,8 @@ class MovieTicketManager
     }
 
     public function getAvailableTickets() {
-        $availableMovies = $this->vendorManager->get(Actions::GET_MOVIE_LIST);
-        $movies=[];
-        foreach ($availableMovies->children() as $child){
-            $child = json_decode(json_encode($child),true);
-            if($child['MovieStatus'] === "1")
-                $movies[]=$child;
-        }
-        return  $movies;
+        $availableMovies = $this->vendorManager->post(Actions::GET_MOVIE_LIST);
+        return  $availableMovies;
     }
 
 
@@ -42,21 +36,8 @@ class MovieTicketManager
     public function getAvailableTheatres($movie_id, $request_date)
     {
         try {
-            $availableTheatres = $this->vendorManager->get(Actions::GET_THEATRE_LIST, ['MovieID' => $movie_id, 'RequestDate' => $request_date]);
-            $theatres=[];
-            foreach ($availableTheatres->children() as $child){
-                $child_parsed = $this->convertToJson($child);
-                $slots = [];
-                for($i = 1 ; $i<=5; $i++) {
-                    $key = 'Show_0'.$i;
-                    $slot = $child_parsed->{$key};
-                    if($slot !== 'No-Show')
-                        array_push($slots,['key' => $key, 'slot' =>$slot]);
-                }
-                $child_parsed->slots = $slots;
-                $theatres[]=$child_parsed;
-            }
-            return  $theatres;
+            $availableTheatres = $this->vendorManager->post(Actions::GET_THEATRE_LIST, ['MovieID' => $movie_id, 'ShowDate' => $request_date]);
+            return  $availableTheatres;
         } catch (GuzzleException $e) {
             throw $e;
         }
@@ -71,8 +52,7 @@ class MovieTicketManager
     public function getTheatreSeatStatus($dtmid, $slot)
     {
         try {
-            $seatStatus = $this->vendorManager->get(Actions::GET_THEATRE_SEAT_STATUS, ['DTMID' => $dtmid, 'slot' => $slot]);
-            $seatStatus = $this->convertToJson($seatStatus->children()[0]);
+            $seatStatus = $this->vendorManager->post(Actions::GET_THEATRE_SEAT_STATUS, ['DTMID' => $dtmid, 'Slot' => $slot]);
             $seat_classes = explode("|",$seatStatus->SeatClass);
             $seat_prices = explode("|",$seatStatus->SeatClassTicketPrice);
             $seats = array();
@@ -105,7 +85,7 @@ class MovieTicketManager
      */
     public function bookSeats($data = array()) {
         try {
-            $bookingResponse = $this->vendorManager->get(Actions::REQUEST_MOVIE_TICKET_SEAT, $data);
+            $bookingResponse = $this->vendorManager->post(Actions::REQUEST_MOVIE_TICKET_SEAT, $data);
             return  $bookingResponse;
         } catch (GuzzleException $e) {
             throw $e;
@@ -119,7 +99,7 @@ class MovieTicketManager
      */
     public function updateMovieTicketStatus($data = array()) {
         try {
-            $bookingResponse = $this->vendorManager->get(Actions::UPDATE_MOVIE_SEAT_STATUS, $data);
+            $bookingResponse = $this->vendorManager->post(Actions::UPDATE_MOVIE_SEAT_STATUS, $data);
             return  $bookingResponse;
         } catch (GuzzleException $e) {
             throw $e;
