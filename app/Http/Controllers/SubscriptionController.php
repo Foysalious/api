@@ -45,6 +45,7 @@ class SubscriptionController extends Controller
                     $service = removeRelationsAndFields($service);
                     list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
                     $subscription = $service->serviceSubscription;
+                    $subscription['offers'] = $subscription->getDiscountOffers();
                     $price_range = $approximatePriceCalculator->setSubscription($subscription)->getPriceRange();
                     $subscription = removeRelationsAndFields($subscription);
                     $subscription['max_price'] = $price_range['max_price'] > 0 ? $price_range['max_price'] : 0;
@@ -121,7 +122,6 @@ class SubscriptionController extends Controller
             else
                 return api_response($request, null, 404);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

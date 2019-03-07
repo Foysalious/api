@@ -14,6 +14,8 @@ abstract class Vendor
 
     abstract public function get($action, $params = []);
 
+    abstract public function post($action, $body = []);
+
     abstract function buyTicket($movieTicketResponse): MovieResponse;
 
     public function  setModel(MovieTicketVendor $model)

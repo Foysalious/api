@@ -13,27 +13,14 @@ class BlockBuster extends Vendor
 {
     // User Credentials
     private $userName;
-    private $password;
-    private $key;
+    private $secretCode;
+    private $apiKey;
 
     // API Urls
     private $apiUrl;
     private $imageServerUrl;
-    private $secretKey;
-    private $connectionMode;
 
     private $httpClient;
-
-    /**
-     * BlockBuster constructor.
-     * @param $connection_mode
-     */
-    public function __construct($connection_mode = 'dev')
-    {
-        $this->imageServerUrl = config('blockbuster.image_server_url');
-        $this->connectionMode = $connection_mode;
-        $this->httpClient = new Client();
-    }
 
     /**
      * @return mixed
@@ -51,41 +38,17 @@ class BlockBuster extends Vendor
         $this->httpClient = $httpClient;
     }
 
-    private function getSecretKey($params = [])
-    {
-        $cur_random_value = (new TransactionGenerator())->generate();
-        $string = "password=$this->password";
-        if(!isset($params['trx_id'])) $string .= "&trxid=$cur_random_value";
-        $string = $this->addParamsToUrl($string, $params);
-        $string .= '&format=xml';
-        $BBC_Codero_Key_Generate = (new KeyEncryptor())->encrypt_cbc($string,$this->key);
-        $BBC_Request_KEY_VALUE =urlencode($BBC_Codero_Key_Generate);
-        return $BBC_Request_KEY_VALUE;
-    }
-
     /**
      * @throws \Exception
      */
     public function init()
     {
-        if($this->connectionMode === 'dev') {
-            // Connect to dev server with test credentials
-            $this->userName = config('blockbuster.username_dev');
-            $this->password = config('blockbuster.password_dev');
-            $this->key = config('blockbuster.key_dev');
-            $this->apiUrl = config('blockbuster.test_api_url');
+        $this->userName = config('blockbuster.username');
+        $this->secretCode = config('blockbuster.secret_code');
+        $this->apiKey = config('blockbuster.api_key');
+        $this->apiUrl = config('blockbuster.base_url');
+        $this->httpClient = new Client();
 
-        } else if($this->connectionMode === 'production'){
-            // Connect to live server with prod credentials
-            $this->userName = config('blockbuster.username_live');
-            $this->password = config('blockbuster.password_live');
-            $this->key = config('blockbuster.key_live');
-            $this->apiUrl = config('blockbuster.live_api_url');
-
-        } else {
-            throw new \Exception('Invalid connection mode');
-        }
-        $this->secretKey = $this->getSecretKey();
     }
 
     /**
@@ -95,28 +58,26 @@ class BlockBuster extends Vendor
      */
     public function generateURIForAction($action, $params = [])
     {
-        $this->secretKey = $this->getSecretKey($params);
         switch ($action) {
             case Actions::GET_MOVIE_LIST:
-                $api_url = $this->apiUrl.'/MovieList.php?username='.$this->userName.'&request_id='.$this->secretKey;
+                $api_url = $this->apiUrl.'movie_list_running.php';
                 break;
             case Actions::GET_THEATRE_LIST:
-                $api_url =  $this->apiUrl.'MovieSchedule.php?username='.$this->userName.'&request_id='.$this->secretKey;
+                $api_url =  $this->apiUrl.'movie_schedule.php';
                 break;
             case Actions::GET_THEATRE_SEAT_STATUS:
-                $api_url =  $this->apiUrl.'MovieScheduleTheatreSeatStatus.php?username='.$this->userName.'&request_id='.$this->secretKey;
+                $api_url =  $this->apiUrl.'movie_schedule_theatre_seat_status.php';
                 break;
             case Actions::REQUEST_MOVIE_TICKET_SEAT:
-                $api_url =  $this->apiUrl.'MovieSeatBookingRequest.php?username='.$this->userName.'&request_id='.$this->secretKey;
+                $api_url =  $this->apiUrl.'movie_seat_booking_request.php';
                 break;
             case Actions::UPDATE_MOVIE_SEAT_STATUS:
-                $api_url =  $this->apiUrl.'MovieSeatUpdateStatus.php?username='.$this->userName.'&request_id='.$this->secretKey;
+                $api_url =  $this->apiUrl.'movie_ticket_confirm.php';
                 break;
             default:
                 throw new \Exception('Invalid Action');
                 break;
         }
-//        dd((new KeyEncryptor())->decrypt_cbc($this->secretKey, $this->key));
         return $api_url;
     }
 
@@ -140,6 +101,7 @@ class BlockBuster extends Vendor
      * @param array $params
      * @return \SimpleXMLElement
      * @throws GuzzleException
+     * @throws \Exception
      */
     public function get($action, $params = [])
     {
@@ -149,20 +111,153 @@ class BlockBuster extends Vendor
             return $this->isJson($body) ? $body :$this->parse($body);
         } catch (GuzzleException $e) {
             throw $e;
+        } catch (\Exception $e) {
+            throw $e;
         }
-
+    }
+    /**
+     * @param $action
+     * @param array $body
+     * @return mixed
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function post($action, $body = [])
+    {
+        $body['username'] = $this->userName;
+        if(!isset($body['trx_id']))
+            $body['trx_id'] = 'SHEBA'.rand(0,32200);
+        try {
+            $ch_tt = curl_init($this->generateURIForAction($action,[]));
+            $post_data = json_encode($body);
+            $header = $this->getHeaders();
+            curl_setopt($ch_tt, CURLOPT_HTTPHEADER, $header);
+            curl_setopt($ch_tt, CURLOPT_CUSTOMREQUEST, "POST");
+            curl_setopt($ch_tt, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch_tt, CURLOPT_POSTFIELDS,$post_data);
+            curl_setopt($ch_tt, CURLOPT_FOLLOWLOCATION, 1);
+            $result_tt = curl_exec($ch_tt);
+            curl_close($ch_tt);
+            $result_tt=json_decode($result_tt);
+            return $this->formatResponse($action, $result_tt);
+        } catch (GuzzleException $e) {
+            throw $e;
+        }
     }
 
-    private function parse ($fileContents) {
-        $fileContents = str_replace(array("\n", "\r", "\t"), '', $fileContents);
-        $fileContents = trim(str_replace('"', "'", $fileContents));
-        $fileContents = trim(str_replace('&', "&amp;", $fileContents));
-        $simpleXml = simplexml_load_string($fileContents);
-        return $simpleXml;
+    private function getHeaders()
+    {
+        return array(
+            'Content-Type: application/json',
+            'secretecode: '.$this->secretCode,
+            'apikey: '.$this->apiKey
+        );
     }
 
-    function isJson($string) {
-        json_decode($string);
-        return (json_last_error() == JSON_ERROR_NONE);
+    /**
+     * @param $action
+     * @param $response
+     * @return mixed|null
+     * @throws \Exception
+     */
+    private function formatResponse($action, $response)
+    {
+        switch ($action) {
+            case Actions::GET_MOVIE_LIST:
+                return $this->getMovieListResponse($response);
+                break;
+            case Actions::GET_THEATRE_LIST:
+                return$this->getTheatreListResponse($response);
+                break;
+            case Actions::GET_THEATRE_SEAT_STATUS:
+                return$this->getTheatreSeatStatusResponse($response);
+                break;
+            case Actions::REQUEST_MOVIE_TICKET_SEAT:
+                return$this->bookTicketResponse($response);
+                break;
+            case Actions::UPDATE_MOVIE_SEAT_STATUS:
+                return $this->updateMovieTicketStatus($response);
+                break;
+            default:
+                throw new \Exception('Invalid Action');
+                break;
+        }
+    }
+
+    /**
+     * @param $response
+     * @return mixed
+     * @throws \Exception
+     */
+    private function getMovieListResponse($response)
+    {
+        if($response->api_validation && $response->api_validation->status==="ok") {
+            if($response->api_response->status === "ok")
+                return $response->api_response->movie_list;
+            return $response->api_response;
+        }
+        throw new \Exception('Server error');
+    }
+
+    /**
+     * @param $response
+     * @return mixed
+     * @throws \Exception
+     */
+    private function getTheatreListResponse($response)
+    {
+        if($response && $response->api_validation && $response->api_validation->status === "ok"){
+            if($response->api_response->status === "ok")
+                return $response->api_response->movie_schedule;
+            else
+                return $response->api_response;
+        }
+        throw new \Exception('Server error');
+    }
+
+    /**
+     * @param $response
+     * @return null
+     * @throws \Exception
+     */
+    private function getTheatreSeatStatusResponse($response)
+    {
+        if($response && $response->api_validation && $response->api_validation->status === "ok"){
+            if($response->api_response->status === "ok")
+                return $response->api_response->movie_schedule_theatre_seat_status;
+            else return $response->api_response;
+        }
+        throw new \Exception('Server error');
+    }
+
+    /**
+     * @param $response
+     * @return mixed
+     * @throws \Exception
+     */
+    private function bookTicketResponse($response)
+    {
+        if($response && $response->api_validation && $response->api_validation->status === "ok"){
+           if($response->api_response->status === "ok")
+              return $response->api_response->movie_seat_booking_request;
+           else
+              return $response->api_response;
+        }
+        throw new \Exception('Server error');
+    }
+
+    /**
+     * @param $response
+     * @throws \Exception
+     */
+    private function updateMovieTicketStatus($response)
+    {
+        if($response && $response->api_validation && $response->api_validation->status === "ok") {
+            if($response->api_response->status === "ok")
+                return $response->api_response->ticket_confirm_status;
+            else
+                return $response->api_response;
+        }
+        throw new \Exception('Server error');
     }
 }

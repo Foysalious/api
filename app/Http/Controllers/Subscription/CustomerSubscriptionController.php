@@ -185,7 +185,6 @@ class CustomerSubscriptionController extends Controller
             }
             return api_response($request, $subscription_orders_list, 200, ['subscription_orders_list' => $subscription_orders_list]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

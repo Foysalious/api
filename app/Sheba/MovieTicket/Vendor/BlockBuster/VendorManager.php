@@ -44,6 +44,20 @@ class VendorManager
         } catch (GuzzleException $e) {
             throw $e;
         }
+    }
 
+
+    /**
+     * @param $action
+     * @param array $body
+     * @throws GuzzleException
+     */
+    public function post($action, $body = [])
+    {
+        try {
+            return $this->vendor->post($action,$body);
+        } catch (GuzzleException $e) {
+            throw $e;
+        }
     }
 }
