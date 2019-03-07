@@ -33,6 +33,7 @@ class OrderType extends GraphQlType
             'contact_number' => ['type' => Type::string()],
             'can_call_expert' => ['type' => Type::boolean()],
             'schedule_date_timestamp' => ['type' => Type::int()],
+            'subscription_order_id' => ['type' => Type::int()],
             'schedule_time' => ['type' => Type::string()],
             'location' => ['type' => GraphQL::type('Location')],
             'original_price' => ['type' => Type::float()],
@@ -293,5 +294,10 @@ class OrderType extends GraphQlType
     protected function resolveInvoiceField($root)
     {
         return $root->invoice;
+    }
+
+    protected function resolveSubscriptionOrderField($root)
+    {
+        return $root->order->subscription_order_id;
     }
 }
