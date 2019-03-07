@@ -321,6 +321,13 @@ class ShebaController extends Controller
                     'method_name' => 'cbl'
                 ),
                 array(
+                    'name' => 'bKash Payment',
+                    'is_published' => 1,
+                    'description' => '',
+                    'asset' => 'bkash',
+                    'method_name' => 'bkash'
+                ),
+                array(
                     'name' => 'Other Debit/Credit',
                     'is_published' => 1,
                     'description' => '',

@@ -143,7 +143,10 @@ class MovieTicketController extends Controller
             $movieTicketRequest->setName($request->customer_name)->setEmail($request->customer_email)->setAmount($response->cost)->setMobile($request->customer_mobile)->setBlockBusterResponse($response);
             $vendor = $vendor->getById(1);
             $movieTicket->setAgent($agent)->setVendor($vendor)->buyTicket($movieTicketRequest);
-            $bookingResponse->order_id = $movieTicket->getMovieTicketOrder()->id;
+            $movieOrder =  $movieTicket->getMovieTicketOrder();
+            $bookingResponse->order_id = $movieOrder->id;
+            $bookingResponse->agent_commission = $movieOrder->agent_commission;
+            $bookingResponse->sheba_commission = $movieOrder->sheba_commission;
             return api_response($request, $bookingResponse, 200, ['status' => $bookingResponse]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
