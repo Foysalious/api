@@ -1,43 +1,31 @@
 [
   {
-    "item_type": "Slider",
-    "item_id": 1,
+    "item_type": "OfferShowcase",
+    "item_id": 122,
     "name": null,
-    "order": 2,
+    "order": 1,
     "updated_at": "2018-12-25 18:23:02",
     "updated_at_timestamp": 1545740582,
     "data": [
       {
-        "small_image_link": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/slides\/1551294765_slide.png",
-        "image_link": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/slides\/1551294764_slide.png",
-        "id": 45,
+        "id": 122,
+        "name": "TK.200 Off on AC Repair",
+        "banner": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/offers_images\/banners\/ac-200-off.png",
+        "is_flash": 0,
+        "valid_till": "2019-03-31 23:59:59",
         "target_type": "Category",
-        "target_id": 346,
+        "target_id": "276",
         "target_link": null,
         "is_parent": false,
         "link": null,
-        "order": 14,
-        "updated_at": "2019-02-28 14:17:58",
-        "updated_at_timestamp": 1551341878
-      },
-      {
-        "small_image_link": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/slides\/1551294886_slide.png",
-        "image_link": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/slides\/1551294886_slide.png",
-        "id": 46,
-        "target_type": "Category",
-        "target_id": 346,
-        "target_link": null,
-        "is_parent": false,
-        "link": null,
-        "order": 15,
-        "updated_at": "2019-02-28 14:09:43",
-        "updated_at_timestamp": 1551341383
+        "updated_at": "2019-02-15 00:36:42",
+        "updated_at_timestamp": 1550169402
       }
     ]
   },
   {
     "item_type": "HomeGrid",
-    "item_id": 1,
+    "item_id": 2,
     "name": null,
     "order": 3,
     "updated_at": "2018-12-25 18:23:02",
@@ -222,6 +210,42 @@
         "order": 15,
         "updated_at": "2018-12-25 18:23:02",
         "updated_at_timestamp": 1545740582
+      }
+    ]
+  },
+  {
+    "item_type": "Slider",
+    "item_id": 4,
+    "name": null,
+    "order": 3,
+    "updated_at": "2018-12-25 18:23:02",
+    "updated_at_timestamp": 1545740582,
+    "data": [
+      {
+        "small_image_link": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/slides\/1551294765_slide.png",
+        "image_link": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/slides\/1551294764_slide.png",
+        "id": 45,
+        "target_type": "Category",
+        "target_id": 346,
+        "target_link": null,
+        "is_parent": false,
+        "link": null,
+        "order": 14,
+        "updated_at": "2019-02-28 14:17:58",
+        "updated_at_timestamp": 1551341878
+      },
+      {
+        "small_image_link": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/slides\/1551294886_slide.png",
+        "image_link": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/slides\/1551294886_slide.png",
+        "id": 46,
+        "target_type": "Category",
+        "target_id": 346,
+        "target_link": null,
+        "is_parent": false,
+        "link": null,
+        "order": 15,
+        "updated_at": "2019-02-28 14:09:43",
+        "updated_at_timestamp": 1551341383
       }
     ]
   },
