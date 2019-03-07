@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\Profile;
 use Illuminate\Validation\ValidationException;
 use App\Repositories\FileRepository;
 use Sheba\ModificationFields;
@@ -130,7 +131,7 @@ class SpLoanController extends Controller
         try {
             $partner = $request->partner;
             $basic_informations = $partner->basicInformations;
-            $partner_data =[
+            $partner_data = [
                 'business_type' => $request->business_type,
                 'address' => $request->address,
                 'full_time_employee' => $request->full_time_employee,
@@ -221,21 +222,21 @@ class SpLoanController extends Controller
             $bank_informations = $partner->bankInformations;
 
             $info = array(
-                'name' => $profile->acc_name,
-                'mobile' => $profile->acc_no,
+                'name' => $profile->name,
+                'mobile' => $profile->mobile,
                 'relation' => $profile->nominee_relation,
                 'picture' => $profile->pro_pic,
 
-                'nid_front_image' => $profile->nid_image,
-                'nid_back_image' => $profile->nid_image,
+                'nid_front_image' => $profile->nid_front_image,
+                'nid_back_image' => $profile->nid_back_image,
                 'granter' => [
-                    'name' => $profile->acc_name,
-                    'mobile' => $profile->acc_no,
+                    'name' => $profile->name,
+                    'mobile' => $profile->mobile,
                     'relation' => $profile->granter_relation,
                     'picture' => $profile->pro_pic,
 
-                    'nid_front_image' => $profile->nid_image,
-                    'nid_back_image' => $profile->nid_image,
+                    'nid_front_image' => $profile->nid_front_image,
+                    'nid_back_image' => $profile->nid_back_image,
                 ]
             );
             return api_response($request, $info, 200, ['info' => $info]);
@@ -243,6 +244,84 @@ class SpLoanController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function updateNomineeInformation($partner, Request $request)
+    {
+        try {
+            $manager_resource = $request->manager_resource;
+            $manager_resource_profile = $manager_resource->profile;
+            #dd($manager_resource_profile);
+
+            $profile = Profile::where('mobile', formatMobile($request->mobile))->first();
+            if ($profile) {
+                $data = [
+                    'nominee_id' => $profile->id,
+                    'nominee_relation' => $request->nominee_relation
+                ];
+                #$profile->update($this->withBothModificationFields(['nominee_relation'=> $request->nominee_relation]));
+                $manager_resource_profile->update($this->withBothModificationFields($data));
+            } else {
+                $profile = $this->createProfile($request);
+                $data = [
+                    'nominee_id' => $profile->id,
+                    'nominee_relation' => $request->nominee_relation
+                ];
+                $manager_resource_profile->update($this->withBothModificationFields($data));
+            }
+
+            return api_response($request, 1, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            dd($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function updateGranterInformation($partner, Request $request)
+    {
+        try {
+            $manager_resource = $request->manager_resource;
+            $manager_resource_profile = $manager_resource->profile;
+
+            $profile = Profile::where('mobile', formatMobile($request->mobile))->first();
+            if ($profile) {
+                $data = [
+                    'granter_id' => $profile->id,
+                    'granter_relation' => $request->granter_relation
+                ];
+                #$profile->update($this->withBothModificationFields(['nominee_relation'=> $request->nominee_relation]));
+                $manager_resource_profile->update($this->withBothModificationFields($data));
+            } else {
+                $profile = $this->createProfile($request);
+                $data = [
+                    'granter_id' => $profile->id,
+                    'granter_relation' => $request->granter_relation
+                ];
+                $manager_resource_profile->update($this->withBothModificationFields($data));
+            }
+
+            return api_response($request, 1, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            dd($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    private function createProfile(Request $request)
+    {
+        $profile = new Profile();
+        $profile->remember_token = str_random(255);
+        $profile->name = $request->name;
+        $profile->mobile = formatMobile($request->mobile);
+        $this->withCreateModificationField($profile);
+        $profile->save();
+        return $profile;
     }
 
     public function getDocuments($partner, Request $request)
@@ -256,19 +335,17 @@ class SpLoanController extends Controller
 
             $info = array(
                 'picture' => $profile->pro_pic,
-                'nid_front_image' => $manager_resource->nid_image,
-                'nid_back_image' => $manager_resource->nid_image,
-                'birth_certificate' => $manager_resource->nid_image,
+                'nid_front_image' => $profile->nid_front_image,
+                'nid_back_image' => $profile->nid_back_image,
                 'nominee_document' => [
                     'picture' => $profile->pro_pic,
-                    'nid_front_image' => $manager_resource->nid_image,
-                    'nid_back_image' => $manager_resource->nid_image,
-                    'birth_certificate' => $manager_resource->nid_image,
+                    'nid_front_image' => $profile->nid_front_image,
+                    'nid_back_image' => $profile->nid_back_image,
                 ],
                 'business_document' => [
-                    'tin_no_attachment' => $profile->tin_no,
+                    'tin_certificate' => $profile->tin_certificate,
                     'trade_license_attachment' => $basic_informations->trade_license_attachment,
-                    'bank_statement_attachment' => $partner->nid_image
+                    'statement' => $bank_informations->statement
                 ],
 
             );
@@ -295,7 +372,7 @@ class SpLoanController extends Controller
                 $this->deleteOldImage($filename);
             }
 
-            $picture_link = $this->fileRepository->uploadToCDN($this->makePicName($profile, $photo, $image_for), $photo,'images/profile/');
+            $picture_link = $this->fileRepository->uploadToCDN($this->makePicName($profile, $photo, $image_for), $photo, 'images/profile/');
 
             if ($picture_link != false) {
                 $data[$image_for] = $picture_link;
@@ -316,13 +393,13 @@ class SpLoanController extends Controller
 
     private function deleteOldImage($filename)
     {
-        $old_image = substr($filename, strlen(config('sheba.s3_url')) );
+        $old_image = substr($filename, strlen(config('sheba.s3_url')));
         $this->fileRepository->deleteFileFromCDN($old_image);
     }
 
     private function makePicName($profile, $photo, $image_for = 'profile')
     {
-        return $filename = Carbon::now()->timestamp . '_'.$image_for.'_image_' . $profile->id . '.' . $photo->extension();
+        return $filename = Carbon::now()->timestamp . '_' . $image_for . '_image_' . $profile->id . '.' . $photo->extension();
     }
 
 }
