@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\MovieTicketOrder;
-use App\Models\MovieTicketVendor;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
@@ -17,6 +16,7 @@ class MovieTicketController extends Controller
 {
     /**
      * @param MovieTicketManager $movieTicket
+     * @return \Illuminate\Http\JsonResponse
      */
     public function getAvailableTickets(MovieTicketManager $movieTicket, Request $request)
     {
@@ -32,6 +32,8 @@ class MovieTicketController extends Controller
 
     /**
      * @param MovieTicketManager $movieTicket
+     * @return \Illuminate\Http\JsonResponse
+     * @throws GuzzleException
      */
     public function getAvailableTheatres(MovieTicketManager $movieTicket, Request $request)
     {
@@ -56,6 +58,7 @@ class MovieTicketController extends Controller
 
     /**
      * @param MovieTicketManager $movieTicket
+     * @return \Illuminate\Http\JsonResponse
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function getTheatreSeatStatus(MovieTicketManager $movieTicket, Request $request)
