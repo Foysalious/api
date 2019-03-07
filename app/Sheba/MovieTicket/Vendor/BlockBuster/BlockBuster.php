@@ -210,7 +210,7 @@ class BlockBuster extends Vendor
             if($response->api_response->status === "ok")
                 return $response->api_response->movie_schedule;
             else
-                $response->api_response;
+                return $response->api_response;
         }
         throw new \Exception('Server error');
     }
