@@ -1,17 +1,26 @@
 <?php
+
 namespace App\Http\Controllers;
 
-use App\Models\PartnerResource;
-use App\Models\Profile;
-use App\Models\Resource;
-use App\Repositories\ProfileRepository;
-use App\Repositories\ReviewRepository;
-use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use App\Repositories\ProfileRepository;
+use App\Repositories\FileRepository;
+use Illuminate\Http\Request;
+use Carbon\Carbon;
+use Sheba\ModificationFields;
 use DB;
 
 class SpLoanController extends Controller
 {
+    use ModificationFields;
+
+    private $fileRepository;
+
+    public function __construct(FileRepository $file_repository)
+    {
+        $this->fileRepository = $file_repository;
+    }
+
     public function getPersonalInformation($partner, Request $request)
     {
         try {
@@ -26,10 +35,11 @@ class SpLoanController extends Controller
                 'name' => $profile->name,
                 'mobile' => $profile->mobile,
                 'gender' => $profile->gender,
+                'genders' => constants('GENDER'),
                 'picture' => $profile->pro_pic,
                 'birthday' => $profile->dob,
                 'present_address' => $profile->address,
-                'permanent_address' =>$profile->permanent_address,
+                'permanent_address' => $profile->permanent_address,
                 'father_name' => $manager_resource->father_name,
                 'spouse_name' => $manager_resource->spouse_name,
                 'occupation_lists' => constants('SUGGESTED_OCCUPATION'),
@@ -44,6 +54,38 @@ class SpLoanController extends Controller
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function storePersonalInformation($partner, Request $request)
+    {
+        try {
+
+            $manager_resource = $request->manager_resource;
+
+            $profile = $manager_resource->profile;
+            $profile_data = array(
+                'gender' => $request->gender,
+                'dob' => $request->dob,
+                'address' => $request->address,
+                'permanent_address' => $request->permanent_address,
+                'occupation' => $request->occupation,
+                'monthly_living_cost' => $request->monthly_living_cost,
+                'total_asset_amount' => $request->total_asset_amount,
+                'monthly_loan_installment_amount' => $request->monthly_loan_installment_amount,
+            );
+            $resource_data = [
+                'father_name' => $request->father_name,
+                'spouse_name' => $request->spouse_name,
+            ];
+            $profile->update($this->withBothModificationFields($profile_data));
+            $manager_resource->update($this->withBothModificationFields($resource_data));
+            return api_response($request, 1, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
     }
@@ -137,7 +179,7 @@ class SpLoanController extends Controller
                     'mobile' => $profile->acc_no,
                     'relation' => $profile->granter_relation,
                     'picture' => $profile->pro_pic,
-                    
+
                     'nid_front_image' => $profile->nid_image,
                     'nid_back_image' => $profile->nid_image,
                 ]
@@ -181,6 +223,44 @@ class SpLoanController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function updatePicture($partner, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'picture' => 'required|mimes:jpeg,png'
+            ]);
+            $manager_resource = $request->manager_resource;
+            $profile = $manager_resource->profile;
+
+            $photo = $request->file('picture');
+
+            if (basename($profile->pro_pic) != 'default.jpg') {
+                $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
+                $this->fileRepository->deleteFileFromCDN($filename);
+            }
+           # $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id . '.' . $photo->extension();
+            $picture_link = $this->fileRepository->uploadToCDN($this->makeProfilePicName($profile, $photo), $photo, 'images/profiles/');
+            if ($picture_link != false) {
+                $profile->pro_pic = $picture_link;
+                $profile->update();
+                return api_response($request, $profile, 200, ['picture' => $profile->pro_pic]);
+            } else {
+                return api_response($request, null, 500);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    private function makeProfilePicName($profile, $photo)
+    {
+        return $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id . '.' . $photo->extension();
     }
 
 }
