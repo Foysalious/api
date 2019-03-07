@@ -164,10 +164,10 @@ class SpLoanController extends Controller
 
             $info = array(
                 'account_holder_name' => $bank_informations->acc_name,
-                'account_no' => $basic_informations->acc_no,
-                'bank_name' => $basic_informations->bank_name,
-                'brunch' => $basic_informations->branch_name,
-                'acc_type' => $basic_informations->acc_type,
+                'account_no' => $bank_informations->acc_no,
+                'bank_name' => $bank_informations->bank_name,
+                'brunch' => $bank_informations->branch_name,
+                'acc_type' => $bank_informations->acc_type,
                 'acc_types' => constants('BANK_ACCOUNT_TYPE'),
                 'bkash' => [
                     'bkash_no' => $partner->bkash_no,
@@ -178,6 +178,35 @@ class SpLoanController extends Controller
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function updateFinanceInformation($partner, Request $request)
+    {
+        try {
+            $partner = $request->partner;
+            $bank_informations = $partner->bankInformations;
+
+            $bank_data = [
+                'acc_name' => $request->acc_name,
+                'acc_no' => $request->acc_no,
+                'bank_name' => $request->bank_name,
+                'branch_name' => $request->branch_name,
+                'acc_type' => $request->acc_type
+            ];
+            $partner_data = [
+                'bkash_no' => formatMobile($request->bkash_no),
+                'bkash_account_type' => $request->bkash_account_type
+            ];
+
+            $bank_informations->update($this->withBothModificationFields($bank_data));
+            $partner->update($this->withBothModificationFields($partner_data));
+            return api_response($request, 1, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
     }
