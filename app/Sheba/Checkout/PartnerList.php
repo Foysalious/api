@@ -9,6 +9,8 @@ use App\Models\Event;
 use App\Models\HyperLocal;
 use App\Models\ImpressionDeduction;
 use App\Models\Partner;
+use App\Models\PartnerServiceDiscount;
+use App\Models\PartnerServiceSurcharge;
 use App\Models\Service;
 use App\Repositories\PartnerServiceRepository;
 use App\Sheba\Partner\PartnerAvailable;
@@ -298,7 +300,26 @@ class PartnerList
 
     public function addPricing()
     {
+        $pivot = collect();
+        foreach (($this->partners->pluck('services')) as $services) {
+            foreach ($services as $service) {
+                $pivot->push($service->pivot);
+            }
+        }
+        $partner_service_group_by_partners = $pivot->groupBy('partner_id');
+        $discounts = PartnerServiceDiscount::whereIn('partner_service_id', $pivot->pluck('id')->toArray())->running()->get();
+        $schedule_date_time = Carbon::parse($this->partnerListRequest->scheduleDate[0] . ' ' . $this->partnerListRequest->scheduleStartTime);
+        $surcharges = PartnerServiceSurcharge::whereIn('partner_service_id', $pivot->pluck('id')->toArray())->runningAt($schedule_date_time)->get();
         foreach ($this->partners as $partner) {
+            $partner_service_ids = $partner_service_group_by_partners->get("$partner->id")->pluck('id')->toArray();
+
+            $partner['discounts'] = $discounts->filter(function ($discount) use ($partner_service_ids) {
+//                dd($discount->partner_service_id,$partner_service_ids);
+                return in_array($discount->partner_service_id, $partner_service_ids);
+            });
+            $partner['surcharges'] = $surcharges->filter(function ($surcharge) use ($partner_service_ids) {
+                return in_array($surcharge->partner_service_id, $partner_service_ids);
+            });
             $pricing = $this->calculateServicePricingAndBreakdownOfPartner($partner);
             foreach ($pricing as $key => $value) {
                 $partner[$key] = $value;
@@ -313,11 +334,11 @@ class PartnerList
             $category_ids = $this->partnerListRequest->selectedCategory->id == (int)env('RENT_CAR_OUTSIDE_ID') ? $category_ids . ",40" : $category_ids . ",38";
         }
         $this->partners->load(['workingHours', 'jobs' => function ($q) use ($category_ids) {
-            $q->selectRaw("count(case when status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then status end) as total_jobs")
-                ->selectRaw("count(case when status in ('Accepted', 'Schedule Due', 'Process', 'Serve Due') then status end) as ongoing_jobs")
-                ->selectRaw("count(case when status in ('Served') and category_id=" . $this->partnerListRequest->selectedCategory->id . " then status end) as total_completed_orders")
-                ->selectRaw("count(case when category_id in(" . $category_ids . ") and status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then category_id end) as total_jobs_of_category")
+            $q->selectRaw("count(case when status in ('Served') and category_id=" . $this->partnerListRequest->selectedCategory->id . " then status end) as total_completed_orders")
+//                ->selectRaw("count(case when status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then status end) as total_jobs")
+//                ->selectRaw("count(case when category_id in(" . $category_ids . ") and status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then category_id end) as total_jobs_of_category")
                 ->groupBy('partner_id');
+            if (strtolower($this->partnerListRequest->portalName) == 'admin-portal') $q->selectRaw("count(case when status in ('Accepted', 'Schedule Due', 'Process', 'Serve Due') then status end) as ongoing_jobs");
         }, 'subscription' => function ($q) {
             $q->select('id', 'name', 'rules');
         }, 'resources' => function ($q) {
@@ -328,7 +349,7 @@ class PartnerList
             $q->selectRaw("avg(rating) as avg_rating")
                 ->selectRaw("count(reviews.id) as total_ratings")
                 ->selectRaw("count(case when rating=5 then reviews.id end) as total_five_star_ratings")
-                ->selectRaw("count(case when review_question_answer.review_type='App\\\Models\\\Review' and rating=5 then review_question_answer.id end) as total_compliments,reviews.partner_id")
+//                ->selectRaw("count(case when review_question_answer.review_type='App\\\Models\\\Review' and rating=5 then review_question_answer.id end) as total_compliments,reviews.partner_id")
                 ->leftJoin('review_question_answer', 'reviews.id', '=', 'review_question_answer.review_id')
                 ->where('category_id', $this->partnerListRequest->selectedCategory->id)
                 ->groupBy('reviews.partner_id');
@@ -338,18 +359,18 @@ class PartnerList
                 ->where('category_partner_resource.category_id', $this->partnerListRequest->selectedCategory->id)->groupBy('partner_id');
         }]);
         foreach ($this->partners as $partner) {
-            $partner['total_jobs'] = $partner->jobs->first() ? $partner->jobs->first()->total_jobs : 0;
-            $partner['ongoing_jobs'] = $partner->jobs->first() ? $partner->jobs->first()->ongoing_jobs : 0;
-            $partner['total_jobs_of_category'] = $partner->jobs->first() ? $partner->jobs->first()->total_jobs_of_category : 0;
+            $partner['total_jobs'] = $partner->jobs->first() ? $partner->jobs->first()->total_completed_orders : 0;
+            $partner['ongoing_jobs'] = $partner->jobs->first() && $partner->jobs->first()->ongoing_jobs ? $partner->jobs->first()->ongoing_jobs : 0;
+            $partner['total_jobs_of_category'] = $partner->jobs->first() ? $partner->jobs->first()->total_completed_orders : 0;
             $partner['total_completed_orders'] = $partner->jobs->first() ? $partner->jobs->first()->total_completed_orders : 0;
-            $partner['contact_no'] = $this->getContactNumber($partner);
+            if (strtolower($this->partnerListRequest->portalName) == 'admin-portal') $partner['contact_no'] = $this->getContactNumber($partner);
             $partner['badge'] = $partner->resolveBadge();
             $partner['subscription_type'] = $partner->resolveSubscriptionType();
             $partner['total_working_days'] = $partner->workingHours ? $partner->workingHours->count() : 0;
             $partner['rating'] = $partner->reviews->first() ? (double)$partner->reviews->first()->avg_rating : 0;
             $partner['total_ratings'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_ratings : 0;
             $partner['total_five_star_ratings'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_five_star_ratings : 0;
-            $partner['total_compliments'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_compliments : 0;
+            $partner['total_compliments'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_five_star_ratings : 0;
             $partner['total_experts'] = $partner->handymanResources->first() ? (int)$partner->handymanResources->first()->total_experts : 0;
         }
     }
@@ -429,7 +450,8 @@ class PartnerList
             $service = $partner->services->where('id', $selected_service->id)->first();
             $schedule_date_time = Carbon::parse($this->partnerListRequest->scheduleDate[0] . ' ' . $this->partnerListRequest->scheduleStartTime);
             $discount = new Discount();
-            $discount->setServiceObj($selected_service)->setServicePivot($service->pivot)->setScheduleDateTime($schedule_date_time)->initialize();
+            $discount->setServiceObj($selected_service)->setServicePivot($service->pivot)->setScheduleDateTime($schedule_date_time)
+                ->setDiscounts($partner->discounts)->setSurcharges($partner->surcharges)->initialize();
             $service = [];
             $service['discount'] = $discount->discount;
             $service['cap'] = $discount->cap;

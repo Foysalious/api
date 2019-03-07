@@ -2,6 +2,7 @@
 
 namespace App\Sheba\Checkout;
 
+use App\Models\Partner;
 use App\Models\PartnerServiceDiscount;
 use App\Models\PartnerServiceSurcharge;
 use App\Repositories\PartnerServiceRepository;
@@ -29,7 +30,10 @@ class Discount
     protected $hasDiscount = 0;
     /** @var ServiceObject */
     protected $serviceObject;
+    protected $partner;
     protected $servicePivot;
+    /** @var $runningDiscount PartnerServiceDiscount */
+    protected $runningDiscount;
     protected $partnerServiceRepository;
 
     public function __construct()
@@ -40,6 +44,18 @@ class Discount
     public function __get($name)
     {
         return $this->$name;
+    }
+
+    public function setDiscounts($discounts)
+    {
+        $this->calculateKey($discounts, 'discounts');
+        return $this;
+    }
+
+    public function setSurcharges($surcharges)
+    {
+        $this->calculateKey($surcharges, 'surcharges');
+        return $this;
     }
 
     public function setServiceObj(ServiceObject $serviceObject)
@@ -56,6 +72,7 @@ class Discount
 
     public function setScheduleDateTime($schedule_date_time)
     {
+        if ($this->surchargePercentage) return $this;
         $surcharge = PartnerServiceSurcharge::where('partner_service_id', $this->servicePivot->id)->runningAt($schedule_date_time)->first();
         $this->surchargePercentage = $surcharge ? $surcharge->amount : 0;;
         return $this;
@@ -123,5 +140,14 @@ class Discount
     private function isRentACar()
     {
         return in_array($this->serviceObject->serviceModel->category_id, array_map('intval', explode(',', env('RENT_CAR_IDS'))));
+    }
+
+
+    private function calculateKey($collection, $key)
+    {
+        if (!$collection) return;
+        $object = $collection->where('partner_service_id', $this->servicePivot->id)->first();
+        if ($key == 'surcharges') $this->surchargePercentage = $object ? $object->amount : 0;
+        elseif ($key == 'discounts') $this->runningDiscount = $object ? $object : 0;
     }
 }
