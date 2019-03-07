@@ -38,7 +38,7 @@ class PartnerRoute
 
                 $api->get('/nominee-info', 'SpLoanController@getNomineeInformation');
                 $api->post('/nominee-info', 'SpLoanController@updateNomineeInformation');
-                $api->post('/granter-info', 'SpLoanController@updateGranterInformation');
+                $api->post('/grantor-info', 'SpLoanController@updateGrantorInformation');
 
                 $api->get('/documents', 'SpLoanController@getDocuments');
                 $api->post('/documents', 'SpLoanController@updateDocuments');

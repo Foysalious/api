@@ -280,7 +280,7 @@ class SpLoanController extends Controller
         }
     }
 
-    public function updateGranterInformation($partner, Request $request)
+    public function updateGrantorInformation($partner, Request $request)
     {
         try {
             $manager_resource = $request->manager_resource;
@@ -289,16 +289,16 @@ class SpLoanController extends Controller
             $profile = Profile::where('mobile', formatMobile($request->mobile))->first();
             if ($profile) {
                 $data = [
-                    'granter_id' => $profile->id,
-                    'granter_relation' => $request->granter_relation
+                    'grantor_id' => $profile->id,
+                    'grantor_relation' => $request->granter_relation
                 ];
-                #$profile->update($this->withBothModificationFields(['nominee_relation'=> $request->nominee_relation]));
+
                 $manager_resource_profile->update($this->withBothModificationFields($data));
             } else {
                 $profile = $this->createProfile($request);
                 $data = [
-                    'granter_id' => $profile->id,
-                    'granter_relation' => $request->granter_relation
+                    'grantor_id' => $profile->id,
+                    'grantor_relation' => $request->granter_relation
                 ];
                 $manager_resource_profile->update($this->withBothModificationFields($data));
             }
@@ -308,7 +308,6 @@ class SpLoanController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             return api_response($request, null, 500);
         }
     }
