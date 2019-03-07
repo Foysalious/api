@@ -214,34 +214,10 @@
     ]
   },
   {
-    "item_type": "OfferShowcase",
-    "item_id": 122,
-    "name": null,
-    "order": 3,
-    "updated_at": "2018-12-25 18:23:02",
-    "updated_at_timestamp": 1545740582,
-    "data": [
-      {
-        "id": 122,
-        "name": "TK.100 Off on Repair",
-        "banner": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/offers_images\/banners\/1550078981_tiwnn.png",
-        "is_flash": 0,
-        "valid_till": "2019-03-31 23:59:00",
-        "target_type": "Voucher",
-        "target_id": "REPAIR",
-        "target_link": null,
-        "is_parent": null,
-        "link": null,
-        "updated_at": "2019-02-15 00:36:42",
-        "updated_at_timestamp": 1550169402
-      }
-    ]
-  },
-  {
     "item_type": "Slider",
     "item_id": 4,
     "name": null,
-    "order": 2,
+    "order": 3,
     "updated_at": "2018-12-25 18:23:02",
     "updated_at_timestamp": 1545740582,
     "data": [
@@ -270,6 +246,30 @@
         "order": 15,
         "updated_at": "2019-02-28 14:09:43",
         "updated_at_timestamp": 1551341383
+      }
+    ]
+  },
+  {
+    "item_type": "OfferShowcase",
+    "item_id": 122,
+    "name": null,
+    "order": 4,
+    "updated_at": "2018-12-25 18:23:02",
+    "updated_at_timestamp": 1545740582,
+    "data": [
+      {
+        "id": 122,
+        "name": "TK.100 Off on Repair",
+        "banner": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/offers_images\/banners\/1550078981_tiwnn.png",
+        "is_flash": 0,
+        "valid_till": "2019-03-31 23:59:00",
+        "target_type": "Voucher",
+        "target_id": "REPAIR",
+        "target_link": null,
+        "is_parent": null,
+        "link": null,
+        "updated_at": "2019-02-15 00:36:42",
+        "updated_at_timestamp": 1550169402
       }
     ]
   },
