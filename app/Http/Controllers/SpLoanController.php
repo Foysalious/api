@@ -1,13 +1,10 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use Illuminate\Validation\ValidationException;
-use App\Repositories\ProfileRepository;
 use App\Repositories\FileRepository;
+use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
-use Sheba\ModificationFields;
 use DB;
 
 class SpLoanController extends Controller
@@ -58,7 +55,7 @@ class SpLoanController extends Controller
         }
     }
 
-    public function storePersonalInformation($partner, Request $request)
+    public function updatePersonalInformation($partner, Request $request)
     {
         try {
 
@@ -225,7 +222,7 @@ class SpLoanController extends Controller
         }
     }
 
-    public function updatePicture($partner, Request $request)
+    public function updateProfilePictures($partner, Request $request)
     {
         try {
             $this->validate($request, [
@@ -233,19 +230,21 @@ class SpLoanController extends Controller
             ]);
             $manager_resource = $request->manager_resource;
             $profile = $manager_resource->profile;
+            $image_for = $request->image_for;
 
             $photo = $request->file('picture');
-
-            if (basename($profile->pro_pic) != 'default.jpg') {
-                $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
-                $this->fileRepository->deleteFileFromCDN($filename);
+            if (basename($profile->image_for) != 'default.jpg') {
+                $filename = substr($profile->{$image_for}, strlen(config('sheba.s3_url')));
+                $this->deleteOldImage($filename);
             }
-           # $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id . '.' . $photo->extension();
-            $picture_link = $this->fileRepository->uploadToCDN($this->makeProfilePicName($profile, $photo), $photo, 'images/profiles/');
+
+            $picture_link = $this->fileRepository->uploadToCDN($this->makePicName($profile, $photo, $image_for), $photo,'images/profile/');
+
             if ($picture_link != false) {
-                $profile->pro_pic = $picture_link;
-                $profile->update();
-                return api_response($request, $profile, 200, ['picture' => $profile->pro_pic]);
+                $data[$image_for] = $picture_link;
+                $profile->update($this->withUpdateModificationField($data));
+
+                return api_response($request, $profile, 200, ['picture' => $profile->{$image_for}]);
             } else {
                 return api_response($request, null, 500);
             }
@@ -258,9 +257,15 @@ class SpLoanController extends Controller
         }
     }
 
-    private function makeProfilePicName($profile, $photo)
+    private function deleteOldImage($filename)
     {
-        return $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id . '.' . $photo->extension();
+        $old_image = substr($filename, strlen(config('sheba.s3_url')) );
+        $this->fileRepository->deleteFileFromCDN($old_image);
+    }
+
+    private function makePicName($profile, $photo, $image_for = 'profile')
+    {
+        return $filename = Carbon::now()->timestamp . '_'.$image_for.'_image_' . $profile->id . '.' . $photo->extension();
     }
 
 }
