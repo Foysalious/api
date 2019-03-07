@@ -14,10 +14,10 @@ class ProfileController extends Controller
     private $profileRepo;
     private $fileRepo;
 
-    public function __construct()
+    public function __construct(ProfileRepository $profile_repository, FileRepository $file_repository)
     {
-        $this->profileRepo = new ProfileRepository();
-        $this->fileRepo = new FileRepository();
+        $this->profileRepo = $profile_repository;
+        $this->fileRepo = $file_repository;
     }
 
     public function changePicture(Request $request)
