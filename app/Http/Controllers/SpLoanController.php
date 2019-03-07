@@ -125,6 +125,47 @@ class SpLoanController extends Controller
         }
     }
 
+    public function updateBusinessInformation($partner, Request $request)
+    {
+        try {
+
+            $partner = $request->partner;
+            $manager_resource = $request->manager_resource;
+            $profile = $manager_resource->profile;
+            $basic_informations = $partner->basicInformations;
+            $bank_informations = $partner->bankInformations;
+
+            $info = array(
+                'business_type' => $partner->business_type,
+                'location' => $partner->address,
+                'establishment_year' => $basic_informations->establishment_year,
+                'full_time_employee' => $partner->full_time_employee,
+                'part_time_employee' => $partner->part_time_employee,
+                'business_expenses' => [
+                    'product_price' => 100,
+                    'employee_salary' => 100,
+                    'office_rent' => 100,
+                    'utility_bills' => 100,
+                    'marketing_cost' => 100,
+                    'other_costs' => 100
+                ],
+                'last_six_month_sell' => [
+                    'avg_sell' => 100,
+                    'min_sell' => 100,
+                    'max_sell' => 100
+                ]
+            );
+            $profile->update($this->withBothModificationFields($info));
+            $manager_resource->update($this->withBothModificationFields($info));
+            return api_response($request, 1, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
     public function getFinanceInformation($partner, Request $request)
     {
         try {
