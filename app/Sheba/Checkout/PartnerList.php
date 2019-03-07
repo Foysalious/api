@@ -314,7 +314,6 @@ class PartnerList
             $partner_service_ids = $partner_service_group_by_partners->get("$partner->id")->pluck('id')->toArray();
 
             $partner['discounts'] = $discounts->filter(function ($discount) use ($partner_service_ids) {
-//                dd($discount->partner_service_id,$partner_service_ids);
                 return in_array($discount->partner_service_id, $partner_service_ids);
             });
             $partner['surcharges'] = $surcharges->filter(function ($surcharge) use ($partner_service_ids) {
