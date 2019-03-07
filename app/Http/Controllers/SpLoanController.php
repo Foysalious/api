@@ -280,7 +280,7 @@ class SpLoanController extends Controller
         }
     }
 
-    public function updateGranterInformation($partner, Request $request)
+    public function updateGrantorInformation($partner, Request $request)
     {
         try {
             $manager_resource = $request->manager_resource;
@@ -289,16 +289,16 @@ class SpLoanController extends Controller
             $profile = Profile::where('mobile', formatMobile($request->mobile))->first();
             if ($profile) {
                 $data = [
-                    'granter_id' => $profile->id,
-                    'granter_relation' => $request->granter_relation
+                    'grantor_id' => $profile->id,
+                    'grantor_relation' => $request->granter_relation
                 ];
-                #$profile->update($this->withBothModificationFields(['nominee_relation'=> $request->nominee_relation]));
+
                 $manager_resource_profile->update($this->withBothModificationFields($data));
             } else {
                 $profile = $this->createProfile($request);
                 $data = [
-                    'granter_id' => $profile->id,
-                    'granter_relation' => $request->granter_relation
+                    'grantor_id' => $profile->id,
+                    'grantor_relation' => $request->granter_relation
                 ];
                 $manager_resource_profile->update($this->withBothModificationFields($data));
             }
@@ -308,7 +308,6 @@ class SpLoanController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             return api_response($request, null, 500);
         }
     }
@@ -365,6 +364,23 @@ class SpLoanController extends Controller
             $manager_resource = $request->manager_resource;
             $profile = $manager_resource->profile;
             $image_for = $request->image_for;
+            $nominee = (bool)$request->nominee;
+            $grantor = (bool)$request->grantor;
+
+            if ($nominee) {
+                if (!$profile->nominee_id) {
+                    return api_response($request, null, 401, ['message' => 'Create Nominee First']);
+                } else {
+                    $profile = Profile::find($profile->nominee_id);
+                }
+            }
+            if ($grantor) {
+                if (!$profile->grantor_id) {
+                    return api_response($request, null, 401, ['message' => 'Create Grantor First']);
+                } else {
+                    $profile = Profile::find($profile->grantor_id);
+                }
+            }
 
             $photo = $request->file('picture');
             if (basename($profile->image_for) != 'default.jpg') {
@@ -382,7 +398,8 @@ class SpLoanController extends Controller
             } else {
                 return api_response($request, null, 500);
             }
-        } catch (ValidationException $e) {
+        } catch
+        (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
