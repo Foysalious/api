@@ -5,30 +5,51 @@ namespace Sheba\Settings\Payment\Methods;
 
 use App\Models\Profile;
 
+use Illuminate\Support\Facades\Redis;
 use Sheba\Bkash\Modules\Tokenized\Methods\Agreement\TokenizedAgreement;
 use Sheba\Bkash\ShebaBkash;
 use Sheba\Settings\Payment\Responses\InitResponse;
+use Sheba\Settings\Payment\Responses\ValidateResponse;
 
 class BkashSetting extends PaymentSettingMethod
 {
-    /** @var ShebaBkash */
-    private $bkash;
+    /** @var TokenizedAgreement $bkash_agreement */
+    private $bkashAgreement;
 
     public function __construct()
     {
-        $this->bkash = (new ShebaBkash())->setModule('tokenized');
+        $this->bkashAgreement = (new ShebaBkash())->setModule('tokenized')->getModuleMethod('agreement');
     }
 
     public function init(Profile $profile): InitResponse
     {
-        /** @var TokenizedAgreement $bkash_agreement */
-        $bkash_agreement = $this->bkash->getModuleMethod('agreement');
-        $response = $bkash_agreement->create($profile->id, 'sheba.xyz');
-        return (new InitResponse())->setSuccessUrl($response->successCallbackURL);
+        $response = $this->bkashAgreement->create($profile->id, config('sheba.api_url') . '/v2/bkash/agreement/validate');
+        $init_response = (new InitResponse())->setSuccessUrl($response->successCallbackURL)
+            ->setRedirectUrl($response->bkashURL)->setTransactionId($response->paymentID);
+        $this->setPaymentIdInRedis($init_response->transactionId, $profile);
+        return $init_response;
     }
 
-    public function validate()
+    public function validate($id): ValidateResponse
     {
-        // TODO: Implement validate() method.
+        $response = $this->bkashAgreement->execute($id);
+        $validate_response = (new ValidateResponse())->setAgreementId($response->agreementID);
+        return $validate_response;
+    }
+
+    public function setPaymentIdInRedis($transaction_id, Profile $profile)
+    {
+        Redis::set($transaction_id, json_encode(array(
+            'id' => $profile->id,
+            'type' => 'Profile'
+        )));
+        Redis::expire($transaction_id, 120 * 60 * 60);
+    }
+
+    public function save(Profile $profile, $id): Profile
+    {
+        $profile->bkash_agreement_id = $id;
+        $profile->update();
+        return $profile;
     }
 }

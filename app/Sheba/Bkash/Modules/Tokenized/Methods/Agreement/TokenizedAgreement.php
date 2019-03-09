@@ -2,6 +2,7 @@
 
 
 use Sheba\Bkash\Modules\Tokenized\Methods\Agreement\Responses\CreateResponse;
+use Sheba\Bkash\Modules\Tokenized\Methods\Agreement\Responses\ExecuteResponse;
 use Sheba\Bkash\Modules\Tokenized\TokenizedModule;
 
 class TokenizedAgreement extends TokenizedModule
@@ -31,9 +32,20 @@ class TokenizedAgreement extends TokenizedModule
         return (new CreateResponse())->setResponse(json_decode($result_data));
     }
 
-    public function execute(array $data)
+    public function execute($payment_id)
     {
-        // TODO: Implement execute() method.
+        $post_fields = json_encode(['paymentID' => $payment_id]);
+        $curl = curl_init($this->getBkashAuth()->url . '/checkout/agreement/execute');
+        $header = $this->getHeader();
+        curl_setopt($curl, CURLOPT_HTTPHEADER, $header);
+        curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($curl, CURLOPT_POSTFIELDS, $post_fields);
+        curl_setopt($curl, CURLOPT_FAILONERROR, true);
+        $result_data = curl_exec($curl);
+        if (curl_errno($curl) > 0) throw new \InvalidArgumentException('API error.');
+        curl_close($curl);
+        return (new ExecuteResponse())->setResponse(json_decode($result_data));
     }
 
     public function status()
