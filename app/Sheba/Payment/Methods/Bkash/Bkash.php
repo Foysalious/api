@@ -108,31 +108,6 @@ class Bkash extends PaymentMethod
         return json_decode($result_data);
     }
 
-    public function token(Payment $payment)
-    {
-        $token = Redis::get('BKASH_TOKEN');
-        $token = $this->grantToken();
-        $body = json_encode(array(
-            'payerReference' => "adad",
-            'callbackURL' => 'http://localhost:8084/bkash?paymentID=' . $payment->transaction_id
-        ));
-        $url = curl_init('https://tokenized.sandbox.bka.sh/v1.2.0-beta/tokenized/checkout/agreement/create');
-        $header = array(
-            'Content-Type:application/json',
-            'authorization:' . $token,
-            'x-app-key:' . $this->appKey);
-        curl_setopt($url, CURLOPT_HTTPHEADER, $header);
-        curl_setopt($url, CURLOPT_CUSTOMREQUEST, "POST");
-        curl_setopt($url, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($url, CURLOPT_POSTFIELDS, $body);
-        curl_setopt($url, CURLOPT_FAILONERROR, true);
-        $result_data = curl_exec($url);
-        dd($header,curl_error($url));
-        if (curl_errno($url) > 0) throw new \InvalidArgumentException('Bkash create API error.');
-        curl_close($url);
-        return json_decode($result_data);
-    }
-
     private function grantToken()
     {
         $post_token = array(

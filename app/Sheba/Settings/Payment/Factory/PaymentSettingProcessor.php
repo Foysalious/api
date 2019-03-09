@@ -1,7 +1,6 @@
 <?php namespace Sheba\Settings\Payment\Factory;
 
-
-use Sheba\Settings\Payment\Methods\Bkash\Bkash;
+use Sheba\Settings\Payment\Methods\BkashSetting;
 
 class PaymentSettingProcessor
 {
@@ -19,7 +18,7 @@ class PaymentSettingProcessor
 
 
     /**
-     * @return Bkash
+     * @return BkashSetting
      * @throws \ReflectionException
      */
     public function get()
@@ -40,7 +39,7 @@ class PaymentSettingProcessor
 
 
     /**
-     * @return Bkash
+     * @return BkashSetting
      * @throws \ReflectionException
      */
     private function calculate()
@@ -49,7 +48,7 @@ class PaymentSettingProcessor
 
         switch ($this->method) {
             case 'bkash':
-                return new Bkash();
+                return new BkashSetting();
         }
     }
 }
