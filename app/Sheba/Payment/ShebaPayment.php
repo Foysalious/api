@@ -6,6 +6,7 @@ use Sheba\Payment\Factory\PaymentProcessor;
 
 class ShebaPayment
 {
+    private $method;
     /**
      * ShebaPayment constructor.
      * @param $enum
@@ -41,10 +42,5 @@ class ShebaPayment
             $payment = $completion_class->complete();
         }
         return $payment;
-    }
-
-    public function token(Payment $payment)
-    {
-        $payment = $this->method->token($payment);
     }
 }

@@ -19,5 +19,4 @@ abstract class PaymentMethod
 
     abstract public function validate(Payment $payment);
 
-    abstract public function token(Payment $payment);
 }
