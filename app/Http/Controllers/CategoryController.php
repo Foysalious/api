@@ -35,9 +35,9 @@ class CategoryController extends Controller
             $is_partner = ($request->has('is_partner') && (int)$request->is_partner)
                 || in_array($request->header('portal-name'), ['manager-app', 'bondhu-app']);
 
-            if($is_business) {
+            if ($is_business) {
                 $q->publishedForBusiness();
-            } else if($is_partner) {
+            } else if ($is_partner) {
                 $q->publishedForPartner();
             } else {
                 $q->published();
@@ -278,8 +278,7 @@ class CategoryController extends Controller
 
                 $subscriptions = collect();
                 foreach ($services as $service) {
-                    if($service->serviceSubscription)
-                    {
+                    if ($service->serviceSubscription) {
                         $subscription = $service->serviceSubscription;
                         list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
                         $subscription->min_price = $service->min_price;
@@ -293,8 +292,15 @@ class CategoryController extends Controller
                 }
 
                 if ($services->count() > 0) {
-                    $category = collect($category)->only(['name', 'slug' ,'banner', 'parent_id', 'app_banner']);
-                    $category['services'] = $this->serviceQuestionSet($services);
+                    $category = collect($category)->only(['name', 'slug', 'banner', 'parent_id', 'app_banner']);
+                    $version_code = (int)$request->header('Version-Code');
+                    $services = $this->serviceQuestionSet($services);
+                    if ($version_code <= 30122) {
+                        $services = $services->reject(function ($service) use ($version_code) {
+                            return $service->subscription;
+                        });
+                    }
+                    $category['services'] = $services;
                     $category['subscriptions'] = $subscriptions;
                     $category['subscription_faq'] = [
                         'title' => 'Subscribe & save money',
@@ -436,8 +442,8 @@ class CategoryController extends Controller
         try {
             $geo_info = json_decode($request->partner->geo_informations);
             $hyper_locations = HyperLocal::insideCircle($geo_info)->with('location')->get()->filter(function ($item) {
-                    return !empty($item->location);
-                })->pluck('location')->pluck('id');
+                return !empty($item->location);
+            })->pluck('location')->pluck('id');
             $category = Category::locationWise($hyper_locations)->get();
             $category = $category->filter(function ($item) {
                 return $item->children->count() > 0;

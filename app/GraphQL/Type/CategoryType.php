@@ -58,8 +58,8 @@ class CategoryType extends GraphQlType
                 'args' => [
                     'id' => ['type' => Type::listOf(Type::int())],
                     'location_id' => ['type' => Type::int()],
-                    'lat' =>['name' => 'lat', 'type' => Type::float()],
-                    'lng' =>['name' => 'lng', 'type' => Type::float()],
+                    'lat' => ['name' => 'lat', 'type' => Type::float()],
+                    'lng' => ['name' => 'lng', 'type' => Type::float()],
                 ],
                 'type' => Type::listOf(GraphQL::type('Service'))
             ],
@@ -82,8 +82,12 @@ class CategoryType extends GraphQlType
     protected function resolveServicesField($root, $args, $context, ResolveInfo $info)
     {
         $fields = $info->getFieldSelection(1);
-        $root->load(['services' => function ($q) use ($args, $fields) {
-            $q->published()->orderBy('order');
+        $version_code = (int)request()->header('Version-Code');
+        $root->load(['services' => function ($q) use ($args, $fields, $version_code) {
+            $q->published()->orderBy('order')->with('subscription');
+            if ($version_code <= 30122) {
+                $q->doesntHave('subscription');
+            }
             if (in_array('start_price', $fields)) {
                 $q->with(['partners' => function ($q) {
                     $q->verified()->where([['partner_service.is_published', 1], ['partner_service.is_verified', 1]]);
@@ -94,15 +98,15 @@ class CategoryType extends GraphQlType
             }
             if (isset($args['location_id'])) {
                 $location = $args['location_id'];
-                $q->whereHas('locations',function($query) use ($location){
-                    $query->where('locations.id',$location);
+                $q->whereHas('locations', function ($query) use ($location) {
+                    $query->where('locations.id', $location);
                 });
             } else if (isset($args['lat']) && isset($args['lng'])) {
-                $hyperLocation= HyperLocal::insidePolygon((double) $args['lat'], (double) $args['lng'])->with('location')->first();
-                if(!is_null($hyperLocation)) {
+                $hyperLocation = HyperLocal::insidePolygon((double)$args['lat'], (double)$args['lng'])->with('location')->first();
+                if (!is_null($hyperLocation)) {
                     $location = $hyperLocation->location->id;
-                    $q->whereHas('locations',function($query) use ($location){
-                        $query->where('locations.id',$location);
+                    $q->whereHas('locations', function ($query) use ($location) {
+                        $query->where('locations.id', $location);
                     });
                 }
             }

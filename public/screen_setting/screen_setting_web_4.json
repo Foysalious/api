@@ -1,1 +1,725 @@
-[{"item_type":"Slider","item_id":3,"name":null,"order":4,"updated_at":"2018-12-25 18:23:07","updated_at_timestamp":1545740587,"data":[{"small_image_link":null,"image_link":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/slides\/1551292328_slide.png","id":44,"target_type":"Category","target_id":328,"target_link":null,"is_parent":false,"link":null,"order":9,"updated_at":"2019-02-28 00:32:08","updated_at_timestamp":1551292328}]},{"item_type":"CategoryGroup","item_id":14,"name":"Whats New","order":5,"updated_at":"2018-12-25 18:23:07","updated_at_timestamp":1545740587,"data":[{"id":23,"name":"Wooden Furniture & Door works","slug":"wooden-furniture-door-works","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/23\/app_thumbnail.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/23\/icon_png.png","is_parent":false,"updated_at":"2019-02-09 10:30:42","updated_at_timestamp":1549686642},{"id":207,"name":"On Demand Cleaner","slug":"on-demand-cleaner","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/207\/150.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/icons_png\/1527308841_tiwnn.png","is_parent":false,"updated_at":"2019-02-06 10:41:17","updated_at_timestamp":1549428077},{"id":222,"name":"Inside City","slug":"inside-city","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/222\/150.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/5\/icon_png.png","is_parent":false,"updated_at":"2018-06-24 03:13:01","updated_at_timestamp":1529788381},{"id":223,"name":"Outside City","slug":"outside-city","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/223\/150.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/5\/icon_png.png","is_parent":false,"updated_at":"2018-06-24 03:13:01","updated_at_timestamp":1529788381},{"id":249,"name":"Smartphone Repair","slug":"smartphone-repair","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/249\/150.jpg","icon_png":null,"is_parent":false,"updated_at":"2019-02-05 13:01:18","updated_at_timestamp":1549350078}]},{"item_type":"CategoryGroup","item_id":15,"name":"Food","order":7,"updated_at":"2018-12-25 18:23:07","updated_at_timestamp":1545740587,"data":[{"id":124,"name":"Catering","slug":"catering","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/124\/app_thumbnail.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/124\/icon_png.png","is_parent":false,"updated_at":"2019-02-05 13:21:30","updated_at_timestamp":1549351290},{"id":206,"name":"Dairy Milk and Ghee","slug":"dairy-milk-and-ghee","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/thumbs\/1549878615_dairy_milk_and_ghee.png","icon_png":null,"is_parent":false,"updated_at":"2019-02-21 14:56:59","updated_at_timestamp":1550739419},{"id":227,"name":"Daily Lunch Meal","slug":"daily-lunch-meal","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/thumbs\/1549867707_daily_lunch_meal.png","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/icons_png\/1530801012_tiwnn.png","is_parent":false,"updated_at":"2019-03-02 15:03:29","updated_at_timestamp":1551517409},{"id":247,"name":"Best Deal for Milk (Free Delivery)","slug":"best-deal-for-milk-free-delivery","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/thumbs\/1549878672_best_deal_for_milk_free_delivery.png","icon_png":null,"is_parent":false,"updated_at":"2019-02-19 19:14:21","updated_at_timestamp":1550582061},{"id":274,"name":"Frozen Foods","slug":"frozen-foods","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/thumbs\/1549864866_frozen_foods.jpg","icon_png":null,"is_parent":false,"updated_at":"2019-02-11 12:02:07","updated_at_timestamp":1549864927}]},{"item_type":"CategoryGroup","item_id":11,"name":"Your Beauty Expert","order":9,"updated_at":"2018-12-25 18:23:07","updated_at_timestamp":1545740587,"data":[{"id":167,"name":"Beauty Salon Services","slug":"beauty-salon-services","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/167\/150.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/167\/icon_png.png","is_parent":false,"updated_at":"2019-02-28 14:52:42","updated_at_timestamp":1551343962},{"id":199,"name":"Wedding and Mehendi","slug":"wedding-and-mehendi","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/199\/150.jpg","icon_png":null,"is_parent":false,"updated_at":"2019-02-28 14:52:42","updated_at_timestamp":1551343962},{"id":200,"name":"Makeup and Hairstyle","slug":"makeup-and-hairstyle","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/200\/150.jpg","icon_png":null,"is_parent":false,"updated_at":"2019-02-28 14:52:42","updated_at_timestamp":1551343962},{"id":259,"name":"Best Deal for Beauty ","slug":"best-deal-for-beauty","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/259\/150.jpg","icon_png":null,"is_parent":false,"updated_at":"2019-02-28 14:52:42","updated_at_timestamp":1551343962},{"id":339,"name":"Body Therapy & Wellness","slug":"body-therapy-wellness","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/thumbs\/1547960064_body_massage_wellness.jpg","icon_png":null,"is_parent":false,"updated_at":"2019-02-28 14:52:42","updated_at_timestamp":1551343962}]},{"item_type":"CategoryGroup","item_id":7,"name":"Trending","order":10,"updated_at":"2018-12-25 18:23:07","updated_at_timestamp":1545740587,"data":[{"id":12,"name":"Microwave Oven Repair","slug":"microwave-oven-repair","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/12\/150.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/12\/icon_png.png","is_parent":false,"updated_at":"2019-02-06 09:51:57","updated_at_timestamp":1549425117},{"id":13,"name":"TV (LCD\/LED)  servicing  ","slug":"tv-lcdled-servicing","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/13\/150.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/13\/icon_png.png","is_parent":false,"updated_at":"2019-02-06 14:45:35","updated_at_timestamp":1549442735},{"id":22,"name":"Electrical Services ","slug":"electrical-services","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/22\/app_thumbnail.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/22\/icon_png.png","is_parent":false,"updated_at":"2019-02-05 18:37:22","updated_at_timestamp":1549370242},{"id":23,"name":"Wooden Furniture & Door works","slug":"wooden-furniture-door-works","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/23\/app_thumbnail.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/23\/icon_png.png","is_parent":false,"updated_at":"2019-02-09 10:30:42","updated_at_timestamp":1549686642},{"id":24,"name":"Furniture Paint","slug":"furniture-paint","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/24\/app_thumbnail.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/24\/icon_png.png","is_parent":false,"updated_at":"2019-02-05 18:38:35","updated_at_timestamp":1549370315},{"id":72,"name":"General Laundry Services","slug":"general-laundry-services","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/72\/150.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/72\/icon_png.png","is_parent":false,"updated_at":"2019-02-06 09:48:12","updated_at_timestamp":1549424892},{"id":200,"name":"Makeup and Hairstyle","slug":"makeup-and-hairstyle","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/200\/150.jpg","icon_png":null,"is_parent":false,"updated_at":"2019-02-28 14:52:42","updated_at_timestamp":1551343962}]},{"item_type":"CategoryGroup","item_id":17,"name":"Home Renovation","order":12,"updated_at":"2018-12-25 18:23:07","updated_at_timestamp":1545740587,"data":[{"id":23,"name":"Wooden Furniture & Door works","slug":"wooden-furniture-door-works","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/23\/app_thumbnail.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/23\/icon_png.png","is_parent":false,"updated_at":"2019-02-09 10:30:42","updated_at_timestamp":1549686642},{"id":24,"name":"Furniture Paint","slug":"furniture-paint","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/24\/app_thumbnail.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/24\/icon_png.png","is_parent":false,"updated_at":"2019-02-05 18:38:35","updated_at_timestamp":1549370315},{"id":25,"name":" Glass & Thai Work","slug":"glass-thai-work","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/thumbs\/1549264409_glass_thai_work.jpg","icon_png":null,"is_parent":false,"updated_at":"2019-02-06 15:08:08","updated_at_timestamp":1549444088},{"id":26,"name":"Wall Painting & wallpaper","slug":"wall-painting-wallpaper","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/thumbs\/1529728035_wall_pasting_paint_.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/26\/icon_png.png","is_parent":false,"updated_at":"2019-02-06 14:47:56","updated_at_timestamp":1549442876},{"id":27,"name":"Steel Works ","slug":"steel-works","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/27\/app_thumbnail.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/27\/icon_png.png","is_parent":false,"updated_at":"2019-02-06 14:35:44","updated_at_timestamp":1549442144},{"id":279,"name":"Interior Design ","slug":"interior-design","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/thumbs\/1541592603_interior_design_.png","icon_png":null,"is_parent":false,"updated_at":"2019-02-06 13:07:25","updated_at_timestamp":1549436845}]},{"item_type":"CategoryGroup","item_id":13,"name":"Your Gadget Clinic","order":13,"updated_at":"2018-12-25 18:23:07","updated_at_timestamp":1545740587,"data":[{"id":74,"name":"Desktop Services ","slug":"desktop-services","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/74\/150.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/74\/icon_png.png","is_parent":false,"updated_at":"2019-02-05 18:30:37","updated_at_timestamp":1549369837},{"id":75,"name":"Laptop Servicing","slug":"laptop-servicing","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/75\/150.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/75\/icon_png.png","is_parent":false,"updated_at":"2019-02-06 09:43:14","updated_at_timestamp":1549424594},{"id":76,"name":"Display Services ","slug":"display-services","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/76\/150.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/76\/icon_png.png","is_parent":false,"updated_at":"2019-02-05 18:29:52","updated_at_timestamp":1549369792},{"id":92,"name":"CCTV Camera Services & Repair","slug":"cctv-camera-services-repair","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/92\/150.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/92\/icon_png.png","is_parent":false,"updated_at":"2019-02-05 18:31:52","updated_at_timestamp":1549369912},{"id":93,"name":"Access Control Services ","slug":"access-control-services","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/93\/150.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/93\/icon_png.png","is_parent":false,"updated_at":"2019-02-05 18:34:22","updated_at_timestamp":1549370062},{"id":249,"name":"Smartphone Repair","slug":"smartphone-repair","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/249\/150.jpg","icon_png":null,"is_parent":false,"updated_at":"2019-02-05 13:01:18","updated_at_timestamp":1549350078}]},{"item_type":"CategoryGroup","item_id":4,"name":"For Your Home","order":13,"updated_at":"2018-12-25 18:23:07","updated_at_timestamp":1545740587,"data":[{"id":19,"name":"Gas Stove\/Burner Repair","slug":"gas-stoveburner-repair","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/19\/150.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/19\/icon_png.png","is_parent":false,"updated_at":"2019-02-05 18:40:34","updated_at_timestamp":1549370434},{"id":21,"name":"Plumbing & Sanitary Services ","slug":"plumbing-sanitary-services","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/thumbs\/1529747412_plumbing_services_sanitary_works.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/21\/icon_png.png","is_parent":false,"updated_at":"2019-02-06 14:19:33","updated_at_timestamp":1549441173},{"id":26,"name":"Wall Painting & wallpaper","slug":"wall-painting-wallpaper","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/thumbs\/1529728035_wall_pasting_paint_.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/26\/icon_png.png","is_parent":false,"updated_at":"2019-02-06 14:47:56","updated_at_timestamp":1549442876},{"id":64,"name":"Professional Home Cleaning","slug":"professional-home-cleaning","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/64\/150.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/64\/icon_png.png","is_parent":false,"updated_at":"2019-02-06 09:39:29","updated_at_timestamp":1549424369},{"id":69,"name":"Pest Control Service ","slug":"pest-control-service","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/69\/150.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/69\/icon_png.png","is_parent":false,"updated_at":"2019-02-06 14:17:31","updated_at_timestamp":1549441051},{"id":152,"name":"Moving Homes","slug":"moving-homes","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/thumbs\/1529580998_moving_homes.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/152\/icon_png.png","is_parent":false,"updated_at":"2019-03-04 09:59:38","updated_at_timestamp":1551671978},{"id":207,"name":"On Demand Cleaner","slug":"on-demand-cleaner","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/207\/150.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/icons_png\/1527308841_tiwnn.png","is_parent":false,"updated_at":"2019-02-06 10:41:17","updated_at_timestamp":1549428077}]},{"item_type":"CategoryGroup","item_id":9,"name":"Car Solution","order":14,"updated_at":"2018-12-25 18:23:07","updated_at_timestamp":1545740587,"data":[{"id":38,"name":"Airport Pick or Drop","slug":"airport-pick-or-drop","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/38\/150.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/38\/icon_png.png","is_parent":false,"updated_at":"2019-02-06 14:18:47","updated_at_timestamp":1549441127},{"id":39,"name":"Day Long Trip Near Dhaka","slug":"day-long-trip-near-dhaka","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/39\/150.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/39\/icon_png.png","is_parent":false,"updated_at":"2019-01-20 14:00:50","updated_at_timestamp":1547971250},{"id":144,"name":"On Demand Driver","slug":"on-demand-driver","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/144\/app_thumbnail.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/144\/icon_png.png","is_parent":false,"updated_at":"2019-02-06 10:50:36","updated_at_timestamp":1549428636},{"id":195,"name":"Car\/Bike Tracking Services","slug":"carbike-tracking-services","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/195\/150.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/icons_png\/1541252654_tiwnn.png","is_parent":false,"updated_at":"2019-02-22 13:46:22","updated_at_timestamp":1550821582},{"id":245,"name":"Car Wash & Polish","slug":"car-wash-polish","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/thumbs\/1550156056_best_deal_for_car_wash_polish.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/icons_png\/1531540070_car_wash.png","is_parent":false,"updated_at":"2019-03-04 14:07:22","updated_at_timestamp":1551686842}]},{"item_type":"CategoryGroup","item_id":3,"name":"Recommended","order":15,"updated_at":"2018-12-25 18:23:07","updated_at_timestamp":1545740587,"data":[{"id":14,"name":"AC Service & Repair","slug":"ac-service-repair","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/14\/150.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/14\/icon_png.png","is_parent":false,"updated_at":"2019-02-11 17:21:31","updated_at_timestamp":1549884091},{"id":24,"name":"Furniture Paint","slug":"furniture-paint","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/24\/app_thumbnail.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/24\/icon_png.png","is_parent":false,"updated_at":"2019-02-05 18:38:35","updated_at_timestamp":1549370315},{"id":75,"name":"Laptop Servicing","slug":"laptop-servicing","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/75\/150.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/75\/icon_png.png","is_parent":false,"updated_at":"2019-02-06 09:43:14","updated_at_timestamp":1549424594},{"id":144,"name":"On Demand Driver","slug":"on-demand-driver","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/144\/app_thumbnail.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/144\/icon_png.png","is_parent":false,"updated_at":"2019-02-06 10:50:36","updated_at_timestamp":1549428636},{"id":167,"name":"Beauty Salon Services","slug":"beauty-salon-services","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/167\/150.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/167\/icon_png.png","is_parent":false,"updated_at":"2019-02-28 14:52:42","updated_at_timestamp":1551343962},{"id":207,"name":"On Demand Cleaner","slug":"on-demand-cleaner","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/207\/150.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/icons_png\/1527308841_tiwnn.png","is_parent":false,"updated_at":"2019-02-06 10:41:17","updated_at_timestamp":1549428077},{"id":222,"name":"Inside City","slug":"inside-city","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/222\/150.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/5\/icon_png.png","is_parent":false,"updated_at":"2018-06-24 03:13:01","updated_at_timestamp":1529788381},{"id":223,"name":"Outside City","slug":"outside-city","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/223\/150.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/5\/icon_png.png","is_parent":false,"updated_at":"2018-06-24 03:13:01","updated_at_timestamp":1529788381}]},{"item_type":"CategoryGroup","item_id":5,"name":"For Your Office","order":18,"updated_at":"2018-12-25 18:23:07","updated_at_timestamp":1545740587,"data":[{"id":61,"name":"Generator Services ","slug":"generator-services","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/61\/150.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/61\/icon_png.png","is_parent":false,"updated_at":"2019-02-05 18:41:22","updated_at_timestamp":1549370482},{"id":74,"name":"Desktop Services ","slug":"desktop-services","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/74\/150.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/74\/icon_png.png","is_parent":false,"updated_at":"2019-02-05 18:30:37","updated_at_timestamp":1549369837},{"id":75,"name":"Laptop Servicing","slug":"laptop-servicing","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/75\/150.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/75\/icon_png.png","is_parent":false,"updated_at":"2019-02-06 09:43:14","updated_at_timestamp":1549424594},{"id":92,"name":"CCTV Camera Services & Repair","slug":"cctv-camera-services-repair","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/92\/150.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/92\/icon_png.png","is_parent":false,"updated_at":"2019-02-05 18:31:52","updated_at_timestamp":1549369912},{"id":153,"name":"Moving Offices","slug":"moving-offices","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/153\/app_thumbnail.jpg","icon_png":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/153\/icon_png.png","is_parent":false,"updated_at":"2019-03-04 09:59:36","updated_at_timestamp":1551671976},{"id":159,"name":"Legal & General Consultancy ","slug":"legal-general-consultancy","thumb":"https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/thumbs\/1522022072_company_secretarial_services.png","icon_png":null,"is_parent":false,"updated_at":"2018-12-02 09:52:04","updated_at_timestamp":1543722724}]}]
+[
+  {
+    "item_type": "Slider",
+    "item_id": 3,
+    "name": null,
+    "order": 4,
+    "updated_at": "2018-12-25 18:23:07",
+    "updated_at_timestamp": 1545740587,
+    "data": [
+      {
+        "small_image_link": null,
+        "image_link": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/slides\/ac-off-200-web-banner.png",
+        "id": 44,
+        "target_type": "Category",
+        "target_id": 328,
+        "target_link": null,
+        "is_parent": false,
+        "link": null,
+        "order": 9,
+        "updated_at": "2019-02-28 00:32:08",
+        "updated_at_timestamp": 1551292328
+      }
+    ]
+  },
+  {
+    "item_type": "CategoryGroup",
+    "item_id": 14,
+    "name": "Whats New",
+    "order": 5,
+    "updated_at": "2018-12-25 18:23:07",
+    "updated_at_timestamp": 1545740587,
+    "data": [
+      {
+        "id": 23,
+        "name": "Wooden Furniture & Door works",
+        "slug": "wooden-furniture-door-works",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/23\/app_thumbnail.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/23\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-09 10:30:42",
+        "updated_at_timestamp": 1549686642
+      },
+      {
+        "id": 207,
+        "name": "On Demand Cleaner",
+        "slug": "on-demand-cleaner",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/207\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/icons_png\/1527308841_tiwnn.png",
+        "is_parent": false,
+        "updated_at": "2019-02-06 10:41:17",
+        "updated_at_timestamp": 1549428077
+      },
+      {
+        "id": 222,
+        "name": "Inside City",
+        "slug": "inside-city",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/222\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/5\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2018-06-24 03:13:01",
+        "updated_at_timestamp": 1529788381
+      },
+      {
+        "id": 223,
+        "name": "Outside City",
+        "slug": "outside-city",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/223\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/5\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2018-06-24 03:13:01",
+        "updated_at_timestamp": 1529788381
+      },
+      {
+        "id": 249,
+        "name": "Smartphone Repair",
+        "slug": "smartphone-repair",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/249\/150.jpg",
+        "icon_png": null,
+        "is_parent": false,
+        "updated_at": "2019-02-05 13:01:18",
+        "updated_at_timestamp": 1549350078
+      }
+    ]
+  },
+  {
+    "item_type": "CategoryGroup",
+    "item_id": 15,
+    "name": "Food",
+    "order": 7,
+    "updated_at": "2018-12-25 18:23:07",
+    "updated_at_timestamp": 1545740587,
+    "data": [
+      {
+        "id": 124,
+        "name": "Catering",
+        "slug": "catering",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/124\/app_thumbnail.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/124\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-05 13:21:30",
+        "updated_at_timestamp": 1549351290
+      },
+      {
+        "id": 206,
+        "name": "Dairy Milk and Ghee",
+        "slug": "dairy-milk-and-ghee",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/thumbs\/1549878615_dairy_milk_and_ghee.png",
+        "icon_png": null,
+        "is_parent": false,
+        "updated_at": "2019-02-21 14:56:59",
+        "updated_at_timestamp": 1550739419
+      },
+      {
+        "id": 227,
+        "name": "Daily Lunch Meal",
+        "slug": "daily-lunch-meal",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/thumbs\/1549867707_daily_lunch_meal.png",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/icons_png\/1530801012_tiwnn.png",
+        "is_parent": false,
+        "updated_at": "2019-03-02 15:03:29",
+        "updated_at_timestamp": 1551517409
+      },
+      {
+        "id": 247,
+        "name": "Best Deal for Milk (Free Delivery)",
+        "slug": "best-deal-for-milk-free-delivery",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/thumbs\/1549878672_best_deal_for_milk_free_delivery.png",
+        "icon_png": null,
+        "is_parent": false,
+        "updated_at": "2019-02-19 19:14:21",
+        "updated_at_timestamp": 1550582061
+      },
+      {
+        "id": 274,
+        "name": "Frozen Foods",
+        "slug": "frozen-foods",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/thumbs\/1549864866_frozen_foods.jpg",
+        "icon_png": null,
+        "is_parent": false,
+        "updated_at": "2019-02-11 12:02:07",
+        "updated_at_timestamp": 1549864927
+      }
+    ]
+  },
+  {
+    "item_type": "CategoryGroup",
+    "item_id": 11,
+    "name": "Your Beauty Expert",
+    "order": 9,
+    "updated_at": "2018-12-25 18:23:07",
+    "updated_at_timestamp": 1545740587,
+    "data": [
+      {
+        "id": 167,
+        "name": "Beauty Salon Services",
+        "slug": "beauty-salon-services",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/167\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/167\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-28 14:52:42",
+        "updated_at_timestamp": 1551343962
+      },
+      {
+        "id": 199,
+        "name": "Wedding and Mehendi",
+        "slug": "wedding-and-mehendi",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/199\/150.jpg",
+        "icon_png": null,
+        "is_parent": false,
+        "updated_at": "2019-02-28 14:52:42",
+        "updated_at_timestamp": 1551343962
+      },
+      {
+        "id": 200,
+        "name": "Makeup and Hairstyle",
+        "slug": "makeup-and-hairstyle",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/200\/150.jpg",
+        "icon_png": null,
+        "is_parent": false,
+        "updated_at": "2019-02-28 14:52:42",
+        "updated_at_timestamp": 1551343962
+      },
+      {
+        "id": 259,
+        "name": "Best Deal for Beauty ",
+        "slug": "best-deal-for-beauty",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/259\/150.jpg",
+        "icon_png": null,
+        "is_parent": false,
+        "updated_at": "2019-02-28 14:52:42",
+        "updated_at_timestamp": 1551343962
+      },
+      {
+        "id": 339,
+        "name": "Body Therapy & Wellness",
+        "slug": "body-therapy-wellness",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/thumbs\/1547960064_body_massage_wellness.jpg",
+        "icon_png": null,
+        "is_parent": false,
+        "updated_at": "2019-02-28 14:52:42",
+        "updated_at_timestamp": 1551343962
+      }
+    ]
+  },
+  {
+    "item_type": "CategoryGroup",
+    "item_id": 7,
+    "name": "Trending",
+    "order": 10,
+    "updated_at": "2018-12-25 18:23:07",
+    "updated_at_timestamp": 1545740587,
+    "data": [
+      {
+        "id": 12,
+        "name": "Microwave Oven Repair",
+        "slug": "microwave-oven-repair",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/12\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/12\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-06 09:51:57",
+        "updated_at_timestamp": 1549425117
+      },
+      {
+        "id": 13,
+        "name": "TV (LCD\/LED)  servicing  ",
+        "slug": "tv-lcdled-servicing",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/13\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/13\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-06 14:45:35",
+        "updated_at_timestamp": 1549442735
+      },
+      {
+        "id": 22,
+        "name": "Electrical Services ",
+        "slug": "electrical-services",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/22\/app_thumbnail.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/22\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-05 18:37:22",
+        "updated_at_timestamp": 1549370242
+      },
+      {
+        "id": 23,
+        "name": "Wooden Furniture & Door works",
+        "slug": "wooden-furniture-door-works",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/23\/app_thumbnail.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/23\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-09 10:30:42",
+        "updated_at_timestamp": 1549686642
+      },
+      {
+        "id": 24,
+        "name": "Furniture Paint",
+        "slug": "furniture-paint",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/24\/app_thumbnail.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/24\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-05 18:38:35",
+        "updated_at_timestamp": 1549370315
+      },
+      {
+        "id": 72,
+        "name": "General Laundry Services",
+        "slug": "general-laundry-services",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/72\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/72\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-06 09:48:12",
+        "updated_at_timestamp": 1549424892
+      },
+      {
+        "id": 200,
+        "name": "Makeup and Hairstyle",
+        "slug": "makeup-and-hairstyle",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/200\/150.jpg",
+        "icon_png": null,
+        "is_parent": false,
+        "updated_at": "2019-02-28 14:52:42",
+        "updated_at_timestamp": 1551343962
+      }
+    ]
+  },
+  {
+    "item_type": "CategoryGroup",
+    "item_id": 17,
+    "name": "Home Renovation",
+    "order": 12,
+    "updated_at": "2018-12-25 18:23:07",
+    "updated_at_timestamp": 1545740587,
+    "data": [
+      {
+        "id": 23,
+        "name": "Wooden Furniture & Door works",
+        "slug": "wooden-furniture-door-works",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/23\/app_thumbnail.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/23\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-09 10:30:42",
+        "updated_at_timestamp": 1549686642
+      },
+      {
+        "id": 24,
+        "name": "Furniture Paint",
+        "slug": "furniture-paint",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/24\/app_thumbnail.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/24\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-05 18:38:35",
+        "updated_at_timestamp": 1549370315
+      },
+      {
+        "id": 25,
+        "name": " Glass & Thai Work",
+        "slug": "glass-thai-work",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/thumbs\/1549264409_glass_thai_work.jpg",
+        "icon_png": null,
+        "is_parent": false,
+        "updated_at": "2019-02-06 15:08:08",
+        "updated_at_timestamp": 1549444088
+      },
+      {
+        "id": 26,
+        "name": "Wall Painting & wallpaper",
+        "slug": "wall-painting-wallpaper",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/thumbs\/1529728035_wall_pasting_paint_.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/26\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-06 14:47:56",
+        "updated_at_timestamp": 1549442876
+      },
+      {
+        "id": 27,
+        "name": "Steel Works ",
+        "slug": "steel-works",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/27\/app_thumbnail.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/27\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-06 14:35:44",
+        "updated_at_timestamp": 1549442144
+      },
+      {
+        "id": 279,
+        "name": "Interior Design ",
+        "slug": "interior-design",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/thumbs\/1541592603_interior_design_.png",
+        "icon_png": null,
+        "is_parent": false,
+        "updated_at": "2019-02-06 13:07:25",
+        "updated_at_timestamp": 1549436845
+      }
+    ]
+  },
+  {
+    "item_type": "CategoryGroup",
+    "item_id": 13,
+    "name": "Your Gadget Clinic",
+    "order": 13,
+    "updated_at": "2018-12-25 18:23:07",
+    "updated_at_timestamp": 1545740587,
+    "data": [
+      {
+        "id": 74,
+        "name": "Desktop Services ",
+        "slug": "desktop-services",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/74\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/74\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-05 18:30:37",
+        "updated_at_timestamp": 1549369837
+      },
+      {
+        "id": 75,
+        "name": "Laptop Servicing",
+        "slug": "laptop-servicing",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/75\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/75\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-06 09:43:14",
+        "updated_at_timestamp": 1549424594
+      },
+      {
+        "id": 76,
+        "name": "Display Services ",
+        "slug": "display-services",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/76\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/76\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-05 18:29:52",
+        "updated_at_timestamp": 1549369792
+      },
+      {
+        "id": 92,
+        "name": "CCTV Camera Services & Repair",
+        "slug": "cctv-camera-services-repair",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/92\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/92\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-05 18:31:52",
+        "updated_at_timestamp": 1549369912
+      },
+      {
+        "id": 93,
+        "name": "Access Control Services ",
+        "slug": "access-control-services",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/93\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/93\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-05 18:34:22",
+        "updated_at_timestamp": 1549370062
+      },
+      {
+        "id": 249,
+        "name": "Smartphone Repair",
+        "slug": "smartphone-repair",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/249\/150.jpg",
+        "icon_png": null,
+        "is_parent": false,
+        "updated_at": "2019-02-05 13:01:18",
+        "updated_at_timestamp": 1549350078
+      }
+    ]
+  },
+  {
+    "item_type": "CategoryGroup",
+    "item_id": 4,
+    "name": "For Your Home",
+    "order": 13,
+    "updated_at": "2018-12-25 18:23:07",
+    "updated_at_timestamp": 1545740587,
+    "data": [
+      {
+        "id": 19,
+        "name": "Gas Stove\/Burner Repair",
+        "slug": "gas-stoveburner-repair",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/19\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/19\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-05 18:40:34",
+        "updated_at_timestamp": 1549370434
+      },
+      {
+        "id": 21,
+        "name": "Plumbing & Sanitary Services ",
+        "slug": "plumbing-sanitary-services",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/thumbs\/1529747412_plumbing_services_sanitary_works.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/21\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-06 14:19:33",
+        "updated_at_timestamp": 1549441173
+      },
+      {
+        "id": 26,
+        "name": "Wall Painting & wallpaper",
+        "slug": "wall-painting-wallpaper",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/thumbs\/1529728035_wall_pasting_paint_.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/26\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-06 14:47:56",
+        "updated_at_timestamp": 1549442876
+      },
+      {
+        "id": 64,
+        "name": "Professional Home Cleaning",
+        "slug": "professional-home-cleaning",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/64\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/64\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-06 09:39:29",
+        "updated_at_timestamp": 1549424369
+      },
+      {
+        "id": 69,
+        "name": "Pest Control Service ",
+        "slug": "pest-control-service",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/69\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/69\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-06 14:17:31",
+        "updated_at_timestamp": 1549441051
+      },
+      {
+        "id": 152,
+        "name": "Moving Homes",
+        "slug": "moving-homes",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/thumbs\/1529580998_moving_homes.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/152\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-03-04 09:59:38",
+        "updated_at_timestamp": 1551671978
+      },
+      {
+        "id": 207,
+        "name": "On Demand Cleaner",
+        "slug": "on-demand-cleaner",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/207\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/icons_png\/1527308841_tiwnn.png",
+        "is_parent": false,
+        "updated_at": "2019-02-06 10:41:17",
+        "updated_at_timestamp": 1549428077
+      }
+    ]
+  },
+  {
+    "item_type": "CategoryGroup",
+    "item_id": 9,
+    "name": "Car Solution",
+    "order": 14,
+    "updated_at": "2018-12-25 18:23:07",
+    "updated_at_timestamp": 1545740587,
+    "data": [
+      {
+        "id": 38,
+        "name": "Airport Pick or Drop",
+        "slug": "airport-pick-or-drop",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/38\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/38\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-06 14:18:47",
+        "updated_at_timestamp": 1549441127
+      },
+      {
+        "id": 39,
+        "name": "Day Long Trip Near Dhaka",
+        "slug": "day-long-trip-near-dhaka",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/39\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/39\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-01-20 14:00:50",
+        "updated_at_timestamp": 1547971250
+      },
+      {
+        "id": 144,
+        "name": "On Demand Driver",
+        "slug": "on-demand-driver",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/144\/app_thumbnail.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/144\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-06 10:50:36",
+        "updated_at_timestamp": 1549428636
+      },
+      {
+        "id": 195,
+        "name": "Car\/Bike Tracking Services",
+        "slug": "carbike-tracking-services",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/195\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/icons_png\/1541252654_tiwnn.png",
+        "is_parent": false,
+        "updated_at": "2019-02-22 13:46:22",
+        "updated_at_timestamp": 1550821582
+      },
+      {
+        "id": 245,
+        "name": "Car Wash & Polish",
+        "slug": "car-wash-polish",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/thumbs\/1550156056_best_deal_for_car_wash_polish.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/icons_png\/1531540070_car_wash.png",
+        "is_parent": false,
+        "updated_at": "2019-03-04 14:07:22",
+        "updated_at_timestamp": 1551686842
+      }
+    ]
+  },
+  {
+    "item_type": "CategoryGroup",
+    "item_id": 3,
+    "name": "Recommended",
+    "order": 15,
+    "updated_at": "2018-12-25 18:23:07",
+    "updated_at_timestamp": 1545740587,
+    "data": [
+      {
+        "id": 14,
+        "name": "AC Service & Repair",
+        "slug": "ac-service-repair",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/14\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/14\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-11 17:21:31",
+        "updated_at_timestamp": 1549884091
+      },
+      {
+        "id": 24,
+        "name": "Furniture Paint",
+        "slug": "furniture-paint",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/24\/app_thumbnail.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/24\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-05 18:38:35",
+        "updated_at_timestamp": 1549370315
+      },
+      {
+        "id": 75,
+        "name": "Laptop Servicing",
+        "slug": "laptop-servicing",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/75\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/75\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-06 09:43:14",
+        "updated_at_timestamp": 1549424594
+      },
+      {
+        "id": 144,
+        "name": "On Demand Driver",
+        "slug": "on-demand-driver",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/144\/app_thumbnail.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/144\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-06 10:50:36",
+        "updated_at_timestamp": 1549428636
+      },
+      {
+        "id": 167,
+        "name": "Beauty Salon Services",
+        "slug": "beauty-salon-services",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/167\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/167\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-28 14:52:42",
+        "updated_at_timestamp": 1551343962
+      },
+      {
+        "id": 207,
+        "name": "On Demand Cleaner",
+        "slug": "on-demand-cleaner",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/207\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/icons_png\/1527308841_tiwnn.png",
+        "is_parent": false,
+        "updated_at": "2019-02-06 10:41:17",
+        "updated_at_timestamp": 1549428077
+      },
+      {
+        "id": 222,
+        "name": "Inside City",
+        "slug": "inside-city",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/222\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/5\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2018-06-24 03:13:01",
+        "updated_at_timestamp": 1529788381
+      },
+      {
+        "id": 223,
+        "name": "Outside City",
+        "slug": "outside-city",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/223\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/5\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2018-06-24 03:13:01",
+        "updated_at_timestamp": 1529788381
+      }
+    ]
+  },
+  {
+    "item_type": "CategoryGroup",
+    "item_id": 5,
+    "name": "For Your Office",
+    "order": 18,
+    "updated_at": "2018-12-25 18:23:07",
+    "updated_at_timestamp": 1545740587,
+    "data": [
+      {
+        "id": 61,
+        "name": "Generator Services ",
+        "slug": "generator-services",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/61\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/61\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-05 18:41:22",
+        "updated_at_timestamp": 1549370482
+      },
+      {
+        "id": 74,
+        "name": "Desktop Services ",
+        "slug": "desktop-services",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/74\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/74\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-05 18:30:37",
+        "updated_at_timestamp": 1549369837
+      },
+      {
+        "id": 75,
+        "name": "Laptop Servicing",
+        "slug": "laptop-servicing",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/75\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/75\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-06 09:43:14",
+        "updated_at_timestamp": 1549424594
+      },
+      {
+        "id": 92,
+        "name": "CCTV Camera Services & Repair",
+        "slug": "cctv-camera-services-repair",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/92\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/92\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-05 18:31:52",
+        "updated_at_timestamp": 1549369912
+      },
+      {
+        "id": 153,
+        "name": "Moving Offices",
+        "slug": "moving-offices",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/153\/app_thumbnail.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/153\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-03-04 09:59:36",
+        "updated_at_timestamp": 1551671976
+      },
+      {
+        "id": 159,
+        "name": "Legal & General Consultancy ",
+        "slug": "legal-general-consultancy",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/thumbs\/1522022072_company_secretarial_services.png",
+        "icon_png": null,
+        "is_parent": false,
+        "updated_at": "2018-12-02 09:52:04",
+        "updated_at_timestamp": 1543722724
+      }
+    ]
+  }
+]
