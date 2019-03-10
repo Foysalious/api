@@ -296,7 +296,7 @@ class OrderType extends GraphQlType
         return $root->invoice;
     }
 
-    protected function resolveSubscriptionOrderField($root)
+    protected function resolveSubscriptionOrderIdField($root)
     {
         return $root->order->subscription_order_id;
     }
