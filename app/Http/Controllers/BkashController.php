@@ -72,6 +72,7 @@ class BkashController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -81,7 +82,10 @@ class BkashController extends Controller
     {
         try {
             $payment = Payment::where('transaction_id', $paymentID)->valid()->first();
-            $data = array_merge(collect(json_decode($payment->transaction_details))->toArray(), ['id' => $payment->payable->user->id, 'token' => $payment->payable->user->remember_token]);
+            $data = array_merge(collect(json_decode($payment->transaction_details))->toArray(), [
+                'order_id' => $payment->payable->type_id, 'id' => $payment->payable->user->id,
+                'token' => $payment->payable->user->remember_token
+            ]);
             return $payment ? api_response($request, $payment, 200, ['data' => $data]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
