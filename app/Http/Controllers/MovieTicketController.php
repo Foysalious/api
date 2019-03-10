@@ -181,7 +181,7 @@ class MovieTicketController extends Controller
                     'show_time' => $reservation_details->ShowTime,
                     'quantity' => $reservation_details->quantity,
                     'reserver_mobile'=> $order->reserver_mobile,
-                    'image_url' =>  $reservation_details->image_url
+                    'image_url' =>  isset($reservation_details->image_url) ? $reservation_details->image_url : null
                 );
                 array_push($histories, $history);
             }
