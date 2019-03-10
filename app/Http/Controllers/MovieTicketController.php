@@ -174,7 +174,6 @@ class MovieTicketController extends Controller
             $histories = array();
             foreach ($orders as $order) {
                 $reservation_details = json_decode($order->reservation_details);
-                dd($reservation_details);
                 $history = array(
                     'id' => $order->id,
                     'movie_title' => $reservation_details->MovieName,
