@@ -38,7 +38,7 @@ class Route
                 $api->post('validate', 'BkashController@validatePayment');
                 $api->group(['prefix' => 'tokenized'], function ($api) {
                     $api->group(['prefix' => 'payment'], function ($api) {
-                        $api->get('validate', 'BkashController@validatePayment');
+                        $api->get('validate', 'Bkash\BkashTokenizedController@validatePayment');
                         $api->post('/', 'Bkash\BkashTokenizedController@tokenizePayment');
                     });
                     $api->group(['prefix' => 'agreement'], function ($api) {
