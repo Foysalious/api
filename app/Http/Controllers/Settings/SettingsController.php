@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\PartnerOrder;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
@@ -93,19 +94,20 @@ class SettingsController extends Controller
         try {
             $this->validate($request, [
                 'payment' => 'sometimes|required|in:bkash',
-                'order_id' => 'numeric'
+                'order_id' => 'numeric',
+                'payment_id' => 'string'
             ]);
             /** @var Customer $customer */
             $profile = $request->customer->profile;
             if ($profile->bkash_agreement_id) return api_response($request, null, 403, ['message' => "$request->payment is already saved"]);
             $response = $paymentSetting->setMethod($request->payment)->init($profile);
             $key = 'order_' . $response->transactionId;
-            Redis::set($key, json_encode(['order_id' => (int)$request->order_id]));
+            Redis::set($key, json_encode(['order_id' => (int)$request->order_id, 'payment_id' => $request->payment_id]));
             Redis::expire($key, 60 * 60);
             return api_response($request, $response, 200, ['data' => array(
                 'transaction_id' => $response->transactionId,
                 'redirect_url' => $response->redirectUrl,
-                'success_url' => config('sheba.front_url') . '/profile/me',
+                'success_url' => $request->order_id ? config('sheba.front_url') . '/orders/' . (PartnerOrder::find($request->order_id))->jobs()->where('status', '<>', constants('JOB_STATUSES')['Cancelled'])->first()->id : config('sheba.front_url') . '/profile/me',
             )]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

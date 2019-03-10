@@ -32,7 +32,6 @@ abstract class BkashPayment
     {
         $curl = curl_init($this->bkashAuth->url . '/checkout/payment/execute');
         $this->setCurlOptions($curl);
-        dump(json_encode(['paymentID' => json_decode($payment->transaction_details)->paymentID]),$this->bkashAuth);
         curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode(['paymentID' => json_decode($payment->transaction_details)->paymentID]));
         $result_data = curl_exec($curl);
         $result_data = json_decode($result_data);
