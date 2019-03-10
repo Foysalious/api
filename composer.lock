@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "eee99f000595899ca1e5e24dd6a79f3a",
+    "content-hash": "d71b54bf3745cd3c1fc14f91dc724b8b",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -2852,7 +2852,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "9a14fb7f878dd0c5287484063a4cb3e3d4c46299"
+                "reference": "e2d238b07ef045e020abcf9b2a1598d545312eaa"
             },
             "require": {
                 "php": ">=5.4"
@@ -2879,7 +2879,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2019-03-07T06:06:07+00:00"
+            "time": "2019-03-10T05:11:57+00:00"
         },
         {
             "name": "sheba/notification",
@@ -2948,7 +2948,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_voucher.git",
-                "reference": "00e33b259c7176859bc5b02814c32230669366b8"
+                "reference": "af5987596637fc83a211f230601d80257a0cd0ec"
             },
             "require": {
                 "php": ">=5.4"
@@ -2972,7 +2972,7 @@
                 }
             ],
             "description": "Voucher for Sheba.",
-            "time": "2019-02-17T11:06:29+00:00"
+            "time": "2019-03-09T09:06:37+00:00"
         },
         {
             "name": "sunra/php-simple-html-dom-parser",
@@ -5439,8 +5439,7 @@
         "ext-curl": "*",
         "ext-soap": "*",
         "ext-calendar": "*",
-        "ext-simplexml": "*",
-        "ext-redis": "*"
+        "ext-simplexml": "*"
     },
     "platform-dev": []
 }
