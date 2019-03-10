@@ -60,6 +60,8 @@ class SpLoanInformationCompletion extends Controller
 
     private function personalInformationCompletion($profile, $manager_resource, $complete_count)
     {
+        $update_at = collect();
+
         if (!empty($profile->name)) $complete_count++;
         if (!empty($profile->mobile)) $complete_count++;
         if (!empty($profile->gender)) $complete_count++;
@@ -67,19 +69,19 @@ class SpLoanInformationCompletion extends Controller
         if (!empty($profile->dob)) $complete_count++;
         if (!empty($profile->address)) $complete_count++;
         if (!empty($profile->permanent_address)) $complete_count++;
-        if (!empty($manager_resource->father_name)) $complete_count++;
-        if (!empty($manager_resource->spouse_name)) $complete_count++;
         if (!empty($profile->occupation)) $complete_count++;
         if (!empty($profile->monthly_living_cost)) $complete_count++;
         if (!empty($profile->total_asset_amount)) $complete_count++;
         if (!empty($profile->monthly_loan_installment_amount)) $complete_count++;
         if (!empty($profile->utility_bill_attachment)) $complete_count++;
+        $update_at->push($profile->updated_at);
 
-        if ($profile->updated_at->gt($manager_resource->updated_at)) {
-            $last_update = getDayName($profile->updated_at);
-        } else {
-            $last_update = getDayName($manager_resource->updated_at);
-        }
+        if (!empty($manager_resource->father_name)) $complete_count++;
+        if (!empty($manager_resource->spouse_name)) $complete_count++;
+        $update_at->push($manager_resource->updated_at);
+
+        $last_update = getDayName($update_at->max());
+
         $personal_information = round((($complete_count / 14) * 100), 0);
         return ['personal_information' => $personal_information, 'last_update' => $last_update];
     }
@@ -88,21 +90,21 @@ class SpLoanInformationCompletion extends Controller
     {
         $business_additional_information = $partner->businessAdditionalInformation()['0'];
         $sales_information = $partner->salesInformation()['0'];
+        $update_at = collect();
 
         if (!empty($partner->name)) $complete_count++;
         if (!empty($partner->business_type)) $complete_count++;
         if (!empty($partner->address)) $complete_count++;
-        if (!empty($basic_informations->establishment_year)) $complete_count++;
         if (!empty($partner->full_time_employee)) $complete_count++;
         if (!empty($partner->part_time_employee)) $complete_count++;
+        $update_at->push($partner->updated_at);
+
+        if (!empty($basic_informations->establishment_year)) $complete_count++;
+        $update_at->push($basic_informations->updated_at);
         if (count((array)$business_additional_information) >= 6) $complete_count++;
         if (count((array)$sales_information) >= 3) $complete_count++;
 
-        if ($partner->updated_at->gt($basic_informations->updated_at)) {
-            $last_update = getDayName($partner->updated_at);
-        } else {
-            $last_update = getDayName($basic_informations->updated_at);
-        }
+        $last_update = getDayName($update_at->max());
 
         $business_information = round((($complete_count / 8) * 100), 0);
         return ['business_information' => $business_information, 'last_update' => $last_update];
@@ -110,19 +112,20 @@ class SpLoanInformationCompletion extends Controller
 
     private function financeInformationCompletion($partner, $bank_informations, $complete_count)
     {
+        $update_at = collect();
+
         if (!empty($bank_informations->acc_name)) $complete_count++;
         if (!empty($bank_informations->acc_no)) $complete_count++;
         if (!empty($bank_informations->bank_name)) $complete_count++;
         if (!empty($bank_informations->branch_name)) $complete_count++;
         if (!empty($bank_informations->acc_type)) $complete_count++;
+        $update_at->push($bank_informations->updated_at);
+
         if (!empty($partner->bkash_no)) $complete_count++;
         if (!empty($partner->bkash_account_type)) $complete_count++;
+        $update_at->push($partner->updated_at);
 
-        if ($partner->updated_at->gt($bank_informations->updated_at)) {
-            $last_update = getDayName($partner->updated_at);
-        } else {
-            $last_update = getDayName($bank_informations->updated_at);
-        }
+        $last_update = getDayName($update_at->max());
 
         $finance_information = round((($complete_count / 7) * 100), 0);
         return ['finance_information' => $finance_information, 'last_update' => $last_update];
@@ -141,6 +144,7 @@ class SpLoanInformationCompletion extends Controller
             if (!(empty($nominee_profile->pro_pic))) $complete_count++;
             if (!(empty($nominee_profile->nid_front_image))) $complete_count++;
             if (!(empty($nominee_profile->nid_back_image))) $complete_count++;
+            $update_at->push($nominee_profile->updated_at);
 
         }
         if ($grantor_profile) {
@@ -150,19 +154,13 @@ class SpLoanInformationCompletion extends Controller
             if (!(empty($grantor_profile->pro_pic))) $complete_count++;
             if (!(empty($grantor_profile->nid_front_image))) $complete_count++;
             if (!(empty($grantor_profile->nid_back_image))) $complete_count++;
+            $update_at->push($grantor_profile->updated_at);
         }
-
-        /*if ($nominee_profile && $grantor_profile) {
-            if ($nominee_profile->updated_at->gt($grantor_profile->updated_at)) {
-                $last_update = getDayName($nominee_profile->updated_at);
-            } else {
-                $last_update = getDayName($grantor_profile->updated_at);
-            }
-        } elseif ($nominee_profile) {
-            $last_update = getDayName($nominee_profile->updated_at);
-        } elseif ($grantor_profile) {
-            $last_update = getDayName($grantor_profile->updated_at);
-        }*/
+        if ($nominee_profile || $grantor_profile) {
+            $last_update = getDayName($update_at->max());
+        } else {
+            $last_update = 0;
+        }
 
         $nominee_information = round((($complete_count / 12) * 100), 0);
 
