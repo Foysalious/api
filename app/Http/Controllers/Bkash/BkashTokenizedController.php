@@ -7,12 +7,35 @@ use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Validation\ValidationException;
 use Sheba\Bkash\Modules\Tokenized\TokenizedPayment;
 use Sheba\Bkash\ShebaBkash;
+use Sheba\Payment\ShebaPayment;
 use Sheba\Settings\Payment\PaymentSetting;
 
 class BkashTokenizedController extends Controller
 {
+    public function validatePayment(Request $request)
+    {
+        try {
+            $this->validate($request, ['paymentID' => 'required']);
+            $payment = Payment::where('transaction_id', $request->paymentID)->valid()->first();
+            if (!$payment) return api_response($request, null, 404, ['message' => 'Valid Payment not found.']);
+            $sheba_payment = new ShebaPayment('bkash');
+            $payment = $sheba_payment->complete($payment);
+            $redirect_url = $payment->payable->success_url . '?invoice_id=' . $request->paymentID;
+            return redirect($redirect_url);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 
     public function tokenizePayment(Request $request)
     {
