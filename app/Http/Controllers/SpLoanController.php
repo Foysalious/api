@@ -96,8 +96,10 @@ class SpLoanController extends Controller
             $profile = $manager_resource->profile;
             $basic_informations = $partner->basicInformations;
             $bank_informations = $partner->bankInformations;
+            $business_additional_information = $partner->businessAdditionalInformation()['0'];
+            $sales_information = $partner->salesInformation()['0'];
+            #dd($business_additional_information, $sales_information);
 
-            #dd($partner, $manager_resource, $profile, $basic_informations);
             $info = array(
                 'business_name' => $partner->name,
                 'business_type' => $partner->business_type,
@@ -105,18 +107,18 @@ class SpLoanController extends Controller
                 'establishment_year' => $basic_informations->establishment_year,
                 'full_time_employee' => $partner->full_time_employee,
                 'part_time_employee' => $partner->part_time_employee,
-                'business_expenses' => [
-                    'product_price' => 100,
-                    'employee_salary' => 100,
-                    'office_rent' => 100,
-                    'utility_bills' => 100,
-                    'marketing_cost' => 100,
-                    'other_costs' => 100
+                'business_additional_information' => [
+                    'product_price' => $business_additional_information->product_price,
+                    'employee_salary' => $business_additional_information->employee_salary,
+                    'office_rent' => $business_additional_information->office_rent,
+                    'utility_bills' => $business_additional_information->utility_bills,
+                    'marketing_cost' => $business_additional_information->marketing_cost,
+                    'other_costs' => $business_additional_information->other_costs
                 ],
-                'last_six_month_sell' => [
-                    'avg_sell' => 100,
-                    'min_sell' => 100,
-                    'max_sell' => 100
+                'last_six_month_sales_information' => [
+                    'avg_sell' => $sales_information->last_six_month_avg_sell,
+                    'min_sell' => $sales_information->last_six_month_min_sell,
+                    'max_sell' => $sales_information->last_six_month_max_sell
                 ]
             );
             return api_response($request, $info, 200, ['info' => $info]);
@@ -215,28 +217,29 @@ class SpLoanController extends Controller
     public function getNomineeInformation($partner, Request $request)
     {
         try {
-            $partner = $request->partner;
             $manager_resource = $request->manager_resource;
             $profile = $manager_resource->profile;
-            $basic_informations = $partner->basicInformations;
-            $bank_informations = $partner->bankInformations;
+
+            $nominee_profile = Profile::find($profile->nominee_id);
+            $grantor_profile = Profile::find($profile->grantor_id);
+
 
             $info = array(
-                'name' => $profile->name,
-                'mobile' => $profile->mobile,
-                'relation' => $profile->nominee_relation,
-                'picture' => $profile->pro_pic,
+                'name' => !empty($nominee_profile) ? $nominee_profile->name : null,
+                'mobile' => !empty($nominee_profile) ? $nominee_profile->mobile : null,
+                'nominee_relation' => !empty($nominee_profile) ? $profile->nominee_relation : null,
+                'picture' => !empty($nominee_profile) ? $nominee_profile->pro_pic : null,
 
-                'nid_front_image' => $profile->nid_front_image,
-                'nid_back_image' => $profile->nid_back_image,
-                'granter' => [
-                    'name' => $profile->name,
-                    'mobile' => $profile->mobile,
-                    'relation' => $profile->granter_relation,
-                    'picture' => $profile->pro_pic,
+                'nid_front_image' => !empty($nominee_profile) ? $nominee_profile->nid_front_image : null,
+                'nid_back_image' => !empty($nominee_profile) ? $nominee_profile->nid_back_image : null,
+                'grantor' => [
+                    'name' => !empty($grantor_profile) ? $grantor_profile->name : null,
+                    'mobile' => !empty($grantor_profile) ? $grantor_profile->mobile : null,
+                    'grantor_relation' => !empty($grantor_profile) ? $profile->grantor_relation : null,
+                    'picture' => !empty($grantor_profile) ? $grantor_profile->pro_pic : null,
 
-                    'nid_front_image' => $profile->nid_front_image,
-                    'nid_back_image' => $profile->nid_back_image,
+                    'nid_front_image' => !empty($grantor_profile) ? $grantor_profile->nid_front_image : null,
+                    'nid_back_image' => !empty($grantor_profile) ? $grantor_profile->nid_back_image : null,
                 ]
             );
             return api_response($request, $info, 200, ['info' => $info]);
@@ -259,7 +262,6 @@ class SpLoanController extends Controller
                     'nominee_id' => $profile->id,
                     'nominee_relation' => $request->nominee_relation
                 ];
-                #$profile->update($this->withBothModificationFields(['nominee_relation'=> $request->nominee_relation]));
                 $manager_resource_profile->update($this->withBothModificationFields($data));
             } else {
                 $profile = $this->createProfile($request);
@@ -275,7 +277,6 @@ class SpLoanController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             return api_response($request, null, 500);
         }
     }
@@ -332,14 +333,16 @@ class SpLoanController extends Controller
             $basic_informations = $partner->basicInformations;
             $bank_informations = $partner->bankInformations;
 
+            $nominee_profile = Profile::find($profile->nominee_id);
+
             $info = array(
                 'picture' => $profile->pro_pic,
                 'nid_front_image' => $profile->nid_front_image,
                 'nid_back_image' => $profile->nid_back_image,
                 'nominee_document' => [
-                    'picture' => $profile->pro_pic,
-                    'nid_front_image' => $profile->nid_front_image,
-                    'nid_back_image' => $profile->nid_back_image,
+                    'picture' => !empty($nominee_profile) ? $nominee_profile->pro_pic : null,
+                    'nid_front_image' => !empty($nominee_profile) ? $nominee_profile->nid_front_image : null,
+                    'nid_back_image' => !empty($nominee_profile) ? $nominee_profile->nid_back_image : null,
                 ],
                 'business_document' => [
                     'tin_certificate' => $profile->tin_certificate,
