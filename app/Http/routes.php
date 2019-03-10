@@ -1,11 +1,6 @@
 <?php
 
-use Sheba\Bkash\ShebaBkash;
-
 Route::get('/', function () {
-    $tokenized_payment = (new ShebaBkash())->setModule('tokenized')->getModuleMethod('payment');
-    $response = $tokenized_payment->create(\App\Models\Payment::find(9756));
-    dd($response);
     return ['code' => 200, 'message' => "Success. This project will hold the api's"];
 });
 $api = app('Dingo\Api\Routing\Router');

@@ -56,16 +56,16 @@ class Bkash extends PaymentMethod
         if ($payment->payable->user->getAgreementId()) {
             /** @var TokenizedPayment $tokenized_payment */
             $tokenized_payment = (new ShebaBkash())->setModule('tokenized')->getModuleMethod('payment');
-            $response = $tokenized_payment->create($payment);
-            dd($response);
-            $payment->transaction_id = $response->paymentID;
+            $data = $tokenized_payment->create($payment);
+            dd($data);
+            $payment->transaction_id = $data->paymentID;
+            $payment->redirect_url = $data->bkashURL;
         } else {
             $data = $this->create($payment);
             $payment->transaction_id = $data->merchantInvoiceNumber;
+            $payment->redirect_url = config('sheba.front_url') . '/bkash?paymentID=' . $data->merchantInvoiceNumber;
         }
-        $payment->transaction_id = $data->merchantInvoiceNumber;
         $payment->transaction_details = json_encode($data);
-        $payment->redirect_url = config('sheba.front_url') . '/bkash?paymentID=' . $data->merchantInvoiceNumber;
         $payment->update();
         return $payment;
     }
@@ -74,7 +74,14 @@ class Bkash extends PaymentMethod
     {
         $execute_response = new ExecuteResponse();
         $execute_response->setPayment($payment);
-        $execute_response->setResponse($this->execute($payment));
+        if ($payment->payable->user->getAgreementId()) {
+            /** @var TokenizedPayment $tokenized_payment */
+            $tokenized_payment = (new ShebaBkash())->setModule('tokenized')->getModuleMethod('payment');
+            $res = $tokenized_payment->execute($payment);
+        } else {
+            $res = $this->execute($payment);
+        }
+        $execute_response->setResponse($res);
         $this->paymentRepository->setPayment($payment);
         if ($execute_response->hasSuccess()) {
             $success = $execute_response->getSuccess();
