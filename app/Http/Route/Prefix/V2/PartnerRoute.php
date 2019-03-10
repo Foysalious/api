@@ -44,7 +44,8 @@ class PartnerRoute
                 $api->post('/documents', 'SpLoanController@updateDocuments');
 
                 $api->post('pictures', 'SpLoanController@updateProfilePictures');
-                #$api->post('picture', 'SpLoanController@updatePicture');
+
+                $api->get('/information-completion', 'SpLoanInformationCompletion@getLoanInformationCompletion');
             });
 
             $api->group(['prefix' => 'categories'], function ($api) {

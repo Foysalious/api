@@ -36,8 +36,13 @@ class Route
             });
 
             $api->group(['prefix' => 'bkash'], function ($api) {
-                $api->post('validate', 'BkashController@validatePayment');
+                $api->get('validate', 'BkashController@validatePayment');
                 $api->get('agreement/validate', 'BkashController@validateAgreement');
+                $api->group(['prefix' => 'tokenized'], function ($api) {
+                    $api->group(['prefix' => 'payment'], function ($api) {
+                        $api->get('validate', 'Bkash\BkashTokenizedController@validatePayment');
+                    });
+                });
                 $api->get('paymentID/{paymentID}', 'BkashController@getPaymentInfo');
                 $api->get('token/{paymentID}', 'BkashController@token');
             });

@@ -12,8 +12,6 @@ abstract class BkashModule
 
     abstract public function setBkashAuth();
 
-    abstract public function getBkashAuth(): BkashAuth;
-
     abstract public function getToken();
 
     abstract public function getMethod($enum);
