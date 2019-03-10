@@ -41,6 +41,38 @@ class SpLoanController extends Controller
         }
     }
 
+    public function getBankInterest($partner, Request $request)
+    {
+        try {
+            $bank_lists = [
+                '0' => [
+                    'name' => 'Brac Bank',
+                    'interest' => '10',
+                ],
+                '1' => [
+                    'name' => 'Bank Asia',
+                    'interest' => '9',
+                ],
+                '2' => [
+                    'name' => 'City Bank',
+                    'interest' => '11',
+                ],
+                '3' => [
+                    'name' => 'Prime Bank',
+                    'interest' => '10',
+                ],
+                '4' => [
+                    'name' => 'Duch Bangla Bank',
+                    'interest' => '10',
+                ],
+            ];
+            return api_response($request, $bank_lists, 200, ['bank_lists' => $bank_lists]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     public function getPersonalInformation($partner, Request $request)
     {
         try {
