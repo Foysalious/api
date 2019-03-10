@@ -237,19 +237,16 @@ if (!function_exists('getDayName')) {
      */
     function getDayName(Carbon $date)
     {
-        $today = Carbon::today();
-        $tomorrow = Carbon::tomorrow();
-        #$yesterday = Carbon::yesterday();
         switch (1) {
-            case $date->eq($today):
+            case $date->isSameDay(Carbon::now()):
                 return "today";
-            case $date->eq($tomorrow):
+            case $date->isTomorrow():
                 return 'tomorrow';
-            case $date->lt($today):
+            case $date->isPast():
                 if ($date->isYesterday())
                     return "yesterday";
                 else {
-                    return $today->diffInDays($date);
+                    return Carbon::now()->diffInDays($date);
                 }
             default:
                 return $date->format('M-j, Y');
