@@ -81,7 +81,7 @@ class BkashController extends Controller
     {
         try {
             $payment = Payment::where('transaction_id', $paymentID)->valid()->first();
-            $data = array_merge(json_decode($payment->transaction_details), ['id' => $payment->payable->user->id, 'token' => $payment->payable->user->remember_token]);
+            $data = array_merge(collect(json_decode($payment->transaction_details))->toArray(), ['id' => $payment->payable->user->id, 'token' => $payment->payable->user->remember_token]);
             return $payment ? api_response($request, $payment, 200, ['data' => $data]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
