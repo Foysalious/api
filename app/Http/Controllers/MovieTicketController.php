@@ -129,7 +129,8 @@ class MovieTicketController extends Controller
                 'customer_name' => 'required',
                 'customer_email' => 'required',
                 'customer_mobile' => 'required|mobile:bd',
-                'cost' => 'required'
+                'cost' => 'required',
+                'image_url' => 'required'
             ]);
 
             $agent = $this->getAgent($request);
@@ -139,6 +140,7 @@ class MovieTicketController extends Controller
                 'DTMSID'=>$request->dtmsid,
                 'ticket_id'=>$request->lid,
                 'ConfirmStatus'=>$request->confirm_status,
+                'image_url' => $request->image_url
             ]);
             $response = $bookingResponse;
             if($response->status === 'failed')
@@ -172,6 +174,7 @@ class MovieTicketController extends Controller
             $histories = array();
             foreach ($orders as $order) {
                 $reservation_details = json_decode($order->reservation_details);
+                dd($reservation_details);
                 $history = array(
                     'id' => $order->id,
                     'movie_title' => $reservation_details->MovieName,
