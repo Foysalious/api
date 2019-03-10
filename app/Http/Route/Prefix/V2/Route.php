@@ -37,7 +37,9 @@ class Route
 
             $api->group(['prefix' => 'bkash'], function ($api) {
                 $api->post('validate', 'BkashController@validatePayment');
+                $api->get('agreement/validate', 'BkashController@validateAgreement');
                 $api->get('paymentID/{paymentID}', 'BkashController@getPaymentInfo');
+                $api->get('token/{paymentID}', 'BkashController@token');
             });
             $api->group(['prefix' => 'orders'], function ($api) {
                 $api->get('online', 'OrderController@clearPayment');

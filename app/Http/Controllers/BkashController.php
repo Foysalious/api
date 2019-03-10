@@ -10,6 +10,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Redis;
 use Cache;
 use Sheba\Payment\ShebaPayment;
+use Sheba\Settings\Payment\PaymentSetting;
 
 class BkashController extends Controller
 {
@@ -76,6 +77,17 @@ class BkashController extends Controller
         }
     }
 
+    public function validateAgreement(Request $request, PaymentSetting $paymentSetting)
+    {
+        try {
+            $paymentSetting->setMethod('bkash')->save($request->paymentID);
+            return api_response($request, 1, 200);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     public function getPaymentInfo($paymentID, Request $request)
     {
         try {
@@ -84,6 +96,17 @@ class BkashController extends Controller
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
+        }
+    }
+
+    public function token($paymentID, Request $request)
+    {
+        try {
+            $payment = Payment::where('transaction_id', $request->paymentID)->valid()->first();
+            (new ShebaPayment('bkash'))->token($payment);
+            dd($payment);
+        } catch (\Throwable $e) {
+            dd($e);
         }
     }
 }
