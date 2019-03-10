@@ -91,12 +91,12 @@ class SettingsController extends Controller
             ]);
             /** @var Customer $customer */
             $profile = $request->customer->profile;
-            if (!$profile->bkash_agreement_id) return api_response($request, null, 403, ['message' => "$request->payment is already saved"]);
-            $response = $paymentSetting->setMethod($request->payment)->init($customer->profile);
+            if ($profile->bkash_agreement_id) return api_response($request, null, 403, ['message' => "$request->payment is already saved"]);
+            $response = $paymentSetting->setMethod($request->payment)->init($profile);
             return api_response($request, $response, 200, ['data' => array(
                 'transaction_id' => $response->transactionId,
                 'redirect_url' => $response->redirectUrl,
-                'success_url' => $response->successUrl,
+                'success_url' => config('sheba.front_url') . '/profile/me',
             )]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
