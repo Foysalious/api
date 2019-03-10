@@ -129,7 +129,8 @@ class MovieTicketController extends Controller
                 'customer_name' => 'required',
                 'customer_email' => 'required',
                 'customer_mobile' => 'required|mobile:bd',
-                'cost' => 'required'
+                'cost' => 'required',
+                'image_url' => 'required'
             ]);
 
             $agent = $this->getAgent($request);
@@ -141,6 +142,7 @@ class MovieTicketController extends Controller
                 'ConfirmStatus'=>$request->confirm_status,
             ]);
             $response = $bookingResponse;
+            $response->image_url = $request->image_url;
             if($response->status === 'failed')
                 return api_response($request, $bookingResponse, 200, ['status' => $response]);
             $movieTicketRequest->setName($request->customer_name)->setEmail($request->customer_email)->setAmount($response->cost)->setMobile($request->customer_mobile)->setBlockBusterResponse($response);
@@ -179,6 +181,7 @@ class MovieTicketController extends Controller
                     'show_time' => $reservation_details->ShowTime,
                     'quantity' => $reservation_details->quantity,
                     'reserver_mobile'=> $order->reserver_mobile,
+                    'image_url' =>  isset($reservation_details->image_url) ? $reservation_details->image_url : null
                 );
                 array_push($histories, $history);
             }
