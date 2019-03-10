@@ -75,7 +75,12 @@ class SettingsController extends Controller
         try {
             /** @var Customer $customer */
             $customer = $request->customer;
-            $settings = array('credit' => $customer->shebaCredit(), 'rating' => round($customer->customerReviews->avg('rating'), 2), 'pending_order' => $customer->partnerOrders->where('closed_and_paid_at', null)->where('cancelled_at', null)->count());
+            $settings = array('credit' => $customer->shebaCredit(),
+                'rating' => round($customer->customerReviews->avg('rating'), 2),
+                'payments' => [
+                    'is_bkash_saved' => $customer->profile->bkash_agreement_id ? 1 : 0
+                ],
+                'pending_order' => $customer->partnerOrders->where('closed_and_paid_at', null)->where('cancelled_at', null)->count());
             return api_response($request, $settings, 200, ['settings' => $settings]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -87,7 +92,8 @@ class SettingsController extends Controller
     {
         try {
             $this->validate($request, [
-                'payment' => 'sometimes|required|in:bkash'
+                'payment' => 'sometimes|required|in:bkash',
+                'job_id' => 'numeric'
             ]);
             /** @var Customer $customer */
             $profile = $request->customer->profile;

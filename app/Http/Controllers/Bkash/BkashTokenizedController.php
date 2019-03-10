@@ -19,9 +19,8 @@ class BkashTokenizedController extends Controller
     {
         try {
             $paymentSetting->setMethod('bkash')->save($request->paymentID);
-            return redirect(config('sheba.front_url') . '/profile/me');
+            return api_response($request, 1, 200);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
