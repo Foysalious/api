@@ -22,6 +22,10 @@ class PaymentSetting
         return $this;
     }
 
+    /**
+     * @param Profile $profile
+     * @return Responses\InitResponse
+     */
     public function init(Profile $profile)
     {
         return $this->method->init($profile);

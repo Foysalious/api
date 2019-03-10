@@ -23,7 +23,7 @@ class BkashSetting extends PaymentSettingMethod
 
     public function init(Profile $profile): InitResponse
     {
-        $response = $this->bkashAgreement->create($profile->id, config('sheba.api_url') . '/v2/bkash/agreement/validate');
+        $response = $this->bkashAgreement->create($profile->id, config('sheba.api_url') . '/v2/bkash/tokenized/agreement/validate');
         $init_response = (new InitResponse())->setSuccessUrl($response->successCallbackURL)
             ->setRedirectUrl($response->bkashURL)->setTransactionId($response->paymentID);
         $this->setPaymentIdInRedis($init_response->transactionId, $profile);

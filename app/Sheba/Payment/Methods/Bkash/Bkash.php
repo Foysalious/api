@@ -4,6 +4,8 @@ use App\Models\Payable;
 use App\Models\Payment;
 use App\Models\PaymentDetail;
 use Carbon\Carbon;
+use Sheba\Bkash\Modules\Tokenized\Methods\Agreement\TokenizedAgreement;
+use Sheba\Bkash\Modules\Tokenized\TokenizedPayment;
 use Sheba\Bkash\ShebaBkash;
 use Sheba\ModificationFields;
 use Illuminate\Support\Facades\Redis;
@@ -51,7 +53,16 @@ class Bkash extends PaymentMethod
             $payment_details->amount = $payable->amount;
             $payment_details->save();
         });
-        $data = $this->create($payment);
+        if ($payment->payable->user->getAgreementId()) {
+            /** @var TokenizedPayment $tokenized_payment */
+            $tokenized_payment = (new ShebaBkash())->setModule('tokenized')->getModuleMethod('payment');
+            $response = $tokenized_payment->create($payment);
+            dd($response);
+            $payment->transaction_id = $response->paymentID;
+        } else {
+            $data = $this->create($payment);
+            $payment->transaction_id = $data->merchantInvoiceNumber;
+        }
         $payment->transaction_id = $data->merchantInvoiceNumber;
         $payment->transaction_details = json_encode($data);
         $payment->redirect_url = config('sheba.front_url') . '/bkash?paymentID=' . $data->merchantInvoiceNumber;

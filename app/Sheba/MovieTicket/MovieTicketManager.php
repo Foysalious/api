@@ -12,8 +12,8 @@ class MovieTicketManager
 
     public function __construct(VendorManager $vendorManager, MovieTicket $movieTicket)
     {
-       $this->vendorManager = $vendorManager;
-       $this->movieTicket = $movieTicket;
+        $this->vendorManager = $vendorManager;
+        $this->movieTicket = $movieTicket;
     }
 
     public function initVendor() {
@@ -54,13 +54,14 @@ class MovieTicketManager
         try {
             $seatStatus = $this->vendorManager->post(Actions::GET_THEATRE_SEAT_STATUS, ['DTMID' => $dtmid, 'Slot' => $slot]);
             $seat_classes = explode("|",$seatStatus->SeatClass);
+            $seat_classes_default = ['E_FRONT','E_REAR'];
             $seat_prices = explode("|",$seatStatus->SeatClassTicketPrice);
             $seats = array();
-            foreach($seat_classes as $index => $seat_class) {
+            foreach($seat_classes_default as $index => $seat_class) {
                 $key_of_total_seats = 'Total_'.str_replace("-","_",$seat_class).'_Seat';
                 $key_of_available_seats = str_replace("-","_",$seat_class).'_Available_Seat';
                 $seat = array(
-                    'class' => $seat_class,
+                    'class' => $seat_classes[$index],
                     'price' => round((float) $seat_prices[$index],2),
                     'total_seats' => (int) $seatStatus->{$key_of_total_seats},
                     'available_seats' => (int) $seatStatus->{$key_of_available_seats}
@@ -68,9 +69,9 @@ class MovieTicketManager
                 array_push($seats,$seat);
             }
             $status = array(
-              'dtmsid' => $seatStatus->DTMSID,
-              'dtmid' => $seatStatus->DTMID,
-              'seats' => $seats
+                'dtmsid' => $seatStatus->DTMSID,
+                'dtmid' => $seatStatus->DTMID,
+                'seats' => $seats
             );
             return $status;
         } catch (GuzzleException $e) {
