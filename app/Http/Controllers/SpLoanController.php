@@ -19,6 +19,23 @@ class SpLoanController extends Controller
         $this->fileRepository = $file_repository;
     }
 
+    public function getHomepage($partner, Request $request)
+    {
+        try {
+            dd(1231);
+            $info = [
+                'হাতের নাগালে ব্যাংক লোন - ' => [
+                    
+                ]
+
+            ];
+            return api_response($request, $info, 200, ['info' => $info]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     public function getPersonalInformation($partner, Request $request)
     {
         try {

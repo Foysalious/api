@@ -32,7 +32,7 @@ class BkashTokenizedController extends Controller
                 $payment = (new ShebaPayment('bkash'))->init($order_adapter->getPayable());
                 Redis::del($key);
             }
-            return api_response($request, 1, 200, ['payment' => $payment ? $payment->getFormattedPayment() : null]);
+            return $payment ? redirect($payment->redirect_url) : redirect(config('sheba.front_url') . '/profile/me');
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
