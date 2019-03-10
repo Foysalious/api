@@ -47,6 +47,7 @@ class PartnerRoute
 
                 $api->get('/information-completion', 'SpLoanInformationCompletion@getLoanInformationCompletion');
                 $api->get('/homepage', 'SpLoanController@getHomepage');
+                $api->get('/bank-interest', 'SpLoanController@getBankInterest');
             });
 
             $api->group(['prefix' => 'categories'], function ($api) {
