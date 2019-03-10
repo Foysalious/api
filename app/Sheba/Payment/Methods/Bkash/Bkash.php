@@ -57,7 +57,6 @@ class Bkash extends PaymentMethod
             /** @var TokenizedPayment $tokenized_payment */
             $tokenized_payment = (new ShebaBkash())->setModule('tokenized')->getModuleMethod('payment');
             $data = $tokenized_payment->create($payment);
-            dd($data);
             $payment->transaction_id = $data->paymentID;
             $payment->redirect_url = $data->bkashURL;
         } else {

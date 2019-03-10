@@ -9,6 +9,8 @@ use App\Models\Event;
 use App\Models\HyperLocal;
 use App\Models\ImpressionDeduction;
 use App\Models\Partner;
+use App\Models\PartnerServiceDiscount;
+use App\Models\PartnerServiceSurcharge;
 use App\Models\Service;
 use App\Repositories\PartnerServiceRepository;
 use App\Sheba\Partner\PartnerAvailable;
@@ -103,6 +105,7 @@ class PartnerList
             $q->where('categories.id', $this->partnerListRequest->selectedCategory->id);
         }]);
         $this->filterByOption();
+        $this->partners->load([]);
         $this->partners = $this->partners->filter(function ($partner) {
             return $this->hasResourcesForTheCategory($partner);
         });
@@ -165,8 +168,11 @@ class PartnerList
             }
         })->whereDoesntHave('leaves', function ($q) {
             $q->where('end', null)->orWhere([['start', '<=', Carbon::now()], ['end', '>=', Carbon::now()->addDays(7)]]);
-        })->with(['handymanResources' => function ($q) use ($isNotLite) {
-            if ($isNotLite) {
+        })->with(['handymanResources' => function ($q) {
+            $q->selectRaw('count(distinct resources.id) as total_experts, partner_id')
+                ->join('category_partner_resource', 'category_partner_resource.partner_resource_id', '=', 'partner_resource.id')
+                ->where('category_partner_resource.category_id', $this->partnerListRequest->selectedCategory->id)->groupBy('partner_id');
+            if ($this->isNotLite) {
                 $q->verified();
             }
         }])->select('partners.id', 'partners.current_impression', 'partners.geo_informations', 'partners.address', 'partners.name',
@@ -183,16 +189,17 @@ class PartnerList
 
     private function hasResourcesForTheCategory($partner)
     {
-        $partner_resource_ids = [];
-        $partner->handymanResources->map(function ($resource) use (&$partner_resource_ids) {
-            $partner_resource_ids[$resource->pivot->id] = $resource;
-        });
-        $result = [];
-        collect(DB::table('category_partner_resource')->select('partner_resource_id')->whereIn('partner_resource_id', array_keys($partner_resource_ids))
-            ->where('category_id', $this->partnerListRequest->selectedCategory->id)->get())->pluck('partner_resource_id')->each(function ($partner_resource_id) use ($partner_resource_ids, &$result) {
-            $result[] = $partner_resource_ids[$partner_resource_id];
-        });
-        return count($result) > 0 ? 1 : 0;
+//        $partner_resource_ids = [];
+//        $partner->handymanResources->map(function ($resource) use (&$partner_resource_ids) {
+//            $partner_resource_ids[$resource->pivot->id] = $resource;
+//        });
+//        $result = [];
+//        collect(DB::table('category_partner_resource')->select('partner_resource_id')->whereIn('partner_resource_id', array_keys($partner_resource_ids))
+//            ->where('category_id', $this->partnerListRequest->selectedCategory->id)->get())->pluck('partner_resource_id')->each(function ($partner_resource_id) use ($partner_resource_ids, &$result) {
+//            $result[] = $partner_resource_ids[$partner_resource_id];
+//        });
+        $handyman_resources = $partner->handymanResources->first();
+        return $handyman_resources && (int)$handyman_resources->total_experts > 0 ? 1 : 0;
     }
 
     private function getContactNumber($partner)
@@ -298,12 +305,82 @@ class PartnerList
 
     public function addPricing()
     {
+        $pivot = collect();
+        foreach (($this->partners->pluck('services')) as $services) {
+            foreach ($services as $service) {
+                $pivot->push($service->pivot);
+            }
+        }
+        $partner_service_group_by_partners = $pivot->groupBy('partner_id');
+        $discounts = PartnerServiceDiscount::whereIn('partner_service_id', $pivot->pluck('id')->toArray())->running()->get();
+        $schedule_date_time = Carbon::parse($this->partnerListRequest->scheduleDate[0] . ' ' . $this->partnerListRequest->scheduleStartTime);
+        $surcharges = PartnerServiceSurcharge::whereIn('partner_service_id', $pivot->pluck('id')->toArray())->runningAt($schedule_date_time)->get();
         foreach ($this->partners as $partner) {
+            $partner_service_ids = $partner_service_group_by_partners->get("$partner->id")->pluck('id')->toArray();
+
+            $partner['discounts'] = $discounts->filter(function ($discount) use ($partner_service_ids) {
+                return in_array($discount->partner_service_id, $partner_service_ids);
+            });
+            $partner['surcharges'] = $surcharges->filter(function ($surcharge) use ($partner_service_ids) {
+                return in_array($surcharge->partner_service_id, $partner_service_ids);
+            });
             $pricing = $this->calculateServicePricingAndBreakdownOfPartner($partner);
             foreach ($pricing as $key => $value) {
                 $partner[$key] = $value;
             }
         }
+    }
+
+    protected function calculateServicePricingAndBreakdownOfPartner($partner)
+    {
+        $total_service_price = [
+            'discount' => 0,
+            'discounted_price' => 0,
+            'original_price' => 0,
+            'is_min_price_applied' => 0,
+        ];
+        $services = [];
+        $category_pivot = $partner->categories->first()->pivot;
+        foreach ($this->partnerListRequest->selectedServices as $selected_service) {
+            $service = $partner->services->where('id', $selected_service->id)->first();
+            $schedule_date_time = Carbon::parse($this->partnerListRequest->scheduleDate[0] . ' ' . $this->partnerListRequest->scheduleStartTime);
+            $discount = new Discount();
+            $discount->setServiceObj($selected_service)->setServicePivot($service->pivot)->setScheduleDateTime($schedule_date_time)
+                ->setDiscounts($partner->discounts)->setSurcharges($partner->surcharges)->initialize();
+            $service = [];
+            $service['discount'] = $discount->discount;
+            $service['cap'] = $discount->cap;
+            $service['amount'] = $discount->amount;
+            $service['is_percentage'] = $discount->isDiscountPercentage;
+            $service['discounted_price'] = $discount->discounted_price;
+            $service['original_price'] = $discount->original_price;
+            $service['min_price'] = $discount->min_price;
+            $service['unit_price'] = $discount->unit_price;
+            $service['sheba_contribution'] = $discount->sheba_contribution;
+            $service['partner_contribution'] = $discount->partner_contribution;
+            $service['is_min_price_applied'] = $discount->original_price == $discount->min_price ? 1 : 0;
+            if ($discount->original_price == $discount->min_price) $total_service_price['is_min_price_applied'] = 1;
+            $total_service_price['discount'] += $service['discount'];
+            $total_service_price['discounted_price'] += $service['discounted_price'];
+            $total_service_price['original_price'] += $service['original_price'];
+            $service['id'] = $selected_service->id;
+            $service['name'] = $selected_service->serviceModel->name;
+            $service['option'] = $selected_service->option;
+            $service['quantity'] = $selected_service->quantity;
+            $service['unit'] = $selected_service->serviceModel->unit;
+            list($option, $variables) = $this->getVariableOptionOfService($selected_service->serviceModel, $selected_service->option);
+            $service['questions'] = json_decode($variables);
+            array_push($services, $service);
+        }
+        array_add($partner, 'breakdown', $services);
+        $total_service_price['discount'] = (int)$total_service_price['discount'];
+        $delivery_charge = (double)$category_pivot->delivery_charge;
+        $total_service_price['discounted_price'] += $delivery_charge;
+        $total_service_price['original_price'] += $delivery_charge;
+        $total_service_price['delivery_charge'] = $delivery_charge;
+        $total_service_price['has_home_delivery'] = (int)$category_pivot->is_home_delivery_applied ? 1 : 0;
+        $total_service_price['has_premise_available'] = (int)$category_pivot->is_partner_premise_applied ? 1 : 0;
+        return $total_service_price;
     }
 
     public function addInfo()
@@ -313,11 +390,11 @@ class PartnerList
             $category_ids = $this->partnerListRequest->selectedCategory->id == (int)env('RENT_CAR_OUTSIDE_ID') ? $category_ids . ",40" : $category_ids . ",38";
         }
         $this->partners->load(['workingHours', 'jobs' => function ($q) use ($category_ids) {
-            $q->selectRaw("count(case when status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then status end) as total_jobs")
-                ->selectRaw("count(case when status in ('Accepted', 'Schedule Due', 'Process', 'Serve Due') then status end) as ongoing_jobs")
-                ->selectRaw("count(case when status in ('Served') and category_id=" . $this->partnerListRequest->selectedCategory->id . " then status end) as total_completed_orders")
-                ->selectRaw("count(case when category_id in(" . $category_ids . ") and status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then category_id end) as total_jobs_of_category")
+            $q->selectRaw("count(case when status in ('Served') and category_id=" . $this->partnerListRequest->selectedCategory->id . " then status end) as total_completed_orders")
+//                ->selectRaw("count(case when status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then status end) as total_jobs")
+//                ->selectRaw("count(case when category_id in(" . $category_ids . ") and status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then category_id end) as total_jobs_of_category")
                 ->groupBy('partner_id');
+            if (strtolower($this->partnerListRequest->portalName) == 'admin-portal') $q->selectRaw("count(case when status in ('Accepted', 'Schedule Due', 'Process', 'Serve Due') then status end) as ongoing_jobs");
         }, 'subscription' => function ($q) {
             $q->select('id', 'name', 'rules');
         }, 'resources' => function ($q) {
@@ -328,32 +405,29 @@ class PartnerList
             $q->selectRaw("avg(rating) as avg_rating")
                 ->selectRaw("count(reviews.id) as total_ratings")
                 ->selectRaw("count(case when rating=5 then reviews.id end) as total_five_star_ratings")
-                ->selectRaw("count(review_question_answer.id) as total_compliments")
+//                ->selectRaw("count(review_question_answer.id) as total_compliments")
                 ->selectRaw("reviews.partner_id")
-                ->leftJoin('review_question_answer', function ($q) {
-                    $q->on('reviews.id', '=', 'review_question_answer.review_id');
-                    $q->where('review_question_answer.review_type', '=', 'App\\Models\\Review');
-                    $q->where('reviews.rating', '=', 5);
-                })->where('reviews.category_id', $this->partnerListRequest->selectedCategory->id)
+//                ->leftJoin('review_question_answer', function ($q) {
+//                    $q->on('reviews.id', '=', 'review_question_answer.review_id');
+//                    $q->where('review_question_answer.review_type', '=', 'App\\Models\\Review');
+//                    $q->where('reviews.rating', '=', 5);
+//                })
+                ->where('reviews.category_id', $this->partnerListRequest->selectedCategory->id)
                 ->groupBy('reviews.partner_id');
-        }, 'handymanResources' => function ($q) {
-            $q->selectRaw('count(distinct resources.id) as total_experts, partner_id')
-                ->verified()->join('category_partner_resource', 'category_partner_resource.partner_resource_id', '=', 'partner_resource.id')
-                ->where('category_partner_resource.category_id', $this->partnerListRequest->selectedCategory->id)->groupBy('partner_id');
         }]);
         foreach ($this->partners as $partner) {
-            $partner['total_jobs'] = $partner->jobs->first() ? $partner->jobs->first()->total_jobs : 0;
-            $partner['ongoing_jobs'] = $partner->jobs->first() ? $partner->jobs->first()->ongoing_jobs : 0;
-            $partner['total_jobs_of_category'] = $partner->jobs->first() ? $partner->jobs->first()->total_jobs_of_category : 0;
+            $partner['total_jobs'] = $partner->jobs->first() ? $partner->jobs->first()->total_completed_orders : 0;
+            $partner['ongoing_jobs'] = $partner->jobs->first() && $partner->jobs->first()->ongoing_jobs ? $partner->jobs->first()->ongoing_jobs : 0;
+            $partner['total_jobs_of_category'] = $partner->jobs->first() ? $partner->jobs->first()->total_completed_orders : 0;
             $partner['total_completed_orders'] = $partner->jobs->first() ? $partner->jobs->first()->total_completed_orders : 0;
-            $partner['contact_no'] = $this->getContactNumber($partner);
+            if (strtolower($this->partnerListRequest->portalName) == 'admin-portal') $partner['contact_no'] = $this->getContactNumber($partner);
             $partner['badge'] = $partner->resolveBadge();
             $partner['subscription_type'] = $partner->resolveSubscriptionType();
             $partner['total_working_days'] = $partner->workingHours ? $partner->workingHours->count() : 0;
             $partner['rating'] = $partner->reviews->first() ? (double)$partner->reviews->first()->avg_rating : 0;
             $partner['total_ratings'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_ratings : 0;
             $partner['total_five_star_ratings'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_five_star_ratings : 0;
-            $partner['total_compliments'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_compliments : 0;
+            $partner['total_compliments'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_five_star_ratings : 0;
             $partner['total_experts'] = $partner->handymanResources->first() ? (int)$partner->handymanResources->first()->total_experts : 0;
         }
     }
@@ -419,56 +493,6 @@ class PartnerList
         $this->partners = $available_partners->merge($unavailable_partners);
     }
 
-    protected function calculateServicePricingAndBreakdownOfPartner($partner)
-    {
-        $total_service_price = [
-            'discount' => 0,
-            'discounted_price' => 0,
-            'original_price' => 0,
-            'is_min_price_applied' => 0,
-        ];
-        $services = [];
-        $category_pivot = $partner->categories->first()->pivot;
-        foreach ($this->partnerListRequest->selectedServices as $selected_service) {
-            $service = $partner->services->where('id', $selected_service->id)->first();
-            $schedule_date_time = Carbon::parse($this->partnerListRequest->scheduleDate[0] . ' ' . $this->partnerListRequest->scheduleStartTime);
-            $discount = new Discount();
-            $discount->setServiceObj($selected_service)->setServicePivot($service->pivot)->setScheduleDateTime($schedule_date_time)->initialize();
-            $service = [];
-            $service['discount'] = $discount->discount;
-            $service['cap'] = $discount->cap;
-            $service['amount'] = $discount->amount;
-            $service['is_percentage'] = $discount->isDiscountPercentage;
-            $service['discounted_price'] = $discount->discounted_price;
-            $service['original_price'] = $discount->original_price;
-            $service['min_price'] = $discount->min_price;
-            $service['unit_price'] = $discount->unit_price;
-            $service['sheba_contribution'] = $discount->sheba_contribution;
-            $service['partner_contribution'] = $discount->partner_contribution;
-            $service['is_min_price_applied'] = $discount->original_price == $discount->min_price ? 1 : 0;
-            if ($discount->original_price == $discount->min_price) $total_service_price['is_min_price_applied'] = 1;
-            $total_service_price['discount'] += $service['discount'];
-            $total_service_price['discounted_price'] += $service['discounted_price'];
-            $total_service_price['original_price'] += $service['original_price'];
-            $service['id'] = $selected_service->id;
-            $service['name'] = $selected_service->serviceModel->name;
-            $service['option'] = $selected_service->option;
-            $service['quantity'] = $selected_service->quantity;
-            $service['unit'] = $selected_service->serviceModel->unit;
-            list($option, $variables) = $this->getVariableOptionOfService($selected_service->serviceModel, $selected_service->option);
-            $service['questions'] = json_decode($variables);
-            array_push($services, $service);
-        }
-        array_add($partner, 'breakdown', $services);
-        $total_service_price['discount'] = (int)$total_service_price['discount'];
-        $delivery_charge = (double)$category_pivot->delivery_charge;
-        $total_service_price['discounted_price'] += $delivery_charge;
-        $total_service_price['original_price'] += $delivery_charge;
-        $total_service_price['delivery_charge'] = $delivery_charge;
-        $total_service_price['has_home_delivery'] = (int)$category_pivot->is_home_delivery_applied ? 1 : 0;
-        $total_service_price['has_premise_available'] = (int)$category_pivot->is_partner_premise_applied ? 1 : 0;
-        return $total_service_price;
-    }
 
     private function calculateHasPartner()
     {
@@ -572,5 +596,19 @@ class PartnerList
                 ]
             ])
         );
+    }
+
+    public function removeKeysFromPartner()
+    {
+        return $this->partners->each(function ($partner, $key) {
+            $partner['rating'] = round($partner->rating, 2);
+            array_forget($partner, 'wallet');
+            array_forget($partner, 'package_id');
+            array_forget($partner, 'geo_informations');
+            array_forget($partner, 'discounts');
+            array_forget($partner, 'surcharges');
+            array_forget($partner, 'score');
+            removeRelationsAndFields($partner);
+        });
     }
 }
