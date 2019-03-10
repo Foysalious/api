@@ -43,7 +43,7 @@ class TokenizedModule extends BkashModule
     public function getMethod($enum)
     {
         if ($enum == 'agreement') return new TokenizedAgreement();
-        elseif ($enum == 'payment') return new TokenizedPayment();
+        elseif ($enum == 'payment') return (new TokenizedPayment())->setBkashAuth($this->bkashAuth);
     }
 
 

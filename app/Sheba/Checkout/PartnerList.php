@@ -405,13 +405,14 @@ class PartnerList
             $q->selectRaw("avg(rating) as avg_rating")
                 ->selectRaw("count(reviews.id) as total_ratings")
                 ->selectRaw("count(case when rating=5 then reviews.id end) as total_five_star_ratings")
-                ->selectRaw("count(review_question_answer.id) as total_compliments")
+//                ->selectRaw("count(review_question_answer.id) as total_compliments")
                 ->selectRaw("reviews.partner_id")
-                ->leftJoin('review_question_answer', function ($q) {
-                    $q->on('reviews.id', '=', 'review_question_answer.review_id');
-                    $q->where('review_question_answer.review_type', '=', 'App\\Models\\Review');
-                    $q->where('reviews.rating', '=', 5);
-                })->where('reviews.category_id', $this->partnerListRequest->selectedCategory->id)
+//                ->leftJoin('review_question_answer', function ($q) {
+//                    $q->on('reviews.id', '=', 'review_question_answer.review_id');
+//                    $q->where('review_question_answer.review_type', '=', 'App\\Models\\Review');
+//                    $q->where('reviews.rating', '=', 5);
+//                })
+                ->where('reviews.category_id', $this->partnerListRequest->selectedCategory->id)
                 ->groupBy('reviews.partner_id');
         }]);
         foreach ($this->partners as $partner) {

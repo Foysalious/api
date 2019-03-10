@@ -1,10 +1,12 @@
-<?php namespace Sheba\Bkash\Modules\Tokenized;
+<?php namespace Sheba\Bkash\Modules\Normal;
+
 
 use App\Models\Payment;
 use Sheba\Bkash\Modules\BkashPayment;
 
-class TokenizedPayment extends BkashPayment
+class NormalPayment extends BkashPayment
 {
+
     public function getCreateBody(Payment $payment)
     {
         return json_encode(array(
@@ -12,9 +14,6 @@ class TokenizedPayment extends BkashPayment
             'currency' => 'BDT',
             'intent' => 'sale',
             'merchantInvoiceNumber' => $payment->transaction_id,
-            'agreementID' => $payment->payable->user->getAgreementId(),
-            'callbackURL' => config('sheba.api_url') . '/v2/bkash/validate'
         ));
     }
-
 }
