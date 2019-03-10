@@ -22,14 +22,19 @@ class SpLoanController extends Controller
     public function getHomepage($partner, Request $request)
     {
         try {
-            dd(1231);
-            $info = [
-                'হাতের নাগালে ব্যাংক লোন - ' => [
-                    
-                ]
+            $homepage = [
+                'banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/profiles/avatar/default.jpg',
+                'title' => 'হাতের নাগালে ব্যাংক লোন -',
+                'list' => [
+                    'সহজেই ব্যবসা বার্তা পৌঁছে দিন কাস্টমারের কাছে',
+                    'আপনার সুবিধা মত সময়ে ও বাজেটে স্বল্পমূল্যে কার্যকরী মার্কেটিং',
+                    'শুধু সফল ভাবে পাঠানো এসএমএস বা ইমেইলের জন্যই মূল্য দিন',
+                    'সহজেই ব্যবসা বার্তা পৌঁছে দিন কাস্টমারের কাছে',
+                    'সহজেই ব্যবসা বার্তা পৌঁছে দিন কাস্টমারের কাছে',
+                ],
 
             ];
-            return api_response($request, $info, 200, ['info' => $info]);
+            return api_response($request, $homepage, 200, ['homepage' => $homepage]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

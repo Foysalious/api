@@ -93,14 +93,14 @@ class SettingsController extends Controller
         try {
             $this->validate($request, [
                 'payment' => 'sometimes|required|in:bkash',
-                'job_id' => 'numeric'
+                'order_id' => 'numeric'
             ]);
             /** @var Customer $customer */
             $profile = $request->customer->profile;
             if ($profile->bkash_agreement_id) return api_response($request, null, 403, ['message' => "$request->payment is already saved"]);
             $response = $paymentSetting->setMethod($request->payment)->init($profile);
             $key = 'order_' . $response->transactionId;
-            Redis::set($key, json_encode(['job_id' => (int)$request->job_id]));
+            Redis::set($key, json_encode(['order_id' => (int)$request->order_id]));
             Redis::expire($key, 60 * 60);
             return api_response($request, $response, 200, ['data' => array(
                 'transaction_id' => $response->transactionId,
