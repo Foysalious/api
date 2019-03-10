@@ -11,6 +11,8 @@ class TokenizedModule extends BkashModule
 {
     /** @var $token TokenizedToken */
     private $token;
+    /** @var $bkashAuth BkashAuth */
+    protected $bkashAuth;
 
     public function __construct()
     {
@@ -28,23 +30,21 @@ class TokenizedModule extends BkashModule
             ->setPassword(config('bkash.tokenized.password'))->setUrl(config('bkash.tokenized.url'));
     }
 
-    public function getBkashAuth(): BkashAuth
-    {
-        return $this->bkashAuth;
-    }
-
     public function getToken()
     {
-        return (new TokenizedToken())->setBkashAuth($this->bkashAuth)->get();
+        return $this->token->setBkashAuth($this->bkashAuth)->get();
     }
+
 
     /**
      * @param $enum
-     * @return TokenizedAgreement
+     * @return TokenizedAgreement|TokenizedPayment
      */
     public function getMethod($enum)
     {
         if ($enum == 'agreement') return new TokenizedAgreement();
+        elseif ($enum == 'payment') return new TokenizedPayment();
     }
+
 
 }

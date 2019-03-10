@@ -454,7 +454,8 @@ class JobController extends Controller
     {
         try {
             $this->validate($request, [
-                'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl,partner_wallet'
+                'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl,partner_wallet',
+                'is_tokenized'
             ]);
             $order_adapter = new OrderAdapter($request->job->partnerOrder);
             $payment = (new ShebaPayment($request->has('payment_method') ? $request->payment_method : 'online'))->init($order_adapter->getPayable());

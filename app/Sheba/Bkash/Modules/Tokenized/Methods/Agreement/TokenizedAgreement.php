@@ -19,9 +19,8 @@ class TokenizedAgreement extends TokenizedModule
             'payerReference' => $payer_reference,
             'callbackURL' => $callback_url,
         ));
-        $curl = curl_init($this->getBkashAuth()->url . '/checkout/agreement/create');
-        $header = $this->getHeader();
-        curl_setopt($curl, CURLOPT_HTTPHEADER, $header);
+        $curl = curl_init($this->bkashAuth->url . '/checkout/agreement/create');
+        curl_setopt($curl, CURLOPT_HTTPHEADER, $this->getHeader());
         curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "POST");
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($curl, CURLOPT_POSTFIELDS, $create_pay_body);
@@ -35,9 +34,8 @@ class TokenizedAgreement extends TokenizedModule
     public function execute($payment_id)
     {
         $post_fields = json_encode(['paymentID' => $payment_id]);
-        $curl = curl_init($this->getBkashAuth()->url . '/checkout/agreement/execute');
-        $header = $this->getHeader();
-        curl_setopt($curl, CURLOPT_HTTPHEADER, $header);
+        $curl = curl_init($this->bkashAuth->url . '/checkout/agreement/execute');
+        curl_setopt($curl, CURLOPT_HTTPHEADER, $this->getHeader());
         curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "POST");
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($curl, CURLOPT_POSTFIELDS, $post_fields);
@@ -47,12 +45,7 @@ class TokenizedAgreement extends TokenizedModule
         curl_close($curl);
         return (new ExecuteResponse())->setResponse(json_decode($result_data));
     }
-
-    public function status()
-    {
-        // TODO: Implement status() method.
-    }
-
+    
     /**
      * @return array
      */
@@ -61,7 +54,7 @@ class TokenizedAgreement extends TokenizedModule
         $header = array(
             'Content-Type:application/json',
             'authorization:' . $this->getToken(),
-            'x-app-key:' . $this->getBkashAuth()->appKey);
+            'x-app-key:' . $this->bkashAuth->appKey);
         return $header;
     }
 }
