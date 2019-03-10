@@ -5,6 +5,7 @@ use App\Models\Customer;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
+use Sheba\Settings\Payment\PaymentSetting;
 
 class SettingsController extends Controller
 {
@@ -74,8 +75,38 @@ class SettingsController extends Controller
         try {
             /** @var Customer $customer */
             $customer = $request->customer;
-            $settings = array('credit' => $customer->shebaCredit(), 'rating' => round($customer->customerReviews->avg('rating'), 2), 'pending_order' => $customer->partnerOrders->where('closed_and_paid_at', null)->where('cancelled_at', null)->count());
+            $settings = array('credit' => $customer->shebaCredit(),
+                'rating' => round($customer->customerReviews->avg('rating'), 2),
+                'payments' => [
+                    'is_bkash_saved' => $customer->profile->bkash_agreement_id ? 1 : 0
+                ],
+                'pending_order' => $customer->partnerOrders->where('closed_and_paid_at', null)->where('cancelled_at', null)->count());
             return api_response($request, $settings, 200, ['settings' => $settings]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function addPayment($customer, Request $request, PaymentSetting $paymentSetting)
+    {
+        try {
+            $this->validate($request, [
+                'payment' => 'sometimes|required|in:bkash',
+                'job_id' => 'numeric'
+            ]);
+            /** @var Customer $customer */
+            $profile = $request->customer->profile;
+            if ($profile->bkash_agreement_id) return api_response($request, null, 403, ['message' => "$request->payment is already saved"]);
+            $response = $paymentSetting->setMethod($request->payment)->init($profile);
+            $key = 'order_' . $response->transactionId;
+            Redis::set($key, json_encode(['job_id' => (int)$request->job_id]));
+            Redis::expire($key, 60 * 60);
+            return api_response($request, $response, 200, ['data' => array(
+                'transaction_id' => $response->transactionId,
+                'redirect_url' => $response->redirectUrl,
+                'success_url' => config('sheba.front_url') . '/profile/me',
+            )]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

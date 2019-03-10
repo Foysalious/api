@@ -77,36 +77,15 @@ class BkashController extends Controller
         }
     }
 
-    public function validateAgreement(Request $request, PaymentSetting $paymentSetting)
-    {
-        try {
-            $paymentSetting->setMethod('bkash')->save($request->paymentID);
-            return api_response($request, 1, 200);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
     public function getPaymentInfo($paymentID, Request $request)
     {
         try {
             $payment = Payment::where('transaction_id', $paymentID)->valid()->first();
-            return $payment ? api_response($request, $payment, 200, ['data' => json_decode($payment->transaction_details)]) : api_response($request, null, 404);
+            $data = array_merge(collect(json_decode($payment->transaction_details))->toArray(), ['id' => $payment->payable->user->id, 'token' => $payment->payable->user->remember_token]);
+            return $payment ? api_response($request, $payment, 200, ['data' => $data]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
-        }
-    }
-
-    public function token($paymentID, Request $request)
-    {
-        try {
-            $payment = Payment::where('transaction_id', $request->paymentID)->valid()->first();
-            (new ShebaPayment('bkash'))->token($payment);
-            dd($payment);
-        } catch (\Throwable $e) {
-            dd($e);
         }
     }
 }
