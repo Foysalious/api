@@ -214,42 +214,6 @@
     ]
   },
   {
-    "item_type": "Slider",
-    "item_id": 4,
-    "name": null,
-    "order": 3,
-    "updated_at": "2018-12-25 18:23:02",
-    "updated_at_timestamp": 1545740582,
-    "data": [
-      {
-        "small_image_link": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/slides\/1551294765_slide.png",
-        "image_link": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/slides\/1551294764_slide.png",
-        "id": 45,
-        "target_type": "Category",
-        "target_id": 346,
-        "target_link": null,
-        "is_parent": false,
-        "link": null,
-        "order": 14,
-        "updated_at": "2019-02-28 14:17:58",
-        "updated_at_timestamp": 1551341878
-      },
-      {
-        "small_image_link": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/slides\/1551294886_slide.png",
-        "image_link": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/slides\/1551294886_slide.png",
-        "id": 46,
-        "target_type": "Category",
-        "target_id": 346,
-        "target_link": null,
-        "is_parent": false,
-        "link": null,
-        "order": 15,
-        "updated_at": "2019-02-28 14:09:43",
-        "updated_at_timestamp": 1551341383
-      }
-    ]
-  },
-  {
     "item_type": "OfferShowcase",
     "item_id": 122,
     "name": null,
