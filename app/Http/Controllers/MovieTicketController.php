@@ -140,9 +140,9 @@ class MovieTicketController extends Controller
                 'DTMSID'=>$request->dtmsid,
                 'ticket_id'=>$request->lid,
                 'ConfirmStatus'=>$request->confirm_status,
-                'image_url' => $request->image_url
             ]);
             $response = $bookingResponse;
+            $response->image_url = $request->image_url;
             if($response->status === 'failed')
                 return api_response($request, $bookingResponse, 200, ['status' => $response]);
             $movieTicketRequest->setName($request->customer_name)->setEmail($request->customer_email)->setAmount($response->cost)->setMobile($request->customer_mobile)->setBlockBusterResponse($response);
