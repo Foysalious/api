@@ -25,7 +25,6 @@ abstract class BkashPayment
         $result_data = curl_exec($curl);
         if (curl_errno($curl) > 0) throw new \InvalidArgumentException('Bkash create API error.');
         curl_close($curl);
-        dd(json_decode($result_data));
         return json_decode($result_data);
     }
 

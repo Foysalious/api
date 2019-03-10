@@ -99,6 +99,9 @@ class SettingsController extends Controller
             $profile = $request->customer->profile;
             if ($profile->bkash_agreement_id) return api_response($request, null, 403, ['message' => "$request->payment is already saved"]);
             $response = $paymentSetting->setMethod($request->payment)->init($profile);
+            $key = 'order_' . $response->transactionId;
+            Redis::set($key, json_encode(['job_id' => (int)$request->job_id]));
+            Redis::expire($key, 60 * 60);
             return api_response($request, $response, 200, ['data' => array(
                 'transaction_id' => $response->transactionId,
                 'redirect_url' => $response->redirectUrl,
