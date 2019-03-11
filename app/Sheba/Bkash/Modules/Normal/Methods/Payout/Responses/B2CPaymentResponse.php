@@ -20,19 +20,19 @@ class B2CPaymentResponse
 
     public function hasSuccess()
     {
-        return $this->response == 'Completed';
+        return $this->response->transactionStatus == 'Completed';
     }
 
     public function getSuccess()
     {
         return array(
-            'completed_time' => $this->response->completedTimebkash,
-            'trxID' => $this->response->trxIDbkash,
-            'status' => $this->response->transactionStatusbkash,
-            'amount' => $this->response->amountbkash,
-            'invoice_no' => $this->response->merchantInvoiceNumberbkash,
-            'receiver_bkash_no' => $this->response->receiverMSISDNbkash,
-            'b2cfee' => $this->response->b2cFee
+            'completed_time' => $this->response->completedTime,
+            'trxID' => $this->response->trxID,
+            'status' => $this->response->transactionStatus,
+            'amount' => (double)$this->response->amount,
+            'invoice_no' => $this->response->merchantInvoiceNumber,
+            'receiver_bkash_no' => $this->response->receiverMSISDN,
+            'b2cfee' => (int)$this->response->b2cFee
         );
     }
 
