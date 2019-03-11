@@ -8,6 +8,12 @@ use Sheba\Bkash\Modules\Normal\NormalModule;
 
 class NormalPayout extends NormalModule
 {
+    /**
+     * @param $amount
+     * @param $transaction_id
+     * @param $receiver_bkash_no
+     * @return B2CPaymentResponse
+     */
     public function sendPayment($amount, $transaction_id, $receiver_bkash_no)
     {
         $payment_body = json_encode(array(
