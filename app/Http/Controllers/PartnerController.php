@@ -89,10 +89,10 @@ class PartnerController extends Controller
             }
 
             $partner_request = $partner;
-            if(is_integer($partner_request))
-                $partner = Partner::where([['id', (int)$partner_request], ['status', 'Verified']])->first();
-            else
-                $partner = Partner::where([['sub_domain', $partner_request], ['status', 'Verified']])->first();
+
+            $partner = Partner::where('status', 'Verified')->Where(function ($q) use ($partner_request) {
+                $q->where('id', $partner_request)->orWhere('sub_domain', $partner_request);
+            })->first();
 
             if ($partner == null) return api_response($request, null, 404);
 
