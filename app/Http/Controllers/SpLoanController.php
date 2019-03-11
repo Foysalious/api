@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Profile;
+use App\Models\PartnerBankLoan;
 use Illuminate\Validation\ValidationException;
 use App\Repositories\FileRepository;
 use Sheba\ModificationFields;
@@ -69,6 +70,28 @@ class SpLoanController extends Controller
             return api_response($request, $bank_lists, 200, ['bank_lists' => $bank_lists]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function store($partner, Request $request, PartnerBankLoan $loan)
+    {
+        try {
+            $partner = $request->partner;
+            $data = [
+                'partner_id' => $partner->id,
+                'bank_name' => $request->bank_name,
+                'loan_amount' => $request->loan_amount,
+                'status' => $request->status,
+                'duration' => $request->duration,
+                'monthly_installment' => $request->monthly_installment
+            ];
+            $loan->create($this->withCreateModificationField($data));
+            return api_response($request, 1, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
     }
@@ -445,7 +468,7 @@ class SpLoanController extends Controller
                 $this->deleteOldImage($filename);
             }
 
-            $picture_link = $this->fileRepository->uploadToCDN($this->makePicName($profile, $photo, $image_for), $photo, 'images/profile/');
+            $picture_link = $this->fileRepository->uploadToCDN($this->makePicName($profile, $photo, $image_for), $photo, 'images/profiles/');
 
             if ($picture_link != false) {
                 $data[$image_for] = $picture_link;

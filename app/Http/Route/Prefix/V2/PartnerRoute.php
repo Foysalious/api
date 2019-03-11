@@ -27,6 +27,7 @@ class PartnerRoute
             });
 
             $api->group(['prefix' => 'loans'], function ($api) {
+                $api->post('/', 'SpLoanController@store');
                 $api->get('/personal-info', 'SpLoanController@getPersonalInformation');
                 $api->post('/personal-info', 'SpLoanController@updatePersonalInformation');
 
