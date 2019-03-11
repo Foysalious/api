@@ -63,6 +63,20 @@ trait FileManager
         return [ $file, $filename ];
     }
 
+    protected function makeBankStatement($file, $name)
+    {
+        $filename = $this->uniqueFileName($file, $name);
+        $file = (new BankStatement($file))->make();
+        return [ $file, $filename ];
+    }
+
+    protected function makeTradeLicense($file, $name)
+    {
+        $filename = $this->uniqueFileName($file, $name);
+        $file = (new TradeLicense($file))->make();
+        return [ $file, $filename ];
+    }
+
     protected function makeAppSlide($file, $name)
     {
         $filename = $this->uniqueFileName($file, $name);

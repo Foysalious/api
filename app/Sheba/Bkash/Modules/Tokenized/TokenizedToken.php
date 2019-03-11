@@ -7,7 +7,7 @@ use Sheba\Bkash\Modules\BkashToken;
 
 class TokenizedToken extends BkashToken
 {
-    const REDIS_KEY_NAME = 'TOKENIZED_BKAH_TOKEN';
+    const REDIS_KEY_NAME = 'TOKENIZED_BKASH_TOKEN';
 
 
     public function getRedisKeyName()

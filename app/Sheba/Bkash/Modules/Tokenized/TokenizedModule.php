@@ -18,7 +18,6 @@ class TokenizedModule extends BkashModule
     {
         $this->setBkashAuth();
         $this->token = new TokenizedToken();
-
     }
 
     public function setBkashAuth()
@@ -34,8 +33,7 @@ class TokenizedModule extends BkashModule
     {
         return $this->token->setBkashAuth($this->bkashAuth)->get();
     }
-
-
+    
     /**
      * @param $enum
      * @return TokenizedAgreement|TokenizedPayment

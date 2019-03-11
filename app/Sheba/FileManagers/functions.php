@@ -11,7 +11,7 @@ if (!function_exists('getEmployeesImagesFolder')) {
     function getEmployeesImagesFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = env('S3_URL');
 
         return $url . 'images/employees_avatar/';
@@ -42,7 +42,7 @@ if (!function_exists('getCategoryBannerFolder')) {
     function getCategoryBannerFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = env('S3_URL');
 
         return $url . 'images/categories_images/banners/';
@@ -60,7 +60,7 @@ if (!function_exists('getCategoryIconFolder')) {
     function getCategoryIconFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = env('S3_URL');
 
         return $url . 'images/categories_images/icons/';
@@ -78,7 +78,7 @@ if (!function_exists('getCategoryIconPngFolder')) {
     function getCategoryIconPngFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = env('S3_URL');
 
         return $url . 'images/categories_images/icons_png/';
@@ -96,7 +96,7 @@ if (!function_exists('getCategoryGroupBannerFolder')) {
     function getCategoryGroupBannerFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = env('S3_URL');
 
         return $url . 'images/category_groups_images/banners/';
@@ -114,14 +114,14 @@ if (!function_exists('getCategoryGroupAppBannerFolder')) {
     function getCategoryGroupAppBannerFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = env('S3_URL');
 
         return $url . 'images/category_groups_images/app_banners/';
     }
 }
 
-if(!function_exists('getCategoryGroupThumbFolder')) {
+if (!function_exists('getCategoryGroupThumbFolder')) {
     /**
      * Get Category Group Thumb Folder
      * @param bool $with_base_url
@@ -130,14 +130,14 @@ if(!function_exists('getCategoryGroupThumbFolder')) {
     function getCategoryGroupThumbFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = env('S3_URL');
 
         return $url . 'images/category_groups_images/thumbs/';
     }
 }
 
-if(!function_exists('getCategoryGroupAppThumbFolder')) {
+if (!function_exists('getCategoryGroupAppThumbFolder')) {
     /**
      * Get Category Group App Thumb Folder
      * @param bool $with_base_url
@@ -146,14 +146,14 @@ if(!function_exists('getCategoryGroupAppThumbFolder')) {
     function getCategoryGroupAppThumbFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = env('S3_URL');
 
         return $url . 'images/category_groups_images/app_thumbs/';
     }
 }
 
-if(!function_exists('getCategoryGroupIconFolder')) {
+if (!function_exists('getCategoryGroupIconFolder')) {
     /**
      * Get Category Group App Thumb Folder
      * @param bool $with_base_url
@@ -162,14 +162,14 @@ if(!function_exists('getCategoryGroupIconFolder')) {
     function getCategoryGroupIconFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = env('S3_URL');
 
         return $url . 'images/category_groups_images/icons/';
     }
 }
 
-if(!function_exists('getCategoryGroupIconPngFolder')) {
+if (!function_exists('getCategoryGroupIconPngFolder')) {
     /**
      * Get Category Group App Thumb Folder
      * @param bool $with_base_url
@@ -178,7 +178,7 @@ if(!function_exists('getCategoryGroupIconPngFolder')) {
     function getCategoryGroupIconPngFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = env('S3_URL');
 
         return $url . 'images/category_groups_images/icons_png/';
@@ -209,7 +209,7 @@ if (!function_exists('getCategoryThumbFolder')) {
     function getCategoryThumbFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = env('S3_URL');
 
         return $url . 'images/categories_images/thumbs/';
@@ -240,7 +240,7 @@ if (!function_exists('getServiceBannerFolder')) {
     function getServiceBannerFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = env('S3_URL');
 
         return $url . 'images/services_images/banners/';
@@ -271,7 +271,7 @@ if (!function_exists('getServiceThumbFolder')) {
     function getServiceThumbFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = env('S3_URL');
 
         return $url . 'images/services_images/thumbs/';
@@ -302,7 +302,7 @@ if (!function_exists('getPartnerLogoFolder')) {
     function getPartnerLogoFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = env('S3_URL');
 
         return $url . 'images/partners/logos/';
@@ -314,7 +314,7 @@ if (!function_exists('getPartnerPackageFolder')) {
     function getPartnerPackageFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = env('S3_URL');
         return $url . 'images/partners/package/';
     }
@@ -344,7 +344,7 @@ if (!function_exists('getPartnerBadgesFolder')) {
     function getPartnerBadgesFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = env('S3_URL');
 
         return $url . 'images/badges/partners/';
@@ -362,7 +362,7 @@ if (!function_exists('getCustomerBadgesFolder')) {
     function getCustomerBadgesFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = env('S3_URL');
 
         return $url . 'images/badges/customers/';
@@ -380,7 +380,7 @@ if (!function_exists('getResourceAvatarFolder')) {
     function getResourceAvatarFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = env('S3_URL');
 
         return $url . 'images/resources/avatar/';
@@ -411,7 +411,7 @@ if (!function_exists('getResourceNIDFolder')) {
     function getResourceNIDFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = env('S3_URL');
 
         return $url . 'images/resources/nid/';
@@ -423,7 +423,7 @@ if (!function_exists('getPushNotificationFolder')) {
     function getPushNotificationFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = env('S3_URL');
 
         return $url . 'images/push_notification/';
@@ -441,7 +441,7 @@ if (!function_exists('getCustomerAvatarFolder')) {
     function getCustomerAvatarFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = env('S3_URL');
 
         return $url . 'images/customer/avatar/';
@@ -472,14 +472,60 @@ if (!function_exists('getSliderImagesFolder')) {
     function getSliderImagesFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = env('S3_URL');
 
         return $url . 'images/slides/';
     }
 }
 
-if(!function_exists('getFileTypeIcon')) {
+if (!function_exists('getBankStatementImagesFolder')) {
+
+    function getBankStatementImagesFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url)
+            $url = env('S3_URL');
+
+        return $url . 'images/profiles/bank_statement_';
+    }
+}
+
+if (!function_exists('getBankStatementDefaultImage')) {
+
+    /**
+     * @return string
+     */
+    function getBankStatementDefaultImage()
+    {
+        return getBankStatementImagesFolder(true) . 'default.jpg';
+    }
+}
+
+if (!function_exists('getTradeLicenceImagesFolder')) {
+
+    function getTradeLicenceImagesFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url)
+            $url = env('S3_URL');
+
+        return $url . 'images/profiles/trade_license_attachment_';
+    }
+}
+
+if (!function_exists('getTradeLicenseDefaultImage')) {
+
+    /**
+     * @return string
+     */
+    function getTradeLicenseDefaultImage()
+    {
+        return getTradeLicenceImagesFolder(true) . 'default.jpg';
+    }
+}
+
+if (!function_exists('getFileTypeIcon')) {
     /**
      * Get icon for a file type.
      *
@@ -512,7 +558,7 @@ if(!function_exists('getFileTypeIcon')) {
             'wma' => 'file-audio-o'
         ];
 
-        if(!array_key_exists($type, $file_type_icons)) {
+        if (!array_key_exists($type, $file_type_icons)) {
             return 'file-o';
         }
 
@@ -531,7 +577,7 @@ if (!function_exists('getOfferBannerFolder')) {
     function getOfferBannerFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = env('S3_URL');
 
         return $url . 'images/offers_images/banners/';
@@ -549,7 +595,7 @@ if (!function_exists('getOfferThumbFolder')) {
     function getOfferThumbFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = env('S3_URL');
 
         return $url . 'images/offers_images/thumbs/';
@@ -567,7 +613,7 @@ if (!function_exists('getBusinessLogoFolder')) {
     function getBusinessLogoFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = env('S3_URL');
 
         return $url . 'images/partners/logos/';
@@ -598,7 +644,7 @@ if (!function_exists('getMemberAvatarFolder')) {
     function getMemberAvatarFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = env('S3_URL');
 
         return $url . 'images/resources/avatar/';
@@ -629,14 +675,14 @@ if (!function_exists('getMemberNIDFolder')) {
     function getMemberNIDFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = env('S3_URL');
 
         return $url . 'images/resources/nid/';
     }
 }
 
-if(!function_exists('getNotificationFolder')) {
+if (!function_exists('getNotificationFolder')) {
     /**
      * getNotificationFolder.
      *
@@ -648,7 +694,7 @@ if(!function_exists('getNotificationFolder')) {
     }
 }
 
-if(!function_exists('getNotificationFileName')) {
+if (!function_exists('getNotificationFileName')) {
     /**
      * getNotificationFileName
      *
@@ -661,7 +707,7 @@ if(!function_exists('getNotificationFileName')) {
     }
 }
 
-if(!function_exists('getBase64FileExtension')) {
+if (!function_exists('getBase64FileExtension')) {
     /**
      * getBase64FileExtension
      *
@@ -698,15 +744,14 @@ if (!function_exists('getProfileAvatarFolder')) {
     function getProfileAvatarFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = env('S3_URL');
 
         return $url . 'images/profiles/avatar/';
     }
 }
 
-if (!function_exists('getFileName'))
-{
+if (!function_exists('getFileName')) {
     function getFileName($file)
     {
         $extension = explode("/", $file);
@@ -714,8 +759,7 @@ if (!function_exists('getFileName'))
     }
 }
 
-if (!function_exists('getFileExtension'))
-{
+if (!function_exists('getFileExtension')) {
     function getFileExtension($file)
     {
         $extension = explode(".", $file);
@@ -760,7 +804,7 @@ if (!function_exists('getRewardShopThumbFolder')) {
     function getRewardShopThumbFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = config('s3.url');
 
         return $url . 'images/reward_product_images/thumbs/';
@@ -778,7 +822,7 @@ if (!function_exists('getRewardShopBannerFolder')) {
     function getRewardShopBannerFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = config('s3.url');
 
         return $url . 'images/reward_product_images/banners/';
@@ -796,7 +840,7 @@ if (!function_exists('getBulkTopUpFolder')) {
     function getBulkTopUpFolder($with_base_url = false)
     {
         $url = '';
-        if($with_base_url)
+        if ($with_base_url)
             $url = env('S3_URL');
 
         return $url . 'bulk_top_ups/';

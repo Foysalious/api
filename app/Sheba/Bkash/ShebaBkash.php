@@ -2,6 +2,7 @@
 
 
 use Sheba\Bkash\Modules\BkashModule;
+use Sheba\Bkash\Modules\Normal\NormalModule;
 use Sheba\Bkash\Modules\Tokenized\TokenizedModule;
 
 class ShebaBkash
@@ -14,6 +15,7 @@ class ShebaBkash
     public function setModule($enum)
     {
         if ($enum == 'tokenized') $this->module = new TokenizedModule();
+        elseif ($enum == 'normal') $this->module = new NormalModule();
         return $this;
     }
 
