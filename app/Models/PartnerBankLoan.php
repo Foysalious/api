@@ -7,8 +7,8 @@ class PartnerBankLoan extends Model
     protected $guarded = ['id'];
 
 
-    public function partners()
+    public function partner()
     {
-        return $this->hasMany(Partner::class);
+        return $this->belongsTo(Partner::class);
     }
 }

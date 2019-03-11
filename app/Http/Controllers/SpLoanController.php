@@ -23,8 +23,16 @@ class SpLoanController extends Controller
     public function getHomepage($partner, Request $request)
     {
         try {
+            $partner = $request->partner;
+
             $homepage = [
-                'banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/profiles/avatar/default.jpg',
+                'running_application' =>[
+                    'bank_name' => $partner->loan ? $partner->loan->bank_name : null,
+                    'loan_amount' => $partner->loan ? $partner->loan->loan_amount : null,
+                    'status' => $partner->loan ? $partner->loan->status : null,
+                    'duration' =>$partner->loan ? $partner->loan->duration : null
+                ],
+                'banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/profile/1552282801_pro_pic_image_1408.png',
                 'title' => 'হাতের নাগালে ব্যাংক লোন -',
                 'list' => [
                     'সহজেই ব্যবসা বার্তা পৌঁছে দিন কাস্টমারের কাছে',
@@ -48,22 +56,27 @@ class SpLoanController extends Controller
             $bank_lists = [
                 '0' => [
                     'name' => 'Brac Bank',
+                    'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/profile/1552282801_pro_pic_image_1408.png',
                     'interest' => '10',
                 ],
                 '1' => [
                     'name' => 'Bank Asia',
+                    'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/profile/1552282801_pro_pic_image_1408.png',
                     'interest' => '9',
                 ],
                 '2' => [
                     'name' => 'City Bank',
+                    'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/profile/1552282801_pro_pic_image_1408.png',
                     'interest' => '11',
                 ],
                 '3' => [
                     'name' => 'Prime Bank',
+                    'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/profile/1552282801_pro_pic_image_1408.png',
                     'interest' => '10',
                 ],
                 '4' => [
                     'name' => 'Duch Bangla Bank',
+                    'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/profile/1552282801_pro_pic_image_1408.png',
                     'interest' => '10',
                 ],
             ];
