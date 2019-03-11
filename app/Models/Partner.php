@@ -160,7 +160,7 @@ class Partner extends Model implements Rewardable, TopUpAgent
 
     public function loan()
     {
-        return $this->belongsTo(PartnerBankLoan::class);
+        return $this->hasOne(PartnerBankLoan::class);
     }
 
     public function runningLeave($date = null)
