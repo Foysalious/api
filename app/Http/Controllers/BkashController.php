@@ -51,7 +51,8 @@ class BkashController extends Controller
             $data = array_merge(collect(json_decode($payment->transaction_details))->toArray(), [
                 'order_id' => $payment->payable->type_id,
                 'order_type' => $payment->payable->type,
-                'token' => $payment->payable->user->remember_token
+                'token' => $payment->payable->user->remember_token,
+                'id' => $payment->payable->user->id,
             ]);
             return $payment ? api_response($request, $payment, 200, ['data' => $data]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
