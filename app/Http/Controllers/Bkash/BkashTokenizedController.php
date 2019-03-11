@@ -17,23 +17,23 @@ class BkashTokenizedController extends Controller
 {
     public function validatePayment(Request $request)
     {
+        $this->validate($request, ['paymentID' => 'required']);
+        $payment = Payment::where('gateway_transaction_id', $request->paymentID)->valid()->first();
+        if (!$payment) return api_response($request, null, 404, ['message' => 'Valid Payment not found.']);
+        $redirect_url = $payment->payable->success_url . '?invoice_id=' . $request->paymentID;
         try {
-            $this->validate($request, ['paymentID' => 'required']);
-            $payment = Payment::where('gateway_transaction_id', $request->paymentID)->valid()->first();
-            if (!$payment) return api_response($request, null, 404, ['message' => 'Valid Payment not found.']);
             $sheba_payment = new ShebaPayment('bkash');
-            $payment = $sheba_payment->complete($payment);
-            $redirect_url = $payment->payable->success_url . '?invoice_id=' . $request->paymentID;
+            $sheba_payment->complete($payment);
             return redirect($redirect_url);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
-            return api_response($request, $message, 400);
+            return redirect($redirect_url);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            return redirect($redirect_url);
         }
     }
 
