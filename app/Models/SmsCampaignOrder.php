@@ -27,6 +27,11 @@ class SmsCampaignOrder extends Model
         return $this->order_receivers()->where('status', constants('SMS_CAMPAIGN_RECEIVER_STATUSES.successful'))->count();
     }
 
+    public function getPendingMessagesAttribute()
+    {
+        return $this->order_receivers()->where('status', constants('SMS_CAMPAIGN_RECEIVER_STATUSES.pending'))->count();
+    }
+
     public function getFailedMessagesAttribute()
     {
         return $this->order_receivers()->where('status', constants('SMS_CAMPAIGN_RECEIVER_STATUSES.failed'))->count();

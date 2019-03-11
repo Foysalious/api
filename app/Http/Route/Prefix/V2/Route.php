@@ -124,6 +124,11 @@ class Route
             });
             $api->get('updates', 'UpdateController@getUpdates');
             $api->get('ek-sheba/authenticate', 'EkshebaController@authenticate');
+
+            /**
+             * PROFILE EXISTENCE CHECK. PUBLIC API
+             */
+            $api->get('get-profile-info', 'ProfileController@getProfile');
         });
         return $api;
     }
