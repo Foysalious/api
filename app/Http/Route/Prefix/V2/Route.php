@@ -129,6 +129,7 @@ class Route
              * PROFILE EXISTENCE CHECK. PUBLIC API
              */
             $api->get('get-profile-info', 'ProfileController@getProfile');
+            $api->post('admin/payout', 'Bkash\\BkashPayoutController@pay');
         });
         return $api;
     }

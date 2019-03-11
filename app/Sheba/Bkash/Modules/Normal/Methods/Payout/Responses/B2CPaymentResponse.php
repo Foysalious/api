@@ -20,7 +20,7 @@ class B2CPaymentResponse
 
     public function hasSuccess()
     {
-        return $this->response->transactionStatus == 'Completed';
+        return isset($this->response->transactionStatus )?$this->response->transactionStatus == 'Completed':false;
     }
 
     public function getSuccess()
