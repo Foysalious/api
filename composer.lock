@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d71b54bf3745cd3c1fc14f91dc724b8b",
+    "content-hash": "26a369e251b2a5b41823d68175c8d317",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -2948,7 +2948,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_voucher.git",
-                "reference": "af5987596637fc83a211f230601d80257a0cd0ec"
+                "reference": "fd1dbe0dbd9ab30b5bae47b9b2c0755c39a3ac72"
             },
             "require": {
                 "php": ">=5.4"
@@ -2972,7 +2972,7 @@
                 }
             ],
             "description": "Voucher for Sheba.",
-            "time": "2019-03-09T09:06:37+00:00"
+            "time": "2019-03-10T13:50:04+00:00"
         },
         {
             "name": "sunra/php-simple-html-dom-parser",
@@ -5439,7 +5439,10 @@
         "ext-curl": "*",
         "ext-soap": "*",
         "ext-calendar": "*",
-        "ext-simplexml": "*"
+        "ext-simplexml": "*",
+        "ext-openssl": "^7.0",
+        "ext-mcrypt": "^7.0",
+        "ext-redis": "*"
     },
     "platform-dev": []
 }
