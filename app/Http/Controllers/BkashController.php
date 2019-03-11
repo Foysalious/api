@@ -14,7 +14,7 @@ class BkashController extends Controller
     {
         try {
             $this->validate($request, ['paymentID' => 'required']);
-            $payment = Payment::where('transaction_id', $request->paymentID)->valid()->first();
+            $payment = Payment::where('gateway_transaction_id', $request->paymentID)->valid()->first();
             if (!$payment) return api_response($request, null, 404, ['message' => 'Valid Payment not found.']);
             $sheba_payment = new ShebaPayment('bkash');
             $payment = $sheba_payment->complete($payment);
@@ -47,7 +47,7 @@ class BkashController extends Controller
     public function getPaymentInfo($paymentID, Request $request)
     {
         try {
-            $payment = Payment::where('transaction_id', $paymentID)->valid()->first();
+            $payment = Payment::where('gateway_transaction_id', $paymentID)->valid()->first();
             $data = array_merge(collect(json_decode($payment->transaction_details))->toArray(), [
                 'order_id' => $payment->payable->type_id, 'id' => $payment->payable->user->id,
                 'token' => $payment->payable->user->remember_token

@@ -19,7 +19,7 @@ class BkashTokenizedController extends Controller
     {
         try {
             $this->validate($request, ['paymentID' => 'required']);
-            $payment = Payment::where('transaction_id', $request->paymentID)->valid()->first();
+            $payment = Payment::where('gateway_transaction_id', $request->paymentID)->valid()->first();
             if (!$payment) return api_response($request, null, 404, ['message' => 'Valid Payment not found.']);
             $sheba_payment = new ShebaPayment('bkash');
             $payment = $sheba_payment->complete($payment);
@@ -42,12 +42,12 @@ class BkashTokenizedController extends Controller
         try {
             $this->validate($request, ['paymentID' => 'required']);
             /** @var Payment $payment */
-            $payment = Payment::where('transaction_id', $request->paymentID)->first();
+            $payment = Payment::where('gateway_transaction_id', $request->paymentID)->first();
             if (!$payment) return api_response($request, null, 404, ['message' => 'Valid Payment not found.']);
             /** @var TokenizedPayment $tokenized_payment */
             $tokenized_payment = (new ShebaBkash())->setModule('tokenized')->getModuleMethod('payment');
             $data = $tokenized_payment->create($payment);
-            $payment->transaction_id = $data->paymentID;
+            $payment->gateway_transaction_id = $data->paymentID;
             $payment->redirect_url = $data->bkashURL;
             $payment->transaction_details = json_encode($data);
             $payment->update();

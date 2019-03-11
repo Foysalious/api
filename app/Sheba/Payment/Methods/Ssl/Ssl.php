@@ -57,6 +57,7 @@ class Ssl extends PaymentMethod
         DB::transaction(function () use ($payment, $payable, $invoice, $user) {
             $payment->payable_id = $payable->id;
             $payment->transaction_id = $invoice;
+            $payment->gateway_transaction_id = $invoice;
             $payment->status = 'initiated';
             $payment->valid_till = Carbon::tomorrow();
             $this->setModifier($user);
