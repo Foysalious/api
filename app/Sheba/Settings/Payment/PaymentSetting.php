@@ -2,6 +2,7 @@
 
 
 use App\Models\Profile;
+use Exception;
 use Illuminate\Support\Facades\Redis;
 use Sheba\Settings\Payment\Factory\PaymentSettingProcessor;
 use Sheba\Settings\Payment\Methods\PaymentSettingMethod;
@@ -22,12 +23,15 @@ class PaymentSetting
         return $this;
     }
 
+
     /**
      * @param Profile $profile
      * @return Responses\InitResponse
+     * @throws Exception
      */
     public function init(Profile $profile)
     {
+        if (!isset($this->method)) throw new Exception("Payment Setting Method is not set");
         return $this->method->init($profile);
     }
 

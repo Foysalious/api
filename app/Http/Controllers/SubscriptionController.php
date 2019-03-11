@@ -260,8 +260,6 @@ class SubscriptionController extends Controller
             }
             $max_min_price = array((double)max($max_price) * $service->min_quantity, (double)min($min_price) * $service->min_quantity);
             $offer = $subscription->getDiscountOffer('asc');
-            dd($subscription);
-            dd($offer);
 //            return array((double)max($max_price) * $service->min_quantity, (double)min($min_price) * $service->min_quantity);
         } catch (\Throwable $e) {
             return array(0, 0);

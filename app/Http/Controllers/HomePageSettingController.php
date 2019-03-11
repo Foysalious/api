@@ -108,7 +108,6 @@ class HomePageSettingController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -171,7 +170,6 @@ class HomePageSettingController extends Controller
         })->sortBy(function ($category) use ($customer_category_orders) {
             return array_search($category->getKey(), $customer_category_orders);
         })->values()->all();
-        dd($slider,$categories,$category_groups);
         return ['slider' => $slider->data, 'categories' => $categories, 'category_groups' => $category_groups->values()->all()];
     }
 }

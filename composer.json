@@ -39,7 +39,8 @@
     "sentry/sentry-laravel": "^0.11.0",
     "ext-openssl": "^7.0",
     "ext-mcrypt": "^7.0",
-    "ext-redis": "*"
+    "ext-redis": "*",
+    "ext-mysql_xdevapi": "*"
   },
   "require-dev": {
     "fzaninotto/faker": "~1.4",

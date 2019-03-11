@@ -11,7 +11,6 @@ class ExecuteResponse extends PaymentMethodResponse
 
     public function hasSuccess()
     {
-        dd($this->response);
         return isset($this->response->transactionStatus) && $this->response->transactionStatus == 'Completed' && ($this->payment->transaction_id == $this->response->merchantInvoiceNumber || $this->payment->transaction_id == $this->response->paymentID);
     }
 
