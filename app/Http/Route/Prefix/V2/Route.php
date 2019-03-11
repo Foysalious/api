@@ -30,14 +30,23 @@ class Route
             $api->group(['prefix' => 'faqs'], function ($api) {
                 $api->get('order', 'JobController@getFaqs');
             });
-
             $api->group(['prefix' => 'ssl'], function ($api) {
                 $api->post('validate', 'SslController@validatePayment');
             });
 
             $api->group(['prefix' => 'bkash'], function ($api) {
                 $api->post('validate', 'BkashController@validatePayment');
+                $api->group(['prefix' => 'tokenized'], function ($api) {
+                    $api->group(['prefix' => 'payment'], function ($api) {
+                        $api->get('validate', 'Bkash\BkashTokenizedController@validatePayment');
+                        $api->post('/', 'Bkash\BkashTokenizedController@tokenizePayment');
+                    });
+                    $api->group(['prefix' => 'agreement'], function ($api) {
+                        $api->get('validate', 'Bkash\BkashTokenizedController@validateAgreement');
+                    });
+                });
                 $api->get('paymentID/{paymentID}', 'BkashController@getPaymentInfo');
+                $api->get('token/{paymentID}', 'BkashController@token');
             });
             $api->group(['prefix' => 'orders'], function ($api) {
                 $api->get('online', 'OrderController@clearPayment');

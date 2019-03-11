@@ -7,8 +7,12 @@ class CustomerRoute
         $api->group(['prefix' => 'customers'], function ($api) {
             $api->group(['prefix' => '{customer}', 'middleware' => ['customer.auth']], function ($api) {
                 $api->get('checkout-info', 'CustomerController@getDeliveryInfo');
-                $api->get('settings/review', 'Settings\SettingsController@getCustomerReviewSettings');
-                $api->get('settings', 'Settings\SettingsController@getCustomerSettings');
+                $api->group(['prefix' => 'settings'], function ($api) {
+                    $api->get('/', 'Settings\SettingsController@getCustomerSettings');
+                    $api->get('review', 'Settings\SettingsController@getCustomerReviewSettings');
+                    $api->get('payment', 'Settings\SettingsController@addPayment');
+                });
+
                 $api->put('notifications', 'CustomerNotificationController@update');
                 $api->post('top-up', 'TopUpController@topUp');
                 $api->group(['prefix' => 'bkash'], function ($api) {

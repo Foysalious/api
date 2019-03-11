@@ -3,44 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Payment;
-use GuzzleHttp\Exception\RequestException;
-use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Redis;
-use Cache;
 use Sheba\Payment\ShebaPayment;
 
 class BkashController extends Controller
 {
-
-    public function create($customer, Request $request)
-    {
-        try {
-            $this->validate($request, [
-                'job' => 'required',
-                'isAdvanced' => 'required|in:0,1'
-            ]);
-            $job = $request->job;
-            $payment = new Payment($job->partnerOrder, new Bkash());
-            $result = [];
-            $query = parse_url($payment->generateLink((int)$request->isAdvanced))['query'];
-            parse_str($query, $result);
-            $key_name = $result['paymentID'];
-            $payment_info = Redis::get("$key_name");
-            $payment_info = json_decode($payment_info);
-            return api_response($request, $result, 200, ['data' => $payment_info]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
 
     public function validatePayment(Request $request)
     {
@@ -80,7 +48,11 @@ class BkashController extends Controller
     {
         try {
             $payment = Payment::where('transaction_id', $paymentID)->valid()->first();
-            return $payment ? api_response($request, $payment, 200, ['data' => json_decode($payment->transaction_details)]) : api_response($request, null, 404);
+            $data = array_merge(collect(json_decode($payment->transaction_details))->toArray(), [
+                'order_id' => $payment->payable->type_id, 'id' => $payment->payable->user->id,
+                'token' => $payment->payable->user->remember_token
+            ]);
+            return $payment ? api_response($request, $payment, 200, ['data' => $data]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

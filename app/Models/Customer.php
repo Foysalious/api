@@ -177,4 +177,9 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
     {
         return $this->hasMany(SubscriptionOrder::class);
     }
+
+    public function getAgreementId()
+    {
+        return $this->profile->bkash_agreement_id;
+    }
 }
