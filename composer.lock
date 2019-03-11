@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d71b54bf3745cd3c1fc14f91dc724b8b",
+    "content-hash": "178a30df2b5e0098af5b0462f38f268e",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -2852,7 +2852,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "e2d238b07ef045e020abcf9b2a1598d545312eaa"
+                "reference": "4a5243a2d86a2de4cee0d39168ef65b1eb920e77"
             },
             "require": {
                 "php": ">=5.4"
@@ -2879,7 +2879,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2019-03-10T05:11:57+00:00"
+            "time": "2019-03-11T07:33:14+00:00"
         },
         {
             "name": "sheba/notification",
@@ -5439,7 +5439,9 @@
         "ext-curl": "*",
         "ext-soap": "*",
         "ext-calendar": "*",
-        "ext-simplexml": "*"
+        "ext-simplexml": "*",
+        "ext-redis": "*",
+        "ext-mysql_xdevapi": "*"
     },
     "platform-dev": []
 }

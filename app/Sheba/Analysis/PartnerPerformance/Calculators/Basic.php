@@ -69,7 +69,7 @@ class Basic extends PartnerPerformance
 
     private function getDataOfComplain(TimeFrame $time_frame)
     {
-        $complain = Complain::against($this->partner)->createdAtBetween($time_frame)->count();
+        $complain = Complain::against($this->partner)->notRejected()->createdAtBetween($time_frame)->count();
         $order_closed = $this->getOrderClosedCountOn($time_frame);
         $without_complain = $order_closed - $complain;
         return (new InnerData())->setValue($without_complain)->setDenominator($order_closed);
