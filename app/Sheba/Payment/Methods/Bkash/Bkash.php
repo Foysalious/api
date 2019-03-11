@@ -41,6 +41,7 @@ class Bkash extends PaymentMethod
         DB::transaction(function () use ($payment, $payable, $invoice) {
             $payment->payable_id = $payable->id;
             $payment->transaction_id = $invoice;
+            $payment->gateway_transaction_id = $invoice;
             $payment->status = 'initiated';
             $payment->valid_till = Carbon::tomorrow();
             $this->setModifier($payable->user);
@@ -57,11 +58,11 @@ class Bkash extends PaymentMethod
             /** @var TokenizedPayment $tokenized_payment */
             $tokenized_payment = (new ShebaBkash())->setModule('tokenized')->getModuleMethod('payment');
             $data = $tokenized_payment->create($payment);
-            $payment->transaction_id = $data->paymentID;
+            $payment->gateway_transaction_id = $data->paymentID;
             $payment->redirect_url = $data->bkashURL;
         } else {
             $data = $this->create($payment);
-            $payment->transaction_id = $data->merchantInvoiceNumber;
+            $payment->gateway_transaction_id = $data->merchantInvoiceNumber;
             $payment->redirect_url = config('sheba.front_url') . '/bkash?paymentID=' . $data->merchantInvoiceNumber;
         }
         $payment->transaction_details = json_encode($data);
@@ -108,7 +109,7 @@ class Bkash extends PaymentMethod
             'amount' => $payment->payable->amount,
             'currency' => 'BDT',
             'intent' => $intent,
-            'merchantInvoiceNumber' => $payment->transaction_id
+            'merchantInvoiceNumber' => $payment->gateway_transaction_id
         ));
         $url = curl_init($this->url . '/checkout/payment/create');
         $header = array(
@@ -169,7 +170,7 @@ class Bkash extends PaymentMethod
         $result_data = json_decode($result_data);
         if (curl_errno($url) > 0) {
             $error = new \InvalidArgumentException('Bkash execute API error.');
-            $error->paymentId = $payment->transaction_id;
+            $error->paymentId = $payment->gateway_transaction_id;
             throw  $error;
         };
         curl_close($url);

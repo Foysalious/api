@@ -20,6 +20,7 @@ class Wallet extends PaymentMethod
         DB::transaction(function () use ($payment, $payable, $invoice, $user_bonus) {
             $payment->payable_id = $payable->id;
             $payment->transaction_id = $invoice;
+            $payment->gateway_transaction_id = $invoice;
             $payment->status = 'initiated';
             $payment->valid_till = Carbon::tomorrow();
             $this->setModifier($payable->user);
