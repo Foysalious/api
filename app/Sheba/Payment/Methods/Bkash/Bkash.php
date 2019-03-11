@@ -62,8 +62,8 @@ class Bkash extends PaymentMethod
             $payment->redirect_url = $data->bkashURL;
         } else {
             $data = $this->create($payment);
-            $payment->gateway_transaction_id = $data->merchantInvoiceNumber;
-            $payment->redirect_url = config('sheba.front_url') . '/bkash?paymentID=' . $data->merchantInvoiceNumber;
+            $payment->gateway_transaction_id = $data->paymentID;
+            $payment->redirect_url = config('sheba.front_url') . '/bkash?paymentID=' . $data->paymentID;
         }
         $payment->transaction_details = json_encode($data);
         $payment->update();
@@ -158,7 +158,7 @@ class Bkash extends PaymentMethod
     {
         $token = Redis::get('BKASH_TOKEN');
         $token = $token ? $token : $this->grantToken();
-        $url = curl_init($this->url . '/checkout/payment/execute/' . json_decode($payment->transaction_details)->paymentID);
+        $url = curl_init($this->url . '/checkout/payment/execute/' . $payment->gateway_transaction_id);
         $header = array(
             'authorization:' . $token,
             'x-app-key:' . $this->appKey);

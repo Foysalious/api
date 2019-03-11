@@ -178,12 +178,12 @@ class ComplainController extends Controller
     {
         try {
             $this->validate($request, [
-                'accessor_id' => 'required|numeric',
+                'accessor_id' => 'numeric',
                 'complain_preset' => 'required|numeric',
                 'complain' => 'sometimes|string',
             ]);
             $this->setModifier($request->customer);
-            $data = $this->processCommonData($request);
+            $data = $this->processCommonData($request, 'Partner');
             $data = array_merge($data, $this->processJobData($request, $request->job));
             $data = $this->withCreateModificationField($data);
 
@@ -208,7 +208,7 @@ class ComplainController extends Controller
     {
         try {
             $this->validate($request, [
-                'accessor_id' => 'required|numeric',
+                'accessor_id' => 'numeric',
                 'complain_preset' => 'required|numeric',
                 'complain' => 'sometimes|string',
             ]);
@@ -217,7 +217,7 @@ class ComplainController extends Controller
                 if (!$job || $job->partnerOrder->partner_id != (int)$partner) return api_response($request, null, 403, ['message' => "This is not your Job"]);
             }
             $this->setModifier($request->manager_resource);
-            $data = $this->processCommonData($request);
+            $data = $this->processCommonData($request, 'Customer');
             if ($request->job) $data = array_merge($data, $this->processJobData($request, $job));
             $data = $this->withCreateModificationField($data);
 
@@ -238,17 +238,19 @@ class ComplainController extends Controller
         }
     }
 
-    protected function processCommonData(Request $request)
+    protected function processCommonData(Request $request, $for = 'Partner')
     {
         $preset_id = (int)$request->complain_preset;
         $preset = $this->complainPresetRepo->find($preset_id);
         $follow_up_time = Carbon::now()->addMinutes($preset->complainType->sla);
-
+        $accessor = $preset->accessors->count() > 1 ? $preset->accessors->filter(function ($accessor) use ($for) {
+            return $accessor->name == $for;
+        })->first() : $preset->accessors->first();
         return [
             'complain' => $request->complain,
             'complain_preset_id' => $preset_id,
             'follow_up_time' => $follow_up_time,
-            'accessor_id' => $request->accessor_id
+            'accessor_id' => $accessor ? $accessor->id : $request->accessor_id
         ];
     }
 

@@ -158,6 +158,11 @@ class Partner extends Model implements Rewardable, TopUpAgent
         return $this->hasMany(PartnerLeave::class);
     }
 
+    public function loan()
+    {
+        return $this->hasOne(PartnerBankLoan::class);
+    }
+
     public function runningLeave($date = null)
     {
         $date = ($date) ? (($date instanceof Carbon) ? $date : new Carbon($date)) : Carbon::now();

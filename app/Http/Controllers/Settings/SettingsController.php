@@ -105,7 +105,6 @@ class SettingsController extends Controller
             Redis::set($key, json_encode(['order_id' => (int)$request->order_id, 'payment_id' => $request->payment_id]));
             Redis::expire($key, 60 * 60);
             return api_response($request, $response, 200, ['data' => array(
-                'transaction_id' => $response->transactionId,
                 'redirect_url' => $response->redirectUrl,
                 'success_url' => $request->order_id ? config('sheba.front_url') . '/orders/' . (PartnerOrder::find($request->order_id))->jobs()->where('status', '<>', constants('JOB_STATUSES')['Cancelled'])->first()->id : config('sheba.front_url') . '/profile/me',
             )]);

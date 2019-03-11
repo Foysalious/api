@@ -1,15 +1,19 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Profile;
+use App\Models\PartnerBankLoan;
 use Illuminate\Validation\ValidationException;
 use App\Repositories\FileRepository;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use DB;
+use Sheba\FileManagers\CdnFileManager;
+use Sheba\FileManagers\FileManager;
 
 class SpLoanController extends Controller
 {
+    use CdnFileManager, FileManager;
     use ModificationFields;
 
     private $fileRepository;
@@ -22,8 +26,16 @@ class SpLoanController extends Controller
     public function getHomepage($partner, Request $request)
     {
         try {
+            $partner = $request->partner;
+
             $homepage = [
-                'banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/profiles/avatar/default.jpg',
+                'running_application' => [
+                    'bank_name' => $partner->loan ? $partner->loan->bank_name : null,
+                    'loan_amount' => $partner->loan ? $partner->loan->loan_amount : null,
+                    'status' => $partner->loan ? $partner->loan->status : null,
+                    'duration' => $partner->loan ? $partner->loan->duration : null
+                ],
+                'banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/profile/1552282801_pro_pic_image_1408.png',
                 'title' => 'হাতের নাগালে ব্যাংক লোন -',
                 'list' => [
                     'সহজেই ব্যবসা বার্তা পৌঁছে দিন কাস্টমারের কাছে',
@@ -47,28 +59,55 @@ class SpLoanController extends Controller
             $bank_lists = [
                 '0' => [
                     'name' => 'Brac Bank',
+                    'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/profile/1552282801_pro_pic_image_1408.png',
                     'interest' => '10',
                 ],
                 '1' => [
                     'name' => 'Bank Asia',
+                    'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/profile/1552282801_pro_pic_image_1408.png',
                     'interest' => '9',
                 ],
                 '2' => [
                     'name' => 'City Bank',
+                    'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/profile/1552282801_pro_pic_image_1408.png',
                     'interest' => '11',
                 ],
                 '3' => [
                     'name' => 'Prime Bank',
+                    'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/profile/1552282801_pro_pic_image_1408.png',
                     'interest' => '10',
                 ],
                 '4' => [
                     'name' => 'Duch Bangla Bank',
+                    'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/profile/1552282801_pro_pic_image_1408.png',
                     'interest' => '10',
                 ],
             ];
             return api_response($request, $bank_lists, 200, ['bank_lists' => $bank_lists]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function store($partner, Request $request, PartnerBankLoan $loan)
+    {
+        try {
+            $partner = $request->partner;
+            $data = [
+                'partner_id' => $partner->id,
+                'bank_name' => $request->bank_name,
+                'loan_amount' => $request->loan_amount,
+                'status' => $request->status,
+                'duration' => $request->duration,
+                'monthly_installment' => $request->monthly_installment
+            ];
+            $loan->create($this->withCreateModificationField($data));
+            return api_response($request, 1, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
     }
@@ -445,7 +484,7 @@ class SpLoanController extends Controller
                 $this->deleteOldImage($filename);
             }
 
-            $picture_link = $this->fileRepository->uploadToCDN($this->makePicName($profile, $photo, $image_for), $photo, 'images/profile/');
+            $picture_link = $this->fileRepository->uploadToCDN($this->makePicName($profile, $photo, $image_for), $photo, 'images/profiles/' . $image_for . '_');
 
             if ($picture_link != false) {
                 $data[$image_for] = $picture_link;
@@ -463,6 +502,89 @@ class SpLoanController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function updateBankStatement($partner, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'picture' => 'required|mimes:jpeg,png'
+            ]);
+            $partner = $request->partner;
+            $bank_informations = $partner->bankInformations;
+
+            $file_name = $request->picture;
+
+            if ($bank_informations->statement != getBankStatementDefaultImage()) {
+                $old_statement = substr($bank_informations->statement, strlen(config('s3.url')));
+                $this->deleteImageFromCDN($old_statement);
+            }
+
+            $bank_statement = $this->saveBankStatement($file_name);
+            if ($bank_statement != false) {
+                $data['statement'] = $bank_statement;
+                $bank_informations->update($this->withUpdateModificationField($data));
+
+                return api_response($request, $bank_statement, 200, ['picture' => $bank_informations->statement]);
+            } else {
+                return api_response($request, null, 500);
+            }
+        } catch
+        (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function updateTradeLicense($partner, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'picture' => 'required|mimes:jpeg,png'
+            ]);
+            $partner = $request->partner;
+            $basic_informations = $partner->basicInformations;
+
+            $file_name = $request->picture;
+
+            if ($basic_informations->trade_license_attachment != getTradeLicenseDefaultImage()) {
+                $old_statement = substr($basic_informations->trade_license_attachment, strlen(config('s3.url')));
+                $this->deleteImageFromCDN($old_statement);
+            }
+
+            $trade_license = $this->saveTradeLicense($file_name);
+            if ($trade_license != false) {
+                $data['trade_license_attachment'] = $trade_license;
+                $basic_informations->update($this->withUpdateModificationField($data));
+
+                return api_response($request, $trade_license, 200, ['picture' => $basic_informations->trade_license_attachment]);
+            } else {
+                return api_response($request, null, 500);
+            }
+        } catch
+        (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
+    }
+
+    private function saveTradeLicense($image_file)
+    {
+        list($trade_license, $trade_license_filename) = $this->makeTradeLicense($image_file, 'trade_license_attachment');
+        return $this->saveImageToCDN($trade_license, getTradeLicenceImagesFolder(), $trade_license_filename);
+    }
+
+    private function saveBankStatement($image_file)
+    {
+        list($bank_statement, $statement_filename) = $this->makeBankStatement($image_file, 'bank_statement');
+        return $this->saveImageToCDN($bank_statement, getBankStatementImagesFolder(), $statement_filename);
     }
 
     private function deleteOldImage($filename)
