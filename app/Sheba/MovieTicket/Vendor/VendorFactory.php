@@ -6,12 +6,7 @@ use Sheba\MovieTicket\Vendor\BlockBuster\BlockBuster;
 
 class VendorFactory
 {
-    const MOCK = 1;
-    const ROBI = 2;
-    const AIRTEL = 3;
-    const GP = 4;
-    const BANGLALINK = 5;
-    const TELETALK = 6;
+    const BlockBuster = 1;
 
     private $classes = [
         BlockBuster::class
