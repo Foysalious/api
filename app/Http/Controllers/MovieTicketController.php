@@ -170,7 +170,8 @@ class MovieTicketController extends Controller
     public function history(Request $request)
     {
         try {
-            $orders =  MovieTicketOrder::all();
+            $agent = $this->getAgent($request);
+            $orders =  MovieTicketOrder::where('agent_type',get_class($agent))->where('agent_id',$agent->id)->get();
             $histories = array();
             foreach ($orders as $order) {
                 $reservation_details = json_decode($order->reservation_details);
