@@ -8,7 +8,7 @@ use Sheba\Bkash\Modules\Normal\Methods\Payout\NormalPayout;
 class NormalModule extends BkashModule
 {
     /** @var $token NormalToken */
-    private $token;
+    protected $token;
     /** @var $bkashAuth BkashAuth */
     protected $bkashAuth;
 

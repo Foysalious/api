@@ -3,11 +3,26 @@
 namespace Sheba\Bkash\Modules\Normal\Methods\Payout;
 
 
+use Sheba\Bkash\Modules\BkashAuth;
 use Sheba\Bkash\Modules\Normal\Methods\Payout\Responses\B2CPaymentResponse;
 use Sheba\Bkash\Modules\Normal\NormalModule;
 
 class NormalPayout extends NormalModule
 {
+    public function setBkashAuth()
+    {
+        $this->bkashAuth = new BkashAuth();
+        $this->bkashAuth->setKey(config('bkash.app_key'))
+            ->setSecret(config('bkash.app_secret'))
+            ->setUsername(config('bkash.username'))
+            ->setPassword(config('bkash.password'))->setUrl(config('bkash.url'));
+    }
+
+    public function getToken()
+    {
+        return $this->token->setBkashAuth($this->bkashAuth)->get();
+    }
+
     /**
      * @param $amount
      * @param $transaction_id
