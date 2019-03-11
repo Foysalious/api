@@ -34,7 +34,7 @@ class ComplainController extends Controller
         $this->complainRepo = $complain;
     }
 
-    public function index(Request $request, $job)
+    public function index(Request $request, $customer, $job = null)
     {
         $job = $job ?: $request->job_id;
         try {
@@ -42,22 +42,14 @@ class ComplainController extends Controller
                 'for' => 'required|in:customer,partner'
             ]);
             $job = Job::find($job);
-            $job_status = $this->getJobStatus($job);
             $accessor = $this->accessorRepo->findByNameWithPublishedCategoryAndPreset(ucwords($request->for));
             $final_complains = collect();
             $final_presets = collect();
-            $presets = $accessor->complainPresets->filter(function ($q) use ($job) {
-                return $q->subCategories->filter(function ($cat) use ($job) {
-                        return $job->category_id == $cat->id;
-                    })->count() > 0;
-            });
-
+            $presets = $this->getCategoryWisePresets($job, $accessor);
             foreach ($presets as $preset) {
                 $final_presets->push(collect($preset)->only(['id', 'name', 'category_id']));
             }
-            $categories = $accessor->complainCategories->filter(function ($cat) use ($job_status) {
-                return $job_status == $cat->order_status;
-            });
+            $categories = $this->getJobWiseCategory($job, $accessor);
             foreach ($categories as $category) {
                 $final = collect($category)->only(['id', 'name']);
                 $final->put('presets', $final_presets->where('category_id', $category->id)->values()->all());
@@ -74,6 +66,25 @@ class ComplainController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function getJobWiseCategory($job, $accessor)
+    {
+        if (!empty($job)) {
+            $job_status = $this->getJobStatus($job);
+        }
+        return !empty($job) ? $accessor->complainCategories->filter(function ($cat) use ($job_status) {
+            return $cat->order_status == $job_status;
+        }) : $accessor->complainCategories;
+    }
+
+    private function getCategoryWisePresets($job, $accessor)
+    {
+        return !empty($job) ? $accessor->complainPresets->filter(function ($q) use ($job) {
+            return $q->subCategories->filter(function ($cat) use ($job) {
+                    return $job->category_id == $cat->id;
+                })->count() > 0;
+        }) : $accessor->complainPresets;
     }
 
     private function getJobStatus($job)
