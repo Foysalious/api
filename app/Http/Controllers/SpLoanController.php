@@ -481,7 +481,7 @@ class SpLoanController extends Controller
                 $this->deleteOldImage($filename);
             }
 
-            $picture_link = $this->fileRepository->uploadToCDN($this->makePicName($profile, $photo, $image_for), $photo, 'images/profiles/');
+            $picture_link = $this->fileRepository->uploadToCDN($this->makePicName($profile, $photo, $image_for), $photo, 'images/profiles/'.$image_for);
 
             if ($picture_link != false) {
                 $data[$image_for] = $picture_link;
