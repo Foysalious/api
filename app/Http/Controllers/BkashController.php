@@ -18,7 +18,7 @@ class BkashController extends Controller
             if (!$payment) return api_response($request, null, 404, ['message' => 'Valid Payment not found.']);
             $sheba_payment = new ShebaPayment('bkash');
             $payment = $sheba_payment->complete($payment);
-            $redirect_url = $payment->payable->success_url . '?invoice_id=' . $request->paymentID;
+            $redirect_url = $payment->payable->success_url . '?invoice_id=' . $payment->transaction_id;
             if ($payment->isComplete()) {
                 return api_response($request, 1, 200, ['payment' => array('redirect_url' => $redirect_url)]);
             } elseif ($payment->isFailed()) {
