@@ -92,8 +92,9 @@ class SettingsController extends Controller
     public function addPayment($customer, Request $request, PaymentSetting $paymentSetting)
     {
         try {
+            //Payment Id is actually gateway transaction id
             $this->validate($request, [
-                'payment' => 'sometimes|required|in:bkash',
+                'payment_name' => 'sometimes|required|in:bkash',
                 'order_id' => 'numeric',
                 'order_type' => 'string',
                 'payment_id' => 'string'
@@ -101,17 +102,29 @@ class SettingsController extends Controller
             /** @var Customer $customer */
             $profile = $request->customer->profile;
             if ($profile->bkash_agreement_id) return api_response($request, null, 403, ['message' => "$request->payment is already saved"]);
-            $response = $paymentSetting->setMethod($request->payment)->init($profile);
+            $response = $paymentSetting->setMethod($request->payment_name)->init($profile);
             $key = 'order_' . $response->transactionId;
-            Redis::set($key, json_encode(['order_id' => (int)$request->order_id, 'order_type' => $request->order_type, 'payment_id' => $request->payment_id]));
+            Redis::set($key, json_encode(['order_id' => (int)$request->order_id, 'order_type' => $request->order_type, 'gateway_transaction_id' => $request->payment_id]));
             Redis::expire($key, 60 * 60);
             return api_response($request, $response, 200, ['data' => array(
                 'redirect_url' => $response->redirectUrl,
-                'success_url' => $request->order_id ? config('sheba.front_url') . '/orders/' . (PartnerOrder::find($request->order_id))->jobs()->where('status', '<>', constants('JOB_STATUSES')['Cancelled'])->first()->id : config('sheba.front_url') . '/profile/me',
+                'success_url' => $this->getSuccessUrl((int)$request->order_id, $request->order_type),
             )]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
+        }
+    }
+
+    private function getSuccessUrl($order_id, $order_type)
+    {
+        $front_url = config('sheba.front_url');
+        if ($order_type == 'partner_order') {
+            return $front_url . '/orders/' . (PartnerOrder::find($order_id))->jobs()->where('status', '<>', constants('JOB_STATUSES')['Cancelled'])->first()->id;
+        } elseif ($order_type == 'subscription_order') {
+            return $front_url . '/subscription-orders/' . $order_id;
+        } else {
+            return $front_url . '/profile/me';
         }
     }
 }
