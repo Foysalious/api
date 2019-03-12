@@ -29,8 +29,8 @@ class Affiliate extends TopUpCommission
 
     private function deductFromAmbassador($amount, $log)
     {
-        $this->agent->debitWallet($amount);
-        $this->agent->walletTransaction(['amount' => $amount, 'type' => 'Debit', 'log' => $log]);
+        $this->agent->ambassador->debitWallet($amount);
+        $this->agent->ambassador->walletTransaction(['amount' => $amount, 'type' => 'Debit', 'log' => $log]);
     }
 
     public function refund()
