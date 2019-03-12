@@ -150,7 +150,7 @@ class SpLoanController extends Controller
         }
     }
 
-    public function updatePersonalInformation($partner, Request $request)
+    public function updatePersonalInformation($partner, SpLoanRequest $request)
     {
         try {
             $manager_resource = $request->manager_resource;
@@ -166,6 +166,7 @@ class SpLoanController extends Controller
                 'total_asset_amount' => $request->total_asset_amount,
                 'monthly_loan_installment_amount' => $request->monthly_loan_installment_amount,
             );
+
             $resource_data = [
                 'father_name' => $request->father_name,
                 'spouse_name' => $request->spouse_name,
@@ -173,10 +174,8 @@ class SpLoanController extends Controller
             $profile->update($this->withBothModificationFields($profile_data));
             $manager_resource->update($this->withBothModificationFields($resource_data));
             return api_response($request, 1, 200);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
