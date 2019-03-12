@@ -28,7 +28,7 @@ class SpLoanRequest extends ApiRequest
      */
     public function rules()
     {
-        if(HttpRequest::segment(5) == "personal-info") {
+        if (HttpRequest::segment(5) == "personal-info") {
             $rules = [
                 'gender' => 'required|string|in:Male,Female,Other,পুরুষ,মহিলা,অন্যান্য',
                 'dob' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
@@ -43,7 +43,7 @@ class SpLoanRequest extends ApiRequest
             ];
         }
 
-        if(HttpRequest::segment(5) == "business-info") {
+        if (HttpRequest::segment(5) == "business-info") {
             $rules = [
                 'business_type' => 'required|string',
                 'location' => 'required|string',
@@ -55,7 +55,7 @@ class SpLoanRequest extends ApiRequest
             ];
         }
 
-        if(HttpRequest::segment(5) == "finance-info") {
+        if (HttpRequest::segment(5) == "finance-info") {
             $rules = [
                 'acc_name' => 'required|string',
                 'acc_no' => 'required|integer',
@@ -66,6 +66,22 @@ class SpLoanRequest extends ApiRequest
                 'bkash_account_type' => 'required|string|in:personal,agent,merchant,পার্সোনাল,এজেন্ট,মার্চেন্ট'
             ];
         }
+        if (HttpRequest::segment(5) == "nominee-info") {
+            $rules = [
+                'name' => 'required|string',
+                'mobile' => 'required|string|mobile:bd',
+                'nominee_relation' => 'required|string'
+            ];
+        }
+
+        if (HttpRequest::segment(5) == "grantor-info") {
+            $rules = [
+                'name' => 'required|string',
+                'mobile' => 'required|string|mobile:bd',
+                'nominee_relation' => 'required|string'
+            ];
+        }
+
 
         return $rules;
     }

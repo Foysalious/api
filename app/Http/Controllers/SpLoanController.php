@@ -337,7 +337,7 @@ class SpLoanController extends Controller
         }
     }
 
-    public function updateNomineeInformation($partner, Request $request)
+    public function updateNomineeInformation($partner, SpLoanRequest $request)
     {
         try {
             $manager_resource = $request->manager_resource;
@@ -361,15 +361,13 @@ class SpLoanController extends Controller
             }
 
             return api_response($request, 1, 200);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function updateGrantorInformation($partner, Request $request)
+    public function updateGrantorInformation($partner, SpLoanRequest $request)
     {
         try {
             $manager_resource = $request->manager_resource;
@@ -393,10 +391,8 @@ class SpLoanController extends Controller
             }
 
             return api_response($request, 1, 200);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
