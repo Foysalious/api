@@ -5,14 +5,7 @@ namespace Sheba\Bkash\Modules\Normal\Methods\Payout\Responses;
 
 class B2CPaymentResponse
 {
-    private $completedTimebkash;
-    private $trxIdBkash;
-    private $transactionStatusBkash;
-    private $amountBkash;
-    private $currencyBkash;
-    private $merchantInvoiceNumberBkash;
-    private $receiverMSISDNBkash;
-    private $b2cFee;
+    private $response;
 
     public function __get($name)
     {
@@ -21,14 +14,33 @@ class B2CPaymentResponse
 
     public function setResponse($response)
     {
-        $this->completedTimebkash = $response->completedTimebkash;
-        $this->trxIdBkash = $response->trxIDbkash;
-        $this->transactionStatusBkash = $response->transactionStatusbkash;
-        $this->amountBkash = $response->amountbkash;
-        $this->currencyBkash = $response->currencybkash;
-        $this->merchantInvoiceNumberBkash = $response->merchantInvoiceNumberbkash;
-        $this->receiverMSISDNBkash = $response->receiverMSISDNbkash;
-        $this->b2cFee = $response->b2cFee;
+        $this->response = $response;
         return $this;
+    }
+
+    public function hasSuccess()
+    {
+        return isset($this->response->transactionStatus )?$this->response->transactionStatus == 'Completed':false;
+    }
+
+    public function getSuccess()
+    {
+        return array(
+            'completed_time' => $this->response->completedTime,
+            'trxID' => $this->response->trxID,
+            'status' => $this->response->transactionStatus,
+            'amount' => (double)$this->response->amount,
+            'invoice_no' => $this->response->merchantInvoiceNumber,
+            'receiver_bkash_no' => $this->response->receiverMSISDN,
+            'b2cfee' => (int)$this->response->b2cFee
+        );
+    }
+
+    public function getError()
+    {
+        return array(
+            'code' => $this->response->errorCode,
+            'message' => $this->response->errorMessage
+        );
     }
 }

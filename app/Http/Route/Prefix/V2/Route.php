@@ -10,7 +10,6 @@ class Route
             $api->post('subscription', 'PushSubscriptionController@store');
             $api->get('car-rental-info', 'ShebaController@sendCarRentalInfo');
             $api->get('payments', 'ShebaController@getPayments');
-            $api->get('subscription-payments', 'ShebaController@getSubscriptionPayments');
             $api->get('butcher-info', 'ShebaController@sendButcherInfo');
             $api->post('service-requests', 'ServiceRequestController@store');
             $api->post('transactions/{transactionID}', 'ShebaController@checkTransactionStatus');
@@ -129,6 +128,7 @@ class Route
              * PROFILE EXISTENCE CHECK. PUBLIC API
              */
             $api->get('get-profile-info', 'ProfileController@getProfile');
+            $api->post('admin/payout', 'Bkash\\BkashPayoutController@pay');
         });
         return $api;
     }
