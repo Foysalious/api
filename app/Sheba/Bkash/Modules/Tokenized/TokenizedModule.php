@@ -9,15 +9,13 @@ use Sheba\Bkash\Modules\Tokenized\Methods\Agreement\TokenizedAgreement;
 
 class TokenizedModule extends BkashModule
 {
-    /** @var $token TokenizedToken */
-    private $token;
     /** @var $bkashAuth BkashAuth */
     protected $bkashAuth;
 
     public function __construct()
     {
         $this->setBkashAuth();
-        $this->token = new TokenizedToken();
+        $this->setToken();
     }
 
     public function setBkashAuth()
@@ -33,7 +31,7 @@ class TokenizedModule extends BkashModule
     {
         return $this->token->setBkashAuth($this->bkashAuth)->get();
     }
-    
+
     /**
      * @param $enum
      * @return TokenizedAgreement|TokenizedPayment
@@ -45,4 +43,8 @@ class TokenizedModule extends BkashModule
     }
 
 
+    protected function setToken()
+    {
+        $this->token = new TokenizedToken();
+    }
 }
