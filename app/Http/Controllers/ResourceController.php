@@ -103,10 +103,10 @@ class ResourceController extends Controller
                 'certificates' => 'required|array'
             ]);
 
-            if ($request->ip() != self::REPTO_IP) {
+            /*if ($request->ip() != self::REPTO_IP) {
                 $message = 'Your IP Is Incorrect';
                 return api_response($request, $message, 500, ['message' => $message]);
-            }
+            }*/
 
             $profile = Profile::where('mobile', $request->mobile)->first();
             $profile->resource->update(['is_trained' => count($request->certificates) > 0 ? 1 : 0]);
