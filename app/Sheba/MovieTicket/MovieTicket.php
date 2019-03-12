@@ -77,7 +77,8 @@ class MovieTicket
         if ($this->response->hasSuccess()) {
             $response = $this->response->getSuccess();
             DB::transaction(function () use ($response, $movie_ticket_request) {
-                $movie_ticket_order = $this->placeMovieTicketOrder($response, $movie_ticket_request->getMobile(), $movie_ticket_request->getAmount());
+                $movie_ticket_order = $this->placeMovieTicketOrder($response, $movie_ticket_request->getName(), $movie_ticket_request->getEmail(),
+                    $movie_ticket_request->getMobile(), $movie_ticket_request->getAmount());
                 $this->agent->getMovieTicketCommission()->setMovieTicketOrder($movie_ticket_order)->disburse();
                 $this->vendor->deductAmount($movie_ticket_request->getAmount());
                 $this->isSuccessful = true;
@@ -115,11 +116,13 @@ class MovieTicket
      * @param $amount
      * @return MovieTicketOrder
      */
-    private function placeMovieTicketOrder(MovieTicketSuccessResponse $response, $mobile_number, $amount)
+    private function placeMovieTicketOrder(MovieTicketSuccessResponse $response, $name, $email, $mobile_number, $amount)
     {
         $movie_ticket_order = new MovieTicketOrder();
         $movie_ticket_order->agent_type = "App\\Models\\" . class_basename($this->agent);
         $movie_ticket_order->agent_id = $this->agent->id;
+        $movie_ticket_order->reserver_name = $name;
+        $movie_ticket_order->reserver_email = $email;
         $movie_ticket_order->reserver_mobile = $mobile_number;
         $movie_ticket_order->amount = $amount;
         $movie_ticket_order->status = 'confirmed';

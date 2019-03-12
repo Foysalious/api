@@ -272,6 +272,9 @@ class ShebaController extends Controller
                     case 'subscription':
                         $payments = $this->getSubscriptionPayments($version_code);
                         break;
+                    case 'voucher':
+                        $payments = $this->getVoucherPayments($version_code);
+                        break;
                     default:
                         throw new \Exception('Invalid Payable Type');
                         break;
@@ -286,6 +289,31 @@ class ShebaController extends Controller
         }
     }
 
+    protected function getVoucherPayments($version_code) {
+        return [
+            array(
+                'name' => 'bKash Payment',
+                'is_published' => 1,
+                'description' => '',
+                'asset' => 'bkash',
+                'method_name' => 'bkash'
+            ),
+            array(
+                'name' => 'City Bank',
+                'is_published' => $version_code ? ($version_code > 30112 ? 1 : 0) : 1,
+                'description' => '',
+                'asset' => 'cbl',
+                'method_name' => 'cbl'
+            ),
+            array(
+                'name' => 'Other Debit/Credit',
+                'is_published' => 1,
+                'description' => '',
+                'asset' => 'ssl',
+                'method_name' => 'online'
+            )
+        ];
+    }
 
     protected function getRegularPayments($version_code) {
         return [

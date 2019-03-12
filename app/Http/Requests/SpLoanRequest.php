@@ -39,7 +39,31 @@ class SpLoanRequest extends ApiRequest
                 'occupation' => 'required|string',
                 'monthly_living_cost' => 'required|numeric',
                 'total_asset_amount' => 'required|numeric',
-                'monthly_loan_installment_amount' => 'required|numeric',
+                'monthly_loan_installment_amount' => 'required|numeric'
+            ];
+        }
+
+        if(HttpRequest::segment(5) == "business-info") {
+            $rules = [
+                'business_type' => 'required|string',
+                'location' => 'required|string',
+                'establishment_year' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
+                'full_time_employee' => 'required|numeric',
+                'part_time_employee' => 'required|numeric',
+                'sales_information' => 'required',
+                'business_additional_information' => 'required'
+            ];
+        }
+
+        if(HttpRequest::segment(5) == "finance-info") {
+            $rules = [
+                'acc_name' => 'required|string',
+                'acc_no' => 'required|integer',
+                'bank_name' => 'required|string',
+                'branch_name' => 'required|string',
+                'acc_type' => 'required|string|in:savings,current,সেভিংস,কারেন্ট',
+                'bkash_no' => 'required|string|mobile:bd',
+                'bkash_account_type' => 'required|string|in:personal,agent,merchant,পার্সোনাল,এজেন্ট,মার্চেন্ট'
             ];
         }
 
