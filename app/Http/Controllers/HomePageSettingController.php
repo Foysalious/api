@@ -27,7 +27,7 @@ class HomePageSettingController extends Controller
                 'lng' => 'numeric'
             ]);
             $setting_key = null;
-            $location = '';
+            $location = 4;
 
             if ($request->has('location')) {
                 $location = (int)$request->location;
@@ -39,13 +39,13 @@ class HomePageSettingController extends Controller
             /**
              * TEMPORARY
              * if ($request->has('portal') && $request->has('screen')) {
-                $setting_key = 'ScreenSetting::' . snake_case(camel_case($request->portal)) . '_' . $request->screen . "_" . $location;
-            } else {
-                $setting_key = 'ScreenSetting::customer_app_home_4';
-            }
-            $settings = $store->get($setting_key);*/
+             * $setting_key = 'ScreenSetting::' . snake_case(camel_case($request->portal)) . '_' . $request->screen . "_" . $location;
+             * } else {
+             * $setting_key = 'ScreenSetting::customer_app_home_4';
+             * }
+             * $settings = $store->get($setting_key);*/
 
-            $city = Location::find($location)->city_id;
+            $city = (Location::find($location))->city_id;
             $location_id = ($city == 1) ? 4 : 120;
             $portal = ($request->get('portal') == 'customer-app') ? 'app' : 'web';
 
@@ -62,6 +62,7 @@ class HomePageSettingController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -99,7 +100,7 @@ class HomePageSettingController extends Controller
             if ($settings) {
                 $settings = json_decode($settings);
                 if ($request->portal == 'customer-portal') $settings = $this->formatWeb($settings, $location);
-                if(empty($settings->sections)) return api_response($request, null, 404);
+                if (empty($settings->sections)) return api_response($request, null, 404);
                 return api_response($request, $settings, 200, ['settings' => $settings]);
             } else {
                 return api_response($request, null, 404);
