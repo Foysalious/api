@@ -92,6 +92,7 @@ class BlockBuster extends Vendor
     function buyTicket($response): MovieResponse
     {
         $blockbuster_response = new BlockBusterResponse();
+        $response->place = 'BLOCKBUSTER Movies, Jamuna Future Park';
         $blockbuster_response->setResponse($response);
         return $blockbuster_response;
     }
