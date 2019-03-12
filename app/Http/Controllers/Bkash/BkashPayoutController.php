@@ -33,6 +33,9 @@ class BkashPayoutController extends Controller
             $sentry->captureException($e);
             return api_response($request, null, 500);
         } catch (\Throwable $e) {
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $e->getMessage()]);
+            $sentry->captureException($e);
             return api_response($request, null, 500, ['message' => $e->getMessage()]);
         }
     }
