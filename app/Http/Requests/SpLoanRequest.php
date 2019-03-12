@@ -82,6 +82,15 @@ class SpLoanRequest extends ApiRequest
             ];
         }
 
+        if (HttpRequest::segment(4) == "loans") {
+            $rules = [
+                'bank_name' => 'required|string',
+                'loan_amount' => 'required|numeric',
+                'duration' => 'required|integer',
+                'monthly_installment' => 'required|numeric',
+                'status' => 'required|string',
+            ];
+        }
 
         return $rules;
     }
