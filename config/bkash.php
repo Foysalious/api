@@ -16,5 +16,12 @@ return [
         'username' => env('BKASH_TOKENIZED_USERNAME'),
         'password' => env('BKASH_TOKENIZED_PASSWORD'),
         'url' => env('BKASH_TOKENIZED_URL')
+    ],
+    'payout' => [
+        'app_key' => env('BKASH_PAYOUT_APP_KEY'),
+        'app_secret' => env('BKASH_PAYOUT_APP_SECRET'),
+        'username' => env('BKASH_PAYOUT_USERNAME'),
+        'password' => env('BKASH_PAYOUT_PASSWORD'),
+        'url' => env('BKASH_PAYOUT_URL')
     ]
 ];
