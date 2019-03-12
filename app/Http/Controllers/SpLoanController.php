@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Http\Requests\SpLoanRequest;
 use App\Models\Profile;
 use App\Models\PartnerBankLoan;
 use Illuminate\Validation\ValidationException;
@@ -93,6 +94,9 @@ class SpLoanController extends Controller
     public function store($partner, Request $request, PartnerBankLoan $loan)
     {
         try {
+            /*$this->validate($request, [
+                'picture' => 'required|mimes:jpeg,png'
+            ]);*/
             $partner = $request->partner;
             $data = [
                 'partner_id' => $partner->id,
@@ -118,10 +122,7 @@ class SpLoanController extends Controller
             $partner = $request->partner;
             $manager_resource = $request->manager_resource;
             $profile = $manager_resource->profile;
-            $basic_informations = $partner->basicInformations;
-            $bank_informations = $partner->bankInformations;
 
-            #dd($partner, $manager_resource, $profile, $basic_informations);
             $info = array(
                 'name' => $profile->name,
                 'mobile' => $profile->mobile,
@@ -152,10 +153,9 @@ class SpLoanController extends Controller
     public function updatePersonalInformation($partner, Request $request)
     {
         try {
-
             $manager_resource = $request->manager_resource;
-
             $profile = $manager_resource->profile;
+
             $profile_data = array(
                 'gender' => $request->gender,
                 'dob' => $request->dob,

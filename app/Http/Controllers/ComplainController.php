@@ -89,7 +89,7 @@ class ComplainController extends Controller
 
     private function getJobStatus($job)
     {
-        if ($job->status === 'Cancelled' || $job->status === 'Closed') {
+        if ($job->status === 'Cancelled' || $job->status === 'Closed'||$job->status==='Served') {
             return 'closed';
         } else {
             return 'open';

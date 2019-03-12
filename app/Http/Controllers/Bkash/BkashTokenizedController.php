@@ -64,7 +64,7 @@ class BkashTokenizedController extends Controller
             $paymentSetting->setMethod('bkash')->save($request->paymentID);
             $key = 'order_' . $request->paymentID;
             $order = Redis::get($key);
-            return $order ? redirect(config('sheba.front_url') . '/bkash?paymentID=' . (json_decode($order))->payment_id) : redirect(config('sheba.front_url') . '/profile/me');
+            return $order ? redirect(config('sheba.front_url') . '/bkash?paymentID=' . (json_decode($order))->gateway_transaction_id) : redirect(config('sheba.front_url') . '/profile/me');
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
