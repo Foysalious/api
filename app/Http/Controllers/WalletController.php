@@ -186,6 +186,7 @@ class WalletController extends Controller
         try{
             $gift_cards = [
                 [
+                    'id' => 1,
                     'type' => 'sheba_credit',
                     'validity' => '1 year',
                     'credit' => 2000,
@@ -194,6 +195,7 @@ class WalletController extends Controller
                     'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/gift_cards/1000.png'
                 ],
                 [
+                    'id' => 2,
                     'type' => 'sheba_credit',
                     'validity' => '1 year',
                     'credit' => 2250,
