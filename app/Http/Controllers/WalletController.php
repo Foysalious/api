@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\GiftCard;
 use App\Models\Customer;
 use App\Models\PartnerOrder;
 use App\Models\Payment;
@@ -184,27 +185,14 @@ class WalletController extends Controller
     public function getGiftCards(Request $request)
     {
         try{
-            $gift_cards = [
-                [
-                    'id' => 1,
-                    'type' => 'sheba_credit',
-                    'validity' => '1 year',
-                    'credit' => 2000,
-                    'price' => 1500,
-                    'valid_time' => '01/03/2019-01/11/2019',
-                    'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/gift_cards/1000.png'
-                ],
-                [
-                    'id' => 2,
-                    'type' => 'sheba_credit',
-                    'validity' => '1 year',
-                    'credit' => 2250,
-                    'price' => 1850,
-                    'valid_time' => '01/06/2019-01/09/2019',
-                    'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/gift_cards/2250.png'
-                ],
-            ];
-
+            $gift_cards = GiftCard::all();
+            foreach ($gift_cards as $gift_card) {
+                $gift_card->credit = (float) $gift_card->credit;
+                $gift_card->price = (float) $gift_card->price;
+                $gift_card->validity = $this->getMonthDiff($gift_card->start_date, $gift_card->end_date);
+                $gift_card->valid_time = Carbon::parse($gift_card->start_date)->format('d/m/Y').'-'.Carbon::parse($gift_card->end_date)->format('d/m/Y');
+                removeRelationsAndFields($gift_card);
+            }
             $instructions  = [
                 [
                     'question' => 'Buy any voucher',
@@ -222,9 +210,16 @@ class WalletController extends Controller
             $data = ['gift_cards' => $gift_cards, 'instructions' => $instructions];
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
+    protected function getMonthDiff($start_date, $end_date){
+        $diffInMonths = Carbon::parse($start_date)->diffInMonths(Carbon::parse($end_date));
+        if($diffInMonths % 12 === 0 )
+            return ($diffInMonths / 12 ) . ' year';
+        return $diffInMonths.' month';
+    }
 }
