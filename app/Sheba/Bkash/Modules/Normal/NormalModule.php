@@ -7,14 +7,14 @@ use Sheba\Bkash\Modules\Normal\Methods\Payout\NormalPayout;
 
 class NormalModule extends BkashModule
 {
-    /** @var $token NormalToken */
-    protected $token;
-    /** @var $bkashAuth BkashAuth */
-    protected $bkashAuth;
-
     public function __construct()
     {
         $this->setBkashAuth();
+        $this->setToken();
+    }
+
+    protected function setToken()
+    {
         $this->token = new NormalToken();
     }
 

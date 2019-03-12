@@ -20,7 +20,7 @@ class B2CPaymentResponse
 
     public function hasSuccess()
     {
-        return isset($this->response->transactionStatus )?$this->response->transactionStatus == 'Completed':false;
+        return isset($this->response->transactionStatus) ? $this->response->transactionStatus == 'Completed' : false;
     }
 
     public function getSuccess()
@@ -39,7 +39,7 @@ class B2CPaymentResponse
     public function getError()
     {
         return array(
-            'code' => $this->response->errorCode,
+            'code' => (int)$this->response->errorCode,
             'message' => $this->response->errorMessage
         );
     }
