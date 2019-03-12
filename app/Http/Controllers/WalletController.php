@@ -181,4 +181,46 @@ class WalletController extends Controller
         }
     }
 
+    public function getVouchers(Request $request)
+    {
+        try{
+            $vouchers = [
+                [
+                    'type' => 'sheba_credit',
+                    'validity' => '1 year',
+                    'price' => 2000,
+                    'discount_price' => 1500,
+                    'valid_time' => '01/03/2019-01/11/2019'
+                ],
+                [
+                    'type' => 'sheba_credit',
+                    'validity' => '1 year',
+                    'price' => 2250,
+                    'discount_price' => 1850,
+                    'valid_time' => '01/06/2019-01/09/2019'
+                ],
+            ];
+
+            $instructions  = [
+                [
+                    'question' => 'Buy any voucher',
+                    'answer' => 'Buy varoius amount of vouchers according to your need.'
+                ],
+                [
+                    'question' => 'Buy any voucher',
+                    'answer' => 'Buy varoius amount of vouchers according to your need.'
+                ],
+                [
+                    'question' => 'Buy any voucher',
+                    'answer' => 'Buy varoius amount of vouchers according to your need.'
+                ],
+            ];
+            $data = ['vouchers' => $vouchers, 'instructions' => $instructions];
+            return api_response($request, $data, 200, ['data' => $data]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
 }
