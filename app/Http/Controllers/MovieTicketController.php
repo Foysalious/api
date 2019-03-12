@@ -171,7 +171,7 @@ class MovieTicketController extends Controller
     {
         try {
             $agent = $this->getAgent($request);
-            $orders =  MovieTicketOrder::where('agent_type',get_class($agent))->where('agent_id',$agent->id)->get();
+            $orders =  MovieTicketOrder::where('agent_type',get_class($agent))->where('agent_id',$agent->id)->orderBy('created_at','desc')->get();
             $histories = array();
             foreach ($orders as $order) {
                 $reservation_details = json_decode($order->reservation_details);
