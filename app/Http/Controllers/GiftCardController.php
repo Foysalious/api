@@ -17,7 +17,7 @@ class GiftCardController extends Controller
     public function getGiftCards(Request $request)
     {
         try{
-            $gift_cards = GiftCard::all();
+            $gift_cards = GiftCard::valid()->get();
             foreach ($gift_cards as $gift_card) {
                 $gift_card->credit = (float) $gift_card->credit;
                 $gift_card->price = (float) $gift_card->price;
@@ -42,7 +42,6 @@ class GiftCardController extends Controller
             $data = ['gift_cards' => $gift_cards, 'instructions' => $instructions];
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -58,6 +57,9 @@ class GiftCardController extends Controller
             $gift_card = GiftCard::find((int) $request->gift_card_id);
             if(!$gift_card)
                 return api_response($request, null, 404, ['message' => 'Gift Card Not found.']);
+
+            if(!$gift_card->isValid())
+                return api_response($request, null, 403, ['message' => 'Gift card is not valid.']);
 
             $gift_card_purchased_order = GiftCardPurchase::create(
                 $this->withCreateModificationField(
