@@ -264,6 +264,7 @@ class ShebaController extends Controller
     {
         try {
             $version_code = (int)$request->header('Version-Code');
+            $platform_name = $request->header('Platform-Name');
             $payments = array(
                 array(
                     'name' => 'Sheba Credit',
@@ -281,7 +282,7 @@ class ShebaController extends Controller
                 ),
                 array(
                     'name' => 'City Bank',
-                    'is_published' => $version_code ? ($version_code > 30112 ? 1 : 0) : 1,
+                    'is_published' => $this->calculateCityBankStatus($version_code, $platform_name),
                     'description' => '',
                     'asset' => 'cbl',
                     'method_name' => 'cbl'
@@ -332,6 +333,16 @@ class ShebaController extends Controller
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
+        }
+    }
+
+
+    private function calculateCityBankStatus($version_code, $platform_name)
+    {
+        if ($version_code) {
+            return $platform_name && $platform_name == 'ios' ? 1 : ($version_code > 30112 ? 1 : 0);
+        } else {
+            return 1;
         }
     }
 }
