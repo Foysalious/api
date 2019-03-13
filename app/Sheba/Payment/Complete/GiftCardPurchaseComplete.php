@@ -20,7 +20,7 @@ class GiftCardPurchaseComplete extends PaymentComplete
                 $gift_card_purchase->status = 'successful';
                 $gift_card_purchase->update();
                 $this->payment->payable->user->rechargeWallet($payable_model->credit, [
-                    'amount' => $payable_model->getPayableModel()->credit, 'transaction_details' => $this->payment->transaction_details,
+                    'amount' => $payable_model->credit, 'transaction_details' => $this->payment->transaction_details,
                     'type' => 'Credit', 'log' => 'Credit Purchase'
                 ]);
                 $this->paymentRepository->changeStatus(['to' => 'completed', 'from' => $this->payment->status,
