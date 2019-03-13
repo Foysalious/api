@@ -268,7 +268,7 @@ class ShebaController extends Controller
             if ($request->payable_type) {
                 switch ($request->payable_type) {
                     case 'order':
-                        $payments = $this->getRegularPayments($version_code);
+                        $payments = $this->getRegularPayments($version_code, $platform_name);
                         break;
                     case 'subscription':
                         $payments = $this->getSubscriptionPayments($version_code);
