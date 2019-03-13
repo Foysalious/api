@@ -41,6 +41,7 @@ class SpLoanRequest extends ApiRequest
                 'total_asset_amount' => 'required|numeric',
                 'monthly_loan_installment_amount' => 'required|numeric'
             ];
+            return $rules;
         }
 
         if (HttpRequest::segment(5) == "business-info") {
@@ -53,6 +54,7 @@ class SpLoanRequest extends ApiRequest
                 'sales_information' => 'required',
                 'business_additional_information' => 'required'
             ];
+            return $rules;
         }
 
         if (HttpRequest::segment(5) == "finance-info") {
@@ -65,6 +67,7 @@ class SpLoanRequest extends ApiRequest
                 'bkash_no' => 'required|string|mobile:bd',
                 'bkash_account_type' => 'required|string|in:personal,agent,merchant,পার্সোনাল,এজেন্ট,মার্চেন্ট'
             ];
+            return $rules;
         }
         if (HttpRequest::segment(5) == "nominee-info") {
             $rules = [
@@ -72,6 +75,7 @@ class SpLoanRequest extends ApiRequest
                 'mobile' => 'required|string|mobile:bd',
                 'nominee_relation' => 'required|string'
             ];
+            return $rules;
         }
 
         if (HttpRequest::segment(5) == "grantor-info") {
@@ -80,6 +84,7 @@ class SpLoanRequest extends ApiRequest
                 'mobile' => 'required|string|mobile:bd',
                 'nominee_relation' => 'required|string'
             ];
+            return $rules;
         }
 
         if (HttpRequest::segment(4) == "loans") {
@@ -90,9 +95,9 @@ class SpLoanRequest extends ApiRequest
                 'monthly_installment' => 'required|numeric',
                 'status' => 'required|string',
             ];
+            return $rules;
         }
-
-        return $rules;
+        return;
     }
 
     public function messages()
