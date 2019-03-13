@@ -24,7 +24,7 @@ class Route
                 $api->post('purchase', 'WalletController@purchase');
                 $api->post('validate', 'WalletController@validatePayment');
                 $api->get('faqs', 'WalletController@getFaqs');
-                $api->get('gift-cards', 'WalletController@getGiftCards');
+                $api->get('gift-cards', 'GiftCardController@getGiftCards');
             });
             $api->group(['prefix' => 'faqs'], function ($api) {
                 $api->get('order', 'JobController@getFaqs');

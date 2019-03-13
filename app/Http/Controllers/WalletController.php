@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\GiftCard;
 use App\Models\Customer;
+use App\Models\GiftCard;
+use App\Models\GiftCardPurchase;
 use App\Models\PartnerOrder;
 use App\Models\Payment;
 use App\Repositories\PaymentRepository;
@@ -12,6 +13,8 @@ use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\ModificationFields;
+use Sheba\Payment\Adapters\Payable\GiftCardPurchaseAdapter;
 use Sheba\Payment\Adapters\Payable\RechargeAdapter;
 use Sheba\Payment\ShebaPayment;
 use DB;
@@ -19,6 +22,7 @@ use Sheba\Reward\BonusCredit;
 
 class WalletController extends Controller
 {
+    use ModificationFields;
     public function validatePayment(Request $request)
     {
         try {
@@ -180,46 +184,5 @@ class WalletController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-    }
-
-    public function getGiftCards(Request $request)
-    {
-        try{
-            $gift_cards = GiftCard::all();
-            foreach ($gift_cards as $gift_card) {
-                $gift_card->credit = (float) $gift_card->credit;
-                $gift_card->price = (float) $gift_card->price;
-                $gift_card->validity = $this->getMonthDiff($gift_card->start_date, $gift_card->end_date);
-                $gift_card->valid_time = Carbon::parse($gift_card->start_date)->format('d/m/Y').'-'.Carbon::parse($gift_card->end_date)->format('d/m/Y');
-                removeRelationsAndFields($gift_card);
-            }
-            $instructions  = [
-                [
-                    'question' => 'Buy any voucher',
-                    'answer' => 'Buy varoius amount of vouchers according to your need.'
-                ],
-                [
-                    'question' => 'Buy any voucher',
-                    'answer' => 'Buy varoius amount of vouchers according to your need.'
-                ],
-                [
-                    'question' => 'Buy any voucher',
-                    'answer' => 'Buy varoius amount of vouchers according to your need.'
-                ],
-            ];
-            $data = ['gift_cards' => $gift_cards, 'instructions' => $instructions];
-            return api_response($request, $data, 200, ['data' => $data]);
-        } catch (\Throwable $e) {
-            dd($e);
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
-    protected function getMonthDiff($start_date, $end_date){
-        $diffInMonths = Carbon::parse($start_date)->diffInMonths(Carbon::parse($end_date));
-        if($diffInMonths % 12 === 0 )
-            return ($diffInMonths / 12 ) . ' year';
-        return $diffInMonths.' month';
     }
 }

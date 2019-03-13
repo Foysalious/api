@@ -9,9 +9,6 @@ use Sheba\Bkash\Modules\Tokenized\Methods\Agreement\TokenizedAgreement;
 
 class TokenizedModule extends BkashModule
 {
-    /** @var $bkashAuth BkashAuth */
-    protected $bkashAuth;
-
     public function __construct()
     {
         $this->setBkashAuth();

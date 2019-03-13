@@ -20,6 +20,8 @@ class Payable extends Model
             return 'recharge';
         } else if ($this->type == 'subscription_order') {
             return 'subscription_order';
+        } else if ($this->type == 'gift_card_purchase') {
+            return 'gift_card_purchase';
         }
     }
 
@@ -32,6 +34,8 @@ class Payable extends Model
             $class_name .= 'RechargeComplete';
         } else if ($this->completion_type == 'order') {
             $class_name .= 'OrderComplete';
+        } else if ($this->completion_type == 'gift_card_purchase') {
+            $class_name .= 'GiftCardPurchaseComplete';
         }
         return new $class_name();
     }
@@ -48,6 +52,8 @@ class Payable extends Model
             $model .= 'PartnerOrder';
         } elseif ($this->type == 'subscription_order') {
             $model .= 'SubscriptionOrder';
+        } elseif( $this->type == 'gift_card_purchase') {
+            $model .= 'GiftCardPurchase';
         }
         return $model;
 

@@ -7,6 +7,7 @@ class CustomerRoute
         $api->group(['prefix' => 'customers'], function ($api) {
             $api->group(['prefix' => '{customer}', 'middleware' => ['customer.auth']], function ($api) {
                 $api->get('checkout-info', 'CustomerController@getDeliveryInfo');
+                $api->post('purchase-gift-card', 'GiftCardController@purchaseGiftCard');
                 $api->group(['prefix' => 'settings'], function ($api) {
                     $api->get('/', 'Settings\SettingsController@getCustomerSettings');
                     $api->get('review', 'Settings\SettingsController@getCustomerReviewSettings');
