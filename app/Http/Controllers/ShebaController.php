@@ -264,10 +264,11 @@ class ShebaController extends Controller
     {
         try {
             $version_code = (int)$request->header('Version-Code');
-            if($request->payable_type) {
+            $platform_name = $request->header('Platform-Name');
+            if ($request->payable_type) {
                 switch ($request->payable_type) {
                     case 'order':
-                        $payments = $this->getRegularPayments($version_code);
+                        $payments = $this->getRegularPayments($version_code, $platform_name);
                         break;
                     case 'subscription':
                         $payments = $this->getSubscriptionPayments($version_code);
@@ -279,8 +280,8 @@ class ShebaController extends Controller
                         throw new \Exception('Invalid Payable Type');
                         break;
                 }
-            } else{
-                $payments = $this->getRegularPayments($version_code);
+            } else {
+                $payments = $this->getRegularPayments($version_code, $platform_name);
             }
             return api_response($request, $payments, 200, ['payments' => $payments]);
         } catch (\Throwable $e) {
@@ -289,7 +290,8 @@ class ShebaController extends Controller
         }
     }
 
-    protected function getVoucherPayments($version_code) {
+    protected function getVoucherPayments($version_code)
+    {
         return [
             array(
                 'name' => 'bKash Payment',
@@ -315,7 +317,8 @@ class ShebaController extends Controller
         ];
     }
 
-    protected function getRegularPayments($version_code) {
+    protected function getRegularPayments($version_code, $platform_name)
+    {
         return [
             array(
                 'name' => 'Sheba Credit',
@@ -333,7 +336,7 @@ class ShebaController extends Controller
             ),
             array(
                 'name' => 'City Bank',
-                'is_published' => $version_code ? ($version_code > 30112 ? 1 : 0) : 1,
+                'is_published' => $this->calculateCityBankStatus($version_code, $platform_name),
                 'description' => '',
                 'asset' => 'cbl',
                 'method_name' => 'cbl'
@@ -380,5 +383,14 @@ class ShebaController extends Controller
                 'method_name' => 'online'
             )
         ];
+    }
+
+    private function calculateCityBankStatus($version_code, $platform_name)
+    {
+        if ($version_code) {
+            return $platform_name && $platform_name == 'ios' ? 1 : ($version_code > 30112 ? 1 : 0);
+        } else {
+            return 1;
+        }
     }
 }
