@@ -52,6 +52,8 @@ class Payable extends Model
             $model .= 'PartnerOrder';
         } elseif ($this->type == 'subscription_order') {
             $model .= 'SubscriptionOrder';
+        } elseif( $this->type == 'gift_card_purchase') {
+            $model .= 'GiftCardPurchase';
         }
         return $model;
 
