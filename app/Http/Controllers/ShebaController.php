@@ -264,11 +264,11 @@ class ShebaController extends Controller
     {
         try {
             $version_code = (int)$request->header('Version-Code');
-            $platform_name = (int)$request->header('Platform-Name');
+            $platform_name = $request->header('Platform-Name');
             if ($request->payable_type) {
                 switch ($request->payable_type) {
                     case 'order':
-                        $payments = $this->getRegularPayments($version_code);
+                        $payments = $this->getRegularPayments($version_code, $platform_name);
                         break;
                     case 'subscription':
                         $payments = $this->getSubscriptionPayments($version_code);
