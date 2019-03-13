@@ -13,13 +13,14 @@ class GiftCardPurchaseComplete extends PaymentComplete
     {
         try {
             $this->paymentRepository->setPayment($this->payment);
-
-            DB::transaction(function () {
+            $model = $this->payment->payable->getPayableModel();
+            $payable_model = $model::find((int)$this->payment->payable->type_id);
+            DB::transaction(function () use ($payable_model) {
                 $gift_card_purchase = GiftCardPurchase::find($this->payment->payable->type_id);
                 $gift_card_purchase->status = 'successful';
                 $gift_card_purchase->update();
-                $this->payment->payable->user->rechargeWallet($this->payment->payable->getPayableModel()->credit, [
-                    'amount' => $this->payment->payable->getPayableModel()->credit, 'transaction_details' => $this->payment->transaction_details,
+                $this->payment->payable->user->rechargeWallet($payable_model->credit, [
+                    'amount' => $payable_model->credit, 'transaction_details' => $this->payment->transaction_details,
                     'type' => 'Credit', 'log' => 'Credit Purchase'
                 ]);
                 $this->paymentRepository->changeStatus(['to' => 'completed', 'from' => $this->payment->status,
