@@ -77,7 +77,6 @@ class GiftCardController extends Controller
             $payment = (new ShebaPayment($request->payment_method))->init($payable);
             return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
