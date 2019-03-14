@@ -38,8 +38,10 @@ class PartnerRoute
                 $api->post('/finance-info', 'SpLoanController@updateFinanceInformation');
 
                 $api->get('/nominee-info', 'SpLoanController@getNomineeInformation');
-                $api->post('/nominee-info', 'SpLoanController@updateNomineeInformation');
-                $api->post('/grantor-info', 'SpLoanController@updateGrantorInformation');
+                #$api->post('/nominee-info', 'SpLoanController@updateNomineeInformation');
+                #$api->post('/grantor-info', 'SpLoanController@updateGrantorInformation');
+
+                $api->post('/nominee-grantor-info', 'SpLoanController@updateNomineeGrantorInformation');
 
                 $api->get('/documents', 'SpLoanController@getDocuments');
                 $api->post('/documents', 'SpLoanController@updateDocuments');

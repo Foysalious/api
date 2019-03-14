@@ -331,12 +331,11 @@ class SpLoanController extends Controller
         }
     }
 
-    public function updateNomineeInformation($partner, SpLoanRequest $request)
+    /*public function updateNomineeInformation($partner, SpLoanRequest $request)
     {
         try {
             $manager_resource = $request->manager_resource;
             $manager_resource_profile = $manager_resource->profile;
-            #dd($manager_resource_profile);
 
             $profile = Profile::where('mobile', formatMobile($request->mobile))->first();
             if ($profile) {
@@ -359,9 +358,58 @@ class SpLoanController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }*/
+
+    public function updateNomineeGrantorInformation($partner, SpLoanRequest $request)
+    {
+        try {
+            $manager_resource = $request->manager_resource;
+            $manager_resource_profile = $manager_resource->profile;
+
+            $nominee_profile = Profile::where('mobile', formatMobile($request->nominee_mobile))->first();
+
+            if ($nominee_profile) {
+                $data = [
+                    'nominee_id' => $nominee_profile->id,
+                    'nominee_relation' => $request->nominee_relation
+                ];
+                $manager_resource_profile->update($this->withBothModificationFields($data));
+            } else {
+                $nominee_profile = $this->createNomineeProfile($request);
+
+                $data = [
+                    'nominee_id' => $nominee_profile->id,
+                    'nominee_relation' => $request->nominee_relation
+                ];
+
+                $manager_resource_profile->update($this->withBothModificationFields($data));
+            }
+
+            $grantor_profile = Profile::where('mobile', formatMobile($request->grantor_mobile))->first();
+            if ($grantor_profile) {
+                $data = [
+                    'grantor_id' => $grantor_profile->id,
+                    'grantor_relation' => $request->grantor_relation
+                ];
+
+                $manager_resource_profile->update($this->withBothModificationFields($data));
+            } else {
+                $grantor_profile = $this->createGrantorProfile($request);
+                $data = [
+                    'grantor_id' => $grantor_profile->id,
+                    'grantor_relation' => $request->grantor_relation
+                ];
+                $manager_resource_profile->update($this->withBothModificationFields($data));
+            }
+
+            return api_response($request, 1, 200);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 
-    public function updateGrantorInformation($partner, SpLoanRequest $request)
+    /*public function updateGrantorInformation($partner, SpLoanRequest $request)
     {
         try {
             $manager_resource = $request->manager_resource;
@@ -389,14 +437,25 @@ class SpLoanController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-    }
+    }*/
 
-    private function createProfile(Request $request)
+    private function createNomineeProfile(Request $request)
     {
         $profile = new Profile();
         $profile->remember_token = str_random(255);
-        $profile->name = $request->name;
-        $profile->mobile = formatMobile($request->mobile);
+        $profile->name = $request->nominee_name;
+        $profile->mobile = formatMobile($request->nominee_mobile);
+        $this->withCreateModificationField($profile);
+        $profile->save();
+        return $profile;
+    }
+
+    private function createGrantorProfile(Request $request)
+    {
+        $profile = new Profile();
+        $profile->remember_token = str_random(255);
+        $profile->name = $request->grantor_name;
+        $profile->mobile = formatMobile($request->grantor_mobile);
         $this->withCreateModificationField($profile);
         $profile->save();
         return $profile;
