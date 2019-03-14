@@ -194,17 +194,17 @@ class SpLoanController extends Controller
                 'full_time_employee' => $partner->full_time_employee,
                 'part_time_employee' => $partner->part_time_employee,
                 'business_additional_information' => [
-                    'product_price' => $business_additional_information->product_price,
-                    'employee_salary' => $business_additional_information->employee_salary,
-                    'office_rent' => $business_additional_information->office_rent,
-                    'utility_bills' => $business_additional_information->utility_bills,
-                    'marketing_cost' => $business_additional_information->marketing_cost,
-                    'other_costs' => $business_additional_information->other_costs
+                    'product_price' => $business_additional_information ? $business_additional_information->product_price : null,
+                    'employee_salary' => $business_additional_information ? $business_additional_information->employee_salary : null,
+                    'office_rent' => $business_additional_information ? $business_additional_information->office_rent : null,
+                    'utility_bills' => $business_additional_information ? $business_additional_information->utility_bills : null,
+                    'marketing_cost' => $business_additional_information ? $business_additional_information->marketing_cost : null,
+                    'other_costs' => $business_additional_information ? $business_additional_information->other_costs : null
                 ],
                 'last_six_month_sales_information' => [
-                    'avg_sell' => $sales_information->last_six_month_avg_sell,
-                    'min_sell' => $sales_information->last_six_month_min_sell,
-                    'max_sell' => $sales_information->last_six_month_max_sell
+                    'avg_sell' => $sales_information ? $sales_information->last_six_month_avg_sell : null,
+                    'min_sell' => $sales_information ? $sales_information->last_six_month_min_sell : null,
+                    'max_sell' => $sales_information ? $sales_information->last_six_month_max_sell : null,
                 ]
             );
             return api_response($request, $info, 200, ['info' => $info]);
