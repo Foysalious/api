@@ -513,12 +513,12 @@ class SpLoanController extends Controller
 
             $info = array(
                 'picture' => $profile->pro_pic,
-                'nid_front_image' => $profile->nid_front_image,
-                'nid_back_image' => $profile->nid_back_image,
+                'nid_image_front' => $profile->nid_image_front,
+                'nid_image_back' => $profile->nid_image_back,
                 'nominee_document' => [
                     'picture' => !empty($nominee_profile) ? $nominee_profile->pro_pic : null,
-                    'nid_front_image' => !empty($nominee_profile) ? $nominee_profile->nid_front_image : null,
-                    'nid_back_image' => !empty($nominee_profile) ? $nominee_profile->nid_back_image : null,
+                    'nid_front_image' => !empty($nominee_profile) ? $nominee_profile->nid_image_front : null,
+                    'nid_back_image' => !empty($nominee_profile) ? $nominee_profile->nid_image_back : null,
                 ],
                 'business_document' => [
                     'tin_certificate' => $profile->tin_certificate,
