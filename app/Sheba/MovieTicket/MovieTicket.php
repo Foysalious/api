@@ -28,6 +28,9 @@ class MovieTicket
     /** @var MovieTicketValidator */
     private $validator;
 
+    /** @var MovieTicketOrder $movieTicketOrder */
+    private $movieTicketOrder;
+
     public function __construct(MovieTicketValidator $validator)
     {
         $this->validator = $validator;
@@ -42,6 +45,14 @@ class MovieTicket
         $this->agent = $agent;
         $this->validator->setAgent($agent);
         return $this;
+    }
+
+    /**
+     * @return MovieTicketOrder
+     */
+    public function getMovieTicketOrder()
+    {
+        return $this->movieTicketOrder;
     }
 
     /**
@@ -66,10 +77,12 @@ class MovieTicket
         if ($this->response->hasSuccess()) {
             $response = $this->response->getSuccess();
             DB::transaction(function () use ($response, $movie_ticket_request) {
-                $movie_ticket_order = $this->placeMovieTicketOrder($response, $movie_ticket_request->getMobile(), $movie_ticket_request->getAmount());
+                $movie_ticket_order = $this->placeMovieTicketOrder($response, $movie_ticket_request->getName(), $movie_ticket_request->getEmail(),
+                    $movie_ticket_request->getMobile(), $movie_ticket_request->getAmount());
                 $this->agent->getMovieTicketCommission()->setMovieTicketOrder($movie_ticket_order)->disburse();
                 $this->vendor->deductAmount($movie_ticket_request->getAmount());
                 $this->isSuccessful = true;
+                $this->movieTicketOrder = $movie_ticket_order;
             });
         }
     }
@@ -103,11 +116,13 @@ class MovieTicket
      * @param $amount
      * @return MovieTicketOrder
      */
-    private function placeMovieTicketOrder(MovieTicketSuccessResponse $response, $mobile_number, $amount)
+    private function placeMovieTicketOrder(MovieTicketSuccessResponse $response, $name, $email, $mobile_number, $amount)
     {
         $movie_ticket_order = new MovieTicketOrder();
         $movie_ticket_order->agent_type = "App\\Models\\" . class_basename($this->agent);
         $movie_ticket_order->agent_id = $this->agent->id;
+        $movie_ticket_order->reserver_name = $name;
+        $movie_ticket_order->reserver_email = $email;
         $movie_ticket_order->reserver_mobile = $mobile_number;
         $movie_ticket_order->amount = $amount;
         $movie_ticket_order->status = 'confirmed';
@@ -118,7 +133,7 @@ class MovieTicket
 
         $this->setModifier($this->agent);
         $this->withCreateModificationField($movie_ticket_order);
-        $movie_ticket_order->save();
+        $movie_ticket_order->save();    
 
         $movie_ticket_order->agent = $this->agent;
         $movie_ticket_order->vendor = $this->model;

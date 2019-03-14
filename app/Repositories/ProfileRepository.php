@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Repositories;
+<?php namespace App\Repositories;
 
 use App\Http\Validators\MobileNumberValidator;
 use App\Models\Affiliate;
@@ -202,7 +200,6 @@ class ProfileRepository
 
     public function registerMobile($info)
     {
-
         $data = [
             'mobile' => $info['mobile'],
             'mobile_verified' => 1,
@@ -323,5 +320,4 @@ class ProfileRepository
     {
         return constants('AVATAR')[$from];
     }
-
 }

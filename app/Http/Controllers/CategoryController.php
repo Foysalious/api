@@ -295,10 +295,10 @@ class CategoryController extends Controller
                     $category = collect($category)->only(['name', 'slug', 'banner', 'parent_id', 'app_banner']);
                     $version_code = (int)$request->header('Version-Code');
                     $services = $this->serviceQuestionSet($services);
-                    if ($version_code <= 30122) {
+                    if ($version_code && $version_code <= 30122 && $version_code <= 107) {
                         $services = $services->reject(function ($service) use ($version_code) {
                             return $service->subscription;
-                        });
+                        })->values()->all();
                     }
                     $category['services'] = $services;
                     $category['subscriptions'] = $subscriptions;

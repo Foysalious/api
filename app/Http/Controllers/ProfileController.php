@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Repositories\FileRepository;
 use App\Repositories\ProfileRepository;
@@ -14,10 +12,10 @@ class ProfileController extends Controller
     private $profileRepo;
     private $fileRepo;
 
-    public function __construct()
+    public function __construct(ProfileRepository $profile_repository, FileRepository $file_repository)
     {
-        $this->profileRepo = new ProfileRepository();
-        $this->fileRepo = new FileRepository();
+        $this->profileRepo = $profile_repository;
+        $this->fileRepo = $file_repository;
     }
 
     public function changePicture(Request $request)
@@ -48,5 +46,26 @@ class ProfileController extends Controller
             'photo' => 'required|mimes:jpeg,png'
         ]);
         return $validator->fails() ? $validator->errors()->all()[0] : false;
+    }
+
+    public function getProfile(Request $request)
+    {
+        if ($request->has('mobile') && $request->has('name')) {
+            $mobile = formatMobile($request->mobile);
+            $profile = $this->profileRepo->getIfExist($mobile, 'mobile');
+
+            if (!$profile) {
+                $data = ['name' => $request->name, 'mobile' => $mobile];
+                $profile = $this->profileRepo->store($data);
+            }
+            $profile=$profile->toArray();
+            unset($profile['password']);
+            return api_response($request, $profile, 200, ['info' => $profile]);
+        } elseif ($request->has('profile_id')) {
+            $profile = $this->profileRepo->getIfExist($request->profile_id, 'id');
+            $profile=$profile->toArray();
+            unset($profile['password']);
+            return api_response($request, $profile, 200, ['info' => $profile]);
+        }
     }
 }

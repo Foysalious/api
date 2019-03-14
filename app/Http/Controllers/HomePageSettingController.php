@@ -27,7 +27,7 @@ class HomePageSettingController extends Controller
                 'lng' => 'numeric'
             ]);
             $setting_key = null;
-            $location = 4;
+            $location = '';
 
             if ($request->has('location')) {
                 $location = (int)$request->location;
@@ -39,13 +39,13 @@ class HomePageSettingController extends Controller
             /**
              * TEMPORARY
              * if ($request->has('portal') && $request->has('screen')) {
-             * $setting_key = 'ScreenSetting::' . snake_case(camel_case($request->portal)) . '_' . $request->screen . "_" . $location;
-             * } else {
-             * $setting_key = 'ScreenSetting::customer_app_home_4';
-             * }
-             * $settings = $store->get($setting_key);*/
+                $setting_key = 'ScreenSetting::' . snake_case(camel_case($request->portal)) . '_' . $request->screen . "_" . $location;
+            } else {
+                $setting_key = 'ScreenSetting::customer_app_home_4';
+            }
+            $settings = $store->get($setting_key);*/
 
-            $city = (Location::find($location))->city_id;
+            $city = Location::find($location)->city_id;
             $location_id = ($city == 1) ? 4 : 120;
             $portal = ($request->get('portal') == 'customer-app') ? 'app' : 'web';
 
@@ -62,7 +62,6 @@ class HomePageSettingController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -99,8 +98,8 @@ class HomePageSettingController extends Controller
             $settings = $store->get($setting_key);
             if ($settings) {
                 $settings = json_decode($settings);
-                if ($request->portal == 'customer-portal') $settings = $this->formatWeb($settings, $location);
-                if (empty($settings->sections)) return api_response($request, null, 404);
+//                if ($request->portal == 'customer-portal') $settings = $this->formatWeb($settings->sections, $location);
+                if(empty($settings->sections)) return api_response($request, null, 404);
                 return api_response($request, $settings, 200, ['settings' => $settings]);
             } else {
                 return api_response($request, null, 404);
@@ -141,12 +140,12 @@ class HomePageSettingController extends Controller
         }
     }
 
-    public function formatWeb(array $settings, $location)
+    public function formatWeb($settings, $location)
     {
         $customer_category_orders = [1, 3, 73, 101, 183, 184, 226, 186, 221, 224, 185, 225, 226, 235, 236, 333];
         $settings = collect($settings);
-        $slider = $settings->where('item_type', 'Slider')->first();
-        $category_groups = $settings->where('item_type', 'CategoryGroup')->sortBy('order');
+        $slider = $settings->where('item_type', 'slider')->first();
+        $category_groups = $settings->where('item_type', 'categorygroup')->sortBy('order');
         $categories = Category::published()->where('parent_id', null)->with(['children' => function ($q) use ($location) {
             $q->select('id', 'parent_id', 'name', 'slug', 'icon_png');
             if ($location) {
@@ -171,7 +170,6 @@ class HomePageSettingController extends Controller
         })->sortBy(function ($category) use ($customer_category_orders) {
             return array_search($category->getKey(), $customer_category_orders);
         })->values()->all();
-
         return ['slider' => $slider->data, 'categories' => $categories, 'category_groups' => $category_groups->values()->all()];
     }
 }

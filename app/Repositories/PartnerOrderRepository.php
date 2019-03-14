@@ -322,6 +322,8 @@ class PartnerOrderRepository
         $partner_order['order_status'] = $job->status;
         $partner_order['isRentCar'] = $job->isRentCar();
         $partner_order['is_on_premise'] = $job->site == 'partner' ? 1 : 0;
+        $partner_order['is_subscription_order'] = $partner_order->order->subscription_order_id ? 1 : 0;
+
         return $partner_order;
     }
 

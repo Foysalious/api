@@ -11,7 +11,7 @@ class BlockBusterResponse extends MovieResponse
 
     public function hasSuccess(): bool
     {
-        return $this->response->status_code == 0000;
+        return $this->response->status == "Seat-CONFIRM-Successfully";
     }
 
     public function getSuccess(): MovieTicketSuccessResponse

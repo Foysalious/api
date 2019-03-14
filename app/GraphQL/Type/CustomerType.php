@@ -128,7 +128,7 @@ class CustomerType extends GraphQlType
             list($offset, $limit) = calculatePagination(\request());
         }
         $root->load(['orders' => function ($q) use ($filter, $offset, $limit) {
-            $q->select('id', 'customer_id', 'location_id', 'sales_channel', 'delivery_name', 'delivery_mobile', 'delivery_address', 'created_at')->orderBy('id', 'desc')->skip($offset)->take($limit)
+            $q->select('id', 'customer_id', 'location_id', 'subscription_order_id', 'sales_channel', 'delivery_name', 'delivery_mobile', 'delivery_address', 'created_at')->orderBy('id', 'desc')->skip($offset)->take($limit)
                 ->with(['location', 'customer.profile', 'partnerOrders' => function ($q) use ($filter, $offset, $limit) {
                     if ($filter) {
                         $q->$filter();
