@@ -9,6 +9,20 @@
     "data": [
       {
         "id": 122,
+        "name": "LPG GAS",
+        "banner": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/offers_images\/banners\/lpg-app-banner.png",
+        "is_flash": 0,
+        "valid_till": "2019-03-31 23:59:59",
+        "target_type": "Category",
+        "target_id": "331",
+        "target_link": null,
+        "is_parent": false,
+        "link": null,
+        "updated_at": "2019-02-15 00:36:42",
+        "updated_at_timestamp": 1550169402
+      },
+      {
+        "id": 122,
         "name": "TK.200 Off on AC Repair",
         "banner": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/offers_images\/banners\/ac-200-off-new.png",
         "is_flash": 0,
