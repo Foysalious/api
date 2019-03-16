@@ -325,9 +325,12 @@ class PartnerList
                 $q->select('profiles.id', 'mobile');
             }]);
         }, 'reviews' => function ($q) {
-            $q->selectRaw("avg(rating) as avg_rating")
-                ->selectRaw("count(reviews.id) as total_ratings")
-                ->selectRaw("count(case when rating=5 then reviews.id end) as total_five_star_ratings")
+            $q->selectRaw("count(DISTINCT(reviews.id)) as total_ratings")
+                ->selectRaw("count(DISTINCT(case when rating=5 then reviews.id end)) as total_five_star_ratings")
+                ->selectRaw("count(DISTINCT(case when rating=4 then reviews.id end)) as total_four_star_ratings")
+                ->selectRaw("count(DISTINCT(case when rating=3 then reviews.id end)) as total_three_star_ratings")
+                ->selectRaw("count(DISTINCT(case when rating=2 then reviews.id end)) as total_two_star_ratings")
+                ->selectRaw("count(DISTINCT(case when rating=1 then reviews.id end)) as total_one_star_ratings")
                 ->selectRaw("count(review_question_answer.id) as total_compliments")
                 ->selectRaw("reviews.partner_id")
                 ->leftJoin('review_question_answer', function ($q) {
@@ -350,11 +353,22 @@ class PartnerList
             $partner['badge'] = $partner->resolveBadge();
             $partner['subscription_type'] = $partner->resolveSubscriptionType();
             $partner['total_working_days'] = $partner->workingHours ? $partner->workingHours->count() : 0;
-            $partner['rating'] = $partner->reviews->first() ? (double)$partner->reviews->first()->avg_rating : 0;
+            $partner['rating'] = $this->calculateAvgRating($partner);
             $partner['total_ratings'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_ratings : 0;
             $partner['total_five_star_ratings'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_five_star_ratings : 0;
             $partner['total_compliments'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_compliments : 0;
             $partner['total_experts'] = $partner->handymanResources->first() ? (int)$partner->handymanResources->first()->total_experts : 0;
+        }
+    }
+
+    private function calculateAvgRating(Partner $partner)
+    {
+        $reviews = $partner->reviews->first();
+        if ($reviews) {
+            return ($reviews->total_five_star_ratings * 5 + $reviews->total_four_star_ratings * 4 + $reviews->total_three_star_ratings * 3 +
+                    $reviews->total_two_star_ratings * 2 + $reviews->total_one_star_ratings * 1) / $reviews->total_ratings;
+        } else {
+            return 0;
         }
     }
 
