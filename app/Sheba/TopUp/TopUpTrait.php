@@ -1,5 +1,6 @@
 <?php namespace Sheba\TopUp;
 
+use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use Sheba\TopUp\Vendor\VendorFactory;
 
@@ -51,5 +52,10 @@ trait TopUpTrait
     public function ambassadorCommission($topup_vendor)
     {
         return (double)$topup_vendor->commissions()->where('type', get_class($this))->first()->ambassador_commission;
+    }
+
+    public function topUpOrders()
+    {
+        return $this->morphMany(TopUpOrder::class, 'agent');
     }
 }

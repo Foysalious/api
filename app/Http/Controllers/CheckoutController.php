@@ -18,7 +18,7 @@ use Session;
 use Cache;
 use DB;
 use Mail;
-use Redis;
+use Illuminate\Support\Facades\Redis;
 use Sheba\Voucher\Creator\GiftedReferral;
 use Sheba\Voucher\PromotionList;
 #use Sheba\Voucher\ReferralCreator;

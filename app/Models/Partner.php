@@ -158,6 +158,11 @@ class Partner extends Model implements Rewardable, TopUpAgent
         return $this->hasMany(PartnerLeave::class);
     }
 
+    public function loan()
+    {
+        return $this->hasOne(PartnerBankLoan::class);
+    }
+
     public function runningLeave($date = null)
     {
         $date = ($date) ? (($date instanceof Carbon) ? $date : new Carbon($date)) : Carbon::now();
@@ -360,6 +365,11 @@ class Partner extends Model implements Rewardable, TopUpAgent
         return $this->belongsTo(PartnerSubscriptionPackageDiscount::class, 'discount_id');
     }
 
+    public function subscriptionOrders()
+    {
+        return $this->hasMany(SubscriptionOrder::class);
+    }
+
     public function subscribe($package, $billing_type)
     {
         $package = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->partner->subscription;
@@ -537,9 +547,18 @@ class Partner extends Model implements Rewardable, TopUpAgent
         return (new BadgeResolver())->setPartner($this)->resolveVersionWiseBadge()->getSubscriptionType();
     }
 
-
     public function getTopFiveResources()
     {
         return $this->resources()->reviews()->groupBy('resource_id')->orderBy('avg(reviews.rating)')->select('id, avg(reviews.rating)')->get();
+    }
+
+    public function businessAdditionalInformation()
+    {
+        return json_decode($this->business_additional_information);
+    }
+
+    public function salesInformation()
+    {
+        return json_decode($this->sales_information);
     }
 }

@@ -3,7 +3,6 @@
 use App\Models\PartnerOrder;
 use App\Models\Payable;
 use Carbon\Carbon;
-use Sheba\Payment\PayChargable;
 
 class OrderAdapter implements PayableAdapter
 {
@@ -41,11 +40,16 @@ class OrderAdapter implements PayableAdapter
         $order = $this->partnerOrder->order;
 
         if ($order->partner_id) {
-            $this->userId   = $order->partner_id;
+            $this->userId = $order->partner_id;
             $this->userType = "App\\Models\\Partner";
         } else {
-            $this->userId   = $order->customer_id;
+            $this->userId = $order->customer_id;
             $this->userType = "App\\Models\\Customer";
         }
+    }
+
+    public function setModelForPayable($model)
+    {
+        // TODO: Implement setModelForPayable() method.
     }
 }

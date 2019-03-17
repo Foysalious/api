@@ -6,16 +6,17 @@ use App\Models\OfferShowcase;
 use App\Models\ScreenSetting;
 use App\Models\SliderPortal;
 use App\Models\Voucher;
-
+use Sheba\AppSettings\HomePageSetting\Getters\Getter as HomePageSettingGetter;
 use Cache;
 use Illuminate\Support\Collection;
 
 class Cacher
 {
     private $memory;
-    private $redisNameSpace = 'ScreenSetting';
+    private $redisNameSpace = 'NewScreenSetting';
+    private $getter;
 
-    public function __construct()
+    public function __construct(HomePageSettingGetter $getter)
     {
         $this->memory = [
             'slider_portal' => collect(),
@@ -27,6 +28,7 @@ class Cacher
             'voucher' => collect(),
             'element' => collect()
         ];
+        $this->getter=$getter;
     }
 
     public function update()
@@ -37,31 +39,32 @@ class Cacher
         $i = 0;
         foreach ($settings as $setting) {
             $elements = $setting->elements;
-            $this->saveElements($elements);
+//            $this->saveElements($elements);
             $location_ids = $elements->pluck('pivot.location_id')->unique();
             foreach ($location_ids as $location_id) {
-                $elements_of_that_location = $elements->where('pivot.location_id', $location_id);
-                $final = collect();
-                foreach ($elements_of_that_location as $element_of_that_location) {
-                    $i++;
-                    $element_of_that_location = $this->memory['element']->where('id', $element_of_that_location->id)->first();
-                    $type = class_basename($element_of_that_location->item_type);
-                    $data_method = "get" . $type . "Data";
-                    $data = $this->$data_method($element_of_that_location->item_id, $location_id, $setting);
-                    if (empty($data)) continue;
-                    $final->push([
-                        'item_type' => $type == 'Grid' ? $element_of_that_location->item->getSettingsName() : $type,
-                        'item_id' => $element_of_that_location->item_id,
-                        'name' => $type == "CategoryGroup" ? $element_of_that_location->item->name : null,
-                        'order' => $element_of_that_location->pivot->order,
-                        'updated_at' => $setting->updated_at->toDateTimeString(),
-                        'updated_at_timestamp' => $setting->updated_at->timestamp,
-                        'data' => $data,
-                    ]);
-                }
+//                $elements_of_that_location = $elements->where('pivot.location_id', $location_id);
+//                $final = collect();
+//                foreach ($elements_of_that_location as $element_of_that_location) {
+//                    $i++;
+//                    $element_of_that_location = $this->memory['element']->where('id', $element_of_that_location->id)->first();
+//                    $type = class_basename($element_of_that_location->item_type);
+//                    $data_method = "get" . $type . "Data";
+//                    $data = $this->$data_method($element_of_that_location->item_id, $location_id, $setting);
+//                    if (empty($data)) continue;
+//                    $final->push([
+//                        'item_type' => $type == 'Grid' ? $element_of_that_location->item->getSettingsName() : $type,
+//                        'item_id' => $element_of_that_location->item_id,
+//                        'name' => $type == "CategoryGroup" ? $element_of_that_location->item->name : null,
+//                        'order' => $element_of_that_location->pivot->order,
+//                        'updated_at' => $setting->updated_at->toDateTimeString(),
+//                        'updated_at_timestamp' => $setting->updated_at->timestamp,
+//                        'data' => $data,
+//                    ]);
+//                }
+                $home_page_settings=$this->getter->setLocation($location_id)->setPortal($setting->portal_name)->setScreen($setting->screen)->getSettings()->toJson();
                 $portal_name = snake_case(camel_case($setting->portal_name));
                 $cache_name = sprintf("%s::%s_%s_%d", $this->redisNameSpace, $portal_name, $setting->screen, $location_id);
-                $store->forever($cache_name, $final->sortBy('order')->values()->toJson());
+                $store->forever($cache_name, $home_page_settings);
             }
         }
     }
@@ -189,6 +192,9 @@ class Cacher
         ];
         $this->memory['offer']->push($offer);
         return $data;
+    }
+    public function getHomeMenuData($id,$location_id,$setting){
+        return [];
     }
 
     /**

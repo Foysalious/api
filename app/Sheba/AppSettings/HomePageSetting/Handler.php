@@ -44,7 +44,7 @@ class Handler
             } else {
                 $screen_setting_element = ScreenSettingElement::create($this->withBothModificationFields([
                     'item_type' => $element['item_type'],
-                    'item_id' => $element['item_id']
+                    'item_id' => $element['item_id'] ?: 0,
                 ]));
             }
 
@@ -77,57 +77,57 @@ class Handler
      * PREVIOUSLY USE THIS METHOD -- REMOVE LATER
      *
      * public function save($data)
-    {
-    $current_settings_screen = ScreenSetting::with(['elements' => function($q) {
-    $q->where('location_id', $this->location->first()->id);
-    }])->where('portal_name', $this->portal)
-    ->where('screen', $this->screen)
-    ->first();
+     * {
+     * $current_settings_screen = ScreenSetting::with(['elements' => function($q) {
+     * $q->where('location_id', $this->location->first()->id);
+     * }])->where('portal_name', $this->portal)
+     * ->where('screen', $this->screen)
+     * ->first();
+     *
+     * if ($current_settings_screen) {
+     * $created_counter = 0;
+     * $updated_counter = 0;
+     * $deleted_counter = 0;
+     * $current_settings = $current_settings_screen->elements;
+     *
+     * foreach ($data as $item) {
+     * $current_setting_key = $item['order'] - 1;
+     *
+     * if (!$current_settings->has($current_setting_key)) {
+     * $Screen_setting_element = ScreenSettingElement::create($this->withBothModificationFields($item));
+     * $created_counter++;
+     * $this->locationTagWithScreenSettingElement($current_settings_screen, $Screen_setting_element, $item['order']);
+     * continue;
+     * }
+     *
+     * if ($this->isCurrentSettingUpdated($current_settings[$current_setting_key], $item)) {
+     * $current_settings[$current_setting_key]->update($this->withUpdateModificationField($item));
+     * $updated_counter++;
+     * }
+     * }
+     *
+     * $new_data_orders = collect($data)->map(function ($item) {
+     * return $item['order'];
+     * });
+     *
+     * foreach ($current_settings as $current_setting) {
+     * if(!$new_data_orders->contains($current_setting->order)) {
+     * $current_setting->delete();
+     * $deleted_counter++;
+     * }
+     * }
+     *
+     * $this->cacher->update();
+     * }
+     *
+     * return "$created_counter items created & $updated_counter items updated & $deleted_counter items deleted.";
+     * }*/
 
-    if ($current_settings_screen) {
-    $created_counter = 0;
-    $updated_counter = 0;
-    $deleted_counter = 0;
-    $current_settings = $current_settings_screen->elements;
-
-    foreach ($data as $item) {
-    $current_setting_key = $item['order'] - 1;
-
-    if (!$current_settings->has($current_setting_key)) {
-    $Screen_setting_element = ScreenSettingElement::create($this->withBothModificationFields($item));
-    $created_counter++;
-    $this->locationTagWithScreenSettingElement($current_settings_screen, $Screen_setting_element, $item['order']);
-    continue;
-    }
-
-    if ($this->isCurrentSettingUpdated($current_settings[$current_setting_key], $item)) {
-    $current_settings[$current_setting_key]->update($this->withUpdateModificationField($item));
-    $updated_counter++;
-    }
-    }
-
-    $new_data_orders = collect($data)->map(function ($item) {
-    return $item['order'];
-    });
-
-    foreach ($current_settings as $current_setting) {
-    if(!$new_data_orders->contains($current_setting->order)) {
-    $current_setting->delete();
-    $deleted_counter++;
-    }
-    }
-
-    $this->cacher->update();
-    }
-
-    return "$created_counter items created & $updated_counter items updated & $deleted_counter items deleted.";
-    }*/
-    
     /**
      * PREVIOUSLY USE THIS METHOD -- REMOVE LATER
-     * 
+     *
      * private function isCurrentSettingUpdated($current_setting, $new_data)
-    {
-        return $current_setting->item_type != $new_data['item_type'] || $current_setting->item_id != $new_data['item_id'];
-    }*/
+     * {
+     * return $current_setting->item_type != $new_data['item_type'] || $current_setting->item_id != $new_data['item_id'];
+     * }*/
 }

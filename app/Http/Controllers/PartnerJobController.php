@@ -42,6 +42,7 @@ class PartnerJobController extends Controller
                     }, 'resource.profile', 'review']);
                 }]);
             }]);
+
             $jobs = collect();
             $jobs_with_resource = collect();
             foreach ($partner->partnerOrders as $partnerOrder) {
@@ -110,7 +111,9 @@ class PartnerJobController extends Controller
                         ));
                     }
                 }
-                return api_response($request, $jobs, 200, ['jobs' => $jobs, 'resources' => $resources]);
+                $subscription_orders = $partner->subscriptionOrders->where('status', 'accepted')->count();
+
+                return api_response($request, $jobs, 200, ['jobs' => $jobs, 'resources' => $resources, 'subscription_orders'=> $subscription_orders]);
             } else {
                 return api_response($request, null, 404);
             }

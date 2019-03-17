@@ -5,14 +5,18 @@ use Illuminate\Database\Eloquent\Model;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Location\Distance\TransactionMethod;
 use Sheba\ModificationFields;
+use Sheba\MovieTicket\MovieAgent;
+use Sheba\MovieTicket\MovieTicketTrait;
+use Sheba\MovieTicket\MovieTicketTransaction;
 use Sheba\Payment\Wallet;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
 
-class Affiliate extends Model implements TopUpAgent
+class Affiliate extends Model implements TopUpAgent, MovieAgent
 {
     use TopUpTrait;
+    use MovieTicketTrait;
     use Wallet;
     use ModificationFields;
 
@@ -107,7 +111,15 @@ class Affiliate extends Model implements TopUpAgent
             $range = getRangeFormat($request);
             $rangeQuery = $rangeQuery . ' and `affiliate_transactions`.`created_at` BETWEEN \'' . $range[0]->toDateTimeString() . '\' AND \'' . $range[1]->toDateTimeString() . '\'';
         }
-        return $query->select($tableName . '.affiliate_id as id', 'aff2.profile_id', 'aff2.ambassador_id', 'aff2.under_ambassador_since', 'profiles.name', 'profiles.pro_pic as picture', 'profiles.mobile', 'affiliate_transactions.created_at')->leftJoin('affiliate_transactions', 'affiliate_transactions.affiliate_id', '=', 'affiliates.id')->leftJoin($tableName, 'affiliate_transactions.affiliation_id', ' = ', $tableName . '.id')->leftJoin('affiliates as aff2', $tableName . '.affiliate_id', '=', 'aff2.id')->leftJoin('profiles', 'profiles.id', '=', 'aff2.profile_id')->selectRaw('sum(affiliate_transactions.amount) as total_gifted_amount, count(distinct(affiliate_transactions.id)) as total_gifted_number')->where('affiliates.id', $affiliate->id)->whereRaw($rangeQuery)->groupBy($tableName . '.affiliate_id');
+        return $query->select($tableName . '.affiliate_id as id', 'aff2.profile_id', 'aff2.ambassador_id', 'aff2.under_ambassador_since', 'profiles.name', 'profiles.pro_pic as picture', 'profiles.mobile', 'aff2.created_at')
+            ->leftJoin('affiliate_transactions', 'affiliate_transactions.affiliate_id', '=', 'affiliates.id')
+            ->leftJoin($tableName, 'affiliate_transactions.affiliation_id', ' = ', $tableName . '.id')
+            ->leftJoin('affiliates as aff2', $tableName . '.affiliate_id', '=', 'aff2.id')
+            ->leftJoin('profiles', 'profiles.id', '=', 'aff2.profile_id')
+            ->selectRaw('sum(affiliate_transactions.amount) as total_gifted_amount, count(distinct(affiliate_transactions.id)) as total_gifted_number')
+            ->where('affiliates.id', $affiliate->id)
+            ->whereRaw($rangeQuery)
+            ->groupBy($tableName . '.affiliate_id');
     }
 
     public function totalLead()
@@ -190,5 +202,16 @@ class Affiliate extends Model implements TopUpAgent
     public function getCommission()
     {
         return new \Sheba\TopUp\Commission\Affiliate();
+    }
+
+    public function getMovieTicketCommission()
+    {
+        return new \Sheba\MovieTicket\Commission\Affiliate();
+    }
+
+    public function movieTicketTransaction(MovieTicketTransaction $transaction)
+    {
+        $this->debitWallet($transaction->getAmount());
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
     }
 }

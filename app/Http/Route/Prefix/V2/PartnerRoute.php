@@ -25,6 +25,36 @@ class PartnerRoute
                     $api->get('/{order}', 'EShopOrderController@show');
                 });
             });
+
+            $api->group(['prefix' => 'loans'], function ($api) {
+                $api->post('/', 'SpLoanController@store');
+                $api->get('/personal-info', 'SpLoanController@getPersonalInformation');
+                $api->post('/personal-info', 'SpLoanController@updatePersonalInformation');
+
+                $api->get('/business-info', 'SpLoanController@getBusinessInformation');
+                $api->post('/business-info', 'SpLoanController@updateBusinessInformation');
+
+                $api->get('/finance-info', 'SpLoanController@getFinanceInformation');
+                $api->post('/finance-info', 'SpLoanController@updateFinanceInformation');
+
+                $api->get('/nominee-info', 'SpLoanController@getNomineeInformation');
+                #$api->post('/nominee-info', 'SpLoanController@updateNomineeInformation');
+                #$api->post('/grantor-info', 'SpLoanController@updateGrantorInformation');
+
+                $api->post('/nominee-grantor-info', 'SpLoanController@updateNomineeGrantorInformation');
+
+                $api->get('/documents', 'SpLoanController@getDocuments');
+                $api->post('/documents', 'SpLoanController@updateDocuments');
+
+                $api->post('pictures', 'SpLoanController@updateProfilePictures');
+                $api->post('bank-statement', 'SpLoanController@updateBankStatement');
+                $api->post('trade-license', 'SpLoanController@updateTradeLicense');
+
+                $api->get('/information-completion', 'SpLoanInformationCompletion@getLoanInformationCompletion');
+                $api->get('/homepage', 'SpLoanController@getHomepage');
+                $api->get('/bank-interest', 'SpLoanController@getBankInterest');
+            });
+
             $api->group(['prefix' => 'categories'], function ($api) {
                 $api->get('/all', 'CategoryController@getPartnerLocationCategory');
                 $api->get('/tree', 'PartnerController@getCategoriesTree');
@@ -61,6 +91,13 @@ class PartnerRoute
                 $api->post('/', 'Partner\PartnerSubscriptionController@store');
                 $api->post('/upgrade', 'Partner\PartnerSubscriptionController@update');
             });
+
+            $api->group(['prefix' => 'customer-subscriptions'], function ($api) {
+                $api->get('order-lists', 'Partner\CustomerSubscriptionController@index');
+                $api->get('{subscription}/details', 'Partner\CustomerSubscriptionController@show');
+                $api->post('{subscription}/bulk-accept ', 'Partner\CustomerSubscriptionController@bulkAccept');
+            });
+
             $api->group(['prefix' => 'resources'], function ($api) {
                 $api->post('/', 'Resource\PersonalInformationController@store');
                 $api->group(['prefix' => '{resource}', 'middleware' => ['partner_resource.auth']], function ($api) {
@@ -140,7 +177,7 @@ class PartnerRoute
                     $api->get('/templates', 'SmsCampaignOrderController@getTemplates');
                     $api->get('/history', 'SmsCampaignOrderController@getHistory');
                     $api->get('/history/{history_id}/details', 'SmsCampaignOrderController@getHistoryDetails');
-                    $api->get('/faq','FaqController@getPartnerSmsCampaignFaq');
+                    $api->get('/faq', 'FaqController@getPartnerSmsCampaignFaq');
                     $api->get('/test-queue-run', 'SmsCampaignOrderController@processQueue');
                 });
             });

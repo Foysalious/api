@@ -3,11 +3,11 @@
 use App\Models\Category;
 use App\Models\HyperLocal;
 
+use App\Models\Location;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Cache;
-use Sheba\AppSettings\HomePageSetting\Getters\Getter as HomePageSettingGetter;
 
 class HomePageSettingController extends Controller
 {
@@ -28,18 +28,29 @@ class HomePageSettingController extends Controller
             ]);
             $setting_key = null;
             $location = '';
+
             if ($request->has('location')) {
                 $location = (int)$request->location;
             } elseif ($request->has('lat') && $request->has('lng')) {
                 $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
                 if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
             }
-            if ($request->has('portal') && $request->has('screen')) {
+
+            /**
+             * TEMPORARY
+             * if ($request->has('portal') && $request->has('screen')) {
                 $setting_key = 'ScreenSetting::' . snake_case(camel_case($request->portal)) . '_' . $request->screen . "_" . $location;
             } else {
                 $setting_key = 'ScreenSetting::customer_app_home_4';
             }
-            $settings = $store->get($setting_key);
+            $settings = $store->get($setting_key);*/
+
+            $city = Location::find($location)->city_id;
+            $location_id = ($city == 1) ? 4 : 120;
+            $portal = ($request->get('portal') == 'customer-app') ? 'app' : 'web';
+
+            $settings = file_get_contents(base_path() . '/public/screen_setting/screen_setting_' . $portal . '_' . $location_id . '.json');
+
             if ($settings) {
                 $settings = json_decode($settings);
                 if ($request->portal == 'customer-portal') $settings = $this->formatWeb($settings, $location);
@@ -56,23 +67,43 @@ class HomePageSettingController extends Controller
         }
     }
 
-    public function indexNew(Request $request, HomePageSettingGetter $getter)
+    public function indexNew(Request $request)
     {
         try {
+            /** @var \Illuminate\Contracts\Cache\Repository $store */
+            $store = Cache::store('redis');
             $portals = config('sheba.portals');
             $screens = config('sheba.screen');
             $this->validate($request, [
+                'for' => 'string|in:app,web,app_json,app_json_revised',
                 'portal' => 'in:' . implode(',', $portals),
                 'screen' => 'in:' . implode(',', $screens),
                 'location' => 'numeric',
                 'lat' => 'numeric',
                 'lng' => 'numeric'
             ]);
-
-            $getter->setLocation($this->getLocationId($request))
-                ->setPortal($request->portal)->setScreen($request->screen);
-            $settings = $getter->getSettings()->get();
-            return api_response($request, $settings, 200, ['settings' => $settings]);
+            $setting_key = null;
+            $location = '';
+            if ($request->has('location')) {
+                $location = (int)$request->location;
+            } elseif ($request->has('lat') && $request->has('lng')) {
+                $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                if (!is_null($hyperLocation)) $location = $hyperLocation->location_id;
+            }
+            if ($request->has('portal') && $request->has('screen')) {
+                $setting_key = 'NewScreenSetting::' . snake_case(camel_case($request->portal)) . '_' . $request->screen . "_" . $location;
+            } else {
+                $setting_key = 'NewScreenSetting::customer_app_home_4';
+            }
+            $settings = $store->get($setting_key);
+            if ($settings) {
+                $settings = json_decode($settings);
+//                if ($request->portal == 'customer-portal') $settings = $this->formatWeb($settings->sections, $location);
+                if(empty($settings->sections)) return api_response($request, null, 404);
+                return api_response($request, $settings, 200, ['settings' => $settings]);
+            } else {
+                return api_response($request, null, 404);
+            }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -109,12 +140,12 @@ class HomePageSettingController extends Controller
         }
     }
 
-    public function formatWeb(array $settings, $location)
+    public function formatWeb($settings, $location)
     {
         $customer_category_orders = [1, 3, 73, 101, 183, 184, 226, 186, 221, 224, 185, 225, 226, 235, 236, 333];
         $settings = collect($settings);
-        $slider = $settings->where('item_type', 'Slider')->first();
-        $category_groups = $settings->where('item_type', 'CategoryGroup')->sortBy('order');
+        $slider = $settings->where('item_type', 'slider')->first();
+        $category_groups = $settings->where('item_type', 'categorygroup')->sortBy('order');
         $categories = Category::published()->where('parent_id', null)->with(['children' => function ($q) use ($location) {
             $q->select('id', 'parent_id', 'name', 'slug', 'icon_png');
             if ($location) {
@@ -139,7 +170,6 @@ class HomePageSettingController extends Controller
         })->sortBy(function ($category) use ($customer_category_orders) {
             return array_search($category->getKey(), $customer_category_orders);
         })->values()->all();
-
         return ['slider' => $slider->data, 'categories' => $categories, 'category_groups' => $category_groups->values()->all()];
     }
 }

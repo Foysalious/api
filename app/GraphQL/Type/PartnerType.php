@@ -6,7 +6,7 @@ use Carbon\Carbon;
 use GraphQL;
 use \Folklore\GraphQL\Support\Type as GraphQlType;
 use GraphQL\Type\Definition\Type;
-use Redis;
+use Illuminate\Support\Facades\Redis;
 
 class PartnerType extends GraphQlType
 {

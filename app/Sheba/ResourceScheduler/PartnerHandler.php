@@ -37,21 +37,24 @@ class PartnerHandler
 
 
         $resource_ids = $this->partner->resourcesInCategory($category)->pluck('id')->unique()->toArray();
-        $start_time = Carbon::parse($date . ' ' . $time);
-        $end_time = Carbon::parse($date . ' ' . $time)->addMinutes($category->book_resource_minutes);
-
-        $booked_schedules = ResourceSchedule::whereIn('resource_id', $resource_ids)
-            ->where(function ($query) use ($start_time, $end_time) {
-                $query->where([['start', '>', $start_time], ['start', '<', $end_time]]);
-                $query->orwhere([['end', '>', $start_time], ['end', '<', $end_time]]);
-                $query->orwhere([['start', '<', $start_time], ['end', '>', $start_time]]);
-                $query->orwhere([['start', '<', $end_time], ['end', '>', $end_time]]);
-                $query->orwhere([['start', $start_time], ['end', $end_time]]);
-            })->get();
-
-
+        $dates = !is_array($date) ? [$date] : $date;
+        $booked_schedules = collect();
+        foreach ($dates as $date) {
+            $start_time = Carbon::parse($date . ' ' . $time);
+            $end_time = Carbon::parse($date . ' ' . $time)->addMinutes($category->book_resource_minutes);
+            $booked = ResourceSchedule::whereIn('resource_id', $resource_ids)
+                ->where(function ($query) use ($start_time, $end_time) {
+                    $query->where([['start', '>', $start_time], ['start', '<', $end_time]]);
+                    $query->orwhere([['end', '>', $start_time], ['end', '<', $end_time]]);
+                    $query->orwhere([['start', '<', $start_time], ['end', '>', $start_time]]);
+                    $query->orwhere([['start', '<', $end_time], ['end', '>', $end_time]]);
+                    $query->orwhere([['start', $start_time], ['end', $end_time]]);
+                })->get();
+            $booked_schedules = $booked_schedules->merge($booked);
+        }
         return collect([
-            'is_available' => count($resource_ids) > $booked_schedules->pluck('resource_id')->unique()->count() ? 1 : 0
+            'is_available' => count($resource_ids) > $booked_schedules->pluck('resource_id')->unique()->count() ? 1 : 0,
+            'available_resources' => array_diff($resource_ids, $booked_schedules->pluck('resource_id')->unique()->toArray())
         ]);
     }
 }

@@ -27,7 +27,6 @@ class Item
     /**
      * @param string $target_type
      * @return Item
-     * @throws UnsupportedTarget
      */
     public function setTargetType($target_type)
     {

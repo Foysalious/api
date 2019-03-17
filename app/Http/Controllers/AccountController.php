@@ -10,7 +10,7 @@ use function GuzzleHttp\Promise\all;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
-use Redis;
+use Illuminate\Support\Facades\Redis;
 use JWTAuth;
 
 class AccountController extends Controller

@@ -7,8 +7,13 @@ class CustomerRoute
         $api->group(['prefix' => 'customers'], function ($api) {
             $api->group(['prefix' => '{customer}', 'middleware' => ['customer.auth']], function ($api) {
                 $api->get('checkout-info', 'CustomerController@getDeliveryInfo');
-                $api->get('settings/review', 'Settings\SettingsController@getCustomerReviewSettings');
-                $api->get('settings', 'Settings\SettingsController@getCustomerSettings');
+                $api->post('purchase-gift-card', 'GiftCardController@purchaseGiftCard');
+                $api->group(['prefix' => 'settings'], function ($api) {
+                    $api->get('/', 'Settings\SettingsController@getCustomerSettings');
+                    $api->get('review', 'Settings\SettingsController@getCustomerReviewSettings');
+                    $api->get('payment', 'Settings\SettingsController@addPayment');
+                });
+
                 $api->put('notifications', 'CustomerNotificationController@update');
                 $api->post('top-up', 'TopUpController@topUp');
                 $api->group(['prefix' => 'bkash'], function ($api) {
@@ -45,6 +50,12 @@ class CustomerRoute
                     $api->group(['prefix' => '{order}'], function ($api) {
                         $api->get('/', 'CustomerOrderController@show');
                     });
+                });
+                $api->group(['prefix' => 'subscriptions'], function ($api) {
+                    $api->post('/', 'Subscription\CustomerSubscriptionController@placeSubscriptionRequest');
+                    $api->get('{subscription}/payment', 'Subscription\CustomerSubscriptionController@clearPayment');
+                    $api->get('order-lists', 'Subscription\CustomerSubscriptionController@index');
+                    $api->get('{subscription}/details', 'Subscription\CustomerSubscriptionController@show');
                 });
                 $api->group(['prefix' => 'jobs'], function ($api) {
                     $api->get('/', 'JobController@index');

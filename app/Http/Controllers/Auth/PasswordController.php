@@ -7,7 +7,7 @@ use Cache;
 use Illuminate\Validation\ValidationException;
 use Sheba\Sms\Sms;
 use Validator;
-use Redis;
+use Illuminate\Support\Facades\Redis;
 use Mail;
 
 class PasswordController extends Controller

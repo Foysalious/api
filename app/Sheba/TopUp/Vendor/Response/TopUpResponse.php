@@ -1,7 +1,4 @@
-<?php
-
-namespace Sheba\TopUp\Vendor\Response;
-
+<?php namespace Sheba\TopUp\Vendor\Response;
 
 abstract class TopUpResponse
 {
@@ -14,5 +11,4 @@ abstract class TopUpResponse
     abstract public function getSuccess(): TopUpSuccessResponse;
 
     abstract public function getError(): TopUpErrorResponse;
-
 }

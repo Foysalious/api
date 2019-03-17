@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\GiftCard;
+use App\Models\GiftCardPurchase;
 use App\Models\PartnerOrder;
 use App\Models\Payment;
 use App\Repositories\PaymentRepository;
@@ -11,6 +13,8 @@ use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\ModificationFields;
+use Sheba\Payment\Adapters\Payable\GiftCardPurchaseAdapter;
 use Sheba\Payment\Adapters\Payable\RechargeAdapter;
 use Sheba\Payment\ShebaPayment;
 use DB;
@@ -18,6 +22,7 @@ use Sheba\Reward\BonusCredit;
 
 class WalletController extends Controller
 {
+    use ModificationFields;
     public function validatePayment(Request $request)
     {
         try {
@@ -101,8 +106,10 @@ class WalletController extends Controller
                         $user->debitWallet($remaining);
                         $transaction = $user->walletTransaction([
                             'amount' => $remaining,
-                            'type' => 'Debit', 'log' => 'Service Purchase.',
-                            'partner_order_id' => $partner_order->id,
+                            'type' => 'Debit',
+                            'log' => 'Service Purchase.',
+                            'event_type' => get_class($partner_order),
+                            'event_id' => $partner_order->id,
                             'created_at' => Carbon::now()
                         ]);
                     }
@@ -178,5 +185,4 @@ class WalletController extends Controller
             return api_response($request, null, 500);
         }
     }
-
 }

@@ -11,12 +11,21 @@ use Sheba\Reward\Event\Rule as BaseRule;
 
 class Event extends Action implements AmountCalculator
 {
+    private $order;
+    private $rewardAmount;
+
     public function setRule(BaseRule $rule)
     {
         if (!($rule instanceof Rule))
             throw new RulesTypeMismatchException("Wallet cashback event must have a cashback event rule");
 
         return parent::setRule($rule);
+    }
+
+    public function setParams(array $params)
+    {
+        parent::setParams($params);
+        $this->order = $this->params[1]->order;
     }
 
     /**
@@ -29,7 +38,7 @@ class Event extends Action implements AmountCalculator
 
     private function filterConstraints()
     {
-        $category_id = $this->params[1]->order->lastJob()->category_id;
+        $category_id = $this->order->lastJob()->category_id;
 
         foreach ($this->reward->constraints->groupBy('constraint_type') as $key => $type) {
             $ids = $type->pluck('constraint_id')->toArray();
@@ -50,6 +59,14 @@ class Event extends Action implements AmountCalculator
         $payment_amount = $this->params[0];
         $amount = ($payment_amount * $this->reward->amount) / 100;
 
-        return ($this->reward->cap && ($amount > $this->reward->cap)) ? $this->reward->cap : $amount;
+        $this->rewardAmount = ($this->reward->cap && ($amount > $this->reward->cap)) ? $this->reward->cap : $amount;
+        return $this->rewardAmount;
+    }
+
+    public function getLogEvent()
+    {
+        $reward_amount = $this->rewardAmount ?: $this->reward->amount;
+        $log = $reward_amount . ' ' . $this->reward->type . ' credited for ' . $this->reward->name . '(' . $this->reward->id . ') on ' . $this->order->code();
+        return $log;
     }
 }

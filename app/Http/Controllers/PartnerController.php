@@ -33,8 +33,9 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
-use Redis;
+use Illuminate\Support\Facades\Redis;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
+use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Manager\JobList;
 use Sheba\ModificationFields;
 use Sheba\Partner\LeaveStatus;
@@ -88,10 +89,12 @@ class PartnerController extends Controller
             }
 
             $partner_request = $partner;
-            $partner = Partner::where([['id', (int)$partner_request], ['status', 'Verified']])->first();
-            if ($partner == null) {
-                $partner = Partner::where([['sub_domain', $partner_request], ['status', 'Verified']])->first();
+            if (is_numeric($partner_request)) {
+                $partner = Partner::where([['status', 'Verified'], ['id', $partner_request]])->first();
+            } else {
+                $partner = Partner::where([['status', 'Verified'], ['sub_domain', $partner_request]])->first();
             }
+
             if ($partner == null) return api_response($request, null, 404);
 
             $serving_master_categories = $partner->servingMasterCategories();
@@ -529,7 +532,7 @@ class PartnerController extends Controller
         }
     }
 
-    public function findPartners(Request $request, $location)
+    public function findPartners(Request $request, $location, PartnerListRequest $partnerListRequest)
     {
         try {
             $this->validate($request, [
@@ -547,8 +550,9 @@ class PartnerController extends Controller
             }
 
             $partner = $request->has('partner') ? $request->partner : null;
-            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time, (int)$location);
-            $partner_list->setAvailability($request->skip_availability)->find($partner);
+            $partnerListRequest->setRequest($request)->prepareObject();
+            $partner_list = new PartnerList();
+            $partner_list->setPartnerListRequest($partnerListRequest)->find($partner);
             if ($request->has('isAvailable')) {
                 $partners = $partner_list->partners;
                 $available_partners = $partners->filter(function ($partner) {
@@ -560,23 +564,12 @@ class PartnerController extends Controller
             if ($partner_list->hasPartners) {
                 $partner_list->addPricing();
                 $partner_list->addInfo();
-
                 if ($request->has('filter') && $request->filter == 'sheba') {
                     $partner_list->sortByShebaPartnerPriority();
                 } else {
-                    $start = microtime(true);
                     $partner_list->sortByShebaSelectedCriteria();
-                    $time_elapsed_secs = microtime(true) - $start;
-                    //dump("sort by sheba criteria: " . $time_elapsed_secs * 1000);
                 }
-                $partners = $partner_list->partners;
-                $partners->each(function ($partner, $key) {
-                    $partner['rating'] = round($partner->rating, 2);
-                    array_forget($partner, 'wallet');
-                    array_forget($partner, 'package_id');
-                    array_forget($partner, 'geo_informations');
-                    removeRelationsAndFields($partner);
-                });
+                $partners = $partner_list->removeKeysFromPartner();
                 return api_response($request, $partners, 200, ['partners' => $partners->values()->all()]);
             }
             return api_response($request, null, 404, ['message' => 'No partner found.']);

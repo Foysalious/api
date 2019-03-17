@@ -393,4 +393,40 @@ class FaqController extends Controller
         }
 
     }
+
+    public function getSubscriptionFaq(Request $request)
+    {
+        try{
+            $faqs = array(
+                array(
+                    'question' => 'Plan, Subscribe & save money',
+                    'answer' => 'A broken AC on a hot summer day is troublesome. Our Experienced AC mechanic partner will fix your AC on spot or take the broken parts for repair.',
+                    'list' => null
+                ),
+                array(
+                    'question' => 'How Subscription Works',
+                    'answer' => null,
+                    'list' => [
+                        'They will ensure 100% satisfaction',
+                        '60 days warranty services on the service',
+                        'On-time service delivery'
+                    ]
+                ),
+                array(
+                    'question' => 'How Payment Works',
+                    'answer' => null,
+                    'list' => [
+                        'They will ensure 100% satisfaction',
+                        '60 days warranty services on the service',
+                        'On-time service delivery'
+                    ]
+                ),
+            );
+            return api_response($request, $faqs, 200, ['faqs' => $faqs]);
+        }   catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
+    }
 }

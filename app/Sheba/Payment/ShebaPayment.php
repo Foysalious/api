@@ -6,6 +6,7 @@ use Sheba\Payment\Factory\PaymentProcessor;
 
 class ShebaPayment
 {
+    private $method;
     /**
      * ShebaPayment constructor.
      * @param $enum

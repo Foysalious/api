@@ -182,6 +182,7 @@ class TopUpController extends Controller
      */
     public function topUpTest(Request $request, VendorFactory $vendor, TopUp $top_up, TopUpRequest $top_up_request)
     {
+
         try {
             $this->validate($request, [
                 'mobile' => 'required|string|mobile:bd',

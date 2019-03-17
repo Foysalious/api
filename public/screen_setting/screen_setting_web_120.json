@@ -1,0 +1,115 @@
+[
+  {
+    "item_type": "Slider",
+    "item_id": 3,
+    "name": null,
+    "order": 4,
+    "updated_at": "2018-12-25 18:23:07",
+    "updated_at_timestamp": 1545740587,
+    "data": [
+      {
+        "small_image_link": null,
+        "image_link": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/slides\/ctg-banner.png",
+        "id": null,
+        "target_type": null,
+        "target_id": null,
+        "target_link": null,
+        "is_parent": false,
+        "link": null,
+        "order": 9,
+        "updated_at": "2019-02-28 00:32:08",
+        "updated_at_timestamp": 1551292328
+      }
+    ]
+  },
+  {
+    "item_type": "CategoryGroup",
+    "item_id": 3,
+    "name": "Recommended",
+    "order": 15,
+    "updated_at": "2018-12-26 15:41:44",
+    "updated_at_timestamp": 1545817304,
+    "data": [
+      {
+        "id": 14,
+        "name": "AC Service & Repair",
+        "slug": "ac-service-repair",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/14\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/14\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-11 17:21:31",
+        "updated_at_timestamp": 1549884091
+      },
+      {
+        "id": 24,
+        "name": "Furniture Paint",
+        "slug": "furniture-paint",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/24\/app_thumbnail.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/24\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-05 18:38:35",
+        "updated_at_timestamp": 1549370315
+      },
+      {
+        "id": 75,
+        "name": "Laptop Servicing",
+        "slug": "laptop-servicing",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/75\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/75\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-06 09:43:14",
+        "updated_at_timestamp": 1549424594
+      },
+      {
+        "id": 144,
+        "name": "On Demand Driver",
+        "slug": "on-demand-driver",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/144\/app_thumbnail.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/144\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-06 10:50:36",
+        "updated_at_timestamp": 1549428636
+      },
+      {
+        "id": 167,
+        "name": "Beauty Salon Services",
+        "slug": "beauty-salon-services",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/167\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/167\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2019-02-28 14:52:42",
+        "updated_at_timestamp": 1551343962
+      },
+      {
+        "id": 207,
+        "name": "On Demand Cleaner",
+        "slug": "on-demand-cleaner",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/207\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/categories_images\/icons_png\/1527308841_tiwnn.png",
+        "is_parent": false,
+        "updated_at": "2019-02-06 10:41:17",
+        "updated_at_timestamp": 1549428077
+      },
+      {
+        "id": 222,
+        "name": "Inside City",
+        "slug": "inside-city",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/222\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/5\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2018-06-24 03:13:01",
+        "updated_at_timestamp": 1529788381
+      },
+      {
+        "id": 223,
+        "name": "Outside City",
+        "slug": "outside-city",
+        "thumb": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/jpg\/Sub-catagory\/223\/150.jpg",
+        "icon_png": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/bulk\/categories\/5\/icon_png.png",
+        "is_parent": false,
+        "updated_at": "2018-06-24 03:13:01",
+        "updated_at_timestamp": 1529788381
+      }
+    ]
+  }
+]

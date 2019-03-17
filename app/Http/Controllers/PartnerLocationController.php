@@ -8,10 +8,11 @@ use App\Sheba\Checkout\Validation;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Checkout\Requests\PartnerListRequest;
 
 class PartnerLocationController extends Controller
 {
-    public function getPartners(Request $request)
+    public function getPartners(Request $request, PartnerListRequest $partnerListRequest)
     {
         try {
             $this->validate($request, [
@@ -22,14 +23,15 @@ class PartnerLocationController extends Controller
                 'partner' => 'sometimes|required',
                 'lat' => 'required|numeric',
                 'lng' => 'required|numeric',
+                'skip_availability' => 'numeric',
+                'filter' => 'string|in:sheba',
             ]);
             $validation = new Validation($request);
-            if (!$validation->isValid()) {
-                return api_response($request, $validation->message, 400, ['message' => $validation->message]);
-            }
+            if (!$validation->isValid()) return api_response($request, $validation->message, 400, ['message' => $validation->message]);
             $partner = $request->has('partner') ? $request->partner : null;
-            $partner_list = new PartnerList(json_decode($request->services), $request->date, $request->time);
-            $partner_list->setGeo($request->lat, $request->lng)->setAvailability((int)$request->skip_availability)->find($partner);
+            $partnerListRequest->setRequest($request)->prepareObject();
+            $partner_list = new PartnerList();
+            $partner_list->setPartnerListRequest($partnerListRequest)->find($partner);
             if ($request->has('isAvailable')) {
                 $partners = $partner_list->partners;
                 $available_partners = $partners->filter(function ($partner) {
@@ -46,14 +48,7 @@ class PartnerLocationController extends Controller
                 } else {
                     $partner_list->sortByShebaSelectedCriteria();
                 }
-                $partners = $partner_list->partners;
-                $partners->each(function ($partner, $key) {
-                    $partner['rating'] = round($partner->rating, 2);
-                    array_forget($partner, 'wallet');
-                    array_forget($partner, 'package_id');
-                    array_forget($partner, 'geo_informations');
-                    removeRelationsAndFields($partner);
-                });
+                $partners = $partner_list->removeKeysFromPartner();
                 return api_response($request, $partners, 200, ['partners' => $partners->values()->all()]);
             }
             return api_response($request, null, 404, ['message' => 'No partner found.']);

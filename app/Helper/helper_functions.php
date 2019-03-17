@@ -230,6 +230,31 @@ if (!function_exists('getRangeFormat')) {
     }
 }
 
+if (!function_exists('getDayName')) {
+    /**
+     * @param Carbon $date
+     * @return int|string
+     */
+    function getDayName(Carbon $date)
+    {
+        switch (1) {
+            case $date->isSameDay(Carbon::now()):
+                return "today";
+            case $date->isTomorrow():
+                return 'tomorrow';
+            case $date->isPast():
+                if ($date->isYesterday())
+                    return "yesterday";
+                else {
+                    return Carbon::now()->diffInDays($date);
+                }
+            default:
+                return $date->format('M-j, Y');
+        }
+    }
+}
+
+
 if (!function_exists('createAuthorWithType')) {
     function createAuthorWithType($author)
     {
@@ -515,7 +540,7 @@ if (!function_exists('scramble_string')) {
     function scramble_string($str, $scramble_ratio = 15)
     {
         $str = \Sheba\BanglaToEnglish::convert($str);
-        $str=preg_replace('/[\x00-\x1F\x7F]/u', '', $str);
+        $str = preg_replace('/[\x00-\x1F\x7F]/u', '', $str);
         $len = strlen($str);
         $number_of_words_visible = (int)ceil(($scramble_ratio * $len) / 100);
         $number_of_words_hidden = $len - ($number_of_words_visible * 2);
@@ -559,9 +584,21 @@ if (!function_exists('getDefaultWorkingHours')) {
      */
     function getDefaultWorkingHours()
     {
-        return (object) [
+        return (object)[
             'start_time' => '09:00:00',
             'end_time' => '18:00:00'
         ];
+    }
+}
+
+if (!function_exists('normalizeCases')) {
+    /**
+     * @param $value
+     * @return string
+     */
+    function normalizeCases($value)
+    {
+        $value = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $value));
+        return ucwords(str_replace(['_', '-'], ' ', $value));
     }
 }

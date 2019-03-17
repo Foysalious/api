@@ -10,7 +10,7 @@ abstract class Vendor
 {
     protected $model;
 
-    public function setModel(TopUpVendor $model)
+    public function  setModel(TopUpVendor $model)
     {
         $this->model = $model;
         return $this;

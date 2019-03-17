@@ -34,19 +34,23 @@ class ComplainController extends Controller
         $this->complainRepo = $complain;
     }
 
-    public function index(Request $request)
+    public function index(Request $request, $customer, $job = null)
     {
+        $job = $job ?: $request->job_id;
         try {
             $this->validate($request, [
                 'for' => 'required|in:customer,partner'
             ]);
+            $job = Job::find($job);
             $accessor = $this->accessorRepo->findByNameWithPublishedCategoryAndPreset(ucwords($request->for));
             $final_complains = collect();
             $final_presets = collect();
-            foreach ($accessor->complainPresets as $preset) {
+            $presets = $this->getCategoryWisePresets($job, $accessor);
+            foreach ($presets as $preset) {
                 $final_presets->push(collect($preset)->only(['id', 'name', 'category_id']));
             }
-            foreach ($accessor->complainCategories as $category) {
+            $categories = $this->getJobWiseCategory($job, $accessor);
+            foreach ($categories as $category) {
                 $final = collect($category)->only(['id', 'name']);
                 $final->put('presets', $final_presets->where('category_id', $category->id)->values()->all());
                 $final_complains->push($final);
@@ -61,6 +65,34 @@ class ComplainController extends Controller
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
+        }
+    }
+
+    private function getJobWiseCategory($job, $accessor)
+    {
+        if (!empty($job)) {
+            $job_status = $this->getJobStatus($job);
+        }
+        return !empty($job) ? $accessor->complainCategories->filter(function ($cat) use ($job_status) {
+            return $cat->order_status == $job_status;
+        }) : $accessor->complainCategories;
+    }
+
+    private function getCategoryWisePresets($job, $accessor)
+    {
+        return !empty($job) ? $accessor->complainPresets->filter(function ($q) use ($job) {
+            return $q->subCategories->filter(function ($cat) use ($job) {
+                    return $job->category_id == $cat->id;
+                })->count() > 0;
+        }) : $accessor->complainPresets;
+    }
+
+    private function getJobStatus($job)
+    {
+        if ($job->status === 'Cancelled' || $job->status === 'Closed'||$job->status==='Served') {
+            return 'closed';
+        } else {
+            return 'open';
         }
     }
 
@@ -146,12 +178,12 @@ class ComplainController extends Controller
     {
         try {
             $this->validate($request, [
-                'accessor_id' => 'required|numeric',
+                'accessor_id' => 'numeric',
                 'complain_preset' => 'required|numeric',
                 'complain' => 'sometimes|string',
             ]);
             $this->setModifier($request->customer);
-            $data = $this->processCommonData($request);
+            $data = $this->processCommonData($request, 'Partner');
             $data = array_merge($data, $this->processJobData($request, $request->job));
             $data = $this->withCreateModificationField($data);
 
@@ -176,7 +208,7 @@ class ComplainController extends Controller
     {
         try {
             $this->validate($request, [
-                'accessor_id' => 'required|numeric',
+                'accessor_id' => 'numeric',
                 'complain_preset' => 'required|numeric',
                 'complain' => 'sometimes|string',
             ]);
@@ -185,7 +217,7 @@ class ComplainController extends Controller
                 if (!$job || $job->partnerOrder->partner_id != (int)$partner) return api_response($request, null, 403, ['message' => "This is not your Job"]);
             }
             $this->setModifier($request->manager_resource);
-            $data = $this->processCommonData($request);
+            $data = $this->processCommonData($request, 'Customer');
             if ($request->job) $data = array_merge($data, $this->processJobData($request, $job));
             $data = $this->withCreateModificationField($data);
 
@@ -206,17 +238,19 @@ class ComplainController extends Controller
         }
     }
 
-    protected function processCommonData(Request $request)
+    protected function processCommonData(Request $request, $for = 'Partner')
     {
         $preset_id = (int)$request->complain_preset;
         $preset = $this->complainPresetRepo->find($preset_id);
         $follow_up_time = Carbon::now()->addMinutes($preset->complainType->sla);
-
+        $accessor = $preset->accessors->count() > 1 ? $preset->accessors->filter(function ($accessor) use ($for) {
+            return $accessor->name == $for;
+        })->first() : $preset->accessors->first();
         return [
             'complain' => $request->complain,
             'complain_preset_id' => $preset_id,
             'follow_up_time' => $follow_up_time,
-            'accessor_id' => $request->accessor_id
+            'accessor_id' => $accessor ? $accessor->id : $request->accessor_id
         ];
     }
 

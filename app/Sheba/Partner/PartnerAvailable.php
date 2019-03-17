@@ -15,19 +15,19 @@ class PartnerAvailable
         $this->partner = ($partner) instanceof Partner ? $partner : Partner::find($partner);
     }
 
-    public function available($date, $preferred_time, Category $category)
+    public function available(array $dates, $preferred_time, Category $category)
     {
-        if ($this->_partnerOnLeave($date, $preferred_time)) {
-            return 0;
+        foreach ($dates as $date) {
+            if ($this->_partnerOnLeave($date, $preferred_time)) {
+                return 0;
+            }
+            if (!$this->_worksAtDayAndTime($date, $preferred_time)) {
+                return 0;
+            }
         }
-
-        if (!$this->_worksAtDayAndTime($date, $preferred_time)) {
-            return 0;
-        }
-
         $rent_car_ids = array_map('intval', explode(',', env('RENT_CAR_IDS')));
         if (!in_array($category->id, $rent_car_ids)) {
-            if (!((scheduler($this->partner)->isAvailable($date, explode('-', $preferred_time)[0], $category)))->get('is_available')) {
+            if (!((scheduler($this->partner)->isAvailable($dates, explode('-', $preferred_time)[0], $category)))->get('is_available')) {
                 return 0;
             }
         }

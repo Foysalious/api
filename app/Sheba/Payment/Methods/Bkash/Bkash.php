@@ -4,8 +4,11 @@ use App\Models\Payable;
 use App\Models\Payment;
 use App\Models\PaymentDetail;
 use Carbon\Carbon;
+use Sheba\Bkash\Modules\Tokenized\Methods\Agreement\TokenizedAgreement;
+use Sheba\Bkash\Modules\Tokenized\TokenizedPayment;
+use Sheba\Bkash\ShebaBkash;
 use Sheba\ModificationFields;
-use Redis;
+use Illuminate\Support\Facades\Redis;
 use Sheba\Payment\Methods\Bkash\Response\ExecuteResponse;
 use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\RequestIdentification;
@@ -38,6 +41,7 @@ class Bkash extends PaymentMethod
         DB::transaction(function () use ($payment, $payable, $invoice) {
             $payment->payable_id = $payable->id;
             $payment->transaction_id = $invoice;
+            $payment->gateway_transaction_id = $invoice;
             $payment->status = 'initiated';
             $payment->valid_till = Carbon::tomorrow();
             $this->setModifier($payable->user);
@@ -50,10 +54,18 @@ class Bkash extends PaymentMethod
             $payment_details->amount = $payable->amount;
             $payment_details->save();
         });
-        $data = $this->create($payment);
-        $payment->transaction_id = $data->merchantInvoiceNumber;
+        if ($payment->payable->user->getAgreementId()) {
+            /** @var TokenizedPayment $tokenized_payment */
+            $tokenized_payment = (new ShebaBkash())->setModule('tokenized')->getModuleMethod('payment');
+            $data = $tokenized_payment->create($payment);
+            $payment->gateway_transaction_id = $data->paymentID;
+            $payment->redirect_url = $data->bkashURL;
+        } else {
+            $data = $this->create($payment);
+            $payment->gateway_transaction_id = $data->paymentID;
+            $payment->redirect_url = config('sheba.front_url') . '/bkash?paymentID=' . $data->paymentID;
+        }
         $payment->transaction_details = json_encode($data);
-        $payment->redirect_url = config('sheba.front_url') . '/bkash?paymentID=' . $data->merchantInvoiceNumber;
         $payment->update();
         return $payment;
     }
@@ -62,7 +74,14 @@ class Bkash extends PaymentMethod
     {
         $execute_response = new ExecuteResponse();
         $execute_response->setPayment($payment);
-        $execute_response->setResponse($this->execute($payment));
+        if ($payment->payable->user->getAgreementId()) {
+            /** @var TokenizedPayment $tokenized_payment */
+            $tokenized_payment = (new ShebaBkash())->setModule('tokenized')->getModuleMethod('payment');
+            $res = $tokenized_payment->execute($payment);
+        } else {
+            $res = $this->execute($payment);
+        }
+        $execute_response->setResponse($res);
         $this->paymentRepository->setPayment($payment);
         if ($execute_response->hasSuccess()) {
             $success = $execute_response->getSuccess();
@@ -90,7 +109,7 @@ class Bkash extends PaymentMethod
             'amount' => $payment->payable->amount,
             'currency' => 'BDT',
             'intent' => $intent,
-            'merchantInvoiceNumber' => $payment->transaction_id
+            'merchantInvoiceNumber' => $payment->gateway_transaction_id
         ));
         $url = curl_init($this->url . '/checkout/payment/create');
         $header = array(
@@ -139,7 +158,7 @@ class Bkash extends PaymentMethod
     {
         $token = Redis::get('BKASH_TOKEN');
         $token = $token ? $token : $this->grantToken();
-        $url = curl_init($this->url . '/checkout/payment/execute/' . json_decode($payment->transaction_details)->paymentID);
+        $url = curl_init($this->url . '/checkout/payment/execute/' . $payment->gateway_transaction_id);
         $header = array(
             'authorization:' . $token,
             'x-app-key:' . $this->appKey);
@@ -151,7 +170,7 @@ class Bkash extends PaymentMethod
         $result_data = json_decode($result_data);
         if (curl_errno($url) > 0) {
             $error = new \InvalidArgumentException('Bkash execute API error.');
-            $error->paymentId = $payment->transaction_id;
+            $error->paymentId = $payment->gateway_transaction_id;
             throw  $error;
         };
         curl_close($url);

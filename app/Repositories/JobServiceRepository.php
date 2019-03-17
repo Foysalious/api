@@ -33,7 +33,6 @@ class JobServiceRepository
             $schedule_date_time = Carbon::parse($this->job->date . ' ' . $this->job->preferred_time_start);
             $discount = new Discount();
             $discount->setServiceObj($selected_service)->setServicePivot($service->pivot)->setScheduleDateTime($schedule_date_time)->initialize();
-            $discount->calculateServiceDiscount();
             $service_data = array(
                 'service_id' => $selected_service->id,
                 'quantity' => $selected_service->quantity,
