@@ -297,8 +297,8 @@ class SpLoanController extends Controller
             $profile = $manager_resource->profile;
             $basic_informations = $partner->basicInformations;
             $bank_informations = $partner->bankInformations;
-            $business_additional_information = $partner->businessAdditionalInformation()['0'];
-            $sales_information = $partner->salesInformation()['0'];
+            $business_additional_information = $partner->businessAdditionalInformation();
+            $sales_information = $partner->salesInformation();
 
             $info = array(
                 'business_name' => $partner->name,
