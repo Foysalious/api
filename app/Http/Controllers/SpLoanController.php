@@ -59,30 +59,20 @@ class SpLoanController extends Controller
         try {
             $bank_lists = [
                 '0' => [
-                    'name' => 'Brac Bank',
-                    'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/profile/1552282801_pro_pic_image_1408.png',
+                    'name' => 'IPDC Finance',
+                    'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bank_icon/ipdc.png',
                     'interest' => '10',
                 ],
                 '1' => [
-                    'name' => 'Bank Asia',
-                    'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/profile/1552282801_pro_pic_image_1408.png',
+                    'name' => 'BRAC Bank',
+                    'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bank_icon/brac.svg',
                     'interest' => '9',
                 ],
                 '2' => [
                     'name' => 'City Bank',
-                    'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/profile/1552282801_pro_pic_image_1408.png',
+                    'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bank_icon/city.svg',
                     'interest' => '11',
-                ],
-                '3' => [
-                    'name' => 'Prime Bank',
-                    'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/profile/1552282801_pro_pic_image_1408.png',
-                    'interest' => '10',
-                ],
-                '4' => [
-                    'name' => 'Duch Bangla Bank',
-                    'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/profile/1552282801_pro_pic_image_1408.png',
-                    'interest' => '10',
-                ],
+                ]
             ];
             return api_response($request, $bank_lists, 200, ['bank_lists' => $bank_lists]);
         } catch (\Throwable $e) {
