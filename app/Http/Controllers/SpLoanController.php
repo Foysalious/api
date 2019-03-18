@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers;
 
 use App\Http\Requests\SpLoanRequest;
+use App\Models\PartnerBankInformation;
 use App\Models\Profile;
 use App\Models\PartnerBankLoan;
 use Illuminate\Validation\ValidationException;
@@ -279,10 +280,10 @@ class SpLoanController extends Controller
             $profile->update($this->withBothModificationFields($profile_data));
             $manager_resource->update($this->withBothModificationFields($resource_data));
             return api_response($request, 1, 200);
-        }  catch (ValidationException $e) {
+        } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        }  catch (\Throwable $e) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -356,7 +357,7 @@ class SpLoanController extends Controller
             $partner->update($this->withBothModificationFields($partner_data));
             $basic_informations->update($this->withBothModificationFields($partner_basic_data));
             return api_response($request, 1, 200);
-        }  catch (ValidationException $e) {
+        } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
@@ -399,7 +400,9 @@ class SpLoanController extends Controller
         try {
             $partner = $request->partner;
             $bank_informations = $partner->bankInformations;
+
             $bank_data = [
+                'partner_id' => $partner->id,
                 'acc_name' => $request->acc_name,
                 'acc_no' => $request->acc_no,
                 'bank_name' => $request->bank_name,
@@ -411,7 +414,12 @@ class SpLoanController extends Controller
                 'bkash_account_type' => $request->bkash_account_type
             ];
 
-            $bank_informations->update($this->withBothModificationFields($bank_data));
+            if ($bank_informations) {
+                $bank_informations->update($this->withBothModificationFields($bank_data));
+            } else {
+                PartnerBankInformation::create($this->withCreateModificationField($bank_data));
+            }
+
             $partner->update($this->withBothModificationFields($partner_data));
             return api_response($request, 1, 200);
         } catch (\Throwable $e) {
