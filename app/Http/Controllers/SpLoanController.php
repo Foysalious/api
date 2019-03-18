@@ -510,6 +510,7 @@ class SpLoanController extends Controller
             $bank_informations = $partner->bankInformations;
 
             $nominee_profile = Profile::find($profile->nominee_id);
+            $grantor_profile = Profile::find($profile->grantor_id);
 
             $info = array(
                 'picture' => $profile->pro_pic,
@@ -519,6 +520,11 @@ class SpLoanController extends Controller
                     'picture' => !empty($nominee_profile) ? $nominee_profile->pro_pic : null,
                     'nid_front_image' => !empty($nominee_profile) ? $nominee_profile->nid_image_front : null,
                     'nid_back_image' => !empty($nominee_profile) ? $nominee_profile->nid_image_back : null,
+                ],
+                'grantor_document' => [
+                    'picture' => !empty($grantor_profile) ? $grantor_profile->pro_pic : null,
+                    'nid_front_image' => !empty($grantor_profile) ? $grantor_profile->nid_image_front : null,
+                    'nid_back_image' => !empty($grantor_profile) ? $grantor_profile->nid_image_back : null,
                 ],
                 'business_document' => [
                     'tin_certificate' => $profile->tin_certificate,
