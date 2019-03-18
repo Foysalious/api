@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "178a30df2b5e0098af5b0462f38f268e",
+    "content-hash": "f6eed257a4e4ba3a5c005220e17a2521",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -635,12 +635,12 @@
             "version": "v1.0.38",
             "source": {
                 "type": "git",
-                "url": "https://github.com/Folkloreatelier/laravel-graphql.git",
+                "url": "https://github.com/folkloreinc/laravel-graphql.git",
                 "reference": "7a2745a34d3e2deb211e1cab857ac9717fd57003"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Folkloreatelier/laravel-graphql/zipball/7a2745a34d3e2deb211e1cab857ac9717fd57003",
+                "url": "https://api.github.com/repos/folkloreinc/laravel-graphql/zipball/7a2745a34d3e2deb211e1cab857ac9717fd57003",
                 "reference": "7a2745a34d3e2deb211e1cab857ac9717fd57003",
                 "shasum": ""
             },
@@ -2857,7 +2857,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "4a5243a2d86a2de4cee0d39168ef65b1eb920e77"
+                "reference": "b935c1d9260f4d9167d6927684db6354e1422db0"
             },
             "require": {
                 "php": ">=5.4"
@@ -2884,7 +2884,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2019-03-11T07:33:14+00:00"
+            "time": "2019-03-18T15:56:18+00:00"
         },
         {
             "name": "sheba/notification",
@@ -5445,12 +5445,10 @@
         "ext-soap": "*",
         "ext-calendar": "*",
         "ext-simplexml": "*",
-        "ext-redis": "*",
-        "ext-mysql_xdevapi": "*",
-        "ext-simplexml": "*",
         "ext-openssl": "^7.0",
         "ext-mcrypt": "^7.0",
-        "ext-redis": "*"
+        "ext-redis": "*",
+        "ext-mysql_xdevapi": "*"
     },
     "platform-dev": []
 }
