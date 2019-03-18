@@ -229,8 +229,8 @@ class PartnerRegistrationController extends Controller
 
     private function walletSetting($partner, $by)
     {
-        $data = ['partner_id' => $partner->id, 'security_money' => 5000];
-        PartnerWalletSetting::create(array_merge(['partner_id' => $partner->id, 'security_money' => 5000], $by));
+        $data = ['partner_id' => $partner->id, 'security_money' => constants('PARTNER_DEFAULT_SECURITY_MONEY')];
+        PartnerWalletSetting::create(array_merge(['partner_id' => $partner->id, 'security_money' => constants('PARTNER_DEFAULT_SECURITY_MONEY')], $by));
     }
 
     public function registerReferAffiliate($affiliate, Request $request)
