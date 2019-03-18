@@ -372,7 +372,6 @@ class SpLoanController extends Controller
         try {
             $partner = $request->partner;
             $bank_informations = $partner->bankInformations;
-
             $bank_data = [
                 'acc_name' => $request->acc_name,
                 'acc_no' => $request->acc_no,
@@ -514,8 +513,12 @@ class SpLoanController extends Controller
 
             $info = array(
                 'picture' => $profile->pro_pic,
+                'nid_image' => $manager_resource->nid_image,
+                'is_verified' => $manager_resource->is_verified,
+
                 'nid_image_front' => $profile->nid_image_front,
                 'nid_image_back' => $profile->nid_image_back,
+
                 'nominee_document' => [
                     'picture' => !empty($nominee_profile) ? $nominee_profile->pro_pic : null,
                     'nid_front_image' => !empty($nominee_profile) ? $nominee_profile->nid_image_front : null,
