@@ -243,9 +243,21 @@ class SpLoanController extends Controller
         }
     }
 
-    public function updatePersonalInformation($partner, SpLoanRequest $request)
+    public function updatePersonalInformation($partner, Request $request)
     {
         try {
+            $this->validate($request, [
+                'gender' => 'required|string|in:Male,Female,Other,পুরুষ,মহিলা,অন্যান্য',
+                'dob' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
+                'address' => 'required|string',
+                'permanent_address' => 'required|string',
+                'father_name' => 'required_without:spouse_name',
+                'spouse_name' => 'required_without:father_name',
+                'occupation' => 'required|string',
+                'monthly_living_cost' => 'required|numeric',
+                'total_asset_amount' => 'required|numeric',
+                'monthly_loan_installment_amount' => 'required|numeric'
+            ]);
             $manager_resource = $request->manager_resource;
             $profile = $manager_resource->profile;
 
@@ -267,7 +279,10 @@ class SpLoanController extends Controller
             $profile->update($this->withBothModificationFields($profile_data));
             $manager_resource->update($this->withBothModificationFields($resource_data));
             return api_response($request, 1, 200);
-        } catch (\Throwable $e) {
+        }  catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        }  catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -312,9 +327,18 @@ class SpLoanController extends Controller
         }
     }
 
-    public function updateBusinessInformation($partner, SpLoanRequest $request)
+    public function updateBusinessInformation($partner, Request $request)
     {
         try {
+            $this->validate($request, [
+                'business_type' => 'required|string',
+                'location' => 'required|string',
+                'establishment_year' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
+                'full_time_employee' => 'required|numeric',
+                'part_time_employee' => 'required|numeric',
+                'sales_information' => 'required',
+                'business_additional_information' => 'required'
+            ]);
             $partner = $request->partner;
             $basic_informations = $partner->basicInformations;
             $partner_data = [
@@ -332,6 +356,9 @@ class SpLoanController extends Controller
             $partner->update($this->withBothModificationFields($partner_data));
             $basic_informations->update($this->withBothModificationFields($partner_basic_data));
             return api_response($request, 1, 200);
+        }  catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -586,8 +613,7 @@ class SpLoanController extends Controller
             } else {
                 return api_response($request, null, 500);
             }
-        } catch
-        (ValidationException $e) {
+        } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
@@ -621,8 +647,7 @@ class SpLoanController extends Controller
             } else {
                 return api_response($request, null, 500);
             }
-        } catch
-        (ValidationException $e) {
+        } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
