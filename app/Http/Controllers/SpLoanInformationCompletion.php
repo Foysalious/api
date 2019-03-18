@@ -25,7 +25,7 @@ class SpLoanInformationCompletion extends Controller
             $business = $this->businessInformationCompletion($partner, $basic_informations, $complete_count);
             $finance = $this->financeInformationCompletion($partner, $bank_informations, $complete_count);
             $nominee = $this->nomineeInformationCompletion($profile, $complete_count);
-            $documents = $this->documentCompletion($profile, $partner, $complete_count);
+            $documents = $this->documentCompletion($profile, $manager_resource, $partner, $complete_count);
 
 
             $completion = [
@@ -162,7 +162,7 @@ class SpLoanInformationCompletion extends Controller
         return ['nominee_information' => $nominee_information, 'last_update' => $last_update];
     }
 
-    private function documentCompletion($profile, $partner, $complete_count)
+    private function documentCompletion($profile, $manager_resource, $partner, $complete_count)
     {
         $basic_informations = $partner->basicInformations;
         $bank_informations = $partner->bankInformations;
@@ -172,8 +172,13 @@ class SpLoanInformationCompletion extends Controller
         $update_at = collect();
 
         if (!empty($profile->pro_pic)) $complete_count++;
-        if (!empty($profile->nid_image_front)) $complete_count++;
-        if (!empty($profile->nid_image_back)) $complete_count++;
+        if (!empty($manager_resource->nid_image)) $complete_count += 2;
+        else {
+            if (!empty($profile->nid_image_front)) $complete_count++;
+            if (!empty($profile->nid_image_back)) $complete_count++;
+        }
+
+
         $update_at->push($profile->updated_at);
 
         if ($nominee_profile) {
