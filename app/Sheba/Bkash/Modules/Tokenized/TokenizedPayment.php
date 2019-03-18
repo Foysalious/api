@@ -8,10 +8,10 @@ class TokenizedPayment extends BkashPayment
     public function getCreateBody(Payment $payment)
     {
         return json_encode(array(
-            'amount' => $payment->payable->amount,
+            'amount' => (string)$payment->payable->amount,
             'currency' => 'BDT',
             'intent' => 'sale',
-            'merchantInvoiceNumber' => $payment->transaction_id,
+            'merchantInvoiceNumber' => (string)$payment->transaction_id,
             'agreementID' => $payment->payable->user->getAgreementId(),
             'callbackURL' => config('sheba.api_url') . '/v2/bkash/tokenized/payment/validate'
         ));
