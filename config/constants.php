@@ -414,6 +414,7 @@ return [
         'service_unavailable' => 'Service Unavailable'
     ],
     'PARTNER_AFFILIATIONS_FAKE_REJECT_REASONS' => ['fake'],
+    'PARTNER_DEFAULT_SECURITY_MONEY' => 300,
     'PARTNER_AFFILIATION_REWARD' => 200,
     'PARTNER_AFFILIATION_PARTNER_ORDER_BENCHMARK' => 2,
     'PARTNER_AFFILIATION_REWARD_BREAKDOWN' => [
@@ -516,5 +517,31 @@ return [
         'pending' => 'pending',
         'successful' => 'successful',
         'failed' => 'failed',
+    ],
+    'BANK_ACCOUNT_TYPE' => [
+        ['key' => 'savings', 'en' => 'savings', 'bn' => 'সেভিংস'],
+        ['key' => 'current', 'en' => 'current', 'bn' => 'কারেন্ট']
+    ],
+    'BKASH_ACCOUNT_TYPE' => [
+        ['key' => 'personal', 'en' => 'personal', 'bn' => 'পার্সোনাল'],
+        ['key' => 'agent', 'en' => 'agent', 'bn' => 'এজেন্ট'],
+        ['key' => 'merchant', 'en' => 'merchant', 'bn' => 'মার্চেন্ট']
+    ],
+    'SUGGESTED_OCCUPATION' => [
+        ['key' => 'government_service', 'en' => 'government_service', 'bn' => 'গভর্নমেন্ট সার্ভিস '],
+        ['key' => 'private_service', 'en' => 'private_service', 'bn' => 'প্রাইভেট সার্ভিস'],
+        ['key' => 'business', 'en' => 'business', 'bn' => 'বিজনেস'],
+        ['key' => 'other', 'en' => 'other', 'bn' => 'অন্যান্য']
+    ],
+    'GENDER' => [
+        ['key' => 'female', 'en' => 'Female', 'bn' => 'মহিলা'],
+        ['key' => 'male', 'en' => 'Male', 'bn' => 'পুরুষ'],
+        ['key'=>'other', 'en' => 'Other', 'bn' => 'অন্যান্য']
+    ],
+    'LOAN_STATUS' => [
+        'rejected' => 'rejected',
+        'approved' => 'approved',
+        'closed' => 'closed',
+        'considerable' => 'considerable'
     ]
 ];

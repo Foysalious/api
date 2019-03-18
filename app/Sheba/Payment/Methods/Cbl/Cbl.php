@@ -42,6 +42,7 @@ class Cbl extends PaymentMethod
         DB::transaction(function () use ($payment, $payable, $invoice, $user) {
             $payment->payable_id = $payable->id;
             $payment->transaction_id = $invoice;
+            $payment->gateway_transaction_id = $invoice;
             $payment->status = 'initiated';
             $payment->valid_till = Carbon::tomorrow();
             $this->setModifier($user);
@@ -60,7 +61,7 @@ class Cbl extends PaymentMethod
         if ($init_response->hasSuccess()) {
             $success = $init_response->getSuccess();
             $payment->transaction_details = json_encode($success->details);
-            $payment->transaction_id = 'SHEBA_CBL_' . $success->id;
+            $payment->gateway_transaction_id = 'SHEBA_CBL_' . $success->id;
             $payment->redirect_url = $success->redirect_url;
         } else {
             $error = $init_response->getError();

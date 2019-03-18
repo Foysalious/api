@@ -2,6 +2,7 @@
 use App\Models\MovieTicketVendor;
 use App\Sheba\MovieTicketRechargeHistory;
 use Carbon\Carbon;
+use Sheba\MovieTicket\MovieTicketRequest;
 use Sheba\MovieTicket\Response\MovieResponse;
 
 abstract class Vendor
@@ -14,7 +15,9 @@ abstract class Vendor
 
     abstract public function get($action, $params = []);
 
-    abstract function buyTicket($movieTicketResponse): MovieResponse;
+    abstract public function post($action, $body = []);
+
+    abstract function buyTicket(MovieTicketRequest $movieTicketRequest): MovieResponse;
 
     public function  setModel(MovieTicketVendor $model)
     {

@@ -265,36 +265,24 @@ class ShebaController extends Controller
         try {
             $version_code = (int)$request->header('Version-Code');
             $platform_name = $request->header('Platform-Name');
-            $payments = array(
-                array(
-                    'name' => 'Sheba Credit',
-                    'is_published' => 1,
-                    'description' => '',
-                    'asset' => 'sheba_credit',
-                    'method_name' => 'wallet'
-                ),
-                array(
-                    'name' => 'bKash Payment',
-                    'is_published' => 0,
-                    'description' => '',
-                    'asset' => 'bkash',
-                    'method_name' => 'bkash'
-                ),
-                array(
-                    'name' => 'City Bank',
-                    'is_published' => $this->calculateCityBankStatus($version_code, $platform_name),
-                    'description' => '',
-                    'asset' => 'cbl',
-                    'method_name' => 'cbl'
-                ),
-                array(
-                    'name' => 'Other Debit/Credit',
-                    'is_published' => 1,
-                    'description' => '',
-                    'asset' => 'ssl',
-                    'method_name' => 'online'
-                )
-            );
+            if ($request->payable_type) {
+                switch ($request->payable_type) {
+                    case 'order':
+                        $payments = $this->getRegularPayments($version_code, $platform_name);
+                        break;
+                    case 'subscription':
+                        $payments = $this->getSubscriptionPayments($version_code);
+                        break;
+                    case 'voucher':
+                        $payments = $this->getVoucherPayments($version_code);
+                        break;
+                    default:
+                        throw new \Exception('Invalid Payable Type');
+                        break;
+                }
+            } else {
+                $payments = $this->getRegularPayments($version_code, $platform_name);
+            }
             return api_response($request, $payments, 200, ['payments' => $payments]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -302,40 +290,100 @@ class ShebaController extends Controller
         }
     }
 
-    public function getSubscriptionPayments(Request $request)
+    protected function getVoucherPayments($version_code)
     {
-        try {
-            $version_code = (int)$request->header('Version-Code');
-            $payments = array(
-                array(
-                    'name' => 'Sheba Credit',
-                    'is_published' => 1,
-                    'description' => '',
-                    'asset' => 'sheba_credit',
-                    'method_name' => 'wallet'
-                ),
-                array(
-                    'name' => 'City Bank',
-                    'is_published' => $version_code ? ($version_code > 30112 ? 1 : 0) : 1,
-                    'description' => '',
-                    'asset' => 'cbl',
-                    'method_name' => 'cbl'
-                ),
-                array(
-                    'name' => 'Other Debit/Credit',
-                    'is_published' => 1,
-                    'description' => '',
-                    'asset' => 'ssl',
-                    'method_name' => 'online'
-                )
-            );
-            return api_response($request, $payments, 200, ['payments' => $payments]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        return [
+            array(
+                'name' => 'bKash Payment',
+                'is_published' => 1,
+                'description' => '',
+                'asset' => 'bkash',
+                'method_name' => 'bkash'
+            ),
+            array(
+                'name' => 'City Bank',
+                'is_published' => $version_code ? ($version_code > 30112 ? 1 : 0) : 1,
+                'description' => '',
+                'asset' => 'cbl',
+                'method_name' => 'cbl'
+            ),
+            array(
+                'name' => 'Other Debit/Credit',
+                'is_published' => 1,
+                'description' => '',
+                'asset' => 'ssl',
+                'method_name' => 'online'
+            )
+        ];
     }
 
+    protected function getRegularPayments($version_code, $platform_name)
+    {
+        return [
+            array(
+                'name' => 'Sheba Credit',
+                'is_published' => 1,
+                'description' => '',
+                'asset' => 'sheba_credit',
+                'method_name' => 'wallet'
+            ),
+            array(
+                'name' => 'bKash Payment',
+                'is_published' => 1,
+                'description' => '',
+                'asset' => 'bkash',
+                'method_name' => 'bkash'
+            ),
+            array(
+                'name' => 'City Bank',
+                'is_published' => $this->calculateCityBankStatus($version_code, $platform_name),
+                'description' => '',
+                'asset' => 'cbl',
+                'method_name' => 'cbl'
+            ),
+            array(
+                'name' => 'Other Debit/Credit',
+                'is_published' => 1,
+                'description' => '',
+                'asset' => 'ssl',
+                'method_name' => 'online'
+            )
+        ];
+    }
+
+    public function getSubscriptionPayments($version_code)
+    {
+        return [
+            array(
+                'name' => 'Sheba Credit',
+                'is_published' => 1,
+                'description' => '',
+                'asset' => 'sheba_credit',
+                'method_name' => 'wallet'
+            ),
+            array(
+                'name' => 'City Bank',
+                'is_published' => $version_code ? ($version_code > 30112 ? 1 : 0) : 1,
+                'description' => '',
+                'asset' => 'cbl',
+                'method_name' => 'cbl'
+            ),
+            array(
+                'name' => 'bKash Payment',
+                'is_published' => 1,
+                'description' => '',
+                'asset' => 'bkash',
+                'method_name' => 'bkash'
+            ),
+            array(
+                'name' => 'Other Debit/Credit',
+                'is_published' => 1,
+                'description' => '',
+                'asset' => 'ssl',
+                'method_name' => 'online'
+            )
+        ];
+    }
 
     private function calculateCityBankStatus($version_code, $platform_name)
     {

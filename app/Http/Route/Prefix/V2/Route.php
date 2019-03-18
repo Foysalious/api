@@ -10,7 +10,6 @@ class Route
             $api->post('subscription', 'PushSubscriptionController@store');
             $api->get('car-rental-info', 'ShebaController@sendCarRentalInfo');
             $api->get('payments', 'ShebaController@getPayments');
-            $api->get('subscription-payments', 'ShebaController@getSubscriptionPayments');
             $api->get('butcher-info', 'ShebaController@sendButcherInfo');
             $api->post('service-requests', 'ServiceRequestController@store');
             $api->post('transactions/{transactionID}', 'ShebaController@checkTransactionStatus');
@@ -25,19 +24,28 @@ class Route
                 $api->post('purchase', 'WalletController@purchase');
                 $api->post('validate', 'WalletController@validatePayment');
                 $api->get('faqs', 'WalletController@getFaqs');
+                $api->get('gift-cards', 'GiftCardController@getGiftCards');
             });
-
             $api->group(['prefix' => 'faqs'], function ($api) {
                 $api->get('order', 'JobController@getFaqs');
             });
-
             $api->group(['prefix' => 'ssl'], function ($api) {
                 $api->post('validate', 'SslController@validatePayment');
             });
 
             $api->group(['prefix' => 'bkash'], function ($api) {
                 $api->post('validate', 'BkashController@validatePayment');
+                $api->group(['prefix' => 'tokenized'], function ($api) {
+                    $api->group(['prefix' => 'payment'], function ($api) {
+                        $api->get('validate', 'Bkash\BkashTokenizedController@validatePayment');
+                        $api->post('/', 'Bkash\BkashTokenizedController@tokenizePayment');
+                    });
+                    $api->group(['prefix' => 'agreement'], function ($api) {
+                        $api->get('validate', 'Bkash\BkashTokenizedController@validateAgreement');
+                    });
+                });
                 $api->get('paymentID/{paymentID}', 'BkashController@getPaymentInfo');
+                $api->get('token/{paymentID}', 'BkashController@token');
             });
             $api->group(['prefix' => 'orders'], function ($api) {
                 $api->get('online', 'OrderController@clearPayment');
@@ -115,6 +123,12 @@ class Route
             });
             $api->get('updates', 'UpdateController@getUpdates');
             $api->get('ek-sheba/authenticate', 'EkshebaController@authenticate');
+
+            /**
+             * PROFILE EXISTENCE CHECK. PUBLIC API
+             */
+            $api->get('get-profile-info', 'ProfileController@getProfile');
+            $api->post('admin/payout', 'Bkash\\BkashPayoutController@pay');
         });
         return $api;
     }
