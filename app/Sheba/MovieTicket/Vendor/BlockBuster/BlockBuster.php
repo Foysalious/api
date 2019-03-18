@@ -2,6 +2,7 @@
 
 use GuzzleHttp\Client;
 use Sheba\MovieTicket\Actions;
+use Sheba\MovieTicket\MovieTicketRequest;
 use Sheba\MovieTicket\Response\BlockBusterResponse;
 use Sheba\MovieTicket\Response\MovieResponse;
 use Sheba\MovieTicket\TransactionGenerator;
@@ -89,10 +90,23 @@ class BlockBuster extends Vendor
         return $url;
     }
 
-    function buyTicket($response): MovieResponse
+    /**
+     * @param MovieTicketRequest $movieTicketRequest
+     * @return MovieResponse
+     * @throws GuzzleException
+     */
+    function buyTicket(MovieTicketRequest $movieTicketRequest): MovieResponse
     {
+        $this->init();
         $blockbuster_response = new BlockBusterResponse();
+        $response = $this->post(Actions::UPDATE_MOVIE_SEAT_STATUS,[
+            'trx_id' => $movieTicketRequest->getTrxId(),
+            'DTMSID'=>$movieTicketRequest->getDtmsId(),
+            'ticket_id'=>$movieTicketRequest->getTicketId(),
+            'ConfirmStatus'=>$movieTicketRequest->getConfirmStatus(),
+        ]);
         $response->place = 'BLOCKBUSTER Movies, Jamuna Future Park';
+        $response->image_url =$movieTicketRequest->getImageUrl();
         $blockbuster_response->setResponse($response);
         return $blockbuster_response;
     }
