@@ -160,28 +160,26 @@ class SpLoanController extends Controller
                     'name' => !empty($nominee_profile) ? $nominee_profile->name : null,
                     'mobile' => !empty($nominee_profile) ? $nominee_profile->mobile : null,
                     'nominee_relation' => !empty($nominee_profile) ? $profile->nominee_relation : null,
-                    'picture' => !empty($nominee_profile) ? $nominee_profile->pro_pic : null,
 
-                    'nid_front_image' => !empty($nominee_profile) ? $nominee_profile->nid_front_image : null,
-                    'nid_back_image' => !empty($nominee_profile) ? $nominee_profile->nid_back_image : null,
                     'grantor' => [
                         'name' => !empty($grantor_profile) ? $grantor_profile->name : null,
                         'mobile' => !empty($grantor_profile) ? $grantor_profile->mobile : null,
                         'grantor_relation' => !empty($grantor_profile) ? $profile->grantor_relation : null,
-                        'picture' => !empty($grantor_profile) ? $grantor_profile->pro_pic : null,
-
-                        'nid_front_image' => !empty($grantor_profile) ? $grantor_profile->nid_front_image : null,
-                        'nid_back_image' => !empty($grantor_profile) ? $grantor_profile->nid_back_image : null,
                     ]
                 ],
                 'documents' => [
                     'picture' => $profile->pro_pic,
-                    'nid_front_image' => $profile->nid_front_image,
-                    'nid_back_image' => $profile->nid_back_image,
+                    'nid_image_front' => $profile->nid_image_front,
+                    'nid_image_back' => $profile->nid_image_back,
                     'nominee_document' => [
                         'picture' => !empty($nominee_profile) ? $nominee_profile->pro_pic : null,
-                        'nid_front_image' => !empty($nominee_profile) ? $nominee_profile->nid_front_image : null,
-                        'nid_back_image' => !empty($nominee_profile) ? $nominee_profile->nid_back_image : null,
+                        'nid_image_front' => !empty($nominee_profile) ? $nominee_profile->nid_image_front : null,
+                        'nid_image_back' => !empty($nominee_profile) ? $nominee_profile->nid_image_back : null,
+                    ],
+                    'grantor_document' => [
+                        'picture' => !empty($grantor_profile) ? $grantor_profile->pro_pic : null,
+                        'nid_image_front' => !empty($grantor_profile) ? $grantor_profile->nid_image_front : null,
+                        'nid_image_back' => !empty($grantor_profile) ? $grantor_profile->nid_image_back : null,
                     ],
                     'business_document' => [
                         'tin_certificate' => $profile->tin_certificate,
@@ -408,18 +406,18 @@ class SpLoanController extends Controller
                 'name' => !empty($nominee_profile) ? $nominee_profile->name : null,
                 'mobile' => !empty($nominee_profile) ? $nominee_profile->mobile : null,
                 'nominee_relation' => !empty($nominee_profile) ? $profile->nominee_relation : null,
-                'picture' => !empty($nominee_profile) ? $nominee_profile->pro_pic : null,
 
-                'nid_front_image' => !empty($nominee_profile) ? $nominee_profile->nid_front_image : null,
-                'nid_back_image' => !empty($nominee_profile) ? $nominee_profile->nid_back_image : null,
+                'picture' => !empty($nominee_profile) ? $nominee_profile->pro_pic : null,
+                'nid_front_image' => !empty($nominee_profile) ? $nominee_profile->nid_image_front : null,
+                'nid_back_image' => !empty($nominee_profile) ? $nominee_profile->nid_image_back : null,
                 'grantor' => [
                     'name' => !empty($grantor_profile) ? $grantor_profile->name : null,
                     'mobile' => !empty($grantor_profile) ? $grantor_profile->mobile : null,
                     'grantor_relation' => !empty($grantor_profile) ? $profile->grantor_relation : null,
-                    'picture' => !empty($grantor_profile) ? $grantor_profile->pro_pic : null,
 
-                    'nid_front_image' => !empty($grantor_profile) ? $grantor_profile->nid_front_image : null,
-                    'nid_back_image' => !empty($grantor_profile) ? $grantor_profile->nid_back_image : null,
+                    'picture' => !empty($grantor_profile) ? $grantor_profile->pro_pic : null,
+                    'nid_front_image' => !empty($grantor_profile) ? $grantor_profile->nid_image_front : null,
+                    'nid_back_image' => !empty($grantor_profile) ? $grantor_profile->nid_image_back : null,
                 ]
             );
             return api_response($request, $info, 200, ['info' => $info]);
