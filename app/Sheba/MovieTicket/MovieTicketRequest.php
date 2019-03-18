@@ -6,8 +6,11 @@ class MovieTicketRequest
     private $mobile;
     private $amount;
     private $email;
-    private $blockBusterResponse;
-
+    private $trxId;
+    private $dtmsId;
+    private $ticketId;
+    private $confirmStatus;
+    private $imageUrl;
     /**
      * @return mixed
      */
@@ -81,17 +84,88 @@ class MovieTicketRequest
     /**
      * @return mixed
      */
-    public function getBlockBusterResponse()
+    public function getTrxId()
     {
-        return $this->blockBusterResponse;
+        return $this->trxId;
     }
 
     /**
-     * @param mixed $blockBusterResponse
+     * @param mixed $trxId
      */
-    public function setBlockBusterResponse($blockBusterResponse)
+    public function setTrxId($trxId)
     {
-        $this->blockBusterResponse = $blockBusterResponse;
+        $this->trxId = $trxId;
+        return $this;
     }
 
+    /**
+     * @return mixed
+     */
+    public function getDtmsId()
+    {
+        return $this->dtmsId;
+    }
+
+    /**
+     * @param mixed $dtmsId
+     */
+    public function setDtmsId($dtmsId)
+    {
+        $this->dtmsId = $dtmsId;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getTicketId()
+    {
+        return $this->ticketId;
+    }
+
+    /**
+     * @param mixed $ticketId
+     */
+    public function setTicketId($ticketId)
+    {
+        $this->ticketId = $ticketId;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getConfirmStatus()
+    {
+        return $this->confirmStatus;
+    }
+
+    /**
+     * @param mixed $confirmStatus
+     */
+    public function setConfirmStatus($confirmStatus)
+    {
+        $this->confirmStatus = $confirmStatus;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getImageUrl()
+    {
+        return $this->imageUrl;
+    }
+
+    /**
+     * @param mixed $imageUrl
+     */
+    public function setImageUrl($imageUrl)
+    {
+        $this->imageUrl = $imageUrl;
+    }
+
+    /**
+     * @return mixed
+     */
 }

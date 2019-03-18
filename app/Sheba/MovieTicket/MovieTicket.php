@@ -73,7 +73,7 @@ class MovieTicket
     public function buyTicket(MovieTicketRequest $movie_ticket_request)
     {
         if ($this->validator->setRequest($movie_ticket_request)->validate()->hasError()) return;
-        $this->response = $this->vendor->buyTicket($movie_ticket_request->getBlockBusterResponse());
+        $this->response = $this->vendor->buyTicket($movie_ticket_request);
         if ($this->response->hasSuccess()) {
             $response = $this->response->getSuccess();
             DB::transaction(function () use ($response, $movie_ticket_request) {
@@ -85,6 +85,7 @@ class MovieTicket
                 $this->movieTicketOrder = $movie_ticket_order;
             });
         }
+        return $this->response;
     }
 
     /**
