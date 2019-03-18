@@ -25,7 +25,7 @@ class SpLoanInformationCompletion extends Controller
             $business = $this->businessInformationCompletion($partner, $basic_informations, $complete_count);
             $finance = $this->financeInformationCompletion($partner, $bank_informations, $complete_count);
             $nominee = $this->nomineeInformationCompletion($profile, $complete_count);
-            $documents = $this->documentCompletion($profile, $partner, $complete_count);
+            $documents = $this->documentCompletion($profile, $manager_resource, $partner, $complete_count);
 
 
             $completion = [
@@ -113,13 +113,14 @@ class SpLoanInformationCompletion extends Controller
     private function financeInformationCompletion($partner, $bank_informations, $complete_count)
     {
         $update_at = collect();
-
-        if (!empty($bank_informations->acc_name)) $complete_count++;
-        if (!empty($bank_informations->acc_no)) $complete_count++;
-        if (!empty($bank_informations->bank_name)) $complete_count++;
-        if (!empty($bank_informations->branch_name)) $complete_count++;
-        if (!empty($bank_informations->acc_type)) $complete_count++;
-        $update_at->push($bank_informations->updated_at);
+        if ($bank_informations) {
+            if (!empty($bank_informations->acc_name)) $complete_count++;
+            if (!empty($bank_informations->acc_no)) $complete_count++;
+            if (!empty($bank_informations->bank_name)) $complete_count++;
+            if (!empty($bank_informations->branch_name)) $complete_count++;
+            if (!empty($bank_informations->acc_type)) $complete_count++;
+            $update_at->push($bank_informations->updated_at);
+        }
 
         if (!empty($partner->bkash_no)) $complete_count++;
         if (!empty($partner->bkash_account_type)) $complete_count++;
@@ -141,9 +142,6 @@ class SpLoanInformationCompletion extends Controller
             if (!(empty($nominee_profile->name))) $complete_count++;
             if (!(empty($nominee_profile->mobile))) $complete_count++;
             if (!(empty($profile->nominee_relation))) $complete_count++;
-            if (!(empty($nominee_profile->pro_pic))) $complete_count++;
-            if (!(empty($nominee_profile->nid_front_image))) $complete_count++;
-            if (!(empty($nominee_profile->nid_back_image))) $complete_count++;
             $update_at->push($nominee_profile->updated_at);
 
         }
@@ -151,9 +149,6 @@ class SpLoanInformationCompletion extends Controller
             if (!(empty($grantor_profile->name))) $complete_count++;
             if (!(empty($grantor_profile->mobile))) $complete_count++;
             if (!(empty($profile->nominee_relation))) $complete_count++;
-            if (!(empty($grantor_profile->pro_pic))) $complete_count++;
-            if (!(empty($grantor_profile->nid_front_image))) $complete_count++;
-            if (!(empty($grantor_profile->nid_back_image))) $complete_count++;
             $update_at->push($grantor_profile->updated_at);
         }
         if ($nominee_profile || $grantor_profile) {
@@ -162,40 +157,55 @@ class SpLoanInformationCompletion extends Controller
             $last_update = 0;
         }
 
-        $nominee_information = round((($complete_count / 12) * 100), 0);
+        $nominee_information = round((($complete_count / 6) * 100), 0);
 
         return ['nominee_information' => $nominee_information, 'last_update' => $last_update];
     }
 
-    private function documentCompletion($profile, $partner, $complete_count)
+    private function documentCompletion($profile, $manager_resource, $partner, $complete_count)
     {
         $basic_informations = $partner->basicInformations;
         $bank_informations = $partner->bankInformations;
         $nominee_profile = Profile::find($profile->nominee_id);
+        $grantor_profile = Profile::find($profile->grantor_id);
 
         $update_at = collect();
 
         if (!empty($profile->pro_pic)) $complete_count++;
-        if (!empty($profile->nid_front_image)) $complete_count++;
-        if (!empty($profile->nid_back_image)) $complete_count++;
+        if (!empty($manager_resource->nid_image)) $complete_count += 2;
+        else {
+            if (!empty($profile->nid_image_front)) $complete_count++;
+            if (!empty($profile->nid_image_back)) $complete_count++;
+        }
+
+
         $update_at->push($profile->updated_at);
 
         if ($nominee_profile) {
             if (!(empty($nominee_profile->pro_pic))) $complete_count++;
-            if (!(empty($nominee_profile->nid_front_image))) $complete_count++;
-            if (!(empty($nominee_profile->nid_back_image))) $complete_count++;
+            if (!(empty($nominee_profile->nid_image_front))) $complete_count++;
+            if (!(empty($nominee_profile->nid_image_back))) $complete_count++;
             $update_at->push($nominee_profile->updated_at);
+        }
+
+        if ($grantor_profile) {
+            if (!(empty($grantor_profile->pro_pic))) $complete_count++;
+            if (!(empty($grantor_profile->nid_image_front))) $complete_count++;
+            if (!(empty($grantor_profile->nid_image_back))) $complete_count++;
+            $update_at->push($grantor_profile->updated_at);
         }
 
         if (!empty($profile->tin_certificate)) $complete_count++;
         if (!empty($basic_informations->trade_license_attachment)) $complete_count++;
         $update_at->push($basic_informations->updated_at);
-        if (!empty($bank_informations->statement)) $complete_count++;
-        $update_at->push($bank_informations->updated_at);
+        if ($bank_informations) {
+            if (!empty($bank_informations->statement)) $complete_count++;
+            $update_at->push($bank_informations->updated_at);
+        }
 
         $last_update = getDayName($update_at->max());
 
-        $documents = round((($complete_count / 9) * 100), 0);
+        $documents = round((($complete_count / 12) * 100), 0);
 
         return ['documents' => $documents, 'last_update' => $last_update];
     }

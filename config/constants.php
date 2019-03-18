@@ -537,5 +537,11 @@ return [
         ['key' => 'female', 'en' => 'Female', 'bn' => 'মহিলা'],
         ['key' => 'male', 'en' => 'Male', 'bn' => 'পুরুষ'],
         ['key'=>'other', 'en' => 'Other', 'bn' => 'অন্যান্য']
+    ],
+    'LOAN_STATUS' => [
+        'rejected' => 'rejected',
+        'approved' => 'approved',
+        'closed' => 'closed',
+        'considerable' => 'considerable'
     ]
 ];

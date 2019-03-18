@@ -24,10 +24,10 @@ class BlockBusterResponse extends MovieResponse
 
     public function getError(): MovieTicketErrorResponse
     {
-        if ($this->hasSuccess()) throwException(new \Exception('Response has success'));
+        if ($this->hasSuccess()) throwException(new \Exception('Response has success'));;
         $movie_ticket_error_response = new MovieTicketErrorResponse();
-        $movie_ticket_error_response->errorCode = $this->response->TXNID;
-        $movie_ticket_error_response->errorMessage = isset($this->response->status) ? $this->response->status : 'Error message not given.';
+        $movie_ticket_error_response->status = $this->response->status;
+        $movie_ticket_error_response->errorMessage = $this->response->message;
         return $movie_ticket_error_response;
     }
 }

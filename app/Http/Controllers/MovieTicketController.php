@@ -135,24 +135,27 @@ class MovieTicketController extends Controller
 
             $agent = $this->getAgent($request);
             if ($agent->wallet < (double) $request->cost) return api_response($request, null, 403, ['message' => "You don't have sufficient balance to buy this ticket."]);
-            $bookingResponse = $movieTicketManager->initVendor()->updateMovieTicketStatus([
-                'trx_id' => $request->trx_id,
-                'DTMSID'=>$request->dtmsid,
-                'ticket_id'=>$request->lid,
-                'ConfirmStatus'=>$request->confirm_status,
-            ]);
-            $response = $bookingResponse;
-            $response->image_url = $request->image_url;
-            if($response->status === 'failed')
-                return api_response($request, $bookingResponse, 200, ['status' => $response]);
-            $movieTicketRequest->setName($request->customer_name)->setEmail($request->customer_email)->setAmount($response->cost)->setMobile($request->customer_mobile)->setBlockBusterResponse($response);
+            $movieTicketRequest->setName($request->customer_name)->setEmail($request->customer_email)->setAmount($request->cost)
+                    ->setMobile($request->customer_mobile)->setTrxId($request->trx_id)->setDtmsId($request->dtmsid)
+                    ->setTicketId($request->lid)->setConfirmStatus($request->confirm_status)->setImageUrl($request->image_url);
             $vendor = $vendor->getById(1);
-            $movieTicket->setAgent($agent)->setVendor($vendor)->buyTicket($movieTicketRequest);
-            $movieOrder =  $movieTicket->getMovieTicketOrder();
-            $bookingResponse->order_id = $movieOrder->id;
-            $bookingResponse->agent_commission = $movieOrder->agent_commission;
-            $bookingResponse->sheba_commission = $movieOrder->sheba_commission;
-            return api_response($request, $bookingResponse, 200, ['status' => $bookingResponse]);
+            $response = $movieTicket->setAgent($agent)->setVendor($vendor)->buyTicket($movieTicketRequest);
+            if($response->hasSuccess()) {
+                $details = $response->getSuccess()->transactionDetails;
+                $movieOrder =  $movieTicket->getMovieTicketOrder();
+                $details->order_id = $movieOrder->id;
+                $details->agent_commission = $movieOrder->agent_commission;
+                $details->sheba_commission = $movieOrder->sheba_commission;
+                return api_response($request, $response, 200, ['status' => $details]);
+            }
+            else
+            {
+                $error = $response->getError();
+                return api_response($request, $response, 200, ['status' => [
+                    'message' => $error->errorMessage,
+                    'status' => $error->status
+                ]]);
+            }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
@@ -160,6 +163,7 @@ class MovieTicketController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         } catch (GuzzleException $e) {
