@@ -53,6 +53,7 @@ class SpLoanInformationCompletion extends Controller
 
             return api_response($request, $completion, 200, ['completion' => $completion]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -88,8 +89,8 @@ class SpLoanInformationCompletion extends Controller
 
     private function businessInformationCompletion($partner, $basic_informations, $complete_count)
     {
-        $business_additional_information = $partner->businessAdditionalInformation()['0'];
-        $sales_information = $partner->salesInformation()['0'];
+        $business_additional_information = $partner->businessAdditionalInformation();
+        $sales_information = $partner->salesInformation();
         $update_at = collect();
 
         if (!empty($partner->name)) $complete_count++;
