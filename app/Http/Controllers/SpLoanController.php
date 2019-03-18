@@ -95,7 +95,15 @@ class SpLoanController extends Controller
                 'monthly_installment' => $request->monthly_installment,
                 'final_information_for_loan' => json_encode([$this->finalInformationForLoan($partner, $request)])
             ];
-            $loan->create($this->withCreateModificationField($data));
+
+            $partner_loan = PartnerBankLoan::where('partner_id', $partner->id)->get()->last();
+
+            if ($partner_loan && in_array($partner_loan->status, ['approved', 'considerable'])) {
+                return api_response($request, null, 403, ['message' => "You already applied for loan"]);
+            } else {
+                $loan->create($this->withCreateModificationField($data));
+            }
+
             return api_response($request, 1, 200);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -311,7 +319,7 @@ class SpLoanController extends Controller
             $basic_informations = $partner->basicInformations;
             $partner_data = [
                 'business_type' => $request->business_type,
-                'address' => $request->address,
+                'address' => $request->location,
                 'full_time_employee' => $request->full_time_employee,
                 'part_time_employee' => $request->part_time_employee,
                 'sales_information' => $request->sales_information,
