@@ -113,13 +113,14 @@ class SpLoanInformationCompletion extends Controller
     private function financeInformationCompletion($partner, $bank_informations, $complete_count)
     {
         $update_at = collect();
-
-        if (!empty($bank_informations->acc_name)) $complete_count++;
-        if (!empty($bank_informations->acc_no)) $complete_count++;
-        if (!empty($bank_informations->bank_name)) $complete_count++;
-        if (!empty($bank_informations->branch_name)) $complete_count++;
-        if (!empty($bank_informations->acc_type)) $complete_count++;
-        $update_at->push($bank_informations->updated_at);
+        if ($bank_informations) {
+            if (!empty($bank_informations->acc_name)) $complete_count++;
+            if (!empty($bank_informations->acc_no)) $complete_count++;
+            if (!empty($bank_informations->bank_name)) $complete_count++;
+            if (!empty($bank_informations->branch_name)) $complete_count++;
+            if (!empty($bank_informations->acc_type)) $complete_count++;
+            $update_at->push($bank_informations->updated_at);
+        }
 
         if (!empty($partner->bkash_no)) $complete_count++;
         if (!empty($partner->bkash_account_type)) $complete_count++;
@@ -192,8 +193,10 @@ class SpLoanInformationCompletion extends Controller
         if (!empty($profile->tin_certificate)) $complete_count++;
         if (!empty($basic_informations->trade_license_attachment)) $complete_count++;
         $update_at->push($basic_informations->updated_at);
-        if (!empty($bank_informations->statement)) $complete_count++;
-        $update_at->push($bank_informations->updated_at);
+        if ($bank_informations) {
+            if (!empty($bank_informations->statement)) $complete_count++;
+            $update_at->push($bank_informations->updated_at);
+        }
 
         $last_update = getDayName($update_at->max());
 
