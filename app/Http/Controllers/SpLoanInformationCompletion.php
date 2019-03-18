@@ -141,9 +141,6 @@ class SpLoanInformationCompletion extends Controller
             if (!(empty($nominee_profile->name))) $complete_count++;
             if (!(empty($nominee_profile->mobile))) $complete_count++;
             if (!(empty($profile->nominee_relation))) $complete_count++;
-            /*if (!(empty($nominee_profile->pro_pic))) $complete_count++;
-            if (!(empty($nominee_profile->nid_front_image))) $complete_count++;
-            if (!(empty($nominee_profile->nid_back_image))) $complete_count++;*/
             $update_at->push($nominee_profile->updated_at);
 
         }
@@ -151,9 +148,6 @@ class SpLoanInformationCompletion extends Controller
             if (!(empty($grantor_profile->name))) $complete_count++;
             if (!(empty($grantor_profile->mobile))) $complete_count++;
             if (!(empty($profile->nominee_relation))) $complete_count++;
-            /*if (!(empty($grantor_profile->pro_pic))) $complete_count++;
-            if (!(empty($grantor_profile->nid_front_image))) $complete_count++;
-            if (!(empty($grantor_profile->nid_back_image))) $complete_count++;*/
             $update_at->push($grantor_profile->updated_at);
         }
         if ($nominee_profile || $grantor_profile) {
@@ -177,21 +171,21 @@ class SpLoanInformationCompletion extends Controller
         $update_at = collect();
 
         if (!empty($profile->pro_pic)) $complete_count++;
-        if (!empty($profile->nid_front_image)) $complete_count++;
-        if (!empty($profile->nid_back_image)) $complete_count++;
+        if (!empty($profile->nid_image_front)) $complete_count++;
+        if (!empty($profile->nid_image_back)) $complete_count++;
         $update_at->push($profile->updated_at);
 
         if ($nominee_profile) {
             if (!(empty($nominee_profile->pro_pic))) $complete_count++;
-            if (!(empty($nominee_profile->nid_front_image))) $complete_count++;
-            if (!(empty($nominee_profile->nid_back_image))) $complete_count++;
+            if (!(empty($nominee_profile->nid_image_front))) $complete_count++;
+            if (!(empty($nominee_profile->nid_image_back))) $complete_count++;
             $update_at->push($nominee_profile->updated_at);
         }
 
         if ($grantor_profile) {
             if (!(empty($grantor_profile->pro_pic))) $complete_count++;
-            if (!(empty($grantor_profile->nid_front_image))) $complete_count++;
-            if (!(empty($grantor_profile->nid_back_image))) $complete_count++;
+            if (!(empty($grantor_profile->nid_image_front))) $complete_count++;
+            if (!(empty($grantor_profile->nid_image_back))) $complete_count++;
             $update_at->push($grantor_profile->updated_at);
         }
 
