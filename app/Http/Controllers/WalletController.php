@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
-use App\Models\GiftCard;
-use App\Models\GiftCardPurchase;
 use App\Models\PartnerOrder;
 use App\Models\Payment;
 use App\Repositories\PaymentRepository;
@@ -13,8 +11,6 @@ use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Sheba\ModificationFields;
-use Sheba\Payment\Adapters\Payable\GiftCardPurchaseAdapter;
 use Sheba\Payment\Adapters\Payable\RechargeAdapter;
 use Sheba\Payment\ShebaPayment;
 use DB;
@@ -22,7 +18,6 @@ use Sheba\Reward\BonusCredit;
 
 class WalletController extends Controller
 {
-    use ModificationFields;
     public function validatePayment(Request $request)
     {
         try {
@@ -90,7 +85,7 @@ class WalletController extends Controller
             $user = $payment->payable->user;
             $sheba_credit = $user->shebaCredit();
             $paymentRepository->setPayment($payment);
-            if ($sheba_credit < $payment->payable->amount) {
+            if ($sheba_credit == 0 && $sheba_credit < $payment->payable->amount) {
                 $paymentRepository->changeStatus(['to' => 'validation_failed', 'from' => $payment->status,
                     'transaction_details' => $payment->transaction_details, 'log' => "Insufficient balance. Purchase Amount: " . $payment->payable->amount . " & Sheba Credit: $sheba_credit"]);
                 $payment->status = 'validation_failed';
@@ -103,6 +98,12 @@ class WalletController extends Controller
                     $partner_order = PartnerOrder::find($payment->payable->type_id);
                     $remaining = $bonus_credit->setUser($user)->setSpentModel($partner_order)->deduct($payment->payable->amount);
                     if ($remaining > 0) {
+                        if ($user->wallet < $remaining) {
+                            $remaining = $user->wallet;
+                            $payment_detail = $payment->paymentDetails->where('method', 'wallet')->first();
+                            $payment_detail->amount = $remaining;
+                            $payment_detail->update();
+                        }
                         $user->debitWallet($remaining);
                         $transaction = $user->walletTransaction([
                             'amount' => $remaining,
@@ -185,4 +186,5 @@ class WalletController extends Controller
             return api_response($request, null, 500);
         }
     }
+
 }
