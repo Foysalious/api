@@ -130,7 +130,7 @@ class MovieTicket
         $movie_ticket_order->transaction_id = $response->transactionId;
         $movie_ticket_order->reservation_details = json_encode($response->transactionDetails);
         $movie_ticket_order->vendor_id = $this->model->id;
-        $movie_ticket_order->sheba_commission = ($amount * $this->model->sheba_commission) / 100;
+        $movie_ticket_order->sheba_commission = ($amount * $this->model->sheba_commission) / (100 + $this->model->sheba_commission);
 
         $this->setModifier($this->agent);
         $this->withCreateModificationField($movie_ticket_order);

@@ -146,6 +146,7 @@ class MovieTicketController extends Controller
                 $details->order_id = $movieOrder->id;
                 $details->agent_commission = $movieOrder->agent_commission;
                 $details->sheba_commission = $movieOrder->sheba_commission;
+                $details->cost = $details->cost + $details->sheba_commission;
                 return api_response($request, $response, 200, ['status' => $details]);
             }
             else
@@ -163,6 +164,7 @@ class MovieTicketController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         } catch (GuzzleException $e) {
@@ -191,6 +193,7 @@ class MovieTicketController extends Controller
             }
             return api_response($request, $orders, 200, ['history' => $histories]);
         }  catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -202,6 +205,7 @@ class MovieTicketController extends Controller
             $order = MovieTicketOrder::find((int) $order);
             removeRelationsAndFields($order);
             $order->reservation_details = json_decode($order->reservation_details);
+            $order->reservation_details->cost = round($order->amount);
             return api_response($request, $order, 200, ['details' => $order]);
         }  catch (\Throwable $e) {
             app('sentry')->captureException($e);
