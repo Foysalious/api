@@ -635,12 +635,12 @@
             "version": "v1.0.38",
             "source": {
                 "type": "git",
-                "url": "https://github.com/Folkloreatelier/laravel-graphql.git",
+                "url": "https://github.com/folkloreinc/laravel-graphql.git",
                 "reference": "7a2745a34d3e2deb211e1cab857ac9717fd57003"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Folkloreatelier/laravel-graphql/zipball/7a2745a34d3e2deb211e1cab857ac9717fd57003",
+                "url": "https://api.github.com/repos/folkloreinc/laravel-graphql/zipball/7a2745a34d3e2deb211e1cab857ac9717fd57003",
                 "reference": "7a2745a34d3e2deb211e1cab857ac9717fd57003",
                 "shasum": ""
             },
@@ -2857,7 +2857,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "4a5243a2d86a2de4cee0d39168ef65b1eb920e77"
+                "reference": "b935c1d9260f4d9167d6927684db6354e1422db0"
             },
             "require": {
                 "php": ">=5.4"
@@ -2884,7 +2884,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2019-03-11T07:33:14+00:00"
+            "time": "2019-03-18T15:56:18+00:00"
         },
         {
             "name": "sheba/notification",
@@ -2892,7 +2892,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_notification.git",
-                "reference": "32916bec8e6aee6af313d47590735a76b80649f0"
+                "reference": "dda0d0519f713644d4dad36e33fba40df9191ba3"
             },
             "require": {
                 "php": ">=5.4"
@@ -2916,7 +2916,7 @@
                 }
             ],
             "description": "Sheba notifications.",
-            "time": "2019-02-13T13:26:06+00:00"
+            "time": "2019-03-16T08:18:58+00:00"
         },
         {
             "name": "sheba/sms",

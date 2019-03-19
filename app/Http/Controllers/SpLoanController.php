@@ -33,6 +33,7 @@ class SpLoanController extends Controller
             $homepage = [
                 'running_application' => [
                     'bank_name' => $partner->loan ? $partner->loan->bank_name : null,
+                    'logo' => $partner->loan ? constants('AVAILABLE_BANK_FOR_LOAN')[$partner->loan->bank_name]['logo']: null,
                     'loan_amount' => $partner->loan ? $partner->loan->loan_amount : null,
                     'status' => $partner->loan ? $partner->loan->status : null,
                     'duration' => $partner->loan ? $partner->loan->duration : null
@@ -58,23 +59,7 @@ class SpLoanController extends Controller
     public function getBankInterest($partner, Request $request)
     {
         try {
-            $bank_lists = [
-                '0' => [
-                    'name' => 'IPDC Finance',
-                    'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bank_icon/ipdc.png',
-                    'interest' => '10',
-                ],
-                '1' => [
-                    'name' => 'BRAC Bank',
-                    'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bank_icon/brac.svg',
-                    'interest' => '9',
-                ],
-                '2' => [
-                    'name' => 'City Bank',
-                    'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bank_icon/city.svg',
-                    'interest' => '11',
-                ]
-            ];
+            $bank_lists = array_values(constants('AVAILABLE_BANK_FOR_LOAN'));
             return api_response($request, $bank_lists, 200, ['bank_lists' => $bank_lists]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
