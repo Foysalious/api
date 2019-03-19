@@ -101,7 +101,6 @@ class BlockBuster extends Vendor
     function buyTicket(MovieTicketRequest $movieTicketRequest): MovieResponse
     {
         $this->init();
-//        $movieTicketRequest->setAmount((($movieTicketRequest->getAmount() * 100)/(100 + $this->shebaCommissionPercentage())));
         $blockbuster_response = new BlockBusterResponse();
         $response = $this->post(Actions::UPDATE_MOVIE_SEAT_STATUS,[
             'trx_id' => $movieTicketRequest->getTrxId(),
