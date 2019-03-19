@@ -70,9 +70,11 @@ class SpLoanInformationCompletion extends Controller
         if (!empty($profile->address)) $complete_count++;
         if (!empty($profile->permanent_address)) $complete_count++;
         if (!empty($profile->occupation)) $complete_count++;
-        if (!empty($profile->monthly_living_cost)) $complete_count++;
-        if (!empty($profile->total_asset_amount)) $complete_count++;
-        if (!empty($profile->monthly_loan_installment_amount)) $complete_count++;
+
+        if (!empty((int)$profile->monthly_living_cost)) $complete_count++;
+        if (!empty((int)$profile->total_asset_amount)) $complete_count++;
+        if (!empty((int)$profile->monthly_loan_installment_amount)) $complete_count++;
+
         if (!empty($profile->utility_bill_attachment)) $complete_count++;
         $update_at->push($profile->updated_at);
 
@@ -95,7 +97,7 @@ class SpLoanInformationCompletion extends Controller
         $business_additional_information = $partner->businessAdditionalInformation();
         $sales_information = $partner->salesInformation();
         $update_at = collect();
-
+       
         if (!empty($partner->name)) $complete_count++;
         if (!empty($partner->business_type)) $complete_count++;
         if (!empty($partner->address)) $complete_count++;
