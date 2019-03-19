@@ -6,6 +6,7 @@ use App\Models\Profile;
 use App\Models\PartnerBankLoan;
 use Illuminate\Validation\ValidationException;
 use App\Repositories\FileRepository;
+use phpDocumentor\Reflection\DocBlock\Description;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -32,11 +33,11 @@ class SpLoanController extends Controller
 
             $homepage = [
                 'running_application' => [
-                    'bank_name' => $partner->loan ? $partner->loan->last()->bank_name : null,
-                    'logo' => $partner->loan ? constants('AVAILABLE_BANK_FOR_LOAN')[$partner->loan->last()->bank_name]['logo'] : null,
-                    'loan_amount' => $partner->loan ? $partner->loan->last()->loan_amount : null,
-                    'status' => $partner->loan ? $partner->loan->last()->status : null,
-                    'duration' => $partner->loan ? $partner->loan->last()->duration : null
+                    'bank_name' => !$partner->loan->isEmpty() ? $partner->loan->last()->bank_name : null,
+                    'logo' => !$partner->loan->isEmpty() ? constants('AVAILABLE_BANK_FOR_LOAN')[$partner->loan->last()->bank_name]['logo'] : null,
+                    'loan_amount' => !$partner->loan->isEmpty() ? $partner->loan->last()->loan_amount : null,
+                    'status' => !$partner->loan->isEmpty() ? $partner->loan->last()->status : null,
+                    'duration' => !$partner->loan->isEmpty() ? $partner->loan->last()->duration : null
                 ],
                 'banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/offers_images/banners/loan_banner_720_324.png',
                 'title' => 'হাতের নাগালে ব্যাংক লোন -',
