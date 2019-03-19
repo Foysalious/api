@@ -25,7 +25,7 @@ class SpLoanInformationCompletion extends Controller
             $business = $this->businessInformationCompletion($partner, $basic_informations, $complete_count);
             $finance = $this->financeInformationCompletion($partner, $bank_informations, $complete_count);
             $nominee = $this->nomineeInformationCompletion($profile, $complete_count);
-            $documents = $this->documentCompletion($profile, $partner, $complete_count);
+            $documents = $this->documentCompletion($profile, $manager_resource, $partner, $complete_count);
 
 
             $completion = [
@@ -53,6 +53,7 @@ class SpLoanInformationCompletion extends Controller
 
             return api_response($request, $completion, 200, ['completion' => $completion]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -61,7 +62,6 @@ class SpLoanInformationCompletion extends Controller
     private function personalInformationCompletion($profile, $manager_resource, $complete_count)
     {
         $update_at = collect();
-
         if (!empty($profile->name)) $complete_count++;
         if (!empty($profile->mobile)) $complete_count++;
         if (!empty($profile->gender)) $complete_count++;
@@ -70,26 +70,32 @@ class SpLoanInformationCompletion extends Controller
         if (!empty($profile->address)) $complete_count++;
         if (!empty($profile->permanent_address)) $complete_count++;
         if (!empty($profile->occupation)) $complete_count++;
-        if (!empty($profile->monthly_living_cost)) $complete_count++;
-        if (!empty($profile->total_asset_amount)) $complete_count++;
-        if (!empty($profile->monthly_loan_installment_amount)) $complete_count++;
+
+        if (!empty((int)$profile->monthly_living_cost)) $complete_count++;
+        if (!empty((int)$profile->total_asset_amount)) $complete_count++;
+        if (!empty((int)$profile->monthly_loan_installment_amount)) $complete_count++;
+
         if (!empty($profile->utility_bill_attachment)) $complete_count++;
         $update_at->push($profile->updated_at);
 
-        if (!empty($manager_resource->father_name)) $complete_count++;
-        if (!empty($manager_resource->spouse_name)) $complete_count++;
+        if (!empty($manager_resource->father_name)) {
+            $complete_count++;
+        } else {
+            if (!empty($manager_resource->spouse_name)) $complete_count++;
+        }
+
         $update_at->push($manager_resource->updated_at);
 
         $last_update = getDayName($update_at->max());
 
-        $personal_information = round((($complete_count / 14) * 100), 0);
+        $personal_information = round((($complete_count / 13) * 100), 0);
         return ['personal_information' => $personal_information, 'last_update' => $last_update];
     }
 
     private function businessInformationCompletion($partner, $basic_informations, $complete_count)
     {
-        $business_additional_information = $partner->businessAdditionalInformation()['0'];
-        $sales_information = $partner->salesInformation()['0'];
+        $business_additional_information = $partner->businessAdditionalInformation();
+        $sales_information = $partner->salesInformation();
         $update_at = collect();
 
         if (!empty($partner->name)) $complete_count++;
@@ -113,13 +119,14 @@ class SpLoanInformationCompletion extends Controller
     private function financeInformationCompletion($partner, $bank_informations, $complete_count)
     {
         $update_at = collect();
-
-        if (!empty($bank_informations->acc_name)) $complete_count++;
-        if (!empty($bank_informations->acc_no)) $complete_count++;
-        if (!empty($bank_informations->bank_name)) $complete_count++;
-        if (!empty($bank_informations->branch_name)) $complete_count++;
-        if (!empty($bank_informations->acc_type)) $complete_count++;
-        $update_at->push($bank_informations->updated_at);
+        if ($bank_informations) {
+            if (!empty($bank_informations->acc_name)) $complete_count++;
+            if (!empty($bank_informations->acc_no)) $complete_count++;
+            if (!empty($bank_informations->bank_name)) $complete_count++;
+            if (!empty($bank_informations->branch_name)) $complete_count++;
+            if (!empty($bank_informations->acc_type)) $complete_count++;
+            $update_at->push($bank_informations->updated_at);
+        }
 
         if (!empty($partner->bkash_no)) $complete_count++;
         if (!empty($partner->bkash_account_type)) $complete_count++;
@@ -161,7 +168,7 @@ class SpLoanInformationCompletion extends Controller
         return ['nominee_information' => $nominee_information, 'last_update' => $last_update];
     }
 
-    private function documentCompletion($profile, $partner, $complete_count)
+    private function documentCompletion($profile, $manager_resource, $partner, $complete_count)
     {
         $basic_informations = $partner->basicInformations;
         $bank_informations = $partner->bankInformations;
@@ -171,8 +178,13 @@ class SpLoanInformationCompletion extends Controller
         $update_at = collect();
 
         if (!empty($profile->pro_pic)) $complete_count++;
-        if (!empty($profile->nid_image_front)) $complete_count++;
-        if (!empty($profile->nid_image_back)) $complete_count++;
+        if (!empty($manager_resource->nid_image)) $complete_count += 2;
+        else {
+            if (!empty($profile->nid_image_front)) $complete_count++;
+            if (!empty($profile->nid_image_back)) $complete_count++;
+        }
+
+
         $update_at->push($profile->updated_at);
 
         if ($nominee_profile) {
@@ -192,8 +204,10 @@ class SpLoanInformationCompletion extends Controller
         if (!empty($profile->tin_certificate)) $complete_count++;
         if (!empty($basic_informations->trade_license_attachment)) $complete_count++;
         $update_at->push($basic_informations->updated_at);
-        if (!empty($bank_informations->statement)) $complete_count++;
-        $update_at->push($bank_informations->updated_at);
+        if ($bank_informations) {
+            if (!empty($bank_informations->statement)) $complete_count++;
+            $update_at->push($bank_informations->updated_at);
+        }
 
         $last_update = getDayName($update_at->max());
 

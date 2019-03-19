@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers;
 
 use App\Http\Requests\SpLoanRequest;
+use App\Models\PartnerBankInformation;
 use App\Models\Profile;
 use App\Models\PartnerBankLoan;
 use Illuminate\Validation\ValidationException;
@@ -32,18 +33,17 @@ class SpLoanController extends Controller
             $homepage = [
                 'running_application' => [
                     'bank_name' => $partner->loan ? $partner->loan->bank_name : null,
+                    'logo' => $partner->loan ? constants('AVAILABLE_BANK_FOR_LOAN')[$partner->loan->bank_name]['logo'] : null,
                     'loan_amount' => $partner->loan ? $partner->loan->loan_amount : null,
                     'status' => $partner->loan ? $partner->loan->status : null,
                     'duration' => $partner->loan ? $partner->loan->duration : null
                 ],
-                'banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/profile/1552282801_pro_pic_image_1408.png',
+                'banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/offers_images/banners/loan_banner_720_324.png',
                 'title' => 'হাতের নাগালে ব্যাংক লোন -',
                 'list' => [
-                    'সহজেই ব্যবসা বার্তা পৌঁছে দিন কাস্টমারের কাছে',
-                    'আপনার সুবিধা মত সময়ে ও বাজেটে স্বল্পমূল্যে কার্যকরী মার্কেটিং',
-                    'শুধু সফল ভাবে পাঠানো এসএমএস বা ইমেইলের জন্যই মূল্য দিন',
-                    'সহজেই ব্যবসা বার্তা পৌঁছে দিন কাস্টমারের কাছে',
-                    'সহজেই ব্যবসা বার্তা পৌঁছে দিন কাস্টমারের কাছে',
+                    'সহজ শর্তে লোন নিন',
+                    'সেবার মাধ্যমে লোন প্রসেসিং',
+                    'প্রয়োজনীয় তথ্য দিয়ে সুবিধা মত লোন গ্রহন করুন'
                 ],
 
             ];
@@ -57,23 +57,7 @@ class SpLoanController extends Controller
     public function getBankInterest($partner, Request $request)
     {
         try {
-            $bank_lists = [
-                '0' => [
-                    'name' => 'IPDC Finance',
-                    'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bank_icon/ipdc.png',
-                    'interest' => '10',
-                ],
-                '1' => [
-                    'name' => 'BRAC Bank',
-                    'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bank_icon/brac.svg',
-                    'interest' => '9',
-                ],
-                '2' => [
-                    'name' => 'City Bank',
-                    'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bank_icon/city.svg',
-                    'interest' => '11',
-                ]
-            ];
+            $bank_lists = array_values(constants('AVAILABLE_BANK_FOR_LOAN'));
             return api_response($request, $bank_lists, 200, ['bank_lists' => $bank_lists]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -86,6 +70,7 @@ class SpLoanController extends Controller
         try {
             $partner = $request->partner;
 
+
             $data = [
                 'partner_id' => $partner->id,
                 'bank_name' => $request->bank_name,
@@ -95,7 +80,15 @@ class SpLoanController extends Controller
                 'monthly_installment' => $request->monthly_installment,
                 'final_information_for_loan' => json_encode([$this->finalInformationForLoan($partner, $request)])
             ];
-            $loan->create($this->withCreateModificationField($data));
+
+            $partner_loan = PartnerBankLoan::where('partner_id', $partner->id)->get()->last();
+
+            if ($partner_loan && in_array($partner_loan->status, ['approved', 'considerable'])) {
+                return api_response($request, null, 403, ['message' => "You already applied for loan"]);
+            } else {
+                $loan->create($this->withCreateModificationField($data));
+            }
+
             return api_response($request, 1, 200);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -109,8 +102,8 @@ class SpLoanController extends Controller
         $profile = $manager_resource->profile;
         $basic_informations = $partner->basicInformations;
         $bank_informations = $partner->bankInformations;
-        $business_additional_information = $partner->businessAdditionalInformation()['0'];
-        $sales_information = $partner->salesInformation()['0'];
+        $business_additional_information = $partner->businessAdditionalInformation();
+        $sales_information = $partner->salesInformation();
 
         $nominee_profile = Profile::find($profile->nominee_id);
         $grantor_profile = Profile::find($profile->grantor_id);
@@ -222,9 +215,9 @@ class SpLoanController extends Controller
                 'occupation_lists' => constants('SUGGESTED_OCCUPATION'),
                 'occupation' => $profile->occupation,
                 'expenses' => [
-                    'monthly_living_cost' => $profile->monthly_living_cost,
-                    'total_asset_amount' => $profile->total_asset_amount,
-                    'monthly_loan_installment_amount' => $profile->monthly_loan_installment_amount,
+                    'monthly_living_cost' => (int)$profile->monthly_living_cost ? $profile->monthly_living_cost : null,
+                    'total_asset_amount' => (int)$profile->total_asset_amount ? $profile->total_asset_amount : null,
+                    'monthly_loan_installment_amount' => (int)$profile->monthly_loan_installment_amount ? $profile->monthly_loan_installment_amount : null,
                     'utility_bill_attachment' => $profile->utility_bill_attachment
                 ]
             );
@@ -235,9 +228,21 @@ class SpLoanController extends Controller
         }
     }
 
-    public function updatePersonalInformation($partner, SpLoanRequest $request)
+    public function updatePersonalInformation($partner, Request $request)
     {
         try {
+            $this->validate($request, [
+                'gender' => 'required|string|in:Male,Female,Other,পুরুষ,মহিলা,অন্যান্য',
+                'dob' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
+                'address' => 'required|string',
+                'permanent_address' => 'required|string',
+                'father_name' => 'required_without:spouse_name',
+                'spouse_name' => 'required_without:father_name',
+                'occupation' => 'required|string',
+                'monthly_living_cost' => 'required|numeric',
+                'total_asset_amount' => 'required|numeric',
+                'monthly_loan_installment_amount' => 'required|numeric'
+            ]);
             $manager_resource = $request->manager_resource;
             $profile = $manager_resource->profile;
 
@@ -259,6 +264,9 @@ class SpLoanController extends Controller
             $profile->update($this->withBothModificationFields($profile_data));
             $manager_resource->update($this->withBothModificationFields($resource_data));
             return api_response($request, 1, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -273,8 +281,8 @@ class SpLoanController extends Controller
             $profile = $manager_resource->profile;
             $basic_informations = $partner->basicInformations;
             $bank_informations = $partner->bankInformations;
-            $business_additional_information = $partner->businessAdditionalInformation()['0'];
-            $sales_information = $partner->salesInformation()['0'];
+            $business_additional_information = $partner->businessAdditionalInformation();
+            $sales_information = $partner->salesInformation();
 
             $info = array(
                 'business_name' => $partner->name,
@@ -304,14 +312,23 @@ class SpLoanController extends Controller
         }
     }
 
-    public function updateBusinessInformation($partner, SpLoanRequest $request)
+    public function updateBusinessInformation($partner, Request $request)
     {
         try {
+            $this->validate($request, [
+                'business_type' => 'required|string',
+                'location' => 'required|string',
+                'establishment_year' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
+                'full_time_employee' => 'required|numeric',
+                'part_time_employee' => 'required|numeric',
+                'sales_information' => 'required',
+                'business_additional_information' => 'required'
+            ]);
             $partner = $request->partner;
             $basic_informations = $partner->basicInformations;
             $partner_data = [
                 'business_type' => $request->business_type,
-                'address' => $request->address,
+                'address' => $request->location,
                 'full_time_employee' => $request->full_time_employee,
                 'part_time_employee' => $request->part_time_employee,
                 'sales_information' => $request->sales_information,
@@ -324,6 +341,9 @@ class SpLoanController extends Controller
             $partner->update($this->withBothModificationFields($partner_data));
             $basic_informations->update($this->withBothModificationFields($partner_basic_data));
             return api_response($request, 1, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -366,6 +386,7 @@ class SpLoanController extends Controller
             $bank_informations = $partner->bankInformations;
 
             $bank_data = [
+                'partner_id' => $partner->id,
                 'acc_name' => $request->acc_name,
                 'acc_no' => $request->acc_no,
                 'bank_name' => $request->bank_name,
@@ -377,7 +398,12 @@ class SpLoanController extends Controller
                 'bkash_account_type' => $request->bkash_account_type
             ];
 
-            $bank_informations->update($this->withBothModificationFields($bank_data));
+            if ($bank_informations) {
+                $bank_informations->update($this->withBothModificationFields($bank_data));
+            } else {
+                PartnerBankInformation::create($this->withCreateModificationField($bank_data));
+            }
+
             $partner->update($this->withBothModificationFields($partner_data));
             return api_response($request, 1, 200);
         } catch (\Throwable $e) {
@@ -506,8 +532,12 @@ class SpLoanController extends Controller
 
             $info = array(
                 'picture' => $profile->pro_pic,
+                'nid_image' => $manager_resource->nid_image,
+                'is_verified' => $manager_resource->is_verified,
+
                 'nid_image_front' => $profile->nid_image_front,
                 'nid_image_back' => $profile->nid_image_back,
+
                 'nominee_document' => [
                     'picture' => !empty($nominee_profile) ? $nominee_profile->pro_pic : null,
                     'nid_front_image' => !empty($nominee_profile) ? $nominee_profile->nid_image_front : null,
@@ -575,8 +605,7 @@ class SpLoanController extends Controller
             } else {
                 return api_response($request, null, 500);
             }
-        } catch
-        (ValidationException $e) {
+        } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
@@ -610,8 +639,7 @@ class SpLoanController extends Controller
             } else {
                 return api_response($request, null, 500);
             }
-        } catch
-        (ValidationException $e) {
+        } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
