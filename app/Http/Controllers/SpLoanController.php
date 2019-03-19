@@ -33,19 +33,17 @@ class SpLoanController extends Controller
             $homepage = [
                 'running_application' => [
                     'bank_name' => $partner->loan ? $partner->loan->bank_name : null,
-                    'logo' => $partner->loan ? constants('AVAILABLE_BANK_FOR_LOAN')[$partner->loan->bank_name]['logo']: null,
+                    'logo' => $partner->loan ? constants('AVAILABLE_BANK_FOR_LOAN')[$partner->loan->bank_name]['logo'] : null,
                     'loan_amount' => $partner->loan ? $partner->loan->loan_amount : null,
                     'status' => $partner->loan ? $partner->loan->status : null,
                     'duration' => $partner->loan ? $partner->loan->duration : null
                 ],
-                'banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/profile/1552282801_pro_pic_image_1408.png',
+                'banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/offers_images/banners/loan_banner_720_324.png',
                 'title' => 'হাতের নাগালে ব্যাংক লোন -',
                 'list' => [
-                    'সহজেই ব্যবসা বার্তা পৌঁছে দিন কাস্টমারের কাছে',
-                    'আপনার সুবিধা মত সময়ে ও বাজেটে স্বল্পমূল্যে কার্যকরী মার্কেটিং',
-                    'শুধু সফল ভাবে পাঠানো এসএমএস বা ইমেইলের জন্যই মূল্য দিন',
-                    'সহজেই ব্যবসা বার্তা পৌঁছে দিন কাস্টমারের কাছে',
-                    'সহজেই ব্যবসা বার্তা পৌঁছে দিন কাস্টমারের কাছে',
+                    'সহজ শর্তে লোন নিন',
+                    'সেবার মাধ্যমে লোন প্রসেসিং',
+                    'প্রয়োজনীয় তথ্য দিয়ে সুবিধা মত লোন গ্রহন করুন'
                 ],
 
             ];

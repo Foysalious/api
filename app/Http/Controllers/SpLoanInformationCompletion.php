@@ -97,7 +97,7 @@ class SpLoanInformationCompletion extends Controller
         $business_additional_information = $partner->businessAdditionalInformation();
         $sales_information = $partner->salesInformation();
         $update_at = collect();
-       
+
         if (!empty($partner->name)) $complete_count++;
         if (!empty($partner->business_type)) $complete_count++;
         if (!empty($partner->address)) $complete_count++;
