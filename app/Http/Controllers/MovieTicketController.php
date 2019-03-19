@@ -146,7 +146,7 @@ class MovieTicketController extends Controller
                 $details->order_id = $movieOrder->id;
                 $details->agent_commission = $movieOrder->agent_commission;
                 $details->sheba_commission = $movieOrder->sheba_commission;
-                $details->cost = $details->cost + $details->sheba_commission;   
+                $details->cost = $details->cost + $details->sheba_commission;
                 return api_response($request, $response, 200, ['status' => $details]);
             }
             else
