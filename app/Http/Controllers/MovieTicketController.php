@@ -146,6 +146,7 @@ class MovieTicketController extends Controller
                 $details->order_id = $movieOrder->id;
                 $details->agent_commission = $movieOrder->agent_commission;
                 $details->sheba_commission = $movieOrder->sheba_commission;
+                $details->cost = $details->cost + $details->sheba_commission;   
                 return api_response($request, $response, 200, ['status' => $details]);
             }
             else
@@ -163,6 +164,7 @@ class MovieTicketController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         } catch (GuzzleException $e) {

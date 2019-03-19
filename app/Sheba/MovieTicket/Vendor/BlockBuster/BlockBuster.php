@@ -101,6 +101,7 @@ class BlockBuster extends Vendor
     function buyTicket(MovieTicketRequest $movieTicketRequest): MovieResponse
     {
         $this->init();
+//        $movieTicketRequest->setAmount((($movieTicketRequest->getAmount() * 100)/(100 + $this->shebaCommissionPercentage())));
         $blockbuster_response = new BlockBusterResponse();
         $response = $this->post(Actions::UPDATE_MOVIE_SEAT_STATUS,[
             'trx_id' => $movieTicketRequest->getTrxId(),
@@ -309,11 +310,21 @@ class BlockBuster extends Vendor
 
     private function priceAfterShebaCommission($original_price)
     {
-        $sheba_commission_percentage = MovieTicketVendor::find(1)->sheba_commission;
         $price_without_sheba_commission = round((float) $original_price,2);
-        $sheba_commission = $price_without_sheba_commission * ( $sheba_commission_percentage / 100);
+        $sheba_commission = $this->shebaCommission($price_without_sheba_commission);
         $total_price = $price_without_sheba_commission + $sheba_commission;
         $total_price = ceil($total_price);
         return $total_price;
+    }
+
+    private function shebaCommission($price)
+    {
+        $sheba_commission_percentage = $this->shebaCommissionPercentage();
+        return $price * ( $sheba_commission_percentage / 100);
+    }
+
+    private function shebaCommissionPercentage()
+    {
+        return MovieTicketVendor::find(1)->sheba_commission;
     }
 }
