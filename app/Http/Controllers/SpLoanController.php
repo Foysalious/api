@@ -70,6 +70,7 @@ class SpLoanController extends Controller
         try {
             $partner = $request->partner;
 
+
             $data = [
                 'partner_id' => $partner->id,
                 'bank_name' => $request->bank_name,
@@ -101,8 +102,8 @@ class SpLoanController extends Controller
         $profile = $manager_resource->profile;
         $basic_informations = $partner->basicInformations;
         $bank_informations = $partner->bankInformations;
-        $business_additional_information = $partner->businessAdditionalInformation()['0'];
-        $sales_information = $partner->salesInformation()['0'];
+        $business_additional_information = $partner->businessAdditionalInformation();
+        $sales_information = $partner->salesInformation();
 
         $nominee_profile = Profile::find($profile->nominee_id);
         $grantor_profile = Profile::find($profile->grantor_id);
