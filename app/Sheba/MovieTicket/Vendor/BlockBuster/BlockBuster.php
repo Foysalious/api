@@ -1,7 +1,10 @@
 <?php namespace Sheba\MovieTicket\Vendor\BlockBuster;
 
+use App\Models\MovieTicketVendor;
+use App\Models\MovieTicketVendorCommission;
 use GuzzleHttp\Client;
 use Sheba\MovieTicket\Actions;
+use Sheba\MovieTicket\MovieTicket;
 use Sheba\MovieTicket\MovieTicketRequest;
 use Sheba\MovieTicket\Response\BlockBusterResponse;
 use Sheba\MovieTicket\Response\MovieResponse;
@@ -238,7 +241,33 @@ class BlockBuster extends Vendor
     {
         if($response && $response->api_validation && $response->api_validation->status === "ok"){
             if($response->api_response->status === "ok")
-                return $response->api_response->movie_schedule_theatre_seat_status;
+            {
+                $seatStatus = $response->api_response->movie_schedule_theatre_seat_status;
+                $seat_classes = explode("|",$seatStatus->SeatClass);
+                $seat_classes_default = ['E_FRONT','E_REAR'];
+                $seat_prices = explode("|",$seatStatus->SeatClassTicketPrice);
+
+                $seats = array();
+                foreach($seat_classes_default as $index => $seat_class) {
+                    $key_of_total_seats = 'Total_'.str_replace("-","_",$seat_class).'_Seat';
+                    $key_of_available_seats = str_replace("-","_",$seat_class).'_Available_Seat';
+                    $original_price = round((float) $seat_prices[$index],2);
+                    $total_price = $this->priceAfterShebaCommission($original_price);
+                    $seat = array(
+                        'class' => $seat_classes[$index],
+                        'price' => $total_price ,
+                        'total_seats' => (int) $seatStatus->{$key_of_total_seats},
+                        'available_seats' => (int) $seatStatus->{$key_of_available_seats}
+                    );
+                    array_push($seats,$seat);
+                }
+                $status = array(
+                    'dtmsid' => $seatStatus->DTMSID,
+                    'dtmid' => $seatStatus->DTMID,
+                    'seats' => $seats
+                );
+                return $status;
+            }
             else return $response->api_response;
         }
         throw new \Exception('Server error');
@@ -252,8 +281,11 @@ class BlockBuster extends Vendor
     private function bookTicketResponse($response)
     {
         if($response && $response->api_validation && $response->api_validation->status === "ok"){
-            if($response->api_response->status === "ok")
-                return $response->api_response->movie_seat_booking_request;
+            if($response->api_response->status === "ok") {
+                $response = $response->api_response->movie_seat_booking_request;
+                $response->cost = $this->priceAfterShebaCommission($response->cost);
+                return $response;
+            }
             else
                 return $response->api_response;
         }
@@ -273,5 +305,15 @@ class BlockBuster extends Vendor
                 return $response->api_response;
         }
         throw new \Exception('Server error');
+    }
+
+    private function priceAfterShebaCommission($original_price)
+    {
+        $sheba_commission_percentage = MovieTicketVendor::find(1)->sheba_commission;
+        $price_without_sheba_commission = round((float) $original_price,2);
+        $sheba_commission = $price_without_sheba_commission * ( $sheba_commission_percentage / 100);
+        $total_price = $price_without_sheba_commission + $sheba_commission;
+        $total_price = ceil($total_price);
+        return $total_price;
     }
 }
