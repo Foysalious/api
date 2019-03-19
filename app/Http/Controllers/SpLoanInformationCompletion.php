@@ -62,7 +62,6 @@ class SpLoanInformationCompletion extends Controller
     private function personalInformationCompletion($profile, $manager_resource, $complete_count)
     {
         $update_at = collect();
-
         if (!empty($profile->name)) $complete_count++;
         if (!empty($profile->mobile)) $complete_count++;
         if (!empty($profile->gender)) $complete_count++;
@@ -77,13 +76,17 @@ class SpLoanInformationCompletion extends Controller
         if (!empty($profile->utility_bill_attachment)) $complete_count++;
         $update_at->push($profile->updated_at);
 
-        if (!empty($manager_resource->father_name)) $complete_count++;
-        if (!empty($manager_resource->spouse_name)) $complete_count++;
+        if (!empty($manager_resource->father_name)) {
+            $complete_count++;
+        } else {
+            if (!empty($manager_resource->spouse_name)) $complete_count++;
+        }
+
         $update_at->push($manager_resource->updated_at);
 
         $last_update = getDayName($update_at->max());
 
-        $personal_information = round((($complete_count / 14) * 100), 0);
+        $personal_information = round((($complete_count / 13) * 100), 0);
         return ['personal_information' => $personal_information, 'last_update' => $last_update];
     }
 

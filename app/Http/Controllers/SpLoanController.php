@@ -216,9 +216,9 @@ class SpLoanController extends Controller
                 'occupation_lists' => constants('SUGGESTED_OCCUPATION'),
                 'occupation' => $profile->occupation,
                 'expenses' => [
-                    'monthly_living_cost' => $profile->monthly_living_cost,
-                    'total_asset_amount' => $profile->total_asset_amount,
-                    'monthly_loan_installment_amount' => $profile->monthly_loan_installment_amount,
+                    'monthly_living_cost' => (int)$profile->monthly_living_cost ? $profile->monthly_living_cost : null,
+                    'total_asset_amount' => (int)$profile->total_asset_amount ? $profile->total_asset_amount : null,
+                    'monthly_loan_installment_amount' => (int)$profile->monthly_loan_installment_amount ? $profile->monthly_loan_installment_amount : null,
                     'utility_bill_attachment' => $profile->utility_bill_attachment
                 ]
             );
