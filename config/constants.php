@@ -553,12 +553,12 @@ return [
         'BRAC Bank' => [
             'name' => 'BRAC Bank',
             'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bank_icon/brac.png',
-            'interest' => '10',
+            'interest' => '11.5',
         ],
         'City Bank' => [
             'name' => 'City Bank',
             'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bank_icon/city.png',
-            'interest' => '10',
+            'interest' => '10.5',
         ],
     ]
 ];
