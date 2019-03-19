@@ -205,7 +205,7 @@ class MovieTicketController extends Controller
             $order = MovieTicketOrder::find((int) $order);
             removeRelationsAndFields($order);
             $order->reservation_details = json_decode($order->reservation_details);
-            $order->reservation_details->cost = $order->amount;
+            $order->reservation_details->cost = round($order->amount);
             return api_response($request, $order, 200, ['details' => $order]);
         }  catch (\Throwable $e) {
             app('sentry')->captureException($e);
