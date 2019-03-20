@@ -294,7 +294,7 @@ class ShebaController extends Controller
     {
         return [
             array(
-                'name' => 'bKash Payment',
+                'name' => 'bKash',
                 'is_published' => 0,
                 'description' => '',
                 'asset' => 'bkash',
@@ -328,7 +328,7 @@ class ShebaController extends Controller
                 'method_name' => 'wallet'
             ),
             array(
-                'name' => 'bKash Payment',
+                'name' => 'bKash',
                 'is_published' => 0,
                 'description' => '',
                 'asset' => 'bkash',
@@ -369,8 +369,8 @@ class ShebaController extends Controller
                 'method_name' => 'cbl'
             ),
             array(
-                'name' => 'bKash Payment',
-                'is_published' => 1,
+                'name' => 'bKash',
+                'is_published' => 0,
                 'description' => '',
                 'asset' => 'bkash',
                 'method_name' => 'bkash'
