@@ -76,7 +76,7 @@ abstract class MovieTicketCommission
         $this->movieTicketOrder->save();
 
         $transaction = (new MovieTicketTransaction())->setAmount($this->amount - $this->movieTicketOrder->agent_commission)
-            ->setLog($this->amount . " has been topped up to " . $this->movieTicketOrder->payee_mobile)
+            ->setLog(($this->amount - $this->movieTicketOrder->agent_commission) . " has been deducted for a movie ticket, of user with mobile number: " . $this->movieTicketOrder->reserver_mobile)
             ->setMovieTicketOrder($this->movieTicketOrder);
         $this->agent->movieTicketTransaction($transaction);
     }
@@ -87,7 +87,7 @@ abstract class MovieTicketCommission
      */
     protected function calculateMovieTicketCommission($amount)
     {
-        return (double)$amount * ($this->getVendorAgentCommission() / 100);
+        return (double)$amount * ($this->getVendorAgentCommission() / (100 + $this->getShebaCommission()));
     }
 
     /**
@@ -96,7 +96,7 @@ abstract class MovieTicketCommission
      */
     protected function calculateAmbassadorCommissionForMovieTicket($amount)
     {
-        return (double)$amount * ($this->getVendorAmbassadorCommission() / 100);
+        return (double)$amount * ($this->getVendorAmbassadorCommission() / ( 100 + $this->getShebaCommission()));
     }
 
     /**
@@ -115,12 +115,17 @@ abstract class MovieTicketCommission
         return (double)$this->vendorCommission->ambassador_commission;
     }
 
+    private function getShebaCommission()
+    {
+        return (double) $this->vendor->sheba_commission;
+    }
+
     protected function refundAgentsCommission()
     {
         $this->setModifier($this->agent);
         $amount = $this->movieTicketOrder->amount;
         $amount_after_commission = round($amount - $this->calculateMovieTicketCommission($amount), 2);
-        $log = "Your recharge TK $amount to {$this->movieTicketOrder->payee_mobile} has failed, TK $amount_after_commission is refunded in your account.";
+        $log = "Your movie ticket request of TK $amount has failed, TK $amount_after_commission is refunded in your account.";
         $this->refundUser($amount_after_commission, $log);
     }
 

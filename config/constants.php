@@ -536,12 +536,29 @@ return [
     'GENDER' => [
         ['key' => 'female', 'en' => 'Female', 'bn' => 'মহিলা'],
         ['key' => 'male', 'en' => 'Male', 'bn' => 'পুরুষ'],
-        ['key'=>'other', 'en' => 'Other', 'bn' => 'অন্যান্য']
+        ['key' => 'other', 'en' => 'Other', 'bn' => 'অন্যান্য']
     ],
     'LOAN_STATUS' => [
         'rejected' => 'rejected',
         'approved' => 'approved',
         'closed' => 'closed',
         'considerable' => 'considerable'
+    ],
+    'AVAILABLE_BANK_FOR_LOAN' => [
+        'IPDC Finance' => [
+            'name' => 'IPDC Finance',
+            'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bank_icon/ipdc.png',
+            'interest' => '10',
+        ],
+        'BRAC Bank' => [
+            'name' => 'BRAC Bank',
+            'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bank_icon/brac.png',
+            'interest' => '11.5',
+        ],
+        'City Bank' => [
+            'name' => 'City Bank',
+            'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bank_icon/city.png',
+            'interest' => '10.5',
+        ],
     ]
 ];

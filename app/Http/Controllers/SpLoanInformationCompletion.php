@@ -53,6 +53,7 @@ class SpLoanInformationCompletion extends Controller
 
             return api_response($request, $completion, 200, ['completion' => $completion]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -61,35 +62,40 @@ class SpLoanInformationCompletion extends Controller
     private function personalInformationCompletion($profile, $manager_resource, $complete_count)
     {
         $update_at = collect();
-
         if (!empty($profile->name)) $complete_count++;
         if (!empty($profile->mobile)) $complete_count++;
         if (!empty($profile->gender)) $complete_count++;
-        if (!empty($profile->pro_pic)) $complete_count++;
+        #if (!empty($profile->pro_pic)) $complete_count++;
         if (!empty($profile->dob)) $complete_count++;
         if (!empty($profile->address)) $complete_count++;
         if (!empty($profile->permanent_address)) $complete_count++;
         if (!empty($profile->occupation)) $complete_count++;
-        if (!empty($profile->monthly_living_cost)) $complete_count++;
-        if (!empty($profile->total_asset_amount)) $complete_count++;
-        if (!empty($profile->monthly_loan_installment_amount)) $complete_count++;
+
+        if (!empty((int)$profile->monthly_living_cost)) $complete_count++;
+        if (!empty((int)$profile->total_asset_amount)) $complete_count++;
+        if (!empty((int)$profile->monthly_loan_installment_amount)) $complete_count++;
+
         if (!empty($profile->utility_bill_attachment)) $complete_count++;
         $update_at->push($profile->updated_at);
 
-        if (!empty($manager_resource->father_name)) $complete_count++;
-        if (!empty($manager_resource->spouse_name)) $complete_count++;
+        if (!empty($manager_resource->father_name)) {
+            $complete_count++;
+        } else {
+            if (!empty($manager_resource->spouse_name)) $complete_count++;
+        }
+
         $update_at->push($manager_resource->updated_at);
 
         $last_update = getDayName($update_at->max());
 
-        $personal_information = round((($complete_count / 14) * 100), 0);
+        $personal_information = round((($complete_count / 12) * 100), 0);
         return ['personal_information' => $personal_information, 'last_update' => $last_update];
     }
 
     private function businessInformationCompletion($partner, $basic_informations, $complete_count)
     {
-        $business_additional_information = $partner->businessAdditionalInformation()['0'];
-        $sales_information = $partner->salesInformation()['0'];
+        $business_additional_information = $partner->businessAdditionalInformation();
+        $sales_information = $partner->salesInformation();
         $update_at = collect();
 
         if (!empty($partner->name)) $complete_count++;
