@@ -1,17 +1,17 @@
 <?php namespace App\Http\Controllers;
 
-use App\Http\Requests\SpLoanRequest;
-use App\Models\PartnerBankInformation;
-use App\Models\Profile;
-use App\Models\PartnerBankLoan;
 use Illuminate\Validation\ValidationException;
+use App\Models\PartnerBankInformation;
+use Sheba\FileManagers\CdnFileManager;
 use App\Repositories\FileRepository;
+use App\Http\Requests\SpLoanRequest;
+use Sheba\FileManagers\FileManager;
+use App\Models\PartnerBankLoan;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
+use App\Models\Profile;
 use Carbon\Carbon;
 use DB;
-use Sheba\FileManagers\CdnFileManager;
-use Sheba\FileManagers\FileManager;
 
 class SpLoanController extends Controller
 {
@@ -32,12 +32,13 @@ class SpLoanController extends Controller
 
             $homepage = [
                 'running_application' => [
-                    'bank_name' => $partner->loan ? $partner->loan->bank_name : null,
-                    'logo' => $partner->loan ? constants('AVAILABLE_BANK_FOR_LOAN')[$partner->loan->bank_name]['logo'] : null,
-                    'loan_amount' => $partner->loan ? $partner->loan->loan_amount : null,
-                    'status' => $partner->loan ? $partner->loan->status : null,
-                    'duration' => $partner->loan ? $partner->loan->duration : null
+                    'bank_name' => !$partner->loan->isEmpty() ? $partner->loan->last()->bank_name : null,
+                    'logo' => !$partner->loan->isEmpty() ? constants('AVAILABLE_BANK_FOR_LOAN')[$partner->loan->last()->bank_name]['logo'] : null,
+                    'loan_amount' => !$partner->loan->isEmpty() ? $partner->loan->last()->loan_amount : null,
+                    'status' => !$partner->loan->isEmpty() ? $partner->loan->last()->status : null,
+                    'duration' => !$partner->loan->isEmpty() ? $partner->loan->last()->duration : null
                 ],
+                'big_banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/offers_images/banners/loan_banner_1440_628.png',
                 'banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/offers_images/banners/loan_banner_720_324.png',
                 'title' => 'হাতের নাগালে ব্যাংক লোন -',
                 'list' => [
@@ -69,7 +70,6 @@ class SpLoanController extends Controller
     {
         try {
             $partner = $request->partner;
-
 
             $data = [
                 'partner_id' => $partner->id,

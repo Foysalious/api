@@ -12,7 +12,7 @@ class PartnerModerator
     private $affiliate, $partner, $moderator;
     private $affiliationRewards;
     private $moderatorRole;
-    private $distanceThreshold = 100;
+    private $distanceThreshold = 200;
 
     public function __construct($moderatorRole)
     {

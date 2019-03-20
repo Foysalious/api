@@ -1,12 +1,11 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\MovieTicketOrder;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
 
+use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\MovieTicket\MovieTicket;
 use Sheba\MovieTicket\MovieTicketManager;
 use Sheba\MovieTicket\MovieTicketRequest;
@@ -28,7 +27,6 @@ class MovieTicketController extends Controller
             return api_response($request, null, 500);
         }
     }
-
 
     /**
      * @param MovieTicketManager $movieTicket
@@ -81,7 +79,6 @@ class MovieTicketController extends Controller
             return api_response($request, null, 500);
         }
     }
-
 
     public function bookTickets(MovieTicketManager $movieTicket, Request $request)
     {
@@ -136,7 +133,7 @@ class MovieTicketController extends Controller
             $agent = $this->getAgent($request);
             if ($agent->wallet < (double) $request->cost) return api_response($request, null, 403, ['message' => "You don't have sufficient balance to buy this ticket."]);
             $movieTicketRequest->setName($request->customer_name)->setEmail($request->customer_email)->setAmount($request->cost)
-                    ->setMobile($request->customer_mobile)->setTrxId($request->trx_id)->setDtmsId($request->dtmsid)
+                    ->setMobile(BDMobileFormatter::format($request->customer_mobile))->setTrxId($request->trx_id)->setDtmsId($request->dtmsid)
                     ->setTicketId($request->lid)->setConfirmStatus($request->confirm_status)->setImageUrl($request->image_url);
             $vendor = $vendor->getById(1);
             $response = $movieTicket->setAgent($agent)->setVendor($vendor)->buyTicket($movieTicketRequest);
@@ -164,7 +161,6 @@ class MovieTicketController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         } catch (GuzzleException $e) {
@@ -193,7 +189,6 @@ class MovieTicketController extends Controller
             }
             return api_response($request, $orders, 200, ['history' => $histories]);
         }  catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
