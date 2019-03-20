@@ -33,7 +33,7 @@ class OrderController extends Controller
             if ($request->vendor->id !== $order->vendor_id) return response()->json(['data' => null]);
             $job = $order->partnerOrders[0]->jobs[0]->id;
             $customer = $order->customer;
-            $job = $this->api->get('/v2/customers/' . $customer->id . '/jobs/' . $job->id . '?remember_token=' . $customer->remember_token);
+            $job = $this->api->get('/v2/customers/' . $customer->id . '/jobs/' . $job . '?remember_token=' . $customer->remember_token);
             $fractal = new Manager();
             $fractal->setSerializer(new CustomSerializer());
             $resource = new Item(json_decode($job->toJson()), new JobTransformer());
