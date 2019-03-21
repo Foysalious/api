@@ -98,8 +98,8 @@ class HomePageSettingController extends Controller
             $settings = $store->get($setting_key);
             if ($settings) {
                 $settings = json_decode($settings);
-                if ($request->portal == 'customer-portal') $settings = $this->formatWeb($settings->sections, $location);
                 if (empty($settings->sections)) return api_response($request, null, 404);
+                if ($request->portal == 'customer-portal') $settings = $this->formatWeb($settings->sections, $location);
                 return api_response($request, $settings, 200, ['settings' => $settings]);
             } else {
                 return api_response($request, null, 404);
