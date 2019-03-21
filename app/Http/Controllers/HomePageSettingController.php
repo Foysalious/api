@@ -144,8 +144,8 @@ class HomePageSettingController extends Controller
     {
         $customer_category_orders = [1, 3, 73, 101, 183, 184, 226, 186, 221, 224, 185, 225, 226, 235, 236, 333];
         $settings = collect($settings);
-        $slider = $settings->where('item_type', 'Slider')->first();
-        $category_groups = $settings->where('item_type', 'CategoryGroup')->sortBy('order');
+        $slider = $settings->where('item_type', 'slider')->first();
+        $category_groups = $settings->where('item_type', 'categorygroup')->sortBy('order');
         $categories = Category::published()->where('parent_id', null)->with(['children' => function ($q) use ($location) {
             $q->select('id', 'parent_id', 'name', 'slug', 'icon_png');
             if ($location) {
