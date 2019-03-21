@@ -7,7 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
-use App\Models\Job;
+use App\Models\Order;
 use App\Models\Profile;
 use App\Sheba\Address\AddressValidator;
 use App\Sheba\Checkout\Checkout;
@@ -15,7 +15,6 @@ use App\Transformers\CustomSerializer;
 use App\Transformers\JobTransformer;
 use Carbon\Carbon;
 use Dingo\Api\Routing\Helpers;
-use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
@@ -30,15 +29,41 @@ class OrderController extends Controller
     {
         try {
             $request->merge(['mobile' => formatMobile($request->mobile)]);
-            $job = Job::find((int)$order);
-            $job->load('partnerOrder.order.customer');
-            if ($request->vendor->id !== $job->partnerOrder->order->vendor_id) return response()->json(['data' => null]);
-            $customer = $job->partnerOrder->order->customer;
-            $job = $this->api->get('/v2/customers/' . $customer->id . '/jobs/' . $order . '?remember_token=' . $customer->remember_token);
+            $order = Order::find((int)$order);
+            if ($request->vendor->id !== $order->vendor_id) return response()->json(['data' => null]);
+            $job = $order->partnerOrders[0]->jobs[0]->id;
+            $customer = $order->customer;
+            $job = $this->api->get('/v2/customers/' . $customer->id . '/jobs/' . $job . '?remember_token=' . $customer->remember_token);
             $fractal = new Manager();
             $fractal->setSerializer(new CustomSerializer());
             $resource = new Item(json_decode($job->toJson()), new JobTransformer());
             return response()->json($fractal->createData($resource)->toArray());
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return response()->json(['data' => null]);
+        }
+    }
+
+    public function getBills($order, Request $request)
+    {
+        try {
+            $request->merge(['mobile' => formatMobile($request->mobile)]);
+            $order = Order::find((int)$order);
+            if ($request->vendor->id !== $order->vendor_id) return response()->json(['data' => null]);
+            $job = $order->partnerOrders[0]->jobs[0]->id;
+            $customer = $order->customer;
+            $job = $this->api->get('/v2/customers/' . $customer->id . '/jobs/' . $job . '/bills?remember_token=' . $customer->remember_token);
+            return response()->json(['data' =>
+                [
+                    'discounted_price' => $job->get('total'),
+                    'original_price' => $job->get('original_price'),
+                    'discount' => $job->get('discount'),
+                    'material_price' => $job->get('material_price'),
+                    'delivery_charge' => $job->get('delivery_charge'),
+                    'paid' => $job->get('paid'),
+                    'due' => $job->get('due'),
+                    'services' => $job->get('services'),
+                ]]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return response()->json(['data' => null]);
@@ -85,7 +110,7 @@ class OrderController extends Controller
             }
             $request->merge(['address_id' => $address->id]);
             $order = $order->placeOrder($request);
-            if ($order) return response()->json(['data' => ['order_id' => $order->partnerOrders[0]->jobs[0]->id, 'message' => 'SUCCESSFUL']]);
+            if ($order) return response()->json(['data' => ['order_id' => $order->id, 'message' => 'SUCCESSFUL']]);
             else return response()->json(['data' => null]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
