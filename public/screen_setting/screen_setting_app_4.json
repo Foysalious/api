@@ -9,13 +9,13 @@
     "data": [
       {
         "id": 122,
-        "name": "LPG GAS",
-        "small_image_link" : "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/offers_images\/banners\/lpg-app-banner.png",
-        "image_link" : "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/offers_images\/banners\/lpg-app-banner.png",
+        "name": "TK.200 Off on AC Repair",
+        "small_image_link": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/offers_images\/banners\/ac-200-off-new-extended.png",
+        "image_link": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/offers_images\/banners\/ac-200-off-new-extended.png",
         "is_flash": 0,
         "valid_till": "2019-03-31 23:59:59",
         "target_type": "Category",
-        "target_id": "331",
+        "target_id": "276",
         "target_link": null,
         "is_parent": false,
         "link": null,
@@ -24,13 +24,13 @@
       },
       {
         "id": 122,
-        "name": "TK.200 Off on AC Repair",
-        "small_image_link": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/offers_images\/banners\/ac-200-off-new-extended.png",
-        "image_link": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/offers_images\/banners\/ac-200-off-new-extended.png",
+        "name": "LPG GAS",
+        "small_image_link" : "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/offers_images\/banners\/lpg-app-banner.png",
+        "image_link" : "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/offers_images\/banners\/lpg-app-banner.png",
         "is_flash": 0,
         "valid_till": "2019-03-31 23:59:59",
         "target_type": "Category",
-        "target_id": "276",
+        "target_id": "331",
         "target_link": null,
         "is_parent": false,
         "link": null,
@@ -240,11 +240,11 @@
       {
         "id": 122,
         "name": "Rent a car",
-        "banner": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/offers_images\/banners\/rentacar.png",
+        "banner": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/offers_images\/banners\/shifting_app-banner_new.png",
         "is_flash": 0,
         "valid_till": "2019-03-31 23:59:00",
         "target_type": "Category",
-        "target_id": "223",
+        "target_id": "152",
         "target_link": null,
         "is_parent": false,
         "link": null,
@@ -674,6 +674,30 @@
         "is_parent": false,
         "updated_at": "2019-02-05 13:01:18",
         "updated_at_timestamp": 1549350078
+      }
+    ]
+  },
+  {
+    "item_type": "OfferShowcase",
+    "item_id": 122,
+    "name": null,
+    "order": 4,
+    "updated_at": "2018-12-25 18:23:02",
+    "updated_at_timestamp": 1545740582,
+    "data": [
+      {
+        "id": 122,
+        "name": "Rent a car",
+        "banner": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/offers_images\/banners\/rentacar.png",
+        "is_flash": 0,
+        "valid_till": "2019-03-31 23:59:00",
+        "target_type": "Category",
+        "target_id": "223",
+        "target_link": null,
+        "is_parent": false,
+        "link": null,
+        "updated_at": "2019-02-15 00:36:42",
+        "updated_at_timestamp": 1550169402
       }
     ]
   },
