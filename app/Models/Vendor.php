@@ -20,6 +20,11 @@ class Vendor extends Model implements TopUpAgent
             'initiator_id' => $transaction->getTopUpOrder()->id, 'log' => $transaction->getLog()]);
     }
 
+    public function transactions()
+    {
+        return $this->hasMany(VendorTransaction::class);
+    }
+
     /**
      * @return TopUpCommission
      */
