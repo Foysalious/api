@@ -16,7 +16,8 @@ class Vendor extends Model implements TopUpAgent
     public function topUpTransaction(TopUpTransaction $transaction)
     {
         $this->debitWallet($transaction->getAmount());
-        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'initiator_type' => "App\\Models\\TopUpOrder",
+            'initiator_id' => $transaction->getTopUpOrder()->id, 'log' => $transaction->getLog()]);
     }
 
     /**

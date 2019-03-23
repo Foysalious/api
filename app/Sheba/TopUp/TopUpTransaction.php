@@ -47,7 +47,7 @@ class TopUpTransaction
     }
 
     /**
-     * @return mixed
+     * @return TopUpOrder
      */
     public function getTopUpOrder()
     {
