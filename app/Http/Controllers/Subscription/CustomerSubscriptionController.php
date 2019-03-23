@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers\Subscription;
+<?php namespace App\Http\Controllers\Subscription;
 
 use App\Exceptions\HyperLocationNotFoundException;
 use App\Http\Controllers\Controller;
@@ -262,6 +260,7 @@ class CustomerSubscriptionController extends Controller
 
                 'customer_name' => $subscription_order->customer->profile->name,
                 'customer_mobile' => $subscription_order->customer->profile->mobile,
+                'address_id' => $subscription_order->deliveryAddress->id,
                 'address' => $subscription_order->deliveryAddress->address,
                 'location_name' => $subscription_order->location ?  $subscription_order->location->name : "",
                 'ordered_for' => $subscription_order->deliveryAddress->name,
