@@ -54,7 +54,7 @@ class Bkash extends PaymentMethod
             $payment_details->amount = $payable->amount;
             $payment_details->save();
         });
-        if ($payment->payable->user->getAgreementId()) {
+        if (false && $payment->payable->user->getAgreementId()) {
             /** @var TokenizedPayment $tokenized_payment */
             $tokenized_payment = (new ShebaBkash())->setModule('tokenized')->getModuleMethod('payment');
             $data = $tokenized_payment->create($payment);
