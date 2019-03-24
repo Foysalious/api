@@ -8,6 +8,7 @@ use App\Models\CategoryPartner;
 use App\Models\HyperLocal;
 use App\Models\Location;
 use App\Models\Partner;
+use App\Repositories\ReviewRepository;
 use App\Sheba\Checkout\PartnerList;
 use App\Sheba\Checkout\Validation;
 use Carbon\Carbon;
@@ -20,6 +21,13 @@ use Sheba\Dal\PartnerLocation\PartnerLocationRepository;
 
 class PartnerLocationController extends Controller
 {
+    private $reviewRepository;
+
+    public function __construct()
+    {
+        $this->reviewRepository = new ReviewRepository();
+    }
+
     public function getPartners(Request $request, PartnerListRequest $partnerListRequest)
     {
         try {
@@ -197,14 +205,25 @@ class PartnerLocationController extends Controller
                 return api_response($request, null, 200, [ 'partners' => $partners]);
             } else {
                 $partners = Partner::whereIn('id',$nearByPartnerIds)->get();
+                $partnerDetails = [];
                 foreach ($partners as $partner) {
-
+                    $serving_master_categories = $partner->servingMasterCategories();
+                    $detail = [
+                        'name' => $partner->name,
+                        'sub_domain' => $partner->sub_domain,
+                        'serving_category' => $serving_master_categories,
+                        'logo' => $partner->logo,
+                        'description' => $partner->description,
+                        'badge' => $partner->resolveBadge(),
+                        'rating' => round($this->reviewRepository->getAvgRating($partner->reviews))
+                    ];
                 }
                 //Find all partners in given location
                 return api_response($request, null, 200, [ 'partners' => $partners]);
             }
 
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
