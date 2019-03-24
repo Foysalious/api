@@ -145,7 +145,8 @@ class PartnerLocationController extends Controller
                 return api_response($request, null, 200, [ 'partners' => $partnerDetails]);
             }
 
-        } catch (\Throwable $e) {app('sentry')->captureException($e);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
 
