@@ -165,7 +165,7 @@ class PartnerModerator
         $geo_info = json_decode($partner->geo_informations, true);
         $partner_radius = $geo_info['radius'] * 1000; // From KM to Meter
         $dist = self::calculateDistance($source, $geo_info);
-        if ($dist > $partner_radius && $dist > $this->distanceThreshold) {
+        if ($dist > $partner_radius || $dist > $this->distanceThreshold) {
             throw new ModeratorDistanceExceedException();
         }
     }

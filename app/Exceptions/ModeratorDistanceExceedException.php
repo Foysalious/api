@@ -3,7 +3,7 @@
 use Exception;
 use Throwable;
 
-class ModeratorDistanceExceedException extends \Exception
+class ModeratorDistanceExceedException extends Exception
 {
     public function __construct($message = "", $code = 402, Throwable $previous = null)
     {
