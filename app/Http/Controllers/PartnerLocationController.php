@@ -96,58 +96,36 @@ class PartnerLocationController extends Controller
 
             $geo_info = json_decode($location->geo_informations);
             $nearByPartners = $partnerLocationRepository->findNearByPartners($geo_info->lat, $geo_info->lng);
-            $nearByPartnerIds = $nearByPartners->pluck('partner_id');
-            $partners = Partner::whereIn('id',$nearByPartnerIds)->get();
-
             $partnerDetails = collect();
-            if($request->has('category_id')) {
+            foreach($nearByPartners as $nearByPartner) {
 
-                foreach ($partners as $partner) {
+                $partner = Partner::find($nearByPartner->partner_id);
+                if($request->has('category_id')) {
                     if(!in_array($request->category_id, $partner->servingMasterCategoryIds()))
                         continue;
+                }
 
-                    $serving_master_categories = $partner->servingMasterCategories();
-                    $detail = [
-                        'id' => $partner->id,
-                        'name' => $partner->name,
-                        'sub_domain' => $partner->sub_domain,
-                        'serving_category' => $serving_master_categories,
-                        'address' => $partner->address,
-                        'logo' => $partner->logo,
-                        'lat' => $nearByPartners->where('partner_id',$partner->id)->first()->location->coordinates[1],
-                        'lng' => $nearByPartners->where('partner_id',$partner->id)->first()->location->coordinates[0],
-                        'description' => $partner->description,
-                        'badge' => $partner->resolveBadge(),
-                        'rating' => round($this->reviewRepository->getAvgRating($partner->reviews)),
-                        'distance' => round($nearByPartners->where('partner_id',$partner->id)->first()->distance, 2)
-                    ];
-                    $partnerDetails->push($detail);
-                }
-                return api_response($request, null, 200, [ 'partners' => $partnerDetails]);
-            } else {
-                foreach ($partners as $partner) {
-                    $serving_master_categories = $partner->servingMasterCategories();
-                    $detail = [
-                        'id' => $partner->id,
-                        'name' => $partner->name,
-                        'sub_domain' => $partner->sub_domain,
-                        'serving_category' => $serving_master_categories,
-                        'address' => $partner->address,
-                        'logo' => $partner->logo,
-                        'lat' => $nearByPartners->where('partner_id',$partner->id)->first()->location->coordinates[1],
-                        'lng' => $nearByPartners->where('partner_id',$partner->id)->first()->location->coordinates[0],
-                        'description' => $partner->description,
-                        'badge' => $partner->resolveBadge(),
-                        'rating' => round($this->reviewRepository->getAvgRating($partner->reviews)),
-                        'distance' => round($nearByPartners->where('partner_id',$partner->id)->first()->distance, 2)
-                    ];
-                    $partnerDetails->push($detail);
-                }
-                //Find all partners in given location
-                return api_response($request, null, 200, [ 'partners' => $partnerDetails]);
+                $serving_master_categories = $partner->servingMasterCategories();
+                $detail = [
+                    'id' => $partner->id,
+                    'name' => $partner->name,
+                    'sub_domain' => $partner->sub_domain,
+                    'serving_category' => $serving_master_categories,
+                    'address' => $partner->address,
+                    'logo' => $partner->logo,
+                    'lat' => $nearByPartners->where('partner_id',$partner->id)->first()->location->coordinates[1],
+                    'lng' => $nearByPartners->where('partner_id',$partner->id)->first()->location->coordinates[0],
+                    'description' => $partner->description,
+                    'badge' => $partner->resolveBadge(),
+                    'rating' => round($this->reviewRepository->getAvgRating($partner->reviews)),
+                    'distance' => round($nearByPartners->where('partner_id',$partner->id)->first()->distance, 2)
+                ];
+                $partnerDetails->push($detail);
             }
 
+            return api_response($request, null, 200, [ 'partners' => $partnerDetails]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
