@@ -15,6 +15,7 @@ use App\Repositories\PartnerRepository;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use DB;
+use Sheba\Dal\PartnerLocation\PartnerLocationRepository;
 use Sheba\ModificationFields;
 use Sheba\Partner\StatusChanger;
 use Sheba\RequestIdentification;
@@ -80,10 +81,10 @@ class OperationController extends Controller
         }
     }
 
-    private function saveInDatabase($partner, Request $request)
+    private function saveInDatabase($partner, Request $request, PartnerLocationRepository $partnerLocationRepository)
     {
         try {
-            DB::transaction(function () use ($request, $partner) {
+            DB::transaction(function () use ($request, $partner, $partnerLocationRepository) {
                 $partner_info = [];
                 if ($request->has('locations')) $partner->locations()->sync(json_decode($request->locations));
                 if ($request->has('address')) $partner_info['address'] = $request->address;
@@ -103,6 +104,17 @@ class OperationController extends Controller
                     ];
 
                     $partner->geoChangeLogs()->save(new PartnerGeoChangeLog($this->withCreateModificationField((new RequestIdentification())->set($geo_change_log_data))));
+
+                    $partnerLocationRepository->updateByPartnerId($partner->id, [
+                        'location' =>  array(
+                            'type' => 'Point',
+                            'coordinates' => [
+                                (double) $request->lng,
+                                (double) $request->lat
+                            ]
+                        ),
+                        'radius' => (double) $request->radius,
+                    ]);
                 }
 
                 $partner->update($partner_info);
