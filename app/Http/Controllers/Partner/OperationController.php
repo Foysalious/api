@@ -15,6 +15,8 @@ use App\Repositories\PartnerRepository;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use DB;
+use Sheba\Dal\PartnerLocation\PartnerLocation;
+use Sheba\Dal\PartnerLocation\PartnerLocationRepository;
 use Sheba\ModificationFields;
 use Sheba\Partner\StatusChanger;
 use Sheba\RequestIdentification;
@@ -22,6 +24,13 @@ use Sheba\RequestIdentification;
 class OperationController extends Controller
 {
     use ModificationFields;
+
+    private $partnerLocationRepo;
+
+    public function __construct()
+    {
+        $this->partnerLocationRepo = new PartnerLocationRepository(new PartnerLocation());
+    }
 
     public function index($partner, Request $request)
     {
@@ -103,6 +112,17 @@ class OperationController extends Controller
                     ];
 
                     $partner->geoChangeLogs()->save(new PartnerGeoChangeLog($this->withCreateModificationField((new RequestIdentification())->set($geo_change_log_data))));
+
+                    $this->partnerLocationRepo->updateByPartnerId($partner->id, [
+                        'location' =>  array(
+                            'type' => 'Point',
+                            'coordinates' => [
+                                (double) $request->lng,
+                                (double) $request->lat
+                            ]
+                        ),
+                        'radius' => (double) $request->radius,
+                    ]);
                 }
 
                 $partner->update($partner_info);
