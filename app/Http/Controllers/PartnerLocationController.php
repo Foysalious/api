@@ -198,7 +198,7 @@ class PartnerLocationController extends Controller
             } else {
                 $partners = Partner::whereIn('id',$nearByPartnerIds)->get();
                 foreach ($partners as $partner) {
-                    
+
                 }
                 //Find all partners in given location
                 return api_response($request, null, 200, [ 'partners' => $partners]);

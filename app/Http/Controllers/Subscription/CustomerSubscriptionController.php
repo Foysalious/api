@@ -386,4 +386,10 @@ class CustomerSubscriptionController extends Controller
 
         return $result;
     }
+
+    private function resolveInputTypeField($answers)
+    {
+        $answers = explode(',', $answers);
+        return count($answers) <= 4 ? "radiobox" : "dropdown";
+    }
 }
