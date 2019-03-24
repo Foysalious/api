@@ -1,10 +1,9 @@
-<?php
-
-namespace App\Http\Controllers\Subscription;
+<?php namespace App\Http\Controllers\Subscription;
 
 use App\Exceptions\HyperLocationNotFoundException;
 use App\Http\Controllers\Controller;
 use App\Models\Service;
+use App\Models\ServiceSubscription;
 use App\Models\SubscriptionOrder;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -14,6 +13,7 @@ use Sheba\Checkout\Requests\SubscriptionOrderRequest;
 use Sheba\Checkout\SubscriptionOrderPlace;
 use Sheba\Payment\Adapters\Payable\SubscriptionOrderAdapter;
 use Sheba\Payment\ShebaPayment;
+use Sheba\Subscription\ApproximatePriceCalculator;
 
 class CustomerSubscriptionController extends Controller
 {
@@ -190,7 +190,7 @@ class CustomerSubscriptionController extends Controller
         }
     }
 
-    public function show(Request $request, $customer, $subscription)
+    public function show(Request $request, $customer, $subscription, ApproximatePriceCalculator $approximatePriceCalculator)
     {
         try {
             $customer = $request->customer;
@@ -225,6 +225,8 @@ class CustomerSubscriptionController extends Controller
             });
 
             $service_details = json_decode($subscription_order->service_details);
+            $service = Service::find($service_details->id);
+
             $variables = collect();
             foreach ($service_details->breakdown as $breakdown) {
                 if (empty($breakdown->questions)) {
@@ -242,7 +244,19 @@ class CustomerSubscriptionController extends Controller
             }
 
             $service_details_breakdown = $service_details->breakdown['0'];
+
             $service = Service::find((int)$service_details_breakdown->id);
+            $options = $this->serviceQuestionSet($service);
+            $answers = collect();
+            if ($options)
+                foreach ($options as $option) {
+                    $answers->push($option["answers"]);
+                }
+
+            $serviceSubscription = ServiceSubscription::where('service_id',$service->id)->first();
+            $price_range = $approximatePriceCalculator->setSubscription($serviceSubscription)->getPriceRange();
+
+
             $schedules = collect(json_decode($subscription_order->schedules));
 
             $subscription_order_details = [
@@ -262,6 +276,7 @@ class CustomerSubscriptionController extends Controller
 
                 'customer_name' => $subscription_order->customer->profile->name,
                 'customer_mobile' => $subscription_order->customer->profile->mobile,
+                'address_id' => $subscription_order->deliveryAddress->id,
                 'address' => $subscription_order->deliveryAddress->address,
                 'location_name' => $subscription_order->location ?  $subscription_order->location->name : "",
                 'ordered_for' => $subscription_order->deliveryAddress->name,
@@ -283,10 +298,92 @@ class CustomerSubscriptionController extends Controller
                 "orders" => $format_partner_orders
             ];
 
+            if ($options) {
+                if (count($answers) > 1)
+                    $subscription_order_details['service_breakdown'] = $this->breakdown_service_with_min_max_price($answers, $serviceSubscription['min_price'], $serviceSubscription['max_price']);
+                else {
+                    $total_breakdown = array();
+                    foreach ($answers[0] as $index => $answer) {
+                        $breakdown = array(
+                            'name' => $answer,
+                            'indexes' => array($index),
+                            'min_price' => $serviceSubscription['min_price'],
+                            'max_price' => $serviceSubscription['max_price']
+                        );
+                        array_push($total_breakdown, $breakdown);
+                    }
+                    $subscription_order_details['service_breakdown'] = $total_breakdown;
+                }
+
+            } else {
+                $subscription_order_details['service_breakdown'] = array(array(
+                    'name' => $serviceSubscription->service->name,
+                    'indexes' => null,
+                    'min_price' => $serviceSubscription['min_price'],
+                    'max_price' => $serviceSubscription['max_price']
+                ));
+            }
+
             return api_response($request, $subscription_order_details, 200, ['subscription_order_details' => $subscription_order_details]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function serviceQuestionSet($service)
+    {
+        $questions = null;
+        if ($service->variable_type == 'Options') {
+            $questions = json_decode($service->variables)->options;
+            foreach ($questions as &$question) {
+                $question = collect($question);
+                $question->put('input_type', $this->resolveInputTypeField($question->get('answers')));
+                $question->put('screen', count($questions) > 3 ? 'slide' : 'normal');
+                $explode_answers = explode(',', $question->get('answers'));
+                $question->put('answers', $explode_answers);
+            }
+            if (count($questions) == 1) {
+                $questions[0]->put('input_type', 'selectbox');
+            }
+        }
+        return $questions;
+    }
+
+    private function breakdown_service_with_min_max_price($arrays, $min_price, $max_price, $i = 0)
+    {
+        if (!isset($arrays[$i])) {
+            return array();
+        }
+
+        if ($i == count($arrays) - 1) {
+            return $arrays[$i];
+        }
+
+        $tmp = $this->breakdown_service_with_min_max_price($arrays, $min_price, $max_price, $i + 1);
+
+        $result = array();
+
+        foreach ($arrays[$i] as $array_index => $v) {
+
+            foreach ($tmp as $index => $t) {
+                $result[] = is_array($t) ?
+                    array(
+                        'name' => $v . " - " . $t['name'],
+                        'indexes' => array_merge(array($array_index), $t['indexes']),
+                        'min_price' => $t['min_price'],
+                        'max_price' => $t['max_price'],
+                    ) :
+                    array(
+                        'name' => $v . " - " . $t,
+                        'indexes' => array($array_index, $index),
+                        'min_price' => $min_price,
+                        'max_price' => $max_price
+                    );
+            }
+        }
+
+        return $result;
     }
 }
