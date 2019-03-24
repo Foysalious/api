@@ -22,4 +22,9 @@ class PartnerTransaction extends Model
     {
         return $this->morphToMany(Tag::class, 'taggable');
     }
+
+    public function scopeHasTransactionID($query, $transactionId)
+    {
+        $query->where('transaction_details', 'LIKE', '%"id":"' . $transactionId . '"%')->orWhere('transaction_details','LIKE','%"trxID":"' . $transactionId . '"%');
+    }
 }
