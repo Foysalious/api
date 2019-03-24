@@ -8,6 +8,7 @@ use App\Models\CategoryPartner;
 use App\Models\HyperLocal;
 use App\Models\Location;
 use App\Models\Partner;
+use App\Repositories\ReviewRepository;
 use App\Sheba\Checkout\PartnerList;
 use App\Sheba\Checkout\Validation;
 use Carbon\Carbon;
@@ -15,9 +16,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Sheba\Checkout\Requests\PartnerListRequest;
+use Sheba\Dal\PartnerLocation\PartnerLocation;
+use Sheba\Dal\PartnerLocation\PartnerLocationRepository;
 
 class PartnerLocationController extends Controller
 {
+    private $reviewRepository;
+
+    public function __construct()
+    {
+        $this->reviewRepository = new ReviewRepository();
+    }
+
     public function getPartners(Request $request, PartnerListRequest $partnerListRequest)
     {
         try {
@@ -70,7 +80,7 @@ class PartnerLocationController extends Controller
         }
     }
 
-    public function getNearbyPartners(Request $request)
+    public function getNearbyPartners(Request $request, PartnerLocationRepository $partnerLocationRepository)
     {
         try {
             $location = null;
@@ -84,219 +94,54 @@ class PartnerLocationController extends Controller
             if(!$location)
                 return api_response($request, 'Invalid location', 400, ['message' => 'Invalid location']);
 
+            $geo_info = json_decode($location->geo_informations);
+            $nearByPartners = $partnerLocationRepository->findNearByPartners($geo_info->lat, $geo_info->lng);
+            $nearByPartnerIds = $nearByPartners->pluck('partner_id');
+            $partners = Partner::whereIn('id',$nearByPartnerIds)->get();
+
+            $partnerDetails = collect();
             if($request->has('category_id')) {
-                // Get All Partners in specific Category && Location
-                $category_id = Category::find($request->category_id);
-                $partners = [
-                    [
-                        'id' => 462,
-                        'current_impression' => 110,
-                        'address' => 'Nodda Bazar, Beside Sonali Bank, Baridhara, Gulshan, Dhaka-1212.',
-                        'name' => 'Yasin Traders',
-                        'sub_domain' => 'yasin-traders',
-                        'description' => 'All kinds of Home and Office Relocation.',
-                        'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/partners/logos/1546778793_yasin_traders.png',
-                        'service_category' => 'Appliance Repair',
-                        'distance' => 1.2,
-                        'lat' => 23.12121212,
-                        'lng' => 91.121213123,
-                        'badge' => 'silver',
-                        'order_limit' => NULL,
-                        'discount' => 0,
-                        'discounted_price' => 2500,
-                        'original_price' => 2500,
-                        'is_min_price_applied' => 0,
-                        'delivery_charge' => 0,
-                        'has_home_delivery' => 1,
-                        'has_premise_available' => 0,
-                        'total_jobs' => 186,
-                        'ongoing_jobs' => 0,
-                        'total_jobs_of_category' => 186,
-                        'total_completed_orders' => 186,
-                        'subscription_type' => 'PSP',
-                        'total_working_days' => 7,
-                        'rating' => 4.64,
-                        'total_ratings' => 99,
-                        'total_five_star_ratings' => 78,
-                        'total_compliments' => 78,
-                        'total_experts' => 5,
-                    ],
-                    [
-                        'id' => 462,
-                        'current_impression' => 110,
-                        'address' => 'Nodda Bazar, Beside Sonali Bank, Baridhara, Gulshan, Dhaka-1212.',
-                        'name' => 'Yasin Traders',
-                        'sub_domain' => 'yasin-traders',
-                        'description' => 'All kinds of Home and Office Relocation.',
-                        'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/partners/logos/1546778793_yasin_traders.png',
-                        'service_category' => 'Appliance Repair',
-                        'distance' => 1.2,
-                        'lat' => 23.12121212,
-                        'lng' => 91.121213123,
-                        'badge' => 'silver',
-                        'order_limit' => NULL,
-                        'discount' => 0,
-                        'discounted_price' => 2500,
-                        'original_price' => 2500,
-                        'is_min_price_applied' => 0,
-                        'delivery_charge' => 0,
-                        'has_home_delivery' => 1,
-                        'has_premise_available' => 0,
-                        'total_jobs' => 186,
-                        'ongoing_jobs' => 0,
-                        'total_jobs_of_category' => 186,
-                        'total_completed_orders' => 186,
-                        'subscription_type' => 'PSP',
-                        'total_working_days' => 7,
-                        'rating' => 4.64,
-                        'total_ratings' => 99,
-                        'total_five_star_ratings' => 78,
-                        'total_compliments' => 78,
-                        'total_experts' => 5,
-                    ],
-                    [
-                        'id' => 462,
-                        'current_impression' => 110,
-                        'address' => 'Nodda Bazar, Beside Sonali Bank, Baridhara, Gulshan, Dhaka-1212.',
-                        'name' => 'Yasin Traders',
-                        'sub_domain' => 'yasin-traders',
-                        'description' => 'All kinds of Home and Office Relocation.',
-                        'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/partners/logos/1546778793_yasin_traders.png',
-                        'service_category' => 'Appliance Repair',
-                        'distance' => 1.2,
-                        'lat' => 23.12121212,
-                        'lng' => 91.121213123,
-                        'badge' => 'silver',
-                        'order_limit' => NULL,
-                        'discount' => 0,
-                        'discounted_price' => 2500,
-                        'original_price' => 2500,
-                        'is_min_price_applied' => 0,
-                        'delivery_charge' => 0,
-                        'has_home_delivery' => 1,
-                        'has_premise_available' => 0,
-                        'total_jobs' => 186,
-                        'ongoing_jobs' => 0,
-                        'total_jobs_of_category' => 186,
-                        'total_completed_orders' => 186,
-                        'subscription_type' => 'PSP',
-                        'total_working_days' => 7,
-                        'rating' => 4.64,
-                        'total_ratings' => 99,
-                        'total_five_star_ratings' => 78,
-                        'total_compliments' => 78,
-                        'total_experts' => 5,
-                    ]
-                ];
-                return api_response($request, null, 200, [ 'partners' => $partners]);
+
+                foreach ($partners as $partner) {
+                    if(!in_array($request->category_id, $partner->servingMasterCategoryIds()))
+                        continue;
+
+                    $serving_master_categories = $partner->servingMasterCategories();
+                    $detail = [
+                        'name' => $partner->name,
+                        'sub_domain' => $partner->sub_domain,
+                        'serving_category' => $serving_master_categories,
+                        'address' => $partner->address,
+                        'logo' => $partner->logo,
+                        'description' => $partner->description,
+                        'badge' => $partner->resolveBadge(),
+                        'rating' => round($this->reviewRepository->getAvgRating($partner->reviews)),
+                        'distance' => round($nearByPartners->where('partner_id',$partner->id)->first()->distance, 2)
+                    ];
+                    $partnerDetails->push($detail);
+                }
+                return api_response($request, null, 200, [ 'partners' => $partnerDetails]);
             } else {
+                foreach ($partners as $partner) {
+                    $serving_master_categories = $partner->servingMasterCategories();
+                    $detail = [
+                        'name' => $partner->name,
+                        'sub_domain' => $partner->sub_domain,
+                        'serving_category' => $serving_master_categories,
+                        'address' => $partner->address,
+                        'logo' => $partner->logo,
+                        'description' => $partner->description,
+                        'badge' => $partner->resolveBadge(),
+                        'rating' => round($this->reviewRepository->getAvgRating($partner->reviews)),
+                        'distance' => round($nearByPartners->where('partner_id',$partner->id)->first()->distance, 2)
+                    ];
+                    $partnerDetails->push($detail);
+                }
                 //Find all partners in given location
-                $partners = [
-                    [
-                        'id' => 462,
-                        'current_impression' => 110,
-                        'address' => 'Nodda Bazar, Beside Sonali Bank, Baridhara, Gulshan, Dhaka-1212.',
-                        'name' => 'Yasin Traders',
-                        'sub_domain' => 'yasin-traders',
-                        'description' => 'All kinds of Home and Office Relocation.',
-                        'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/partners/logos/1546778793_yasin_traders.png',
-                        'service_category' => 'Appliance Repair',
-                        'distance' => 1.2,
-                        'lat' => 23.12121212,
-                        'lng' => 91.121213123,
-                        'badge' => 'silver',
-                        'order_limit' => NULL,
-                        'discount' => 0,
-                        'discounted_price' => 2500,
-                        'original_price' => 2500,
-                        'is_min_price_applied' => 0,
-                        'delivery_charge' => 0,
-                        'has_home_delivery' => 1,
-                        'has_premise_available' => 0,
-                        'total_jobs' => 186,
-                        'ongoing_jobs' => 0,
-                        'total_jobs_of_category' => 186,
-                        'total_completed_orders' => 186,
-                        'subscription_type' => 'PSP',
-                        'total_working_days' => 7,
-                        'rating' => 4.64,
-                        'total_ratings' => 99,
-                        'total_five_star_ratings' => 78,
-                        'total_compliments' => 78,
-                        'total_experts' => 5,
-                    ],
-                    [
-                        'id' => 462,
-                        'current_impression' => 110,
-                        'address' => 'Nodda Bazar, Beside Sonali Bank, Baridhara, Gulshan, Dhaka-1212.',
-                        'name' => 'Yasin Traders',
-                        'sub_domain' => 'yasin-traders',
-                        'description' => 'All kinds of Home and Office Relocation.',
-                        'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/partners/logos/1546778793_yasin_traders.png',
-                        'service_category' => 'Appliance Repair',
-                        'distance' => 1.2,
-                        'lat' => 23.12121212,
-                        'lng' => 91.121213123,
-                        'badge' => 'silver',
-                        'order_limit' => NULL,
-                        'discount' => 0,
-                        'discounted_price' => 2500,
-                        'original_price' => 2500,
-                        'is_min_price_applied' => 0,
-                        'delivery_charge' => 0,
-                        'has_home_delivery' => 1,
-                        'has_premise_available' => 0,
-                        'total_jobs' => 186,
-                        'ongoing_jobs' => 0,
-                        'total_jobs_of_category' => 186,
-                        'total_completed_orders' => 186,
-                        'subscription_type' => 'PSP',
-                        'total_working_days' => 7,
-                        'rating' => 4.64,
-                        'total_ratings' => 99,
-                        'total_five_star_ratings' => 78,
-                        'total_compliments' => 78,
-                        'total_experts' => 5,
-                    ],
-                    [
-                        'id' => 462,
-                        'current_impression' => 110,
-                        'address' => 'Nodda Bazar, Beside Sonali Bank, Baridhara, Gulshan, Dhaka-1212.',
-                        'name' => 'Yasin Traders',
-                        'sub_domain' => 'yasin-traders',
-                        'description' => 'All kinds of Home and Office Relocation.',
-                        'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/partners/logos/1546778793_yasin_traders.png',
-                        'service_category' => 'Appliance Repair',
-                        'distance' => 1.2,
-                        'lat' => 23.12121212,
-                        'lng' => 91.121213123,
-                        'badge' => 'silver',
-                        'order_limit' => NULL,
-                        'discount' => 0,
-                        'discounted_price' => 2500,
-                        'original_price' => 2500,
-                        'is_min_price_applied' => 0,
-                        'delivery_charge' => 0,
-                        'has_home_delivery' => 1,
-                        'has_premise_available' => 0,
-                        'total_jobs' => 186,
-                        'ongoing_jobs' => 0,
-                        'total_jobs_of_category' => 186,
-                        'total_completed_orders' => 186,
-                        'subscription_type' => 'PSP',
-                        'total_working_days' => 7,
-                        'rating' => 4.64,
-                        'total_ratings' => 99,
-                        'total_five_star_ratings' => 78,
-                        'total_compliments' => 78,
-                        'total_experts' => 5,
-                    ]
-                ];
-                return api_response($request, null, 200, [ 'partners' => $partners]);
+                return api_response($request, null, 200, [ 'partners' => $partnerDetails]);
             }
 
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+        } catch (\Throwable $e) {app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
 

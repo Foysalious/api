@@ -232,12 +232,14 @@ class CustomerSubscriptionController extends Controller
                 if (empty($breakdown->questions)) {
                     $data = [
                         'quantity' => $breakdown->quantity,
-                        'questions' => null
+                        'questions' => null,
+                        'options' => $breakdown->option
                     ];
                 } else {
                     $data = [
                         'quantity' => $breakdown->quantity,
-                        'questions' => $breakdown->questions
+                        'questions' => $breakdown->questions,
+                        'options' => $breakdown->option
                     ];
                 }
                 $variables->push($data);
@@ -246,16 +248,6 @@ class CustomerSubscriptionController extends Controller
             $service_details_breakdown = $service_details->breakdown['0'];
 
             $service = Service::find((int)$service_details_breakdown->id);
-            $options = $this->serviceQuestionSet($service);
-            $answers = collect();
-            if ($options)
-                foreach ($options as $option) {
-                    $answers->push($option["answers"]);
-                }
-
-            $serviceSubscription = ServiceSubscription::where('service_id',$service->id)->first();
-            $price_range = $approximatePriceCalculator->setSubscription($serviceSubscription)->getPriceRange();
-
 
             $schedules = collect(json_decode($subscription_order->schedules));
 
@@ -298,35 +290,9 @@ class CustomerSubscriptionController extends Controller
                 "orders" => $format_partner_orders
             ];
 
-            if ($options) {
-                if (count($answers) > 1)
-                    $subscription_order_details['service_breakdown'] = $this->breakdown_service_with_min_max_price($answers, $serviceSubscription['min_price'], $serviceSubscription['max_price']);
-                else {
-                    $total_breakdown = array();
-                    foreach ($answers[0] as $index => $answer) {
-                        $breakdown = array(
-                            'name' => $answer,
-                            'indexes' => array($index),
-                            'min_price' => $serviceSubscription['min_price'],
-                            'max_price' => $serviceSubscription['max_price']
-                        );
-                        array_push($total_breakdown, $breakdown);
-                    }
-                    $subscription_order_details['service_breakdown'] = $total_breakdown;
-                }
-
-            } else {
-                $subscription_order_details['service_breakdown'] = array(array(
-                    'name' => $serviceSubscription->service->name,
-                    'indexes' => null,
-                    'min_price' => $serviceSubscription['min_price'],
-                    'max_price' => $serviceSubscription['max_price']
-                ));
-            }
 
             return api_response($request, $subscription_order_details, 200, ['subscription_order_details' => $subscription_order_details]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -385,5 +351,11 @@ class CustomerSubscriptionController extends Controller
         }
 
         return $result;
+    }
+
+    private function resolveInputTypeField($answers)
+    {
+        $answers = explode(',', $answers);
+        return count($answers) <= 4 ? "radiobox" : "dropdown";
     }
 }
