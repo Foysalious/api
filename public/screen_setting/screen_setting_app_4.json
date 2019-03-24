@@ -9,13 +9,13 @@
     "data": [
       {
         "id": 122,
-        "name": "TK.200 Off on AC Repair",
-        "small_image_link": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/offers_images\/banners\/ac-200-off-new-extended.png",
-        "image_link": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/offers_images\/banners\/ac-200-off-new-extended.png",
+        "name": "Beauty Service",
+        "small_image_link": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/offers_images\/banners\/slider_01_24_03_2019.png",
+        "image_link": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/offers_images\/banners\/slider_01_24_03_2019.png",
         "is_flash": 0,
         "valid_till": "2019-03-31 23:59:59",
         "target_type": "Category",
-        "target_id": "276",
+        "target_id": "183",
         "target_link": null,
         "is_parent": false,
         "link": null,
@@ -24,13 +24,13 @@
       },
       {
         "id": 122,
-        "name": "LPG GAS",
-        "small_image_link" : "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/offers_images\/banners\/lpg-app-banner.png",
-        "image_link" : "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/offers_images\/banners\/lpg-app-banner.png",
+        "name": "FROZEN FOOD",
+        "small_image_link": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/offers_images\/banners\/slider_02_24_03_2019.png",
+        "image_link": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/offers_images\/banners\/lpg-app-banner.png",
         "is_flash": 0,
         "valid_till": "2019-03-31 23:59:59",
         "target_type": "Category",
-        "target_id": "331",
+        "target_id": "274",
         "target_link": null,
         "is_parent": false,
         "link": null,
@@ -240,7 +240,7 @@
       {
         "id": 122,
         "name": "Rent a car",
-        "banner": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/offers_images\/banners\/shifting_app-banner_new.png",
+        "banner": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/offers_images\/banners\/shifting_app_banner_24_03_2019.png",
         "is_flash": 0,
         "valid_till": "2019-03-31 23:59:00",
         "target_type": "Category",
@@ -324,7 +324,7 @@
       {
         "id": 122,
         "name": "frozen food offer",
-        "banner": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/offers_images\/banners\/frozenfood.png",
+        "banner": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/offers_images\/banners\/4_offer_24_03_2019.png",
         "is_flash": 0,
         "valid_till": "2019-03-31 23:59:00",
         "target_type": "Category",
@@ -538,6 +538,30 @@
     ]
   },
   {
+    "item_type": "OfferShowcase",
+    "item_id": 122,
+    "name": null,
+    "order": 6,
+    "updated_at": "2018-12-25 18:23:02",
+    "updated_at_timestamp": 1545740582,
+    "data": [
+      {
+        "id": 122,
+        "name": "Appliance Repair",
+        "banner": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/offers_images\/banners\/2_offer_24_03_2019.png",
+        "is_flash": 0,
+        "valid_till": "2019-03-31 23:59:00",
+        "target_type": "Category",
+        "target_id": "184",
+        "target_link": null,
+        "is_parent": false,
+        "link": null,
+        "updated_at": "2019-02-15 00:36:42",
+        "updated_at_timestamp": 1550169402
+      }
+    ]
+  },
+  {
     "item_type": "CategoryGroup",
     "item_id": 17,
     "name": "Home Renovation",
@@ -604,6 +628,30 @@
         "is_parent": false,
         "updated_at": "2019-02-06 13:07:25",
         "updated_at_timestamp": 1549436845
+      }
+    ]
+  },
+  {
+    "item_type": "OfferShowcase",
+    "item_id": 122,
+    "name": null,
+    "order": 6,
+    "updated_at": "2018-12-25 18:23:02",
+    "updated_at_timestamp": 1545740582,
+    "data": [
+      {
+        "id": 122,
+        "name": "Appliance Repair",
+        "banner": "https:\/\/s3.ap-south-1.amazonaws.com\/cdn-shebaxyz\/images\/offers_images\/banners\/1_offer_24_03_2019.png",
+        "is_flash": 0,
+        "valid_till": "2019-03-31 23:59:00",
+        "target_type": "Category",
+        "target_id": "1",
+        "target_link": null,
+        "is_parent": false,
+        "link": null,
+        "updated_at": "2019-02-15 00:36:42",
+        "updated_at_timestamp": 1550169402
       }
     ]
   },
