@@ -108,6 +108,7 @@ class PartnerLocationController extends Controller
 
                     $serving_master_categories = $partner->servingMasterCategories();
                     $detail = [
+                        'id' => $partner->id,
                         'name' => $partner->name,
                         'sub_domain' => $partner->sub_domain,
                         'serving_category' => $serving_master_categories,
@@ -127,6 +128,7 @@ class PartnerLocationController extends Controller
                 foreach ($partners as $partner) {
                     $serving_master_categories = $partner->servingMasterCategories();
                     $detail = [
+                        'id' => $partner->id,
                         'name' => $partner->name,
                         'sub_domain' => $partner->sub_domain,
                         'serving_category' => $serving_master_categories,
