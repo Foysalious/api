@@ -232,12 +232,14 @@ class CustomerSubscriptionController extends Controller
                 if (empty($breakdown->questions)) {
                     $data = [
                         'quantity' => $breakdown->quantity,
-                        'questions' => null
+                        'questions' => null,
+                        'options' => $breakdown->option
                     ];
                 } else {
                     $data = [
                         'quantity' => $breakdown->quantity,
-                        'questions' => $breakdown->questions
+                        'questions' => $breakdown->questions,
+                        'options' => $breakdown->option
                     ];
                 }
                 $variables->push($data);

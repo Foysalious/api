@@ -6,6 +6,7 @@ use App\Exceptions\NotFoundException;
 use App\Models\Affiliate;
 use App\Models\Partner;
 use DB;
+use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
 
@@ -192,6 +193,10 @@ class PartnerModerator
     public static function calculateDistance($source, $dest)
     {
         $distance = (new Distance(DistanceStrategy::$VINCENTY))->linear();
+
+        $source = (new Coords($source['lat'], $source['lng']));
+        $dest   = (new Coords($dest['lat'], $dest['lng']));
+
         return $distance->from($source)->to($dest)->distance();
         // return self::vincentyGreatCircleDistance(floatval($source['lat']), floatval($source['lng']), floatval($dest['lat']), floatval($dest['lng']));
     }
