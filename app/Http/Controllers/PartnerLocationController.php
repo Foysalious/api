@@ -113,8 +113,8 @@ class PartnerLocationController extends Controller
                         'serving_category' => $serving_master_categories,
                         'address' => $partner->address,
                         'logo' => $partner->logo,
-                        'lat' => json_decode($partner->geo_informations, true)->lat,
-                        'lng' => json_decode($partner->geo_informations, true)->lng,
+                        'lat' => $nearByPartners->where('partner_id',$partner->id)->first()->location->coordinates[1],
+                        'lng' => $nearByPartners->where('partner_id',$partner->id)->first()->location->coordinates[0],
                         'description' => $partner->description,
                         'badge' => $partner->resolveBadge(),
                         'rating' => round($this->reviewRepository->getAvgRating($partner->reviews)),
@@ -126,14 +126,15 @@ class PartnerLocationController extends Controller
             } else {
                 foreach ($partners as $partner) {
                     $serving_master_categories = $partner->servingMasterCategories();
+
                     $detail = [
                         'name' => $partner->name,
                         'sub_domain' => $partner->sub_domain,
                         'serving_category' => $serving_master_categories,
                         'address' => $partner->address,
                         'logo' => $partner->logo,
-                        'lat' => json_decode($partner->geo_informations, true)->lat,
-                        'lng' => json_decode($partner->geo_informations, true)->lng,
+                        'lat' => $nearByPartners->where('partner_id',$partner->id)->first()->location->coordinates[1],
+                        'lng' =>  $nearByPartners->where('partner_id',$partner->id)->first()->location->coordinates[0],
                         'description' => $partner->description,
                         'badge' => $partner->resolveBadge(),
                         'rating' => round($this->reviewRepository->getAvgRating($partner->reviews)),
@@ -145,7 +146,9 @@ class PartnerLocationController extends Controller
                 return api_response($request, null, 200, [ 'partners' => $partnerDetails]);
             }
 
-        } catch (\Throwable $e) {app('sentry')->captureException($e);
+        } catch (\Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
 
