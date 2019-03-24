@@ -60,7 +60,7 @@ class SpLoanRequest extends ApiRequest
         if (HttpRequest::segment(5) == "finance-info") {
             $rules = [
                 'acc_name' => 'required|string',
-                'acc_no' => 'required|integer',
+                'acc_no' => 'required|string',
                 'bank_name' => 'required|string',
                 'branch_name' => 'required|string',
                 'acc_type' => 'required|string|in:savings,current,সেভিংস,কারেন্ট',

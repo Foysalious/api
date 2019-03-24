@@ -302,10 +302,12 @@ class CategoryController extends Controller
                     }
                     $category['services'] = $services;
                     $category['subscriptions'] = $subscriptions;
-                    $category['subscription_faq'] = [
-                        'title' => 'Subscribe & save money',
-                        'body' => 'Save BDT 20 in every meter by subscribing for one month!'
-                    ];
+                    if($subscriptions->count()) {
+                        $category['subscription_faq'] = [
+                            'title' => 'Subscribe & save money',
+                            'body' => 'Save BDT 20 in every meter by subscribing for one month!'
+                        ];
+                    }
                     return api_response($request, $category, 200, ['category' => $category]);
                 } else
                     return api_response($request, null, 404);

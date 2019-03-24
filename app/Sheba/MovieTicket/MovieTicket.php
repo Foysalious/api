@@ -134,7 +134,7 @@ class MovieTicket
 
         $this->setModifier($this->agent);
         $this->withCreateModificationField($movie_ticket_order);
-        $movie_ticket_order->save();
+        $movie_ticket_order->save();    
 
         $movie_ticket_order->agent = $this->agent;
         $movie_ticket_order->vendor = $this->model;

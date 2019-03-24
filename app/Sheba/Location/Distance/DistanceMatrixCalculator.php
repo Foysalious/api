@@ -1,6 +1,5 @@
 <?php namespace Sheba\Location\Distance;
 
-
 use Sheba\Location\Distance\Strategies\GoogleDistanceMatrix;
 
 class DistanceMatrixCalculator

@@ -537,6 +537,11 @@ class Partner extends Model implements Rewardable, TopUpAgent
         return implode(", ",Category::whereIn('id',$serving_master_category_ids)->pluck('name')->toArray());
     }
 
+    public function servingMasterCategoryIds()
+    {
+        return array_unique($this->categories->pluck('parent_id')->toArray());
+    }
+
     public function resolveBadge()
     {
         return (new BadgeResolver())->setPartner($this)->resolveVersionWiseBadge()->getBadge();

@@ -175,6 +175,7 @@ class TopUpController extends Controller
         if ($request->affiliate) return $request->affiliate;
         elseif ($request->customer) return $request->customer;
         elseif ($request->partner) return $request->partner;
+        elseif ($request->vendor) return $request->vendor;
     }
 
     /**

@@ -16,7 +16,7 @@ class TokenizedAgreement extends TokenizedModule
     public function create($payer_reference, $callback_url)
     {
         $create_pay_body = json_encode(array(
-            'payerReference' => $payer_reference,
+            'payerReference' => (string)$payer_reference,
             'callbackURL' => $callback_url,
         ));
         $curl = curl_init($this->bkashAuth->url . '/checkout/agreement/create');
@@ -45,7 +45,7 @@ class TokenizedAgreement extends TokenizedModule
         curl_close($curl);
         return (new ExecuteResponse())->setResponse(json_decode($result_data));
     }
-    
+
     /**
      * @return array
      */
