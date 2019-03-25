@@ -8,6 +8,7 @@ use App\Repositories\ReviewRepository;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use DB;
+use Sheba\Helpers\Formatters\BDMobileFormatter;
 
 class ResourceController extends Controller
 {
@@ -108,7 +109,7 @@ class ResourceController extends Controller
                 return api_response($request, $message, 500, ['message' => $message]);
             }
 
-            $profile = Profile::where('mobile', $request->mobile)->first();
+            $profile = Profile::where('mobile', BDMobileFormatter::format($request->mobile))->first();
             $profile->resource->update(['is_trained' => count($request->certificates) > 0 ? 1 : 0]);
 
             return api_response($request, 1, 200);
