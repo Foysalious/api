@@ -5,6 +5,7 @@ use Illuminate\Database\Eloquent\Model;
 use Sheba\CiCalculator;
 use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Helpers\TimeFrame;
+use Sheba\Jobs\JobStatuses;
 
 class Job extends Model
 {
@@ -391,5 +392,71 @@ class Job extends Model
     public function isOnPremise()
     {
         return $this->site == constants('JOB_ON_PREMISE')['partner'] ? 1 : 0;
+    }
+
+    public function isOneWay()
+    {
+        return $this->category->needsOneWayLogistic();
+    }
+
+    public function isOneWayReadyToPick()
+    {
+        return $this->category->needsOneWayLogisticOnReadyToPick();
+    }
+
+    public function isTwoWay()
+    {
+        return $this->category->needsTwoWayLogistic();
+    }
+
+    public function isProcessable()
+    {
+        return $this->_isProcessable() && !$this->needsLogistic();
+    }
+
+    private function _isProcessable()
+    {
+        return JobStatuses::isProcessable($this->status) && empty($this->first_logistic_order_id);
+    }
+
+    public function isServeable()
+    {
+        return JobStatuses::isServeable($this->status) && empty($this->first_logistic_order_id);
+    }
+
+    public function isPayable()
+    {
+        return !JobStatuses::isServeable($this->status) && empty($this->first_logistic_order_id);
+    }
+
+    public function isReadyToPickable()
+    {
+        return $this->isTwoWayReadyToPickable() || $this->isOneWayReadyToPickable();
+    }
+
+    private function isOneWayReadyToPickable()
+    {
+        return $this->isOneWayReadyToPick() && $this->_isProcessable();
+    }
+
+    private function isTwoWayReadyToPickable()
+    {
+        return $this->isServeable() && $this->isTwoWay() && empty($this->last_logistic_order_id);
+    }
+
+    /**
+     * @return CategoryPartner
+     */
+    public function getPartnerCategory()
+    {
+        return CategoryPartner::where([
+            'partner_id' => $this->partnerOrder->partner_id,
+            'category_id' => $this->category_id,
+        ])->first();
+    }
+
+    public function needsLogistic()
+    {
+        return $this->category->needsLogistic() && $this->getPartnerCategory()->needsShebaLogistic();
     }
 }

@@ -1,6 +1,8 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Logistics\Natures as LogisticNatures;
+use Sheba\Logistics\OneWayInitEvents as OneWayLogisticInitEvents;
 
 class Category extends Model
 {
@@ -150,5 +152,61 @@ class Category extends Model
                     }
                 )->select('id', 'name', 'parent_id');
             }]);
+    }
+
+    /**
+     * @return bool
+     */
+    public function needsLogistic()
+    {
+        return (bool) $this->is_logistic_available;
+    }
+
+    /**
+     * @return bool
+     */
+    public function needsTwoWayLogistic()
+    {
+        return $this->needsLogistic() && $this->logistic_nature == LogisticNatures::TWO_WAY;
+    }
+
+    /**
+     * @return bool
+     */
+    public function needsOneWayLogistic()
+    {
+        return $this->needsLogistic() && $this->logistic_nature == LogisticNatures::ONE_WAY;
+    }
+
+    /**
+     * @return bool
+     */
+    public function needsOneWayLogisticOnAccept()
+    {
+        return $this->needsOneWayLogistic() && $this->one_way_logistic_init_event == OneWayLogisticInitEvents::ORDER_ACCEPT;
+    }
+
+    /**
+     * @return bool
+     */
+    public function needsOneWayLogisticOnReadyToPick()
+    {
+        return $this->needsOneWayLogistic() && $this->one_way_logistic_init_event == OneWayLogisticInitEvents::READY_TO_PICK;
+    }
+
+    /**
+     * @return bool
+     */
+    public function needsLogisticOnAccept()
+    {
+        return $this->needsTwoWayLogistic() || $this->needsOneWayLogisticOnAccept();
+    }
+
+    /**
+     * @return bool
+     */
+    public function needsLogisticOnReadyToPick()
+    {
+        return $this->needsTwoWayLogistic() || $this->needsOneWayLogisticOnReadyToPick();
     }
 }

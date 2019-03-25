@@ -159,4 +159,30 @@ class Order extends Model implements ShebaOrderInterface
         $delivery_address->geo_informations = json_encode(["lat" => $location->lat, "lng" => $location->lng]);
         return $delivery_address;
     }
+
+    public function isLogisticOrder()
+    {
+        return $this->lastJob()->needsLogistic();
+    }
+
+    public function isReadyToPick()
+    {
+        return $this->lastJob()->isReadyToPickable();
+    }
+
+    public function isProcessable()
+    {
+        return $this->lastJob()->isProcessable();
+    }
+
+    public function isServeable()
+    {
+        return $this->lastJob()->isServeable();
+    }
+
+    public function isPayable()
+    {
+        return $this->lastJob()->isPayable();
+    }
+
 }
