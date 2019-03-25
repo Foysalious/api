@@ -18,6 +18,7 @@ class CustomerRoute
 
                 $api->group(['prefix' => 'info-call'], function ($api) {
                     $api->get('/', 'InfoCallController@index');
+                    $api->get('/details/{id}', 'InfoCallController@getDetails');
                     $api->post('/', 'InfoCallController@store');
                 });
 
