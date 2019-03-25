@@ -185,7 +185,7 @@ class PartnerJobController extends Controller
             $job = $request->job;
             $statuses = 'start,end';
             foreach (constants('JOB_STATUSES') as $key => $value) {
-                $statuses .= ',$value';
+                $statuses .= ",$value";
             }
             $this->validate($request, [
                 'schedule_date' => 'sometimes|required|date|after:' . Carbon::yesterday(),
