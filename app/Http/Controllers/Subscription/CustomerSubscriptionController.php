@@ -362,10 +362,15 @@ class CustomerSubscriptionController extends Controller
             $request['lat'] = (double) $geo->lat;
             $request['lng'] = (double) $geo->lng;
             $request['subscription_type'] =  $subscription_order->billing_cycle;
-
-
+            $partners = $this->findPartnersForSubscription($request,$partner_orders[0]->partner_id);
             if(count($partners) > 0) {
                 return api_response($request, $partners, 200, ['status' => 'partner_available_on_time']);
+            } else {
+                $partners = $this->findPartnersForSubscription($request);
+                if(count($partners) > 0)
+                    return api_response($request, $partners, 200, ['status' => 'other_partners_available_on_time']);
+                else
+                    return api_response($request, $partners, 200, ['status' => 'no_partners_available_on_time']);
             }
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
