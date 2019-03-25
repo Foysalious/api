@@ -15,6 +15,14 @@ class CustomerRoute
                     $api->get('payment', 'Settings\SettingsController@addPayment');
                 });
 
+
+                $api->group(['prefix' => 'info-call'], function ($api) {
+                    $api->get('/', 'InfoCallController@index');
+                    $api->get('/details/{id}', 'InfoCallController@getDetails');
+                    $api->post('/', 'InfoCallController@store');
+                });
+
+
                 $api->put('notifications', 'CustomerNotificationController@update');
                 $api->post('top-up', 'TopUpController@topUp');
                 $api->group(['prefix' => 'bkash'], function ($api) {
