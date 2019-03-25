@@ -241,6 +241,11 @@ class Partner extends Model implements Rewardable, TopUpAgent
         return $query->where('status', 'Verified');
     }
 
+    public function isVerified()
+    {
+        return $this->where('status','Verified');
+    }
+
     public function getContactNumber()
     {
         if ($operation_resource = $this->operationResources()->first()) return $operation_resource->profile->mobile;
