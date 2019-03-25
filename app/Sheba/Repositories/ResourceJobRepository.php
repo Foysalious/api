@@ -22,17 +22,31 @@ class ResourceJobRepository extends BaseRepository
 
     public function changeJobStatus(Job $job, $new_status)
     {
-        $form_data = $this->withRequestIdentificationData(array_merge(['status' => $new_status], $this->getResourceInfo()));
-        $url = config('sheba.admin_url') . '/api/job/' . $job->id . '/change-status';
-        try {
-            $client = new Client();
-            $response = $client->request('POST', $url, array('form_params' => $form_data));
-            return json_decode($response->getBody());
-        } catch (RequestException $e) {
-            $sentry = app('sentry');
-            $sentry->user_context(['data' => $form_data]);
-            $sentry->captureException($e);
-            return null;
+        if($new_status === constants('JOB_STATUSES')['Ready_To_Pick']) {
+            $url = config('sheba.admin_url') . '/api/job/' . $job->id . '/ready-to-pick';
+            try {
+                $client = new Client();
+                $response = $client->request('POST', $url, array('form_params' => []));
+                return json_decode($response->getBody());
+            } catch (RequestException $e) {
+                $sentry = app('sentry');
+                $sentry->user_context(['data' => ['job_id' => $job->id, 'status' => 'ready-to-pick']]);
+                $sentry->captureException($e);
+                return null;
+            }
+        } else {
+            $form_data = $this->withRequestIdentificationData(array_merge(['status' => $new_status], $this->getResourceInfo()));
+            $url = config('sheba.admin_url') . '/api/job/' . $job->id . '/change-status';
+            try {
+                $client = new Client();
+                $response = $client->request('POST', $url, array('form_params' => $form_data));
+                return json_decode($response->getBody());
+            } catch (RequestException $e) {
+                $sentry = app('sentry');
+                $sentry->user_context(['data' => $form_data]);
+                $sentry->captureException($e);
+                return null;
+            }
         }
     }
 
