@@ -5,7 +5,43 @@ use Illuminate\Database\Eloquent\Model;
 class Profile extends Model
 {
     protected $guarded = ['id'];
-
+    protected $fillable = [
+        'name',
+        'mobile',
+        'email',
+        'password',
+        'remember_token',
+        'fb_id',
+        'google_id',
+        'mobile_verified',
+        'email_verified',
+        'address',
+        'permanent_address',
+        'bkash_agreement_id',
+        'occupation',
+        'nid_no',
+        'nid_image_front',
+        'nid_image_back',
+        'tin_no',
+        'tin_certificate',
+        'gender',
+        'dob',
+        'pro_pic',
+        'total_asset_amount',
+        'monthly_living_cost',
+        'monthly_loan_installment_amount',
+        'utility_bill_attachment',
+        'nominee_id',
+        'nominee_relation',
+        'grantor_id',
+        'grantor_relation',
+        'created_by',
+        'created_by_name',
+        'updated_by',
+        'updated_by_name',
+        'created_at',
+        'updated_at',
+    ];
 
     public function customer()
     {
