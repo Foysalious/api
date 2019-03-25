@@ -57,6 +57,7 @@ class CustomerRoute
                     $api->get('{subscription}/payment', 'Subscription\CustomerSubscriptionController@clearPayment');
                     $api->get('order-lists', 'Subscription\CustomerSubscriptionController@index');
                     $api->get('{subscription}/details', 'Subscription\CustomerSubscriptionController@show');
+                    $api->get('{subscription}/check-renewal-status', 'Subscription\CustomerSubscriptionController@checkRenewalStatus');
                 });
                 $api->group(['prefix' => 'movie-ticket'], function ($api) {
                     $api->get('movie-list', 'MovieTicketController@getAvailableTickets');

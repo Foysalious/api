@@ -2,6 +2,7 @@
 
 use App\Exceptions\HyperLocationNotFoundException;
 use App\Http\Controllers\Controller;
+use App\Models\CustomerDeliveryAddress;
 use App\Models\Service;
 use App\Models\ServiceSubscription;
 use App\Models\SubscriptionOrder;
@@ -212,10 +213,7 @@ class CustomerSubscriptionController extends Controller
                 ];
             });
 
-
-            $next_order_addition_days = $subscription_order->billing_cycle === 'weekly' ? 7 : 30;
-
-            $schedule_dates = $partner_orders->map(function ($partner_order) use ($next_order_addition_days) {
+            $schedule_dates = $partner_orders->map(function ($partner_order) {
                 $last_job = $partner_order->order->lastJob();
                 $day_name = Carbon::parse($last_job->schedule_date)->format('l');
                 return Carbon::parse(new Carbon('next '.lcfirst($day_name)))->toDateString();
@@ -312,6 +310,69 @@ class CustomerSubscriptionController extends Controller
         }
     }
 
+    public function checkRenewalStatus(Request $request, $customer, $subscription)
+    {
+        try{
+            $customer = $request->customer;
+            $subscription_order = SubscriptionOrder::find((int)$subscription);
+            $partner_orders = $subscription_order->orders->map(function ($order) {
+                return $order->lastPartnerOrder();
+            });
+            $delivery_address = CustomerDeliveryAddress::find($partner_orders[0]->order->delivery_address_id);
+            $geo = json_decode($delivery_address->geo_informations);
+
+            $format_partner_orders = $partner_orders->map(function ($partner_order) {
+                $last_job = $partner_order->order->lastJob();
+                return [
+                    'id' => $partner_order->order->code(),
+                    'job_id' => $last_job->id,
+                    'schedule_date' => Carbon::parse($last_job->schedule_date),
+                    'preferred_time' => Carbon::parse($last_job->schedule_date)->format('M-j').', '.Carbon::parse($last_job->preferred_time_start)->format('h:ia'),
+                    'is_completed' => $partner_order->closed_and_paid_at ? $partner_order->closed_and_paid_at->format('M-j, h:ia') : null,
+                    'cancelled_at' => $partner_order->cancelled_at ? Carbon::parse($partner_order->cancelled_at)->format('M-j, h:i a') : null
+                ];
+            });
+
+            $schedule_dates = $partner_orders->map(function ($partner_order) {
+                $last_job = $partner_order->order->lastJob();
+                $day_name = Carbon::parse($last_job->schedule_date)->format('l');
+                return Carbon::parse(new Carbon('next '.lcfirst($day_name)))->toDateString();
+            })->toArray();
+
+            usort($schedule_dates, function ($a, $b) {
+                return strtotime($a) - strtotime($b);
+            });
+            $schedules = collect(json_decode($subscription_order->schedules));
+
+            $service_details = json_decode($subscription_order->service_details);
+            $variables = collect();
+            foreach ($service_details->breakdown as $breakdown) {
+                    $data = [
+                        'id' => $breakdown->id,
+                        'quantity' => $breakdown->quantity,
+                        'option' => $breakdown->option
+                    ];
+
+                $variables->push($data);
+            }
+
+            $request['date'] = $schedule_dates;
+            $request['time'] =$schedules->first()->time;
+            $request['services'] = json_encode($variables, true);
+            $request['lat'] = (double) $geo->lat;
+            $request['lng'] = (double) $geo->lng;
+            $request['subscription_type'] =  $subscription_order->billing_cycle;
+
+
+            if(count($partners) > 0) {
+                return api_response($request, $partners, 200, ['status' => 'partner_available_on_time']);
+            }
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     private function serviceQuestionSet($service)
     {
         $questions = null;
@@ -371,5 +432,19 @@ class CustomerSubscriptionController extends Controller
     {
         $answers = explode(',', $answers);
         return count($answers) <= 4 ? "radiobox" : "dropdown";
+    }
+
+    private function findPartnersForSubscription($request, $partner = null)
+    {
+        $partnerListRequest = new PartnerListRequest();
+        $partnerListRequest->setRequest($request)->prepareObject();
+        if (!$partnerListRequest->isValid()) {
+            return api_response($request, null, 400, ['message' => 'Wrong Day for subscription']);
+        }
+        $partner_list = new SubscriptionPartnerList();
+        $partner_list->setPartnerListRequest($partnerListRequest)->find($partner);
+        $partners = $partner_list->partners->filter(function ($partner) {
+            return $partner->is_available == 1 || $partner->id == config('sheba.sheba_help_desk_id');
+        });
     }
 }
