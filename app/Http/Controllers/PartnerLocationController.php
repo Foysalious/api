@@ -83,13 +83,15 @@ class PartnerLocationController extends Controller
     public function getNearbyPartners(Request $request, PartnerLocationRepository $partnerLocationRepository)
     {
         try {
+
+            $this->validate($request,[
+                'lat' => 'required',
+                'lng' => 'required'
+            ]);
+
             $location = null;
-            if ($request->has('location')) {
-                $location = Location::find($request->location);
-            } else if ($request->has('lat')) {
-                $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
-                if (!is_null($hyperLocation)) $location = $hyperLocation->location;
-            }
+            $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+            if (!is_null($hyperLocation)) $location = $hyperLocation->location;
 
             if(!$location)
                 return api_response($request, 'Invalid location', 400, ['message' => 'Invalid location']);
@@ -125,7 +127,6 @@ class PartnerLocationController extends Controller
 
             return api_response($request, null, 200, [ 'partners' => $partnerDetails]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
