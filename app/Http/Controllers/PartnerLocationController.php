@@ -101,6 +101,8 @@ class PartnerLocationController extends Controller
             foreach($nearByPartners as $nearByPartner) {
 
                 $partner = Partner::find($nearByPartner->partner_id);
+                if(!$partner->isVerified() || !$partner->isLite())
+                    continue;
                 if($request->has('category_id')) {
                     if(!in_array($request->category_id, $partner->servingMasterCategoryIds()))
                         continue;
