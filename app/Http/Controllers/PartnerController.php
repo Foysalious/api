@@ -96,7 +96,7 @@ class PartnerController extends Controller
             }
             if(!$partner->isLite() || !$partner->isVerified())
                 $partner = null;
-            
+
             if ($partner == null) return api_response($request, null, 404);
 
             $serving_master_categories = $partner->servingMasterCategories();
