@@ -96,8 +96,7 @@ class PartnerLocationController extends Controller
             if(!$location)
                 return api_response($request, 'Invalid location', 400, ['message' => 'Invalid location']);
 
-            $geo_info = json_decode($location->geo_informations);
-            $nearByPartners = $partnerLocationRepository->findNearByPartners($geo_info->lat, $geo_info->lng);
+            $nearByPartners = $partnerLocationRepository->findNearByPartners($request->lat, $request->lng);
             $partnerDetails = collect();
             foreach($nearByPartners as $nearByPartner) {
 
