@@ -212,6 +212,19 @@ class CustomerSubscriptionController extends Controller
                 ];
             });
 
+
+            $next_order_addition_days = $subscription_order->billing_cycle === 'weekly' ? 7 : 30;
+
+            $schedule_dates = $partner_orders->map(function ($partner_order) use ($next_order_addition_days) {
+                $last_job = $partner_order->order->lastJob();
+                $day_name = Carbon::parse($last_job->schedule_date)->format('l');
+                return Carbon::parse(new Carbon('next '.lcfirst($day_name)))->toDateString();
+            })->toArray();
+
+            usort($schedule_dates, function ($a, $b) {
+                return strtotime($a) - strtotime($b);
+            });
+
             $next_order = [];
             foreach ($format_partner_orders->toArray() as $partner_order){
                 if (empty($partner_order['is_completed'])){
@@ -287,7 +300,8 @@ class CustomerSubscriptionController extends Controller
                 'discount' => $service_details->discount,
                 'total_price' => $service_details->discounted_price,
                 "paid_on" => !empty($subscription_order->paid_at) ? Carbon::parse($subscription_order->paid_at)->format('M-j, Y') : null,
-                "orders" => $format_partner_orders
+                "orders" => $format_partner_orders,
+                'schedule_dates' => $schedule_dates
             ];
 
 
