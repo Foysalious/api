@@ -28,6 +28,11 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
         return $this->hasMany(CustomerMobile::class);
     }
 
+    public function infoCalls()
+    {
+        return $this->hasMany(InfoCall::class);
+    }
+
     public function delivery_addresses()
     {
         return $this->hasMany(CustomerDeliveryAddress::class);
