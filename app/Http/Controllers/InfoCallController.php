@@ -62,17 +62,22 @@ class InfoCallController extends Controller
                 'estimated_budget' => 'required|numeric'
             ]);
             $customer = $request->customer;
+            $profile = $customer->profile;
 
             $data = [
                 'service_name' => $request->service_name,
                 'estimated_budget' => $request->estimated_budget,
+                'customer_name' => $profile->name,
+                'customer_mobile' => $profile->mobile,
+                'customer_email' => !empty($profile->email) ? $profile->email : null
             ];
+
             $customer->infoCalls()->create($this->withCreateModificationField($data));
             return api_response($request, 1, 200);
-        }  catch (ValidationException $e) {
+        } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        }catch (\Throwable $e) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
