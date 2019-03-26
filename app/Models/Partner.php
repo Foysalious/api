@@ -201,7 +201,7 @@ class Partner extends Model implements Rewardable, TopUpAgent
 
     public function getFirstOperationResource()
     {
-        if($this->resources) {
+        if ($this->resources) {
             return $this->resources->where('pivot.resource_type', $this->resourceTypes['Operation'])->first();
         } else {
             return $this->admins->first();
@@ -210,7 +210,7 @@ class Partner extends Model implements Rewardable, TopUpAgent
 
     public function getFirstAdminResource()
     {
-        if($this->resources) {
+        if ($this->resources) {
             return $this->resources->where('pivot.resource_type', $this->resourceTypes['Admin'])->first();
         } else {
             return $this->admins->first();
@@ -243,7 +243,7 @@ class Partner extends Model implements Rewardable, TopUpAgent
 
     public function isVerified()
     {
-        return $this->where('status','Verified');
+        return $this->where('status', 'Verified');
     }
 
     public function getContactNumber()
@@ -536,10 +536,20 @@ class Partner extends Model implements Rewardable, TopUpAgent
         return $this->package_id == (int)config('sheba.partner_lite_packages_id');
     }
 
+    public function scopeLite($q)
+    {
+        return $q->where('package_id', (int)config('sheba.partner_lite_packages_id'));
+    }
+
+    public function scopeModerated($query)
+    {
+        return $query->where('moderator_id', '<>', null)->where('moderation_status', 'approved');
+    }
+
     public function servingMasterCategories()
     {
         $serving_master_category_ids = array_unique($this->categories->pluck('parent_id')->toArray());
-        return implode(", ",Category::whereIn('id',$serving_master_category_ids)->pluck('name')->toArray());
+        return implode(", ", Category::whereIn('id', $serving_master_category_ids)->pluck('name')->toArray());
     }
 
     public function servingMasterCategoryIds()
@@ -571,4 +581,6 @@ class Partner extends Model implements Rewardable, TopUpAgent
     {
         return json_decode($this->sales_information);
     }
+
+
 }

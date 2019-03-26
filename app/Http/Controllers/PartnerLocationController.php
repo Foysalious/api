@@ -15,6 +15,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Sheba\Checkout\Partners\LitePartnerList;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Dal\PartnerLocation\PartnerLocation;
 use Sheba\Dal\PartnerLocation\PartnerLocationRepository;
@@ -64,8 +65,16 @@ class PartnerLocationController extends Controller
                 } else {
                     $partner_list->sortByShebaSelectedCriteria();
                 }
-                $partners = $partner_list->removeKeysFromPartner();
-                return api_response($request, $partners, 200, ['partners' => $partners->values()->all()]);
+                $partners = $partner_list->removeKeysFromPartner()->values()->all();
+                if (count($partners) < 50) {
+                    $lite_list = new LitePartnerList();
+                    $lite_list->setPartnerListRequest($partnerListRequest)->setLimit(50 - count($partners))->find($partner);
+                    $lite_list->addInfo();
+                    $lite_partners = $lite_list->removeKeysFromPartner()->values()->all();
+                } else {
+                    $lite_partners = [];
+                }
+                return api_response($request, $partners, 200, ['partners' => $partners, 'lite_partners' => $lite_partners]);
             }
             return api_response($request, null, 404, ['message' => 'No partner found.']);
         } catch (HyperLocationNotFoundException $e) {
@@ -84,7 +93,7 @@ class PartnerLocationController extends Controller
     {
         try {
 
-            $this->validate($request,[
+            $this->validate($request, [
                 'lat' => 'required',
                 'lng' => 'required'
             ]);
@@ -93,18 +102,18 @@ class PartnerLocationController extends Controller
             $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
             if (!is_null($hyperLocation)) $location = $hyperLocation->location;
 
-            if(!$location)
+            if (!$location)
                 return api_response($request, 'Invalid location', 400, ['message' => 'Invalid location']);
 
-            $nearByPartners = $partnerLocationRepository->findNearByPartners((double) $request->lat, (double) $request->lng);
+            $nearByPartners = $partnerLocationRepository->findNearByPartners((double)$request->lat, (double)$request->lng);
             $partnerDetails = collect();
-            foreach($nearByPartners as $nearByPartner) {
+            foreach ($nearByPartners as $nearByPartner) {
 
                 $partner = Partner::find($nearByPartner->partner_id);
-                if(!$partner->isVerified() || !$partner->isLite())
+                if (!$partner->isVerified() || !$partner->isLite())
                     continue;
-                if($request->has('category_id')) {
-                    if(!in_array($request->category_id, $partner->servingMasterCategoryIds()))
+                if ($request->has('category_id')) {
+                    if (!in_array($request->category_id, $partner->servingMasterCategoryIds()))
                         continue;
                 }
 
@@ -116,17 +125,17 @@ class PartnerLocationController extends Controller
                     'serving_category' => $serving_master_categories,
                     'address' => $partner->address,
                     'logo' => $partner->logo,
-                    'lat' => $nearByPartners->where('partner_id',$partner->id)->first()->location->coordinates[1],
-                    'lng' => $nearByPartners->where('partner_id',$partner->id)->first()->location->coordinates[0],
+                    'lat' => $nearByPartners->where('partner_id', $partner->id)->first()->location->coordinates[1],
+                    'lng' => $nearByPartners->where('partner_id', $partner->id)->first()->location->coordinates[0],
                     'description' => $partner->description,
                     'badge' => $partner->resolveBadge(),
                     'rating' => round($this->reviewRepository->getAvgRating($partner->reviews)),
-                    'distance' => round($nearByPartners->where('partner_id',$partner->id)->first()->distance, 2)
+                    'distance' => round($nearByPartners->where('partner_id', $partner->id)->first()->distance, 2)
                 ];
                 $partnerDetails->push($detail);
             }
 
-            return api_response($request, null, 200, [ 'partners' => $partnerDetails]);
+            return api_response($request, null, 200, ['partners' => $partnerDetails]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
