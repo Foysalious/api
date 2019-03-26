@@ -1,12 +1,13 @@
 <?php namespace App\Http\Controllers;
 
-use App\Models\InfoCall;
+use Illuminate\Validation\ValidationException;
+use Sheba\ModificationFields;
 use Illuminate\Http\Request;
-use DB;
-use Carbon\Carbon;
+use App\Models\InfoCall;
 
 class InfoCallController extends Controller
 {
+    use ModificationFields;
 
     public function index($customer, Request $request)
     {
@@ -20,7 +21,6 @@ class InfoCallController extends Controller
                     'service_name' => $info_call->service_name,
                     'status' => $info_call->status,
                     'created_at' => $info_call->created_at->format('F j, Y'),
-                    #'created' => $info_call->created_at->format('d F Y'),
                 ];
                 $info_call_lists->push($info);
             }
@@ -57,15 +57,22 @@ class InfoCallController extends Controller
     public function store($customer, Request $request)
     {
         try {
+            $this->validate($request, [
+                'service_name' => 'required|string',
+                'estimated_budget' => 'required|numeric'
+            ]);
             $customer = $request->customer;
 
             $data = [
-                'sevice_name' => $request->sevice_name,
-                'budget' => $request->budget,
+                'service_name' => $request->service_name,
+                'estimated_budget' => $request->estimated_budget,
             ];
-
+            $customer->infoCalls()->create($this->withCreateModificationField($data));
             return api_response($request, 1, 200);
-        } catch (\Throwable $e) {
+        }  catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        }catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
