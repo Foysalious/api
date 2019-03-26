@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\InfoCall;
 use Illuminate\Http\Request;
 use DB;
 use Carbon\Carbon;
@@ -30,19 +31,19 @@ class InfoCallController extends Controller
         }
     }
 
-    public function getDetails($customer, Request $request)
+    public function getDetails($customer, $info_call, Request $request)
     {
         try {
             $customer = $request->customer;
-
+            $info_call = InfoCall::find($info_call);
             $details = [
                 [
-                    'id' => 1,
-                    'code' => '#A-9068947',
-                    'created_at' => '18 March, 9.30AM',
-                    'status' => 'In Progress',
-                    'service_name' => 'ABC',
-                    'estimated_budget' => '1000',
+                    'id' => $info_call->id,
+                    'code' => $info_call->code(),
+                    'service_name' => $info_call->service_name,
+                    'status' => $info_call->status,
+                    'created_at' => $info_call->created_at->format('F j, h:ia'),
+                    'estimated_budget' => $info_call->estimated_budget,
                 ]
 
             ];
