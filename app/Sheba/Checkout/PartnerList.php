@@ -105,7 +105,6 @@ class PartnerList
             $q->where('categories.id', $this->partnerListRequest->selectedCategory->id);
         }]);
         $this->filterByOption();
-        $this->partners->load([]);
         $this->partners = $this->partners->filter(function ($partner) {
             return $this->hasResourcesForTheCategory($partner);
         });
@@ -115,31 +114,23 @@ class PartnerList
         $this->calculateHasPartner();
     }
 
-    private function setPartner($partner_id)
+    protected function setPartner($partner_id)
     {
         if ($partner_id) $this->partner = Partner::find((int)$partner_id);
         $this->isNotLite = isset($this->partner) ? !$this->partner->isLite() : true;
     }
 
-    private function findPartnersByServiceAndLocation()
+    protected function findPartnersByServiceAndLocation()
     {
         $this->partners = $this->findPartnersByService();
         $this->notFoundValues['service'] = $this->getPartnerIds();
         $this->partners->load('locations');
-        $this->partners = $this->partners->filter(function ($partner) {
-            if (!$partner->geo_informations) return false;
-            $locations = HyperLocal::insideCircle(json_decode($partner->geo_informations))
-                ->with('location')
-                ->get()
-                ->pluck('location')
-                ->filter();
-            return $locations->where('id', $this->partnerListRequest->location)->count() > 0;
-        });
+        $this->partners = $this->filterPartnerByLocation();
         $this->notFoundValues['location'] = $this->getPartnerIds();
         return $this->partners;
     }
 
-    private function findPartnersByService()
+    protected function findPartnersByService()
     {
         $category_ids = [$this->partnerListRequest->selectedCategory->id];
         $isNotLite = $this->isNotLite;
@@ -189,20 +180,11 @@ class PartnerList
 
     private function hasResourcesForTheCategory($partner)
     {
-//        $partner_resource_ids = [];
-//        $partner->handymanResources->map(function ($resource) use (&$partner_resource_ids) {
-//            $partner_resource_ids[$resource->pivot->id] = $resource;
-//        });
-//        $result = [];
-//        collect(DB::table('category_partner_resource')->select('partner_resource_id')->whereIn('partner_resource_id', array_keys($partner_resource_ids))
-//            ->where('category_id', $this->partnerListRequest->selectedCategory->id)->get())->pluck('partner_resource_id')->each(function ($partner_resource_id) use ($partner_resource_ids, &$result) {
-//            $result[] = $partner_resource_ids[$partner_resource_id];
-//        });
         $handyman_resources = $partner->handymanResources->first();
         return $handyman_resources && (int)$handyman_resources->total_experts > 0 ? 1 : 0;
     }
 
-    private function getContactNumber($partner)
+    protected function getContactNumber($partner)
     {
         if ($operation_resource = $partner->resources->where('pivot.resource_type', constants('RESOURCE_TYPES')['Operation'])->first()) {
             return $operation_resource->profile->mobile;
@@ -216,7 +198,7 @@ class PartnerList
      * @return mixed
      * @throws HyperLocationNotFoundException
      */
-    private function findPartnersByServiceAndGeo()
+    protected function findPartnersByServiceAndGeo()
     {
         $hyper_local = HyperLocal::insidePolygon($this->partnerListRequest->lat, $this->partnerListRequest->lng)->with('location')->first();
         if (!$hyper_local) {
@@ -231,21 +213,11 @@ class PartnerList
         });
         $this->notFoundValues['service'] = $this->getPartnerIds();
         if ($this->partners->count() == 0) return $this->partners;
-        $current = new Coords($this->partnerListRequest->lat, $this->partnerListRequest->lng);
-        $to = $this->partners->map(function ($partner) {
-            $geo = json_decode($partner->geo_informations);
-            return new Coords(floatval($geo->lat), floatval($geo->lng), $partner->id);
-        })->toArray();
-        $distance = (new Distance(DistanceStrategy::$VINCENTY))->matrix();
-        $results = $distance->from([$current])->to($to)->sortedDistance()[0];
-        $this->partners = $this->partners->filter(function ($partner) use ($results) {
-            return $results[$partner->id] <= (double)json_decode($partner->geo_informations)->radius * 1000;
-        });
-        $this->notFoundValues['location'] = $this->getPartnerIds();
+        $this->filterPartnerByRadius();
         return $this->partners;
     }
 
-    private function filterByOption()
+    protected function filterByOption()
     {
         foreach ($this->partnerListRequest->selectedServices as $selected_service) {
             if ($selected_service->serviceModel->isOptions()) {
@@ -507,7 +479,7 @@ class PartnerList
     }
 
 
-    private function calculateHasPartner()
+    protected function calculateHasPartner()
     {
         if (count($this->partners) > 0) {
             $this->hasPartners = true;
@@ -614,7 +586,7 @@ class PartnerList
     public function removeKeysFromPartner()
     {
         return $this->partners->each(function ($partner, $key) {
-            $partner['rating'] = round($partner->rating, 2);
+            if(isset($partner->rating)) $partner['rating'] = round($partner->rating, 2);
             array_forget($partner, 'wallet');
             array_forget($partner, 'package_id');
             array_forget($partner, 'geo_informations');
@@ -623,5 +595,34 @@ class PartnerList
             array_forget($partner, 'score');
             removeRelationsAndFields($partner);
         });
+    }
+
+    protected function filterPartnerByLocation()
+    {
+        return $this->partners->filter(function ($partner) {
+            if (!$partner->geo_informations) return false;
+            $locations = HyperLocal::insideCircle(json_decode($partner->geo_informations))
+                ->with('location')
+                ->get()
+                ->pluck('location')
+                ->filter();
+            return $locations->where('id', $this->partnerListRequest->location)->count() > 0;
+        });
+    }
+
+    protected function filterPartnerByRadius()
+    {
+        $current = new Coords($this->partnerListRequest->lat, $this->partnerListRequest->lng);
+        $to = $this->partners->map(function ($partner) {
+            $geo = json_decode($partner->geo_informations);
+            return new Coords(floatval($geo->lat), floatval($geo->lng), $partner->id);
+        })->toArray();
+        $distance = (new Distance(DistanceStrategy::$VINCENTY))->matrix();
+        $results = $distance->from([$current])->to($to)->sortedDistance()[0];
+        $this->partners = $this->partners->filter(function ($partner) use ($results) {
+            $partner['distance'] = $results[$partner->id];
+            return $results[$partner->id] <= (double)json_decode($partner->geo_informations)->radius * 1000;
+        });
+        $this->notFoundValues['location'] = $this->getPartnerIds();
     }
 }
