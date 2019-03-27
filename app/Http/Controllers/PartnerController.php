@@ -94,7 +94,7 @@ class PartnerController extends Controller
             } else {
                 $partner = Partner::where([['sub_domain', $partner_request]])->first();
             }
-            if(!$partner->isLite() || !$partner->isVerified())
+            if(!$partner->isLite() && !$partner->isVerified())
                 $partner = null;
 
             if ($partner == null) return api_response($request, null, 404);
