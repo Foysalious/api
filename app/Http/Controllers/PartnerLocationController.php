@@ -114,15 +114,23 @@ class PartnerLocationController extends Controller
             #dd(Partner::verified()->whereIn('id',$nearByPartnersIds)->get()->pluck('id'));
             $partners = Partner::verified()->whereIn('id',$nearByPartnersIds)->with(['subscription','categories' => function($category_query) {
                 $category_query->with(['parent' => function($master_category_query) {
-                    $master_category_query->select('name');
+                    $master_category_query->select('id','name');
                 }])->select('parent_id');
-            }])->get();
+            }]);
+            if($request->has('q'))
+                $partners = $partners->where('name','like','%'.$request->q.'%');
+
+            $partners = $partners->get();
+
             $reviews = Review::select('partner_id', DB::raw('avg(rating) as avg_rating'))->groupBy('partner_id')->whereIn('partner_id', $nearByPartnersIds)->get()->pluck('avg_rating', 'partner_id');
 
             $partners = (new PartnerSort($partners))->get()->take(50);
 
             $partnerDetails = collect();
             foreach ($partners as $partner) {
+                if($request->has('category_id'))
+                    if(!in_array($request->category_id, $partner->servingMasterCategoryIds()))
+                        continue;
                 $serving_master_categories = $partner->servingMasterCategories();
                 $partner->lat = $nearByPartners->where('partner_id', $partner->id)->first()->location->coordinates[1];
                 $partner->lng = $nearByPartners->where('partner_id', $partner->id)->first()->location->coordinates[0];
@@ -135,6 +143,7 @@ class PartnerLocationController extends Controller
             }
             return api_response($request, null, 200, ['partners' => $partnerDetails]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
