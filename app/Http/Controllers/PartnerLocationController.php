@@ -107,6 +107,10 @@ class PartnerLocationController extends Controller
                     if(!in_array($request->category_id, $partner->servingMasterCategoryIds()))
                         continue;
                 }
+                if($request->has('q')) {
+                    if(!str_contains($partner->name, $request->q))
+                        continue;
+                }
 
                 $serving_master_categories = $partner->servingMasterCategories();
                 $detail = [
