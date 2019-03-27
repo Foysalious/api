@@ -17,6 +17,7 @@ use App\Sheba\Partner\PartnerAvailable;
 use Carbon\Carbon;
 use DB;
 use Dingo\Api\Routing\Helpers;
+use Sheba\Checkout\DeliveryCharge;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
@@ -45,8 +46,7 @@ class PartnerList
     protected $partnerServiceRepository;
     protected $rentCarServicesId;
     protected $skipAvailability;
-    /** @var Category */
-    public $selectedCategory;
+
     protected $rentCarCategoryIds;
     protected $selectedServiceIds;
     protected $notFoundValues;
@@ -57,6 +57,7 @@ class PartnerList
     protected $badgeResolver;
     /** @var PartnerListRequest */
     protected $partnerListRequest;
+    protected $deliveryCharge;
 
     use ModificationFields;
 
@@ -65,6 +66,7 @@ class PartnerList
         $this->rentCarServicesId = array_map('intval', explode(',', env('RENT_CAR_SERVICE_IDS')));
         $this->rentCarCategoryIds = array_map('intval', explode(',', env('RENT_CAR_IDS')));
         $this->partnerServiceRepository = new PartnerServiceRepository();
+        $this->deliveryCharge = new DeliveryCharge();
         $this->notFoundValues = [
             'service' => [],
             'location' => [],
@@ -346,7 +348,7 @@ class PartnerList
         }
         array_add($partner, 'breakdown', $services);
         $total_service_price['discount'] = (int)$total_service_price['discount'];
-        $delivery_charge = (double)$category_pivot->delivery_charge;
+        $delivery_charge = $this->deliveryCharge->setCategory($this->partnerListRequest->selectedCategory)->setPartner($partner)->setCategoryPartnerPivot($category_pivot)->getDeliveryCharge();
         $total_service_price['discounted_price'] += $delivery_charge;
         $total_service_price['original_price'] += $delivery_charge;
         $total_service_price['delivery_charge'] = $delivery_charge;
@@ -363,8 +365,6 @@ class PartnerList
         }
         $this->partners->load(['workingHours', 'jobs' => function ($q) use ($category_ids) {
             $q->selectRaw("count(case when status in ('Served') and category_id=" . $this->partnerListRequest->selectedCategory->id . " then status end) as total_completed_orders")
-//                ->selectRaw("count(case when status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then status end) as total_jobs")
-//                ->selectRaw("count(case when category_id in(" . $category_ids . ") and status in ('Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due') then category_id end) as total_jobs_of_category")
                 ->groupBy('partner_id');
             if (strtolower($this->partnerListRequest->portalName) == 'admin-portal') $q->selectRaw("count(case when status in ('Accepted', 'Schedule Due', 'Process', 'Serve Due') then status end) as ongoing_jobs");
         }, 'subscription' => function ($q) {
@@ -586,7 +586,7 @@ class PartnerList
     public function removeKeysFromPartner()
     {
         return $this->partners->each(function ($partner, $key) {
-            if(isset($partner->rating)) $partner['rating'] = round($partner->rating, 2);
+            if (isset($partner->rating)) $partner['rating'] = round($partner->rating, 2);
             array_forget($partner, 'wallet');
             array_forget($partner, 'package_id');
             array_forget($partner, 'geo_informations');
