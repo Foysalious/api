@@ -37,7 +37,6 @@ class Order extends Model implements ShebaOrderInterface
         return $this->hasMany(PartnerOrder::class);
     }
 
-
     public function subscription()
     {
         return $this->belongsTo(SubscriptionOrder::class);
@@ -184,5 +183,4 @@ class Order extends Model implements ShebaOrderInterface
     {
         return $this->lastJob()->isPayable();
     }
-
 }
