@@ -12,6 +12,7 @@ class Route
             $api->get('payments', 'ShebaController@getPayments');
             $api->get('butcher-info', 'ShebaController@sendButcherInfo');
             $api->post('service-requests', 'ServiceRequestController@store');
+            $api->get('validate-transaction-id', 'PartnerTransactionController@validateTransactionId');
             $api->post('transactions/{transactionID}', 'ShebaController@checkTransactionStatus');
             $api->post('password/email', 'Auth\PasswordController@sendResetPasswordEmail');
             $api->post('password/validate', 'Auth\PasswordController@validatePasswordResetCode');
