@@ -124,7 +124,7 @@ class CustomerSubscriptionController extends Controller
         try {
             $customer = $request->customer;
             $subscription_orders_list = collect([]);
-            $subscription_orders = SubscriptionOrder::where('customer_id', (int)$customer->id)->get();
+            $subscription_orders = SubscriptionOrder::where('customer_id', (int)$customer->id)->orderBy('created_at', 'desc')->get();
 
             foreach ($subscription_orders as $subscription_order) {
 

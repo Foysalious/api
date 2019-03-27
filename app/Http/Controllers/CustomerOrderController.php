@@ -99,7 +99,7 @@ class CustomerOrderController extends Controller
         $due = $job->partnerOrder->calculate(true)->due;
         $status = $job->status;
 
-        if (in_array($status, ['Served', 'Declined', 'Cancelled']))
+        if (in_array($status, ['Declined', 'Cancelled']))
             return false;
         else {
             return $due > 0;

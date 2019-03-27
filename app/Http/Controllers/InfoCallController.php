@@ -13,8 +13,10 @@ class InfoCallController extends Controller
     {
         try {
             $customer = $request->customer;
+            #InfoCall::where('customer_id', (int)$customer->id)->orderBy('created_at', 'desc')->get();
+            $info_calls = $customer->infoCalls()->orderBy('created_at', 'DESC')->get();
             $info_call_lists = collect([]);
-            foreach ($customer->infoCalls as $info_call) {
+            foreach ($info_calls as $info_call) {
                 $info = [
                     'id' => $info_call->id,
                     'code' => $info_call->code(),

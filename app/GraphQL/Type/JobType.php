@@ -205,7 +205,7 @@ class JobType extends GraphQlType
         $due = $root->partnerOrder->calculate(true)->due;
         $status = $root->status;
 
-        if(in_array($status, ['Served', 'Declined', 'Cancelled']))
+        if(in_array($status, ['Declined', 'Cancelled']))
             return false;
         else {
             return $due > 0;
