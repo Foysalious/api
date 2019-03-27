@@ -23,9 +23,9 @@ class Partner extends Model implements Rewardable, TopUpAgent
 
     protected $guarded = ['id',];
     protected $dates = ['last_billed_date', 'billing_start_date'];
-    protected $casts = ['wallet' => 'double', 'last_billed_amount' => 'double', 'reward_point' => 'int', 'current_impression' => 'double', 'impression_limit' => 'double'];
+    protected $casts = ['wallet' => 'double', 'last_billed_amount' => 'double', 'reward_point' => 'int', 'current_impression' => 'double', 'impression_limit' => 'double', 'uses_sheba_logistic' => 'int'];
     protected $resourcePivotColumns = ['id', 'designation', 'department', 'resource_type', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
-    protected $categoryPivotColumns = ['id', 'experience', 'preparation_time_minutes', 'response_time_min', 'response_time_max', 'commission', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at', 'is_home_delivery_applied', 'is_partner_premise_applied', 'delivery_charge'];
+    protected $categoryPivotColumns = ['id', 'experience', 'preparation_time_minutes', 'response_time_min', 'response_time_max', 'commission', 'is_verified', 'uses_sheba_logistic', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at', 'is_home_delivery_applied', 'is_partner_premise_applied', 'delivery_charge'];
     protected $servicePivotColumns = ['id', 'description', 'options', 'prices', 'min_prices', 'base_prices', 'base_quantity', 'is_published', 'discount', 'discount_start_date', 'discount_start_date', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
 
     private $resourceTypes;
@@ -243,7 +243,7 @@ class Partner extends Model implements Rewardable, TopUpAgent
 
     public function isVerified()
     {
-        return $this->where('status', 'Verified');
+        return $this->status === 'Verified';
     }
 
     public function getContactNumber()
@@ -548,8 +548,7 @@ class Partner extends Model implements Rewardable, TopUpAgent
 
     public function servingMasterCategories()
     {
-        $serving_master_category_ids = array_unique($this->categories->pluck('parent_id')->toArray());
-        return implode(", ", Category::whereIn('id', $serving_master_category_ids)->pluck('name')->toArray());
+        return $this->categories->pluck('parent.name')->unique()->implode(', ');
     }
 
     public function servingMasterCategoryIds()

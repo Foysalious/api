@@ -8,6 +8,7 @@ use App\Models\CategoryPartner;
 use App\Models\HyperLocal;
 use App\Models\Location;
 use App\Models\Partner;
+use App\Models\Review;
 use App\Repositories\ReviewRepository;
 use App\Sheba\Checkout\PartnerList;
 use App\Sheba\Checkout\Validation;
@@ -16,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Sheba\Checkout\Partners\LitePartnerList;
+use Sheba\Checkout\PartnerSort;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Dal\PartnerLocation\PartnerLocation;
 use Sheba\Dal\PartnerLocation\PartnerLocationRepository;
@@ -23,6 +25,7 @@ use Sheba\Dal\PartnerLocation\PartnerLocationRepository;
 class PartnerLocationController extends Controller
 {
     private $reviewRepository;
+    const COMPLIMENT_QUESTION_ID = 2;
 
     public function __construct()
     {
@@ -84,6 +87,7 @@ class PartnerLocationController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -92,55 +96,57 @@ class PartnerLocationController extends Controller
     public function getNearbyPartners(Request $request, PartnerLocationRepository $partnerLocationRepository)
     {
         try {
-
+            $start_memory = memory_get_usage();
             $this->validate($request, [
                 'lat' => 'required',
                 'lng' => 'required'
             ]);
 
+
             $location = null;
             $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
             if (!is_null($hyperLocation)) $location = $hyperLocation->location;
 
-            if (!$location)
-                return api_response($request, 'Invalid location', 400, ['message' => 'Invalid location']);
+            if (!$location) return api_response($request, 'Invalid location', 400, ['message' => 'Invalid location']);
 
-            $nearByPartners = $partnerLocationRepository->findNearByPartners((double)$request->lat, (double)$request->lng);
+            $nearByPartners = $partnerLocationRepository->findNearByPartners((double)$request->lat, (double)$request->lng)->pluckMultiple(['distance','location'],'partner_id',true);
+
+            #dd(Partner::verified()->whereIn('id',$nearByPartnersIds)->get()->pluck('id'));
+
+            $partners = Partner::verified()->whereIn('id', $nearByPartners->keys())->with(['subscription','categories' => function($category_query) {
+                $category_query->with(['parent' => function($master_category_query) {
+                    $master_category_query->select('id','name');
+                }])->select('parent_id');
+            }]);
+
+            if($request->has('q'))
+                $partners = $partners->where('name','like','%'.$request->q.'%');
+
+            $partners = $partners->get();
+
+            $reviews = Review::select('partner_id', DB::raw('avg(rating) as avg_rating'))->groupBy('partner_id')->whereIn('partner_id', $nearByPartners->keys())->get()->pluck('avg_rating', 'partner_id');
+
+            $partners = (new PartnerSort($partners))->get()->take(50);
+
             $partnerDetails = collect();
-            foreach ($nearByPartners as $nearByPartner) {
-
-                $partner = Partner::find($nearByPartner->partner_id);
-                if (!$partner->isVerified() || !$partner->isLite())
-                    continue;
-                if ($request->has('category_id')) {
-                    if (!in_array($request->category_id, $partner->servingMasterCategoryIds()))
+            foreach ($partners as $partner) {
+                if($request->has('category_id'))
+                    if(!in_array($request->category_id, $partner->servingMasterCategoryIds()))
                         continue;
-                }
-                if($request->has('q')) {
-                    if(!str_contains($partner->name, $request->q))
-                        continue;
-                }
-
                 $serving_master_categories = $partner->servingMasterCategories();
-                $detail = [
-                    'id' => $partner->id,
-                    'name' => $partner->name,
-                    'sub_domain' => $partner->sub_domain,
-                    'serving_category' => $serving_master_categories,
-                    'address' => $partner->address,
-                    'logo' => $partner->logo,
-                    'lat' => $nearByPartners->where('partner_id', $partner->id)->first()->location->coordinates[1],
-                    'lng' => $nearByPartners->where('partner_id', $partner->id)->first()->location->coordinates[0],
-                    'description' => $partner->description,
-                    'badge' => $partner->resolveBadge(),
-                    'rating' => round($this->reviewRepository->getAvgRating($partner->reviews)),
-                    'distance' => round($nearByPartners->where('partner_id', $partner->id)->first()->distance, 2)
-                ];
-                $partnerDetails->push($detail);
+                $partner->lat = $nearByPartners[$partner->id]->location->coordinates[1];
+                $partner->lng = $nearByPartners[$partner->id]->location->coordinates[0];
+                $partner->distance = round($nearByPartners[$partner->id]->distance, 2);
+                $partner->badge = $partner->resolveBadge();
+                $partner->rating =  $reviews->has($partner->id)  ? round($reviews[$partner->id], 2) : 0.00;;
+                $partner->serving_category = $serving_master_categories;
+                removeRelationsAndFields($partner);
+                $partnerDetails->push($partner);
             }
-
+            $partnerDetails = $partnerDetails->sortBy('distance')->values();
             return api_response($request, null, 200, ['partners' => $partnerDetails]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
