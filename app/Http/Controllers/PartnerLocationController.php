@@ -138,7 +138,7 @@ class PartnerLocationController extends Controller
                 $partner->lng = $nearByPartners[$partner->id]->location->coordinates[0];
                 $partner->distance = round($nearByPartners[$partner->id]->distance, 2);
                 $partner->badge = $partner->resolveBadge();
-                $partner->rating =  $reviews->has("partner_id")  ? round($reviews[$partner->id]) : 0.00;;
+                $partner->rating =  $reviews->has($partner->id)  ? round($reviews[$partner->id], 2) : 0.00;;
                 $partner->serving_category = $serving_master_categories;
                 removeRelationsAndFields($partner);
                 $partnerDetails->push($partner);
