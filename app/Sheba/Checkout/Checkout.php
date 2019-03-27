@@ -384,6 +384,7 @@ class Checkout
             }
             if ($valid) {
                 $data['discount'] = (double)$result['amount'];
+                $data['original_discount_amount'] = (double)$result['original_amount'];
                 $data['sheba_contribution'] = (double)$result['voucher']['sheba_contribution'];
                 if ($result['voucher']['is_amount_percentage']) {
                     $data['discount_percentage'] = (double)$result['voucher']['amount'];

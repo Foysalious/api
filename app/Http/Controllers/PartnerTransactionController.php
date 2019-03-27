@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\PartnerTransaction;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -145,5 +146,13 @@ class PartnerTransactionController extends Controller
             app('sentry')->captureException($e);
             return null;
         }
+    }
+
+    public function validateTransactionId(Request $request)
+    {
+        if (!$request->has('transaction_id')) return api_response($request, null, 500, ['message' => 'Transaction ID is required']);
+        $transaction = PartnerTransaction::hasTransactionID($request->transaction_id)->first();
+        if (!empty($transaction)) return api_response($request, null, 400, ['message' => 'Transaction is not valid']);
+        else return api_response($request, true, 200, ['transaction id is valid']);
     }
 }
