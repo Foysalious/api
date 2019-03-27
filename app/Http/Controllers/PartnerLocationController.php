@@ -112,11 +112,7 @@ class PartnerLocationController extends Controller
             $nearByPartners = $partnerLocationRepository->findNearByPartners((double)$request->lat, (double)$request->lng);
             $nearByPartnersIds = $nearByPartners->pluck('partner_id');
             #dd(Partner::verified()->whereIn('id',$nearByPartnersIds)->get()->pluck('id'));
-            $partners = Partner::where(function ($q) {
-                $q->verified()->orWhere(function($query) {
-                    $query->lite();
-                });
-            })->whereIn('id',$nearByPartnersIds)->with(['subscription','categories' => function($category_query) {
+            $partners = Partner::verified()->whereIn('id',$nearByPartnersIds)->with(['subscription','categories' => function($category_query) {
                 $category_query->with(['parent' => function($master_category_query) {
                     $master_category_query->select('name');
                 }])->select('parent_id');
@@ -139,7 +135,6 @@ class PartnerLocationController extends Controller
             }
             return api_response($request, null, 200, ['partners' => $partnerDetails]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
