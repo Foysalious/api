@@ -8,6 +8,7 @@ use App\Models\CategoryPartner;
 use App\Models\HyperLocal;
 use App\Models\Location;
 use App\Models\Partner;
+use App\Models\Review;
 use App\Repositories\ReviewRepository;
 use App\Sheba\Checkout\PartnerList;
 use App\Sheba\Checkout\Validation;
@@ -16,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Sheba\Checkout\Partners\LitePartnerList;
+use Sheba\Checkout\PartnerSort;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Dal\PartnerLocation\PartnerLocation;
 use Sheba\Dal\PartnerLocation\PartnerLocationRepository;
@@ -23,6 +25,7 @@ use Sheba\Dal\PartnerLocation\PartnerLocationRepository;
 class PartnerLocationController extends Controller
 {
     private $reviewRepository;
+    const COMPLIMENT_QUESTION_ID = 2;
 
     public function __construct()
     {
@@ -107,39 +110,29 @@ class PartnerLocationController extends Controller
                 return api_response($request, 'Invalid location', 400, ['message' => 'Invalid location']);
 
             $nearByPartners = $partnerLocationRepository->findNearByPartners((double)$request->lat, (double)$request->lng);
+            $nearByPartnersIds = $nearByPartners->pluck('partner_id');
+            #dd(Partner::verified()->whereIn('id',$nearByPartnersIds)->get()->pluck('id'));
+            $partners = Partner::verified()->whereIn('id',$nearByPartnersIds)->with(['subscription','categories' => function($category_query) {
+                $category_query->with(['parent' => function($master_category_query) {
+                    $master_category_query->select('name');
+                }])->select('parent_id');
+            }])->get();
+            $reviews = Review::select('partner_id', DB::raw('avg(rating) as avg_rating'))->groupBy('partner_id')->whereIn('partner_id', $nearByPartnersIds)->get()->pluck('avg_rating', 'partner_id');
+
+            $partners = (new PartnerSort($partners))->get()->take(50);
+
             $partnerDetails = collect();
-            foreach ($nearByPartners as $nearByPartner) {
-
-                $partner = Partner::find($nearByPartner->partner_id);
-                if (!$partner->isVerified() || !$partner->isLite())
-                    continue;
-                if ($request->has('category_id')) {
-                    if (!in_array($request->category_id, $partner->servingMasterCategoryIds()))
-                        continue;
-                }
-                if($request->has('q')) {
-                    if(!str_contains($partner->name, $request->q))
-                        continue;
-                }
-
+            foreach ($partners as $partner) {
                 $serving_master_categories = $partner->servingMasterCategories();
-                $detail = [
-                    'id' => $partner->id,
-                    'name' => $partner->name,
-                    'sub_domain' => $partner->sub_domain,
-                    'serving_category' => $serving_master_categories,
-                    'address' => $partner->address,
-                    'logo' => $partner->logo,
-                    'lat' => $nearByPartners->where('partner_id', $partner->id)->first()->location->coordinates[1],
-                    'lng' => $nearByPartners->where('partner_id', $partner->id)->first()->location->coordinates[0],
-                    'description' => $partner->description,
-                    'badge' => $partner->resolveBadge(),
-                    'rating' => round($this->reviewRepository->getAvgRating($partner->reviews)),
-                    'distance' => round($nearByPartners->where('partner_id', $partner->id)->first()->distance, 2)
-                ];
-                $partnerDetails->push($detail);
+                $partner->lat = $nearByPartners->where('partner_id', $partner->id)->first()->location->coordinates[1];
+                $partner->lng = $nearByPartners->where('partner_id', $partner->id)->first()->location->coordinates[0];
+                $partner->distance = round($nearByPartners->where('partner_id', $partner->id)->first()->distance, 2);
+                $partner->badge = $partner->resolveBadge();
+                $partner->rating =  $reviews->has("partner_id")  ? round($reviews[$partner->id]) : 0.00;;
+                $partner->serving_category = $serving_master_categories;
+                removeRelationsAndFields($partner);
+                $partnerDetails->push($partner);
             }
-
             return api_response($request, null, 200, ['partners' => $partnerDetails]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

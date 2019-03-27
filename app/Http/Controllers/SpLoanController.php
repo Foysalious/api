@@ -172,6 +172,7 @@ class SpLoanController extends Controller
             ],
             'documents' => [
                 'picture' => $profile->pro_pic,
+                'nid_image' => $manager_resource->nid_image,
                 'nid_image_front' => $profile->nid_image_front,
                 'nid_image_back' => $profile->nid_image_back,
                 'nominee_document' => [
