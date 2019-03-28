@@ -113,7 +113,11 @@ class PartnerLocationController extends Controller
 
             #dd(Partner::verified()->whereIn('id',$nearByPartnersIds)->get()->pluck('id'));
 
-            $partners = Partner::verified()->whereIn('id', $nearByPartners->keys())->with(['subscription','categories' => function($category_query) {
+            $partners = Partner::where(function ($query) {
+                $query->verified();
+            })->orWhere(function ($query) {
+                $query->lite();
+            })->whereIn('id', $nearByPartners->keys())->with(['subscription','categories' => function($category_query) {
                 $category_query->with(['parent' => function($master_category_query) {
                     $master_category_query->select('id','name');
                 }])->select('parent_id');
