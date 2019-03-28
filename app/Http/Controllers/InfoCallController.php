@@ -73,6 +73,7 @@ class InfoCallController extends Controller
                 'customer_name' => $profile->name,
                 'customer_mobile' => $profile->mobile,
                 'customer_email' => !empty($profile->email) ? $profile->email : null,
+                'customer_address' => !empty($profile->address) ? $profile->address : null,
                 'follow_up_date' => Carbon::now()->addMinutes(30),
                 'intended_closing_date' => Carbon::now()->addMinutes(30)
             ];
@@ -92,8 +93,8 @@ class InfoCallController extends Controller
     public function sendNotificationToSD($info_call)
     {
         try {
-            $sd_not_crm = User::where('department_id', 5)->where('is_cm', 0)->pluck('id');
-            notify()->users($sd_not_crm)->send([
+            $sd_but_not_crm = User::where('department_id', 5)->where('is_cm', 0)->pluck('id');
+            notify()->users($sd_but_not_crm)->send([
                 "title" => 'New Info Call Created by Customer',
                 'link' => env('SHEBA_BACKEND_URL') . '/info-call/' . $info_call->id,
                 "type" => notificationType('Info')
