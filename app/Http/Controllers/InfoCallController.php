@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
@@ -38,14 +39,14 @@ class InfoCallController extends Controller
         try {
             $customer = $request->customer;
             $info_call = InfoCall::find($info_call);
-            $details =  [
-                    'id' => $info_call->id,
-                    'code' => $info_call->code(),
-                    'service_name' => $info_call->service_name,
-                    'status' => $info_call->status,
-                    'created_at' => $info_call->created_at->format('F j, h:ia'),
-                    'estimated_budget' => $info_call->estimated_budget,
-                ];
+            $details = [
+                'id' => $info_call->id,
+                'code' => $info_call->code(),
+                'service_name' => $info_call->service_name,
+                'status' => $info_call->status,
+                'created_at' => $info_call->created_at->format('F j, h:ia'),
+                'estimated_budget' => $info_call->estimated_budget,
+            ];
 
             return api_response($request, $details, 200, ['details' => $details]);
         } catch (\Throwable $e) {
@@ -56,7 +57,6 @@ class InfoCallController extends Controller
 
     public function store($customer, Request $request)
     {
-
         try {
             $this->setModifier($request->customer);
             $this->validate($request, [
@@ -71,7 +71,9 @@ class InfoCallController extends Controller
                 'estimated_budget' => $request->estimated_budget,
                 'customer_name' => $profile->name,
                 'customer_mobile' => $profile->mobile,
-                'customer_email' => !empty($profile->email) ? $profile->email : null
+                'customer_email' => !empty($profile->email) ? $profile->email : null,
+                'follow_up_date' => Carbon::now()->addMinutes(30),
+                'intended_closing_date' => Carbon::now()->addMinutes(30)
             ];
 
             $customer->infoCalls()->create($this->withCreateModificationField($data));
