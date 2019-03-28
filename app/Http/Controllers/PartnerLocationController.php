@@ -87,7 +87,38 @@ class PartnerLocationController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getLitePartners(Request $request, PartnerListRequest $partnerListRequest)
+    {
+        try {
+            $this->validate($request, [
+                'services' => 'required|string',
+                'partner' => 'sometimes|required',
+                'lat' => 'required|numeric',
+                'lng' => 'required|numeric',
+                'limit' => 'required|numeric',
+            ]);
+            $partner = $request->has('partner') ? $request->partner : null;
+            $partnerListRequest->setRequest($request)->prepareObject();
+            $partner_list = new PartnerList();
+            $partner_list->setPartnerListRequest($partnerListRequest)->find($partner);
+            $lite_list = new LitePartnerList();
+            $lite_list->setPartnerListRequest($partnerListRequest)->setLimit((int)$request->limit)->find($partner);
+            $lite_list->addInfo();
+            $lite_partners = $lite_list->removeKeysFromPartner()->values()->all();
+            if (count($lite_partners) > 0) return api_response($request, null, 200, ['partners' => $lite_partners]);
+            else api_response($request, null, 404, ['message' => 'No partner found.']);
+        } catch (HyperLocationNotFoundException $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 400, ['message' => 'Your are out of service area.']);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -109,18 +140,18 @@ class PartnerLocationController extends Controller
 
             if (!$location) return api_response($request, 'Invalid location', 400, ['message' => 'Invalid location']);
 
-            $nearByPartners = $partnerLocationRepository->findNearByPartners((double)$request->lat, (double)$request->lng)->pluckMultiple(['distance','location'],'partner_id',true);
+            $nearByPartners = $partnerLocationRepository->findNearByPartners((double)$request->lat, (double)$request->lng)->pluckMultiple(['distance', 'location'], 'partner_id', true);
 
             #dd(Partner::verified()->whereIn('id',$nearByPartnersIds)->get()->pluck('id'));
 
-            $partners = Partner::verified()->whereIn('id', $nearByPartners->keys())->with(['subscription','categories' => function($category_query) {
-                $category_query->with(['parent' => function($master_category_query) {
-                    $master_category_query->select('id','name');
+            $partners = Partner::verified()->whereIn('id', $nearByPartners->keys())->with(['subscription', 'categories' => function ($category_query) {
+                $category_query->with(['parent' => function ($master_category_query) {
+                    $master_category_query->select('id', 'name');
                 }])->select('parent_id');
             }]);
 
-            if($request->has('q'))
-                $partners = $partners->where('name','like','%'.$request->q.'%');
+            if ($request->has('q'))
+                $partners = $partners->where('name', 'like', '%' . $request->q . '%');
 
             $partners = $partners->get();
 
@@ -130,15 +161,15 @@ class PartnerLocationController extends Controller
 
             $partnerDetails = collect();
             foreach ($partners as $partner) {
-                if($request->has('category_id'))
-                    if(!in_array($request->category_id, $partner->servingMasterCategoryIds()))
+                if ($request->has('category_id'))
+                    if (!in_array($request->category_id, $partner->servingMasterCategoryIds()))
                         continue;
                 $serving_master_categories = $partner->servingMasterCategories();
                 $partner->lat = $nearByPartners[$partner->id]->location->coordinates[1];
                 $partner->lng = $nearByPartners[$partner->id]->location->coordinates[0];
                 $partner->distance = round($nearByPartners[$partner->id]->distance, 2);
                 $partner->badge = $partner->resolveBadge();
-                $partner->rating =  $reviews->has($partner->id)  ? round($reviews[$partner->id], 2) : 0.00;;
+                $partner->rating = $reviews->has($partner->id) ? round($reviews[$partner->id], 2) : 0.00;;
                 $partner->serving_category = $serving_master_categories;
                 removeRelationsAndFields($partner);
                 $partnerDetails->push($partner);
@@ -146,7 +177,6 @@ class PartnerLocationController extends Controller
             $partnerDetails = $partnerDetails->sortBy('distance')->values();
             return api_response($request, null, 200, ['partners' => $partnerDetails]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

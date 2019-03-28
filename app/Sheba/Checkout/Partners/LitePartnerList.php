@@ -63,7 +63,8 @@ class LitePartnerList extends PartnerList
         }]);
         foreach ($this->partners as $partner) {
             $partner['contact_no'] = $this->getContactNumber($partner);
-            $partner['distance_km'] =round( $partner['distance'] / 1000,2);
+            $partner['distance_km'] = round($partner['distance'] / 1000, 2);
+            $partner['status'] = "Not Verified";
         }
     }
 
