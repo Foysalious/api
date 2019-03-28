@@ -80,6 +80,7 @@ class PartnerList
     public function setPartnerListRequest(PartnerListRequest $partner_list_request)
     {
         $this->partnerListRequest = $partner_list_request;
+        $this->deliveryCharge->setCategory($this->partnerListRequest->selectedCategory);
         return $this;
     }
 
@@ -348,7 +349,9 @@ class PartnerList
         }
         array_add($partner, 'breakdown', $services);
         $total_service_price['discount'] = (int)$total_service_price['discount'];
-        $delivery_charge = $this->deliveryCharge->setCategory($this->partnerListRequest->selectedCategory)->setPartner($partner)->setCategoryPartnerPivot($category_pivot)->getDeliveryCharge();
+
+        $delivery_charge = $this->deliveryCharge->setPartner($partner)->setCategoryPartnerPivot($category_pivot)->getDeliveryCharge();
+
         $total_service_price['discounted_price'] += $delivery_charge;
         $total_service_price['original_price'] += $delivery_charge;
         $total_service_price['delivery_charge'] = $delivery_charge;
