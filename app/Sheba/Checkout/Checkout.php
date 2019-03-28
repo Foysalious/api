@@ -22,6 +22,7 @@ use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use DB;
 use Illuminate\Http\Request;
+use Sheba\Checkout\DeliveryCharge;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Checkout\Services\ServiceObject;
 use Sheba\ModificationFields;
@@ -178,7 +179,8 @@ class Checkout
                     'discount_percentage' => isset($data['discount_percentage']) ? $data['discount_percentage'] : 0,
                     'resource_id' => isset($data['resource_id']) ? $data['resource_id'] : null,
                     'status' => isset($data['resource_id']) ? constants('JOB_STATUSES')['Accepted'] : constants('JOB_STATUSES')['Pending'],
-                    'delivery_charge' => $data['is_on_premise'] ? 0 : (double)$partner->categories->first()->pivot->delivery_charge,
+                    'delivery_charge' => $data['is_on_premise'] ? 0 : (new DeliveryCharge())->setCategory($this->partnerListRequest->selectedCategory)->setPartner($partner)
+                        ->setCategoryPartnerPivot($partner->categories->first()->pivot)->getDeliveryCharge(),
                     'site' => $data['site']
                 ]);
                 $job = $this->getAuthor($job, $data);
