@@ -56,7 +56,9 @@ class InfoCallController extends Controller
 
     public function store($customer, Request $request)
     {
+
         try {
+            $this->setModifier($request->customer);
             $this->validate($request, [
                 'service_name' => 'required|string',
                 'estimated_budget' => 'required|numeric'
