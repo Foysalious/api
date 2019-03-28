@@ -20,6 +20,7 @@ class SubscriptionOrderRequest extends PartnerListRequest
     private $billingCycleStart;
     /** @var $billingCycleEnd Carbon */
     private $billingCycleEnd;
+    private $location;
 
     private $deliveryName;
     private $deliveryMobile;
@@ -52,6 +53,16 @@ class SubscriptionOrderRequest extends PartnerListRequest
     {
         $this->address = CustomerDeliveryAddress::where('id', $this->request->address_id)->where('customer_id', $this->customer->id)->first();
         $this->decodeGeo();
+        $this->calculateLocation();
+    }
+
+    private function calculateLocation()
+    {
+        if ($this->address->location_id) $this->location = $this->address->location_id;
+        else {
+            $hyper_local = HyperLocal::insidePloygon($this->geo->lat, $this->geo->lng)->first();
+            $this->location = $hyper_local->location_id;
+        }
     }
 
     private function decodeGeo()
