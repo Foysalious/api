@@ -163,7 +163,13 @@ class PartnerLocationController extends Controller
 
             $reviews = Review::select('partner_id', DB::raw('avg(rating) as avg_rating'))->groupBy('partner_id')->whereIn('partner_id', $nearByPartners->keys())->get()->pluck('avg_rating', 'partner_id');
 
+            $liteSps = $partners->filter(function($partner) {
+                return $partner->isLite();
+            });
+
             $partners = (new PartnerSort($partners))->get()->take(50);
+
+            $partners = $partners->merge($liteSps);
 
             $partnerDetails = collect();
             foreach ($partners as $partner) {
@@ -183,6 +189,7 @@ class PartnerLocationController extends Controller
             $partnerDetails = $partnerDetails->sortBy('distance')->values();
             return api_response($request, null, 200, ['partners' => $partnerDetails]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
