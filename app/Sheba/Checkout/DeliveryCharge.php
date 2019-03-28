@@ -14,10 +14,6 @@ class DeliveryCharge
     private $shebaLogisticDeliveryCharge;
     private $categoryPartnerPivot;
 
-    public function __construct()
-    {
-        $this->shebaLogisticDeliveryCharge = $this->setShebaLogisticsPrice();
-    }
 
     public function setPartner(Partner $partner)
     {
@@ -29,6 +25,7 @@ class DeliveryCharge
     public function setCategory(Category $category)
     {
         $this->category = $category;
+        $this->shebaLogisticDeliveryCharge = $this->setShebaLogisticsPrice();
         return $this;
     }
 
@@ -41,16 +38,20 @@ class DeliveryCharge
     public function setShebaLogisticsPrice()
     {
         $client = new Client();
-        $response = $client->request('GET', config('sheba.logistic_url') . '/orders/price');
+        $response = $client->request('GET', config('sheba.logistic_url') . '/parcels/' . $this->category->logistic_parcel_type, [
+            'headers' => [
+                'app-key' => 'shebalogistic',
+                'app-secret' => 'shebalogistic'
+            ]
+        ]);
         $result = json_decode($response->getBody());
-        return $result->price;
+        return isset($result->parcel->price) ? $result->parcel->price : 0;
     }
 
     public function getDeliveryCharge()
     {
         if ((int)$this->categoryPartnerPivot->uses_sheba_logistic) {
             return $this->category->needsTwoWayLogistic() ? $this->shebaLogisticDeliveryCharge * 2 : $this->shebaLogisticDeliveryCharge;
-
         } else {
             return (double)$this->categoryPartnerPivot->delivery_charge;
         }
