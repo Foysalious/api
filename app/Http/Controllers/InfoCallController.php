@@ -73,7 +73,7 @@ class InfoCallController extends Controller
                 'customer_name' => $profile->name,
                 'customer_mobile' => $profile->mobile,
                 'customer_email' => !empty($profile->email) ? $profile->email : null,
-                'customer_address' => !empty($profile->address) ? $profile->address : null,
+                'customer_address' => !empty($profile->address) ? $profile->address : '',
                 'follow_up_date' => Carbon::now()->addMinutes(30),
                 'intended_closing_date' => Carbon::now()->addMinutes(30)
             ];
