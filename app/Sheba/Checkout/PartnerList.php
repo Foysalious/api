@@ -366,36 +366,43 @@ class PartnerList
         if (in_array($this->partnerListRequest->selectedCategory->id, $this->rentCarCategoryIds)) {
             $category_ids = $this->partnerListRequest->selectedCategory->id == (int)env('RENT_CAR_OUTSIDE_ID') ? $category_ids . ",40" : $category_ids . ",38";
         }
-        $this->partners->load(['workingHours', 'jobs' => function ($q) use ($category_ids) {
-            if (strtolower($this->partnerListRequest->portalName) == 'admin-portal') {
-                $q->with(['resources' => function ($q) {
-                    $q->select('resources.id', 'profile_id')->with(['profile' => function ($q) {
-                        $q->select('profiles.id', 'mobile');
-                    }]);
-                }]);
+        $relations = [
+            'workingHours',
+            'jobs' => function ($q) use ($category_ids) {
+                $q->selectRaw("count(case when status in ('Served') and category_id=" . $this->partnerListRequest->selectedCategory->id . " then status end) as total_completed_orders")
+                    ->groupBy('partner_id');
+                if (strtolower($this->partnerListRequest->portalName) == 'admin-portal')
+                    $q->selectRaw("count(case when status in ('Accepted', 'Schedule Due', 'Process', 'Serve Due') then status end) as ongoing_jobs");
+            }, 'subscription' => function ($q) {
+                $q->select('id', 'name', 'rules');
+            }, 'reviews' => function ($q) {
+                $q->selectRaw("count(DISTINCT(reviews.id)) as total_ratings")
+                    ->selectRaw("count(DISTINCT(case when rating=5 then reviews.id end)) as total_five_star_ratings")
+                    ->selectRaw("count(DISTINCT(case when rating=4 then reviews.id end)) as total_four_star_ratings")
+                    ->selectRaw("count(DISTINCT(case when rating=3 then reviews.id end)) as total_three_star_ratings")
+                    ->selectRaw("count(DISTINCT(case when rating=2 then reviews.id end)) as total_two_star_ratings")
+                    ->selectRaw("count(DISTINCT(case when rating=1 then reviews.id end)) as total_one_star_ratings")
+                    ->selectRaw("count(review_question_answer.id) as total_compliments")
+                    ->selectRaw("reviews.partner_id")
+                    ->leftJoin('review_question_answer', function ($q) {
+                        $q->on('reviews.id', '=', 'review_question_answer.review_id');
+                        $q->where('review_question_answer.review_type', '=', 'App\\Models\\Review');
+                        $q->where('reviews.rating', '=', 5);
+                    })->where('reviews.category_id', $this->partnerListRequest->selectedCategory->id)
+                    ->groupBy('reviews.partner_id');
             }
-            $q->selectRaw("count(case when status in ('Served') and category_id=" . $this->partnerListRequest->selectedCategory->id . " then status end) as total_completed_orders")
-                ->groupBy('partner_id');
-            if (strtolower($this->partnerListRequest->portalName) == 'admin-portal') $q->selectRaw("count(case when status in ('Accepted', 'Schedule Due', 'Process', 'Serve Due') then status end) as ongoing_jobs");
-        }, 'subscription' => function ($q) {
-            $q->select('id', 'name', 'rules');
-        }, 'reviews' => function ($q) {
-            $q->selectRaw("count(DISTINCT(reviews.id)) as total_ratings")
-                ->selectRaw("count(DISTINCT(case when rating=5 then reviews.id end)) as total_five_star_ratings")
-                ->selectRaw("count(DISTINCT(case when rating=4 then reviews.id end)) as total_four_star_ratings")
-                ->selectRaw("count(DISTINCT(case when rating=3 then reviews.id end)) as total_three_star_ratings")
-                ->selectRaw("count(DISTINCT(case when rating=2 then reviews.id end)) as total_two_star_ratings")
-                ->selectRaw("count(DISTINCT(case when rating=1 then reviews.id end)) as total_one_star_ratings")
-                ->selectRaw("count(review_question_answer.id) as total_compliments")
-                ->selectRaw("reviews.partner_id")
-                ->leftJoin('review_question_answer', function ($q) {
-                    $q->on('reviews.id', '=', 'review_question_answer.review_id');
-                    $q->where('review_question_answer.review_type', '=', 'App\\Models\\Review');
-                    $q->where('reviews.rating', '=', 5);
-                })->where('reviews.category_id', $this->partnerListRequest->selectedCategory->id)
-                ->groupBy('reviews.partner_id');
+        ];
+
+        if (strtolower($this->partnerListRequest->portalName) == 'admin-portal') {
+            $relations['resources'] = function ($q) {
+                $q->select('resources.id', 'profile_id')->with(['profile' => function ($q) {
+                    $q->select('profiles.id', 'mobile');
+                }]);
+            };
         }
-        ]);
+
+        $this->partners->load($relations);
+
         foreach ($this->partners as $partner) {
             $partner['total_jobs'] = $partner->jobs->first() ? $partner->jobs->first()->total_completed_orders : 0;
             $partner['ongoing_jobs'] = $partner->jobs->first() && $partner->jobs->first()->ongoing_jobs ? $partner->jobs->first()->ongoing_jobs : 0;
