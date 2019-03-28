@@ -1,8 +1,6 @@
 <?php namespace Sheba\Logistics\Repository;
 
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
-use mysql_xdevapi\Exception;
 
 class LogisticClient
 {
@@ -34,8 +32,7 @@ class LogisticClient
         $res = $this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data));
         $res = json_decode($res->getBody()->getContents(), true);
 
-        if ($res['code'] != 200)
-            throw new \Exception($res['message']);
+        if ($res['code'] != 200) throw new \Exception($res['message']);
 
         unset($res['code'], $res['message']);
         return $res;
@@ -48,11 +45,8 @@ class LogisticClient
 
     private function getOptions($data = null)
     {
-        $options['headers'] = [
-            'app-key' => $this->appKey,
-            'app-secret' => $this->appSecret,
-        ];
-        if($data) {
+        $options['headers'] = ['app-key' => $this->appKey, 'app-secret' => $this->appSecret,];
+        if ($data) {
             $options['form_params'] = $data;
         }
         return $options;
