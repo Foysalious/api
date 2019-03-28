@@ -81,6 +81,9 @@ class PartnerController extends Controller
     {
         try {
 
+            ini_set('memory_limit', '6096M');
+            ini_set('max_execution_time', 660);
+
             $location = null;
             if ($request->has('location')) {
                 $location = Location::find($request->location)->id;
