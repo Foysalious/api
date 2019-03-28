@@ -38,17 +38,15 @@ class InfoCallController extends Controller
         try {
             $customer = $request->customer;
             $info_call = InfoCall::find($info_call);
-            $details = [
-                [
+            $details =  [
                     'id' => $info_call->id,
                     'code' => $info_call->code(),
                     'service_name' => $info_call->service_name,
                     'status' => $info_call->status,
                     'created_at' => $info_call->created_at->format('F j, h:ia'),
                     'estimated_budget' => $info_call->estimated_budget,
-                ]
+                ];
 
-            ];
             return api_response($request, $details, 200, ['details' => $details]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
