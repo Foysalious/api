@@ -3,6 +3,7 @@
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Logistics\Natures as LogisticNatures;
 use Sheba\Logistics\OneWayInitEvents as OneWayLogisticInitEvents;
+use Sheba\Logistics\Repository\ParcelRepository;
 
 class Category extends Model
 {
@@ -208,5 +209,15 @@ class Category extends Model
     public function needsLogisticOnReadyToPick()
     {
         return $this->needsTwoWayLogistic() || $this->needsOneWayLogisticOnReadyToPick();
+    }
+
+    public function getShebaLogisticsPrice()
+    {
+        $parcel_repo = app(ParcelRepository::class);
+        $parcel_details = $parcel_repo->findBySlug($this->logistic_parcel_type);
+
+        if (!isset($parcel_details['price'])) return 0;
+
+        return $this->needsTwoWayLogistic() ? $parcel_details['price'] * 2 : $parcel_details['price'];
     }
 }

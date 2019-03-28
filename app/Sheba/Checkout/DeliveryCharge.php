@@ -2,7 +2,6 @@
 
 use App\Models\Category;
 use App\Models\Partner;
-use Sheba\Logistics\Repository\ParcelRepository;
 
 class DeliveryCharge
 {
@@ -22,9 +21,9 @@ class DeliveryCharge
     public function setCategory(Category $category)
     {
         $this->category = $category;
-        if ($this->category->needsLogistic)
-            $this->shebaLogisticDeliveryCharge = $this->getShebaLogisticsPrice();
-        
+        if ($this->category->needsLogistic())
+            $this->shebaLogisticDeliveryCharge = $this->category->getShebaLogisticsPrice();
+
         return $this;
     }
 
@@ -34,18 +33,10 @@ class DeliveryCharge
         return $this;
     }
 
-    private function getShebaLogisticsPrice()
-    {
-        $parcel_repo = app(ParcelRepository::class);
-        $parcel_details = $parcel_repo->findBySlug($this->category->logistic_parcel_type);
-
-        return isset($parcel_details['price']) ? $parcel_details['price'] : 0;
-    }
-
     public function getDeliveryCharge()
     {
         if ((int)$this->categoryPartnerPivot->uses_sheba_logistic) {
-            return $this->category->needsTwoWayLogistic() ? $this->shebaLogisticDeliveryCharge * 2 : $this->shebaLogisticDeliveryCharge;
+            return $this->shebaLogisticDeliveryCharge;
         } else {
             return (double)$this->categoryPartnerPivot->delivery_charge;
         }

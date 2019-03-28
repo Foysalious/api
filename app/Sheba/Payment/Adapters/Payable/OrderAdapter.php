@@ -1,5 +1,6 @@
 <?php namespace Sheba\Payment\Adapters\Payable;
 
+use App\Models\Job;
 use App\Models\PartnerOrder;
 use App\Models\Payable;
 use Carbon\Carbon;
@@ -7,10 +8,12 @@ use Sheba\Logistics\Repository\ParcelRepository;
 
 class OrderAdapter implements PayableAdapter
 {
+    /** @var PartnerOrder $partnerOrder */
     private $partnerOrder;
     private $isAdvancedPayment;
     private $userId;
     private $userType;
+    /** @var Job $job */
     private $job;
 
     public function __construct(PartnerOrder $partner_order, $is_advanced_payment = false)
@@ -41,12 +44,8 @@ class OrderAdapter implements PayableAdapter
 
     private function getShebaLogisticsPrice()
     {
-        if ($this->job->needsLogistic()) {
-            $parcel_repo = app(ParcelRepository::class);
-            $parcel_details = $parcel_repo->findBySlug($this->category->logistic_parcel_type);
-
-            return isset($parcel_details['price']) ? $parcel_details['price'] : 0;
-        }
+        if ($this->job->needsLogistic())
+            return $this->job->category->getShebaLogisticsPrice();
 
         return 0.00;
     }
