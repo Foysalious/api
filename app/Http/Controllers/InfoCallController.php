@@ -77,26 +77,25 @@ class InfoCallController extends Controller
                 'intended_closing_date' => Carbon::now()->addMinutes(30)
             ];
 
-            #$customer->infoCalls()->create($this->withCreateModificationField($data));
-            $this->sendNotificationToSD();
+            $info_call = $customer->infoCalls()->create($this->withCreateModificationField($data));
+            $this->sendNotificationToSD($info_call);
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function sendNotificationToSD()
+    public function sendNotificationToSD($info_call)
     {
         try {
             $sd_not_crm = User::where('department_id', 5)->where('is_cm', 0)->pluck('id');
-
             notify()->users($sd_not_crm)->send([
                 "title" => 'New Info Call Created by Customer',
+                'link' => env('SHEBA_BACKEND_URL') . '/info-call/' . $info_call->id,
                 "type" => notificationType('Info')
             ]);
         } catch (\Throwable $e) {
