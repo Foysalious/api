@@ -20,7 +20,7 @@ class SubscriptionOrderRequest extends PartnerListRequest
     private $billingCycleStart;
     /** @var $billingCycleEnd Carbon */
     private $billingCycleEnd;
-    private $location;
+    protected $location;
 
     private $deliveryName;
     private $deliveryMobile;
