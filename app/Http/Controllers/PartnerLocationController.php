@@ -127,7 +127,7 @@ class PartnerLocationController extends Controller
     public function getNearbyPartners(Request $request, PartnerLocationRepository $partnerLocationRepository)
     {
         try {
-            $start_memory = memory_get_usage();
+            ini_set('memory_limit','512M');
             $this->validate($request, [
                 'lat' => 'required',
                 'lng' => 'required'
@@ -144,11 +144,13 @@ class PartnerLocationController extends Controller
 
             #dd(Partner::verified()->whereIn('id',$nearByPartnersIds)->get()->pluck('id'));
 
-            $partners = Partner::where(function ($query) {
-                $query->verified();
-            })->orWhere(function ($query) {
-                $query->lite();
-            })->whereIn('id', $nearByPartners->keys())->with(['subscription','categories' => function($category_query) {
+            $partners = Partner::where(function($query){
+                $query->where(function ($query) {
+                    $query->verified();
+                }) ->orWhere(function ($query) {
+                    $query->lite();
+                });
+            })->with(['subscription','categories' => function($category_query) {
                 $category_query->with(['parent' => function($master_category_query) {
                     $master_category_query->select('id','name');
                 }])->select('parent_id');
@@ -157,7 +159,7 @@ class PartnerLocationController extends Controller
             if ($request->has('q'))
                 $partners = $partners->where('name', 'like', '%' . $request->q . '%');
 
-            $partners = $partners->get();
+            $partners = $partners->whereIn('id', $nearByPartners->keys())->get();
 
             $reviews = Review::select('partner_id', DB::raw('avg(rating) as avg_rating'))->groupBy('partner_id')->whereIn('partner_id', $nearByPartners->keys())->get()->pluck('avg_rating', 'partner_id');
 
