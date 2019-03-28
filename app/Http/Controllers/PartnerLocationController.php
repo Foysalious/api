@@ -100,18 +100,21 @@ class PartnerLocationController extends Controller
                 'partner' => 'sometimes|required',
                 'lat' => 'required|numeric',
                 'lng' => 'required|numeric',
-                'limit' => 'required|numeric',
+                'partner_count' => 'numeric',
             ]);
             $partner = $request->has('partner') ? $request->partner : null;
-            $partnerListRequest->setRequest($request)->prepareObject();
-            $partner_list = new PartnerList();
-            $partner_list->setPartnerListRequest($partnerListRequest)->find($partner);
-            $lite_list = new LitePartnerList();
-            $lite_list->setPartnerListRequest($partnerListRequest)->setLimit((int)$request->limit)->find($partner);
-            $lite_list->addInfo();
-            $lite_partners = $lite_list->removeKeysFromPartner()->values()->all();
-            if (count($lite_partners) > 0) return api_response($request, null, 200, ['partners' => $lite_partners]);
-            else api_response($request, null, 404, ['message' => 'No partner found.']);
+            $partner_count = $request->has('partner_count') ? (int)$request->partner_count : 0;
+            if ($partner_count < 50) {
+                $partnerListRequest->setRequest($request)->prepareObject();
+                $partner_list = new PartnerList();
+                $partner_list->setPartnerListRequest($partnerListRequest)->find($partner);
+                $lite_list = new LitePartnerList();
+                $lite_list->setPartnerListRequest($partnerListRequest)->setLimit(50 - $partner_count)->find($partner);
+                $lite_list->addInfo();
+                $lite_partners = $lite_list->removeKeysFromPartner()->values()->all();
+                if (count($lite_partners) > 0) return api_response($request, null, 200, ['partners' => $lite_partners]);
+            }
+            return api_response($request, null, 404, ['message' => 'No partner found.']);
         } catch (HyperLocationNotFoundException $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 400, ['message' => 'Your are out of service area.']);
