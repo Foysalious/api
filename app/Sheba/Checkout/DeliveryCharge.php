@@ -1,9 +1,8 @@
 <?php namespace Sheba\Checkout;
 
-
 use App\Models\Category;
 use App\Models\Partner;
-use GuzzleHttp\Client;
+use Sheba\Logistics\Repository\ParcelRepository;
 
 class DeliveryCharge
 {
@@ -14,18 +13,16 @@ class DeliveryCharge
     private $shebaLogisticDeliveryCharge;
     private $categoryPartnerPivot;
 
-
     public function setPartner(Partner $partner)
     {
         $this->partner = $partner;
         return $this;
     }
 
-
     public function setCategory(Category $category)
     {
         $this->category = $category;
-        $this->shebaLogisticDeliveryCharge = $this->setShebaLogisticsPrice();
+        $this->shebaLogisticDeliveryCharge = $this->getShebaLogisticsPrice();
         return $this;
     }
 
@@ -35,17 +32,12 @@ class DeliveryCharge
         return $this;
     }
 
-    public function setShebaLogisticsPrice()
+    private function getShebaLogisticsPrice()
     {
-        $client = new Client();
-        $response = $client->request('GET', config('sheba.logistic_url') . '/parcels/' . $this->category->logistic_parcel_type, [
-            'headers' => [
-                'app-key' => 'shebalogistic',
-                'app-secret' => 'shebalogistic'
-            ]
-        ]);
-        $result = json_decode($response->getBody());
-        return isset($result->parcel->price) ? $result->parcel->price : 0;
+        $parcel_repo = app(ParcelRepository::class);
+        $parcel_details = $parcel_repo->findBySlug($this->category->logistic_parcel_type);
+
+        return isset($parcel_details['price']) ? $parcel_details['price'] : 0;
     }
 
     public function getDeliveryCharge()
@@ -56,6 +48,4 @@ class DeliveryCharge
             return (double)$this->categoryPartnerPivot->delivery_charge;
         }
     }
-
-
 }

@@ -161,6 +161,7 @@ class Checkout
                 $partner_order = $this->getAuthor($partner_order, $data);
                 $preferred_time_start = (Carbon::parse(explode('-', $data['time'])[0]))->format('G:i:s');
                 $preferred_time_end = (Carbon::parse(explode('-', $data['time'])[1]))->format('G:i:s');
+
                 $job = Job::create([
                     'category_id' => $data['category_id'],
                     'partner_order_id' => $partner_order->id,
@@ -179,8 +180,7 @@ class Checkout
                     'discount_percentage' => isset($data['discount_percentage']) ? $data['discount_percentage'] : 0,
                     'resource_id' => isset($data['resource_id']) ? $data['resource_id'] : null,
                     'status' => isset($data['resource_id']) ? constants('JOB_STATUSES')['Accepted'] : constants('JOB_STATUSES')['Pending'],
-                    'delivery_charge' => $data['is_on_premise'] ? 0 : (new DeliveryCharge())->setCategory($this->partnerListRequest->selectedCategory)->setPartner($partner)
-                        ->setCategoryPartnerPivot($partner->categories->first()->pivot)->getDeliveryCharge(),
+                    'delivery_charge' => $data['is_on_premise'] ? 0 : $this->getDeliveryCharge($partner),
                     'site' => $data['site']
                 ]);
                 $job = $this->getAuthor($job, $data);
@@ -195,6 +195,19 @@ class Checkout
             throw  $e;
         }
         return $order;
+    }
+
+    /**
+     * @param $partner
+     * @return float|int
+     */
+    private function getDeliveryCharge($partner)
+    {
+        return ($partner->categories->first()->pivot->uses_sheba_logistic) ? 0 :
+            (new DeliveryCharge())->setCategory($this->partnerListRequest->selectedCategory)
+                ->setPartner($partner)
+                ->setCategoryPartnerPivot($partner->categories->first()->pivot)
+                ->getDeliveryCharge();
     }
 
     private function createCarRentalDetail($service)
