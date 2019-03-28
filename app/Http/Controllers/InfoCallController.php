@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 use Sheba\ModificationFields;
@@ -76,14 +77,31 @@ class InfoCallController extends Controller
                 'intended_closing_date' => Carbon::now()->addMinutes(30)
             ];
 
-            $customer->infoCalls()->create($this->withCreateModificationField($data));
+            #$customer->infoCalls()->create($this->withCreateModificationField($data));
+            $this->sendNotificationToSD();
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
+
+    public function sendNotificationToSD()
+    {
+        try {
+            $sd_not_crm = User::where('department_id', 5)->where('is_cm', 0)->pluck('id');
+
+            notify()->users($sd_not_crm)->send([
+                "title" => 'New Info Call Created by Customer',
+                "type" => notificationType('Info')
+            ]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+        }
+    }
+
 }
