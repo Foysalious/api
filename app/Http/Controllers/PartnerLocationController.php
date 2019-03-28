@@ -69,15 +69,7 @@ class PartnerLocationController extends Controller
                     $partner_list->sortByShebaSelectedCriteria();
                 }
                 $partners = $partner_list->removeKeysFromPartner()->values()->all();
-                if (count($partners) < 50) {
-                    $lite_list = new LitePartnerList();
-                    $lite_list->setPartnerListRequest($partnerListRequest)->setLimit(50 - count($partners))->find($partner);
-                    $lite_list->addInfo();
-                    $lite_partners = $lite_list->removeKeysFromPartner()->values()->all();
-                } else {
-                    $lite_partners = [];
-                }
-                return api_response($request, $partners, 200, ['partners' => $partners, 'lite_partners' => $lite_partners]);
+                return api_response($request, $partners, 200, ['partners' => $partners]);
             }
             return api_response($request, null, 404, ['message' => 'No partner found.']);
         } catch (HyperLocationNotFoundException $e) {
@@ -130,14 +122,14 @@ class PartnerLocationController extends Controller
     public function getNearbyPartners(Request $request, PartnerLocationRepository $partnerLocationRepository)
     {
         try {
-            ini_set('memory_limit','512M');
+            ini_set('memory_limit', '512M');
             $this->validate($request, [
                 'lat' => 'required',
                 'lng' => 'required'
             ]);
 
             $location = null;
-            
+
             $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
             if (!is_null($hyperLocation)) $location = $hyperLocation->location;
 
@@ -145,15 +137,15 @@ class PartnerLocationController extends Controller
 
             $nearByPartners = $partnerLocationRepository->findNearByPartners((double)$request->lat, (double)$request->lng)->pluckMultiple(['distance', 'location'], 'partner_id', true);
 
-            $partners = Partner::where(function($query){
+            $partners = Partner::where(function ($query) {
                 $query->where(function ($query) {
                     $query->verified();
-                }) ->orWhere(function ($query) {
+                })->orWhere(function ($query) {
                     $query->lite();
                 });
-            })->with(['subscription','categories' => function($category_query) {
-                $category_query->with(['parent' => function($master_category_query) {
-                    $master_category_query->select('id','name');
+            })->with(['subscription', 'categories' => function ($category_query) {
+                $category_query->with(['parent' => function ($master_category_query) {
+                    $master_category_query->select('id', 'name');
                 }])->select('parent_id');
             }]);
 
@@ -174,7 +166,7 @@ class PartnerLocationController extends Controller
 
             $partnerDetails = $partnerDetails->sortBy('distance')->values();
 
-            $liteSps = $partnersWithLiteSps->filter(function($partner) {
+            $liteSps = $partnersWithLiteSps->filter(function ($partner) {
                 return $partner->isLite();
             })->take(20);
 
@@ -188,7 +180,7 @@ class PartnerLocationController extends Controller
 
     }
 
-    private function formatCollection($partners, $nearByPartners, $request,$reviews, &$partnerDetails )
+    private function formatCollection($partners, $nearByPartners, $request, $reviews, &$partnerDetails)
     {
         foreach ($partners as $partner) {
             if ($request->has('category_id'))
