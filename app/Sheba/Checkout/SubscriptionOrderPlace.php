@@ -24,7 +24,6 @@ class SubscriptionOrderPlace
         $subscription_order->customer_id = $this->subscriptionOrderRequest->customer->id;
         $subscription_order->location_id = $this->subscriptionOrderRequest->address->location_id;
         $subscription_order->delivery_address_id = $this->subscriptionOrderRequest->address->id;
-        $subscription_order->location_id = $this->subscriptionOrderRequest->address->location_id;
         $subscription_order->sales_channel = $this->subscriptionOrderRequest->salesChannel;
         $subscription_order->partner_id = $this->subscriptionOrderRequest->selectedPartner->id;
         $subscription_order->delivery_mobile = $this->subscriptionOrderRequest->deliveryMobile;
