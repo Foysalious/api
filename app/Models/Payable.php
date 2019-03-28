@@ -1,7 +1,4 @@
-<?php
-
-namespace App\Models;
-
+<?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Payment\Complete\PaymentComplete;
@@ -63,5 +60,4 @@ class Payable extends Model
     {
         return $this->hasOne(Payment::class);
     }
-
 }

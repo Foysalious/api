@@ -159,7 +159,7 @@ class Category extends Model
      */
     public function needsLogistic()
     {
-        return (bool) $this->is_logistic_available;
+        return (bool)$this->is_logistic_available;
     }
 
     /**

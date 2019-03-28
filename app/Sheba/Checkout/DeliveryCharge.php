@@ -22,7 +22,9 @@ class DeliveryCharge
     public function setCategory(Category $category)
     {
         $this->category = $category;
-        $this->shebaLogisticDeliveryCharge = $this->getShebaLogisticsPrice();
+        if ($this->category->needsLogistic)
+            $this->shebaLogisticDeliveryCharge = $this->getShebaLogisticsPrice();
+        
         return $this;
     }
 
