@@ -136,16 +136,14 @@ class PartnerLocationController extends Controller
                 'lng' => 'required'
             ]);
 
-
             $location = null;
+            
             $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
             if (!is_null($hyperLocation)) $location = $hyperLocation->location;
 
             if (!$location) return api_response($request, 'Invalid location', 400, ['message' => 'Invalid location']);
 
             $nearByPartners = $partnerLocationRepository->findNearByPartners((double)$request->lat, (double)$request->lng)->pluckMultiple(['distance', 'location'], 'partner_id', true);
-
-            #dd(Partner::verified()->whereIn('id',$nearByPartnersIds)->get()->pluck('id'));
 
             $partners = Partner::where(function($query){
                 $query->where(function ($query) {
@@ -166,36 +164,45 @@ class PartnerLocationController extends Controller
 
             $reviews = Review::select('partner_id', DB::raw('avg(rating) as avg_rating'))->groupBy('partner_id')->whereIn('partner_id', $nearByPartners->keys())->get()->pluck('avg_rating', 'partner_id');
 
-            $liteSps = $partners->filter(function($partner) {
-                return $partner->isLite();
-            });
+            $partnersWithLiteSps = $partners;
 
             $partners = (new PartnerSort($partners))->get()->take(50);
 
-            $partners = $partners->merge($liteSps);
-
             $partnerDetails = collect();
-            foreach ($partners as $partner) {
-                if ($request->has('category_id'))
-                    if (!in_array($request->category_id, $partner->servingMasterCategoryIds()))
-                        continue;
-                $serving_master_categories = $partner->servingMasterCategories();
-                $partner->lat = $nearByPartners[$partner->id]->location->coordinates[1];
-                $partner->lng = $nearByPartners[$partner->id]->location->coordinates[0];
-                $partner->distance = round($nearByPartners[$partner->id]->distance, 2);
-                $partner->badge = $partner->resolveBadge();
-                $partner->rating = $reviews->has($partner->id) ? round($reviews[$partner->id], 2) : 0.00;;
-                $partner->serving_category = $serving_master_categories;
-                removeRelationsAndFields($partner);
-                $partnerDetails->push($partner);
-            }
+
+            $this->formatCollection($partners, $nearByPartners, $request, $reviews, $partnerDetails);
+
             $partnerDetails = $partnerDetails->sortBy('distance')->values();
+
+            $liteSps = $partnersWithLiteSps->filter(function($partner) {
+                return $partner->isLite();
+            })->take(20);
+
+            $this->formatCollection($liteSps, $nearByPartners, $request, $reviews, $partnerDetails);
+
             return api_response($request, null, 200, ['partners' => $partnerDetails]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
 
+    }
+
+    private function formatCollection($partners, $nearByPartners, $request,$reviews, &$partnerDetails )
+    {
+        foreach ($partners as $partner) {
+            if ($request->has('category_id'))
+                if (!in_array($request->category_id, $partner->servingMasterCategoryIds()))
+                    continue;
+            $serving_master_categories = $partner->servingMasterCategories();
+            $partner->lat = $nearByPartners[$partner->id]->location->coordinates[1];
+            $partner->lng = $nearByPartners[$partner->id]->location->coordinates[0];
+            $partner->distance = round($nearByPartners[$partner->id]->distance, 2);
+            $partner->badge = $partner->resolveBadge();
+            $partner->rating = $reviews->has($partner->id) ? round($reviews[$partner->id], 2) : 0.00;;
+            $partner->serving_category = $serving_master_categories;
+            removeRelationsAndFields($partner);
+            $partnerDetails->push($partner);
+        }
     }
 }
