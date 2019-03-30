@@ -144,18 +144,18 @@ class PartnerWithdrawalRequestController extends Controller
 
     private function canWithdraw(Partner $partner)
     {
-        $activePartnerWithdrawalRequest = $partner->withdrawalRequests()->pending()->first();
-        $is_wallet_has_sufficient_balance = $partner->wallet > $partner->walletSetting->security_money;
+        $active_withdrawal_request = $partner->withdrawalRequests()->pending()->first();
+        $does_wallet_have_sufficient_balance = $partner->wallet > $partner->walletSetting->security_money;
         $can_withdraw = true;
         $status = 'You can send withdraw request';
-        if (!$is_wallet_has_sufficient_balance) {
+        if (!$does_wallet_have_sufficient_balance) {
             $status = 'You don\'t have sufficient balance on your wallet. So you can\'t send a withdraw request.';
             $can_withdraw = false;
-        } elseif ($is_wallet_has_sufficient_balance && $activePartnerWithdrawalRequest) {
+        } elseif ($does_wallet_have_sufficient_balance && $active_withdrawal_request) {
             $status = 'We have received your withdrawal request, Please wait for approval.';
             $can_withdraw = false;
         }
-        return array($can_withdraw, $status);
+        return [$can_withdraw, $status];
     }
 
 
