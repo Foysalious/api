@@ -1,7 +1,4 @@
-<?php
-
-namespace Sheba\Bkash\Modules\Normal\Methods\Payout;
-
+<?php namespace Sheba\Bkash\Modules\Normal\Methods\Payout;
 
 use Sheba\Bkash\Modules\BkashAuth;
 use Sheba\Bkash\Modules\Normal\Methods\Payout\Responses\B2CPaymentResponse;
@@ -82,10 +79,10 @@ class NormalPayout extends NormalModule
      */
     private function getHeader()
     {
-        $header = array(
+        return [
             'Content-Type:application/json',
             'authorization:' . $this->getToken(),
-            'x-app-key:' . $this->bkashAuth->appKey);
-        return $header;
+            'x-app-key:' . $this->bkashAuth->appKey
+        ];
     }
 }

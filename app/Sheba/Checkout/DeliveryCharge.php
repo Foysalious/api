@@ -36,7 +36,7 @@ class DeliveryCharge
     public function getDeliveryCharge()
     {
         if ((int)$this->categoryPartnerPivot->uses_sheba_logistic) {
-            return $this->shebaLogisticDeliveryCharge;
+            return (double)$this->shebaLogisticDeliveryCharge;
         } else {
             return (double)$this->categoryPartnerPivot->delivery_charge;
         }
