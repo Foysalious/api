@@ -1,9 +1,8 @@
-<?php
-
-namespace App\Http\Controllers\Subscription;
+<?php namespace App\Http\Controllers\Subscription;
 
 use App\Exceptions\HyperLocationNotFoundException;
 use App\Http\Controllers\Controller;
+use App\Models\CustomerDeliveryAddress;
 use App\Models\Service;
 use App\Models\ServiceSubscription;
 use App\Models\SubscriptionOrder;
@@ -125,7 +124,7 @@ class CustomerSubscriptionController extends Controller
         try {
             $customer = $request->customer;
             $subscription_orders_list = collect([]);
-            $subscription_orders = SubscriptionOrder::where('customer_id', (int)$customer->id)->get();
+            $subscription_orders = SubscriptionOrder::where('customer_id', (int)$customer->id)->orderBy('created_at', 'desc')->get();
 
             foreach ($subscription_orders as $subscription_order) {
 
@@ -214,6 +213,16 @@ class CustomerSubscriptionController extends Controller
                 ];
             });
 
+            $schedule_dates = $partner_orders->map(function ($partner_order) {
+                $last_job = $partner_order->order->lastJob();
+                $day_name = Carbon::parse($last_job->schedule_date)->format('l');
+                return Carbon::parse(new Carbon('next '.lcfirst($day_name)))->toDateString();
+            })->toArray();
+
+            usort($schedule_dates, function ($a, $b) {
+                return strtotime($a) - strtotime($b);
+            });
+
             $next_order = [];
             foreach ($format_partner_orders->toArray() as $partner_order){
                 if (empty($partner_order['is_completed'])){
@@ -234,12 +243,14 @@ class CustomerSubscriptionController extends Controller
                 if (empty($breakdown->questions)) {
                     $data = [
                         'quantity' => $breakdown->quantity,
-                        'questions' => null
+                        'questions' => null,
+                        'options' => $breakdown->option
                     ];
                 } else {
                     $data = [
                         'quantity' => $breakdown->quantity,
-                        'questions' => $breakdown->questions
+                        'questions' => $breakdown->questions,
+                        'options' => $breakdown->option
                     ];
                 }
                 $variables->push($data);
@@ -248,16 +259,6 @@ class CustomerSubscriptionController extends Controller
             $service_details_breakdown = $service_details->breakdown['0'];
 
             $service = Service::find((int)$service_details_breakdown->id);
-            $options = $this->serviceQuestionSet($service);
-            $answers = collect();
-            if ($options)
-                foreach ($options as $option) {
-                    $answers->push($option["answers"]);
-                }
-
-            $serviceSubscription = ServiceSubscription::where('service_id',$service->id)->first();
-            $price_range = $approximatePriceCalculator->setSubscription($serviceSubscription)->getPriceRange();
-
 
             $schedules = collect(json_decode($subscription_order->schedules));
 
@@ -278,6 +279,7 @@ class CustomerSubscriptionController extends Controller
 
                 'customer_name' => $subscription_order->customer->profile->name,
                 'customer_mobile' => $subscription_order->customer->profile->mobile,
+                'address_id' => $subscription_order->deliveryAddress->id,
                 'address' => $subscription_order->deliveryAddress->address,
                 'location_name' => $subscription_order->location ?  $subscription_order->location->name : "",
                 'ordered_for' => $subscription_order->deliveryAddress->name,
@@ -296,38 +298,81 @@ class CustomerSubscriptionController extends Controller
                 'discount' => $service_details->discount,
                 'total_price' => $service_details->discounted_price,
                 "paid_on" => !empty($subscription_order->paid_at) ? Carbon::parse($subscription_order->paid_at)->format('M-j, Y') : null,
-                "orders" => $format_partner_orders
+                "orders" => $format_partner_orders,
+                'schedule_dates' => $schedule_dates
             ];
 
-            if ($options) {
-                if (count($answers) > 1)
-                    $subscription_order_details['service_breakdown'] = $this->breakdown_service_with_min_max_price($answers, $serviceSubscription['min_price'], $serviceSubscription['max_price']);
-                else {
-                    $total_breakdown = array();
-                    foreach ($answers[0] as $index => $answer) {
-                        $breakdown = array(
-                            'name' => $answer,
-                            'indexes' => array($index),
-                            'min_price' => $serviceSubscription['min_price'],
-                            'max_price' => $serviceSubscription['max_price']
-                        );
-                        array_push($total_breakdown, $breakdown);
-                    }
-                    $subscription_order_details['service_breakdown'] = $total_breakdown;
-                }
-
-            } else {
-                $subscription_order_details['service_breakdown'] = array(array(
-                    'name' => $serviceSubscription->service->name,
-                    'indexes' => null,
-                    'min_price' => $serviceSubscription['min_price'],
-                    'max_price' => $serviceSubscription['max_price']
-                ));
-            }
 
             return api_response($request, $subscription_order_details, 200, ['subscription_order_details' => $subscription_order_details]);
         } catch (\Throwable $e) {
-            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function checkRenewalStatus(Request $request, $customer, $subscription)
+    {
+        try{
+            $customer = $request->customer;
+            $subscription_order = SubscriptionOrder::find((int)$subscription);
+            $partner_orders = $subscription_order->orders->map(function ($order) {
+                return $order->lastPartnerOrder();
+            });
+            $delivery_address = CustomerDeliveryAddress::find($partner_orders[0]->order->delivery_address_id);
+            $geo = json_decode($delivery_address->geo_informations);
+
+            $format_partner_orders = $partner_orders->map(function ($partner_order) {
+                $last_job = $partner_order->order->lastJob();
+                return [
+                    'id' => $partner_order->order->code(),
+                    'job_id' => $last_job->id,
+                    'schedule_date' => Carbon::parse($last_job->schedule_date),
+                    'preferred_time' => Carbon::parse($last_job->schedule_date)->format('M-j').', '.Carbon::parse($last_job->preferred_time_start)->format('h:ia'),
+                    'is_completed' => $partner_order->closed_and_paid_at ? $partner_order->closed_and_paid_at->format('M-j, h:ia') : null,
+                    'cancelled_at' => $partner_order->cancelled_at ? Carbon::parse($partner_order->cancelled_at)->format('M-j, h:i a') : null
+                ];
+            });
+
+            $schedule_dates = $partner_orders->map(function ($partner_order) {
+                $last_job = $partner_order->order->lastJob();
+                $day_name = Carbon::parse($last_job->schedule_date)->format('l');
+                return Carbon::parse(new Carbon('next '.lcfirst($day_name)))->toDateString();
+            })->toArray();
+
+            usort($schedule_dates, function ($a, $b) {
+                return strtotime($a) - strtotime($b);
+            });
+            $schedules = collect(json_decode($subscription_order->schedules));
+
+            $service_details = json_decode($subscription_order->service_details);
+            $variables = collect();
+            foreach ($service_details->breakdown as $breakdown) {
+                    $data = [
+                        'id' => $breakdown->id,
+                        'quantity' => $breakdown->quantity,
+                        'option' => $breakdown->option
+                    ];
+
+                $variables->push($data);
+            }
+
+            $request['date'] = $schedule_dates;
+            $request['time'] =$schedules->first()->time;
+            $request['services'] = json_encode($variables, true);
+            $request['lat'] = (double) $geo->lat;
+            $request['lng'] = (double) $geo->lng;
+            $request['subscription_type'] =  $subscription_order->billing_cycle;
+            $partners = $this->findPartnersForSubscription($request,$partner_orders[0]->partner_id);
+            if(count($partners) > 0) {
+                return api_response($request, $partners, 200, ['status' => 'partner_available_on_time']);
+            } else {
+                $partners = $this->findPartnersForSubscription($request);
+                if(count($partners) > 0)
+                    return api_response($request, $partners, 200, ['status' => 'other_partners_available_on_time']);
+                else
+                    return api_response($request, $partners, 200, ['status' => 'no_partners_available_on_time']);
+            }
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -386,5 +431,25 @@ class CustomerSubscriptionController extends Controller
         }
 
         return $result;
+    }
+
+    private function resolveInputTypeField($answers)
+    {
+        $answers = explode(',', $answers);
+        return count($answers) <= 4 ? "radiobox" : "dropdown";
+    }
+
+    private function findPartnersForSubscription($request, $partner = null)
+    {
+        $partnerListRequest = new PartnerListRequest();
+        $partnerListRequest->setRequest($request)->prepareObject();
+        if (!$partnerListRequest->isValid()) {
+            return api_response($request, null, 400, ['message' => 'Wrong Day for subscription']);
+        }
+        $partner_list = new SubscriptionPartnerList();
+        $partner_list->setPartnerListRequest($partnerListRequest)->find($partner);
+        $partners = $partner_list->partners->filter(function ($partner) {
+            return $partner->is_available == 1 || $partner->id == config('sheba.sheba_help_desk_id');
+        });
     }
 }

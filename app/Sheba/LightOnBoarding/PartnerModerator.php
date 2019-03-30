@@ -6,13 +6,16 @@ use App\Exceptions\NotFoundException;
 use App\Models\Affiliate;
 use App\Models\Partner;
 use DB;
+use Sheba\Location\Coords;
+use Sheba\Location\Distance\Distance;
+use Sheba\Location\Distance\DistanceStrategy;
 
 class PartnerModerator
 {
     private $affiliate, $partner, $moderator;
     private $affiliationRewards;
     private $moderatorRole;
-    private $distanceThreshold = 200;
+    private $distanceThreshold;
 
     public function __construct($moderatorRole)
     {
@@ -31,6 +34,11 @@ class PartnerModerator
         return $this->affiliate;
     }
 
+    /**
+     * @param Affiliate $affiliate
+     * @return $this
+     * @throws InvalidModeratorException
+     */
     public function setModerator(Affiliate $affiliate)
     {
         $this->moderator = $affiliate;
@@ -40,12 +48,18 @@ class PartnerModerator
         return $this;
     }
 
+    /**
+     * @param $partner_id
+     * @return $this
+     * @throws InvalidModeratorException
+     * @throws NotFoundException
+     */
     public function setPartner($partner_id)
     {
         $this->partner = Partner::find($partner_id);
         $this->affiliate = $this->partner->affiliate;
         if (empty($this->partner)) {
-            throw  new NotFoundException('Partner Does not exists', 404);
+            throw new NotFoundException('Partner Does not exists', 404);
         }
         if (empty($this->affiliate)) {
             throw new InvalidModeratorException('This partner does not have any affiliate');
@@ -53,10 +67,17 @@ class PartnerModerator
         return $this;
     }
 
+    /**
+     * @param $data
+     * @return bool
+     * @throws InvalidModeratorException
+     * @throws ModeratorDistanceExceedException
+     * @throws \Exception
+     */
     private function validateRequest($data)
     {
         if ($this->partner->moderation_status && $this->partner->moderation_status != 'pending') {
-            throw  new InvalidModeratorException('This partner is already moderated');
+            throw new InvalidModeratorException('This partner is already moderated');
         }
         if ($this->moderatorRole == 'moderator') {
             if ($this->moderator->id != $this->partner->moderator_id) {
@@ -68,6 +89,12 @@ class PartnerModerator
         return true;
     }
 
+    /**
+     * @param $data
+     * @throws InvalidModeratorException
+     * @throws ModeratorDistanceExceedException
+     * @throws \Throwable
+     */
     public function accept($data)
     {
         try {
@@ -92,6 +119,12 @@ class PartnerModerator
         }
     }
 
+    /**
+     * @param $data
+     * @throws InvalidModeratorException
+     * @throws ModeratorDistanceExceedException
+     * @throws \Throwable
+     */
     public function reject($data)
     {
         try {
@@ -117,18 +150,23 @@ class PartnerModerator
         }
     }
 
+    /**
+     * @param $source
+     * @param $partner
+     * @throws ModeratorDistanceExceedException
+     * @throws \Exception
+     */
     private function validateLocation($source, $partner)
     {
-        if (!empty($partner->geo_informations)) {
-            $geo_info = json_decode($partner->geo_informations, true);
-            $partner_radius = $geo_info['radius'] * 1000; // From KM to Meter
-            $dist = self::calculateDistance($source, $geo_info);
-            if ($dist < $partner_radius && $dist <= $this->distanceThreshold) {
-            } else {
-                throw new ModeratorDistanceExceedException();
-            }
-        } else {
+        if (empty($partner->geo_informations)) {
             throw new \Exception('Partners Geo Information is not set yet');
+        }
+
+        $geo_info = json_decode($partner->geo_informations, true);
+        $partner_radius = $geo_info['radius'] * 1000; // From KM to Meter
+        $dist = self::calculateDistance($source, $geo_info);
+        if ($dist > $partner_radius || $dist > $this->distanceThreshold) {
+            throw new ModeratorDistanceExceedException();
         }
     }
 
@@ -154,34 +192,12 @@ class PartnerModerator
 
     public static function calculateDistance($source, $dest)
     {
-        return self::vincentyGreatCircleDistance(floatval($source['lat']), floatval($source['lng']), floatval($dest['lat']), floatval($dest['lng']));
-    }
+        $distance = (new Distance(DistanceStrategy::$VINCENTY))->linear();
 
-    /**
-     * Calculates the great-circle distance between two points, with
-     * the Vincenty formula.
-     * @param float $latitudeFrom Latitude of start point in [deg decimal]
-     * @param float $longitudeFrom Longitude of start point in [deg decimal]
-     * @param float $latitudeTo Latitude of target point in [deg decimal]
-     * @param float $longitudeTo Longitude of target point in [deg decimal]
-     * @param float $earthRadius Mean earth radius in [m]
-     * @return float Distance between points in [m] (same as earthRadius)
-     */
-    private static function vincentyGreatCircleDistance(
-        $latitudeFrom, $longitudeFrom, $latitudeTo, $longitudeTo, $earthRadius = 6371000.0)
-    {
-        // convert from degrees to radians
-        $latFrom = deg2rad($latitudeFrom);
-        $lonFrom = deg2rad($longitudeFrom);
-        $latTo = deg2rad($latitudeTo);
-        $lonTo = deg2rad($longitudeTo);
+        $source = (new Coords($source['lat'], $source['lng']));
+        $dest   = (new Coords($dest['lat'], $dest['lng']));
 
-        $lonDelta = $lonTo - $lonFrom;
-        $a = pow(cos($latTo) * sin($lonDelta), 2) +
-            pow(cos($latFrom) * sin($latTo) - sin($latFrom) * cos($latTo) * cos($lonDelta), 2);
-        $b = sin($latFrom) * sin($latTo) + cos($latFrom) * cos($latTo) * cos($lonDelta);
-
-        $angle = atan2(sqrt($a), $b);
-        return $angle * $earthRadius;
+        return $distance->from($source)->to($dest)->distance();
+        // return self::vincentyGreatCircleDistance(floatval($source['lat']), floatval($source['lng']), floatval($dest['lat']), floatval($dest['lng']));
     }
 }

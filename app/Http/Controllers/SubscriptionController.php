@@ -14,6 +14,7 @@ class SubscriptionController extends Controller
     public function index(Request $request, ApproximatePriceCalculator $approximatePriceCalculator)
     {
         try {
+            ini_set('memory_limit', '2048M');
             if ($request->has('location')) {
                 $location = $request->location != '' ? $request->location : 4;
             } else {
@@ -43,7 +44,6 @@ class SubscriptionController extends Controller
             foreach ($categories as $category) {
                 $subscriptions =  $category->services->map(function($service) use ($approximatePriceCalculator){
                     $service = removeRelationsAndFields($service);
-                    list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
                     $subscription = $service->serviceSubscription;
                     $subscription['offers'] = $subscription->getDiscountOffers();
                     $price_range = $approximatePriceCalculator->setSubscription($subscription)->getPriceRange();
@@ -75,7 +75,6 @@ class SubscriptionController extends Controller
                     else
                         $parents->push($parent);
                 }
-
             }
             if(count($parents)>0)
                 return api_response($request, $parents, 200, ['category' => $parents]);

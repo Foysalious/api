@@ -6,6 +6,8 @@ use App\Models\Customer;
 use App\Models\CustomerTransaction;
 use App\Models\Partner;
 use App\Models\PartnerTransaction;
+use App\Models\Vendor;
+use App\Models\VendorTransaction;
 use Carbon\Carbon;
 use DB;
 
@@ -46,6 +48,8 @@ trait Wallet
             return new AffiliateTransaction();
         } else if ($this instanceof Partner) {
             return new PartnerTransaction();
+        } else if ($this instanceof Vendor) {
+            return new VendorTransaction();
         }
     }
 }

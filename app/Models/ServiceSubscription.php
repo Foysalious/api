@@ -71,10 +71,17 @@ class ServiceSubscription extends Model
             $discount_amount_for_homepage.= "$unit";
         }
 
+        $discount_amount = '';
+        if($discount_offer->cap != 0) $discount_amount.="$discount_offer->cap";
+        else $discount_amount .= $amount;
+
+
         return [
             'short_text' => $offer_short_text,
             'long_text' => $offer_long_text,
-            'discount_amount_for_homepage' => $discount_amount_for_homepage
+            'discount_amount_for_homepage' => $discount_amount_for_homepage,
+            'discount_amount' => $discount_offer->is_discount_amount_percentage? $discount_offer->discount_amount.'%' : $discount_offer->discount_amount,
+            'is_percentage' => $discount_offer->is_discount_amount_percentage
         ];
     }
 }

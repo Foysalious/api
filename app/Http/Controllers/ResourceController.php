@@ -8,6 +8,8 @@ use App\Repositories\ReviewRepository;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use DB;
+use Sheba\Helpers\Formatters\BDMobileFormatter;
+use Illuminate\Support\Facades\Redis;
 
 class ResourceController extends Controller
 {
@@ -97,6 +99,8 @@ class ResourceController extends Controller
     public function trainingStatusUpdate(Request $request)
     {
         try {
+            $repto_request_data = 'Repto:Request_'. $request->mobile;
+            Redis::set($repto_request_data, json_encode($request->all()));
             $this->validate($request, [
                 'mobile' => 'required',
                 'is_trained' => 'boolean',
@@ -108,10 +112,10 @@ class ResourceController extends Controller
                 return api_response($request, $message, 500, ['message' => $message]);
             }
 
-            $profile = Profile::where('mobile', $request->mobile)->first();
+            $profile = Profile::where('mobile', BDMobileFormatter::format($request->mobile))->first();
             $profile->resource->update(['is_trained' => count($request->certificates) > 0 ? 1 : 0]);
 
-            return api_response($request, 1, 200);
+            return api_response($request, 1, 200, ['message' => 'Resource trained successfully']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);

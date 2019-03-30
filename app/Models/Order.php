@@ -37,7 +37,6 @@ class Order extends Model implements ShebaOrderInterface
         return $this->hasMany(PartnerOrder::class);
     }
 
-
     public function subscription()
     {
         return $this->belongsTo(SubscriptionOrder::class);
@@ -158,5 +157,30 @@ class Order extends Model implements ShebaOrderInterface
         $delivery_address->address = $this->delivery_address;
         $delivery_address->geo_informations = json_encode(["lat" => $location->lat, "lng" => $location->lng]);
         return $delivery_address;
+    }
+
+    public function isLogisticOrder()
+    {
+        return $this->lastJob()->needsLogistic();
+    }
+
+    public function isReadyToPick()
+    {
+        return $this->lastJob()->isReadyToPickable();
+    }
+
+    public function isProcessable()
+    {
+        return $this->lastJob()->isProcessable();
+    }
+
+    public function isServeable()
+    {
+        return $this->lastJob()->isServeable();
+    }
+
+    public function isPayable()
+    {
+        return $this->lastJob()->isPayable();
     }
 }

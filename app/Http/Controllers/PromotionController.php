@@ -11,6 +11,7 @@ use App\Sheba\Checkout\PartnerList;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Checkout\DeliveryCharge;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Voucher\ApplicableVoucherFinder;
 use Sheba\Voucher\CheckParams;
@@ -198,23 +199,24 @@ class PromotionController extends Controller
     }
 
     /**
-     * @param PartnerListRequest $partnerListRequest
+     * @param PartnerListRequest $request
      * @param $partner
      * @return float|int|null
      * @throws \App\Exceptions\HyperLocationNotFoundException
      */
-    private function calculateOrderAmount(PartnerListRequest $partnerListRequest, $partner)
+    private function calculateOrderAmount(PartnerListRequest $request, $partner)
     {
         $partner_list = new PartnerList();
-        $partnerListRequest->setAvailabilityCheck(1);
-        $partner_list->setPartnerListRequest($partnerListRequest);
+        $request->setAvailabilityCheck(1);
+        $partner_list->setPartnerListRequest($request);
         $partner_list->find($partner);
         if ($partner_list->hasPartners) {
             $partner = $partner_list->partners->first();
             $order_amount = 0;
-            $category_pivot = $partner->categories->first()->pivot;
-            $delivery_charge = (double)$category_pivot->delivery_charge;
-            foreach ($partnerListRequest->selectedServices as $selected_service) {
+            $delivery_charge = (new DeliveryCharge())->setCategory($request->selectedCategory)
+                ->setPartner($partner)->setCategoryPartnerPivot($partner->categories->first()->pivot)
+                ->getDeliveryCharge(); //(double)$category_pivot->delivery_charge;
+            foreach ($request->selectedServices as $selected_service) {
                 $service = $partner->services->where('id', $selected_service->id)->first();
                 $schedule_date_time = Carbon::parse(request()->get('date') . ' ' . explode('-', request()->get('time'))[0]);
                 $discount = new Discount();

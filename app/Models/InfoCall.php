@@ -13,6 +13,11 @@ class InfoCall extends Model
         return $this->belongsTo(Department::class, 'department_id');
     }
 
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
     public function crm()
     {
         return $this->belongsTo(User::class, 'crm_id');

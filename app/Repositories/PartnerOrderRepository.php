@@ -33,6 +33,14 @@ class PartnerOrderRepository
     public function getOrderDetailsV2($request)
     {
         $partner_order = $this->getInfo($this->loadAllRelatedRelationsV2($request->partner_order));
+
+        $partner_order['is_logistic'] = $partner_order->order->isLogisticOrder();
+        $partner_order['is_ready_to_pick'] = $partner_order->order->isReadyToPick();
+
+        $partner_order['can_process'] = $partner_order->order->isProcessable();
+        $partner_order['can_serve'] = $partner_order->order->isServeable();
+        $partner_order['can_pay'] = $partner_order->order->isPayable();
+
         $jobs = $partner_order->jobs->each(function ($job) use ($partner_order) {
             $job['partner_order'] = $partner_order;
             $job = $this->partnerJobRepository->getJobInfo($job);

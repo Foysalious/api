@@ -44,6 +44,32 @@ class OrderController extends Controller
         }
     }
 
+    public function getBills($order, Request $request)
+    {
+        try {
+            $request->merge(['mobile' => formatMobile($request->mobile)]);
+            $order = Order::find((int)$order);
+            if ($request->vendor->id !== $order->vendor_id) return response()->json(['data' => null]);
+            $job = $order->partnerOrders[0]->jobs[0]->id;
+            $customer = $order->customer;
+            $job = $this->api->get('/v2/customers/' . $customer->id . '/jobs/' . $job . '/bills?remember_token=' . $customer->remember_token);
+            return response()->json(['data' =>
+                [
+                    'discounted_price' => $job->get('total'),
+                    'original_price' => $job->get('original_price'),
+                    'discount' => $job->get('discount'),
+                    'material_price' => $job->get('material_price'),
+                    'delivery_charge' => $job->get('delivery_charge'),
+                    'paid' => $job->get('paid'),
+                    'due' => $job->get('due'),
+                    'services' => $job->get('services'),
+                ]]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return response()->json(['data' => null]);
+        }
+    }
+
     public function placeOrder(Request $request)
     {
         try {

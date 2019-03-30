@@ -23,9 +23,9 @@ class Partner extends Model implements Rewardable, TopUpAgent
 
     protected $guarded = ['id',];
     protected $dates = ['last_billed_date', 'billing_start_date'];
-    protected $casts = ['wallet' => 'double', 'last_billed_amount' => 'double', 'reward_point' => 'int', 'current_impression' => 'double', 'impression_limit' => 'double'];
+    protected $casts = ['wallet' => 'double', 'last_billed_amount' => 'double', 'reward_point' => 'int', 'current_impression' => 'double', 'impression_limit' => 'double', 'uses_sheba_logistic' => 'int'];
     protected $resourcePivotColumns = ['id', 'designation', 'department', 'resource_type', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
-    protected $categoryPivotColumns = ['id', 'experience', 'preparation_time_minutes', 'response_time_min', 'response_time_max', 'commission', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at', 'is_home_delivery_applied', 'is_partner_premise_applied', 'delivery_charge'];
+    protected $categoryPivotColumns = ['id', 'experience', 'preparation_time_minutes', 'response_time_min', 'response_time_max', 'commission', 'is_verified', 'uses_sheba_logistic', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at', 'is_home_delivery_applied', 'is_partner_premise_applied', 'delivery_charge'];
     protected $servicePivotColumns = ['id', 'description', 'options', 'prices', 'min_prices', 'base_prices', 'base_quantity', 'is_published', 'discount', 'discount_start_date', 'discount_start_date', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
 
     private $resourceTypes;
@@ -201,7 +201,7 @@ class Partner extends Model implements Rewardable, TopUpAgent
 
     public function getFirstOperationResource()
     {
-        if($this->resources) {
+        if ($this->resources) {
             return $this->resources->where('pivot.resource_type', $this->resourceTypes['Operation'])->first();
         } else {
             return $this->admins->first();
@@ -210,7 +210,7 @@ class Partner extends Model implements Rewardable, TopUpAgent
 
     public function getFirstAdminResource()
     {
-        if($this->resources) {
+        if ($this->resources) {
             return $this->resources->where('pivot.resource_type', $this->resourceTypes['Admin'])->first();
         } else {
             return $this->admins->first();
@@ -239,6 +239,11 @@ class Partner extends Model implements Rewardable, TopUpAgent
     public function scopeVerified($query)
     {
         return $query->where('status', 'Verified');
+    }
+
+    public function isVerified()
+    {
+        return $this->status === 'Verified';
     }
 
     public function getContactNumber()
@@ -531,10 +536,24 @@ class Partner extends Model implements Rewardable, TopUpAgent
         return $this->package_id == (int)config('sheba.partner_lite_packages_id');
     }
 
+    public function scopeLite($q)
+    {
+        return $q->where('package_id', (int)config('sheba.partner_lite_packages_id'));
+    }
+
+    public function scopeModerated($query)
+    {
+        return $query->where('moderator_id', '<>', null)->where('moderation_status', 'approved');
+    }
+
     public function servingMasterCategories()
     {
-        $serving_master_category_ids = array_unique($this->categories->pluck('parent_id')->toArray());
-        return implode(", ",Category::whereIn('id',$serving_master_category_ids)->pluck('name')->toArray());
+        return $this->categories->pluck('parent.name')->unique()->implode(', ');
+    }
+
+    public function servingMasterCategoryIds()
+    {
+        return array_unique($this->categories->pluck('parent_id')->toArray());
     }
 
     public function resolveBadge()
@@ -561,4 +580,6 @@ class Partner extends Model implements Rewardable, TopUpAgent
     {
         return json_decode($this->sales_information);
     }
+
+
 }

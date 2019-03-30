@@ -185,7 +185,7 @@ class PartnerJobController extends Controller
             $job = $request->job;
             $statuses = 'start,end';
             foreach (constants('JOB_STATUSES') as $key => $value) {
-                $statuses .= ',$value';
+                $statuses .= ",$value";
             }
             $this->validate($request, [
                 'schedule_date' => 'sometimes|required|date|after:' . Carbon::yesterday(),
@@ -221,11 +221,12 @@ class PartnerJobController extends Controller
                 $new_status = $request->status;
                 if ($new_status === 'start') $new_status = $this->jobStatuses['Process'];
                 elseif ($new_status === 'end') $new_status = $this->jobStatuses['Served'];
-                $due = (double)$job->partnerOrder->calculate(true)->due;
+                /**
+                 * $due = (double)$job->partnerOrder->calculate(true)->due;
                 if ($new_status == "Served" && ($due > 0 || $due < 0)) {
                     $action = $due > 0 ? "collect" : "refund";
                     return api_response($request, null, 403, ['message' => "Please " . $action . " money to end this job."]);
-                }
+                }*/
                 if ($response = (new \Sheba\Repositories\ResourceJobRepository($request->manager_resource))->changeJobStatus($job, $new_status)) {
                     return api_response($request, $response, $response->code, ['message' => $response->msg]);
                 }

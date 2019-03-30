@@ -35,6 +35,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Redis;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
+use Sheba\Checkout\Partners\LitePartnerList;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Manager\JobList;
 use Sheba\ModificationFields;
@@ -80,6 +81,9 @@ class PartnerController extends Controller
     {
         try {
 
+            ini_set('memory_limit', '6096M');
+            ini_set('max_execution_time', 660);
+
             $location = null;
             if ($request->has('location')) {
                 $location = Location::find($request->location)->id;
@@ -90,10 +94,12 @@ class PartnerController extends Controller
 
             $partner_request = $partner;
             if (is_numeric($partner_request)) {
-                $partner = Partner::where([['status', 'Verified'], ['id', $partner_request]])->first();
+                $partner = Partner::find($partner_request);
             } else {
-                $partner = Partner::where([['status', 'Verified'], ['sub_domain', $partner_request]])->first();
+                $partner = Partner::where([['sub_domain', $partner_request]])->first();
             }
+            if(!$partner->isLite() && !$partner->isVerified())
+                $partner = null;
 
             if ($partner == null) return api_response($request, null, 404);
 
@@ -569,8 +575,16 @@ class PartnerController extends Controller
                 } else {
                     $partner_list->sortByShebaSelectedCriteria();
                 }
-                $partners = $partner_list->removeKeysFromPartner();
-                return api_response($request, $partners, 200, ['partners' => $partners->values()->all()]);
+                $partners = $partner_list->removeKeysFromPartner()->values()->all();
+                if (count($partners) < 50) {
+                    $lite_list = new LitePartnerList();
+                    $lite_list->setPartnerListRequest($partnerListRequest)->setLimit(50 - count($partners))->find($partner);
+                    $lite_list->addInfo();
+                    $lite_partners = $lite_list->removeKeysFromPartner()->values()->all();
+                } else {
+                    $lite_partners = [];
+                }
+                return api_response($request, $partners, 200, ['partners' => $partners, 'lite_partners' => $lite_partners]);
             }
             return api_response($request, null, 404, ['message' => 'No partner found.']);
         } catch (HyperLocationNotFoundException $e) {
