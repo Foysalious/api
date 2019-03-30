@@ -144,11 +144,13 @@ class PartnerLocationController extends Controller
             $nearByPartners = $partnerLocationRepository->findNearByPartners((double)$request->lat, (double)$request->lng)
                 ->pluckMultiple(['distance', 'location'], 'partner_id', true);
 
-            $partners = Partner::where('moderation_status', 'approved')->where(function ($query) {
+            $partners = Partner::where(function ($query) {
                 $query->where(function ($query) {
                     $query->verified();
                 })->orWhere(function ($query) {
-                    $query->lite();
+                    $query->where(function ($lite_sp_filtering_query) {
+                        $lite_sp_filtering_query->lite();
+                    })->where('moderation_status', 'approved');
                 });
             })->with(['subscription', 'categories' => function ($category_query) {
                 $category_query->with(['parent' => function ($master_category_query) {
