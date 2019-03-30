@@ -119,6 +119,11 @@ class PartnerLocationController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @param PartnerLocationRepository $partnerLocationRepository
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function getNearbyPartners(Request $request, PartnerLocationRepository $partnerLocationRepository)
     {
         try {
@@ -133,11 +138,13 @@ class PartnerLocationController extends Controller
             $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
             if (!is_null($hyperLocation)) $location = $hyperLocation->location;
 
-            if (!$location) return api_response($request, 'Invalid location', 400, ['message' => 'Invalid location']);
+            if (!$location)
+                return api_response($request, 'Invalid location', 400, ['message' => 'Invalid location']);
 
-            $nearByPartners = $partnerLocationRepository->findNearByPartners((double)$request->lat, (double)$request->lng)->pluckMultiple(['distance', 'location'], 'partner_id', true);
+            $nearByPartners = $partnerLocationRepository->findNearByPartners((double)$request->lat, (double)$request->lng)
+                ->pluckMultiple(['distance', 'location'], 'partner_id', true);
 
-            $partners = Partner::where(function ($query) {
+            $partners = Partner::where('moderation_status', 'approved')->where(function ($query) {
                 $query->where(function ($query) {
                     $query->verified();
                 })->orWhere(function ($query) {
@@ -154,22 +161,20 @@ class PartnerLocationController extends Controller
 
             $partners = $partners->whereIn('id', $nearByPartners->keys())->get();
 
-            $reviews = Review::select('partner_id', DB::raw('avg(rating) as avg_rating'))->groupBy('partner_id')->whereIn('partner_id', $nearByPartners->keys())->get()->pluck('avg_rating', 'partner_id');
+            $reviews = Review::select('partner_id', DB::raw('avg(rating) as avg_rating'))
+                ->groupBy('partner_id')
+                ->whereIn('partner_id', $nearByPartners->keys())
+                ->get()
+                ->pluck('avg_rating', 'partner_id');
 
             $partnersWithLiteSps = $partners;
-
             $partners = (new PartnerSort($partners))->get()->take(50);
-
             $partnerDetails = collect();
-
             $this->formatCollection($partners, $nearByPartners, $request, $reviews, $partnerDetails);
-
             $partnerDetails = $partnerDetails->sortBy('distance')->values();
-
             $liteSps = $partnersWithLiteSps->filter(function ($partner) {
                 return $partner->isLite();
             })->take(20);
-
             $this->formatCollection($liteSps, $nearByPartners, $request, $reviews, $partnerDetails);
 
             return api_response($request, null, 200, ['partners' => $partnerDetails]);
@@ -180,6 +185,13 @@ class PartnerLocationController extends Controller
 
     }
 
+    /**
+     * @param $partners
+     * @param $nearByPartners
+     * @param $request
+     * @param $reviews
+     * @param $partnerDetails
+     */
     private function formatCollection($partners, $nearByPartners, $request, $reviews, &$partnerDetails)
     {
         foreach ($partners as $partner) {
