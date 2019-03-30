@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\GiftCard;
 use App\Models\GiftCardPurchase;
@@ -27,16 +25,16 @@ class GiftCardController extends Controller
             }
             $instructions  = [
                 [
-                    'question' => 'Buy any voucher',
-                    'answer' => 'Buy varoius amount of vouchers according to your need.'
+                    'question' => 'Purchase any voucher',
+                    'answer' => 'Purchase any voucher from available voucher list. You will be asked to pay the required amount from our available payment method. The amount of voucher will be added to Sheba bonus credit.'
                 ],
                 [
-                    'question' => 'Buy any voucher',
-                    'answer' => 'Buy varoius amount of vouchers according to your need.'
+                    'question' => 'Voucher Validity',
+                    'answer' => 'Each voucher has its own validity. You can check the validity with each voucher. The voucher amount with lower validity will be used first.'
                 ],
                 [
-                    'question' => 'Buy any voucher',
-                    'answer' => 'Buy varoius amount of vouchers according to your need.'
+                    'question' => 'Pay with Voucher',
+                    'answer' => 'You can use Sheba bonus credit in mobile recharge and service purchase. In service purchase you can find Sheba Bonus Credit section from where you can select Sheba bonus credit for full or partial payment.'
                 ],
             ];
             $data = ['gift_cards' => $gift_cards, 'instructions' => $instructions];

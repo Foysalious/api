@@ -142,49 +142,40 @@ class WalletController extends Controller
     public function getFaqs(Request $request)
     {
         try {
-            $faqs = array(
-                array(
-                    'question' => '1. How can I purchase Sheba Credit?',
-                    'answer' => 'You can purchase your Sheba Credit via your credit/debit card, mobile banking services like bKash/rocket. You will be asked to give proper information to confirm the payment. After completing the purchase, you will get a confirmation screen in the app.'
-                ),
-                array(
-                    'question' => '2. Where I can use my Sheba Credit?',
-                    'answer' => 'Currently you can use your Sheba Credit while placing order to avail any sheba services. Soon you can use your Sheba Credit in many places.'
-                ),
-                array(
-                    'question' => '3. Where I can check my current credit balance?',
-                    'answer' => 'You can check your credit balance by selecting credit from bottom menu and your current credit balance will be displayed there. In web you can check Sheba Credit balance from your profile.'
-                ),
-                array(
-                    'question' => '4. What is the value of each credit?',
-                    'answer' => 'The value of each Sheba Credit is 1 BDT. '
-                ),
-                array(
-                    'question' => '5. What is the minimum and maximum credit I can purchase?',
-                    'answer' => 'The minimum Sheba Credit is 10 that you can purchase and the maximum Sheba Credit is 5000.'
-                ),
-                array(
-                    'question' => '6. What benefits I will get using Sheba Credit?',
-                    'answer' => 'You can go with hassle free payment transaction while purchasing any sheba service & you will get instant bonus Sheba Credit if you purchase any service using Sheba Credit. Soon you will get more benefits from Sheba Credit.'
-                ),
-                array(
-                    'question' => '7. Where I can check my credit transactions?',
-                    'answer' => 'You can check all of your credit transactions history with details in history page.'
-                ),
-                array(
-                    'question' => '8. What if I completed purchase but my credit balance doesn’t update?',
-                    'answer' => 'For this type of issue, please send us a mail to info@sheba.xyz. After a few verifications, sheba.xyz will adjust the Sheba Credit balance.'
-                ),
-                array(
-                    'question' => '9. Is there any hidden charge?',
-                    'answer' => 'Sheba Credit is completely free. There is no hidden charge. You don’t need to pay any additional charges to purchase or purchase any services.'
-                )
-            );
+            $faqs = [
+                [
+                    'question' => '1. What is Bonus Credit?',
+                    'answer' => 'Bonus credit is a promotional credit which is given by Sheba.xyz to make service purchase at discounted price.'
+                ],
+                [
+                    'question' => '2. How to get bonus credit?',
+                    'answer' => 'You can get bonus credit by purchasing services for which bonus credit offer is running. '
+                ],
+                [
+                    'question' => '3. When does bonus credit expire?',
+                    'answer' => 'From bonus credit list you can check the validity of each bonus credit.'
+                ],
+                [
+                    'question' => '4. Where is bonus credit applicable?',
+                    'answer' => 'Bonus credit can be applied in any sort of service booking. You can pay the full or partial amount of the total bill by bonus credit. '
+                ],
+                [
+                    'question' => '5. What is Voucher?',
+                    'answer' => 'Voucher is a promotional offer to buy bonus credit which can be used in any sort of service purchase. Each voucher has its own validity.'
+                ],
+                [
+                    'question' => '6. How can I purchase Voucher?',
+                    'answer' => 'Sheba voucher can be purchased through any payment method available at payment screen.'
+                ],
+                [
+                    'question' => '7. Is there any hidden charge in purchasing Sheba Voucher?',
+                    'answer' => 'There is no hidden charge applicable.'
+                ]
+            ];
             return api_response($request, $faqs, 200, ['faqs' => $faqs]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
-
 }
