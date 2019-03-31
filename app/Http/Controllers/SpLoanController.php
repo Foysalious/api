@@ -422,7 +422,6 @@ class SpLoanController extends Controller
             $nominee_profile = Profile::find($profile->nominee_id);
             $grantor_profile = Profile::find($profile->grantor_id);
 
-
             $info = array(
                 'name' => !empty($nominee_profile) ? $nominee_profile->name : null,
                 'mobile' => !empty($nominee_profile) ? $nominee_profile->mobile : null,
@@ -455,7 +454,6 @@ class SpLoanController extends Controller
             $manager_resource_profile = $manager_resource->profile;
 
             $nominee_profile = Profile::where('mobile', formatMobile($request->nominee_mobile))->first();
-
             if ($nominee_profile) {
                 $data = [
                     'nominee_id' => $nominee_profile->id,
@@ -502,7 +500,7 @@ class SpLoanController extends Controller
         $profile = new Profile();
         $profile->remember_token = str_random(255);
         $profile->name = $request->nominee_name;
-        $profile->mobile = formatMobile($request->nominee_mobile);
+        $profile->mobile = !empty($request->nominee_mobile)? formatMobile($request->nominee_mobile) : null;
         $this->withCreateModificationField($profile);
         $profile->save();
         return $profile;
@@ -513,7 +511,7 @@ class SpLoanController extends Controller
         $profile = new Profile();
         $profile->remember_token = str_random(255);
         $profile->name = $request->grantor_name;
-        $profile->mobile = formatMobile($request->grantor_mobile);
+        $profile->mobile = !empty($request->grantor_mobile) ? formatMobile($request->grantor_mobile) : null;
         $this->withCreateModificationField($profile);
         $profile->save();
         return $profile;
