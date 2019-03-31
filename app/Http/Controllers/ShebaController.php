@@ -294,13 +294,6 @@ class ShebaController extends Controller
     {
         return [
             array(
-                'name' => 'bKash',
-                'is_published' => 1,
-                'description' => '',
-                'asset' => 'bkash',
-                'method_name' => 'bkash'
-            ),
-            array(
                 'name' => 'City Bank',
                 'is_published' => $version_code ? ($version_code > 30112 ? 1 : 0) : 1,
                 'description' => '',
