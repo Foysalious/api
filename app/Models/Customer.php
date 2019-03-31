@@ -2,6 +2,10 @@
 
 use App\Sheba\Payment\Rechargable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Sheba\MovieTicket\MovieAgent;
+use Sheba\MovieTicket\MovieTicketCommission;
+use Sheba\MovieTicket\MovieTicketTrait;
+use Sheba\MovieTicket\MovieTicketTransaction;
 use Sheba\Payment\Wallet;
 use Sheba\Reward\Rewardable;
 use Sheba\TopUp\TopUpAgent;
@@ -9,9 +13,10 @@ use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
 use Sheba\Voucher\VoucherCodeGenerator;
 
-class Customer extends Authenticatable implements Rechargable, Rewardable, TopUpAgent
+class Customer extends Authenticatable implements Rechargable, Rewardable, TopUpAgent, MovieAgent
 {
     use TopUpTrait;
+    use MovieTicketTrait;
     use Wallet;
 
     protected $fillable = ['name', 'mobile', 'email', 'password', 'fb_id', 'mobile_verified', 'email_verified', 'address', 'gender', 'dob', 'pro_pic', 'wallet', 'created_by', 'created_by_name', 'updated_by', 'updated_by_name', 'remember_token', 'reference_code', 'referrer_id', 'profile_id'];
@@ -21,6 +26,11 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
     public function mobiles()
     {
         return $this->hasMany(CustomerMobile::class);
+    }
+
+    public function infoCalls()
+    {
+        return $this->hasMany(InfoCall::class);
     }
 
     public function delivery_addresses()
@@ -181,5 +191,16 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
     public function getAgreementId()
     {
         return $this->profile->bkash_agreement_id;
+    }
+
+    public function getMovieTicketCommission()
+    {
+        return new \Sheba\MovieTicket\Commission\Customer();
+    }
+
+    public function movieTicketTransaction(MovieTicketTransaction $transaction)
+    {
+        $this->debitWallet($transaction->getAmount());
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
     }
 }

@@ -58,7 +58,8 @@ class ResourceCreator
     public function create()
     {
         $this->saveImages();
-        $this->data['mobile'] = formatMobile($this->data['mobile']);
+        $this->data['mobile'] = formatMobileAux($this->data['mobile']);
+        $this->data['alternate_contact'] =  $this->data['alternate_contact'] ? formatMobileAux($this->data['alternate_contact']) : null;
         $this->format();
         $this->attachProfile();
         $this->data['remember_token'] = str_random(255);
@@ -108,7 +109,6 @@ class ResourceCreator
         $this->data['nid_no'] = isset($this->data['nid_no']) ? $this->data['nid_no'] : null;
         $this->data['nid_image'] = isset($this->data['nid_image']) ? $this->data['nid_image'] : null;
         $this->data['is_trained'] = isset($this->data['is_trained']) ? $this->data['is_trained'] : 0;
-        $this->data['alternate_contact'] = !is_null($this->data['alternate_contact']) ? formatMobile(trim($this->data['alternate_contact'])) : null;
     }
 
     private function hasFile($filename)

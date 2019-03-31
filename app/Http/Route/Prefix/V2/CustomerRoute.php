@@ -6,6 +6,7 @@ class CustomerRoute
     {
         $api->group(['prefix' => 'customers'], function ($api) {
             $api->group(['prefix' => '{customer}', 'middleware' => ['customer.auth']], function ($api) {
+                $api->get('partners-nearby','PartnerLocationController@getNearbyPartners');
                 $api->get('checkout-info', 'CustomerController@getDeliveryInfo');
                 $api->post('purchase-gift-card', 'GiftCardController@purchaseGiftCard');
                 $api->group(['prefix' => 'settings'], function ($api) {
@@ -13,6 +14,14 @@ class CustomerRoute
                     $api->get('review', 'Settings\SettingsController@getCustomerReviewSettings');
                     $api->get('payment', 'Settings\SettingsController@addPayment');
                 });
+
+
+                $api->group(['prefix' => 'info-call'], function ($api) {
+                    $api->get('/', 'InfoCallController@index');
+                    $api->get('/details/{id}', 'InfoCallController@getDetails');
+                    $api->post('/', 'InfoCallController@store');
+                });
+
 
                 $api->put('notifications', 'CustomerNotificationController@update');
                 $api->post('top-up', 'TopUpController@topUp');
@@ -56,6 +65,7 @@ class CustomerRoute
                     $api->get('{subscription}/payment', 'Subscription\CustomerSubscriptionController@clearPayment');
                     $api->get('order-lists', 'Subscription\CustomerSubscriptionController@index');
                     $api->get('{subscription}/details', 'Subscription\CustomerSubscriptionController@show');
+                    $api->get('{subscription}/check-renewal-status', 'Subscription\CustomerSubscriptionController@checkRenewalStatus');
                 });
                 $api->group(['prefix' => 'movie-ticket'], function ($api) {
                     $api->get('movie-list', 'MovieTicketController@getAvailableTickets');

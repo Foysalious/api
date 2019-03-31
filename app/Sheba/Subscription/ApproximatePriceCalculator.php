@@ -60,7 +60,6 @@ class ApproximatePriceCalculator extends Discount
         $service_subscription = $this->service->subscription;
         /** @var  $discount ServiceSubscriptionDiscount */
         $discount = $service_subscription->discounts()->where('subscription_type', $this->getPreferredSubscriptionType())->valid()->first();
-       // dd($discount);
         if ($discount) {
             $this->hasDiscount = 1;
             $this->cap = (double)$discount->cap;

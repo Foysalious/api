@@ -23,7 +23,7 @@ class AdvancedOrderComplete extends PaymentComplete
             DB::transaction(function () {
                 $payable = $this->payment->payable;
                 $partner_order = PartnerOrder::find((int)$payable->type_id);
-                $partner_order->sheba_collection = $payable->amount;
+                $partner_order->sheba_collection = $this->payment->paymentDetails->sum('amount');
                 $partner_order->update();
                 $user = $payable->user;
                 $this->setModifier($user);

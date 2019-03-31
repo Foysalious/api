@@ -27,4 +27,9 @@ class CategoryPartner extends Model
     {
         return $this->hasMany(DeliveryChargeUpdateRequest::class);
     }
+
+    public function needsShebaLogistic()
+    {
+        return $this->is_home_delivery_applied && $this->uses_sheba_logistic;
+    }
 }
