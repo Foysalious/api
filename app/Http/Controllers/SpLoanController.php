@@ -290,8 +290,8 @@ class SpLoanController extends Controller
                 'business_type' => $partner->business_type,
                 'location' => $partner->address,
                 'establishment_year' => $basic_informations->establishment_year,
-                'full_time_employee' => $partner->full_time_employee,
-                'part_time_employee' => $partner->part_time_employee,
+                'full_time_employee' => !empty($partner->full_time_employee) ? $partner->full_time_employee : null,
+                'part_time_employee' => !empty($partner->part_time_employee) ? $partner->part_time_employee : null,
                 'business_additional_information' => [
                     'product_price' => isset($business_additional_information->product_price) ? $business_additional_information->product_price : null,
                     'employee_salary' => isset($business_additional_information->employee_salary) ? $business_additional_information->employee_salary : null,
