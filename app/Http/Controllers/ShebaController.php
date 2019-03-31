@@ -240,7 +240,15 @@ class ShebaController extends Controller
                 'job_id' => 'sometimes|required',
             ]);
             $payment = Payment::where('transaction_id', $transactionID)->whereIn('status', ['failed', 'validated', 'completed'])->first();
-            if (!$payment) return api_response($request, null, 404, ['message' => 'Payment Not found.']);
+            if (!$payment) {
+                $payment = Payment::where('transaction_id', $transactionID)->first();
+                if ($payment->transaction_details && isset(json_decode($payment->transaction_details)->errorMessage)) {
+                    $message = 'Your payment has been failed due to ' . json_decode($payment->transaction_details)->errorMessage;
+                } else {
+                    $message = 'Payment Failed.';
+                }
+                return api_response($request, null, 404, ['message' => $message]);
+            }
             $info = array('amount' => $payment->payable->amount);
             if ($payment->status == 'validated' || $payment->status == 'failed') {
                 return api_response($request, 1, 200, ['info' => $info,

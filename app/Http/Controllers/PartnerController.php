@@ -108,7 +108,7 @@ class PartnerController extends Controller
             $geo_informations = $partner->geo_informations;
 
             $partner->load(['workingHours', 'categories' => function ($q) {
-                $q->select('categories.id', 'name', 'thumb', 'icon', 'categories.slug')->where('category_partner.is_verified', 1);
+                $q->select('categories.id', 'name', 'thumb', 'icon', 'categories.slug')->where('category_partner.is_verified', 1)->published();
             }, 'reviews' => function ($q) {
                 $q->with(['rates' => function ($q) {
                     $q->select('review_id', 'review_type', 'rate_answer_id')->where('rate_question_id', self::COMPLIMENT_QUESTION_ID)->with(['answer' => function ($q) {
