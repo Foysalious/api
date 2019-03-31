@@ -163,6 +163,11 @@ class PartnerLocationController extends Controller
 
             $partners = $partners->whereIn('id', $nearByPartners->keys())->get();
 
+            if ($request->has('category_id'))
+                $partners =  $partners->filter(function($partner) use ($request) {
+                    return in_array($request->category_id, $partner->servingMasterCategoryIds());
+                });
+
             $reviews = Review::select('partner_id', DB::raw('avg(rating) as avg_rating'))
                 ->groupBy('partner_id')
                 ->whereIn('partner_id', $nearByPartners->keys())
@@ -197,9 +202,6 @@ class PartnerLocationController extends Controller
     private function formatCollection($partners, $nearByPartners, $request, $reviews, &$partnerDetails)
     {
         foreach ($partners as $partner) {
-            if ($request->has('category_id'))
-                if (!in_array($request->category_id, $partner->servingMasterCategoryIds()))
-                    continue;
             $serving_master_categories = $partner->servingMasterCategories();
             $partner->lat = $nearByPartners[$partner->id]->location->coordinates[1];
             $partner->lng = $nearByPartners[$partner->id]->location->coordinates[0];
