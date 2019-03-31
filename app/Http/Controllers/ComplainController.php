@@ -321,7 +321,7 @@ class ComplainController extends Controller
             }
 
             $complains = $this->complainRepo->partnerComplainList($request->partner->id, $accessor, ($request->has('not_resolved') && $request->not_resolved));
-            $formated_complains = collect();
+            $formatted_complains = collect();
             foreach ($complains as $complain) {
                 $order_code = 'N/A';
                 $customer_name = 'N/A';
@@ -343,7 +343,7 @@ class ComplainController extends Controller
                     $resource_name = $complain->job->resource ? $complain->job->resource->profile->name : 'N/A';
                     $partner_order_id = $complain->job->partnerOrder->id;
                 }
-                $formated_complains->push([
+                $formatted_complains->push([
                     'id' => $complain->id,
                     'complain_code' => $complain->code(),
                     'complain' => $complain->complain,
@@ -360,7 +360,7 @@ class ComplainController extends Controller
                     'created_at' => $complain->created_at->format('jS F, Y')
                 ]);
             }
-            return api_response($request, $formated_complains, 200, ['complains' => $formated_complains]);
+            return api_response($request, $formatted_complains, 200, ['complains' => $formatted_complains]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
