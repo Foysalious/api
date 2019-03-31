@@ -3,6 +3,8 @@
 use App\Models\CustomerFavorite;
 use App\Models\Job;
 use App\Models\JobCancelReason;
+use App\Models\Payable;
+use App\Models\Payment;
 use App\Sheba\UserRequestInformation;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -456,6 +458,9 @@ class JobController extends Controller
             $this->validate($request, [
                 'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl,partner_wallet',
             ]);
+            if ($request->payment_method == 'bkash' && $this->hasPreviousBkashTransaction($request->job->partner_order_id)) {
+                return api_response($request, null, 500, ['message' => "Can't send multiple requests within 15 minutes."]);
+            }
             $order_adapter = new OrderAdapter($request->job->partnerOrder);
             $payment = (new ShebaPayment($request->has('payment_method') ? $request->payment_method : 'online'))->init($order_adapter->getPayable());
             return api_response($request, $payment, 200, ['link' => $payment->redirect_url, 'payment' => $payment->getFormattedPayment()]);
@@ -469,6 +474,15 @@ class JobController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function hasPreviousBkashTransaction($partner_order_id)
+    {
+        $time = Carbon::now()->subMinutes(15);
+        $payment = Payment::whereHas('payable', function ($q) use ($partner_order_id) {
+            $q->where([['type', 'partner_order'], ['type_id', $partner_order_id]]);
+        })->where([['transaction_id', 'LIKE', '%bkash%'], ['created_at', '>=', $time]])->first();
+        return $payment ? 1 : 0;
     }
 
     public function getOrderLogs($customer, Request $request)
