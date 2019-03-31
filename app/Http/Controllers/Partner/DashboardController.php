@@ -54,7 +54,7 @@ class DashboardController extends Controller
                     'not_responded' => $partner->notRespondedJobs($successful_jobs)->count(),
                     'schedule_due' => $partner->scheduleDueJobs($successful_jobs)->count(),
                     'serve_due' => $partner->serveDueJobs($successful_jobs)->count(),
-                    'complain' => $partner->complains()->statusNotResolved()->count()
+                    'complain' => $partner->complains()->notClosed()->count()
                 ],
                 'sales' => [
                     'today' => [
