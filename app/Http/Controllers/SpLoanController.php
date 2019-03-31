@@ -550,13 +550,12 @@ class SpLoanController extends Controller
                 'business_document' => [
                     'tin_certificate' => $profile->tin_certificate,
                     'trade_license_attachment' => $basic_informations->trade_license_attachment,
-                    'statement' => $bank_informations->statement
+                    'statement' => !empty($bank_informations) ? $bank_informations->statement : null
                 ],
 
             );
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
