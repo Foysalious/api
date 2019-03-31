@@ -183,4 +183,9 @@ class Order extends Model implements ShebaOrderInterface
     {
         return $this->lastJob()->isPayable();
     }
+
+    public function hasCustomerReturned()
+    {
+        return !$this->customer->getFirstOrder()->created_at->isSameDay($this->created_at);
+    }
 }
