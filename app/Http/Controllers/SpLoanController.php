@@ -149,11 +149,11 @@ class SpLoanController extends Controller
                 ]
             ],
             'finance_info' => [
-                'account_holder_name' => $bank_informations->acc_name,
-                'account_no' => $bank_informations->acc_no,
-                'bank_name' => $bank_informations->bank_name,
-                'brunch' => $bank_informations->branch_name,
-                'acc_type' => $bank_informations->acc_type,
+                'account_holder_name' => !empty($bank_informations) ?  $bank_informations->acc_name: null,
+                'account_no' => !empty($bank_informations) ?  $bank_informations->acc_no: null,
+                'bank_name' => !empty($bank_informations) ?  $bank_informations->bank_name: null,
+                'brunch' => !empty($bank_informations) ?  $bank_informations->branch_name: null,
+                'acc_type' => !empty($bank_informations) ?  $bank_informations->acc_type: null,
                 'bkash' => [
                     'bkash_no' => $partner->bkash_no,
                     'bkash_account_type' => $partner->bkash_account_type,
@@ -188,7 +188,7 @@ class SpLoanController extends Controller
                 'business_document' => [
                     'tin_certificate' => $profile->tin_certificate,
                     'trade_license_attachment' => $basic_informations->trade_license_attachment,
-                    'statement' => $bank_informations->statement
+                    'statement' => !empty($bank_informations) ? $bank_informations->statement : null
                 ],
 
             ]
@@ -359,14 +359,13 @@ class SpLoanController extends Controller
             $profile = $manager_resource->profile;
             $basic_informations = $partner->basicInformations;
             $bank_informations = $partner->bankInformations;
-            #dd($bank_informations);
 
             $info = [
-                'account_holder_name' => $bank_informations->acc_name,
-                'account_no' => $bank_informations->acc_no,
-                'bank_name' => $bank_informations->bank_name,
-                'brunch' => $bank_informations->branch_name,
-                'acc_type' => $bank_informations->acc_type,
+                'account_holder_name' => !empty($bank_informations) ?  $bank_informations->acc_name: null,
+                'account_no' => !empty($bank_informations) ?  $bank_informations->acc_no: null,
+                'bank_name' => !empty($bank_informations) ?  $bank_informations->bank_name: null,
+                'brunch' => !empty($bank_informations) ?  $bank_informations->branch_name: null,
+                'acc_type' => !empty($bank_informations) ?  $bank_informations->acc_type: null,
                 'acc_types' => constants('BANK_ACCOUNT_TYPE'),
                 'bkash' => [
                     'bkash_no' => $partner->bkash_no,
@@ -622,9 +621,10 @@ class SpLoanController extends Controller
             ]);
             $partner = $request->partner;
             $bank_informations = $partner->bankInformations;
-            if (!$bank_informations) return api_response($request, 1,400, ['message' => 'You Dont have Bank Informations']);
+            if (!$bank_informations) $bank_informations = $this->createBankInformation($partner);
+
             $file_name = $request->picture;
-            #   dd($bank_informations);
+
             if ($bank_informations->statement != getBankStatementDefaultImage()) {
                 $old_statement = substr($bank_informations->statement, strlen(config('s3.url')));
                 $this->deleteImageFromCDN($old_statement);
@@ -646,6 +646,17 @@ class SpLoanController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function createBankInformation($partner)
+    {
+        $this->setModifier($partner);
+        $bank_information = new PartnerBankInformation();
+        $bank_information->partner_id = $partner->id;
+        $bank_information->is_verified = $partner->status == 'Verified' ? 1 : 0;
+        $this->withCreateModificationField($bank_information);
+        $bank_information->save();
+        return $bank_information;
     }
 
     public function updateTradeLicense($partner, Request $request)
@@ -673,8 +684,7 @@ class SpLoanController extends Controller
             } else {
                 return api_response($request, null, 500);
             }
-        } catch
-        (ValidationException $e) {
+        } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
