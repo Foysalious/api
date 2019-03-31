@@ -53,6 +53,7 @@ class BkashController extends Controller
                 'order_type' => $payment->payable->type,
                 'token' => $payment->payable->user->remember_token,
                 'id' => $payment->payable->user->id,
+                'redirect_url' => $payment->payable->success_url . '?invoice_id=' . $payment->transaction_id
             ]);
             return $payment ? api_response($request, $payment, 200, ['data' => $data]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
