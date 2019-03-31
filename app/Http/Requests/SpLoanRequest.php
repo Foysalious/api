@@ -72,12 +72,12 @@ class SpLoanRequest extends ApiRequest
 
         if (HttpRequest::segment(5) == "nominee-grantor-info") {
             $rules = [
-                'nominee_name' => 'string',
-                'nominee_mobile' => 'string|mobile:bd',
-                'nominee_relation' => 'string',
-                'grantor_name' => 'string',
-                'grantor_mobile' => 'string|mobile:bd',
-                'grantor_relation' => 'string'
+                'nominee_name' => 'required|string',
+                'nominee_mobile' => 'required|string|mobile:bd',
+                'nominee_relation' => 'required|string',
+                'grantor_name' => 'required|string',
+                'grantor_mobile' => 'required|string|mobile:bd',
+                'grantor_relation' => 'required|string'
             ];
 
         }

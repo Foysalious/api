@@ -450,6 +450,7 @@ class SpLoanController extends Controller
     public function updateNomineeGrantorInformation($partner, SpLoanRequest $request)
     {
         try {
+            $partner = $request->partner;
             $manager_resource = $request->manager_resource;
             $manager_resource_profile = $manager_resource->profile;
 
@@ -461,7 +462,7 @@ class SpLoanController extends Controller
                 ];
                 $manager_resource_profile->update($this->withBothModificationFields($data));
             } else {
-                $nominee_profile = $this->createNomineeProfile($request);
+                $nominee_profile = $this->createNomineeProfile($partner, $request);
 
                 $data = [
                     'nominee_id' => $nominee_profile->id,
@@ -480,7 +481,7 @@ class SpLoanController extends Controller
 
                 $manager_resource_profile->update($this->withBothModificationFields($data));
             } else {
-                $grantor_profile = $this->createGrantorProfile($request);
+                $grantor_profile = $this->createGrantorProfile($partner, $request);
                 $data = [
                     'grantor_id' => $grantor_profile->id,
                     'grantor_relation' => $request->grantor_relation
@@ -495,8 +496,9 @@ class SpLoanController extends Controller
         }
     }
 
-    private function createNomineeProfile(Request $request)
+    private function createNomineeProfile($partner, Request $request)
     {
+        $this->setModifier($partner);
         $profile = new Profile();
         $profile->remember_token = str_random(255);
         $profile->name = $request->nominee_name;
@@ -506,8 +508,9 @@ class SpLoanController extends Controller
         return $profile;
     }
 
-    private function createGrantorProfile(Request $request)
+    private function createGrantorProfile($partner, Request $request)
     {
+        $this->setModifier($partner);
         $profile = new Profile();
         $profile->remember_token = str_random(255);
         $profile->name = $request->grantor_name;
