@@ -233,16 +233,16 @@ class SpLoanController extends Controller
     {
         try {
             $this->validate($request, [
-                'gender' => 'required|string|in:Male,Female,Other,পুরুষ,মহিলা,অন্যান্য',
-                'dob' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
+                'gender' => 'required|string|in:Male,Female,Other',
+                'dob' => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
                 'address' => 'required|string',
                 'permanent_address' => 'required|string',
-                'father_name' => 'required_without:spouse_name',
-                'spouse_name' => 'required_without:father_name',
-                'occupation' => 'required|string',
-                'monthly_living_cost' => 'required|numeric',
-                'total_asset_amount' => 'required|numeric',
-                'monthly_loan_installment_amount' => 'required|numeric'
+                #'father_name' => 'required_without:spouse_name',
+                #'spouse_name' => 'required_without:father_name',
+                'occupation' => 'string',
+                'monthly_living_cost' => 'numeric',
+                'total_asset_amount' => 'numeric',
+                'monthly_loan_installment_amount' => 'numeric'
             ]);
             $manager_resource = $request->manager_resource;
             $profile = $manager_resource->profile;
@@ -317,13 +317,13 @@ class SpLoanController extends Controller
     {
         try {
             $this->validate($request, [
-                'business_type' => 'required|string',
+                'business_type' => 'string',
                 'location' => 'required|string',
-                'establishment_year' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
-                'full_time_employee' => 'required|numeric',
-                'part_time_employee' => 'required|numeric',
-                'sales_information' => 'required',
-                'business_additional_information' => 'required'
+                'establishment_year' => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
+                'full_time_employee' => 'numeric',
+                'part_time_employee' => 'numeric',
+                #'sales_information' => 'required',
+                #'business_additional_information' => 'required'
             ]);
             $partner = $request->partner;
             $basic_informations = $partner->basicInformations;

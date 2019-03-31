@@ -30,29 +30,29 @@ class SpLoanRequest extends ApiRequest
     {
         if (HttpRequest::segment(5) == "personal-info") {
             $rules = [
-                'gender' => 'required|string|in:Male,Female,Other,পুরুষ,মহিলা,অন্যান্য',
-                'dob' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
+                'gender' => 'required|string|in:Male,Female,Other',
+                'dob' => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
                 'address' => 'required|string',
                 'permanent_address' => 'required|string',
-                'father_name' => 'required_without:spouse_name',
-                'spouse_name' => 'required_without:father_name',
-                'occupation' => 'required|string',
-                'monthly_living_cost' => 'required|numeric',
-                'total_asset_amount' => 'required|numeric',
-                'monthly_loan_installment_amount' => 'required|numeric'
+                #'father_name' => 'required_without:spouse_name',
+                #'spouse_name' => 'required_without:father_name',
+                'occupation' => 'string',
+                'monthly_living_cost' => 'numeric',
+                'total_asset_amount' => 'numeric',
+                'monthly_loan_installment_amount' => 'numeric'
             ];
 
         }
 
         if (HttpRequest::segment(5) == "business-info") {
             $rules = [
-                'business_type' => 'required|string',
+                'business_type' => 'string',
                 'location' => 'required|string',
-                'establishment_year' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
-                'full_time_employee' => 'required|numeric',
-                'part_time_employee' => 'required|numeric',
-                'sales_information' => 'required',
-                'business_additional_information' => 'required'
+                'establishment_year' => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
+                'full_time_employee' => 'numeric',
+                'part_time_employee' => 'numeric',
+                #'sales_information' => 'required',
+                #'business_additional_information' => 'required'
             ];
 
         }
@@ -63,21 +63,21 @@ class SpLoanRequest extends ApiRequest
                 'acc_no' => 'required|string',
                 'bank_name' => 'required|string',
                 'branch_name' => 'required|string',
-                'acc_type' => 'required|string|in:savings,current,সেভিংস,কারেন্ট',
-                'bkash_no' => 'required|string|mobile:bd',
-                'bkash_account_type' => 'required|string|in:personal,agent,merchant,পার্সোনাল,এজেন্ট,মার্চেন্ট'
+                'acc_type' => 'string|in:savings,current',
+                'bkash_no' => 'string|mobile:bd',
+                'bkash_account_type' => 'string|in:personal,agent,merchant'
             ];
 
         }
 
         if (HttpRequest::segment(5) == "nominee-grantor-info") {
             $rules = [
-                'nominee_name' => 'required|string',
-                'nominee_mobile' => 'required|string|mobile:bd',
-                'nominee_relation' => 'required|string',
-                'grantor_name' => 'required|string',
-                'grantor_mobile' => 'required|string|mobile:bd',
-                'grantor_relation' => 'required|string'
+                'nominee_name' => 'string',
+                'nominee_mobile' => 'string|mobile:bd',
+                'nominee_relation' => 'string',
+                'grantor_name' => 'string',
+                'grantor_mobile' => 'string|mobile:bd',
+                'grantor_relation' => 'string'
             ];
 
         }
