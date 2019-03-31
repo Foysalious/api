@@ -149,11 +149,11 @@ class SpLoanController extends Controller
                 ]
             ],
             'finance_info' => [
-                'account_holder_name' => !empty($bank_informations) ?  $bank_informations->acc_name: null,
-                'account_no' => !empty($bank_informations) ?  $bank_informations->acc_no: null,
-                'bank_name' => !empty($bank_informations) ?  $bank_informations->bank_name: null,
-                'brunch' => !empty($bank_informations) ?  $bank_informations->branch_name: null,
-                'acc_type' => !empty($bank_informations) ?  $bank_informations->acc_type: null,
+                'account_holder_name' => !empty($bank_informations) ? $bank_informations->acc_name : null,
+                'account_no' => !empty($bank_informations) ? $bank_informations->acc_no : null,
+                'bank_name' => !empty($bank_informations) ? $bank_informations->bank_name : null,
+                'brunch' => !empty($bank_informations) ? $bank_informations->branch_name : null,
+                'acc_type' => !empty($bank_informations) ? $bank_informations->acc_type : null,
                 'bkash' => [
                     'bkash_no' => $partner->bkash_no,
                     'bkash_account_type' => $partner->bkash_account_type,
@@ -361,11 +361,11 @@ class SpLoanController extends Controller
             $bank_informations = $partner->bankInformations;
 
             $info = [
-                'account_holder_name' => !empty($bank_informations) ?  $bank_informations->acc_name: null,
-                'account_no' => !empty($bank_informations) ?  $bank_informations->acc_no: null,
-                'bank_name' => !empty($bank_informations) ?  $bank_informations->bank_name: null,
-                'brunch' => !empty($bank_informations) ?  $bank_informations->branch_name: null,
-                'acc_type' => !empty($bank_informations) ?  $bank_informations->acc_type: null,
+                'account_holder_name' => !empty($bank_informations) ? $bank_informations->acc_name : null,
+                'account_no' => !empty($bank_informations) ? $bank_informations->acc_no : null,
+                'bank_name' => !empty($bank_informations) ? $bank_informations->bank_name : null,
+                'brunch' => !empty($bank_informations) ? $bank_informations->branch_name : null,
+                'acc_type' => !empty($bank_informations) ? $bank_informations->acc_type : null,
                 'acc_types' => constants('BANK_ACCOUNT_TYPE'),
                 'bkash' => [
                     'bkash_no' => $partner->bkash_no,
@@ -395,7 +395,7 @@ class SpLoanController extends Controller
                 'acc_type' => $request->acc_type
             ];
             $partner_data = [
-                'bkash_no' => formatMobile($request->bkash_no),
+                'bkash_no' => !empty($request->bkash_no) ? formatMobile($request->bkash_no) : null,
                 'bkash_account_type' => $request->bkash_account_type
             ];
 
