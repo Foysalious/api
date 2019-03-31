@@ -359,6 +359,7 @@ class SpLoanController extends Controller
             $profile = $manager_resource->profile;
             $basic_informations = $partner->basicInformations;
             $bank_informations = $partner->bankInformations;
+            #dd($bank_informations);
 
             $info = [
                 'account_holder_name' => $bank_informations->acc_name,
@@ -621,7 +622,7 @@ class SpLoanController extends Controller
             ]);
             $partner = $request->partner;
             $bank_informations = $partner->bankInformations;
-            if (!$bank_informations) return api_response($request, 400, ['message' => 'You Dont have Bank Informations']);
+            if (!$bank_informations) return api_response($request, 1,400, ['message' => 'You Dont have Bank Informations']);
             $file_name = $request->picture;
             #   dd($bank_informations);
             if ($bank_informations->statement != getBankStatementDefaultImage()) {
@@ -642,7 +643,6 @@ class SpLoanController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
