@@ -500,7 +500,7 @@ class SpLoanController extends Controller
         $profile = new Profile();
         $profile->remember_token = str_random(255);
         $profile->name = $request->nominee_name;
-        $profile->mobile = !empty($request->nominee_mobile)? formatMobile($request->nominee_mobile) : null;
+        $profile->mobile = !empty($request->nominee_mobile) ? formatMobile($request->nominee_mobile) : null;
         $this->withCreateModificationField($profile);
         $profile->save();
         return $profile;
@@ -621,9 +621,9 @@ class SpLoanController extends Controller
             ]);
             $partner = $request->partner;
             $bank_informations = $partner->bankInformations;
-
+            if (!$bank_informations) return api_response($request, 400, ['message' => 'You Dont have Bank Informations']);
             $file_name = $request->picture;
-
+            #   dd($bank_informations);
             if ($bank_informations->statement != getBankStatementDefaultImage()) {
                 $old_statement = substr($bank_informations->statement, strlen(config('s3.url')));
                 $this->deleteImageFromCDN($old_statement);
@@ -642,6 +642,7 @@ class SpLoanController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
