@@ -22,6 +22,7 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
     protected $fillable = ['name', 'mobile', 'email', 'password', 'fb_id', 'mobile_verified', 'email_verified', 'address', 'gender', 'dob', 'pro_pic', 'wallet', 'created_by', 'created_by_name', 'updated_by', 'updated_by_name', 'remember_token', 'reference_code', 'referrer_id', 'profile_id'];
     protected $hidden = ['password', 'remember_token',];
     protected $casts = ['wallet' => 'double'];
+    private $firstOrder;
 
     public function mobiles()
     {
@@ -97,10 +98,12 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
 
         $counter = 0;
 
-        return $this->orders()->orderBy('id')->get()->filter(function ($order) use (&$counter, $n) {
+        $orders = $this->orders()->orderBy('id')->get()->filter(function ($order) use (&$counter, $n) {
             $counter++;
             return in_array($counter, $n);
         });
+
+        return count($n) == 1 ? $orders->first() : $orders;
     }
 
     public function getReferralAttribute()
@@ -162,6 +165,16 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
     public function shebaBonusCredit()
     {
         return (double)$this->bonuses()->where('status', 'valid')->sum('amount');
+    }
+
+    public function setFirstOrder(Order $order)
+    {
+        $this->firstOrder = $order;
+    }
+
+    public function getFirstOrder()
+    {
+        return $this->firstOrder ?: $this->nthOrders(1);
     }
 
     public function topUpTransaction(TopUpTransaction $transaction)
