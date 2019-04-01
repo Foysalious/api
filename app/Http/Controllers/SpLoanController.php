@@ -38,7 +38,8 @@ class SpLoanController extends Controller
                     'status' => !$partner->loan->isEmpty() ? $partner->loan->last()->status : null,
                     'duration' => !$partner->loan->isEmpty() ? $partner->loan->last()->duration : null
                 ],
-                'big_banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/offers_images/banners/loan_banner_1440_628.png',
+                #'big_banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/offers_images/banners/loan_banner_1440_628.png',
+                'big_banner' => 'https://i.ibb.co/6JNhRPG/image.png',
                 'banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/offers_images/banners/loan_banner_720_324.png',
                 'title' => 'হাতের নাগালে ব্যাংক লোন -',
                 'list' => [
