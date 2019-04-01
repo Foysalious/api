@@ -431,7 +431,7 @@ class Job extends Model
 
     public function isReadyToPickable()
     {
-        return $this->isTwoWayReadyToPickable() || $this->isOneWayReadyToPickable();
+        return ($this->isTwoWayReadyToPickable() || $this->isOneWayReadyToPickable()) && $this->needsLogistic();
     }
 
     private function isOneWayReadyToPickable()
