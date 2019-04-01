@@ -136,6 +136,9 @@ class PartnerSubscriptionController extends Controller
         $yearly_discounted_price = $rules['fee']['yearly']['original_price'] - $rules['fee']['yearly']['discount'];
         $rules['fee']['yearly']['discounted_price'] = $yearly_discounted_price > 0 ? $yearly_discounted_price : 0;
         $rules['fee']['yearly']['discount_note'] = $this->discountNote($package, 'yearly');
+        $rules['fee']['yearly']['original_price_breakdown'] = round($rules['fee']['yearly']['original_price']/12,2);
+        $rules['fee']['yearly']['discounted_price_breakdown'] = round(  $rules['fee']['yearly']['discounted_price']/12,2);
+        $rules['fee']['yearly']['breakdown_type'] = 'monthly';
 
         array_forget($rules, ['fee.monthly.value', 'fee.yearly.value']);
 
