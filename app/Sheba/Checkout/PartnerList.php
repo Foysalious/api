@@ -91,10 +91,10 @@ class PartnerList
     public function find($partner_id = null)
     {
         $this->setPartner($partner_id);
-        if ($this->partnerListRequest->location) {
-            $this->partners = $this->findPartnersByServiceAndLocation();
-        } else {
+        if ($this->partnerListRequest->lat && $this->partnerListRequest->lng) {
             $this->partners = $this->findPartnersByServiceAndGeo();
+        } else {
+            $this->partners = $this->findPartnersByServiceAndLocation();
         }
         if ($this->isNotLite) {
             $this->filterByCreditLimit();
