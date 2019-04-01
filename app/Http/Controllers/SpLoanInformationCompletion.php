@@ -139,30 +139,30 @@ class SpLoanInformationCompletion extends Controller
 
     private function nomineeInformationCompletion($profile, $complete_count)
     {
-        $nominee_profile = Profile::find($profile->nominee_id);
+        #$nominee_profile = Profile::find($profile->nominee_id);
         $grantor_profile = Profile::find($profile->grantor_id);
         $update_at = collect();
 
-        if ($nominee_profile) {
+        /*if ($nominee_profile) {
             if (!(empty($nominee_profile->name))) $complete_count++;
             if (!(empty($nominee_profile->mobile))) $complete_count++;
             if (!(empty($profile->nominee_relation))) $complete_count++;
             $update_at->push($nominee_profile->updated_at);
 
-        }
+        }*/
         if ($grantor_profile) {
             if (!(empty($grantor_profile->name))) $complete_count++;
             if (!(empty($grantor_profile->mobile))) $complete_count++;
             if (!(empty($profile->nominee_relation))) $complete_count++;
             $update_at->push($grantor_profile->updated_at);
         }
-        if ($nominee_profile || $grantor_profile) {
+        if ($grantor_profile) {
             $last_update = getDayName($update_at->max());
         } else {
             $last_update = 0;
         }
 
-        $nominee_information = round((($complete_count / 6) * 100), 0);
+        $nominee_information = round((($complete_count / 3) * 100), 0);
 
         return ['nominee_information' => $nominee_information, 'last_update' => $last_update];
     }
@@ -171,7 +171,7 @@ class SpLoanInformationCompletion extends Controller
     {
         $basic_informations = $partner->basicInformations;
         $bank_informations = $partner->bankInformations;
-        $nominee_profile = Profile::find($profile->nominee_id);
+        #$nominee_profile = Profile::find($profile->nominee_id);
         $grantor_profile = Profile::find($profile->grantor_id);
 
         $update_at = collect();
@@ -186,12 +186,12 @@ class SpLoanInformationCompletion extends Controller
 
         $update_at->push($profile->updated_at);
 
-        if ($nominee_profile) {
+        /*if ($nominee_profile) {
             if (!(empty($nominee_profile->pro_pic))) $complete_count++;
             if (!(empty($nominee_profile->nid_image_front))) $complete_count++;
             if (!(empty($nominee_profile->nid_image_back))) $complete_count++;
             $update_at->push($nominee_profile->updated_at);
-        }
+        }*/
 
         if ($grantor_profile) {
             if (!(empty($grantor_profile->pro_pic))) $complete_count++;
@@ -210,7 +210,7 @@ class SpLoanInformationCompletion extends Controller
 
         $last_update = getDayName($update_at->max());
 
-        $documents = round((($complete_count / 12) * 100), 0);
+        $documents = round((($complete_count / 9) * 100), 0);
 
         return ['documents' => $documents, 'last_update' => $last_update];
     }

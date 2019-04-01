@@ -38,8 +38,7 @@ class SpLoanController extends Controller
                     'status' => !$partner->loan->isEmpty() ? $partner->loan->last()->status : null,
                     'duration' => !$partner->loan->isEmpty() ? $partner->loan->last()->duration : null
                 ],
-                #'big_banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/offers_images/banners/loan_banner_1440_628.png',
-                'big_banner' => 'https://i.ibb.co/6JNhRPG/image.png',
+                'big_banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/offers_images/banners/loan_banner_1440_628.png',
                 'banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/offers_images/banners/loan_banner_720_324.png',
                 'title' => 'হাতের নাগালে ব্যাংক লোন -',
                 'list' => [
@@ -420,17 +419,17 @@ class SpLoanController extends Controller
             $manager_resource = $request->manager_resource;
             $profile = $manager_resource->profile;
 
-            $nominee_profile = Profile::find($profile->nominee_id);
+            #$nominee_profile = Profile::find($profile->nominee_id);
             $grantor_profile = Profile::find($profile->grantor_id);
 
             $info = array(
-                'name' => !empty($nominee_profile) ? $nominee_profile->name : null,
+                /*'name' => !empty($nominee_profile) ? $nominee_profile->name : null,
                 'mobile' => !empty($nominee_profile) ? $nominee_profile->mobile : null,
                 'nominee_relation' => !empty($nominee_profile) ? $profile->nominee_relation : null,
 
                 'picture' => !empty($nominee_profile) ? $nominee_profile->pro_pic : null,
                 'nid_front_image' => !empty($nominee_profile) ? $nominee_profile->nid_image_front : null,
-                'nid_back_image' => !empty($nominee_profile) ? $nominee_profile->nid_image_back : null,
+                'nid_back_image' => !empty($nominee_profile) ? $nominee_profile->nid_image_back : null,*/
                 'grantor' => [
                     'name' => !empty($grantor_profile) ? $grantor_profile->name : null,
                     'mobile' => !empty($grantor_profile) ? $grantor_profile->mobile : null,
@@ -455,7 +454,7 @@ class SpLoanController extends Controller
             $manager_resource = $request->manager_resource;
             $manager_resource_profile = $manager_resource->profile;
 
-            $nominee_profile = Profile::where('mobile', formatMobile($request->nominee_mobile))->first();
+            /*$nominee_profile = Profile::where('mobile', formatMobile($request->nominee_mobile))->first();
             if ($nominee_profile) {
                 $data = [
                     'nominee_id' => $nominee_profile->id,
@@ -471,7 +470,7 @@ class SpLoanController extends Controller
                 ];
 
                 $manager_resource_profile->update($this->withBothModificationFields($data));
-            }
+            }*/
 
             $grantor_profile = Profile::where('mobile', formatMobile($request->grantor_mobile))->first();
             if ($grantor_profile) {
@@ -530,7 +529,7 @@ class SpLoanController extends Controller
             $basic_informations = $partner->basicInformations;
             $bank_informations = $partner->bankInformations;
 
-            $nominee_profile = Profile::find($profile->nominee_id);
+            #$nominee_profile = Profile::find($profile->nominee_id);
             $grantor_profile = Profile::find($profile->grantor_id);
 
             $info = array(
@@ -541,11 +540,11 @@ class SpLoanController extends Controller
                 'nid_image_front' => $profile->nid_image_front,
                 'nid_image_back' => $profile->nid_image_back,
 
-                'nominee_document' => [
+                /*'nominee_document' => [
                     'picture' => !empty($nominee_profile) ? $nominee_profile->pro_pic : null,
                     'nid_front_image' => !empty($nominee_profile) ? $nominee_profile->nid_image_front : null,
                     'nid_back_image' => !empty($nominee_profile) ? $nominee_profile->nid_image_back : null,
-                ],
+                ],*/
                 'grantor_document' => [
                     'picture' => !empty($grantor_profile) ? $grantor_profile->pro_pic : null,
                     'nid_front_image' => !empty($grantor_profile) ? $grantor_profile->nid_image_front : null,
