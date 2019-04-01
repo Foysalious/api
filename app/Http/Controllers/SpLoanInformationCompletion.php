@@ -153,7 +153,7 @@ class SpLoanInformationCompletion extends Controller
         if ($grantor_profile) {
             if (!(empty($grantor_profile->name))) $complete_count++;
             if (!(empty($grantor_profile->mobile))) $complete_count++;
-            if (!(empty($profile->nominee_relation))) $complete_count++;
+            if (!(empty($profile->grantor_relation))) $complete_count++;
             $update_at->push($grantor_profile->updated_at);
         }
         if ($grantor_profile) {
