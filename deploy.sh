@@ -12,4 +12,7 @@ branch_name="$(git symbolic-ref --short -q HEAD 2>/dev/null)"
 reset="sudo git reset --hard origin/"
 reset_branch="$reset$branch_name"
 eval $reset_branch
-sudo composer install --ignore-platform-reqs
+
+sudo composer install --ignore-platform-reqs --no-interaction
+sudo php artisan config:clear
+php artisan queue:restart
