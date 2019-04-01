@@ -32,7 +32,7 @@ class B2CPaymentResponse
             'amount' => (double)$this->response->amount,
             'invoice_no' => $this->response->merchantInvoiceNumber,
             'receiver_bkash_no' => $this->response->receiverMSISDN,
-            'b2cfee' => (int)$this->response->b2cFee
+            'b2cfee' => (int)isset($this->response->b2cFee) ? $this->response->b2cFee : 0
         );
     }
 
