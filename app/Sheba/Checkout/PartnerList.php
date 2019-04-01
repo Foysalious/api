@@ -91,10 +91,10 @@ class PartnerList
     public function find($partner_id = null)
     {
         $this->setPartner($partner_id);
-        if ($this->partnerListRequest->location) {
-            $this->partners = $this->findPartnersByServiceAndLocation();
-        } else {
+        if ($this->partnerListRequest->lat && $this->partnerListRequest->lng) {
             $this->partners = $this->findPartnersByServiceAndGeo();
+        } else {
+            $this->partners = $this->findPartnersByServiceAndLocation();
         }
         if ($this->isNotLite) {
             $this->filterByCreditLimit();
@@ -366,16 +366,18 @@ class PartnerList
         if (in_array($this->partnerListRequest->selectedCategory->id, $this->rentCarCategoryIds)) {
             $category_ids = $this->partnerListRequest->selectedCategory->id == (int)env('RENT_CAR_OUTSIDE_ID') ? $category_ids . ",40" : $category_ids . ",38";
         }
+        $categories = Category::select('id')->where('parent_id', $this->partnerListRequest->selectedCategory->parent_id)->get();
+        $category_ids = $categories->pluck('id')->toArray();
         $relations = [
             'workingHours',
             'jobs' => function ($q) use ($category_ids) {
-                $q->selectRaw("count(case when status in ('Served') and category_id=" . $this->partnerListRequest->selectedCategory->id . " then status end) as total_completed_orders")
+                $q->selectRaw("count(case when status in ('Served') and category_id in(" . implode($category_ids, ',') . ") then status end) as total_completed_orders")
                     ->groupBy('partner_id');
                 if (strtolower($this->partnerListRequest->portalName) == 'admin-portal')
                     $q->selectRaw("count(case when status in ('Accepted', 'Schedule Due', 'Process', 'Serve Due') then status end) as ongoing_jobs");
             }, 'subscription' => function ($q) {
                 $q->select('id', 'name', 'rules');
-            }, 'reviews' => function ($q) {
+            }, 'reviews' => function ($q) use ($category_ids) {
                 $q->selectRaw("count(DISTINCT(reviews.id)) as total_ratings")
                     ->selectRaw("count(DISTINCT(case when rating=5 then reviews.id end)) as total_five_star_ratings")
                     ->selectRaw("count(DISTINCT(case when rating=4 then reviews.id end)) as total_four_star_ratings")
@@ -388,7 +390,7 @@ class PartnerList
                         $q->on('reviews.id', '=', 'review_question_answer.review_id');
                         $q->where('review_question_answer.review_type', '=', 'App\\Models\\Review');
                         $q->where('reviews.rating', '=', 5);
-                    })->where('reviews.category_id', $this->partnerListRequest->selectedCategory->id)
+                    })->whereIn('reviews.category_id', $category_ids)
                     ->groupBy('reviews.partner_id');
             }
         ];
@@ -607,6 +609,8 @@ class PartnerList
             array_forget($partner, 'discounts');
             array_forget($partner, 'surcharges');
             array_forget($partner, 'score');
+            array_forget($partner, 'distance');
+            array_forget($partner, 'order_limit');
             removeRelationsAndFields($partner);
         });
     }
