@@ -626,6 +626,7 @@ class PartnerList
 
     protected function filterPartnerByRadius()
     {
+        if ($this->partners->count() == 0) return;
         $current = new Coords($this->partnerListRequest->lat, $this->partnerListRequest->lng);
         $to = $this->partners->map(function ($partner) {
             $geo = json_decode($partner->geo_informations);
