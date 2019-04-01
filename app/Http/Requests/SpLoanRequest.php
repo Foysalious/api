@@ -39,7 +39,7 @@ class SpLoanRequest extends ApiRequest
                 'occupation' => 'string',
                 'monthly_living_cost' => 'numeric',
                 'total_asset_amount' => 'numeric',
-                'monthly_loan_installment_amount' => 'numeric'
+                #'monthly_loan_installment_amount' => 'numeric'
             ];
 
         }

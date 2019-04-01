@@ -105,7 +105,7 @@ class SpLoanController extends Controller
         $business_additional_information = $partner->businessAdditionalInformation();
         $sales_information = $partner->salesInformation();
 
-        $nominee_profile = Profile::find($profile->nominee_id);
+        #$nominee_profile = Profile::find($profile->nominee_id);
         $grantor_profile = Profile::find($profile->grantor_id);
 
         return [
@@ -123,7 +123,7 @@ class SpLoanController extends Controller
                 'expenses' => [
                     'monthly_living_cost' => $profile->monthly_living_cost,
                     'total_asset_amount' => $profile->total_asset_amount,
-                    'monthly_loan_installment_amount' => $profile->monthly_loan_installment_amount,
+                    #'monthly_loan_installment_amount' => $profile->monthly_loan_installment_amount,
                     'utility_bill_attachment' => $profile->utility_bill_attachment
                 ]
             ],
@@ -160,9 +160,9 @@ class SpLoanController extends Controller
                 ]
             ],
             'nominee_grantor_info' => [
-                'name' => !empty($nominee_profile) ? $nominee_profile->name : null,
+                /*'name' => !empty($nominee_profile) ? $nominee_profile->name : null,
                 'mobile' => !empty($nominee_profile) ? $nominee_profile->mobile : null,
-                'nominee_relation' => !empty($nominee_profile) ? $profile->nominee_relation : null,
+                'nominee_relation' => !empty($nominee_profile) ? $profile->nominee_relation : null,*/
 
                 'grantor' => [
                     'name' => !empty($grantor_profile) ? $grantor_profile->name : null,
@@ -175,11 +175,11 @@ class SpLoanController extends Controller
                 'nid_image' => $manager_resource->nid_image,
                 'nid_image_front' => $profile->nid_image_front,
                 'nid_image_back' => $profile->nid_image_back,
-                'nominee_document' => [
+                /*'nominee_document' => [
                     'picture' => !empty($nominee_profile) ? $nominee_profile->pro_pic : null,
                     'nid_image_front' => !empty($nominee_profile) ? $nominee_profile->nid_image_front : null,
                     'nid_image_back' => !empty($nominee_profile) ? $nominee_profile->nid_image_back : null,
-                ],
+                ],*/
                 'grantor_document' => [
                     'picture' => !empty($grantor_profile) ? $grantor_profile->pro_pic : null,
                     'nid_image_front' => !empty($grantor_profile) ? $grantor_profile->nid_image_front : null,
@@ -218,7 +218,7 @@ class SpLoanController extends Controller
                 'expenses' => [
                     'monthly_living_cost' => (int)$profile->monthly_living_cost ? $profile->monthly_living_cost : null,
                     'total_asset_amount' => (int)$profile->total_asset_amount ? $profile->total_asset_amount : null,
-                    'monthly_loan_installment_amount' => (int)$profile->monthly_loan_installment_amount ? $profile->monthly_loan_installment_amount : null,
+                    #'monthly_loan_installment_amount' => (int)$profile->monthly_loan_installment_amount ? $profile->monthly_loan_installment_amount : null,
                     'utility_bill_attachment' => $profile->utility_bill_attachment
                 ]
             );
@@ -242,7 +242,7 @@ class SpLoanController extends Controller
                 'occupation' => 'string',
                 'monthly_living_cost' => 'numeric',
                 'total_asset_amount' => 'numeric',
-                'monthly_loan_installment_amount' => 'numeric'
+                #'monthly_loan_installment_amount' => 'numeric'
             ]);
             $manager_resource = $request->manager_resource;
             $profile = $manager_resource->profile;
@@ -255,7 +255,7 @@ class SpLoanController extends Controller
                 'occupation' => $request->occupation,
                 'monthly_living_cost' => $request->monthly_living_cost,
                 'total_asset_amount' => $request->total_asset_amount,
-                'monthly_loan_installment_amount' => $request->monthly_loan_installment_amount,
+                #'monthly_loan_installment_amount' => $request->monthly_loan_installment_amount,
             );
 
             $resource_data = [

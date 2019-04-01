@@ -72,7 +72,7 @@ class SpLoanInformationCompletion extends Controller
 
         if (!empty((int)$profile->monthly_living_cost)) $complete_count++;
         if (!empty((int)$profile->total_asset_amount)) $complete_count++;
-        if (!empty((int)$profile->monthly_loan_installment_amount)) $complete_count++;
+        #if (!empty((int)$profile->monthly_loan_installment_amount)) $complete_count++;
 
         if (!empty($profile->utility_bill_attachment)) $complete_count++;
         $update_at->push($profile->updated_at);
@@ -87,7 +87,7 @@ class SpLoanInformationCompletion extends Controller
 
         $last_update = getDayName($update_at->max());
 
-        $personal_information = round((($complete_count / 12) * 100), 0);
+        $personal_information = round((($complete_count / 11) * 100), 0);
         return ['personal_information' => $personal_information, 'last_update' => $last_update];
     }
 
