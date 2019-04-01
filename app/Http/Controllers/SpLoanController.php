@@ -188,7 +188,7 @@ class SpLoanController extends Controller
                 'business_document' => [
                     'tin_certificate' => $profile->tin_certificate,
                     'trade_license_attachment' => $basic_informations->trade_license_attachment,
-                    'statement' => !empty($bank_informations) ? $bank_informations->statement : null
+                    #'statement' => !empty($bank_informations) ? $bank_informations->statement : null
                 ],
 
             ]
@@ -553,7 +553,7 @@ class SpLoanController extends Controller
                 'business_document' => [
                     'tin_certificate' => $profile->tin_certificate,
                     'trade_license_attachment' => $basic_informations->trade_license_attachment,
-                    'statement' => !empty($bank_informations) ? $bank_informations->statement : null
+                    #'statement' => !empty($bank_informations) ? $bank_informations->statement : null
                 ],
 
             );

@@ -203,14 +203,14 @@ class SpLoanInformationCompletion extends Controller
         if (!empty($profile->tin_certificate)) $complete_count++;
         if (!empty($basic_informations->trade_license_attachment)) $complete_count++;
         $update_at->push($basic_informations->updated_at);
-        if ($bank_informations) {
+        /*if ($bank_informations) {
             if (!empty($bank_informations->statement)) $complete_count++;
             $update_at->push($bank_informations->updated_at);
-        }
+        }*/
 
         $last_update = getDayName($update_at->max());
 
-        $documents = round((($complete_count / 9) * 100), 0);
+        $documents = round((($complete_count / 8) * 100), 0);
 
         return ['documents' => $documents, 'last_update' => $last_update];
     }
