@@ -38,7 +38,8 @@ class SpLoanController extends Controller
                     'status' => !$partner->loan->isEmpty() ? $partner->loan->last()->status : null,
                     'duration' => !$partner->loan->isEmpty() ? $partner->loan->last()->duration : null
                 ],
-                'big_banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/offers_images/banners/loan_banner_1440_628.png',
+                #'big_banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/offers_images/banners/loan_banner_1440_628.png',
+                'big_banner' => 'https://i.ibb.co/6JNhRPG/image.png',
                 'banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/offers_images/banners/loan_banner_720_324.png',
                 'title' => 'হাতের নাগালে ব্যাংক লোন -',
                 'list' => [
@@ -135,17 +136,17 @@ class SpLoanController extends Controller
                 'full_time_employee' => $partner->full_time_employee,
                 'part_time_employee' => $partner->part_time_employee,
                 'business_additional_information' => [
-                    'product_price' => $business_additional_information ? $business_additional_information->product_price : null,
-                    'employee_salary' => $business_additional_information ? $business_additional_information->employee_salary : null,
-                    'office_rent' => $business_additional_information ? $business_additional_information->office_rent : null,
-                    'utility_bills' => $business_additional_information ? $business_additional_information->utility_bills : null,
-                    'marketing_cost' => $business_additional_information ? $business_additional_information->marketing_cost : null,
-                    'other_costs' => $business_additional_information ? $business_additional_information->other_costs : null
+                    'product_price' => isset($business_additional_information->product_price) ? $business_additional_information->product_price : null,
+                    'employee_salary' => isset($business_additional_information->employee_salary) ? $business_additional_information->employee_salary : null,
+                    'office_rent' => isset($business_additional_information->office_rent) ? $business_additional_information->office_rent : null,
+                    'utility_bills' => isset($business_additional_information->utility_bills) ? $business_additional_information->utility_bills : null,
+                    'marketing_cost' => isset($business_additional_information->marketing_cost) ? $business_additional_information->marketing_cost : null,
+                    'other_costs' => isset($business_additional_information->other_costs) ? $business_additional_information->other_costs : null
                 ],
                 'last_six_month_sales_information' => [
-                    'avg_sell' => $sales_information ? $sales_information->last_six_month_avg_sell : null,
-                    'min_sell' => $sales_information ? $sales_information->last_six_month_min_sell : null,
-                    'max_sell' => $sales_information ? $sales_information->last_six_month_max_sell : null,
+                    'avg_sell' => isset($sales_information->last_six_month_avg_sell) ? $sales_information->last_six_month_avg_sell : null,
+                    'min_sell' => isset($sales_information->last_six_month_min_sell) ? $sales_information->last_six_month_min_sell : null,
+                    'max_sell' => isset($sales_information->last_six_month_max_sell) ? $sales_information->last_six_month_max_sell : null,
                 ]
             ],
             'finance_info' => [
