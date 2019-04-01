@@ -133,14 +133,14 @@ class SpLoanController extends Controller
                 'location' => $partner->address,
                 'establishment_year' => $basic_informations->establishment_year,
                 'full_time_employee' => $partner->full_time_employee,
-                'part_time_employee' => $partner->part_time_employee,
+                #'part_time_employee' => $partner->part_time_employee,
                 'business_additional_information' => [
-                    'product_price' => isset($business_additional_information->product_price) ? $business_additional_information->product_price : null,
+                    #'product_price' => isset($business_additional_information->product_price) ? $business_additional_information->product_price : null,
                     'employee_salary' => isset($business_additional_information->employee_salary) ? $business_additional_information->employee_salary : null,
                     'office_rent' => isset($business_additional_information->office_rent) ? $business_additional_information->office_rent : null,
-                    'utility_bills' => isset($business_additional_information->utility_bills) ? $business_additional_information->utility_bills : null,
-                    'marketing_cost' => isset($business_additional_information->marketing_cost) ? $business_additional_information->marketing_cost : null,
-                    'other_costs' => isset($business_additional_information->other_costs) ? $business_additional_information->other_costs : null
+                    #'utility_bills' => isset($business_additional_information->utility_bills) ? $business_additional_information->utility_bills : null,
+                    #'marketing_cost' => isset($business_additional_information->marketing_cost) ? $business_additional_information->marketing_cost : null,
+                    #'other_costs' => isset($business_additional_information->other_costs) ? $business_additional_information->other_costs : null
                 ],
                 'last_six_month_sales_information' => [
                     'avg_sell' => isset($sales_information->last_six_month_avg_sell) ? $sales_information->last_six_month_avg_sell : null,
@@ -291,14 +291,14 @@ class SpLoanController extends Controller
                 'location' => $partner->address,
                 'establishment_year' => $basic_informations->establishment_year,
                 'full_time_employee' => !empty($partner->full_time_employee) ? $partner->full_time_employee : null,
-                'part_time_employee' => !empty($partner->part_time_employee) ? $partner->part_time_employee : null,
+                #'part_time_employee' => !empty($partner->part_time_employee) ? $partner->part_time_employee : null,
                 'business_additional_information' => [
-                    'product_price' => isset($business_additional_information->product_price) ? $business_additional_information->product_price : null,
+                    #'product_price' => isset($business_additional_information->product_price) ? $business_additional_information->product_price : null,
                     'employee_salary' => isset($business_additional_information->employee_salary) ? $business_additional_information->employee_salary : null,
                     'office_rent' => isset($business_additional_information->office_rent) ? $business_additional_information->office_rent : null,
-                    'utility_bills' => isset($business_additional_information->utility_bills) ? $business_additional_information->utility_bills : null,
-                    'marketing_cost' => isset($business_additional_information->marketing_cost) ? $business_additional_information->marketing_cost : null,
-                    'other_costs' => isset($business_additional_information->other_costs) ? $business_additional_information->other_costs : null
+                    #'utility_bills' => isset($business_additional_information->utility_bills) ? $business_additional_information->utility_bills : null,
+                    #'marketing_cost' => isset($business_additional_information->marketing_cost) ? $business_additional_information->marketing_cost : null,
+                    #'other_costs' => isset($business_additional_information->other_costs) ? $business_additional_information->other_costs : null
                 ],
                 'last_six_month_sales_information' => [
                     'avg_sell' => isset($sales_information->last_six_month_avg_sell) ? $sales_information->last_six_month_avg_sell : null,
@@ -321,7 +321,7 @@ class SpLoanController extends Controller
                 'location' => 'required|string',
                 'establishment_year' => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
                 'full_time_employee' => 'numeric',
-                'part_time_employee' => 'numeric',
+                #'part_time_employee' => 'numeric',
                 #'sales_information' => 'required',
                 #'business_additional_information' => 'required'
             ]);
@@ -331,7 +331,7 @@ class SpLoanController extends Controller
                 'business_type' => $request->business_type,
                 'address' => $request->location,
                 'full_time_employee' => $request->full_time_employee,
-                'part_time_employee' => $request->part_time_employee,
+                #'part_time_employee' => $request->part_time_employee,
                 'sales_information' => $request->sales_information,
                 'business_additional_information' => $request->business_additional_information,
             ];

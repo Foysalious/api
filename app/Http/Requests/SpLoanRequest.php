@@ -50,7 +50,7 @@ class SpLoanRequest extends ApiRequest
                 'location' => 'required|string',
                 'establishment_year' => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
                 'full_time_employee' => 'numeric',
-                'part_time_employee' => 'numeric',
+                #'part_time_employee' => 'numeric',
                 #'sales_information' => 'required',
                 #'business_additional_information' => 'required'
             ];

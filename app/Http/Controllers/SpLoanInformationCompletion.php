@@ -101,17 +101,17 @@ class SpLoanInformationCompletion extends Controller
         if (!empty($partner->business_type)) $complete_count++;
         if (!empty($partner->address)) $complete_count++;
         if (!empty($partner->full_time_employee)) $complete_count++;
-        if (!empty($partner->part_time_employee)) $complete_count++;
+        #if (!empty($partner->part_time_employee)) $complete_count++;
         $update_at->push($partner->updated_at);
 
         if (!empty($basic_informations->establishment_year)) $complete_count++;
         $update_at->push($basic_informations->updated_at);
-        if (count((array)$business_additional_information) >= 6) $complete_count++;
+        if (count((array)$business_additional_information) >= 2) $complete_count++;
         if (count((array)$sales_information) >= 3) $complete_count++;
 
         $last_update = getDayName($update_at->max());
 
-        $business_information = round((($complete_count / 8) * 100), 0);
+        $business_information = round((($complete_count / 7) * 100), 0);
         return ['business_information' => $business_information, 'last_update' => $last_update];
     }
 
