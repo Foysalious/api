@@ -531,10 +531,8 @@ class AffiliateController extends Controller
     public function getServicesInfo($affiliate, Request $request)
     {
         try {
-//            list($offset, $limit) = calculatePagination($request);
-//            $services = Service::PublishedForBondhu()->skip($offset)->take($limit)->get();
             $services = Service::select('id', 'category_id', 'name', 'description', 'bn_name', 'app_thumb', 'banner', 'min_quantity', 'unit')
-                ->publishedForBondhu()->orderBy('order_for_bondhu')
+                ->publishedForBondhu()->orderByRaw('order_for_bondhu IS NULL, order_for_bondhu')
                 ->get()->map(function ($service) {
                     return [
                         'id' => $service->id,
