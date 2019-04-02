@@ -66,8 +66,9 @@ class ServiceType extends GraphQlType
     {
         try {
             $price = [];
-            if ($root->partners->where('status', 'Verified')->count() == 0) return 0;
-            foreach ($root->partners->where('status', 'Verified') as $partner) {
+            $partners = $root->partners->where('status', 'Verified');
+            if ($partners->count() == 0) return 0;
+            foreach ($partners as $partner) {
                 $partner_service = $partner->pivot;
                 if (!($partner_service->is_verified && $partner_service->is_published)) continue;
                 $prices = (array)json_decode($partner_service->prices);
@@ -75,7 +76,6 @@ class ServiceType extends GraphQlType
             }
             return (double)min($price) * (double)$root->min_quantity;
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
             return 0;
         }
     }

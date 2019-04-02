@@ -98,7 +98,7 @@ class PartnerController extends Controller
             } else {
                 $partner = Partner::where([['sub_domain', $partner_request]])->first();
             }
-            if(!$partner->isLite() && !$partner->isVerified())
+            if (!$partner->isLite() && !$partner->isVerified())
                 $partner = null;
 
             if ($partner == null) return api_response($request, null, 404);
@@ -259,11 +259,13 @@ class PartnerController extends Controller
             $info->put('master_category_names', $serving_master_categories);
             $info->put('badge', $badge);
             $geo_informations = json_decode($geo_informations);
-            $geo_informations = array(
-                'lat' => (float)$geo_informations->lat,
-                'lng' => (float)$geo_informations->lng,
-                'radius' => (float)$geo_informations->radius,
-            );
+            if ($geo_informations) {
+                $geo_informations = array(
+                    'lat' => (float)$geo_informations->lat,
+                    'lng' => (float)$geo_informations->lng,
+                    'radius' => (float)$geo_informations->radius,
+                );
+            }
             $info->put('geo_informations', $geo_informations);
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
