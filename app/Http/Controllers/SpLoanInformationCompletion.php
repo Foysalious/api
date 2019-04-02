@@ -27,6 +27,7 @@ class SpLoanInformationCompletion extends Controller
             $nominee = $this->nomineeInformationCompletion($profile, $complete_count);
             $documents = $this->documentCompletion($profile, $manager_resource, $partner, $complete_count);
 
+            $is_all_completed = (($personal['personal_information'] >= 50) && ($business['business_information'] >= 20) && ($finance['finance_information'] >= 70) && ($nominee['nominee_information'] == 100) && ($documents['documents'] >= 50)) ? 1 : 0;
 
             $completion = [
                 'personal' => [
@@ -48,7 +49,8 @@ class SpLoanInformationCompletion extends Controller
                 'documents' => [
                     'completion_percentage' => $documents['documents'],
                     'last_update' => $documents['last_update']
-                ]
+                ],
+                'is_applicable_for_loan' => $is_all_completed
             ];
 
             return api_response($request, $completion, 200, ['completion' => $completion]);
