@@ -533,19 +533,21 @@ class AffiliateController extends Controller
         try {
 //            list($offset, $limit) = calculatePagination($request);
 //            $services = Service::PublishedForBondhu()->skip($offset)->take($limit)->get();
-            $services = Service::PublishedForBondhu()->get()->map(function ($service) {
-                return [
-                    'id' => $service->id,
-                    'name' => $service->name,
-                    'bangla_name' => empty($service->bn_name) ? null : $service->bn_name,
-                    'image' => $service->app_thumb,
-                    'min_quantity' => $service->min_quantity,
-                    'unit' => $service->unit,
-                    'category_id' => $service->category_id,
-                    'banner' => $service->banner,
-                    'description' => $service->description
-                ];
-            });
+            $services = Service::select('id', 'category_id', 'name', 'description', 'bn_name', 'app_thumb', 'banner', 'min_quantity', 'unit')
+                ->publishedForBondhu()->orderBy('order_for_bondhu')
+                ->get()->map(function ($service) {
+                    return [
+                        'id' => $service->id,
+                        'name' => $service->name,
+                        'bangla_name' => empty($service->bn_name) ? null : $service->bn_name,
+                        'image' => $service->app_thumb,
+                        'min_quantity' => $service->min_quantity,
+                        'unit' => $service->unit,
+                        'category_id' => $service->category_id,
+                        'banner' => $service->banner,
+                        'description' => $service->description
+                    ];
+                });
             return api_response($request, $services, 200, ['services' => $services]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
