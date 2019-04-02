@@ -39,7 +39,7 @@ class SpLoanRequest extends ApiRequest
                 'occupation' => 'string',
                 'monthly_living_cost' => 'numeric',
                 'total_asset_amount' => 'numeric',
-                'monthly_loan_installment_amount' => 'numeric'
+                #'monthly_loan_installment_amount' => 'numeric'
             ];
 
         }
@@ -50,7 +50,7 @@ class SpLoanRequest extends ApiRequest
                 'location' => 'required|string',
                 'establishment_year' => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
                 'full_time_employee' => 'numeric',
-                'part_time_employee' => 'numeric',
+                #'part_time_employee' => 'numeric',
                 #'sales_information' => 'required',
                 #'business_additional_information' => 'required'
             ];
@@ -72,9 +72,9 @@ class SpLoanRequest extends ApiRequest
 
         if (HttpRequest::segment(5) == "nominee-grantor-info") {
             $rules = [
-                'nominee_name' => 'required|string',
+                /*'nominee_name' => 'required|string',
                 'nominee_mobile' => 'required|string|mobile:bd',
-                'nominee_relation' => 'required|string',
+                'nominee_relation' => 'required|string',*/
                 'grantor_name' => 'required|string',
                 'grantor_mobile' => 'required|string|mobile:bd',
                 'grantor_relation' => 'required|string'

@@ -38,8 +38,7 @@ class SpLoanController extends Controller
                     'status' => !$partner->loan->isEmpty() ? $partner->loan->last()->status : null,
                     'duration' => !$partner->loan->isEmpty() ? $partner->loan->last()->duration : null
                 ],
-                #'big_banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/offers_images/banners/loan_banner_1440_628.png',
-                'big_banner' => 'https://i.ibb.co/6JNhRPG/image.png',
+                'big_banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/offers_images/banners/loan_banner_1440_628.png',
                 'banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/offers_images/banners/loan_banner_720_324.png',
                 'title' => 'হাতের নাগালে ব্যাংক লোন -',
                 'list' => [
@@ -67,9 +66,16 @@ class SpLoanController extends Controller
         }
     }
 
-    public function store($partner, SpLoanRequest $request, PartnerBankLoan $loan)
+    public function store($partner, Request $request, PartnerBankLoan $loan)
     {
         try {
+            $this->validate($request, [
+                'bank_name' => 'required|string',
+                'loan_amount' => 'required|numeric',
+                'duration' => 'required|integer',
+                'monthly_installment' => 'required|numeric',
+                'status' => 'required|string',
+            ]);
             $partner = $request->partner;
 
             $data = [
@@ -91,6 +97,9 @@ class SpLoanController extends Controller
             }
 
             return api_response($request, 1, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -106,7 +115,7 @@ class SpLoanController extends Controller
         $business_additional_information = $partner->businessAdditionalInformation();
         $sales_information = $partner->salesInformation();
 
-        $nominee_profile = Profile::find($profile->nominee_id);
+        #$nominee_profile = Profile::find($profile->nominee_id);
         $grantor_profile = Profile::find($profile->grantor_id);
 
         return [
@@ -124,7 +133,7 @@ class SpLoanController extends Controller
                 'expenses' => [
                     'monthly_living_cost' => $profile->monthly_living_cost,
                     'total_asset_amount' => $profile->total_asset_amount,
-                    'monthly_loan_installment_amount' => $profile->monthly_loan_installment_amount,
+                    #'monthly_loan_installment_amount' => $profile->monthly_loan_installment_amount,
                     'utility_bill_attachment' => $profile->utility_bill_attachment
                 ]
             ],
@@ -134,14 +143,14 @@ class SpLoanController extends Controller
                 'location' => $partner->address,
                 'establishment_year' => $basic_informations->establishment_year,
                 'full_time_employee' => $partner->full_time_employee,
-                'part_time_employee' => $partner->part_time_employee,
+                #'part_time_employee' => $partner->part_time_employee,
                 'business_additional_information' => [
-                    'product_price' => isset($business_additional_information->product_price) ? $business_additional_information->product_price : null,
+                    #'product_price' => isset($business_additional_information->product_price) ? $business_additional_information->product_price : null,
                     'employee_salary' => isset($business_additional_information->employee_salary) ? $business_additional_information->employee_salary : null,
                     'office_rent' => isset($business_additional_information->office_rent) ? $business_additional_information->office_rent : null,
-                    'utility_bills' => isset($business_additional_information->utility_bills) ? $business_additional_information->utility_bills : null,
-                    'marketing_cost' => isset($business_additional_information->marketing_cost) ? $business_additional_information->marketing_cost : null,
-                    'other_costs' => isset($business_additional_information->other_costs) ? $business_additional_information->other_costs : null
+                    #'utility_bills' => isset($business_additional_information->utility_bills) ? $business_additional_information->utility_bills : null,
+                    #'marketing_cost' => isset($business_additional_information->marketing_cost) ? $business_additional_information->marketing_cost : null,
+                    #'other_costs' => isset($business_additional_information->other_costs) ? $business_additional_information->other_costs : null
                 ],
                 'last_six_month_sales_information' => [
                     'avg_sell' => isset($sales_information->last_six_month_avg_sell) ? $sales_information->last_six_month_avg_sell : null,
@@ -161,9 +170,9 @@ class SpLoanController extends Controller
                 ]
             ],
             'nominee_grantor_info' => [
-                'name' => !empty($nominee_profile) ? $nominee_profile->name : null,
+                /*'name' => !empty($nominee_profile) ? $nominee_profile->name : null,
                 'mobile' => !empty($nominee_profile) ? $nominee_profile->mobile : null,
-                'nominee_relation' => !empty($nominee_profile) ? $profile->nominee_relation : null,
+                'nominee_relation' => !empty($nominee_profile) ? $profile->nominee_relation : null,*/
 
                 'grantor' => [
                     'name' => !empty($grantor_profile) ? $grantor_profile->name : null,
@@ -176,11 +185,11 @@ class SpLoanController extends Controller
                 'nid_image' => $manager_resource->nid_image,
                 'nid_image_front' => $profile->nid_image_front,
                 'nid_image_back' => $profile->nid_image_back,
-                'nominee_document' => [
+                /*'nominee_document' => [
                     'picture' => !empty($nominee_profile) ? $nominee_profile->pro_pic : null,
                     'nid_image_front' => !empty($nominee_profile) ? $nominee_profile->nid_image_front : null,
                     'nid_image_back' => !empty($nominee_profile) ? $nominee_profile->nid_image_back : null,
-                ],
+                ],*/
                 'grantor_document' => [
                     'picture' => !empty($grantor_profile) ? $grantor_profile->pro_pic : null,
                     'nid_image_front' => !empty($grantor_profile) ? $grantor_profile->nid_image_front : null,
@@ -189,7 +198,7 @@ class SpLoanController extends Controller
                 'business_document' => [
                     'tin_certificate' => $profile->tin_certificate,
                     'trade_license_attachment' => $basic_informations->trade_license_attachment,
-                    'statement' => !empty($bank_informations) ? $bank_informations->statement : null
+                    #'statement' => !empty($bank_informations) ? $bank_informations->statement : null
                 ],
 
             ]
@@ -219,7 +228,7 @@ class SpLoanController extends Controller
                 'expenses' => [
                     'monthly_living_cost' => (int)$profile->monthly_living_cost ? $profile->monthly_living_cost : null,
                     'total_asset_amount' => (int)$profile->total_asset_amount ? $profile->total_asset_amount : null,
-                    'monthly_loan_installment_amount' => (int)$profile->monthly_loan_installment_amount ? $profile->monthly_loan_installment_amount : null,
+                    #'monthly_loan_installment_amount' => (int)$profile->monthly_loan_installment_amount ? $profile->monthly_loan_installment_amount : null,
                     'utility_bill_attachment' => $profile->utility_bill_attachment
                 ]
             );
@@ -243,7 +252,7 @@ class SpLoanController extends Controller
                 'occupation' => 'string',
                 'monthly_living_cost' => 'numeric',
                 'total_asset_amount' => 'numeric',
-                'monthly_loan_installment_amount' => 'numeric'
+                #'monthly_loan_installment_amount' => 'numeric'
             ]);
             $manager_resource = $request->manager_resource;
             $profile = $manager_resource->profile;
@@ -256,7 +265,7 @@ class SpLoanController extends Controller
                 'occupation' => $request->occupation,
                 'monthly_living_cost' => $request->monthly_living_cost,
                 'total_asset_amount' => $request->total_asset_amount,
-                'monthly_loan_installment_amount' => $request->monthly_loan_installment_amount,
+                #'monthly_loan_installment_amount' => $request->monthly_loan_installment_amount,
             );
 
             $resource_data = [
@@ -292,14 +301,14 @@ class SpLoanController extends Controller
                 'location' => $partner->address,
                 'establishment_year' => $basic_informations->establishment_year,
                 'full_time_employee' => !empty($partner->full_time_employee) ? $partner->full_time_employee : null,
-                'part_time_employee' => !empty($partner->part_time_employee) ? $partner->part_time_employee : null,
+                #'part_time_employee' => !empty($partner->part_time_employee) ? $partner->part_time_employee : null,
                 'business_additional_information' => [
-                    'product_price' => isset($business_additional_information->product_price) ? $business_additional_information->product_price : null,
+                    #'product_price' => isset($business_additional_information->product_price) ? $business_additional_information->product_price : null,
                     'employee_salary' => isset($business_additional_information->employee_salary) ? $business_additional_information->employee_salary : null,
                     'office_rent' => isset($business_additional_information->office_rent) ? $business_additional_information->office_rent : null,
-                    'utility_bills' => isset($business_additional_information->utility_bills) ? $business_additional_information->utility_bills : null,
-                    'marketing_cost' => isset($business_additional_information->marketing_cost) ? $business_additional_information->marketing_cost : null,
-                    'other_costs' => isset($business_additional_information->other_costs) ? $business_additional_information->other_costs : null
+                    #'utility_bills' => isset($business_additional_information->utility_bills) ? $business_additional_information->utility_bills : null,
+                    #'marketing_cost' => isset($business_additional_information->marketing_cost) ? $business_additional_information->marketing_cost : null,
+                    #'other_costs' => isset($business_additional_information->other_costs) ? $business_additional_information->other_costs : null
                 ],
                 'last_six_month_sales_information' => [
                     'avg_sell' => isset($sales_information->last_six_month_avg_sell) ? $sales_information->last_six_month_avg_sell : null,
@@ -322,7 +331,7 @@ class SpLoanController extends Controller
                 'location' => 'required|string',
                 'establishment_year' => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
                 'full_time_employee' => 'numeric',
-                'part_time_employee' => 'numeric',
+                #'part_time_employee' => 'numeric',
                 #'sales_information' => 'required',
                 #'business_additional_information' => 'required'
             ]);
@@ -332,7 +341,7 @@ class SpLoanController extends Controller
                 'business_type' => $request->business_type,
                 'address' => $request->location,
                 'full_time_employee' => $request->full_time_employee,
-                'part_time_employee' => $request->part_time_employee,
+                #'part_time_employee' => $request->part_time_employee,
                 'sales_information' => $request->sales_information,
                 'business_additional_information' => $request->business_additional_information,
             ];
@@ -381,9 +390,18 @@ class SpLoanController extends Controller
         }
     }
 
-    public function updateFinanceInformation($partner, SpLoanRequest $request)
+    public function updateFinanceInformation($partner, Request $request)
     {
         try {
+            $this->validate($request, [
+                'acc_name' => 'required|string',
+                'acc_no' => 'required|string',
+                'bank_name' => 'required|string',
+                'branch_name' => 'required|string',
+                'acc_type' => 'string|in:savings,current',
+                'bkash_no' => 'string|mobile:bd',
+                'bkash_account_type' => 'string|in:personal,agent,merchant'
+            ]);
             $partner = $request->partner;
             $bank_informations = $partner->bankInformations;
 
@@ -408,6 +426,9 @@ class SpLoanController extends Controller
 
             $partner->update($this->withBothModificationFields($partner_data));
             return api_response($request, 1, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -420,17 +441,17 @@ class SpLoanController extends Controller
             $manager_resource = $request->manager_resource;
             $profile = $manager_resource->profile;
 
-            $nominee_profile = Profile::find($profile->nominee_id);
+            #$nominee_profile = Profile::find($profile->nominee_id);
             $grantor_profile = Profile::find($profile->grantor_id);
 
             $info = array(
-                'name' => !empty($nominee_profile) ? $nominee_profile->name : null,
+                /*'name' => !empty($nominee_profile) ? $nominee_profile->name : null,
                 'mobile' => !empty($nominee_profile) ? $nominee_profile->mobile : null,
                 'nominee_relation' => !empty($nominee_profile) ? $profile->nominee_relation : null,
 
                 'picture' => !empty($nominee_profile) ? $nominee_profile->pro_pic : null,
                 'nid_front_image' => !empty($nominee_profile) ? $nominee_profile->nid_image_front : null,
-                'nid_back_image' => !empty($nominee_profile) ? $nominee_profile->nid_image_back : null,
+                'nid_back_image' => !empty($nominee_profile) ? $nominee_profile->nid_image_back : null,*/
                 'grantor' => [
                     'name' => !empty($grantor_profile) ? $grantor_profile->name : null,
                     'mobile' => !empty($grantor_profile) ? $grantor_profile->mobile : null,
@@ -448,14 +469,22 @@ class SpLoanController extends Controller
         }
     }
 
-    public function updateNomineeGrantorInformation($partner, SpLoanRequest $request)
+    public function updateNomineeGrantorInformation($partner, Request $request)
     {
         try {
+            $this->validate($request, [
+                /*'nominee_name' => 'required|string',
+                'nominee_mobile' => 'required|string|mobile:bd',
+                'nominee_relation' => 'required|string',*/
+                'grantor_name' => 'required|string',
+                'grantor_mobile' => 'required|string|mobile:bd',
+                'grantor_relation' => 'required|string'
+            ]);
             $partner = $request->partner;
             $manager_resource = $request->manager_resource;
             $manager_resource_profile = $manager_resource->profile;
 
-            $nominee_profile = Profile::where('mobile', formatMobile($request->nominee_mobile))->first();
+            /*$nominee_profile = Profile::where('mobile', formatMobile($request->nominee_mobile))->first();
             if ($nominee_profile) {
                 $data = [
                     'nominee_id' => $nominee_profile->id,
@@ -471,7 +500,7 @@ class SpLoanController extends Controller
                 ];
 
                 $manager_resource_profile->update($this->withBothModificationFields($data));
-            }
+            }*/
 
             $grantor_profile = Profile::where('mobile', formatMobile($request->grantor_mobile))->first();
             if ($grantor_profile) {
@@ -491,6 +520,9 @@ class SpLoanController extends Controller
             }
 
             return api_response($request, 1, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -530,7 +562,7 @@ class SpLoanController extends Controller
             $basic_informations = $partner->basicInformations;
             $bank_informations = $partner->bankInformations;
 
-            $nominee_profile = Profile::find($profile->nominee_id);
+            #$nominee_profile = Profile::find($profile->nominee_id);
             $grantor_profile = Profile::find($profile->grantor_id);
 
             $info = array(
@@ -541,11 +573,11 @@ class SpLoanController extends Controller
                 'nid_image_front' => $profile->nid_image_front,
                 'nid_image_back' => $profile->nid_image_back,
 
-                'nominee_document' => [
+                /*'nominee_document' => [
                     'picture' => !empty($nominee_profile) ? $nominee_profile->pro_pic : null,
                     'nid_front_image' => !empty($nominee_profile) ? $nominee_profile->nid_image_front : null,
                     'nid_back_image' => !empty($nominee_profile) ? $nominee_profile->nid_image_back : null,
-                ],
+                ],*/
                 'grantor_document' => [
                     'picture' => !empty($grantor_profile) ? $grantor_profile->pro_pic : null,
                     'nid_front_image' => !empty($grantor_profile) ? $grantor_profile->nid_image_front : null,
@@ -554,7 +586,7 @@ class SpLoanController extends Controller
                 'business_document' => [
                     'tin_certificate' => $profile->tin_certificate,
                     'trade_license_attachment' => $basic_informations->trade_license_attachment,
-                    'statement' => !empty($bank_informations) ? $bank_informations->statement : null
+                    #'statement' => !empty($bank_informations) ? $bank_informations->statement : null
                 ],
 
             );
