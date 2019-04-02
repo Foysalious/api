@@ -153,8 +153,9 @@ class SpLoanInformationCompletion extends Controller
         if ($grantor_profile) {
             if (!(empty($grantor_profile->name))) $complete_count++;
             if (!(empty($grantor_profile->mobile))) $complete_count++;
-            if (!(empty($profile->grantor_relation))) $complete_count++;
             $update_at->push($grantor_profile->updated_at);
+            if (!(empty($profile->grantor_relation))) $complete_count++;
+            $update_at->push($profile->updated_at);
         }
         if ($grantor_profile) {
             $last_update = getDayName($update_at->max());
