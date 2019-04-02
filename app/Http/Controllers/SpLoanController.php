@@ -66,9 +66,16 @@ class SpLoanController extends Controller
         }
     }
 
-    public function store($partner, SpLoanRequest $request, PartnerBankLoan $loan)
+    public function store($partner, Request $request, PartnerBankLoan $loan)
     {
         try {
+            $this->validate($request, [
+                'bank_name' => 'required|string',
+                'loan_amount' => 'required|numeric',
+                'duration' => 'required|integer',
+                'monthly_installment' => 'required|numeric',
+                'status' => 'required|string',
+            ]);
             $partner = $request->partner;
 
             $data = [
@@ -90,6 +97,9 @@ class SpLoanController extends Controller
             }
 
             return api_response($request, 1, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -380,9 +390,18 @@ class SpLoanController extends Controller
         }
     }
 
-    public function updateFinanceInformation($partner, SpLoanRequest $request)
+    public function updateFinanceInformation($partner, Request $request)
     {
         try {
+            $this->validate($request, [
+                'acc_name' => 'required|string',
+                'acc_no' => 'required|string',
+                'bank_name' => 'required|string',
+                'branch_name' => 'required|string',
+                'acc_type' => 'string|in:savings,current',
+                'bkash_no' => 'string|mobile:bd',
+                'bkash_account_type' => 'string|in:personal,agent,merchant'
+            ]);
             $partner = $request->partner;
             $bank_informations = $partner->bankInformations;
 
@@ -407,6 +426,9 @@ class SpLoanController extends Controller
 
             $partner->update($this->withBothModificationFields($partner_data));
             return api_response($request, 1, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -447,9 +469,17 @@ class SpLoanController extends Controller
         }
     }
 
-    public function updateNomineeGrantorInformation($partner, SpLoanRequest $request)
+    public function updateNomineeGrantorInformation($partner, Request $request)
     {
         try {
+            $this->validate($request, [
+                /*'nominee_name' => 'required|string',
+                'nominee_mobile' => 'required|string|mobile:bd',
+                'nominee_relation' => 'required|string',*/
+                'grantor_name' => 'required|string',
+                'grantor_mobile' => 'required|string|mobile:bd',
+                'grantor_relation' => 'required|string'
+            ]);
             $partner = $request->partner;
             $manager_resource = $request->manager_resource;
             $manager_resource_profile = $manager_resource->profile;
@@ -490,6 +520,9 @@ class SpLoanController extends Controller
             }
 
             return api_response($request, 1, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
