@@ -447,9 +447,17 @@ class SpLoanController extends Controller
         }
     }
 
-    public function updateNomineeGrantorInformation($partner, SpLoanRequest $request)
+    public function updateNomineeGrantorInformation($partner, Request $request)
     {
         try {
+            $this->validate($request, [
+                /*'nominee_name' => 'required|string',
+                'nominee_mobile' => 'required|string|mobile:bd',
+                'nominee_relation' => 'required|string',*/
+                'grantor_name' => 'required|string',
+                'grantor_mobile' => 'required|string|mobile:bd',
+                'grantor_relation' => 'required|string'
+            ]);
             $partner = $request->partner;
             $manager_resource = $request->manager_resource;
             $manager_resource_profile = $manager_resource->profile;
@@ -490,6 +498,9 @@ class SpLoanController extends Controller
             }
 
             return api_response($request, 1, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
