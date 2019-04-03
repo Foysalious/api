@@ -23,6 +23,11 @@ class Item
     protected $voucherCode;
     /** @var  Carbon */
     protected $updatedAt;
+    protected $ratio;
+    protected $packageName;
+    protected $link;
+    protected $children;
+    protected $slug;
 
     /**
      * @param string $target_type
@@ -175,6 +180,32 @@ class Item
         return $this;
     }
 
+    public function setRatio($ratio)
+    {
+        $this->ratio = $ratio;
+        return $this;
+    }
+
+    /**
+     * @param mixed $packageName
+     * @return Item
+     */
+    public function setPackageName($packageName)
+    {
+        $this->packageName = $packageName;
+        return $this;
+    }
+
+    /**
+     * @param mixed $link
+     * @return Item
+     */
+    public function setLink($link)
+    {
+        $this->link = $link;
+        return $this;
+    }
+
     public function toArray()
     {
         return [
@@ -194,6 +225,31 @@ class Item
             'voucher_code' => $this->voucherCode,
             'updated_at' => $this->updatedAt ? $this->updatedAt->toDateTimeString() : null,
             'updated_at_timestamp' => $this->updatedAt ? $this->updatedAt->timestamp : null,
+            'ratio' => $this->ratio,
+            'package_name' => $this->packageName,
+            'link' => $this->link,
+            'children' => $this->children,
+            'slug' => $this->slug
         ];
+    }
+
+    /**
+     * @param mixed $children
+     * @return Item
+     */
+    public function setChildren($children)
+    {
+        $this->children = $children;
+        return $this;
+    }
+
+    /**
+     * @param mixed $slug
+     * @return Item
+     */
+    public function setSlug($slug)
+    {
+        $this->slug = $slug;
+        return $this;
     }
 }

@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\CategoryGroup;
 use App\Models\HyperLocal;
 
 use App\Models\Location;
@@ -8,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Cache;
+use Sheba\AppSettings\HomePageSetting\DS\Builders\ItemBuilder;
 
 class HomePageSettingController extends Controller
 {
@@ -67,6 +69,10 @@ class HomePageSettingController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function indexNew(Request $request)
     {
         try {
@@ -95,11 +101,15 @@ class HomePageSettingController extends Controller
             } else {
                 $setting_key = 'NewScreenSetting::customer_app_home_4';
             }
+
             $settings = $store->get($setting_key);
             if ($settings) {
                 $settings = json_decode($settings);
                 if (empty($settings->sections)) return api_response($request, null, 404);
-//                if ($request->portal == 'customer-portal') $settings = $this->formatWeb($settings->sections, $location);
+                if ($request->portal == 'customer-portal') {
+                    $this->categoryGroupPushToCategory($settings, $location);
+                }
+
                 return api_response($request, $settings, 200, ['settings' => $settings]);
             } else {
                 return api_response($request, null, 404);
@@ -172,5 +182,29 @@ class HomePageSettingController extends Controller
         })->values()->all();
 
         return ['slider' => $slider->data, 'categories' => $categories, 'category_groups' => $category_groups->values()->all()];
+    }
+
+    /**
+     * @param $settings
+     * @param $location
+     */
+    private function categoryGroupPushToCategory($settings, $location)
+    {
+        if (isset($settings->sections[1]) && $settings->sections[1]->item_type == 'master_categories' && Location::find($location)->city_id == 1) {
+            $item_builder = (new ItemBuilder());
+            $children_items = [];
+            $best_deal_category_group = CategoryGroup::where('name', 'Best Deal')->first();
+
+            $best_deal_category = $best_deal_category_group->categories()->whereHas('locations', function ($query) use ($location) {
+                $query->where('id', $location);
+            })->published()->get();
+
+            foreach ($best_deal_category as $child) {
+                $children_items[] = $item_builder->buildCategory($child)->toArray();
+            }
+
+            $best_deal_category_group = (new ItemBuilder())->buildCategoryGroup($best_deal_category_group)->setChildren($children_items)->toArray();
+            array_unshift($settings->sections[1]->data, $best_deal_category_group);
+        }
     }
 }

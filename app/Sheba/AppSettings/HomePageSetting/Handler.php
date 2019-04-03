@@ -47,7 +47,6 @@ class Handler
                     'item_id' => $element['item_id'] ?: 0,
                 ]));
             }
-
             $this->locationTagWithScreenSettingElement($screen_setting_element, $element['order']);
         }
 
