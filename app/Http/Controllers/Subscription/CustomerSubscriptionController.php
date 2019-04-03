@@ -237,20 +237,24 @@ class CustomerSubscriptionController extends Controller
 
             $service_details = json_decode($subscription_order->service_details);
             $service = Service::find($service_details->id);
-
+            $service_subscription =  $service->subscription;
             $variables = collect();
             foreach ($service_details->breakdown as $breakdown) {
                 if (empty($breakdown->questions)) {
                     $data = [
                         'quantity' => $breakdown->quantity,
                         'questions' => null,
-                        'options' => $breakdown->option
+                        'options' => $breakdown->option,
+                        'min_weekly_qty' => $service_subscription->min_weekly_qty,
+                        'min_monthly_qty' => $service_subscription->min_monthly_qty
                     ];
                 } else {
                     $data = [
                         'quantity' => $breakdown->quantity,
                         'questions' => $breakdown->questions,
-                        'options' => $breakdown->option
+                        'options' => $breakdown->option,
+                        'min_weekly_qty' => $service_subscription->min_weekly_qty,
+                        'min_monthly_qty' => $service_subscription->min_monthly_qty
                     ];
                 }
                 $variables->push($data);
