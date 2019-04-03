@@ -1,20 +1,25 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\CategoryGroup;
 use App\Models\HyperLocal;
 
 use App\Models\Location;
+use Illuminate\Contracts\Cache\Repository;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Cache;
+use Sheba\AppSettings\HomePageSetting\DS\Builders\ItemBuilder;
+use Throwable;
 
 class HomePageSettingController extends Controller
 {
     public function index(Request $request)
     {
         try {
-            /** @var \Illuminate\Contracts\Cache\Repository $store */
+            /** @var Repository $store */
             $store = Cache::store('redis');
             $portals = config('sheba.portals');
             $screens = config('sheba.screen');
@@ -35,16 +40,6 @@ class HomePageSettingController extends Controller
                 $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
                 if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
             }
-
-            /**
-             * TEMPORARY
-             * if ($request->has('portal') && $request->has('screen')) {
-             * $setting_key = 'ScreenSetting::' . snake_case(camel_case($request->portal)) . '_' . $request->screen . "_" . $location;
-             * } else {
-             * $setting_key = 'ScreenSetting::customer_app_home_4';
-             * }
-             * $settings = $store->get($setting_key);*/
-
             $city = (Location::find($location))->city_id;
             $location_id = ($city == 1) ? 4 : 120;
             $portal = ($request->get('portal') == 'customer-app') ? 'app' : 'web';
@@ -61,16 +56,20 @@ class HomePageSettingController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function indexNew(Request $request)
     {
         try {
-            /** @var \Illuminate\Contracts\Cache\Repository $store */
+            /** @var Repository $store */
             $store = Cache::store('redis');
             $portals = config('sheba.portals');
             $screens = config('sheba.screen');
@@ -95,11 +94,15 @@ class HomePageSettingController extends Controller
             } else {
                 $setting_key = 'NewScreenSetting::customer_app_home_4';
             }
+
             $settings = $store->get($setting_key);
             if ($settings) {
                 $settings = json_decode($settings);
                 if (empty($settings->sections)) return api_response($request, null, 404);
-//                if ($request->portal == 'customer-portal') $settings = $this->formatWeb($settings->sections, $location);
+                if ($request->portal == 'customer-portal') {
+                    $this->categoryGroupPushToCategory($settings, $location);
+                }
+
                 return api_response($request, $settings, 200, ['settings' => $settings]);
             } else {
                 return api_response($request, null, 404);
@@ -107,7 +110,7 @@ class HomePageSettingController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -135,7 +138,7 @@ class HomePageSettingController extends Controller
         try {
             $settings = json_decode(Redis::get('car_settings'));
             return api_response($request, $settings, 200, ['settings' => $settings]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return api_response($request, null, 500);
         }
     }
@@ -172,5 +175,29 @@ class HomePageSettingController extends Controller
         })->values()->all();
 
         return ['slider' => $slider->data, 'categories' => $categories, 'category_groups' => $category_groups->values()->all()];
+    }
+
+    /**
+     * @param $settings
+     * @param $location
+     */
+    private function categoryGroupPushToCategory($settings, $location)
+    {
+        if (isset($settings->sections[1]) && $settings->sections[1]->item_type == 'master_categories' && Location::find($location)->city_id == 1) {
+            $item_builder = (new ItemBuilder());
+            $children_items = [];
+            $best_deal_category_group = CategoryGroup::where('name', 'Best Deal')->first();
+
+            $best_deal_category = $best_deal_category_group->categories()->whereHas('locations', function ($query) use ($location) {
+                $query->where('id', $location);
+            })->published()->get();
+
+            foreach ($best_deal_category as $child) {
+                $children_items[] = $item_builder->buildCategory($child)->toArray();
+            }
+
+            $best_deal_category_group = (new ItemBuilder())->buildCategoryGroup($best_deal_category_group)->setChildren($children_items)->toArray();
+            array_unshift($settings->sections[1]->data, $best_deal_category_group);
+        }
     }
 }

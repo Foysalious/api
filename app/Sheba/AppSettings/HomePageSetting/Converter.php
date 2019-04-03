@@ -31,7 +31,7 @@ class Converter
             return [
                 'key' => $key = $this->availableItems->getKeyByModel($item->item_type),
                 'name' => $this->availableItems->getName($key),
-                'subItem' => !($item->item_id) ? null : [
+                'subItem' => !($item->item_id) ? ['id'=>0,'name'=>'None'] : [
                     'id' => $item->item_id,
                     'name' => $item->item->name
                 ]

@@ -25,10 +25,11 @@ class ItemSet implements Arrayable, ArrayAccess, IteratorAggregate
         }
         return $items;
     }
+
     /**
      * Determine if an item exists at an offset.
      *
-     * @param  mixed  $key
+     * @param  mixed $key
      * @return bool
      */
     public function offsetExists($key)
@@ -39,7 +40,7 @@ class ItemSet implements Arrayable, ArrayAccess, IteratorAggregate
     /**
      * Get an item at a given offset.
      *
-     * @param  mixed  $key
+     * @param  mixed $key
      * @return mixed
      */
     public function offsetGet($key)
@@ -50,8 +51,8 @@ class ItemSet implements Arrayable, ArrayAccess, IteratorAggregate
     /**
      * Set the item at a given offset.
      *
-     * @param  mixed  $key
-     * @param  mixed  $value
+     * @param  mixed $key
+     * @param  mixed $value
      * @return void
      */
     public function offsetSet($key, $value)
@@ -66,7 +67,7 @@ class ItemSet implements Arrayable, ArrayAccess, IteratorAggregate
     /**
      * Unset the item at a given offset.
      *
-     * @param  string  $key
+     * @param  string $key
      * @return void
      */
     public function offsetUnset($key)
@@ -82,5 +83,13 @@ class ItemSet implements Arrayable, ArrayAccess, IteratorAggregate
     public function getIterator()
     {
         return new ArrayIterator($this->items);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isEmpty()
+    {
+        return empty($this->items);
     }
 }
