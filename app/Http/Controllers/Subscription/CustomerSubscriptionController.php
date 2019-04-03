@@ -236,10 +236,11 @@ class CustomerSubscriptionController extends Controller
             });
 
             $service_details = json_decode($subscription_order->service_details);
-            $service = Service::find($service_details->id);
-            $service_subscription =  $service->subscription;
+
             $variables = collect();
             foreach ($service_details->breakdown as $breakdown) {
+            $service = Service::find($breakdown->id);
+            $service_subscription =  $service->subscription;
                 if (empty($breakdown->questions)) {
                     $data = [
                         'quantity' => $breakdown->quantity,
