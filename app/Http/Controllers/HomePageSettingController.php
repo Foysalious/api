@@ -5,18 +5,21 @@ use App\Models\CategoryGroup;
 use App\Models\HyperLocal;
 
 use App\Models\Location;
+use Illuminate\Contracts\Cache\Repository;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Cache;
 use Sheba\AppSettings\HomePageSetting\DS\Builders\ItemBuilder;
+use Throwable;
 
 class HomePageSettingController extends Controller
 {
     public function index(Request $request)
     {
         try {
-            /** @var \Illuminate\Contracts\Cache\Repository $store */
+            /** @var Repository $store */
             $store = Cache::store('redis');
             $portals = config('sheba.portals');
             $screens = config('sheba.screen');
@@ -37,16 +40,6 @@ class HomePageSettingController extends Controller
                 $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
                 if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
             }
-
-            /**
-             * TEMPORARY
-             * if ($request->has('portal') && $request->has('screen')) {
-             * $setting_key = 'ScreenSetting::' . snake_case(camel_case($request->portal)) . '_' . $request->screen . "_" . $location;
-             * } else {
-             * $setting_key = 'ScreenSetting::customer_app_home_4';
-             * }
-             * $settings = $store->get($setting_key);*/
-
             $city = (Location::find($location))->city_id;
             $location_id = ($city == 1) ? 4 : 120;
             $portal = ($request->get('portal') == 'customer-app') ? 'app' : 'web';
@@ -63,7 +56,7 @@ class HomePageSettingController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -71,12 +64,12 @@ class HomePageSettingController extends Controller
 
     /**
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function indexNew(Request $request)
     {
         try {
-            /** @var \Illuminate\Contracts\Cache\Repository $store */
+            /** @var Repository $store */
             $store = Cache::store('redis');
             $portals = config('sheba.portals');
             $screens = config('sheba.screen');
@@ -117,7 +110,7 @@ class HomePageSettingController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -145,7 +138,7 @@ class HomePageSettingController extends Controller
         try {
             $settings = json_decode(Redis::get('car_settings'));
             return api_response($request, $settings, 200, ['settings' => $settings]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return api_response($request, null, 500);
         }
     }
