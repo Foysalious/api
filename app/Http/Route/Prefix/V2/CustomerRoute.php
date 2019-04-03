@@ -74,7 +74,7 @@ class CustomerRoute
                     $api->get('history', 'MovieTicketController@history');
                     $api->get('history/{history_id}', 'MovieTicketController@historyDetails');
                     $api->post('book-tickets', 'MovieTicketController@bookTickets');
-                    $api->post('update-status', 'MovieTicketController@updateTicketStatus');
+                    $api->post('update-status', 'CustomerMovieTicketController@updateTicketStatus');
                 });
                 $api->group(['prefix' => 'jobs'], function ($api) {
                     $api->get('/', 'JobController@index');

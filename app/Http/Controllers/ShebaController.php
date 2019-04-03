@@ -284,6 +284,9 @@ class ShebaController extends Controller
                     case 'voucher':
                         $payments = $this->getVoucherPayments($version_code);
                         break;
+                    case 'movie_ticket':
+                        $payments = $this->getMovieTicketPayments($version_code);
+                        break;
                     default:
                         throw new \Exception('Invalid Payable Type');
                         break;
@@ -353,6 +356,41 @@ class ShebaController extends Controller
     }
 
     public function getSubscriptionPayments($version_code)
+    {
+        return [
+            array(
+                'name' => 'Sheba Credit',
+                'is_published' => 1,
+                'description' => '',
+                'asset' => 'sheba_credit',
+                'method_name' => 'wallet'
+            ),
+            array(
+                'name' => 'City Bank',
+                'is_published' => $version_code ? ($version_code > 30112 ? 1 : 0) : 1,
+                'description' => '',
+                'asset' => 'cbl',
+                'method_name' => 'cbl'
+            ),
+            array(
+                'name' => 'bKash',
+                'is_published' => 1,
+                'description' => 'Get 20% cash back!',
+                'asset' => 'bkash',
+                'method_name' => 'bkash'
+            ),
+            array(
+                'name' => 'Other Debit/Credit',
+                'is_published' => 1,
+                'description' => '',
+                'asset' => 'ssl',
+                'method_name' => 'online'
+            )
+        ];
+    }
+
+
+    public function getMovieTicketPayments($version_code)
     {
         return [
             array(
