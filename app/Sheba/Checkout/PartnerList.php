@@ -327,10 +327,10 @@ class PartnerList
             $service['cap'] = $discount->cap;
             $service['amount'] = $discount->amount;
             $service['is_percentage'] = $discount->isDiscountPercentage;
-            $service['discounted_price'] = $discount->discounted_price;
-            $service['original_price'] = $discount->original_price;
+            $service['discounted_price'] = floor($discount->discounted_price);
+            $service['original_price'] = floor($discount->original_price);
             $service['min_price'] = $discount->min_price;
-            $service['unit_price'] = $discount->unit_price;
+            $service['unit_price'] = floor($discount->unit_price);
             $service['sheba_contribution'] = $discount->sheba_contribution;
             $service['partner_contribution'] = $discount->partner_contribution;
             $service['is_min_price_applied'] = $discount->original_price == $discount->min_price ? 1 : 0;
