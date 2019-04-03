@@ -1,7 +1,4 @@
-<?php
-
-namespace Sheba\Checkout\Requests;
-
+<?php namespace Sheba\Checkout\Requests;
 
 use App\Models\Category;
 use App\Models\Partner;
