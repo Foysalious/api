@@ -236,7 +236,6 @@ class CustomerSubscriptionController extends Controller
             });
 
             $service_details = json_decode($subscription_order->service_details);
-            $service = Service::find($service_details->id);
 
             $variables = collect();
             foreach ($service_details->breakdown as $breakdown) {
@@ -259,6 +258,7 @@ class CustomerSubscriptionController extends Controller
             $service_details_breakdown = $service_details->breakdown['0'];
 
             $service = Service::find((int)$service_details_breakdown->id);
+            $service_subscription =  $service->subscription;
 
             $schedules = collect(json_decode($subscription_order->schedules));
 
@@ -270,6 +270,11 @@ class CustomerSubscriptionController extends Controller
                 "variables" => $variables,
                 "total_quantity" => $service_details->total_quantity,
                 'quantity' => (double)$service_details_breakdown->quantity,
+
+                'is_weekly' => $service_subscription->is_weekly,
+                'is_monthly' => $service_subscription->is_monthly,
+                'min_weekly_qty' => $service_subscription->min_weekly_qty,
+                'min_monthly_qty' => $service_subscription->min_monthly_qty,
 
                 "partner_id" => $subscription_order->partner_id,
                 "partner_name" => $service_details->name,

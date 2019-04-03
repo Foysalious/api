@@ -2,6 +2,7 @@
 
 use App\Models\MovieTicketOrder;
 use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Database\QueryException;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
 
@@ -10,8 +11,10 @@ use Sheba\MovieTicket\MovieTicket;
 use Sheba\MovieTicket\MovieTicketManager;
 use Sheba\MovieTicket\MovieTicketRequest;
 use Sheba\MovieTicket\Vendor\VendorFactory;
+use Sheba\Payment\Adapters\Payable\MovieTicketPurchaseAdapter;
+use Sheba\Payment\ShebaPayment;
 
-class MovieTicketController extends Controller
+class CustomerMovieTicketController extends Controller
 {
     /**
      * @param MovieTicketManager $movieTicket
@@ -131,34 +134,20 @@ class MovieTicketController extends Controller
             ]);
 
             $agent = $this->getAgent($request);
-            if ($agent->wallet < (double) $request->cost) return api_response($request, null, 403, ['message' => "You don't have sufficient balance to buy this ticket."]);
             $movieTicketRequest->setName($request->customer_name)->setEmail($request->customer_email)->setAmount($request->cost)
                     ->setMobile(BDMobileFormatter::format($request->customer_mobile))->setTrxId($request->trx_id)->setDtmsId($request->dtmsid)
                     ->setTicketId($request->lid)->setConfirmStatus($request->confirm_status)->setImageUrl($request->image_url);
             $vendor = $vendor->getById(1);
 
-
             $movieTicket =  $movieTicket->setMovieTicketRequest($movieTicketRequest)->setAgent($agent)->setVendor($vendor);
             if($movieTicket->validate()) {
-                $response = $movieTicket->placeOrder()->buyTicket();
-                if($response->hasSuccess()) {
-                    $movieOrder =  $movieTicket->disburseCommissions()->getMovieTicketOrder();
-                    $movieTicket->processSuccessfulMovieTicket($movieOrder, $response->getSuccess());
-                    $details = $response->getSuccess()->transactionDetails;
-                    $details->order_id = $movieOrder->id;
-                    $details->agent_commission = $movieOrder->agent_commission;
-                    $details->sheba_commission = $movieOrder->sheba_commission;
-                    $details->cost = $details->cost + $details->sheba_commission;
-                    return api_response($request, $response, 200, ['status' => $details]);
+                $movie_ticket_order = $movieTicket->placeOrder()->getMovieTicketOrder();
+                $payment = $this->getPayment($request->payment_method, $movie_ticket_order);
+                if ($payment) {
+                    $link = $payment->redirect_url;
+                    $payment = $payment->getFormattedPayment();
                 }
-                else
-                {
-                    $error = $response->getError();
-                    return api_response($request, $response, 200, ['status' => [
-                        'message' => $error->errorMessage,
-                        'status' => $error->status
-                    ]]);
-                }
+                return api_response($request, $movie_ticket_order, 200, ['link' => $link, 'payment' => $payment]);
             }
             else
                 return api_response($request, 'Movie Ticket Request is not valid', 400, ['message' => 'Movie Ticket Request is not valid']);
@@ -170,6 +159,7 @@ class MovieTicketController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         } catch (GuzzleException $e) {
@@ -236,5 +226,20 @@ class MovieTicketController extends Controller
 
     private function  convertToJson($response) {
         return json_decode(json_encode($response));
+    }
+
+    private function getPayment($payment_method, $movie_ticket_order)
+    {
+        try {
+            $movie_ticket_order_adapter = new MovieTicketPurchaseAdapter();
+            $payment = (new ShebaPayment($payment_method))->init($movie_ticket_order_adapter->setModelForPayable($movie_ticket_order)->getPayable());
+            return $payment->isInitiated() ? $payment : null;
+        } catch (QueryException $e) {
+            app('sentry')->captureException($e);
+            return null;
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return null;
+        }
     }
 }
