@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use Illuminate\Http\Request;
@@ -23,7 +21,6 @@ class SslController extends Controller
             $redirect_url = $payment->payable->success_url . '?invoice_id=' . $request->tran_id;
             if (!$payment->isComplete()) (new ShebaPayment('online'))->complete($payment);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
         }
         return redirect($redirect_url);
