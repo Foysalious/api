@@ -284,7 +284,7 @@ class ShebaController extends Controller
                     case 'voucher':
                         $payments = $this->getVoucherPayments($version_code);
                         break;
-                    case 'movie_ticket':
+                        case 'movie_ticket':
                         $payments = $this->getMovieTicketPayments($version_code);
                         break;
                     default:
