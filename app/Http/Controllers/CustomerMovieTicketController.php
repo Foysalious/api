@@ -130,7 +130,8 @@ class CustomerMovieTicketController extends Controller
                 'customer_email' => 'required',
                 'customer_mobile' => 'required|mobile:bd',
                 'cost' => 'required',
-                'image_url' => 'required'
+                'image_url' => 'required',
+                'payment_method' => 'required|string|in:online,bkash,wallet,cbl',
             ]);
 
             $agent = $this->getAgent($request);
@@ -190,7 +191,6 @@ class CustomerMovieTicketController extends Controller
             }
             return api_response($request, $orders, 200, ['history' => $histories]);
         }  catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
