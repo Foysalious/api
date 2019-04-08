@@ -8,7 +8,6 @@ use App\Models\Partner;
 use App\Models\Service;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
-use Carbon\Carbon;
 use Dingo\Api\Routing\Helpers;
 use Illuminate\Http\Request;
 use DB;
@@ -275,7 +274,6 @@ class CategoryController extends Controller
                         return in_array($location, $locations);
                     });
                 }
-
                 $subscriptions = collect();
                 foreach ($services as $service) {
                     if ($service->serviceSubscription) {
@@ -286,7 +284,7 @@ class CategoryController extends Controller
                         $subscription['thumb'] = $service['thumb'];
                         $subscription['banner'] = $service['banner'];
                         $subscription['offers'] = $subscription->getDiscountOffers();
-                        removeRelationsAndFields($subscription);
+                        removeRelationsAndFields($service);
                         $subscriptions->push($subscription);
                     }
                 }
