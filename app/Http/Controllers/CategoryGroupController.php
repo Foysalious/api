@@ -49,7 +49,7 @@ class CategoryGroupController extends Controller
                 $with = $request->with;
                 if ($with == 'categories') {
                     $categoryGroups->load(['categories' => function ($query) use ($location) {
-                        return $query->published()
+                        return $query->published()->orderBy('category_group_category.order')
                             ->whereHas('services', function ($q) use ($location) {
                                 $q->published()->whereHas('locations', function ($q) use ($location) {
                                     $q->where('locations.id', $location);
