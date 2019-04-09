@@ -99,7 +99,7 @@ class CategoryGroupController extends Controller
             }
             if ($location) {
                 $category_group = CategoryGroup::with(['categories' => function ($q) use ($location) {
-                    return $q->orderBy('category_group_category.order')
+                    return $q->published()->orderBy('category_group_category.order')
                         ->whereHas('services', function ($q) use ($location) {
                             $q->published()->whereHas('locations', function ($q) use ($location) {
                                 $q->where('locations.id', $location);
@@ -108,12 +108,9 @@ class CategoryGroupController extends Controller
                 }])->where('id', $id)->select('id', 'name')->first();
             } else {
                 $category_group = CategoryGroup::with(['categories' => function ($q) {
-                    $q->orderBy('category_group_category.order');
+                    $q->published()->orderBy('category_group_category.order');
                 }])->where('id', $id)->select('id', 'name')->first();
-                #$category_group = CategoryGroup::with('categories')->where('id', $id)->select('id', 'name')->first();
-                #dd($category_group);
             }
-            #dd(233);
             if ($category_group != null) {
                 $categories = $category_group->categories->each(function ($category) use ($location) {
                     removeRelationsAndFields($category);
