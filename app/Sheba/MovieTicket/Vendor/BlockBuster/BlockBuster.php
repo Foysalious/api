@@ -108,7 +108,7 @@ class BlockBuster extends Vendor
             'ticket_id'=>$movieTicketRequest->getTicketId(),
             'ConfirmStatus'=>$movieTicketRequest->getConfirmStatus(),
         ]);
-        $response->place = 'BLOCKBUSTER Movies, Jamuna Future Park';
+        $response->place = 'Blockbuster Movies, Jamuna Future Park';
         $response->image_url =$movieTicketRequest->getImageUrl();
         $blockbuster_response->setResponse($response);
         return $blockbuster_response;
