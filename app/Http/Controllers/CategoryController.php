@@ -170,8 +170,7 @@ class CategoryController extends Controller
             #dd(implode(',', $best_deal_category)->toArray());
             if ($location) {
                 $children = $category->load(['children' => function ($q) use ($best_deal_category, $location) {
-                    $q->whereNotIn('id',  $best_deal_category)
-                        ->whereHas('locations', function ($q) use ($location) {
+                    $q->whereHas('locations', function ($q) use ($location) {#->whereNotIn('id',  $best_deal_category)
                         $q->where('locations.id', $location->id);
                     });
                     $q->whereHas('services', function ($q) use ($location) {
