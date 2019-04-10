@@ -238,7 +238,7 @@ class AffiliateController extends Controller
             $query[] = Affiliate::agentsWithFilter($request, 'affiliations')->get()->toArray();
             $query[] = Affiliate::agentsWithFilter($request, 'partner_affiliations')->get()->toArray();
 
-            $agents = $this->mapAgents($query);
+            $agents = $this->mapAgents($query)->where('ambassador_id', $affiliate->id);
 
             $agents = $this->filterAgents($q, $agents);
 
