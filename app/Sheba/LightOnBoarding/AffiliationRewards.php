@@ -43,17 +43,26 @@ class AffiliationRewards
     {
         $this->moderatorWalletUpdate();
         $this->moderatorTransaction($ref, $status);
+
         return $this;
     }
 
+    /**
+     * @param $ref
+     * @return $this
+     */
     public function payAffiliate($ref)
     {
         $this->affiliateWalletUpdate();
         $this->affiliationTransaction($ref);
         $this->payAmbassador($ref);
+
         return $this;
     }
 
+    /**
+     * @param $ref
+     */
     private function payAmbassador($ref)
     {
         if ($this->ambassador) {
@@ -82,55 +91,69 @@ class AffiliationRewards
         return $this->getAffiliationCost() + $this->getModerationCost() + $this->getAmbassadorCost();
     }
 
+    /**
+     * @param $ref
+     */
     private function affiliationTransaction($ref)
     {
-        $log = "Earned " . $this->getAffiliationCost() . " tk for giving reference partner id: $ref->id";
-        $data = [
-            'affiliate_id' => $this->affiliate->id,
-            'affiliation_id' => $ref->id,
-            'affiliation_type' => get_class($ref),
-            'type' => "Credit",
-            'log' => $log,
-            'amount' => $this->getAffiliationCost()
-        ];
-        $affiliate_transaction = new AffiliateTransaction($this->withCreateModificationField($data));
-        $affiliate_transaction->save();
+        if ($this->getAffiliationCost() > 0) {
+            $log = "Earned " . $this->getAffiliationCost() . " tk for giving reference partner id: $ref->id";
+            $data = [
+                'affiliate_id' => $this->affiliate->id,
+                'affiliation_id' => $ref->id,
+                'affiliation_type' => get_class($ref),
+                'type' => "Credit",
+                'log' => $log,
+                'amount' => $this->getAffiliationCost()
+            ];
+            $affiliate_transaction = new AffiliateTransaction($this->withCreateModificationField($data));
+            $affiliate_transaction->save();
+        }
     }
 
+    /**
+     * @param $ref
+     */
     private function affiliationAmbassadorTransaction($ref)
     {
-        $affiliate_identity = ($this->affiliate->profile->name ?: $this->affiliate->profile->mobile) ?: "#" . $this->affiliate->id;
-        $data = [
-            'affiliation_type' => get_class($ref),
-            'affiliation_id' => $ref->id,
-            'type' => 'Credit',
-            'is_gifted' => 1,
-            'affiliate_id' => $this->ambassador->id,
-            'log' => $affiliate_identity . ' gifted ' . $this->getAmbassadorCost() . ' tk for reference a partner, id: ' . $ref->id . ' ',
-            'amount' => $this->getAmbassadorCost()
-        ];
-        $affiliate_transaction = new AffiliateTransaction($this->withCreateModificationField($data));
-        $affiliate_transaction->save();
+        if ($this->getAmbassadorCost() > 0) {
+            $affiliate_identity = ($this->affiliate->profile->name ?: $this->affiliate->profile->mobile) ?: "#" . $this->affiliate->id;
+            $data = [
+                'affiliation_type' => get_class($ref),
+                'affiliation_id' => $ref->id,
+                'type' => 'Credit',
+                'is_gifted' => 1,
+                'affiliate_id' => $this->ambassador->id,
+                'log' => $affiliate_identity . ' gifted ' . $this->getAmbassadorCost() . ' tk for reference a partner, id: ' . $ref->id . ' ',
+                'amount' => $this->getAmbassadorCost()
+            ];
+            $affiliate_transaction = new AffiliateTransaction($this->withCreateModificationField($data));
+            $affiliate_transaction->save();
+        }
     }
 
+    /**
+     * @param $ref
+     * @param $status
+     */
     private function moderatorTransaction($ref, $status)
     {
-        if ($status == 'accept') {
-            $statusText = 'accepting';
-        } else {
-            $statusText = 'rejecting';
+        if ($this->getModerationCost() > 0) {
+            if ($status == 'accept') $statusText = 'accepting';
+            else $statusText = 'rejecting';
+
+            $log = "Earned " . $this->getModerationCost() . "tk for $statusText  reference of partner id: $ref->id";
+            $data = [
+                'affiliate_id' => $this->moderator->id,
+                'affiliation_id' => $ref->id,
+                'affiliation_type' => get_class($ref),
+                'type' => "Credit",
+                'log' => $log,
+                'amount' => $this->getModerationCost()
+            ];
+            $affiliate_transaction = new AffiliateTransaction($this->withCreateModificationField($data));
+            $affiliate_transaction->save();
         }
-        $log = "Earned " . $this->getModerationCost() . "tk for $statusText  reference of partner id: $ref->id";
-        $data = [
-            'affiliate_id' => $this->moderator->id,
-            'affiliation_id' => $ref->id,
-            'affiliation_type' => get_class($ref),
-            'type' => "Credit",
-            'log' => $log,
-            'amount' => $this->getModerationCost()
-        ];
-        $affiliate_transaction = new AffiliateTransaction($this->withCreateModificationField($data));
-        $affiliate_transaction->save();
     }
 
     private function affiliateWalletUpdate()

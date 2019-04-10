@@ -190,7 +190,7 @@ class HomePageSettingController extends Controller
 
             $best_deal_category = $best_deal_category_group->categories()->whereHas('locations', function ($query) use ($location) {
                 $query->where('id', $location);
-            })->published()->get();
+            })->published()->orderBy('category_group_category.order')->get();
 
             foreach ($best_deal_category as $child) {
                 $children_items[] = $item_builder->buildCategory($child)->toArray();
