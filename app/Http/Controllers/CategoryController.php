@@ -22,7 +22,7 @@ class CategoryController extends Controller
     use Helpers, ModificationFields;
     private $categoryRepository;
     private $serviceRepository;
-    CONST BESTDEALID = 10;
+    CONST BEST_DEAL_ID = 10;
 
     public function __construct()
     {
@@ -167,7 +167,7 @@ class CategoryController extends Controller
             }
 
 
-            $best_deal_category = CategoryGroupCategory::where('category_group_id', self::BESTDEALID)->pluck('category_id')->toArray();
+            $best_deal_category = CategoryGroupCategory::where('category_group_id', self::BEST_DEAL_ID)->pluck('category_id')->toArray();
 
             if ($location) {
                 $children = $category->load(['children' => function ($q) use ($best_deal_category, $location) {
