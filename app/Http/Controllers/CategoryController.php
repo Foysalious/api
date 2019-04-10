@@ -1,6 +1,8 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\CategoryGroup;
+use App\Models\CategoryGroupCategory;
 use App\Models\CategoryPartner;
 use App\Models\HyperLocal;
 use App\Models\Location;
@@ -20,6 +22,7 @@ class CategoryController extends Controller
     use Helpers, ModificationFields;
     private $categoryRepository;
     private $serviceRepository;
+    CONST BESTDEALID = 10;
 
     public function __construct()
     {
@@ -162,8 +165,11 @@ class CategoryController extends Controller
                 if (!is_null($hyperLocation)) $location = $hyperLocation->location;
             }
 
+
+            $best_deal_category = CategoryGroupCategory::where('category_group_id', self::BESTDEALID)->pluck('category_id')->toArray();
+            #dd(implode(',', $best_deal_category));
             if ($location) {
-                $children = $category->load(['children' => function ($q) use ($location) {
+                $children = $category->whereNotIn('id', implode(',', $best_deal_category))->load(['children' => function ($q) use ($location) {
                     $q->whereHas('locations', function ($q) use ($location) {
                         $q->where('locations.id', $location->id);
                     });
@@ -175,6 +181,7 @@ class CategoryController extends Controller
                 }])->children;
             } else
                 $children = $category->children;
+                #dd($children);
 
             if (count($children) != 0) {
                 $children = $children->each(function (&$child) use ($location) {
@@ -186,6 +193,7 @@ class CategoryController extends Controller
             } else
                 return api_response($request, null, 404);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
