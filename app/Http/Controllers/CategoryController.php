@@ -70,13 +70,11 @@ class CategoryController extends Controller
                 });
             }
             $categories = $categories->select('id', 'name', 'bn_name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id');
-            $best_deal_category = CategoryGroupCategory::where('category_group_id', self::BESTDEALID)->pluck('category_id')->toArray();
 
             if ($request->has('with')) {
                 $with = $request->with;
                 if ($with == 'children') {
-                    $categories->with(['allChildren' => function ($q) use ($best_deal_category, $location, $filter_publication) {
-                        $q->whereNotIn('id', $best_deal_category);
+                    $categories->with(['allChildren' => function ($q) use ($location, $filter_publication) {
                         if (!is_null($location)) {
                             $q->whereHas('locations', function ($q) use ($location) {
                                 $q->where('locations.id', $location->id);
@@ -99,9 +97,7 @@ class CategoryController extends Controller
 
             foreach ($categories as $key => &$category) {
                 if ($with == 'children') {
-                    $category->children = $category->allChildren->filter(function ($sub_category) use ($best_deal_category) {
-                        return !in_array($sub_category->id, $best_deal_category);
-                    });
+                    $category->children = $category->allChildren;
                     unset($category->allChildren);
                     if ($category->children->isEmpty()) {
                         $categories->forget($key);
