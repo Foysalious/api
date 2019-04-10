@@ -169,8 +169,9 @@ class CategoryController extends Controller
             $best_deal_category = CategoryGroupCategory::where('category_group_id', self::BESTDEALID)->pluck('category_id')->toArray();
             #dd(implode(',', $best_deal_category));
             if ($location) {
-                $children = $category->whereNotIn('id', implode(',', $best_deal_category))->load(['children' => function ($q) use ($location) {
-                    $q->whereHas('locations', function ($q) use ($location) {
+                $children = $category->load(['children' => function ($q) use ($best_deal_category, $location) {
+                    $q->whereNotIn('id', implode(',', $best_deal_category))
+                        ->whereHas('locations', function ($q) use ($location) {
                         $q->where('locations.id', $location->id);
                     });
                     $q->whereHas('services', function ($q) use ($location) {
