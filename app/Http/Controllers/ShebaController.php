@@ -279,13 +279,13 @@ class ShebaController extends Controller
                         $payments = $this->getRegularPayments($version_code, $platform_name);
                         break;
                     case 'subscription':
-                        $payments = $this->getSubscriptionPayments($version_code);
+                        $payments = $this->getSubscriptionPayments($version_code, $platform_name);
                         break;
                     case 'voucher':
-                        $payments = $this->getVoucherPayments($version_code);
+                        $payments = $this->getVoucherPayments($version_code, $platform_name);
                         break;
-                    case 'movie_ticket':
-                        $payments = $this->getMovieTicketPayments($version_code);
+                        case 'movie_ticket':
+                        $payments = $this->getMovieTicketPayments($version_code, $platform_name);
                         break;
                     default:
                         throw new \Exception('Invalid Payable Type');
@@ -301,12 +301,12 @@ class ShebaController extends Controller
         }
     }
 
-    protected function getVoucherPayments($version_code)
+    protected function getVoucherPayments($version_code, $platform_name)
     {
         return [
             array(
                 'name' => 'City Bank',
-                'is_published' => $version_code ? ($version_code > 30112 ? 1 : 0) : 1,
+                'is_published' => $this->calculateCityBankStatus($version_code, $platform_name),
                 'description' => '',
                 'asset' => 'cbl',
                 'method_name' => 'cbl'
@@ -355,7 +355,7 @@ class ShebaController extends Controller
         ];
     }
 
-    public function getSubscriptionPayments($version_code)
+    public function getSubscriptionPayments($version_code, $platform_name)
     {
         return [
             array(
@@ -367,7 +367,7 @@ class ShebaController extends Controller
             ),
             array(
                 'name' => 'City Bank',
-                'is_published' => $version_code ? ($version_code > 30112 ? 1 : 0) : 1,
+                'is_published' => $this->calculateCityBankStatus($version_code, $platform_name),
                 'description' => '',
                 'asset' => 'cbl',
                 'method_name' => 'cbl'
@@ -390,7 +390,7 @@ class ShebaController extends Controller
     }
 
 
-    public function getMovieTicketPayments($version_code)
+    public function getMovieTicketPayments($version_code, $platform_name)
     {
         return [
             array(
@@ -402,7 +402,7 @@ class ShebaController extends Controller
             ),
             array(
                 'name' => 'City Bank',
-                'is_published' => $version_code ? ($version_code > 30112 ? 1 : 0) : 1,
+                'is_published' =>$this->calculateCityBankStatus($version_code, $platform_name),
                 'description' => '',
                 'asset' => 'cbl',
                 'method_name' => 'cbl'

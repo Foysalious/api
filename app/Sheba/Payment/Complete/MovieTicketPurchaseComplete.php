@@ -54,7 +54,7 @@ class MovieTicketPurchaseComplete extends PaymentComplete
             });
         } catch (QueryException $e) {
 
-            $movie_ticket_order = GiftCardPurchase::find($this->payment->payable->type_id);
+            $movie_ticket_order = MovieTicketOrder::find($this->payment->payable->type_id);
             $movie_ticket_order->status = 'failed';
             $movie_ticket_order->update();
 

@@ -62,7 +62,7 @@ class MovieTicketValidator
             $this->error = new MovieTicketErrorResponse();
             $this->error->errorCode = 421;
             $this->error->errorMessage = "Invalid number.";
-        } else if ($this->agent->wallet < $this->request->getAmount()) {
+        } else if ((lcfirst((class_basename($this->agent))) ===  'affiliate') && ($this->agent->wallet < $this->request->getAmount()) ) {
             $this->error = new MovieTicketWalletErrorResponse();
         }
 

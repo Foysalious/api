@@ -1,6 +1,8 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\CategoryGroup;
+use App\Models\CategoryGroupCategory;
 use App\Models\CategoryPartner;
 use App\Models\HyperLocal;
 use App\Models\Location;
@@ -20,6 +22,7 @@ class CategoryController extends Controller
     use Helpers, ModificationFields;
     private $categoryRepository;
     private $serviceRepository;
+    CONST BEST_DEAL_ID = 10;
 
     public function __construct()
     {
@@ -87,6 +90,7 @@ class CategoryController extends Controller
                     }]);
                 }
             }
+
             $filter_publication($categories);
             //$categories = $request->has('is_business') && (int)$request->is_business ? $categories->publishedForBusiness() : $categories->published();
             $categories = $categories->get();
@@ -162,19 +166,26 @@ class CategoryController extends Controller
                 if (!is_null($hyperLocation)) $location = $hyperLocation->location;
             }
 
+
+            $best_deal_category = CategoryGroupCategory::where('category_group_id', self::BEST_DEAL_ID)->pluck('category_id')->toArray();
+
             if ($location) {
-                $children = $category->load(['children' => function ($q) use ($location) {
-                    $q->whereHas('locations', function ($q) use ($location) {
-                        $q->where('locations.id', $location->id);
-                    });
+                $children = $category->load(['children' => function ($q) use ($best_deal_category, $location) {
+                    $q->whereNotIn('id', $best_deal_category)
+                        ->whereHas('locations', function ($q) use ($location) {
+                            $q->where('locations.id', $location->id);
+                        });
                     $q->whereHas('services', function ($q) use ($location) {
                         $q->published()->whereHas('locations', function ($q) use ($location) {
                             $q->where('locations.id', $location->id);
                         });
                     });
                 }])->children;
-            } else
-                $children = $category->children;
+            } else {
+                $children = $category->children->filter(function ($sub_category) use ($best_deal_category) {
+                    return !in_array($sub_category->id, $best_deal_category);
+                });
+            }
 
             if (count($children) != 0) {
                 $children = $children->each(function (&$child) use ($location) {
@@ -274,7 +285,6 @@ class CategoryController extends Controller
                         return in_array($location, $locations);
                     });
                 }
-
                 $subscriptions = collect();
                 foreach ($services as $service) {
                     if ($service->serviceSubscription) {
@@ -301,7 +311,7 @@ class CategoryController extends Controller
                     }
                     $category['services'] = $services;
                     $category['subscriptions'] = $subscriptions;
-                    if($subscriptions->count()) {
+                    if ($subscriptions->count()) {
                         $category['subscription_faq'] = [
                             'title' => 'Subscribe & save money',
                             'body' => 'Save BDT 20 in every meter by subscribing for one month!'
