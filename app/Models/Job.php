@@ -436,12 +436,12 @@ class Job extends Model
 
     private function isOneWayReadyToPickable()
     {
-        return $this->isOneWayReadyToPick() && $this->_isProcessable();
+        return $this->category->needsOneWayLogisticOnReadyToPick() && JobStatuses::isProcessable($this->status);
     }
 
     private function isTwoWayReadyToPickable()
     {
-        return $this->isServeable() && $this->isTwoWay() && empty($this->last_logistic_order_id);
+        return JobStatuses::isServeable($this->status) && $this->category->needsTwoWayLogistic() && empty($this->last_logistic_order_id);
     }
 
     /**
