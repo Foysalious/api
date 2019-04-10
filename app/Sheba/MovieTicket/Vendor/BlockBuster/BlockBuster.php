@@ -216,8 +216,23 @@ class BlockBuster extends Vendor
             if($response->api_response->status === "ok")
             {
                 $movies =  $response->api_response->movie_list;
-                foreach ($movies as $movie) {
-                    $movie->MovieID = (int) $movie->MovieID;
+                foreach ($movies as  $index => $movie) {
+                    $data = [
+                        "id" => (int) $movie->MovieID,
+                        "MovieID" => $movie->MovieID,
+                        "MovieName" => $movie->MovieName,
+                        "DirName" => $movie->DirName,
+                        "ReleaseDate" => $movie->ReleaseDate,
+                        "MovieStartDate" => $movie->MovieStartDate,
+                        "MovieEndDate" => $movie->MovieEndDate,
+                        "MovieType" =>$movie->MovieType,
+                        "MovieStatus" => $movie->MovieStatus,
+                        "MovieTrailer" => $movie->MovieTrailer,
+                        "Status" =>$movie->Status,
+                        "Banner" => $movie->Banner,
+                        "BannerSmall" => $movie->BannerSmall
+                    ];
+                    $movies[$index] = $data;
                 }
                 return $movies;
             }
@@ -236,8 +251,19 @@ class BlockBuster extends Vendor
         if($response && $response->api_validation && $response->api_validation->status === "ok"){
             if($response->api_response->status === "ok") {
                 $schedules = $response->api_response->movie_schedule;
-                foreach ($schedules as $schedule)
-                    $schedule->MovieID = (int) $schedule->MovieID;
+                foreach ($schedules as $index => $schedule) {
+                    $data = [
+                        "id" => (int) $schedule->MovieID,
+                        "MovieID"=>  $schedule->MovieID,
+                        "MovieName" => $schedule->MovieName,
+                        "RequestDate"=> $schedule->RequestDate,
+                        "DTMID"=> $schedule->DTMID,
+                        "TheatreName"=> $schedule->TheatreName,
+                        "ShowTime"=> $schedule->ShowTime,
+                        "Slot"=> $schedule->Slot
+                    ];
+                    $schedules[$index] = $data;
+                }
                 return $schedules;
             }
             return null;
