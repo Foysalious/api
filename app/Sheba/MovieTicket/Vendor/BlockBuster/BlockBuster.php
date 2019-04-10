@@ -145,6 +145,9 @@ class BlockBuster extends Vendor
         $body['username'] = $this->userName;
         if(!isset($body['trx_id']))
             $body['trx_id'] = 'SHEBA'.rand(0,32200);
+        if(isset($body['MovieID'])){
+            $body['MovieID'] = $this->parseMovieIdToBlockBusterFormat($body['MovieID']);
+        }
         try {
             $ch_tt = curl_init($this->generateURIForAction($action,[]));
             $post_data = json_encode($body);
@@ -211,7 +214,13 @@ class BlockBuster extends Vendor
     {
         if($response->api_validation && $response->api_validation->status==="ok") {
             if($response->api_response->status === "ok")
-                return $response->api_response->movie_list;
+            {
+                $movies =  $response->api_response->movie_list;
+                foreach ($movies as $movie) {
+                    $movie->MovieID = (int) $movie->MovieID;
+                }
+                return $movies;
+            }
             return null;
         }
         throw new \Exception('Server error');
@@ -225,8 +234,12 @@ class BlockBuster extends Vendor
     private function getTheatreListResponse($response)
     {
         if($response && $response->api_validation && $response->api_validation->status === "ok"){
-            if($response->api_response->status === "ok")
-                return $response->api_response->movie_schedule;
+            if($response->api_response->status === "ok") {
+                $schedules = $response->api_response->movie_schedule;
+                foreach ($schedules as $schedule)
+                    $schedule->MovieID = (int) $schedule->MovieID;
+                return $schedules;
+            }
             return null;
         }
         throw new \Exception('Server error');
@@ -325,5 +338,10 @@ class BlockBuster extends Vendor
     private function shebaCommissionPercentage()
     {
         return MovieTicketVendor::find(1)->sheba_commission;
+    }
+
+    public function parseMovieIdToBlockBusterFormat($id)
+    {
+        return str_pad($id, 5, '0', STR_PAD_LEFT);
     }
 }
