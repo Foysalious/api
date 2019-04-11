@@ -16,6 +16,8 @@ class Basic extends PartnerPerformance
     private $ordersCreated = [];
     private $ordersServed = [];
     private $jobServedIds = [];
+    private $actualJobCancelledCount = [];
+    private $cancelledJobsThatDoesNotAffectPerformanceCount = [];
 
     protected function get()
     {
@@ -125,21 +127,40 @@ class Basic extends PartnerPerformance
     {
         $key = $this->getKey($time_frame);
         if (array_key_exists($key, $this->ordersCreated)) return $this->ordersCreated[$key];
-        $data = $this->partner->orders()->createdAtBetween($time_frame)->count();
-        $jobs_that_affects_performance = $this->getJobsThatAffectsPerformance($time_frame);
-        $data -= $jobs_that_affects_performance;
-        $this->ordersCreated[$key] = $data;
-        return $data;
+        $total_order = $this->partner->orders()->createdAtBetween($time_frame)->count();
+        $this->ordersCreated[$key] = $total_order - $this->getCancelledJobsThatDoesNotAffectPerformance($time_frame);
+        return $this->ordersCreated[$key];
     }
 
-    private function getJobsThatAffectsPerformance(TimeFrame $time_frame)
+    private function getCancelledJobsThatAffectsPerformance(TimeFrame $time_frame)
     {
+        $key = $this->getKey($time_frame);
+        if (array_key_exists($key, $this->actualJobCancelledCount)) return $this->actualJobCancelledCount[$key];
+
         $cancel_reasons_that_affects_performance = JobCancelReason::affectsPartnerPerformance()->pluck('key');
         $partners_jobs_that_affects_performance = $this->partner->jobs()->whereBetween('jobs.created_at',$time_frame->getArray())
             ->with(['cancelLog' => function($q) use ($cancel_reasons_that_affects_performance) {
                 $q->whereIn('cancel_reason',$cancel_reasons_that_affects_performance);
             }])->get()->pluck('cancelLog.job_id')->toArray();
-        return count(array_filter($partners_jobs_that_affects_performance));
+
+        $this->actualJobCancelledCount[$key] = count(array_filter($partners_jobs_that_affects_performance));
+        return $this->actualJobCancelledCount[$key];
+    }
+
+    private function getCancelledJobsThatDoesNotAffectPerformance(TimeFrame $time_frame)
+    {
+        $key = $this->getKey($time_frame);
+        if (array_key_exists($key, $this->cancelledJobsThatDoesNotAffectPerformanceCount))
+            return $this->cancelledJobsThatDoesNotAffectPerformanceCount[$key];
+
+        $cancel_reasons_that_affects_performance = JobCancelReason::affectsPartnerPerformance()->pluck('key');
+        $partners_jobs_that_affects_performance = $this->partner->jobs()->whereBetween('jobs.created_at',$time_frame->getArray())
+            ->with(['cancelLog' => function($q) use ($cancel_reasons_that_affects_performance) {
+                $q->whereNotIn('cancel_reason',$cancel_reasons_that_affects_performance);
+            }])->get()->pluck('cancelLog.job_id')->toArray();
+
+        $this->cancelledJobsThatDoesNotAffectPerformanceCount[$key] = count(array_filter($partners_jobs_that_affects_performance));
+        return $this->cancelledJobsThatDoesNotAffectPerformanceCount[$key];
     }
 
     private function getOrderClosedCountOn(TimeFrame $time_frame)
@@ -153,9 +174,7 @@ class Basic extends PartnerPerformance
 
     private function getOrderCancelledCountOn(TimeFrame $time_frame)
     {
-        $cancelled = $this->partner->orders()->cancelledAtBetween($time_frame)->count();
-        $customer_count = $this->getJobsThatAffectsPerformance($time_frame);
-        return $cancelled-$customer_count;
+        return $this->getCancelledJobsThatAffectsPerformance($time_frame);
     }
 
     private function getJobsServedOn(TimeFrame $time_frame)
