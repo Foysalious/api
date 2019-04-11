@@ -77,7 +77,7 @@ class WalletController extends Controller
             /** @var Payment $payment */
             $payment = Payment::where('transaction_id', $request->transaction_id)->valid()->first();
             if (!$payment) return api_response($request, null, 404);
-            elseif ($payment->isFailed()) return api_response($request, null, 500, 'Payment failed');
+            elseif ($payment->isFailed()) return api_response($request, null, 500, ['message' => 'Payment failed']);
             elseif ($payment->isPassed()) return api_response($request, null, 200);
             /** @var Customer $user */
             $user = $payment->payable->user;
@@ -93,8 +93,9 @@ class WalletController extends Controller
             try {
                 $transaction = '';
                 DB::transaction(function () use ($payment, $user, $bonus_credit, &$transaction) {
-                    $partner_order = PartnerOrder::find($payment->payable->type_id);
-                    $remaining = $bonus_credit->setUser($user)->setSpentModel($partner_order)->deduct($payment->payable->amount);
+                    $model_name = $payment->payable->getPayableModel();
+                    $spent_model = $model_name::find($payment->payable->type_id);
+                    $remaining = $bonus_credit->setUser($user)->setSpentModel($spent_model)->deduct($payment->payable->amount);
                     if ($remaining > 0) {
                         if ($user->wallet < $remaining) {
                             $remaining = $user->wallet;
@@ -106,9 +107,9 @@ class WalletController extends Controller
                         $transaction = $user->walletTransaction([
                             'amount' => $remaining,
                             'type' => 'Debit',
-                            'log' => "Service Purchase (ORDER ID: {$partner_order->code()})",
-                            'event_type' => get_class($partner_order),
-                            'event_id' => $partner_order->id,
+                            'log' => "Service Purchase." . ($spent_model instanceof PartnerOrder) ? "ORDER ID: {$spent_model->code()}" : "",
+                            'event_type' => get_class($spent_model),
+                            'event_id' => $spent_model->id,
                             'created_at' => Carbon::now()
                         ]);
                     }
