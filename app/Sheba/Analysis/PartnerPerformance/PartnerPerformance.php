@@ -29,12 +29,14 @@ abstract class PartnerPerformance
     public function setPartner(Partner $partner)
     {
         $this->partner = $partner;
+        if($this->next) $this->next->setPartner($partner);
         return $this;
     }
 
     public function setTimeFrame(TimeFrame $time_frame)
     {
         $this->timeFrame = $time_frame;
+        if($this->next) $this->next->setTimeFrame($time_frame);
         return $this;
     }
 
@@ -44,11 +46,19 @@ abstract class PartnerPerformance
     }
 
     /**
-     * @return Collection
+     * @return array
      */
     public function getData()
     {
         return $this->data->toArray();
+    }
+
+    /**
+     * @return Collection
+     */
+    public function getObject()
+    {
+        return $this->data;
     }
 
     protected function isCalculatingWeekly()

@@ -14,6 +14,8 @@ class CacheWrapper extends PartnerPerformance
         $cache_name = sprintf("%s::%d_%s_%s_data", $this->redisNameSpace, $this->partner->id,
             $this->timeFrame->start->toDateString(), $this->timeFrame->end->toDateString());
 
+//        1_2019-01-01_2019-01-31
+
         if ($store->has($cache_name)) {
             return $store->get($cache_name);
         } else {
