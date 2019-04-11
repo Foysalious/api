@@ -23,16 +23,19 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Redis;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\ShebaPayment;
+use Sheba\Sms\Sms;
 
 class OrderController extends Controller
 {
     private $orderRepository;
     private $jobServiceRepository;
+    private $sms;
 
-    public function __construct()
+    public function __construct(Sms $sms)
     {
         $this->orderRepository = new OrderRepository();
         $this->jobServiceRepository = new JobServiceRepository();
+        $this->sms = $sms;
     }
 
     public function checkOrderValidity(Request $request)
@@ -133,6 +136,7 @@ class OrderController extends Controller
                             $payment = $payment->getFormattedPayment();
                         }
                     }
+                    #$this->sms->shoot($affiliate->profile->mobile, "Congrats! Your account has been verified. Go, refer someone now. https://play.google.com/store/apps/details?id=xyz.sheba.bondhu&hl=en");
                     $this->sendNotifications($bondhuAutoOrder->customer, $order);
                     DB::commit();
                     return api_response($request, $order, 200, ['link' => $link, 'job_id' => $order->jobs->first()->id, 'order_code' => $order->code(), 'payment' => $payment]);
