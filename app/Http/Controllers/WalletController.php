@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\PartnerOrder;
@@ -108,7 +106,7 @@ class WalletController extends Controller
                         $transaction = $user->walletTransaction([
                             'amount' => $remaining,
                             'type' => 'Debit',
-                            'log' => 'Service Purchase.',
+                            'log' => "Service Purchase (ORDER ID: $partner_order->code())",
                             'event_type' => get_class($partner_order),
                             'event_id' => $partner_order->id,
                             'created_at' => Carbon::now()

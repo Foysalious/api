@@ -85,7 +85,7 @@ class PartnerWalletController extends Controller
                     $transaction = $user->walletTransaction([
                         'amount' => $payment->payable->amount,
                         'type' => 'Debit',
-                        'log' => 'Service Purchase.',
+                        'log' => "Service Purchase (ORDER ID: $partner_order->code())",
                         'partner_order_id' => $partner_order->id,
                         'created_at' => Carbon::now()
                     ]);

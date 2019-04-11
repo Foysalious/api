@@ -1,6 +1,7 @@
 <?php namespace Sheba\Analysis\PartnerPerformance\Calculators;
 
 use App\Models\Job;
+use App\Models\JobCancelReason;
 use App\Models\JobNoResponseLog;
 use App\Models\JobScheduleDueLog;
 use Sheba\Analysis\PartnerPerformance\Data\InnerData;
@@ -18,11 +19,6 @@ class Basic extends PartnerPerformance
 
     protected function get()
     {
-//        $completed = $this->getDataOf('completed');
-//        $complain = $this->getDataOf('complain');
-//        $timely_accepted = $this->getDataOf('timely_accepted');
-//        $timely_processed = $this->getDataOf('timely_processed');
-
         return (new PartnerPerformanceData())
             ->setCompleted($this->getDataOf('completed'))
             ->setCancelled($this->getOrderCancelledCountOn($this->timeFrame))
@@ -30,21 +26,6 @@ class Basic extends PartnerPerformance
             ->setTimelyAccepted($this->getDataOf('timely_accepted'))
             ->setTimelyProcessed($this->getDataOf('timely_processed'))
             ->setOrderReceived($this->getOrderCreatedCountOn($this->timeFrame));
-
-//        return collect([
-//            'score' => ($completed->getRate() + $complain->getRate() + $timely_accepted->getRate() + $timely_processed->getRate()) / 4,
-//            'summary' => [
-//                'order_received' => $this->getOrderCreatedCountOn($this->timeFrame),
-//                'completed' => $completed->getTotal(),
-//                'no_complain' => $complain->getTotal(),
-//                'timely_accepted' => $timely_accepted->getTotal(),
-//                'timely_processed' => $timely_processed->getTotal()
-//            ],
-//            'completed' => $completed->toArray(),
-//            'no_complain' => $complain->toArray(),
-//            'timely_accepted' => $timely_accepted->toArray(),
-//            'timely_processed' => $timely_processed->toArray()
-//        ]);
     }
 
     private function getDataOf($of)
@@ -63,9 +44,9 @@ class Basic extends PartnerPerformance
     {
         $order_closed = $this->getOrderClosedCountOn($time_frame);
         $order_created = $this->getOrderCreatedCountOn($time_frame);
+
         return (new InnerData())->setValue($order_closed)->setDenominator($order_created);
     }
-
 
     private function getDataOfComplain(TimeFrame $time_frame)
     {
@@ -145,8 +126,20 @@ class Basic extends PartnerPerformance
         $key = $this->getKey($time_frame);
         if (array_key_exists($key, $this->ordersCreated)) return $this->ordersCreated[$key];
         $data = $this->partner->orders()->createdAtBetween($time_frame)->count();
+        $jobs_that_affects_performance = $this->getJobsThatAffectsPerformance($time_frame);
+        $data -= $jobs_that_affects_performance;
         $this->ordersCreated[$key] = $data;
         return $data;
+    }
+
+    private function getJobsThatAffectsPerformance(TimeFrame $time_frame)
+    {
+        $cancel_reasons_that_affects_performance = JobCancelReason::affectsPartnerPerformance()->pluck('key');
+        $partners_jobs_that_affects_performance = $this->partner->jobs()->whereBetween('jobs.created_at',$time_frame->getArray())
+            ->with(['cancelLog' => function($q) use ($cancel_reasons_that_affects_performance) {
+                $q->whereIn('cancel_reason',$cancel_reasons_that_affects_performance);
+            }])->get()->pluck('cancelLog.job_id')->toArray();
+        return count(array_filter($partners_jobs_that_affects_performance));
     }
 
     private function getOrderClosedCountOn(TimeFrame $time_frame)
@@ -160,7 +153,9 @@ class Basic extends PartnerPerformance
 
     private function getOrderCancelledCountOn(TimeFrame $time_frame)
     {
-        return $this->partner->orders()->cancelledAtBetween($time_frame)->count();
+        $cancelled = $this->partner->orders()->cancelledAtBetween($time_frame)->count();
+        $customer_count = $this->getJobsThatAffectsPerformance($time_frame);
+        return $cancelled-$customer_count;
     }
 
     private function getJobsServedOn(TimeFrame $time_frame)

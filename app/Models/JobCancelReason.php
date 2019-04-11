@@ -10,4 +10,9 @@ class JobCancelReason extends Model
     {
         return $query->where('is_published_for_customer', 1);
     }
+
+    public function scopeAffectsPartnerPerformance($query)
+    {
+        return $query->where('affects_partner_performance',1);
+    }
 }
