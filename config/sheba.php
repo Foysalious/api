@@ -112,5 +112,6 @@ return [
                 ]
             ]
     ],
-    'sheba_help_desk_id' => 1809
+    'sheba_help_desk_id' => 1809,
+    'best_deal_ids' => env('BEST_DEAL_IDS')
 ];
