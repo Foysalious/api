@@ -22,7 +22,6 @@ class CategoryController extends Controller
     use Helpers, ModificationFields;
     private $categoryRepository;
     private $serviceRepository;
-    CONST BEST_DEAL_ID = 10;
 
     public function __construct()
     {
@@ -166,8 +165,8 @@ class CategoryController extends Controller
                 if (!is_null($hyperLocation)) $location = $hyperLocation->location;
             }
 
-
-            $best_deal_category = CategoryGroupCategory::where('category_group_id', self::BEST_DEAL_ID)->pluck('category_id')->toArray();
+            $best_deal_categories_id = explode(',', config('sheba.best_deal_ids'));
+            $best_deal_category = CategoryGroupCategory::whereIn('category_group_id', $best_deal_categories_id)->pluck('category_id')->toArray();
 
             if ($location) {
                 $children = $category->load(['children' => function ($q) use ($best_deal_category, $location) {
