@@ -136,7 +136,7 @@ class OrderController extends Controller
                             $payment = $payment->getFormattedPayment();
                         }
                     }
-                    #$this->sms->shoot($affiliate->profile->mobile, "Congrats! Your account has been verified. Go, refer someone now. https://play.google.com/store/apps/details?id=xyz.sheba.bondhu&hl=en");
+
                     $this->sendNotifications($bondhuAutoOrder->customer, $order);
                     if ($request->header('portal-name') == 'admin-portal') {
                         $this->sendSms($affiliate, $order);
@@ -180,13 +180,15 @@ class OrderController extends Controller
         $affiliate = Affiliate::find($affiliate);
         $agent_mobile = $affiliate->profile->mobile;
         $partner = $order->partnerOrders->first()->partner;
+        $job = $order->lastJob();
 
         (new SmsHandler('order-created-to-bondhu'))->send($agent_mobile, [
-            'service_name' => $order->lastJob()->service_name,
-            'order_code' => $order->code(),
-            'partner_name' => $partner->name,
-            'preferred_time' => $order->lastJob()->preferred_time,
-            'preferred_date' => $order->lastJob()->schedule_date,
+            'service_name'   => $job->category->name,
+            'order_code'     => $order->code(),
+            'partner_name'   => $partner->name,
+            'partner_number' => $partner->getContactNumber(),
+            'preferred_time' => $job->preferred_time,
+            'preferred_date' => $job->schedule_date,
         ]);
     }
 
