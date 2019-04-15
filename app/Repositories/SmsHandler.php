@@ -16,12 +16,12 @@ class SmsHandler
 
     public function send($mobile, $variables)
     {
-        if ($this->template->is_on){
+        if ($this->template->is_on) {
             $this->checkVariables($variables);
 
             $message = $this->template->template;
             foreach ($variables as $variable => $value) {
-                $message = str_replace("{{" . $variable. "}}", $value, $message);
+                $message = str_replace("{{" . $variable . "}}", $value, $message);
             }
             $this->sms->shoot($mobile, $message);
         }

@@ -23,16 +23,19 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Redis;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\ShebaPayment;
+use Sheba\Sms\Sms;
 
 class OrderController extends Controller
 {
     private $orderRepository;
     private $jobServiceRepository;
+    private $sms;
 
-    public function __construct()
+    public function __construct(Sms $sms)
     {
         $this->orderRepository = new OrderRepository();
         $this->jobServiceRepository = new JobServiceRepository();
+        $this->sms = $sms;
     }
 
     public function checkOrderValidity(Request $request)
@@ -133,7 +136,11 @@ class OrderController extends Controller
                             $payment = $payment->getFormattedPayment();
                         }
                     }
+
                     $this->sendNotifications($bondhuAutoOrder->customer, $order);
+                    if ($request->header('portal-name') == 'admin-portal') {
+                        $this->sendSms($affiliate, $order);
+                    }
                     DB::commit();
                     return api_response($request, $order, 200, ['link' => $link, 'job_id' => $order->jobs->first()->id, 'order_code' => $order->code(), 'payment' => $payment]);
                 } else {
@@ -166,6 +173,23 @@ class OrderController extends Controller
         } catch (\Throwable $e) {
             return null;
         }
+    }
+
+    private function sendSms($affiliate, $order)
+    {
+        $affiliate = Affiliate::find($affiliate);
+        $agent_mobile = $affiliate->profile->mobile;
+        $partner = $order->partnerOrders->first()->partner;
+        $job = $order->lastJob();
+
+        (new SmsHandler('order-created-to-bondhu'))->send($agent_mobile, [
+            'service_name'   => $job->category->name,
+            'order_code'     => $order->code(),
+            'partner_name'   => $partner->name,
+            'partner_number' => $partner->getContactNumber(),
+            'preferred_time' => $job->preferred_time,
+            'preferred_date' => $job->schedule_date,
+        ]);
     }
 
     private function sendNotifications($customer, $order)

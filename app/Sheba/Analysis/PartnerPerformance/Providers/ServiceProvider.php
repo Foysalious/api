@@ -25,7 +25,7 @@ class ServiceProvider extends BaseServiceProvider
     {
         $this->app->singleton(PartnerPerformance::class, function ($app) {
             return new Basic();
-            //return new CacheWrapper(new StatDbWrapper(new Basic()));
+//            return new CacheWrapper(new Basic());
         });
     }
 }
