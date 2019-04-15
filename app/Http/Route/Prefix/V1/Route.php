@@ -15,7 +15,7 @@ class Route
                 $api->get('orders/{order}/bills', 'Vendor\OrderController@getBills');
                 $api->post('orders', 'Vendor\OrderController@placeOrder');
                 $api->get('locations', 'Vendor\LocationController@index');
-                $api->get('topup', 'TopUpController@topUp');
+                $api->post('topup', 'TopUpController@topUp');
             });
             $api->get('categories', ['uses' => 'CategoryController@index']);
             $api->get('categories/{category}/secondaries', ['uses' => 'CategoryController@get']);
