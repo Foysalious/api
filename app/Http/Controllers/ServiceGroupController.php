@@ -13,27 +13,32 @@ use Illuminate\Support\Facades\DB;
 
 class ServiceGroupController extends Controller
 {
-    public function index(Request $request)
+    public function show($service_group, Request $request)
     {
         $service_group = [
-            [
-                "id" => 10,
-                "name" => "Refrigerator Servicing ",
-                'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/1/150.jpg',
-                "original_price" => 300,
-                "discounted_price" => 2,
-                "discount" => 10,
-                'stock' => 25
-            ],
-            [
-                "id" => 10,
-                "name" => "Refrigerator Servicing ",
-                'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/1/150.jpg',
-                "original_price" => 6,
-                "discounted_price" => 2,
-                "discount" => 10,
-                'stock' => 25
-            ],
+                'id' => 1,
+                "name" =>  "Appliances Repair",
+                "app_thumb" =>  "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/1/150.jpg",
+                "services" => [
+                    [
+                        "id" => 10,
+                        "name" => "Refrigerator Servicing ",
+                        'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/1/150.jpg',
+                        "original_price" => 300,
+                        "discounted_price" => 2,
+                        "discount" => 10,
+                        'stock' => 25
+                    ],
+                    [
+                        "id" => 10,
+                        "name" => "Refrigerator Servicing ",
+                        'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/1/150.jpg',
+                        "original_price" => 6,
+                        "discounted_price" => 2,
+                        "discount" => 10,
+                        'stock' => 25
+                    ],
+            ]
         ];
 
         return api_response($request, $service_group, 200, ['service_group' => $service_group]);
@@ -102,7 +107,7 @@ class ServiceGroupController extends Controller
         return $for == null ? 'publishedForWeb' : 'publishedFor' . ucwords($for);
     }
 
-    public function show($id, Request $request)
+    public function showw($id, Request $request)
     {
         try {
             $this->validate($request, [

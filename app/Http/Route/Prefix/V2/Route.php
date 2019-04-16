@@ -87,6 +87,9 @@ class Route
 
             $api->group(['prefix' => 'service-groups'], function ($api) {
                 $api->get('/', 'ServiceGroupController@index');
+                $api->group(['prefix' => '{id}'], function ($api) {
+                    $api->get('', 'ServiceGroupController@show');
+                });
             });
 
 
