@@ -53,6 +53,13 @@ class PartnerRoute
                 $api->get('/bank-interest', 'SpLoanController@getBankInterest');
             });
 
+
+            $api->group(['prefix' => 'pos'], function ($api) {
+               $api->resources(['services' => 'Pos\ServiceController']);
+               $api->resources(['orders' => 'Pos\OrderController']);
+               $api->resources(['customers' => 'Pos\CustomerController']);
+            });
+
             $api->group(['prefix' => 'categories'], function ($api) {
                 $api->get('/all', 'CategoryController@getPartnerLocationCategory');
                 $api->get('/tree', 'PartnerController@getCategoriesTree');
