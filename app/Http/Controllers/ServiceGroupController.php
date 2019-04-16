@@ -21,7 +21,7 @@ class ServiceGroupController extends Controller
                 "app_thumb" =>  "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/1/150.jpg",
                 "services" => [
                     [
-                        'category_id' => 1,
+                        'master_category_id' => 1,
                         'category_name' => 'Appliances Repair',
                         "id" => 10,
                         "service_name" => "Refrigerator Servicing",
@@ -33,7 +33,7 @@ class ServiceGroupController extends Controller
                         'stock_left' => 25
                     ],
                     [
-                        'category_id' => 1,
+                        'master_category_id' => 1,
                         'category_name' => 'Fridge Repair',
                         "id" => 10,
                         "service_name" => "Fridge Servicing",
