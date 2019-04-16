@@ -17,12 +17,14 @@ class ServiceGroupController extends Controller
     {
         $service_group = [
                 'id' => 1,
-                "name" =>  "Appliances Repair",
+                "name" =>  "Repair",
                 "app_thumb" =>  "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/1/150.jpg",
                 "services" => [
                     [
-                        "id" => 10,
-                        "name" => "Refrigerator Servicing ",
+                        'category_id' => 1,
+                        'category_name' => 'Appliances Repair',
+                        "service_id" => 10,
+                        "service_name" => "Refrigerator Servicing",
                         'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/1/150.jpg',
                         "original_price" => 300,
                         "discounted_price" => 2,
@@ -31,8 +33,10 @@ class ServiceGroupController extends Controller
                         'stock_left' => 25
                     ],
                     [
-                        "id" => 12,
-                        "name" => "Fridge Servicing ",
+                        'category_id' => 1,
+                        'category_name' => 'Fridge Repair',
+                        "service_id" => 10,
+                        "service_name" => "Fridge Servicing",
                         'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/1/150.jpg',
                         "original_price" => 6,
                         "discounted_price" => 2,

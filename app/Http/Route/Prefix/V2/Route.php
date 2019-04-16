@@ -92,6 +92,13 @@ class Route
                 });
             });
 
+            $api->group(['prefix' => 'offer-groups'], function ($api) {
+                $api->get('/', 'OfferGroupController@index');
+                $api->group(['prefix' => '{id}'], function ($api) {
+                    $api->get('', 'OfferGroupController@show');
+                });
+            });
+
 
             $api->group(['prefix' => 'categories'], function ($api) {
                 $api->group(['prefix' => '{id}'], function ($api) {
