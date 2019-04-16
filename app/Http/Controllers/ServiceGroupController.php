@@ -23,7 +23,7 @@ class ServiceGroupController extends Controller
                     [
                         'category_id' => 1,
                         'category_name' => 'Appliances Repair',
-                        "service_id" => 10,
+                        "id" => 10,
                         "service_name" => "Refrigerator Servicing",
                         'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/1/150.jpg',
                         "original_price" => 300,
@@ -35,7 +35,7 @@ class ServiceGroupController extends Controller
                     [
                         'category_id' => 1,
                         'category_name' => 'Fridge Repair',
-                        "service_id" => 10,
+                        "id" => 10,
                         "service_name" => "Fridge Servicing",
                         'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/1/150.jpg',
                         "original_price" => 6,
@@ -46,8 +46,18 @@ class ServiceGroupController extends Controller
                     ],
             ]
         ];
+        $master_category = [
+            [
+                'id' => 1,
+                'name' => 'Appliances Repair',
+            ],
+            [
+                'id' => 2,
+                'name' => 'Fridge Repair',
+            ],
+        ];
 
-        return api_response($request, $service_group, 200, ['service_group' => $service_group]);
+        return api_response($request, $service_group, 200, ['service_group' => $service_group, 'master_category'=> $master_category]);
         try {
             $this->validate($request, [
                 'for' => 'sometimes|required|string|in:app,web',
