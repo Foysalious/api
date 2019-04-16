@@ -27,16 +27,18 @@ class ServiceGroupController extends Controller
                         "original_price" => 300,
                         "discounted_price" => 2,
                         "discount" => 10,
-                        'stock' => 25
+                        'total_stock' => 50,
+                        'stock_left' => 25
                     ],
                     [
-                        "id" => 10,
-                        "name" => "Refrigerator Servicing ",
+                        "id" => 12,
+                        "name" => "Fridge Servicing ",
                         'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/1/150.jpg',
                         "original_price" => 6,
                         "discounted_price" => 2,
                         "discount" => 10,
-                        'stock' => 25
+                        'total_stock' => 50,
+                        'stock_left' => 25
                     ],
             ]
         ];
