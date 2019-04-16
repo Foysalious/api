@@ -22,13 +22,17 @@ class OfferGroupController extends Controller
             "offers" => [
                 [
                     "id" => 10,
-                    "sale_start_time" => "2019-04-16 14:19:11",
-                    "sale_end_time" => "2019-04-18 14:19:11",
+                    "target_type" => 'service_group',
+                    "target_id" => 1,
+                    "start_time" => "2019-04-16 14:19:11",
+                    "end_time" => "2019-04-18 14:19:11",
                 ],
                 [
                     "id" => 12,
-                    "sale_start_time" => "2019-04-16 14:19:11",
-                    "sale_end_time" => "2019-04-18 14:19:11",
+                    "target_type" => 'service_group',
+                    "target_id" => 1,
+                    "start_time" => "2019-04-16 14:19:11",
+                    "end_time" => "2019-04-18 14:19:11",
                 ],
             ]
         ];
