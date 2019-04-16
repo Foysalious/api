@@ -84,6 +84,12 @@ class Route
                     $api->get('', 'CategoryGroupController@show');
                 });
             });
+
+            $api->group(['prefix' => 'service-groups'], function ($api) {
+                $api->get('/', 'ServiceGroupController@index');
+            });
+
+
             $api->group(['prefix' => 'categories'], function ($api) {
                 $api->group(['prefix' => '{id}'], function ($api) {
                     $api->get('', 'CategoryController@show');
