@@ -33,13 +33,14 @@ class ServiceGroupController extends Controller
 
             if ($location) {
                 $service_group = ServiceGroup::with(['services' => function ($q) use ($location) {
-                    return $q->published()->whereHas('locations', function ($q) use ($location) {
-                        $q->where('locations.id', $location);
-                    });
+                    return $q->published()->orderBy('service_group_service.order')
+                        ->whereHas('locations', function ($q) use ($location) {
+                            $q->where('locations.id', $location);
+                        });
                 }])->where('id', $service_group)->select('id', 'name', 'app_thumb')->first();
             } else {
                 $service_group = ServiceGroup::with(['services' => function ($q) {
-                    $q->published();
+                    $q->published()->orderBy('service_group_service.order');
                 }])->where('id', $service_group)->select('id', 'name', 'app_thumb')->first();
             }
 
@@ -81,89 +82,4 @@ class ServiceGroupController extends Controller
         }
     }
 
-    private function getPublishedFor($for)
-    {
-        return $for == null ? 'publishedForWeb' : 'publishedFor' . ucwords($for);
-    }
-
-    public function showw($id, Request $request)
-    {
-        try {
-            $this->validate($request, [
-                'location' => 'sometimes|numeric',
-                'lat' => 'sometimes|numeric',
-                'lng' => 'required_with:lat'
-            ]);
-            $location = null;
-            if ($request->has('location')) {
-                $location = Location::find($request->location)->id;
-            } else if ($request->has('lat')) {
-                $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
-                if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
-            }
-            if ($location) {
-                $category_group = CategoryGroup::with(['categories' => function ($q) use ($location) {
-                    return $q->published()->whereHas('locations', function ($q) use ($location) {
-                        $q->where('locations.id', $location);
-                    })
-                        ->orderBy('category_group_category.order')
-                        ->whereHas('services', function ($q) use ($location) {
-                            $q->published()->whereHas('locations', function ($q) use ($location) {
-                                $q->where('locations.id', $location);
-                            });
-                        });
-                }])->where('id', $id)->select('id', 'name')->first();
-            } else {
-                $category_group = CategoryGroup::with(['categories' => function ($q) {
-                    $q->published()
-                        ->orderBy('category_group_category.order')
-                        ->whereHas('services', function ($q) {
-                            $q->published();
-                        });
-                }])->where('id', $id)->select('id', 'name')->first();
-            }
-            if ($category_group != null) {
-                $categories = $category_group->categories->each(function ($category) use ($location) {
-                    removeRelationsAndFields($category);
-                });
-
-                if (count($categories) > 0) {
-                    $category_group['position_at_home'] = null;
-                    removeRelationsAndFields($category_group);
-                    $category_group['secondaries'] = $categories;
-                    return api_response($request, $categories, 200, ['category' => $category_group]);
-                }
-            }
-            return api_response($request, null, 404);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
-    public function getCategoryByColumn($column, $value, $location)
-    {
-        $category_group = CategoryGroup::with(['categories' => function ($q) {
-            $q->has('services', '>', 0);
-        }])->where($column, 'like', '%' . $value . '%')->select('id', 'name', 'banner')->first();
-        if ($category_group != null) {
-            $setting = ScreenSettingElement::where([['item_type', 'App\\Models\\CategoryGroup'], ['item_id', $category_group->id]])->first();
-            if ($setting != null) {
-                $category_group['position_at_home'] = $setting ? $setting->order : null;
-                $categories = collect();
-                $category_group->categories->each(function ($category) use ($location, $categories) {
-                    if (in_array($location, $category->locations()->pluck('id')->toArray())) {
-                        $categories->push($category);
-                        removeRelationsAndFields($category);
-                    }
-                });
-                if (count($categories) > 0) {
-                    $category_group['secondaries'] = $categories;
-                    removeRelationsAndFields($category_group);
-                    return $category_group;
-                }
-            }
-        }
-        return null;
-    }
 }
