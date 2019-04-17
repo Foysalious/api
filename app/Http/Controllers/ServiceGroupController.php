@@ -17,9 +17,31 @@ class ServiceGroupController extends Controller
     public function show($service_group, Request $request)
     {
         try {
-            $service_group = ServiceGroup::with(['services' => function ($q) {
-                $q->published();
-            }])->where('id', $service_group)->select('id', 'name', 'app_thumb')->first();
+            $this->validate($request, [
+                'location' => 'sometimes|numeric',
+                'lat' => 'sometimes|numeric',
+                'lng' => 'required_with:lat'
+            ]);
+            $location = null;
+            if ($request->has('location')) {
+                $location = Location::find($request->location)->id;
+            } else if ($request->has('lat')) {
+                $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
+            }
+
+
+            if ($location) {
+                $service_group = ServiceGroup::with(['services' => function ($q) use ($location) {
+                    return $q->published()->whereHas('locations', function ($q) use ($location) {
+                        $q->where('locations.id', $location);
+                    });
+                }])->where('id', $service_group)->select('id', 'name', 'app_thumb')->first();
+            } else {
+                $service_group = ServiceGroup::with(['services' => function ($q) {
+                    $q->published();
+                }])->where('id', $service_group)->select('id', 'name', 'app_thumb')->first();
+            }
 
             $services = [];
             foreach ($service_group->services as $service) {
@@ -49,6 +71,9 @@ class ServiceGroupController extends Controller
                 return ['id' => $item['master_category_id'], 'name' => $item['category_name']];
             })->values();
             return api_response($request, $service_group, 200, ['service_group' => $service_group, 'master_category' => $master_category]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             dd($e);
             app('sentry')->captureException($e);
