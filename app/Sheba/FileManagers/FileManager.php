@@ -97,4 +97,11 @@ trait FileManager
         $file = (new PushImage($file))->make();
         return [ $file, $filename ];
     }
+
+    protected function makePosServiceAppThumb($file, $name)
+    {
+        $filename = $this->uniqueFileName($file, $name);
+        $file = (new PosServiceAppThumb($file))->make();
+        return [ $file, $filename ];
+    }
 }

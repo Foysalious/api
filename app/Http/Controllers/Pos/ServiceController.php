@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\PartnerPosService;
+use App\Sheba\Pos\ProductCreator;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -40,7 +41,6 @@ class ServiceController extends Controller
 
             return api_response($request, $services, 200, ['services' => $services]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -72,23 +72,12 @@ class ServiceController extends Controller
         }
     }
 
-    public function store(Request $request)
+    public function store(Request $request, ProductCreator $creator)
     {
         try {
             $this->validate($request, ['name' => 'required', 'category_id' => 'required', 'price' => 'required']);
 
-            $data = [
-                'partner_id' => $request->partner->id,
-                'pos_category_id' => $request->category_id,
-                'name' => $request->name,
-                // 'app_thumb' => $request->app_thumb,
-                'cost' => $request->cost,
-                'price' => $request->price,
-                'stock' => ($request->has('stock') && $request->stock) ? (double)$request->stock : null,
-                'vat_percentage' => ($request->has('vat_percentage') && $request->vat_percentage) ? (double)$request->vat_percentage : 0.00
-            ];
-
-            $partner_pos_service = PartnerPosService::create($this->withCreateModificationField($data));
+            $partner_pos_service = $creator->setData($request->all())->create();
 
             if ($request->has('discount_amount') && $request->discount_amount > 0) {
                 $discount_data = [
