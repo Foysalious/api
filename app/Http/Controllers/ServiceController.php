@@ -53,7 +53,7 @@ class ServiceController extends Controller
     public function get($service, Request $request, ApproximatePriceCalculator $approximatePriceCalculator)
     {
         try {
-            $service = Service::where('id', $service)->select('id', 'name', 'unit', 'structured_description', 'category_id', 'short_description', 'description', 'thumb', 'slug', 'min_quantity', 'banner', 'faqs', 'bn_name', 'bn_faqs', 'variable_type', 'variables');
+            $service = Service::where('id', $service)->select('id', 'name', 'unit', 'slug', 'structured_description', 'category_id', 'short_description', 'description', 'thumb', 'slug', 'min_quantity', 'banner', 'faqs', 'bn_name', 'bn_faqs', 'variable_type', 'variables');
 
             $offer = $service->first()->groups()->first() ? $service->first()->groups()->first()->offers()->where('end_date', '>', Carbon::now())->first() : null;
             $options = $this->serviceQuestionSet($service->first());
