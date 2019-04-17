@@ -53,7 +53,7 @@ class ServiceController extends Controller
     public function get($service, Request $request, ApproximatePriceCalculator $approximatePriceCalculator)
     {
         try {
-            $service = Service::where('id', $service)->select('id', 'name', 'unit', 'slug', 'structured_description', 'category_id', 'short_description', 'description', 'thumb', 'slug', 'min_quantity', 'banner', 'faqs', 'bn_name', 'bn_faqs', 'variable_type', 'variables');
+            $service = Service::where('id', $service)->select('id', 'name', 'unit', 'structured_description', 'category_id', 'short_description', 'description', 'thumb', 'slug', 'min_quantity', 'banner', 'faqs', 'bn_name', 'bn_faqs', 'variable_type', 'variables');
 
             $offer = $service->first()->groups()->first() ? $service->first()->groups()->first()->offers()->where('end_date', '>', Carbon::now())->first() : null;
             $options = $this->serviceQuestionSet($service->first());
@@ -129,10 +129,11 @@ class ServiceController extends Controller
             $service['bn_faqs'] = $service->bn_faqs ? json_decode($service->bn_faqs) : null;
             $category = Category::with(['parent' => function ($query) {
                 $query->select('id', 'name');
-            }])->where('id', $service->category_id)->select('id', 'name', 'parent_id', 'video_link')->first();
+            }])->where('id', $service->category_id)->select('id', 'name', 'parent_id', 'video_link', 'slug')->first();
 
             array_add($service, 'category_name', $category->name);
             array_add($service, 'video_link', $category->video_link);
+            array_add($service, 'category_slug', $category->slug);
             array_add($service, 'master_category_id', $category->parent->id);
             array_add($service, 'master_category_name', $category->parent->name);
             array_add($service, 'service_breakdown', $service_breakdown);
