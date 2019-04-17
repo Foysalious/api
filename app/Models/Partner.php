@@ -27,9 +27,7 @@ class Partner extends Model implements Rewardable, TopUpAgent
     protected $resourcePivotColumns = ['id', 'designation', 'department', 'resource_type', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
     protected $categoryPivotColumns = ['id', 'experience', 'preparation_time_minutes', 'response_time_min', 'response_time_max', 'commission', 'is_verified', 'uses_sheba_logistic', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at', 'is_home_delivery_applied', 'is_partner_premise_applied', 'delivery_charge'];
     protected $servicePivotColumns = ['id', 'description', 'options', 'prices', 'min_prices', 'base_prices', 'base_quantity', 'is_published', 'discount', 'discount_start_date', 'discount_start_date', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
-
     private $resourceTypes;
-
 
     public function __construct($attributes = [])
     {
@@ -585,5 +583,8 @@ class Partner extends Model implements Rewardable, TopUpAgent
         return json_decode($this->sales_information);
     }
 
-
+    public function posServices()
+    {
+        return $this->hasMany(PartnerPosService::class);
+    }
 }

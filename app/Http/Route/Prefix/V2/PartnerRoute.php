@@ -53,11 +53,11 @@ class PartnerRoute
                 $api->get('/bank-interest', 'SpLoanController@getBankInterest');
             });
 
-
             $api->group(['prefix' => 'pos'], function ($api) {
-               $api->resources(['services' => 'Pos\ServiceController']);
-               $api->resources(['orders' => 'Pos\OrderController']);
-               $api->resources(['customers' => 'Pos\CustomerController']);
+                $api->resources(['categories' => 'Pos\CategoryController']);
+                $api->resources(['services' => 'Pos\ServiceController']);
+                $api->resources(['orders' => 'Pos\OrderController']);
+                $api->resources(['customers' => 'Pos\CustomerController']);
             });
 
             $api->group(['prefix' => 'categories'], function ($api) {

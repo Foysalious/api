@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers\Pos;
+<?php namespace App\Http\Controllers\Pos;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -48,30 +46,5 @@ class OrderController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-    }
-
-    public function create()
-    {
-
-    }
-
-    public function store()
-    {
-
-    }
-
-    public function edit()
-    {
-
-    }
-
-    public function update()
-    {
-
-    }
-
-    public function show()
-    {
-
     }
 }
