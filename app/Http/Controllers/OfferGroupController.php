@@ -32,7 +32,8 @@ class OfferGroupController extends Controller
 
             if ($location) {
                 $offer_group = OfferGroup::with(['offers' => function ($q) use ($location) {
-                    return $q->published()->whereHas('locations', function ($q) use ($location) {
+                    return $q->active()->flash()->select('id', 'target_type', 'target_id', 'start_date', 'end_date')
+                        ->whereHas('locations', function ($q) use ($location) {
                         $q->where('locations.id', $location);
                     });
                 }])->where('id', $offer_group)->select('id', 'name', 'app_thumb')->first();
