@@ -6,6 +6,7 @@ use App\Models\HomepageSetting;
 use App\Models\HyperLocal;
 use App\Models\Location;
 use App\Models\ScreenSettingElement;
+use App\Models\ServiceGroup;
 use App\Sheba\Queries\Category\StartPrice;
 use Illuminate\Contracts\Validation\ValidationException;
 use Illuminate\Http\Request;
@@ -15,104 +16,41 @@ class ServiceGroupController extends Controller
 {
     public function show($service_group, Request $request)
     {
-        $service_group = [
-                'id' => 1,
-                "name" =>  "Repair",
-                "app_thumb" =>  "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/1/150.jpg",
-                "services" => [
-                    [
-                        'master_category_id' => 1,
-                        'category_name' => 'Appliances Repair',
-                        "id" => 10,
-                        "service_name" => "Refrigerator Servicing",
-                        'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/1/150.jpg',
-                        "original_price" => 300,
-                        "discounted_price" => 2,
-                        "discount" => 10,
-                        'total_stock' => 50,
-                        'stock_left' => 25
-                    ],
-                    [
-                        'master_category_id' => 1,
-                        'category_name' => 'Fridge Repair',
-                        "id" => 10,
-                        "service_name" => "Fridge Servicing",
-                        'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/1/150.jpg',
-                        "original_price" => 6,
-                        "discounted_price" => 2,
-                        "discount" => 10,
-                        'total_stock' => 50,
-                        'stock_left' => 25
-                    ],
-            ]
-        ];
-        $master_category = [
-            [
-                'id' => 1,
-                'name' => 'Appliances Repair',
-            ],
-            [
-                'id' => 2,
-                'name' => 'Fridge Repair',
-            ],
-        ];
-
-        return api_response($request, $service_group, 200, ['service_group' => $service_group, 'master_category'=> $master_category]);
         try {
-            $this->validate($request, [
-                'for' => 'sometimes|required|string|in:app,web',
-                'name' => 'sometimes|required|string',
-                'location' => 'sometimes|numeric',
-                'lat' => 'sometimes|numeric',
-                'lng' => 'required_with:lat'
-            ]);
-            $location = null;
-            if ($request->has('location')) {
-                $location = Location::find($request->location)->id;
-            } else if ($request->has('lat')) {
-                $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
-                if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
-            }
-            $location = !is_null($location) ? $location : 4;
-            $for = $this->getPublishedFor($request->for);
-            if ($request->has('name')) {
-                $categories = $this->getCategoryByColumn('name', $request->name, $location);
-                return $categories ? api_response($request, $categories, 200, ['category' => $categories]) : api_response($request, null, 404);
-            }
-            $with = '';
-            $categoryGroups = CategoryGroup::$for()->select('id', 'name', 'app_thumb', 'app_banner')
-                ->whereHas('locations', function ($query) use ($location) {
-                    $query->where('locations.id', $location);
-                })
-                ->get();
+            $service_group = ServiceGroup::with(['services' => function ($q) {
+                $q->published();
+            }])->where('id', $service_group)->select('id', 'name', 'app_thumb')->first();
 
-            if ($request->has('with')) {
-                $with = $request->with;
-                if ($with == 'categories') {
-                    $categoryGroups->load(['categories' => function ($query) use ($location) {
-                        return $query->published()->orderBy('category_group_category.order')
-                            ->whereHas('services', function ($q) use ($location) {
-                                $q->published()->whereHas('locations', function ($q) use ($location) {
-                                    $q->where('locations.id', $location);
-                                });
-                            })->whereHas('locations', function ($query) use ($location) {
-                                $query->where('locations.id', $location);
-                            });
-                    }]);
-                    $categoryGroups = $categoryGroups->each(function ($category_group) {
-                        $category_group->categories->each(function ($category) {
-                            removeRelationsAndFields($category);
-                        });
-                        $category_group->children = $category_group->categories;
-                        unset($category_group->categories);
-                    });
-                }
+            $services = [];
+            foreach ($service_group->services as $service) {
+                $service_variable = $service->flashPrice();
+                $service = [
+                    'master_category_id' => $service->category->parent->id,
+                    'category_name' => $service->category->parent->name,
+                    "id" => $service->id,
+                    "service_name" => $service->name,
+                    'image' => $service->app_thumb,
+                    "original_price" => $service_variable['price'],
+                    "discounted_price" => $service_variable['discounted_price'],
+                    "discount" => $service_variable['discount'],
+                    'total_stock' => (int)$service->stock,
+                    'stock_left' => (int)$service->stock_left
+                ];
+                array_push($services, $service);
             }
-            return count($categoryGroups) > 0 ? api_response($request, $categoryGroups, 200, ['categories' => $categoryGroups]) : api_response($request, null, 404);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
+
+            $service_group = [
+                'id' => $service_group->id,
+                "name" => $service_group->name,
+                "app_thumb" => $service_group->app_thumb,
+                "services" => $services
+            ];
+            $master_category = collect($services)->unique('master_category_id')->map(function ($item) {
+                return ['id' => $item['master_category_id'], 'name' => $item['category_name']];
+            })->values();
+            return api_response($request, $service_group, 200, ['service_group' => $service_group, 'master_category' => $master_category]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
