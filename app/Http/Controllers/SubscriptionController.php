@@ -42,7 +42,7 @@ class SubscriptionController extends Controller
 
             $parents = collect();
             foreach ($categories as $category) {
-                $subscriptions =  $category->services->map(function($service) use ($approximatePriceCalculator){
+                $subscriptions = $category->services->map(function ($service) use ($approximatePriceCalculator) {
                     $service = removeRelationsAndFields($service);
                     $subscription = $service->serviceSubscription;
                     $subscription['offers'] = $subscription->getDiscountOffers();
@@ -55,28 +55,27 @@ class SubscriptionController extends Controller
                     $subscription['banner'] = $service['banner'];
                     return $subscription;
                 });
-                $parent =[
-                    'id'=>$category->parent->id,
-                    'name'=> $category->parent->name,
+                $parent = [
+                    'id' => $category->parent->id,
+                    'name' => $category->parent->name,
                     'bn_name' => $category->parent->bn_name,
                     'slug' => $category->parent->slug,
                     'short_description' => $category->parent->slug,
                     'subscriptions' => $subscriptions
                 ];
-                if(count($parent['subscriptions']) > 0) {
-                    $existingParent = $parents->filter(function($parent) use ($category) {
-                        if($parent['id'] === $category->parent->id) return $parent;
+                if (count($parent['subscriptions']) > 0) {
+                    $existingParent = $parents->filter(function ($parent) use ($category) {
+                        if ($parent['id'] === $category->parent->id) return $parent;
                     });
-                    if(count($existingParent)>0) {
-                        foreach($subscriptions as $subscription) {
+                    if (count($existingParent) > 0) {
+                        foreach ($subscriptions as $subscription) {
                             $existingParent->first()['subscriptions']->push($subscription);
                         }
-                    }
-                    else
+                    } else
                         $parents->push($parent);
                 }
             }
-            if(count($parents)>0)
+            if (count($parents) > 0)
                 return api_response($request, $parents, 200, ['category' => $parents]);
             else
                 return api_response($request, null, 404);
@@ -88,7 +87,7 @@ class SubscriptionController extends Controller
 
     public function all(Request $request, ApproximatePriceCalculator $approximatePriceCalculator)
     {
-        try{
+        try {
             if ($request->has('location')) {
                 $location = $request->location != '' ? $request->location : 4;
             } else {
@@ -126,7 +125,7 @@ class SubscriptionController extends Controller
         }
     }
 
-    public function show($serviceSubscription,Request $request, ApproximatePriceCalculator $approximatePriceCalculator)
+    public function show($serviceSubscription, Request $request, ApproximatePriceCalculator $approximatePriceCalculator)
     {
         try {
             if ($request->has('location')) {

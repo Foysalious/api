@@ -41,4 +41,9 @@ class ServiceGroup extends Model
             return $this->where('is_published_for_app', 1)->where('is_published_for_web', 1);
         }
     }
+
+    public function offers()
+    {
+        return $this->hasMany(OfferShowcase::class, 'target_id')->where('target_type', 'App\\Models\\ServiceGroup');
+    }
 }

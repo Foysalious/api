@@ -53,6 +53,11 @@ class Service extends Model
         return $this->hasOne(ServiceSubscription::class);
     }
 
+    public function groups()
+    {
+        return $this->belongsToMany(ServiceGroup::class, 'service_group_service');
+    }
+
     public function reviews()
     {
         return $this->hasMany(Review::class);
