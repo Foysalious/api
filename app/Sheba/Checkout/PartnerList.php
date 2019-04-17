@@ -18,6 +18,7 @@ use Carbon\Carbon;
 use DB;
 use Dingo\Api\Routing\Helpers;
 use Sheba\Checkout\DeliveryCharge;
+use Sheba\Checkout\Partners\PartnerUnavailabilityReasons;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
@@ -263,8 +264,24 @@ class PartnerList
     {
         $this->partners->load(['workingHours', 'leaves']);
         $this->partners->each(function ($partner) {
-            $partner['is_available'] = $this->isWithinPreparationTime($partner) && (new PartnerAvailable($partner))->available($this->partnerListRequest->scheduleDate, $this->partnerListRequest->scheduleTime, $this->partnerListRequest->selectedCategory) ? 1 : 0;
+            if(!$this->isWithinPreparationTime($partner)) {
+                $partner['is_available'] = 0;
+                $partner['unavailability_reason'] = PartnerUnavailabilityReasons::PREPARATION_TIME;
+                return;
+            }
+
+            $partner_available = new PartnerAvailable($partner);
+            $partner_available->check($this->partnerListRequest->scheduleDate, $this->partnerListRequest->scheduleTime, $this->partnerListRequest->selectedCategory);
+
+            if(!$partner_available->getAvailability()) {
+                $partner['is_available'] = 0;
+                $partner['unavailability_reason'] = $partner_available->getUnavailabilityReason();
+                return;
+            }
+
+            $partner['is_available'] = 1;
         });
+
         if ($this->getAvailablePartners()->count() > 1) $this->rejectShebaHelpDesk();
     }
 

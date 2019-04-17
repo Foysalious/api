@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\CategoryGroup;
@@ -13,10 +11,53 @@ use Illuminate\Contracts\Validation\ValidationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class CategoryGroupController extends Controller
+class ServiceGroupController extends Controller
 {
-    public function index(Request $request)
+    public function show($service_group, Request $request)
     {
+        $service_group = [
+                'id' => 1,
+                "name" =>  "Repair",
+                "app_thumb" =>  "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/1/150.jpg",
+                "services" => [
+                    [
+                        'master_category_id' => 1,
+                        'category_name' => 'Appliances Repair',
+                        "id" => 10,
+                        "service_name" => "Refrigerator Servicing",
+                        'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/1/150.jpg',
+                        "original_price" => 300,
+                        "discounted_price" => 2,
+                        "discount" => 10,
+                        'total_stock' => 50,
+                        'stock_left' => 25
+                    ],
+                    [
+                        'master_category_id' => 1,
+                        'category_name' => 'Fridge Repair',
+                        "id" => 10,
+                        "service_name" => "Fridge Servicing",
+                        'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/1/150.jpg',
+                        "original_price" => 6,
+                        "discounted_price" => 2,
+                        "discount" => 10,
+                        'total_stock' => 50,
+                        'stock_left' => 25
+                    ],
+            ]
+        ];
+        $master_category = [
+            [
+                'id' => 1,
+                'name' => 'Appliances Repair',
+            ],
+            [
+                'id' => 2,
+                'name' => 'Fridge Repair',
+            ],
+        ];
+
+        return api_response($request, $service_group, 200, ['service_group' => $service_group, 'master_category'=> $master_category]);
         try {
             $this->validate($request, [
                 'for' => 'sometimes|required|string|in:app,web',
@@ -82,7 +123,7 @@ class CategoryGroupController extends Controller
         return $for == null ? 'publishedForWeb' : 'publishedFor' . ucwords($for);
     }
 
-    public function show($id, Request $request)
+    public function showw($id, Request $request)
     {
         try {
             $this->validate($request, [
@@ -97,22 +138,27 @@ class CategoryGroupController extends Controller
                 $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
                 if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
             }
-
-            $filter_location = function ($q) use ($location) {
-                if(!$location) return;
-                $q->whereHas('locations', function ($q) use ($location) {
-                    $q->where('locations.id', $location);
-                });
-            };
-            $category_group = CategoryGroup::select('id', 'name', 'icon_png', 'short_description', 'thumb', 'banner')
-                ->with(['categories' => function ($q) use ($filter_location) {
-                    $filter_location($q->published());
-                    $q->orderBy('category_group_category.order')
-                        ->whereHas('services', function ($q) use ($filter_location) {
-                            $filter_location($q->published());
+            if ($location) {
+                $category_group = CategoryGroup::with(['categories' => function ($q) use ($location) {
+                    return $q->published()->whereHas('locations', function ($q) use ($location) {
+                        $q->where('locations.id', $location);
+                    })
+                        ->orderBy('category_group_category.order')
+                        ->whereHas('services', function ($q) use ($location) {
+                            $q->published()->whereHas('locations', function ($q) use ($location) {
+                                $q->where('locations.id', $location);
+                            });
                         });
-                }])->where('id', $id)->first();
-
+                }])->where('id', $id)->select('id', 'name')->first();
+            } else {
+                $category_group = CategoryGroup::with(['categories' => function ($q) {
+                    $q->published()
+                        ->orderBy('category_group_category.order')
+                        ->whereHas('services', function ($q) {
+                            $q->published();
+                        });
+                }])->where('id', $id)->select('id', 'name')->first();
+            }
             if ($category_group != null) {
                 $categories = $category_group->categories->each(function ($category) use ($location) {
                     removeRelationsAndFields($category);

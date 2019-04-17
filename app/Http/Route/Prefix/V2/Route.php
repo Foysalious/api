@@ -84,6 +84,22 @@ class Route
                     $api->get('', 'CategoryGroupController@show');
                 });
             });
+
+            $api->group(['prefix' => 'service-groups'], function ($api) {
+                $api->get('/', 'ServiceGroupController@index');
+                $api->group(['prefix' => '{id}'], function ($api) {
+                    $api->get('', 'ServiceGroupController@show');
+                });
+            });
+
+            $api->group(['prefix' => 'offer-groups'], function ($api) {
+                $api->get('/', 'OfferGroupController@index');
+                $api->group(['prefix' => '{id}'], function ($api) {
+                    $api->get('', 'OfferGroupController@show');
+                });
+            });
+
+
             $api->group(['prefix' => 'categories'], function ($api) {
                 $api->group(['prefix' => '{id}'], function ($api) {
                     $api->get('', 'CategoryController@show');
