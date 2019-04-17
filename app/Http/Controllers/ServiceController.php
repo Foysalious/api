@@ -69,8 +69,9 @@ class ServiceController extends Controller
 
             $service_breakdown = [];
             if ($options) {
-                if (count($answers) > 1)
-                    $service['service_breakdown'] = $this->breakdown_service_with_min_max_price($answers, $service_min_price, $service_max_price);
+                if (count($answers) > 1){
+                    $service_breakdown = $this->breakdown_service_with_min_max_price($answers, $service_min_price, $service_max_price);
+                }
                 else {
                     $total_breakdown = array();
                     foreach ($answers[0] as $index => $answer) {
@@ -210,7 +211,6 @@ class ServiceController extends Controller
         $result = array();
 
         foreach ($arrays[$i] as $array_index => $v) {
-
             foreach ($tmp as $index => $t) {
                 $result[] = is_array($t) ?
                     array(
@@ -227,7 +227,6 @@ class ServiceController extends Controller
                     );
             }
         }
-
         return $result;
     }
 
