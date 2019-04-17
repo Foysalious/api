@@ -18,6 +18,22 @@ class CategoryController extends Controller
         }
     }
 
+    public function getMasterCategoriesWithSubCategory(Request $request)
+    {
+        try {
+            $master_categories = PosCategory::with(['children' => function ($query) {
+                $query->select(array_merge($this->getSelectColumnsOfCategory(), ['parent_id']));
+            }])->parents()->published()->select($this->getSelectColumnsOfCategory())->get();
+
+            if (!$master_categories) return api_response($request, null, 404);
+
+            return api_response($request, $master_categories, 200, ['categories' => $master_categories]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     private function getSelectColumnsOfCategory()
     {
         return ['id', 'name', 'thumb', 'banner', 'app_thumb', 'app_banner'];
