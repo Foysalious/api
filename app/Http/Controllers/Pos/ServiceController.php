@@ -4,9 +4,13 @@ use App\Http\Controllers\Controller;
 use App\Models\PartnerPosService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Sheba\ModificationFields;
 
 class ServiceController extends Controller
 {
+    use ModificationFields;
+
     public function index(Request $request)
     {
         try {
@@ -62,6 +66,46 @@ class ServiceController extends Controller
         ];
         try {
             return api_response($request, $service, 200, ['service' => $service]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function store(Request $request)
+    {
+        try {
+            $this->validate($request, ['name' => 'required', 'category_id' => 'required', 'price' => 'required']);
+
+            $data = [
+                'partner_id' => $request->partner->id,
+                'pos_category_id' => $request->category_id,
+                'name' => $request->name,
+                // 'app_thumb' => $request->app_thumb,
+                'cost' => $request->cost,
+                'price' => $request->price,
+                'stock' => ($request->has('stock') && $request->stock) ? (double)$request->stock : null,
+                'vat_percentage' => ($request->has('vat_percentage') && $request->vat_percentage) ? (double)$request->vat_percentage : 0.00
+            ];
+
+            $partner_pos_service = PartnerPosService::create($this->withCreateModificationField($data));
+
+            if ($request->has('discount_amount') && $request->discount_amount > 0) {
+                $discount_data = [
+                    'amount' => (double)$request->discount_amount,
+                    'start_date' => Carbon::now(),
+                    'end_date' => Carbon::parse($request->end_date . ' 23:59:59')
+                ];
+
+                $partner_pos_service->discounts()->create($this->withCreateModificationField($discount_data));
+            }
+            return api_response($request, null, 200, ['msg' => 'Product Created Successfully']);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

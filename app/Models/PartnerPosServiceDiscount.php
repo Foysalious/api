@@ -7,6 +7,7 @@ class PartnerPosServiceDiscount extends Model
 {
     protected $guarded = ['id'];
     protected $casts = ['cap' => 'double', 'amount' => 'double'];
+    protected $dates = ['start_date', 'end_date'];
 
     public function partnerPosService()
     {
