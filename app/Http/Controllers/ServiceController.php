@@ -53,6 +53,7 @@ class ServiceController extends Controller
     {
         try {
             $service = Service::where('id', $service)->select('id', 'name', 'unit', 'category_id', 'short_description', 'description', 'thumb', 'slug', 'min_quantity', 'banner', 'faqs', 'bn_name', 'bn_faqs', 'variable_type', 'variables');
+
             $service = $request->has('is_business') ? $service->publishedForBusiness() : $service->publishedForAll();
             $service = $service->first();
             if ($service == null)
@@ -86,6 +87,9 @@ class ServiceController extends Controller
             array_add($service, 'category_name', $category->name);
             array_add($service, 'master_category_id', $category->parent->id);
             array_add($service, 'master_category_name', $category->parent->name);
+            array_add($service, 'is_flash', 1);
+            array_add($service, 'start_time', '2019-04-11 04:45:31');
+            array_add($service, 'end_time', '2019-04-19 04:45:31');
 
             if ($request->has('is_business')) {
                 $questions = null;
