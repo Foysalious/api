@@ -44,34 +44,38 @@ class ServiceGroupController extends Controller
                 }])->where('id', $service_group)->select('id', 'name', 'app_thumb')->first();
             }
 
-            $services = [];
-            foreach ($service_group->services as $service) {
-                $service_variable = $service->flashPrice();
-                $service = [
-                    'master_category_id' => $service->category->parent->id,
-                    'category_name' => $service->category->parent->name,
-                    "id" => $service->id,
-                    "service_name" => $service->name,
-                    'image' => $service->app_thumb,
-                    "original_price" => $service_variable['price'],
-                    "discounted_price" => $service_variable['discounted_price'],
-                    "discount" => $service_variable['discount'],
-                    'total_stock' => (int)$service->stock,
-                    'stock_left' => (int)$service->stock_left
-                ];
-                array_push($services, $service);
-            }
+            if ($service_group) {
+                $services = [];
+                foreach ($service_group->services as $service) {
+                    $service_variable = $service->flashPrice();
+                    $service = [
+                        'master_category_id' => $service->category->parent->id,
+                        'category_name' => $service->category->parent->name,
+                        "id" => $service->id,
+                        "service_name" => $service->name,
+                        'image' => $service->app_thumb,
+                        "original_price" => $service_variable['price'],
+                        "discounted_price" => $service_variable['discounted_price'],
+                        "discount" => $service_variable['discount'],
+                        'total_stock' => (int)$service->stock,
+                        'stock_left' => (int)$service->stock_left
+                    ];
+                    array_push($services, $service);
+                }
 
-            $service_group = [
-                'id' => $service_group->id,
-                "name" => $service_group->name,
-                "app_thumb" => $service_group->app_thumb,
-                "services" => $services
-            ];
-            $master_category = collect($services)->unique('master_category_id')->map(function ($item) {
-                return ['id' => $item['master_category_id'], 'name' => $item['category_name']];
-            })->values();
-            return api_response($request, $service_group, 200, ['service_group' => $service_group, 'master_category' => $master_category]);
+                $service_group = [
+                    'id' => $service_group->id,
+                    "name" => $service_group->name,
+                    "app_thumb" => $service_group->app_thumb,
+                    "services" => $services
+                ];
+                $master_category = collect($services)->unique('master_category_id')->map(function ($item) {
+                    return ['id' => $item['master_category_id'], 'name' => $item['category_name']];
+                })->values();
+                return api_response($request, $service_group, 200, ['service_group' => $service_group, 'master_category' => $master_category]);
+            } else {
+                return api_response($request, 1, 404);
+            }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
