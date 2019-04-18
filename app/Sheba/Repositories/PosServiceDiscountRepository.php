@@ -8,4 +8,15 @@ class PosServiceDiscountRepository extends BaseRepository
     {
         return PartnerPosServiceDiscount::create($this->withCreateModificationField($data));
     }
+
+
+    /**
+     * @param PartnerPosServiceDiscount $discount
+     * @param $data
+     * @return bool|int
+     */
+    public function update(PartnerPosServiceDiscount $discount, $data)
+    {
+        return $discount->update($this->withUpdateModificationField($data));
+    }
 }

@@ -58,7 +58,16 @@ class PartnerRoute
                     $api->get('/', 'Pos\CategoryController@index');
                     $api->get('/master', 'Pos\CategoryController@getMasterCategoriesWithSubCategory');
                 });
-                $api->resources(['services' => 'Pos\ServiceController']);
+
+                $api->group(['prefix' => 'services'], function ($api) {
+                    $api->get('/', 'Pos\ServiceController@index');
+                    $api->post('/', 'Pos\ServiceController@store');
+                    $api->group(['prefix' => '{service}'], function ($api) {
+                        $api->get('/', 'Pos\ServiceController@show');
+                        $api->post('/', 'Pos\ServiceController@update');
+                    });
+                });
+
                 $api->resources(['orders' => 'Pos\OrderController']);
                 $api->resources(['customers' => 'Pos\CustomerController']);
             });

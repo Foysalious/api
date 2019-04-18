@@ -2,11 +2,15 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\PartnerPosService;
+use App\Models\PartnerPosServiceDiscount;
+use App\Models\PartnerServiceDiscount;
 use App\Sheba\Pos\Product\Creator as ProductCreator;
+use App\Sheba\Pos\Product\Updater as ProductUpdater;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\ModificationFields;
+use Sheba\Repositories\PosServiceDiscountRepository;
 
 class ServiceController extends Controller
 {
@@ -96,6 +100,46 @@ class ServiceController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function update(Request $request, ProductUpdater $updater, PosServiceDiscountRepository $discount_repo)
+    {
+        try {
+            $partner_pos_service = PartnerPosService::find($request->service);
+            if (!$partner_pos_service) return api_response($request, null, 400, ['msg' => 'Service Not Found']);
+            $updater->setService($partner_pos_service)->setData($request->all())->update();
+
+            if ($request->discount_id) {
+                $discount_data = [];
+                $discount = PartnerPosServiceDiscount::find($request->discount_id);
+                if ($request->has('is_discount_off') && $request->is_discount_off) {
+                    $discount_data = ['end_date' => Carbon::now()];
+                } else {
+                    $requested_end_date = ($request->has('end_date')) ? Carbon::parse($request->end_date . ' 23:59:59') : $discount->end_date;
+                    if ($request->has('end_date') && !$requested_end_date->isSameDay($discount->end_date)) {
+                        $discount_data['end_date'] = $requested_end_date;
+                    }
+
+                    if ($request->has('discount_amount') && $request->discount_amount != $discount->amount) {
+                        $discount_data['amount'] = (double)$request->discount_amount;
+                    }
+                }
+
+                if (!empty($discount_data)) $discount_repo->update($discount, $discount_data);
+            }
+
+            return api_response($request, null, 200, ['msg' => 'Product Updated Successfully', 'service' => $partner_pos_service]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

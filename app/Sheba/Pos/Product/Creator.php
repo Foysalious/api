@@ -4,7 +4,6 @@ use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
-use Sheba\Repositories\PosServiceDiscountRepository;
 use Sheba\Repositories\PosServiceRepository;
 
 class Creator
@@ -13,12 +12,10 @@ class Creator
 
     private $data;
     private $serviceRepo;
-    private $discountRepo;
 
-    public function __construct(PosServiceRepository $service_repo, PosServiceDiscountRepository $discount_repo)
+    public function __construct(PosServiceRepository $service_repo)
     {
         $this->serviceRepo = $service_repo;
-        $this->discountRepo = $discount_repo;
     }
 
     public function setData($data)
