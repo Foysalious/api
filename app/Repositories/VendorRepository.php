@@ -34,6 +34,6 @@ class VendorRepository
 
     public function details(Request $request)
     {
-        return ['data' => ['id' => $request->vendor->id, 'name' => $request->vendor->name, 'wallet' => $request->vendor->wallet]];
+        return ['data' => ['id' => $request->vendor->id, 'name' => $request->vendor->name, 'balance' => $request->vendor->wallet]];
     }
 }
