@@ -53,11 +53,9 @@ class ServiceController extends Controller
     public function get($service, Request $request, ApproximatePriceCalculator $approximatePriceCalculator)
     {
         try {
-            $service = Service::where('id', $service)->select('id', 'name', 'unit', 'category_id', 'short_description', 'description', 'thumb', 'slug', 'min_quantity', 'banner', 'faqs', 'bn_name', 'bn_faqs', 'variable_type', 'variables');
-
+            $service = Service::where('id', $service)->select('id', 'name', 'unit', 'structured_description', 'category_id', 'short_description', 'description', 'thumb', 'slug', 'min_quantity', 'banner', 'faqs', 'bn_name', 'bn_faqs', 'variable_type', 'variables');
 
             $offer = $service->first()->groups()->first() ? $service->first()->groups()->first()->offers()->where('end_date', '>', Carbon::now())->first() : null;
-
             $options = $this->serviceQuestionSet($service->first());
             $answers = collect();
             if ($options)
@@ -71,8 +69,9 @@ class ServiceController extends Controller
 
             $service_breakdown = [];
             if ($options) {
-                if (count($answers) > 1)
-                    $service['service_breakdown'] = $this->breakdown_service_with_min_max_price($answers, $service_min_price, $service_max_price);
+                if (count($answers) > 1){
+                    $service_breakdown = $this->breakdown_service_with_min_max_price($answers, $service_min_price, $service_max_price);
+                }
                 else {
                     $total_breakdown = array();
                     foreach ($answers[0] as $index => $answer) {
@@ -98,6 +97,10 @@ class ServiceController extends Controller
 
             $service = $request->has('is_business') ? $service->publishedForBusiness() : $service->publishedForAll();
             $service = $service->first();
+
+
+
+
             if ($service == null)
                 return api_response($request, null, 404);
             if ($service->variable_type == 'Options') {
@@ -122,11 +125,16 @@ class ServiceController extends Controller
             //$service = $this->serviceRepository->addServiceInfo($services, $scope)[0];
             $service['variables'] = $variables;
             $service['faqs'] = json_decode($service->faqs);
+            $service['structured_description'] =  $service->structured_description ? json_decode($service->structured_description) : null;
+
             $service['bn_faqs'] = $service->bn_faqs ? json_decode($service->bn_faqs) : null;
             $category = Category::with(['parent' => function ($query) {
                 $query->select('id', 'name');
-            }])->where('id', $service->category_id)->select('id', 'name', 'parent_id')->first();
+            }])->where('id', $service->category_id)->select('id', 'name', 'parent_id', 'video_link', 'slug')->first();
+
             array_add($service, 'category_name', $category->name);
+            array_add($service, 'video_link', $category->video_link);
+            array_add($service, 'category_slug', $category->slug);
             array_add($service, 'master_category_id', $category->parent->id);
             array_add($service, 'master_category_name', $category->parent->name);
             array_add($service, 'service_breakdown', $service_breakdown);
@@ -203,7 +211,6 @@ class ServiceController extends Controller
         $result = array();
 
         foreach ($arrays[$i] as $array_index => $v) {
-
             foreach ($tmp as $index => $t) {
                 $result[] = is_array($t) ?
                     array(
@@ -220,7 +227,6 @@ class ServiceController extends Controller
                     );
             }
         }
-
         return $result;
     }
 

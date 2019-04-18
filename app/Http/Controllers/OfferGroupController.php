@@ -48,7 +48,7 @@ class OfferGroupController extends Controller
                 $offer = [
                     "id" => $offer->id,
                     "target_type" => snake_case(explode('\\', $offer->target_type)[2]),
-                    "target_id" => $offer->target_id,
+                    "target_id" => (int)$offer->target_id,
                     "start_time" => $offer->start_date->toDateTimeString(),
                     "end_time" => $offer->end_date->toDateTimeString(),
                 ];
