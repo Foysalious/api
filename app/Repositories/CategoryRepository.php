@@ -23,7 +23,7 @@ class CategoryRepository
             }]);
         }])->whereHas('locations', function ($q) use ($location) {
             $q->where('locations.id', $location);
-        })->whereNotIn('id', [74])
+        })->whereNotIn('id', $this->serviceGroupServiceIds())
             ->select('id', 'category_id', 'name', 'bn_name', 'thumb', 'banner', 'app_thumb', 'app_banner', 'slug', 'min_quantity', 'short_description', 'description', 'variable_type', 'variables', 'faqs')
             ->whereIn('category_id', $category_ids)->skip($offset)->take($limit);
 
