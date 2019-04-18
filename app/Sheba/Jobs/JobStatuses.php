@@ -22,6 +22,21 @@ class JobStatuses
         return [self::SERVED, self::CANCELLED];
     }
 
+    public static function getActuals()
+    {
+        return self::getAllWithout(self::SERVED_AND_DUE);
+    }
+
+    public static function getAcceptable()
+    {
+        return [self::PENDING, self::NOT_RESPONDED];
+    }
+
+    public static function getOngoing()
+    {
+        return [self::ACCEPTED, self::SCHEDULE_DUE, self::PROCESS, self::SERVE_DUE, self::SERVED];
+    }
+
     public static function getClosedString($glue = ",")
     {
         return self::getString('closed', $glue);
