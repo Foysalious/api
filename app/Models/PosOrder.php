@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Pos\Order\OrderPaymentStatuses;
 
 class PosOrder extends Model
 {
@@ -8,22 +9,34 @@ class PosOrder extends Model
     /**
      * @var int
      */
-    private $totalServicePrice;
-    private $itemDiscounts;
+    public $totalServicePrice;
+    public $itemDiscounts;
     /**
      * @var int|number
      */
-    private $totalPrice;
-    private $totalDiscount;
-    private $appliedDiscount;
+    public $totalPrice;
+    public $totalDiscount;
+    public $appliedDiscount;
     /**
      * @var float
      */
-    private $grossAmount;
+    public $grossAmount;
+    /**
+     * @var string
+     */
+    public $paymentStatus;
+    /**
+     * @var float
+     */
+    public $paid;
+    /**
+     * @var float
+     */
+    public $due;
     /**
      * @var bool
      */
-    private $isCalculated;
+    public $isCalculated;
 
     public function calculate()
     {
@@ -31,14 +44,29 @@ class PosOrder extends Model
         $this->totalDiscount = $this->itemDiscounts + $this->discount;
         $this->appliedDiscount = (double)($this->totalDiscount > $this->amount) ? $this->amount : $this->discount;
         $this->grossAmount = floatValFormat($this->totalPrice - $this->appliedDiscount);
+        $this->_calculatePaidAmount();
+        $this->paid = $this->paid ?: 0;
+        $this->due = $this->grossAmount - $this->paid;
+        $this->_setPaymentStatus();
         $this->isCalculated = true;
 
         return $this->_formatAllToTaka();
     }
 
+    private function _setPaymentStatus()
+    {
+        $this->paymentStatus = ($this->due) ? OrderPaymentStatuses::DUE : OrderPaymentStatuses::PAID;
+        return $this;
+    }
+
     public function customer()
     {
         return $this->belongsTo(PosCustomer::class);
+    }
+
+    public function partner()
+    {
+        return $this->belongsTo(Partner::class);
     }
 
     public function items()
@@ -84,5 +112,13 @@ class PosOrder extends Model
         $this->itemDiscounts = formatTaka($this->itemDiscounts);
 
         return $this;
+    }
+
+    private function _calculatePaidAmount()
+    {
+        $this->paid = 0;
+        foreach ($this->payments as $payment) {
+            $this->paid += $payment->amount;
+        }
     }
 }

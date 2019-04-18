@@ -8,20 +8,20 @@ class PosOrderItem extends Model
     /**
      * @var number
      */
-    private $servicePrice;
-    private $serviceDiscounts;
+    public $servicePrice;
+    public $serviceDiscounts;
     /**
      * @var int|number
      */
-    private $grossPrice;
+    public $grossPrice;
     /**
      * @var number
      */
-    private $unitPrice;
+    public $unitPrice;
     /**
      * @var bool
      */
-    private $isCalculated;
+    public $isCalculated;
 
     public function order()
     {

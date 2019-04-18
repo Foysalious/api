@@ -1,8 +1,16 @@
 <?php namespace App\Http\Controllers\Pos;
 
 use App\Http\Controllers\Controller;
+use App\Models\PosOrder;
+
+use App\Transformers\JobTransformer;
+use App\Transformers\PosOrderTransformer;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
+use League\Fractal\Resource\Item;
+use League\Fractal\Serializer\ArraySerializer;
 use Sheba\ModificationFields;
 use Sheba\Pos\Order\Creator;
 
@@ -53,11 +61,27 @@ class OrderController extends Controller
         }
     }
 
+    public function show(Request $request)
+    {
+        try {
+            $order = PosOrder::with('items')->find($request->order)->calculate();
+            $manager = new Manager();
+            $manager->setSerializer(new ArraySerializer());
+            $resource = new Item($order, new PosOrderTransformer());
+            $order = $manager->createData($resource)->toArray();
+
+            return api_response($request, null, 200, ['order' => $order]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     public function store(Request $request, Creator $creator)
     {
         try {
             $this->validate($request, []);
-            $this->setModifier($request->partner);
+            $this->setModifier($request->manager_resource);
 
             $order = $creator->setData($request->all())->create();
 
@@ -69,9 +93,13 @@ class OrderController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function getSelectColumnsOfItem()
+    {
+        return ['service_name', 'app_thumb', 'app_banner', 'price', 'stock'];
     }
 }
