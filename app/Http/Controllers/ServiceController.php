@@ -133,7 +133,11 @@ class ServiceController extends Controller
             array_add($service, 'master_category_id', $category->parent->id);
             array_add($service, 'master_category_name', $category->parent->name);
             array_add($service, 'service_breakdown', $service_breakdown);
-            array_add($service, 'online_payment_discount_percentage', config('sheba.online_payment_discount_percentage'));
+            if (config('sheba.online_payment_discount_percentage') > 0){
+                $discount_percentage = config('sheba.online_payment_discount_percentage');
+                $payment_discount_percentage = "Save $discount_percentage% more by paying online after checkout!";
+                array_add($service, 'payment_discount_percentage', $payment_discount_percentage);
+            }
             if ($offer) {
                 array_add($service, 'is_flash', $offer->is_flash);
                 array_add($service, 'start_time', $offer->start_date->toDateTimeString());
