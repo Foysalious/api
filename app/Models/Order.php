@@ -3,6 +3,7 @@
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Checkout\ShebaOrderInterface;
 use Sheba\Order\StatusCalculator;
+use Sheba\Portals\Portals;
 
 class Order extends Model implements ShebaOrderInterface
 {
@@ -12,8 +13,9 @@ class Order extends Model implements ShebaOrderInterface
     public $profit;
     private $statuses;
 
-    public function __construct()
+    public function __construct($attributes = [])
     {
+        parent::__construct($attributes);
         $this->statuses = constants('ORDER_STATUSES');
     }
 
@@ -99,6 +101,11 @@ class Order extends Model implements ShebaOrderInterface
     public function voucher()
     {
         return $this->belongsTo(Voucher::class);
+    }
+
+    public function affiliation()
+    {
+        return $this->belongsTo(Affiliation::class);
     }
 
     public function updateLogs()
@@ -187,5 +194,10 @@ class Order extends Model implements ShebaOrderInterface
     public function hasCustomerReturned()
     {
         return !$this->customer->getFirstOrder()->created_at->isSameDay($this->created_at);
+    }
+
+    public function isFromOfflineBondhu()
+    {
+        return $this->affiliation_id && $this->portal_name == Portals::ADMIN;
     }
 }
