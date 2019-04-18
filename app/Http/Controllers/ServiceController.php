@@ -69,10 +69,9 @@ class ServiceController extends Controller
 
             $service_breakdown = [];
             if ($options) {
-                if (count($answers) > 1){
+                if (count($answers) > 1) {
                     $service_breakdown = $this->breakdown_service_with_min_max_price($answers, $service_min_price, $service_max_price);
-                }
-                else {
+                } else {
                     $total_breakdown = array();
                     foreach ($answers[0] as $index => $answer) {
                         $breakdown = array(
@@ -96,8 +95,6 @@ class ServiceController extends Controller
 
             $service = $request->has('is_business') ? $service->publishedForBusiness() : $service->publishedForAll();
             $service = $service->first();
-
-
 
 
             if ($service == null)
@@ -124,7 +121,7 @@ class ServiceController extends Controller
             //$service = $this->serviceRepository->addServiceInfo($services, $scope)[0];
             $service['variables'] = $variables;
             $service['faqs'] = json_decode($service->faqs);
-            $service['structured_description'] =  $service->structured_description ? json_decode($service->structured_description) : null;
+            $service['structured_description'] = $service->structured_description ? json_decode($service->structured_description) : null;
 
             $service['bn_faqs'] = $service->bn_faqs ? json_decode($service->bn_faqs) : null;
             $category = Category::with(['parent' => function ($query) {
