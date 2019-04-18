@@ -16,6 +16,8 @@ class Route
                 $api->post('orders', 'Vendor\OrderController@placeOrder');
                 $api->get('locations', 'Vendor\LocationController@index');
                 $api->post('topup', 'Vendor\TopUpController@topUp');
+                $api->get('{id}/topup-history', 'Vendor\TopUpController@history');
+                $api->get('{id}', 'Vendor\ShebaController@getDetails');
             });
             $api->get('categories', ['uses' => 'CategoryController@index']);
             $api->get('categories/{category}/secondaries', ['uses' => 'CategoryController@get']);

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Vendor;
 
 
 use App\Http\Controllers\Controller;
+use App\Repositories\VendorRepository;
 use App\Transformers\CustomSerializer;
 use App\Transformers\TimeTransformer;
 use Dingo\Api\Routing\Helpers;
@@ -51,6 +52,15 @@ class ShebaController extends Controller
             $sentry = app('sentry');
             $sentry->captureException($e);
             return response()->json(['data' => null, 'message' => 'Something went wrong']);
+        }
+    }
+    public function getDetails(Request $request,VendorRepository $repository){
+        try{
+          $response=$repository->details($request);
+          return api_response($request, $response, 200,$response);
+        }catch (\Throwable $e){
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
         }
     }
 }
