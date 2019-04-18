@@ -25,9 +25,9 @@ class AdvancedOrderComplete extends PaymentComplete
                 $model = $payable->getPayableModel();
                 $payable_model = $model::find((int)$payable->type_id);
                 if ($payable_model instanceof PartnerOrder) {
+                    $this->giveOnlineDiscount($payable_model);
                     $payable_model->sheba_collection = $this->payment->paymentDetails->sum('amount');
                     $payable_model->update();
-                    $this->giveOnlineDiscount($payable_model);
                 }
                 $user = $payable->user;
                 $this->setModifier($user);
