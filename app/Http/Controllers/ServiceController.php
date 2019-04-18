@@ -96,7 +96,6 @@ class ServiceController extends Controller
             $service = $request->has('is_business') ? $service->publishedForBusiness() : $service->publishedForAll();
             $service = $service->first();
 
-
             if ($service == null)
                 return api_response($request, null, 404);
             if ($service->variable_type == 'Options') {
@@ -143,7 +142,6 @@ class ServiceController extends Controller
                 array_add($service, 'start_time', null);
                 array_add($service, 'end_time', null);
             }
-
 
             if ($request->has('is_business')) {
                 $questions = null;
