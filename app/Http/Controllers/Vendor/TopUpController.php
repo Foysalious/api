@@ -1,9 +1,12 @@
 <?php namespace App\Http\Controllers\Vendor;
 
 use App\Http\Controllers\Controller;
+use App\Models\Vendor;
+use App\Repositories\VendorRepository;
 use Dingo\Api\Routing\Helpers;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Validator;
 use Sheba\TopUp\Jobs\TopUpJob;
 use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\VendorFactory;
@@ -32,6 +35,27 @@ class TopUpController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function history(Request $request, $id)
+    {
+        try {
+            $rules = [
+                'from' => 'date_format:Y-m-d',
+                'to' => 'date_format:Y-m-d|required_with:from'
+            ];
+            $validator = Validator::make($request->all(), $rules);
+            if ($validator->fails()) {
+                $error = $validator->errors()->all()[0];
+                return api_response($request, $error, 400, ['msg' => $error]);
+            }
+            $data= (new VendorRepository())->topUpHistory($request);
+            $response = ['data' => $data];
+            return api_response($request, $response, 200, $response);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

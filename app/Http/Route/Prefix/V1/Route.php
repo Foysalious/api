@@ -15,7 +15,11 @@ class Route
                 $api->get('orders/{order}/bills', 'Vendor\OrderController@getBills');
                 $api->post('orders', 'Vendor\OrderController@placeOrder');
                 $api->get('locations', 'Vendor\LocationController@index');
-                $api->post('topup', 'Vendor\TopUpController@topUp');
+                $api->group(['prefix' => 'topup'], function ($api) {
+                    $api->post('/', 'Vendor\TopUpController@topUp');
+                    $api->get('', 'Vendor\TopUpController@history');
+                });
+                $api->get('balance', 'Vendor\ShebaController@getDetails');
             });
             $api->get('categories', ['uses' => 'CategoryController@index']);
             $api->get('categories/{category}/secondaries', ['uses' => 'CategoryController@get']);
