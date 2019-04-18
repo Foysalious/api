@@ -22,7 +22,7 @@ class VendorRepository
             return [
                 'mobile' => $topup->payee_mobile,
                 'name' => $topup->payee_name ? $topup->payee_name : 'N/A',
-                'amount' => $topup->amount,
+                'amount' => (double)$topup->amount,
                 'operator' => $topup->vendor->name,
                 'status' => $topup->status,
                 'created_at' => $topup->created_at->toDateTimeString()
@@ -34,6 +34,6 @@ class VendorRepository
 
     public function details(Request $request)
     {
-        return ['data' => ['id' => $request->vendor->id, 'name' => $request->vendor->name, 'balance' => $request->vendor->wallet]];
+        return ['data' => ['name' => $request->vendor->name, 'balance' => (double)$request->vendor->wallet]];
     }
 }
