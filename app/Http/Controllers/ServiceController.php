@@ -85,10 +85,9 @@ class ServiceController extends Controller
                     }
                     $service_breakdown = $total_breakdown;
                 }
-
             } else {
                 $service_breakdown = array(array(
-                    'name' => $service->name,
+                    'name' => $service->first()->name,
                     'indexes' => null,
                     'min_price' => $service_min_price,
                     'max_price' => $service_max_price
