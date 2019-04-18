@@ -1,11 +1,11 @@
-<?php namespace App\Sheba\Pos\Product;
+<?php namespace Sheba\Pos\Product;
 
 use App\Models\PartnerPosService;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
-use Sheba\Repositories\PosServiceRepository;
+use Sheba\Pos\Repositories\PosServiceRepository;
 
 class Updater
 {

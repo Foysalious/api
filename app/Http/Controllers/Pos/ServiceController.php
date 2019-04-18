@@ -3,14 +3,14 @@
 use App\Http\Controllers\Controller;
 use App\Models\PartnerPosService;
 use App\Models\PartnerPosServiceDiscount;
-use App\Models\PartnerServiceDiscount;
-use App\Sheba\Pos\Product\Creator as ProductCreator;
-use App\Sheba\Pos\Product\Updater as ProductUpdater;
+
+use Sheba\Pos\Product\Creator as ProductCreator;
+use Sheba\Pos\Product\Updater as ProductUpdater;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\ModificationFields;
-use Sheba\Repositories\PosServiceDiscountRepository;
+use Sheba\Pos\Repositories\PosServiceDiscountRepository;
 
 class ServiceController extends Controller
 {
@@ -80,7 +80,7 @@ class ServiceController extends Controller
     {
         try {
             $this->validate($request, ['name' => 'required', 'category_id' => 'required', 'price' => 'required']);
-
+            $this->setModifier($request->partner);
             $partner_pos_service = $creator->setData($request->all())->create();
 
             if ($request->has('discount_amount') && $request->discount_amount > 0) {
@@ -108,6 +108,7 @@ class ServiceController extends Controller
     public function update(Request $request, ProductUpdater $updater, PosServiceDiscountRepository $discount_repo)
     {
         try {
+            $this->setModifier($request->partner);
             $partner_pos_service = PartnerPosService::find($request->service);
             if (!$partner_pos_service) return api_response($request, null, 400, ['msg' => 'Service Not Found']);
             $updater->setService($partner_pos_service)->setData($request->all())->update();
@@ -139,7 +140,6 @@ class ServiceController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

@@ -1,6 +1,7 @@
-<?php namespace Sheba\Repositories;
+<?php namespace Sheba\Pos\Repositories;
 
 use App\Models\PartnerPosService;
+use Sheba\Repositories\BaseRepository;
 
 class PosServiceRepository extends BaseRepository
 {
