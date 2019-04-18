@@ -8,18 +8,20 @@ use App\Models\HyperLocal;
 use App\Models\Location;
 use App\Models\Partner;
 use App\Models\Service;
+use App\Models\ServiceGroupService;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
 use Dingo\Api\Routing\Helpers;
 use Illuminate\Http\Request;
 use DB;
 use Illuminate\Validation\ValidationException;
+use Sheba\CategoryServiceGroup;
 use Sheba\Location\Coords;
 use Sheba\ModificationFields;
 
 class CategoryController extends Controller
 {
-    use Helpers, ModificationFields;
+    use Helpers, ModificationFields, CategoryServiceGroup;
     private $categoryRepository;
     private $serviceRepository;
 
@@ -258,9 +260,10 @@ class CategoryController extends Controller
                     $services = $this->serviceRepository->addServiceInfo($services, $scope);
                 } else {
                     $category = $category->load(['services' => function ($q) use ($offset, $limit, $location) {
-                        $q->whereHas('locations', function ($query) use ($location) {
-                            $query->where('locations.id', $location);
-                        });
+                        $q->whereNotIn('id', $this->serviceGroupServiceIds())
+                            ->whereHas('locations', function ($query) use ($location) {
+                                $query->where('locations.id', $location);
+                            });
                         $q->select('id', 'category_id', 'unit', 'name', 'bn_name', 'thumb', 'app_thumb', 'app_banner', 'short_description', 'description', 'banner', 'faqs', 'variables', 'variable_type', 'min_quantity')->orderBy('order')->skip($offset)->take($limit);
                         if ((int)\request()->is_business) $q->publishedForBusiness();
                         elseif ((int)\request()->is_for_backend) $q->publishedForAll();
@@ -284,6 +287,7 @@ class CategoryController extends Controller
                         return in_array($location, $locations);
                     });
                 }
+
                 $subscriptions = collect();
                 foreach ($services as $service) {
                     if ($service->serviceSubscription) {
