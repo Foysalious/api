@@ -85,7 +85,7 @@ class CategoryType extends GraphQlType
         $fields = $info->getFieldSelection(1);
         $version_code = (int)request()->header('Version-Code');
         $root->load(['services' => function ($q) use ($args, $fields, $version_code) {
-            $q->whereNotIn('id', [74])
+            $q->whereNotIn('id', $this->serviceGroupServiceIds())
                 ->published()->orderBy('order')->with('subscription');
             if ($version_code <= 30122) {
                 $q->doesntHave('subscription');
