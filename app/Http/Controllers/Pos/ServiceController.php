@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\PartnerPosService;
-use App\Sheba\Pos\ProductCreator;
+use App\Sheba\Pos\Product\Creator as ProductCreator;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -88,7 +88,7 @@ class ServiceController extends Controller
 
                 $partner_pos_service->discounts()->create($this->withCreateModificationField($discount_data));
             }
-            return api_response($request, null, 200, ['msg' => 'Product Created Successfully']);
+            return api_response($request, null, 200, ['msg' => 'Product Created Successfully', 'service' => $partner_pos_service]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');

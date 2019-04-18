@@ -1,4 +1,4 @@
-<?php namespace App\Sheba\Pos;
+<?php namespace App\Sheba\Pos\Product;
 
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
@@ -7,7 +7,7 @@ use Sheba\FileManagers\FileManager;
 use Sheba\Repositories\PosServiceDiscountRepository;
 use Sheba\Repositories\PosServiceRepository;
 
-class ProductCreator
+class Creator
 {
     use FileManager, CdnFileManager;
 
