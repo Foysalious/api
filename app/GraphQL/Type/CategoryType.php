@@ -1,6 +1,4 @@
-<?php
-
-namespace App\GraphQL\Type;
+<?php namespace App\GraphQL\Type;
 
 use App\Models\HyperLocal;
 use App\Models\ScheduleSlot;
@@ -11,9 +9,12 @@ use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use Illuminate\Support\Facades\Redis;
 use DB;
+use Sheba\CategoryServiceGroup;
 
 class CategoryType extends GraphQlType
 {
+    use CategoryServiceGroup;
+
     protected $attributes = [
         'name' => 'Category',
         'description' => 'Sheba Category'
@@ -84,7 +85,8 @@ class CategoryType extends GraphQlType
         $fields = $info->getFieldSelection(1);
         $version_code = (int)request()->header('Version-Code');
         $root->load(['services' => function ($q) use ($args, $fields, $version_code) {
-            $q->published()->orderBy('order')->with('subscription');
+            $q->whereNotIn('id', [74])
+                ->published()->orderBy('order')->with('subscription');
             if ($version_code <= 30122) {
                 $q->doesntHave('subscription');
             }
