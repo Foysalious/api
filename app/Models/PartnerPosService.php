@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class PartnerPosService extends Model
 {
     protected $guarded = ['id'];
-    protected $casts = ['price' => 'double', 'stock' => 'double'];
+    protected $casts = ['cost' => 'double', 'price' => 'double', 'stock' => 'double', 'vat_percentage' => 'double'];
 
     public function category()
     {

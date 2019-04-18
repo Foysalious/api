@@ -9,7 +9,18 @@ class CategoryController extends Controller
     public function index(Request $request)
     {
         try {
-            $sub_categories = PosCategory::child()->published()->select($this->getSelectColumnsOfCategory())->get();
+            $partner = $request->partner;
+            $sub_categories = PosCategory::child()->published()
+                ->with(['services' => function ($service_query) use ($partner) {
+                    $service_query->partner($partner->id)
+                        ->with(['discounts' => function ($discounts_query) {
+                            $discounts_query->runningDiscounts()->select($this->getSelectColumnsOfServiceDiscount());
+                        }])
+                    ->select($this->getSelectColumnsOfService());
+                }])
+                ->select($this->getSelectColumnsOfCategory())
+                ->get();
+
             if (!$sub_categories) return api_response($request, null, 404);
             return api_response($request, $sub_categories, 200, ['categories' => $sub_categories]);
         } catch (\Throwable $e) {
@@ -37,5 +48,15 @@ class CategoryController extends Controller
     private function getSelectColumnsOfCategory()
     {
         return ['id', 'name', 'thumb', 'banner', 'app_thumb', 'app_banner'];
+    }
+
+    private function getSelectColumnsOfService()
+    {
+        return ['id', 'partner_id', 'pos_category_id', 'name', 'publication_status', 'thumb', 'banner', 'app_thumb', 'app_banner', 'cost', 'price', 'vat_percentage', 'stock'];
+    }
+
+    private function getSelectColumnsOfServiceDiscount()
+    {
+        return ['id', 'partner_pos_service_id', 'amount', 'is_amount_percentage', 'cap', 'start_date', 'end_date'];
     }
 }
