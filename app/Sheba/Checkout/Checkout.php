@@ -452,10 +452,9 @@ class Checkout
     private function deductStock($job_services)
     {
         foreach ($job_services as $job_service) {
-            $quantity = $job_service->quantity;
             $service = Service::select('id', 'stock_left')->where('id', $job_service->service_id)->first();
-            if ($service->stock_left - $quantity <= 0) $service->stock_left = 0;
-            else $service->stock_left -= $quantity;
+            if ($service->stock_left <= 0) $service->stock_left = 0;
+            else $service->stock_left -= 1;
             $service->update();
         }
     }
