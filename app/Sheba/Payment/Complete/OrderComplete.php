@@ -11,6 +11,9 @@ use Sheba\RequestIdentification;
 
 class OrderComplete extends PaymentComplete
 {
+    CONST ONLINE_PAYMENT_THRESHOLD_MINUTES = 9;
+    CONST ONLINE_PAYMENT_DISCOUNT = 10;
+
     public function complete()
     {
         $has_error = false;
@@ -20,11 +23,12 @@ class OrderComplete extends PaymentComplete
             $payable = $this->payment->payable;
             $model = $payable->getPayableModel();
             $payable_model = $model::find((int)$payable->type_id);
+            if ($payable_model instanceof PartnerOrder) $this->giveOnlineDiscount($payable_model);
             $customer = $payable->user;
             foreach ($this->payment->paymentDetails as $paymentDetail) {
                 if ($payable_model instanceof PartnerOrder) {
                     $has_error = $this->clearPartnerOrderPayment($payable_model, $customer, $paymentDetail, $has_error);
-                } else {
+                } elseif ($payable_model instanceof SubscriptionOrder) {
                     $has_error = $this->clearSubscriptionPayment($payable_model, $paymentDetail, $has_error);
                 }
             }
@@ -100,6 +104,17 @@ class OrderComplete extends PaymentComplete
             $subscription_order->convertToOrder();
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
+        }
+    }
+
+    private function giveOnlineDiscount(PartnerOrder $partner_order)
+    {
+        $partner_order->calculate(true);
+        $job = $partner_order->getActiveJob();
+        if ($job->isOnlinePaymentDiscountApplicable()) {
+            $job->online_discount = $partner_order->due * (config('sheba.online_payment_discount_percentage') / 100);
+            $job->discount += $job->online_discount;
+            $job->update();
         }
     }
 }

@@ -26,20 +26,27 @@ class OrderAdapter implements PayableAdapter
 
     public function getPayable(): Payable
     {
-        $this->job = $this->partnerOrder->jobs()->where('status', '<>', constants('JOB_STATUSES')['Cancelled'])->first();
-
+        $this->job = $this->partnerOrder->getActiveJob();
         $payable = new Payable();
         $payable->type = 'partner_order';
         $payable->type_id = $this->partnerOrder->id;
         $payable->user_id = $this->userId;
         $payable->user_type = $this->userType;
-        $payable->amount = (double)$this->partnerOrder->due + $this->getShebaLogisticsPrice();
+        $due = (double)$this->partnerOrder->due + $this->getShebaLogisticsPrice();
+        $payable->amount = $this->calculateAmount($due);
         $payable->completion_type = $this->isAdvancedPayment ? 'advanced_order' : "order";
         $payable->success_url = config('sheba.front_url') . '/orders/' . $this->job->id;
         $payable->created_at = Carbon::now();
         $payable->save();
-
         return $payable;
+    }
+
+    private function calculateAmount($due)
+    {
+        if ($this->job->isOnlinePaymentDiscountApplicable()) {
+            $due -= ($due * (config('sheba.online_payment_discount_percentage') / 100));
+        }
+        return $due;
     }
 
     private function getShebaLogisticsPrice()
@@ -47,7 +54,7 @@ class OrderAdapter implements PayableAdapter
         if ($this->job->needsLogistic())
             return $this->job->category->getShebaLogisticsPrice();
 
-        return 0.00;
+        return 0;
     }
 
     private function setUser()

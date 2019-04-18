@@ -113,5 +113,7 @@ return [
             ]
     ],
     'sheba_help_desk_id' => 1809,
-    'best_deal_ids' => env('BEST_DEAL_IDS')
+    'best_deal_ids' => env('BEST_DEAL_IDS'),
+    'online_payment_discount_threshold_minutes' => 30,
+    'online_payment_discount_percentage' => 10,
 ];
