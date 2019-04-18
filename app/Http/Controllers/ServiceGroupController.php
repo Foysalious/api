@@ -5,6 +5,8 @@ use App\Models\CategoryGroup;
 use App\Models\HomepageSetting;
 use App\Models\HyperLocal;
 use App\Models\Location;
+use App\Models\OfferGroup;
+use App\Models\OfferShowcase;
 use App\Models\ScreenSettingElement;
 use App\Models\ServiceGroup;
 use App\Sheba\Queries\Category\StartPrice;
@@ -45,7 +47,18 @@ class ServiceGroupController extends Controller
             }
 
             if ($service_group) {
+                $offer_group_id = null;
+                $offer = OfferShowcase::targetType('ServiceGroup')->where('target_id', $service_group->id)->active()->valid()->orderBy('end_date', 'desc')->first();
+                if ($offer) {
+                    $offer->load(['groups' => function ($q) use ($location) {
+                        $q->select('id')->whereHas('locations', function ($q) use ($location) {
+                            $q->where('locations.id', $location);
+                        });
+                    }]);
+                    if($offer->groups->first()) $offer_group_id = $offer->groups->first()->id;
+                }
                 $services = [];
+                $service_group->services->load('category.parent');
                 foreach ($service_group->services as $service) {
                     $service_variable = $service->flashPrice();
                     $service = [
@@ -67,7 +80,8 @@ class ServiceGroupController extends Controller
                     'id' => $service_group->id,
                     "name" => $service_group->name,
                     "app_thumb" => $service_group->app_thumb,
-                    "services" => $services
+                    "services" => $services,
+                    'offer_group_id' => $offer_group_id
                 ];
                 $master_category = collect($services)->unique('master_category_id')->map(function ($item) {
                     return ['id' => $item['master_category_id'], 'name' => $item['category_name']];
@@ -80,6 +94,7 @@ class ServiceGroupController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
