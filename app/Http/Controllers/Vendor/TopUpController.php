@@ -53,8 +53,8 @@ class TopUpController extends Controller
                 $error = $validator->errors()->all()[0];
                 return api_response($request, $error, 400, ['msg' => $error]);
             }
-            list($data, $total, $offset) = (new VendorRepository())->topUpHistory($request);
-            $response = ['data' => $data, 'total' => $total, 'offset' => $offset];
+            $data= (new VendorRepository())->topUpHistory($request);
+            $response = ['data' => $data];
             return api_response($request, $response, 200, $response);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
