@@ -41,7 +41,7 @@ class TopUpController extends Controller
         }
     }
 
-    public function history(Request $request, $id)
+    public function history(Request $request)
     {
         try {
             $rules = [
