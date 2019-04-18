@@ -47,12 +47,12 @@ class Affiliate extends Model implements TopUpAgent, MovieAgent
 
     public function onboardedPartners()
     {
-        return $this->hasMany(Partner::class,'affiliate_id');
+        return $this->hasMany(Partner::class, 'affiliate_id');
     }
 
     public function moderatedPartners()
     {
-        return $this->hasMany(Partner::class,'moderator_id');
+        return $this->hasMany(Partner::class, 'moderator_id');
     }
 
     public function suspensions()
@@ -186,7 +186,7 @@ class Affiliate extends Model implements TopUpAgent, MovieAgent
 
     public function topups()
     {
-        return $this->hasMany(TopUpOrder::class, 'agent_id');
+        return $this->hasMany(TopUpOrder::class, 'agent_id')->where('agent_type', 'App\\Models\\Affiliate');
     }
 
     public function scopeTopUpTransactionBetween($query, $from, $to)
