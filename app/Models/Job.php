@@ -115,7 +115,7 @@ class Job extends Model
         //$this->totalPrice = formatTaka($this->totalPriceWithoutVat + $this->vat); // later
         $this->totalPrice = formatTaka($this->totalPriceWithoutVat);
         $this_discount = $this->isCalculated ? Job::find($this->id)->discount : $this->discount;
-        $this->ownDiscount = $this_discount;
+        $this->ownDiscount = $this_discount - $this->online_discount;
         $this->ownShebaContribution = $this->sheba_contribution;
         $this->ownPartnerContribution = $this->partner_contribution;
         $this->serviceDiscounts = $this->calculateServiceDiscount();
@@ -126,7 +126,7 @@ class Job extends Model
         $this->ownDiscountContributionPartner = formatTaka(($this->ownDiscount * $this->ownPartnerContribution) / 100);
         $this->serviceDiscountContributionSheba = $this->calculateServiceDiscountContributionSheba();
         $this->serviceDiscountContributionPartner = $this->calculateServiceDiscountContributionPartner();
-        $this->discountContributionSheba = formatTaka($this->ownDiscountContributionSheba + $this->serviceDiscountContributionSheba);
+        $this->discountContributionSheba = formatTaka($this->ownDiscountContributionSheba + $this->serviceDiscountContributionSheba + $this->online_discount);
         $this->discountContributionPartner = formatTaka($this->ownDiscountContributionPartner + $this->serviceDiscountContributionPartner);
         $this->totalCost = $this->totalCostWithoutDiscount - $this->discountContributionPartner;
         $this->grossCost = formatTaka($this->totalCost);
@@ -436,12 +436,12 @@ class Job extends Model
 
     private function isOneWayReadyToPickable()
     {
-        return $this->isOneWayReadyToPick() && $this->_isProcessable();
+        return $this->category->needsOneWayLogisticOnReadyToPick() && JobStatuses::isProcessable($this->status);
     }
 
     private function isTwoWayReadyToPickable()
     {
-        return $this->isServeable() && $this->isTwoWay() && empty($this->last_logistic_order_id);
+        return JobStatuses::isServeable($this->status) && $this->category->needsTwoWayLogistic() && empty($this->last_logistic_order_id);
     }
 
     /**
@@ -458,5 +458,10 @@ class Job extends Model
     public function needsLogistic()
     {
         return $this->category->needsLogistic() && $this->getPartnerCategory()->needsShebaLogistic();
+    }
+
+    public function isOnlinePaymentDiscountApplicable()
+    {
+        return $this->created_at->copy()->addMinutes(config('sheba.online_payment_discount_threshold_minutes')) >= Carbon::now() && $this->online_discount == 0;
     }
 }

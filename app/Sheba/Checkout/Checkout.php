@@ -185,6 +185,7 @@ class Checkout
                 ]);
                 $job = $this->getAuthor($job, $data);
                 $job->jobServices()->saveMany($data['job_services']);
+                $this->deductStock($data['job_services']);
                 if (isset($data['car_rental_job_detail'])) {
                     $data['car_rental_job_detail']->job_id = $job->id;
                     $data['car_rental_job_detail']->save();
@@ -445,6 +446,16 @@ class Checkout
             return $profile;
         } catch (\Throwable $e) {
             return null;
+        }
+    }
+
+    private function deductStock($job_services)
+    {
+        foreach ($job_services as $job_service) {
+            $service = Service::select('id', 'stock_left')->where('id', $job_service->service_id)->first();
+            if ($service->stock_left <= 0) $service->stock_left = 0;
+            else $service->stock_left -= 1;
+            $service->update();
         }
     }
 }

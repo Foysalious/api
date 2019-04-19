@@ -1,24 +1,27 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\CategoryGroup;
+use App\Models\CategoryGroupCategory;
 use App\Models\CategoryPartner;
 use App\Models\HyperLocal;
 use App\Models\Location;
 use App\Models\Partner;
 use App\Models\Service;
+use App\Models\ServiceGroupService;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
-use Carbon\Carbon;
 use Dingo\Api\Routing\Helpers;
 use Illuminate\Http\Request;
 use DB;
 use Illuminate\Validation\ValidationException;
+use Sheba\CategoryServiceGroup;
 use Sheba\Location\Coords;
 use Sheba\ModificationFields;
 
 class CategoryController extends Controller
 {
-    use Helpers, ModificationFields;
+    use Helpers, ModificationFields, CategoryServiceGroup;
     private $categoryRepository;
     private $serviceRepository;
 
@@ -88,6 +91,7 @@ class CategoryController extends Controller
                     }]);
                 }
             }
+
             $filter_publication($categories);
             //$categories = $request->has('is_business') && (int)$request->is_business ? $categories->publishedForBusiness() : $categories->published();
             $categories = $categories->get();
@@ -163,19 +167,26 @@ class CategoryController extends Controller
                 if (!is_null($hyperLocation)) $location = $hyperLocation->location;
             }
 
+            $best_deal_categories_id = explode(',', config('sheba.best_deal_ids'));
+            $best_deal_category = CategoryGroupCategory::whereIn('category_group_id', $best_deal_categories_id)->pluck('category_id')->toArray();
+
             if ($location) {
-                $children = $category->load(['children' => function ($q) use ($location) {
-                    $q->whereHas('locations', function ($q) use ($location) {
-                        $q->where('locations.id', $location->id);
-                    });
+                $children = $category->load(['children' => function ($q) use ($best_deal_category, $location) {
+                    $q->whereNotIn('id', $best_deal_category)
+                        ->whereHas('locations', function ($q) use ($location) {
+                            $q->where('locations.id', $location->id);
+                        });
                     $q->whereHas('services', function ($q) use ($location) {
                         $q->published()->whereHas('locations', function ($q) use ($location) {
                             $q->where('locations.id', $location->id);
                         });
                     });
                 }])->children;
-            } else
-                $children = $category->children;
+            } else {
+                $children = $category->children->filter(function ($sub_category) use ($best_deal_category) {
+                    return !in_array($sub_category->id, $best_deal_category);
+                });
+            }
 
             if (count($children) != 0) {
                 $children = $children->each(function (&$child) use ($location) {
@@ -249,9 +260,10 @@ class CategoryController extends Controller
                     $services = $this->serviceRepository->addServiceInfo($services, $scope);
                 } else {
                     $category = $category->load(['services' => function ($q) use ($offset, $limit, $location) {
-                        $q->whereHas('locations', function ($query) use ($location) {
-                            $query->where('locations.id', $location);
-                        });
+                        $q->whereNotIn('id', $this->serviceGroupServiceIds())
+                            ->whereHas('locations', function ($query) use ($location) {
+                                $query->where('locations.id', $location);
+                            });
                         $q->select('id', 'category_id', 'unit', 'name', 'bn_name', 'thumb', 'app_thumb', 'app_banner', 'short_description', 'description', 'banner', 'faqs', 'variables', 'variable_type', 'min_quantity')->orderBy('order')->skip($offset)->take($limit);
                         if ((int)\request()->is_business) $q->publishedForBusiness();
                         elseif ((int)\request()->is_for_backend) $q->publishedForAll();
@@ -286,7 +298,7 @@ class CategoryController extends Controller
                         $subscription['thumb'] = $service['thumb'];
                         $subscription['banner'] = $service['banner'];
                         $subscription['offers'] = $subscription->getDiscountOffers();
-                        removeRelationsAndFields($subscription);
+                        removeRelationsAndFields($service);
                         $subscriptions->push($subscription);
                     }
                 }
@@ -302,7 +314,7 @@ class CategoryController extends Controller
                     }
                     $category['services'] = $services;
                     $category['subscriptions'] = $subscriptions;
-                    if($subscriptions->count()) {
+                    if ($subscriptions->count()) {
                         $category['subscription_faq'] = [
                             'title' => 'Subscribe & save money',
                             'body' => 'Save BDT 20 in every meter by subscribing for one month!'

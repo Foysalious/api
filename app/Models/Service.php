@@ -53,6 +53,11 @@ class Service extends Model
         return $this->hasOne(ServiceSubscription::class);
     }
 
+    public function groups()
+    {
+        return $this->belongsToMany(ServiceGroup::class, 'service_group_service');
+    }
+
     public function reviews()
     {
         return $this->hasMany(Review::class);
@@ -220,6 +225,24 @@ class Service extends Model
             ]);
         }
         return json_encode($variables);
+    }
+
+    public function variable()
+    {
+        return json_decode($this->variables);
+    }
+
+    public function flashPrice()
+    {
+        $variable = $this->variable();
+        $defaultDiscount = (new \stdClass());
+        $defaultDiscount->value = 0;
+        $defaultDiscount->is_percentage = 0;
+        return [
+            'price' => isset($variable->price) ? (double)$variable->price : 0,
+            'discounted_price' => isset($variable->discounted_price) ? (double)$variable->discounted_price : 0,
+            'discount' => isset($variable->discount) ? $variable->discount : $defaultDiscount,
+        ];
     }
 
     public function favorites()

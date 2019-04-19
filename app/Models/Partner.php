@@ -457,9 +457,13 @@ class Partner extends Model implements Rewardable, TopUpAgent
 
     public function notCancelledJobs()
     {
-        return $this->jobs->reject(function ($job) {
-            return $job->cancelRequests->count() > 0;
-        });
+//        return $this->jobs->reject(function ($job) {
+//            return $job->cancelRequests()->count() > 0;
+//        });
+
+        return $this->jobs()->whereNotExists(function ($q) {
+            $q->from('job_cancel_requests')->whereRaw('job_id = jobs.id');
+        })->get();
     }
 
     public function todayJobs($jobs = null)

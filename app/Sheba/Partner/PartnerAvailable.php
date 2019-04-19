@@ -5,34 +5,80 @@ namespace App\Sheba\Partner;
 use App\Models\Category;
 use App\Models\Partner;
 use Carbon\Carbon;
+use Sheba\Checkout\Partners\PartnerUnavailabilityReasons;
 
 class PartnerAvailable
 {
+    /** @var Partner */
     private $partner;
+    /** @var bool */
+    private $isAvailable;
+    /** @var string */
+    private $unavailabilityReason;
 
     public function __construct($partner)
     {
         $this->partner = ($partner) instanceof Partner ? $partner : Partner::find($partner);
     }
 
-    public function available(array $dates, $preferred_time, Category $category)
+    /**
+     * @param array $dates
+     * @param $preferred_time
+     * @param Category $category
+     */
+    public function check(array $dates, $preferred_time, Category $category)
     {
         foreach ($dates as $date) {
             if ($this->_partnerOnLeave($date, $preferred_time)) {
-                return 0;
+                $this->isAvailable = false;
+                $this->unavailabilityReason = PartnerUnavailabilityReasons::ON_LEAVE;
+                return;
             }
             if (!$this->_worksAtDayAndTime($date, $preferred_time)) {
-                return 0;
-            }
-        }
-        $rent_car_ids = array_map('intval', explode(',', env('RENT_CAR_IDS')));
-        if (!in_array($category->id, $rent_car_ids)) {
-            if (!((scheduler($this->partner)->isAvailable($dates, explode('-', $preferred_time)[0], $category)))->get('is_available')) {
-                return 0;
+                $this->isAvailable = false;
+                $this->unavailabilityReason = PartnerUnavailabilityReasons::WORKING_HOUR;
+                return;
             }
         }
 
-        return 1;
+        $rent_car_ids = array_map('intval', explode(',', env('RENT_CAR_IDS')));
+        if (!in_array($category->id, $rent_car_ids)) {
+            if (!((scheduler($this->partner)->isAvailable($dates, explode('-', $preferred_time)[0], $category)))->get('is_available')) {
+                $this->isAvailable = false;
+                $this->unavailabilityReason = PartnerUnavailabilityReasons::RESOURCE_BOOKED;
+                return;
+            }
+        }
+
+        $this->isAvailable = true;
+    }
+
+    /**
+     * @return int
+     */
+    public function getAvailability()
+    {
+        return $this->isAvailable ? 1 : 0;
+    }
+
+    /**
+     * @return string
+     */
+    public function getUnavailabilityReason()
+    {
+        return $this->unavailabilityReason;
+    }
+
+    /**
+     * @param array $dates
+     * @param $preferred_time
+     * @param Category $category
+     * @return int
+     */
+    public function available(array $dates, $preferred_time, Category $category)
+    {
+        $this->check($dates, $preferred_time, $category);
+        return $this->getAvailability();
     }
 
     private function _partnerOnLeave($date, $preferred_time)

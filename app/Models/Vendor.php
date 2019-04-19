@@ -32,4 +32,9 @@ class Vendor extends Model implements TopUpAgent
     {
         return new \Sheba\TopUp\Commission\Vendor();
     }
+
+    public function topups()
+    {
+        return $this->hasMany(TopUpOrder::class, 'agent_id')->where('agent_type', 'App\\Models\\Vendor');
+    }
 }

@@ -6,6 +6,7 @@ use App\Models\TopUpVendorCommission;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\TopUp\TopUp;
@@ -90,6 +91,10 @@ class TopUpController extends Controller
             $sentry->captureException(new \Exception('SSL topup fail'));
             $error_response->setResponse($data);
             $top_up->processFailedTopUp($error_response->getTopUpOrder(), $error_response);
+
+            $topup_fail_namespace = 'Topup:Fail_'. Carbon::now()->timestamp . str_random(6);
+            Redis::set($topup_fail_namespace, json_encode($data));
+
             return api_response($request, 1, 200);
         } catch (QueryException $e) {
             $sentry = app('sentry');
@@ -112,6 +117,10 @@ class TopUpController extends Controller
             Storage::disk('s3')->put("topup/success/ssl/$filename", json_encode($data));
             $success_response->setResponse($data);
             $top_up->processSuccessfulTopUp($success_response->getTopUpOrder(), $success_response);
+
+            $topup_success_namespace = 'Topup:Success_'. Carbon::now()->timestamp . str_random(6);
+            Redis::set($topup_success_namespace, json_encode($data));
+
             return api_response($request, 1, 200);
         } catch (QueryException $e) {
             $sentry = app('sentry');

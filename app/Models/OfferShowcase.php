@@ -13,6 +13,11 @@ class OfferShowcase extends Model
         return $q->where('is_active', 1);
     }
 
+    public function scopeFlash($q)
+    {
+        return $q->where('is_flash', 1);
+    }
+
     public function scopeValid($q)
     {
         $now = Carbon::now();
