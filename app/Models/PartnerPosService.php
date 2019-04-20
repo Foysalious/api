@@ -11,7 +11,7 @@ class PartnerPosService extends Model
 
     public function category()
     {
-        return $this->belongsTo(PosCategory::class);
+        return $this->belongsTo(PosCategory::class, 'pos_category_id');
     }
 
     public function subCategory()

@@ -4,6 +4,10 @@ use App\Http\Controllers\Controller;
 use App\Models\PartnerPosService;
 use App\Models\PartnerPosServiceDiscount;
 
+use App\Transformers\PosServiceTransformer;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Item;
+use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Pos\Product\Creator as ProductCreator;
 use Sheba\Pos\Product\Updater as ProductUpdater;
 use Carbon\Carbon;
@@ -53,23 +57,15 @@ class ServiceController extends Controller
 
     public function show(Request $request)
     {
-        $service = [
-            'name' => 'Flower Kit',
-            'image' => 'https://lh6.googleusercontent.com/proxy/u8eiKX1ZnFRzptzjIcyehRP-wH1_GbB9P0uog4dh5wrsXmx57m7H97yRAjjTmqSaAWwtWGHyYqI9dFYsvL-L75RrMF_bIeUPmgwqRjAtRWop_PrcMNXoeUcHWfdqvLuzPURmnYlAOSeZYOcOpyYrDYpXleM=w100-h134-n-k-no',
-            'regular_price' => 1300.00,
-            'discounted_price' => 1254.00,
-            'category' => 'Foods',
-            'sub_category' => 'Breakfast',
-            'inventory' => true,
-            'quantity' => 300,
-            'purchase_cost' => 20,
-            'vat_applicable' => true,
-            'vat' => 0.20,
-            'discount_applicable' => true,
-            'discount_amount' => 46,
-            'discount_end_time' => Carbon::parse('11-08-2019')
-        ];
         try {
+            $service = PartnerPosService::with(['category', 'discounts'])->find($request->service);
+            if (!$service) return api_response($request, null, 404, ['msg' => 'Service Not Found']);
+
+            $manager = new Manager();
+            $manager->setSerializer(new ArraySerializer());
+            $resource = new Item($service, new PosServiceTransformer());
+            $service = $manager->createData($resource)->toArray();
+
             return api_response($request, $service, 200, ['service' => $service]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
