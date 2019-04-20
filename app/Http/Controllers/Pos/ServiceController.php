@@ -32,6 +32,7 @@ class ServiceController extends Controller
                 ->partner($partner->id)->get()
                 ->each(function ($service) use (&$services) {
                     $services[] = [
+                        'id'                    => $service->id,
                         'name'                  => $service->name,
                         'app_thumb'             => $service->app_thumb,
                         'app_banner'            => $service->app_banner,

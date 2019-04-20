@@ -39,7 +39,7 @@ class Updater
         $this->format();
         $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'is_vat_percentage_off', 'is_stock_off']);
 
-        if ($this->updatedData) $this->serviceRepo->update($this->service, $this->updatedData);
+        if (!empty($this->updatedData)) $this->serviceRepo->update($this->service, $this->updatedData);
     }
 
     private function saveImages()
@@ -83,6 +83,14 @@ class Updater
 
         if ((isset($this->data['price']) && $this->data['price'] != $this->service->cost)) {
             $this->updatedData['price'] = $this->data['price'];
+        }
+
+        if ((isset($this->data['name']) && $this->data['name'] != $this->service->name)) {
+            $this->updatedData['name'] = $this->data['name'];
+        }
+
+        if ((isset($this->data['category_id']) && $this->data['category_id'] != $this->service->pos_category_id)) {
+            $this->updatedData['pos_category_id'] = $this->data['category_id'];
         }
     }
 
