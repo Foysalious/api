@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PartnerPosService;
 use App\Models\PartnerPosServiceDiscount;
 
+use App\Models\PosCategory;
 use App\Transformers\PosServiceTransformer;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
@@ -76,7 +77,12 @@ class ServiceController extends Controller
     public function store(Request $request, ProductCreator $creator)
     {
         try {
-            $this->validate($request, ['name' => 'required', 'category_id' => 'required', 'price' => 'required']);
+            $secondaries_categories = PosCategory::child()->pluck('id')->toArray();
+            $this->validate($request, [
+                'name' => 'required',
+                'category_id' => 'required|in:' . implode(',', $secondaries_categories),
+                'price' => 'required'
+            ]);
             $this->setModifier($request->partner);
             $partner_pos_service = $creator->setData($request->all())->create();
 

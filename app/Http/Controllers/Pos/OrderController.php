@@ -47,6 +47,8 @@ class OrderController extends Controller
     {
         try {
             $order = PosOrder::with('items')->find($request->order)->calculate();
+            if (!$order) return api_response($request, null, 404, ['msg' => 'Order Not Found']);
+
             $manager = new Manager();
             $manager->setSerializer(new ArraySerializer());
             $resource = new Item($order, new PosOrderTransformer());
