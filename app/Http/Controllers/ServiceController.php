@@ -59,11 +59,11 @@ class ServiceController extends Controller
             #$offer = $service->first()->groups()->first() ? $service->first()->groups()->first()->offers()->where('end_date', '>', Carbon::now())->first() : null;
 
             $offer = $service->first()->groups()->whereHas('offers', function ($q) {
-                $q->active()->flash()->validFlashOffer()->where('offer_showcases.end_date', '>', Carbon::now());
+                $q->active()->flash()->validFlashOffer();
             })->with(['offers' => function ($query) {
-                $query->active()->flash()->validFlashOffer()->where('offer_showcases.end_date', '>', Carbon::now())->orderBy('end_date', 'desc');
+                $query->active()->flash()->validFlashOffer()->orderBy('end_date', 'desc');
             }])->first()->offers->first();
-
+            
             $options = $this->serviceQuestionSet($service->first());
             $answers = collect();
             if ($options)
