@@ -12,7 +12,7 @@ $helper_files = [
 
 foreach ($helper_files as $file) {
     $file = dirname(dirname(__DIR__)) . "/" . $file;
-    if(file_exists($file)) require $file;
+    if (file_exists($file)) require $file;
 }
 
 if (!function_exists('setTrace')) {
