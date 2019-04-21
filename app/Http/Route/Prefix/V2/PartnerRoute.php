@@ -69,6 +69,7 @@ class PartnerRoute
                 $api->group(['prefix' => 'orders'], function ($api) {
                     $api->get('/', 'Pos\OrderController@index');
                     $api->post('/', 'Pos\OrderController@store');
+                    $api->post('/quick-store', 'Pos\OrderController@quickStore');
                     $api->group(['prefix' => '{order}'], function ($api) {
                         $api->get('/', 'Pos\OrderController@show');
                     });

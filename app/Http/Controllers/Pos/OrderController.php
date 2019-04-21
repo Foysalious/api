@@ -3,17 +3,16 @@
 use App\Http\Controllers\Controller;
 use App\Models\PosOrder;
 
-use App\Transformers\JobTransformer;
 use App\Transformers\PosOrderTransformer;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
-use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
 use Sheba\ModificationFields;
 use Sheba\Pos\Order\Creator;
+use Sheba\Pos\Order\QuickCreator;
 
 class OrderController extends Controller
 {
@@ -61,6 +60,27 @@ class OrderController extends Controller
     }
 
     public function store(Request $request, Creator $creator)
+    {
+        try {
+            $this->validate($request, []);
+            $this->setModifier($request->manager_resource);
+
+            $order = $creator->setData($request->all())->create();
+
+            return api_response($request, null, 200, ['msg' => 'Order Created Successfully', 'order' => $order]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function quickStore(Request $request, QuickCreator $creator)
     {
         try {
             $this->validate($request, []);
