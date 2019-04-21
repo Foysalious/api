@@ -55,7 +55,15 @@ class ServiceController extends Controller
         try {
             $service = Service::where('id', $service)->select('id', 'name', 'unit', 'structured_description', 'category_id', 'short_description', 'description', 'thumb', 'slug', 'min_quantity', 'banner', 'faqs', 'bn_name', 'bn_faqs', 'variable_type', 'variables');
 
-            $offer = $service->first()->groups()->first() ? $service->first()->groups()->first()->offers()->where('end_date', '>', Carbon::now())->first() : null;
+
+            #$offer = $service->first()->groups()->first() ? $service->first()->groups()->first()->offers()->where('end_date', '>', Carbon::now())->first() : null;
+
+            $offer = $service->first()->groups()->whereHas('offers', function ($q) {
+                $q->active()->flash()->validFlashOffer()->where('offer_showcases.end_date', '>', Carbon::now());
+            })->with(['offers' => function ($query) {
+                $query->active()->flash()->validFlashOffer()->where('offer_showcases.end_date', '>', Carbon::now())->orderBy('end_date', 'desc');
+            }])->first()->offers->first();
+
             $options = $this->serviceQuestionSet($service->first());
             $answers = collect();
             if ($options)
@@ -133,7 +141,7 @@ class ServiceController extends Controller
             array_add($service, 'master_category_id', $category->parent->id);
             array_add($service, 'master_category_name', $category->parent->name);
             array_add($service, 'service_breakdown', $service_breakdown);
-            if (config('sheba.online_payment_discount_percentage') > 0){
+            if (config('sheba.online_payment_discount_percentage') > 0) {
                 $discount_percentage = config('sheba.online_payment_discount_percentage');
                 $payment_discount_percentage = "Save $discount_percentage% more by paying online after checkout!";
                 array_add($service, 'payment_discount_percentage', $payment_discount_percentage);
