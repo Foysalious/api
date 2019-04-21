@@ -5,6 +5,7 @@ use App\Models\PosOrder;
 
 use App\Transformers\JobTransformer;
 use App\Transformers\PosOrderTransformer;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
@@ -20,41 +21,23 @@ class OrderController extends Controller
 
     public function index(Request $request)
     {
-        $orders = [
-            [
-                'date' => '12 Feb 2019',
-                'orders' => [
-                    [
-                        'code' => '156412',
-                        'time' => '5:20PM',
-                        'status' => 'paid',
-                    ],
-                    [
-                        'code' => '156412',
-                        'time' => '5:20PM',
-                        'status' => 'due',
-                    ]
-                ]
-            ],
-            [
-                'date' => '14 Feb 2019',
-                'orders' => [
-                    [
-                        'code' => '156412',
-                        'time' => '5:20PM',
-                        'status' => 'paid',
-                    ],
-                    [
-                        'code' => '156412',
-                        'time' => '5:20PM',
-                        'status' => 'due',
-                    ]
-                ]
-            ]
-        ];
-        //To do => Filter Collection By Query
         try {
-            return api_response($request, $orders, 200, ['orders' => $orders]);
+            $status = $request->status;
+            $orders = PosOrder::with('items')->orderBy('created_at','desc')->get();
+            $final_orders = array();
+            foreach ($orders as $index => $order) {
+                $order_data = $order->calculate();
+                $manager = new Manager();
+                $manager->setSerializer(new ArraySerializer());
+                $resource = new Item($order_data, new PosOrderTransformer());
+                $order_formatted = $manager->createData($resource)->toArray();
+                $order_create_date  = Carbon::parse($order_formatted['created_at'])->format('Y-m-d');
+                if(!isset($final_orders[$order_create_date]))
+                    $final_orders[$order_create_date] = array();
+                if(!$status || ($status && $order_formatted['payment_status'] === $status) )
+                    array_push($final_orders[$order_create_date], $order_formatted);
+            }
+            return api_response($request, $final_orders, 200, ['orders' => $final_orders]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

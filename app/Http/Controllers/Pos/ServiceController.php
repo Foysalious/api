@@ -32,7 +32,7 @@ class ServiceController extends Controller
                 $base_query->whereIn('pos_category_id', $category_ids);
             }
 
-            $base_query->select($this->getSelectColumnsOfService())
+                $base_query->select($this->getSelectColumnsOfService())
                 ->partner($partner->id)->get()
                 ->each(function ($service) use (&$services) {
                     $services[] = [
