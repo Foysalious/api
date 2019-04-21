@@ -64,7 +64,12 @@ class OrderController extends Controller
     public function store(Request $request, Creator $creator)
     {
         try {
-            $this->validate($request, []);
+            $this->validate($request, [
+                'services' => 'required|string',
+                'amount' => 'required|numeric',
+                'paid_amount' => 'required|numeric',
+                'payment_method' => 'required|string|in:' . implode(',', config('pos.payment_method'))
+            ]);
             $this->setModifier($request->manager_resource);
 
             $order = $creator->setData($request->all())->create();
@@ -85,7 +90,11 @@ class OrderController extends Controller
     public function quickStore(Request $request, QuickCreator $creator)
     {
         try {
-            $this->validate($request, []);
+            $this->validate($request, [
+                'amount' => 'required|numeric',
+                'paid_amount' => 'required|numeric',
+                'payment_method' => 'required|string|in:' . implode(',', config('pos.payment_method'))
+            ]);
             $this->setModifier($request->manager_resource);
 
             $order = $creator->setData($request->all())->create();
@@ -98,6 +107,7 @@ class OrderController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
