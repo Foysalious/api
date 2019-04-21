@@ -65,6 +65,11 @@ class OfferShowcase extends Model
         return strtolower(snake_case(str_replace("App\\Models\\", '', $this->target_type)));
     }
 
+    public function scopeTargetType($query, $type)
+    {
+        return $query->where('target_type', "App\\Models\\$type");
+    }
+
     public function isVoucher()
     {
         return $this->type() == 'voucher' ? 1 : 0;
@@ -88,6 +93,11 @@ class OfferShowcase extends Model
     public function locations()
     {
         return $this->belongsToMany(Location::class);
+    }
+
+    public function groups()
+    {
+        return $this->belongsToMany(OfferGroup::class, 'offer_group_offer');
     }
 
 }
