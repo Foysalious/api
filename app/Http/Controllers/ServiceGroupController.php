@@ -48,14 +48,17 @@ class ServiceGroupController extends Controller
 
             if ($service_group) {
                 $offer_group_id = null;
-                $offer = OfferShowcase::targetType('ServiceGroup')->where('target_id', $service_group->id)->active()->valid()->orderBy('end_date', 'desc')->first();
+                $offer = OfferShowcase::targetType('ServiceGroup')->where('target_id', $service_group->id)->active()->valid()->orderBy('end_date')->first();
                 if ($offer) {
                     $offer->load(['groups' => function ($q) use ($location) {
-                        $q->select('id')->whereHas('locations', function ($q) use ($location) {
-                            $q->where('locations.id', $location);
-                        });
+                        $q->select('id');
+                        if ($location) {
+                            $q->whereHas('locations', function ($q) use ($location) {
+                                $q->where('locations.id', $location);
+                            });
+                        }
                     }]);
-                    if($offer->groups->first()) $offer_group_id = $offer->groups->first()->id;
+                    if ($offer->groups->first()) $offer_group_id = $offer->groups->first()->id;
                 }
                 $services = [];
                 $service_group->services->load('category.parent');
