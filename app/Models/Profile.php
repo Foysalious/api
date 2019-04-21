@@ -68,6 +68,11 @@ class Profile extends Model
         return $this->hasMany(JoinRequest::class);
     }
 
+    public function posCustomer()
+    {
+        return $this->hasOne(PosCustomer::class);
+    }
+
     public function getIdentityAttribute()
     {
         if ($this->name != '') {
