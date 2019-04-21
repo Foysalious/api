@@ -99,6 +99,9 @@ class Route
                 });
             });
 
+            $api->post('b2b-login', 'B2b\LoginController@login');
+            $api->post('b2b-register', 'B2b\RegistrationController@register');
+
 
             $api->group(['prefix' => 'categories'], function ($api) {
                 $api->group(['prefix' => '{id}'], function ($api) {
