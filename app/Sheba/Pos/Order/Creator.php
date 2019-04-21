@@ -1,5 +1,6 @@
 <?php namespace Sheba\Pos\Order;
 
+use App\Models\PartnerPosService;
 use Sheba\Pos\Repositories\PosOrderItemRepository;
 use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
@@ -51,6 +52,7 @@ class Creator
             $service['service_id']   = $service['id'];
             $service['service_name'] = $service['name'];
             $service['pos_order_id'] = $order->id;
+            $service['vat_percentage'] = PartnerPosService::find($service['id'])->vat_percentage;
             $service = array_except($service, ['id', 'name']);
 
             $this->itemRepo->save($service);

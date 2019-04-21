@@ -2,13 +2,23 @@
 
 class TakaFormatter
 {
-    public static function formatTaka($amount, $comma_separation = false, $comma_separation_format = "BDT")
+    private static function formatTaka($amount, $comma_separation = false, $comma_separation_format = "BDT")
     {
         $amount = number_format($amount, 2, '.', '');
         if ($comma_separation) {
             $amount = self::commaSeparate($amount, $decimal = 2, $comma_separation_format);
         }
         return $amount;
+    }
+
+    public static function toString($amount, $comma_separation = false, $comma_separation_format = "BDT")
+    {
+        return self::formatTaka($amount, $comma_separation, $comma_separation_format);
+    }
+
+    public static function toDecimal($amount)
+    {
+        return self::formatTaka($amount);
     }
 
     public static function commaSeparate($amount, $decimal = 0, $format = "BDT")

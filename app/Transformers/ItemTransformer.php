@@ -9,7 +9,7 @@ class ItemTransformer extends TransformerAbstract
         return [
             'id'    => (int)$item->service_id,
             'name'  => $item->service_name,
-            'price' => (double)$item->grossPrice
+            'price' => (double)$item->total
         ];
     }
 }

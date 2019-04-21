@@ -13,9 +13,9 @@ class PosOrderTransformer extends TransformerAbstract
             'created_by_name' => $order->created_by_name,
             'created_at' => $order->created_at->format('Y-m-d h:s:i A'),
             'partner_name' => $order->partner->name,
-            'price' => (double)$order->grossAmount,
+            'price' => (double)$order->netBill,
             'payment_status' => $order->paymentStatus,
-            'vat' => 0.00,
+            'vat' => (double)$order->totalVat,
             'paid' => $order->paid,
             'due' => $order->due
         ];
