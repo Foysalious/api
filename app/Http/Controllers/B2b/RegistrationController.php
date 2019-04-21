@@ -7,6 +7,9 @@ use App\Http\Controllers\Controller;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use App\Models\Profile;
+use JWTAuth;
+use JWTFactory;
+use Session;
 
 class RegistrationController extends Controller
 {
@@ -32,9 +35,23 @@ class RegistrationController extends Controller
             $m_profile = $this->profileRepository->ifExist($mobile, 'mobile');
             $e_profile = $this->profileRepository->ifExist($email, 'email');
 
+            $profile = collect();
+
             if ($m_profile && $e_profile) {
-                if ($m_profile->id == $e_profile->id)
-                    $member = $this->makeMember($m_profile);
+                if ($m_profile->id == $e_profile->id) {
+                    if (!$m_profile->member) {
+                        $member = $this->makeMember($m_profile);
+                    }
+                    $token = JWTAuth::fromUser($m_profile);
+                    return response()->json([
+                        'msg' => 'successful',
+                        'code' => 200,
+                        'token' => $token,
+                        'remember_token' => $m_profile->remember_token,
+                        'member' => $m_profile->id,
+                        'member_img' => $m_profile->pro_pic
+                    ]);
+                }
             } elseif ($m_profile) {
                 return api_response($request, null, 400, ['message' => 'Mobile already exists! Please login']);
             } elseif ($e_profile) {
@@ -47,10 +64,19 @@ class RegistrationController extends Controller
                     'password' => bcrypt($request->password)
                 ];
                 $profile = $this->profileRepository->store($data);
+                $profile->push($m_profile);
                 $member = $this->makeMember($profile);
-            }
 
-            return $profile ? api_response($request, $profile, 200, ['profile' => $profile]) : api_response($request, null, 404);
+                $token = JWTAuth::fromUser($profile);
+                return response()->json([
+                    'msg' => 'successful',
+                    'code' => 200,
+                    'token' => $token,
+                    'remember_token' => $profile->remember_token,
+                    'member' => $profile->id,
+                    'member_img' => $profile->pro_pic
+                ]);
+            }
 
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
