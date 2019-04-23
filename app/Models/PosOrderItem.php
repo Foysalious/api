@@ -5,22 +5,27 @@ use Illuminate\Database\Eloquent\Model;
 class PosOrderItem extends Model
 {
     protected $guarded = ['id'];
+
     /**
      * @var number
      */
-    public $servicePrice;
-    public $serviceDiscounts;
+    private $vat;
     /**
-     * @var int|number
+     * @var float|int|number
      */
-    public $grossPrice;
+    private $priceWithVat;
     /**
-     * @var number
+     * @var float|int
      */
-    public $unitPrice;
+    private $discountAmount;
     /**
-     * @var bool
+     * @var float|int|number
      */
+    private $total;
+    /**
+     * @var float|int
+     */
+    private $price;
     public $isCalculated;
 
     public function order()
@@ -35,11 +40,63 @@ class PosOrderItem extends Model
 
     public function calculate()
     {
-        $this->servicePrice = formatTaka(($this->unit_price * $this->quantity));
-        $this->grossPrice = ($this->servicePrice > $this->discount) ? formatTaka($this->servicePrice - $this->discount) : 0;
-        $this->unitPrice = formatTaka($this->unit_price);
+        $this->price = ($this->unit_price * $this->quantity);
+        $this->vat = ($this->price * $this->vat_percentage) / 100;
+        $this->priceWithVat = $this->price + $this->vat;
+        $this->discountAmount = ($this->price > $this->discount) ? $this->discount : $this->price;
+        $this->total = $this->priceWithVat - $this->discount;
         $this->isCalculated = true;
+        $this->_formatAllToTaka();
 
         return $this;
+    }
+
+    private function _formatAllToTaka()
+    {
+        $this->price = formatTakaToDecimal($this->price);
+        $this->vat = formatTakaToDecimal($this->vat);
+        $this->priceWithVat = formatTakaToDecimal($this->priceWithVat);
+        $this->discountAmount = formatTakaToDecimal($this->discountAmount);
+        $this->total = formatTakaToDecimal($this->total);
+    }
+
+    /**
+     * @return float|int
+     */
+    public function getPrice()
+    {
+        return $this->price;
+    }
+
+    /**
+     * @return number
+     */
+    public function getVat()
+    {
+        return $this->vat;
+    }
+
+    /**
+     * @return float|int|number
+     */
+    public function getPriceWithVat()
+    {
+        return $this->priceWithVat;
+    }
+
+    /**
+     * @return float|int
+     */
+    public function getDiscountAmount()
+    {
+        return $this->discountAmount;
+    }
+
+    /**
+     * @return float|int|number
+     */
+    public function getTotal()
+    {
+        return $this->total;
     }
 }

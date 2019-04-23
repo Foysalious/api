@@ -32,7 +32,7 @@ class Basic extends PartnerPerformance
 
     private function getDataOf($of)
     {
-        $func_name = "getDataOf" . pamel_case($of);
+        $func_name = "getDataOf" . pamelCase($of);
 
         $previous = $this->isCalculatingWeekly() ? $this->getPreviousDataByWeekly($of) : $this->getPreviousDataByMonthly($of);
 
@@ -78,7 +78,7 @@ class Basic extends PartnerPerformance
 
     private function getPreviousDataByWeekly($of)
     {
-        $func_name = "getDataOf" . pamel_case($of);
+        $func_name = "getDataOf" . pamelCase($of);
 
         $calculating_week = $this->timeFrame->start->weekOfYear;
         $week_start_date = $this->timeFrame->start->copy()->subWeeks(self::CALCULATE_PREVIOUS_SLOT);
@@ -102,7 +102,7 @@ class Basic extends PartnerPerformance
 
     private function getPreviousDataByMonthly($of)
     {
-        $func_name = "getDataOf" . pamel_case($of);
+        $func_name = "getDataOf" . pamelCase($of);
 
         $calculating_month = $this->timeFrame->start->month;
         $month_start_date = $this->timeFrame->start->copy()->subMonths(self::CALCULATE_PREVIOUS_SLOT);

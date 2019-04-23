@@ -6,33 +6,47 @@ use Sheba\Pos\Order\OrderPaymentStatuses;
 class PosOrder extends Model
 {
     protected $guarded = ['id'];
-    /**
-     * @var int
-     */
-    public $totalServicePrice;
-    public $itemDiscounts;
-    /**
-     * @var int|number
-     */
-    public $totalPrice;
-    public $totalDiscount;
-    public $appliedDiscount;
-    /**
-     * @var float
-     */
-    public $grossAmount;
+
     /**
      * @var string
      */
-    public $paymentStatus;
+    private $paymentStatus;
     /**
      * @var float
      */
-    public $paid;
+    private $paid;
     /**
      * @var float
      */
-    public $due;
+    private $due;
+    /**
+     * @var float|int
+     */
+    private $totalPrice;
+    /**
+     * @var number
+     */
+    private $totalVat;
+    /**
+     * @var float|int
+     */
+    private $totalItemDiscount;
+    /**
+     * @var float|int|number
+     */
+    private $totalBill;
+    /**
+     * @var float|int
+     */
+    private $totalDiscount;
+    /**
+     * @var float|int|number
+     */
+    private $appliedDiscount;
+    /**
+     * @var float|int|number
+     */
+    private $netBill;
     /**
      * @var bool
      */
@@ -41,16 +55,17 @@ class PosOrder extends Model
     public function calculate()
     {
         $this->_calculateThisItems();
-        $this->totalDiscount = $this->itemDiscounts + $this->discount;
-        $this->appliedDiscount = (double)($this->totalDiscount > $this->amount) ? $this->amount : $this->discount;
-        $this->grossAmount = floatValFormat($this->totalPrice - $this->appliedDiscount);
+        $this->totalDiscount = $this->totalItemDiscount + $this->discount;
+        $this->appliedDiscount = (double)($this->totalDiscount > $this->totalBill) ? $this->totalBill : $this->totalDiscount;
+        $this->netBill = $this->totalBill - $this->appliedDiscount;
         $this->_calculatePaidAmount();
         $this->paid = $this->paid ?: 0;
-        $this->due = $this->grossAmount - $this->paid;
+        $this->due = $this->netBill - $this->paid;
         $this->_setPaymentStatus();
         $this->isCalculated = true;
+        $this->_formatAllToTaka();
 
-        return $this->_formatAllToTaka();
+        return $this;
     }
 
     private function _setPaymentStatus()
@@ -92,24 +107,26 @@ class PosOrder extends Model
 
     private function _initializeTotalsToZero()
     {
-        $this->totalServicePrice = 0;
+        $this->totalPrice = 0;
+        $this->totalVat = 0;
+        $this->totalItemDiscount = 0;
+        $this->totalBill = 0;
     }
 
     private function _updateTotalPriceAndCost(PosOrderItem $item)
     {
-        $this->totalServicePrice += $item->servicePrice;
-        $this->totalPrice += $item->grossPrice;
-        $this->itemDiscounts += $item->discount;
+        $this->totalPrice += $item->getPrice();
+        $this->totalVat += $item->getVat();
+        $this->totalItemDiscount += $item->getDiscountAmount();
+        $this->totalBill += $item->getTotal();
     }
 
     private function _formatAllToTaka()
     {
-        $this->totalDiscount = formatTaka($this->totalDiscount);
-        $this->appliedDiscount = formatTaka($this->appliedDiscount);
-        $this->grossAmount = formatTaka($this->grossAmount);
-        $this->totalServicePrice = formatTaka($this->totalServicePrice);
-        $this->totalPrice = formatTaka($this->totalPrice);
-        $this->itemDiscounts = formatTaka($this->itemDiscounts);
+        $this->totalPrice = formatTakaToDecimal($this->totalPrice);
+        $this->totalVat = formatTakaToDecimal($this->totalVat);
+        $this->totalItemDiscount = formatTakaToDecimal($this->totalItemDiscount);
+        $this->totalBill = formatTakaToDecimal($this->totalBill);
 
         return $this;
     }
@@ -120,5 +137,85 @@ class PosOrder extends Model
         foreach ($this->payments as $payment) {
             $this->paid += $payment->amount;
         }
+    }
+
+    /**
+     * @return string
+     */
+    public function getPaymentStatus()
+    {
+        return $this->paymentStatus;
+    }
+
+    /**
+     * @return float
+     */
+    public function getPaid()
+    {
+        return $this->paid;
+    }
+
+    /**
+     * @return float
+     */
+    public function getDue()
+    {
+        return $this->due;
+    }
+
+    /**
+     * @return float|int
+     */
+    public function getTotalPrice()
+    {
+        return $this->totalPrice;
+    }
+
+    /**
+     * @return number
+     */
+    public function getTotalVat()
+    {
+        return $this->totalVat;
+    }
+
+    /**
+     * @return float|int
+     */
+    public function getTotalItemDiscount()
+    {
+        return $this->totalItemDiscount;
+    }
+
+    /**
+     * @return float|int|number
+     */
+    public function getTotalBill()
+    {
+        return $this->totalBill;
+    }
+
+    /**
+     * @return float|int
+     */
+    public function getTotalDiscount()
+    {
+        return $this->totalDiscount;
+    }
+
+    /**
+     * @return float|int|number
+     */
+    public function getAppliedDiscount()
+    {
+        return $this->appliedDiscount;
+    }
+
+    /**
+     * @return float|int|number
+     */
+    public function getNetBill()
+    {
+        return $this->netBill;
     }
 }

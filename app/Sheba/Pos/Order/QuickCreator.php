@@ -22,6 +22,7 @@ class QuickCreator
      * @var PaymentCreator
      */
     private $paymentCreator;
+    const QUICK_CREATE_DEFAULT_QUANTITY = 1;
 
     public function __construct(PosOrderRepository $order_repo, PosOrderItemRepository $item_repo, PaymentCreator $payment_creator)
     {
@@ -43,10 +44,15 @@ class QuickCreator
         $order_data['partner_id'] = $this->data['partner']['id'];
         $order_data['discount'] = $is_discount_applied ? ($this->data['is_percentage'] ? $this->data['discount'] * $this->data['amount'] : $this->data['discount']) : 0;
         $order_data['discount_percentage'] = $is_discount_applied ? ($this->data['is_percentage'] ? $this->data['discount'] : 0) : 0;
+        if (isset($this->data['customer_id']) && $this->data['customer_id']) {
+            $order_data['customer_id'] = $this->data['customer_id'];
+        }
         $order = $this->orderRepo->save($order_data);
 
-        $service['service_name'] = $this->data['service_name'];
-        $service['quantity'] = $this->data['quantity'];
+        $service['pos_order_id'] = $order->id;
+        $service['service_name'] = $this->data['name'];
+        $service['unit_price'] = $this->data['amount'];
+        $service['quantity'] = self::QUICK_CREATE_DEFAULT_QUANTITY;
         $this->itemRepo->save($service);
 
         if (isset($this->data['paid_amount']) && $this->data['paid_amount'] > 0) {
