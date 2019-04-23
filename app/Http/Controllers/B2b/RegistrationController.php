@@ -46,7 +46,7 @@ class RegistrationController extends Controller
                     $info = [
                         'token' => $token,
                         'remember_token' => $m_profile->remember_token,
-                        'member' => $m_profile->id,
+                        'member' => $m_profile->member->id,
                         'member_img' => $m_profile->pro_pic
                     ];
                     return api_response($request, $info, 200, ['info' => $info]);
