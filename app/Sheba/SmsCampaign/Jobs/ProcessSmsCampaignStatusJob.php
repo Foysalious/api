@@ -68,7 +68,7 @@ class ProcessSmsCampaignStatusJob extends Job implements ShouldQueue
 
     private function getOrderStatus(SmsHandler $sms_handler)
     {
-        $response = ($sms_handler->getSingleMessage($this->campaignOrderReceiver->message_id));
+        $response = $sms_handler->getSingleMessage($this->campaignOrderReceiver->message_id);
         if ($response) return $response->status->name;
         return 'PENDING';
     }

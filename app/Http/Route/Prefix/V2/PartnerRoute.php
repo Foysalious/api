@@ -72,6 +72,8 @@ class PartnerRoute
                     $api->post('/quick-store', 'Pos\OrderController@quickStore');
                     $api->group(['prefix' => '{order}'], function ($api) {
                         $api->get('/', 'Pos\OrderController@show');
+                        $api->get('/send-sms', 'Pos\OrderController@sendSms');
+                        $api->get('/send-email', 'Pos\OrderController@sendEmail');
                     });
                 });
                 $api->resources(['customers' => 'Pos\CustomerController']);

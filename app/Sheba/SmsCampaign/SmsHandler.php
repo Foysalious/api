@@ -20,7 +20,9 @@ class SmsHandler
      */
     public function sendBulkMessages($to, $message)
     {
-        return $this->sms->shoot($to, $message);
+        $sms = $this->sms->to($to)->msg($message);
+        $sms->shoot();
+        return $sms->getVendorResponse();
     }
 
     /**

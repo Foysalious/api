@@ -3,16 +3,23 @@
 use App\Http\Controllers\Controller;
 use App\Models\PosOrder;
 
+use App\Models\PosOrderItem;
+
 use App\Transformers\PosOrderTransformer;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
 use Sheba\ModificationFields;
+use Sheba\PartnerWallet\PartnerTransactionHandler;
+use Sheba\Pos\Jobs\OrderBillEmail;
+use Sheba\Pos\Jobs\OrderBillSms;
 use Sheba\Pos\Order\Creator;
 use Sheba\Pos\Order\QuickCreator;
+use Throwable;
 
 class OrderController extends Controller
 {
@@ -63,7 +70,7 @@ class OrderController extends Controller
             $order = $manager->createData($resource)->toArray();
 
             return api_response($request, null, 200, ['order' => $order]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -89,8 +96,7 @@ class OrderController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            dd($e);
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -115,7 +121,55 @@ class OrderController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * SMS TO CUSTOMER ABOUT POS ORDER BILLS
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function sendSms(Request $request)
+    {
+        try {
+            $this->setModifier($request->manager_resource);
+            /** @var PosOrder $order */
+            $order = PosOrder::with('items')->find($request->order)->calculate();
+
+            if (!$order) return api_response($request, null, 404, ['msg' => 'Order not found']);
+            if (!$order->customer->profile->mobile) return api_response($request, null, 404, ['msg' => 'Customer mobile not found']);
+
+            dispatch(new OrderBillSms($order));
+            return api_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * EMAIL TO CUSTOMER ABOUT POS ORDER BILLS
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function sendEmail(Request $request)
+    {
+        try {
+            $this->setModifier($request->manager_resource);
+            /** @var PosOrder $order */
+            $order = PosOrder::with('items')->find($request->order)->calculate();
+
+            if (!$order) return api_response($request, null, 404, ['msg' => 'Order not found']);
+            if (!$order->customer->profile->email) return api_response($request, null, 404, ['msg' => 'Customer email not found']);
+
+            dispatch(new OrderBillEmail($order));
+            return api_response($request, null, 200, ['msg' => 'Email Send Successfully']);
+        } catch (Throwable $e) {
             dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
