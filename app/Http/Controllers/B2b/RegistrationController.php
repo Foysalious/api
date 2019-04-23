@@ -33,11 +33,10 @@ class RegistrationController extends Controller
             ]);
             $mobile = formatMobile($request->mobile);
             $email = $request->email;
-            $m_profile = $this->profileRepository->ifExist($mobile, 'mobile')->first();
-            $e_profile = $this->profileRepository->ifExist($email, 'email')->first();
+            $m_profile = $this->profileRepository->ifExist($mobile, 'mobile');
+            $e_profile = $this->profileRepository->ifExist($email, 'email');
 
             $profile = collect();
-
             if ($m_profile && $e_profile) {
                 if ($m_profile->id == $e_profile->id) {
                     if (!$m_profile->member) {
@@ -52,6 +51,8 @@ class RegistrationController extends Controller
                         'member' => $m_profile->id,
                         'member_img' => $m_profile->pro_pic
                     ]);
+                } else {
+                    return api_response($request, null, 400, ['message' => 'You gave others email or mobile']);
                 }
             } elseif ($m_profile) {
                 return api_response($request, null, 400, ['message' => 'Mobile already exists! Please login']);
