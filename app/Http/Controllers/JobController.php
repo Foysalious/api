@@ -459,7 +459,7 @@ class JobController extends Controller
                 'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl,partner_wallet',
             ]);
             if ($request->payment_method == 'bkash' && $this->hasPreviousBkashTransaction($request->job->partner_order_id)) {
-                return api_response($request, null, 500, ['message' => "Can't send multiple requests within 15 minutes."]);
+                return api_response($request, null, 500, ['message' => "Can't send multiple requests within 1 minute."]);
             }
             $order_adapter = new OrderAdapter($request->job->partnerOrder);
             $payment = (new ShebaPayment($request->has('payment_method') ? $request->payment_method : 'online'))->init($order_adapter->getPayable());
@@ -478,7 +478,7 @@ class JobController extends Controller
 
     private function hasPreviousBkashTransaction($partner_order_id)
     {
-        $time = Carbon::now()->subMinutes(15);
+        $time = Carbon::now()->subMinutes(1);
         $payment = Payment::whereHas('payable', function ($q) use ($partner_order_id) {
             $q->where([['type', 'partner_order'], ['type_id', $partner_order_id]]);
         })->where([['transaction_id', 'LIKE', '%bkash%'], ['created_at', '>=', $time]])->first();
