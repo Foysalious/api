@@ -58,11 +58,27 @@ class MembersController extends Controller
         }
     }
 
-    public function getVendorsInfo($member, Request $request)
+    public function getBusinessInfo($member, Request $request)
     {
         try {
-            $vendors = Business::all();
-            return api_response($request, $vendors, 200, ['vendors' => $vendors]);
+            $member = Member::find((int)$member);
+            $profile = $member->profile;
+
+            if ($business = $member->businesses->first()) {
+                $info = [
+                    "name" => $business->name,
+                    "sub_domain" => $business->sub_domain,
+                    "tagline" => $business->tagline,
+                    "company_type" => $business->type,
+                    "address" => $business->address,
+                    "geo_informations" => $business->geo_informations,
+                    "employee_size" => $business->employee_size,
+                ];
+                return api_response($request, $info, 200, ['info' => $info]);
+            } else {
+                return api_response($request, null, 404, ["message" => 'Business not found.']);
+            }
+
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -75,7 +91,7 @@ class MembersController extends Controller
             $member = Member::find((int)$member);
             $profile = $member->profile;
             $info = [
-                'profile_id' =>$profile->id,
+                'profile_id' => $profile->id,
                 'name' => $profile->name,
                 'mobile' => $profile->mobile,
                 'email' => $profile->email,
