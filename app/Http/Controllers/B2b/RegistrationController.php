@@ -23,6 +23,7 @@ class RegistrationController extends Controller
 
     public function register(Request $request)
     {
+        #dd($request->all());
         try {
             $this->validate($request, [
                 'name' => 'required|string',
@@ -32,8 +33,8 @@ class RegistrationController extends Controller
             ]);
             $mobile = formatMobile($request->mobile);
             $email = $request->email;
-            $m_profile = $this->profileRepository->ifExist($mobile, 'mobile');
-            $e_profile = $this->profileRepository->ifExist($email, 'email');
+            $m_profile = $this->profileRepository->ifExist($mobile, 'mobile')->first();
+            $e_profile = $this->profileRepository->ifExist($email, 'email')->first();
 
             $profile = collect();
 
@@ -77,7 +78,6 @@ class RegistrationController extends Controller
                     'member_img' => $profile->pro_pic
                 ]);
             }
-
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
