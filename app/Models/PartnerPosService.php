@@ -79,6 +79,7 @@ class PartnerPosService extends Model
         } else {
             $amount = $discount->amount;
         }
+
         return ($amount < 0) ? 0 : (float)$amount;
     }
 }

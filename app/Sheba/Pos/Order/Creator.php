@@ -52,15 +52,19 @@ class Creator
 
         $services = json_decode($this->data['services'], true);
         foreach ($services as $service) {
+            $original_service = PartnerPosService::find($service['id']);
+            $is_service_discount_applied = $original_service->discount();
+
             $service['service_id']   = $service['id'];
             $service['service_name'] = $service['name'];
             $service['pos_order_id'] = $order->id;
-
-            $original_service = PartnerPosService::find($service['id']);
             $service['unit_price'] = $original_service->price;
-            $service['discount_id'] = $original_service->discount()? $original_service->discount()->id : null;
-            $service['discount'] = $original_service->discount() ? $original_service->getDiscount() : 0.0;
-            $service['discount_percentage'] = $original_service->discount() ? ($original_service->discount()->is_amount_percentage ? $original_service->discount()->amount : 0.0): 0.0;
+
+            if ($is_service_discount_applied) {
+                $service['discount_id'] = $original_service->discount()->id;
+                $service['discount'] = $original_service->getDiscount();
+                $service['discount_percentage'] = $original_service->discount()->is_amount_percentage ? $original_service->discount()->amount : 0.0;
+            }
 
             $service['vat_percentage'] = PartnerPosService::find($service['id'])->vat_percentage;
             $service = array_except($service, ['id', 'name']);
