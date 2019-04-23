@@ -53,10 +53,8 @@ class ServiceController extends Controller
     public function get($service, Request $request, ApproximatePriceCalculator $approximatePriceCalculator)
     {
         try {
-            $service = Service::where('id', $service)->select('id', 'name', 'unit', 'structured_description', 'category_id', 'short_description', 'description', 'thumb', 'slug', 'min_quantity', 'banner', 'faqs', 'bn_name', 'bn_faqs', 'variable_type', 'variables');
-
-            #$offer = $service->first()->groups()->first() ? $service->first()->groups()->first()->offers()->where('end_date', '>', Carbon::now())->first() : null;
-
+            $service = Service::where('id', $service)->select('id', 'name', 'unit', 'structured_description', 'stock', 'stock_left', 'category_id', 'short_description', 'description', 'thumb', 'slug', 'min_quantity', 'banner', 'faqs', 'bn_name', 'bn_faqs', 'variable_type', 'variables');
+            
             $service_groups = $service->first()->groups;
             $offers = collect();
             if ($service_groups) {
@@ -65,12 +63,6 @@ class ServiceController extends Controller
                 });
                 $offer = $offers->flatten()->sortByDesc('end_date')->first();
             }
-
-            /*$offer = $service->first()->groups()->whereHas('offers', function ($q) {
-                $q->active()->flash()->validFlashOffer();
-            })->with(['offers' => function ($query) {
-                $query->active()->flash()->validFlashOffer()->orderBy('end_date', 'desc');
-            }])->first()->offers;*/
 
             $options = $this->serviceQuestionSet($service->first());
             $answers = collect();
