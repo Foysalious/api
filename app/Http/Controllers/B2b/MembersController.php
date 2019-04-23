@@ -33,28 +33,33 @@ class MembersController extends Controller
             ]);
             $member = Member::find($member);
             $this->setModifier($member);
+
             $business_data = [
                 'name' => $request->name,
-                'sub_domain' => $this->guessSubDomain($request->name),
                 'employee_size' => $request->no_employee,
                 'geo_informations' => json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]),
                 'address' => $request->address,
             ];
-            $business = Business::create($this->withCreateModificationField($business_data));
-            $member_business_data = [
-                'business_id' => $business->id,
-                'member_id' => $member->id,
-                'type' => 'Admin',
-                'join_date' => Carbon::now(),
-            ];
-            BusinessMember::create($this->withCreateModificationField($member_business_data));
+            if (count($member->businesses) > 0) {
+                $business = $member->businesses->first();
+                $business->update($this->withUpdateModificationField($business_data));
+            } else {
+                $business_data['sub_domain'] = $this->guessSubDomain($request->name);
+                $business = Business::create($this->withCreateModificationField($business_data));
+                $member_business_data = [
+                    'business_id' => $business->id,
+                    'member_id' => $member->id,
+                    'type' => 'Admin',
+                    'join_date' => Carbon::now(),
+                ];
+                BusinessMember::create($this->withCreateModificationField($member_business_data));
+            }
 
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
