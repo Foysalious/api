@@ -36,7 +36,15 @@ class OrderController extends Controller
                 if(!$status || ($status && $order_formatted['payment_status'] === $status) )
                     array_push($final_orders[$order_create_date], $order_formatted);
             }
-            return api_response($request, $final_orders, 200, ['orders' => $final_orders]);
+            $orders_formatted =  array();
+            foreach($final_orders as $key => $value) {
+                $order_list = array(
+                    'date' => $key,
+                    'orders' => $value
+                );
+                array_push($orders_formatted, $order_list);
+            }
+            return api_response($request, $orders_formatted, 200, ['orders' => $orders_formatted]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
