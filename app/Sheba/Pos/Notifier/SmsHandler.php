@@ -25,7 +25,7 @@ class SmsHandler
         });
         $service_break_down = implode(',', $service_break_down);
 
-        $sms = (new SmsHandlerRepo('pos-order-details'))->send($this->order->customer->profile->mobile, [
+        $sms = (new SmsHandlerRepo('pos-order-bills'))->send($this->order->customer->profile->mobile, [
             'order_id' => $this->order->id,
             'service_break_down' => $service_break_down,
             'total_amount' => $this->order->getNetBill(),
