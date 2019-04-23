@@ -102,7 +102,8 @@ class Route
             $api->post('b2b-login', 'B2b\LoginController@login');
             $api->post('b2b-register', 'B2b\RegistrationController@register');
 
-            $api->group(['prefix' => 'member', 'middleware' => ['member.auth']], function ($api) {
+            $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
+                $api->get('/{member}/info', 'B2b\MembersController@getMemberInfo');
                 $api->post('/{member}/update-business-info', 'B2b\MembersController@updateBusinessInfo');
             });
 

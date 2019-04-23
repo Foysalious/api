@@ -69,6 +69,28 @@ class MembersController extends Controller
         }
     }
 
+    public function getMemberInfo($member, Request $request)
+    {
+        try {
+            $member = Member::find((int)$member);
+            $profile = $member->profile;
+            $info = [
+                'profile_id' =>$profile->id,
+                'name' => $profile->name,
+                'mobile' => $profile->mobile,
+                'email' => $profile->email,
+                'pro_pic' => $profile->pro_pic,
+                'gender' => $profile->gender,
+                'date_of_birth' => $profile->dob,
+                'nid_no' => $profile->nid_no,
+            ];
+            return api_response($request, $info, 200, ['info' => $info]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     private function guessSubDomain($name)
     {
         $blacklist = ["google", "facebook", "microsoft", "sheba", "sheba.xyz"];

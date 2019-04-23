@@ -43,14 +43,13 @@ class RegistrationController extends Controller
                         $member = $this->makeMember($m_profile);
                     }
                     $token = JWTAuth::fromUser($m_profile);
-                    return response()->json([
-                        'msg' => 'successful',
-                        'code' => 200,
+                    $info = [
                         'token' => $token,
                         'remember_token' => $m_profile->remember_token,
                         'member' => $m_profile->id,
                         'member_img' => $m_profile->pro_pic
-                    ]);
+                    ];
+                    return api_response($request, $info, 200, ['info' => $info]);
                 } else {
                     return api_response($request, null, 400, ['message' => 'You gave others email or mobile']);
                 }
