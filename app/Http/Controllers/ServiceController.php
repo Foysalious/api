@@ -125,7 +125,7 @@ class ServiceController extends Controller
             unset($variables->prices);
             $services = [];
             array_push($services, $service);
-            //$service = $this->serviceRepository->addServiceInfo($services, $scope)[0];
+            $service = $this->serviceRepository->addServiceInfo($services, $scope)[0];
             $service['variables'] = $variables;
             $service['faqs'] = json_decode($service->faqs);
             $service['structured_description'] = $service->structured_description ? json_decode($service->structured_description) : null;
@@ -141,6 +141,7 @@ class ServiceController extends Controller
             array_add($service, 'master_category_id', $category->parent->id);
             array_add($service, 'master_category_name', $category->parent->name);
             array_add($service, 'service_breakdown', $service_breakdown);
+            removeRelationsAndFields($service);
             if (config('sheba.online_payment_discount_percentage') > 0) {
                 $discount_percentage = config('sheba.online_payment_discount_percentage');
                 $payment_discount_percentage = "Save $discount_percentage% more by paying online after checkout!";
