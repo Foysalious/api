@@ -1,35 +1,24 @@
-<?php
+<?php namespace App\Http\Controllers\B2b;
 
-namespace App\Http\Controllers\B2b;
 
-use App\Http\Controllers\FacebookAccountKit;
-use App\Models\Profile;
-use App\Models\Resource;
-use App\Repositories\CustomerRepository;
 use App\Repositories\ProfileRepository;
-use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Tymon\JWTAuth\Exceptions\JWTException;
-use Validator;
 use App\Http\Controllers\Controller;
-use JWTAuth;
+use Illuminate\Http\Request;
 use JWTFactory;
-use App\Models\Customer;
+use Validator;
+use JWTAuth;
 use Session;
-use Illuminate\Support\Facades\Redis;
 use Hash;
 
 class LoginController extends Controller
 {
-    private $fbKit;
-    private $customer;
     private $profileRepository;
 
-    public function __construct()
+    public function __construct(ProfileRepository $profile_repository)
     {
-        $this->fbKit = new FacebookAccountKit();
-        $this->customer = new CustomerRepository();
-        $this->profileRepository = new ProfileRepository();
+        $this->profileRepository = $profile_repository;
     }
 
     public function login(Request $request)
@@ -37,19 +26,19 @@ class LoginController extends Controller
         try {
             $this->validate($request, [
                 'email' => 'required',
-                'password' => 'required',
-                'from' => 'required|string|in:' . implode(',', constants('FROM'))
+                'password' => 'required'
             ]);
             $profile = $this->profileRepository->ifExist($request->email, 'email');
-            if ($profile == false) {
-                $profile = $this->profileRepository->ifExist(formatMobile($request->email), 'mobile');
-            }
-            if ($profile != false) {
+            if ($profile) {
                 if (Hash::check($request->input('password'), $profile->password)) {
-                    $info = $this->profileRepository->getProfileInfo($this->profileRepository->getAvatar($request->from), $profile, $request);
-                    if ($info != null) {
-                        return api_response($request, $info, 200, ['info' => $info]);
-                    }
+                    $token = JWTAuth::fromUser($profile);
+                    $info = [
+                        'token' => $token,
+                        'remember_token' => $profile->remember_token,
+                        'member' => $profile->id,
+                        'member_img' => $profile->pro_pic
+                    ];
+                    return api_response($request, $info, 200, ['info' => $info]);
                 }
             }
             return api_response($request, null, 404);
