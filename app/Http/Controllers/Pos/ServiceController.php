@@ -44,7 +44,8 @@ class ServiceController extends Controller
                         'price'                 => $service->price,
                         'stock'                 => $service->stock,
                         'discount_applicable'   => $service->discount() ? true : false,
-                        'discounted_price'      => $service->discount() ? $service->getDiscountedAmount() : 0
+                        'discounted_price'      => $service->discount() ? $service->getDiscountedAmount() : 0,
+                        'vat_percentage'        => $service->vat_percentage
                     ];
             });
             if (!$services) return api_response($request, null, 404);
@@ -150,6 +151,6 @@ class ServiceController extends Controller
 
     private function getSelectColumnsOfService()
     {
-        return ['id', 'name', 'app_thumb', 'app_banner', 'price', 'stock'];
+        return ['id', 'name', 'app_thumb', 'app_banner', 'price', 'stock', 'vat_percentage'];
     }
 }

@@ -64,17 +64,21 @@ class PartnerPosService extends Model
 
     public function getDiscountedAmount()
     {
+        $amount = $this->price - $this->getDiscount();
+        return ($amount < 0) ? 0 : (float)$amount;
+    }
+
+    public function getDiscount()
+    {
         $discount = $this->discount();
         if ($discount->is_amount_percentage) {
-            $calculated_discount_amount = ($this->price * $discount->amount) / 100;
+            $amount = ($this->price * $discount->amount) / 100;
             if ($discount->hasCap()) {
-                $calculated_discount_amount = ($calculated_discount_amount > $discount->cap) ? $discount->cap : $calculated_discount_amount;
+                $amount = ($amount > $discount->cap) ? $discount->cap : $amount;
             }
-            $amount = $this->price - $calculated_discount_amount;
         } else {
-            $amount = $this->price - $discount->amount;
+            $amount = $discount->amount;
         }
-
         return ($amount < 0) ? 0 : (float)$amount;
     }
 }
