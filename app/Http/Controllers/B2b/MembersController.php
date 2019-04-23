@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Models\Business;
+use App\Models\BusinessMember;
 use App\Models\Member;
 use Illuminate\Validation\ValidationException;
 use App\Models\PartnerBankInformation;
@@ -25,20 +26,28 @@ class MembersController extends Controller
         try {
             $this->validate($request, [
                 'name' => 'required|string',
-                'no_employee' => 'required|numeric',
-                'location' => 'required|numeric',
+                'no_employee' => 'required|integer',
+                'lat' => 'required|numeric',
+                'lng' => 'required|numeric',
                 'address' => 'required|string',
             ]);
             $member = Member::find($member);
-            $sub_domain = $this->guessSubDomain($request->name);
-            dd($sub_domain);
-
-            $data = [
-                'company_name' => $request->name,
-                'no_employee' => $request->no_employee,
-                'location' => $request->location,
+            $this->setModifier($member);
+            $business_data = [
+                'name' => $request->name,
+                'sub_domain' => $this->guessSubDomain($request->name),
+                'employee_size' => $request->no_employee,
+                'geo_informations' => json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]),
                 'address' => $request->address,
             ];
+            $business = Business::create($this->withCreateModificationField($business_data));
+            $member_business_data = [
+                'business_id' => $business->id,
+                'member_id' => $member->id,
+                'type' => 'Admin',
+                'join_date' => Carbon::now(),
+            ];
+            BusinessMember::create($this->withCreateModificationField($member_business_data));
 
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
