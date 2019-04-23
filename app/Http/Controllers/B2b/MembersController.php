@@ -1,19 +1,12 @@
 <?php namespace App\Http\Controllers\B2b;
 
-use App\Models\Business;
-use App\Models\BusinessMember;
-use App\Models\Member;
 use Illuminate\Validation\ValidationException;
-use App\Models\PartnerBankInformation;
-use Sheba\FileManagers\CdnFileManager;
 use App\Http\Controllers\Controller;
-use App\Repositories\FileRepository;
-use App\Http\Requests\SpLoanRequest;
-use Sheba\FileManagers\FileManager;
-use App\Models\PartnerBankLoan;
+use App\Models\BusinessMember;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
-use App\Models\Profile;
+use App\Models\Business;
+use App\Models\Member;
 use Carbon\Carbon;
 use DB;
 
@@ -59,6 +52,17 @@ class MembersController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getVendorsInfo($member, Request $request)
+    {
+        try {
+            $vendors = Business::all();
+            return api_response($request, $vendors, 200, ['vendors' => $vendors]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
