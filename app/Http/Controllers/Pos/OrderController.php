@@ -15,6 +15,7 @@ use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
 use Sheba\ModificationFields;
 use Sheba\PartnerWallet\PartnerTransactionHandler;
+use Sheba\Pos\Jobs\OrderBillEmail;
 use Sheba\Pos\Jobs\OrderBillSms;
 use Sheba\Pos\Order\Creator;
 use Sheba\Pos\Order\QuickCreator;
@@ -127,7 +128,7 @@ class OrderController extends Controller
     }
 
     /**
-     * SMS TO CUSTOMER ABOUT POS ORDER DETAILS
+     * SMS TO CUSTOMER ABOUT POS ORDER BILLS
      *
      * @param Request $request
      * @return JsonResponse
@@ -150,9 +151,29 @@ class OrderController extends Controller
         }
     }
 
-    public function sendEmail()
+    /**
+     * EMAIL TO CUSTOMER ABOUT POS ORDER BILLS
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function sendEmail(Request $request)
     {
+        try {
+            $this->setModifier($request->manager_resource);
+            /** @var PosOrder $order */
+            $order = PosOrder::with('items')->find($request->order)->calculate();
 
+            if (!$order) return api_response($request, null, 404, ['msg' => 'Order not found']);
+            if (!$order->customer->profile->email) return api_response($request, null, 404, ['msg' => 'Customer email not found']);
+
+            dispatch(new OrderBillEmail($order));
+            return api_response($request, null, 200, ['msg' => 'Email Send Successfully']);
+        } catch (Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 
     private function getSelectColumnsOfItem()
