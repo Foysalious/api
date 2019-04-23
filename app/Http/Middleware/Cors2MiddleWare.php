@@ -64,6 +64,7 @@ class Cors2MiddleWare
             "https://bondhu.sheba.xyz",
             "https://api.sheba.xyz",
             "http://0.0.0.0:3333",
+            "http://b2b.sheba.test"
         ];
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Credentials'] = 'true';

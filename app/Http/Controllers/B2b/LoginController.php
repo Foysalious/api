@@ -38,7 +38,7 @@ class LoginController extends Controller
                         $info = [
                             'token' => $token,
                             'remember_token' => $profile->remember_token,
-                            'member' => $profile->id,
+                            'member' => $member->id,
                             'member_img' => $profile->pro_pic
                         ];
                         return api_response($request, $info, 200, ['info' => $info]);
