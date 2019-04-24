@@ -80,6 +80,11 @@ class Partner extends Model implements Rewardable, TopUpAgent
         return $this->belongsToMany(Location::class);
     }
 
+    public function businesses()
+    {
+        return $this->belongsToMany(Business::class, 'business_partners');
+    }
+
     public function getLocationsList()
     {
         return $this->locations->lists('id')->toArray();
