@@ -7,7 +7,7 @@ use Sheba\Pos\Payment\Creator as PaymentCreator;
 abstract class ReturnPosItem extends RefundNature
 {
     protected $details;
-    private $old_services;
+    protected $old_services;
     /** @var PaymentCreator $paymentCreator */
     protected $paymentCreator;
 
@@ -30,7 +30,7 @@ abstract class ReturnPosItem extends RefundNature
     /**
      * GENERATE LOG DETAILS DATA
      */
-    private function generateDetails()
+    protected function generateDetails()
     {
         $changes = [];
         $this->services->each(function ($service) use (&$changes) {

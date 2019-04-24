@@ -1,24 +1,23 @@
 <?php namespace Sheba\Pos\Order;
 
-use App\Models\PartnerPosService;
 use App\Models\PosOrder;
 use Sheba\Pos\Repositories\PosOrderItemRepository;
+use Sheba\Pos\Repositories\PosOrderRepository;
 
 class Updater
 {
-    /**
-     * @var PosOrder
-     */
+    /** @var PosOrder $order*/
     private $order;
-    /**
-     * @var array
-     */
+    /** @var array $data*/
     private $data;
     /** @var PosOrderItemRepository $itemRepo */
     private $itemRepo;
+    /** @var PosOrderRepository */
+    private $orderRepo;
 
-    public function __construct(PosOrderItemRepository $item_repo)
+    public function __construct(PosOrderRepository $order_repo, PosOrderItemRepository $item_repo)
     {
+        $this->orderRepo = $order_repo;
         $this->itemRepo = $item_repo;
     }
 
@@ -36,11 +35,13 @@ class Updater
 
     public function update()
     {
-        $services = json_decode($this->data['services'], true);
-        foreach ($services as $service) {
-            $item = $this->itemRepo->findByService($this->order, $service['id']);
-            $service_data['quantity'] = $service['quantity'];
-            $this->itemRepo->update($item, $service_data);
+        if (isset($this->data['services'])) {
+            $services = json_decode($this->data['services'], true);
+            foreach ($services as $service) {
+                $item = $this->itemRepo->findByService($this->order, $service['id']);
+                $service_data['quantity'] = $service['quantity'];
+                $this->itemRepo->update($item, $service_data);
+            }
         }
     }
 }

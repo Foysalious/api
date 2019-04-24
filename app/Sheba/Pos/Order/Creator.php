@@ -8,21 +8,13 @@ use Sheba\Pos\Payment\Creator as PaymentCreator;
 
 class Creator
 {
-    /**
-     * @var array
-     */
+    /** @var array */
     private $data;
-    /**
-     * @var PosOrderRepository
-     */
+    /** @var PosOrderRepository */
     private $orderRepo;
-    /**
-     * @var PosOrderItemRepository
-     */
+    /** @var PosOrderItemRepository */
     private $itemRepo;
-    /**
-     * @var PaymentCreator
-     */
+    /** @var PaymentCreator */
     private $paymentCreator;
 
     public function __construct(PosOrderRepository $order_repo, PosOrderItemRepository $item_repo, PaymentCreator $payment_creator)
@@ -48,6 +40,7 @@ class Creator
         if (isset($this->data['customer_id']) && $this->data['customer_id']) {
             $order_data['customer_id'] = $this->data['customer_id'];
         }
+        $order_data['previous_order_id'] = isset($this->data['previous_order_id']) ? $this->data['previous_order_id'] : null;
         $order = $this->orderRepo->save($order_data);
 
         $services = json_decode($this->data['services'], true);

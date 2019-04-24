@@ -12,6 +12,8 @@ class NatureFactory
                     return app(PartialReturnPosItem::class);
                 } elseif ($return_nature == ReturnNatures::FULL_RETURN) {
                     return app(FullReturnPosItem::class);
+                } elseif ($return_nature == ReturnNatures::QUANTITY_INCREASE) {
+                    return app(PosItemQuantityIncrease::class);
                 }
             } else if ($nature == Natures::EXCHANGED) {
                 return app(ExchangePosItem::class);

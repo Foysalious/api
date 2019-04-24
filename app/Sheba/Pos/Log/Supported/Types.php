@@ -8,6 +8,7 @@ class Types extends Constants
     const PARTIAL_RETURN = "partial_return";
     const FULL_RETURN = "full_return";
     const EXCHANGE = "exchange";
+    const ITEM_QUANTITY_INCREASE = "item_quantity_increase";
 
     /**
      * @param $type

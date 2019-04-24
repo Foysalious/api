@@ -8,4 +8,5 @@ class ReturnNatures
 
     const PARTIAL_RETURN = "partial_return";
     const FULL_RETURN = "full_return";
+    const QUANTITY_INCREASE = "quantity_increase";
 }

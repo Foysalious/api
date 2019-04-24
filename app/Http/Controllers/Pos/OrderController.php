@@ -132,7 +132,7 @@ class OrderController extends Controller
             $order = PosOrder::with('items')->find($request->order);
             $is_returned = ($this->isReturned($order, $request));
             $refund_nature = $is_returned ? Natures::RETURNED : Natures::EXCHANGED;
-            $return_nature = $is_returned ? $this->getReturnType($request) : null;
+            $return_nature = $is_returned ? $this->getReturnType($request, $order) : null;
 
             /** @var RefundNature $refund */
             $refund = NatureFactory::getRefundNature($order, $request->all(), $refund_nature, $return_nature);
@@ -158,10 +158,16 @@ class OrderController extends Controller
         return $services === $request_services;
     }
 
-    public function getReturnType(Request $request)
+    public function getReturnType(Request $request, PosOrder $order)
     {
         $request_services_quantity = collect(json_decode($request->services, true))->pluck('quantity')->toArray();
-        return (empty(array_filter($request_services_quantity))) ? ReturnNatures::FULL_RETURN : ReturnNatures::PARTIAL_RETURN;
+
+        $is_full_order_returned = (empty(array_filter($request_services_quantity)));
+        $is_item_added = array_sum($request_services_quantity) > $order->items->sum('quantity');
+
+        return $is_full_order_returned ?
+            ReturnNatures::FULL_RETURN :
+            ($is_item_added ? ReturnNatures::QUANTITY_INCREASE : ReturnNatures::PARTIAL_RETURN);
     }
 
     /**
@@ -207,7 +213,6 @@ class OrderController extends Controller
             dispatch(new OrderBillEmail($order));
             return api_response($request, null, 200, ['msg' => 'Email Send Successfully']);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
