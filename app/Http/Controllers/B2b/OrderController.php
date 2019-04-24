@@ -7,15 +7,82 @@ use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
 use App\Models\Member;
+use App\Models\Payment;
 use App\Sheba\Address\AddressValidator;
 use App\Sheba\Checkout\Checkout;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Location\Coords;
+use Sheba\Payment\Adapters\Payable\OrderAdapter;
+use Sheba\Payment\ShebaPayment;
 
 class OrderController extends Controller
 {
+
+    public function index(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'filter' => 'required|string|in:ongoing,history'
+            ]);
+            $customer = $request->member->profile->customer;
+            if ($customer) {
+                $url = config('sheba.api_url') . "/v2/customers/$customer->id/orders?remember_token=$customer->remember_token&for=business&filter=$request->filter";
+                $client = new Client();
+                $res = $client->request('GET', $url);
+                if ($response = json_decode($res->getBody())) {
+                    return ($response->code == 200) ? api_response($request, $response, 200, ['orders' => $response->orders]) : api_response($request, $response, $response->code);
+                }
+            } else {
+                return api_response($request, null, 404);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return response()->json(['data' => null, 'message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function clearBills($business, $order, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl',
+            ]);
+            if ($request->payment_method == 'bkash' && $this->hasPreviousBkashTransaction($request->job->partner_order_id)) {
+                return api_response($request, null, 500, ['message' => "Can't send multiple requests within 1 minute."]);
+            }
+            $order_adapter = new OrderAdapter($request->job->partnerOrder);
+            $payment = (new ShebaPayment($request->has('payment_method') ? $request->payment_method : 'online'))->init($order_adapter->getPayable());
+            return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    private function hasPreviousBkashTransaction($partner_order_id)
+    {
+        $time = Carbon::now()->subMinutes(1);
+        $payment = Payment::whereHas('payable', function ($q) use ($partner_order_id) {
+            $q->where([['type', 'partner_order'], ['type_id', $partner_order_id]]);
+        })->where([['transaction_id', 'LIKE', '%bkash%'], ['created_at', '>=', $time]])->first();
+        return $payment ? 1 : 0;
+    }
+
 
     public function placeOrder(Request $request)
     {
