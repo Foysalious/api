@@ -3,15 +3,16 @@
 use App\Models\Member;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use Closure;
 
 class BusinessAuthMiddleware
 {
 
-    protected function handleAuth($role)
+    public function handle($request, Closure $next)
     {
         $payload = [];
-
         try {
+
             $token = JWTAuth::getToken();
             $payload = JWTAuth::getPayload($token)->toArray();
             dd($payload);

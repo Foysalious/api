@@ -44,8 +44,14 @@ class RegistrationController extends Controller
                         $member = $this->makeMember($m_profile);
                     }
 
-                    $token = $this->generateToken($m_profile);
-                    return api_response($request, $token, 200, ['token' => $token]);
+                    $member = $m_profile->member;
+                    $businesses = $member->businesses->first();
+                    $info = [
+                        'token' => $this->generateToken($m_profile),
+                        'member_id' => $member->id,
+                        'business_id' => $businesses ? $businesses->id : null,
+                    ];
+                    return api_response($request, $info, 200, ['info' => $info]);
 
                 } else {
                     return api_response($request, null, 400, ['message' => 'You gave others email or mobile']);
@@ -63,10 +69,15 @@ class RegistrationController extends Controller
                 ];
                 $profile = $this->profileRepository->store($data);
                 $profile->push($m_profile);
-                $member = $this->makeMember($profile);
 
-                $token = $this->generateToken($profile);
-                return api_response($request, $token, 200, ['token' => $token]);
+                $member = $this->makeMember($profile);
+                $businesses = $member->businesses->first();
+                $info = [
+                    'token' => $this->generateToken($profile),
+                    'member_id' => $member->id,
+                    'business_id' => $businesses ? $businesses->id : null,
+                ];
+                return api_response($request, $info, 200, ['info' => $info]);
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -85,11 +96,11 @@ class RegistrationController extends Controller
     {
         $member = $profile->member;
         $businesses = $member->businesses->first();
+
         return JWTAuth::fromUser($profile, [
-            'member' => $member->id,
-            'member_img' => $profile->pro_pic,
+            'member_id' => $member->id,
+            'member_type' => count($member->businessMember) > 0 ? $member->businessMember->first()->type : null,
             'business_id' => $businesses ? $businesses->id : null,
-            'business_type' => $businesses ? $businesses->type : null,
         ]);
     }
 

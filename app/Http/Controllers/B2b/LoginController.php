@@ -41,7 +41,7 @@ class LoginController extends Controller
                         $businesses = $member->businesses->first();
                         $info = [
                             'token' => $this->generateToken($profile),
-                            'member' => $member->id,
+                            'member_id' => $member->id,
                             'business_id' => $businesses ? $businesses->id : null,
                         ];
                         return api_response($request, $info, 200, ['info' => $info]);
@@ -69,8 +69,8 @@ class LoginController extends Controller
         $member = $profile->member;
         $businesses = $member->businesses->first();
         return JWTAuth::fromUser($profile, [
-            'member' => $member->id,
-            'member_type' => $businesses ? $businesses->type : null,
+            'member_id' => $member->id,
+            'member_type' => count($member->businessMember) > 0 ? $member->businessMember->first()->type : null,
             'business_id' => $businesses ? $businesses->id : null,
         ]);
     }
