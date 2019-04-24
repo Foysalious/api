@@ -42,7 +42,7 @@ class QuickCreator
         $is_discount_applied = (isset($this->data['discount']) && $this->data['discount'] > 0);
 
         $order_data['partner_id'] = $this->data['partner']['id'];
-        $order_data['discount'] = $is_discount_applied ? ($this->data['is_percentage'] ? $this->data['discount'] * $this->data['amount'] : $this->data['discount']) : 0;
+        $order_data['discount'] = $is_discount_applied ? ($this->data['is_percentage'] ? (($this->data['discount'] / 100) * $this->data['amount']) : $this->data['discount']) : 0;
         $order_data['discount_percentage'] = $is_discount_applied ? ($this->data['is_percentage'] ? $this->data['discount'] : 0) : 0;
         if (isset($this->data['customer_id']) && $this->data['customer_id']) {
             $order_data['customer_id'] = $this->data['customer_id'];
