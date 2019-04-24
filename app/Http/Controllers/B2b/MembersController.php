@@ -1,19 +1,12 @@
 <?php namespace App\Http\Controllers\B2b;
 
-use App\Models\Business;
-use App\Models\BusinessMember;
-use App\Models\Member;
 use Illuminate\Validation\ValidationException;
-use App\Models\PartnerBankInformation;
-use Sheba\FileManagers\CdnFileManager;
 use App\Http\Controllers\Controller;
-use App\Repositories\FileRepository;
-use App\Http\Requests\SpLoanRequest;
-use Sheba\FileManagers\FileManager;
-use App\Models\PartnerBankLoan;
+use App\Models\BusinessMember;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
-use App\Models\Profile;
+use App\Models\Business;
+use App\Models\Member;
 use Carbon\Carbon;
 use DB;
 
@@ -59,6 +52,55 @@ class MembersController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getBusinessInfo($member, Request $request)
+    {
+        try {
+            $member = Member::find((int)$member);
+            $profile = $member->profile;
+
+            if ($business = $member->businesses->first()) {
+                $info = [
+                    "name" => $business->name,
+                    "sub_domain" => $business->sub_domain,
+                    "tagline" => $business->tagline,
+                    "company_type" => $business->type,
+                    "address" => $business->address,
+                    "geo_informations" => $business->geo_informations,
+                    "employee_size" => $business->employee_size,
+                ];
+                return api_response($request, $info, 200, ['info' => $info]);
+            } else {
+                return api_response($request, null, 404, ["message" => 'Business not found.']);
+            }
+
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getMemberInfo($member, Request $request)
+    {
+        try {
+            $member = Member::find((int)$member);
+            $profile = $member->profile;
+            $info = [
+                'profile_id' => $profile->id,
+                'name' => $profile->name,
+                'mobile' => $profile->mobile,
+                'email' => $profile->email,
+                'pro_pic' => $profile->pro_pic,
+                'gender' => $profile->gender,
+                'date_of_birth' => $profile->dob,
+                'nid_no' => $profile->nid_no,
+            ];
+            return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

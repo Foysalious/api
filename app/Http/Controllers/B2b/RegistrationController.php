@@ -23,6 +23,7 @@ class RegistrationController extends Controller
 
     public function register(Request $request)
     {
+        #dd($request->all());
         try {
             $this->validate($request, [
                 'name' => 'required|string',
@@ -36,21 +37,21 @@ class RegistrationController extends Controller
             $e_profile = $this->profileRepository->ifExist($email, 'email');
 
             $profile = collect();
-
             if ($m_profile && $e_profile) {
                 if ($m_profile->id == $e_profile->id) {
                     if (!$m_profile->member) {
                         $member = $this->makeMember($m_profile);
                     }
                     $token = JWTAuth::fromUser($m_profile);
-                    return response()->json([
-                        'msg' => 'successful',
-                        'code' => 200,
+                    $info = [
                         'token' => $token,
-                        'remember_token' => $m_profile->remember_token,
-                        'member' => $m_profile->id,
+                        'remember_token' => $m_profile->member->remember_token,
+                        'member' => $m_profile->member->id,
                         'member_img' => $m_profile->pro_pic
-                    ]);
+                    ];
+                    return api_response($request, $info, 200, ['info' => $info]);
+                } else {
+                    return api_response($request, null, 400, ['message' => 'You gave others email or mobile']);
                 }
             } elseif ($m_profile) {
                 return api_response($request, null, 400, ['message' => 'Mobile already exists! Please login']);
@@ -77,7 +78,6 @@ class RegistrationController extends Controller
                     'member_img' => $profile->pro_pic
                 ]);
             }
-
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');

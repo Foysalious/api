@@ -102,9 +102,14 @@ class Route
             $api->post('b2b-login', 'B2b\LoginController@login');
             $api->post('b2b-register', 'B2b\RegistrationController@register');
 
-            $api->group(['prefix' => 'member', 'middleware' => ['member.auth']], function ($api) {
+            $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
+                $api->get('/{member}/info', 'B2b\MembersController@getMemberInfo');
+                $api->get('/{member}/get-business-info', 'B2b\MembersController@getBusinessInfo');
                 $api->post('/{member}/update-business-info', 'B2b\MembersController@updateBusinessInfo');
             });
+
+            $api->get('businesses/{business}/vendors', 'B2b\MembersController@getVendorsInfo');
+            $api->post('businesses/{business}/invite', 'B2b\BusinessesController@inviteVendors');
 
             $api->group(['prefix' => 'categories'], function ($api) {
                 $api->group(['prefix' => '{id}'], function ($api) {

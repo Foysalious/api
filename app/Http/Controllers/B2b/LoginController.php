@@ -29,19 +29,26 @@ class LoginController extends Controller
                 'password' => 'required'
             ]);
             $profile = $this->profileRepository->ifExist($request->email, 'email');
+
             if ($profile) {
-                if (Hash::check($request->input('password'), $profile->password)) {
-                    $token = JWTAuth::fromUser($profile);
-                    $info = [
-                        'token' => $token,
-                        'remember_token' => $profile->remember_token,
-                        'member' => $profile->id,
-                        'member_img' => $profile->pro_pic
-                    ];
-                    return api_response($request, $info, 200, ['info' => $info]);
+                $member = $profile->member;
+                if ($member) {
+                    if (Hash::check($request->input('password'), $profile->password)) {
+                        $token = JWTAuth::fromUser($profile);
+                        $info = [
+                            'token' => $token,
+                            'remember_token' => $profile->member->remember_token,
+                            'member' => $member->id,
+                            'member_img' => $profile->pro_pic
+                        ];
+                        return api_response($request, $info, 200, ['info' => $info]);
+                    }
                 }
+                return api_response($request, null, 404, ["message" => 'Member not found.']);
+            } else {
+                return api_response($request, null, 404);
             }
-            return api_response($request, null, 404);
+
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
