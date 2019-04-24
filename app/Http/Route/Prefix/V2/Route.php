@@ -99,9 +99,6 @@ class Route
                 });
             });
 
-            $api->post('business-login', 'B2b\LoginController@login');
-            $api->post('business-register', 'B2b\RegistrationController@register');
-
             $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
                 $api->get('/{member}/info', 'B2b\MembersController@getMemberInfo');
                 $api->get('/{member}/get-business-info', 'B2b\MembersController@getBusinessInfo');
