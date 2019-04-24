@@ -26,16 +26,16 @@ class BusinessesController extends Controller
     {
         try {
             $this->validate($request, [
-                'numbers' => 'required|array'
+                'numbers' => 'required|json'
             ]);
+
             $business = $request->business;
             $this->setModifier($business);
 
-            $numbers = explode(', ', $request['numbers'][0]);
-            foreach ($numbers as $number) {
+            foreach (json_decode($request->numbers) as $number) {
                 $data = [
                     'business_id' => $business->id,
-                    'mobile' => $number
+                    'mobile' => formatMobile($number)
                 ];
                 BusinessJoinRequest::create($data);
                 $this->sms->shoot($number, "Nothing");
