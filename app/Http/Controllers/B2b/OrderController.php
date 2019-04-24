@@ -232,7 +232,7 @@ class OrderController extends Controller
     private function createAddress(Member $member, Business $business)
     {
         $address = new CustomerDeliveryAddress();
-        $address->address = $member->business->address;
+        $address->address = $business->address;
         $address->name = $business->name;
         $geo = json_decode($business->geo_informations);
         $address->geo_informations = $business->geo_informations;
