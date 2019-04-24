@@ -20,8 +20,9 @@ class BusinessesController extends Controller
             $this->validate($request, [
                 'numbers' => 'required|array'
             ]);
-            $business = Business::find((int)$business);
-            dd(123456);
+            /*$business = $request->business;
+            $numbers = $request['numbers']
+            dd($request['numbers']);*/
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
