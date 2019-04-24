@@ -24,8 +24,7 @@ class OrderController extends Controller
             $this->validate($request, [
                 'filter' => 'required|string|in:ongoing,history'
             ]);
-            $member = Member::find(1);
-            $customer = $member->profile->customer;
+            $customer = $request->member->profile->customer;
             if ($customer) {
                 $url = config('sheba.api_url') . "/v2/customers/$customer->id/orders?remember_token=$customer->remember_token&for=business&filter=$request->filter";
                 $client = new Client();
