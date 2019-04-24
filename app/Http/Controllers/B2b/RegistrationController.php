@@ -43,6 +43,12 @@ class RegistrationController extends Controller
                         $member = $this->makeMember($m_profile);
                     }
                     $token = JWTAuth::fromUser($m_profile);
+                    $info =  JWTAuth::fromUser($m_profile, [
+                        'token' => $token,
+                        'remember_token' => $m_profile->member->remember_token,
+                        'member' => $m_profile->member->id,
+                        'member_img' => $m_profile->pro_pic
+                    ]);
                     $info = [
                         'token' => $token,
                         'remember_token' => $m_profile->member->remember_token,
@@ -69,14 +75,13 @@ class RegistrationController extends Controller
                 $member = $this->makeMember($profile);
 
                 $token = JWTAuth::fromUser($profile);
-                return response()->json([
-                    'msg' => 'successful',
-                    'code' => 200,
+                $info = [
                     'token' => $token,
-                    'remember_token' => $profile->remember_token,
-                    'member' => $profile->id,
-                    'member_img' => $profile->pro_pic
-                ]);
+                    'remember_token' => $m_profile->member->remember_token,
+                    'member' => $m_profile->member->id,
+                    'member_img' => $m_profile->pro_pic
+                ];
+                return api_response($request, $info, 200, ['info' => $info]);
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
