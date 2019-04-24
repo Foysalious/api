@@ -64,6 +64,9 @@ class OrderAdapter implements PayableAdapter
         if ($order->partner_id) {
             $this->userId = $order->partner_id;
             $this->userType = "App\\Models\\Partner";
+        } elseif ($order->business_id) {
+            $this->userId = $order->business_id;
+            $this->userType = "App\\Models\\Business";
         } else {
             $this->userId = $order->customer_id;
             $this->userType = "App\\Models\\Customer";
