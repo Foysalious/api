@@ -21,7 +21,6 @@ class BusinessesController extends Controller
                 'numbers' => 'required|array'
             ]);
             $business = Business::find((int)$business);
-            dd($business,$request->all());
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

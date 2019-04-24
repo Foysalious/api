@@ -43,6 +43,12 @@ class RegistrationController extends Controller
                         $member = $this->makeMember($m_profile);
                     }
                     $token = JWTAuth::fromUser($m_profile);
+                    $info =  JWTAuth::fromUser($m_profile, [
+                        'token' => $token,
+                        'remember_token' => $m_profile->member->remember_token,
+                        'member' => $m_profile->member->id,
+                        'member_img' => $m_profile->pro_pic
+                    ]);
                     $info = [
                         'token' => $token,
                         'remember_token' => $m_profile->member->remember_token,
