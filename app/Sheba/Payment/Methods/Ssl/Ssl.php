@@ -49,9 +49,9 @@ class Ssl extends PaymentMethod
         $data['cancel_url'] = $this->cancelUrl;
         $data['tran_id'] = $invoice;
         $user = $payable->user;
-        $data['cus_name'] = $user->profile->name;
-        $data['cus_email'] = $user->profile->email;
-        $data['cus_phone'] = $user->profile->mobile;
+        $data['cus_name'] = $payable->getName();
+        $data['cus_email'] = $payable->getEmail();
+        $data['cus_phone'] = $payable->getMobile();
         $payment = new Payment();
         DB::transaction(function () use ($payment, $payable, $invoice, $user) {
             $payment->payable_id = $payable->id;

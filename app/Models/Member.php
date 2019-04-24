@@ -18,6 +18,11 @@ class Member extends Model
         return $this->belongsToMany(Business::class)->withTimestamps();
     }
 
+    public function businessMember()
+    {
+        return $this->hasMany(BusinessMember::class);
+    }
+
     public function typeIn($business)
     {
         $business = $business instanceof Business ? $business->id : $business;

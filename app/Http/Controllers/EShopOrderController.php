@@ -1,4 +1,5 @@
 <?php namespace App\Http\Controllers;
+
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 
@@ -10,7 +11,7 @@ class EShopOrderController extends Controller
 
         try {
             if ($customer) {
-                $url = config('sheba.api_url'). "/v2/customers/$customer->id/orders?remember_token=$customer->remember_token&for=eshop";
+                $url = config('sheba.api_url') . "/v2/customers/$customer->id/orders?remember_token=$customer->remember_token&for=eshop";
                 $client = new Client();
                 $res = $client->request('GET', $url);
                 if ($response = json_decode($res->getBody())) {
@@ -30,7 +31,7 @@ class EShopOrderController extends Controller
         $customer = $request->manager_resource->profile->customer;
         try {
             if ($customer) {
-                $url = config('sheba.api_url'). "/v2/customers/$customer->id/orders/$order?remember_token=$customer->remember_token&for=eshop";
+                $url = config('sheba.api_url') . "/v2/customers/$customer->id/orders/$order?remember_token=$customer->remember_token&for=eshop";
                 $client = new Client();
                 $res = $client->request('GET', $url);
                 if ($response = json_decode($res->getBody())) {

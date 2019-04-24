@@ -17,7 +17,7 @@ class CustomerOrderController extends Controller
         try {
             $this->validate($request, [
                 'filter' => 'sometimes|string|in:ongoing,history',
-                'for' => 'sometimes|required|string|in:eshop'
+                'for' => 'sometimes|required|string|in:eshop,business'
             ]);
             $filter = $request->filter;
             $for = $request->for;
@@ -27,6 +27,8 @@ class CustomerOrderController extends Controller
                     ->skip($offset)->take($limit);
                 if ($for == 'eshop') {
                     $q->whereNotNull('partner_id');
+                } else if ($for == "business") {
+                    $q->whereNull('business_id');
                 } else {
                     $q->whereNull('partner_id');
                 }

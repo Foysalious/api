@@ -19,7 +19,7 @@ class Payable extends Model
             return 'subscription_order';
         } else if ($this->type == 'gift_card_purchase') {
             return 'gift_card_purchase';
-        }  else if ($this->type == 'movie_ticket_purchase') {
+        } else if ($this->type == 'movie_ticket_purchase') {
             return 'movie_ticket_purchase';
         }
     }
@@ -47,6 +47,34 @@ class Payable extends Model
         return $this->morphTo();
     }
 
+    public function getMobile()
+    {
+        if ($this->user instanceof Customer) {
+            return $this->user->profile->mobile;
+        } elseif ($this->user instanceof Business) {
+            return $this->user->mobile;
+        }
+    }
+
+    public function getEmail()
+    {
+        if ($this->user instanceof Customer) {
+            return $this->user->profile->email;
+        } elseif ($this->user instanceof Business) {
+            return $this->user->email;
+        }
+    }
+
+    public function getName()
+    {
+        if ($this->user instanceof Customer) {
+            return $this->user->profile->name;
+        } elseif ($this->user instanceof Business) {
+            return $this->user->name;
+        }
+    }
+
+
     public function getPayableModel()
     {
         $model = "App\\Models\\";
@@ -54,7 +82,7 @@ class Payable extends Model
             $model .= 'PartnerOrder';
         } elseif ($this->type == 'subscription_order') {
             $model .= 'SubscriptionOrder';
-        } elseif( $this->type == 'gift_card_purchase') {
+        } elseif ($this->type == 'gift_card_purchase') {
             $model .= 'GiftCardPurchase';
         } else {
             $model .= 'MovieTicketOrder';

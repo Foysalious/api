@@ -1,40 +1,38 @@
-<?php
-
-namespace App\Http\Middleware;
+<?php namespace App\Http\Middleware;
 
 use App\Models\Business;
 use App\Models\Member;
-use App\Models\Partner;
-use App\Models\Resource;
+use Tymon\JWTAuth\Exceptions\JWTException;
+use Tymon\JWTAuth\Facades\JWTAuth;
 use Closure;
 
 class BusinessAuthMiddleware
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Illuminate\Http\Request $request
-     * @param  \Closure $next
-     * @return mixed
-     */
+    private $member;
+
     public function handle($request, Closure $next)
     {
-        if ($request->has('remember_token')) {
-            $business_member = Member::where('remember_token', $request->input('remember_token'))->first();
+        $payload = [];
+        try {
+            $token = JWTAuth::getToken();
+            $payload = JWTAuth::getPayload($token)->toArray();
+        } catch (JWTException $e) {
+            $this->die(401, $e->getMessage());
+        }
+        $this->member = Member::find($payload['member_id']);
+        if (!$this->member) $this->die(404, 'Member not found.');
 
-            $business = Business::find($request->business);
-            if ($business_member && $business) {
-                if ($business_member->isManager($business)) {
-                    $request->merge(['business_member' => $business_member, 'business' => $business]);
-                    return $next($request);
-                } else {
-                    return api_response($request, null, 403, ["message" => "Forbidden. You're not a manager of this partner."]);
-                }
+        $business = Business::find((int)$request->business);
+        if ($this->member && $business) {
+            if ($this->member->isManager($business)) {
+                $request->merge(['manager_member' => $this->member, 'business' => $business]);
+                return $next($request);
             } else {
-                return api_response($request, null, 404, ["message" => 'Partner or Resource not found.']);
+                return api_response($request, null, 403, ["message" => "Forbidden. You're not a manager of this business."]);
             }
         } else {
-            return api_response($request, null, 400, ["message" => "Authentication token is missing from the request."]);
+            return api_response($request, null, 404, ["message" => 'Business not found.']);
         }
     }
+
 }
