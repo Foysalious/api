@@ -14,7 +14,6 @@ class BusinessAuthMiddleware
     {
         $payload = [];
         try {
-
             $token = JWTAuth::getToken();
             $payload = JWTAuth::getPayload($token)->toArray();
         } catch (JWTException $e) {
