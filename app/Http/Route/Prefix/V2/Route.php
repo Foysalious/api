@@ -108,8 +108,11 @@ class Route
                 $api->post('/{member}/update-business-info', 'B2b\MembersController@updateBusinessInfo');
             });
 
-            $api->get('businesses/{business}/vendors', 'B2b\MembersController@getVendorsInfo');
-            $api->post('businesses/{business}/invite', 'B2b\BusinessesController@inviteVendors');
+
+            $api->group(['prefix' => 'businesses/{business}', 'middleware' => ['business.auth']], function ($api) {
+                $api->get('/vendors', 'B2b\MembersController@getVendorsInfo');
+                $api->post('/invite', 'B2b\BusinessesController@inviteVendors');
+            });
 
             $api->group(['prefix' => 'categories'], function ($api) {
                 $api->group(['prefix' => '{id}'], function ($api) {
