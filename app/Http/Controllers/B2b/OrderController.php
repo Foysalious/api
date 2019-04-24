@@ -194,6 +194,7 @@ class OrderController extends Controller
             $customer = $member->profile->customer;
             if (!$customer) {
                 $customer = $this->createCustomerFromMember($member);
+                $member = Member::find($member->id);
                 $address = $this->createAddress($member, $business);
             } else {
                 $geo = json_decode($business->geo_informations);
