@@ -45,7 +45,6 @@ class BusinessesController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -55,18 +54,21 @@ class BusinessesController extends Controller
     {
         try {
             $business = $request->business;
-            $partners = $business->partners()->with(['categories' => function ($q) {
-                dd(121);
-                $q->parent()->get();
-            }])->select('id', 'name', 'mobile')->get();
-            dd($partners, 2222);
+            $partners = $business->partners()->with('categories')->select('id', 'name', 'mobile')->get();
             $vendors = collect();
             if ($business) {
                 foreach ($partners as $partner) {
+                    $master_categories = collect();
+                    $partner->categories->map(function ($category) use ($master_categories) {
+                        $parent_category = $category->parent()->select('id', 'name')->first();
+                        $master_categories->push($parent_category);
+                    });
+                    $master_categories = $master_categories->unique()->pluck('name');
                     $vendor = [
                         "id" => $partner->id,
                         "name" => $partner->name,
                         "mobile" => $partner->mobile,
+                        'type' => $master_categories
                     ];
                     $vendors->push($vendor);
                 }
@@ -75,7 +77,6 @@ class BusinessesController extends Controller
                 return api_response($request, 1, 404);
             }
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
