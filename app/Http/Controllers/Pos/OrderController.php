@@ -19,6 +19,8 @@ use Sheba\Pos\Jobs\OrderBillEmail;
 use Sheba\Pos\Jobs\OrderBillSms;
 use Sheba\Pos\Order\Creator;
 use Sheba\Pos\Order\QuickCreator;
+use Sheba\Pos\Order\RefundNatures\NatureFactory;
+use Sheba\Pos\Order\RefundNatures\Natures;
 use Sheba\Pos\Order\Updater;
 use Throwable;
 
@@ -38,18 +40,13 @@ class OrderController extends Controller
                 $manager->setSerializer(new ArraySerializer());
                 $resource = new Item($order_data, new PosOrderTransformer());
                 $order_formatted = $manager->createData($resource)->toArray();
-                $order_create_date  = Carbon::parse($order_formatted['created_at'])->format('Y-m-d');
-                if(!isset($final_orders[$order_create_date]))
-                    $final_orders[$order_create_date] = array();
-                if(!$status || ($status && $order_formatted['payment_status'] === $status) )
-                    array_push($final_orders[$order_create_date], $order_formatted);
+                $order_create_date = Carbon::parse($order_formatted['created_at'])->format('Y-m-d');
+                if (!isset($final_orders[$order_create_date])) $final_orders[$order_create_date] = array();
+                if (!$status || ($status && $order_formatted['payment_status'] === $status)) array_push($final_orders[$order_create_date], $order_formatted);
             }
-            $orders_formatted =  array();
-            foreach($final_orders as $key => $value) {
-                $order_list = array(
-                    'date' => $key,
-                    'orders' => $value
-                );
+            $orders_formatted = array();
+            foreach ($final_orders as $key => $value) {
+                $order_list = array('date' => $key, 'orders' => $value);
                 array_push($orders_formatted, $order_list);
             }
             return api_response($request, $orders_formatted, 200, ['orders' => $orders_formatted]);
@@ -81,12 +78,7 @@ class OrderController extends Controller
     public function store(Request $request, Creator $creator)
     {
         try {
-            $this->validate($request, [
-                'services' => 'required|string',
-                'amount' => 'required|numeric',
-                'paid_amount' => 'required|numeric',
-                'payment_method' => 'required|string|in:' . implode(',', config('pos.payment_method'))
-            ]);
+            $this->validate($request, ['services' => 'required|string', 'amount' => 'required|numeric', 'paid_amount' => 'required|numeric', 'payment_method' => 'required|string|in:' . implode(',', config('pos.payment_method'))]);
             $this->setModifier($request->manager_resource);
 
             $order = $creator->setData($request->all())->create();
@@ -107,11 +99,7 @@ class OrderController extends Controller
     public function quickStore(Request $request, QuickCreator $creator)
     {
         try {
-            $this->validate($request, [
-                'amount' => 'required|numeric',
-                'paid_amount' => 'required|numeric',
-                'payment_method' => 'required|string|in:' . implode(',', config('pos.payment_method'))
-            ]);
+            $this->validate($request, ['amount' => 'required|numeric', 'paid_amount' => 'required|numeric', 'payment_method' => 'required|string|in:' . implode(',', config('pos.payment_method'))]);
             $this->setModifier($request->manager_resource);
 
             $order = $creator->setData($request->all())->create();
@@ -141,11 +129,23 @@ class OrderController extends Controller
         try {
             /** @var PosOrder $order */
             $order = PosOrder::with('items')->find($request->order);
-            $updater->setOrder($order)->setData($request->all())->update();
+            $refund_nature = ($this->isReturned($order, $request)) ? Natures::RETURNED : Natures::EXCHANGED;
+            $refund_nature = NatureFactory::getRefundNature($order, $request->all(), $refund_nature);
+            $refund_nature->update();
+
+            return api_response($request, null, 200, ['msg' => 'Order Updated Successfully', 'order' => $order]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function isReturned(PosOrder $order, Request $request)
+    {
+        $services = $order->items->pluck('service_id')->toArray();
+        $request_services = collect(json_decode($request->services, true))->pluck('id')->toArray();
+
+        return $services === $request_services;
     }
 
     /**

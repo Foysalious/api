@@ -1,8 +1,8 @@
 <?php namespace Sheba\Pos\Order;
 
+use App\Models\PartnerPosService;
 use App\Models\PosOrder;
-use Sheba\Pos\Order\RefundNatures\NatureFactory;
-use Sheba\Pos\Order\RefundNatures\Natures;
+use Sheba\Pos\Repositories\PosOrderItemRepository;
 
 class Updater
 {
@@ -14,6 +14,13 @@ class Updater
      * @var array
      */
     private $data;
+    /** @var PosOrderItemRepository $itemRepo */
+    private $itemRepo;
+
+    public function __construct(PosOrderItemRepository $item_repo)
+    {
+        $this->itemRepo = $item_repo;
+    }
 
     public function setOrder(PosOrder $order)
     {
@@ -29,17 +36,11 @@ class Updater
 
     public function update()
     {
-        $refund_nature = ($this->isReturned()) ? Natures::RETURNED : Natures::EXCHANGED;
-        $refund_nature = NatureFactory::getRefundNature($this->order, $refund_nature);
-
-        return;
-    }
-
-    private function isReturned()
-    {
-        $services = $this->order->items->pluck('service_id')->toArray();
-        $request_services = collect(json_decode($this->data['services'], true))->pluck('id')->toArray();
-
-        return $services === $request_services;
+        $services = json_decode($this->data['services'], true);
+        foreach ($services as $service) {
+            $item = $this->itemRepo->findByService($this->order, $service['id']);
+            $service_data['quantity'] = $service['quantity'];
+            $this->itemRepo->update($item, $service_data);
+        }
     }
 }

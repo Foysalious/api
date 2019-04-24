@@ -4,7 +4,7 @@ use App\Models\PosOrder;
 
 class NatureFactory
 {
-    public static function getRefundNature(PosOrder $order, $nature)
+    public static function getRefundNature(PosOrder $order, array $data, $nature)
     {
         return ((function () use ($order, $nature) {
             if ($nature == Natures::RETURNED) {
@@ -14,6 +14,6 @@ class NatureFactory
             } else {
                 throw new \Exception('Unsupported Nature');
             }
-        })())->setOrder($order);
+        })())->setOrder($order)->setData($data);
     }
 }
