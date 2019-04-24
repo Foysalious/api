@@ -7,7 +7,6 @@ use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
 use App\Models\Member;
-use App\Models\PartnerOrder;
 use App\Models\Payment;
 use App\Sheba\Address\AddressValidator;
 use App\Sheba\Checkout\Checkout;
@@ -25,12 +24,9 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         try {
-            $this->validate($request, [
-                'filter' => 'required|string|in:ongoing,history'
-            ]);
             $customer = $request->manager_member->profile->customer;
             if ($customer) {
-                $url = config('sheba.api_url') . "/v2/customers/$customer->id/orders?remember_token=$customer->remember_token&for=business&filter=$request->filter";
+                $url = config('sheba.api_url') . "/v2/customers/$customer->id/orders?remember_token=$customer->remember_token&for=business";
                 $client = new Client();
                 $res = $client->request('GET', $url);
                 if ($response = json_decode($res->getBody())) {
