@@ -27,7 +27,7 @@ class OrderController extends Controller
             $this->validate($request, [
                 'filter' => 'required|string|in:ongoing,history'
             ]);
-            $customer = $request->member->profile->customer;
+            $customer = $request->manager_member->profile->customer;
             if ($customer) {
                 $url = config('sheba.api_url') . "/v2/customers/$customer->id/orders?remember_token=$customer->remember_token&for=business&filter=$request->filter";
                 $client = new Client();
@@ -92,13 +92,12 @@ class OrderController extends Controller
                 'services' => 'required|string',
                 'partner' => 'required',
                 'mobile' => 'required|string|mobile:bd',
-                'name' => 'required',
                 'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
                 'time' => 'required|string',
                 'is_on_premise' => 'sometimes|numeric',
             ], ['mobile' => 'Invalid mobile number!']);
             $business = $request->business;
-            $member = $request->member;
+            $member = $request->manager_member;
             $customer = $member->profile->customer;
             if (!$customer) {
                 $customer = $this->createCustomerFromMember($member);
@@ -110,7 +109,7 @@ class OrderController extends Controller
                 if (!$address) $address = $this->createAddress($member, $business);
             }
             $order = new Checkout($customer);
-            $request->merge(['customer' => $customer, 'address_id' => $address->id, 'payment_method' => 'cod', 'business_id' => $business->id, 'sales_channel' => 'Business']);
+            $request->merge(['customer' => $customer, 'address_id' => $address->id, 'name' => $business->name, 'payment_method' => 'cod', 'business_id' => $business->id, 'sales_channel' => 'Business']);
             $request->merge(['address_id' => $address->id]);
             $order = $order->placeOrder($request);
             return api_response($request, $order, 200, ['job_id' => $order->jobs->first()->id, 'order_code' => $order->code()]);
@@ -121,6 +120,7 @@ class OrderController extends Controller
             $sentry->captureException($e);
             return response()->json(['data' => null, 'message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
