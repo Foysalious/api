@@ -89,6 +89,7 @@ class MembersController extends Controller
     {
         try {
             $member = Member::find((int)$member);
+            $business = $member->businesses->first();
             $profile = $member->profile;
             $info = [
                 'profile_id' => $profile->id,
@@ -99,6 +100,7 @@ class MembersController extends Controller
                 'gender' => $profile->gender,
                 'date_of_birth' => $profile->dob,
                 'nid_no' => $profile->nid_no,
+                'business_id' => $business ? $business->id : null,
             ];
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {

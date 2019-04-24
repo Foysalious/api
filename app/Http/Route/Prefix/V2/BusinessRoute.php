@@ -10,7 +10,7 @@ class BusinessRoute
 
         $api->group(['prefix' => 'businesses', 'middleware'=>['business.auth']], function ($api) {
             $api->group(['prefix' => '{business}'], function ($api) {
-                $api->get('/vendors', 'B2b\MembersController@getVendorsInfo');
+                $api->get('/vendors', 'B2b\BusinessesController@getVendorsInfo');
                 $api->post('/invite', 'B2b\BusinessesController@inviteVendors');
                 $api->post('orders', 'B2b\OrderController@placeOrder');
                 $api->post('promotions/add', 'B2b\OrderController@applyPromo');

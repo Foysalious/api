@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Models;
+<?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
@@ -11,6 +9,11 @@ class Business extends Model
     public function members()
     {
         return $this->belongsToMany(Member::class)->withTimestamps()->withPivot('type', 'join_date');
+    }
+
+    public function partners()
+    {
+        return $this->belongsToMany(Partner::class, 'business_partners');
     }
 
     public function deliveryAddresses()
