@@ -592,4 +592,9 @@ class Partner extends Model implements Rewardable, TopUpAgent
     {
         return $this->hasMany(PosOrder::class);
     }
+
+    public function posSetting()
+    {
+        return $this->hasOne(PartnerPosSetting::class);
+    }
 }

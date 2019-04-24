@@ -19,6 +19,7 @@ use Sheba\Pos\Jobs\OrderBillEmail;
 use Sheba\Pos\Jobs\OrderBillSms;
 use Sheba\Pos\Order\Creator;
 use Sheba\Pos\Order\QuickCreator;
+use Sheba\Pos\Order\Updater;
 use Throwable;
 
 class OrderController extends Controller
@@ -128,6 +129,25 @@ class OrderController extends Controller
     }
 
     /**
+     * @param Request $request
+     * @param Updater $updater
+     * @return JsonResponse
+     */
+    public function update(Request $request, Updater $updater)
+    {
+        $this->setModifier($request->manager_resource);
+
+        try {
+            /** @var PosOrder $order */
+            $order = PosOrder::with('items')->find($request->order);
+            $updater->setOrder($order)->setData($request->all())->update();
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
      * SMS TO CUSTOMER ABOUT POS ORDER BILLS
      *
      * @param Request $request
@@ -174,10 +194,5 @@ class OrderController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-    }
-
-    private function getSelectColumnsOfItem()
-    {
-        return ['service_name', 'app_thumb', 'app_banner', 'price', 'stock'];
     }
 }
