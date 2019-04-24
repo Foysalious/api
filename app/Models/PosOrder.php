@@ -7,49 +7,27 @@ class PosOrder extends Model
 {
     protected $guarded = ['id'];
 
-    /**
-     * @var string
-     */
+    /** @var string */
     private $paymentStatus;
-    /**
-     * @var float
-     */
+    /** @var float */
     private $paid;
-    /**
-     * @var float
-     */
+    /** @var float */
     private $due;
-    /**
-     * @var float|int
-     */
+    /**@var float|int */
     private $totalPrice;
-    /**
-     * @var number
-     */
+    /** @var number */
     private $totalVat;
-    /**
-     * @var float|int
-     */
+    /** @var float|int */
     private $totalItemDiscount;
-    /**
-     * @var float|int|number
-     */
+    /** @var float|int|number */
     private $totalBill;
-    /**
-     * @var float|int
-     */
+    /** @var float|int */
     private $totalDiscount;
-    /**
-     * @var float|int|number
-     */
+    /** @var float|int|number */
     private $appliedDiscount;
-    /**
-     * @var float|int|number
-     */
+    /** @var float|int|number */
     private $netBill;
-    /**
-     * @var bool
-     */
+    /** @var bool */
     public $isCalculated;
 
     public function calculate()
