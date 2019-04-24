@@ -3,24 +3,24 @@
 
 namespace App\Http\Middleware\B2B;
 
-
-use App\Models\Customer;
-use App\Models\Job;
+use App\Models\PartnerOrder;
 use Closure;
 
 class OrderMiddleware
 {
     public function handle($request, Closure $next)
     {
-        $customer =Customer::find(11);
-        $job = Job::with('partnerOrder.order')->find((int)$request->order);
+        $customer = $request->manager_member->profile->customer;
+        /** @var PartnerOrder $partner_order */
+        $partner_order = PartnerOrder::find((int)$request->order);
+        $job = $partner_order->getActiveJob();
         if (!$job) {
             return api_response($request, null, 404, ["message" => "Order not found."]);
         }
-        if ($job->partnerOrder->order->customer_id != $customer->id) {
+        if ($partner_order->order->customer_id != $customer->id) {
             return api_response($request, null, 403, ["message" => "You're not authorized to access this order."]);
         }
-        $request->merge(['job' => $job]);
+        $request->merge(['job' => $job, 'partner_order' => $partner_order]);
         return $next($request);
     }
 }
