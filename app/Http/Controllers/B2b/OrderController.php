@@ -83,6 +83,48 @@ class OrderController extends Controller
         return $payment ? 1 : 0;
     }
 
+    public function applyPromo(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'services' => 'required|string',
+                'partner' => 'required',
+                'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
+                'time' => 'required|string',
+                'code' => 'required|string',
+            ]);
+            $business = $request->business;
+            $member = $request->manager_member;
+            $customer = $member->profile->customer;
+            $client = new Client();
+            $geo = json_decode($business->geo_informations);
+            $result = $client->request('POST', config('sheba.api_url') . '/v2/customers/' . $customer->id . '/promotions',
+                [
+                    'form_params' => [
+                        'services' => $request->services,
+                        'remember_token' => $customer->remember_token,
+                        'partner' => $request->partner,
+                        'date' => $request->date,
+                        'time' => $request->time,
+                        'lat' => $geo->lat,
+                        'lng' => $geo->lng,
+                        'code' => $request->code,
+                        'sales_channel' => 'Business',
+                    ]
+                ]);
+            $result = json_decode($result->getBody());
+            return api_response($request, $result, $result->code, ['message' => $result->message]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return response()->json(['data' => null, 'message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 
     public function placeOrder(Request $request)
     {
@@ -109,8 +151,10 @@ class OrderController extends Controller
                 if (!$address) $address = $this->createAddress($member, $business);
             }
             $order = new Checkout($customer);
-            $request->merge(['customer' => $customer, 'address_id' => $address->id, 'name' => $business->name, 'payment_method' => 'cod', 'business_id' => $business->id, 'sales_channel' => 'Business']);
-            $request->merge(['address_id' => $address->id]);
+            $request->merge(['customer' => $customer,
+                'address_id' => $address->id,
+                'name' => $business->name, 'payment_method' => 'cod',
+                'business_id' => $business->id, 'sales_channel' => 'Business']);
             $order = $order->placeOrder($request);
             return api_response($request, $order, 200, ['job_id' => $order->jobs->first()->id, 'order_code' => $order->code()]);
         } catch (ValidationException $e) {
@@ -120,7 +164,6 @@ class OrderController extends Controller
             $sentry->captureException($e);
             return response()->json(['data' => null, 'message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
