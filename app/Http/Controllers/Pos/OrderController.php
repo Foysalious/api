@@ -21,6 +21,8 @@ use Sheba\Pos\Order\Creator;
 use Sheba\Pos\Order\QuickCreator;
 use Sheba\Pos\Order\RefundNatures\NatureFactory;
 use Sheba\Pos\Order\RefundNatures\Natures;
+use Sheba\Pos\Order\RefundNatures\RefundNature;
+use Sheba\Pos\Order\RefundNatures\ReturnNatures;
 use Sheba\Pos\Order\Updater;
 use Throwable;
 
@@ -32,7 +34,7 @@ class OrderController extends Controller
     {
         try {
             $status = $request->status;
-            $orders = PosOrder::with('items','customer')->orderBy('created_at','desc')->get();
+            $orders = PosOrder::with('items', 'customer')->orderBy('created_at', 'desc')->get();
             $final_orders = array();
             foreach ($orders as $index => $order) {
                 $order_data = $order->calculate();
@@ -60,7 +62,7 @@ class OrderController extends Controller
     public function show(Request $request)
     {
         try {
-            $order = PosOrder::with('items','customer.profile')->find($request->order)->calculate();
+            $order = PosOrder::with('items', 'customer.profile')->find($request->order)->calculate();
             if (!$order) return api_response($request, null, 404, ['msg' => 'Order Not Found']);
 
             $manager = new Manager();
@@ -129,9 +131,13 @@ class OrderController extends Controller
         try {
             /** @var PosOrder $order */
             $order = PosOrder::with('items')->find($request->order);
-            $refund_nature = ($this->isReturned($order, $request)) ? Natures::RETURNED : Natures::EXCHANGED;
-            $refund_nature = NatureFactory::getRefundNature($order, $request->all(), $refund_nature);
-            $refund_nature->update();
+            $is_returned = ($this->isReturned($order, $request));
+            $refund_nature = $is_returned ? Natures::RETURNED : Natures::EXCHANGED;
+            $return_nature = $is_returned ? $this->getReturnType($request) : null;
+
+            /** @var RefundNature $refund */
+            $refund = NatureFactory::getRefundNature($order, $request->all(), $refund_nature, $return_nature);
+            $refund->update();
 
             return api_response($request, null, 200, ['msg' => 'Order Updated Successfully', 'order' => $order]);
         } catch (Throwable $e) {
@@ -140,12 +146,23 @@ class OrderController extends Controller
         }
     }
 
+    /**
+     * @param PosOrder $order
+     * @param Request $request
+     * @return bool
+     */
     private function isReturned(PosOrder $order, Request $request)
     {
         $services = $order->items->pluck('service_id')->toArray();
         $request_services = collect(json_decode($request->services, true))->pluck('id')->toArray();
 
         return $services === $request_services;
+    }
+
+    public function getReturnType(Request $request)
+    {
+        $request_services_quantity = collect(json_decode($request->services, true))->pluck('quantity')->toArray();
+        return (empty(array_filter($request_services_quantity))) ? ReturnNatures::FULL_RETURN : ReturnNatures::PARTIAL_RETURN;
     }
 
     /**

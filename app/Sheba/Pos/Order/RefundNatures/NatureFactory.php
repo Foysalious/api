@@ -4,11 +4,15 @@ use App\Models\PosOrder;
 
 class NatureFactory
 {
-    public static function getRefundNature(PosOrder $order, array $data, $nature)
+    public static function getRefundNature(PosOrder $order, array $data, $nature, $return_nature)
     {
-        return ((function () use ($order, $nature) {
+        return ((function () use ($order, $nature, $return_nature) {
             if ($nature == Natures::RETURNED) {
-                return app(ReturnPosItem::class);
+                if ($return_nature == ReturnNatures::PARTIAL_RETURN) {
+                    return app(PartialReturnPosItem::class);
+                } elseif ($return_nature == ReturnNatures::FULL_RETURN) {
+                    return app(FullReturnPosItem::class);
+                }
             } else if ($nature == Natures::EXCHANGED) {
                 return app(ExchangePosItem::class);
             } else {
