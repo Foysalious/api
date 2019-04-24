@@ -30,7 +30,7 @@ class OrderController extends Controller
     {
         try {
             $status = $request->status;
-            $orders = PosOrder::with('items')->orderBy('created_at','desc')->get();
+            $orders = PosOrder::with('items','customer')->orderBy('created_at','desc')->get();
             $final_orders = array();
             foreach ($orders as $index => $order) {
                 $order_data = $order->calculate();
@@ -54,6 +54,7 @@ class OrderController extends Controller
             }
             return api_response($request, $orders_formatted, 200, ['orders' => $orders_formatted]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -62,7 +63,7 @@ class OrderController extends Controller
     public function show(Request $request)
     {
         try {
-            $order = PosOrder::with('items')->find($request->order)->calculate();
+            $order = PosOrder::with('items','customer.profile')->find($request->order)->calculate();
             if (!$order) return api_response($request, null, 404, ['msg' => 'Order Not Found']);
 
             $manager = new Manager();

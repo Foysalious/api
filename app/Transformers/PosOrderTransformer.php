@@ -9,6 +9,7 @@ class PosOrderTransformer extends TransformerAbstract
 
     public function transform(PosOrder $order)
     {
+        $customer = $order->customer ? $order->customer->profile : null;
         return [
             'id' => $order->id,
             'created_by_name' => $order->created_by_name,
@@ -18,7 +19,13 @@ class PosOrderTransformer extends TransformerAbstract
             'payment_status' => $order->getPaymentStatus(),
             'vat' => (double)$order->getTotalVat(),
             'paid' => $order->getPaid(),
-            'due' => $order->getDue()
+            'due' => $order->getDue(),
+            'customer' => $customer ? collect([
+                'name' => $customer->name,
+                'mobile' => $customer->mobile,
+                'image' => $customer->pro_pic,
+            ]) : null,
+            'payments' => $order->payments
         ];
     }
 
