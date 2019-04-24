@@ -100,7 +100,6 @@ class OrderController extends Controller
             $sentry->captureException($e);
             return response()->json(['data' => null, 'message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
