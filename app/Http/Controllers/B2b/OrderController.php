@@ -10,12 +10,43 @@ use App\Models\Member;
 use App\Sheba\Address\AddressValidator;
 use App\Sheba\Checkout\Checkout;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Location\Coords;
 
 class OrderController extends Controller
 {
+
+    public function index(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'filter' => 'required|string|in:ongoing,history'
+            ]);
+            $member = Member::find(1);
+            $customer = $member->profile->customer;
+            if ($customer) {
+                $url = config('sheba.api_url') . "/v2/customers/$customer->id/orders?remember_token=$customer->remember_token&for=business&filter=$request->filter";
+                $client = new Client();
+                $res = $client->request('GET', $url);
+                if ($response = json_decode($res->getBody())) {
+                    return ($response->code == 200) ? api_response($request, $response, 200, ['orders' => $response->orders]) : api_response($request, $response, $response->code);
+                }
+            } else {
+                return api_response($request, null, 404);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return response()->json(['data' => null, 'message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 
     public function placeOrder(Request $request)
     {
