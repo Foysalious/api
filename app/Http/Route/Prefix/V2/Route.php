@@ -108,8 +108,7 @@ class Route
                 $api->post('/{member}/update-business-info', 'B2b\MembersController@updateBusinessInfo');
             });
 
-            $api->get('businesses/{business}/vendors', 'B2b\MembersController@getVendorsInfo');
-            $api->post('businesses/{business}/invite', 'B2b\BusinessesController@inviteVendors');
+            (new BusinessRoute())->set($api);
 
             $api->group(['prefix' => 'categories'], function ($api) {
                 $api->group(['prefix' => '{id}'], function ($api) {

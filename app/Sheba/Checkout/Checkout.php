@@ -137,6 +137,7 @@ class Checkout
         if ($request->has('partner_id')) {
             $data['partner_id'] = $request->partner_id;
         }
+        if ($request->has('business_id')) $data['business_id'] = $request->business_id;
         $data['vendor_id'] = $request->has('vendor_id') ? $request->vendor_id : null;
         $data['pap_visitor_id'] = $request->has('pap_visitor_id') ? $request->pap_visitor_id : null;
         $data['created_by'] = $created_by = $request->has('created_by') ? $request->created_by : $this->customer->id;
@@ -277,7 +278,8 @@ class Checkout
         $order->created_by = $data['created_by'];
         $order->created_by_name = $data['created_by_name'];
         $order->partner_id = isset($data['partner_id']) ? $data['partner_id'] : null;
-        $order->vendor_id = $data['vendor_id'];
+        $order->business_id = isset($data['business_id']) ? $data['business_id'] : null;
+        $order->vendor_id = isset($data['vendor_id']) ? $data['vendor_id'] : null;
         $customer_delivery_address = $this->getDeliveryAddress($data, $partner);
         $order->delivery_address_id = $customer_delivery_address != null ? $customer_delivery_address->id : null;
         $order->fill((new RequestIdentification())->get());

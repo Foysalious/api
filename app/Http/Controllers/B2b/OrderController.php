@@ -11,6 +11,7 @@ use App\Sheba\Address\AddressValidator;
 use App\Sheba\Checkout\Checkout;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Sheba\Location\Coords;
 
 class OrderController extends Controller
@@ -46,6 +47,12 @@ class OrderController extends Controller
             $request->merge(['address_id' => $address->id]);
             $order = $order->placeOrder($request);
             return api_response($request, $order, 200, ['job_id' => $order->jobs->first()->id, 'order_code' => $order->code()]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return response()->json(['data' => null, 'message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
