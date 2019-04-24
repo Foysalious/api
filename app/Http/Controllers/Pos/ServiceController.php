@@ -26,7 +26,7 @@ class ServiceController extends Controller
         try {
             $partner = $request->partner;
             $services = [];
-            $base_query = PartnerPosService::with('discounts');
+            $base_query = PartnerPosService::published()->with('discounts');
 
             if ($request->has('category_id') && !empty($request->category_id)) {
                 $category_ids = explode(',', $request->category_id);

@@ -19,6 +19,11 @@ class PartnerPosService extends Model
         return $this->category()->with('parent');
     }
 
+    public function scopePublished($query)
+    {
+        return $query->where('publication_status',1);
+    }
+
     /**
      * Scope a query to only include a specific master category.
      *
