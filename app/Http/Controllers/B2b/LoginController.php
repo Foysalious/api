@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
 
+use App\Models\Profile;
 use App\Repositories\ProfileRepository;
 use Illuminate\Validation\ValidationException;
 use Tymon\JWTAuth\Exceptions\JWTException;
@@ -34,12 +35,14 @@ class LoginController extends Controller
                 $member = $profile->member;
                 if ($member) {
                     if (Hash::check($request->input('password'), $profile->password)) {
-                        $token = JWTAuth::fromUser($profile);
+
+
+                        $member = $profile->member;
+                        $businesses = $member->businesses->first();
                         $info = [
-                            'token' => $token,
-                            'remember_token' => $profile->member->remember_token,
+                            'token' => $this->generateToken($profile),
                             'member' => $member->id,
-                            'member_img' => $profile->pro_pic
+                            'business_id' => $businesses ? $businesses->id : null,
                         ];
                         return api_response($request, $info, 200, ['info' => $info]);
                     }
@@ -61,27 +64,15 @@ class LoginController extends Controller
         }
     }
 
-    private function formatMobile($mobile)
+    private function generateToken(Profile $profile)
     {
-        // mobile starts with '+88'
-        if (preg_match("/^(\+88)/", $mobile)) {
-            return $mobile;
-        } // when mobile starts with '88' replace it with '+880'
-        elseif (preg_match("/^(88)/", $mobile)) {
-            return preg_replace('/^88/', '+88', $mobile);
-        } // real mobile no add '+880' at the start
-        else {
-            return '+88' . $mobile;
-        }
-    }
-
-    private function _validateLoginRequest($request)
-    {
-        $from = implode(',', constants('FROM'));
-        $validator = Validator::make($request->all(), [
-
-        ], ['in' => 'from value is invalid!']);
-        return $validator->fails() ? $validator->errors()->all()[0] : false;
+        $member = $profile->member;
+        $businesses = $member->businesses->first();
+        return JWTAuth::fromUser($profile, [
+            'member' => $member->id,
+            'member_type' => $businesses ? $businesses->type : null,
+            'business_id' => $businesses ? $businesses->id : null,
+        ]);
     }
 
 }

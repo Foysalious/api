@@ -1,40 +1,34 @@
-<?php
+<?php namespace App\Http\Middleware;
 
-namespace App\Http\Middleware;
-
-use App\Models\Business;
 use App\Models\Member;
-use App\Models\Partner;
-use App\Models\Resource;
-use Closure;
+use Tymon\JWTAuth\Exceptions\JWTException;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class BusinessAuthMiddleware
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Illuminate\Http\Request $request
-     * @param  \Closure $next
-     * @return mixed
-     */
-    public function handle($request, Closure $next)
-    {
-        if ($request->has('remember_token')) {
-            $business_member = Member::where('remember_token', $request->input('remember_token'))->first();
 
-            $business = Business::find($request->business);
-            if ($business_member && $business) {
-                if ($business_member->isManager($business)) {
-                    $request->merge(['business_member' => $business_member, 'business' => $business]);
-                    return $next($request);
-                } else {
-                    return api_response($request, null, 403, ["message" => "Forbidden. You're not a manager of this partner."]);
-                }
-            } else {
-                return api_response($request, null, 404, ["message" => 'Partner or Resource not found.']);
-            }
-        } else {
-            return api_response($request, null, 400, ["message" => "Authentication token is missing from the request."]);
+    protected function handleAuth($role)
+    {
+        $payload = [];
+
+        try {
+            $token = JWTAuth::getToken();
+            $payload = JWTAuth::getPayload($token)->toArray();
+            dd($payload);
+        } catch (JWTException $e) {
+            $this->die(401, $e->getMessage());
         }
+
+        if (!isset($payload['logistic_user'])) $this->die(401, 'User has no access');
+        $this->user = Member::find($payload['logistic_user']['id']);
+        if (!$this->user) $this->die(404, 'User not found.');
+        $this->user->name = $payload['name'];
+
+        $this->request->merge(['user' => $this->user]);
+    }
+
+    protected function getModifier()
+    {
+        return $this->user;
     }
 }

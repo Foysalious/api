@@ -37,25 +37,16 @@ class RegistrationController extends Controller
             $e_profile = $this->profileRepository->ifExist($email, 'email');
 
             $profile = collect();
+
             if ($m_profile && $e_profile) {
                 if ($m_profile->id == $e_profile->id) {
                     if (!$m_profile->member) {
                         $member = $this->makeMember($m_profile);
                     }
-                    $token = JWTAuth::fromUser($m_profile);
-                    $info =  JWTAuth::fromUser($m_profile, [
-                        'token' => $token,
-                        'remember_token' => $m_profile->member->remember_token,
-                        'member' => $m_profile->member->id,
-                        'member_img' => $m_profile->pro_pic
-                    ]);
-                    $info = [
-                        'token' => $token,
-                        'remember_token' => $m_profile->member->remember_token,
-                        'member' => $m_profile->member->id,
-                        'member_img' => $m_profile->pro_pic
-                    ];
-                    return api_response($request, $info, 200, ['info' => $info]);
+
+                    $token = $this->generateToken($m_profile);
+                    return api_response($request, $token, 200, ['token' => $token]);
+
                 } else {
                     return api_response($request, null, 400, ['message' => 'You gave others email or mobile']);
                 }
@@ -74,14 +65,8 @@ class RegistrationController extends Controller
                 $profile->push($m_profile);
                 $member = $this->makeMember($profile);
 
-                $token = JWTAuth::fromUser($profile);
-                $info = [
-                    'token' => $token,
-                    'remember_token' => $m_profile->member->remember_token,
-                    'member' => $m_profile->member->id,
-                    'member_img' => $m_profile->pro_pic
-                ];
-                return api_response($request, $info, 200, ['info' => $info]);
+                $token = $this->generateToken($profile);
+                return api_response($request, $token, 200, ['token' => $token]);
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -90,9 +75,22 @@ class RegistrationController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function generateToken(Profile $profile)
+    {
+        $member = $profile->member;
+        $businesses = $member->businesses->first();
+        return JWTAuth::fromUser($profile, [
+            'member' => $member->id,
+            'member_img' => $profile->pro_pic,
+            'business_id' => $businesses ? $businesses->id : null,
+            'business_type' => $businesses ? $businesses->type : null,
+        ]);
     }
 
     private function makeMember($profile)
