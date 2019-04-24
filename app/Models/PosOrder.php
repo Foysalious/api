@@ -111,10 +111,25 @@ class PosOrder extends Model
 
     private function _calculatePaidAmount()
     {
-        $this->paid = 0;
-        foreach ($this->payments as $payment) {
-            $this->paid += $payment->amount;
-        }
+        $credit = $this->creditPayments()->sum('amount');
+        $debit  = $this->debitPayments()->sum('amount');
+
+        $this->paid = $credit - $debit;
+    }
+
+    private function creditPayments()
+    {
+        return $this->payments()->credit();
+    }
+
+    private function debitPayments()
+    {
+        return $this->payments()->debit();
+    }
+
+    public function getRefundAmount()
+    {
+        return !$this->debitPayments()->get()->isEmpty() ? (double)$this->debitPayments()->sum('amount') : 0.00;
     }
 
     /**

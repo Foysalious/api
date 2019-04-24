@@ -52,7 +52,7 @@ class QuickCreator
             $payment_data['amount'] = $this->data['paid_amount'];
             $payment_data['method'] = $this->data['payment_method'];
             $payment_data['transaction_type'] = 'Credit';
-            $this->paymentCreator->create($payment_data);
+            $this->paymentCreator->credit($payment_data);
         }
 
         return $order;
