@@ -35,7 +35,7 @@ class BusinessesController extends Controller
             foreach (json_decode($request->numbers) as $number) {
                 $data = [
                     'business_id' => $business->id,
-                    'mobile' => $number
+                    'mobile' => formatMobile($number)
                 ];
                 BusinessJoinRequest::create($data);
                 $this->sms->shoot($number, "Nothing");
