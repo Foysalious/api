@@ -37,7 +37,7 @@ class LoginController extends Controller
                         $token = JWTAuth::fromUser($profile);
                         $info = [
                             'token' => $token,
-                            'remember_token' => $profile->remember_token,
+                            'remember_token' => $profile->member->remember_token,
                             'member' => $member->id,
                             'member_img' => $profile->pro_pic
                         ];
