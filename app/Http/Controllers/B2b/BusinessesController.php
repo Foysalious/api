@@ -38,7 +38,7 @@ class BusinessesController extends Controller
                     'mobile' => formatMobile($number)
                 ];
                 BusinessJoinRequest::create($data);
-                $this->sms->shoot($number, "Nothing");
+                $this->sms->shoot($number, "You have been invited to Sheba.xyz by $business->name");
             }
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
