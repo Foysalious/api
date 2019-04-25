@@ -34,7 +34,8 @@ class OrderController extends Controller
     {
         try {
             $status = $request->status;
-            $orders = PosOrder::with('items', 'customer')->orderBy('created_at', 'desc')->get();
+            $partner = $request->partner;
+            $orders = PosOrder::with('items', 'customer')->byPartner($partner->id)->orderBy('created_at', 'desc')->get();
             $final_orders = array();
             foreach ($orders as $index => $order) {
                 $order_data = $order->calculate();
@@ -58,6 +59,10 @@ class OrderController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function show(Request $request)
     {
         try {
