@@ -28,7 +28,7 @@ class CustomerOrderController extends Controller
                 if ($for == 'eshop') {
                     $q->whereNotNull('partner_id');
                 } else if ($for == "business") {
-                    $q->whereNull('business_id');
+                    $q->whereNotNull('business_id');
                 } else {
                     $q->whereNull('partner_id');
                 }
@@ -47,7 +47,6 @@ class CustomerOrderController extends Controller
                     }]);
                 }]);
             }]);
-
             if (count($customer->orders) > 0) {
                 $all_jobs = $this->getInformation($customer->orders);
                 $cancelled_served_jobs = $all_jobs->filter(function ($job) {
