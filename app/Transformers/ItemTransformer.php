@@ -11,7 +11,8 @@ class ItemTransformer extends TransformerAbstract
             'id'        => $item->service_id ? (int)$item->service_id : null,
             'name'      => $item->service_name,
             'quantity'  => $item->quantity,
-            'price'     => (double)$item->getTotal()
+            'price'     => (double)$item->getTotal(),
+            'price_without_vat' =>  (double) $item->getTotal() - $item->getVat()
         ];
     }
 }

@@ -35,7 +35,7 @@ class PosOrder extends Model
     public function calculate()
     {
         $this->_calculateThisItems();
-        $this->totalDiscount = $this->totalItemDiscount + $this->discount;
+        $this->totalDiscount = $this->discount;
         $this->appliedDiscount = (double)($this->totalDiscount > $this->totalBill) ? $this->totalBill : $this->totalDiscount;
         $this->netBill = $this->totalBill - $this->appliedDiscount;
         $this->_calculatePaidAmount();
@@ -89,7 +89,7 @@ class PosOrder extends Model
     {
         $this->totalPrice = 0;
         $this->totalVat = 0;
-        $this->totalItemDiscount = 0;
+        // $this->totalItemDiscount = 0;
         $this->totalBill = 0;
     }
 
@@ -97,7 +97,7 @@ class PosOrder extends Model
     {
         $this->totalPrice += $item->getPrice();
         $this->totalVat += $item->getVat();
-        $this->totalItemDiscount += $item->getDiscountAmount();
+        // $this->totalItemDiscount += $item->getDiscountAmount();
         $this->totalBill += $item->getTotal();
     }
 
@@ -105,7 +105,7 @@ class PosOrder extends Model
     {
         $this->totalPrice = formatTakaToDecimal($this->totalPrice);
         $this->totalVat = formatTakaToDecimal($this->totalVat);
-        $this->totalItemDiscount = formatTakaToDecimal($this->totalItemDiscount);
+        // $this->totalItemDiscount = formatTakaToDecimal($this->totalItemDiscount);
         $this->totalBill = formatTakaToDecimal($this->totalBill);
 
         return $this;
