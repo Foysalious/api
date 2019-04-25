@@ -72,6 +72,7 @@ class MembersController extends Controller
                     "company_type" => $business->type,
                     "address" => $business->address,
                     "geo_informations" => json_decode($business->geo_informations),
+                    "wallet" => (double)$business->wallet,
                     "employee_size" => $business->employee_size,
                 ];
                 return api_response($request, $info, 200, ['info' => $info]);
