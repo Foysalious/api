@@ -72,6 +72,7 @@ class MembersController extends Controller
                     "company_type" => $business->type,
                     "address" => $business->address,
                     "geo_informations" => json_decode($business->geo_informations),
+                    "wallet" => (double)$business->wallet,
                     "employee_size" => $business->employee_size,
                 ];
                 return api_response($request, $info, 200, ['info' => $info]);
@@ -97,6 +98,7 @@ class MembersController extends Controller
                 'mobile' => $profile->mobile,
                 'email' => $profile->email,
                 'pro_pic' => $profile->pro_pic,
+                'designation' => count($member->businessMember) > 0 ? $member->businessMember->first()->type : null,
                 'gender' => $profile->gender,
                 'date_of_birth' => $profile->dob ? Carbon::parse($profile->dob)->format('M-j, Y') : null,
                 'nid_no' => $profile->nid_no,
