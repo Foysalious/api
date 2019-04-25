@@ -2,12 +2,18 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\PartnerPosCustomer;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Pos\Customer\Creator;
+use Throwable;
 
 class CustomerController extends Controller
 {
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function index(Request $request)
     {
         try {
@@ -17,13 +23,19 @@ class CustomerController extends Controller
                 $customers->push($partner_customer->details());
             }
             return api_response($request, $customers, 200, ['customers' => $customers]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function show($partner,$customer, Request $request)
+    /**
+     * @param $partner
+     * @param $customer
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function show($partner, $customer, Request $request)
     {
         try {
             $customer = PartnerPosCustomer::find((int) $customer);
@@ -31,12 +43,17 @@ class CustomerController extends Controller
                 return api_response($request, $customer, 200, ['customer' => $customer->details()]);
             else
                 return api_response($request, null, 404, ['message' => 'Customer Not Found.']);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
+    /**
+     * @param Request $request
+     * @param Creator $creator
+     * @return JsonResponse
+     */
     public function store(Request $request, Creator $creator)
     {
         try {
@@ -54,8 +71,7 @@ class CustomerController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            dd($e);
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
