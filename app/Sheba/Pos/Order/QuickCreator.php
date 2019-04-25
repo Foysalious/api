@@ -1,5 +1,6 @@
 <?php namespace Sheba\Pos\Order;
 
+use App\Models\PartnerPosSetting;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\Pos\Repositories\PosOrderItemRepository;
 use Sheba\Pos\Repositories\PosOrderRepository;
@@ -32,26 +33,27 @@ class QuickCreator
     public function create()
     {
         $is_discount_applied = (isset($this->data['discount']) && $this->data['discount'] > 0);
+        $setting = PartnerPosSetting::byPartner($this->data['partner']['id'])->first();
 
         $order_data['partner_id'] = $this->data['partner']['id'];
         $order_data['discount'] = $is_discount_applied ? ($this->data['is_percentage'] ? (($this->data['discount'] / 100) * $this->data['amount']) : $this->data['discount']) : 0;
         $order_data['discount_percentage'] = $is_discount_applied ? ($this->data['is_percentage'] ? $this->data['discount'] : 0) : 0;
-        if (isset($this->data['customer_id']) && $this->data['customer_id']) {
-            $order_data['customer_id'] = $this->data['customer_id'];
-        }
+        $order_data['customer_id'] = (isset($this->data['customer_id']) && $this->data['customer_id']) ? $this->data['customer_id'] : null;
         $order = $this->orderRepo->save($order_data);
 
         $service['pos_order_id'] = $order->id;
         $service['service_name'] = $this->data['name'];
         $service['unit_price'] = $this->data['amount'];
         $service['quantity'] = self::QUICK_CREATE_DEFAULT_QUANTITY;
+        $service['vat_percentage'] = (isset($this->data['vat_percentage']) && $this->data['vat_percentage'] > 0) ?
+            (double)$this->data['vat_percentage'] : ($setting ? (double)$setting->vat_percentage : 0.00);
+
         $this->itemRepo->save($service);
 
         if (isset($this->data['paid_amount']) && $this->data['paid_amount'] > 0) {
             $payment_data['pos_order_id'] = $order->id;
             $payment_data['amount'] = $this->data['paid_amount'];
             $payment_data['method'] = $this->data['payment_method'];
-            $payment_data['transaction_type'] = 'Credit';
             $this->paymentCreator->credit($payment_data);
         }
 

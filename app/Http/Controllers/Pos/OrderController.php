@@ -114,7 +114,11 @@ class OrderController extends Controller
     public function quickStore(Request $request, QuickCreator $creator)
     {
         try {
-            $this->validate($request, ['amount' => 'required|numeric', 'paid_amount' => 'required|numeric', 'payment_method' => 'required|string|in:' . implode(',', config('pos.payment_method'))]);
+            $this->validate($request, [
+                'amount' => 'required|numeric',
+                'paid_amount' => 'required|numeric',
+                'payment_method' => 'required|string|in:' . implode(',', config('pos.payment_method'))
+            ]);
             $this->setModifier($request->manager_resource);
 
             $order = $creator->setData($request->all())->create();

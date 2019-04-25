@@ -34,7 +34,12 @@ abstract class ReturnPosItem extends RefundNature
             $payment_data['amount'] = $this->data['paid_amount'];
             $payment_data['method'] = $this->data['payment_method'];
 
-            $this->paymentCreator->debit($payment_data);
+            if ($this->data['paid_amount'] > 0) {
+                $this->paymentCreator->credit($payment_data);
+            } else {
+                $payment_data['amount'] = abs($payment_data['amount']);
+                $this->paymentCreator->debit($payment_data);
+            }
         }
     }
 
