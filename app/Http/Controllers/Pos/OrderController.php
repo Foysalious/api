@@ -92,6 +92,8 @@ class OrderController extends Controller
             $this->setModifier($request->manager_resource);
 
             $order = $creator->setData($request->all())->create();
+            $order = $order->calculate();
+            $order->payment_status = $order->getPaymentStatus();
 
             return api_response($request, null, 200, ['msg' => 'Order Created Successfully', 'order' => $order]);
         } catch (ValidationException $e) {
@@ -122,6 +124,8 @@ class OrderController extends Controller
             $this->setModifier($request->manager_resource);
 
             $order = $creator->setData($request->all())->create();
+            $order = $order->calculate();
+            $order->payment_status = $order->getPaymentStatus();
 
             return api_response($request, null, 200, ['msg' => 'Order Created Successfully', 'order' => $order]);
         } catch (ValidationException $e) {
