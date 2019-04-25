@@ -40,4 +40,15 @@ class Business extends Model
     {
         return 0;
     }
+
+    public function bonuses()
+    {
+        return $this->morphMany(Bonus::class, 'user');
+    }
+
+    public function bonusLogs()
+    {
+        return $this->morphMany(BonusLog::class, 'user');
+    }
+
 }
