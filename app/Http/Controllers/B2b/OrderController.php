@@ -184,10 +184,9 @@ class OrderController extends Controller
             $this->validate($request, [
                 'services' => 'required|string',
                 'partner' => 'required',
-                'mobile' => 'required|string|mobile:bd',
+                'voucher' => 'string',
                 'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
                 'time' => 'required|string',
-                'is_on_premise' => 'sometimes|numeric',
             ], ['mobile' => 'Invalid mobile number!']);
             $business = $request->business;
             $member = $request->manager_member;
@@ -205,8 +204,8 @@ class OrderController extends Controller
             $order = new Checkout($customer);
             $request->merge(['customer' => $customer,
                 'address_id' => $address->id,
-                'name' => $business->name, 'payment_method' => 'cod',
-                'business_id' => $business->id, 'sales_channel' => 'Business']);
+                'name' => $business->name, 'payment_method' => 'cod', 'mobile' => $member->profile->mobile,
+                'business_id' => $business->id, 'sales_channel' => 'Business', 'voucher' => $request->voucher]);
             $order = $order->placeOrder($request);
             return api_response($request, $order, 200, ['job_id' => $order->jobs->first()->id, 'order_code' => $order->code()]);
         } catch (ValidationException $e) {
