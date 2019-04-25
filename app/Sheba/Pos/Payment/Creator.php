@@ -14,7 +14,19 @@ class Creator
         $this->paymentRepo = $payment_repo;
     }
 
-    public function create(array $data)
+    public function credit(array $data)
+    {
+        $data['transaction_type'] = 'Credit';
+        $this->create($data);
+    }
+
+    public function debit(array $data)
+    {
+        $data['transaction_type'] = 'Debit';
+        $this->create($data);
+    }
+
+    private function create(array $data)
     {
         $this->paymentRepo->save($data);
     }

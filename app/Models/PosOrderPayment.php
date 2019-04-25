@@ -11,4 +11,19 @@ class PosOrderPayment extends Model
     {
         return $this->belongsTo(PosOrder::class);
     }
+
+    public function scopeType($query, $type)
+    {
+        return $query->where('transaction_type', $type);
+    }
+
+    public function scopeDebit($query)
+    {
+        return $query->type('Debit');
+    }
+
+    public function scopeCredit($query)
+    {
+        return $query->type('Credit');
+    }
 }

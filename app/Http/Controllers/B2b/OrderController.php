@@ -24,16 +24,67 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         try {
-            $this->validate($request, [
-                'filter' => 'required|string|in:ongoing,history'
-            ]);
             $customer = $request->manager_member->profile->customer;
             if ($customer) {
-                $url = config('sheba.api_url') . "/v2/customers/$customer->id/orders?remember_token=$customer->remember_token&for=business&filter=$request->filter";
+                $url = config('sheba.api_url') . "/v2/customers/$customer->id/orders?remember_token=$customer->remember_token&for=business";
                 $client = new Client();
                 $res = $client->request('GET', $url);
                 if ($response = json_decode($res->getBody())) {
                     return ($response->code == 200) ? api_response($request, $response, 200, ['orders' => $response->orders]) : api_response($request, $response, $response->code);
+                }
+            } else {
+                return api_response($request, null, 404);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return response()->json(['data' => null, 'message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function show($order, Request $request)
+    {
+        try {
+            $customer = $request->manager_member->profile->customer;
+            $partner_order = $request->partner_order;
+            if ($customer) {
+                $url = config('sheba.api_url') . "/v2/customers/$customer->id/orders/$partner_order->id?remember_token=$customer->remember_token";
+                $client = new Client();
+                $res = $client->request('GET', $url);
+                if ($response = json_decode($res->getBody())) {
+                    return ($response->code == 200) ? api_response($request, $response, 200, ['order' => $response->orders]) : api_response($request, $response, $response->code);
+                }
+            } else {
+                return api_response($request, null, 404);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return response()->json(['data' => null, 'message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getBills($order, Request $request)
+    {
+        try {
+            $customer = $request->manager_member->profile->customer;
+            $job = $request->job;
+            if ($customer) {
+                $url = config('sheba.api_url') . "/v2/customers/$customer->id/jobs/$job->id/bills?remember_token=$customer->remember_token";
+                $client = new Client();
+                $res = $client->request('GET', $url);
+                if ($response = json_decode($res->getBody())) {
+                    return ($response->code == 200) ? api_response($request, $response, 200, ['order' => $response->bill]) : api_response($request, $response, $response->code);
                 }
             } else {
                 return api_response($request, null, 404);
@@ -143,6 +194,7 @@ class OrderController extends Controller
             $customer = $member->profile->customer;
             if (!$customer) {
                 $customer = $this->createCustomerFromMember($member);
+                $member = Member::find($member->id);
                 $address = $this->createAddress($member, $business);
             } else {
                 $geo = json_decode($business->geo_informations);
@@ -181,7 +233,7 @@ class OrderController extends Controller
     private function createAddress(Member $member, Business $business)
     {
         $address = new CustomerDeliveryAddress();
-        $address->address = $member->business->address;
+        $address->address = $business->address;
         $address->name = $business->name;
         $geo = json_decode($business->geo_informations);
         $address->geo_informations = $business->geo_informations;

@@ -6,21 +6,13 @@ use Sheba\Pos\Repositories\PosOrderRepository;
 
 class QuickCreator
 {
-    /**
-     * @var array
-     */
+    /** @var array */
     private $data;
-    /**
-     * @var PosOrderRepository
-     */
+    /** @var PosOrderRepository */
     private $orderRepo;
-    /**
-     * @var PosOrderItemRepository
-     */
+    /** @var PosOrderItemRepository */
     private $itemRepo;
-    /**
-     * @var PaymentCreator
-     */
+    /** @var PaymentCreator */
     private $paymentCreator;
     const QUICK_CREATE_DEFAULT_QUANTITY = 1;
 
@@ -59,7 +51,8 @@ class QuickCreator
             $payment_data['pos_order_id'] = $order->id;
             $payment_data['amount'] = $this->data['paid_amount'];
             $payment_data['method'] = $this->data['payment_method'];
-            $this->paymentCreator->create($payment_data);
+            $payment_data['transaction_type'] = 'Credit';
+            $this->paymentCreator->credit($payment_data);
         }
 
         return $order;

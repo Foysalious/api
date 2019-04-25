@@ -19,6 +19,10 @@ use Sheba\Pos\Jobs\OrderBillEmail;
 use Sheba\Pos\Jobs\OrderBillSms;
 use Sheba\Pos\Order\Creator;
 use Sheba\Pos\Order\QuickCreator;
+use Sheba\Pos\Order\RefundNatures\NatureFactory;
+use Sheba\Pos\Order\RefundNatures\Natures;
+use Sheba\Pos\Order\RefundNatures\RefundNature;
+use Sheba\Pos\Order\RefundNatures\ReturnNatures;
 use Sheba\Pos\Order\Updater;
 use Throwable;
 
@@ -30,7 +34,7 @@ class OrderController extends Controller
     {
         try {
             $status = $request->status;
-            $orders = PosOrder::with('items','customer')->orderBy('created_at','desc')->get();
+            $orders = PosOrder::with('items', 'customer')->orderBy('created_at', 'desc')->get();
             $final_orders = array();
             foreach ($orders as $index => $order) {
                 $order_data = $order->calculate();
@@ -38,18 +42,13 @@ class OrderController extends Controller
                 $manager->setSerializer(new ArraySerializer());
                 $resource = new Item($order_data, new PosOrderTransformer());
                 $order_formatted = $manager->createData($resource)->toArray();
-                $order_create_date  = Carbon::parse($order_formatted['created_at'])->format('Y-m-d');
-                if(!isset($final_orders[$order_create_date]))
-                    $final_orders[$order_create_date] = array();
-                if(!$status || ($status && $order_formatted['payment_status'] === $status) )
-                    array_push($final_orders[$order_create_date], $order_formatted);
+                $order_create_date = Carbon::parse($order_formatted['created_at'])->format('Y-m-d');
+                if (!isset($final_orders[$order_create_date])) $final_orders[$order_create_date] = array();
+                if (!$status || ($status && $order_formatted['payment_status'] === $status)) array_push($final_orders[$order_create_date], $order_formatted);
             }
-            $orders_formatted =  array();
-            foreach($final_orders as $key => $value) {
-                $order_list = array(
-                    'date' => $key,
-                    'orders' => $value
-                );
+            $orders_formatted = array();
+            foreach ($final_orders as $key => $value) {
+                $order_list = array('date' => $key, 'orders' => $value);
                 array_push($orders_formatted, $order_list);
             }
             return api_response($request, $orders_formatted, 200, ['orders' => $orders_formatted]);
@@ -62,7 +61,7 @@ class OrderController extends Controller
     public function show(Request $request)
     {
         try {
-            $order = PosOrder::with('items','customer.profile')->find($request->order)->calculate();
+            $order = PosOrder::with('items', 'customer.profile')->find($request->order)->calculate();
             if (!$order) return api_response($request, null, 404, ['msg' => 'Order Not Found']);
 
             $manager = new Manager();
@@ -80,12 +79,7 @@ class OrderController extends Controller
     public function store(Request $request, Creator $creator)
     {
         try {
-            $this->validate($request, [
-                'services' => 'required|string',
-                'amount' => 'required|numeric',
-                'paid_amount' => 'required|numeric',
-                'payment_method' => 'required|string|in:' . implode(',', config('pos.payment_method'))
-            ]);
+            $this->validate($request, ['services' => 'required|string', 'amount' => 'required|numeric', 'paid_amount' => 'required|numeric', 'payment_method' => 'required|string|in:' . implode(',', config('pos.payment_method'))]);
             $this->setModifier($request->manager_resource);
 
             $order = $creator->setData($request->all())->create();
@@ -106,11 +100,7 @@ class OrderController extends Controller
     public function quickStore(Request $request, QuickCreator $creator)
     {
         try {
-            $this->validate($request, [
-                'amount' => 'required|numeric',
-                'paid_amount' => 'required|numeric',
-                'payment_method' => 'required|string|in:' . implode(',', config('pos.payment_method'))
-            ]);
+            $this->validate($request, ['amount' => 'required|numeric', 'paid_amount' => 'required|numeric', 'payment_method' => 'required|string|in:' . implode(',', config('pos.payment_method'))]);
             $this->setModifier($request->manager_resource);
 
             $order = $creator->setData($request->all())->create();
@@ -140,11 +130,44 @@ class OrderController extends Controller
         try {
             /** @var PosOrder $order */
             $order = PosOrder::with('items')->find($request->order);
-            $updater->setOrder($order)->setData($request->all())->update();
+            $is_returned = ($this->isReturned($order, $request));
+            $refund_nature = $is_returned ? Natures::RETURNED : Natures::EXCHANGED;
+            $return_nature = $is_returned ? $this->getReturnType($request, $order) : null;
+
+            /** @var RefundNature $refund */
+            $refund = NatureFactory::getRefundNature($order, $request->all(), $refund_nature, $return_nature);
+            $refund->update();
+
+            return api_response($request, null, 200, ['msg' => 'Order Updated Successfully', 'order' => $order]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param PosOrder $order
+     * @param Request $request
+     * @return bool
+     */
+    private function isReturned(PosOrder $order, Request $request)
+    {
+        $services = $order->items->pluck('service_id')->toArray();
+        $request_services = collect(json_decode($request->services, true))->pluck('id')->toArray();
+
+        return $services === $request_services;
+    }
+
+    public function getReturnType(Request $request, PosOrder $order)
+    {
+        $request_services_quantity = collect(json_decode($request->services, true))->pluck('quantity')->toArray();
+
+        $is_full_order_returned = (empty(array_filter($request_services_quantity)));
+        $is_item_added = array_sum($request_services_quantity) > $order->items->sum('quantity');
+
+        return $is_full_order_returned ?
+            ReturnNatures::FULL_RETURN :
+            ($is_item_added ? ReturnNatures::QUANTITY_INCREASE : ReturnNatures::PARTIAL_RETURN);
     }
 
     /**

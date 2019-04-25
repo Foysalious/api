@@ -13,4 +13,14 @@ class PosOrderRepository extends BaseRepository
     {
         return PosOrder::create($this->withCreateModificationField($data));
     }
+
+    /**
+     * @param PosOrder $order
+     * @param array $data
+     * @return bool|int
+     */
+    public function update(PosOrder $order, array $data)
+    {
+        return $order->update($this->withUpdateModificationField($data));
+    }
 }

@@ -5,7 +5,7 @@ use App\Models\Member;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Closure;
 
-class BusinessAuthMiddleware
+class BusinessManagerAuthMiddleware
 {
     private $member;
 

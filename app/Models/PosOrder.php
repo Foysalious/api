@@ -7,49 +7,27 @@ class PosOrder extends Model
 {
     protected $guarded = ['id'];
 
-    /**
-     * @var string
-     */
+    /** @var string */
     private $paymentStatus;
-    /**
-     * @var float
-     */
+    /** @var float */
     private $paid;
-    /**
-     * @var float
-     */
+    /** @var float */
     private $due;
-    /**
-     * @var float|int
-     */
+    /**@var float|int */
     private $totalPrice;
-    /**
-     * @var number
-     */
+    /** @var number */
     private $totalVat;
-    /**
-     * @var float|int
-     */
+    /** @var float|int */
     private $totalItemDiscount;
-    /**
-     * @var float|int|number
-     */
+    /** @var float|int|number */
     private $totalBill;
-    /**
-     * @var float|int
-     */
+    /** @var float|int */
     private $totalDiscount;
-    /**
-     * @var float|int|number
-     */
+    /** @var float|int|number */
     private $appliedDiscount;
-    /**
-     * @var float|int|number
-     */
+    /** @var float|int|number */
     private $netBill;
-    /**
-     * @var bool
-     */
+    /** @var bool */
     public $isCalculated;
 
     public function calculate()
@@ -133,10 +111,25 @@ class PosOrder extends Model
 
     private function _calculatePaidAmount()
     {
-        $this->paid = 0;
-        foreach ($this->payments as $payment) {
-            $this->paid += $payment->amount;
-        }
+        $credit = $this->creditPayments()->sum('amount');
+        $debit  = $this->debitPayments()->sum('amount');
+
+        $this->paid = $credit - $debit;
+    }
+
+    private function creditPayments()
+    {
+        return $this->payments()->credit();
+    }
+
+    private function debitPayments()
+    {
+        return $this->payments()->debit();
+    }
+
+    public function getRefundAmount()
+    {
+        return !$this->debitPayments()->get()->isEmpty() ? (double)$this->debitPayments()->sum('amount') : 0.00;
     }
 
     /**
