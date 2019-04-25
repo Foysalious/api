@@ -35,4 +35,9 @@ class Business extends Model
     {
         return $this->belongsTo(BusinessCategory::class);
     }
+
+    public function shebaBonusCredit()
+    {
+        return 0;
+    }
 }

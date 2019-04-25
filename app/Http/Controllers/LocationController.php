@@ -8,6 +8,8 @@ use App\Models\Location;
 use App\Models\Partner;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Events\OutOfZoneEvent;
+use Sheba\Location\Geo;
 
 class LocationController extends Controller
 {
@@ -61,7 +63,7 @@ class LocationController extends Controller
 
     }
 
-    public function getCurrent(Request $request)
+    public function getCurrent(Request $request, OutOfZoneEvent $event, Geo $geo)
     {
         try {
             $this->validate($request, [
@@ -80,6 +82,8 @@ class LocationController extends Controller
                         'category' => $request->has('category') ? $this->calculateModelAvailability($request->category, 'Category', $location) : [],
                     ]);
             } else {
+                $geo->setLat($request->lat)->setLng($request->lng);
+                $event->setGeo($geo)->save();
                 return api_response($request, null, 404);
             }
         } catch (ValidationException $e) {
