@@ -147,6 +147,7 @@ class OrderController extends Controller
             $business = $request->business;
             $member = $request->manager_member;
             $customer = $member->profile->customer;
+            if (!$customer) $customer = $this->createCustomerFromMember($member);
             $client = new Client();
             $geo = json_decode($business->geo_informations);
             $result = $client->request('POST', config('sheba.api_url') . '/v2/customers/' . $customer->id . '/promotions',
