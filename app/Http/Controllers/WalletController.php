@@ -69,10 +69,10 @@ class WalletController extends Controller
     {
         try {
             $this->validate($request, [
-                'user_id' => 'required',
+                'user_id' => 'sometimes',
                 'transaction_id' => 'required',
-                'user_type' => 'required|in:customer',
-                'remember_token' => 'required',
+                'user_type' => 'sometimes|in:customer',
+                'remember_token' => 'sometimes',
             ]);
             /** @var Payment $payment */
             $payment = Payment::where('transaction_id', $request->transaction_id)->valid()->first();
