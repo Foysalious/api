@@ -100,6 +100,7 @@ class MembersController extends Controller
                 'gender' => $profile->gender,
                 'date_of_birth' => $profile->dob,
                 'nid_no' => $profile->nid_no,
+                'address' => $profile->address,
                 'business_id' => $business ? $business->id : null,
             ];
             return api_response($request, $info, 200, ['info' => $info]);
