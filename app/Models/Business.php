@@ -40,4 +40,8 @@ class Business extends Model
     {
         return 0;
     }
+    public function shebaCredit()
+    {
+        return $this->wallet + $this->shebaBonusCredit();
+    }
 }

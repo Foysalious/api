@@ -79,7 +79,6 @@ class WalletController extends Controller
             if (!$payment) return api_response($request, null, 404);
             elseif ($payment->isFailed()) return api_response($request, null, 500, ['message' => 'Payment failed']);
             elseif ($payment->isPassed()) return api_response($request, null, 200);
-            /** @var Customer $user */
             $user = $payment->payable->user;
             $sheba_credit = $user->shebaCredit();
             $paymentRepository->setPayment($payment);
