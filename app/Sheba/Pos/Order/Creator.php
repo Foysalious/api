@@ -49,7 +49,7 @@ class Creator
 
             if ($is_service_discount_applied) {
                 $service['discount_id'] = $original_service->discount()->id;
-                $service['discount'] = $original_service->getDiscount();
+                $service['discount'] = $original_service->getDiscount() * $service['quantity'];
                 $service['discount_percentage'] = $original_service->discount()->is_amount_percentage ? $original_service->discount()->amount : 0.0;
             }
 
