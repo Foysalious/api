@@ -284,7 +284,7 @@ class ShebaController extends Controller
                     case 'voucher':
                         $payments = $this->getVoucherPayments($version_code, $platform_name);
                         break;
-                        case 'movie_ticket':
+                    case 'movie_ticket':
                         $payments = $this->getMovieTicketPayments($version_code, $platform_name);
                         break;
                     default:
@@ -294,7 +294,7 @@ class ShebaController extends Controller
             } else {
                 $payments = $this->getRegularPayments($version_code, $platform_name);
             }
-            return api_response($request, $payments, 200, ['payments' => $payments]);
+            return api_response($request, $payments, 200, ['payments' => $payments, 'discount_message' => '10% discount on all online payments']);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -402,7 +402,7 @@ class ShebaController extends Controller
             ),
             array(
                 'name' => 'City Bank',
-                'is_published' =>$this->calculateCityBankStatus($version_code, $platform_name),
+                'is_published' => $this->calculateCityBankStatus($version_code, $platform_name),
                 'description' => '',
                 'asset' => 'cbl',
                 'method_name' => 'cbl'
