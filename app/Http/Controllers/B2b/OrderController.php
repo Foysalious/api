@@ -208,7 +208,12 @@ class OrderController extends Controller
                 'name' => $business->name, 'payment_method' => 'cod', 'mobile' => $member->profile->mobile,
                 'business_id' => $business->id, 'sales_channel' => 'Business', 'voucher' => $request->voucher]);
             $order = $order->placeOrder($request);
-            return api_response($request, $order, 200, ['job_id' => $order->jobs->first()->id, 'order_code' => $order->code()]);
+            if ($order) {
+                return api_response($request, $order, 200, ['job_id' => $order->jobs->first()->id, 'order_id' => $order->partnerOrders->first()->id,
+                    'order_code' => $order->code()]);
+            } else {
+                return api_response($request, null, 500);
+            }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
