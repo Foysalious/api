@@ -76,10 +76,19 @@ class OrderController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @param Creator $creator
+     * @return JsonResponse
+     */
     public function store(Request $request, Creator $creator)
     {
         try {
-            $this->validate($request, ['services' => 'required|string', 'amount' => 'required|numeric', 'paid_amount' => 'required|numeric', 'payment_method' => 'required|string|in:' . implode(',', config('pos.payment_method'))]);
+            $this->validate($request, [
+                'services' => 'required|string',
+                'paid_amount' => 'sometimes|required|numeric',
+                'payment_method' => 'sometimes|required|string|in:' . implode(',', config('pos.payment_method'))
+            ]);
             $this->setModifier($request->manager_resource);
 
             $order = $creator->setData($request->all())->create();
@@ -97,6 +106,11 @@ class OrderController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @param QuickCreator $creator
+     * @return JsonResponse
+     */
     public function quickStore(Request $request, QuickCreator $creator)
     {
         try {

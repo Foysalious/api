@@ -25,7 +25,7 @@ class PosItemQuantityIncrease extends ReturnPosItem
     private function refundPayment()
     {
         $payment_data['pos_order_id'] = $this->order->id;
-        $payment_data['amount'] = $this->data['new_amount'];
+        $payment_data['amount'] = $this->data['paid_amount'];
         $payment_data['method'] = $this->data['payment_method'];
 
         $this->paymentCreator->credit($payment_data);
