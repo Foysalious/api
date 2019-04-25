@@ -15,16 +15,18 @@ class Creator
     use FileManager, CdnFileManager;
 
     private $data;
-
+    /** @var ProfileRepository $profiles */
     private $profiles;
-    private $partner_pos_customers;
-    private $pos_customers;
+    /** @var PartnerPosCustomerRepository $partnerPosCustomers */
+    private $partnerPosCustomers;
+    /** @var PosCustomerRepository $posCustomers */
+    private $posCustomers;
 
     public function __construct(ProfileRepository $profile_repo, PartnerPosCustomerRepository $customer_repo, PosCustomerRepository $pos_customer_repo)
     {
         $this->profiles = $profile_repo;
-        $this->partner_pos_customers = $customer_repo;
-        $this->pos_customers = $pos_customer_repo;
+        $this->partnerPosCustomers = $customer_repo;
+        $this->posCustomers = $pos_customer_repo;
     }
 
     public function setData($data)
@@ -49,6 +51,11 @@ class Creator
     {
         $mobile_profile = $this->profiles->checkExistingMobile($this->data['mobile']);
         if ($mobile_profile && $mobile_profile->posCustomer) return ['mobile' => 'Mobile already exists'];
+        if (isset($this->data['email']) && !empty($this->data['email'])) {
+            $email_profile = $this->profiles->checkExistingEmail($this->data['email']);
+            if ($email_profile && $email_profile->posCustomer) return ['email' => 'Email already exists'];
+        }
+
         return false;
     }
 
@@ -58,13 +65,12 @@ class Creator
     public function create()
     {
         $this->saveImages();
-        $this->data['mobile'] = formatMobileAux($this->data['mobile']);
         $this->format();
         $this->attachProfile();
         $this->createPosCustomer();
         $this->data['partner_id'] = $this->data['partner']->id;
         $this->data = array_except($this->data, ['mobile', 'name', 'email', 'address', 'profile_image','partner','manager_resource','profile_id']);
-        return $this->partner_pos_customers->save($this->data);
+        return $this->partnerPosCustomers->save($this->data);
     }
 
     private function saveImages()
@@ -92,24 +98,23 @@ class Creator
 
     private function createPosCustomer()
     {
-        $customer = $this->pos_customers->save(['profile_id' => $this->data['profile_id']]);
+        $customer = $this->posCustomers->save(['profile_id' => $this->data['profile_id']]);
         $this->data['customer_id'] = $customer->id;
     }
 
     private function format()
     {
-        $this->data['note'] = isset($this->data['note']) ? $this->data['note'] : null;
+        $this->data['mobile']   = formatMobileAux($this->data['mobile']);
+        $this->data['email']    = (isset($this->data['email']) && !empty($this->data['email'])) ? $this->data['email'] : null;
+        $this->data['note']     = isset($this->data['note']) ? $this->data['note'] : null;
     }
 
+    /**
+     * @param $filename
+     * @return bool
+     */
     private function hasFile($filename)
     {
-        return array_key_exists($filename, $this->data)
-            && (
-                $this->data[$filename] instanceof Image
-                || (
-                    $this->data[$filename] instanceof UploadedFile
-                    && $this->data[$filename]->getPath() != ''
-                )
-            );
+        return array_key_exists($filename, $this->data) && ($this->data[$filename] instanceof Image || ($this->data[$filename] instanceof UploadedFile && $this->data[$filename]->getPath() != ''));
     }
 }

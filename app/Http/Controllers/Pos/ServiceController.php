@@ -5,7 +5,9 @@ use App\Models\PartnerPosService;
 use App\Models\PartnerPosServiceDiscount;
 
 use App\Models\PosCategory;
+use App\Transformers\CustomSerializer;
 use App\Transformers\PosServiceTransformer;
+use Illuminate\Http\JsonResponse;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
@@ -16,11 +18,16 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\ModificationFields;
 use Sheba\Pos\Repositories\PosServiceDiscountRepository;
+use Throwable;
 
 class ServiceController extends Controller
 {
     use ModificationFields;
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function index(Request $request)
     {
         try {
@@ -51,12 +58,16 @@ class ServiceController extends Controller
             if (!$services) return api_response($request, null, 404);
 
             return api_response($request, $services, 200, ['services' => $services]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function show(Request $request)
     {
         try {
@@ -64,17 +75,22 @@ class ServiceController extends Controller
             if (!$service) return api_response($request, null, 404, ['msg' => 'Service Not Found']);
 
             $manager = new Manager();
-            $manager->setSerializer(new ArraySerializer());
+            $manager->setSerializer(new CustomSerializer());
             $resource = new Item($service, new PosServiceTransformer());
             $service = $manager->createData($resource)->toArray();
 
             return api_response($request, $service, 200, ['service' => $service]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
+    /**
+     * @param Request $request
+     * @param ProductCreator $creator
+     * @return JsonResponse
+     */
     public function store(Request $request, ProductCreator $creator)
     {
         try {
@@ -103,12 +119,18 @@ class ServiceController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
+    /**
+     * @param Request $request
+     * @param ProductUpdater $updater
+     * @param PosServiceDiscountRepository $discount_repo
+     * @return JsonResponse
+     */
     public function update(Request $request, ProductUpdater $updater, PosServiceDiscountRepository $discount_repo)
     {
         try {
@@ -143,7 +165,7 @@ class ServiceController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

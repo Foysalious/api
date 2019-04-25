@@ -1,7 +1,9 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Pos\Log\Supported\Types;
 use Sheba\Pos\Order\OrderPaymentStatuses;
+use Sheba\Pos\Order\RefundNatures\Natures;
 
 class PosOrder extends Model
 {
@@ -117,6 +119,16 @@ class PosOrder extends Model
         $this->paid = $credit - $debit;
     }
 
+    public function logs()
+    {
+        return $this->hasMany(PosOrderLog::class);
+    }
+
+    public function scopeByPartner($query, $partner_id)
+    {
+        return $query->where('partner_id', $partner_id);
+    }
+
     private function creditPayments()
     {
         return $this->payments()->credit();
@@ -210,5 +222,14 @@ class PosOrder extends Model
     public function getNetBill()
     {
         return $this->netBill;
+    }
+
+    public function getRefundStatus()
+    {
+        $is_exchanged = $this->logs()->refundOf(Types::EXCHANGE)->first();
+        $is_full_returned  = $this->logs()->refundOf(Types::FULL_RETURN)->first();
+        $is_partial_return = $this->logs()->refundOf(Types::PARTIAL_RETURN)->first();
+
+        return $is_exchanged ? Natures::EXCHANGED : (($is_full_returned || $is_partial_return) ? Natures::RETURNED : null);
     }
 }
