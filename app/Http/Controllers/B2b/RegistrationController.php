@@ -23,7 +23,6 @@ class RegistrationController extends Controller
 
     public function register(Request $request)
     {
-        #dd($request->all());
         try {
             $this->validate($request, [
                 'name' => 'required|string',
@@ -43,7 +42,6 @@ class RegistrationController extends Controller
                     if (!$m_profile->member) {
                         $member = $this->makeMember($m_profile);
                     }
-
                     $member = $m_profile->member;
                     $businesses = $member->businesses->first();
                     $info = [
@@ -86,7 +84,6 @@ class RegistrationController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -96,7 +93,6 @@ class RegistrationController extends Controller
     {
         $member = $profile->member;
         $businesses = $member->businesses->first();
-
         return JWTAuth::fromUser($profile, [
             'member_id' => $member->id,
             'member_type' => count($member->businessMember) > 0 ? $member->businessMember->first()->type : null,
