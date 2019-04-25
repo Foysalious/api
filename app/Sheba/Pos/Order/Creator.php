@@ -32,15 +32,9 @@ class Creator
 
     public function create()
     {
-        $is_discount_applied = (isset($this->data['discount']) && $this->data['discount'] > 0);
-
         $order_data['partner_id'] = $this->data['partner']['id'];
-        $order_data['discount'] = $is_discount_applied ? ($this->data['is_percentage'] ? (($this->data['discount'] / 100) * $this->data['amount']) : $this->data['discount']) : 0;
-        $order_data['discount_percentage'] = $is_discount_applied ? ($this->data['is_percentage'] ? $this->data['discount'] : 0) : 0;
-        if (isset($this->data['customer_id']) && $this->data['customer_id']) {
-            $order_data['customer_id'] = $this->data['customer_id'];
-        }
-        $order_data['previous_order_id'] = isset($this->data['previous_order_id']) ? $this->data['previous_order_id'] : null;
+        $order_data['customer_id'] = (isset($this->data['customer_id']) && $this->data['customer_id']) ? $this->data['customer_id'] : null;
+        $order_data['previous_order_id'] = (isset($this->data['previous_order_id']) && $this->data['previous_order_id']) ? $this->data['previous_order_id'] : null;
         $order = $this->orderRepo->save($order_data);
 
         $services = json_decode($this->data['services'], true);
@@ -51,7 +45,7 @@ class Creator
             $service['service_id']   = $service['id'];
             $service['service_name'] = $service['name'];
             $service['pos_order_id'] = $order->id;
-            $service['unit_price'] = $original_service->price;
+            $service['unit_price']   = $original_service->price;
 
             if ($is_service_discount_applied) {
                 $service['discount_id'] = $original_service->discount()->id;
@@ -71,6 +65,12 @@ class Creator
             $payment_data['method'] = $this->data['payment_method'];
             $this->paymentCreator->credit($payment_data);
         }
+
+        $order = $order->calculate();
+        $is_discount_applied = (isset($this->data['discount']) && $this->data['discount'] > 0);
+        $order_discount_data['discount'] = $is_discount_applied ? ($this->data['is_percentage'] ? (($this->data['discount'] / 100) * $order->getTotalBill()) : $this->data['discount']) : 0;
+        $order_discount_data['discount_percentage'] = $is_discount_applied ? ($this->data['is_percentage'] ? $this->data['discount'] : 0) : 0;
+        $this->orderRepo->update($order, $order_discount_data);
 
         return $order;
     }

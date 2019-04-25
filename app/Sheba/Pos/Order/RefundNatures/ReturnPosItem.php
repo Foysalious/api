@@ -27,6 +27,17 @@ abstract class ReturnPosItem extends RefundNature
         $this->saveLog();
     }
 
+    private function refundPayment()
+    {
+        if (isset($this->data['is_refunded']) && $this->data['is_refunded']) {
+            $payment_data['pos_order_id'] = $this->order->id;
+            $payment_data['amount'] = $this->data['paid_amount'];
+            $payment_data['method'] = $this->data['payment_method'];
+
+            $this->paymentCreator->debit($payment_data);
+        }
+    }
+
     /**
      * GENERATE LOG DETAILS DATA
      */
@@ -41,14 +52,5 @@ abstract class ReturnPosItem extends RefundNature
         });
         $details['items']['changes'] = $changes;
         $this->details = json_encode($details);
-    }
-
-    private function refundPayment()
-    {
-        $payment_data['pos_order_id'] = $this->order->id;
-        $payment_data['amount'] = $this->data['refund_amount'];
-        $payment_data['method'] = $this->data['payment_method'];
-
-        $this->paymentCreator->debit($payment_data);
     }
 }
