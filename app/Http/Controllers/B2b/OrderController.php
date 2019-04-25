@@ -204,7 +204,7 @@ class OrderController extends Controller
             $order = new Checkout($customer);
             $request->merge(['customer' => $customer,
                 'address_id' => $address->id,
-                'name' => $business->name, 'payment_method' => 'cod', 'mobile' => $customer->profile->mobile,
+                'name' => $business->name, 'payment_method' => 'cod', 'mobile' => $member->profile->mobile,
                 'business_id' => $business->id, 'sales_channel' => 'Business', 'voucher' => $request->voucher]);
             $order = $order->placeOrder($request);
             return api_response($request, $order, 200, ['job_id' => $order->jobs->first()->id, 'order_code' => $order->code()]);
