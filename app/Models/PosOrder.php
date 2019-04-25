@@ -117,6 +117,11 @@ class PosOrder extends Model
         $this->paid = $credit - $debit;
     }
 
+    public function scopeByPartner($query, $partner_id)
+    {
+        return $query->where('partner_id', $partner_id);
+    }
+
     private function creditPayments()
     {
         return $this->payments()->credit();

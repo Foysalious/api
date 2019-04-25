@@ -35,8 +35,6 @@ class LoginController extends Controller
                 $member = $profile->member;
                 if ($member) {
                     if (Hash::check($request->input('password'), $profile->password)) {
-
-
                         $member = $profile->member;
                         $businesses = $member->businesses->first();
                         $info = [
@@ -51,7 +49,6 @@ class LoginController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');

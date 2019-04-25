@@ -11,4 +11,9 @@ class PartnerPosSetting extends Model
     {
         return $this->belongsTo(Partner::class);
     }
+
+    public function scopeByPartner($query, $partner_id)
+    {
+        return $query->where('partner_id', $partner_id);
+    }
 }

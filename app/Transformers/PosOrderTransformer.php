@@ -5,11 +5,10 @@ use League\Fractal\TransformerAbstract;
 
 class PosOrderTransformer extends TransformerAbstract
 {
-    protected $defaultIncludes = ['items'];
+    protected $defaultIncludes = ['items', 'customer'];
 
     public function transform(PosOrder $order)
     {
-        $customer = $order->customer ? $order->customer->profile : null;
         return [
             'id' => $order->id,
             'created_by_name' => $order->created_by_name,
@@ -20,12 +19,8 @@ class PosOrderTransformer extends TransformerAbstract
             'vat' => (double)$order->getTotalVat(),
             'paid' => $order->getPaid(),
             'due' => $order->getDue(),
-            'customer' => $customer ? collect([
-                'name' => $customer->name,
-                'mobile' => $customer->mobile,
-                'image' => $customer->pro_pic,
-            ]) : null,
-            'payments' => $order->payments
+            'payments' => $order->payments,
+            'customer' => null
         ];
     }
 
@@ -35,5 +30,11 @@ class PosOrderTransformer extends TransformerAbstract
         return $collection->getData() ? $collection : $this->item(null, function () {
             return [];
         });
+    }
+
+    public function includeCustomer($order)
+    {
+        $collection = $this->item($order->customer, new PosCustomerTransformer());
+        return $collection->getData() ? $collection : null;
     }
 }

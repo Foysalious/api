@@ -34,7 +34,8 @@ class OrderController extends Controller
     {
         try {
             $status = $request->status;
-            $orders = PosOrder::with('items', 'customer')->orderBy('created_at', 'desc')->get();
+            $partner = $request->partner;
+            $orders = PosOrder::with('items', 'customer')->byPartner($partner->id)->orderBy('created_at', 'desc')->get();
             $final_orders = array();
             foreach ($orders as $index => $order) {
                 $order_data = $order->calculate();
@@ -58,6 +59,10 @@ class OrderController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function show(Request $request)
     {
         try {
@@ -92,6 +97,8 @@ class OrderController extends Controller
             $this->setModifier($request->manager_resource);
 
             $order = $creator->setData($request->all())->create();
+            $order = $order->calculate();
+            $order->payment_status = $order->getPaymentStatus();
 
             return api_response($request, null, 200, ['msg' => 'Order Created Successfully', 'order' => $order]);
         } catch (ValidationException $e) {
@@ -114,10 +121,16 @@ class OrderController extends Controller
     public function quickStore(Request $request, QuickCreator $creator)
     {
         try {
-            $this->validate($request, ['amount' => 'required|numeric', 'paid_amount' => 'required|numeric', 'payment_method' => 'required|string|in:' . implode(',', config('pos.payment_method'))]);
+            $this->validate($request, [
+                'amount' => 'required|numeric',
+                'paid_amount' => 'required|numeric',
+                'payment_method' => 'required|string|in:' . implode(',', config('pos.payment_method'))
+            ]);
             $this->setModifier($request->manager_resource);
 
             $order = $creator->setData($request->all())->create();
+            $order = $order->calculate();
+            $order->payment_status = $order->getPaymentStatus();
 
             return api_response($request, null, 200, ['msg' => 'Order Created Successfully', 'order' => $order]);
         } catch (ValidationException $e) {

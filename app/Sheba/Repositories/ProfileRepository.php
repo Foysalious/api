@@ -2,6 +2,8 @@
 
 use App\Helper\BangladeshiMobileValidator;
 use App\Models\Profile;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class ProfileRepository extends BaseRepository
 {
@@ -18,11 +20,9 @@ class ProfileRepository extends BaseRepository
     }
 
     /**
-     * Update a resource profile.
-     *
      * @param Profile $profile
      * @param $data
-     * @return Profile
+     * @return bool|int
      */
     public function update(Profile $profile, $data)
     {
@@ -31,11 +31,9 @@ class ProfileRepository extends BaseRepository
     }
 
     /**
-     * Checking existing profile.
-     *
      * @param $mobile
      * @param $email
-     * @return Profile
+     * @return array|Builder|Model|null
      */
     public function checkExistingProfile($mobile, $email)
     {
@@ -60,7 +58,6 @@ class ProfileRepository extends BaseRepository
         //return Profile::where('mobile', $contact_no)->first();
     }
 
-
     /**
      * Checking existing profile mobile.
      *
@@ -74,7 +71,6 @@ class ProfileRepository extends BaseRepository
         if (!$mobile) return null;
         return Profile::where('mobile', $mobile)->first();
     }
-
 
     /**
      * Checking existing profile email.
@@ -93,7 +89,7 @@ class ProfileRepository extends BaseRepository
      * Formatting Data for profile table.
      *
      * @param $data
-     * @return Array
+     * @return mixed
      */
     private function profileDataFormat($data)
     {
