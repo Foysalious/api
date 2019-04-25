@@ -8,10 +8,10 @@ class ItemTransformer extends TransformerAbstract
     public function transform(PosOrderItem $item)
     {
         return [
-            'id'    => $item->service_id ? (int)$item->service_id : null,
-            'name'  => $item->service_name,
-            'price' => (double)$item->getTotal(),
-            'quantity' => $item->quantity
+            'id'        => $item->service_id ? (int)$item->service_id : null,
+            'name'      => $item->service_name,
+            'quantity'  => $item->quantity,
+            'price'     => (double)$item->getTotal()
         ];
     }
 }

@@ -1,7 +1,4 @@
-<?php
-
-namespace App\Transformers;
-
+<?php namespace App\Transformers;
 
 use League\Fractal\Serializer\DataArraySerializer;
 
