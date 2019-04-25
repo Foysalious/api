@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Models\BusinessJoinRequest;
+use App\Models\Partner;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
@@ -50,11 +51,11 @@ class BusinessesController extends Controller
         }
     }
 
-    public function getVendorsInfo($business, Request $request)
+    public function getVendorsList($business, Request $request)
     {
         try {
             $business = $request->business;
-            $partners = $business->partners()->with('categories')->select('id', 'name', 'mobile')->get();
+            $partners = $business->partners()->with('categories')->select('id', 'name', 'mobile','logo')->get();
             $vendors = collect();
             if ($business) {
                 foreach ($partners as $partner) {
@@ -67,6 +68,7 @@ class BusinessesController extends Controller
                     $vendor = [
                         "id" => $partner->id,
                         "name" => $partner->name,
+                        "logo" => $partner->logo,
                         "mobile" => $partner->mobile,
                         'type' => $master_categories
                     ];
@@ -76,6 +78,41 @@ class BusinessesController extends Controller
             } else {
                 return api_response($request, 1, 404);
             }
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getVendorInfo($business, $vendor, Request $request)
+    {
+        try {
+            $business = $request->business;
+            $partner = Partner::find((int)$vendor);
+            $basic_informations = $partner->basicInformations;
+            $resources = $partner->resources->count();
+            $type = $partner->businesses->pluck('type')->unique();
+
+            $master_categories = collect();
+            $partner->categories->map(function ($category) use ($master_categories) {
+                $parent_category = $category->parent()->select('id', 'name')->first();
+                $master_categories->push($parent_category);
+            });
+            $master_categories = $master_categories->unique()->pluck('name');
+
+            $vendor = [
+                "id" => $partner->id,
+                "name" => $partner->name,
+                "logo" => $partner->logo,
+                "mobile" => $partner->mobile,
+                "company_type" => $type,
+                "service_type" => $master_categories,
+                "no_of_resource" => $resources,
+                "trade_license" => $basic_informations->trade_license,
+                "establishment_year" => $basic_informations->trade_license ? Carbon::parse($basic_informations->trade_license)->format('M, Y') : null,
+            ];
+
+            return api_response($request, $vendor, 200, ['vendor' => $vendor]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
