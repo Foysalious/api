@@ -38,11 +38,9 @@ class CustomerController extends Controller
     public function show($partner, $customer, Request $request)
     {
         try {
-            $customer = PartnerPosCustomer::find((int) $customer);
-            if($customer)
-                return api_response($request, $customer, 200, ['customer' => $customer->details()]);
-            else
-                return api_response($request, null, 404, ['message' => 'Customer Not Found.']);
+            $customer = PartnerPosCustomer::find((int)$customer);
+            if (!$customer) return api_response($request, null, 404, ['message' => 'Customer Not Found.']);
+            return api_response($request, $customer, 200, ['customer' => $customer->details()]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

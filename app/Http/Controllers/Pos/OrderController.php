@@ -5,6 +5,7 @@ use App\Models\PosOrder;
 
 use App\Models\PosOrderItem;
 
+use App\Transformers\CustomSerializer;
 use App\Transformers\PosOrderTransformer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -35,23 +36,30 @@ class OrderController extends Controller
         try {
             $status = $request->status;
             $partner = $request->partner;
-            $orders = PosOrder::with('items', 'customer')->byPartner($partner->id)->orderBy('created_at', 'desc')->get();
-            $final_orders = array();
+            /** @var PosOrder $orders */
+            $orders = PosOrder::with('items.service.discounts', 'customer')->byPartner($partner->id)->orderBy('created_at', 'desc')->get();
+            $final_orders = [];
             foreach ($orders as $index => $order) {
                 $order_data = $order->calculate();
                 $manager = new Manager();
-                $manager->setSerializer(new ArraySerializer());
+                $manager->setSerializer(new CustomSerializer());
                 $resource = new Item($order_data, new PosOrderTransformer());
-                $order_formatted = $manager->createData($resource)->toArray();
-                $order_create_date = Carbon::parse($order_formatted['created_at'])->format('Y-m-d');
-                if (!isset($final_orders[$order_create_date])) $final_orders[$order_create_date] = array();
-                if (!$status || ($status && $order_formatted['payment_status'] === $status)) array_push($final_orders[$order_create_date], $order_formatted);
+                $order_formatted = $manager->createData($resource)->toArray()['data'];
+
+                $order_create_date = $order->created_at->format('Y-m-d');
+
+                if (!isset($final_orders[$order_create_date])) $final_orders[$order_create_date] = [];
+                if (!$status || ($status && $order->getPaymentStatus() == $status)) {
+                    array_push($final_orders[$order_create_date], $order_formatted);
+                }
             }
-            $orders_formatted = array();
+
+            $orders_formatted = [];
             foreach ($final_orders as $key => $value) {
-                $order_list = array('date' => $key, 'orders' => $value);
+                $order_list = ['date' => $key, 'orders' => $value];
                 array_push($orders_formatted, $order_list);
             }
+
             return api_response($request, $orders_formatted, 200, ['orders' => $orders_formatted]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -70,7 +78,7 @@ class OrderController extends Controller
             if (!$order) return api_response($request, null, 404, ['msg' => 'Order Not Found']);
 
             $manager = new Manager();
-            $manager->setSerializer(new ArraySerializer());
+            $manager->setSerializer(new CustomSerializer());
             $resource = new Item($order, new PosOrderTransformer());
             $order = $manager->createData($resource)->toArray();
 
