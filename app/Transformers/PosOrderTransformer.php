@@ -19,7 +19,8 @@ class PosOrderTransformer extends TransformerAbstract
             'vat' => (double)$order->getTotalVat(),
             'paid' => $order->getPaid(),
             'due' => $order->getDue(),
-            'payments' => $order->payments
+            'payments' => $order->payments,
+            'customer' => null
         ];
     }
 
@@ -34,8 +35,6 @@ class PosOrderTransformer extends TransformerAbstract
     public function includeCustomer($order)
     {
         $collection = $this->item($order->customer, new PosCustomerTransformer());
-        return $collection->getData() ? $collection : $this->item(null, function () {
-            return [];
-        });
+        return $collection->getData() ? $collection : null;
     }
 }
