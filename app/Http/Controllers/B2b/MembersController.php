@@ -71,7 +71,7 @@ class MembersController extends Controller
                     "tagline" => $business->tagline,
                     "company_type" => $business->type,
                     "address" => $business->address,
-                    "geo_informations" => $business->geo_informations,
+                    "geo_informations" => json_decode($business->geo_informations),
                     "employee_size" => $business->employee_size,
                 ];
                 return api_response($request, $info, 200, ['info' => $info]);
@@ -98,7 +98,7 @@ class MembersController extends Controller
                 'email' => $profile->email,
                 'pro_pic' => $profile->pro_pic,
                 'gender' => $profile->gender,
-                'date_of_birth' => $profile->dob,
+                'date_of_birth' => $profile->dob ? Carbon::parse($profile->dob)->format('M-j, Y') : null,
                 'nid_no' => $profile->nid_no,
                 'address' => $profile->address,
                 'business_id' => $business ? $business->id : null,
