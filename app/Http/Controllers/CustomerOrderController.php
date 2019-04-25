@@ -140,6 +140,9 @@ class CustomerOrderController extends Controller
             $partner_order['total_paid'] = (double)$partner_order->paid;
             $partner_order['total_due'] = (double)$partner_order->due;
             $partner_order['total_price'] = (double)$partner_order->totalPrice;
+            $partner_order['delivery_name'] = (double)$partner_order->order->delivery_name;
+            $partner_order['delivery_mobile'] = (double)$partner_order->order->delivery_mobile;
+            $partner_order['delivery_address'] = (double)$partner_order->order->delivery_address;
             $final = collect();
             foreach ($partner_order->jobs as $job) {
                 $final->push($this->getJobInformation($job, $partner_order));
