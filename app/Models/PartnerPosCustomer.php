@@ -11,6 +11,11 @@ class PartnerPosCustomer extends Model
         return $this->belongsTo(PosCustomer::class);
     }
 
+    public function scopeByPartner($query, $partner_id)
+    {
+        return $query->where('partner_id',$partner_id);
+    }
+
     public function details()
     {
         $customer = $this->customer;

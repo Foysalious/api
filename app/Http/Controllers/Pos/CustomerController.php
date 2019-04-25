@@ -17,7 +17,8 @@ class CustomerController extends Controller
     public function index(Request $request)
     {
         try {
-            $partner_customers = PartnerPosCustomer::all();
+            $partner = $request->partner;
+            $partner_customers = PartnerPosCustomer::byPartner($partner->id)->get();
             $customers = collect();
             foreach ($partner_customers as $partner_customer) {
                 $customers->push($partner_customer->details());
