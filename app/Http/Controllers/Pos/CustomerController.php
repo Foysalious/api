@@ -40,15 +40,12 @@ class CustomerController extends Controller
     public function store(Request $request, Creator $creator)
     {
         try {
-            $this->validate($request,[
-                'mobile' => 'required|mobile:bd',
-                'name' => 'required'
-            ]);
+            $this->validate($request, ['mobile' => 'required|mobile:bd', 'name' => 'required']);
 
             $creator = $creator->setData($request->except(['partner_id','remember_token']));
-            if ($error = $creator->hasError()) {
-                return api_response($request, 1, 400, ['message' => $error['msg']]);
-            }
+            if ($error = $creator->hasError())
+                return api_response($request, null, 400, ['message' => $error['msg']]);
+
             $customer = $creator->create();
             return api_response($request, $customer, 200, ['customer' => $customer->details()]);
         } catch (ValidationException $e) {
