@@ -35,7 +35,8 @@ class OrderAdapter implements PayableAdapter
         $due = (double)$this->partnerOrder->due + $this->getShebaLogisticsPrice();
         $payable->amount = $this->calculateAmount($due);
         $payable->completion_type = $this->isAdvancedPayment ? 'advanced_order' : "order";
-        $payable->success_url = config('sheba.front_url') . '/orders/' . $this->job->id;
+        $payable->success_url = $this->getSuccessUrl();
+        $payable->fail_url = $this->getFailUrl();
         $payable->created_at = Carbon::now();
         $payable->save();
         return $payable;
@@ -72,6 +73,19 @@ class OrderAdapter implements PayableAdapter
             $this->userType = "App\\Models\\Customer";
         }
     }
+
+    private function getSuccessUrl()
+    {
+        if ($this->userType == "App\\Models\\Business") return config('sheba.business_url') . "/dashboard/orders/" . $this->id;
+        else return config('sheba.front_url') . '/orders/' . $this->job->id;
+    }
+
+    private function getFailUrl()
+    {
+        if ($this->userType == "App\\Models\\Business") return config('sheba.business_url');
+        else return config('sheba.front_url');
+    }
+
 
     public function setModelForPayable($model)
     {
