@@ -260,10 +260,12 @@ class CategoryController extends Controller
                     $services = $this->serviceRepository->addServiceInfo($services, $scope);
                 } else {
                     $category = $category->load(['services' => function ($q) use ($offset, $limit, $location) {
-                        $q->whereNotIn('id', $this->serviceGroupServiceIds())
-                            ->whereHas('locations', function ($query) use ($location) {
-                                $query->where('locations.id', $location);
-                            });
+                        if (!(int)\request()->is_business) {
+                            $q->whereNotIn('id', $this->serviceGroupServiceIds())
+                                ->whereHas('locations', function ($query) use ($location) {
+                                    $query->where('locations.id', $location);
+                                });
+                        }
                         $q->select('id', 'category_id', 'unit', 'name', 'bn_name', 'thumb', 'app_thumb', 'app_banner', 'short_description', 'description', 'banner', 'faqs', 'variables', 'variable_type', 'min_quantity')->orderBy('order')->skip($offset)->take($limit);
                         if ((int)\request()->is_business) $q->publishedForBusiness();
                         elseif ((int)\request()->is_for_backend) $q->publishedForAll();
