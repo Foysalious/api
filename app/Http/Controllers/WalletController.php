@@ -76,6 +76,7 @@ class WalletController extends Controller
             ]);
             /** @var Payment $payment */
             $payment = Payment::where('transaction_id', $request->transaction_id)->valid()->first();
+            dd($payment);
             if (!$payment) return api_response($request, null, 404);
             elseif ($payment->isFailed()) return api_response($request, null, 500, ['message' => 'Payment failed']);
             elseif ($payment->isPassed()) return api_response($request, null, 200);
@@ -132,6 +133,7 @@ class WalletController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
