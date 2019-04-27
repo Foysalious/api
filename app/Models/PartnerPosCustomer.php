@@ -21,7 +21,7 @@ class PartnerPosCustomer extends Model
         $customer = $this->customer;
         $profile = $customer->profile;
         return [
-          'id' => $this->id,
+          'id' =>  $customer->id,
           'name' => $profile->name,
           'phone' => $profile->mobile,
           'email' => $profile->email,
