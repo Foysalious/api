@@ -9,13 +9,13 @@ use Sheba\Pos\Payment\Creator as PaymentCreator;
 
 class Creator
 {
-    /** @var array */
+    /** @var array $data */
     private $data;
-    /** @var PosOrderRepository */
+    /** @var PosOrderRepository $orderRepo */
     private $orderRepo;
-    /** @var PosOrderItemRepository */
+    /** @var PosOrderItemRepository $itemRepo */
     private $itemRepo;
-    /** @var PaymentCreator */
+    /** @var PaymentCreator $paymentCreator */
     private $paymentCreator;
     /** @var StockManager $stockManager */
     private $stockManager;

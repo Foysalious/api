@@ -1,30 +1,32 @@
 <?php namespace App\Http\Controllers\Pos;
 
 use App\Http\Controllers\Controller;
-use App\Models\PosOrder;
 
-use App\Models\PosOrderItem;
+use App\Models\PosOrder;
 
 use App\Transformers\CustomSerializer;
 use App\Transformers\PosOrderTransformer;
-use Carbon\Carbon;
+
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
-use League\Fractal\Serializer\ArraySerializer;
+
 use Sheba\ModificationFields;
-use Sheba\PartnerWallet\PartnerTransactionHandler;
+
 use Sheba\Pos\Jobs\OrderBillEmail;
 use Sheba\Pos\Jobs\OrderBillSms;
 use Sheba\Pos\Order\Creator;
+use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\Pos\Order\QuickCreator;
 use Sheba\Pos\Order\RefundNatures\NatureFactory;
 use Sheba\Pos\Order\RefundNatures\Natures;
 use Sheba\Pos\Order\RefundNatures\RefundNature;
 use Sheba\Pos\Order\RefundNatures\ReturnNatures;
 use Sheba\Pos\Order\Updater;
+
 use Throwable;
 
 class OrderController extends Controller
@@ -176,7 +178,6 @@ class OrderController extends Controller
 
             return api_response($request, null, 200, ['msg' => 'Order Updated Successfully', 'order' => $order]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -195,7 +196,7 @@ class OrderController extends Controller
         return $services === $request_services;
     }
 
-    public function getReturnType(Request $request, PosOrder $order)
+    private function getReturnType(Request $request, PosOrder $order)
     {
         $request_services_quantity = collect(json_decode($request->services, true))->pluck('quantity')->toArray();
 
@@ -249,6 +250,30 @@ class OrderController extends Controller
 
             dispatch(new OrderBillEmail($order));
             return api_response($request, null, 200, ['msg' => 'Email Send Successfully']);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function collectPayment(Request $request, PaymentCreator $payment_creator)
+    {
+        $this->setModifier($request->manager_resource);
+        try {
+            $this->validate($request, [
+                'paid_amount' => 'required|numeric',
+                'payment_method' => 'required|string|in:' . implode(',', config('pos.payment_method'))
+            ]);
+
+            /** @var PosOrder $order */
+            $order = PosOrder::find($request->order);
+            $payment_data = [
+                'pos_order_id' => $order->id,
+                'amount' => $request->paid_amount,
+                'method' => $request->payment_method
+            ];
+            $payment_creator->credit($payment_data);
+            return api_response($request, null, 200, ['msg' => 'Payment Collect Successfully', 'order' => $order]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
