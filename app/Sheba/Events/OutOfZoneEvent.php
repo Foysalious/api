@@ -30,14 +30,14 @@ class OutOfZoneEvent extends ShebaEvent
         $event->fill((new RequestIdentification)->get());
         $user_id = $this->getUserId();
         if ($event->portal_name == 'bondhu-app') {
-            $event->created_by_type = "App\\Models\\Affiliate";
             if ($user_id) {
+                $event->created_by_type = "App\\Models\\Affiliate";
                 $event->created_by = $user_id;
                 $event->created_by_name = "Affiliate - " . (Affiliate::find($user_id))->profile->name;
             }
         } elseif ($event->portal_name == 'customer-app' || $event->portal_name == 'customer-portal') {
-            $event->created_by_type = "App\\Models\\Customer";
             if ($user_id) {
+                $event->created_by_type = "App\\Models\\Customer";
                 $event->created_by = $user_id;
                 $event->created_by_name = "Customer - " . (Customer::find($user_id))->profile->name;
             }
