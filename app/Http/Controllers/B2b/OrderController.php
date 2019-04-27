@@ -152,6 +152,7 @@ class OrderController extends Controller
             $customer = $member->profile->customer;
             $geo = json_decode($business->geo_informations);
             if (!$customer) $customer = $this->createCustomerFromMember($member);
+            $request->merge(['lat' => (double)$geo->lat, 'lng' => (double)$geo->lng]);
             $partnerListRequest->setRequest($request)->prepareObject();
             $hyper_local = HyperLocal::insidePolygon((double)$geo->lat, (double)$geo->lng)->with('location')->first();
             $location = $hyper_local ? $hyper_local->location->id : null;
