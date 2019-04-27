@@ -24,7 +24,7 @@ abstract class RefundNature
 
     public function setOrder(PosOrder $order)
     {
-        $this->order = $order;
+        $this->order = $order->calculate();
         return $this;
     }
 

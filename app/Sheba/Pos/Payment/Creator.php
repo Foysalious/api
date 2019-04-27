@@ -4,9 +4,7 @@ use Sheba\Pos\Repositories\PosOrderPaymentRepository;
 
 class Creator
 {
-    /**
-     * @var PosOrderPaymentRepository
-     */
+    /** @var PosOrderPaymentRepository $paymentRepo */
     private $paymentRepo;
 
     public function __construct(PosOrderPaymentRepository $payment_repo)

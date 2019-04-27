@@ -5,6 +5,7 @@ use Sheba\Pos\Log\Creator as LogCreator;
 use Sheba\Pos\Log\Supported\Types;
 use Sheba\Pos\Order\Creator;
 use Sheba\Pos\Order\Updater;
+use Sheba\Pos\Payment\Transfer as PaymentTransfer;
 use Sheba\Pos\Product\StockManager;
 use Sheba\Pos\Repositories\PosServiceRepository;
 
@@ -18,12 +19,16 @@ class ExchangePosItem extends RefundNature
     private $stockManager;
     /** @var PosServiceRepository $serviceRepo */
     private $serviceRepo;
+    /** @var PaymentTransfer $paymentTransfer */
+    private $paymentTransfer;
 
-    public function __construct(LogCreator $log_creator, Updater $updater, PosServiceRepository $service_repo, StockManager $stock_manager)
+    public function __construct(LogCreator $log_creator, Updater $updater,
+                                PosServiceRepository $service_repo, StockManager $stock_manager, PaymentTransfer $transfer)
     {
         parent::__construct($log_creator, $updater);
         $this->stockManager = $stock_manager;
         $this->serviceRepo = $service_repo;
+        $this->paymentTransfer = $transfer;
     }
 
     public function update()
@@ -34,11 +39,16 @@ class ExchangePosItem extends RefundNature
         $this->newOrder = $creator->setData($this->data)->create();
         $this->generateDetails();
         $this->saveLog();
+        $this->transferPaidAmount();
     }
 
     protected function saveLog()
     {
-        $this->logCreator->setOrder($this->order)->setType(Types::EXCHANGE)->setLog("New Order Created for Exchange, old order id: {$this->order->id}")->setDetails($this->details)->create();
+        $this->logCreator->setOrder($this->order)
+            ->setType(Types::EXCHANGE)
+            ->setLog("New Order Created for Exchange, old order id: {$this->order->id}")
+            ->setDetails($this->details)
+            ->create();
     }
 
     /**
@@ -57,5 +67,15 @@ class ExchangePosItem extends RefundNature
             $is_stock_maintainable = $this->stockManager->setPosService($partner_pos_service)->isStockMaintainable();
             if ($is_stock_maintainable) $this->stockManager->increase($item->quantity);
         });
+    }
+
+    private function transferPaidAmount()
+    {
+        $log = "Transfer to " . $this->newOrder->id . " from " . $this->order->id . ", as per exchange.";
+        $previous_order_paid_amount = $this->order->getPaid();
+        $this->paymentTransfer->setOrder($this->newOrder)
+            ->setLog($log)
+            ->setAmount($previous_order_paid_amount)
+            ->process();
     }
 }
