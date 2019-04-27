@@ -1,9 +1,11 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Payment\Wallet;
 
 class Business extends Model
 {
+    use Wallet;
     protected $guarded = ['id'];
 
     public function members()
@@ -36,10 +38,6 @@ class Business extends Model
         return $this->belongsTo(BusinessCategory::class);
     }
 
-    public function shebaBonusCredit()
-    {
-        return 0;
-    }
 
     public function bonuses()
     {
@@ -49,6 +47,21 @@ class Business extends Model
     public function bonusLogs()
     {
         return $this->morphMany(BonusLog::class, 'user');
+    }
+
+    public function shebaCredit()
+    {
+        return $this->wallet + $this->shebaBonusCredit();
+    }
+
+    public function shebaBonusCredit()
+    {
+        return (double)$this->bonuses()->where('status', 'valid')->sum('amount');
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(CustomerTransaction::class);
     }
 
 }

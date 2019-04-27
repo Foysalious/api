@@ -2,6 +2,8 @@
 
 use App\Models\Affiliate;
 use App\Models\AffiliateTransaction;
+use App\Models\Business;
+use App\Models\BusinessTransaction;
 use App\Models\Customer;
 use App\Models\CustomerTransaction;
 use App\Models\Partner;
@@ -50,6 +52,8 @@ trait Wallet
             return new PartnerTransaction();
         } else if ($this instanceof Vendor) {
             return new VendorTransaction();
+        } else if ($this instanceof Business) {
+            return new BusinessTransaction();
         }
     }
 }
