@@ -75,7 +75,7 @@ class ServiceController extends Controller
             if (!$service) return api_response($request, null, 404, ['msg' => 'Service Not Found']);
 
             $manager = new Manager();
-            $manager->setSerializer(new CustomSerializer());
+            $manager->setSerializer(new ArraySerializer());
             $resource = new Item($service, new PosServiceTransformer());
             $service = $manager->createData($resource)->toArray();
 
