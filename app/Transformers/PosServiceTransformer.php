@@ -6,6 +6,8 @@ class PosServiceTransformer extends TransformerAbstract
 {
     public function transform($service)
     {
+        $service_discount = $service->discount();
+
         return [
             'name' => $service->name,
             'app_thumb' => $service->app_thumb,
@@ -19,10 +21,11 @@ class PosServiceTransformer extends TransformerAbstract
             'stock' => $service->stock,
             'vat_applicable' => $service->vat_percentage ? true : false,
             'vat' => $service->vat_percentage,
-            'discount_id' => $service->discount() ? $service->discount()->id : null,
-            'discount_applicable' => $service->discount() ? true : false,
-            'discounted_price' => $service->discount() ? $service->getDiscountedAmount() : 0,
-            'discount_end_time' => $service->discount() ? $service->discount()->end_date->format('Y-m-d') : null
+            'discount_id' => $service_discount ? $service_discount->id : null,
+            'discount_amount' => $service_discount ? (double)$service_discount->amount : 0.00,
+            'discount_applicable' => $service_discount ? true : false,
+            'discounted_price' => $service_discount ? (double)$service->getDiscountedAmount() : 0,
+            'discount_end_time' => $service_discount ? $service_discount->end_date->format('Y-m-d') : null
         ];
     }
 }
