@@ -104,13 +104,7 @@ class ServiceController extends Controller
             $partner_pos_service = $creator->setData($request->all())->create();
 
             if ($request->has('discount_amount') && $request->discount_amount > 0) {
-                $discount_data = [
-                    'amount' => (double)$request->discount_amount,
-                    'start_date' => Carbon::now(),
-                    'end_date' => Carbon::parse($request->end_date . ' 23:59:59')
-                ];
-
-                $partner_pos_service->discounts()->create($this->withCreateModificationField($discount_data));
+                $this->createServiceDiscount($request, $partner_pos_service);
             }
             return api_response($request, null, 200, ['msg' => 'Product Created Successfully', 'service' => $partner_pos_service]);
         } catch (ValidationException $e) {
@@ -158,6 +152,10 @@ class ServiceController extends Controller
                 if (!empty($discount_data)) $discount_repo->update($discount, $discount_data);
             }
 
+            if ($request->is_discount_off == 'false' && !$request->discount_id) {
+                $this->createServiceDiscount($request, $partner_pos_service);
+            }
+
             return api_response($request, null, 200, ['msg' => 'Product Updated Successfully', 'service' => $partner_pos_service]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -169,6 +167,21 @@ class ServiceController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param Request $request
+     * @param PartnerPosService $partner_pos_service
+     */
+    private function createServiceDiscount(Request $request, PartnerPosService $partner_pos_service)
+    {
+        $discount_data = [
+            'amount' => (double)$request->discount_amount,
+            'start_date' => Carbon::now(),
+            'end_date' => Carbon::parse($request->end_date . ' 23:59:59')
+        ];
+
+        $partner_pos_service->discounts()->create($this->withCreateModificationField($discount_data));
     }
 
     private function getSelectColumnsOfService()
