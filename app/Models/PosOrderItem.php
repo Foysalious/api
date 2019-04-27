@@ -5,27 +5,19 @@ use Illuminate\Database\Eloquent\Model;
 class PosOrderItem extends Model
 {
     protected $guarded = ['id'];
+    protected $casts = ['discount' => 'double', 'discount_percentage' => 'double', 'vat_percentage' => 'double'];
 
-    /**
-     * @var number
-     */
+    /** @var number */
     private $vat;
-    /**
-     * @var float|int|number
-     */
+    /** @var float|int|number */
     private $priceWithVat;
-    /**
-     * @var float|int
-     */
+    /** @var float|int */
     private $discountAmount;
-    /**
-     * @var float|int|number
-     */
+    /** @var float|int|number */
     private $total;
-    /**
-     * @var float|int
-     */
+    /** @var float|int */
     private $price;
+    /** @var bool */
     public $isCalculated;
 
     public function order()

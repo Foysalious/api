@@ -14,9 +14,12 @@ use Carbon\Carbon;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Checkout\PromotionCalculation;
+use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Location\Coords;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\ShebaPayment;
+use Sheba\Voucher\PromotionList;
 
 class OrderController extends Controller
 {
@@ -134,7 +137,7 @@ class OrderController extends Controller
         return $payment ? 1 : 0;
     }
 
-    public function applyPromo(Request $request)
+    public function applyPromo(Request $request, PartnerListRequest $partnerListRequest, PromotionCalculation $promotionCalculation)
     {
         try {
             $this->validate($request, [
@@ -147,25 +150,23 @@ class OrderController extends Controller
             $business = $request->business;
             $member = $request->manager_member;
             $customer = $member->profile->customer;
-            if (!$customer) $customer = $this->createCustomerFromMember($member);
-            $client = new Client();
             $geo = json_decode($business->geo_informations);
-            $result = $client->request('POST', config('sheba.api_url') . '/v2/customers/' . $customer->id . '/promotions',
-                [
-                    'form_params' => [
-                        'services' => $request->services,
-                        'remember_token' => $customer->remember_token,
-                        'partner' => $request->partner,
-                        'date' => $request->date,
-                        'time' => $request->time,
-                        'lat' => $geo->lat,
-                        'lng' => $geo->lng,
-                        'code' => $request->code,
-                        'sales_channel' => 'Business',
-                    ]
-                ]);
-            $result = json_decode($result->getBody());
-            return api_response($request, $result, $result->code, ['message' => $result->message]);
+            if (!$customer) $customer = $this->createCustomerFromMember($member);
+            $partnerListRequest->setRequest($request)->prepareObject();
+            $hyper_local = HyperLocal::insidePolygon((double)$geo->lat, (double)$geo->lng)->with('location')->first();
+            $location = $hyper_local ? $hyper_local->location->id : null;
+            $order_amount = $promotionCalculation->calculateOrderAmount($partnerListRequest, $request->partner);
+            if (!$order_amount) return api_response($request, null, 403);
+            $result = voucher($request->code)
+                ->check($partnerListRequest->selectedCategory->id, $request->partner, $location, $customer, $order_amount, 'Business')
+                ->reveal();
+            if ($result['is_valid']) {
+                $voucher = $result['voucher'];
+                $promo = array('amount' => (double)$result['amount'], 'code' => $voucher->code, 'id' => $voucher->id, 'title' => $voucher->title);
+                return api_response($request, 1, 200, ['promotion' => $promo]);
+            } else {
+                return api_response($request, null, 403, ['message' => 'Invalid Promo']);
+            }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
@@ -232,6 +233,7 @@ class OrderController extends Controller
         $customer->profile_id = $member->profile->id;
         $customer->remember_token = str_random(255);
         $customer->save();
+        return $customer;
 
     }
 
