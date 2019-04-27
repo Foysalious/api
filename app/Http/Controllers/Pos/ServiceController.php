@@ -142,7 +142,7 @@ class ServiceController extends Controller
             if ($request->discount_id) {
                 $discount_data = [];
                 $discount = PartnerPosServiceDiscount::find($request->discount_id);
-                if ($request->has('is_discount_off') && $request->is_discount_off) {
+                if ($request->has('is_discount_off') && $request->is_discount_off == 'true') {
                     $discount_data = ['end_date' => Carbon::now()];
                 } else {
                     $requested_end_date = ($request->has('end_date')) ? Carbon::parse($request->end_date . ' 23:59:59') : $discount->end_date;

@@ -61,13 +61,13 @@ class Updater
 
     private function format()
     {
-        if ((isset($this->data['is_stock_off']) && $this->data['is_stock_off'])) {
+        if ((isset($this->data['is_stock_off']) && $this->data['is_stock_off'] == 'true')) {
             $this->updatedData['stock'] = null;
         } elseif (isset($this->data['stock']) && $this->data['stock'] != $this->service->stock) {
             $this->updatedData['stock'] = (double)$this->data['stock'];
         }
 
-        if ((isset($this->data['is_vat_percentage_off']) && $this->data['is_vat_percentage_off'])) {
+        if ((isset($this->data['is_vat_percentage_off']) && $this->data['is_vat_percentage_off'] == 'true')) {
             $this->updatedData['vat_percentage'] = null;
         } else if (isset($this->data['vat_percentage']) && $this->data['vat_percentage'] != $this->service->vat_percentage) {
             $this->updatedData['vat_percentage'] = (double)$this->data['vat_percentage'];
