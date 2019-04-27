@@ -13,7 +13,7 @@ class PosOrderTransformer extends TransformerAbstract
             'id' => $order->id,
             'previous_order_id' => $order->previous_order_id,
             'created_by_name' => $order->created_by_name,
-            'created_at' => $order->created_at->format('Y-m-d h:s:i A'),
+            'created_at' => $order->created_at->format('Y-m-d h:i A'),
             'partner_name' => $order->partner->name,
             'price' => (double)$order->getNetBill(),
             'payment_status' => $order->getPaymentStatus(),

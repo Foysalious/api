@@ -11,6 +11,7 @@ class PosOrderPaymentTransformer extends TransformerAbstract
             'amount' => $payment->amount,
             'transaction_type' => $payment->transaction_type,
             'method' => $payment->method,
+            'date' => $payment->created_at->format('Y-m-d h:i A')
         ];
     }
 }
