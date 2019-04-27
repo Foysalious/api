@@ -5,6 +5,11 @@ use Sheba\Repositories\BaseRepository;
 
 class PosServiceRepository extends BaseRepository
 {
+    public function find($id)
+    {
+        return PartnerPosService::find($id);
+    }
+
     /**
      * @param $data
      * @return PartnerPosService

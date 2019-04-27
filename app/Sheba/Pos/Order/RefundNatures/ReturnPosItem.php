@@ -21,7 +21,6 @@ abstract class ReturnPosItem extends RefundNature
     {
         $this->old_services = $this->order->items->pluck('quantity', 'service_id')->toArray();
         $this->updater->setOrder($this->order)->setData($this->data)->update();
-
         $this->refundPayment();
         $this->generateDetails();
         $this->saveLog();
