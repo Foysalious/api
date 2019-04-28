@@ -38,9 +38,11 @@ class OrderController extends Controller
         try {
             $status = $request->status;
             $partner = $request->partner;
+
             /** @var PosOrder $orders */
             $orders = PosOrder::with('items.service.discounts', 'customer')->byPartner($partner->id)->orderBy('created_at', 'desc')->get();
             $final_orders = [];
+
             foreach ($orders as $index => $order) {
                 $order_data = $order->calculate();
                 $manager = new Manager();
@@ -51,7 +53,7 @@ class OrderController extends Controller
                 $order_create_date = $order->created_at->format('Y-m-d');
 
                 if (!isset($final_orders[$order_create_date])) $final_orders[$order_create_date] = [];
-                if (!$status || ($status && $order->getPaymentStatus() == $status)) {
+                if (($status == "null") || !$status || ($status && $order->getPaymentStatus() == $status)) {
                     array_push($final_orders[$order_create_date], $order_formatted);
                 }
             }
