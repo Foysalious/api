@@ -54,7 +54,6 @@ class PartnerRoute
             });
 
             $api->group(['prefix' => 'pos'], function ($api) {
-                $api->get('/settings', 'Pos\CategoryController@getSettings');
                 $api->group(['prefix' => 'categories'], function ($api) {
                     $api->get('/', 'Pos\CategoryController@index');
                     $api->get('/master', 'Pos\CategoryController@getMasterCategoriesWithSubCategory');
@@ -81,6 +80,7 @@ class PartnerRoute
                     });
                 });
                 $api->resources(['customers' => 'Pos\CustomerController']);
+                $api->get('settings', 'Pos\SettingController@getSettings');
             });
 
             $api->group(['prefix' => 'categories'], function ($api) {

@@ -46,19 +46,6 @@ class CategoryController extends Controller
         }
     }
 
-    public function getSettings(Request $request)
-    {
-        try {
-            $partner_id = $request->partner->id;
-            $settings = PartnerPosSetting::byPartner($partner_id)->first();
-            removeRelationsAndFields($settings);
-            return api_response($request, $settings, 200, ['settings' => $settings]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-    
     private function getSelectColumnsOfCategory()
     {
         return ['id', 'name', 'thumb', 'banner', 'app_thumb', 'app_banner'];
