@@ -2,6 +2,7 @@
 
 use App\Models\BusinessJoinRequest;
 use App\Models\Partner;
+use App\Models\Profile;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
@@ -34,12 +35,17 @@ class BusinessesController extends Controller
             $this->setModifier($business);
 
             foreach (json_decode($request->numbers) as $number) {
-                $data = [
-                    'business_id' => $business->id,
-                    'mobile' => formatMobile($number)
-                ];
-                BusinessJoinRequest::create($data);
-                $this->sms->shoot($number, "You have been invited to Sheba.xyz by $business->name");
+                $mobile = formatMobile($number);
+                if ($partner = $this->hasPartner($mobile)) {
+                    $partner->businesses()->sync(['business_id' => $business->id]);
+                } else {
+                    $data = [
+                        'business_id' => $business->id,
+                        'mobile' => $mobile
+                    ];
+                    BusinessJoinRequest::create($data);
+                    $this->sms->shoot($number, "You have been invited to Sheba.xyz by $business->name");
+                }
             }
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
@@ -51,11 +57,21 @@ class BusinessesController extends Controller
         }
     }
 
+    private function hasPartner($mobile)
+    {
+        $profile = Profile::where('mobile', $mobile)->first();
+        if (!$profile) return false;
+        $resource = $profile->resource;
+        if (!$resource) return false;
+        $partner = $resource->firstPartner();
+        return $partner ? $partner : false;
+    }
+
     public function getVendorsList($business, Request $request)
     {
         try {
             $business = $request->business;
-            $partners = $business->partners()->with('categories')->select('id', 'name', 'mobile','logo')->get();
+            $partners = $business->partners()->with('categories')->select('id', 'name', 'mobile', 'logo')->get();
             $vendors = collect();
             if ($business) {
                 foreach ($partners as $partner) {
