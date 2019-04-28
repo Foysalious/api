@@ -76,8 +76,8 @@ class OrderAdapter implements PayableAdapter
 
     private function getSuccessUrl()
     {
-        if ($this->userType == "App\\Models\\Business") return config('sheba.business_url') . "/dashboard/orders/" . $this->id;
-        else return config('sheba.front_url') . '/orders/' . $this->job->id;
+        if ($this->userType == "App\\Models\\Business") return config('sheba.business_url') . "/dashboard/orders/" . $this->partnerOrder->id;
+        else return config('sheba.front_url') . '/orders/' . $this->partnerOrder->job->id;
     }
 
     private function getFailUrl()
