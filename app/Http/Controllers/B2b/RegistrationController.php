@@ -34,9 +34,7 @@ class RegistrationController extends Controller
             $email = $request->email;
             $m_profile = $this->profileRepository->ifExist($mobile, 'mobile');
             $e_profile = $this->profileRepository->ifExist($email, 'email');
-
             $profile = collect();
-
             if ($m_profile && $e_profile) {
                 if ($m_profile->id == $e_profile->id) {
                     if (!$m_profile->member) {

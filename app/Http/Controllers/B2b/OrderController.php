@@ -187,7 +187,6 @@ class OrderController extends Controller
             $this->validate($request, [
                 'services' => 'required|string',
                 'partner' => 'required',
-                'voucher' => 'required',
                 'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
                 'time' => 'required|string',
             ], ['mobile' => 'Invalid mobile number!']);
