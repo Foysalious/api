@@ -32,14 +32,14 @@ class OfferGroupController extends Controller
 
             if ($location) {
                 $offer_group = OfferGroup::with(['offers' => function ($q) use ($location) {
-                    return $q->active()->validFlashOffer()->flash()->select('id', 'target_type', 'target_id', 'start_date', 'end_date')
+                    return $q->active()->validFlashOffer()->flash()->select('id', 'target_type', 'target_id', 'start_date', 'end_date')->orderBy('end_date', 'asc')->take(6)
                         ->whereHas('locations', function ($q) use ($location) {
                             $q->where('locations.id', $location);
                         });
                 }])->where('id', $offer_group)->select('id', 'name', 'app_thumb')->first();
             } else {
                 $offer_group = OfferGroup::with(['offers' => function ($q) {
-                    $q->active()->validFlashOffer()->flash()->select('id', 'target_type', 'target_id', 'start_date', 'end_date');
+                    $q->active()->validFlashOffer()->flash()->select('id', 'target_type', 'target_id', 'start_date', 'end_date')->orderBy('end_date', 'asc')->take(6);
                 }])->where('id', $offer_group)->select('id', 'name', 'app_thumb')->first();
             }
 
@@ -55,6 +55,7 @@ class OfferGroupController extends Controller
                     ];
                     array_push($offers, $offer);
                 }
+
                 $offer_group = [
                     'id' => $offer_group->id,
                     "name" => $offer_group->name,
@@ -70,6 +71,7 @@ class OfferGroupController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
