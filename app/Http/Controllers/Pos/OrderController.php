@@ -118,7 +118,6 @@ class OrderController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -273,6 +272,9 @@ class OrderController extends Controller
                 'method' => $request->payment_method
             ];
             $payment_creator->credit($payment_data);
+            $order = $order->calculate();
+            $order->payment_status = $order->getPaymentStatus();
+
             return api_response($request, null, 200, ['msg' => 'Payment Collect Successfully', 'order' => $order]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
