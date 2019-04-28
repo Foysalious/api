@@ -12,6 +12,7 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Pos\Product\Creator as ProductCreator;
+use Sheba\Pos\Product\Deleter;
 use Sheba\Pos\Product\Updater as ProductUpdater;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -163,6 +164,24 @@ class ServiceController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param Deleter $deleter
+     * @return JsonResponse
+     */
+    public function destroy(Request $request, Deleter $deleter)
+    {
+        try {
+            $this->setModifier($request->partner);
+            $deleter->delete($request->service);
+
+            return api_response($request, null, 200, ['msg' => 'Product Updated Successfully']);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

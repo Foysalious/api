@@ -65,6 +65,7 @@ class PartnerRoute
                     $api->group(['prefix' => '{service}'], function ($api) {
                         $api->get('/', 'Pos\ServiceController@show');
                         $api->post('/', 'Pos\ServiceController@update');
+                        $api->delete('/', 'Pos\ServiceController@destroy');
                     });
                 });
                 $api->group(['prefix' => 'orders'], function ($api) {
