@@ -24,7 +24,12 @@ class AddressValidator
         $results = collect($distance->from([$current])->to($to)->sortedDistance()[0])->reject(function ($value) {
             return $value > self::THRESHOLD_DISTANCE;
         });
-        return $results->count() > 0 ? 1 : 0;
+        $address = null;
+        foreach ($results as $key => $value) {
+            $address = $addresses->where('id', $key)->first();
+            break;
+        }
+        return $address ? $address : 0;
     }
 
     public function isAddressNameExists($addresses, $new_address)

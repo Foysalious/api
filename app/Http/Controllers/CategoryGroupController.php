@@ -97,27 +97,22 @@ class CategoryGroupController extends Controller
                 $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
                 if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
             }
-            if ($location) {
-                $category_group = CategoryGroup::with(['categories' => function ($q) use ($location) {
-                    return $q->published()->whereHas('locations', function ($q) use ($location) {
-                            $q->where('locations.id', $location);
-                        })
-                        ->orderBy('category_group_category.order')
-                        ->whereHas('services', function ($q) use ($location) {
-                            $q->published()->whereHas('locations', function ($q) use ($location) {
-                                $q->where('locations.id', $location);
-                            });
+
+            $filter_location = function ($q) use ($location) {
+                if(!$location) return;
+                $q->whereHas('locations', function ($q) use ($location) {
+                    $q->where('locations.id', $location);
+                });
+            };
+            $category_group = CategoryGroup::select('id', 'name', 'icon_png', 'short_description', 'thumb', 'banner')
+                ->with(['categories' => function ($q) use ($filter_location) {
+                    $filter_location($q->published());
+                    $q->orderBy('category_group_category.order')
+                        ->whereHas('services', function ($q) use ($filter_location) {
+                            $filter_location($q->published());
                         });
-                }])->where('id', $id)->select('id', 'name')->first();
-            } else {
-                $category_group = CategoryGroup::with(['categories' => function ($q) {
-                    $q->published()
-                        ->orderBy('category_group_category.order')
-                        ->whereHas('services', function ($q) {
-                            $q->published();
-                        });
-                }])->where('id', $id)->select('id', 'name')->first();
-            }
+                }])->where('id', $id)->first();
+
             if ($category_group != null) {
                 $categories = $category_group->categories->each(function ($category) use ($location) {
                     removeRelationsAndFields($category);

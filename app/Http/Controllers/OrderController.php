@@ -23,6 +23,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Redis;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\ShebaPayment;
+use Sheba\Portals\Portals;
 use Sheba\Sms\Sms;
 
 class OrderController extends Controller
@@ -116,18 +117,19 @@ class OrderController extends Controller
         }
     }
 
-    public function placeOrderFromBondhu(BondhuOrderRequest $request, $affiliate, BondhuAutoOrder $bondhuAutoOrder)
+    public function placeOrderFromBondhu(BondhuOrderRequest $request, $affiliate, BondhuAutoOrder $bondhu_auto_order)
     {
-        if (Affiliate::find($affiliate)->is_suspended) {
-            return api_response($request, null, 400, ['message' => 'You\'re suspended can not place order now']);
-        }
         try {
-            if ($bondhuAutoOrder->setServiceCategoryName()) {
-                $order = $payment = $link = null;
+            if (Affiliate::find($affiliate)->is_suspended) {
+                return api_response($request, null, 400, ['message' => 'You\'re suspended can not place order now']);
+            }
+
+            if ($bondhu_auto_order->setServiceCategoryName()) {
+                $payment = $link = null;
                 DB::beginTransaction();
-                $order = $bondhuAutoOrder->place();
+                $order = $bondhu_auto_order->place();
                 if ($order) {
-                    if ($order->voucher_id) $this->updateVouchers($order, $bondhuAutoOrder->customer);
+                    if ($order->voucher_id) $this->updateVouchers($order, $bondhu_auto_order->customer);
                     if ($request->payment_method !== 'cod') {
                         /** @var Payment $payment */
                         $payment = $this->getPayment($request->payment_method, $order);
@@ -137,8 +139,8 @@ class OrderController extends Controller
                         }
                     }
 
-                    $this->sendNotifications($bondhuAutoOrder->customer, $order);
-                    if ($request->header('portal-name') == 'admin-portal') {
+                    $this->sendNotifications($bondhu_auto_order->customer, $order);
+                    if ($bondhu_auto_order->isAsOfflineBondhu()) {
                         $this->sendSms($affiliate, $order);
                     }
                     DB::commit();

@@ -17,7 +17,7 @@ class CustomerOrderController extends Controller
         try {
             $this->validate($request, [
                 'filter' => 'sometimes|string|in:ongoing,history',
-                'for' => 'sometimes|required|string|in:eshop'
+                'for' => 'sometimes|required|string|in:eshop,business'
             ]);
             $filter = $request->filter;
             $for = $request->for;
@@ -27,6 +27,8 @@ class CustomerOrderController extends Controller
                     ->skip($offset)->take($limit);
                 if ($for == 'eshop') {
                     $q->whereNotNull('partner_id');
+                } else if ($for == "business") {
+                    $q->whereNotNull('business_id');
                 } else {
                     $q->whereNull('partner_id');
                 }
@@ -45,7 +47,6 @@ class CustomerOrderController extends Controller
                     }]);
                 }]);
             }]);
-
             if (count($customer->orders) > 0) {
                 $all_jobs = $this->getInformation($customer->orders);
                 $cancelled_served_jobs = $all_jobs->filter(function ($job) {
@@ -139,6 +140,9 @@ class CustomerOrderController extends Controller
             $partner_order['total_paid'] = (double)$partner_order->paid;
             $partner_order['total_due'] = (double)$partner_order->due;
             $partner_order['total_price'] = (double)$partner_order->totalPrice;
+            $partner_order['delivery_name'] = $partner_order->order->delivery_name;
+            $partner_order['delivery_mobile'] = $partner_order->order->delivery_mobile;
+            $partner_order['delivery_address'] = $partner_order->order->delivery_address_id ? $partner_order->order->deliveryAddress->name : $partner_order->order->delivery_address;
             $final = collect();
             foreach ($partner_order->jobs as $job) {
                 $final->push($this->getJobInformation($job, $partner_order));

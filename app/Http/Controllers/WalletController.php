@@ -69,17 +69,16 @@ class WalletController extends Controller
     {
         try {
             $this->validate($request, [
-                'user_id' => 'required',
+                'user_id' => 'sometimes',
                 'transaction_id' => 'required',
-                'user_type' => 'required|in:customer',
-                'remember_token' => 'required',
+                'user_type' => 'sometimes|in:customer',
+                'remember_token' => 'sometimes',
             ]);
             /** @var Payment $payment */
             $payment = Payment::where('transaction_id', $request->transaction_id)->valid()->first();
             if (!$payment) return api_response($request, null, 404);
             elseif ($payment->isFailed()) return api_response($request, null, 500, ['message' => 'Payment failed']);
             elseif ($payment->isPassed()) return api_response($request, null, 200);
-            /** @var Customer $user */
             $user = $payment->payable->user;
             $sheba_credit = $user->shebaCredit();
             $paymentRepository->setPayment($payment);
@@ -107,7 +106,7 @@ class WalletController extends Controller
                         $transaction = $user->walletTransaction([
                             'amount' => $remaining,
                             'type' => 'Debit',
-                            'log' => "Service Purchase." . ($spent_model instanceof PartnerOrder) ? "ORDER ID: {$spent_model->code()}" : "",
+                            'log' => "Service Purchase.", // . ($spent_model instanceof PartnerOrder) ? "ORDER ID: {$spent_model->code()}" : "",
                             'event_type' => get_class($spent_model),
                             'event_id' => $spent_model->id,
                             'created_at' => Carbon::now()

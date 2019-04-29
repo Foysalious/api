@@ -1,8 +1,8 @@
-<?php
-
-namespace App\Http\Middleware;
+<?php namespace App\Http\Middleware;
 
 use App\Models\Member;
+use Tymon\JWTAuth\Facades\JWTAuth;
+use Tymon\JWTAuth\Exceptions\JWTException;
 use Closure;
 
 class MemberAuthMiddleware
@@ -16,14 +16,20 @@ class MemberAuthMiddleware
      */
     public function handle($request, Closure $next)
     {
-        If ($request->has('remember_token') && !empty($request->remember_token)) {
-            $member = Member::where('remember_token', $request->remember_token)->first();
-            if (count($member) != 0) {
-                if ($member->id == $request->member) {
-                    return $next($request);
-                }
-            }
+        try {
+            $payload = [];
+            $token = JWTAuth::getToken();
+            $payload = JWTAuth::getPayload($token)->toArray();
+        } catch (JWTException $e) {
+            return api_response($request, null, 401);
         }
-        return response()->json(['msg' => 'unauthorized', 'code' => 409]);
+
+        $member = Member::find($payload['member_id']);
+        if (!$member) $this->die(404, 'Member not found.');
+
+        if ($member->id == (int)$request->member) {
+            return $next($request);
+        }
+        return response()->json(['message' => 'unauthorized', 'code' => 409]);
     }
 }

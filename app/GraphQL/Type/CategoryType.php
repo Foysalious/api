@@ -1,6 +1,4 @@
-<?php
-
-namespace App\GraphQL\Type;
+<?php namespace App\GraphQL\Type;
 
 use App\Models\HyperLocal;
 use App\Models\ScheduleSlot;
@@ -11,9 +9,12 @@ use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use Illuminate\Support\Facades\Redis;
 use DB;
+use Sheba\CategoryServiceGroup;
 
 class CategoryType extends GraphQlType
 {
+    use CategoryServiceGroup;
+
     protected $attributes = [
         'name' => 'Category',
         'description' => 'Sheba Category'

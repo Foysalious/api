@@ -5,6 +5,7 @@ return [
     'admin_url' => env('SHEBA_BACKEND_URL'),
     'api_url' => env('SHEBA_API_URL'),
     'logistic_url' => env('SHEBA_LOGISTIC_URL'),
+    'business_url' => env('SHEBA_BUSINESS_URL'),
     's3_url' => env('S3_URL'),
     'socket_url' => env('SHEBA_SOCKET_URL'),
     'socket_on' => env('SHEBA_SOCKET_ON', true),
@@ -113,5 +114,8 @@ return [
             ]
     ],
     'sheba_help_desk_id' => 1809,
-    'best_deal_ids' => env('BEST_DEAL_IDS')
+    'best_deal_ids' => env('BEST_DEAL_IDS'),
+    'service_group_ids' => env('SERVICE_GROUP_IDS'),
+    'online_payment_discount_threshold_minutes' => 30,
+    'online_payment_discount_percentage' => 10
 ];

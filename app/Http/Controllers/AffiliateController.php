@@ -58,9 +58,11 @@ class AffiliateController extends Controller
                 return response()->json(['code' => 500, 'msg' => $msg]);
             }
             $affiliate = Affiliate::find($affiliate);
-            if ($request->has('name')) {
+            if ($request->has('name') || $request->has('address')) {
+                /** @var Profile $profile */
                 $profile = $affiliate->profile;
-                $profile->name = $request->name;
+                if ($request->has('name')) $profile->name = $request->name;
+                if ($request->has('address')) $profile->address = $request->address;
                 $profile->update();
             }
             if ($request->has('bkash_no')) {
@@ -71,6 +73,7 @@ class AffiliateController extends Controller
             if ($request->has('geolocation')) {
                 $affiliate->geolocation = $request->geolocation;
             }
+
             return $affiliate->update() ? response()->json(['code' => 200]) : response()->json(['code' => 404]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

@@ -139,6 +139,6 @@ trait ModificationFields
 
     public function getModifierType()
     {
-        return "App\\Models\\" . class_basename(Session::get('modifier'));
+        if (!empty(class_basename(Session::get('modifier')))) return "App\\Models\\" . class_basename(Session::get('modifier'));
     }
 }

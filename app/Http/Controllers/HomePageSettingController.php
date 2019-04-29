@@ -5,6 +5,8 @@ use App\Models\CategoryGroup;
 use App\Models\HyperLocal;
 
 use App\Models\Location;
+use App\Models\OfferShowcase;
+use Carbon\Carbon;
 use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -103,6 +105,12 @@ class HomePageSettingController extends Controller
                     $this->categoryGroupPushToCategory($settings, $location);
                 }
 
+                foreach ($settings->sections as &$section) {
+                    if($section->item_type == 'service_group'){
+                        $this->addFlashOfferDataToServiceGroup($section);
+                    }
+                }
+
                 return api_response($request, $settings, 200, ['settings' => $settings]);
             } else {
                 return api_response($request, null, 404);
@@ -198,6 +206,25 @@ class HomePageSettingController extends Controller
 
             $best_deal_category_group = (new ItemBuilder())->buildCategoryGroup($best_deal_category_group)->setChildren($children_items)->toArray();
             array_unshift($settings->sections[1]->data, $best_deal_category_group);
+        }
+    }
+
+    /**
+     * @param $section
+     */
+    private function addFlashOfferDataToServiceGroup(&$section)
+    {
+        $offer = OfferShowcase::where('target_type', "App\\Models\\ServiceGroup")
+            ->where('target_id', $section->item_id)
+            ->where('end_date', '>', Carbon::now())
+            ->where('is_active', 1)
+            ->where('is_flash', 1)
+            ->orderBy('end_date')
+            ->first();
+        if ($offer) {
+            $section->show_timer = true;
+            $section->timer_end = $offer->end_date->toDateTimeString();
+            $section->timer_end_timestamp = $offer->end_date->timestamp;
         }
     }
 }

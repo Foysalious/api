@@ -284,8 +284,11 @@ class ShebaController extends Controller
                     case 'voucher':
                         $payments = $this->getVoucherPayments($version_code, $platform_name);
                         break;
-                        case 'movie_ticket':
+                    case 'movie_ticket':
                         $payments = $this->getMovieTicketPayments($version_code, $platform_name);
+                        break;
+                    case 'business':
+                        $payments = $this->getBusinessPayments($version_code, $platform_name);
                         break;
                     default:
                         throw new \Exception('Invalid Payable Type');
@@ -294,7 +297,7 @@ class ShebaController extends Controller
             } else {
                 $payments = $this->getRegularPayments($version_code, $platform_name);
             }
-            return api_response($request, $payments, 200, ['payments' => $payments]);
+            return api_response($request, $payments, 200, ['payments' => $payments, 'discount_message' => '10% discount on all online payments']);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -327,6 +330,40 @@ class ShebaController extends Controller
             array(
                 'name' => 'Sheba Credit',
                 'is_published' => 1,
+                'description' => '',
+                'asset' => 'sheba_credit',
+                'method_name' => 'wallet'
+            ),
+            array(
+                'name' => 'bKash',
+                'is_published' => 1,
+                'description' => '',
+                'asset' => 'bkash',
+                'method_name' => 'bkash'
+            ),
+            array(
+                'name' => 'City Bank',
+                'is_published' => $this->calculateCityBankStatus($version_code, $platform_name),
+                'description' => '',
+                'asset' => 'cbl',
+                'method_name' => 'cbl'
+            ),
+            array(
+                'name' => 'Other Debit/Credit',
+                'is_published' => 1,
+                'description' => '',
+                'asset' => 'ssl',
+                'method_name' => 'online'
+            )
+        ];
+    }
+
+    protected function getBusinessPayments($version_code, $platform_name)
+    {
+        return [
+            array(
+                'name' => 'Sheba Credit',
+                'is_published' => 0,
                 'description' => '',
                 'asset' => 'sheba_credit',
                 'method_name' => 'wallet'
@@ -402,7 +439,7 @@ class ShebaController extends Controller
             ),
             array(
                 'name' => 'City Bank',
-                'is_published' =>$this->calculateCityBankStatus($version_code, $platform_name),
+                'is_published' => $this->calculateCityBankStatus($version_code, $platform_name),
                 'description' => '',
                 'asset' => 'cbl',
                 'method_name' => 'cbl'

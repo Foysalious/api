@@ -317,4 +317,12 @@ class PartnerOrder extends Model
     {
         return $this->id > (double)env('LAST_PARTNER_ORDER_ID_V1');
     }
+
+    /**
+     * @return Job
+     */
+    public function getActiveJob()
+    {
+        return $this->jobs()->where('status', '<>', constants('JOB_STATUSES')['Cancelled'])->first();
+    }
 }
