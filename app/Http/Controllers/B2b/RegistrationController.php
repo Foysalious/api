@@ -47,7 +47,7 @@ class RegistrationController extends Controller
                     ];
                     return api_response($request, $info, 200, ['info' => $info]);
                 } else {
-                    return api_response($request, null, 400, ['message' => 'You gave others email or mobile']);
+                    return api_response($request, null, 400, ['message' => 'The email / Phone number is already in use']);
                 }
             } elseif ($m_profile && !$e_profile) {
                 $m_profile->email = $email;
