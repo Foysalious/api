@@ -31,9 +31,9 @@ abstract class ReturnPosItem extends RefundNature
         if (isset($this->data['is_refunded']) && $this->data['is_refunded']) {
             $payment_data['pos_order_id'] = $this->order->id;
             $payment_data['amount'] = $this->data['paid_amount'];
-            $payment_data['method'] = $this->data['payment_method'];
 
             if ($this->data['paid_amount'] > 0) {
+                $payment_data['method'] = $this->data['payment_method'];
                 $this->paymentCreator->credit($payment_data);
             } else {
                 $payment_data['amount'] = abs($payment_data['amount']);
