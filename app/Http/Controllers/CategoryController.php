@@ -249,6 +249,7 @@ class CategoryController extends Controller
             });
 
             $category = ((int)$request->is_business ? $category->publishedForBusiness() : $category->published())->first();
+            $category = ((int)$request->is_b2b ? $category->publishedForB2B() : $category->published())->first();
             if ($category != null) {
                 list($offset, $limit) = calculatePagination($request);
                 $scope = [];
@@ -256,6 +257,9 @@ class CategoryController extends Controller
                 if ($category->parent_id == null) {
                     if ((int)$request->is_business) {
                         $services = $this->categoryRepository->getServicesOfCategory((Category::where('parent_id', $category->id)->publishedForBusiness()->orderBy('order')->get())->pluck('id')->toArray(), $location, $offset, $limit);
+                    } else if ($request->is_b2b) {
+                        $services = $this->categoryRepository->getServicesOfCategory(Category::where('parent_id', $category->id)->publishedForB2B()
+                            ->orderBy('order')->get()->pluck('id')->toArray(), $location, $offset, $limit);
                     } else {
                         $services = $this->categoryRepository->getServicesOfCategory($category->children->sortBy('order')->pluck('id'), $location, $offset, $limit);
                     }
