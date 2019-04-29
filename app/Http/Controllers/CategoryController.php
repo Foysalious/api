@@ -290,8 +290,7 @@ class CategoryController extends Controller
 
                 $subscriptions = collect();
                 foreach ($services as $service) {
-                    if ($service->serviceSubscription) {
-                        $subscription = $service->serviceSubscription;
+                    if ($subscription = $service->activeSubscription) {
                         list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
                         $subscription->min_price = $service->min_price;
                         $subscription->max_price = $service->max_price;
