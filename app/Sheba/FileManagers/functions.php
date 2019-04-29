@@ -846,3 +846,123 @@ if (!function_exists('getBulkTopUpFolder')) {
         return $url . 'bulk_top_ups/';
     }
 }
+
+if (!function_exists('getPosCategoryDefaultThumb')) {
+
+    /**
+     * Get Category default Thumb file name.
+     *
+     * @return string
+     */
+    function getPosCategoryDefaultThumb()
+    {
+        return getPosCategoryThumbFolder(true) . 'default.jpg';
+    }
+}
+
+if (!function_exists('getPosCategoryThumbFolder')) {
+
+    /**
+     * Get Category Thumb Folder.
+     *
+     * @param bool $with_base_url
+     * @return string
+     */
+    function getPosCategoryThumbFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) $url = config('s3.url');
+
+        return $url . 'images/pos/categories/thumbs/';
+    }
+}
+
+if (!function_exists('getPosCategoryDefaultBanner')) {
+
+    /**
+     * Get Category default Thumb file name.
+     *
+     * @return string
+     */
+    function getPosCategoryDefaultBanner()
+    {
+        return getPosCategoryBannerFolder(true) . 'default.jpg';
+    }
+}
+
+if (!function_exists('getPosCategoryBannerFolder')) {
+
+    /**
+     * Get Category Thumb Folder.
+     *
+     * @param bool $with_base_url
+     * @return string
+     */
+    function getPosCategoryBannerFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) $url = config('s3.url');
+
+        return $url . 'images/pos/categories/banners/';
+    }
+}
+
+if (!function_exists('getPosServiceDefaultThumb')) {
+
+    /**
+     * Get Service default Thumb file name.
+     *
+     * @return string
+     */
+    function getPosServiceDefaultThumb()
+    {
+        return getPosServiceThumbFolder(true) . 'default.jpg';
+    }
+}
+
+if (!function_exists('getPosServiceThumbFolder')) {
+
+    /**
+     * Get Service Thumb Folder.
+     *
+     * @param bool $with_base_url
+     * @return string
+     */
+    function getPosServiceThumbFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) $url = config('s3.url');
+
+        return $url . 'images/pos/services/thumbs/';
+    }
+}
+
+if (!function_exists('getPosServiceDefaultBanner')) {
+
+    /**
+     * Get Service default Thumb file name.
+     *
+     * @return string
+     */
+    function getPosServiceDefaultBanner()
+    {
+        return getPosServiceBannerFolder(true) . 'default.jpg';
+    }
+}
+
+if (!function_exists('getPosServiceBannerFolder')) {
+
+    /**
+     * Get Service Thumb Folder.
+     *
+     * @param bool $with_base_url
+     * @return string
+     */
+    function getPosServiceBannerFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) $url = config('s3.url');
+
+        return $url . 'images/pos/services/banners/';
+    }
+}

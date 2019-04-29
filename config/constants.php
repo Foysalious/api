@@ -33,7 +33,7 @@ return [
         'Declined' => 'Declined',
         'Accepted' => 'Accepted',
         'Schedule_Due' => 'Schedule Due',
-            'Ready_To_Pick' => 'Ready To Pick',
+        'Ready_To_Pick' => 'Ready To Pick',
         'Process' => 'Process',
         'Serve_Due' => 'Serve Due',
         'Served' => 'Served',
@@ -361,7 +361,8 @@ return [
         'customer-app',
         'affiliation-app',
         'manager-app',
-        'manager-web'
+        'manager-web',
+        'business-portal',
     ],
     'PARTNER_ACQUISITION_CHANNEL' => [
         'PM' => 'PM',

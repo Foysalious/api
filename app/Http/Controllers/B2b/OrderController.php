@@ -145,20 +145,21 @@ class OrderController extends Controller
                 'partner' => 'required',
                 'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
                 'time' => 'required|string',
-                'code' => 'required|string',
+                'code' => 'required|string'
             ]);
             $business = $request->business;
             $member = $request->manager_member;
             $customer = $member->profile->customer;
             $geo = json_decode($business->geo_informations);
             if (!$customer) $customer = $this->createCustomerFromMember($member);
+            $request->merge(['lat' => (double)$geo->lat, 'lng' => (double)$geo->lng]);
             $partnerListRequest->setRequest($request)->prepareObject();
             $hyper_local = HyperLocal::insidePolygon((double)$geo->lat, (double)$geo->lng)->with('location')->first();
             $location = $hyper_local ? $hyper_local->location->id : null;
             $order_amount = $promotionCalculation->calculateOrderAmount($partnerListRequest, $request->partner);
             if (!$order_amount) return api_response($request, null, 403);
             $result = voucher($request->code)
-                ->check($partnerListRequest->selectedCategory->id, $request->partner, $location, $customer, $order_amount, 'Business')
+                ->check($partnerListRequest->selectedCategory->id, $request->partner, $location, $customer, $order_amount, constants('SALES_CHANNELS')['B2B']['name'])
                 ->reveal();
             if ($result['is_valid']) {
                 $voucher = $result['voucher'];
@@ -186,7 +187,6 @@ class OrderController extends Controller
             $this->validate($request, [
                 'services' => 'required|string',
                 'partner' => 'required',
-                'voucher' => 'string',
                 'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
                 'time' => 'required|string',
             ], ['mobile' => 'Invalid mobile number!']);
@@ -207,7 +207,7 @@ class OrderController extends Controller
             $request->merge(['customer' => $customer,
                 'address_id' => $address->id,
                 'name' => $business->name, 'payment_method' => 'cod', 'mobile' => $member->profile->mobile,
-                'business_id' => $business->id, 'sales_channel' => 'Business', 'voucher' => $request->voucher]);
+                'business_id' => $business->id, 'sales_channel' => constants('SALES_CHANNELS')['B2B']['name'], 'voucher' => $request->voucher]);
             $order = $order->placeOrder($request);
             if ($order) {
                 return api_response($request, $order, 200, ['job_id' => $order->jobs->first()->id, 'order_id' => $order->partnerOrders->first()->id,

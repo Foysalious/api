@@ -2,6 +2,7 @@
 
 use App\Models\BusinessJoinRequest;
 use App\Models\Partner;
+use App\Models\Profile;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
@@ -55,6 +56,16 @@ class BusinessesController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function hasPartner($mobile)
+    {
+        $profile = Profile::where('mobile', $mobile)->first();
+        if (!$profile) return false;
+        $resource = $profile->resource;
+        if (!$resource) return false;
+        $partner = $resource->firstPartner();
+        return $partner ? $partner : false;
     }
 
     public function getVendorsList($business, Request $request)

@@ -5,6 +5,7 @@ return [
     'admin_url' => env('SHEBA_BACKEND_URL'),
     'api_url' => env('SHEBA_API_URL'),
     'logistic_url' => env('SHEBA_LOGISTIC_URL'),
+    'business_url' => env('SHEBA_BUSINESS_URL'),
     's3_url' => env('S3_URL'),
     'socket_url' => env('SHEBA_SOCKET_URL'),
     'socket_on' => env('SHEBA_SOCKET_ON', true),

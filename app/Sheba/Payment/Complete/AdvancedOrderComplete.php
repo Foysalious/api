@@ -28,7 +28,6 @@ class AdvancedOrderComplete extends PaymentComplete
                     $this->giveOnlineDiscount($payable_model);
                     $payable_model->sheba_collection = $this->payment->paymentDetails->sum('amount');
                     $payable_model->update();
-                    $this->giveOnlineDiscount($payable_model);
                 }
                 $user = $payable->user;
                 $this->setModifier($user);
