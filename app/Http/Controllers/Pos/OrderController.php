@@ -101,7 +101,7 @@ class OrderController extends Controller
     /**
      * @param Request $request
      * @param Creator $creator
-     * @return JsonResponse
+     * @return array
      */
     public function store(Request $request, Creator $creator)
     {
@@ -113,7 +113,10 @@ class OrderController extends Controller
             ]);
             $this->setModifier($request->manager_resource);
 
-            $order = $creator->setData($request->all())->create();
+            $creator->setData($request->all());
+            if ($error = $creator->hasError()) return $error;
+            $order = $creator->create();
+
             $order = $order->calculate();
             $order->payment_status = $order->getPaymentStatus();
 
