@@ -6,6 +6,7 @@ use Sheba\Pos\Product\StockManager;
 use Sheba\Pos\Repositories\PosOrderItemRepository;
 use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
+use Sheba\Pos\Validators\OrderCreateValidator;
 
 class Creator
 {
@@ -19,19 +20,37 @@ class Creator
     private $paymentCreator;
     /** @var StockManager $stockManager */
     private $stockManager;
+    /** @var OrderCreateValidator $createValidator */
+    private $createValidator;
 
     public function __construct(PosOrderRepository $order_repo, PosOrderItemRepository $item_repo,
-                                PaymentCreator $payment_creator, StockManager $stock_manager)
+                                PaymentCreator $payment_creator, StockManager $stock_manager,
+                                OrderCreateValidator $create_validator)
     {
         $this->orderRepo = $order_repo;
         $this->itemRepo = $item_repo;
         $this->paymentCreator = $payment_creator;
         $this->stockManager = $stock_manager;
+        $this->createValidator = $create_validator;
     }
 
+    /**
+     * @return array
+     */
+    public function hasError()
+    {
+        return $this->createValidator->hasError();
+    }
+
+    /**
+     * @param array $data
+     * @return $this
+     */
     public function setData(array $data)
     {
         $this->data = $data;
+        $this->createValidator->setServices(json_decode($this->data['services'], true));
+
         return $this;
     }
 
