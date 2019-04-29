@@ -52,7 +52,7 @@ class Creator
     {
         $mobile_profile = $this->profiles->checkExistingMobile($this->data['mobile']);
         if ($mobile_profile && $mobile_profile->posCustomer) {
-            if(PartnerPosCustomer::where('customer_id',$mobile_profile->posCustomer->id)->exists())
+            if(PartnerPosCustomer::where('customer_id',$mobile_profile->posCustomer->id)->where('partner_id',$this->data['partner']->id)->exists())
                 return ['mobile' => 'Mobile already exists'];
         };
         if (isset($this->data['email']) && !empty($this->data['email'])) {

@@ -143,8 +143,8 @@ class OrderController extends Controller
         try {
             $this->validate($request, [
                 'amount' => 'required|numeric',
-                'paid_amount' => 'required|numeric',
-                'payment_method' => 'required|string|in:' . implode(',', config('pos.payment_method'))
+//                'paid_amount' => 'required|numeric',
+//                'payment_method' => 'required|string|in:' . implode(',', config('pos.payment_method'))
             ]);
             $this->setModifier($request->manager_resource);
 
