@@ -21,7 +21,7 @@ class OrderCreateValidator extends Validator
 
     public function hasError()
     {
-        if ($this->isOutOfStock()) return ['code' => 421, 'msg' => 'Job does not include any logistics.'];
+        if ($this->isOutOfStock()) return ['code' => 421, 'msg' => 'Product out of stock.'];
     }
 
     /**
