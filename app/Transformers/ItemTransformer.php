@@ -13,7 +13,8 @@ class ItemTransformer extends TransformerAbstract
             'quantity'  => $item->quantity,
             'app_thumb' =>  $item->service ? $item->service->app_thumb : '',
             'price'     => (double)$item->getTotal(),
-            'price_without_vat' =>  (double) $item->getTotal() - $item->getVat()
+            'price_without_vat' =>  (double) $item->getTotal() - $item->getVat(),
+            'vat_percentage' => $item->service ? (double)$item->service->vat_percentage : 0.00
         ];
     }
 }
