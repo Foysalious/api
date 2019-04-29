@@ -35,6 +35,7 @@ class OrderController extends Controller
 
     public function index(Request $request)
     {
+        ini_set('memory_limit', '2096M');
         try {
             $status = $request->status;
             $partner = $request->partner;
@@ -61,7 +62,7 @@ class OrderController extends Controller
 
             $orders_formatted = [];
             foreach ($final_orders as $key => $value) {
-                if(count($value) > 0) {
+                if (count($value) > 0) {
                     $order_list = ['date' => $key, 'orders' => $value];
                     array_push($orders_formatted, $order_list);
                 }
@@ -81,7 +82,8 @@ class OrderController extends Controller
     public function show(Request $request)
     {
         try {
-            $order = PosOrder::with('items', 'customer.profile')->find($request->order)->calculate();
+            /** @var PosOrder $order */
+            $order = PosOrder::with('items.service.discounts', 'customer', 'payments', 'logs', 'partner')->find($request->order)->calculate();
             if (!$order) return api_response($request, null, 404, ['msg' => 'Order Not Found']);
 
             $manager = new Manager();

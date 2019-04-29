@@ -114,11 +114,16 @@ class PosOrder extends Model
 
     private function _calculatePaidAmount()
     {
-        // $credit = $this->creditPayments()->sum('amount');
-        // $debit  = $this->debitPayments()->sum('amount');
+        /**
+         * USING AS A QUERY, THAT INCREASING LOAD TIME ON LIST VIEW
+         *
+         * $credit = $this->creditPayments()->sum('amount');
+         * $debit  = $this->debitPayments()->sum('amount');
+         *
+         */
 
         $credit = $this->creditPaymentsCollect()->sum('amount');
-        $debit  = $this->debitPaymentsCollect()->sum('amount');
+        $debit = $this->debitPaymentsCollect()->sum('amount');
 
         $this->paid = $credit - $debit;
     }
@@ -244,20 +249,20 @@ class PosOrder extends Model
 
     public function getRefundStatus()
     {
-        // $is_exchanged = $this->logs()->refundOf(Types::EXCHANGE)->first();
-        // $is_full_returned  = $this->logs()->refundOf(Types::FULL_RETURN)->first();
-        // $is_partial_return = $this->logs()->refundOf(Types::PARTIAL_RETURN)->first();
+        /**
+         * USING AS A QUERY, THAT INCREASING LOAD TIME ON LIST VIEW
+         *
+         * $is_exchanged = $this->logs()->refundOf(Types::EXCHANGE)->first();
+         * $is_full_returned  = $this->logs()->refundOf(Types::FULL_RETURN)->first();
+         * $is_partial_return = $this->logs()->refundOf(Types::PARTIAL_RETURN)->first();
+         *
+         */
         $is_exchanged = $is_full_returned = $is_partial_return = null;
-        $this->logs->each(function($log) use (&$is_exchanged, &$is_full_returned, &$is_partial_return) {
-            if($log->type == Types::EXCHANGE && !$is_exchanged) {
-                $is_exchanged = $log;
-            }
-            if($log->type == Types::FULL_RETURN && !$is_full_returned) {
-                $is_full_returned = $log;
-            }
-            if($log->type == Types::PARTIAL_RETURN && !$is_partial_return) {
-                $is_partial_return = $log;
-            }
+
+        $this->logs->each(function ($log) use (&$is_exchanged, &$is_full_returned, &$is_partial_return) {
+            $is_exchanged = ($log->type == Types::EXCHANGE && !$is_exchanged) ? $log : null;
+            $is_full_returned = ($log->type == Types::FULL_RETURN && !$is_full_returned) ? $log: null;
+            $is_partial_return = ($log->type == Types::PARTIAL_RETURN && !$is_partial_return) ? $log : null;
         });
 
         return $is_exchanged ? Natures::EXCHANGED : (($is_full_returned || $is_partial_return) ? Natures::RETURNED : null);
@@ -266,6 +271,6 @@ class PosOrder extends Model
     public function isRefundable()
     {
         $service_ids = $this->items->pluck('service_id')->toArray();
-        return !in_array(null,$service_ids);
+        return !in_array(null, $service_ids);
     }
 }

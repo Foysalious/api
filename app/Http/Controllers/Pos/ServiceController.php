@@ -34,7 +34,7 @@ class ServiceController extends Controller
         try {
             $partner = $request->partner;
             $services = [];
-            $base_query = PartnerPosService::published()->with('discounts');
+            $base_query = PartnerPosService::with('discounts')->published();
 
             if ($request->has('category_id') && !empty($request->category_id)) {
                 $category_ids = explode(',', $request->category_id);
@@ -72,7 +72,7 @@ class ServiceController extends Controller
     public function show(Request $request)
     {
         try {
-            $service = PartnerPosService::with(['category', 'discounts'])->find($request->service);
+            $service = PartnerPosService::with('category', 'discounts')->find($request->service);
             if (!$service) return api_response($request, null, 404, ['msg' => 'Service Not Found']);
 
             $manager = new Manager();
