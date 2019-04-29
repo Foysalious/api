@@ -17,7 +17,7 @@ class PosServiceTransformer extends TransformerAbstract
             'category_name' => $service->subCategory->parent->name,
             'sub_category_id' => $service->subCategory->id,
             'sub_category_name' => $service->subCategory->name,
-            'stock_applicable' => $service->stock ? true : false,
+            'stock_applicable' => !is_null($service->stock) ? true : false,
             'stock' => $service->stock,
             'vat_applicable' => $service->vat_percentage ? true : false,
             'vat' => $service->vat_percentage,
