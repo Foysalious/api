@@ -93,6 +93,10 @@ class Category extends Model
     {
         return $query->where('is_published_for_business', 1);
     }
+    public function scopePublishedForB2B($query)
+    {
+        return $query->where('is_published_for_b2b', 1);
+    }
 
     public function scopePublishedForPartner($query)
     {

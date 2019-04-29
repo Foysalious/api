@@ -32,6 +32,7 @@ class ServiceController extends Controller
             $services = Service::select('id', 'name', 'bn_name', 'unit', 'category_id', 'thumb', 'slug', 'min_quantity', 'banner', 'variable_type');
             $scope = ['start_price'];
             if ($request->has('is_business')) $services = $services->publishedForBusiness();
+            if($request->has('is_b2b')) $services->publishedForB2B();
             $services = $services->skip($offset)->take($limit)->get();
             $services = $this->serviceRepository->getpartnerServicePartnerDiscount($services);
             $services = $this->serviceRepository->addServiceInfo($services, $scope);
