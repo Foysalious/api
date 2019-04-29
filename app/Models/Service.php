@@ -205,6 +205,11 @@ class Service extends Model
         return $this->hasOne(ServiceSubscription::class);
     }
 
+    public function activeSubscription()
+    {
+        return $this->hasOne(ServiceSubscription::class)->active();
+    }
+
     public function isOptions()
     {
         return $this->variable_type == 'Options';
