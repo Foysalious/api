@@ -106,7 +106,7 @@ class WalletController extends Controller
                         $transaction = $user->walletTransaction([
                             'amount' => $remaining,
                             'type' => 'Debit',
-                            'log' => "Service Purchase." . ($spent_model instanceof PartnerOrder) ? "ORDER ID: {$spent_model->code()}" : "",
+                            'log' => "Service Purchase.", // . ($spent_model instanceof PartnerOrder) ? "ORDER ID: {$spent_model->code()}" : "",
                             'event_type' => get_class($spent_model),
                             'event_id' => $spent_model->id,
                             'created_at' => Carbon::now()

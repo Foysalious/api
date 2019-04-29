@@ -88,7 +88,6 @@ class Payable extends Model
             $model .= 'MovieTicketOrder';
         }
         return $model;
-
     }
 
     public function payment()
