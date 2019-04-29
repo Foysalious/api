@@ -63,8 +63,8 @@ class OrderComplete extends PaymentComplete
         $res = $client->request('POST', config('sheba.admin_url') . '/api/partner-order/' . $partner_order->id . '/collect',
             [
                 'form_params' => array_merge([
-                    'customer_id' => $customer->id,
-                    'remember_token' => $customer->remember_token,
+                    'customer_id' => $partner_order->order->customer->id,
+                    'remember_token' => $partner_order->order->customer->remember_token,
                     'sheba_collection' => (double)$paymentDetail->amount,
                     'payment_method' => ucfirst($paymentDetail->method),
                     'created_by_type' => 'App\\Models\\Customer',
