@@ -21,7 +21,7 @@ class PosOrderTransformer extends TransformerAbstract
             'paid' => $order->getPaid(),
             'due' => $order->getDue(),
             'customer' => null,
-            'is_refundable' => $order->items()->whereNull('service_id')->first() ? false : true,
+            'is_refundable' => $order->isRefundable(),
             'refund_status' => $order->getRefundStatus()
         ];
     }

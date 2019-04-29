@@ -39,9 +39,10 @@ class OrderController extends Controller
             $status = $request->status;
             $partner = $request->partner;
             /** @var PosOrder $orders */
-            $orders = PosOrder::with('items.service.discounts', 'customer')->byPartner($partner->id)->orderBy('created_at', 'desc')->get();
+            $orders = PosOrder::with('items.service.discounts', 'customer', 'payments', 'logs', 'partner')->byPartner($partner->id)->orderBy('created_at', 'desc')->get();
             $final_orders = [];
             foreach ($orders as $index => $order) {
+                $order->isRefundable();
                 $order_data = $order->calculate();
                 $manager = new Manager();
                 $manager->setSerializer(new CustomSerializer());
@@ -58,8 +59,10 @@ class OrderController extends Controller
 
             $orders_formatted = [];
             foreach ($final_orders as $key => $value) {
-                $order_list = ['date' => $key, 'orders' => $value];
-                array_push($orders_formatted, $order_list);
+                if(count($value) > 0) {
+                    $order_list = ['date' => $key, 'orders' => $value];
+                    array_push($orders_formatted, $order_list);
+                }
             }
 
             return api_response($request, $orders_formatted, 200, ['orders' => $orders_formatted]);
