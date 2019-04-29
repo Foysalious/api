@@ -231,6 +231,7 @@ class OrderController extends Controller
             $order = PosOrder::with('items')->find($request->order)->calculate();
 
             if (!$order) return api_response($request, null, 404, ['msg' => 'Order not found']);
+            if (!$order->customer) return api_response($request, null, 404, ['msg' => 'Customer not found']);
             if (!$order->customer->profile->mobile) return api_response($request, null, 404, ['msg' => 'Customer mobile not found']);
 
             dispatch(new OrderBillSms($order));
@@ -255,6 +256,7 @@ class OrderController extends Controller
             $order = PosOrder::with('items')->find($request->order)->calculate();
 
             if (!$order) return api_response($request, null, 404, ['msg' => 'Order not found']);
+            if (!$order->customer) return api_response($request, null, 404, ['msg' => 'Customer not found']);
             if (!$order->customer->profile->email) return api_response($request, null, 404, ['msg' => 'Customer email not found']);
 
             dispatch(new OrderBillEmail($order));
