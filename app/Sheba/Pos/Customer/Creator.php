@@ -1,6 +1,7 @@
 <?php namespace Sheba\Pos\Customer;
 
 use App\Models\PartnerPosCustomer;
+use App\Models\PosCustomer;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
 use Sheba\FileManagers\CdnFileManager;
@@ -50,7 +51,10 @@ class Creator
     private function alreadyExistError()
     {
         $mobile_profile = $this->profiles->checkExistingMobile($this->data['mobile']);
-        if ($mobile_profile && $mobile_profile->posCustomer) return ['mobile' => 'Mobile already exists'];
+        if ($mobile_profile && $mobile_profile->posCustomer) {
+            if(PartnerPosCustomer::where('customer_id',$mobile_profile->posCustomer->id)->exists())
+                return ['mobile' => 'Mobile already exists'];
+        };
         if (isset($this->data['email']) && !empty($this->data['email'])) {
             $email_profile = $this->profiles->checkExistingEmail($this->data['email']);
             if ($email_profile && $email_profile->posCustomer) return ['email' => 'Email already exists'];
@@ -98,7 +102,12 @@ class Creator
 
     private function createPosCustomer()
     {
-        $customer = $this->posCustomers->save(['profile_id' => $this->data['profile_id']]);
+        $customer_query = PosCustomer::where('profile_id',$this->data['profile_id']);
+        if($customer_query->exists()) {
+            $customer = $customer_query->first();
+        } else
+            $customer = $this->posCustomers->save(['profile_id' => $this->data['profile_id']]);
+
         $this->data['customer_id'] = $customer->id;
     }
 
