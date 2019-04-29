@@ -3,11 +3,15 @@
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PartnerPosService extends Model
 {
+    use SoftDeletes;
+
     protected $guarded = ['id'];
     protected $casts = ['cost' => 'double', 'price' => 'double', 'stock' => 'double', 'vat_percentage' => 'double'];
+    protected $dates = ['deleted_at'];
 
     public function category()
     {

@@ -34,30 +34,46 @@ class RegistrationController extends Controller
             $email = $request->email;
             $m_profile = $this->profileRepository->ifExist($mobile, 'mobile');
             $e_profile = $this->profileRepository->ifExist($email, 'email');
-
             $profile = collect();
-
             if ($m_profile && $e_profile) {
                 if ($m_profile->id == $e_profile->id) {
-                    if (!$m_profile->member) {
-                        $member = $this->makeMember($m_profile);
-                    }
                     $member = $m_profile->member;
+                    if (!$member) $member = $this->makeMember($m_profile);
                     $businesses = $member->businesses->first();
                     $info = [
-                        'token' => $this->generateToken($m_profile),
+                        'token' => $this->generateToken($m_profile, $member),
                         'member_id' => $member->id,
                         'business_id' => $businesses ? $businesses->id : null,
                     ];
                     return api_response($request, $info, 200, ['info' => $info]);
-
                 } else {
                     return api_response($request, null, 400, ['message' => 'You gave others email or mobile']);
                 }
-            } elseif ($m_profile) {
-                return api_response($request, null, 400, ['message' => 'Mobile already exists! Please login']);
-            } elseif ($e_profile) {
-                return api_response($request, null, 400, ['message' => 'Email already exists! Please login']);
+            } elseif ($m_profile && !$e_profile) {
+                $m_profile->email = $email;
+                $m_profile->update();
+                $member = $m_profile->member;
+                if (!$member) $member = $this->makeMember($m_profile);
+                $businesses = $member->businesses->first();
+                $info = [
+                    'token' => $this->generateToken($m_profile, $member),
+                    'member_id' => $member->id,
+                    'business_id' => $businesses ? $businesses->id : null,
+                ];
+                return api_response($request, $info, 200, ['info' => $info]);
+            } elseif ($e_profile && !$m_profile) {
+                $e_profile->mobile = formatMobile($mobile);
+                $e_profile->mobile_verified = 1;
+                $e_profile->update();
+                $member = $e_profile->member;
+                if (!$member) $member = $this->makeMember($e_profile);
+                $businesses = $member->businesses->first();
+                $info = [
+                    'token' => $this->generateToken($e_profile, $member),
+                    'member_id' => $member->id,
+                    'business_id' => $businesses ? $businesses->id : null,
+                ];
+                return api_response($request, $info, 200, ['info' => $info]);
             } else {
                 $data = [
                     'mobile' => $mobile,
@@ -71,7 +87,7 @@ class RegistrationController extends Controller
                 $member = $this->makeMember($profile);
                 $businesses = $member->businesses->first();
                 $info = [
-                    'token' => $this->generateToken($profile),
+                    'token' => $this->generateToken($profile, $member),
                     'member_id' => $member->id,
                     'business_id' => $businesses ? $businesses->id : null,
                 ];
@@ -89,9 +105,8 @@ class RegistrationController extends Controller
         }
     }
 
-    private function generateToken(Profile $profile)
+    private function generateToken(Profile $profile, $member)
     {
-        $member = $profile->member;
         $businesses = $member->businesses->first();
         return JWTAuth::fromUser($profile, [
             'member_id' => $member->id,

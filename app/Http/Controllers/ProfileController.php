@@ -56,6 +56,7 @@ class ProfileController extends Controller
 
             if (!$profile) {
                 $data = ['name' => $request->name, 'mobile' => $mobile];
+                if ($request->has('nid_no') && !empty($request->nid_no)) $data['nid_no'] = $request->nid_no;
                 $profile = $this->profileRepo->store($data);
             }
         } elseif ($request->has('profile_id')) {

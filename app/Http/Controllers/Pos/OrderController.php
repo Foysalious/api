@@ -38,9 +38,11 @@ class OrderController extends Controller
         try {
             $status = $request->status;
             $partner = $request->partner;
+
             /** @var PosOrder $orders */
             $orders = PosOrder::with('items.service.discounts', 'customer', 'payments', 'logs', 'partner')->byPartner($partner->id)->orderBy('created_at', 'desc')->get();
             $final_orders = [];
+
             foreach ($orders as $index => $order) {
                 $order->isRefundable();
                 $order_data = $order->calculate();
@@ -52,7 +54,7 @@ class OrderController extends Controller
                 $order_create_date = $order->created_at->format('Y-m-d');
 
                 if (!isset($final_orders[$order_create_date])) $final_orders[$order_create_date] = [];
-                if (!$status || ($status && $order->getPaymentStatus() == $status)) {
+                if (($status == "null") || !$status || ($status && $order->getPaymentStatus() == $status)) {
                     array_push($final_orders[$order_create_date], $order_formatted);
                 }
             }
@@ -121,7 +123,6 @@ class OrderController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -276,6 +277,9 @@ class OrderController extends Controller
                 'method' => $request->payment_method
             ];
             $payment_creator->credit($payment_data);
+            $order = $order->calculate();
+            $order->payment_status = $order->getPaymentStatus();
+
             return api_response($request, null, 200, ['msg' => 'Payment Collect Successfully', 'order' => $order]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
