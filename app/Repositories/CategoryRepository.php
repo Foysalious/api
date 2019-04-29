@@ -29,8 +29,12 @@ class CategoryRepository
 
         if (request()->get('is_for_backend')) {
             $services = $services->publishedForAll()->get();
+        } else if ((int)request()->get('is_business')) {
+            $services = $services->publishedForBusiness()->get();
+        } else if ((int)request()->get('is_b2b')) {
+            $services = $services->publishedForB2B()->get();
         } else {
-            $services = (int)request()->get('is_business') ? $services->publishedForBusiness()->get() : $services->published()->get();
+            $services = $services->published()->get();
         }
 
         $final_services = [];
