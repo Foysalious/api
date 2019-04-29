@@ -244,12 +244,17 @@ class CategoryController extends Controller
                 } else $location = 4;
             }
 
-            $category = Category::where('id', $category)->whereHas('locations', function ($q) use ($location) {
+            $cat = Category::where('id', $category)->whereHas('locations', function ($q) use ($location) {
                 $q->where('locations.id', $location);
             });
 
-            $category = ((int)$request->is_business ? $category->publishedForBusiness() : $category->published())->first();
-            $category = ((int)$request->is_b2b ? $category->publishedForB2B() : $category->published())->first();
+            if ((int)$request->is_business) {
+                $category = $cat->publishedForBusiness()->first();
+            } elseif ((int)$request->is_b2b) {
+                $category = $cat->publishedForB2B()->first();
+            } else {
+                $category = $cat->published()->first();
+            }
             if ($category != null) {
                 list($offset, $limit) = calculatePagination($request);
                 $scope = [];
