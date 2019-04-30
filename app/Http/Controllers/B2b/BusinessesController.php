@@ -86,7 +86,7 @@ class BusinessesController extends Controller
                         "id" => $partner->id,
                         "name" => $partner->name,
                         "logo" => $partner->logo,
-                        "mobile" => $partner->mobile,
+                        "mobile" => $partner->getContactNumber(),
                         'type' => $master_categories
                     ];
                     $vendors->push($vendor);
@@ -121,7 +121,7 @@ class BusinessesController extends Controller
                 "id" => $partner->id,
                 "name" => $partner->name,
                 "logo" => $partner->logo,
-                "mobile" => $partner->mobile,
+                "mobile" => $partner->getContactNumber(),
                 "company_type" => $type,
                 "service_type" => $master_categories,
                 "no_of_resource" => $resources,
