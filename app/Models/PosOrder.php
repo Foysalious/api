@@ -37,7 +37,7 @@ class PosOrder extends Model
     {
         $this->_calculateThisItems();
         $this->totalDiscount = $this->totalItemDiscount + $this->discount;
-        $this->appliedDiscount = ($this->discount > $this->totalBill) ? $this->totalBill : $this->discount;
+        $this->appliedDiscount = ($this->discount > $this->totalBill) ? $this->totalBill : $this->totalDiscount;
         $this->netBill = $this->totalBill - $this->appliedDiscount;
         $this->_calculatePaidAmount();
         $this->paid = $this->paid ?: 0;
