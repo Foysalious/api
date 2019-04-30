@@ -18,6 +18,7 @@ class PosOrderTransformer extends TransformerAbstract
             'price' => (double)$order->getNetBill(),
             'payment_status' => $order->getPaymentStatus(),
             'vat' => (double)$order->getTotalVat(),
+            'discount_amount' => (double)$order->getAppliedDiscount(),
             'paid' => $order->getPaid(),
             'due' => $order->getDue(),
             'customer' => null,
