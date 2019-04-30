@@ -297,7 +297,9 @@ class ShebaController extends Controller
             } else {
                 $payments = $this->getRegularPayments($version_code, $platform_name);
             }
-            return api_response($request, $payments, 200, ['payments' => $payments, 'discount_message' => '10% discount on all online payments']);
+            // $discount_message = '10% discount on all online payments';
+            $discount_message = '';
+            return api_response($request, $payments, 200, ['payments' => $payments, 'discount_message' => $discount_message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
