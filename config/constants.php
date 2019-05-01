@@ -304,7 +304,7 @@ return [
             'department' => 'AC'
         ]
     ],
-    'SERVICE_UNITS' => ['ft', 'sft', 'hour', 'kg', 'meal', 'person', 'piece', 'rft', 'seat', 'strip', 'km'],
+    'SERVICE_UNITS' => ['ft', 'sft', 'hour', 'kg', 'meal', 'person', 'piece', 'rft', 'seat', 'strip', 'km', 'basket', 'Cow Price', 'litre', 'বান্ডেল', 'দিন', 'cft'],
     'FEEDBACK_STATUSES' => [
         'Open' => 'Open',
         'Acknowledged' => 'Acknowledged',
