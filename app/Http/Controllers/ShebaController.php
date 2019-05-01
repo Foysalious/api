@@ -428,7 +428,6 @@ class ShebaController extends Controller
         ];
     }
 
-
     public function getMovieTicketPayments($version_code, $platform_name)
     {
         return [
