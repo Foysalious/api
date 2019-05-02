@@ -1,6 +1,5 @@
 <?php namespace App\Http\Controllers\B2b;
 
-
 use App\Models\Profile;
 use App\Repositories\ProfileRepository;
 use Illuminate\Validation\ValidationException;
@@ -34,16 +33,18 @@ class LoginController extends Controller
             if ($profile) {
                 $member = $profile->member;
                 if ($member) {
-                    if (Hash::check($request->input('password'), $profile->password)) {
-                        $member = $profile->member;
-                        $businesses = $member->businesses->first();
-                        $info = [
-                            'token' => $this->generateToken($profile),
-                            'member_id' => $member->id,
-                            'business_id' => $businesses ? $businesses->id : null,
-                        ];
-                        return api_response($request, $info, 200, ['info' => $info]);
+                    if (!Hash::check($request->input('password'), $profile->password)) {
+                        return api_response($request, null, 401, ["message" => 'Credential mismatch']);
                     }
+                    
+                    $member = $profile->member;
+                    $businesses = $member->businesses->first();
+                    $info = [
+                        'token' => $this->generateToken($profile),
+                        'member_id' => $member->id,
+                        'business_id' => $businesses ? $businesses->id : null,
+                    ];
+                    return api_response($request, $info, 200, ['info' => $info]);
                 } else {
                     return api_response($request, null, 404, ["message" => 'Member not found.']);
                 }
