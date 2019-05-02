@@ -35,6 +35,7 @@ class BusinessesController extends Controller
             $this->setModifier($business);
 
             foreach (json_decode($request->numbers) as $number) {
+
                 $mobile = formatMobile($number);
                 if ($partner = $this->hasPartner($mobile)) {
                     $partner->businesses()->sync(['business_id' => $business->id]);
@@ -44,7 +45,7 @@ class BusinessesController extends Controller
                         'mobile' => $mobile
                     ];
                     BusinessJoinRequest::create($data);
-                    $this->sms->shoot($number, "You have been invited to Sheba.xyz by $business->name");
+                    $this->sms->shoot($number, "You have been invited to serve corporate client. Just click the link- http://bit.ly/ShebaManagerApp . sheba.xyz will help you to grow and manage your business. by $business->name");
                 }
             }
             return api_response($request, 1, 200);
@@ -85,7 +86,7 @@ class BusinessesController extends Controller
                         "id" => $partner->id,
                         "name" => $partner->name,
                         "logo" => $partner->logo,
-                        "mobile" => $partner->mobile,
+                        "mobile" => $partner->getContactNumber(),
                         'type' => $master_categories
                     ];
                     $vendors->push($vendor);
@@ -120,7 +121,7 @@ class BusinessesController extends Controller
                 "id" => $partner->id,
                 "name" => $partner->name,
                 "logo" => $partner->logo,
-                "mobile" => $partner->mobile,
+                "mobile" => $partner->getContactNumber(),
                 "company_type" => $type,
                 "service_type" => $master_categories,
                 "no_of_resource" => $resources,

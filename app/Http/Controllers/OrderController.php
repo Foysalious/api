@@ -200,7 +200,7 @@ class OrderController extends Controller
             $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
             $partner = $order->partnerOrders->first()->partner;
             if ((bool)config('sheba.send_order_create_sms')) {
-                if (!in_array($order->portal_name, config('sheba.stopped_sms_portal_for_customer'))) {
+                if ($this->isSendingServedConfirmationSms($order)) {
                     (new SmsHandler('order-created'))->send($customer->profile->mobile, [
                         'order_code' => $order->code()
                     ]);
@@ -247,5 +247,17 @@ class OrderController extends Controller
             app('sentry')->captureException($e);
             return null;
         }
+    }
+
+    /**
+     * @param $order
+     * @return bool
+     */
+    private function isSendingServedConfirmationSms($order)
+    {
+        return (
+            !in_array($order->portal_name, config('sheba.stopped_sms_portal_for_customer')) &&
+            !($order->portal_name == 'admin-portal' && $order->sales_channel == 'Bondhu')
+        );
     }
 }
