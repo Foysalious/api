@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Affiliate;
 use App\Models\Customer;
+use App\Models\Profile;
 use App\Models\Resource;
 use App\Repositories\ProfileRepository;
 use Closure;
@@ -21,8 +22,8 @@ class ProfileAuthMiddleware
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request $request
-     * @param  \Closure $next
+     * @param \Illuminate\Http\Request $request
+     * @param \Closure $next
      * @return mixed
      */
     public function handle($request, Closure $next)
@@ -37,6 +38,8 @@ class ProfileAuthMiddleware
                     $avatar = Affiliate::where('remember_token', $request->input('remember_token'))->first();
                 } elseif ($from == 'resource') {
                     $avatar = Resource::where('remember_token', $request->input('remember_token'))->first();
+                } elseif ($from == 'user') {
+                    $avatar = Profile::where('remember_token', $request->input('remember_token'))->first();
                 }
                 if ($avatar != null) {
                     if ($avatar->id == $request->id) {
