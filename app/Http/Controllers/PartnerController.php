@@ -882,15 +882,18 @@ class PartnerController extends Controller
                 if (!is_null($hyperLocation)) $location = $hyperLocation->location;
             }
 
-            $service = $request->partner
-                ->services()
-                ->whereHas('locations', function ($query) use ($location) {
-                    $query->where('id', $location->id);
-                })
-                ->where('category_id', $category)
-                // ->where('is_published', 1)
+            $service_base_query = $request->partner->services()->whereHas('locations', function ($query) use ($location) {
+                $query->where('id', $location->id);
+            })->where('category_id', $category);
+
+            if ($request->has('publication_status')) {
+                $service_base_query = $request->publication_status ? $service_base_query->where('is_published', 1) : $service_base_query->where('is_published', 0);
+            }
+            
+            $service = $service_base_query
                 ->select('services.id', 'services.name', 'services.variable_type', 'services.app_thumb')
                 ->get();
+
             return api_response($request, $request, 200, ['services' => $service]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500, ['message' => $e->getMessage()]);
