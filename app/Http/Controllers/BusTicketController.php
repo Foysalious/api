@@ -10,6 +10,7 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Transport\Bus\Generators\Destinations;
 use Sheba\Transport\Bus\Generators\Routes;
+use Sheba\Transport\Bus\Generators\VehicleList;
 use Sheba\Transport\Bus\Repositories\BusRouteLocationRepository;
 use Throwable;
 
@@ -78,12 +79,12 @@ class BusTicketController extends Controller
         }
     }
 
-    public function getAvailableCoaches(Request $request)
+    public function getAvailableCoaches(Request $request, VehicleList $vehicleList)
     {
         try {
-            $this->validate($request, ['pickup_place_id' => 'required', 'destination_place_id' => 'required', 'date' => 'required',]);
+            $this->validate($request, ['pickup_place_id' => 'required', 'destination_place_id' => 'required', 'date' => 'required']);
 
-            $available_coaches = [['id' => 121321231, 'company_name' => 'Shyamoli', 'type' => 'AC Coach', 'start_time' => '10.30 pm', 'start_point' => 'Kalabagan', 'end_time' => '8:45 am', 'end_point' => 'Kolatoli', 'price' => '900', 'seats_left' => 15, 'code' => '125-CTG'], ['id' => 121321123231, 'company_name' => 'Shyamoli', 'type' => 'AC Coach', 'start_time' => '10.30 pm', 'start_point' => 'Kalabagan', 'end_time' => '8:45 am', 'end_point' => 'Kolatoli', 'price' => '900', 'seats_left' => 15, 'code' => '125-CTG'], ['id' => 121312321231, 'company_name' => 'Shyamoli', 'type' => 'AC Coach', 'start_time' => '10.30 pm', 'start_point' => 'Kalabagan', 'end_time' => '8:45 am', 'end_point' => 'Kolatoli', 'price' => '900', 'seats_left' => 15, 'code' => '125-CTG'], ['id' => 121321231231, 'company_name' => 'Shyamoli', 'type' => 'AC Coach', 'start_time' => '10.30 pm', 'start_point' => 'Kalabagan', 'end_time' => '8:45 am', 'end_point' => 'Kolatoli', 'price' => '900', 'seats_left' => 15, 'code' => '125-CTG'],];
+            $available_coaches = $vehicleList->setPickupAddressId($request->pickup_place_id)->setDestinationAddressId($request->destination_place_id)->setDate($request->date)->getVehicles();
 
             $filters = ['types' => [['type' => 'ac', 'name' => 'AC'], ['type' => 'morning_shift', 'name' => 'Morning Shift'], ['type' => 'evening_shift', 'name' => 'Evening Shift'], ['type' => 'morning_shift', 'name' => 'Morning Shift'],]];
 
@@ -98,6 +99,7 @@ class BusTicketController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

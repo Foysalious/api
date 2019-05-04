@@ -17,7 +17,7 @@ class Pekhom extends ExternalApiClient
      */
     public function __construct()
     {
-        $this->client = (new Client());
+        $this->client = (new Client(['headers' => ['Content-Type' => 'application/json']]));
         $this->baseUrl = config('bus_transport.pekhom.base_url');
         $this->userName = config('bus_transport.pekhom.user_name');
         $this->apiKey = config('bus_transport.pekhom.api_key');
@@ -69,8 +69,10 @@ class Pekhom extends ExternalApiClient
     private function getOptions($data = null)
     {
         $options = [];
-        if (!is_null($data)) $options['form_params'] = $data;
-        $options['body'] = json_encode(['username' => $this->userName, 'api_key' => $this->apiKey]);
+//        if (!is_null($data)) $options['form_params'] = $data;
+        $data['username']  = $this->userName;
+        $data['api_key'] = $this->apiKey;
+        $options['body'] = json_encode($data);
 
         return $options;
     }

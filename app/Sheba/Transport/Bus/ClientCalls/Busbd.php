@@ -17,7 +17,7 @@ class Busbd extends ExternalApiClient
      */
     public function __construct()
     {
-        $this->client = (new Client());
+        $this->client = (new Client(['headers' => ['Content-Type' => 'application/json']]));
         $this->baseUrl = config('bus_transport.busbd.base_url');
         $this->apiVersion = config('bus_transport.busbd.api_version');
         $this->bookingPort = config('bus_transport.busbd.booking_port');
@@ -69,7 +69,8 @@ class Busbd extends ExternalApiClient
     private function getOptions($data = null)
     {
         $options = [];
-        if ($data) $options['form_params'] = $data;
+//        if (!is_null($data)) $options['form_params'] = $data;
+        $options['body'] = json_encode( $data);
 
         return $options;
     }
