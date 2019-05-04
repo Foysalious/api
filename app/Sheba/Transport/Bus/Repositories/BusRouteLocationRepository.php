@@ -31,4 +31,13 @@ class BusRouteLocationRepository extends BaseRepository
     {
         return BusRouteLocation::insert($data);
     }
+
+    /**
+     * @param $id
+     * @return BusRouteLocation
+     */
+    public function findById($id)
+    {
+        return BusRouteLocation::find($id);
+    }
 }

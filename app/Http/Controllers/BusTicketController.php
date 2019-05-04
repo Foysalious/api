@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use Sheba\Transport\Bus\Generators\Destinations;
 use Sheba\Transport\Bus\Generators\Routes;
 use Sheba\Transport\Bus\Repositories\BusRouteLocationRepository;
 use Throwable;
@@ -50,11 +51,13 @@ class BusTicketController extends Controller
         }
     }
 
-    public function getAvailableDestinationPlaces(Request $request)
+    public function getAvailableDestinationPlaces(Request $request, Destinations $destinations)
     {
         try {
             $this->validate($request, ['pickup_place_id' => 'required']);
-            $destination_routes = [['id' => 12312321321, 'name' => 'Dhaka'], ['id' => 1912321321, 'name' => 'Chittagong'], ['id' => 12341994124, 'name' => 'Rajshahi'], ['id' => 1234199414224, 'name' => 'Bagerhat'],];
+            $destination_routes = $destinations->setPickupAddressId( $request->pickup_place_id)->getDestinations();
+
+//            $destination_routes = [['id' => 12312321321, 'name' => 'Dhaka'], ['id' => 1912321321, 'name' => 'Chittagong'], ['id' => 12341994124, 'name' => 'Rajshahi'], ['id' => 1234199414224, 'name' => 'Bagerhat'],];
 
             return api_response($request, $destination_routes, 200, ['routes' => $destination_routes]);
         } catch (ValidationException $e) {
