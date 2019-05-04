@@ -30,7 +30,6 @@ class Destinations
     public function getDestinations()
     {
         $bus_route_location = $this->busRouteLocation_Repo->findById($this->pickupAddressId);
-        return $this->busBdClient->get('routes/to/'.$bus_route_location->bus_bd_id)["data"];
+        return $this->busBdClient->get('routes/to/' . $bus_route_location->bus_bd_id)["data"];
     }
-
 }

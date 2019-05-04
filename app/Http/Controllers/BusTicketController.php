@@ -57,8 +57,6 @@ class BusTicketController extends Controller
             $this->validate($request, ['pickup_place_id' => 'required']);
             $destination_routes = $destinations->setPickupAddressId( $request->pickup_place_id)->getDestinations();
 
-//            $destination_routes = [['id' => 12312321321, 'name' => 'Dhaka'], ['id' => 1912321321, 'name' => 'Chittagong'], ['id' => 12341994124, 'name' => 'Rajshahi'], ['id' => 1234199414224, 'name' => 'Bagerhat'],];
-
             return api_response($request, $destination_routes, 200, ['routes' => $destination_routes]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
