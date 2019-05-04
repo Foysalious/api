@@ -56,8 +56,16 @@ class BusTicketController extends Controller
         try {
             $this->validate($request, ['pickup_place_id' => 'required']);
             $destination_routes = $destinations->setPickupAddressId( $request->pickup_place_id)->getDestinations();
+            $routes = [];
+            $destination_routes->each(function ($route) use (&$routes) {
+                $manager = new Manager();
+                $manager->setSerializer(new CustomSerializer());
+                $resource = new Item($route, new BusRouteTransformer());
+                $destination_routes = $manager->createData($resource)->toArray();
+                $routes[] = $destination_routes['data'];
+            });
 
-            return api_response($request, $destination_routes, 200, ['routes' => $destination_routes]);
+            return api_response($request, $routes, 200, ['routes' => $routes]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');

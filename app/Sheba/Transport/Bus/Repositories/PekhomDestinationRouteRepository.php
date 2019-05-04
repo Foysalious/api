@@ -1,26 +1,26 @@
 <?php namespace Sheba\Transport\Bus\Repositories;
 
-use App\Models\BusRouteLocation;
+use App\Models\PekhomDestinationRoute;
 use Illuminate\Database\Eloquent\Collection;
 use Sheba\Repositories\BaseRepository;
 
-class BusRouteLocationRepository extends BaseRepository
+class PekhomDestinationRouteRepository extends BaseRepository
 {
     /**
-     * @return BusRouteLocation[]|Collection
+     * @return PekhomDestinationRoute[]|Collection
      */
     public function get()
     {
-        return BusRouteLocation::all();
+        return PekhomDestinationRoute::all();
     }
 
     /**
      * @param array $data
-     * @return BusRouteLocation
+     * @return PekhomDestinationRoute
      */
     public function save(array $data)
     {
-        return BusRouteLocation::create($this->withCreateModificationField($data));
+        return PekhomDestinationRoute::create($this->withCreateModificationField($data));
     }
 
     /**
@@ -29,16 +29,16 @@ class BusRouteLocationRepository extends BaseRepository
      */
     public function insert(array $data)
     {
-        return BusRouteLocation::insert($data);
+        return PekhomDestinationRoute::insert($data);
     }
 
     /**
      * @param $id
-     * @return BusRouteLocation
+     * @return PekhomDestinationRoute
      */
     public function findById($id)
     {
-        return BusRouteLocation::find($id);
+        return PekhomDestinationRoute::find($id);
     }
 
     /**
@@ -48,6 +48,6 @@ class BusRouteLocationRepository extends BaseRepository
      */
     public function findIdsByColumnName($column_name, $ids)
     {
-        return BusRouteLocation::whereIn($column_name,$ids)->get();
+        return PekhomDestinationRoute::whereIn($column_name,$ids)->get();
     }
 }
