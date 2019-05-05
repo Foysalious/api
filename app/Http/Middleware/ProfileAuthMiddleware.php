@@ -43,7 +43,7 @@ class ProfileAuthMiddleware
                 }
                 if ($avatar != null) {
                     if ($avatar->id == $request->id) {
-                        $request->merge(['profile' => $avatar->profile]);
+                        $request->merge(['profile' => $from != 'user' ? $avatar->profile : $avatar]);
                         return $next($request);
                     } else {
                         return api_response($request, null, 403, ["message" => "You're not authorized to access this user."]);
