@@ -6,26 +6,33 @@ use Sheba\MovieTicket\Vendor\BlockBuster\VendorManager;
 
 class MovieTicketManager
 {
-    /** @var VendorManager $vendorManager **/
+    /** @var VendorManager $vendorManager */
     private $vendorManager;
+    /** @var MovieTicket $movieTicket */
     private $movieTicket;
 
+    /**
+     * MovieTicketManager constructor.
+     * @param VendorManager $vendorManager
+     * @param MovieTicket $movieTicket
+     */
     public function __construct(VendorManager $vendorManager, MovieTicket $movieTicket)
     {
         $this->vendorManager = $vendorManager;
         $this->movieTicket = $movieTicket;
     }
 
-    public function initVendor() {
+    public function initVendor()
+    {
         $this->vendorManager->setVendor(new BlockBuster())->initVendor();
         return $this;
     }
 
-    public function getAvailableTickets() {
+    public function getAvailableTickets()
+    {
         $availableMovies = $this->vendorManager->post(Actions::GET_MOVIE_LIST);
-        return  $availableMovies;
+        return $availableMovies;
     }
-
 
     /**
      * @param $movie_id
@@ -37,7 +44,7 @@ class MovieTicketManager
     {
         try {
             $availableTheatres = $this->vendorManager->post(Actions::GET_THEATRE_LIST, ['MovieID' => $movie_id, 'ShowDate' => $request_date]);
-            return  $availableTheatres;
+            return $availableTheatres;
         } catch (GuzzleException $e) {
             throw $e;
         }
@@ -64,10 +71,11 @@ class MovieTicketManager
      * @return array
      * @throws GuzzleException
      */
-    public function bookSeats($data = array()) {
+    public function bookSeats($data = array())
+    {
         try {
             $bookingResponse = $this->vendorManager->post(Actions::REQUEST_MOVIE_TICKET_SEAT, $data);
-            return  $bookingResponse;
+            return $bookingResponse;
         } catch (GuzzleException $e) {
             throw $e;
         }
@@ -78,17 +86,18 @@ class MovieTicketManager
      * @return array
      * @throws GuzzleException
      */
-    public function updateMovieTicketStatus($data = array()) {
+    public function updateMovieTicketStatus($data = array())
+    {
         try {
             $bookingResponse = $this->vendorManager->post(Actions::UPDATE_MOVIE_SEAT_STATUS, $data);
-            return  $bookingResponse;
+            return $bookingResponse;
         } catch (GuzzleException $e) {
             throw $e;
         }
     }
 
-    private function  convertToJson($response) {
+    private function convertToJson($response)
+    {
         return json_decode(json_encode($response));
     }
-
 }
