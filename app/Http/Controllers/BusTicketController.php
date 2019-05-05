@@ -85,11 +85,7 @@ class BusTicketController extends Controller
         try {
             $this->validate($request, ['pickup_place_id' => 'required', 'destination_place_id' => 'required', 'date' => 'required']);
 
-            $available_coaches = $vehicleList->setPickupAddressId($request->pickup_place_id)->setDestinationAddressId($request->destination_place_id)->setDate($request->date)->getVehicles();
-
-            $filters = ['types' => [['type' => 'ac', 'name' => 'AC'], ['type' => 'morning_shift', 'name' => 'Morning Shift'], ['type' => 'evening_shift', 'name' => 'Evening Shift'], ['type' => 'morning_shift', 'name' => 'Morning Shift'],]];
-
-            $data = ['coaches' => $available_coaches, 'filters' => $filters];
+            $data = $vehicleList->setPickupAddressId($request->pickup_place_id)->setDestinationAddressId($request->destination_place_id)->setDate($request->date)->getVehicles();
 
             return api_response($request, $data, 200, ['data' => $data]);
 
@@ -125,7 +121,6 @@ class BusTicketController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

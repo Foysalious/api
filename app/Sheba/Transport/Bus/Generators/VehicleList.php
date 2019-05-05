@@ -1,5 +1,6 @@
 <?php namespace Sheba\Transport\Bus\Generators;
 
+use Carbon\Carbon;
 use Sheba\Transport\Bus\ClientCalls\Busbd;
 use Sheba\Transport\Bus\ClientCalls\Pekhom;
 use Sheba\Transport\Bus\Repositories\BusRouteLocationRepository;
@@ -48,7 +49,10 @@ class VehicleList
         $destination_location = $this->busRouteLocation_Repo->findById($this->destinationAddressId);
         $bus_bd_vehicles =$this->parseBusBdResponse($this->busBdClient->post('coaches/search',['date' => $this->date, 'fromStationId' => $pick_up_location->bus_bd_id, 'toStationId' => $destination_location->bus_bd_id]));
         $pekhom_vehicles = $this->parsePekhomResponse($this->pekhomClient->post('bus/search.php',['journey_date' => $this->date, 'from_location_uid' => $pick_up_location->pekhom_id, 'to_location_uid' => $destination_location->pekhom_id]));
-        return array_merge($bus_bd_vehicles,$pekhom_vehicles);
+        $vehicles = array_merge($bus_bd_vehicles,$pekhom_vehicles);
+        $filters = $this->getFilters($vehicles);
+        $this->parseTags($vehicles);
+        return ['coaches' => $vehicles, 'filters' => $filters];;
     }
 
     private function parseBusBdResponse($data)
@@ -69,7 +73,7 @@ class VehicleList
                     'price' => (double) $vehicle->minimumFare,
                     'seats_left' => $vehicle->availableSeats,
                     'code' => $vehicle->coachNo,
-                    'vendor_id' => 1
+                    'vendor_id' => 1,
                 ];
                 array_push($bus_bd_vehicles, $current_vehicle_details);
             }
@@ -101,5 +105,50 @@ class VehicleList
             }
         }
         return $pekhom_vehicles;
+    }
+
+    private function getFilters($vehicles)
+    {
+        $company_names = $shifts =  $types = $prices = [];
+        foreach ($vehicles as $vehicle) {
+            $vehicle = (object) $vehicle;
+            $this->insertIntoArray($vehicle->company_name,  $company_names);
+            $this->insertIntoArray($vehicle->type,  $types);
+            $this->insertIntoArray($this->parseTimeShift($vehicle->start_time),  $shifts);
+        }
+        return [
+          'company_names' => $company_names,
+          'shifts' => $shifts,
+          'types' => $types
+        ];
+    }
+
+    private function insertIntoArray($item, &$array)
+    {
+        if(!in_array($item, $array))
+            array_push($array, $item);
+    }
+
+    private function parseTimeShift($time)
+    {
+        $hour = Carbon::parse($this->date." ".$time)->hour;
+        if ($hour < 12) {
+            return 'morning';
+        } else
+            if ($hour >= 12 && $hour < 18) {
+                return 'evening';
+            } else
+                return 'night';
+    }
+
+    private function parseTags(&$vehicles)
+    {
+        foreach ($vehicles as  $index => $vehicle) {
+            $tags = [];
+            array_push($tags, $this->parseTimeShift($vehicle['start_time']));
+            array_push($tags, $vehicle['type']);
+            array_push($tags, $vehicle['company_name']);
+            $vehicles[$index]['tags'] = $tags;
+        }
     }
 }
