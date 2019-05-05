@@ -64,4 +64,9 @@ class Business extends Model
         return $this->hasMany(CustomerTransaction::class);
     }
 
+    public function vehicles()
+    {
+        return $this->morphMany(Vehicle::class, 'owner');
+    }
+
 }

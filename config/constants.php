@@ -352,6 +352,7 @@ return [
         env('SHEBA_AFFILIATION_APP') => 'affiliate',
         env('SHEBA_RESOURCE_APP') => 'resource',
         env('SHEBA_MANGER_APP') => 'resource',
+        'user' => 'user'
     ],
     'MANAGER' => [
         'Owner', 'Management', 'Admin', 'Operation', 'Finance'
