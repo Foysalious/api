@@ -34,6 +34,10 @@ class VehiclesController extends Controller
                 'model_name' => 'required|string',
                 'model_year' => 'required|date|date_format:Y-m-d',
                 'seat_capacity' => 'required|integer',
+                'transmission_type' => 'required|string|in:auto,manual',
+                'fuel_type' => 'required|string',
+                'fuel_quality' => 'required|string',
+                'fuel_tank_capacity_ltr' => 'required|string',
 
                 'license_number' => 'required',
                 'license_number_image' => 'required|mimes:jpeg,png',
@@ -61,6 +65,10 @@ class VehiclesController extends Controller
                 'model_name' => $request->model_name,
                 'model_year' => $request->model_year,
                 'seat_capacity' => $request->seat_capacity,
+                'transmission_type' => $request->transmission_type,
+                'fuel_type' => $request->fuel_type,
+                'fuel_quality' => $request->fuel_quality,
+                'fuel_tank_capacity_ltr' => $request->fuel_tank_capacity_ltr,
             ];
             $vehicle->basicInformations()->create($this->withCreateModificationField($vehicle_basic_information_data));
 
@@ -96,6 +104,10 @@ class VehiclesController extends Controller
                 'model_name' => 'string',
                 'model_year' => 'date|date_format:Y-m-d',
                 'seat_capacity' => 'integer',
+                'transmission_type' => 'string|in:auto,manual',
+                'fuel_type' => 'string',
+                'fuel_quality' => 'string',
+                'fuel_tank_capacity_ltr' => 'string',
 
                 #'license_number' => 'required',
                 'license_number_image' => 'mimes:jpeg,png',
@@ -104,8 +116,12 @@ class VehiclesController extends Controller
                 'fitness_date' => 'date|date_format:Y-m-d',
                 'fitness_paper_image' => 'mimes:jpeg,png',
                 'insurance_date' => 'date|date_format:Y-m-d',
-                'insurance_paper_image' => 'mimes:jpeg,png',
+                'insurance_paper_image' => 'mimes:jpeg,png'
             ]);
+
+
+
+
 
             $member = Member::find($member);
             $business = $member->businesses->first();
@@ -117,13 +133,16 @@ class VehiclesController extends Controller
 
             #dd($vehicle_basic_informations, $vehicle_registration_informations);
 
-
             $vehicle_basic_information_data = [
                 'type' => $request->type,
                 'company_name' => $request->company_name,
                 'model_name' => $request->model_name,
                 'model_year' => $request->model_year,
                 'seat_capacity' => $request->seat_capacity,
+                'transmission_type' => $request->transmission_type,
+                'fuel_type' => $request->fuel_type,
+                'fuel_quality' => $request->fuel_quality,
+                'fuel_tank_capacity_ltr' => $request->fuel_tank_capacity_ltr,
             ];
             $vehicle_basic_informations->update($this->withUpdateModificationField($vehicle_basic_information_data));
 
