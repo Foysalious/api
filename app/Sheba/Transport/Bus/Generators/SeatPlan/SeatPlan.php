@@ -92,7 +92,8 @@ class SeatPlan
                 return $this->busBdSeatPlan->setVendorId($this->vendorId)->setCoachId($this->coachId)->getSeatPlan();
             case 2:
                 // Pekhom
-
+                return $this->pekhomSeatPlan->setVendorId($this->vendorId)->setCoachId($this->coachId)->setPickupAddressId($this->pickupAddressId)->
+                        setDestinationAddressId($this->destinationAddressId)->setDate($this->date)->getSeatPlan();
                 break;
             default:
                 throw new \Exception('Invalid Vendor');

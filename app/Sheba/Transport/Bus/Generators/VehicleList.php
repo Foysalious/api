@@ -52,6 +52,8 @@ class VehicleList
         $vehicles = array_merge($bus_bd_vehicles,$pekhom_vehicles);
         $filters = $this->getFilters($vehicles);
         $this->parseTags($vehicles);
+        $vehicles = collect($vehicles);
+//        $vehicles = $vehicles->unique('code')->values();
         return ['coaches' => $vehicles, 'filters' => $filters];;
     }
 
