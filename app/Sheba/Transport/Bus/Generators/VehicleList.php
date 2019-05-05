@@ -90,13 +90,16 @@ class VehicleList
             $vehicles = $data['api_data'];
             foreach ($vehicles as  $vehicle) {
                 $vehicle = (object) $vehicle;
+                $start_time =  $vehicle->departure_time;
+                $end_time = $vehicle->arrival_time;
+
                 $current_vehicle_details = [
                     'id' => $vehicle->bus_id,
                     'company_name' => ($vehicle->bus_name),
                     'type' => $vehicle->bus_type,
-                    'start_time' => $vehicle->departure_time,
+                    'start_time' => $start_time,
                     'start_point' => $vehicle->start_counter,
-                    'end_time' => $vehicle->arrival_time,
+                    'end_time' => $end_time,
                     'end_point' => $vehicle->end_counter,
                     'price' => (double) $vehicle->price[$vehicle->seat_class[0]],
                     'seats_left' => $vehicle->available_seat,
@@ -152,5 +155,14 @@ class VehicleList
             array_push($tags, $vehicle['company_name']);
             $vehicles[$index]['tags'] = $tags;
         }
+    }
+
+    private function convertToHoursMins($time, $format = '%02dh %02dm') {
+        if ($time < 1) {
+            return;
+        }
+        $hours = floor($time / 60);
+        $minutes = ($time % 60);
+        return sprintf($format, $hours, $minutes);
     }
 }

@@ -76,6 +76,15 @@ class CustomerRoute
                     $api->post('book-tickets', 'MovieTicketController@bookTickets');
                     $api->post('update-status', 'CustomerMovieTicketController@updateTicketStatus');
                 });
+                $api->group(['prefix' => 'transport'], function ($api) {
+                    $api->group(['prefix' => 'bus-ticket'], function ($api) {
+                        $api->get('pickup-places', 'BusTicketController@getAvailablePickupPlaces');
+                        $api->get('destination-places', 'BusTicketController@getAvailableDestinationPlaces');
+                        $api->get('available-coaches', 'BusTicketController@getAvailableCoaches');
+                        $api->get('seat-status', 'BusTicketController@getSeatStatus');
+                        $api->get('available-points', 'BusTicketController@getAvailablePoints');
+                    });
+                });
                 $api->group(['prefix' => 'jobs'], function ($api) {
                     $api->get('/', 'JobController@index');
                     $api->get('cancel-reason', 'JobController@cancelReason');
