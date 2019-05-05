@@ -90,8 +90,9 @@ class ProfileController extends Controller
         return api_response($request, $profile, 200, ['info' => $profile]);
     }
 
-    public function updateProfileDocument(Request $request, Profile $id)
+    public function updateProfileDocument(Request $request,$id)
     {
+
         try {
             $rules = ['pro_pic' => 'sometimes|string', 'nid_image_back' => 'sometimes|string', 'nid_image_front' => 'sometimes|string'];
             $this->validate($request, $rules);
@@ -104,6 +105,7 @@ class ProfileController extends Controller
             $message = getValidationErrorMessage($e->errors());
             return api_response($request, null, 401, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             return api_response($request, null, 500);
         }
     }
