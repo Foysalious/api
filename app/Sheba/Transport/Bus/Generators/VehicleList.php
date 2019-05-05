@@ -64,18 +64,28 @@ class VehicleList
             $vehicles = $data['data'];
             foreach ($vehicles as  $vehicle) {
                 $vehicle = (object) $vehicle;
+                $start_time =  $vehicle->departureTime;
+                $end_time = $vehicle->arrivalTime;
+                if(str_contains($start_time,'PM') && str_contains($end_time,'AM')) {
+                    $date_next = Carbon::parse($this->date)->addDays(1)->format('Y-m-d').' '.$end_time;
+                    $duration = Carbon::parse($this->date.' '.$start_time)->diffInMinutes(Carbon::parse($date_next));
+                }
+                else
+                    $duration = Carbon::parse($this->date.' '.$start_time)->diffInMinutes(Carbon::parse($this->date.' '.$end_time));
+
                 $current_vehicle_details = [
                     'id' => $vehicle->id,
                     'company_name' => ( (object) ($vehicle->company))->name,
                     'type' => $vehicle->coachType,
-                    'start_time' => $vehicle->departureTime,
+                    'start_time' => $start_time,
                     'start_point' => $vehicle->startCounter,
-                    'end_time' => $vehicle->arrivalTime,
+                    'end_time' => $end_time,
                     'end_point' => $vehicle->endCounter,
                     'price' => (double) $vehicle->minimumFare,
                     'seats_left' => $vehicle->availableSeats,
                     'code' => $vehicle->coachNo,
                     'vendor_id' => 1,
+                    'duration' => $this->convertToHoursMins($duration)
                 ];
                 array_push($bus_bd_vehicles, $current_vehicle_details);
             }
@@ -92,6 +102,12 @@ class VehicleList
                 $vehicle = (object) $vehicle;
                 $start_time =  $vehicle->departure_time;
                 $end_time = $vehicle->arrival_time;
+                if(str_contains($start_time,'PM') && str_contains($end_time,'AM')) {
+                    $date_next = Carbon::parse($this->date)->addDays(1)->format('Y-m-d').' '.$end_time;
+                    $duration = Carbon::parse($this->date.' '.$start_time)->diffInMinutes(Carbon::parse($date_next));
+                }
+                else
+                    $duration = Carbon::parse($this->date.' '.$start_time)->diffInMinutes(Carbon::parse($this->date.' '.$end_time));
 
                 $current_vehicle_details = [
                     'id' => $vehicle->bus_id,
@@ -105,6 +121,7 @@ class VehicleList
                     'seats_left' => $vehicle->available_seat,
                     'code' => $vehicle->bus_no,
                     'vendor_id' => 2,
+                    'duration' => $this->convertToHoursMins($duration)
                 ];
                 array_push($pekhom_vehicles, $current_vehicle_details);
             }
@@ -122,9 +139,9 @@ class VehicleList
             $this->insertIntoArray($this->parseTimeShift($vehicle->start_time),  $shifts);
         }
         return [
-          'company_names' => $company_names,
-          'shifts' => $shifts,
-          'types' => $types
+            'company_names' => $company_names,
+            'shifts' => $shifts,
+            'types' => $types
         ];
     }
 
