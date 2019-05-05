@@ -66,9 +66,10 @@ class VehicleList
                     'start_point' => $vehicle->startCounter,
                     'end_time' => $vehicle->arrivalTime,
                     'end_point' => $vehicle->endCounter,
-                    'price' => $vehicle->minimumFare,
+                    'price' => (double) $vehicle->minimumFare,
                     'seats_left' => $vehicle->availableSeats,
-                    'code' => $vehicle->coachNo
+                    'code' => $vehicle->coachNo,
+                    'vendor_id' => 1
                 ];
                 array_push($bus_bd_vehicles, $current_vehicle_details);
             }
@@ -85,15 +86,16 @@ class VehicleList
                 $vehicle = (object) $vehicle;
                 $current_vehicle_details = [
                     'id' => $vehicle->bus_id,
-                    'company_name' => ($vehicle->bus_name   ),
+                    'company_name' => ($vehicle->bus_name),
                     'type' => $vehicle->bus_type,
                     'start_time' => $vehicle->departure_time,
                     'start_point' => $vehicle->start_counter,
                     'end_time' => $vehicle->arrival_time,
                     'end_point' => $vehicle->end_counter,
-                    'price' => $vehicle->price[$vehicle->seat_class[0]],
+                    'price' => (double) $vehicle->price[$vehicle->seat_class[0]],
                     'seats_left' => $vehicle->available_seat,
-                    'code' => $vehicle->bus_no
+                    'code' => $vehicle->bus_no,
+                    'vendor_id' => 2,
                 ];
                 array_push($pekhom_vehicles, $current_vehicle_details);
             }
