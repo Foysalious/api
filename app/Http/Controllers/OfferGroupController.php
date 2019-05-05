@@ -60,6 +60,7 @@ class OfferGroupController extends Controller
                     'id' => $offer_group->id,
                     "name" => $offer_group->name,
                     "app_thumb" => $offer_group->app_thumb,
+                    "banner" => $offer_group->banner,
                     "offers" => $offers
                 ];
                 return api_response($request, $offer_group, 200, ['offer_group' => $offer_group]);
