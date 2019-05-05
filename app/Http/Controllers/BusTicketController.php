@@ -107,7 +107,7 @@ class BusTicketController extends Controller
 
     }
 
-    public function getSeatStatus(Request $request, SeatPlan $seatPlan)
+    public function getSeatStatus(Request $request)
     {
         try {
             $this->validate($request, ['coach_id' => 'required',]);
