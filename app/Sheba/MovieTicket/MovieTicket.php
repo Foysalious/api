@@ -55,7 +55,6 @@ class MovieTicket
         return $this;
     }
 
-
     /**
      * @param MovieTicketRequest $movieTicketRequest
      * @return $this

@@ -1,10 +1,11 @@
 <?php namespace Sheba\Transport\Bus\Generators\SeatPlan;
+
 use Sheba\Transport\Bus\ClientCalls\Busbd;
 use Sheba\Transport\Bus\Repositories\BusRouteLocationRepository;
 
 class BusBdSeatPlan
 {
-    /** @var \Sheba\Transport\Bus\ClientCalls\Busbd $busBdClient */
+    /** @var Busbd $busBdClient */
     private $busBdClient;
     /** @var BusRouteLocationRepository $busRouteLocation_Repo */
     private $busRouteLocation_Repo;
@@ -45,27 +46,17 @@ class BusBdSeatPlan
 
     public function getSeatPlan()
     {
-        if(!$this->coachId)
-            throw new \Exception('Coach id is required for seat details from bus bd.');
+        if (!$this->coachId) throw new \Exception('Coach id is required for seat details from bus bd.');
 
-        $data =  $this->busBdClient->get('coaches/' . $this->coachId.  '/seats');
+        $data = $this->busBdClient->get('coaches/' . $this->coachId . '/seats');
 
-        if($data['data']) {
+        if ($data['data']) {
             $plan = $data['data'];
             $seatDetails = [];
             $seats = [];
             foreach ($plan['seats'] as $seat) {
-                $current_seat = [
-                    "seat_id" => $seat['seatId']."",
-                    "seat_no" => $seat['seatNo'],
-                    "seat_type_id" => $seat['seatTypeId'],
-                    "status" => $seat['status'],
-                    "color_code" => $seat['colorCode'],
-                    "fare" => (double) $seat['fare'],
-                    "x_axis" => $seat['xaxis'],
-                    "y_axis" => $seat['yaxis']
-                ];
-                array_push($seats, $current_seat);
+                $currentSeat = ["seat_id" => $seat['seatId'], "seat_no" => $seat['seatNo'], "seat_type_id" => $seat['seatTypeId'], "status" => $seat['status'], "color_code" => $seat['colorCode'], "fare" => (double)$seat['fare'], "x_axis" => $seat['xaxis'], "y_axis" => $seat['yaxis']];
+                array_push($seats, $currentSeat);
             }
             $seatDetails['seats'] = $seats;
             $seatDetails['maximum_selectable'] = 5;
@@ -97,5 +88,4 @@ class BusBdSeatPlan
         } else
             throw new \Exception('Failed to parse ticket.');
     }
-
 }

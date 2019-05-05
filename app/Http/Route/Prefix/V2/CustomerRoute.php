@@ -6,7 +6,7 @@ class CustomerRoute
     {
         $api->group(['prefix' => 'customers'], function ($api) {
             $api->group(['prefix' => '{customer}', 'middleware' => ['customer.auth']], function ($api) {
-                $api->get('partners-nearby','PartnerLocationController@getNearbyPartners');
+                $api->get('partners-nearby', 'PartnerLocationController@getNearbyPartners');
                 $api->get('checkout-info', 'CustomerController@getDeliveryInfo');
                 $api->post('purchase-gift-card', 'GiftCardController@purchaseGiftCard');
                 $api->group(['prefix' => 'settings'], function ($api) {
@@ -14,15 +14,11 @@ class CustomerRoute
                     $api->get('review', 'Settings\SettingsController@getCustomerReviewSettings');
                     $api->get('payment', 'Settings\SettingsController@addPayment');
                 });
-
-
                 $api->group(['prefix' => 'info-call'], function ($api) {
                     $api->get('/', 'InfoCallController@index');
                     $api->get('/details/{id}', 'InfoCallController@getDetails');
                     $api->post('/', 'InfoCallController@store');
                 });
-
-
                 $api->put('notifications', 'CustomerNotificationController@update');
                 $api->post('top-up', 'TopUpController@topUp');
                 $api->group(['prefix' => 'bkash'], function ($api) {
@@ -40,7 +36,6 @@ class CustomerRoute
                     $api->post('/', 'PromotionController@addPromo');
                     $api->get('applicable', 'PromotionController@getApplicablePromotions');
                 });
-
                 $api->group(['prefix' => 'delivery-addresses'], function ($api) {
                     $api->get('/', 'CustomerDeliveryAddressController@index');
                     $api->get('filter', 'CustomerDeliveryAddressController@filterAddress');
@@ -76,15 +71,7 @@ class CustomerRoute
                     $api->post('book-tickets', 'MovieTicketController@bookTickets');
                     $api->post('update-status', 'CustomerMovieTicketController@updateTicketStatus');
                 });
-                $api->group(['prefix' => 'transport'], function ($api) {
-                    $api->group(['prefix' => 'bus-ticket'], function ($api) {
-                        $api->get('pickup-places', 'BusTicketController@getAvailablePickupPlaces');
-                        $api->get('destination-places', 'BusTicketController@getAvailableDestinationPlaces');
-                        $api->get('available-coaches', 'BusTicketController@getAvailableCoaches');
-                        $api->get('seat-status', 'BusTicketController@getSeatStatus');
-                        $api->get('available-points', 'BusTicketController@getAvailablePoints');
-                    });
-                });
+                (new TransportRoute())->set($api);
                 $api->group(['prefix' => 'jobs'], function ($api) {
                     $api->get('/', 'JobController@index');
                     $api->get('cancel-reason', 'JobController@cancelReason');
@@ -113,7 +100,6 @@ class CustomerRoute
                 $api->group(['prefix' => 'transactions'], function ($api) {
                     $api->get('/', 'Customer\CustomerTransactionController@index');
                 });
-
             });
         });
     }

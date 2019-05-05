@@ -12,6 +12,8 @@ use Sheba\Transport\Bus\Generators\Destinations;
 use Sheba\Transport\Bus\Generators\Routes;
 use Sheba\Transport\Bus\Generators\SeatPlan\SeatPlan;
 use Sheba\Transport\Bus\Generators\VehicleList;
+use Sheba\Transport\Bus\Order\Creator;
+use Sheba\Transport\Bus\Order\Status;
 use Sheba\Transport\Bus\Repositories\BusRouteLocationRepository;
 use Throwable;
 
@@ -57,7 +59,7 @@ class BusTicketController extends Controller
     {
         try {
             $this->validate($request, ['pickup_place_id' => 'required']);
-            $destination_routes = $destinations->setPickupAddressId( $request->pickup_place_id)->getDestinations();
+            $destination_routes = $destinations->setPickupAddressId($request->pickup_place_id)->getDestinations();
             $routes = [];
             $destination_routes->each(function ($route) use (&$routes) {
                 $manager = new Manager();
@@ -99,7 +101,6 @@ class BusTicketController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-
     }
 
     public function getSeatStatus(Request $request, SeatPlan $seatPlan)
@@ -145,7 +146,67 @@ class BusTicketController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-
     }
 
+    /**
+     * ORDER PLACEMENT - BOOK TICKET
+     *
+     * @param Request $request
+     * @param Creator $creator
+     * @return JsonResponse
+     */
+    public function book(Request $request, Creator $creator)
+    {
+        try {
+            $this->validate($request, ['journey_date' => 'required', 'departure_time' => 'required']);
+
+            $creator->setAgent(1)
+                ->setReserverName($request->reserver_name)
+                ->setReserverMobile($request->reserver_mobile)
+                ->setReserverEmail($request->reserver_email)
+                ->setVendorId($request->vendor_id)->setStatus(Status::INITIATED)->setAmount($request->amount)
+                ->setTransactionId(1)
+                ->setJourneyDate($request->journey_date)->setDepartureTime($request->departure_time)->setArrivalTime($request->arrival_time)
+                ->setDepartureStationName($request->departure_station_name)
+                ->setArrivalStationName($request->arrival_station_name);
+
+            $order = $creator->create();
+
+            return api_response($request, null, 200, ['data' => $order]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * ORDER PLACEMENT - CONFIRM TICKET
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function confirm(Request $request)
+    {
+        try {
+            $this->validate($request, []);
+            $data = [];
+            return api_response($request, $data, 200, ['data' => $data]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }
