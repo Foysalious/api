@@ -56,7 +56,7 @@ class BusBdSeatPlan
             $seats = [];
             foreach ($plan['seats'] as $seat) {
                 $current_seat = [
-                    "seat_id" => $seat['seatId'],
+                    "seat_id" => $seat['seatId']."",
                     "seat_no" => $seat['seatNo'],
                     "seat_type_id" => $seat['seatTypeId'],
                     "status" => $seat['status'],

@@ -97,7 +97,7 @@ class PekhomSeatPlan
                 if(is_array($seat))
                 {
                     $current_seat = [
-                        "seat_id" => $seat['seatid'],
+                        "seat_id" => $seat['seatid']."",
                         "seat_no" => $seat['seat_no'],
                         "seat_type_id" => $seat['seat_type_id'],
                         "status" => $seat['status'],
