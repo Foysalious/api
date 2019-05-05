@@ -25,5 +25,8 @@ class BusinessRoute
                 });
             });
         });
+        $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
+            $api->post('/{member}/vehicles', 'B2b\VehiclesController@store');
+        });
     }
 }
