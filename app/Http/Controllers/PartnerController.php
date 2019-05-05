@@ -888,7 +888,7 @@ class PartnerController extends Controller
                     $query->where('id', $location->id);
                 })
                 ->where('category_id', $category)
-                ->where('is_published', 1)
+                // ->where('is_published', 1)
                 ->select('services.id', 'services.name', 'services.variable_type', 'services.app_thumb')
                 ->get();
             return api_response($request, $request, 200, ['services' => $service]);
