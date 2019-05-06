@@ -10,6 +10,7 @@ class Creator
     private $reserverName;
     private $reserverMobile;
     private $reserverEmail;
+    private $reserverGender;
     private $vendorId;
     private $status;
     private $amount;
@@ -23,7 +24,15 @@ class Creator
     private $arrivalTime;
     private $departureStationName;
     private $arrivalStationName;
+
+    private $departureStationId;
+    private $arrivalStationId;
+
     private $reservationDetails;
+    private $coachId;
+    private $seatListId;
+    private $boardingPoint;
+    private $droppingPoint;
     /** @var TransportTicketOrdersRepository $ordersRepo */
     private $ordersRepo;
 
@@ -82,32 +91,32 @@ class Creator
     }
 
     /**
-     * @param mixed $reserverMobile
+     * @param $reserver_mobile
      * @return Creator
      */
-    public function setReserverMobile($reserverMobile)
+    public function setReserverMobile($reserver_mobile)
     {
-        $this->reserverMobile = $reserverMobile;
+        $this->reserverMobile = $reserver_mobile;
         return $this;
     }
 
     /**
-     * @param mixed $reserverEmail
+     * @param $reserver_email
      * @return Creator
      */
-    public function setReserverEmail($reserverEmail)
+    public function setReserverEmail($reserver_email)
     {
-        $this->reserverEmail = $reserverEmail;
+        $this->reserverEmail = $reserver_email;
         return $this;
     }
 
     /**
-     * @param mixed $vendorId
+     * @param $vendor_id
      * @return Creator
      */
-    public function setVendorId($vendorId)
+    public function setVendorId($vendor_id)
     {
-        $this->vendorId = $vendorId;
+        $this->vendorId = $vendor_id;
         return $this;
     }
 
@@ -142,102 +151,252 @@ class Creator
     }
 
     /**
-     * @param mixed $discountPercent
+     * @param $discount_percent
      * @return Creator
      */
-    public function setDiscountPercent($discountPercent)
+    public function setDiscountPercent($discount_percent)
     {
-        $this->discountPercent = $discountPercent;
+        $this->discountPercent = $discount_percent;
         return $this;
     }
 
     /**
-     * @param mixed $shebaContribution
+     * @param $sheba_contribution
      * @return Creator
      */
-    public function setShebaContribution($shebaContribution)
+    public function setShebaContribution($sheba_contribution)
     {
-        $this->shebaContribution = $shebaContribution;
+        $this->shebaContribution = $sheba_contribution;
         return $this;
     }
 
     /**
-     * @param mixed $vendorContribution
+     * @param $vendor_contribution
      * @return Creator
      */
-    public function setVendorContribution($vendorContribution)
+    public function setVendorContribution($vendor_contribution)
     {
-        $this->vendorContribution = $vendorContribution;
+        $this->vendorContribution = $vendor_contribution;
         return $this;
     }
 
     /**
-     * @param mixed $transactionId
+     * @param mixed $transaction_id
      * @return Creator
      */
-    public function setTransactionId($transactionId)
+    public function setTransactionId($transaction_id)
     {
-        $this->transactionId = $transactionId;
+        $this->transactionId = $transaction_id;
         return $this;
     }
 
     /**
-     * @param mixed $journeyDate
+     * @param mixed $journey_date
      * @return Creator
      */
-    public function setJourneyDate($journeyDate)
+    public function setJourneyDate($journey_date)
     {
-        $this->journeyDate = $journeyDate;
+        $this->journeyDate = $journey_date;
         return $this;
     }
 
     /**
-     * @param mixed $departureTime
+     * @param mixed $departure_time
      * @return Creator
      */
-    public function setDepartureTime($departureTime)
+    public function setDepartureTime($departure_time)
     {
-        $this->departureTime = $departureTime;
+        $this->departureTime = $departure_time;
         return $this;
     }
 
     /**
-     * @param mixed $arrivalTime
+     * @param mixed $arrival_time
      * @return Creator
      */
-    public function setArrivalTime($arrivalTime)
+    public function setArrivalTime($arrival_time)
     {
-        $this->arrivalTime = $arrivalTime;
+        $this->arrivalTime = $arrival_time;
         return $this;
     }
 
     /**
-     * @param mixed $departureStationName
+     * @param mixed $departure_station_name
      * @return Creator
      */
-    public function setDepartureStationName($departureStationName)
+    public function setDepartureStationName($departure_station_name)
     {
-        $this->departureStationName = $departureStationName;
+        $this->departureStationName = $departure_station_name;
         return $this;
     }
 
     /**
-     * @param mixed $arrivalStationName
+     * @param mixed $arrival_station_name
      * @return Creator
      */
-    public function setArrivalStationName($arrivalStationName)
+    public function setArrivalStationName($arrival_station_name)
     {
-        $this->arrivalStationName = $arrivalStationName;
+        $this->arrivalStationName = $arrival_station_name;
         return $this;
     }
 
     /**
-     * @param mixed $reservationDetails
+     * @param mixed $reservation_details
      * @return Creator
      */
-    public function setReservationDetails($reservationDetails)
+    public function setReservationDetails($reservation_details)
     {
-        $this->reservationDetails = $reservationDetails;
+        $this->reservationDetails = $reservation_details;
+        return $this;
+    }
+
+    /**
+     * @param $coach_id
+     * @return $this
+     */
+    public function setCoachId($coach_id)
+    {
+        $this->coachId = $coach_id;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getCoachId()
+    {
+        return $this->coachId;
+    }
+
+    /**
+     * @param $departure_station_id
+     * @return Creator
+     */
+    public function setDepartureStationId($departure_station_id)
+    {
+        $this->departureStationId = $departure_station_id;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getArrivalStationId()
+    {
+        return $this->arrivalStationId;
+    }
+
+    /**
+     * @param $arrival_station_id
+     * @return Creator
+     */
+    public function setArrivalStationId($arrival_station_id)
+    {
+        $this->arrivalStationId = $arrival_station_id;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getDepartureStationId()
+    {
+        return $this->departureStationId;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getReserverName()
+    {
+        return $this->reserverName;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getReserverMobile()
+    {
+        return $this->reserverMobile;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getReserverEmail()
+    {
+        return $this->reserverEmail;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getReserverGender()
+    {
+        return $this->reserverGender;
+    }
+
+    /**
+     * @param $reserver_gender
+     * @return Creator
+     */
+    public function setReserverGender($reserver_gender)
+    {
+        $this->reserverGender = $reserver_gender;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getSeatIdList()
+    {
+        return $this->seatListId;
+    }
+
+    /**
+     * @param $seat_list_id
+     * @return Creator
+     */
+    public function setSeatIdList($seat_list_id)
+    {
+        $this->seatListId = explode(',', $seat_list_id);
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getBoardingPoint()
+    {
+        return $this->boardingPoint;
+    }
+
+    /**
+     * @param $boarding_point
+     * @return Creator
+     */
+    public function setBoardingPoint($boarding_point)
+    {
+        $this->boardingPoint = $boarding_point;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getDroppingPoint()
+    {
+        return $this->droppingPoint;
+    }
+
+    /**
+     * @param $dropping_point
+     * @return Creator
+     */
+    public function setDroppingPoint($dropping_point)
+    {
+        $this->droppingPoint = $dropping_point;
         return $this;
     }
 }

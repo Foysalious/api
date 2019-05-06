@@ -197,7 +197,6 @@ class BusTicketController extends Controller
         }
     }
 
-
     public function applyPromo($customer, Request $request)
     {
         try {
@@ -244,12 +243,14 @@ class BusTicketController extends Controller
             $this->validate($request, [
                 'reserver_mobile' => 'required|string|mobile:bd',
                 'journey_date' => 'required',
-                'departure_time' => 'required'
+                'departure_time' => 'required',
+                'vendor_id' => 'required',
+                'coach_id' => 'required',
+                'seat_id_list' => 'required|string'
             ]);
 
             $agent = $this->getAgent($request);
             $vendor = $vendor->getById($request->vendor_id);
-            $vendor->book();
 
             $creator->setAgent($agent)
                 ->setReserverName($request->reserver_name)
@@ -258,13 +259,18 @@ class BusTicketController extends Controller
                 ->setVendorId($request->vendor_id)
                 ->setStatus(Status::INITIATED)
                 ->setAmount($request->amount)
-                ->setTransactionId(1)
                 ->setJourneyDate($request->journey_date)
                 ->setDepartureTime($request->departure_time)
                 ->setArrivalTime($request->arrival_time)
                 ->setDepartureStationName($request->departure_station_name)
-                ->setArrivalStationName($request->arrival_station_name);
+                ->setArrivalStationName($request->arrival_station_name)
+                ->setBoardingPoint($request->boarding_point)
+                ->setDroppingPoint($request->dropping_point)
+                ->setCoachId($request->coach_id)
+                ->setReserverGender($request->reserver_gender)
+                ->setSeatIdList($request->seat_id_list);
 
+            // $vendor->bookTicket($creator);
             $order = $creator->create();
 
             return api_response($request, null, 200, ['data' => $order]);
@@ -275,6 +281,7 @@ class BusTicketController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

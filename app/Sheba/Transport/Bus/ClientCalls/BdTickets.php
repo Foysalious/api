@@ -45,6 +45,17 @@ class BdTickets extends ExternalApiClient
     }
 
     /**
+     * @param $uri
+     * @param $data
+     * @return mixed|ResponseInterface
+     * @throws GuzzleException
+     */
+    public function put($uri, $data)
+    {
+        return $this->call('put', $uri, $data);
+    }
+
+    /**
      * @param $method
      * @param $uri
      * @param null $data
@@ -54,7 +65,7 @@ class BdTickets extends ExternalApiClient
     private function call($method, $uri, $data = null)
     {
         $res = $this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data));
-        if ($res->getStatusCode() != 200) throw new Exception();
+        if (!in_array($res->getStatusCode(), [200, 201])) throw new Exception();
         $res = json_decode($res->getBody()->getContents(), true);
 
         unset($res['code'], $res['message']);

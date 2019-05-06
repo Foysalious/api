@@ -48,6 +48,6 @@ class BusRouteLocationRepository extends BaseRepository
      */
     public function findIdsByColumnName($column_name, $ids)
     {
-        return BusRouteLocation::whereIn($column_name,$ids)->get();
+        return BusRouteLocation::whereIn($column_name, $ids)->get();
     }
 }
