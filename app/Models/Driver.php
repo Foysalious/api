@@ -12,4 +12,9 @@ class Driver extends Model
         return $this->belongsTo(Profile::class);
     }
 
+    public function vehicles()
+    {
+        return $this->belongsToMany(Vehicle::class);
+    }
+
 }

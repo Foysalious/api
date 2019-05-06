@@ -21,4 +21,9 @@ class Vehicle extends Model
         return $this->hasOne(VehicleRegistrationInformation::class);
     }
 
+    public function drivers()
+    {
+        return $this->belongsToMany(Driver::class);
+    }
+
 }
