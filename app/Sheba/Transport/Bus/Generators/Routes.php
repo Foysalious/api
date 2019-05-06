@@ -1,14 +1,14 @@
 <?php namespace Sheba\Transport\Bus\Generators;
 
-use Sheba\Transport\Bus\ClientCalls\Busbd;
+use Sheba\Transport\Bus\ClientCalls\BdTickets;
 use Sheba\Transport\Bus\ClientCalls\Pekhom;
 use Sheba\Transport\Bus\Repositories\BusRouteLocationRepository;
 use Sheba\Transport\Bus\Repositories\PekhomDestinationRouteRepository;
 
 class Routes
 {
-    /** @var Busbd $busBdClient */
-    private $busBdClient;
+    /** @var BdTickets $bdTicketClient */
+    private $bdTicketClient;
     /** @var BusRouteLocationRepository $busRouteLocation_Repo */
     private $busRouteLocationRepo;
     /** @var PekhomDestinationRouteRepository $pekhomDestinationRouteRepo */
@@ -19,12 +19,13 @@ class Routes
     /**
      * Routes constructor.
      * @param BusRouteLocationRepository $bus_route_location_repo
-     * @param Busbd $bus_bd
+     * @param BdTickets $bd_tickets
      * @param Pekhom $pekhom
+     * @param PekhomDestinationRouteRepository $pekhomDestinationRouteRepo
      */
-    public function __construct(BusRouteLocationRepository $bus_route_location_repo, Busbd $bus_bd, Pekhom $pekhom,PekhomDestinationRouteRepository $pekhomDestinationRouteRepo)
+    public function __construct(BusRouteLocationRepository $bus_route_location_repo, BdTickets $bd_tickets, Pekhom $pekhom, PekhomDestinationRouteRepository $pekhomDestinationRouteRepo)
     {
-        $this->busBdClient = $bus_bd;
+        $this->bdTicketClient = $bd_tickets;
         $this->busRouteLocationRepo = $bus_route_location_repo;
         $this->pekhomClient = $pekhom;
         $this->pekhomDestinationRouteRepo = $pekhomDestinationRouteRepo;
@@ -32,7 +33,7 @@ class Routes
 
     public function generate()
     {
-        $bus_bd_route = $this->busBdClient->get('routes/from');
+        $bus_bd_route = $this->bdTicketClient->get('routes/from');
 
         if (config('bus_transport.pekhom.is_active')) {
             $pekhom_route = $this->pekhomClient->post('bus/routes.php', null);

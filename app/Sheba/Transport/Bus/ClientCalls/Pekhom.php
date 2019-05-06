@@ -13,7 +13,7 @@ class Pekhom extends ExternalApiClient
     private $apiKey;
 
     /**
-     * Busbd constructor.
+     * BdTickets constructor.
      */
     public function __construct()
     {

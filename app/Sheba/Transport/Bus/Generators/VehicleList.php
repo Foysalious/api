@@ -1,15 +1,15 @@
 <?php namespace Sheba\Transport\Bus\Generators;
 
 use Carbon\Carbon;
-use Sheba\Transport\Bus\ClientCalls\Busbd;
+use Sheba\Transport\Bus\ClientCalls\BdTickets;
 use Sheba\Transport\Bus\ClientCalls\Pekhom;
 use Sheba\Transport\Bus\Repositories\BusRouteLocationRepository;
 use Sheba\Transport\Bus\Repositories\PekhomDestinationRouteRepository;
 
 class VehicleList
 {
-    /** @var Busbd $busBdClient */
-    private $busBdClient;
+    /** @var BdTickets $bdTicketClient */
+    private $bdTicketClient;
     /** @var Pekhom $pekhomClient */
     private $pekhomClient;
     /** @var BusRouteLocationRepository $busRouteLocation_Repo */
@@ -18,9 +18,16 @@ class VehicleList
     private $destinationAddressId;
     private $date;
 
-    public function __construct(BusRouteLocationRepository $bus_route_location_repo, Busbd $bus_bd, Pekhom $pekhom, PekhomDestinationRouteRepository $pekhomDestinationRouteRepo)
+    /**
+     * VehicleList constructor.
+     * @param BusRouteLocationRepository $bus_route_location_repo
+     * @param BdTickets $bd_ticket
+     * @param Pekhom $pekhom
+     * @param PekhomDestinationRouteRepository $pekhomDestinationRouteRepo
+     */
+    public function __construct(BusRouteLocationRepository $bus_route_location_repo, BdTickets $bd_ticket, Pekhom $pekhom, PekhomDestinationRouteRepository $pekhomDestinationRouteRepo)
     {
-        $this->busBdClient = $bus_bd;
+        $this->bdTicketClient = $bd_ticket;
         $this->pekhomClient = $pekhom;
         $this->busRouteLocation_Repo = $bus_route_location_repo;
     }
@@ -47,9 +54,9 @@ class VehicleList
     {
         $pick_up_location = $this->busRouteLocation_Repo->findById($this->pickupAddressId);
         $destination_location = $this->busRouteLocation_Repo->findById($this->destinationAddressId);
-        $bus_bd_vehicles =$this->parseBusBdResponse($this->busBdClient->post('coaches/search',['date' => $this->date, 'fromStationId' => $pick_up_location->bus_bd_id, 'toStationId' => $destination_location->bus_bd_id]));
+        $bd_ticket_vehicles =$this->parseBdTicketResponse($this->bdTicketClient->post('coaches/search',['date' => $this->date, 'fromStationId' => $pick_up_location->bus_bd_id, 'toStationId' => $destination_location->bus_bd_id]));
         $pekhom_vehicles = $this->parsePekhomResponse($this->pekhomClient->post('bus/search.php',['journey_date' => $this->date, 'from_location_uid' => $pick_up_location->pekhom_id, 'to_location_uid' => $destination_location->pekhom_id]));
-        $vehicles = array_merge($bus_bd_vehicles,$pekhom_vehicles);
+        $vehicles = array_merge($bd_ticket_vehicles,$pekhom_vehicles);
         $filters = $this->getFilters($vehicles);
         $this->parseTags($vehicles);
         $vehicles = collect($vehicles);
@@ -57,9 +64,9 @@ class VehicleList
         return ['coaches' => $vehicles, 'filters' => $filters];;
     }
 
-    private function parseBusBdResponse($data)
+    private function parseBdTicketResponse($data)
     {
-        $bus_bd_vehicles = [];
+        $bd_ticket_vehicles = [];
         if($data['data']) {
             $vehicles = $data['data'];
             foreach ($vehicles as  $vehicle) {
@@ -87,10 +94,11 @@ class VehicleList
                     'vendor_id' => 1,
                     'duration' => $this->convertToHoursMins($duration)
                 ];
-                array_push($bus_bd_vehicles, $current_vehicle_details);
+                array_push($bd_ticket_vehicles, $current_vehicle_details);
             }
         }
-        return $bus_bd_vehicles;
+
+        return $bd_ticket_vehicles;
     }
 
     private function parsePekhomResponse($data)

@@ -1,12 +1,12 @@
 <?php namespace Sheba\Transport\Bus\Generators\SeatPlan;
 
-use Sheba\Transport\Bus\ClientCalls\Busbd;
+use Sheba\Transport\Bus\ClientCalls\BdTickets;
 use Sheba\Transport\Bus\Repositories\BusRouteLocationRepository;
 
 class BdTicketsSeatPlan
 {
-    /** @var Busbd $busBdClient */
-    private $busBdClient;
+    /** @var BdTickets $bdTicketClient */
+    private $bdTicketClient;
     /** @var BusRouteLocationRepository $busRouteLocation_Repo */
     private $busRouteLocation_Repo;
 
@@ -16,11 +16,11 @@ class BdTicketsSeatPlan
     /**
      * SeatPlan constructor.
      * @param BusRouteLocationRepository $bus_route_location_repo
-     * @param Busbd $bus_bd_client
+     * @param BdTickets $bd_ticket_client
      */
-    public function __construct(BusRouteLocationRepository $bus_route_location_repo, Busbd $bus_bd_client)
+    public function __construct(BusRouteLocationRepository $bus_route_location_repo, BdTickets $bd_ticket_client)
     {
-        $this->busBdClient = $bus_bd_client;
+        $this->bdTicketClient = $bd_ticket_client;
         $this->busRouteLocation_Repo = $bus_route_location_repo;
     }
 
@@ -48,7 +48,7 @@ class BdTicketsSeatPlan
     {
         if (!$this->coachId) throw new \Exception('Coach id is required for seat details from bus bd.');
 
-        $data = $this->busBdClient->get('coaches/' . $this->coachId . '/seats');
+        $data = $this->bdTicketClient->get('coaches/' . $this->coachId . '/seats');
 
         if ($data['data']) {
             $plan = $data['data'];

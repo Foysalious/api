@@ -1,19 +1,19 @@
 <?php namespace Sheba\Transport\Bus\Vendor\BdTickets;
 
 use Sheba\Transport\Bus\Vendor\Vendor;
-use Sheba\Transport\Bus\ClientCalls\Busbd as BusbdClientCall;
+use Sheba\Transport\Bus\ClientCalls\BdTickets as BdTicketsClientCall;
 
 class BdTickets extends Vendor
 {
     const BOOK_APPLICATION = 'BUS';
     const APPLICATION_CHANNEL = 'REMOTE';
 
-    /** @var BusbdClientCall $busbdClient */
-    private $busbdClient;
+    /** @var BdTicketsClientCall $bdTicketClient */
+    private $bdTicketClient;
 
-    public function __construct(BusbdClientCall $busbd_client)
+    public function __construct(BdTicketsClientCall $bd_ticket_client)
     {
-        $this->busbdClient = $busbd_client;
+        $this->bdTicketClient = $bd_ticket_client;
     }
 
     public function bookTicket()
@@ -29,7 +29,7 @@ class BdTickets extends Vendor
             'bookApplication' => self::BOOK_APPLICATION,
             'applicationChannel' => self::APPLICATION_CHANNEL
         ];
-        return $this->busbdClient->post('carts', $data);
+        return $this->bdTicketClient->post('carts', $data);
     }
 
     private function updateCart()

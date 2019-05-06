@@ -5,7 +5,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Psr\Http\Message\ResponseInterface;
 
-class Busbd extends ExternalApiClient
+class BdTickets extends ExternalApiClient
 {
     protected $client;
     protected $baseUrl;
@@ -13,7 +13,7 @@ class Busbd extends ExternalApiClient
     protected $bookingPort;
 
     /**
-     * Busbd constructor.
+     * BdTickets constructor.
      */
     public function __construct()
     {
@@ -69,7 +69,7 @@ class Busbd extends ExternalApiClient
     private function getOptions($data = null)
     {
         $options = [];
-        //if (!is_null($data)) $options['form_params'] = $data;
+        // if (!is_null($data)) $options['form_params'] = $data;
         $options['body'] = json_encode( $data);
 
         return $options;
