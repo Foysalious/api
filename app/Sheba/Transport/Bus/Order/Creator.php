@@ -1,5 +1,6 @@
 <?php namespace Sheba\Transport\Bus\Order;
 
+use Carbon\Carbon;
 use Sheba\Transport\Bus\Repositories\TransportTicketOrdersRepository;
 use Sheba\Transport\TransportAgent;
 
@@ -206,7 +207,7 @@ class Creator
      */
     public function setDepartureTime($departure_time)
     {
-        $this->departureTime = $departure_time;
+        $this->departureTime = Carbon::parse($departure_time)->toTimeString();
         return $this;
     }
 
@@ -216,7 +217,7 @@ class Creator
      */
     public function setArrivalTime($arrival_time)
     {
-        $this->arrivalTime = $arrival_time;
+        $this->arrivalTime = Carbon::parse($arrival_time)->toTimeString();
         return $this;
     }
 
