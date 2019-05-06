@@ -31,6 +31,9 @@ class BusinessRoute
 
             $api->get('/{member}/vehicles', 'B2b\VehiclesController@vehicleLists');
 
+            $api->get('/{member}/vehicles/{vehicle}/general-info', 'B2b\VehiclesController@getVehicleGeneralInfo');
+            $api->post('/{member}/vehicles/{vehicle}/general-info', 'B2b\VehiclesController@updateVehicleGeneralInfo');
+
             $api->post('/{member}/drivers', 'B2b\DriversController@store');
             $api->post('/{member}/drivers/{driver}', 'B2b\DriversController@update');
         });
