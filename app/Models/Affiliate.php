@@ -3,7 +3,6 @@
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Helpers\TimeFrame;
-use Sheba\Location\Distance\TransactionMethod;
 use Sheba\ModificationFields;
 use Sheba\MovieTicket\MovieAgent;
 use Sheba\MovieTicket\MovieTicketTrait;

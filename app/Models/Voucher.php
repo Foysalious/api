@@ -14,14 +14,34 @@ class Voucher extends Model
         return $this->hasMany(Order::class);
     }
 
-    public function usage($customer)
+    public function movieTicketOrders()
     {
-        return $this->orders->where('customer_id', $customer)->count();
+        return $this->hasMany(MovieTicketOrder::class);
+    }
+
+    public function usage(Profile $profile)
+    {
+        return $this->usageCalculator->setVoucher($this)->usage($profile);
     }
 
     public function usedCustomerCount()
     {
-        return $this->orders->groupBy('customer_id')->count();
+        return $this->usageCalculator->setVoucher($this)->usedCustomerCount();
+    }
+
+    public function hasNotReachedMaxCustomer()
+    {
+        return $this->usedCustomerCount() < $this->max_customer;
+    }
+
+    public function hasNotReachedMaxOrder(Profile $profile)
+    {
+        return $this->usage($profile) < $this->max_order;
+    }
+
+    public function hasReachedMaxOrder(Profile $profile)
+    {
+        return $this->usage($profile) >= $this->max_order;
     }
 
     public function promotions()

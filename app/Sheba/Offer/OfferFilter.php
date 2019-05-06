@@ -116,7 +116,7 @@ class OfferFilter
         if (count($rules) == 0) return true;
         if ($voucher->max_order > 0 && $this->customer->orders->where('voucher_id', $voucher->id)->count() >= $voucher->max_order) return false;
         $params = (new CheckParamsForPromotion())->setApplicant($this->customer);
-        if (!voucher($voucher)->checkForPromotion($params)->isValid()) {
+        if (voucher($voucher)->checkForPromotion($params)->isInValid()) {
             return false;
         }
         if (array_key_exists('nth_orders', $rules)) {
