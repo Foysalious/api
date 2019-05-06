@@ -29,7 +29,7 @@ class VehiclesController extends Controller
     {
         try {
             $this->validate($request, [
-                #'type' => 'required|string|in:car,bus,bike,cycle',
+                'type' => 'required|string|in:hatchback,sedan,suv,passenger_van,others',
                 'company_name' => 'required|string',
                 'model_name' => 'required|string',
                 'model_year' => 'required|date|date_format:Y-m-d',
@@ -100,7 +100,7 @@ class VehiclesController extends Controller
     {
         try {
             $this->validate($request, [
-                'type' => 'string|in:car,bus,bike,cycle',
+                'type' => 'string|in:hatchback,sedan,suv,passenger_van,others',
                 'company_name' => 'string',
                 'model_name' => 'string',
                 'model_year' => 'date|date_format:Y-m-d',
@@ -173,19 +173,19 @@ class VehiclesController extends Controller
             $this->setModifier($member);
 
             list($offset, $limit) = calculatePagination($request);
-            $vehicles = Vehicle::select('id', 'status')->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
+            $vehicles = Vehicle::select('id', 'status', 'current_driver_id')->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
 
             $vehicle_lists = [];
             foreach($vehicles as $vehicle){
                 $basic_information = $vehicle->basicInformations;
                 $registration_information = $vehicle->registrationInformations;
-                dd($vehicle->drivers);
+
                 $vehicle = [
                     'vehicle_model' => $basic_information->model_name,
                     'status' => $vehicle->status,
                     'vehicle_type' => $basic_information->type,
                     'assigned_to' => 1,
-                    'driver' => 1,
+                    'driver' => "Nothing",
                 ];
                 array_push($vehicle_lists, $vehicle);
             }
