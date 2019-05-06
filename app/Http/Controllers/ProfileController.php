@@ -6,6 +6,8 @@ use App\Repositories\ProfileRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Helpers\Formatters\BDMobileFormatter;
+use Sheba\Sms\Sms;
 use Validator;
 use App\Http\Requests;
 
@@ -90,7 +92,7 @@ class ProfileController extends Controller
         return api_response($request, $profile, 200, ['info' => $profile]);
     }
 
-    public function updateProfileDocument(Request $request,$id)
+    public function updateProfileDocument(Request $request, $id)
     {
 
         try {
@@ -106,6 +108,26 @@ class ProfileController extends Controller
             return api_response($request, null, 401, ['message' => $message]);
         } catch (\Throwable $e) {
             dd($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function forgetPassword(Request $request, Sms $sms)
+    {
+        $rules = ['mobile' => 'required|mobile:bd'];
+        try {
+            $this->validate($request, $rules);
+            $mobile = BDMobileFormatter::format($request->mobile);
+            $profile = Profile::where('mobile', $mobile)->first();
+            if (!$profile) return api_response($request, null, 404, ['message' => 'Profile not found with this number']);
+            $password = str_random(6);
+            $smsSent=$sms->shoot($mobile, "Your password is reset to $password . Please use this password to login");
+            $profile->update(['password' => bcrypt($password)]);
+            return api_response($request, true, 200, ['message' => 'Your password is sent to your mobile number. Please use that password to login']);
+        } catch (ValidationException $e) {
+            return api_response($request, null, 401, ['message' => 'Invalid mobile number']);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
