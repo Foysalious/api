@@ -28,6 +28,9 @@ class BusinessRoute
         $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
             $api->post('/{member}/vehicles', 'B2b\VehiclesController@store');
             $api->post('/{member}/vehicles/{vehicle}', 'B2b\VehiclesController@update');
+
+            $api->post('/{member}/drivers', 'B2b\DriversController@store');
+            $api->post('/{member}/drivers/{driver}', 'B2b\DriversController@update');
         });
     }
 }
