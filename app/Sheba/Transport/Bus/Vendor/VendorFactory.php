@@ -1,13 +1,18 @@
 <?php namespace Sheba\Transport\Bus\Vendor;
 
 use App\Models\Transport\TransportTicketVendor;
+
 use Exception;
 use ReflectionClass;
+
 use Sheba\Transport\Bus\Vendor\BdTickets\BdTickets;
 use Sheba\Transport\Bus\Vendor\Pekhom\Pekhom;
 
 class VendorFactory
 {
+    const BUSBD = 1;
+    const PEKHOM = 2;
+
     private $classes = [
         BdTickets::class,
         Pekhom::class

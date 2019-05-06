@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\Transport\Bus\Generators\Destinations;
 use Sheba\Transport\Bus\Generators\Routes;
 use Sheba\Transport\Bus\Generators\SeatPlan\SeatPlan;
@@ -15,6 +16,8 @@ use Sheba\Transport\Bus\Generators\VehicleList;
 use Sheba\Transport\Bus\Order\Creator;
 use Sheba\Transport\Bus\Order\Status;
 use Sheba\Transport\Bus\Repositories\BusRouteLocationRepository;
+use Sheba\Transport\Bus\Vendor\Vendor;
+use Sheba\Transport\Bus\Vendor\VendorFactory;
 use Throwable;
 
 class BusTicketController extends Controller
@@ -153,20 +156,33 @@ class BusTicketController extends Controller
      *
      * @param Request $request
      * @param Creator $creator
+     * @param VendorFactory $vendor
      * @return JsonResponse
      */
-    public function book(Request $request, Creator $creator)
+    public function book(Request $request, Creator $creator, VendorFactory $vendor)
     {
         try {
-            $this->validate($request, ['journey_date' => 'required', 'departure_time' => 'required']);
+            $this->validate($request, [
+                'reserver_mobile' => 'required|string|mobile:bd',
+                'journey_date' => 'required',
+                'departure_time' => 'required'
+            ]);
 
-            $creator->setAgent(1)
+            $agent = $this->getAgent($request);
+            $vendor = $vendor->getById($request->vendor_id);
+            $vendor->book();
+
+            $creator->setAgent($agent)
                 ->setReserverName($request->reserver_name)
-                ->setReserverMobile($request->reserver_mobile)
+                ->setReserverMobile(BDMobileFormatter::format($request->reserver_mobile))
                 ->setReserverEmail($request->reserver_email)
-                ->setVendorId($request->vendor_id)->setStatus(Status::INITIATED)->setAmount($request->amount)
+                ->setVendorId($request->vendor_id)
+                ->setStatus(Status::INITIATED)
+                ->setAmount($request->amount)
                 ->setTransactionId(1)
-                ->setJourneyDate($request->journey_date)->setDepartureTime($request->departure_time)->setArrivalTime($request->arrival_time)
+                ->setJourneyDate($request->journey_date)
+                ->setDepartureTime($request->departure_time)
+                ->setArrivalTime($request->arrival_time)
                 ->setDepartureStationName($request->departure_station_name)
                 ->setArrivalStationName($request->arrival_station_name);
 
@@ -208,5 +224,11 @@ class BusTicketController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function getAgent(Request $request)
+    {
+        if ($request->affiliate) return $request->affiliate;
+        elseif ($request->customer) return $request->customer;
     }
 }

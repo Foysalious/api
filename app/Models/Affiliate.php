@@ -12,8 +12,9 @@ use Sheba\Payment\Wallet;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
+use Sheba\Transport\TransportAgent;
 
-class Affiliate extends Model implements TopUpAgent, MovieAgent
+class Affiliate extends Model implements TopUpAgent, MovieAgent, TransportAgent
 {
     use TopUpTrait;
     use MovieTicketTrait;

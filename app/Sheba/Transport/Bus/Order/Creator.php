@@ -1,6 +1,7 @@
 <?php namespace Sheba\Transport\Bus\Order;
 
 use Sheba\Transport\Bus\Repositories\TransportTicketOrdersRepository;
+use Sheba\Transport\TransportAgent;
 
 class Creator
 {
@@ -60,13 +61,13 @@ class Creator
     }
 
     /**
-     * @param $agent
-     * @return Creator
+     * @param TransportAgent $agent
+     * @return $this
      */
-    public function setAgent($agent)
+    public function setAgent(TransportAgent $agent)
     {
-        $this->agentType = "App\\Models\\Affiliate";
-        $this->agentId = $agent;
+        $this->agentType = get_class($agent);
+        $this->agentId = $agent->id;
         return $this;
     }
 
