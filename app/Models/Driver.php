@@ -9,7 +9,7 @@ class Driver extends Model
 
     public function profile()
     {
-        return $this->belongsTo(Profile::class);
+        return $this->hasOne(Profile::class,'driver_id');
     }
 
     public function vehicle()

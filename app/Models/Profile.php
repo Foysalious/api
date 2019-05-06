@@ -66,7 +66,7 @@ class Profile extends Model
 
     public function driver()
     {
-        return $this->hasOne(Driver::class);
+        return $this->belongsTo(Driver::class);
     }
 
     public function joinRequests()
