@@ -3,7 +3,6 @@
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Helpers\TimeFrame;
-use Sheba\Location\Distance\TransactionMethod;
 use Sheba\ModificationFields;
 use Sheba\MovieTicket\MovieAgent;
 use Sheba\MovieTicket\MovieTicketTrait;
@@ -13,8 +12,9 @@ use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
 use Sheba\Transport\TransportAgent;
+use Sheba\Voucher\Contracts\CanApplyVoucher;
 
-class Affiliate extends Model implements TopUpAgent, MovieAgent, TransportAgent
+class Affiliate extends Model implements TopUpAgent, MovieAgent, TransportAgent, CanApplyVoucher
 {
     use TopUpTrait;
     use MovieTicketTrait;

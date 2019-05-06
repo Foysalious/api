@@ -3,7 +3,6 @@
 use App\Sheba\Payment\Rechargable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Sheba\MovieTicket\MovieAgent;
-use Sheba\MovieTicket\MovieTicketCommission;
 use Sheba\MovieTicket\MovieTicketTrait;
 use Sheba\MovieTicket\MovieTicketTransaction;
 use Sheba\Payment\Wallet;
@@ -13,8 +12,9 @@ use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
 use Sheba\Transport\TransportAgent;
 use Sheba\Voucher\VoucherCodeGenerator;
+use Sheba\Voucher\Contracts\CanApplyVoucher;
 
-class Customer extends Authenticatable implements Rechargable, Rewardable, TopUpAgent, MovieAgent, TransportAgent
+class Customer extends Authenticatable implements Rechargable, Rewardable, TopUpAgent, MovieAgent, TransportAgent, CanApplyVoucher
 {
     use TopUpTrait;
     use MovieTicketTrait;

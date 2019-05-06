@@ -1,8 +1,9 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Voucher\Contracts\CanHaveVoucher;
 
-class MovieTicketOrder extends Model
+class MovieTicketOrder extends Model implements CanHaveVoucher
 {
     protected $guarded = ['id'];
 
