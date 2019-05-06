@@ -26,4 +26,9 @@ class Vehicle extends Model
         return $this->belongsTo(Driver::class, 'current_driver_id');
     }
 
+    public function businessTrip()
+    {
+        return $this->hasOne(BusinessTrip::class);
+    }
+
 }
