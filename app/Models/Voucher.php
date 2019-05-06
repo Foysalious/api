@@ -2,12 +2,22 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Voucher\VoucherUsageCalculator;
 
 class Voucher extends Model
 {
     protected $guarded = ['id'];
     protected $dates = ['start_date', 'end_date'];
     protected $casts = ['is_amount_percentage' => 'integer', 'cap' => 'double', 'amount' => 'double'];
+
+    /** @var  VoucherUsageCalculator */
+    private $usageCalculator;
+
+    public function __construct($attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->usageCalculator = new VoucherUsageCalculator();
+    }
 
     public function orders()
     {
