@@ -1,13 +1,12 @@
-<?php
-
-namespace Sheba\Offer;
+<?php namespace Sheba\Offer;
 
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Location;
 use App\Models\OfferShowcase;
 use App\Models\Voucher;
-use Sheba\Voucher\VoucherRule;
+use Sheba\Voucher\DTO\Params\CheckParamsForPromotion;
+use Sheba\Voucher\VoucherRuleChecker;
 
 class OfferFilter
 {
@@ -57,7 +56,7 @@ class OfferFilter
             if ($this->category) {
                 $category_ids = !$this->category->isParent() ? [$this->category->id] : $this->category->children->pluck('id')->toArray();
                 if ($offer->isVoucher()) {
-                    $voucher_rule = new VoucherRule($offer->target->rules);
+                    $voucher_rule = new VoucherRuleChecker($offer->target->rules);
                     $is_applicable = 0;
                     foreach ($category_ids as $id) {
                         if ($voucher_rule->checkCategory($id)) $is_applicable = 1;
@@ -103,9 +102,9 @@ class OfferFilter
                 }
             }
             if ($this->location) {
-               $locations = $offer->locations->pluck('id')->toArray();
-               if(!in_array($this->location->id, $locations))
-                   unset($this->offers[$key]);
+                $locations = $offer->locations->pluck('id')->toArray();
+                if(!in_array($this->location->id, $locations))
+                    unset($this->offers[$key]);
             }
         }
         return $this->offers;
@@ -116,11 +115,8 @@ class OfferFilter
         $rules = json_decode($voucher->rules);
         if (count($rules) == 0) return true;
         if ($voucher->max_order > 0 && $this->customer->orders->where('voucher_id', $voucher->id)->count() >= $voucher->max_order) return false;
-        $voucher_rule = new VoucherRule($voucher->rules);
-        $mobile = $this->customer->profile->mobile;
-        if (!$voucher_rule->checkCustomerMobileExcluded($mobile) || !$voucher_rule->checkNumberSeriesExcluded($mobile) ||
-            !$voucher_rule->checkCustomerMobile($mobile) || !$voucher_rule->checkCustomerId($this->customer->id) ||
-            !$voucher_rule->checkDomainAgainstCustomer($this->customer) || !$voucher_rule->checkDomainExcludedAgainstCustomer($this->customer)) {
+        $params = (new CheckParamsForPromotion())->setApplicant($this->customer);
+        if (!voucher($voucher)->checkForPromotion($params)->isValid()) {
             return false;
         }
         if (array_key_exists('nth_orders', $rules)) {

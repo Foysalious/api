@@ -81,7 +81,7 @@ class DriversController extends Controller
             'gender' => $request->gender,
             'dob' => $request->dob,
             'nid_no' => $request->nid_no,
-            'pro_pic' => $request->pro_pic,
+            'pro_pic' => $this->updateProfilePicture('pro_pic', $request->file('pro_pic')),
         ];
 
         return Profile::create($this->withCreateModificationField($profile_data));
@@ -130,19 +130,38 @@ class DriversController extends Controller
         }
 
         #$picture_link = $this->fileRepository->uploadToCDN($this->makePicName($vehicle_registration_information, $photo, $image_for), $photo, 'images/drivers/' . $image_for . '_');
-        $picture_link = $this->fileRepository->uploadToCDN($this->makePicName($vehicle_registration_information, $photo, $image_for), $photo, 'images/profiles/' . $image_for . '_');
+        $picture_link = $this->fileRepository->uploadToCDN($this->makeDocumentsName($vehicle_registration_information, $photo, $image_for), $photo, 'images/profiles/' . $image_for . '_');
         return $picture_link;
+    }
+
+    private function updateProfilePicture($image_for, $photo)
+    {
+        $profile = new Profile();
+
+        if (basename($profile->image_for) != 'default.jpg') {
+            $filename = substr($profile->{$image_for}, strlen(config('sheba.s3_url')));
+            $this->deleteOldImage($filename);
+        }
+
+        $picture_link = $this->fileRepository->uploadToCDN($this->makePicName($profile, $photo, $image_for), $photo, 'images/profiles/' . $image_for . '_');
+        return $picture_link;
+    }
+
+
+    private function makeDocumentsName(VehicleRegistrationInformation $vehicle_registration_information, $photo, $image_for = 'license_number_image')
+    {
+        return $filename = Carbon::now()->timestamp . '_' . $image_for . '_image_' . $vehicle_registration_information->id . '.' . $photo->extension();
+    }
+
+    private function makePicName(Profile $profile, $photo, $image_for = 'license_number_image')
+    {
+        return $filename = Carbon::now()->timestamp . '_' . $image_for . '_image_' . $profile->id . '.' . $photo->extension();
     }
 
     private function deleteOldImage($filename)
     {
         $old_image = substr($filename, strlen(config('sheba.s3_url')));
         $this->fileRepository->deleteFileFromCDN($old_image);
-    }
-
-    private function makePicName(VehicleRegistrationInformation $vehicle_registration_information, $photo, $image_for = 'license_number_image')
-    {
-        return $filename = Carbon::now()->timestamp . '_' . $image_for . '_image_' . $vehicle_registration_information->id . '.' . $photo->extension();
     }
 
 }
