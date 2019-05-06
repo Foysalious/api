@@ -119,10 +119,6 @@ class VehiclesController extends Controller
                 'insurance_paper_image' => 'mimes:jpeg,png'
             ]);
 
-
-
-
-
             $member = Member::find($member);
             $business = $member->businesses->first();
             $this->setModifier($member);
@@ -164,6 +160,22 @@ class VehiclesController extends Controller
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function vehicleLists($member, Request $request)
+    {
+        try {
+            $member = Member::find($member);
+            dd($member);
+            $business = $member->businesses->first();
+            $this->setModifier($member);
+
+            $vehicle_lists = [];
+            return api_response($request, $vehicle_lists, 200, ['vehicle_lists' => $vehicle_lists]);
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
