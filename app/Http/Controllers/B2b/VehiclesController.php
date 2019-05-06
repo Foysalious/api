@@ -29,25 +29,25 @@ class VehiclesController extends Controller
     {
         try {
             $this->validate($request, [
-                'type' => 'required|string|in:car,bus,bike,cycle',
+                'type' => 'required|string|in:hatchback,sedan,suv,passenger_van,others',
                 'company_name' => 'required|string',
                 'model_name' => 'required|string',
                 'model_year' => 'required|date|date_format:Y-m-d',
                 'seat_capacity' => 'required|integer',
                 'transmission_type' => 'required|string|in:auto,manual',
-                'fuel_type' => 'required|string',
-                'fuel_quality' => 'required|string',
-                'fuel_tank_capacity_ltr' => 'required|string',
+                #'fuel_type' => 'required|string',
+                #'fuel_quality' => 'required|string',
+                #'fuel_tank_capacity_ltr' => 'required|string',
 
                 'license_number' => 'required',
-                'license_number_image' => 'required|mimes:jpeg,png',
+                #'license_number_image' => 'required|mimes:jpeg,png',
                 'tax_token_number' => 'required',
-                'tax_token_image' => 'required|mimes:jpeg,png',
+                #'tax_token_image' => 'required|mimes:jpeg,png',
                 'fitness_start_date' => 'required|date|date_format:Y-m-d',
                 'fitness_end_date' => 'required|date|date_format:Y-m-d',
-                'fitness_paper_image' => 'required|mimes:jpeg,png',
+                #'fitness_paper_image' => 'required|mimes:jpeg,png',
                 'insurance_date' => 'required|date|date_format:Y-m-d',
-                'insurance_paper_image' => 'required|mimes:jpeg,png',
+                #'insurance_paper_image' => 'required|mimes:jpeg,png',
             ]);
 
             $member = Member::find($member);
@@ -67,22 +67,22 @@ class VehiclesController extends Controller
                 'model_year' => $request->model_year,
                 'seat_capacity' => $request->seat_capacity,
                 'transmission_type' => $request->transmission_type,
-                'fuel_type' => $request->fuel_type,
-                'fuel_quality' => $request->fuel_quality,
-                'fuel_tank_capacity_ltr' => $request->fuel_tank_capacity_ltr,
+                #'fuel_type' => $request->fuel_type,
+                #'fuel_quality' => $request->fuel_quality,
+                #'fuel_tank_capacity_ltr' => $request->fuel_tank_capacity_ltr,
             ];
             $vehicle->basicInformations()->create($this->withCreateModificationField($vehicle_basic_information_data));
 
             $vehicle_registration_information_data = [
                 'license_number' => $request->license_number,
-                'license_number_image' => $this->updateVehiclesDocuments('license_number_image', $request->file('license_number_image')),
+                #'license_number_image' => $this->updateVehiclesDocuments('license_number_image', $request->file('license_number_image')),
                 'tax_token_number' => $request->tax_token_number,
-                'tax_token_image' => $this->updateVehiclesDocuments('tax_token_image', $request->file('tax_token_image')),
+                #'tax_token_image' => $this->updateVehiclesDocuments('tax_token_image', $request->file('tax_token_image')),
                 'fitness_start_date' => $request->fitness_start_date,
                 'fitness_end_date' => $request->fitness_end_date,
-                'fitness_paper_image' => $this->updateVehiclesDocuments('fitness_paper_image', $request->file('fitness_paper_image')),
+                #'fitness_paper_image' => $this->updateVehiclesDocuments('fitness_paper_image', $request->file('fitness_paper_image')),
                 'insurance_date' => $request->insurance_date,
-                'insurance_paper_image' => $this->updateVehiclesDocuments('insurance_paper_image', $request->file('insurance_paper_image')),
+                #'insurance_paper_image' => $this->updateVehiclesDocuments('insurance_paper_image', $request->file('insurance_paper_image')),
             ];
             $vehicle->registrationInformations()->create($this->withCreateModificationField($vehicle_registration_information_data));
 
@@ -100,25 +100,25 @@ class VehiclesController extends Controller
     {
         try {
             $this->validate($request, [
-                'type' => 'string|in:car,bus,bike,cycle',
+                'type' => 'string|in:hatchback,sedan,suv,passenger_van,others',
                 'company_name' => 'string',
                 'model_name' => 'string',
                 'model_year' => 'date|date_format:Y-m-d',
                 'seat_capacity' => 'integer',
                 'transmission_type' => 'string|in:auto,manual',
-                'fuel_type' => 'string',
-                'fuel_quality' => 'string',
-                'fuel_tank_capacity_ltr' => 'string',
+                #'fuel_type' => 'string',
+                #'fuel_quality' => 'string',
+                #'fuel_tank_capacity_ltr' => 'string',
 
                 #'license_number' => 'required',
-                'license_number_image' => 'mimes:jpeg,png',
+                #'license_number_image' => 'mimes:jpeg,png',
                 #'tax_token_number' => 'required',
-                'tax_token_image' => 'mimes:jpeg,png',
+                #'tax_token_image' => 'mimes:jpeg,png',
                 'fitness_start_date' => 'required|date|date_format:Y-m-d',
                 'fitness_end_date' => 'required|date|date_format:Y-m-d',
-                'fitness_paper_image' => 'mimes:jpeg,png',
+                #'fitness_paper_image' => 'mimes:jpeg,png',
                 'insurance_date' => 'date|date_format:Y-m-d',
-                'insurance_paper_image' => 'mimes:jpeg,png'
+                #'insurance_paper_image' => 'mimes:jpeg,png'
             ]);
 
             $member = Member::find($member);
@@ -136,9 +136,9 @@ class VehiclesController extends Controller
                 'model_year' => $request->model_year,
                 'seat_capacity' => $request->seat_capacity,
                 'transmission_type' => $request->transmission_type,
-                'fuel_type' => $request->fuel_type,
-                'fuel_quality' => $request->fuel_quality,
-                'fuel_tank_capacity_ltr' => $request->fuel_tank_capacity_ltr,
+                #'fuel_type' => $request->fuel_type,
+                #'fuel_quality' => $request->fuel_quality,
+                #'fuel_tank_capacity_ltr' => $request->fuel_tank_capacity_ltr,
             ];
             $vehicle_basic_informations->update($this->withUpdateModificationField($vehicle_basic_information_data));
 
@@ -169,13 +169,240 @@ class VehiclesController extends Controller
     {
         try {
             $member = Member::find($member);
-            dd($member);
             $business = $member->businesses->first();
             $this->setModifier($member);
 
+            list($offset, $limit) = calculatePagination($request);
+            $vehicles = Vehicle::select('id', 'status', 'current_driver_id')->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
+
             $vehicle_lists = [];
+            foreach ($vehicles as $vehicle) {
+                $basic_information = $vehicle->basicInformations;
+                $registration_information = $vehicle->registrationInformations;
+                $vehicle = [
+                    'vehicle_model' => $basic_information->model_name,
+                    'model_year' => Carbon::parse($basic_information->model_year)->format('Y'),
+                    'status' => $vehicle->status,
+                    'vehicle_type' => $basic_information->type,
+                    'assigned_to' => 'ARNAD DADA',
+                    'current_driver' => $vehicle->driver->profile ? $vehicle->driver->profile->name : 'N/S',
+                ];
+                array_push($vehicle_lists, $vehicle);
+            }
             return api_response($request, $vehicle_lists, 200, ['vehicle_lists' => $vehicle_lists]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getVehicleGeneralInfo($member, $vehicle, Request $request)
+    {
+        try {
+            $member = Member::find($member);
+            $business = $member->businesses->first();
+            $this->setModifier($member);
+
+            $vehicle = Vehicle::find((int)$vehicle);
+
+            $basic_information = $vehicle->basicInformations;
+            $registration_information = $vehicle->registrationInformations;
+
+            $general_info = [
+                'vehicle_id' => $vehicle->id,
+                'model_year' => $basic_information->model_year,
+                'company_name' => $basic_information->company_name,
+                'model_name' => $basic_information->model_name,
+                'type' => $basic_information->type,
+                'status' => $vehicle->status,
+                'enlisted_from' => $vehicle->created_at->format('d/m/Y'),
+                'seat_capacity' => $basic_information->seat_capacity,
+                'department' => "Don't ask",
+            ];
+
+            return api_response($request, $general_info, 200, ['general_info' => $general_info]);
+        } catch (\Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function updateVehicleGeneralInfo($member, $vehicle, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'model_year' => 'required|date|date_format:Y-m-d',
+                'company_name' => 'string',
+                'model_name' => 'string',
+                'type' => 'string|in:hatchback,sedan,suv,passenger_van,others',
+                'seat_capacity' => 'required|integer',
+                'department' => 'string',
+            ]);
+
+            $member = Member::find($member);
+            $business = $member->businesses->first();
+            $this->setModifier($member);
+
+            $vehicle = Vehicle::find((int)$vehicle);
+
+            $basic_information = $vehicle->basicInformations;
+            $registration_information = $vehicle->registrationInformations;
+
+            $basic_information_data = [
+                'model_year' => $request->model_year,
+                'company_name' => $request->company_name,
+                'model_name' => $request->model_name,
+                'type' => $request->type,
+                'seat_capacity' => $request->seat_capacity,
+                #'department' => "Don't ask",
+            ];
+
+            $basic_information->update($this->withUpdateModificationField($basic_information_data));
+
+            return api_response($request, 1, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getVehicleRegistrationInfo($member, $vehicle, Request $request)
+    {
+        try {
+            $member = Member::find($member);
+            $business = $member->businesses->first();
+            $this->setModifier($member);
+
+            $vehicle = Vehicle::find((int)$vehicle);
+
+            $basic_information = $vehicle->basicInformations;
+            $registration_information = $vehicle->registrationInformations;
+
+            $registration_info = [
+                'vehicle_id' => $vehicle->id,
+                'license_number' => $registration_information->license_number,
+                'fitness_start_date' => Carbon::parse($registration_information->fitness_start_date)->format('Y-m-d'),
+                'fitness_end_date' => Carbon::parse($registration_information->fitness_end_date)->format('Y-m-d'),
+                'insurance_date' => Carbon::parse($registration_information->insurance_date)->format('Y-m-d'),
+            ];
+            return api_response($request, $registration_info, 200, ['registration_info' => $registration_info]);
+        } catch (\Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function updateVehicleRegistrationInfo($member, $vehicle, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'license_number' => 'string',
+                'fitness_start_date' => 'required|date|date_format:Y-m-d',
+                'fitness_end_date' => 'required|date|date_format:Y-m-d',
+                'insurance_date' => 'required|date|date_format:Y-m-d'
+            ]);
+
+            $member = Member::find($member);
+            $business = $member->businesses->first();
+            $this->setModifier($member);
+
+            $vehicle = Vehicle::find((int)$vehicle);
+
+            $basic_information = $vehicle->basicInformations;
+            $registration_information = $vehicle->registrationInformations;
+
+            $registration_information_data = [
+                'license_number' => $request->license_number,
+                'fitness_start_date' => $request->fitness_start_date,
+                'fitness_end_date' => $request->fitness_end_date,
+                'insurance_date' => $request->insurance_date,
+            ];
+
+            $registration_information->update($this->withUpdateModificationField($registration_information_data));
+
+            return api_response($request, 1, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getVehicleSpecs($member, $vehicle, Request $request)
+    {
+        try {
+            $member = Member::find($member);
+            $business = $member->businesses->first();
+            $this->setModifier($member);
+
+            $vehicle = Vehicle::find((int)$vehicle);
+
+            $basic_information = $vehicle->basicInformations;
+            $registration_information = $vehicle->registrationInformations;
+
+            $specs_info = [
+                'height_inch' => (double)$basic_information->height_inch,
+                'width_inch' => (double)$basic_information->width_inch,
+                'length_inch' => (double)$basic_information->length_inch,
+                'volume_ft' => (double)$basic_information->volume_ft,
+                'weight_kg' => (double)$basic_information->weight_kg,
+                'max_payload_kg' => (double)$basic_information->max_payload_kg,
+                'engine_summary' => $basic_information->engine_summary,
+                'transmission_type' => $basic_information->transmission_type,
+            ];
+            return api_response($request, $specs_info, 200, ['specs_info' => $specs_info]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function updateVehicleSpecs($member, $vehicle, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'height_inch' => 'required|numeric',
+                'width_inch' => 'required|numeric',
+                'length_inch' => 'required|numeric',
+                'volume_ft' => 'required|numeric',
+                'weight_kg' => 'required|numeric',
+                'max_payload_kg' => 'required|numeric',
+                'engine_summary' => 'required|string',
+                'transmission_type' => 'required|string|in:hatchback,sedan,suv,passenger_van,others',
+            ]);
+            $member = Member::find($member);
+            $business = $member->businesses->first();
+            $this->setModifier($member);
+
+            $vehicle = Vehicle::find((int)$vehicle);
+
+            $basic_information = $vehicle->basicInformations;
+
+            $basic_information_data = [
+                'height_inch' => $request->height_inch,
+                'width_inch' => $request->width_inch,
+                'length_inch' => $request->length_inch,
+                'volume_ft' => $request->volume_ft,
+                'weight_kg' => $request->weight_kg,
+                'max_payload_kg' => $request->max_payload_kg,
+                'engine_summary' => $request->engine_summary,
+                'transmission_type' => $request->transmission_type,
+            ];
+            $basic_information->update($this->withUpdateModificationField($basic_information_data));
+
+            return api_response($request, 1, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
