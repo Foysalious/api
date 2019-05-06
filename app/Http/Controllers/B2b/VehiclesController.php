@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Models\BusinessTrip;
 use App\Models\Vehicle;
 use App\Models\VehicleRegistrationInformation;
 use App\Repositories\FileRepository;
@@ -403,6 +404,32 @@ class VehiclesController extends Controller
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getVehicleRecentAssignment($member, $vehicle, Request $request)
+    {
+        try {
+            $member = Member::find($member);
+            $business = $member->businesses->first();
+            $this->setModifier($member);
+            $business_trips = BusinessTrip::where('vehicle_id', (int)$vehicle)->get();
+
+            $recent_assignment = [];
+            #$business_trips->first()->driver->profile->name;
+            foreach ($business_trips as $business_trip){
+                $vehicle = [
+                    'id' => $business_trip->id,
+                    'status' => $business_trip->vehicle->status,
+                    'assigned_to' => 'ARNAD DADA',
+                    'driver' => $business_trip->driver->profile ? $business_trip->driver->profile->name : 'N/S',
+                ];
+                array_push($recent_assignment, $vehicle);
+            }
+            return api_response($request, $recent_assignment, 200, ['recent_assignment' => $recent_assignment]);
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

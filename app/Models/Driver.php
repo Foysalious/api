@@ -17,4 +17,9 @@ class Driver extends Model
         return $this->hasOne(Vehicle::class);
     }
 
+    public function businessTrip()
+    {
+        return $this->hasOne(BusinessTrip::class);
+    }
+
 }

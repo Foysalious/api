@@ -40,6 +40,8 @@ class BusinessRoute
             $api->get('/{member}/vehicles/{vehicle}/specs', 'B2b\VehiclesController@getVehicleSpecs');
             $api->post('/{member}/vehicles/{vehicle}/specs', 'B2b\VehiclesController@updateVehicleSpecs');
 
+            $api->get('/{member}/vehicles/{vehicle}/recent-assignment', 'B2b\VehiclesController@getVehicleRecentAssignment');
+
             $api->post('/{member}/drivers', 'B2b\DriversController@store');
             $api->post('/{member}/drivers/{driver}', 'B2b\DriversController@update');
         });
