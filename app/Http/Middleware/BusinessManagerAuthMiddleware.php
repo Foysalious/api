@@ -21,7 +21,7 @@ class BusinessManagerAuthMiddleware
         }
 
         $member = Member::find($payload['member_id']);
-        if (!$member) $this->die(404, 'Member not found.');
+        if (!$member) return response()->json(['message' => 'Member not found.', 'code' => 404]);
         $business = Business::find((int)$request->business);
 
         if ($member && $business) {

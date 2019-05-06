@@ -43,7 +43,8 @@ class VehiclesController extends Controller
                 'license_number_image' => 'required|mimes:jpeg,png',
                 'tax_token_number' => 'required',
                 'tax_token_image' => 'required|mimes:jpeg,png',
-                'fitness_date' => 'required|date|date_format:Y-m-d',
+                'fitness_start_date' => 'required|date|date_format:Y-m-d',
+                'fitness_end_date' => 'required|date|date_format:Y-m-d',
                 'fitness_paper_image' => 'required|mimes:jpeg,png',
                 'insurance_date' => 'required|date|date_format:Y-m-d',
                 'insurance_paper_image' => 'required|mimes:jpeg,png',
@@ -77,7 +78,8 @@ class VehiclesController extends Controller
                 'license_number_image' => $this->updateVehiclesDocuments('license_number_image', $request->file('license_number_image')),
                 'tax_token_number' => $request->tax_token_number,
                 'tax_token_image' => $this->updateVehiclesDocuments('tax_token_image', $request->file('tax_token_image')),
-                'fitness_date' => $request->fitness_date,
+                'fitness_start_date' => $request->fitness_start_date,
+                'fitness_end_date' => $request->fitness_end_date,
                 'fitness_paper_image' => $this->updateVehiclesDocuments('fitness_paper_image', $request->file('fitness_paper_image')),
                 'insurance_date' => $request->insurance_date,
                 'insurance_paper_image' => $this->updateVehiclesDocuments('insurance_paper_image', $request->file('insurance_paper_image')),
@@ -89,7 +91,6 @@ class VehiclesController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -113,7 +114,8 @@ class VehiclesController extends Controller
                 'license_number_image' => 'mimes:jpeg,png',
                 #'tax_token_number' => 'required',
                 'tax_token_image' => 'mimes:jpeg,png',
-                'fitness_date' => 'date|date_format:Y-m-d',
+                'fitness_start_date' => 'required|date|date_format:Y-m-d',
+                'fitness_end_date' => 'required|date|date_format:Y-m-d',
                 'fitness_paper_image' => 'mimes:jpeg,png',
                 'insurance_date' => 'date|date_format:Y-m-d',
                 'insurance_paper_image' => 'mimes:jpeg,png'
@@ -126,8 +128,6 @@ class VehiclesController extends Controller
 
             $vehicle_basic_informations = $vehicle->basicInformations;
             $vehicle_registration_informations = $vehicle->registrationInformations;
-
-            #dd($vehicle_basic_informations, $vehicle_registration_informations);
 
             $vehicle_basic_information_data = [
                 'type' => $request->type,
@@ -147,7 +147,8 @@ class VehiclesController extends Controller
                 'license_number_image' => $this->updateVehiclesDocuments('license_number_image', $request->file('license_number_image')),
                 'tax_token_number' => $request->tax_token_number,
                 'tax_token_image' => $this->updateVehiclesDocuments('tax_token_image', $request->file('tax_token_image')),
-                'fitness_date' => $request->fitness_date,
+                'fitness_start_date' => $request->fitness_start_date,
+                'fitness_end_date' => $request->fitness_end_date,
                 'fitness_paper_image' => $this->updateVehiclesDocuments('fitness_paper_image', $request->file('fitness_paper_image')),
                 'insurance_date' => $request->insurance_date,
                 'insurance_paper_image' => $this->updateVehiclesDocuments('insurance_paper_image', $request->file('insurance_paper_image')),
@@ -159,7 +160,6 @@ class VehiclesController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
