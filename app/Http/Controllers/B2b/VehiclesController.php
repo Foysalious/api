@@ -40,14 +40,14 @@ class VehiclesController extends Controller
                 #'fuel_tank_capacity_ltr' => 'required|string',
 
                 'license_number' => 'required',
-                'license_number_image' => 'required|mimes:jpeg,png',
+                #'license_number_image' => 'required|mimes:jpeg,png',
                 'tax_token_number' => 'required',
-                'tax_token_image' => 'required|mimes:jpeg,png',
+                #'tax_token_image' => 'required|mimes:jpeg,png',
                 'fitness_start_date' => 'required|date|date_format:Y-m-d',
                 'fitness_end_date' => 'required|date|date_format:Y-m-d',
-                'fitness_paper_image' => 'required|mimes:jpeg,png',
+                #'fitness_paper_image' => 'required|mimes:jpeg,png',
                 'insurance_date' => 'required|date|date_format:Y-m-d',
-                'insurance_paper_image' => 'required|mimes:jpeg,png',
+                #'insurance_paper_image' => 'required|mimes:jpeg,png',
             ]);
 
             $member = Member::find($member);
@@ -75,14 +75,14 @@ class VehiclesController extends Controller
 
             $vehicle_registration_information_data = [
                 'license_number' => $request->license_number,
-                'license_number_image' => $this->updateVehiclesDocuments('license_number_image', $request->file('license_number_image')),
+                #'license_number_image' => $this->updateVehiclesDocuments('license_number_image', $request->file('license_number_image')),
                 'tax_token_number' => $request->tax_token_number,
-                'tax_token_image' => $this->updateVehiclesDocuments('tax_token_image', $request->file('tax_token_image')),
+                #'tax_token_image' => $this->updateVehiclesDocuments('tax_token_image', $request->file('tax_token_image')),
                 'fitness_start_date' => $request->fitness_start_date,
                 'fitness_end_date' => $request->fitness_end_date,
-                'fitness_paper_image' => $this->updateVehiclesDocuments('fitness_paper_image', $request->file('fitness_paper_image')),
+                #'fitness_paper_image' => $this->updateVehiclesDocuments('fitness_paper_image', $request->file('fitness_paper_image')),
                 'insurance_date' => $request->insurance_date,
-                'insurance_paper_image' => $this->updateVehiclesDocuments('insurance_paper_image', $request->file('insurance_paper_image')),
+                #'insurance_paper_image' => $this->updateVehiclesDocuments('insurance_paper_image', $request->file('insurance_paper_image')),
             ];
             $vehicle->registrationInformations()->create($this->withCreateModificationField($vehicle_registration_information_data));
 
@@ -111,14 +111,14 @@ class VehiclesController extends Controller
                 #'fuel_tank_capacity_ltr' => 'string',
 
                 #'license_number' => 'required',
-                'license_number_image' => 'mimes:jpeg,png',
+                #'license_number_image' => 'mimes:jpeg,png',
                 #'tax_token_number' => 'required',
-                'tax_token_image' => 'mimes:jpeg,png',
+                #'tax_token_image' => 'mimes:jpeg,png',
                 'fitness_start_date' => 'required|date|date_format:Y-m-d',
                 'fitness_end_date' => 'required|date|date_format:Y-m-d',
-                'fitness_paper_image' => 'mimes:jpeg,png',
+                #'fitness_paper_image' => 'mimes:jpeg,png',
                 'insurance_date' => 'date|date_format:Y-m-d',
-                'insurance_paper_image' => 'mimes:jpeg,png'
+                #'insurance_paper_image' => 'mimes:jpeg,png'
             ]);
 
             $member = Member::find($member);
