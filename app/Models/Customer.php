@@ -11,9 +11,10 @@ use Sheba\Reward\Rewardable;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
+use Sheba\Voucher\Contracts\CanApplyVoucher;
 use Sheba\Voucher\VoucherCodeGenerator;
 
-class Customer extends Authenticatable implements Rechargable, Rewardable, TopUpAgent, MovieAgent
+class Customer extends Authenticatable implements Rechargable, Rewardable, TopUpAgent, MovieAgent, CanApplyVoucher
 {
     use TopUpTrait;
     use MovieTicketTrait;

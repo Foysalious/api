@@ -4,8 +4,9 @@ use Illuminate\Database\Eloquent\Model;
 use Sheba\Checkout\ShebaOrderInterface;
 use Sheba\Order\StatusCalculator;
 use Sheba\Portals\Portals;
+use Sheba\Voucher\Contracts\CanHaveVoucher;
 
-class Order extends Model implements ShebaOrderInterface
+class Order extends Model implements ShebaOrderInterface, CanHaveVoucher
 {
     protected $guarded = ['id'];
     public $totalPrice;
