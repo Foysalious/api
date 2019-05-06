@@ -177,10 +177,20 @@ class VehicleList
     private function parseTags(&$vehicles)
     {
         foreach ($vehicles as  $index => $vehicle) {
-            $tags = [];
-            array_push($tags, $this->parseTimeShift($vehicle['start_time']));
-            array_push($tags, $vehicle['type']);
-            array_push($tags, $vehicle['company_name']);
+            $tags = [
+                'company_names' => [
+                    $vehicle['company_name']
+                ],
+                'shifts' => [
+                    $this->parseTimeShift($vehicle['start_time'])
+                ],
+                'types'  => [
+                    $vehicle['type']
+                ]
+            ];
+//            array_push($tags, $this->parseTimeShift($vehicle['start_time']));
+//            array_push($tags, $vehicle['type']);
+//            array_push($tags, $vehicle['company_name']);
             $vehicles[$index]['tags'] = $tags;
         }
     }

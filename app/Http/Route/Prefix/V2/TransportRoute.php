@@ -10,7 +10,8 @@ class TransportRoute
                 $api->get('destination-places', 'BusTicketController@getAvailableDestinationPlaces');
                 $api->get('available-coaches', 'BusTicketController@getAvailableCoaches');
                 $api->get('seat-status', 'BusTicketController@getSeatStatus');
-                $api->get('available-points', 'BusTicketController@getAvailablePoints');
+                $api->get('promotions', 'BusTicketController@getPromotions');
+                $api->post('promotions/add', 'BusTicketController@applyPromo');
 
                 $api->post('book', 'BusTicketController@book');
                 $api->post('confirm', 'BusTicketController@confirm');
