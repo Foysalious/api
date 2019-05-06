@@ -156,6 +156,7 @@ class Route
             $api->post('profile/{id}/update-profile-document', 'ProfileController@updateProfileDocument')->middleware('profile.auth');
             $api->post('admin/payout', 'Bkash\\BkashPayoutController@pay');
             $api->post('admin/bkash-balance', 'Bkash\\BkashPayoutController@queryBalance');
+            $api->post('forget-password', 'ProfileController@forgetPassword');
         });
         return $api;
     }
