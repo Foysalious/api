@@ -33,7 +33,7 @@ class Routes
 
     public function generate()
     {
-        $bus_bd_route = $this->bdTicketClient->get('routes/from');
+        $bd_ticket_route = $this->bdTicketClient->get('routes/from');
 
         if (config('bus_transport.pekhom.is_active')) {
             $pekhom_route = $this->pekhomClient->post('bus/routes.php', null);
@@ -42,11 +42,11 @@ class Routes
             $this->pekhomDestinationRouteRepo->insert($pekhom_to_routes);
         }
         $locations = [];
-        foreach ($bus_bd_route['data'] as $key => $location) {
+        foreach ($bd_ticket_route['data'] as $key => $location) {
             $pekhom_location_name = (config('bus_transport.pekhom.is_active')) ? $pekhom_route->where('location_name', $location['name'])->first() : null;
             $locations[] = [
                 'name'      => $location['name'],
-                'bus_bd_id' => $location['id'],
+                'bd_ticket_id' => $location['id'],
                 'pekhom_id' => $pekhom_location_name ? $pekhom_location_name['location_uid'] : null
             ];
         }

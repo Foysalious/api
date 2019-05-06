@@ -3,6 +3,7 @@
 use Carbon\Carbon;
 use Sheba\Transport\Bus\ClientCalls\BdTickets;
 use Sheba\Transport\Bus\ClientCalls\Pekhom;
+use Sheba\Transport\Bus\Exception\InvalidLocationAddressException;
 use Sheba\Transport\Bus\Repositories\BusRouteLocationRepository;
 use Sheba\Transport\Bus\Repositories\PekhomDestinationRouteRepository;
 
@@ -54,7 +55,9 @@ class VehicleList
     {
         $pick_up_location = $this->busRouteLocation_Repo->findById($this->pickupAddressId);
         $destination_location = $this->busRouteLocation_Repo->findById($this->destinationAddressId);
-        $bd_ticket_vehicles =$this->parseBdTicketResponse($this->bdTicketClient->post('coaches/search',['date' => $this->date, 'fromStationId' => $pick_up_location->bus_bd_id, 'toStationId' => $destination_location->bus_bd_id]));
+        if(!$pick_up_location || !$destination_location)
+            throw new InvalidLocationAddressException('Invalid pickup or destination id');
+        $bd_ticket_vehicles =$this->parseBdTicketResponse($this->bdTicketClient->post('coaches/search',['date' => $this->date, 'fromStationId' => $pick_up_location->bd_ticket_id, 'toStationId' => $destination_location->bd_ticket_id]));
         $pekhom_vehicles = $this->parsePekhomResponse($this->pekhomClient->post('bus/search.php',['journey_date' => $this->date, 'from_location_uid' => $pick_up_location->pekhom_id, 'to_location_uid' => $destination_location->pekhom_id]));
         $vehicles = array_merge($bd_ticket_vehicles,$pekhom_vehicles);
         $filters = $this->getFilters($vehicles);

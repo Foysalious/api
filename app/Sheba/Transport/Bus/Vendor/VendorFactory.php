@@ -10,7 +10,7 @@ use Sheba\Transport\Bus\Vendor\Pekhom\Pekhom;
 
 class VendorFactory
 {
-    const BUSBD = 1;
+    const BDTICKETS = 1;
     const PEKHOM = 2;
 
     private $classes = [

@@ -18,9 +18,9 @@ class BdTickets extends ExternalApiClient
     public function __construct()
     {
         $this->client = (new Client(['headers' => ['Content-Type' => 'application/json']]));
-        $this->baseUrl = config('bus_transport.busbd.base_url');
-        $this->apiVersion = config('bus_transport.busbd.api_version');
-        $this->bookingPort = config('bus_transport.busbd.booking_port');
+        $this->baseUrl = config('bus_transport.bdticket.base_url');
+        $this->apiVersion = config('bus_transport.bdticket.api_version');
+        $this->bookingPort = config('bus_transport.bdticket.booking_port');
     }
 
     /**

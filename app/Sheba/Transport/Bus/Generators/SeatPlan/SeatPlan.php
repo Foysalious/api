@@ -2,8 +2,8 @@
 
 class SeatPlan
 {
-    /** @var BdTicketsSeatPlan $busBdSeatPlan */
-    private $busBdSeatPlan;
+    /** @var BdTicketsSeatPlan $bdTicketSeatPlan */
+    private $bdTicketSeatPlan;
     /** @var PekhomSeatPlan $pekhomSeatPlan */
     private $pekhomSeatPlan;
 
@@ -12,6 +12,12 @@ class SeatPlan
     private $date = null;
     private $vendorId = null;
     private $coachId = null;
+
+    public function __construct(BdTicketsSeatPlan $bd_ticket_seat_plan, PekhomSeatPlan $pekhom_seat_plan)
+    {
+        $this->bdTicketSeatPlan = $bd_ticket_seat_plan;
+        $this->pekhomSeatPlan = $pekhom_seat_plan;
+    }
 
     /**
      * @param $pickup_address_id
@@ -67,12 +73,12 @@ class SeatPlan
      * @return mixed
      * @throws \Exception
      */
-    private function resolveSeatPlan()
+    public function resolveSeatPlan()
     {
         switch ($this->vendorId) {
             case 1:
                 // Bus Bd
-                return $this->busBdSeatPlan->setVendorId($this->vendorId)->setCoachId($this->coachId)->getSeatPlan();
+                return $this->bdTicketSeatPlan->setVendorId($this->vendorId)->setCoachId($this->coachId)->getSeatPlan();
             case 2:
                 // Pekhom
                 return $this->pekhomSeatPlan->setVendorId($this->vendorId)->setCoachId($this->coachId)->setPickupAddressId($this->pickupAddressId)->
