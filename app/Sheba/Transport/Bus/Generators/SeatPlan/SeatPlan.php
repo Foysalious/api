@@ -2,7 +2,7 @@
 
 class SeatPlan
 {
-    /** @var BusBdSeatPlan $busBdSeatPlan */
+    /** @var BdTicketsSeatPlan $busBdSeatPlan */
     private $busBdSeatPlan;
     /** @var PekhomSeatPlan $pekhomSeatPlan */
     private $pekhomSeatPlan;
@@ -12,13 +12,6 @@ class SeatPlan
     private $date = null;
     private $vendorId = null;
     private $coachId = null;
-
-
-    public function __construct(BusBdSeatPlan $bus_bd_seat_plan, PekhomSeatPlan $pekhom_seat_plan)
-    {
-        $this->busBdSeatPlan = $bus_bd_seat_plan;
-        $this->pekhomSeatPlan = $pekhom_seat_plan;
-    }
 
     /**
      * @param $pickup_address_id
@@ -74,16 +67,6 @@ class SeatPlan
      * @return mixed
      * @throws \Exception
      */
-    public function getSeatPlan()
-    {
-        $seatPlan = $this->resolveSeatPlan();
-        return $seatPlan;
-    }
-
-    /**
-     * @return mixed
-     * @throws \Exception
-     */
     private function resolveSeatPlan()
     {
         switch ($this->vendorId) {
@@ -93,7 +76,7 @@ class SeatPlan
             case 2:
                 // Pekhom
                 return $this->pekhomSeatPlan->setVendorId($this->vendorId)->setCoachId($this->coachId)->setPickupAddressId($this->pickupAddressId)->
-                        setDestinationAddressId($this->destinationAddressId)->setDate($this->date)->getSeatPlan();
+                setDestinationAddressId($this->destinationAddressId)->setDate($this->date)->getSeatPlan();
                 break;
             default:
                 throw new \Exception('Invalid Vendor');

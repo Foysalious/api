@@ -3,7 +3,7 @@
 use Sheba\Transport\Bus\ClientCalls\Pekhom;
 use Sheba\Transport\Bus\Repositories\BusRouteLocationRepository;
 
-class PekhomSeatPlan
+class PekhomSeatPlan extends SeatPlan
 {
     /** @var Pekhom $pekhomClient */
     private $pekhomClient;

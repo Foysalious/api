@@ -3,7 +3,7 @@
 use Sheba\Transport\Bus\ClientCalls\Busbd;
 use Sheba\Transport\Bus\Repositories\BusRouteLocationRepository;
 
-class BusBdSeatPlan
+class BdTicketsSeatPlan
 {
     /** @var Busbd $busBdClient */
     private $busBdClient;
@@ -26,7 +26,7 @@ class BusBdSeatPlan
 
     /**
      * @param $vendor_id
-     * @return BusBdSeatPlan
+     * @return BdTicketsSeatPlan
      */
     public function setVendorId($vendor_id)
     {
@@ -36,7 +36,7 @@ class BusBdSeatPlan
 
     /**
      * @param $coach_id
-     * @return BusBdSeatPlan
+     * @return BdTicketsSeatPlan
      */
     public function setCoachId($coach_id)
     {

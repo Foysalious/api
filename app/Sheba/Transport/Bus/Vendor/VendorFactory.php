@@ -3,12 +3,14 @@
 use App\Models\Transport\TransportTicketVendor;
 use Exception;
 use ReflectionClass;
-use Sheba\MovieTicket\Vendor\BlockBuster\BlockBuster;
+use Sheba\Transport\Bus\Vendor\BdTickets\BdTickets;
+use Sheba\Transport\Bus\Vendor\Pekhom\Pekhom;
 
 class VendorFactory
 {
     private $classes = [
-        BlockBuster::class
+        BdTickets::class,
+        Pekhom::class
     ];
 
     /**
