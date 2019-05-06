@@ -30,6 +30,7 @@ class BusinessRoute
             $api->post('/{member}/vehicles/{vehicle}', 'B2b\VehiclesController@update');
 
             $api->post('/{member}/drivers', 'B2b\DriversController@store');
+            $api->post('/{member}/drivers/{driver}', 'B2b\DriversController@update');
         });
     }
 }

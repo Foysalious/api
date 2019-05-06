@@ -48,9 +48,9 @@ class DriversController extends Controller
             ];
             $driver = Driver::create($this->withCreateModificationField($driver_data));
             $profile = Profile::where('mobile', formatMobile($request->mobile))->first();
-            if (!$profile){
+            if (!$profile) {
                 $this->createDriverProfile($member, $driver, $request);
-            }else{
+            } else {
                 $profile_data = [
                     'driver_id' => $driver->id,
                 ];
@@ -75,6 +75,7 @@ class DriversController extends Controller
             'remember_token' => str_random(255),
             'mobile' => !empty($request->mobile) ? formatMobile($request->mobile) : null,
             'name' => $request->name,
+            'driver_id' => $driver->id,
             'address' => $request->address,
             'email' => $request->email,
             'gender' => $request->gender,
@@ -86,75 +87,34 @@ class DriversController extends Controller
         return Profile::create($this->withCreateModificationField($profile_data));
     }
 
-    public function update($member, $vehicle, Request $request)
+    public function update($member, $driver, Request $request)
     {
         try {
             $this->validate($request, [
-                'type' => 'string|in:car,bus,bike,cycle',
-                'company_name' => 'string',
-                'model_name' => 'string',
-                'model_year' => 'date|date_format:Y-m-d',
-                'seat_capacity' => 'integer',
-                'transmission_type' => 'string|in:auto,manual',
-                'fuel_type' => 'string',
-                'fuel_quality' => 'string',
-                'fuel_tank_capacity_ltr' => 'string',
-
-                #'license_number' => 'required',
-                'license_number_image' => 'mimes:jpeg,png',
-                #'tax_token_number' => 'required',
-                'tax_token_image' => 'mimes:jpeg,png',
-                'fitness_date' => 'date|date_format:Y-m-d',
-                'fitness_paper_image' => 'mimes:jpeg,png',
-                'insurance_date' => 'date|date_format:Y-m-d',
-                'insurance_paper_image' => 'mimes:jpeg,png'
+                'license_number' => 'required',
+                'license_number_image' => 'required|mimes:jpeg,png',
+                'license_class' => 'required',
+                'years_of_experience' => 'required|integer',
             ]);
 
-
-
-
-
             $member = Member::find($member);
-            $business = $member->businesses->first();
             $this->setModifier($member);
-            $vehicle = Vehicle::find($vehicle);
+            $driver = Driver::find((int)$driver);
 
-            $vehicle_basic_informations = $vehicle->basicInformations;
-            $vehicle_registration_informations = $vehicle->registrationInformations;
-
-            #dd($vehicle_basic_informations, $vehicle_registration_informations);
-
-            $vehicle_basic_information_data = [
-                'type' => $request->type,
-                'company_name' => $request->company_name,
-                'model_name' => $request->model_name,
-                'model_year' => $request->model_year,
-                'seat_capacity' => $request->seat_capacity,
-                'transmission_type' => $request->transmission_type,
-                'fuel_type' => $request->fuel_type,
-                'fuel_quality' => $request->fuel_quality,
-                'fuel_tank_capacity_ltr' => $request->fuel_tank_capacity_ltr,
-            ];
-            $vehicle_basic_informations->update($this->withUpdateModificationField($vehicle_basic_information_data));
-
-            $vehicle_registration_information_data = [
+            $driver_data = [
                 'license_number' => $request->license_number,
-                'license_number_image' => $this->updateVehiclesDocuments('license_number_image', $request->file('license_number_image')),
-                'tax_token_number' => $request->tax_token_number,
-                'tax_token_image' => $this->updateVehiclesDocuments('tax_token_image', $request->file('tax_token_image')),
-                'fitness_date' => $request->fitness_date,
-                'fitness_paper_image' => $this->updateVehiclesDocuments('fitness_paper_image', $request->file('fitness_paper_image')),
-                'insurance_date' => $request->insurance_date,
-                'insurance_paper_image' => $this->updateVehiclesDocuments('insurance_paper_image', $request->file('insurance_paper_image')),
+                'license_number_image' => $this->updateDocuments('license_number_image', $request->file('license_number_image')),
+                'license_class' => $request->license_class,
+                'years_of_experience' => $request->years_of_experience,
             ];
-            $vehicle_registration_informations->update($this->withUpdateModificationField($vehicle_registration_information_data));
+            $driver->update($this->withUpdateModificationField($driver_data));
+            #$profile = Profile::where('mobile', formatMobile($request->mobile))->first();
 
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
