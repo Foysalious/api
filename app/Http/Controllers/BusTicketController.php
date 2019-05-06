@@ -270,7 +270,7 @@ class BusTicketController extends Controller
                 ->setReserverGender($request->reserver_gender)
                 ->setSeatIdList($request->seat_id_list);
 
-            // $vendor->bookTicket($creator);
+            $vendor->bookTicket($creator);
             $order = $creator->create();
 
             return api_response($request, null, 200, ['data' => $order]);
@@ -291,13 +291,17 @@ class BusTicketController extends Controller
      * ORDER PLACEMENT - CONFIRM TICKET
      *
      * @param Request $request
+     * @param VendorFactory $vendor
      * @return JsonResponse
      */
-    public function confirm(Request $request)
+    public function confirm(Request $request, VendorFactory $vendor)
     {
         try {
-            $this->validate($request, []);
+            $this->validate($request, ['vendor_id' => 'required', 'ticket_id' => 'required',]);
             $data = [];
+            $vendor = $vendor->getById($request->vendor_id);
+            $vendor->confirmTicket($request->ticket_id);
+
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

@@ -22,4 +22,6 @@ abstract class Vendor
     }
 
     abstract function bookTicket(Creator $creator);
+
+    abstract function confirmTicket($ticket_id);
 }

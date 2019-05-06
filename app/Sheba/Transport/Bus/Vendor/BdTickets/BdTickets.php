@@ -11,6 +11,7 @@ class BdTickets extends Vendor
 {
     const BOOK_APPLICATION = 'BUS';
     const APPLICATION_CHANNEL = 'REMOTE';
+    const ACCOUNT_TYPE = 'AGENT';
 
     /** @var BdTicketsClientCall $bdTicketClient */
     private $bdTicketClient;
@@ -75,5 +76,11 @@ class BdTickets extends Vendor
     {
         $data = ['cartId' => $cart_id, 'applicationChannel' => self::APPLICATION_CHANNEL];
         return $this->bdTicketClient->post('carts/book', $data);
+    }
+
+    public function confirmTicket($ticket_id)
+    {
+        $data = ['ticketId' => $ticket_id, 'accountType' => self::ACCOUNT_TYPE, 'applicationChannel' => self::APPLICATION_CHANNEL];
+        return $this->bdTicketClient->post('tickets/confirm', $data);
     }
 }
