@@ -25,7 +25,7 @@ class MemberAuthMiddleware
         }
 
         $member = Member::find($payload['member_id']);
-        if (!$member) $this->die(404, 'Member not found.');
+        if (!$member)  return response()->json(['message' => 'Member not found.', 'code' => 404]);
 
         if ($member->id == (int)$request->member) {
             return $next($request);
