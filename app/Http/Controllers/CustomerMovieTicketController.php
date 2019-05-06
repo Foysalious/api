@@ -118,30 +118,20 @@ class CustomerMovieTicketController extends Controller
         }
     }
 
-    public function updateTicketStatus(MovieTicketManager $movieTicketManager, MovieTicket $movieTicket, Request $request, MovieTicketRequest $movieTicketRequest,VendorFactory $vendor)
+    public function updateTicketStatus(MovieTicketManager $movieTicketManager, MovieTicket $movieTicket, Request $request, MovieTicketRequest $movieTicketRequest, VendorFactory $vendor)
     {
-        try{
-            $this->validate($request, [
-                'trx_id' => 'required',
-                'dtmsid' => 'required',
-                'lid' => 'required',
-                'confirm_status' => 'required',
-                'customer_name' => 'required',
-                'customer_email' => 'required',
-                'customer_mobile' => 'required|mobile:bd',
-                'cost' => 'required',
-                'image_url' => 'required',
-                'payment_method' => 'required|string|in:online,bkash,wallet,cbl',
-            ]);
+        try {
+            $this->validate($request, ['trx_id' => 'required', 'dtmsid' => 'required', 'lid' => 'required', 'confirm_status' => 'required', 'customer_name' => 'required', 'customer_email' => 'required', 'customer_mobile' => 'required|mobile:bd', 'cost' => 'required', 'image_url' => 'required', 'payment_method' => 'required|string|in:online,bkash,wallet,cbl',]);
 
             $agent = $this->getAgent($request);
-            $movieTicketRequest->setName($request->customer_name)->setEmail($request->customer_email)->setAmount($request->cost)
-                    ->setMobile(BDMobileFormatter::format($request->customer_mobile))->setTrxId($request->trx_id)->setDtmsId($request->dtmsid)
-                    ->setTicketId($request->lid)->setConfirmStatus($request->confirm_status)->setImageUrl($request->image_url);
+            $movieTicketRequest->setName($request->customer_name)->setEmail($request->customer_email)
+                ->setAmount($request->cost)->setMobile(BDMobileFormatter::format($request->customer_mobile))
+                ->setTrxId($request->trx_id)->setDtmsId($request->dtmsid)->setTicketId($request->lid)
+                ->setConfirmStatus($request->confirm_status)->setImageUrl($request->image_url);
             $vendor = $vendor->getById(1);
 
-            $movieTicket =  $movieTicket->setMovieTicketRequest($movieTicketRequest)->setAgent($agent)->setVendor($vendor);
-            if($movieTicket->validate()) {
+            $movieTicket = $movieTicket->setMovieTicketRequest($movieTicketRequest)->setAgent($agent)->setVendor($vendor);
+            if ($movieTicket->validate()) {
                 $movie_ticket_order = $movieTicket->placeOrder()->getMovieTicketOrder();
                 $payment = $this->getPayment($request->payment_method, $movie_ticket_order);
                 if ($payment) {
@@ -149,9 +139,9 @@ class CustomerMovieTicketController extends Controller
                     $payment = $payment->getFormattedPayment();
                 }
                 return api_response($request, $movie_ticket_order, 200, ['link' => $link, 'payment' => $payment]);
-            }
-            else
+            } else {
                 return api_response($request, 'Movie Ticket Request is not valid', 400, ['message' => 'Movie Ticket Request is not valid']);
+            }
 
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

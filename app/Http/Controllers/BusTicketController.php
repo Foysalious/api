@@ -3,12 +3,16 @@
 use App\Transformers\BusRouteTransformer;
 use App\Transformers\CustomSerializer;
 
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
+use Sheba\ModificationFields;
+use Sheba\Payment\Adapters\Payable\TransportTicketPurchaseAdapter;
+use Sheba\Payment\ShebaPayment;
 use Sheba\Transport\Bus\Exception\InvalidLocationAddressException;
 use Sheba\Transport\Bus\Generators\Destinations;
 use Sheba\Transport\Bus\Generators\Routes;
@@ -16,13 +20,15 @@ use Sheba\Transport\Bus\Generators\SeatPlan\SeatPlan;
 use Sheba\Transport\Bus\Generators\VehicleList;
 use Sheba\Transport\Bus\Order\Creator;
 use Sheba\Transport\Bus\Order\Status;
+use Sheba\Transport\Bus\Order\TransportTicketRequest;
 use Sheba\Transport\Bus\Repositories\BusRouteLocationRepository;
-use Sheba\Transport\Bus\Vendor\Vendor;
 use Sheba\Transport\Bus\Vendor\VendorFactory;
 use Throwable;
 
 class BusTicketController extends Controller
 {
+    use ModificationFields;
+
     /** @var BusRouteLocationRepository $busRouteRepo */
     private $busRouteRepo;
 
@@ -235,9 +241,10 @@ class BusTicketController extends Controller
      * @param Request $request
      * @param Creator $creator
      * @param VendorFactory $vendor
+     * @param TransportTicketRequest $ticket_request
      * @return JsonResponse
      */
-    public function book(Request $request, Creator $creator, VendorFactory $vendor)
+    public function book(Request $request, Creator $creator, VendorFactory $vendor, TransportTicketRequest $ticket_request)
     {
         try {
             $this->validate($request, [
@@ -250,9 +257,10 @@ class BusTicketController extends Controller
             ]);
 
             $agent = $this->getAgent($request);
+            $this->setModifier($agent);
             $vendor = $vendor->getById($request->vendor_id);
 
-            $creator->setAgent($agent)
+            $ticket_request->setAgent($agent)
                 ->setReserverName($request->reserver_name)
                 ->setReserverMobile(BDMobileFormatter::format($request->reserver_mobile))
                 ->setReserverEmail($request->reserver_email)
@@ -270,8 +278,8 @@ class BusTicketController extends Controller
                 ->setReserverGender($request->reserver_gender)
                 ->setSeatIdList($request->seat_id_list);
 
-            $vendor->bookTicket($creator);
-            $order = $creator->create();
+            // $vendor->bookTicket($creator);
+            $order = $creator->setRequest($ticket_request)->create();
 
             return api_response($request, null, 200, ['data' => $order]);
         } catch (ValidationException $e) {
@@ -281,7 +289,6 @@ class BusTicketController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -298,9 +305,17 @@ class BusTicketController extends Controller
     {
         try {
             $this->validate($request, ['vendor_id' => 'required', 'ticket_id' => 'required',]);
+            $this->setModifier($this->getAgent($request));
             $data = [];
             $vendor = $vendor->getById($request->vendor_id);
             $vendor->confirmTicket($request->ticket_id);
+
+            /*$payment = $this->getPayment($request->payment_method, $movie_ticket_order);
+            if ($payment) {
+                $link = $payment->redirect_url;
+                $payment = $payment->getFormattedPayment();
+            }
+            return api_response($request, $movie_ticket_order, 200, ['link' => $link, 'payment' => $payment]);*/
 
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (ValidationException $e) {
@@ -319,5 +334,23 @@ class BusTicketController extends Controller
     {
         if ($request->affiliate) return $request->affiliate;
         elseif ($request->customer) return $request->customer;
+    }
+
+    private function getPayment($payment_method, $transport_ticket_order)
+    {
+        try {
+            $transport_ticket_order_adapter = new TransportTicketPurchaseAdapter();
+            $payment = (new ShebaPayment($payment_method))->init($transport_ticket_order_adapter
+                    ->setModelForPayable($transport_ticket_order)
+                    ->getPayable());
+
+            return $payment->isInitiated() ? $payment : null;
+        } catch (QueryException $e) {
+            app('sentry')->captureException($e);
+            return null;
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return null;
+        }
     }
 }

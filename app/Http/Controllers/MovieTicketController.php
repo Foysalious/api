@@ -1,7 +1,9 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\MovieTicketOrder;
+use Exception;
 use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
 
@@ -10,19 +12,20 @@ use Sheba\MovieTicket\MovieTicket;
 use Sheba\MovieTicket\MovieTicketManager;
 use Sheba\MovieTicket\MovieTicketRequest;
 use Sheba\MovieTicket\Vendor\VendorFactory;
+use Throwable;
 
 class MovieTicketController extends Controller
 {
     /**
      * @param MovieTicketManager $movieTicket
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function getAvailableTickets(MovieTicketManager $movieTicket, Request $request)
     {
         try {
             $movies = $movieTicket->initVendor()->getAvailableTickets();
             return api_response($request, $movies, 200, ['movies' => $this->convertToJson($movies)]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -30,7 +33,7 @@ class MovieTicketController extends Controller
 
     /**
      * @param MovieTicketManager $movieTicket
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      * @throws GuzzleException
      */
     public function getAvailableTheatres(MovieTicketManager $movieTicket, Request $request)
@@ -48,7 +51,7 @@ class MovieTicketController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -56,8 +59,8 @@ class MovieTicketController extends Controller
 
     /**
      * @param MovieTicketManager $movieTicket
-     * @return \Illuminate\Http\JsonResponse
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @return JsonResponse
+     * @throws GuzzleException
      */
     public function getTheatreSeatStatus(MovieTicketManager $movieTicket, Request $request)
     {
@@ -74,7 +77,7 @@ class MovieTicketController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -107,7 +110,7 @@ class MovieTicketController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         } catch (GuzzleException $e) {
@@ -132,17 +135,17 @@ class MovieTicketController extends Controller
 
             $agent = $this->getAgent($request);
             if ($agent->wallet < (double) $request->cost) return api_response($request, null, 403, ['message' => "You don't have sufficient balance to buy this ticket."]);
-            $movieTicketRequest->setName($request->customer_name)->setEmail($request->customer_email)->setAmount($request->cost)
-                    ->setMobile(BDMobileFormatter::format($request->customer_mobile))->setTrxId($request->trx_id)->setDtmsId($request->dtmsid)
-                    ->setTicketId($request->lid)->setConfirmStatus($request->confirm_status)->setImageUrl($request->image_url);
+            $movieTicketRequest->setName($request->customer_name)->setEmail($request->customer_email)
+                ->setAmount($request->cost)
+                ->setMobile(BDMobileFormatter::format($request->customer_mobile))->setTrxId($request->trx_id)->setDtmsId($request->dtmsid)
+                ->setTicketId($request->lid)->setConfirmStatus($request->confirm_status)->setImageUrl($request->image_url);
             $vendor = $vendor->getById(1);
 
-
             $movieTicket =  $movieTicket->setMovieTicketRequest($movieTicketRequest)->setAgent($agent)->setVendor($vendor);
-            if($movieTicket->validate()) {
+            if ($movieTicket->validate()) {
                 $response = $movieTicket->placeOrder()->buyTicket();
-                if($response->hasSuccess()) {
-                    $movieOrder =  $movieTicket->disburseCommissions()->getMovieTicketOrder();
+                if ($response->hasSuccess()) {
+                    $movieOrder = $movieTicket->disburseCommissions()->getMovieTicketOrder();
                     $movieTicket->processSuccessfulMovieTicket($movieOrder, $response->getSuccess());
                     $details = $response->getSuccess()->transactionDetails;
                     $details->order_id = $movieOrder->id;
@@ -150,26 +153,20 @@ class MovieTicketController extends Controller
                     $details->sheba_commission = $movieOrder->sheba_commission;
                     $details->cost = $details->cost + $details->sheba_commission;
                     return api_response($request, $response, 200, ['status' => $details]);
-                }
-                else
-                {
+                } else {
                     $error = $response->getError();
-                    return api_response($request, $response, 200, ['status' => [
-                        'message' => $error->errorMessage,
-                        'status' => $error->status
-                    ]]);
+                    return api_response($request, $response, 200, ['status' => ['message' => $error->errorMessage, 'status' => $error->status]]);
                 }
-            }
-            else
+            } else {
                 return api_response($request, 'Movie Ticket Request is not valid', 400, ['message' => 'Movie Ticket Request is not valid']);
-
+            }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         } catch (GuzzleException $e) {
@@ -200,7 +197,7 @@ class MovieTicketController extends Controller
 
             }
             return api_response($request, $orders, 200, ['history' => $histories]);
-        }  catch (\Throwable $e) {
+        }  catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -214,12 +211,11 @@ class MovieTicketController extends Controller
             $order->reservation_details = json_decode($order->reservation_details);
             $order->reservation_details->cost = round($order->amount);
             return api_response($request, $order, 200, ['details' => $order]);
-        }  catch (\Throwable $e) {
+        }  catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
-
 
     public function getPromotions($customer, Request $request)
     {
@@ -268,12 +264,11 @@ class MovieTicketController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
-
 
     public function applyPromo($customer, Request $request)
     {
@@ -306,7 +301,7 @@ class MovieTicketController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return response()->json(['data' => null, 'message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -315,14 +310,14 @@ class MovieTicketController extends Controller
     /**
      * @param Request $request
      * @return mixed
-     * @throws \Exception
+     * @throws Exception
      */
     private function getAgent(Request $request)
     {
         if ($request->affiliate) return $request->affiliate;
         elseif ($request->customer) return $request->customer;
         elseif ($request->partner) return $request->partner;
-        throw new \Exception('Invalid Agent');
+        throw new Exception('Invalid Agent');
     }
 
     private function  convertToJson($response) {
