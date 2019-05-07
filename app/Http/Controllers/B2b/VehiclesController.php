@@ -182,13 +182,14 @@ class VehiclesController extends Controller
             foreach ($vehicles as $vehicle) {
                 $basic_information = $vehicle->basicInformations;
                 $registration_information = $vehicle->registrationInformations;
+                $driver = $vehicle->driver;
                 $vehicle = [
                     'vehicle_model' => $basic_information->model_name,
                     'model_year' => Carbon::parse($basic_information->model_year)->format('Y'),
                     'status' => $vehicle->status,
                     'vehicle_type' => $basic_information->type,
                     'assigned_to' => 'ARNAD DADA',
-                    'current_driver' => $vehicle->driver->profile ? $vehicle->driver->profile->name : 'N/S',
+                    'current_driver' => $driver ? $vehicle->driver->profile->name : 'N/S',
                 ];
                 array_push($vehicle_lists, $vehicle);
             }
