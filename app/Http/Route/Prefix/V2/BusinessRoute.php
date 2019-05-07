@@ -56,6 +56,9 @@ class BusinessRoute
             $api->get('/{member}/drivers/{driver}/contract-info', 'B2b\DriversController@getDriverContractInfo');
             $api->post('/{member}/drivers/{driver}/contract-info', 'B2b\DriversController@updateDriverContractInfo');
 
+            $api->get('/{member}/drivers/{driver}/experience-info', 'B2b\DriversController@getDriverExperienceInfo');
+            $api->post('/{member}/drivers/{driver}/experience-info', 'B2b\DriversController@updateDriverExperienceInfo');
+
             $api->get('/{member}/drivers/{driver}/recent-assignment', 'B2b\DriversController@getDriverRecentAssignment');
         });
     }

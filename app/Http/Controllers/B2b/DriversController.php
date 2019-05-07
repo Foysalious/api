@@ -356,6 +356,62 @@ class DriversController extends Controller
         }
     }
 
+    public function getDriverExperienceInfo($member, $driver, Request $request)
+    {
+        try {
+            $member = Member::find($member);
+            $business = $member->businesses->first();
+            $this->setModifier($member);
+
+            $driver = Driver::find((int)$driver);
+            $profile = $driver->profile;
+            $vehicle = $driver->vehicle;
+
+            $license_info = [
+                'years_of_experience' => $driver->years_of_experience,
+            ];
+
+            return api_response($request, $license_info, 200, ['license_info' => $license_info]);
+        } catch (\Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function updateDriverExperienceInfo($member, $driver, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                #'type' => 'required|string|in:hatchback,sedan,suv,passenger_van,others',
+                'years_of_experience' => 'required|numeric',
+                #'model_year' => 'required|date|date_format:Y-m-d',
+            ]);
+            $member = Member::find($member);
+            $business = $member->businesses->first();
+            $this->setModifier($member);
+
+            $driver = Driver::find((int)$driver);
+            $profile = $driver->profile;
+            $vehicle = $driver->vehicle;
+
+            $driver_info = [
+                'years_of_experience' => $request->years_of_experience,
+            ];
+            $driver->update($this->withUpdateModificationField($driver_info));
+
+            return api_response($request, 1, 200);
+
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     public function getDriverRecentAssignment($member, $driver, Request $request)
     {
         try {
