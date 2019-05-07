@@ -92,6 +92,7 @@ class VehiclesController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -161,6 +162,7 @@ class VehiclesController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -192,6 +194,7 @@ class VehiclesController extends Controller
             }
             return api_response($request, $vehicle_lists, 200, ['vehicle_lists' => $vehicle_lists]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -266,6 +269,7 @@ class VehiclesController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -331,6 +335,7 @@ class VehiclesController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -360,6 +365,7 @@ class VehiclesController extends Controller
             ];
             return api_response($request, $specs_info, 200, ['specs_info' => $specs_info]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -419,7 +425,7 @@ class VehiclesController extends Controller
 
             $recent_assignment = [];
             #$business_trips->first()->driver->profile->name;
-            foreach ($business_trips as $business_trip){
+            foreach ($business_trips as $business_trip) {
                 $vehicle = [
                     'id' => $business_trip->id,
                     'status' => $business_trip->vehicle->status,
@@ -430,6 +436,7 @@ class VehiclesController extends Controller
             }
             return api_response($request, $recent_assignment, 200, ['recent_assignment' => $recent_assignment]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
