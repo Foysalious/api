@@ -146,6 +146,7 @@ class VehicleList
         foreach ($vehicles as $vehicle) {
             $vehicle = (object) $vehicle;
             $this->insertIntoArray($vehicle->company_name,  $company_names);
+            if(strtolower($vehicle->type) === 'ac') $vehicle->type = 'AC';
             $this->insertIntoArray($vehicle->type,  $types);
             $this->insertIntoArray($this->parseTimeShift($vehicle->start_time),  $shifts);
         }
