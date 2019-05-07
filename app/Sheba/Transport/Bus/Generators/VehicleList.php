@@ -179,7 +179,7 @@ class VehicleList
     {
         foreach ($vehicles as  $index => $vehicle) {
             $type = $vehicle['type'];
-            if(strtolower($vehicle->type) === 'ac') $type = 'AC';
+            if(strtolower($vehicle['type']) === 'ac') $type = 'AC';
             $tags = [
                 'company_names' => [
                     $vehicle['company_name']
