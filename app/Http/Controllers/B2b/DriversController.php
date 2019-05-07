@@ -120,6 +120,39 @@ class DriversController extends Controller
         }
     }
 
+    public function driverLists($member, Request $request)
+    {
+        try {
+            $member = Member::find($member);
+            $business = $member->businesses->first();
+            $this->setModifier($member);
+
+            list($offset, $limit) = calculatePagination($request);
+            $drivers = Driver::select('id', 'status')->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
+
+            $driver_lists = [];
+            foreach ($drivers as $driver) {
+                $profile = $driver->profile;
+                $vehicle = $driver->vehicle;
+                $basic_information = $vehicle ? $vehicle->basicInformations : null;
+                $driver = [
+                    'picture' => $profile->pro_pic,
+                    'mobile' => $profile->mobile,
+                    'status' => $driver->status,
+                    'model_year' => $basic_information ? Carbon::parse($basic_information->model_year)->format('Y') : null,
+                    'model_name' => $basic_information ? $basic_information->model_name : null,
+                    'vehicle_type' => $basic_information ? $basic_information->type : null,
+                ];
+                array_push($driver_lists, $driver);
+            }
+            return api_response($request, $driver_lists, 200, ['driver_lists' => $driver_lists]);
+        } catch (\Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     private function updateDocuments($image_for, $photo)
     {
         $vehicle_registration_information = new VehicleRegistrationInformation();
