@@ -292,6 +292,7 @@ class VehiclesController extends Controller
             $registration_info = [
                 'vehicle_id' => $vehicle->id,
                 'license_number' => $registration_information->license_number,
+                'tax_token_number' => $registration_information->tax_token_number,
                 'fitness_start_date' => Carbon::parse($registration_information->fitness_start_date)->format('Y-m-d'),
                 'fitness_end_date' => Carbon::parse($registration_information->fitness_end_date)->format('Y-m-d'),
                 'insurance_date' => Carbon::parse($registration_information->insurance_date)->format('Y-m-d'),
@@ -309,6 +310,7 @@ class VehiclesController extends Controller
         try {
             $this->validate($request, [
                 'license_number' => 'string',
+                'tax_token_number' => 'string',
                 'fitness_start_date' => 'required|date|date_format:Y-m-d',
                 'fitness_end_date' => 'required|date|date_format:Y-m-d',
                 'insurance_date' => 'required|date|date_format:Y-m-d'
@@ -325,6 +327,7 @@ class VehiclesController extends Controller
 
             $registration_information_data = [
                 'license_number' => $request->license_number,
+                'tax_token_number' => $request->tax_token_number,
                 'fitness_start_date' => $request->fitness_start_date,
                 'fitness_end_date' => $request->fitness_end_date,
                 'insurance_date' => $request->insurance_date,
