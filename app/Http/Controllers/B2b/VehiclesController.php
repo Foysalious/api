@@ -387,7 +387,7 @@ class VehiclesController extends Controller
                 'weight_kg' => 'required|numeric',
                 'max_payload_kg' => 'required|numeric',
                 'engine_summary' => 'required|string',
-                'transmission_type' => 'required|string|in:hatchback,sedan,suv,passenger_van,others',
+                'transmission_type' => 'required|string|in:auto,manual',
             ]);
             $member = Member::find($member);
             $business = $member->businesses->first();
