@@ -14,7 +14,12 @@ class Driver extends Model
 
     public function vehicle()
     {
-        return $this->hasOne(Vehicle::class);
+        return $this->hasOne(Vehicle::class, 'current_driver_id');
+    }
+
+    public function businessTrip()
+    {
+        return $this->hasOne(BusinessTrip::class);
     }
 
 }

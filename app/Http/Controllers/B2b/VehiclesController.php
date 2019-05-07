@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Models\BusinessTrip;
 use App\Models\Vehicle;
 use App\Models\VehicleRegistrationInformation;
 use App\Repositories\FileRepository;
@@ -91,6 +92,7 @@ class VehiclesController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -160,6 +162,7 @@ class VehiclesController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -179,18 +182,21 @@ class VehiclesController extends Controller
             foreach ($vehicles as $vehicle) {
                 $basic_information = $vehicle->basicInformations;
                 $registration_information = $vehicle->registrationInformations;
+                $driver = $vehicle->driver;
                 $vehicle = [
+                    'id' => $vehicle->id,
                     'vehicle_model' => $basic_information->model_name,
                     'model_year' => Carbon::parse($basic_information->model_year)->format('Y'),
                     'status' => $vehicle->status,
                     'vehicle_type' => $basic_information->type,
                     'assigned_to' => 'ARNAD DADA',
-                    'current_driver' => $vehicle->driver->profile ? $vehicle->driver->profile->name : 'N/S',
+                    'current_driver' => $driver ? $vehicle->driver->profile->name : 'N/S',
                 ];
                 array_push($vehicle_lists, $vehicle);
             }
             return api_response($request, $vehicle_lists, 200, ['vehicle_lists' => $vehicle_lists]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -265,6 +271,7 @@ class VehiclesController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -285,6 +292,7 @@ class VehiclesController extends Controller
             $registration_info = [
                 'vehicle_id' => $vehicle->id,
                 'license_number' => $registration_information->license_number,
+                'tax_token_number' => $registration_information->tax_token_number,
                 'fitness_start_date' => Carbon::parse($registration_information->fitness_start_date)->format('Y-m-d'),
                 'fitness_end_date' => Carbon::parse($registration_information->fitness_end_date)->format('Y-m-d'),
                 'insurance_date' => Carbon::parse($registration_information->insurance_date)->format('Y-m-d'),
@@ -302,6 +310,7 @@ class VehiclesController extends Controller
         try {
             $this->validate($request, [
                 'license_number' => 'string',
+                'tax_token_number' => 'string',
                 'fitness_start_date' => 'required|date|date_format:Y-m-d',
                 'fitness_end_date' => 'required|date|date_format:Y-m-d',
                 'insurance_date' => 'required|date|date_format:Y-m-d'
@@ -318,6 +327,7 @@ class VehiclesController extends Controller
 
             $registration_information_data = [
                 'license_number' => $request->license_number,
+                'tax_token_number' => $request->tax_token_number,
                 'fitness_start_date' => $request->fitness_start_date,
                 'fitness_end_date' => $request->fitness_end_date,
                 'insurance_date' => $request->insurance_date,
@@ -330,6 +340,7 @@ class VehiclesController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -359,6 +370,7 @@ class VehiclesController extends Controller
             ];
             return api_response($request, $specs_info, 200, ['specs_info' => $specs_info]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -375,7 +387,7 @@ class VehiclesController extends Controller
                 'weight_kg' => 'required|numeric',
                 'max_payload_kg' => 'required|numeric',
                 'engine_summary' => 'required|string',
-                'transmission_type' => 'required|string|in:hatchback,sedan,suv,passenger_van,others',
+                'transmission_type' => 'required|string|in:auto,manual',
             ]);
             $member = Member::find($member);
             $business = $member->businesses->first();
@@ -401,6 +413,33 @@ class VehiclesController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getVehicleRecentAssignment($member, $vehicle, Request $request)
+    {
+        try {
+            $member = Member::find($member);
+            $business = $member->businesses->first();
+            $this->setModifier($member);
+            $business_trips = BusinessTrip::where('vehicle_id', (int)$vehicle)->get();
+
+            $recent_assignment = [];
+            #$business_trips->first()->driver->profile->name;
+            foreach ($business_trips as $business_trip) {
+                $vehicle = [
+                    'id' => $business_trip->id,
+                    'status' => $business_trip->vehicle->status,
+                    'assigned_to' => 'ARNAD DADA',
+                    'driver' => $business_trip->driver->profile ? $business_trip->driver->profile->name : 'N/S',
+                ];
+                array_push($recent_assignment, $vehicle);
+            }
+            return api_response($request, $recent_assignment, 200, ['recent_assignment' => $recent_assignment]);
         } catch (\Throwable $e) {
             dd($e);
             app('sentry')->captureException($e);

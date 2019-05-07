@@ -40,8 +40,26 @@ class BusinessRoute
             $api->get('/{member}/vehicles/{vehicle}/specs', 'B2b\VehiclesController@getVehicleSpecs');
             $api->post('/{member}/vehicles/{vehicle}/specs', 'B2b\VehiclesController@updateVehicleSpecs');
 
+            $api->get('/{member}/vehicles/{vehicle}/recent-assignment', 'B2b\VehiclesController@getVehicleRecentAssignment');
+
             $api->post('/{member}/drivers', 'B2b\DriversController@store');
             $api->post('/{member}/drivers/{driver}', 'B2b\DriversController@update');
+
+            $api->get('/{member}/drivers', 'B2b\DriversController@driverLists');
+
+            $api->get('/{member}/drivers/{driver}/general-info', 'B2b\DriversController@getDriverGeneralInfo');
+            $api->post('/{member}/drivers/{driver}/general-info', 'B2b\DriversController@updateDriverGeneralInfo');
+
+            $api->get('/{member}/drivers/{driver}/license-info', 'B2b\DriversController@getDriverLicenseInfo');
+            $api->post('/{member}/drivers/{driver}/license-info', 'B2b\DriversController@updateDriverLicenseInfo');
+
+            $api->get('/{member}/drivers/{driver}/contract-info', 'B2b\DriversController@getDriverContractInfo');
+            $api->post('/{member}/drivers/{driver}/contract-info', 'B2b\DriversController@updateDriverContractInfo');
+
+            $api->get('/{member}/drivers/{driver}/experience-info', 'B2b\DriversController@getDriverExperienceInfo');
+            $api->post('/{member}/drivers/{driver}/experience-info', 'B2b\DriversController@updateDriverExperienceInfo');
+
+            $api->get('/{member}/drivers/{driver}/recent-assignment', 'B2b\DriversController@getDriverRecentAssignment');
         });
     }
 }
