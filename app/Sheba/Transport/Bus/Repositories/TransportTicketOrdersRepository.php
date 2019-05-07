@@ -6,6 +6,15 @@ use Sheba\Repositories\BaseRepository;
 class TransportTicketOrdersRepository extends BaseRepository
 {
     /**
+     * @param $id
+     * @return TransportTicketOrder
+     */
+    public function findById($id)
+    {
+        return TransportTicketOrder::find($id);
+    }
+
+    /**
      * @param array $data
      * @return TransportTicketOrder
      */

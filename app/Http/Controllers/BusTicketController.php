@@ -1,8 +1,10 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\Payment;
 use App\Transformers\BusRouteTransformer;
 use App\Transformers\CustomSerializer;
 
+use Clockwork\DataSource\DBALDataSource;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -22,6 +24,7 @@ use Sheba\Transport\Bus\Order\Creator;
 use Sheba\Transport\Bus\Order\Status;
 use Sheba\Transport\Bus\Order\TransportTicketRequest;
 use Sheba\Transport\Bus\Repositories\BusRouteLocationRepository;
+use Sheba\Transport\Bus\Repositories\TransportTicketOrdersRepository;
 use Sheba\Transport\Bus\Vendor\VendorFactory;
 use Throwable;
 
@@ -229,7 +232,7 @@ class BusTicketController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return response()->json(['data' => null, 'message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -281,6 +284,26 @@ class BusTicketController extends Controller
             // $vendor->bookTicket($creator);
             $order = $creator->setRequest($ticket_request)->create();
 
+            return api_response($request, null, 200, ['data' => $order]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function pay(Request $request, TransportTicketOrdersRepository $ticket_order_repo)
+    {
+        try {
+            $this->validate($request, ['payment_method' => 'required', 'order_id' => 'required']);
+            $this->setModifier($this->getAgent($request));
+
+            $order = $ticket_order_repo->findById($request->order_id);
             $payment = $this->getPayment($request->payment_method, $order);
             if ($payment) {
                 $link = $payment->redirect_url;
@@ -301,52 +324,31 @@ class BusTicketController extends Controller
     }
 
     /**
-     * ORDER PLACEMENT - CONFIRM TICKET
-     *
      * @param Request $request
-     * @param VendorFactory $vendor
-     * @return JsonResponse
+     * @return mixed
      */
-    public function confirm(Request $request, VendorFactory $vendor)
-    {
-        try {
-            $this->validate($request, ['vendor_id' => 'required', 'ticket_id' => 'required',]);
-            $this->setModifier($this->getAgent($request));
-            $data = [];
-            $vendor = $vendor->getById($request->vendor_id);
-            $vendor->confirmTicket($request->ticket_id);
-
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
     private function getAgent(Request $request)
     {
         if ($request->affiliate) return $request->affiliate;
         elseif ($request->customer) return $request->customer;
     }
 
+    /**
+     * @param $payment_method
+     * @param $transport_ticket_order
+     * @return Payment|void|null
+     */
     private function getPayment($payment_method, $transport_ticket_order)
     {
         try {
             $transport_ticket_order_adapter = new TransportTicketPurchaseAdapter();
-            $payment = (new ShebaPayment($payment_method))->init($transport_ticket_order_adapter
-                    ->setModelForPayable($transport_ticket_order)
-                    ->getPayable());
+            $payment = (new ShebaPayment($payment_method))->init($transport_ticket_order_adapter->setModelForPayable($transport_ticket_order)->getPayable());
 
             return $payment->isInitiated() ? $payment : null;
         } catch (QueryException $e) {
             app('sentry')->captureException($e);
             return null;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return null;
         }
