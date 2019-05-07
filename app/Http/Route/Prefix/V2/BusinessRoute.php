@@ -44,7 +44,11 @@ class BusinessRoute
 
             $api->post('/{member}/drivers', 'B2b\DriversController@store');
             $api->post('/{member}/drivers/{driver}', 'B2b\DriversController@update');
+
             $api->get('/{member}/drivers', 'B2b\DriversController@driverLists');
+
+            $api->get('/{member}/drivers/{driver}/general-info', 'B2b\DriversController@getDriverGeneralInfo');
+            $api->post('/{member}/drivers/{driver}/general-info', 'B2b\DriversController@updateDriverGeneralInfo');
         });
     }
 }

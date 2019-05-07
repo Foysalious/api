@@ -153,6 +153,67 @@ class DriversController extends Controller
         }
     }
 
+    public function getDriverGeneralInfo($member, $driver, Request $request)
+    {
+        try {
+            $member = Member::find($member);
+            $business = $member->businesses->first();
+            $this->setModifier($member);
+
+            $driver = Driver::find((int)$driver);
+            $profile = $driver->profile;
+            #dd($driver->profile);
+
+            $general_info = [
+                'driver_id' => $driver->id,
+                'name' => $profile->name,
+                'dob' => Carbon::parse($profile->dob)->format('j M, Y'),
+                #'blood_group' => $profile->blood_group,
+                'nid_no' => $profile->nid_no,
+            ];
+
+            return api_response($request, $general_info, 200, ['general_info' => $general_info]);
+        } catch (\Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function updateDriverGeneralInfo($member, $driver, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'dob' => 'required|date|date_format:Y-m-d',
+                'name' => 'string',
+                'nid_no' => 'string',
+            ]);
+            $member = Member::find($member);
+            $business = $member->businesses->first();
+            $this->setModifier($member);
+
+            $driver = Driver::find((int)$driver);
+            $profile = $driver->profile;
+            $general_info = [
+                'name' => $request->name,
+                'dob' => $request->dob,
+                #'blood_group' => $request->blood_group,
+                'nid_no' => $request->nid_no,
+            ];
+            $profile->update($this->withUpdateModificationField($general_info));
+
+            return api_response($request, 1, 200);
+
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     private function updateDocuments($image_for, $photo)
     {
         $vehicle_registration_information = new VehicleRegistrationInformation();

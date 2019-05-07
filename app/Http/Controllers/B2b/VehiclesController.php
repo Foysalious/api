@@ -184,6 +184,7 @@ class VehiclesController extends Controller
                 $registration_information = $vehicle->registrationInformations;
                 $driver = $vehicle->driver;
                 $vehicle = [
+                    'id' => $vehicle->id,
                     'vehicle_model' => $basic_information->model_name,
                     'model_year' => Carbon::parse($basic_information->model_year)->format('Y'),
                     'status' => $vehicle->status,
