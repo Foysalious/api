@@ -289,6 +289,72 @@ class DriversController extends Controller
         }
     }
 
+    public function getDriverContractInfo($member, $driver, Request $request)
+    {
+        try {
+            $member = Member::find($member);
+            $business = $member->businesses->first();
+            $this->setModifier($member);
+
+            $driver = Driver::find((int)$driver);
+            $profile = $driver->profile;
+
+            $contract_info = [
+                'email' => $driver->id,
+                'mobile' => $profile->name,
+                'address' => $profile->blood_group,
+            ];
+
+            return api_response($request, $contract_info, 200, ['contract_info' => $contract_info]);
+        } catch (\Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function updateDriverContractInfo($member, $driver, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'email' => 'required|email',
+                'mobile' => 'required|string|mobile:bd',
+                'address' => 'required|string',
+            ]);
+            $member = Member::find($member);
+            $business = $member->businesses->first();
+            $this->setModifier($member);
+
+            $driver = Driver::find((int)$driver);
+            $profile = $driver->profile;
+            $exist_mobile = Profile::where('mobile', formatMobile($request->mobile))->first();
+            $exist_email = Profile::where('email', $request->email)->first();
+
+            if ($exist_mobile){
+                return response()->json(['message' => 'Mobile Number Already Exist.', 'code' => 403]);
+            }
+            if ($exist_email){
+                return response()->json(['message' => 'Email Already Exist.', 'code' => 403]);
+            }
+            $general_info = [
+                'email' => $request->email,
+                'mobile' => formatMobile($request->mobile),
+                'address' => $request->address,
+            ];
+            $profile->update($this->withUpdateModificationField($general_info));
+
+            return api_response($request, 1, 200);
+
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     private function updateDocuments($image_for, $photo)
     {
         $vehicle_registration_information = new VehicleRegistrationInformation();
