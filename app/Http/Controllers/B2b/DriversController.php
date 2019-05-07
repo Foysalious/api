@@ -300,9 +300,9 @@ class DriversController extends Controller
             $profile = $driver->profile;
 
             $contract_info = [
-                'email' => $driver->id,
-                'mobile' => $profile->name,
-                'address' => $profile->blood_group,
+                'email' => $profile->email,
+                'mobile' => $profile->mobile,
+                'address' => $profile->address,
             ];
 
             return api_response($request, $contract_info, 200, ['contract_info' => $contract_info]);
