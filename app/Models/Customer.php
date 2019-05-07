@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use App\Models\Transport\TransportTicketOrder;
 use App\Sheba\Payment\Rechargable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Sheba\MovieTicket\MovieAgent;
@@ -216,5 +217,10 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
     {
         $this->debitWallet($transaction->getAmount());
         $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
+    }
+
+    public function transportTicketOrders()
+    {
+        return $this->morphMany(TransportTicketOrder::class, 'agent');
     }
 }

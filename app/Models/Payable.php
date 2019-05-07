@@ -21,6 +21,8 @@ class Payable extends Model
             return 'gift_card_purchase';
         } else if ($this->type == 'movie_ticket_purchase') {
             return 'movie_ticket_purchase';
+        } else if ($this->type == 'transport_ticket_purchase') {
+            return 'transport_ticket_purchase';
         }
     }
 
@@ -37,6 +39,8 @@ class Payable extends Model
             $class_name .= 'GiftCardPurchaseComplete';
         } else if ($this->completion_type == 'movie_ticket_purchase') {
             $class_name .= 'MovieTicketPurchaseComplete';
+        } else if ($this->completion_type == 'transport_ticket_purchase') {
+            $class_name .= 'TransportTicketPurchaseComplete';
         }
 
         return new $class_name();
@@ -84,9 +88,12 @@ class Payable extends Model
             $model .= 'SubscriptionOrder';
         } elseif ($this->type == 'gift_card_purchase') {
             $model .= 'GiftCardPurchase';
-        } else {
+        } elseif ($this->type == 'movie_ticket_purchase') {
             $model .= 'MovieTicketOrder';
+        } elseif ($this->type == 'transport_ticket_purchase') {
+            $model .= 'TransportTicketOrder';
         }
+
         return $model;
     }
 

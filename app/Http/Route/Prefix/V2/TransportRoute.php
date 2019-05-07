@@ -14,7 +14,7 @@ class TransportRoute
                 $api->post('promotions/add', 'BusTicketController@applyPromo');
 
                 $api->post('book', 'BusTicketController@book');
-                $api->post('confirm', 'BusTicketController@confirm');
+                $api->post('pay', 'BusTicketController@pay');
             });
         });
     }

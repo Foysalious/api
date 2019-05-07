@@ -22,7 +22,7 @@ class TransportTicketPurchaseAdapter implements PayableAdapter
         $payable->user_type = get_class($this->transportTicketOrder->agent);
         $payable->amount = $this->transportTicketOrder->amount;
         $payable->completion_type = "transport_ticket_purchase";
-        $payable->success_url = config('sheba.front_url') . '/transport-tickets/' . $this->transportTicketOrder->id;
+        $payable->success_url = config('sheba.front_url') . '/transport-tickets/bus/' . $this->transportTicketOrder->id;
         $payable->created_at = Carbon::now();
         $payable->save();
 
