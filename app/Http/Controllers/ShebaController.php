@@ -290,6 +290,9 @@ class ShebaController extends Controller
                     case 'business':
                         $payments = $this->getBusinessPayments($version_code, $platform_name);
                         break;
+                    case 'transport_ticket':
+                        $payments = $this->getTransportTicketPayments($version_code, $platform_name);
+                        break;
                     default:
                         throw new \Exception('Invalid Payable Type');
                         break;
@@ -429,6 +432,40 @@ class ShebaController extends Controller
     }
 
     public function getMovieTicketPayments($version_code, $platform_name)
+    {
+        return [
+            array(
+                'name' => 'Sheba Credit',
+                'is_published' => 1,
+                'description' => '',
+                'asset' => 'sheba_credit',
+                'method_name' => 'wallet'
+            ),
+            array(
+                'name' => 'City Bank',
+                'is_published' => $this->calculateCityBankStatus($version_code, $platform_name),
+                'description' => '',
+                'asset' => 'cbl',
+                'method_name' => 'cbl'
+            ),
+            array(
+                'name' => 'bKash',
+                'is_published' => 1,
+                'description' => '',
+                'asset' => 'bkash',
+                'method_name' => 'bkash'
+            ),
+            array(
+                'name' => 'Other Debit/Credit',
+                'is_published' => 1,
+                'description' => '',
+                'asset' => 'ssl',
+                'method_name' => 'online'
+            )
+        ];
+    }
+
+    public function getTransportTicketPayments($version_code, $platform_name)
     {
         return [
             array(
