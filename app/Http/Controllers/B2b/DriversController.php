@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Models\BusinessMember;
 use App\Models\BusinessTrip;
 use App\Models\Driver;
 use App\Models\Profile;
@@ -50,11 +51,34 @@ class DriversController extends Controller
             $driver = Driver::create($this->withCreateModificationField($driver_data));
             $profile = Profile::where('mobile', formatMobile($request->mobile))->first();
             if (!$profile) {
-                $this->createDriverProfile($member, $driver, $request);
+                $profile = $this->createDriverProfile($member, $driver, $request);
+                $new_member = $profile->member;
+                if (!$new_member) $new_member = $this->makeMember($profile);
+
+                $business = $member->businesses->first();
+                $member_business_data = [
+                    'business_id' => $business->id,
+                    'member_id' => $new_member->id,
+                    'type' => 'Admin',
+                    'join_date' => Carbon::now(),
+                ];
+                BusinessMember::create($this->withCreateModificationField($member_business_data));
             } else {
                 $profile_data = [
                     'driver_id' => $driver->id,
                 ];
+                $new_member = $profile->member;
+                if (!$new_member) $new_member = $this->makeMember($profile);
+
+                $business = $member->businesses->first();
+                $member_business_data = [
+                    'business_id' => $business->id,
+                    'member_id' => $new_member->id,
+                    'type' => 'Admin',
+                    'join_date' => Carbon::now(),
+                ];
+                BusinessMember::create($this->withCreateModificationField($member_business_data));
+
                 $profile->update($this->withCreateModificationField($profile_data));
             }
 
@@ -86,6 +110,16 @@ class DriversController extends Controller
         ];
 
         return Profile::create($this->withCreateModificationField($profile_data));
+    }
+
+    private function makeMember($profile)
+    {
+        $this->setModifier($profile);
+        $member = new Member();
+        $member->profile_id = $profile->id;
+        $member->remember_token = str_random(255);
+        $member->save();
+        return $member;
     }
 
     public function update($member, $driver, Request $request)
@@ -331,10 +365,10 @@ class DriversController extends Controller
             $exist_mobile = Profile::where('mobile', formatMobile($request->mobile))->first();
             $exist_email = Profile::where('email', $request->email)->first();
 
-            if ($exist_mobile){
+            if ($exist_mobile) {
                 return response()->json(['message' => 'Mobile Number Already Exist.', 'code' => 403]);
             }
-            if ($exist_email){
+            if ($exist_email) {
                 return response()->json(['message' => 'Email Already Exist.', 'code' => 403]);
             }
             $general_info = [
@@ -421,7 +455,7 @@ class DriversController extends Controller
             $business_trips = BusinessTrip::where('driver_id', (int)$driver)->get();
 
             $recent_assignment = [];
-          
+
             foreach ($business_trips as $business_trip) {
                 $vehicle = $business_trip->vehicle;
                 $basic_information = $vehicle ? $vehicle->basicInformations : null;
@@ -430,7 +464,7 @@ class DriversController extends Controller
                     'id' => $business_trip->id,
                     'status' => $business_trip->status,
                     'assigned_to' => 'ARNAD DADA',
-                    'vehicle'=>[
+                    'vehicle' => [
                         'type' => $basic_information->type,
                         'company_name' => $basic_information->company_name,
                         'model_name' => $basic_information->model_name,
