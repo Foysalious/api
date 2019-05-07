@@ -214,6 +214,81 @@ class DriversController extends Controller
         }
     }
 
+    public function getDriverLicenseInfo($member, $driver, Request $request)
+    {
+        try {
+            $member = Member::find($member);
+            $business = $member->businesses->first();
+            $this->setModifier($member);
+
+            $driver = Driver::find((int)$driver);
+            $profile = $driver->profile;
+            $vehicle = $driver->vehicle;
+
+            $license_info = [
+                'type' => $vehicle ? $vehicle->basicInformations->type : null,
+                'company_name' => $vehicle ? $vehicle->basicInformations->company_name : null,
+                'model_name' => $vehicle ? $vehicle->basicInformations->model_name : null,
+                'model_year' => $vehicle ? $vehicle->basicInformations->model_year : null,
+
+                'license_number' => $driver->id,
+                'license_class' => $profile->name,
+                'issue_authority' => 'BRTA',
+            ];
+
+            return api_response($request, $license_info, 200, ['license_info' => $license_info]);
+        } catch (\Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function updateDriverLicenseInfo($member, $driver, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'type' => 'required|string|in:hatchback,sedan,suv,passenger_van,others',
+                'company_name' => 'required|string',
+                'model_name' => 'required|string',
+                'model_year' => 'required|date|date_format:Y-m-d',
+                'license_number' => 'required|string',
+                'license_class' => 'required|string',
+            ]);
+            $member = Member::find($member);
+            $business = $member->businesses->first();
+            $this->setModifier($member);
+
+            $driver = Driver::find((int)$driver);
+            $profile = $driver->profile;
+            $vehicle = $driver->vehicle;
+
+            $vehicle_basic_info = [
+                'type' => $request->type,
+                'company_name' => $request->company_name,
+                'model_name' => $request->model_name,
+                'model_year' => $request->model_year,
+            ];
+            if ($vehicle) $vehicle->basicInformations->update($this->withUpdateModificationField($vehicle_basic_info));
+
+            $driver_info = [
+                'license_number' => $request->license_number,
+                'license_class' => $request->license_class,
+            ];
+            $driver->update($this->withUpdateModificationField($driver_info));
+
+            return api_response($request, 1, 200);
+
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     private function updateDocuments($image_for, $photo)
     {
         $vehicle_registration_information = new VehicleRegistrationInformation();
