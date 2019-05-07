@@ -4,6 +4,7 @@ use App\Helper\BangladeshiMobileValidator;
 use App\Models\Profile;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Hash;
 
 class ProfileRepository extends BaseRepository
 {
@@ -27,6 +28,7 @@ class ProfileRepository extends BaseRepository
     public function update(Profile $profile, $data)
     {
         $profile_data = $this->profileDataFormat($data);
+        unset($profile_data['remember_token']);
         return $profile->update($this->withUpdateModificationField($profile_data));
     }
 
@@ -56,6 +58,17 @@ class ProfileRepository extends BaseRepository
 
         //$contact_no = formatMobileAux($contact_no);
         //return Profile::where('mobile', $contact_no)->first();
+    }
+
+    public function validate($data, $profile)
+    {
+        $mobile = isset($data['mobile']) ? $data['mobile'] : null;
+        $email = isset($data['email']) ? $data['email'] : null;
+        $eProfile = $this->checkExistingEmail($email);
+        $mProfile = $this->checkExistingMobile($mobile);
+        if ($eProfile && $eProfile->id != $profile->id) return 'email';
+        if ($mProfile && $mProfile->id != $profile->id) return 'phone';
+        return true;
     }
 
     /**
@@ -97,15 +110,20 @@ class ProfileRepository extends BaseRepository
         if (isset($data['profile_image'])) {
             $profile_data['pro_pic'] = $data['profile_image'];
         }
-
         if (isset($data['_token'])) {
             $profile_data['remember_token'] = $data['_token'];
 
         } else {
-            $profile_data['name'] = isset($data['resource_name']) ? $data['resource_name'] : $data['name'];
+            $profile_data['name'] = isset($data['resource_name']) ? $data['resource_name'] : isset($data['name']) ? $data['name'] : null;
+            if (!$profile_data['name']) unset($profile_data['name']);
             $profile_data['remember_token'] = str_random(255);
         }
-
+        if (isset($data['password'])) {
+            $profile_data['password'] = bcrypt($data['password']);
+        }
+        if (isset($data['mobile'])) {
+            $profile_data['mobile'] = formatMobile($data['mobile']);
+        }
         return $profile_data;
     }
 }
