@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Models\BusinessTrip;
 use App\Models\Driver;
 use App\Models\Profile;
 use App\Models\Vehicle;
@@ -348,6 +349,41 @@ class DriversController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getDriverRecentAssignment($member, $driver, Request $request)
+    {
+        try {
+            $member = Member::find($member);
+            $business = $member->businesses->first();
+            $this->setModifier($member);
+            $business_trips = BusinessTrip::where('driver_id', (int)$driver)->get();
+
+            $recent_assignment = [];
+          
+            foreach ($business_trips as $business_trip) {
+                $vehicle = $business_trip->vehicle;
+                $basic_information = $vehicle ? $vehicle->basicInformations : null;
+
+                $vehicle = [
+                    'id' => $business_trip->id,
+                    'status' => $business_trip->status,
+                    'assigned_to' => 'ARNAD DADA',
+                    'vehicle'=>[
+                        'type' => $basic_information->type,
+                        'company_name' => $basic_information->company_name,
+                        'model_name' => $basic_information->model_name,
+                        'model_year' => $basic_information->model_year,
+                    ]
+                ];
+                array_push($recent_assignment, $vehicle);
+            }
+            return api_response($request, $recent_assignment, 200, ['recent_assignment' => $recent_assignment]);
         } catch (\Throwable $e) {
             dd($e);
             app('sentry')->captureException($e);
