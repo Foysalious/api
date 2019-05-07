@@ -281,7 +281,13 @@ class BusTicketController extends Controller
             // $vendor->bookTicket($creator);
             $order = $creator->setRequest($ticket_request)->create();
 
-            return api_response($request, null, 200, ['data' => $order]);
+            $payment = $this->getPayment($request->payment_method, $order);
+            if ($payment) {
+                $link = $payment->redirect_url;
+                $payment = $payment->getFormattedPayment();
+            }
+
+            return api_response($request, null, 200, ['link' => $link, 'payment' => $payment]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
@@ -310,14 +316,6 @@ class BusTicketController extends Controller
             $vendor = $vendor->getById($request->vendor_id);
             $vendor->confirmTicket($request->ticket_id);
 
-            /*$payment = $this->getPayment($request->payment_method, $movie_ticket_order);
-            if ($payment) {
-                $link = $payment->redirect_url;
-                $payment = $payment->getFormattedPayment();
-            }
-            return api_response($request, $movie_ticket_order, 200, ['link' => $link, 'payment' => $payment]);*/
-
-            return api_response($request, $data, 200, ['data' => $data]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
