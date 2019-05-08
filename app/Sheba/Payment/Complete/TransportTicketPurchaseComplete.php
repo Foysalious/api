@@ -41,7 +41,7 @@ class TransportTicketPurchaseComplete extends PaymentComplete
                     'created_at' => Carbon::now()
                 ];
 
-                TicketTransaction::insert($data);
+                TicketTransaction::create($data);
 
                 $bus_ticket->setAgent($transport_ticket_order->agent)->agentTransaction();
                 $bus_ticket->disburseCommissions();
