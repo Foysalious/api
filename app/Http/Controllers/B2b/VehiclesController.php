@@ -176,12 +176,18 @@ class VehiclesController extends Controller
             $this->setModifier($member);
 
             list($offset, $limit) = calculatePagination($request);
-            $vehicles = Vehicle::select('id', 'status', 'current_driver_id')->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
+            $vehicles = Vehicle::with('basicInformations')->select('id', 'status', 'current_driver_id')->orderBy('id', 'desc')->skip($offset)->limit($limit);
+            if ($request->has('status'))
+                $vehicles = $vehicles->status($request->status);
 
+            $vehicles = $vehicles->get();
             $vehicle_lists = [];
             foreach ($vehicles as $vehicle) {
                 $basic_information = $vehicle->basicInformations;
-                $registration_information = $vehicle->registrationInformations;
+
+                if ($request->has('type'))
+                    if ($vehicle->basicInformations->type !== $request->type) continue;
+
                 $driver = $vehicle->driver;
                 $vehicle = [
                     'id' => $vehicle->id,
