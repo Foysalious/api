@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use App\Models\Member;
 use Carbon\Carbon;
 use DB;
+use Sheba\Repositories\ProfileRepository;
 
 class DriversController extends Controller
 {
@@ -23,10 +24,12 @@ class DriversController extends Controller
     use ModificationFields;
 
     private $fileRepository;
+    private $profileRepository;
 
-    public function __construct(FileRepository $file_repository)
+    public function __construct(FileRepository $file_repository , ProfileRepository $profile_repository)
     {
         $this->fileRepository = $file_repository;
+        $this->profileRepository = $profile_repository;
     }
 
     public function store($member, Request $request)
@@ -40,7 +43,7 @@ class DriversController extends Controller
 
                 'name' => 'required|string',
                 'email' => 'email',
-                'mobile' => 'required|string|mobile:bd',
+                #'mobile' => 'required|string|mobile:bd',
                 'address' => 'required|string',
                 'dob' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
                 'nid_no' => 'required|integer',
@@ -57,8 +60,11 @@ class DriversController extends Controller
                 'license_class' => $request->license_class,
                 'years_of_experience' => $request->years_of_experience,
             ];
-            $driver = Driver::create($this->withCreateModificationField($driver_data));
-            $profile = Profile::where('mobile', formatMobile($request->mobile))->first();
+            $profile = $this->profileRepository->checkExistingMobile($request->mobile);
+            $profile = $this->profileRepository->checkExistingEmail($request->email);
+            dd($request->mobile, $request->email,$profile);
+            $email_profile = Profile::where('email', $request->email)->first();
+            #$driver = Driver::create($this->withCreateModificationField($driver_data));
             if (!$profile) {
                 $profile = $this->createDriverProfile($member, $driver, $request);
                 $new_member = $profile->member;
@@ -170,9 +176,9 @@ class DriversController extends Controller
             $member = Member::find($member);
             $business = $member->businesses->first();
             $this->setModifier($member);
-#with('profile', 'vehicle', 'vehicle.basicInformations')->
             list($offset, $limit) = calculatePagination($request);
             $drivers = Driver::select('id', 'status')->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
+                                #with('profile', 'vehicle', 'vehicle.basicInformations')->
             $driver_lists = [];
             foreach ($drivers as $driver) {
                 $profile = $driver->profile;
@@ -212,6 +218,8 @@ class DriversController extends Controller
             $general_info = [
                 'driver_id' => $driver->id,
                 'name' => $profile->name,
+                'mobile' => $profile->mobile,
+                'pro_pic' => $profile->pro_pic,
                 'dob' => Carbon::parse($profile->dob)->format('j M, Y'),
                 #'blood_group' => $profile->blood_group,
                 'nid_no' => $profile->nid_no,
