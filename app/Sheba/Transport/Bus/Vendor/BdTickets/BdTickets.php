@@ -3,6 +3,7 @@
 use GuzzleHttp\Exception\GuzzleException;
 use Psr\Http\Message\ResponseInterface;
 use Sheba\Transport\Bus\Order\Creator;
+use Sheba\Transport\Bus\Order\TransportTicketRequest;
 use Sheba\Transport\Bus\Repositories\BusRouteLocationRepository;
 use Sheba\Transport\Bus\Vendor\Vendor;
 use Sheba\Transport\Bus\ClientCalls\BdTickets as BdTicketsClientCall;
@@ -15,8 +16,8 @@ class BdTickets extends Vendor
 
     /** @var BdTicketsClientCall $bdTicketClient */
     private $bdTicketClient;
-    /** @var Creator $creator */
-    private $creator;
+    /** @var TransportTicketRequest $ticketRequest */
+    private $ticketRequest;
 
     public function __construct(BdTicketsClientCall $bd_ticket_client, BusRouteLocationRepository $bus_route_location_repo)
     {
@@ -25,15 +26,16 @@ class BdTickets extends Vendor
     }
 
     /**
-     * @param Creator $creator
+     * @param TransportTicketRequest $ticket_request
+     * @return mixed|ResponseInterface
      * @throws GuzzleException
      */
-    public function bookTicket(Creator $creator)
+    public function bookTicket(TransportTicketRequest $ticket_request)
     {
-        $this->creator = $creator;
+        $this->ticketRequest = $ticket_request;
         $cart_id = $this->createCart();
         $this->updateCart($cart_id);
-        $this->_bookTicket($cart_id);
+        return $this->_bookTicket($cart_id);
     }
 
     /**
@@ -53,19 +55,19 @@ class BdTickets extends Vendor
     {
         $data = [
             "cartType" => "DEPARTURE",
-            "boardingPoint" => (int)$this->creator->getBoardingPoint(),
-            "droppingPoint" => (int)$this->creator->getDroppingPoint(),
-            "coachId" => $this->creator->getCoachId(),
+            "boardingPoint" => (int)$this->ticketRequest->getBoardingPoint(),
+            "droppingPoint" => (int)$this->ticketRequest->getDroppingPoint(),
+            "coachId" => $this->ticketRequest->getCoachId(),
             "passengerList" => [
                 json_encode([
-                    "firstName" => $this->creator->getReserverName(),
+                    "firstName" => $this->ticketRequest->getReserverName(),
                     "lastName" => "",
-                    "phoneNumber" => $this->creator->getReserverMobile(),
-                    "email" => $this->creator->getReserverEmail(),
-                    "gender" => strtoupper($this->creator->getReserverGender()[0])
+                    "phoneNumber" => $this->ticketRequest->getReserverMobile(),
+                    "email" => $this->ticketRequest->getReserverEmail(),
+                    "gender" => strtoupper($this->ticketRequest->getReserverGender()[0])
                 ])
             ],
-            "seatIdList" => $this->creator->getSeatIdList(),
+            "seatIdList" => $this->ticketRequest->getSeatIdList(),
             "applicationChannel" => self::APPLICATION_CHANNEL
         ];
         

@@ -11,6 +11,7 @@ use Sheba\Reward\Rewardable;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
+use Sheba\Transport\Bus\BusTicketCommission;
 use Sheba\Transport\TransportAgent;
 use Sheba\Voucher\VoucherCodeGenerator;
 use Sheba\Voucher\Contracts\CanApplyVoucher;
@@ -222,5 +223,13 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
     public function transportTicketOrders()
     {
         return $this->morphMany(TransportTicketOrder::class, 'agent');
+    }
+
+    /**
+     * @return BusTicketCommission|\Sheba\Transport\Bus\Commission\Customer
+     */
+    public function getBusTicketCommission()
+    {
+        return new \Sheba\Transport\Bus\Commission\Customer();
     }
 }

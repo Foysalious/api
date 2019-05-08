@@ -1,7 +1,7 @@
 <?php namespace Sheba\Transport\Bus\Vendor;
 
 use App\Models\Transport\TransportTicketVendor;
-use Sheba\Transport\Bus\Order\Creator;
+use Sheba\Transport\Bus\Order\TransportTicketRequest;
 use Sheba\Transport\Bus\Repositories\BusRouteLocationRepository;
 
 abstract class Vendor
@@ -21,7 +21,7 @@ abstract class Vendor
         return $this;
     }
 
-    abstract function bookTicket(Creator $creator);
+    abstract function bookTicket(TransportTicketRequest $ticket_request);
 
     abstract function confirmTicket($ticket_id);
 }

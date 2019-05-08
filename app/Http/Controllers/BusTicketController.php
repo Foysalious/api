@@ -281,7 +281,8 @@ class BusTicketController extends Controller
                 ->setReserverGender($request->reserver_gender)
                 ->setSeatIdList($request->seat_id_list);
 
-            // $vendor->bookTicket($creator);
+            // $response = $vendor->bookTicket($ticket_request);
+            // $ticket_request->setReservationDetails(json_encode($response['data']));
             $order = $creator->setRequest($ticket_request)->create();
 
             return api_response($request, null, 200, ['data' => $order]);
@@ -297,6 +298,11 @@ class BusTicketController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @param TransportTicketOrdersRepository $ticket_order_repo
+     * @return JsonResponse
+     */
     public function pay(Request $request, TransportTicketOrdersRepository $ticket_order_repo)
     {
         try {

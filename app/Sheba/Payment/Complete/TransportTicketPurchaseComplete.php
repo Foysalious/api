@@ -1,8 +1,14 @@
 <?php namespace Sheba\Payment\Complete;
 
+use App\Models\Transport\TicketTransaction;
 use App\Models\Transport\TransportTicketOrder;
+use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use DB;
+use Sheba\Transport\Bus\BusTicket;
+use Sheba\Transport\Bus\Order\TransportTicketRequest;
+use Sheba\Transport\Bus\Vendor\BdTickets\BdTickets;
+use Sheba\Transport\Bus\Vendor\VendorFactory;
 
 class TransportTicketPurchaseComplete extends PaymentComplete
 {
@@ -10,46 +16,37 @@ class TransportTicketPurchaseComplete extends PaymentComplete
     {
         try {
             $this->paymentRepository->setPayment($this->payment);
-            $model = $this->payment->payable->getPayableModel();
-            // $payable_model = $model::find((int)$this->payment->payable->type_id);
-            DB::transaction(function () use ($model) {
+
+            DB::transaction(function () {
+                /** @var BusTicket $bus_ticket */
+                $bus_ticket = app(BusTicket::class);
                 $transport_ticket_order = TransportTicketOrder::find($this->payment->payable->type_id);
-                /** @var MovieTicket $movie_ticket */
-                /*$movie_ticket = app(MovieTicket::class);
-                $movie_ticket_request = app(MovieTicketRequest::class);
-                $transaction_details = json_decode($movie_ticket_order->reservation_details);
+                $transaction_details = json_decode($transport_ticket_order->reservation_details);
+
                 $vendor = app(VendorFactory::class);
+                $vendor = $vendor->getById($transport_ticket_order->vendor_id);
+                /** @var BdTickets $vendor */
+                $vendor->confirmTicket($transaction_details->id);
 
-                $movie_ticket_request->setName($movie_ticket_order->customer_name)->setEmail($movie_ticket_order->customer_email)
-                    ->setAmount($movie_ticket_order->amount)->setMobile(BDMobileFormatter::format($movie_ticket_order->customer_mobile))
-                    ->setTrxId($transaction_details->trx_id)->setDtmsId($transaction_details->dtmsid)
-                    ->setTicketId($transaction_details->lid)
-                    ->setConfirmStatus('CONFIRM')
-                    ->setImageUrl($transaction_details->image_url);
+                $amount = $transport_ticket_order->amount - $transport_ticket_order->vendor->sheba_amount;
+                $data = [
+                    'agent_type' => get_class($transport_ticket_order->agent),
+                    'agent_id' => $transport_ticket_order->agent->id,
+                    'ticket_type' => get_class($transport_ticket_order),
+                    'ticket_id' => $transport_ticket_order->id,
+                    'type' => 'Credit',
+                    'amount' => $amount,
+                    'log' => "$amount Tk. has been credited for transport ticket.",
+                    'transaction_details' => '',
+                    'created_at' => Carbon::now()
+                ];
 
-                $vendor = $vendor->getById(1);
-                $agent_class = new $movie_ticket_order->agent_type();
-                $agent = $agent_class->where('id', $movie_ticket_order->agent_id)->first();
-                $movie_ticket_order->vendor = $vendor;
-                $movie_ticket_order->agent = $agent;
+                TicketTransaction::insert($data);
 
-                $movie_ticket = $movie_ticket->setMovieTicketRequest($movie_ticket_request)->setAgent($agent)
-                    ->setMovieTicketOrder($movie_ticket_order)
-                    ->setVendor($vendor);
+                $bus_ticket->setAgent($transport_ticket_order->agent)->agentTransaction();
+                $bus_ticket->disburseCommissions();
 
-                $response = $movie_ticket->buyTicket();
-                if ($response->hasSuccess()) {
-                    $movieOrder = $movie_ticket->disburseCommissions()->getMovieTicketOrder();
-                    $movie_ticket->processSuccessfulMovieTicket($movieOrder, $response->getSuccess());
-                } else {
-                    $response = (new BlockBusterFailResponse())->setResponse($response);
-                    $movie_ticket->processFailedMovieTicket($movie_ticket_order, $response);
-                }*/
-                $this->paymentRepository->changeStatus([
-                    'to' => 'completed',
-                    'from' => $this->payment->status,
-                    'transaction_details' => $this->payment->transaction_details
-                ]);
+                $this->paymentRepository->changeStatus(['to' => 'completed', 'from' => $this->payment->status, 'transaction_details' => $this->payment->transaction_details]);
                 $this->payment->status = 'completed';
                 $this->payment->update();
             });
