@@ -22,4 +22,15 @@ class TransportTicketOrdersRepository extends BaseRepository
     {
         return TransportTicketOrder::create($this->withCreateModificationField($data));
     }
+
+    /**
+     * Update a specified resource.
+     * @param TransportTicketOrder $transport_ticket_order
+     * @param array $data
+     * @return bool|int
+     */
+    public function update(TransportTicketOrder $transport_ticket_order, array $data)
+    {
+        return $transport_ticket_order->update($this->withUpdateModificationField($data));
+    }
 }

@@ -31,6 +31,7 @@ class TransportTicketRequest
     private $seatListId;
     private $boardingPoint;
     private $droppingPoint;
+    private $shebaAmount;
 
     /**
      * @param TransportAgent $agent
@@ -489,5 +490,23 @@ class TransportTicketRequest
     public function getReservationDetails()
     {
         return $this->reservationDetails;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getShebaAmount()
+    {
+        return $this->shebaAmount;
+    }
+
+    /**
+     * @param $sheba_amount
+     * @return TransportTicketRequest
+     */
+    public function setShebaAmount($sheba_amount)
+    {
+        $this->shebaAmount = $sheba_amount;
+        return $this;
     }
 }

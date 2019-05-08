@@ -6,12 +6,30 @@ use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Database\QueryException;
 use DB;
 use Sheba\Transport\Bus\BusTicket;
+use Sheba\Transport\Bus\Order\Status;
+use Sheba\Transport\Bus\Order\TransportTicketRequest;
+use Sheba\Transport\Bus\Order\Updater;
+use Sheba\Transport\Bus\Repositories\TransportTicketOrdersRepository;
 use Sheba\Transport\Bus\Vendor\BdTickets\BdTickets;
 use Sheba\Transport\Bus\Vendor\VendorFactory;
 use Throwable;
 
 class TransportTicketPurchaseComplete extends PaymentComplete
 {
+    /** @var Updater $transportTicketUpdater */
+    private $transportTicketUpdater;
+    /** @var TransportTicketRequest $transportTicketRequest */
+    private $transportTicketRequest;
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        $transportTicketOrdersRepository = (new TransportTicketOrdersRepository());
+        $this->transportTicketUpdater = (new Updater($transportTicketOrdersRepository));
+        $this->transportTicketRequest = (new TransportTicketRequest());
+    }
+
     /**
      * @return Payment
      */
@@ -44,7 +62,8 @@ class TransportTicketPurchaseComplete extends PaymentComplete
                 $this->payment->status = 'completed';
                 $this->payment->update();
 
-                $transport_ticket_order->update(['status' => 'confirmed']);
+                $ticket_request = $this->transportTicketRequest->setShebaAmount($transport_ticket_order->vendor->sheba_amount)->setStatus(Status::CONFIRMED);
+                $this->transportTicketUpdater->setOrder($transport_ticket_order)->setRequest($ticket_request)->update();
             });
         } catch (QueryException $e) {
             throw $e;
