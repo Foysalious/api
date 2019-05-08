@@ -36,7 +36,7 @@ class DriversController extends Controller
                 'license_number' => 'required',
                 'license_number_image' => 'required|mimes:jpeg,png',
                 'license_class' => 'required',
-                'years_of_experience' => 'required|integer',
+                'years_of_experience' => 'integer',
 
                 'name' => 'required|string',
                 'email' => 'required|email',
@@ -138,7 +138,7 @@ class DriversController extends Controller
                 'license_number' => 'required',
                 'license_number_image' => 'required|mimes:jpeg,png',
                 'license_class' => 'required',
-                'years_of_experience' => 'required|integer',
+                'years_of_experience' => 'integer',
             ]);
 
             $member = Member::find($member);
