@@ -39,10 +39,10 @@ class DriversController extends Controller
                 'years_of_experience' => 'integer',
 
                 'name' => 'required|string',
-                'email' => 'required|email',
+                'email' => 'email',
                 'mobile' => 'required|string|mobile:bd',
                 'address' => 'required|string',
-                'dob' => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
+                'dob' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
                 'nid_no' => 'required|integer',
                 'pro_pic' => 'required|mimes:jpeg,png',
 
