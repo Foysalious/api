@@ -1,16 +1,18 @@
-<?php
+<?php namespace Sheba\TopUp\Vendor;
 
-namespace Sheba\TopUp\Vendor;
-
-use Sheba\TopUp\Vendor\Internal\Rax;
+use Sheba\TopUp\Vendor\Internal\RobiAxiata;
 
 class Airtel extends Vendor
 {
-    use Rax;
+    use RobiAxiata;
 
-    private function setup()
+    private function getMid()
     {
-        $this->mid = config('topup.robi.airtel_mid');
-        $this->pin = config('topup.robi.airtel_pin');
+        return config('topup.robi.airtel_mid');
+    }
+
+    private function getPin()
+    {
+        return config('topup.robi.airtel_pin');
     }
 }
