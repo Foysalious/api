@@ -52,6 +52,7 @@ class DriversController extends Controller
             $this->setModifier($member);
 
             $driver_data = [
+                'status' => 'active',
                 'license_number' => $request->license_number,
                 'license_number_image' => $this->updateDriversDocuments('license_number_image', $request->file('license_number_image')),
                 'license_class' => $request->license_class,
