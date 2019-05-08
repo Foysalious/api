@@ -28,8 +28,8 @@ class BdTickets extends ExternalApiClient
         $this->client = (new Client(['headers' => ['Content-Type' => 'application/json']]));
 
         if (!$token) {
-            $token = $this->generateToken();
-            Redis::set('bdticket_bearer_token', $token);
+            $access_token = $this->generateAccessToken();
+            Redis::set('bdticket_bearer_token', $access_token['token'], 'EX', ($access_token['expires'] - 3600));
         }
         $this->bearerToken = $token;
     }
@@ -98,13 +98,13 @@ class BdTickets extends ExternalApiClient
         return $options;
     }
 
-    private function generateToken()
+    private function generateAccessToken()
     {
         $url    = $this->baseUrl . ':' . $this->authorizationPort . "/" . $this->apiVersion . "/auth";
         $data   = ['email' => config('bus_transport.bdticket.login_email'), 'password' => config('bus_transport.bdticket.login_pass')];
         $res    = $this->client->request('POST', $url, $this->getOptions($data));
         $res    = json_decode($res->getBody()->getContents(), true);
 
-        return $res['data']['access']['token'];
+        return $res['data']['access'];
     }
 }
