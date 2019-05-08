@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Payment;
+use App\Models\Transport\TransportTicketOrder;
 use App\Transformers\BusRouteTransformer;
 use App\Transformers\CustomSerializer;
 
@@ -321,6 +322,75 @@ class BusTicketController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+
+    public function history(Request $request)
+    {
+        try {
+            $agent = $this->getAgent($request);
+            $orders = $agent->transportTicketOrders()->confirmed()->get();
+            $history = [];
+            foreach ( $orders as $order) {
+                $details = json_decode($order->reservation_details);
+                $currentHistory = [
+                    'id' => $order->id,
+                    'departure_station_name' => $order->departure_station_name,
+                    'arrival_station_name' => $order->arrival_station_name,
+                    'journey_date' => $order->journey_date,
+                    'company_name' => $details->company->name,
+                    'seats' => count($details->coachSeatList),
+                    'price' => $details->totalPayable,
+                    'start_time' => $details->boardingPoint->reportingTime,
+                    'start_point' => $details->boardingPoint->counterName,
+                    'end_time' => $details->droppingPoint->reportingTime,
+                    'end_point' => $details->droppingPoint->counterName
+
+                ];
+                array_push($history,$currentHistory);
+            }
+            return api_response($request, $history, 200, ['history' => $history,]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function historyDetails(Request $request)
+    {
+        try {
+            $order = TransportTicketOrder::find((int) $request->history_id);
+
+            if($order) {
+                $details = json_decode($order->reservation_details);
+                $history = [
+                    'id' => $order->id,
+                    'departure_station_name' => $order->departure_station_name,
+                    'arrival_station_name' => $order->arrival_station_name,
+                    'journey_date' => $order->journey_date,
+                    'company_name' => $details->company->name,
+                    'seats' => count($details->coachSeatList),
+                    'price' => $details->totalPayable,
+                    'start_time' => $details->boardingPoint->reportingTime,
+                    'start_point' => $details->boardingPoint->counterName,
+                    'end_time' => $details->droppingPoint->reportingTime,
+                    'end_point' => $details->droppingPoint->counterName,
+                    'coach_code' => $details->coachNo,
+                    'seat_numbers' => implode(',',collect($details->coachSeatList)->map(function($seat) {
+                        return $seat->seatNo;
+                    })->toArray())
+                ];
+
+                return api_response($request, $history, 200, ['details' => $history]);
+            }
+
+            else
+                return api_response($request, null, 404, ['message' => 'Not Found.']);
+        }  catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
     }
 
     /**

@@ -12,6 +12,8 @@ class TransportRoute
                 $api->get('seat-status', 'BusTicketController@getSeatStatus');
                 $api->get('promotions', 'BusTicketController@getPromotions');
                 $api->post('promotions/add', 'BusTicketController@applyPromo');
+                $api->get('history', 'BusTicketController@history');
+                $api->get('history/{history_id}', 'BusTicketController@historyDetails');
 
                 $api->post('book', 'BusTicketController@book');
                 $api->post('pay', 'BusTicketController@pay');

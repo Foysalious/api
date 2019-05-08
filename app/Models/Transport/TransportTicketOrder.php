@@ -11,4 +11,9 @@ class TransportTicketOrder extends Model implements CanHaveVoucher
     {
         return $this->morphTo();
     }
+
+    public function scopeConfirmed($query)
+    {
+        return $query->where('status', 'confirmed');
+    }
 }
