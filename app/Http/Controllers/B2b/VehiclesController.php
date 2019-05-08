@@ -92,7 +92,6 @@ class VehiclesController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -162,7 +161,6 @@ class VehiclesController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -202,7 +200,6 @@ class VehiclesController extends Controller
             }
             return api_response($request, $vehicle_lists, 200, ['vehicle_lists' => $vehicle_lists]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -234,7 +231,6 @@ class VehiclesController extends Controller
 
             return api_response($request, $general_info, 200, ['general_info' => $general_info]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -277,7 +273,6 @@ class VehiclesController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -305,7 +300,6 @@ class VehiclesController extends Controller
             ];
             return api_response($request, $registration_info, 200, ['registration_info' => $registration_info]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
