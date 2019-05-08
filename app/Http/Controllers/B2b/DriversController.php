@@ -37,6 +37,15 @@ class DriversController extends Controller
                 'license_number_image' => 'required|mimes:jpeg,png',
                 'license_class' => 'required',
                 'years_of_experience' => 'required|integer',
+
+                'name' => 'required|string',
+                'email' => 'required|email',
+                'mobile' => 'required|string|mobile:bd',
+                'address' => 'required|string',
+                'dob' => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
+                'nid_no' => 'required|integer',
+                'pro_pic' => 'required|mimes:jpeg,png',
+
             ]);
 
             $member = Member::find($member);
@@ -103,7 +112,7 @@ class DriversController extends Controller
             'driver_id' => $driver->id,
             'address' => $request->address,
             'email' => $request->email,
-            'gender' => $request->gender,
+            #'gender' => $request->gender,
             'dob' => $request->dob,
             'nid_no' => $request->nid_no,
             'pro_pic' => $this->updateProfilePicture('pro_pic', $request->file('pro_pic')),
