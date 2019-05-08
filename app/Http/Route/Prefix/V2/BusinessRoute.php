@@ -60,6 +60,8 @@ class BusinessRoute
             $api->post('/{member}/drivers/{driver}/experience-info', 'B2b\DriversController@updateDriverExperienceInfo');
 
             $api->get('/{member}/drivers/{driver}/recent-assignment', 'B2b\DriversController@getDriverRecentAssignment');
+
+            $api->post('/{member}/trip-requests', 'B2b\VehiclesController@store');
         });
     }
 }
