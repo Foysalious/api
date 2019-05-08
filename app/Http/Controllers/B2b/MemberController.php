@@ -129,15 +129,16 @@ class MemberController extends Controller
     {
         try {
             $list = [];
-            $members = $request->business->load('members.profile');
-            foreach ($members as $member) {
+            $request->business->load('members.profile');
+            $members = $request->business->members;
+            foreach ($request->business->members as $member) {
                 array_push($list, [
                         'id' => $member->id,
                         'name' => $member->profile->name
                     ]
                 );
             }
-            if (count($members) > 0) return api_response($request, $members, 200, ['members' => $members]);
+            if (count($members) > 0) return api_response($request, $members, 200, ['members' => $list]);
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
