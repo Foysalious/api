@@ -382,6 +382,7 @@ class BusTicketController extends Controller
                     'end_time' => $details->droppingPoint->reportingTime,
                     'end_point' => $details->droppingPoint->counterName,
                     'coach_code' => $details->coachNo,
+                    'status' => $order->status,
                     'seat_numbers' => implode(',',collect($details->coachSeatList)->map(function($seat) {
                         return $seat->seatNo;
                     })->toArray())
