@@ -282,8 +282,8 @@ class BusTicketController extends Controller
                 ->setReserverGender($request->reserver_gender)
                 ->setSeatIdList($request->seat_id_list);
 
-            // $response = $vendor->bookTicket($ticket_request);
-            // $ticket_request->setReservationDetails(json_encode($response['data']));
+            $response = $vendor->bookTicket($ticket_request);
+            $ticket_request->setReservationDetails(json_encode($response['data']));
             $order = $creator->setRequest($ticket_request)->create();
 
             return api_response($request, null, 200, ['data' => $order]);
@@ -329,7 +329,6 @@ class BusTicketController extends Controller
             return api_response($request, null, 500);
         }
     }
-
 
     public function history(Request $request)
     {
@@ -433,7 +432,7 @@ class BusTicketController extends Controller
 
     /**
      * DUMMY API
-     * 
+     *
      * @param Request $request
      * @return JsonResponse
      */

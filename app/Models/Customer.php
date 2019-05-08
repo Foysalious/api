@@ -13,6 +13,7 @@ use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
 use Sheba\Transport\Bus\BusTicketCommission;
 use Sheba\Transport\TransportAgent;
+use Sheba\Transport\TransportTicketTransaction;
 use Sheba\Voucher\VoucherCodeGenerator;
 use Sheba\Voucher\Contracts\CanApplyVoucher;
 
@@ -231,5 +232,11 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
     public function getBusTicketCommission()
     {
         return new \Sheba\Transport\Bus\Commission\Customer();
+    }
+
+    public function transportTicketTransaction(TransportTicketTransaction $transaction)
+    {
+        $this->debitWallet($transaction->getAmount());
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'event_type' => $transaction->getEventType(), 'event_id' => $transaction->getEventId(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
     }
 }

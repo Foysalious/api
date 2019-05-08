@@ -4,11 +4,7 @@ use Sheba\Transport\Bus\BusTicketCommission;
 
 class Customer extends BusTicketCommission
 {
-    public function disburse()
-    {
-    }
+    public function disburse(){}
 
-    public function refund()
-    {
-    }
+    public function refund(){}
 }

@@ -4,6 +4,8 @@ use Sheba\Transport\Bus\BusTicketCommission;
 
 interface TransportAgent
 {
+    public function transportTicketTransaction(TransportTicketTransaction $transaction);
+
     /**
      * @return BusTicketCommission
      */

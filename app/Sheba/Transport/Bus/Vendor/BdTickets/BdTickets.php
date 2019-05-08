@@ -2,11 +2,12 @@
 
 use GuzzleHttp\Exception\GuzzleException;
 use Psr\Http\Message\ResponseInterface;
-use Sheba\Transport\Bus\Order\Creator;
+use Sheba\Transport\Bus\ClientCalls\WalletClient;
 use Sheba\Transport\Bus\Order\TransportTicketRequest;
 use Sheba\Transport\Bus\Repositories\BusRouteLocationRepository;
 use Sheba\Transport\Bus\Vendor\Vendor;
 use Sheba\Transport\Bus\ClientCalls\BdTickets as BdTicketsClientCall;
+use Throwable;
 
 class BdTickets extends Vendor
 {
@@ -18,11 +19,14 @@ class BdTickets extends Vendor
     private $bdTicketClient;
     /** @var TransportTicketRequest $ticketRequest */
     private $ticketRequest;
+    /** @var WalletClient $walletClient */
+    private $walletClient;
 
-    public function __construct(BdTicketsClientCall $bd_ticket_client, BusRouteLocationRepository $bus_route_location_repo)
+    public function __construct(BdTicketsClientCall $bd_ticket_client, BusRouteLocationRepository $bus_route_location_repo, WalletClient $wallet_client)
     {
         parent::__construct($bus_route_location_repo);
         $this->bdTicketClient = $bd_ticket_client;
+        $this->walletClient = $wallet_client;
     }
 
     /**
@@ -64,13 +68,12 @@ class BdTickets extends Vendor
                     "lastName" => "",
                     "phoneNumber" => $this->ticketRequest->getReserverMobile(),
                     "email" => $this->ticketRequest->getReserverEmail(),
-                    "gender" => strtoupper($this->ticketRequest->getReserverGender()[0])
-                ])
-            ],
+                    "gender" => strtoupper($this->ticketRequest->getReserverGender()[0])])
+                ],
             "seatIdList" => $this->ticketRequest->getSeatIdList(),
             "applicationChannel" => self::APPLICATION_CHANNEL
         ];
-        
+
         return $this->bdTicketClient->put("carts/$cart_id", $data);
     }
 
@@ -84,5 +87,21 @@ class BdTickets extends Vendor
     {
         $data = ['ticketId' => $ticket_id, 'accountType' => self::ACCOUNT_TYPE, 'applicationChannel' => self::APPLICATION_CHANNEL];
         return $this->bdTicketClient->post('tickets/confirm', $data);
+    }
+
+    /**
+     * @param $transport_ticket_order
+     * @param $amount
+     * @param $transaction_id
+     * @throws GuzzleException
+     * @throws Throwable
+     */
+    public function deduceAmount($transport_ticket_order, $amount, $transaction_id)
+    {
+        $wallet_id = $transport_ticket_order->vendor->wallet_id;
+        $log = "$amount Tk. has been debited for transport ticket.";
+        $transaction_details = json_encode(['transaction_id' => $transaction_id, 'log' => $log]);
+
+        $this->walletClient->saveTransaction($wallet_id, $amount, 'debit', $transaction_details, 'purchase');
     }
 }
