@@ -11,6 +11,7 @@ use Sheba\Payment\Wallet;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
+use Sheba\Transport\Bus\BusTicketCommission;
 use Sheba\Transport\TransportAgent;
 use Sheba\Voucher\Contracts\CanApplyVoucher;
 
@@ -214,5 +215,13 @@ class Affiliate extends Model implements TopUpAgent, MovieAgent, TransportAgent,
     {
         $this->debitWallet($transaction->getAmount());
         $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
+    }
+
+    /**
+     * @return BusTicketCommission|\Sheba\Transport\Bus\Commission\Affiliate
+     */
+    public function getBusTicketCommission()
+    {
+        return new \Sheba\Transport\Bus\Commission\Affiliate();
     }
 }

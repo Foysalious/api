@@ -282,7 +282,8 @@ class BusTicketController extends Controller
                 ->setReserverGender($request->reserver_gender)
                 ->setSeatIdList($request->seat_id_list);
 
-            // $vendor->bookTicket($creator);
+            // $response = $vendor->bookTicket($ticket_request);
+            // $ticket_request->setReservationDetails(json_encode($response['data']));
             $order = $creator->setRequest($ticket_request)->create();
 
             return api_response($request, null, 200, ['data' => $order]);
@@ -298,6 +299,11 @@ class BusTicketController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @param TransportTicketOrdersRepository $ticket_order_repo
+     * @return JsonResponse
+     */
     public function pay(Request $request, TransportTicketOrdersRepository $ticket_order_repo)
     {
         try {
@@ -422,5 +428,34 @@ class BusTicketController extends Controller
             app('sentry')->captureException($e);
             return null;
         }
+    }
+
+    /**
+     * DUMMY API
+     * 
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function offer(Request $request)
+    {
+        $offers = [
+            [
+                "id" => 167,
+                "title" => "Save Up to 200 TK",
+                "short_description" => "Poopppaaa OfferPoopppaaa OfferPoopppaaa OfferPoopppaaa OfferPoopppaaa OfferPoopppaaa OfferPoopppaaa OfferPoopppaaa Offer",
+                "type" => "offer_group",
+                "type_id" => 9,
+                "start_date" => "2019-05-05 00:00:00",
+                "end_date" => "2019-06-15 23:59:00",
+                "icon" => "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/png/percentage.png",
+                "gradient" => [],
+                "structured_title" => [],
+                "is_flash" => 1,
+                "is_applied" => 0,
+                "promo_code" => null
+            ]
+        ];
+
+        return api_response($request, null, 200, ['offers' => $offers]);
     }
 }

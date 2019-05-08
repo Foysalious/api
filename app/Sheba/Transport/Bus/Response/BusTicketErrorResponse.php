@@ -1,9 +1,8 @@
-<?php namespace Sheba\MovieTicket\Response;
+<?php namespace Sheba\Transport\Bus\Response;
 
-class MovieTicketErrorResponse
+class BusTicketErrorResponse
 {
     protected $errorCode;
-
     protected $errorMessage;
 
     public function __get($name)

@@ -16,4 +16,9 @@ class TransportTicketOrder extends Model implements CanHaveVoucher
     {
         return $query->where('status', 'confirmed');
     }
+
+    public function vendor()
+    {
+        return $this->belongsTo(TransportTicketVendor::class);
+    }
 }

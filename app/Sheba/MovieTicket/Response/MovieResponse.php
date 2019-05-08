@@ -1,6 +1,5 @@
 <?php namespace Sheba\MovieTicket\Response;
 
-
 abstract class MovieResponse
 {
     protected $response;

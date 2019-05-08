@@ -1,8 +1,8 @@
-<?php namespace Sheba\MovieTicket\Response;
+<?php namespace Sheba\Transport\Bus\Response;
 
 use App\Models\MovieTicketOrder;
 
-abstract class MovieTicketFailResponse
+abstract class BusTicketFailResponse
 {
     /** @var array $response */
     protected $response;

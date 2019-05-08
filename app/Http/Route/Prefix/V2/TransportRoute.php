@@ -17,6 +17,8 @@ class TransportRoute
 
                 $api->post('book', 'BusTicketController@book');
                 $api->post('pay', 'BusTicketController@pay');
+
+                $api->get('offers', 'BusTicketController@offer');
             });
         });
     }
