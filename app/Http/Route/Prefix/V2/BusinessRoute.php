@@ -52,7 +52,8 @@ class BusinessRoute
             $api->post('/{member}/drivers', 'B2b\DriversController@store');
             $api->post('/{member}/drivers/{driver}', 'B2b\DriversController@update');
 
-            $api->get('/{member}/trip-requests', 'B2b\TripRequestController@store');
+            $api->post('/{member}/trips', 'B2b\TripRequestController@createTrip');
+            $api->post('/{member}/trip-requests', 'B2b\TripRequestController@createTripRequests');
 
             $api->group(['prefix' => '{member}'], function ($api) {
                 $api->group(['prefix' => 'drivers'], function ($api) {
