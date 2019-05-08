@@ -14,7 +14,7 @@ class ProxyController extends Controller
         $this->client = $client;
     }
 
-    public function topUp(Request $request)
+    public function pretupsTopUp(Request $request)
     {
         try {
             $whitelists = ['180.234.223.46', '104.215.190.77', '13.232.181.83', '172.18.0.6'];
@@ -37,8 +37,9 @@ class ProxyController extends Controller
             $err = curl_error($ch);
             if($err) throw new \Exception($err);
             curl_close($ch);
+            $data = json_decode(json_encode(simplexml_load_string($data)), 1);
 
-            return api_response($request, 1, 200, ['data' => $data]);
+            return api_response($request, 1, 200, ['endpoint_response' => $data]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);

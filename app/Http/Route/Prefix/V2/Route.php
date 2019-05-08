@@ -161,7 +161,7 @@ class Route
             $api->post('forget-password', 'ProfileController@forgetPassword');
 
             $api->group(['prefix' => 'proxy'], function ($api) {
-                $api->post('/top-up', 'ProxyController@topUp');
+                $api->post('/top-up', 'ProxyController@pretupsTopUp');
             });
         });
         return $api;
