@@ -168,7 +168,7 @@ class BusTicketController extends Controller
                     "voucher" => [
                         "id"=> 289551,
                         "code"=> "MAY100F",
-                        "amount"=> 100,
+                        "amount"=> 5,
                         "title"=> "Congrats! Food promo code unlocked!",
                         "is_amount_percentage"=> 0,
                         "cap"=> 0,
@@ -185,7 +185,7 @@ class BusTicketController extends Controller
                     "voucher" => [
                         "id"=> 289551,
                         "code"=> "MAY100Q",
-                        "amount"=> 100,
+                        "amount"=> 5,
                         "title"=> "Congrats! Qinetic promo code unlocked!",
                         "is_amount_percentage"=> 0,
                         "cap"=> 0,
@@ -222,7 +222,7 @@ class BusTicketController extends Controller
             $code = $request->code;
             if ($code == "MAY100F" || $code == "MAY100Q")
             {
-                $promo = array('amount' => (double) 100, 'code' => $code, 'id' => 81260, 'title' => "Congrats! Food promo code unlocked!");
+                $promo = array('amount' => (double) 5, 'code' => $code, 'id' => 81260, 'title' => "Congrats! Food promo code unlocked!");
                 return api_response($request, 1, 200, ['promotion' => $promo]);
             } else {
                 return api_response($request, null, 403, ['message' => 'Invalid Promo']);
