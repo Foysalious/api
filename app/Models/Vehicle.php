@@ -11,6 +11,11 @@ class Vehicle extends Model
         return $this->morphTo();
     }
 
+    public function basicInformation()
+    {
+        return $this->hasOne(VehicleBasicInformation::class);
+    }
+
     public function basicInformations()
     {
         return $this->hasOne(VehicleBasicInformation::class);
