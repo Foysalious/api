@@ -100,9 +100,9 @@ class Route
             });
 
             $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
-                $api->get('/{member}/info', 'B2b\MembersController@getMemberInfo');
-                $api->get('/{member}/get-business-info', 'B2b\MembersController@getBusinessInfo');
-                $api->post('/{member}/update-business-info', 'B2b\MembersController@updateBusinessInfo');
+                $api->get('/{member}/info', 'B2b\MemberController@getMemberInfo');
+                $api->get('/{member}/get-business-info', 'B2b\MemberController@getBusinessInfo');
+                $api->post('/{member}/update-business-info', 'B2b\MemberController@updateBusinessInfo');
             });
 
             (new BusinessRoute())->set($api);
