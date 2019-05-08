@@ -4,8 +4,6 @@ use App\Models\BusinessMember;
 use App\Models\BusinessTrip;
 use App\Models\Driver;
 use App\Models\Profile;
-use App\Models\Vehicle;
-use App\Models\VehicleRegistrationInformation;
 use App\Repositories\FileRepository;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
@@ -26,7 +24,7 @@ class DriversController extends Controller
     private $fileRepository;
     private $profileRepository;
 
-    public function __construct(FileRepository $file_repository , ProfileRepository $profile_repository)
+    public function __construct(FileRepository $file_repository, ProfileRepository $profile_repository)
     {
         $this->fileRepository = $file_repository;
         $this->profileRepository = $profile_repository;
@@ -42,8 +40,7 @@ class DriversController extends Controller
                 'years_of_experience' => 'integer',
 
                 'name' => 'required|string',
-                'email' => 'email',
-                #'mobile' => 'required|string|mobile:bd',
+                'mobile' => 'required|string|mobile:bd',
                 'address' => 'required|string',
                 'dob' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
                 'nid_no' => 'required|integer',
@@ -60,12 +57,10 @@ class DriversController extends Controller
                 'license_class' => $request->license_class,
                 'years_of_experience' => $request->years_of_experience,
             ];
+
             $profile = $this->profileRepository->checkExistingMobile($request->mobile);
-            $profile = $this->profileRepository->checkExistingEmail($request->email);
-            dd($request->mobile, $request->email,$profile);
-            $email_profile = Profile::where('email', $request->email)->first();
-            #$driver = Driver::create($this->withCreateModificationField($driver_data));
             if (!$profile) {
+                $driver = Driver::create($this->withCreateModificationField($driver_data));
                 $profile = $this->createDriverProfile($member, $driver, $request);
                 $new_member = $profile->member;
                 if (!$new_member) $new_member = $this->makeMember($profile);
@@ -79,24 +74,27 @@ class DriversController extends Controller
                 ];
                 BusinessMember::create($this->withCreateModificationField($member_business_data));
             } else {
-                $profile_data = [
-                    'driver_id' => $driver->id,
-                ];
-                $new_member = $profile->member;
-                if (!$new_member) $new_member = $this->makeMember($profile);
+                $driver = $profile->driver;
+                if (!$driver) {
+                    $driver = Driver::create($this->withCreateModificationField($driver_data));
+                    $profile_data = [
+                        'driver_id' => $driver->id,
+                    ];
+                    $profile->update($this->withCreateModificationField($profile_data));
 
-                $business = $member->businesses->first();
-                $member_business_data = [
-                    'business_id' => $business->id,
-                    'member_id' => $new_member->id,
-                    'type' => 'Admin',
-                    'join_date' => Carbon::now(),
-                ];
-                BusinessMember::create($this->withCreateModificationField($member_business_data));
+                    $new_member = $profile->member;
+                    if (!$new_member) $new_member = $this->makeMember($profile);
 
-                $profile->update($this->withCreateModificationField($profile_data));
+                    $business = $member->businesses->first();
+                    $member_business_data = [
+                        'business_id' => $business->id,
+                        'member_id' => $new_member->id,
+                        'type' => 'Admin',
+                        'join_date' => Carbon::now(),
+                    ];
+                    BusinessMember::create($this->withCreateModificationField($member_business_data));
+                }
             }
-
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -178,7 +176,7 @@ class DriversController extends Controller
             $this->setModifier($member);
             list($offset, $limit) = calculatePagination($request);
             $drivers = Driver::select('id', 'status')->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
-                                #with('profile', 'vehicle', 'vehicle.basicInformations')->
+            #with('profile', 'vehicle', 'vehicle.basicInformations')->
             $driver_lists = [];
             foreach ($drivers as $driver) {
                 $profile = $driver->profile;
