@@ -47,6 +47,20 @@ if (!function_exists('formatMobileReverse')) {
     }
 }
 
+
+if (!function_exists('getOriginalMobileNumber')) {
+    /**
+     * Format Mobile number without +88 .
+     *
+     * @param  $number
+     * @return string
+     */
+    function getOriginalMobileNumber($number)
+    {
+        return BDMobileFormatter::getOriginal($number);
+    }
+}
+
 if (!function_exists('commaSeparate')) {
     /**
      * Format comma separated number.

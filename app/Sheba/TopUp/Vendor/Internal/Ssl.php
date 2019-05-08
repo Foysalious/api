@@ -42,8 +42,5 @@ trait Ssl
     public function refill($amount)
     {
         TopUpVendor::whereIn('id', [4, 5, 6])->increment('amount', $amount);
-        // $this->createNewRechargeHistory($amount, 4);
-        // $this->createNewRechargeHistory($amount, 5);
-        // $this->createNewRechargeHistory($amount, 6);
     }
 }

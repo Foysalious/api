@@ -4,11 +4,56 @@ abstract class TopUpResponse
 {
     protected $response;
 
-    abstract public function setResponse($response);
+    public function setResponse($response)
+    {
+        $this->response = $response;
+        return $this;
+    }
 
     abstract public function hasSuccess(): bool;
 
-    abstract public function getSuccess(): TopUpSuccessResponse;
+    /**
+     * @return mixed
+     */
+    abstract public function getTransactionId();
 
-    abstract public function getError(): TopUpErrorResponse;
+    /**
+     * @return mixed
+     */
+    abstract public function getErrorCode();
+
+    /**
+     * @return string
+     */
+    abstract public function getErrorMessage();
+
+
+    /**
+     * @return TopUpSuccessResponse
+     * @throws \Exception
+     */
+    public function getSuccess(): TopUpSuccessResponse
+    {
+        if (!$this->hasSuccess()) throw new \Exception('Response does not have success.');
+
+        $topup_response = new TopUpSuccessResponse();
+        $topup_response->transactionId = $this->getTransactionId();
+        $topup_response->transactionDetails = $this->response;
+        return $topup_response;
+    }
+
+    /**
+     * @return TopUpErrorResponse
+     * @throws \Exception
+     */
+    public function getError(): TopUpErrorResponse
+    {
+        if ($this->hasSuccess()) throw new \Exception('Response has success.');
+
+        $topup_error = new TopUpErrorResponse();
+        $topup_error->errorCode = $this->response->recharge_status;
+        $topup_error->errorMessage = $this->response->Message;
+        return $topup_error;
+    }
+
 }
