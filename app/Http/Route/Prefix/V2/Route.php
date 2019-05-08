@@ -155,6 +155,10 @@ class Route
             $api->get('get-profile-info', 'ProfileController@getProfile');
             $api->post('admin/payout', 'Bkash\\BkashPayoutController@pay');
             $api->post('admin/bkash-balance', 'Bkash\\BkashPayoutController@queryBalance');
+
+            $api->group(['prefix' => 'proxy'], function ($api) {
+                $api->get('top-up', 'ProxyController@pretupsTopUp');
+            });
         });
         return $api;
     }
