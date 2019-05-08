@@ -30,28 +30,34 @@ class BusinessRoute
             $api->post('/{member}/vehicles', 'B2b\VehiclesController@store');
             $api->post('/{member}/vehicles/{vehicle}', 'B2b\VehiclesController@update');
 
-            $api->get('/{member}/vehicles', 'B2b\VehiclesController@vehicleLists');
+            $api->group(['prefix' => '{member}'], function ($api) {
+                $api->group(['prefix' => 'vehicles'], function ($api) {
+                    $api->get('/', 'B2b\VehiclesController@vehicleLists');
 
-            $api->get('/{member}/vehicles/{vehicle}/general-info', 'B2b\VehiclesController@getVehicleGeneralInfo');
-            $api->post('/{member}/vehicles/{vehicle}/general-info', 'B2b\VehiclesController@updateVehicleGeneralInfo');
+                    $api->group(['prefix' => '{vehicle}'], function ($api) {
+                        $api->get('/general-info', 'B2b\VehiclesController@getVehicleGeneralInfo');
+                        $api->post('/general-info', 'B2b\VehiclesController@updateVehicleGeneralInfo');
 
-            $api->get('/{member}/vehicles/{vehicle}/registration-info', 'B2b\VehiclesController@getVehicleRegistrationInfo');
-            $api->post('/{member}/vehicles/{vehicle}/registration-info', 'B2b\VehiclesController@updateVehicleRegistrationInfo');
+                        $api->get('/registration-info', 'B2b\VehiclesController@getVehicleRegistrationInfo');
+                        $api->post('/registration-info', 'B2b\VehiclesController@updateVehicleRegistrationInfo');
 
-            $api->get('/{member}/vehicles/{vehicle}/specs', 'B2b\VehiclesController@getVehicleSpecs');
-            $api->post('/{member}/vehicles/{vehicle}/specs', 'B2b\VehiclesController@updateVehicleSpecs');
+                        $api->get('/specs', 'B2b\VehiclesController@getVehicleSpecs');
+                        $api->post('/specs', 'B2b\VehiclesController@updateVehicleSpecs');
 
-            $api->get('/{member}/vehicles/{vehicle}/recent-assignment', 'B2b\VehiclesController@getVehicleRecentAssignment');
+                        $api->get('/recent-assignment', 'B2b\VehiclesController@getVehicleRecentAssignment');
+                    });
+                });
+            });
 
             $api->post('/{member}/drivers', 'B2b\DriversController@store');
             $api->post('/{member}/drivers/{driver}', 'B2b\DriversController@update');
-
-            $api->get('/{member}/drivers', 'B2b\DriversController@driverLists');
 
             $api->get('/{member}/trip-requests', 'B2b\TripRequestController@store');
 
             $api->group(['prefix' => '{member}'], function ($api) {
                 $api->group(['prefix' => 'drivers'], function ($api) {
+                    $api->get('/', 'B2b\DriversController@driverLists');
+
                     $api->group(['prefix' => '{driver}'], function ($api) {
                         $api->get('/general-info', 'B2b\DriversController@getDriverGeneralInfo');
                         $api->post('/general-info', 'B2b\DriversController@updateDriverGeneralInfo');
