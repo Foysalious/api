@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\Affiliate;
 use App\Models\Payment;
 use App\Models\Transport\TransportTicketOrder;
 use App\Transformers\BusRouteTransformer;
@@ -267,6 +268,11 @@ class BusTicketController extends Controller
 
             $agent = $this->getAgent($request);
             $this->setModifier($agent);
+            
+            if ($agent instanceof Affiliate && $agent->wallet < (double)$request->amount) {
+                return api_response($request, null, 403, ['message' => "You don't have sufficient balance to buy this ticket."]);
+            }
+
             $vendor = $vendor->getById($request->vendor_id);
 
             $ticket_request->setAgent($agent)
