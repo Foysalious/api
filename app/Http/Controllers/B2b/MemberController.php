@@ -10,7 +10,7 @@ use App\Models\Member;
 use Carbon\Carbon;
 use DB;
 
-class MembersController extends Controller
+class MemberController extends Controller
 {
     use ModificationFields;
 
