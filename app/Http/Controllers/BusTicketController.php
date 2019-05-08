@@ -268,7 +268,7 @@ class BusTicketController extends Controller
 
             $agent = $this->getAgent($request);
             $this->setModifier($agent);
-            
+
             if ($agent instanceof Affiliate && $agent->wallet < (double)$request->amount) {
                 return api_response($request, null, 403, ['message' => "You don't have sufficient balance to buy this ticket."]);
             }
@@ -319,7 +319,12 @@ class BusTicketController extends Controller
     {
         try {
             $this->validate($request, ['payment_method' => 'required|string|in:online,wallet', 'order_id' => 'required']);
-            $this->setModifier($this->getAgent($request));
+            $agent = $this->getAgent($request);
+            $this->setModifier($agent);
+
+            if ($request->payment_method == "wallet" && $agent->wallet < (double)$request->amount) {
+                return api_response($request, null, 403, ['message' => "You don't have sufficient balance to buy this ticket."]);
+            }
 
             $order = $ticket_order_repo->findById($request->order_id);
             $payment = $this->getPayment($request->payment_method, $order);
@@ -363,7 +368,7 @@ class BusTicketController extends Controller
                     'end_point' => $details->droppingPoint->counterName
 
                 ];
-                array_push($history,$currentHistory);
+                array_push($history, $currentHistory);
             }
             return api_response($request, $history, 200, ['history' => $history,]);
         } catch (Throwable $e) {
