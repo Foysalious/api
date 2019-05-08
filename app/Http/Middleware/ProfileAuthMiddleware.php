@@ -51,6 +51,8 @@ class ProfileAuthMiddleware
                 } else {
                     return api_response($request, null, 404, ["message" => "User not found."]);
                 }
+            } else {
+                return api_response($request, null, 404, ['message' => 'from field is required']);
             }
         } else {
             return api_response($request, null, 400, ["message" => "Authentication token is missing from the request."]);

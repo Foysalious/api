@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
+use Sheba\Repositories\ProfileRepository as ShebaProfileRepository;
 use Sheba\Sms\Sms;
 use Validator;
 use App\Http\Requests;
@@ -92,23 +93,36 @@ class ProfileController extends Controller
         return api_response($request, $profile, 200, ['info' => $profile]);
     }
 
-    public function updateProfileDocument(Request $request, $id)
+    public function updateProfileDocument(Request $request, $id, ShebaProfileRepository $repository)
     {
-
         try {
+            $profile = $request->profile;
+            if (!$profile) return api_response($request, null, 404, ['message' => 'Profile no found']);
             $rules = ['pro_pic' => 'sometimes|string', 'nid_image_back' => 'sometimes|string', 'nid_image_front' => 'sometimes|string'];
             $this->validate($request, $rules);
-            $data = $request->all();
+            $data = $request->only(['email', 'name', 'password', 'pro_pic', 'nid_image_front', 'email', 'gender', 'dob', 'mobile']);
+            $data = array_filter($data, function ($item) {
+                return $item != null;
+            });
             if (!empty($data)) {
-                $request->profile->update($data);
+                $validation = $repository->validate($data, $profile);
+                if ($validation === true) {
+                    $repository->update($profile, $data);
+                } elseif ($validation === 'phone') {
+                    return api_response($request, null, 500, ['message' => 'Mobile number used by another user']);
+                } elseif ($validation === 'email') {
+                    return api_response($request, null, 500, ['message' => 'Email used by another user']);
+                }
+            } else {
+                return api_response($request, null, 404, ['message' => 'No data provided']);
             }
-            return api_response($request, null, 200);
+            return api_response($request, null, 200, ['message' => 'Profile Updated']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->errors());
             return api_response($request, null, 401, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
-            return api_response($request, null, 500);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500, ['message' => $e->getMessage(),'trace'=>$e->getTrace()]);
         }
     }
 
@@ -121,7 +135,7 @@ class ProfileController extends Controller
             $profile = Profile::where('mobile', $mobile)->first();
             if (!$profile) return api_response($request, null, 404, ['message' => 'Profile not found with this number']);
             $password = str_random(6);
-            $smsSent=$sms->shoot($mobile, "Your password is reset to $password . Please use this password to login");
+            $smsSent = $sms->shoot($mobile, "Your password is reset to $password . Please use this password to login");
             $profile->update(['password' => bcrypt($password)]);
             return api_response($request, true, 200, ['message' => 'Your password is sent to your mobile number. Please use that password to login']);
         } catch (ValidationException $e) {

@@ -44,7 +44,7 @@ class DriversController extends Controller
 
             $driver_data = [
                 'license_number' => $request->license_number,
-                'license_number_image' => $this->updateDocuments('license_number_image', $request->file('license_number_image')),
+                'license_number_image' => $this->updateDriversDocuments('license_number_image', $request->file('license_number_image')),
                 'license_class' => $request->license_class,
                 'years_of_experience' => $request->years_of_experience,
             ];
@@ -138,7 +138,7 @@ class DriversController extends Controller
 
             $driver_data = [
                 'license_number' => $request->license_number,
-                'license_number_image' => $this->updateDocuments('license_number_image', $request->file('license_number_image')),
+                'license_number_image' => $this->updateDriversDocuments('license_number_image', $request->file('license_number_image')),
                 'license_class' => $request->license_class,
                 'years_of_experience' => $request->years_of_experience,
             ];
@@ -403,8 +403,12 @@ class DriversController extends Controller
 
             $license_info = [
                 'years_of_experience' => $driver->years_of_experience,
+                'traffic_awareness' => $driver->traffic_awareness,
+                'accident_history' => $driver->accident_history,
+                'basic_knowledge' => $driver->basic_knowledge,
+                'license_age_in_years' => (double)$driver->license_age_in_years,
+                'additional_info' => $driver->additional_info,
             ];
-
             return api_response($request, $license_info, 200, ['license_info' => $license_info]);
         } catch (\Throwable $e) {
             dd($e);
@@ -417,9 +421,12 @@ class DriversController extends Controller
     {
         try {
             $this->validate($request, [
-                #'type' => 'required|string|in:hatchback,sedan,suv,passenger_van,others',
                 'years_of_experience' => 'required|numeric',
-                #'model_year' => 'required|date|date_format:Y-m-d',
+                'traffic_awareness' => 'required|string',
+                'accident_history' => 'required|string',
+                'basic_knowledge' => 'required|string',
+                'license_age_in_years' => 'required|numeric',
+                'additional_info' => 'required|string',
             ]);
             $member = Member::find($member);
             $business = $member->businesses->first();
@@ -431,8 +438,67 @@ class DriversController extends Controller
 
             $driver_info = [
                 'years_of_experience' => $request->years_of_experience,
+                'traffic_awareness' => $request->traffic_awareness,
+                'accident_history' => $request->accident_history,
+                'basic_knowledge' => $request->basic_knowledge,
+                'license_age_in_years' => $request->license_age_in_years,
+                'additional_info' => $request->additional_info,
             ];
             $driver->update($this->withUpdateModificationField($driver_info));
+
+            return api_response($request, 1, 200);
+
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getDriverDocuments($member, $driver, Request $request)
+    {
+        try {
+            $member = Member::find($member);
+            $business = $member->businesses->first();
+            $this->setModifier($member);
+
+            $driver = Driver::find((int)$driver);
+            $profile = $driver->profile;
+            $vehicle = $driver->vehicle;
+
+            $documents = [
+                'license_number_image' => $driver->license_number_image,
+            ];
+
+            return api_response($request, $documents, 200, ['documents' => $documents]);
+        } catch (\Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function updateDriverDocuments($member, $driver, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'license_number_image' => 'required|mimes:jpeg,png',
+            ]);
+            $member = Member::find($member);
+            $business = $member->businesses->first();
+            $this->setModifier($member);
+
+            $driver = Driver::find((int)$driver);
+            $profile = $driver->profile;
+            $vehicle = $driver->vehicle;
+
+            $documents = [
+                'license_number_image' => $this->updateDriversDocuments('license_number_image', $request->file('license_number_image')),
+            ];
+            $driver->update($this->withUpdateModificationField($documents));
 
             return api_response($request, 1, 200);
 
@@ -481,17 +547,16 @@ class DriversController extends Controller
         }
     }
 
-    private function updateDocuments($image_for, $photo)
+    private function updateDriversDocuments($image_for, $photo)
     {
-        $vehicle_registration_information = new VehicleRegistrationInformation();
+        $driver = new Driver();
 
-        if (basename($vehicle_registration_information->image_for) != 'default.jpg') {
-            $filename = substr($vehicle_registration_information->{$image_for}, strlen(config('sheba.s3_url')));
+        if (basename($driver->image_for) != 'default.jpg') {
+            $filename = substr($driver->{$image_for}, strlen(config('sheba.s3_url')));
             $this->deleteOldImage($filename);
         }
 
-        #$picture_link = $this->fileRepository->uploadToCDN($this->makePicName($vehicle_registration_information, $photo, $image_for), $photo, 'images/drivers/' . $image_for . '_');
-        $picture_link = $this->fileRepository->uploadToCDN($this->makeDocumentsName($vehicle_registration_information, $photo, $image_for), $photo, 'images/profiles/' . $image_for . '_');
+        $picture_link = $this->fileRepository->uploadToCDN($this->makeDocumentsName($driver, $photo, $image_for), $photo, 'images/drivers/' . $image_for . '_');
         return $picture_link;
     }
 
@@ -508,10 +573,9 @@ class DriversController extends Controller
         return $picture_link;
     }
 
-
-    private function makeDocumentsName(VehicleRegistrationInformation $vehicle_registration_information, $photo, $image_for = 'license_number_image')
+    private function makeDocumentsName(Driver $driver, $photo, $image_for = 'license_number_image')
     {
-        return $filename = Carbon::now()->timestamp . '_' . $image_for . '_image_' . $vehicle_registration_information->id . '.' . $photo->extension();
+        return $filename = Carbon::now()->timestamp . '_' . $image_for . '_image_' . $driver->id . '.' . $photo->extension();
     }
 
     private function makePicName(Profile $profile, $photo, $image_for = 'license_number_image')
