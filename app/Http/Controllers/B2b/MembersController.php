@@ -124,4 +124,24 @@ class MembersController extends Controller
         }
         return $name;
     }
+
+    public function index(Request $request)
+    {
+        try {
+            $list = [];
+            $members = $request->business->load('members.profile');
+            foreach ($members as $member) {
+                array_push($list, [
+                        'id' => $member->id,
+                        'name' => $member->profile->name
+                    ]
+                );
+            }
+            if (count($members) > 0) return api_response($request, $members, 200, ['members' => $members]);
+            else  return api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }
