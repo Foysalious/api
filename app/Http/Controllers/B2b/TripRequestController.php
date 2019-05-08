@@ -34,6 +34,65 @@ class TripRequestController extends Controller
         }
     }
 
+    public function tripRequestInfo($member, $trip_request, Request $request)
+    {
+
+        try {
+            $trip_request = BusinessTripRequest::find((int)$trip_request);
+            if (!$trip_request) return api_response($request, null, 404);
+            $info = [
+                'reason' => $trip_request->reason,
+                'details' => $trip_request->details,
+                'member' => [
+                    'name' => $trip_request->member->name
+                ],
+                'vehicle_type' => $trip_request->vehicle_type,
+                'trip_type' => $trip_request->trip_type,
+                'pickup_address' => $trip_request->pickup_address,
+                'dropoff_address' => $trip_request->dropoff_address,
+                'start_date' => $trip_request->start_date,
+                'end_date' => $trip_request->end_date,
+            ];
+            return api_response($request, $info, 200, ['info' => $info]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function tripInfo($member, $trip, Request $request)
+    {
+
+        try {
+            $trip = BusinessTrip::find((int)$trip);
+            if (!$trip) return api_response($request, null, 404);
+            $info = [
+                'reason' => $trip->reason,
+                'details' => $trip->details,
+                'member' => [
+                    'name' => $trip->member->name
+                ],
+                'driver' => [
+                    'name' => $trip->driver->profile->name
+                ],
+                'vehicle' => [
+                    'name' => $trip->vehicle->basicInformation->model_name
+                ],
+                'vehicle_type' => $trip->vehicle_type,
+                'trip_type' => $trip->trip_type,
+                'pickup_address' => $trip->pickup_address,
+                'dropoff_address' => $trip->dropoff_address,
+                'start_date' => $trip->start_date,
+                'end_date' => $trip->end_date,
+            ];
+            return api_response($request, $info, 200, ['info' => $info]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+
     public function getTrips(Request $request)
     {
         try {
@@ -71,7 +130,6 @@ class TripRequestController extends Controller
             $business_trip = $this->storeTrip($business_trip_request);
             return api_response($request, $business_trip, 200, ['id' => $business_trip->id]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
