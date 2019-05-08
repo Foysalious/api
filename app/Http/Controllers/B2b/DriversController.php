@@ -1,5 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Models\BusinessMember;
+use App\Models\BusinessTrip;
 use App\Models\Driver;
 use App\Models\Profile;
 use App\Models\Vehicle;
@@ -49,11 +51,34 @@ class DriversController extends Controller
             $driver = Driver::create($this->withCreateModificationField($driver_data));
             $profile = Profile::where('mobile', formatMobile($request->mobile))->first();
             if (!$profile) {
-                $this->createDriverProfile($member, $driver, $request);
+                $profile = $this->createDriverProfile($member, $driver, $request);
+                $new_member = $profile->member;
+                if (!$new_member) $new_member = $this->makeMember($profile);
+
+                $business = $member->businesses->first();
+                $member_business_data = [
+                    'business_id' => $business->id,
+                    'member_id' => $new_member->id,
+                    'type' => 'Admin',
+                    'join_date' => Carbon::now(),
+                ];
+                BusinessMember::create($this->withCreateModificationField($member_business_data));
             } else {
                 $profile_data = [
                     'driver_id' => $driver->id,
                 ];
+                $new_member = $profile->member;
+                if (!$new_member) $new_member = $this->makeMember($profile);
+
+                $business = $member->businesses->first();
+                $member_business_data = [
+                    'business_id' => $business->id,
+                    'member_id' => $new_member->id,
+                    'type' => 'Admin',
+                    'join_date' => Carbon::now(),
+                ];
+                BusinessMember::create($this->withCreateModificationField($member_business_data));
+
                 $profile->update($this->withCreateModificationField($profile_data));
             }
 
@@ -85,6 +110,16 @@ class DriversController extends Controller
         ];
 
         return Profile::create($this->withCreateModificationField($profile_data));
+    }
+
+    private function makeMember($profile)
+    {
+        $this->setModifier($profile);
+        $member = new Member();
+        $member->profile_id = $profile->id;
+        $member->remember_token = str_random(255);
+        $member->save();
+        return $member;
     }
 
     public function update($member, $driver, Request $request)
@@ -330,10 +365,10 @@ class DriversController extends Controller
             $exist_mobile = Profile::where('mobile', formatMobile($request->mobile))->first();
             $exist_email = Profile::where('email', $request->email)->first();
 
-            if ($exist_mobile){
+            if ($exist_mobile) {
                 return response()->json(['message' => 'Mobile Number Already Exist.', 'code' => 403]);
             }
-            if ($exist_email){
+            if ($exist_email) {
                 return response()->json(['message' => 'Email Already Exist.', 'code' => 403]);
             }
             $general_info = [
@@ -348,6 +383,97 @@ class DriversController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getDriverExperienceInfo($member, $driver, Request $request)
+    {
+        try {
+            $member = Member::find($member);
+            $business = $member->businesses->first();
+            $this->setModifier($member);
+
+            $driver = Driver::find((int)$driver);
+            $profile = $driver->profile;
+            $vehicle = $driver->vehicle;
+
+            $license_info = [
+                'years_of_experience' => $driver->years_of_experience,
+            ];
+
+            return api_response($request, $license_info, 200, ['license_info' => $license_info]);
+        } catch (\Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function updateDriverExperienceInfo($member, $driver, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                #'type' => 'required|string|in:hatchback,sedan,suv,passenger_van,others',
+                'years_of_experience' => 'required|numeric',
+                #'model_year' => 'required|date|date_format:Y-m-d',
+            ]);
+            $member = Member::find($member);
+            $business = $member->businesses->first();
+            $this->setModifier($member);
+
+            $driver = Driver::find((int)$driver);
+            $profile = $driver->profile;
+            $vehicle = $driver->vehicle;
+
+            $driver_info = [
+                'years_of_experience' => $request->years_of_experience,
+            ];
+            $driver->update($this->withUpdateModificationField($driver_info));
+
+            return api_response($request, 1, 200);
+
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getDriverRecentAssignment($member, $driver, Request $request)
+    {
+        try {
+            $member = Member::find($member);
+            $business = $member->businesses->first();
+            $this->setModifier($member);
+            $business_trips = BusinessTrip::where('driver_id', (int)$driver)->get();
+
+            $recent_assignment = [];
+
+            foreach ($business_trips as $business_trip) {
+                $vehicle = $business_trip->vehicle;
+                $basic_information = $vehicle ? $vehicle->basicInformations : null;
+
+                $vehicle = [
+                    'id' => $business_trip->id,
+                    'status' => $business_trip->status,
+                    'assigned_to' => 'ARNAD DADA',
+                    'vehicle' => [
+                        'type' => $basic_information->type,
+                        'company_name' => $basic_information->company_name,
+                        'model_name' => $basic_information->model_name,
+                        'model_year' => $basic_information->model_year,
+                    ]
+                ];
+                array_push($recent_assignment, $vehicle);
+            }
+            return api_response($request, $recent_assignment, 200, ['recent_assignment' => $recent_assignment]);
         } catch (\Throwable $e) {
             dd($e);
             app('sentry')->captureException($e);
