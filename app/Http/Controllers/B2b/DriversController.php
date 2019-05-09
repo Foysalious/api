@@ -101,7 +101,6 @@ class DriversController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -176,13 +175,21 @@ class DriversController extends Controller
             $business = $member->businesses->first();
             $this->setModifier($member);
             list($offset, $limit) = calculatePagination($request);
-            $drivers = Driver::select('id', 'status')->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
-            #with('profile', 'vehicle', 'vehicle.basicInformations')->
+            $drivers = Driver::with('profile', 'vehicle.basicInformations')->select('id', 'status')->orderBy('id', 'desc')->skip($offset)->limit($limit);
+
+            if ($request->has('status'))
+                $drivers = $drivers->status($request->status);
+
+            $drivers = $drivers->get();
             $driver_lists = [];
             foreach ($drivers as $driver) {
                 $profile = $driver->profile;
                 $vehicle = $driver->vehicle;
                 $basic_information = $vehicle ? $vehicle->basicInformations : null;
+
+                if ($request->has('type') && $vehicle){
+                    if ($vehicle->basicInformations->type !== $request->type) continue;
+                }
 
                 $driver = [
                     'id' => $driver->id,
@@ -197,7 +204,6 @@ class DriversController extends Controller
             }
             return api_response($request, $driver_lists, 200, ['driver_lists' => $driver_lists]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -212,7 +218,6 @@ class DriversController extends Controller
 
             $driver = Driver::find((int)$driver);
             $profile = $driver->profile;
-            #dd($driver->profile);
 
             $general_info = [
                 'driver_id' => $driver->id,
@@ -226,7 +231,6 @@ class DriversController extends Controller
 
             return api_response($request, $general_info, 200, ['general_info' => $general_info]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -260,7 +264,6 @@ class DriversController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -280,8 +283,8 @@ class DriversController extends Controller
             $license_info = [
                 'type' => $vehicle ? $vehicle->basicInformations->type : null,
                 'company_name' => $vehicle ? $vehicle->basicInformations->company_name : null,
-                'model_name' => $vehicle ? $vehicle->basicInformations->model_name : null,
-                'model_year' => $vehicle ? $vehicle->basicInformations->model_year : null,
+                #'model_name' => $vehicle ? $vehicle->basicInformations->model_name : null,
+                #'model_year' => $vehicle ? $vehicle->basicInformations->model_year : null,
 
                 'license_number' => $driver->id,
                 'license_class' => $profile->name,
@@ -290,7 +293,6 @@ class DriversController extends Controller
 
             return api_response($request, $license_info, 200, ['license_info' => $license_info]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -302,8 +304,8 @@ class DriversController extends Controller
             $this->validate($request, [
                 'type' => 'required|string|in:hatchback,sedan,suv,passenger_van,others',
                 'company_name' => 'required|string',
-                'model_name' => 'required|string',
-                'model_year' => 'required|date|date_format:Y-m-d',
+                #'model_name' => 'required|string',
+                #'model_year' => 'required|date|date_format:Y-m-d',
                 'license_number' => 'required|string',
                 'license_class' => 'required|string',
             ]);
@@ -318,8 +320,8 @@ class DriversController extends Controller
             $vehicle_basic_info = [
                 'type' => $request->type,
                 'company_name' => $request->company_name,
-                'model_name' => $request->model_name,
-                'model_year' => $request->model_year,
+                #'model_name' => $request->model_name,
+                #'model_year' => $request->model_year,
             ];
             if ($vehicle) $vehicle->basicInformations->update($this->withUpdateModificationField($vehicle_basic_info));
 
@@ -335,7 +337,6 @@ class DriversController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -359,7 +360,6 @@ class DriversController extends Controller
 
             return api_response($request, $contract_info, 200, ['contract_info' => $contract_info]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -401,7 +401,6 @@ class DriversController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -428,7 +427,6 @@ class DriversController extends Controller
             ];
             return api_response($request, $license_info, 200, ['license_info' => $license_info]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -469,7 +467,6 @@ class DriversController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -492,7 +489,6 @@ class DriversController extends Controller
 
             return api_response($request, $documents, 200, ['documents' => $documents]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -523,7 +519,6 @@ class DriversController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -558,7 +553,6 @@ class DriversController extends Controller
             }
             return api_response($request, $recent_assignment, 200, ['recent_assignment' => $recent_assignment]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

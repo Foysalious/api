@@ -157,6 +157,10 @@ class Route
             $api->post('admin/payout', 'Bkash\\BkashPayoutController@pay');
             $api->post('admin/bkash-balance', 'Bkash\\BkashPayoutController@queryBalance');
             $api->post('forget-password', 'ProfileController@forgetPassword');
+
+            $api->group(['prefix' => 'proxy'], function ($api) {
+                $api->post('/top-up', 'ProxyController@pretupsTopUp');
+            });
         });
         return $api;
     }

@@ -1,13 +1,10 @@
 <?php namespace Sheba\TopUp\Vendor\Response;
 
-class MockResponse extends TopUpResponse
+class PretupsResponse extends TopUpResponse
 {
-    /**
-     * @return bool
-     */
     public function hasSuccess(): bool
     {
-        return $this->response->TXNSTATUS == 200;
+        return $this->response && $this->response->TXNSTATUS == 200;
     }
 
     /**

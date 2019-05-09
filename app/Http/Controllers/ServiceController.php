@@ -32,7 +32,7 @@ class ServiceController extends Controller
             $services = Service::select('id', 'name', 'bn_name', 'unit', 'category_id', 'thumb', 'slug', 'min_quantity', 'banner', 'variable_type');
             $scope = ['start_price'];
             if ($request->has('is_business')) $services = $services->publishedForBusiness();
-            if($request->has('is_b2b')) $services->publishedForB2B();
+            if ($request->has('is_b2b')) $services->publishedForB2B();
             $services = $services->skip($offset)->take($limit)->get();
             $services = $this->serviceRepository->getpartnerServicePartnerDiscount($services);
             $services = $this->serviceRepository->addServiceInfo($services, $scope);
@@ -55,16 +55,16 @@ class ServiceController extends Controller
     {
         try {
             $service = Service::where('id', $service)->select('id', 'name', 'unit', 'structured_description', 'stock', 'stock_left', 'category_id', 'short_description', 'description', 'thumb', 'slug', 'min_quantity', 'banner', 'faqs', 'bn_name', 'bn_faqs', 'variable_type', 'variables');
-            
+
             $service_groups = $service->first()->groups;
             $offers = collect();
             if ($service_groups) {
                 $service_groups->map(function ($service_group) use ($offers) {
-                    $offers->push($service_group->offers()->active()->flash()->validFlashOffer()->get());
+                    $offer = $service_group->offers()->active()->flash()->validFlashOffer()->orderBy('end_date', 'desc')->first();
+                    if($offer) $offers->push($offer);
                 });
-                $offer = $offers->flatten()->sortByDesc('end_date')->first();
+                $offer = $offers->sortBy('end_date')->first();
             }
-
             $options = $this->serviceQuestionSet($service->first());
             $answers = collect();
             if ($options)
