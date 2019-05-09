@@ -175,17 +175,21 @@ class VehiclesController extends Controller
 
             list($offset, $limit) = calculatePagination($request);
             $vehicles = Vehicle::with('basicInformations')->select('id', 'status', 'current_driver_id')->orderBy('id', 'desc')->skip($offset)->limit($limit);
+
             if ($request->has('status'))
                 $vehicles = $vehicles->status($request->status);
 
+            if ($request->has('type')) {
+                $vehicles->where(function ($query) use ($request) {
+                    $query->whereHas('basicInformations', function ($query) use ($request) {
+                        $query->where('type', $request->type);
+                    });
+                });
+            }
             $vehicles = $vehicles->get();
             $vehicle_lists = [];
             foreach ($vehicles as $vehicle) {
                 $basic_information = $vehicle->basicInformations;
-
-                if ($request->has('type'))
-                    if ($vehicle->basicInformations->type !== $request->type) continue;
-
                 $driver = $vehicle->driver;
                 $vehicle = [
                     'id' => $vehicle->id,
