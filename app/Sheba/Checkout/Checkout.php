@@ -27,7 +27,6 @@ use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Checkout\Services\ServiceObject;
 use Sheba\ModificationFields;
 use Sheba\RequestIdentification;
-use Sheba\Voucher\VoucherSuggester;
 
 class Checkout
 {

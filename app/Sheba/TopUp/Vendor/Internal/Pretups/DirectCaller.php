@@ -18,6 +18,6 @@ class DirectCaller extends Caller
         $err = curl_error($ch);
         if($err) throw new \Exception($err);
         curl_close($ch);
-        return json_decode(json_encode(simplexml_load_string($data)), 1);
+        return json_decode(json_encode(simplexml_load_string($data)));
     }
 }
