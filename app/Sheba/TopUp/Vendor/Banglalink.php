@@ -50,6 +50,11 @@ class Banglalink extends Vendor
         ];
     }
 
+    private function getAmountMultiplier()
+    {
+        return 100;
+    }
+
     private function getVPNServer()
     {
         return "https://api.sheba.xyz";

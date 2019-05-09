@@ -16,6 +16,7 @@ class Client
     private $language1;
     private $language2;
     private $selectors;
+    private $amountMultiplier;
 
     public function __construct(DirectCaller $caller)
     {
@@ -49,6 +50,12 @@ class Client
     public function setLanguage2($l1)
     {
         $this->language2 = $l1;
+        return $this;
+    }
+
+    public function setAmountMultiplier($multiplier)
+    {
+        $this->amountMultiplier = $multiplier;
         return $this;
     }
 
@@ -98,7 +105,7 @@ class Client
         $input .= '<EXTCODE></EXTCODE>';
         $input .= '<EXTREFNUM></EXTREFNUM>';
         $input .= "<MSISDN2>" . $top_up_request->getOriginalMobile() . "</MSISDN2>";
-        $input .= "<AMOUNT>" . $top_up_request->getAmount() . "</AMOUNT>";
+        $input .= "<AMOUNT>" . ($top_up_request->getAmount() * $this->amountMultiplier) . "</AMOUNT>";
         $input .= "<LANGUAGE1>" . $this->language1 . "</LANGUAGE1>";
         $input .= "<LANGUAGE2>" . $this->language2 . "</LANGUAGE2>";
         $input .= "<SELECTOR>" . $this->selectors[$top_up_request->getType()] . "</SELECTOR>";
