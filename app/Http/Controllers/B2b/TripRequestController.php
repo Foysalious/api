@@ -55,6 +55,7 @@ class TripRequestController extends Controller
                 'start_date' => $trip_request->start_date,
                 'end_date' => $trip_request->end_date,
                 'no_of_seats' => $trip_request->no_of_seats,
+                'created_at' => $trip_request->created_at,
             ];
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
@@ -93,6 +94,7 @@ class TripRequestController extends Controller
                 'start_date' => $trip->start_date,
                 'end_date' => $trip->end_date,
                 'no_of_seats' => $trip->no_of_seats,
+                'created_at' => $trip->created_at,
             ];
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
