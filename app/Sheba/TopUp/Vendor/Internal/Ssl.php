@@ -5,6 +5,7 @@ namespace Sheba\TopUp\Vendor\Internal;
 use App\Models\TopUpVendor;
 use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
+use Sheba\TopUp\Vendor\VendorFactory;
 
 trait Ssl
 {
@@ -36,11 +37,13 @@ trait Ssl
      */
     public function deductAmount($amount)
     {
-        TopUpVendor::whereIn('id', [4, 5, 6])->update(['amount' => $this->model->amount - $amount]);
+        TopUpVendor::whereIn('id', [VendorFactory::GP, VendorFactory::TELETALK])
+            ->update(['amount' => $this->model->amount - $amount]);
     }
 
     public function refill($amount)
     {
-        TopUpVendor::whereIn('id', [4, 5, 6])->increment('amount', $amount);
+        TopUpVendor::whereIn('id', [VendorFactory::GP, VendorFactory::TELETALK])
+            ->increment('amount', $amount);
     }
 }

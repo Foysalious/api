@@ -3,7 +3,6 @@
 return [
     'robi' => [
         //'proxy_url' => env('ROBI_PROXY_URL', 'http://proxy.dev-sheba.xyz/robi.php'),
-        'proxy_url' => env('ROBI_PROXY_URL', 'https://api.dev-sheba.xyz/v2/proxy/top-up'),
         'url' => env('ROBI_TOPUP_URL', 'http://202.134.12.103:9898/pretups/C2SReceiver'),
         'login_id' => env('ROBI_TOPUP_LOGIN', 'pretups'),
         'password' => env('ROBI_TOPUP_PASSWORD', 'pretups123'),
@@ -14,7 +13,6 @@ return [
         'airtel_pin' => env('ROBI_TOPUP_AIRTEL_PIN', '1972')
     ],
     'bl' => [
-        'proxy_url' => env('BL_PROXY_URL', 'https://api.sheba.xyz/proxy/top-up'),
         'url' => env('BL_TOPUP_URL', 'http://10.13.2.90:9898/pretups/C2SReceiver'),
         'login_id' => env('BL_TOPUP_LOGIN', 'sheba'),
         'password' => env('BL_TOPUP_PASSWORD', 'test@123'),
