@@ -87,7 +87,7 @@ class VehiclesController extends Controller
             ];
             $vehicle->registrationInformations()->create($this->withCreateModificationField($vehicle_registration_information_data));
 
-            return api_response($request, 1, 200);
+            return api_response($request, $vehicle, 200, ['vehicle' => $vehicle->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -156,7 +156,7 @@ class VehiclesController extends Controller
             ];
             $vehicle_registration_informations->update($this->withUpdateModificationField($vehicle_registration_information_data));
 
-            return api_response($request, 1, 200);
+            return api_response($request, $vehicle, 200, ['vehicle' => $vehicle->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
