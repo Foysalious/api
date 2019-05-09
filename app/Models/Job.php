@@ -457,7 +457,8 @@ class Job extends Model
 
     public function needsLogistic()
     {
-        return $this->category->needsLogistic() && $this->getPartnerCategory()->needsShebaLogistic();
+        return $this->category->needsLogistic() &&
+            ($this->logistic_enabled_manually || $this->getPartnerCategory()->needsShebaLogistic());
     }
 
     public function isOnlinePaymentDiscountApplicable()
