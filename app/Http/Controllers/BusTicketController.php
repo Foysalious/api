@@ -31,6 +31,7 @@ use Sheba\Transport\Bus\Repositories\BusRouteLocationRepository;
 use Sheba\Transport\Bus\Repositories\TransportTicketOrdersRepository;
 use Sheba\Transport\Bus\Vendor\VendorFactory;
 
+use Sheba\Voucher\DTO\Params\CheckParamsForTransport;
 use Throwable;
 
 class BusTicketController extends Controller
@@ -112,8 +113,8 @@ class BusTicketController extends Controller
             $this->validate($request, ['pickup_place_id' => 'required', 'destination_place_id' => 'required', 'date' => 'required']);
 
             $data = $vehicleList->setPickupAddressId($request->pickup_place_id)->setDestinationAddressId($request->destination_place_id)->setDate($request->date)->getVehicles();
-            if (count($data['coaches']) > 0) return api_response($request, $data, 200, ['data' => $data]); else
-                return api_response($request, null, 404, ['message' => 'No Coaches Found.']);
+            if (count($data['coaches']) > 0) return api_response($request, $data, 200, ['data' => $data]);
+            else return api_response($request, null, 404, ['message' => 'No Coaches Found.']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
@@ -127,7 +128,6 @@ class BusTicketController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -162,7 +162,7 @@ class BusTicketController extends Controller
         }
     }
 
-    public function getPromotions($customer, Request $request)
+    public function getPromotions(Request $request)
     {
         try {
             $promotions = [
@@ -215,22 +215,23 @@ class BusTicketController extends Controller
         }
     }
 
-    public function applyPromo($customer, Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function applyPromo(Request $request)
     {
         try {
-            $this->validate($request, [
-                'coach_id' => 'required',
-                'vendor_id' => 'required',
-                'pickup_place_id' => 'required',
-                'destination_place_id' => 'required',
-                'date' => 'required',
-                'code' => 'required'
-            ]);
+            $this->validate($request, ['coach_id' => 'required', 'vendor_id' => 'required', 'pickup_place_id' => 'required', 'destination_place_id' => 'required', 'date' => 'required', 'code' => 'required']);
 
-            $code = $request->code;
-            if ($code == "MAY100F" || $code == "MAY100Q")
-            {
-                $promo = array('amount' => (double) 5, 'code' => $code, 'id' => 81260, 'title' => "Congrats! Food promo code unlocked!");
+            $agent = $this->getAgent($request);
+            $transport_params = (new CheckParamsForTransport());
+            $transport_params->setOrderAmount($request->amount)->setApplicant($agent);
+            $result = voucher($request->code)->checkForTransport($transport_params)->reveal();
+
+            if ($result['is_valid']) {
+                $voucher = $result['voucher'];
+                $promo = ['amount' => (double)$result['amount'], 'code' => $voucher->code, 'id' => $voucher->id, 'title' => $voucher->title];
                 return api_response($request, 1, 200, ['promotion' => $promo]);
             } else {
                 return api_response($request, null, 403, ['message' => 'Invalid Promo']);
@@ -242,6 +243,7 @@ class BusTicketController extends Controller
             $sentry->captureException($e);
             return response()->json(['data' => null, 'message' => $message]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

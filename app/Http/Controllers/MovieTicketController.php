@@ -12,6 +12,7 @@ use Sheba\MovieTicket\MovieTicket;
 use Sheba\MovieTicket\MovieTicketManager;
 use Sheba\MovieTicket\MovieTicketRequest;
 use Sheba\MovieTicket\Vendor\VendorFactory;
+use Sheba\Voucher\DTO\Params\CheckParamsForMovie;
 use Throwable;
 
 class MovieTicketController extends Controller
@@ -194,16 +195,30 @@ class MovieTicketController extends Controller
         }
     }
 
-    public function applyPromo($customer, Request $request)
+    public function applyPromo(Request $request)
     {
         try {
+            $this->validate($request, [
+                'trx_id' => 'required',
+                'dtmsid' => 'required',
+                'lid' => 'required',
+                'confirm_status' => 'required',
+                'customer_name' => 'required',
+                'customer_email' => 'required',
+                'customer_mobile' => 'required|mobile:bd', 'cost' => 'required',
+                'code' => 'required',
+                'amount' => 'required'
+            ]);
 
-            $this->validate($request, ['trx_id' => 'required', 'dtmsid' => 'required', 'lid' => 'required', 'confirm_status' => 'required', 'customer_name' => 'required', 'customer_email' => 'required', 'customer_mobile' => 'required|mobile:bd', 'cost' => 'required', 'image_url' => 'required', 'code' => 'required']);
+            $agent = $this->getAgent($request);
+            $movie_params = (new CheckParamsForMovie());
+            $movie_params->setOrderAmount($request->amount)->setApplicant($agent);
+            $result = voucher($request->code)->checkForMovie($movie_params)->reveal();
 
-            $code = $request->code;
-            if ($code == "MAY100F" || $code == "MAY100Q") {
-                $promo = array('amount' => (double)100, 'code' => $code, 'id' => 81260, 'title' => "Congrats! Food promo code unlocked!");
-                return api_response($request, 1, 200, ['promotion' => $promo]);
+            if ($result['is_valid']) {
+                $voucher = $result['voucher'];
+                $promo = ['amount' => (double)$result['amount'], 'code' => $voucher->code, 'id' => $voucher->id, 'title' => $voucher->title];
+                return api_response($request, null, 200, ['promotion' => $promo]);
             } else {
                 return api_response($request, null, 403, ['message' => 'Invalid Promo']);
             }
