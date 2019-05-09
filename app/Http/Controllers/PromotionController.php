@@ -11,6 +11,7 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Checkout\DeliveryCharge;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Voucher\ApplicableVoucherFinder;
+use Sheba\Voucher\DTO\Params\CheckParamsForOrder;
 use Sheba\Voucher\PromotionList;
 use Sheba\Voucher\VoucherSuggester;
 
@@ -167,7 +168,17 @@ class PromotionController extends Controller
             }
             $order_amount = $this->calculateOrderAmount($partnerListRequest, $request->partner);
             if (!$order_amount) return api_response($request, null, 403, ['message' => 'No partner available at this combination']);
-            $voucherSuggester->init($request->customer, $partnerListRequest->selectedCategory->id, $request->partner, (int)$location, $order_amount, $request->sales_channel);
+
+            $order_params = (new CheckParamsForOrder($request->customer, $request->customer->profile))
+                ->setApplicant($request->customer)
+                ->setCategory($partnerListRequest->selectedCategory->id)
+                ->setPartner($request->partner)
+                ->setLocation((int)$location)
+                ->setOrderAmount($order_amount)
+                ->setSalesChannel($request->sales_channel);
+
+            $voucherSuggester->init($order_params);
+
             if ($promo = $voucherSuggester->suggest()) {
                 $applied_voucher = array('amount' => (int)$promo['amount'], 'code' => $promo['voucher']->code, 'id' => $promo['voucher']->id);
                 $valid_promos = $this->sortPromotionsByWeight($voucherSuggester->validPromos);

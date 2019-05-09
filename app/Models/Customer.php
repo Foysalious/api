@@ -73,11 +73,6 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
         return $this->hasMany(Promotion::class);
     }
 
-    public function suggestedPromotion()
-    {
-        return suggestedVoucherFor($this);
-    }
-
     public function generateReferral()
     {
         return VoucherCodeGenerator::byName($this->profile->name);
