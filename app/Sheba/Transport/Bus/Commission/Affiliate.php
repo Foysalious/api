@@ -21,10 +21,10 @@ class Affiliate extends BusTicketCommission
 
     private function storeAmbassadorWalletTransaction()
     {
-        $this->agent->ambassador->creditWallet($this->transportTicketOrder->ambassador_commission);
-        $log = "{$this->agent->profile->name} gifted {$this->transportTicketOrder->ambassador_commission} Tk. for {$this->transportTicketOrder->amount} Tk. movie ticket purchase";;
+        $this->agent->ambassador->creditWallet($this->transportTicketOrder->ambassador_amount);
+        $log = "{$this->agent->profile->name} gifted {$this->transportTicketOrder->ambassador_amount} Tk. for {$this->transportTicketOrder->amount} Tk. transport ticket purchase";
         $this->agent->ambassador->walletTransaction([
-            'amount' => $this->transportTicketOrder->ambassador_commission,
+            'amount' => $this->transportTicketOrder->ambassador_amount,
             'type' => 'Credit',
             'log' => $log
         ]);

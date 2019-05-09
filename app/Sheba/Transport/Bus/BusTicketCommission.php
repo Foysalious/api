@@ -44,8 +44,11 @@ abstract class BusTicketCommission
         $this->transportTicketOrder->agent_amount = $this->calculateTransportTicketCommission();
         $this->transportTicketOrder->save();
 
-        $log = ($this->amount - $this->transportTicketOrder->agent_amount) . " has been deducted for a movie ticket, of user with mobile number: " . $this->transportTicketOrder->reserver_mobile;
-        $transaction = (new TransportTicketTransaction())->setAmount($this->amount - $this->transportTicketOrder->agent_amount)->setLog($log)->setMovieTicketOrder($this->transportTicketOrder);
+        $log = ($this->transportTicketOrder->sheba_amount - $this->transportTicketOrder->agent_amount) . " has been credited for a transport ticket purchase, of user with mobile number: " . $this->transportTicketOrder->reserver_mobile;
+        $transaction = (new TransportTicketTransaction())
+            ->setAmount($this->transportTicketOrder->sheba_amount - $this->transportTicketOrder->agent_amount)
+            ->setLog($log)
+            ->setMovieTicketOrder($this->transportTicketOrder);
 
         $this->agent->transportTicketTransaction($transaction);
     }

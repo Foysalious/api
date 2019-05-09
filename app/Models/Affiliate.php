@@ -228,7 +228,7 @@ class Affiliate extends Model implements TopUpAgent, MovieAgent, TransportAgent,
 
     public function transportTicketTransaction(TransportTicketTransaction $transaction)
     {
-        $this->debitWallet($transaction->getAmount());
+        $this->creditWallet($transaction->getAmount());
         $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
     }
 

@@ -1,6 +1,7 @@
 <?php namespace Sheba\Transport\Bus;
 
 use App\Models\Transport\TransportTicketOrder;
+use App\Models\Transport\TransportTicketVendor;
 use Sheba\Transport\TransportAgent;
 use Sheba\Transport\TransportTicketTransaction;
 
@@ -29,7 +30,7 @@ class BusTicket
 
     public function disburseCommissions()
     {
-        $this->agent->getBusTicketCommission()->disburse();
+        $this->agent->getBusTicketCommission()->setTransportTicketOrder($this->transportTicketOrder)->disburse();
     }
 
     public function agentTransaction()
