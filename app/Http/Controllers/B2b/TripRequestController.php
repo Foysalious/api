@@ -41,6 +41,17 @@ class TripRequestController extends Controller
         try {
             $trip_request = BusinessTripRequest::find((int)$trip_request);
             if (!$trip_request) return api_response($request, null, 404);
+            $comments = [];
+            foreach ($trip_request->comments as $comment) {
+                array_push($comments, [
+                    'comment' => $comment->comment,
+                    'user' => [
+                        'name' => $comment->commentator->profile->name,
+                        'image' => $comment->commentator->profile->pro_pic
+                    ],
+                    'created_at' => $comment->created_at->toDateTimeString()
+                ]);
+            }
             $info = [
                 'reason' => $trip_request->reason,
                 'details' => $trip_request->details,
@@ -48,6 +59,7 @@ class TripRequestController extends Controller
                     'name' => $trip_request->member->profile->name,
                     "designation" => 'Manager'
                 ],
+                'comments' => $comments,
                 'vehicle_type' => ucfirst($trip_request->vehicle_type),
                 'trip_type' => $trip_request->trip_readable_type,
                 'pickup_address' => $trip_request->pickup_address,
@@ -55,8 +67,9 @@ class TripRequestController extends Controller
                 'start_date' => $trip_request->start_date,
                 'end_date' => $trip_request->end_date,
                 'no_of_seats' => $trip_request->no_of_seats,
-                'created_at' => $trip_request->created_at,
+                'created_at' => $trip_request->created_at->toDateTimeString(),
             ];
+
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -70,6 +83,17 @@ class TripRequestController extends Controller
         try {
             $trip = BusinessTrip::find((int)$trip);
             if (!$trip) return api_response($request, null, 404);
+            $comments = [];
+            foreach ($trip->comments as $comment) {
+                array_push($comments, [
+                    'comment' => $comment->comment,
+                    'user' => [
+                        'name' => $comment->commentator->profile->name,
+                        'image' => $comment->commentator->profile->pro_pic
+                    ],
+                    'created_at' => $comment->created_at->toDateTimeString()
+                ]);
+            }
             $info = [
                 'reason' => $trip->reason,
                 'details' => $trip->details,
@@ -94,7 +118,7 @@ class TripRequestController extends Controller
                 'start_date' => $trip->start_date,
                 'end_date' => $trip->end_date,
                 'no_of_seats' => $trip->no_of_seats,
-                'created_at' => $trip->created_at,
+                'created_at' => $trip->created_at->toDateTimeString(),
             ];
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
@@ -160,7 +184,7 @@ class TripRequestController extends Controller
     public function commentOnTripRequest($member, $trip_request, Request $request)
     {
         try {
-            $comment = (new CommentRepository('BusinessTripRequest', BusinessTripRequest::find($trip_request), $request->member))->store($request->comment);
+            $comment = (new CommentRepository('BusinessTripRequest', $trip_request, $request->member))->store($request->comment);
             return $comment ? api_response($request, $comment, 200) : api_response($request, $comment, 500);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -171,7 +195,7 @@ class TripRequestController extends Controller
     public function commentOnTrip($member, $trip, Request $request)
     {
         try {
-            $comment = (new CommentRepository('BusinessTripRequest', BusinessTrip::find($trip), $request->member))->store($request->comment);
+            $comment = (new CommentRepository('BusinessTripRequest', $trip, $request->member))->store($request->comment);
             return $comment ? api_response($request, $comment, 200) : api_response($request, $comment, 500);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
