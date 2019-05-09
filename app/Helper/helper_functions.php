@@ -15,25 +15,6 @@ foreach ($helper_files as $file) {
     if (file_exists($file)) require $file;
 }
 
-if (!function_exists('setTrace')) {
-
-    /**
-     * Debug data in formatted presentation.
-     *
-     * @param $data
-     * @param bool $die
-     * @return array
-     */
-    function setTrace($data, $die = true)
-    {
-        echo "<hr><pre>";
-        print_r($data);
-        echo "</pre><hr>";
-
-        if ($die) exit;
-    }
-}
-
 if (!function_exists('constants')) {
     /**
      * Get the constant from config constants file.
@@ -47,7 +28,15 @@ if (!function_exists('constants')) {
     }
 }
 
-if (!function_exists('randomString')) {
+if (!function_exists('randomString'))
+{
+    /**
+     * @param $len
+     * @param int $num
+     * @param int $alpha
+     * @param int $spec_char
+     * @return string
+     */
     function randomString($len, $num = 0, $alpha = 0, $spec_char = 0)
     {
         $alphabets = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -63,30 +52,6 @@ if (!function_exists('randomString')) {
             $rand_string .= $characters[mt_rand(0, strlen($characters) - 1)];
         }
         return $rand_string;
-    }
-}
-
-if (!function_exists('getOriginalMobileNumber')) {
-    /**
-     * Format Mobile number with +88 .
-     *
-     * @param  $number
-     * @return string
-     */
-    function getOriginalMobileNumber($number)
-    {
-        $number = str_replace(" ", "", $number);
-        $number = str_replace("-", "", $number);
-        // mobile starts with '+88'
-        if (preg_match("/^(\+88)/", $number)) {
-            return substr($number, 3);
-        } // when mobile starts with '88' replace it with '+880'
-        elseif (preg_match("/^(88)/", $number)) {
-            return substr($number, 2);
-        } // real mobile no add '+880' at the start
-        else {
-            return $number;
-        }
     }
 }
 
@@ -376,7 +341,7 @@ if (!function_exists('en2bnNumber')) {
     }
 }
 
-if (!function_exists('indexedArrayToAssociativ')) {
+if (!function_exists('indexedArrayToAssociative')) {
     /**
      * @param $key
      * @param $value
