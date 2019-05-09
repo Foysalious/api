@@ -94,6 +94,8 @@ class DriversController extends Controller
                         'join_date' => Carbon::now(),
                     ];
                     BusinessMember::create($this->withCreateModificationField($member_business_data));
+                } else {
+                    return api_response($request, null, 403, ['message' => 'Driver already exits!']);
                 }
             }
 

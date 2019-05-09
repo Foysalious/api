@@ -202,7 +202,9 @@ class VehiclesController extends Controller
                 ];
                 array_push($vehicle_lists, $vehicle);
             }
-            return api_response($request, $vehicle_lists, 200, ['vehicle_lists' => $vehicle_lists]);
+
+            if (count($vehicle_lists) > 0) return api_response($request, $vehicle_lists, 200, ['vehicle_lists' => $vehicle_lists]);
+            else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -357,6 +359,7 @@ class VehiclesController extends Controller
             $this->setModifier($member);
 
             $vehicle = Vehicle::find((int)$vehicle);
+            if (!$vehicle) return api_response($request, null, 404);
 
             $basic_information = $vehicle->basicInformations;
             $registration_information = $vehicle->registrationInformations;
@@ -371,6 +374,7 @@ class VehiclesController extends Controller
                 'engine_summary' => $basic_information->engine_summary,
                 'transmission_type' => $basic_information->transmission_type,
             ];
+
             return api_response($request, $specs_info, 200, ['specs_info' => $specs_info]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -396,6 +400,7 @@ class VehiclesController extends Controller
             $this->setModifier($member);
 
             $vehicle = Vehicle::find((int)$vehicle);
+            if (!$vehicle) return api_response($request, null, 404);
 
             $basic_information = $vehicle->basicInformations;
 
