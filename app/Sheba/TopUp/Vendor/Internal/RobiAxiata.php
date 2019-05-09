@@ -42,4 +42,9 @@ trait RobiAxiata
             'postpaid' => '2'
         ];
     }
+
+    private function getAmountMultiplier()
+    {
+        return 1;
+    }
 }
