@@ -283,8 +283,8 @@ class DriversController extends Controller
             $license_info = [
                 'type' => $vehicle ? $vehicle->basicInformations->type : null,
                 'company_name' => $vehicle ? $vehicle->basicInformations->company_name : null,
-                'model_name' => $vehicle ? $vehicle->basicInformations->model_name : null,
-                'model_year' => $vehicle ? $vehicle->basicInformations->model_year : null,
+                #'model_name' => $vehicle ? $vehicle->basicInformations->model_name : null,
+                #'model_year' => $vehicle ? $vehicle->basicInformations->model_year : null,
 
                 'license_number' => $driver->id,
                 'license_class' => $profile->name,
@@ -304,8 +304,8 @@ class DriversController extends Controller
             $this->validate($request, [
                 'type' => 'required|string|in:hatchback,sedan,suv,passenger_van,others',
                 'company_name' => 'required|string',
-                'model_name' => 'required|string',
-                'model_year' => 'required|date|date_format:Y-m-d',
+                #'model_name' => 'required|string',
+                #'model_year' => 'required|date|date_format:Y-m-d',
                 'license_number' => 'required|string',
                 'license_class' => 'required|string',
             ]);
@@ -320,8 +320,8 @@ class DriversController extends Controller
             $vehicle_basic_info = [
                 'type' => $request->type,
                 'company_name' => $request->company_name,
-                'model_name' => $request->model_name,
-                'model_year' => $request->model_year,
+                #'model_name' => $request->model_name,
+                #'model_year' => $request->model_year,
             ];
             if ($vehicle) $vehicle->basicInformations->update($this->withUpdateModificationField($vehicle_basic_info));
 
