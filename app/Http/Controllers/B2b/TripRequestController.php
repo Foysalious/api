@@ -4,6 +4,7 @@
 use App\Http\Controllers\Controller;
 use App\Models\BusinessTrip;
 use App\Models\BusinessTripRequest;
+use App\Repositories\CommentRepository;
 use Illuminate\Http\Request;
 
 class TripRequestController extends Controller
@@ -44,14 +45,16 @@ class TripRequestController extends Controller
                 'reason' => $trip_request->reason,
                 'details' => $trip_request->details,
                 'member' => [
-                    'name' => $trip_request->member->name
+                    'name' => $trip_request->member->profile->name,
+                    "designation" => 'Manager'
                 ],
-                'vehicle_type' => $trip_request->vehicle_type,
-                'trip_type' => $trip_request->trip_type,
+                'vehicle_type' => ucfirst($trip_request->vehicle_type),
+                'trip_type' => $trip_request->trip_readable_type,
                 'pickup_address' => $trip_request->pickup_address,
                 'dropoff_address' => $trip_request->dropoff_address,
                 'start_date' => $trip_request->start_date,
                 'end_date' => $trip_request->end_date,
+                'no_of_seats' => $trip_request->no_of_seats,
             ];
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
@@ -70,20 +73,26 @@ class TripRequestController extends Controller
                 'reason' => $trip->reason,
                 'details' => $trip->details,
                 'member' => [
-                    'name' => $trip->member->name
+                    'name' => $trip->member->profile->name,
+                    'image' => $trip->member->profile->pro_pic,
+                    'designation' => 'Manager'
                 ],
                 'driver' => [
-                    'name' => $trip->driver->profile->name
+                    'name' => $trip->driver->profile->name,
+                    'mobile' => $trip->driver->profile->mobile,
+                    'image' => $trip->driver->profile->pro_pic
                 ],
                 'vehicle' => [
-                    'name' => $trip->vehicle->basicInformation->model_name
+                    'name' => $trip->vehicle->basicInformation->model_name,
+                    'type' => $trip->vehicle->basicInformation->readable_type,
                 ],
-                'vehicle_type' => $trip->vehicle_type,
-                'trip_type' => $trip->trip_type,
+                'vehicle_type' => ucfirst($trip->vehicle_type),
+                'trip_type' => $trip->trip_readable_type,
                 'pickup_address' => $trip->pickup_address,
                 'dropoff_address' => $trip->dropoff_address,
                 'start_date' => $trip->start_date,
                 'end_date' => $trip->end_date,
+                'no_of_seats' => $trip->no_of_seats,
             ];
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
@@ -146,6 +155,28 @@ class TripRequestController extends Controller
         }
     }
 
+    public function commentOnTripRequest($member, $trip_request, Request $request)
+    {
+        try {
+            $comment = (new CommentRepository('BusinessTripRequest', BusinessTripRequest::find($trip_request), $request->member))->store($request->comment);
+            return $comment ? api_response($request, $comment, 200) : api_response($request, $comment, 500);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function commentOnTrip($member, $trip, Request $request)
+    {
+        try {
+            $comment = (new CommentRepository('BusinessTripRequest', BusinessTrip::find($trip), $request->member))->store($request->comment);
+            return $comment ? api_response($request, $comment, 200) : api_response($request, $comment, 500);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     private function storeTrip(BusinessTripRequest $business_trip_request)
     {
         $business_trip = new BusinessTrip();
@@ -185,4 +216,6 @@ class TripRequestController extends Controller
         $business_trip_request->save();
         return $business_trip_request;
     }
+
+
 }
