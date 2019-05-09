@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Payable\RechargeAdapter;
 use Sheba\Payment\ShebaPayment;
 use DB;
@@ -16,6 +17,8 @@ use Sheba\Reward\BonusCredit;
 
 class WalletController extends Controller
 {
+    use ModificationFields;
+
     public function validatePayment(Request $request)
     {
         try {
@@ -103,18 +106,23 @@ class WalletController extends Controller
                             $payment_detail->update();
                         }
                         $user->debitWallet($remaining);
-                        $transaction = $user->walletTransaction([
+                        $this->setModifier($user);
+                        $wallet_transaction_data = [
                             'amount' => $remaining,
                             'type' => 'Debit',
                             'log' => "Service Purchase.", // . ($spent_model instanceof PartnerOrder) ? "ORDER ID: {$spent_model->code()}" : "",
-                            'event_type' => get_class($spent_model),
-                            'event_id' => $spent_model->id,
                             'created_at' => Carbon::now()
-                        ]);
+                        ];
+                        if ($user instanceof Customer) {
+                            $wallet_transaction_data += ['event_type' => get_class($spent_model), 'event_id' => $spent_model->id];
+                        }
+                        $transaction = $user->walletTransaction($wallet_transaction_data);
                     }
                 });
-                $paymentRepository->changeStatus(['to' => 'validated', 'from' => $payment->status,
-                    'transaction_details' => $payment->transaction_details]);
+                $paymentRepository->changeStatus([
+                    'to' => 'validated', 'from' => $payment->status,
+                    'transaction_details' => $payment->transaction_details
+                ]);
                 $payment->status = 'validated';
                 $payment->transaction_details = json_encode(array('payment_id' => $payment->id, 'transaction_id' => $transaction ? $transaction->id : null));
                 $payment->update();

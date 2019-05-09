@@ -73,7 +73,9 @@ class CustomerRoute
                     $api->post('book-tickets', 'MovieTicketController@bookTickets');
                     $api->post('update-status', 'CustomerMovieTicketController@updateTicketStatus');
                 });
+
                 (new TransportRoute())->set($api);
+
                 $api->group(['prefix' => 'jobs'], function ($api) {
                     $api->get('/', 'JobController@index');
                     $api->get('cancel-reason', 'JobController@cancelReason');
