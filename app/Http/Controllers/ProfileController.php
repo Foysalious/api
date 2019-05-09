@@ -100,7 +100,7 @@ class ProfileController extends Controller
             if (!$profile) return api_response($request, null, 404, ['message' => 'Profile no found']);
             $rules = ['pro_pic' => 'sometimes|string', 'nid_image_back' => 'sometimes|string', 'nid_image_front' => 'sometimes|string'];
             $this->validate($request, $rules);
-            $data = $request->only(['email', 'name', 'password', 'pro_pic', 'nid_image_front', 'email', 'gender', 'dob', 'mobile']);
+            $data = $request->only(['email', 'name', 'password', 'pro_pic', 'nid_image_front', 'email', 'gender', 'dob', 'mobile', 'nid_no', 'address']);
             $data = array_filter($data, function ($item) {
                 return $item != null;
             });
@@ -122,7 +122,7 @@ class ProfileController extends Controller
             return api_response($request, null, 401, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
-            return api_response($request, null, 500, ['message' => $e->getMessage(),'trace'=>$e->getTrace()]);
+            return api_response($request, null, 500, ['message' => $e->getMessage(), 'trace' => $e->getTrace()]);
         }
     }
 
