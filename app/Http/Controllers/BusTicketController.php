@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Affiliate;
+use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\Transport\TransportTicketOrder;
 use App\Transformers\BusRouteTransformer;
@@ -172,9 +173,10 @@ class BusTicketController extends Controller
     {
         try {
             $agent = $this->getAgent($request);
-            $order_params = (new CheckParamsForTransport())->setApplicant($agent);
+            if (!($agent instanceof Customer)) return api_response($request, null, 404, ['message' => 'Promotion only valid for customer']);
 
-            $voucher_suggester->init($order_params);
+            $transport_params = (new CheckParamsForTransport())->setApplicant($agent)->setOrderAmount($request->amount);
+            $voucher_suggester->init($transport_params);
 
             if ($promo = $voucher_suggester->suggest()) {
                 $applied_voucher = ['amount' => (int)$promo['amount'], 'code' => $promo['voucher']->code, 'id' => $promo['voucher']->id];

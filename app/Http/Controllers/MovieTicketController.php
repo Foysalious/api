@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use App\Models\MovieTicketOrder;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
@@ -13,6 +14,8 @@ use Sheba\MovieTicket\MovieTicketManager;
 use Sheba\MovieTicket\MovieTicketRequest;
 use Sheba\MovieTicket\Vendor\VendorFactory;
 use Sheba\Voucher\DTO\Params\CheckParamsForMovie;
+use Sheba\Voucher\DTO\Params\CheckParamsForTransport;
+use Sheba\Voucher\VoucherSuggester;
 use Throwable;
 
 class MovieTicketController extends Controller
@@ -177,12 +180,22 @@ class MovieTicketController extends Controller
         }
     }
 
-    public function getPromotions($customer, Request $request)
+    public function getPromotions(Request $request, VoucherSuggester $voucher_suggester)
     {
         try {
-            $promotions = [["id" => 81260, "voucher_id" => 289551, "customer_id" => 35009, "valid_till" => "2019-05-31 23:59:00", "valid_till_timestamp" => 1559325540, "usage_left" => "20", "voucher" => ["id" => 289551, "code" => "MAY100F", "amount" => 100, "title" => "Congrats! Food promo code unlocked!", "is_amount_percentage" => 0, "cap" => 0, "max_order" => 21]], ["id" => 81261, "voucher_id" => 289551, "customer_id" => 35009, "valid_till" => "2019-05-31 23:59:00", "valid_till_timestamp" => 1559325540, "usage_left" => "20", "voucher" => ["id" => 289551, "code" => "MAY100Q", "amount" => 100, "title" => "Congrats! Qinetic promo code unlocked!", "is_amount_percentage" => 0, "cap" => 0, "max_order" => 21]]];
+            $agent = $this->getAgent($request);
+            if (!($agent instanceof Customer)) return api_response($request, null, 404, ['message' => 'Promotion only valid for customer']);
 
-            return api_response($request, $promotions, 200, ['promotions' => $promotions]);
+            $movie_ticket_params = (new CheckParamsForMovie())->setApplicant($agent)->setOrderAmount($request->amount);
+            $voucher_suggester->init($movie_ticket_params);
+
+            if ($promo = $voucher_suggester->suggest()) {
+                $applied_voucher = ['amount' => (int)$promo['amount'], 'code' => $promo['voucher']->code, 'id' => $promo['voucher']->id];
+                $valid_promos = $this->sortPromotionsByWeight($voucher_suggester->validPromos);
+                return api_response($request, null, 200, ['voucher' => $applied_voucher, 'valid_promotions' => $valid_promos]);
+            } else {
+                return api_response($request, null, 404);
+            }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
@@ -193,6 +206,21 @@ class MovieTicketController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function sortPromotionsByWeight($valid_promos)
+    {
+        return $valid_promos->map(function ($promotion) {
+            $promo = [];
+            $promo['id'] = $promotion['voucher']->id;
+            $promo['title'] = $promotion['voucher']->title;
+            $promo['amount'] = (double)$promotion['amount'];
+            $promo['code'] = $promotion['voucher']->code;
+            $promo['priority'] = round($promotion['weight'], 4);
+            return $promo;
+        })->sortByDesc(function ($promotion) {
+            return $promotion['priority'];
+        })->values()->all();
     }
 
     public function applyPromo(Request $request)
