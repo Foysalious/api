@@ -197,6 +197,7 @@ class DriversController extends Controller
                 $basic_information = $vehicle ? $vehicle->basicInformations : null;
                 $driver = [
                     'id' => $driver->id,
+                    'name' => $profile->name,
                     'picture' => $profile->pro_pic,
                     'mobile' => $profile->mobile,
                     'status' => $driver->status,
