@@ -24,6 +24,7 @@ class WalletController extends Controller
         try {
             /** @var Payment $payment */
             $payment = Payment::where('transaction_id', $request->transaction_id)->valid()->first();
+            $this->setModifier($payment->payable->user);
             if (!$payment) return api_response($request, null, 404);
             elseif ($payment->isComplete()) return api_response($request, 1, 200,
                 ['message' => 'Payment completed']);
