@@ -180,17 +180,19 @@ class DriversController extends Controller
             if ($request->has('status'))
                 $drivers = $drivers->status($request->status);
 
+            if ($request->has('type')) {
+                $drivers->where(function ($query) use ($request) {
+                    $query->whereHas('vehicle.basicInformations', function ($query) use ($request) {
+                        $query->where('type', $request->type);
+                    });
+                });
+            }
             $drivers = $drivers->get();
             $driver_lists = [];
             foreach ($drivers as $driver) {
                 $profile = $driver->profile;
                 $vehicle = $driver->vehicle;
                 $basic_information = $vehicle ? $vehicle->basicInformations : null;
-
-                if ($request->has('type') && $vehicle){
-                    if ($vehicle->basicInformations->type !== $request->type) continue;
-                }
-
                 $driver = [
                     'id' => $driver->id,
                     'picture' => $profile->pro_pic,
