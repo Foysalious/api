@@ -16,4 +16,19 @@ class BusinessTrip extends Model
         return $this->belongsTo(Driver::class);
     }
 
+    public function member()
+    {
+        return $this->belongsTo(Member::class);
+    }
+
+    public function getTripReadableTypeAttribute()
+    {
+        return title_case(str_replace('_', ' ', $this->trip_type));
+    }
+
+    public function comments()
+    {
+        return $this->morphMany(Comment::class, 'commentable');
+    }
+
 }

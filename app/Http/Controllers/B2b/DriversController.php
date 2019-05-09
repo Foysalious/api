@@ -94,9 +94,13 @@ class DriversController extends Controller
                         'join_date' => Carbon::now(),
                     ];
                     BusinessMember::create($this->withCreateModificationField($member_business_data));
+                } else {
+                    return api_response($request, null, 403, ['message' => 'Driver already exits!']);
                 }
             }
-            return api_response($request, 1, 200);
+
+            return api_response($request, $driver, 200, ['driver' => $driver->id]);
+
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -158,7 +162,7 @@ class DriversController extends Controller
             $driver->update($this->withUpdateModificationField($driver_data));
             #$profile = Profile::where('mobile', formatMobile($request->mobile))->first();
 
-            return api_response($request, 1, 200);
+            return api_response($request, $driver, 200, ['driver' => $driver->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -180,19 +184,22 @@ class DriversController extends Controller
             if ($request->has('status'))
                 $drivers = $drivers->status($request->status);
 
+            if ($request->has('type')) {
+                $drivers->where(function ($query) use ($request) {
+                    $query->whereHas('vehicle.basicInformations', function ($query) use ($request) {
+                        $query->where('type', $request->type);
+                    });
+                });
+            }
             $drivers = $drivers->get();
             $driver_lists = [];
             foreach ($drivers as $driver) {
                 $profile = $driver->profile;
                 $vehicle = $driver->vehicle;
                 $basic_information = $vehicle ? $vehicle->basicInformations : null;
-
-                if ($request->has('type') && $vehicle){
-                    if ($vehicle->basicInformations->type !== $request->type) continue;
-                }
-
                 $driver = [
                     'id' => $driver->id,
+                    'name' => $profile->name,
                     'picture' => $profile->pro_pic,
                     'mobile' => $profile->mobile,
                     'status' => $driver->status,
@@ -202,7 +209,8 @@ class DriversController extends Controller
                 ];
                 array_push($driver_lists, $driver);
             }
-            return api_response($request, $driver_lists, 200, ['driver_lists' => $driver_lists]);
+            if (count($driver_lists) > 0) return api_response($request, $driver_lists, 200, ['driver_lists' => $driver_lists]);
+            else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

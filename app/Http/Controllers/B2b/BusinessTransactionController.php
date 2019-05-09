@@ -11,17 +11,15 @@ use App\Models\Member;
 use Carbon\Carbon;
 use DB;
 
-class TransactionController extends Controller
+class BusinessTransactionController extends Controller
 {
     use ModificationFields;
 
-    public function index($member, Request $request)
+    public function index($business, Request $request)
     {
         try {
-            $member = Member::find($member);
-            $business = $member->businesses->first();
-            $this->setModifier($member);
-            $transactions = BusinessTransaction::query()->orderBy('id', 'desc');
+            $business = $request->business;
+            $transactions = BusinessTransaction::where('business_id', (int)$business->id)->orderBy('id', 'desc');
             if ($request->has('type'))
                 $transactions = $transactions->type($request->type);
 
@@ -34,14 +32,16 @@ class TransactionController extends Controller
                     'date' => Carbon::parse($transaction->created_at)->format('Y'),
                     'sector' => 'SMS',
                     'amount' => $transaction->amount,
+                    'wallet' => (double)$business->wallet,
                     'type' => $transaction->type,
                     'log' => $transaction->log,
                 ];
                 array_push($business_transaction, $transaction);
             }
-            return api_response($request, $business_transaction, 200, ['business_transaction' => $business_transaction]);
+
+            if (count($business_transaction) > 0) return api_response($request, $business_transaction, 200, ['business_transaction' => $business_transaction]);
+            else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
