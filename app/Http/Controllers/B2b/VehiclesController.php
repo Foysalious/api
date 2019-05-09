@@ -40,9 +40,9 @@ class VehiclesController extends Controller
                 #'fuel_quality' => 'required|string',
                 #'fuel_tank_capacity_ltr' => 'required|string',
 
-                'license_number' => 'required',
+                'license_number' => 'required|unique:vehicle_registration_informations',
                 #'license_number_image' => 'required|mimes:jpeg,png',
-                'tax_token_number' => 'required',
+                'tax_token_number' => 'required|unique:vehicle_registration_informations',
                 #'tax_token_image' => 'required|mimes:jpeg,png',
                 'fitness_start_date' => 'required|date|date_format:Y-m-d',
                 'fitness_end_date' => 'required|date|date_format:Y-m-d',
