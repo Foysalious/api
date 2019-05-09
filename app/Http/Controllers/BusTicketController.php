@@ -112,11 +112,9 @@ class BusTicketController extends Controller
             $this->validate($request, ['pickup_place_id' => 'required', 'destination_place_id' => 'required', 'date' => 'required']);
 
             $data = $vehicleList->setPickupAddressId($request->pickup_place_id)->setDestinationAddressId($request->destination_place_id)->setDate($request->date)->getVehicles();
-            if(count($data['coaches']) > 0)
-                return api_response($request, $data, 200, ['data' => $data]);
-            else
+            if (count($data['coaches']) > 0) return api_response($request, $data, 200, ['data' => $data]); else
                 return api_response($request, null, 404, ['message' => 'No Coaches Found.']);
-        }  catch (ValidationException $e) {
+        } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
@@ -129,6 +127,7 @@ class BusTicketController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -142,10 +141,13 @@ class BusTicketController extends Controller
     public function getSeatStatus(Request $request, SeatPlan $seatPlan)
     {
         try {
-            $this->validate($request, ['coach_id' => 'required','vendor_id' => 'required', 'pickup_place_id' => 'required', 'destination_place_id' => 'required', 'date' => 'required']);
+            $this->validate($request, ['coach_id' => 'required', 'vendor_id' => 'required', 'pickup_place_id' => 'required', 'destination_place_id' => 'required', 'date' => 'required']);
             $seatStatus = $seatPlan->setPickupAddressId($request->pickup_place_id)
-                ->setDestinationAddressId($request->destination_place_id)->setDate($request->date)
-                ->setCoachId($request->coach_id)->setVendorId($request->vendor_id)->resolveSeatPlan();
+                ->setDestinationAddressId($request->destination_place_id)
+                ->setDate($request->date)
+                ->setCoachId($request->coach_id)
+                ->setVendorId($request->vendor_id)
+                ->resolveSeatPlan();
 
             return api_response($request, $seatStatus, 200, ['seat_status' => $seatStatus]);
         } catch (ValidationException $e) {

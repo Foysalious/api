@@ -1,5 +1,7 @@
 <?php namespace Sheba\Transport\Bus\Generators\SeatPlan;
 
+use Exception;
+
 class SeatPlan
 {
     /** @var BdTicketsSeatPlan $bdTicketSeatPlan */
@@ -71,21 +73,20 @@ class SeatPlan
 
     /**
      * @return mixed
-     * @throws \Exception
+     * @throws Exception
      */
     public function resolveSeatPlan()
     {
         switch ($this->vendorId) {
             case 1:
-                // Bus Bd
                 return $this->bdTicketSeatPlan->setVendorId($this->vendorId)->setCoachId($this->coachId)->getSeatPlan();
             case 2:
-                // Pekhom
-                return $this->pekhomSeatPlan->setVendorId($this->vendorId)->setCoachId($this->coachId)->setPickupAddressId($this->pickupAddressId)->
-                setDestinationAddressId($this->destinationAddressId)->setDate($this->date)->getSeatPlan();
+                return $this->pekhomSeatPlan->setVendorId($this->vendorId)->setCoachId($this->coachId)
+                    ->setPickupAddressId($this->pickupAddressId)->setDestinationAddressId($this->destinationAddressId)
+                    ->setDate($this->date)->getSeatPlan();
                 break;
             default:
-                throw new \Exception('Invalid Vendor');
+                throw new Exception('Invalid Vendor');
                 break;
         }
     }
