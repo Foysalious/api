@@ -19,7 +19,7 @@ class BusinessTransactionController extends Controller
     {
         try {
             $business = $request->business;
-            $transactions = BusinessTransaction::query()->orderBy('id', 'desc');
+            $transactions = BusinessTransaction::where('business_id', (int)$business->id)->orderBy('id', 'desc');
             if ($request->has('type'))
                 $transactions = $transactions->type($request->type);
 
@@ -38,7 +38,9 @@ class BusinessTransactionController extends Controller
                 ];
                 array_push($business_transaction, $transaction);
             }
-            return api_response($request, $business_transaction, 200, ['business_transaction' => $business_transaction]);
+
+            if (count($business_transaction) > 0) return api_response($request, $business_transaction, 200, ['business_transaction' => $business_transaction]);
+            else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
