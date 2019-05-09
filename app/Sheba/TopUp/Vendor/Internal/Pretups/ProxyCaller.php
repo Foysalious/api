@@ -34,6 +34,6 @@ class ProxyCaller extends Caller
         ]);
 
         $response = json_decode($result->getBody()->getContents())->endpoint_response;
-        return json_decode(json_encode($response), 1);
+        return json_decode(json_encode($response));
     }
 }
