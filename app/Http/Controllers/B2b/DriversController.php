@@ -175,13 +175,21 @@ class DriversController extends Controller
             $business = $member->businesses->first();
             $this->setModifier($member);
             list($offset, $limit) = calculatePagination($request);
-            $drivers = Driver::select('id', 'status')->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
-            #with('profile', 'vehicle', 'vehicle.basicInformations')->
+            $drivers = Driver::with('profile', 'vehicle.basicInformations')->select('id', 'status')->orderBy('id', 'desc')->skip($offset)->limit($limit);
+
+            if ($request->has('status'))
+                $drivers = $drivers->status($request->status);
+
+            $drivers = $drivers->get();
             $driver_lists = [];
             foreach ($drivers as $driver) {
                 $profile = $driver->profile;
                 $vehicle = $driver->vehicle;
                 $basic_information = $vehicle ? $vehicle->basicInformations : null;
+
+                if ($request->has('type') && $vehicle){
+                    if ($vehicle->basicInformations->type !== $request->type) continue;
+                }
 
                 $driver = [
                     'id' => $driver->id,
