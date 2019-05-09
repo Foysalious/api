@@ -10,4 +10,10 @@ class VehicleBasicInformation extends Model
     {
         return $this->belongsTo(Vehicle::class);
     }
+
+    public function getReadableTypeAttribute()
+    {
+        return title_case(str_replace('_', ' ', $this->type));
+    }
+
 }

@@ -45,14 +45,16 @@ class TripRequestController extends Controller
                 'reason' => $trip_request->reason,
                 'details' => $trip_request->details,
                 'member' => [
-                    'name' => $trip_request->member->name
+                    'name' => $trip_request->member->profile->name,
+                    "designation" => 'Manager'
                 ],
-                'vehicle_type' => $trip_request->vehicle_type,
-                'trip_type' => $trip_request->trip_type,
+                'vehicle_type' => ucfirst($trip_request->vehicle_type),
+                'trip_type' => $trip_request->trip_readable_type,
                 'pickup_address' => $trip_request->pickup_address,
                 'dropoff_address' => $trip_request->dropoff_address,
                 'start_date' => $trip_request->start_date,
                 'end_date' => $trip_request->end_date,
+                'no_of_seats' => $trip_request->no_of_seats,
             ];
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
@@ -71,20 +73,26 @@ class TripRequestController extends Controller
                 'reason' => $trip->reason,
                 'details' => $trip->details,
                 'member' => [
-                    'name' => $trip->member->name
+                    'name' => $trip->member->profile->name,
+                    'image' => $trip->member->profile->pro_pic,
+                    'designation' => 'Manager'
                 ],
                 'driver' => [
-                    'name' => $trip->driver->profile->name
+                    'name' => $trip->driver->profile->name,
+                    'mobile' => $trip->driver->profile->mobile,
+                    'image' => $trip->driver->profile->pro_pic
                 ],
                 'vehicle' => [
-                    'name' => $trip->vehicle->basicInformation->model_name
+                    'name' => $trip->vehicle->basicInformation->model_name,
+                    'type' => $trip->vehicle->basicInformation->readable_type,
                 ],
-                'vehicle_type' => $trip->vehicle_type,
-                'trip_type' => $trip->trip_type,
+                'vehicle_type' => ucfirst($trip->vehicle_type),
+                'trip_type' => $trip->trip_readable_type,
                 'pickup_address' => $trip->pickup_address,
                 'dropoff_address' => $trip->dropoff_address,
                 'start_date' => $trip->start_date,
                 'end_date' => $trip->end_date,
+                'no_of_seats' => $trip->no_of_seats,
             ];
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
