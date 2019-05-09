@@ -26,4 +26,9 @@ class BusinessTrip extends Model
         return title_case(str_replace('_', ' ', $this->trip_type));
     }
 
+    public function comments()
+    {
+        return $this->morphMany(Comment::class, 'commentable');
+    }
+
 }
