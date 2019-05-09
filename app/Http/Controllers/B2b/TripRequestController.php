@@ -53,6 +53,7 @@ class TripRequestController extends Controller
                 ]);
             }
             $info = [
+                'id' => $trip_request->id,
                 'reason' => $trip_request->reason,
                 'details' => $trip_request->details,
                 'member' => [
@@ -95,6 +96,7 @@ class TripRequestController extends Controller
                 ]);
             }
             $info = [
+                'id' => $trip->id,
                 'reason' => $trip->reason,
                 'details' => $trip->details,
                 'member' => [
