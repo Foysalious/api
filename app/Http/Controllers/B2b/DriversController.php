@@ -207,7 +207,8 @@ class DriversController extends Controller
                 ];
                 array_push($driver_lists, $driver);
             }
-            return api_response($request, $driver_lists, 200, ['driver_lists' => $driver_lists]);
+            if (count($driver_lists) > 0) return api_response($request, $driver_lists, 200, ['driver_lists' => $driver_lists]);
+            else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
