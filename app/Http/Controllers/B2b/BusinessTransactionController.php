@@ -11,7 +11,7 @@ use App\Models\Member;
 use Carbon\Carbon;
 use DB;
 
-class TransactionController extends Controller
+class BusinessTransactionController extends Controller
 {
     use ModificationFields;
 
