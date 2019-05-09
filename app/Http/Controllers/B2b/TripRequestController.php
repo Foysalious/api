@@ -4,6 +4,7 @@
 use App\Http\Controllers\Controller;
 use App\Models\BusinessTrip;
 use App\Models\BusinessTripRequest;
+use App\Repositories\CommentRepository;
 use Illuminate\Http\Request;
 
 class TripRequestController extends Controller
@@ -146,6 +147,28 @@ class TripRequestController extends Controller
         }
     }
 
+    public function commentOnTripRequest($member, $trip_request, Request $request)
+    {
+        try {
+            $comment = (new CommentRepository('BusinessTripRequest', BusinessTripRequest::find($trip_request), $request->member))->store($request->comment);
+            return $comment ? api_response($request, $comment, 200) : api_response($request, $comment, 500);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function commentOnTrip($member, $trip, Request $request)
+    {
+        try {
+            $comment = (new CommentRepository('BusinessTripRequest', BusinessTrip::find($trip), $request->member))->store($request->comment);
+            return $comment ? api_response($request, $comment, 200) : api_response($request, $comment, 500);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     private function storeTrip(BusinessTripRequest $business_trip_request)
     {
         $business_trip = new BusinessTrip();
@@ -185,4 +208,6 @@ class TripRequestController extends Controller
         $business_trip_request->save();
         return $business_trip_request;
     }
+
+
 }

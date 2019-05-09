@@ -54,9 +54,11 @@ class BusinessRoute
 
             $api->get('/{member}/trips', 'B2b\TripRequestController@getTrips');
             $api->post('/{member}/trips', 'B2b\TripRequestController@createTrip');
+            $api->post('/{member}/trips/{trip}/comments', 'B2b\TripRequestController@commentOnTrip');
             $api->get('/{member}/trips/{trip}', 'B2b\TripRequestController@tripInfo');
             $api->get('/{member}/trip-requests', 'B2b\TripRequestController@getTripRequests');
             $api->post('/{member}/trip-requests', 'B2b\TripRequestController@createTripRequests');
+            $api->post('/{member}/trip-requests/{trip_request}/comments', 'B2b\TripRequestController@commentOnTripRequest');
             $api->get('/{member}/trip-requests/{trip_request}', 'B2b\TripRequestController@tripRequestInfo');
 
             $api->group(['prefix' => '{member}'], function ($api) {
