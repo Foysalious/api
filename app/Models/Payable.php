@@ -91,7 +91,7 @@ class Payable extends Model
         } elseif ($this->type == 'movie_ticket_purchase') {
             $model .= 'MovieTicketOrder';
         } elseif ($this->type == 'transport_ticket_purchase') {
-            $model .= 'TransportTicketOrder';
+            $model .= "Transport\\TransportTicketOrder";
         }
 
         return $model;

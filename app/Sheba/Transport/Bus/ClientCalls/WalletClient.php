@@ -41,7 +41,8 @@ class WalletClient
                 $params['form_params']['source_type'] = $source_type;
             }
 
-            $result = $this->client->request('POST', $url, $params)->getBody()->getContents();
+            $response = $this->client->request('POST', $url, $params);
+            $result = $response->getBody()->getContents();
 
             return json_decode($result);
         } catch (Throwable $e) {

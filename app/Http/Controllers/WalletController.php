@@ -71,7 +71,7 @@ class WalletController extends Controller
             $this->validate($request, [
                 'user_id' => 'sometimes',
                 'transaction_id' => 'required',
-                'user_type' => 'sometimes|in:customer',
+                'user_type' => 'sometimes|in:customer,affiliate',
                 'remember_token' => 'sometimes',
             ]);
             /** @var Payment $payment */

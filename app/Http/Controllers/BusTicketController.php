@@ -329,11 +329,11 @@ class BusTicketController extends Controller
             $order = $ticket_order_repo->findById($request->order_id);
             $payment = $this->getPayment($request->payment_method, $order);
             if ($payment) {
-                $link = $payment->redirect_url;
+                // $link = $payment->redirect_url;
                 $payment = $payment->getFormattedPayment();
             }
 
-            return api_response($request, null, 200, ['link' => $link, 'payment' => $payment]);
+            return api_response($request, null, 200, ['payment' => $payment]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
