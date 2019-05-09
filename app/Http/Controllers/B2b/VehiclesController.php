@@ -40,9 +40,9 @@ class VehiclesController extends Controller
                 #'fuel_quality' => 'required|string',
                 #'fuel_tank_capacity_ltr' => 'required|string',
 
-                'license_number' => 'required',
+                'license_number' => 'required|unique:vehicle_registration_informations',
                 #'license_number_image' => 'required|mimes:jpeg,png',
-                'tax_token_number' => 'required',
+                'tax_token_number' => 'required|unique:vehicle_registration_informations',
                 #'tax_token_image' => 'required|mimes:jpeg,png',
                 'fitness_start_date' => 'required|date|date_format:Y-m-d',
                 'fitness_end_date' => 'required|date|date_format:Y-m-d',
@@ -87,12 +87,11 @@ class VehiclesController extends Controller
             ];
             $vehicle->registrationInformations()->create($this->withCreateModificationField($vehicle_registration_information_data));
 
-            return api_response($request, 1, 200);
+            return api_response($request, $vehicle, 200, ['vehicle' => $vehicle->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -157,12 +156,11 @@ class VehiclesController extends Controller
             ];
             $vehicle_registration_informations->update($this->withUpdateModificationField($vehicle_registration_information_data));
 
-            return api_response($request, 1, 200);
+            return api_response($request, $vehicle, 200, ['vehicle' => $vehicle->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -177,17 +175,21 @@ class VehiclesController extends Controller
 
             list($offset, $limit) = calculatePagination($request);
             $vehicles = Vehicle::with('basicInformations')->select('id', 'status', 'current_driver_id')->orderBy('id', 'desc')->skip($offset)->limit($limit);
+
             if ($request->has('status'))
                 $vehicles = $vehicles->status($request->status);
 
+            if ($request->has('type')) {
+                $vehicles->where(function ($query) use ($request) {
+                    $query->whereHas('basicInformations', function ($query) use ($request) {
+                        $query->where('type', $request->type);
+                    });
+                });
+            }
             $vehicles = $vehicles->get();
             $vehicle_lists = [];
             foreach ($vehicles as $vehicle) {
                 $basic_information = $vehicle->basicInformations;
-
-                if ($request->has('type'))
-                    if ($vehicle->basicInformations->type !== $request->type) continue;
-
                 $driver = $vehicle->driver;
                 $vehicle = [
                     'id' => $vehicle->id,
@@ -200,9 +202,10 @@ class VehiclesController extends Controller
                 ];
                 array_push($vehicle_lists, $vehicle);
             }
-            return api_response($request, $vehicle_lists, 200, ['vehicle_lists' => $vehicle_lists]);
+
+            if (count($vehicle_lists) > 0) return api_response($request, $vehicle_lists, 200, ['vehicle_lists' => $vehicle_lists]);
+            else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -234,7 +237,6 @@ class VehiclesController extends Controller
 
             return api_response($request, $general_info, 200, ['general_info' => $general_info]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -277,7 +279,6 @@ class VehiclesController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -305,7 +306,6 @@ class VehiclesController extends Controller
             ];
             return api_response($request, $registration_info, 200, ['registration_info' => $registration_info]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -346,7 +346,6 @@ class VehiclesController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -360,6 +359,7 @@ class VehiclesController extends Controller
             $this->setModifier($member);
 
             $vehicle = Vehicle::find((int)$vehicle);
+            if (!$vehicle) return api_response($request, null, 404);
 
             $basic_information = $vehicle->basicInformations;
             $registration_information = $vehicle->registrationInformations;
@@ -374,9 +374,9 @@ class VehiclesController extends Controller
                 'engine_summary' => $basic_information->engine_summary,
                 'transmission_type' => $basic_information->transmission_type,
             ];
+
             return api_response($request, $specs_info, 200, ['specs_info' => $specs_info]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -400,6 +400,7 @@ class VehiclesController extends Controller
             $this->setModifier($member);
 
             $vehicle = Vehicle::find((int)$vehicle);
+            if (!$vehicle) return api_response($request, null, 404);
 
             $basic_information = $vehicle->basicInformations;
 
@@ -420,7 +421,6 @@ class VehiclesController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -447,7 +447,6 @@ class VehiclesController extends Controller
             }
             return api_response($request, $recent_assignment, 200, ['recent_assignment' => $recent_assignment]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

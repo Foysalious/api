@@ -16,6 +16,9 @@ class BusinessRoute
                 $api->get('/vendors/{vendor}/info', 'B2b\BusinessesController@getVendorInfo');
                 $api->post('orders', 'B2b\OrderController@placeOrder');
                 $api->post('promotions/add', 'B2b\OrderController@applyPromo');
+
+                $api->get('/transactions', 'B2b\BusinessTransactionController@index');
+
                 $api->group(['prefix' => 'orders'], function ($api) {
                     $api->get('/', 'B2b\OrderController@index');
                     $api->group(['prefix' => '{order}', 'middleware' => ['business_order.auth']], function ($api) {
@@ -52,7 +55,6 @@ class BusinessRoute
             $api->post('/{member}/drivers', 'B2b\DriversController@store');
             $api->post('/{member}/drivers/{driver}', 'B2b\DriversController@update');
 
-            $api->get('/{member}/trip-requests', 'B2b\TripRequestController@store');
 
             $api->group(['prefix' => '{member}'], function ($api) {
                 $api->group(['prefix' => 'drivers'], function ($api) {
@@ -76,6 +78,23 @@ class BusinessRoute
 
                         $api->get('/recent-assignment', 'B2b\DriversController@getDriverRecentAssignment');
                     });
+                });
+                $api->group(['prefix' => 'trips'], function ($api) {
+                    $api->get('/', 'B2b\TripRequestController@getTrips');
+                    $api->post('/', 'B2b\TripRequestController@createTrip');
+                    $api->group(['prefix' => '{trip}'], function ($api) {
+                        $api->get('/', 'B2b\TripRequestController@tripInfo');
+                        $api->post('comments', 'B2b\TripRequestController@commentOnTrip');
+                    });
+                });
+                $api->group(['prefix' => 'trip-requests'], function ($api) {
+                    $api->get('/', 'B2b\TripRequestController@getTripRequests');
+                    $api->post('/', 'B2b\TripRequestController@createTripRequests');
+                    $api->group(['prefix' => '{trip_requests}'], function ($api) {
+                        $api->get('/', 'B2b\TripRequestController@tripRequestInfo');
+                        $api->post('/comments', 'B2b\TripRequestController@commentOnTripRequest');
+                    });
+
                 });
             });
         });
