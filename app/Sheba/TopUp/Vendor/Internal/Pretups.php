@@ -21,8 +21,8 @@ trait Pretups
     public function recharge(TopUpRequest $top_up_request): TopUpResponse
     {
         $pretups = $this->pretups->setPin($this->getPin())->setMId($this->getMid())->setUrl($this->getUrl())
-            ->setEXTNWCODE($this->getEXTNWCODE())->setLanguage1($this->getLanguage1())
-            ->setLanguage2($this->getLanguage2())->setSelectors($this->getSelectors());
+            ->setEXTNWCODE($this->getEXTNWCODE())->setAmountMultiplier($this->getAmountMultiplier())
+            ->setLanguage1($this->getLanguage1())->setLanguage2($this->getLanguage2())->setSelectors($this->getSelectors());
 
         if($this->needsProxy()) $pretups->setProxyUrl($this->getVPNServer() . "/v2/proxy/top-up");
 
