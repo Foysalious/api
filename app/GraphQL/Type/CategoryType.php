@@ -1,5 +1,6 @@
 <?php namespace App\GraphQL\Type;
 
+use App\Models\CategoryGroupCategory;
 use App\Models\HyperLocal;
 use App\Models\ScheduleSlot;
 use Carbon\Carbon;
@@ -40,6 +41,11 @@ class CategoryType extends GraphQlType
             'icon_png' => ['type' => Type::string()],
             'questions' => ['type' => Type::int()],
             'children' => [
+                'args' => [
+                    'location_id' => ['type' => Type::int()],
+                    'lat' => ['name' => 'lat', 'type' => Type::float()],
+                    'lng' => ['name' => 'lng', 'type' => Type::float()],
+                ],
                 'type' => Type::listOf(GraphQL::type('Category'))
             ],
             'partners' => [
@@ -117,8 +123,31 @@ class CategoryType extends GraphQlType
 
     protected function resolveChildrenField($root, $args)
     {
+        $location = null;
+        if (isset($args['lat']) && isset($args['lng'])) {
+            $hyperLocation = HyperLocal::insidePolygon((double)$args['lat'], (double)$args['lng'])->with('location')->first();
+            if ($hyperLocation) $location = $hyperLocation->location->id;
+        } elseif (isset($args['location_id'])) {
+            $location = $args['location_id'];
+        }
+        $best_deal_categories_id = explode(',', config('sheba.best_deal_ids'));
+        $best_deal_category = CategoryGroupCategory::whereIn('category_group_id', $best_deal_categories_id)->pluck('category_id')->toArray();
+
         if ($root->isParent()) {
-            return $root->children->sortBy('order');
+            $root->load(['allChildren' => function ($q) use ($location, $best_deal_category) {
+                if ($location) {
+                    $q->whereHas('locations', function ($q) use ($location) {
+                        $q->where('locations.id', $location);
+                    });
+                    $q->whereHas('services', function ($q) use ($location) {
+                        $q->published()->whereHas('locations', function ($q) use ($location) {
+                            $q->where('locations.id', $location);
+                        });
+                    });
+                }
+                $q->whereNotIn('id', $best_deal_category)->published()->orderBy('order');
+            }]);
+            return $root->allChildren;
         } else {
             return null;
         }
