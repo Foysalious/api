@@ -37,13 +37,11 @@ trait Ssl
      */
     public function deductAmount($amount)
     {
-        TopUpVendor::whereIn('id', [VendorFactory::GP, VendorFactory::TELETALK])
-            ->update(['amount' => $this->model->amount - $amount]);
+        VendorFactory::sslVendors()->update(['amount' => $this->model->amount - $amount]);
     }
 
     public function refill($amount)
     {
-        TopUpVendor::whereIn('id', [VendorFactory::GP, VendorFactory::TELETALK])
-            ->increment('amount', $amount);
+        VendorFactory::sslVendors()->increment('amount', $amount);
     }
 }
