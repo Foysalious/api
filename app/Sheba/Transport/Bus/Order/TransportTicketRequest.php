@@ -70,7 +70,7 @@ class TransportTicketRequest
      */
     public function setReserverEmail($reserver_email)
     {
-        $this->reserverEmail = $reserver_email;
+        $this->reserverEmail = !empty($reserver_email) ? $reserver_email : null;
         return $this;
     }
 

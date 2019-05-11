@@ -246,7 +246,8 @@ class MovieTicketController extends Controller
                 $voucher = $result['voucher'];
                 $voucher = ['amount' => (double)$result['amount'], 'code' => $voucher->code, 'id' => $voucher->id, 'title' => $voucher->title];
 
-                (new PromotionList($agent))->add($result['voucher']);
+                $promo = (new PromotionList($agent))->add($result['voucher']);
+                if (!$promo[0]) return api_response($request, null, 403, ['message' => $promo[1]]);
 
                 return api_response($request, null, 200, ['voucher' => $voucher]);
             } else {
