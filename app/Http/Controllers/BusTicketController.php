@@ -33,6 +33,7 @@ use Sheba\Transport\Bus\Repositories\TransportTicketOrdersRepository;
 use Sheba\Transport\Bus\Vendor\VendorFactory;
 
 use Sheba\Voucher\DTO\Params\CheckParamsForTransport;
+use Sheba\Voucher\PromotionList;
 use Sheba\Voucher\VoucherSuggester;
 use Throwable;
 
@@ -219,7 +220,13 @@ class BusTicketController extends Controller
     public function applyPromo(Request $request)
     {
         try {
-            $this->validate($request, ['coach_id' => 'required', 'vendor_id' => 'required', 'pickup_place_id' => 'required', 'destination_place_id' => 'required', 'date' => 'required', 'code' => 'required']);
+            $this->validate($request, [
+                'coach_id' => 'required',
+                'vendor_id' => 'required',
+                'pickup_place_id' => 'required',
+                'destination_place_id' => 'required',
+                'date' => 'required', 'code' => 'required'
+            ]);
 
             $agent = $this->getAgent($request);
             $transport_params = (new CheckParamsForTransport());
@@ -228,8 +235,11 @@ class BusTicketController extends Controller
 
             if ($result['is_valid']) {
                 $voucher = $result['voucher'];
-                $promo = ['amount' => (double)$result['amount'], 'code' => $voucher->code, 'id' => $voucher->id, 'title' => $voucher->title];
-                return api_response($request, 1, 200, ['promotion' => $promo]);
+                $voucher = ['amount' => (double)$result['amount'], 'code' => $voucher->code, 'id' => $voucher->id, 'title' => $voucher->title];
+
+                (new PromotionList($agent))->add($result['voucher']);
+
+                return api_response($request, 1, 200, ['voucher' => $voucher]);
             } else {
                 return api_response($request, null, 403, ['message' => 'Invalid Promo']);
             }

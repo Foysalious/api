@@ -15,6 +15,7 @@ use Sheba\MovieTicket\MovieTicketRequest;
 use Sheba\MovieTicket\Vendor\VendorFactory;
 use Sheba\Voucher\DTO\Params\CheckParamsForMovie;
 use Sheba\Voucher\DTO\Params\CheckParamsForTransport;
+use Sheba\Voucher\PromotionList;
 use Sheba\Voucher\VoucherSuggester;
 use Throwable;
 
@@ -231,9 +232,7 @@ class MovieTicketController extends Controller
                 'dtmsid' => 'required',
                 'lid' => 'required',
                 'confirm_status' => 'required',
-                'customer_name' => 'required',
-                'customer_email' => 'required',
-                'customer_mobile' => 'required|mobile:bd', 'cost' => 'required',
+                'customer_mobile' => 'required|mobile:bd',
                 'code' => 'required',
                 'amount' => 'required'
             ]);
@@ -245,8 +244,11 @@ class MovieTicketController extends Controller
 
             if ($result['is_valid']) {
                 $voucher = $result['voucher'];
-                $promo = ['amount' => (double)$result['amount'], 'code' => $voucher->code, 'id' => $voucher->id, 'title' => $voucher->title];
-                return api_response($request, null, 200, ['promotion' => $promo]);
+                $voucher = ['amount' => (double)$result['amount'], 'code' => $voucher->code, 'id' => $voucher->id, 'title' => $voucher->title];
+
+                (new PromotionList($agent))->add($result['voucher']);
+
+                return api_response($request, null, 200, ['voucher' => $voucher]);
             } else {
                 return api_response($request, null, 403, ['message' => 'Invalid Promo']);
             }
