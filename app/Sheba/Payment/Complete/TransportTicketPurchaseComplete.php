@@ -53,10 +53,10 @@ class TransportTicketPurchaseComplete extends PaymentComplete
                 $this->storeTicketTransaction($transport_ticket_order, $seat_count, $vendor, $this->payment->transaction_id);
 
                 $payment_method = $this->payment->paymentDetails()->first()->method;
-                if ($payment_method == 'wallet') {
-                    $bus_ticket->setAgent($transport_ticket_order->agent)->setOrder($transport_ticket_order)->agentTransaction();
-                }
-                $bus_ticket->setAgent($transport_ticket_order->agent)->disburseCommissions();
+
+                $bus_ticket->setAgent($transport_ticket_order->agent)->setOrder($transport_ticket_order);
+                if ($payment_method == 'wallet') $bus_ticket->agentTransaction();
+                $bus_ticket->disburseCommissions();
 
                 $this->paymentRepository->changeStatus(['to' => 'completed', 'from' => $this->payment->status, 'transaction_details' => $this->payment->transaction_details]);
                 $this->payment->status = 'completed';
