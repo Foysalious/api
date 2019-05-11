@@ -368,10 +368,10 @@ class BusTicketController extends Controller
                     'company_name' => $trips_details->company->name,
                     'seats' => count($trips_details->coachSeatList),
                     'price' => $reservation_details->totalPayable,
-                    'start_time' => $trips_details->boardingPoint->reportingTime,
-                    'start_point' => $trips_details->boardingPoint->counterName,
-                    'end_time' => $trips_details->droppingPoint->reportingTime,
-                    'end_point' => $trips_details->droppingPoint->counterName
+                    'start_time' => isset($trips_details->boardingPoint)? $trips_details->boardingPoint->reportingTime : '',
+                    'start_point' => isset($trips_details->boardingPoint) ? $trips_details->boardingPoint->counterName : '',
+                    'end_time' => isset($trips_details->droppingPoint)?  $trips_details->droppingPoint->reportingTime : '',
+                    'end_point' =>  isset($trips_details->droppingPoint)? $trips_details->droppingPoint->counterName : ''
 
                 ];
                 array_push($history, $currentHistory);
@@ -404,10 +404,10 @@ class BusTicketController extends Controller
                 'company_name' => $trips_details->company->name,
                 'seats' => count($trips_details->coachSeatList),
                 'price' => $reservation_details->totalPayable,
-                'start_time' => $trips_details->boardingPoint->reportingTime,
-                'start_point' => $trips_details->boardingPoint->counterName,
-                'end_time' => $trips_details->droppingPoint->reportingTime,
-                'end_point' => $trips_details->droppingPoint->counterName,
+                'start_time' => isset($trips_details->boardingPoint)? $trips_details->boardingPoint->reportingTime : '',
+                'start_point' => isset($trips_details->boardingPoint) ? $trips_details->boardingPoint->counterName : '',
+                'end_time' => isset($trips_details->droppingPoint)?  $trips_details->droppingPoint->reportingTime : '',
+                'end_point' =>  isset($trips_details->droppingPoint)? $trips_details->droppingPoint->counterName : '',
                 'coach_code' => $trips_details->coachNo,
                 'status' => $order->status,
                 'seat_numbers' => implode(',', collect($trips_details->coachSeatList)->map(function ($seat) {
