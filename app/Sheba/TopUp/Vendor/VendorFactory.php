@@ -3,6 +3,7 @@
 namespace Sheba\TopUp\Vendor;
 
 use App\Models\TopUpVendor;
+use Illuminate\Database\Eloquent\Builder;
 use ReflectionClass;
 
 class VendorFactory
@@ -76,6 +77,22 @@ class VendorFactory
     public function getModel($id)
     {
         return TopUpVendor::find($id);
+    }
+
+    /**
+     * @return array
+     */
+    public static function sslVendorsId()
+    {
+        return [self::GP, self::TELETALK];
+    }
+
+    /**
+     * @return Builder
+     */
+    public static function sslVendors()
+    {
+        return TopUpVendor::whereIn('id', self::sslVendorsId());
     }
 
     private function getConstants()
