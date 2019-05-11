@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use App\Models\Transport\TransportTicketOrder;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Helpers\TimeFrame;
@@ -216,6 +217,11 @@ class Affiliate extends Model implements TopUpAgent, MovieAgent, TransportAgent,
     {
         $this->debitWallet($transaction->getAmount());
         $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
+    }
+
+    public function transportTicketOrders()
+    {
+        return $this->morphMany(TransportTicketOrder::class, 'agent');
     }
 
     /**
