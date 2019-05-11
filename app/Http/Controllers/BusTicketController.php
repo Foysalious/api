@@ -422,7 +422,10 @@ class BusTicketController extends Controller
                 'status' => $order->status,
                 'seat_numbers' => implode(',', collect($trips_details->coachSeatList)->map(function ($seat) {
                     return $seat->seatNo;
-                })->toArray())
+                })->toArray()),
+                'boarding_point' => $trips_details->boardingPoint,
+                'dropping_point' => $trips_details->boardingPoint,
+                'seat_details' => $trips_details->coachSeatList
             ];
 
             return api_response($request, $history, 200, ['details' => $history]);
