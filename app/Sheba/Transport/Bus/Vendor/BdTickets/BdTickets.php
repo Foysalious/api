@@ -1,10 +1,14 @@
 <?php namespace Sheba\Transport\Bus\Vendor\BdTickets;
 
 use GuzzleHttp\Exception\GuzzleException;
+use Predis\ClientException;
 use Psr\Http\Message\ResponseInterface;
 use Sheba\Transport\Bus\ClientCalls\WalletClient;
+use Sheba\Transport\Bus\Exception\UnCaughtClientException;
 use Sheba\Transport\Bus\Order\TransportTicketRequest;
 use Sheba\Transport\Bus\Repositories\BusRouteLocationRepository;
+use Sheba\Transport\Bus\Response\BdTicketsFailResponse;
+use Sheba\Transport\Bus\Response\BdTicketsResponse;
 use Sheba\Transport\Bus\Vendor\Vendor;
 use Sheba\Transport\Bus\ClientCalls\BdTickets as BdTicketsClientCall;
 use Throwable;
@@ -21,12 +25,16 @@ class BdTickets extends Vendor
     private $ticketRequest;
     /** @var WalletClient $walletClient */
     private $walletClient;
+    /** @var BdTicketsResponse $bdTicketResponse */
+    private $bdTicketResponse;
 
-    public function __construct(BdTicketsClientCall $bd_ticket_client, BusRouteLocationRepository $bus_route_location_repo, WalletClient $wallet_client)
+    public function __construct(BdTicketsClientCall $bd_ticket_client, BusRouteLocationRepository $bus_route_location_repo,
+                                WalletClient $wallet_client, BdTicketsResponse $bd_ticket_response)
     {
         parent::__construct($bus_route_location_repo);
         $this->bdTicketClient = $bd_ticket_client;
         $this->walletClient = $wallet_client;
+        $this->bdTicketResponse = $bd_ticket_response;
     }
 
     /**
@@ -62,14 +70,7 @@ class BdTickets extends Vendor
             "boardingPoint" => (int)$this->ticketRequest->getBoardingPoint(),
             "droppingPoint" => (int)$this->ticketRequest->getDroppingPoint(),
             "coachId" => $this->ticketRequest->getCoachId(),
-            "passengerList" => [
-                json_encode([
-                    "firstName" => $this->ticketRequest->getReserverName(),
-                    "lastName" => "",
-                    "phoneNumber" => $this->ticketRequest->getReserverMobile(),
-                    "email" => $this->ticketRequest->getReserverEmail(),
-                    "gender" => strtoupper($this->ticketRequest->getReserverGender()[0])])
-                ],
+            "passengerList" => [json_encode(["firstName" => $this->ticketRequest->getReserverName(), "lastName" => "", "phoneNumber" => $this->ticketRequest->getReserverMobile(), "email" => $this->ticketRequest->getReserverEmail(), "gender" => strtoupper($this->ticketRequest->getReserverGender()[0])])],
             "seatIdList" => $this->ticketRequest->getSeatIdList(),
             "applicationChannel" => self::APPLICATION_CHANNEL
         ];

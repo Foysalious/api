@@ -10,13 +10,13 @@ class BdTicketsFailResponse extends BusTicketFailResponse
         return $this;
     }
 
-    public function getMovieTicketOrder(): TransportTicketOrder
-    {
-        return TransportTicketOrder::where('transaction_id', 'like', '%' . $this->response->ticket_id . '%')->first();
-    }
-
     public function getFailedTransactionDetails()
     {
         return $this->response;
+    }
+
+    public function getTransportTicketOrder(): TransportTicketOrder
+    {
+        return TransportTicketOrder::where('transaction_id', 'like', '%' . $this->response->ticket_id . '%')->first();
     }
 }

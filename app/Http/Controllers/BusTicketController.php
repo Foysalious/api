@@ -30,8 +30,10 @@ use Sheba\Transport\Bus\Order\Status;
 use Sheba\Transport\Bus\Order\TransportTicketRequest;
 use Sheba\Transport\Bus\Repositories\BusRouteLocationRepository;
 use Sheba\Transport\Bus\Repositories\TransportTicketOrdersRepository;
+use Sheba\Transport\Bus\Response\BusTicketResponse;
 use Sheba\Transport\Bus\Vendor\VendorFactory;
 
+use Sheba\Transport\Exception\TransportException;
 use Sheba\Voucher\DTO\Params\CheckParamsForTransport;
 use Sheba\Voucher\PromotionList;
 use Sheba\Voucher\VoucherSuggester;
@@ -304,7 +306,9 @@ class BusTicketController extends Controller
                 ->setReserverGender($request->reserver_gender)
                 ->setSeatIdList($request->seat_id_list);
 
+            /** @var BusTicketResponse $response */
             $response = $vendor->bookTicket($ticket_request);
+
             $ticket_request->setReservationDetails(json_encode($response['data']));
             $order = $creator->setRequest($ticket_request)->create();
 
@@ -315,6 +319,8 @@ class BusTicketController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
+        } catch (TransportException $e) {
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

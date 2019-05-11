@@ -11,5 +11,4 @@ abstract class MovieResponse
     abstract public function getSuccess(): MovieTicketSuccessResponse;
 
     abstract public function getError(): MovieTicketErrorResponse;
-
 }

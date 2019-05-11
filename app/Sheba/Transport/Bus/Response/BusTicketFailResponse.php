@@ -1,6 +1,6 @@
 <?php namespace Sheba\Transport\Bus\Response;
 
-use App\Models\MovieTicketOrder;
+use App\Models\Transport\TransportTicketOrder;
 
 abstract class BusTicketFailResponse
 {
@@ -9,7 +9,7 @@ abstract class BusTicketFailResponse
 
     abstract public function setResponse($response);
 
-    abstract public function getMovieTicketOrder(): MovieTicketOrder;
+    abstract public function getTransportTicketOrder(): TransportTicketOrder;
 
     abstract public function getFailedTransactionDetails();
 }

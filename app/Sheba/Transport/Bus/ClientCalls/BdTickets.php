@@ -1,10 +1,11 @@
 <?php namespace Sheba\Transport\Bus\ClientCalls;
 
-use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Redis;
 use Psr\Http\Message\ResponseInterface;
+use Sheba\Transport\Bus\Exception\UnCaughtClientException;
 
 class BdTickets extends ExternalApiClient
 {
@@ -38,6 +39,7 @@ class BdTickets extends ExternalApiClient
      * @param $uri
      * @return mixed|ResponseInterface
      * @throws GuzzleException
+     * @throws UnCaughtClientException
      */
     public function get($uri)
     {
@@ -49,6 +51,7 @@ class BdTickets extends ExternalApiClient
      * @param $data
      * @return mixed|ResponseInterface
      * @throws GuzzleException
+     * @throws UnCaughtClientException
      */
     public function post($uri, $data)
     {
@@ -60,6 +63,7 @@ class BdTickets extends ExternalApiClient
      * @param $data
      * @return mixed|ResponseInterface
      * @throws GuzzleException
+     * @throws UnCaughtClientException
      */
     public function put($uri, $data)
     {
@@ -72,15 +76,20 @@ class BdTickets extends ExternalApiClient
      * @param null $data
      * @return mixed|ResponseInterface
      * @throws GuzzleException
+     * @throws UnCaughtClientException
      */
     private function call($method, $uri, $data = null)
     {
-        $res = $this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data));
-        if (!in_array($res->getStatusCode(), [200, 201])) throw new Exception();
-        $res = json_decode($res->getBody()->getContents(), true);
+        try {
+            $res = $this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data));
+            $res = json_decode($res->getBody()->getContents(), true);
+            return $res;
+        } catch (RequestException $e) {
+            $exception = (string) $e->getResponse()->getBody();
+            $exception = json_decode($exception);
 
-        unset($res['code'], $res['message']);
-        return $res;
+            throw new UnCaughtClientException($exception->errors[0], 409, $e);
+        }
     }
 
     private function makeUrl($uri)
@@ -91,7 +100,6 @@ class BdTickets extends ExternalApiClient
     private function getOptions($data = null)
     {
         $options = [];
-        // if (!is_null($data)) $options['form_params'] = $data;
         $options['headers'] = ['Authorization' => 'Bearer ' . $this->bearerToken];
         $options['body'] = json_encode( $data);
 
