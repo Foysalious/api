@@ -414,7 +414,7 @@ class BusTicketController extends Controller
                 'journey_date' => $order->journey_date,
                 'company_name' => $trips_details->company->name,
                 'seats' => count($trips_details->coachSeatList),
-                'price' => $reservation_details->totalPayable,
+                'price' => $order->amount,
                 'start_time' => isset($trips_details->boardingPoint)? $trips_details->boardingPoint->reportingTime : '',
                 'start_point' => isset($trips_details->boardingPoint) ? $trips_details->boardingPoint->counterName : '',
                 'end_time' => isset($trips_details->droppingPoint)?  $trips_details->droppingPoint->reportingTime : '',
