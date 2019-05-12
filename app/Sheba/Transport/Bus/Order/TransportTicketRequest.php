@@ -524,6 +524,8 @@ class TransportTicketRequest
             $discount_percent = $this->voucher->is_amount_percentage ? $this->voucher->amount : 0.00;
             $this->setDiscount($amount);
             $this->setDiscountPercent($discount_percent);
+            $this->setShebaContribution($this->voucher->sheba_contribution);
+            $this->setVendorContribution($this->voucher->partner_contribution);
         }
 
         return $this;
