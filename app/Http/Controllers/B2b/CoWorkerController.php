@@ -80,7 +80,7 @@ class CoWorkerController extends Controller
                 ];
                 BusinessMember::create($this->withCreateModificationField($member_business_data));
             }
-            return api_response($request, null, 200);
+            return api_response($request, $profile, 200, ['co_worker' => $profile->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -96,7 +96,7 @@ class CoWorkerController extends Controller
             $business = $request->business;
             $business_depts = BusinessDepartment::with(['businessRoles' => function ($q) {
                 $q->select('id', 'name', 'business_department_id');
-            }])->select('id', 'business_id', 'name')->get();
+            }])->where('business_id', $business->id)->select('id', 'business_id', 'name')->get();
             $departments = [];
             foreach ($business_depts as $business_dept) {
                 $dept_role = collect();
