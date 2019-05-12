@@ -120,7 +120,7 @@ class OrderController extends Controller
             $order = $order->calculate();
             $order->payment_status = $order->getPaymentStatus();
 
-            return api_response($request, null, 200, ['msg' => 'Order Created Successfully', 'order' => $order]);
+            return api_response($request, null, 200, ['msg' => 'Order Created Successfully', 'order' => $order, 'client_pos_order_id' => $request->client_pos_order_id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
