@@ -52,9 +52,6 @@ class PartnerList
     protected $selectedServiceIds;
     protected $notFoundValues;
     protected $isNotLite;
-
-    /** @header * */
-    protected $portalName;
     protected $badgeResolver;
     /** @var PartnerListRequest */
     protected $partnerListRequest;
@@ -100,7 +97,7 @@ class PartnerList
         if ($this->isNotLite) {
             $this->filterByCreditLimit();
         }
-        if (!in_array($this->portalName, ['partner-portal', 'manager-app'])) {
+        if (!in_array($this->partnerListRequest->portalName, ['partner-portal', 'manager-app'])) {
             $this->filterByDailyOrderLimit();
         }
         $this->partners->load(['services' => function ($q) {

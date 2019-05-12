@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Checkout\ShebaOrderInterface;
+use Sheba\Order\Code\Builder as CodeBuilder;
 use Sheba\Order\StatusCalculator;
 use Sheba\Portals\Portals;
 use Sheba\Voucher\Contracts\CanHaveVoucher;
@@ -13,11 +14,19 @@ class Order extends Model implements ShebaOrderInterface, CanHaveVoucher
     public $due;
     public $profit;
     private $statuses;
+    private $salesChannelDepartments;
+    private $salesChannelShortNames;
+
+    /** @var CodeBuilder */
+    private $codeBuilder;
 
     public function __construct($attributes = [])
     {
         parent::__construct($attributes);
         $this->statuses = constants('ORDER_STATUSES');
+        $this->salesChannelDepartments = getSalesChannels('department');
+        $this->salesChannelShortNames = getSalesChannels('short_name');
+        $this->codeBuilder = new CodeBuilder();
     }
 
     public function jobs()
@@ -81,22 +90,22 @@ class Order extends Model implements ShebaOrderInterface, CanHaveVoucher
 
     public function channelCode()
     {
-        if (in_array($this->sales_channel, ['Web', 'Call-Center', 'App', 'Facebook', 'App-iOS', 'E-Shop'])) {
-            $prefix = 'D';
-        } elseif ($this->sales_channel == 'B2B') {
-            $prefix = 'F';
-        } elseif ($this->sales_channel == 'Store') {
-            $prefix = 'S';
-        } else {
-            $prefix = 'A';
-        }
-        return $prefix;
+        return $this->codeBuilder->channel($this);
     }
 
     public function code()
     {
-        $startFrom = 8000;
-        return $this->channelCode() . '-' . sprintf('%06d', $this->id + $startFrom);
+        return $this->codeBuilder->order($this);
+    }
+
+    public function department()
+    {
+        return $this->salesChannelDepartments[$this->sales_channel];
+    }
+
+    public function shortChannel()
+    {
+        return $this->salesChannelShortNames[$this->sales_channel];
     }
 
     public function voucher()
@@ -119,16 +128,14 @@ class Order extends Model implements ShebaOrderInterface, CanHaveVoucher
         return $this->id > (int)env('LAST_ORDER_ID_V1') ? 'v2' : 'v1';
     }
 
-    public function department()
-    {
-        return getSalesChannels('department')[$this->sales_channel];
-    }
-
     public function isCancelled()
     {
         return $this->getStatus() == $this->statuses['Cancelled'];
     }
 
+    /**
+     * @return Job
+     */
     public function lastJob()
     {
         if ($this->isCancelled()) return $this->jobs->last();

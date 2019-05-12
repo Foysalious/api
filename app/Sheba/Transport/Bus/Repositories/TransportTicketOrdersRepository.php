@@ -33,4 +33,9 @@ class TransportTicketOrdersRepository extends BaseRepository
     {
         return $transport_ticket_order->update($this->withUpdateModificationField($data));
     }
+
+    public function cancel(TransportTicketOrder $transportTicketOrder)
+    {
+
+    }
 }
