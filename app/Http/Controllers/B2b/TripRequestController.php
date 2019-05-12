@@ -102,7 +102,7 @@ class TripRequestController extends Controller
                     'image' => $trip->member->profile->pro_pic,
                     'designation' => 'Manager'
                 ],
-                'comments'=>$comments,
+                'comments' => $comments,
                 'driver' => [
                     'name' => $trip->driver->profile->name,
                     'mobile' => $trip->driver->profile->mobile,
@@ -196,7 +196,7 @@ class TripRequestController extends Controller
     public function commentOnTrip($member, $trip, Request $request)
     {
         try {
-            $comment = (new CommentRepository('BusinessTripRequest', $trip, $request->member))->store($request->comment);
+            $comment = (new CommentRepository('BusinessTrip', $trip, $request->member))->store($request->comment);
             return $comment ? api_response($request, $comment, 200) : api_response($request, $comment, 500);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
