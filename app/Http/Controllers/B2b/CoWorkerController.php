@@ -60,7 +60,7 @@ class CoWorkerController extends Controller
                     'member_id' => $new_member->id,
                     'type' => 'Admin',
                     'join_date' => Carbon::now(),
-                    'department' => $request->department,
+                    #'department' => $request->department,
                     'business_role_id' => $request->role,
                 ];
                 BusinessMember::create($this->withCreateModificationField($member_business_data));
@@ -71,10 +71,10 @@ class CoWorkerController extends Controller
                 $business = $member->businesses->first();
                 $member_business_data = [
                     'business_id' => $business->id,
-                    'member_id' => $new_member->id,
+                    'member_id' => $old_member ? $old_member->id : $new_member->id ,
                     'type' => 'Admin',
                     'join_date' => Carbon::now(),
-                    'department' => $request->department,
+                    #'department' => $request->department,
                     'business_role_id' => $request->role,
                 ];
                 BusinessMember::create($this->withCreateModificationField($member_business_data));
@@ -84,6 +84,7 @@ class CoWorkerController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -96,13 +97,13 @@ class CoWorkerController extends Controller
             'remember_token' => str_random(255),
             'mobile' => !empty($request->mobile) ? formatMobile($request->mobile) : null,
             'name' => $request->name,
-            #'driver_id' => $driver->id,
-            #'address' => $request->address,
             'email' => $request->email,
             ##'gender' => $request->gender,
             #'dob' => $request->dob,
             #'nid_no' => $request->nid_no,
             #'pro_pic' => $this->updateProfilePicture('pro_pic', $request->file('pro_pic')),
+            #'address' => $request->address,
+            #'driver_id' => $driver->id,
         ];
 
         return Profile::create($this->withCreateModificationField($profile_data));
