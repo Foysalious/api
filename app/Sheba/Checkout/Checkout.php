@@ -25,6 +25,7 @@ use Illuminate\Http\Request;
 use Sheba\Checkout\DeliveryCharge;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Checkout\Services\ServiceObject;
+use Sheba\Jobs\JobStatuses;
 use Sheba\ModificationFields;
 use Sheba\RequestIdentification;
 
@@ -162,7 +163,7 @@ class Checkout
                 $preferred_time_start = (Carbon::parse(explode('-', $data['time'])[0]))->format('G:i:s');
                 $preferred_time_end = (Carbon::parse(explode('-', $data['time'])[1]))->format('G:i:s');
 
-                $job = Job::create([
+                $job_data = [
                     'category_id' => $data['category_id'],
                     'partner_order_id' => $partner_order->id,
                     'schedule_date' => $data['date'],
@@ -179,10 +180,18 @@ class Checkout
                     'partner_contribution' => isset($data['partner_contribution']) ? $data['partner_contribution'] : 0,
                     'discount_percentage' => isset($data['discount_percentage']) ? $data['discount_percentage'] : 0,
                     'resource_id' => isset($data['resource_id']) ? $data['resource_id'] : null,
-                    'status' => isset($data['resource_id']) ? constants('JOB_STATUSES')['Accepted'] : constants('JOB_STATUSES')['Pending'],
-                    'delivery_charge' => $data['is_on_premise'] ? 0 : $this->getDeliveryCharge($partner),
+                    'status' => isset($data['resource_id']) ? JobStatuses::ACCEPTED : JobStatuses::PENDING,
                     'site' => $data['site']
-                ]);
+                ];
+
+                if($data['is_on_premise']) {
+                    $delivery_charge = $this->buildDeliveryCharge($partner);
+                    $charge = $delivery_charge->get();
+                    $job_data['delivery_charge'] = $delivery_charge->doesUseShebaLogistic() ? 0 : $charge;
+                    $job_data['logistic_charge'] = $delivery_charge->doesUseShebaLogistic() ? $charge : 0;
+                }
+
+                $job = Job::create($job_data);
                 $job = $this->getAuthor($job, $data);
                 $job->jobServices()->saveMany($data['job_services']);
                 $this->deductStock($data['job_services']);
@@ -198,17 +207,12 @@ class Checkout
         return $order;
     }
 
-    /**
-     * @param $partner
-     * @return float|int
-     */
-    private function getDeliveryCharge($partner)
+    private function buildDeliveryCharge(Partner $partner)
     {
-        return ($partner->categories->first()->pivot->uses_sheba_logistic) ? 0 :
-            (new DeliveryCharge())->setCategory($this->partnerListRequest->selectedCategory)
-                ->setPartner($partner)
-                ->setCategoryPartnerPivot($partner->categories->first()->pivot)
-                ->getDeliveryCharge();
+        return (new DeliveryCharge())
+            ->setPartner($partner)
+            ->setCategoryPartnerPivot($partner->categories->first()->pivot)
+            ->setCategory($this->partnerListRequest->selectedCategory);
     }
 
     private function createCarRentalDetail($service)

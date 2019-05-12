@@ -1,119 +1,130 @@
 <?php namespace Sheba\Reports;
 
-use Carbon\Carbon;
-use Maatwebsite\Excel\Facades\Excel;
+use Exception;
+use Maatwebsite\Excel\Excel;
+use Maatwebsite\Excel\Classes\LaravelExcelWorksheet;
+use Maatwebsite\Excel\Writers\LaravelExcelWriter;
+use Sheba\Reports\Exceptions\NotAssociativeArray;
 
-class ExcelHandler
+class ExcelHandler extends Handler
 {
-    private $name;
-    private $filename;
+    /** @var Excel */
+    private $excel;
+
     private $viewFilePath = "reports.excels.";
-    private $viewFileName;
     private $sheetName;
     private $downloadFormat = "csv";
-
     private $autoSize = null;
     private $columnFormat = null;
 
-    private $data;
-
-    public function make($name, $view, $data)
+    public function __construct(Excel $excel)
     {
-        $this->setName($name);
-        $this->setViewFile($view);
-        $this->setData($data);
-        return $this;
-    }
-
-    public function setName($name)
-    {
-        $this->name = $name;
-        $this->setFilenameWithDate($name);
-    }
-
-    public function setFilenameWithDate($name, $separator = '_')
-    {
-        $date = Carbon::now()->toDateString();
-        $this->setFilename($date . $separator . $name);
-    }
-
-    public function setFilename($name)
-    {
-        $this->filename = $name . "Report";
-    }
-
-    public function setViewFile($name)
-    {
-        $this->setViewFileWithPath($this->viewFilePath . $name);
-    }
-
-    public function setViewFileWithPath($name)
-    {
-        $this->viewFileName = $name;
-    }
-
-    public function pushData($key, $value)
-    {
-        $this->data[$key] = $value;
-        return $this;
-    }
-
-    public function setData($value)
-    {
-        if(!is_array($value)) throw new \InvalidArgumentException('Value is not an array.');
-        if(!isAssoc($value)) throw new \InvalidArgumentException('Value is not an associative array.');
-        $this->data = $value;
-    }
-
-    public function setSheetName($name)
-    {
-        $this->sheetName = $name;
-    }
-
-    public function setDownloadFormat($name)
-    {
-        $this->sheetName = $name;
-    }
-
-    public function setAutoSize($value)
-    {
-        $this->autoSize = $value;
-    }
-
-    public function setColumnFormat(array $value)
-    {
-        $this->columnFormat = $value;
-    }
-
-    public function show()
-    {
-        return view($this->viewFileName, $this->data);
+        $this->excel = $excel;
     }
 
     /**
-     * @throws \Exception
+     * Creates a generic report. The generic view file is auto loaded.
+     * No need to push data externally, all are loaded and downloadable.
+     *
+     * @param array $value 2D array, on which the data will be loaded.
+     * @return $this
+     * @throws NotAssociativeArray
+     */
+    public function createReport($value)
+    {
+        /** @var Report $report */
+        $report = app(Report::class);
+        $report = $report->setTitle($this->name)->set($value);
+        $this->setViewFile(Report::VIEW_FILE);
+        $this->pushData(Report::VARIABLE_NAME, $report);
+        return $this;
+    }
+
+    /**
+     * Returns the report object for the generic report.
+     *
+     * @return Report
+     */
+    public function getReport()
+    {
+        return array_key_exists(Report::VARIABLE_NAME, $this->data) ? $this->data[Report::VARIABLE_NAME] : app(Report::class);
+    }
+
+    /**
+     * Set sheet name.
+     *
+     * @param $name
+     * @return $this
+     */
+    public function setSheetName($name)
+    {
+        $this->sheetName = $name;
+        return $this;
+    }
+
+    /**
+     * Set download format.
+     *
+     * @param string $name
+     * @return $this
+     */
+    public function setDownloadFormat($name)
+    {
+        $this->downloadFormat = $name;
+        return $this;
+    }
+
+    /**
+     * Set auto sizing option. (Wrapper on Maatwebsite\Excel)
+     *
+     * @param bool $value
+     * @return $this
+     */
+    public function setAutoSize($value)
+    {
+        $this->autoSize = $value;
+        return $this;
+    }
+
+    /**
+     * Set column formatting options. (Wrapper on Maatwebsite\Excel)
+     *
+     * @param array $value Options to be set on different columns.
+     * @return $this
+     */
+    public function setColumnFormat(array $value)
+    {
+        $this->columnFormat = $value;
+        return $this;
+    }
+
+    /**
+     * Generate the excel.
+     *
+     * @return LaravelExcelWriter
+     * @throws Exception
      */
     public function create()
     {
-        if(empty($this->data)) throw new \Exception('Invalid Data');
+        if(empty($this->data)) throw new Exception('Invalid Data');
         $this->sheetName = $this->sheetName ?: $this->name;
 
-        return Excel::create($this->filename, function ($excel) {
+        return $this->excel->create($this->filename, function (LaravelExcelWriter $excel) {
             $excel->setTitle($this->filename);
             $excel->setCreator('Sheba')->setCompany('Sheba');
 
-
-            $excel->sheet($this->sheetName, function ($sheet) {
+            $excel->sheet($this->sheetName, function (LaravelExcelWorksheet $sheet) {
                 if(!is_null($this->autoSize)) $sheet->setAutoSize($this->autoSize);
                 if(!is_null($this->columnFormat)) $sheet->setColumnFormat($this->columnFormat);
-
                 $sheet->loadView($this->viewFileName, $this->data);
             });
         });
     }
 
     /**
-     * @throws \Exception
+     * Get the excel.
+     *
+     * @throws Exception
      */
     public function get()
     {
@@ -121,10 +132,29 @@ class ExcelHandler
     }
 
     /**
-     * @throws \Exception
+     * Generate and download the excel.
+     *
+     * @throws Exception
      */
     public function download()
     {
         $this->create()->download($this->downloadFormat);
+    }
+
+    /**
+     * Generate and save the excel.
+     *
+     * @throws Exception
+     * @return string Path of the saved file.
+     */
+    public function save()
+    {
+        $file = $this->create()->save($this->downloadFormat);
+        return $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
+    }
+
+    protected function getViewPath()
+    {
+        return $this->viewFilePath;
     }
 }
