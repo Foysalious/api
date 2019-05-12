@@ -120,7 +120,7 @@ class OrderComplete extends PaymentComplete
         }
     }
 
-    public function giveOnlineDiscount(PartnerOrder $partner_order)
+    private function giveOnlineDiscount(PartnerOrder $partner_order)
     {
         $partner_order->calculate(true);
         $job = $partner_order->getActiveJob();
