@@ -35,6 +35,7 @@ class Creator
             'vendor_id' => $this->transportTicketRequest->getVendorId(),
             'status' => $this->transportTicketRequest->getStatus(),
             'amount' => $this->transportTicketRequest->getAmount(),
+            'voucher_id' => $this->transportTicketRequest->getVoucher() ? $this->transportTicketRequest->getVoucher()->id : null,
             'discount' => $this->transportTicketRequest->getDiscount() ?: 0.00,
             'discount_percent' => $this->transportTicketRequest->getDiscountPercent() ?: 0.00,
             'sheba_contribution' => $this->transportTicketRequest->getShebaContribution() ?: 0.00,

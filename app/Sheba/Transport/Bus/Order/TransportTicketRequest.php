@@ -512,6 +512,11 @@ class TransportTicketRequest
         return $this;
     }
 
+    public function getVoucher()
+    {
+        return $this->voucher;
+    }
+
     /**
      * @param mixed $voucher
      * @return TransportTicketRequest
