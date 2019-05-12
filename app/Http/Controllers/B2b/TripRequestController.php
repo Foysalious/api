@@ -104,6 +104,7 @@ class TripRequestController extends Controller
                     'image' => $trip->member->profile->pro_pic,
                     'designation' => 'Manager'
                 ],
+                'comments'=>$comments,
                 'driver' => [
                     'name' => $trip->driver->profile->name,
                     'mobile' => $trip->driver->profile->mobile,
