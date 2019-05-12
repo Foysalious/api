@@ -336,7 +336,7 @@ class BusTicketController extends Controller
     public function pay(Request $request, TransportTicketOrdersRepository $ticket_order_repo)
     {
         try {
-            $this->validate($request, ['payment_method' => 'required|string|in:online,wallet', 'order_id' => 'required']);
+            $this->validate($request, ['payment_method' => 'required|string|in:online,bkash,wallet,cbl', 'order_id' => 'required']);
             $agent = $this->getAgent($request);
             $this->setModifier($agent);
 
@@ -455,6 +455,44 @@ class BusTicketController extends Controller
     {
         if ($request->affiliate) return $request->affiliate;
         elseif ($request->customer) return $request->customer;
+    }
+
+    /**
+     * @param Request $request
+     * @param VendorFactory $vendor
+     * @return JsonResponse
+     * @throws \Exception
+     */
+    public function cancelTicket(Request $request, VendorFactory $vendor)
+    {
+        try {
+            $this->validate($request, [
+                'order_id' => 'required'
+            ]);
+
+            $order = TransportTicketOrder::find((int)$request->order_id);
+            if (!$order)
+                return api_response($request, null, 404, ['message' => 'Order Not Found.']);
+
+            $vendor = $vendor->getById($order->vendor_id);
+            if($vendor->ticketCancellable($order))
+            {
+                $vendor->cancelTicket($order);;
+                return api_response($request, null, 200, ['message' => 'Ticket cancelled successfully.', 'code' => 200]);
+            }
+            else
+                return api_response($request, null, 200, ['message' => 'Ticket cannot be cancelled.', 'code' => 400]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 
     /**
