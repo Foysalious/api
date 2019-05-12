@@ -22,7 +22,7 @@ class PromotionCalculation
             $order_amount = 0;
             $delivery_charge = (new DeliveryCharge())->setCategory($request->selectedCategory)
                 ->setPartner($partner)->setCategoryPartnerPivot($partner->categories->first()->pivot)
-                ->getDeliveryCharge(); //(double)$category_pivot->delivery_charge;
+                ->get(); //(double)$category_pivot->delivery_charge;
             foreach ($request->selectedServices as $selected_service) {
                 $service = $partner->services->where('id', $selected_service->id)->first();
                 $schedule_date_time = Carbon::parse(request()->get('date') . ' ' . explode('-', request()->get('time'))[0]);

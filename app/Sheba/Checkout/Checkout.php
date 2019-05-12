@@ -5,7 +5,6 @@ use App\Models\CarRentalJobDetail;
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
-use App\Models\HyperLocal;
 use App\Models\InfoCall;
 use App\Models\Job;
 use App\Models\JobService;
@@ -14,7 +13,6 @@ use App\Models\Order;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
 use App\Models\Service;
-use App\Models\Voucher;
 use App\Repositories\CustomerRepository;
 use App\Repositories\PartnerServiceRepository;
 use App\Repositories\VoucherRepository;
@@ -25,9 +23,11 @@ use Illuminate\Http\Request;
 use Sheba\Checkout\DeliveryCharge;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Checkout\Services\ServiceObject;
+use Sheba\Dal\Discount\DiscountTypes;
+use Sheba\Jobs\JobStatuses;
 use Sheba\ModificationFields;
 use Sheba\RequestIdentification;
-use Sheba\Voucher\VoucherSuggester;
+use Sheba\Dal\Discount\DiscountRepository;
 
 class Checkout
 {
@@ -38,6 +38,9 @@ class Checkout
     private $partnerServiceRepository;
     private $orderData;
     private $partnerListRequest;
+    /** @var DiscountRepository */
+    private $discountRepo;
+    private $orderAmount;
 
     public function __construct($customer)
     {
@@ -46,6 +49,7 @@ class Checkout
         $this->voucherRepository = new VoucherRepository();
         $this->partnerServiceRepository = new PartnerServiceRepository();
         $this->partnerListRequest = new PartnerListRequest();
+        $this->discountRepo = app(DiscountRepository::class);
     }
 
     /**
@@ -89,7 +93,8 @@ class Checkout
                 $data['car_rental_job_detail'] = $this->createCarRentalDetail($this->partnerListRequest->selectedServices[0]);
             }
             $data['category_id'] = $this->partnerListRequest->selectedCategory->id;
-            $data = $this->getVoucherData($data['job_services'], $data, $partner);
+            $this->calculateOrderAmount($data['job_services'], $partner);
+            $data = $this->getVoucherData($data, $partner);
             if ($order = $this->storeInDB($data, $this->partnerListRequest->selectedServices, $partner)) {
                 if (isset($data['email'])) {
                     $this->updateProfile($order->customer, $data['email']);
@@ -102,6 +107,13 @@ class Checkout
             app('sentry')->captureException(new \Exception("Partner not found"));
             return null;
         }
+    }
+
+    private function calculateOrderAmount($job_services, $partner)
+    {
+        $this->orderAmount = $job_services->map(function ($job_service) {
+            return $job_service->unit_price * $job_service->quantity;
+        })->sum() + (double)$partner->categories->first()->pivot->delivery_charge;
     }
 
     private function makeOrderData($request)
@@ -163,7 +175,10 @@ class Checkout
                 $preferred_time_start = (Carbon::parse(explode('-', $data['time'])[0]))->format('G:i:s');
                 $preferred_time_end = (Carbon::parse(explode('-', $data['time'])[1]))->format('G:i:s');
 
-                $job = Job::create([
+                /** @var Category $category */
+                $category = Category::find($data['category_id']);
+
+                $job_data = [
                     'category_id' => $data['category_id'],
                     'partner_order_id' => $partner_order->id,
                     'schedule_date' => $data['date'],
@@ -173,19 +188,44 @@ class Checkout
                     'crm_id' => $data['crm_id'],
                     'job_additional_info' => $data['additional_information'],
                     'category_answers' => $data['category_answers'],
-                    'commission_rate' => Category::find($data['category_id'])->commission($partner_order->partner_id),
+                    'commission_rate' => $category->commission($partner_order->partner_id),
                     'material_commission_rate' => config('sheba.material_commission_rate'),
                     'discount' => isset($data['discount']) ? $data['discount'] : 0,
                     'sheba_contribution' => isset($data['sheba_contribution']) ? $data['sheba_contribution'] : 0,
                     'partner_contribution' => isset($data['partner_contribution']) ? $data['partner_contribution'] : 0,
                     'discount_percentage' => isset($data['discount_percentage']) ? $data['discount_percentage'] : 0,
                     'resource_id' => isset($data['resource_id']) ? $data['resource_id'] : null,
-                    'status' => isset($data['resource_id']) ? constants('JOB_STATUSES')['Accepted'] : constants('JOB_STATUSES')['Pending'],
-                    'delivery_charge' => $data['is_on_premise'] ? 0 : $this->getDeliveryCharge($partner),
+                    'status' => isset($data['resource_id']) ? JobStatuses::ACCEPTED : JobStatuses::PENDING,
                     'site' => $data['site']
-                ]);
+                ];
+
+                $discount_data = [];
+                if($data['is_on_premise']) {
+                    $delivery_charge = $this->buildDeliveryCharge($partner);
+                    $charge = $delivery_charge->get();
+                    $job_data['delivery_charge'] = $delivery_charge->doesUseShebaLogistic() ? 0 : $charge;
+                    $job_data['logistic_charge'] = $delivery_charge->doesUseShebaLogistic() ? $charge : 0;
+                    $discount = $this->discountRepo->findValidForAgainst(DiscountTypes::DELIVERY, $category);
+                    if($discount) {
+                        $applied_amount = $discount->getApplicableAmount($charge);
+                        $discount_data = $this->withBothModificationFields([
+                            'discount_id' => $discount->id,
+                            'type' => $discount->type,
+                            'amount' => $applied_amount,
+                            'original_amount' => $discount->amount,
+                            'is_percentage' => $discount->is_percentage,
+                            'cap' => $discount->cap,
+                            'sheba_contribution' => $discount->sheba_contribution,
+                            'partner_contribution' => $discount->partner_contribution,
+                        ]);
+                        $job_data['discount'] += $applied_amount;
+                    }
+                }
+
+                $job = Job::create($job_data);
                 $job = $this->getAuthor($job, $data);
                 $job->jobServices()->saveMany($data['job_services']);
+                if(!empty($discount_data)) $job->discounts()->create($discount_data);
                 $this->deductStock($data['job_services']);
                 if (isset($data['car_rental_job_detail'])) {
                     $data['car_rental_job_detail']->job_id = $job->id;
@@ -199,17 +239,12 @@ class Checkout
         return $order;
     }
 
-    /**
-     * @param $partner
-     * @return float|int
-     */
-    private function getDeliveryCharge($partner)
+    private function buildDeliveryCharge(Partner $partner)
     {
-        return ($partner->categories->first()->pivot->uses_sheba_logistic) ? 0 :
-            (new DeliveryCharge())->setCategory($this->partnerListRequest->selectedCategory)
-                ->setPartner($partner)
-                ->setCategoryPartnerPivot($partner->categories->first()->pivot)
-                ->getDeliveryCharge();
+        return (new DeliveryCharge())
+            ->setPartner($partner)
+            ->setCategoryPartnerPivot($partner->categories->first()->pivot)
+            ->setCategory($this->partnerListRequest->selectedCategory);
     }
 
     private function createCarRentalDetail($service)
@@ -387,16 +422,13 @@ class Checkout
         return null;
     }
 
-    private function getVoucherData($job_services, $data, $partner)
+    private function getVoucherData($data, $partner)
     {
         try {
-            $order_amount = $job_services->map(function ($job_service) {
-                    return $job_service->unit_price * $job_service->quantity;
-                })->sum() + (double)$partner->categories->first()->pivot->delivery_charge;
             $valid = 0;
             if (isset($data['voucher'])) {
                 $result = voucher($data['voucher'])
-                    ->check($data['category_id'], $partner->id, $data['location_id'], $data['customer_id'], $order_amount, $data['sales_channel'])
+                    ->check($data['category_id'], $partner->id, $data['location_id'], $data['customer_id'], $this->orderAmount, $data['sales_channel'])
                     ->reveal();
                 if ($result['is_valid']) $valid = 1;
             }

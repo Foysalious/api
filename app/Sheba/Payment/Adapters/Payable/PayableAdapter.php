@@ -1,7 +1,4 @@
-<?php
-
-namespace Sheba\Payment\Adapters\Payable;
-
+<?php namespace Sheba\Payment\Adapters\Payable;
 
 use App\Models\Payable;
 

@@ -1,6 +1,5 @@
 <?php namespace Sheba\Payment\Adapters\Payable;
 
-
 use App\Models\Payable;
 use Carbon\Carbon;
 
@@ -26,6 +25,7 @@ class MovieTicketPurchaseAdapter implements PayableAdapter
         $payable->success_url = config('sheba.front_url') . '/movie-tickets/'.$this->movieTicketOrder->id;
         $payable->created_at = Carbon::now();
         $payable->save();
+
         return $payable;
     }
 }

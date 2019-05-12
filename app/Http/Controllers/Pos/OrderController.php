@@ -119,6 +119,7 @@ class OrderController extends Controller
 
             $order = $order->calculate();
             $order->payment_status = $order->getPaymentStatus();
+            $order->client_pos_order_id = $request->client_pos_order_id;
 
             return api_response($request, null, 200, ['msg' => 'Order Created Successfully', 'order' => $order]);
         } catch (ValidationException $e) {
@@ -143,8 +144,8 @@ class OrderController extends Controller
         try {
             $this->validate($request, [
                 'amount' => 'required|numeric',
-//                'paid_amount' => 'required|numeric',
-//                'payment_method' => 'required|string|in:' . implode(',', config('pos.payment_method'))
+                /*'paid_amount' => 'required|numeric',
+                'payment_method' => 'required|string|in:' . implode(',', config('pos.payment_method'))*/
             ]);
             $this->setModifier($request->manager_resource);
 
@@ -185,6 +186,7 @@ class OrderController extends Controller
             $refund = NatureFactory::getRefundNature($order, $request->all(), $refund_nature, $return_nature);
             $refund->update();
 
+            $order->payment_status = $order->calculate()->getPaymentStatus();
             return api_response($request, null, 200, ['msg' => 'Order Updated Successfully', 'order' => $order]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);

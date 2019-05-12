@@ -51,6 +51,14 @@ class TopUpRequest
     }
 
     /**
+     * @return mixed
+     */
+    public function getOriginalMobile()
+    {
+        return getOriginalMobileNumber($this->mobile);
+    }
+
+    /**
      * @param mixed $mobile
      * @return TopUpRequest
      */

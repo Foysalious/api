@@ -10,7 +10,12 @@ class Business extends Model
 
     public function members()
     {
-        return $this->belongsToMany(Member::class)->withTimestamps()->withPivot('type', 'join_date');
+        return $this->belongsToMany(Member::class)->withTimestamps();
+    }
+
+    public function businessSms()
+    {
+        return $this->hasMany(BusinessSmsTemplate::class);
     }
 
     public function partners()
@@ -62,6 +67,11 @@ class Business extends Model
     public function transactions()
     {
         return $this->hasMany(CustomerTransaction::class);
+    }
+
+    public function vehicles()
+    {
+        return $this->morphMany(Vehicle::class, 'owner');
     }
 
 }

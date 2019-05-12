@@ -1,9 +1,9 @@
 <?php namespace App\Models;
 
+use App\Models\Transport\TransportTicketOrder;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Helpers\TimeFrame;
-use Sheba\Location\Distance\TransactionMethod;
 use Sheba\ModificationFields;
 use Sheba\MovieTicket\MovieAgent;
 use Sheba\MovieTicket\MovieTicketTrait;
@@ -12,8 +12,12 @@ use Sheba\Payment\Wallet;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
+use Sheba\Transport\Bus\BusTicketCommission;
+use Sheba\Transport\TransportAgent;
+use Sheba\Transport\TransportTicketTransaction;
+use Sheba\Voucher\Contracts\CanApplyVoucher;
 
-class Affiliate extends Model implements TopUpAgent, MovieAgent
+class Affiliate extends Model implements TopUpAgent, MovieAgent, TransportAgent, CanApplyVoucher
 {
     use TopUpTrait;
     use MovieTicketTrait;
@@ -213,5 +217,34 @@ class Affiliate extends Model implements TopUpAgent, MovieAgent
     {
         $this->debitWallet($transaction->getAmount());
         $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
+    }
+
+    public function transportTicketOrders()
+    {
+        return $this->morphMany(TransportTicketOrder::class, 'agent');
+    }
+
+    /**
+     * @return BusTicketCommission|\Sheba\Transport\Bus\Commission\Affiliate
+     */
+    public function getBusTicketCommission()
+    {
+        return new \Sheba\Transport\Bus\Commission\Affiliate();
+    }
+
+    public function transportTicketTransaction(TransportTicketTransaction $transaction)
+    {
+        $this->creditWallet($transaction->getAmount());
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Credit', 'log' => $transaction->getLog()]);
+    }
+
+    public function shebaCredit()
+    {
+        return $this->wallet + $this->shebaBonusCredit();
+    }
+
+    public function shebaBonusCredit()
+    {
+        return (double)$this->bonuses()->where('status', 'valid')->sum('amount');
     }
 }

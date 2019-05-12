@@ -2,6 +2,7 @@
 
 use App\Models\Payable;
 use App\Models\Payment;
+use ReflectionException;
 use Sheba\Payment\Factory\PaymentProcessor;
 
 class ShebaPayment
@@ -10,7 +11,7 @@ class ShebaPayment
     /**
      * ShebaPayment constructor.
      * @param $enum
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function __construct($enum)
     {

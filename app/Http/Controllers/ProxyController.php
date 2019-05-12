@@ -3,6 +3,7 @@
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\TopUp\Vendor\Internal\Pretups\DirectCaller;
 
 class ProxyController extends Controller
 {
@@ -14,7 +15,7 @@ class ProxyController extends Controller
         $this->client = $client;
     }
 
-    public function pretupsTopUp(Request $request)
+    public function pretupsTopUp(Request $request, DirectCaller $caller)
     {
         try {
             $whitelists = ['180.234.223.46', '104.215.190.77', '13.232.181.83', '103.4.146.66'];
@@ -27,17 +28,7 @@ class ProxyController extends Controller
                 'input' => 'required|string',
             ]);
 
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $request->url);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: text/xml', 'Connection: close']);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, "xmlRequest=$request->input");
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 300);
-            $data = curl_exec($ch);
-            $err = curl_error($ch);
-            if($err) throw new \Exception($err);
-            curl_close($ch);
-            $data = json_decode(json_encode(simplexml_load_string($data)), 1);
+            $data = $caller->setUrl($request->url)->setInput($request->input)->call();
 
             return api_response($request, 1, 200, ['endpoint_response' => $data]);
         } catch (ValidationException $e) {
@@ -47,6 +38,5 @@ class ProxyController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-
     }
 }
