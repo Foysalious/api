@@ -4,6 +4,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Helpers\TimeFrame;
 use Sheba\PartnerOrder\StatusCalculator;
+use Sheba\Reports\PartnerOrder\Generator as PartnerOrderReportGenerator;
 
 class PartnerOrder extends Model
 {
@@ -51,6 +52,27 @@ class PartnerOrder extends Model
         parent::__construct($attributes);
         StatusCalculator::initialize();
         $this->jobStatuses = StatusCalculator::$jobStatuses;
+    }
+
+
+    public static function boot()
+    {
+        parent::boot();
+
+        self::created(function(PartnerOrder $model){
+            $model->createOrUpdateReport();
+        });
+
+        self::updated(function(PartnerOrder $model){
+            $model->createOrUpdateReport();
+        });
+    }
+
+    public function createOrUpdateReport()
+    {
+        /** @var PartnerOrderReportGenerator $generator */
+        $generator = app(PartnerOrderReportGenerator::class);
+        $generator->createOrUpdate($this);
     }
 
     public function order()

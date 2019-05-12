@@ -6,22 +6,20 @@ use Sheba\Reports\Query as BaseQuery;
 class Query extends BaseQuery
 {
     private static $columns = [
-        'preset' => ['id', 'name', 'type_id', 'category_id'],#complain
-        'complainCategory' => ['id', 'name'],#preset
-        'complainType' => ['id', 'name', 'lifetime_sla'],#preset
-        'accessor' => ['id', 'name'],#complain
-        'customer' => ['id', 'profile_id', 'created_at'],#complain
-        'job' => ['id', 'partner_order_id', 'category_id', 'crm_id', 'service_id', 'service_name', 'status', 'created_at'],#complain
-        'resource' => ['id', 'profile_id'],#Job
-        'profile' => ['id', 'name', 'mobile'],#Resource
-        'category' => ['id', 'parent_id', 'name'],#job
-        'jobServices' => ['id', 'job_id', 'name'],#job
-        'partnerOrder' => ['id', 'order_id', 'partner_id', 'created_at'],#Job
-        'order' => ['id', 'sales_channel', 'customer_id', 'created_at'],#PartnerOrder
-        'partner' => ['id', 'name'],#complain
-        'user' => ['id', 'name', 'department_id', 'is_cm', 'is_active']#Job,complain
-
-
+        'preset' => ['id', 'name', 'type_id', 'category_id'],
+        'complainCategory' => ['id', 'name'],
+        'complainType' => ['id', 'name', 'lifetime_sla'],
+        'accessor' => ['id', 'name'],
+        'customer' => ['id', 'profile_id', 'created_at'],
+        'job' => ['id', 'partner_order_id', 'category_id', 'crm_id', 'service_id', 'service_name', 'status', 'created_at'],
+        'resource' => ['id', 'profile_id'],
+        'profile' => ['id', 'name', 'mobile'],
+        'category' => ['id', 'parent_id', 'name'],
+        'jobServices' => ['id', 'job_id', 'name'],
+        'partnerOrder' => ['id', 'order_id', 'partner_id', 'created_at'],
+        'order' => ['id', 'sales_channel', 'customer_id', 'created_at'],
+        'partner' => ['id', 'name'],
+        'user' => ['id', 'name', 'department_id', 'is_cm', 'is_active']
     ];
 
     public function build()
@@ -33,7 +31,6 @@ class Query extends BaseQuery
     {
         return Complain::with('preset.complainCategory', 'customer', 'partner', 'job');
     }
-
 
     private function optimizedQuery()
     {
@@ -89,8 +86,11 @@ class Query extends BaseQuery
                     'crm' => function ($crm_query) {
                         $crm_query->select(self::$columns['user']);
                     }
+
+
                 ]);
             }
         ]);
     }
+
 }

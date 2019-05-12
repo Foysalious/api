@@ -7,12 +7,25 @@ use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Sheba\Checkout\Adapters\SubscriptionOrderAdapter;
+use Sheba\Dal\Discount\DiscountRepository;
+use Sheba\Dal\Discount\DiscountTypes;
+use Sheba\ModificationFields;
 use Sheba\RequestIdentification;
 
 class OrderComplete extends PaymentComplete
 {
+    use ModificationFields;
+
     CONST ONLINE_PAYMENT_THRESHOLD_MINUTES = 9;
     CONST ONLINE_PAYMENT_DISCOUNT = 10;
+
+    private $discountRepo;
+
+    public function __construct(DiscountRepository $discount_repo)
+    {
+        parent::__construct();
+        $this->discountRepo = $discount_repo;
+    }
 
     public function complete()
     {
@@ -21,10 +34,10 @@ class OrderComplete extends PaymentComplete
             if ($this->payment->isComplete()) return $this->payment;
             $this->paymentRepository->setPayment($this->payment);
             $payable = $this->payment->payable;
+            $this->setModifier($customer = $payable->user);
             $model = $payable->getPayableModel();
             $payable_model = $model::find((int)$payable->type_id);
             if ($payable_model instanceof PartnerOrder) $this->giveOnlineDiscount($payable_model);
-            $customer = $payable->user;
             foreach ($this->payment->paymentDetails as $paymentDetail) {
                 if ($payable_model instanceof PartnerOrder) {
                     $has_error = $this->clearPartnerOrderPayment($payable_model, $customer, $paymentDetail, $has_error);
@@ -107,14 +120,28 @@ class OrderComplete extends PaymentComplete
         }
     }
 
-    private function giveOnlineDiscount(PartnerOrder $partner_order)
+    public function giveOnlineDiscount(PartnerOrder $partner_order)
     {
         $partner_order->calculate(true);
         $job = $partner_order->getActiveJob();
         if ($job->isOnlinePaymentDiscountApplicable()) {
-            $job->online_discount = $partner_order->due * (config('sheba.online_payment_discount_percentage') / 100);
-            $job->discount += $job->online_discount;
-            $job->update();
+            $discount = $this->discountRepo->findValidFor(DiscountTypes::ONLINE_PAYMENT);
+            if($discount) {
+                $applied_amount = $discount->getApplicableAmount($partner_order->due);
+                $job->discounts()->create($this->withBothModificationFields([
+                    'discount_id' => $discount->id,
+                    'type' => $discount->type,
+                    'amount' => $applied_amount,
+                    'original_amount' => $discount->amount,
+                    'is_percentage' => $discount->is_percentage,
+                    'cap' => $discount->cap,
+                    'sheba_contribution' => $discount->sheba_contribution,
+                    'partner_contribution' => $discount->partner_contribution,
+                ]));
+
+                $job->discount += $applied_amount;
+                $job->update();
+            }
         }
     }
 }
