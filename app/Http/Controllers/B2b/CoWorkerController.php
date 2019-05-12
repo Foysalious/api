@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Models\BusinessDepartment;
 use App\Models\BusinessMember;
 use App\Models\BusinessTrip;
 use App\Models\Driver;
@@ -37,7 +38,7 @@ class CoWorkerController extends Controller
                 'name' => 'required|string',
                 'mobile' => 'required|string|mobile:bd',
                 'email' => 'required|email',
-                'department' => 'required|integer',
+                #'department' => 'required|integer',
                 'role' => 'required|integer',
                 #'pro_pic' => 'required|mimes:jpeg,png',
                 #'dob' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
@@ -71,7 +72,7 @@ class CoWorkerController extends Controller
                 $business = $member->businesses->first();
                 $member_business_data = [
                     'business_id' => $business->id,
-                    'member_id' => $old_member ? $old_member->id : $new_member->id ,
+                    'member_id' => $old_member ? $old_member->id : $new_member->id,
                     'type' => 'Admin',
                     'join_date' => Carbon::now(),
                     #'department' => $request->department,
@@ -84,7 +85,18 @@ class CoWorkerController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function departmentRole($business, Request $request)
+    {
+        try {
+            $business = $request->business;
+            $business_depts = BusinessDepartment::all();
+            dd($business_depts->take(2));
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
