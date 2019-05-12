@@ -16,7 +16,7 @@ use Carbon\Carbon;
 use DB;
 use Sheba\Repositories\ProfileRepository;
 
-class DriversController extends Controller
+class DriverController extends Controller
 {
     use CdnFileManager, FileManager;
     use ModificationFields;

@@ -17,6 +17,7 @@ return [
     //'revision' => file_get_contents(base_path()."/revision"),
     'order_code_start' => 8000,
     'job_code_start' => 16000,
+    'last_partner_order_id_v1' => env('LAST_PARTNER_ORDER_ID_V1'),
     'material_commission_rate' => 2.0,
     'portals' => ['admin-portal', 'partner-portal', 'manager-app', 'customer-app', 'customer-portal', 'resource-portal', 'resource-app', 'bondhu-app', 'bondhu-portal', 'automatic'],
     'send_order_create_sms' => env('SEND_ORDER_CREATE_SMS', true),
@@ -118,5 +119,13 @@ return [
     'best_deal_ids' => env('BEST_DEAL_IDS'),
     'service_group_ids' => env('SERVICE_GROUP_IDS'),
     'online_payment_discount_threshold_minutes' => 30,
-    'online_payment_discount_percentage' => env('ONLINE_PAYMENT_DISCOUNT_PERCENTAGE', 0)
+    'online_payment_discount_percentage' => env('ONLINE_PAYMENT_DISCOUNT_PERCENTAGE', 0),
+    'car_rental' => [
+        'master_category_id' => env('RENT_A_CAR_CATEGORY_ID'),
+        'secondary_category_ids' => explode(',', env('RENT_CAR_IDS')),
+        'one_way_id' => env('ONE_WAY_SERVICE_ID'),
+        'round_trip_id' => env('ROUND_TRIP_SERVICE_ID'),
+        'date_range_service_ids' => explode(',', env('RENT_A_CAR_SERVICE_ID_FOR_DATE_RANGE')),
+        'destination_fields_service_ids' => explode(',', env('RENT_A_CAR_SERVICE_ID_FOR_DESTINATION_FIELD')),
+    ],
 ];

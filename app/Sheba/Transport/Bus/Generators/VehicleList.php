@@ -55,15 +55,19 @@ class VehicleList
     {
         $pick_up_location = $this->busRouteLocation_Repo->findById($this->pickupAddressId);
         $destination_location = $this->busRouteLocation_Repo->findById($this->destinationAddressId);
-        if(!$pick_up_location || !$destination_location)
+        if (!$pick_up_location || !$destination_location) {
             throw new InvalidLocationAddressException('Invalid pickup or destination id');
-        $bd_ticket_vehicles =$this->parseBdTicketResponse($this->bdTicketClient->post('coaches/search',['date' => $this->date, 'fromStationId' => $pick_up_location->bd_ticket_id, 'toStationId' => $destination_location->bd_ticket_id]));
-        $pekhom_vehicles = $this->parsePekhomResponse($this->pekhomClient->post('bus/search.php',['journey_date' => $this->date, 'from_location_uid' => $pick_up_location->pekhom_id, 'to_location_uid' => $destination_location->pekhom_id]));
-        $vehicles = array_merge($bd_ticket_vehicles,$pekhom_vehicles);
+        }
+
+        $bd_ticket_vehicles = (config('bus_transport.bdticket.is_active')) ? $this->parseBdTicketResponse($this->bdTicketClient->post('coaches/search', ['date' => $this->date, 'fromStationId' => $pick_up_location->bd_ticket_id, 'toStationId' => $destination_location->bd_ticket_id])) : [];
+        $pekhom_vehicles = (config('bus_transport.pekhom.is_active')) ? $this->parsePekhomResponse($this->pekhomClient->post('bus/search.php', ['journey_date' => $this->date, 'from_location_uid' => $pick_up_location->pekhom_id, 'to_location_uid' => $destination_location->pekhom_id])) : [];
+
+        $vehicles = array_merge($bd_ticket_vehicles, $pekhom_vehicles);
         $filters = $this->getFilters($vehicles);
         $this->parseTags($vehicles);
         $vehicles = collect($vehicles);
-//        $vehicles = $vehicles->unique('code')->values();
+        // $vehicles = $vehicles->unique('code')->values();
+
         return ['coaches' => $vehicles, 'filters' => $filters];;
     }
 

@@ -18,6 +18,13 @@ class BusinessRoute
                 $api->post('promotions/add', 'B2b\OrderController@applyPromo');
 
                 $api->get('/transactions', 'B2b\BusinessTransactionController@index');
+                $api->get('/dept-role', 'B2b\CoWorkerController@departmentRole');
+
+                $api->group(['prefix' => 'employees'], function ($api) {
+                    $api->post('/', 'B2b\CoWorkerController@store');
+                    $api->get('/', 'B2b\CoWorkerController@index');
+                    $api->get('/{employee}', 'B2b\CoWorkerController@show');
+                });
 
                 $api->group(['prefix' => 'orders'], function ($api) {
                     $api->get('/', 'B2b\OrderController@index');
@@ -34,9 +41,9 @@ class BusinessRoute
             $api->post('/{member}/vehicles/{vehicle}', 'B2b\VehiclesController@update');
 
             $api->group(['prefix' => '{member}'], function ($api) {
+
                 $api->group(['prefix' => 'vehicles'], function ($api) {
                     $api->get('/', 'B2b\VehiclesController@vehicleLists');
-
                     $api->group(['prefix' => '{vehicle}'], function ($api) {
                         $api->get('/general-info', 'B2b\VehiclesController@getVehicleGeneralInfo');
                         $api->post('/general-info', 'B2b\VehiclesController@updateVehicleGeneralInfo');
@@ -52,31 +59,31 @@ class BusinessRoute
                 });
             });
 
-            $api->post('/{member}/drivers', 'B2b\DriversController@store');
-            $api->post('/{member}/drivers/{driver}', 'B2b\DriversController@update');
+            $api->post('/{member}/drivers', 'B2b\DriverController@store');
+            $api->post('/{member}/drivers/{driver}', 'B2b\DriverController@update');
 
 
             $api->group(['prefix' => '{member}'], function ($api) {
                 $api->group(['prefix' => 'drivers'], function ($api) {
-                    $api->get('/', 'B2b\DriversController@driverLists');
+                    $api->get('/', 'B2b\DriverController@driverLists');
 
                     $api->group(['prefix' => '{driver}'], function ($api) {
-                        $api->get('/general-info', 'B2b\DriversController@getDriverGeneralInfo');
-                        $api->post('/general-info', 'B2b\DriversController@updateDriverGeneralInfo');
+                        $api->get('/general-info', 'B2b\DriverController@getDriverGeneralInfo');
+                        $api->post('/general-info', 'B2b\DriverController@updateDriverGeneralInfo');
 
-                        $api->get('/license-info', 'B2b\DriversController@getDriverLicenseInfo');
-                        $api->post('/license-info', 'B2b\DriversController@updateDriverLicenseInfo');
+                        $api->get('/license-info', 'B2b\DriverController@getDriverLicenseInfo');
+                        $api->post('/license-info', 'B2b\DriverController@updateDriverLicenseInfo');
 
-                        $api->get('/contract-info', 'B2b\DriversController@getDriverContractInfo');
-                        $api->post('/contract-info', 'B2b\DriversController@updateDriverContractInfo');
+                        $api->get('/contract-info', 'B2b\DriverController@getDriverContractInfo');
+                        $api->post('/contract-info', 'B2b\DriverController@updateDriverContractInfo');
 
-                        $api->get('/experience-info', 'B2b\DriversController@getDriverExperienceInfo');
-                        $api->post('/experience-info', 'B2b\DriversController@updateDriverExperienceInfo');
+                        $api->get('/experience-info', 'B2b\DriverController@getDriverExperienceInfo');
+                        $api->post('/experience-info', 'B2b\DriverController@updateDriverExperienceInfo');
 
-                        $api->get('/documents', 'B2b\DriversController@getDriverDocuments');
-                        $api->post('/documents', 'B2b\DriversController@updateDriverDocuments');
+                        $api->get('/documents', 'B2b\DriverController@getDriverDocuments');
+                        $api->post('/documents', 'B2b\DriverController@updateDriverDocuments');
 
-                        $api->get('/recent-assignment', 'B2b\DriversController@getDriverRecentAssignment');
+                        $api->get('/recent-assignment', 'B2b\DriverController@getDriverRecentAssignment');
                     });
                 });
                 $api->group(['prefix' => 'trips'], function ($api) {
