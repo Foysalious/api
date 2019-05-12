@@ -41,6 +41,7 @@ class BdTickets extends Vendor
      * @param TransportTicketRequest $ticket_request
      * @return mixed|ResponseInterface
      * @throws GuzzleException
+     * @throws UnCaughtClientException
      */
     public function bookTicket(TransportTicketRequest $ticket_request)
     {
@@ -55,6 +56,7 @@ class BdTickets extends Vendor
      *
      * @return mixed|ResponseInterface
      * @throws GuzzleException
+     * @throws UnCaughtClientException
      */
     private function createCart()
     {

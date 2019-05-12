@@ -15,19 +15,18 @@ class Affiliate extends BusTicketCommission
 
     private function storeAmbassadorCommission()
     {
-        $this->transportTicketOrder->ambassador_amount = $this->calculateAmbassadorCommissionForMovieTicket();
-        $this->transportTicketOrder->save();
+        $ambassador_commission = $this->calculateAmbassadorCommissionForMovieTicket();
+        if ($ambassador_commission > 0) {
+            $this->transportTicketOrder->ambassador_amount = $this->calculateAmbassadorCommissionForMovieTicket();
+            $this->transportTicketOrder->save();
+        }
     }
 
     private function storeAmbassadorWalletTransaction()
     {
         $this->agent->ambassador->creditWallet($this->transportTicketOrder->ambassador_amount);
         $log = "{$this->agent->profile->name} gifted {$this->transportTicketOrder->ambassador_amount} Tk. for {$this->transportTicketOrder->amount} Tk. transport ticket purchase";
-        $this->agent->ambassador->walletTransaction([
-            'amount' => $this->transportTicketOrder->ambassador_amount,
-            'type' => 'Credit',
-            'log' => $log
-        ]);
+        $this->agent->ambassador->walletTransaction(['amount' => $this->transportTicketOrder->ambassador_amount, 'type' => 'Credit', 'log' => $log]);
     }
 
     public function refund(){}
