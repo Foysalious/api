@@ -110,7 +110,7 @@ class CoWorkerController extends Controller
             foreach ($members as $member) {
                 $profile = $member->profile;
                 $role = $member->businessMember->role;
-                
+
                 $employee = [
                     'id' => $member->id,
                     'name' => $profile->name,
@@ -123,7 +123,28 @@ class CoWorkerController extends Controller
             if (count($employees) > 0) return api_response($request, $employees, 200, ['employees' => $employees]);
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
-            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function show($business, $employee, Request $request)
+    {
+        try {
+            $business = $request->business;
+            $member = Member::find((int)$employee);
+            $profile = $member->profile;
+            $employee = [
+                'name' => $profile->name,
+                'mobile' => $profile->mobile,
+                'email' => $profile->email,
+                'dob' => Carbon::parse($profile->dob)->format('M j Y'),
+                'designation' => $member->businessMember->role ? $member->businessMember->role->name : null,
+            ];
+
+            if (count($employee) > 0) return api_response($request, $employee, 200, ['employee' => $employee]);
+            else  return api_response($request, null, 404);
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

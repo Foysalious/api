@@ -20,8 +20,11 @@ class BusinessRoute
                 $api->get('/transactions', 'B2b\BusinessTransactionController@index');
                 $api->get('/dept-role', 'B2b\CoWorkerController@departmentRole');
 
-                $api->post('/employees', 'B2b\CoWorkerController@store');
-                $api->get('/employees', 'B2b\CoWorkerController@index');
+                $api->group(['prefix' => 'employees'], function ($api) {
+                    $api->post('/', 'B2b\CoWorkerController@store');
+                    $api->get('/', 'B2b\CoWorkerController@index');
+                    $api->get('/{employee}', 'B2b\CoWorkerController@show');
+                });
 
                 $api->group(['prefix' => 'orders'], function ($api) {
                     $api->get('/', 'B2b\OrderController@index');
