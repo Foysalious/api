@@ -94,8 +94,29 @@ class CoWorkerController extends Controller
     {
         try {
             $business = $request->business;
-            $business_depts = BusinessDepartment::all();
-            dd($business_depts->take(2));
+            $business_depts = BusinessDepartment::with(['businessRoles' => function ($q) {
+                $q->select('id', 'name', 'business_department_id');
+            }])->select('id', 'business_id', 'name')->get();
+            $departments = [];
+            foreach ($business_depts as $business_dept) {
+                $dept_role = collect();
+                foreach ($business_dept->businessRoles as $role) {
+                    $role = [
+                        'id' => $role->id,
+                        'name' => $role->name,
+                    ];
+                    $dept_role->push($role);
+                }
+
+                $department = [
+                    'id' => $business_dept->id,
+                    'name' => $business_dept->name,
+                    'roles' => $dept_role
+                ];
+                array_push($departments, $department);
+            }
+            if (count($departments) > 0) return api_response($request, $departments, 200, ['departments' => $departments]);
+            else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

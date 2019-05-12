@@ -8,8 +8,8 @@ class BusinessRole extends Model
     protected $guarded = ['id',];
     protected $table = 'business_roles';
 
-    public function businessDepartments()
+    public function businessDepartment()
     {
-        return $this->belongsToMany(BusinessDepartment::class);
+        return $this->belongsTo(BusinessDepartment::class);
     }
 }

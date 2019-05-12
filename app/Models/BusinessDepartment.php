@@ -10,6 +10,6 @@ class BusinessDepartment extends Model
 
     public function businessRoles()
     {
-        return $this->belongsToMany(BusinessRole::class);
+        return $this->hasMany(BusinessRole::class);
     }
 }
