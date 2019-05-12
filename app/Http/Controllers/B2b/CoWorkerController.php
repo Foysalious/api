@@ -31,22 +31,22 @@ class CoWorkerController extends Controller
         $this->profileRepository = $profile_repository;
     }
 
-    public function store($member, Request $request)
+    public function store($business, Request $request)
     {
         try {
             $this->validate($request, [
                 'name' => 'required|string',
                 'mobile' => 'required|string|mobile:bd',
                 'email' => 'required|email',
-                #'department' => 'required|integer',
                 'role' => 'required|integer',
                 #'pro_pic' => 'required|mimes:jpeg,png',
                 #'dob' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
                 #'address' => 'required|string',
+                #'department' => 'required|integer',
 
             ]);
-
-            $member = Member::find($member);
+            $business = $request->business;
+            $member = $request->manager_member;
             $this->setModifier($member);
 
             $profile = $this->profileRepository->checkExistingProfile($request->mobile, $request->email);
@@ -85,6 +85,45 @@ class CoWorkerController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function index($business, Request $request)
+    {
+        try {
+            $business = $request->business;
+            $member = $request->manager_member;
+            $this->setModifier($member);
+            $members = $business->members();
+
+            if ($request->has('department')) {
+                $members->where(function ($query) use ($request) {
+                    $query->whereHas('businessMember.role.businessDepartment', function ($query) use ($request) {
+                        $query->where('name', $request->department);
+                    });
+                });
+            }
+            $members = $members->get()->unique();
+            $employees = [];
+            foreach ($members as $member) {
+                $profile = $member->profile;
+                $role = $member->businessMember->role;
+                
+                $employee = [
+                    'id' => $member->id,
+                    'name' => $profile->name,
+                    'mobile' => $profile->mobile,
+                    'email' => $profile->email,
+                    'department' => $role ? $role->businessDepartment->name : null,
+                ];
+                array_push($employees, $employee);
+            }
+            if (count($employees) > 0) return api_response($request, $employees, 200, ['employees' => $employees]);
+            else  return api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
