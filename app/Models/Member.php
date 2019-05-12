@@ -20,7 +20,7 @@ class Member extends Model
 
     public function businessMember()
     {
-        return $this->hasMany(BusinessMember::class);
+        return $this->hasOne(BusinessMember::class);
     }
 
     public function typeIn($business)
