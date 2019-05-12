@@ -87,7 +87,15 @@ class MovieTicketController extends Controller
         try {
             $this->validate($request, ['dtmsid' => 'required', 'seat_class' => 'required', 'seat' => 'required', 'customer_name' => 'required', 'customer_email' => 'required', 'customer_mobile' => 'required|mobile:bd',]);
 
-            $bookingResponse = $movieTicket->initVendor()->bookSeats(['DTMSID' => $request->dtmsid, 'SeatClass' => $request->seat_class, 'Seat' => $request->seat, 'CusName' => $request->customer_name, 'CusEmail' => $request->customer_email, 'CusMobile' => $request->customer_mobile]);
+            $bookingResponse = $movieTicket->initVendor()->bookSeats([
+                'DTMSID' => $request->dtmsid,
+                'SeatClass' => $request->seat_class,
+                'Seat' => $request->seat,
+                'CusName' => $request->customer_name,
+                'CusEmail' => $request->customer_email,
+                'CusMobile' => $request->customer_mobile
+            ]);
+
             return api_response($request, $bookingResponse, 200, ['status' => $bookingResponse]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
