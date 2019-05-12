@@ -20,7 +20,8 @@ class TripRequestController extends Controller
                 array_push($list, [
                     'id' => $business_trip_request->id,
                     'member' => [
-                        'name' => $business_trip_request->member->profile->name
+                        'name' => $business_trip_request->member->profile->name,
+                        "designation" => 'Manager'
                     ],
                     'vehicle_type' => ucfirst($business_trip_request->vehicle_type),
                     'status' => ucfirst($business_trip_request->status),
@@ -59,6 +60,7 @@ class TripRequestController extends Controller
                     'name' => $trip_request->member->profile->name,
                     "designation" => 'Manager'
                 ],
+                'status' => $trip_request->status,
                 'comments' => $comments,
                 'vehicle_type' => ucfirst($trip_request->vehicle_type),
                 'trip_type' => $trip_request->trip_readable_type,
