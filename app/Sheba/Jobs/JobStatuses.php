@@ -70,6 +70,11 @@ class JobStatuses
         return true;
     }
 
+    public static function isOngoing($status)
+    {
+        return in_array($status, self::getOngoing());
+    }
+
     public static function isChangeable($to)
     {
         return in_array($to, [self::SERVED, self::PROCESS, self::ACCEPTED, self::DECLINED, self::CANCELLED]);
