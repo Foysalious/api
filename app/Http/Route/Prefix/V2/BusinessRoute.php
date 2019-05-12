@@ -18,6 +18,7 @@ class BusinessRoute
                 $api->post('promotions/add', 'B2b\OrderController@applyPromo');
 
                 $api->get('/transactions', 'B2b\BusinessTransactionController@index');
+                $api->get('/dept-role', 'B2b\CoWorkerController@departmentRole');
 
                 $api->group(['prefix' => 'orders'], function ($api) {
                     $api->get('/', 'B2b\OrderController@index');

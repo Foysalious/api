@@ -7,4 +7,9 @@ class BusinessRole extends Model
 {
     protected $guarded = ['id',];
     protected $table = 'business_roles';
+
+    public function businessDepartment()
+    {
+        return $this->belongsTo(BusinessDepartment::class);
+    }
 }

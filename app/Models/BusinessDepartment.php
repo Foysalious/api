@@ -7,4 +7,9 @@ class BusinessDepartment extends Model
 {
     protected $guarded = ['id',];
     protected $table = 'business_departments';
+
+    public function businessRoles()
+    {
+        return $this->hasMany(BusinessRole::class);
+    }
 }
