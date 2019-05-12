@@ -6,6 +6,7 @@ use App\Models\BusinessTrip;
 use App\Models\BusinessTripRequest;
 use App\Repositories\CommentRepository;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class TripRequestController extends Controller
 {
@@ -20,7 +21,8 @@ class TripRequestController extends Controller
                 array_push($list, [
                     'id' => $business_trip_request->id,
                     'member' => [
-                        'name' => $business_trip_request->member->profile->name
+                        'name' => $business_trip_request->member->profile->name,
+                        "designation" => 'Manager'
                     ],
                     'vehicle_type' => ucfirst($business_trip_request->vehicle_type),
                     'status' => ucfirst($business_trip_request->status),
@@ -53,12 +55,14 @@ class TripRequestController extends Controller
                 ]);
             }
             $info = [
+                'id' => $trip_request->id,
                 'reason' => $trip_request->reason,
                 'details' => $trip_request->details,
                 'member' => [
                     'name' => $trip_request->member->profile->name,
                     "designation" => 'Manager'
                 ],
+                'status' => $trip_request->status,
                 'comments' => $comments,
                 'vehicle_type' => ucfirst($trip_request->vehicle_type),
                 'trip_type' => $trip_request->trip_readable_type,
@@ -95,6 +99,7 @@ class TripRequestController extends Controller
                 ]);
             }
             $info = [
+                'id' => $trip->id,
                 'reason' => $trip->reason,
                 'details' => $trip->details,
                 'member' => [
@@ -102,6 +107,7 @@ class TripRequestController extends Controller
                     'image' => $trip->member->profile->pro_pic,
                     'designation' => 'Manager'
                 ],
+                'comments' => $comments,
                 'driver' => [
                     'name' => $trip->driver->profile->name,
                     'mobile' => $trip->driver->profile->mobile,
@@ -158,12 +164,25 @@ class TripRequestController extends Controller
     public function createTrip(Request $request)
     {
         try {
+            $this->validate($request, ['status' => 'required|string|in:accept,reject']);
             if ($request->has('trip_request_id')) $business_trip_request = BusinessTripRequest::find((int)$request->trip_request_id);
             else $business_trip_request = $this->storeTripRequest($request);
-            $business_trip_request->vehicle_id = $request->vehicle_id;
-            $business_trip_request->driver_id = $request->driver_id;
-            $business_trip = $this->storeTrip($business_trip_request);
-            return api_response($request, $business_trip, 200, ['id' => $business_trip->id]);
+            if ($request->has('status') && $request->status == "accept") {
+                $business_trip_request->vehicle_id = $request->vehicle_id;
+                $business_trip_request->driver_id = $request->driver_id;
+                $business_trip = $this->storeTrip($business_trip_request);
+                return api_response($request, $business_trip, 200, ['id' => $business_trip->id]);
+            } else {
+                $business_trip_request->status = 'rejected';
+                $business_trip_request->update();
+                return api_response($request, null, 200, ['message' => 'Trip Request rejected successfully']);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -195,7 +214,7 @@ class TripRequestController extends Controller
     public function commentOnTrip($member, $trip, Request $request)
     {
         try {
-            $comment = (new CommentRepository('BusinessTripRequest', $trip, $request->member))->store($request->comment);
+            $comment = (new CommentRepository('BusinessTrip', $trip, $request->member))->store($request->comment);
             return $comment ? api_response($request, $comment, 200) : api_response($request, $comment, 500);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

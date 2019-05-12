@@ -5,6 +5,7 @@ use App\Http\Requests\BondhuOrderRequest;
 use App\Models\Affiliate;
 use App\Models\Customer;
 use App\Models\Order;
+use App\Models\Partner;
 use App\Models\PartnerOrder;
 use App\Models\Payment;
 use App\Repositories\JobServiceRepository;
@@ -198,6 +199,7 @@ class OrderController extends Controller
     {
         try {
             $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
+            /** @var Partner $partner */
             $partner = $order->partnerOrders->first()->partner;
             if ((bool)config('sheba.send_order_create_sms')) {
                 if ($this->isSendingServedConfirmationSms($order)) {

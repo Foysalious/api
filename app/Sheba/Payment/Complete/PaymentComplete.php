@@ -1,7 +1,4 @@
-<?php
-
-namespace Sheba\Payment\Complete;
-
+<?php namespace Sheba\Payment\Complete;
 
 use App\Models\Payment;
 use App\Repositories\PaymentRepository;

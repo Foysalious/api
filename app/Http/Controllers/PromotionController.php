@@ -2,10 +2,7 @@
 
 use App\Models\Customer;
 use App\Models\HyperLocal;
-use App\Models\PartnerService;
 use App\Models\Promotion;
-use App\Repositories\CartRepository;
-use App\Repositories\PartnerServiceRepository;
 use App\Sheba\Checkout\Discount;
 use App\Sheba\Checkout\PartnerList;
 use Carbon\Carbon;
@@ -14,7 +11,7 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Checkout\DeliveryCharge;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Voucher\ApplicableVoucherFinder;
-use Sheba\Voucher\CheckParams;
+use Sheba\Voucher\DTO\Params\CheckParamsForOrder;
 use Sheba\Voucher\PromotionList;
 use Sheba\Voucher\VoucherSuggester;
 
@@ -41,19 +38,12 @@ class PromotionController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-
     }
 
     public function getApplicablePromotions($customer, Request $request)
     {
         try {
-            $this->validate($request, [
-                'category' => 'required|numeric',
-                'sales_channel' => 'required|string',
-                'lat' => 'sometimes|string',
-                'lng' => 'sometimes|string',
-                'location' => 'sometimes|numeric'
-            ]);
+            $this->validate($request, ['category' => 'required|numeric', 'sales_channel' => 'required|string', 'lat' => 'sometimes|string', 'lng' => 'sometimes|string', 'location' => 'sometimes|numeric']);
             /** @var Customer $customer */
             $customer = $request->customer->load(['promotions' => function ($q) {
                 $q->select('id', 'voucher_id', 'customer_id', 'is_valid', 'valid_till')->valid()->with(['voucher' => function ($q) {
@@ -67,9 +57,7 @@ class PromotionController extends Controller
             }
             $valid_promos = collect();
             foreach ($customer->promotions as $promotion) {
-                $result = voucher($promotion->voucher->code)
-                    ->check($request->category, null, (int)$location, $customer, null, $request->sales_channel)
-                    ->reveal();
+                $result = voucher($promotion->voucher->code)->check($request->category, null, (int)$location, $customer, null, $request->sales_channel)->reveal();
                 if ($result['is_valid']) $valid_promos->push($promotion->voucher);
             }
             if ($valid_promos->count() == 0) return api_response($request, null, 404);
@@ -80,8 +68,7 @@ class PromotionController extends Controller
             if (!$applicable_promo) {
                 $applicable_promo = $valid_promos->each(function (&$promo) {
                     $cap = (double)$promo->cap;
-                    if ($cap > 0) $promo['applicable_amount'] = $cap;
-                    else $promo['applicable_amount'] = (double)$promo->amount;
+                    if ($cap > 0) $promo['applicable_amount'] = $cap; else $promo['applicable_amount'] = (double)$promo->amount;
                 })->sortByDesc('applicable_amount')->first();
             }
             $applicable_promo['order_amount'] = null;
@@ -152,17 +139,14 @@ class PromotionController extends Controller
             }
             $order_amount = $this->calculateOrderAmount($partnerListRequest, $request->partner);
             if (!$order_amount) return api_response($request, null, 403);
-            $result = voucher($request->code)
-                ->check($partnerListRequest->selectedCategory->id, $request->partner, $location, $customer, $order_amount, $request->sales_channel)
-                ->reveal();
+            $result = voucher($request->code)->check($partnerListRequest->selectedCategory->id, $request->partner, $location, $customer, $order_amount, $request->sales_channel)->reveal();
             if ($result['is_valid']) {
                 $voucher = $result['voucher'];
                 $promotion = new PromotionList($request->customer);
                 list($promotion, $msg) = $promotion->add($result['voucher']);
                 $promo = array('amount' => (double)$result['amount'], 'code' => $voucher->code, 'id' => $voucher->id, 'title' => $voucher->title);
 
-                if ($promotion) return api_response($request, 1, 200, ['promotion' => $promo]);
-                else return api_response($request, null, 403, ['message' => $msg]);
+                if ($promotion) return api_response($request, 1, 200, ['promotion' => $promo]); else return api_response($request, null, 403, ['message' => $msg]);
             } else {
                 return api_response($request, null, 403, ['message' => 'Invalid Promo']);
             }
@@ -184,7 +168,17 @@ class PromotionController extends Controller
             }
             $order_amount = $this->calculateOrderAmount($partnerListRequest, $request->partner);
             if (!$order_amount) return api_response($request, null, 403, ['message' => 'No partner available at this combination']);
-            $voucherSuggester->init($request->customer, $partnerListRequest->selectedCategory->id, $request->partner, (int)$location, $order_amount, $request->sales_channel);
+
+            $order_params = (new CheckParamsForOrder($request->customer, $request->customer->profile))
+                ->setApplicant($request->customer)
+                ->setCategory($partnerListRequest->selectedCategory->id)
+                ->setPartner($request->partner)
+                ->setLocation((int)$location)
+                ->setOrderAmount($order_amount)
+                ->setSalesChannel($request->sales_channel);
+
+            $voucherSuggester->init($order_params);
+
             if ($promo = $voucherSuggester->suggest()) {
                 $applied_voucher = array('amount' => (int)$promo['amount'], 'code' => $promo['voucher']->code, 'id' => $promo['voucher']->id);
                 $valid_promos = $this->sortPromotionsByWeight($voucherSuggester->validPromos);
@@ -256,9 +250,7 @@ class PromotionController extends Controller
             $order_amount = $this->calculateOrderAmount($partnerListRequest, $request->partner);
             if (!$order_amount) return api_response($request, null, 403);
 
-            $params = $params->setPartner($request->partner)->setCustomer($customer)
-                ->setCategory($partnerListRequest->selectedCategory->id)
-                ->setLocation($location)->setOrderAmount($order_amount)->setSalesChannel($request->sales_channel);
+            $params = $params->setPartner($request->partner)->setCustomer($customer)->setCategory($partnerListRequest->selectedCategory->id)->setLocation($location)->setOrderAmount($order_amount)->setSalesChannel($request->sales_channel);
 
             $added_promos = Promotion::select('id', 'voucher_id')->where('customer_id', $customer->id)->get()->map(function ($item) {
                 return $item->voucher_id;
@@ -268,15 +260,7 @@ class PromotionController extends Controller
             $result = $finder->getAll($params)->filter(function ($item) {
                 if (isset($item['voucher'])) return $item;
             })->map(function ($item) use ($customer, $added_promos) {
-                $voucher_item = [
-                    'id' => $item['voucher']->id,
-                    'code' => $item['voucher']->code,
-                    'applicable_amount' => $item['amount'],
-                    'voucher_amount' => $item['voucher']->amount,
-                    'is_percentage' => $item['voucher']->is_amount_percentage,
-                    'cap' => $item['voucher']->cap,
-                    'is_added' => in_array($item['voucher']->id, $added_promos)
-                ];
+                $voucher_item = ['id' => $item['voucher']->id, 'code' => $item['voucher']->code, 'applicable_amount' => $item['amount'], 'voucher_amount' => $item['voucher']->amount, 'is_percentage' => $item['voucher']->is_amount_percentage, 'cap' => $item['voucher']->cap, 'is_added' => in_array($item['voucher']->id, $added_promos)];
                 return $voucher_item;
             });
 
