@@ -49,6 +49,7 @@ class VehiclesController extends Controller
                 #'fitness_paper_image' => 'required|mimes:jpeg,png',
                 'insurance_date' => 'required|date|date_format:Y-m-d',
                 #'insurance_paper_image' => 'required|mimes:jpeg,png',
+                'department_id' => 'required|integer',
             ]);
 
             $member = Member::find($member);
@@ -58,6 +59,7 @@ class VehiclesController extends Controller
             $vehicle_data = [
                 'owner_type' => get_class($business),
                 'owner_id' => $business->id,
+                'department_id' => $request->department_id,
             ];
             $vehicle = Vehicle::create($this->withCreateModificationField($vehicle_data));
 
@@ -120,6 +122,7 @@ class VehiclesController extends Controller
                 #'fitness_paper_image' => 'mimes:jpeg,png',
                 'insurance_date' => 'date|date_format:Y-m-d',
                 #'insurance_paper_image' => 'mimes:jpeg,png'
+                'department_id' => 'required|integer',
             ]);
 
             $member = Member::find($member);
@@ -129,6 +132,8 @@ class VehiclesController extends Controller
 
             $vehicle_basic_informations = $vehicle->basicInformations;
             $vehicle_registration_informations = $vehicle->registrationInformations;
+
+            $vehicle->update($this->withUpdateModificationField(['department_id' => $request->department_id]));
 
             $vehicle_basic_information_data = [
                 'type' => $request->type,
@@ -232,7 +237,7 @@ class VehiclesController extends Controller
                 'status' => $vehicle->status,
                 'enlisted_from' => $vehicle->created_at->format('d/m/Y'),
                 'seat_capacity' => $basic_information->seat_capacity,
-                'department' => "Don't ask",
+                'department' => $vehicle->businessDepartment ? $vehicle->businessDepartment->name : null,
             ];
 
             return api_response($request, $general_info, 200, ['general_info' => $general_info]);
@@ -251,7 +256,7 @@ class VehiclesController extends Controller
                 'model_name' => 'string',
                 'type' => 'string|in:hatchback,sedan,suv,passenger_van,others',
                 'seat_capacity' => 'required|integer',
-                'department' => 'string',
+                'department_id' => 'required|integer',
             ]);
 
             $member = Member::find($member);
@@ -263,13 +268,14 @@ class VehiclesController extends Controller
             $basic_information = $vehicle->basicInformations;
             $registration_information = $vehicle->registrationInformations;
 
+            $vehicle->update($this->withUpdateModificationField(['department_id' => $request->department_id]));
+
             $basic_information_data = [
                 'model_year' => $request->model_year,
                 'company_name' => $request->company_name,
                 'model_name' => $request->model_name,
                 'type' => $request->type,
                 'seat_capacity' => $request->seat_capacity,
-                #'department' => "Don't ask",
             ];
 
             $basic_information->update($this->withUpdateModificationField($basic_information_data));

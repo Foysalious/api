@@ -20,6 +20,12 @@ class BusinessRoute
                 $api->get('/transactions', 'B2b\BusinessTransactionController@index');
                 $api->get('/dept-role', 'B2b\CoWorkerController@departmentRole');
 
+                $api->group(['prefix' => 'employees'], function ($api) {
+                    $api->post('/', 'B2b\CoWorkerController@store');
+                    $api->get('/', 'B2b\CoWorkerController@index');
+                    $api->get('/{employee}', 'B2b\CoWorkerController@show');
+                });
+
                 $api->group(['prefix' => 'orders'], function ($api) {
                     $api->get('/', 'B2b\OrderController@index');
                     $api->group(['prefix' => '{order}', 'middleware' => ['business_order.auth']], function ($api) {
@@ -35,7 +41,6 @@ class BusinessRoute
             $api->post('/{member}/vehicles/{vehicle}', 'B2b\VehiclesController@update');
 
             $api->group(['prefix' => '{member}'], function ($api) {
-                $api->post('/co-worker', 'B2b\CoWorkerController@store');
 
                 $api->group(['prefix' => 'vehicles'], function ($api) {
                     $api->get('/', 'B2b\VehiclesController@vehicleLists');

@@ -17,4 +17,9 @@ class BusinessMember extends Model
     {
         return $this->belongsToMany(Business::class);
     }
+
+    public function role()
+    {
+        return $this->belongsTo(BusinessRole::class, 'business_role_id');
+    }
 }
