@@ -304,7 +304,8 @@ class BusTicketController extends Controller
                 ->setDroppingPoint($request->dropping_point)
                 ->setCoachId($request->coach_id)
                 ->setReserverGender($request->reserver_gender)
-                ->setSeatIdList($request->seat_id_list);
+                ->setSeatIdList($request->seat_id_list)
+                ->setVoucher($request->voucher_id);
 
             /** @var BusTicketResponse $response */
             $response = $vendor->bookTicket($ticket_request);

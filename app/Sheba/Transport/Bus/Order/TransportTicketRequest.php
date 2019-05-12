@@ -1,5 +1,6 @@
 <?php namespace Sheba\Transport\Bus\Order;
 
+use App\Models\Voucher;
 use Carbon\Carbon;
 use Sheba\Transport\TransportAgent;
 
@@ -32,6 +33,7 @@ class TransportTicketRequest
     private $boardingPoint;
     private $droppingPoint;
     private $shebaAmount;
+    private $voucher;
 
     /**
      * @param TransportAgent $agent
@@ -508,5 +510,40 @@ class TransportTicketRequest
     {
         $this->shebaAmount = $sheba_amount;
         return $this;
+    }
+
+    /**
+     * @param mixed $voucher
+     * @return TransportTicketRequest
+     */
+    public function setVoucher($voucher)
+    {
+        $this->voucher = ($voucher instanceof Voucher) ? $voucher : Voucher::find($voucher);
+        if ($this->voucher) {
+            $amount = $this->getDiscountAmount();
+            $discount_percent = $this->voucher->is_amount_percentage ? $this->voucher->amount : 0.00;
+            $this->setDiscount($amount);
+            $this->setDiscountPercent($discount_percent);
+        }
+
+        return $this;
+    }
+
+    public function getDiscountAmount()
+    {
+        if ($this->voucher->is_amount_percentage) {
+            $amount = ((double)$this->amount * $this->voucher->amount) / 100;
+            if ($this->voucher->cap != 0 && $amount > $this->voucher->cap) {
+                $amount = $this->voucher->cap;
+            }
+            return $amount;
+        } else {
+            return $this->validateDiscountValue($this->amount, $this->voucher['amount']);
+        }
+    }
+
+    private function validateDiscountValue($amount, $discount_value)
+    {
+        return $amount < $discount_value ? $amount : $discount_value;
     }
 }
