@@ -138,7 +138,8 @@ class CoWorkerController extends Controller
                 'name' => $profile->name,
                 'mobile' => $profile->mobile,
                 'email' => $profile->email,
-                'dob' => Carbon::parse($profile->dob)->format('M j Y'),
+                'pro_pic' => $profile->pro_pic,
+                'dob' => Carbon::parse($profile->dob)->format('M j, Y'),
                 'designation' => $member->businessMember->role ? $member->businessMember->role->name : null,
             ];
 
