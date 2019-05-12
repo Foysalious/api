@@ -6,6 +6,7 @@ use App\Models\BusinessTrip;
 use App\Models\BusinessTripRequest;
 use App\Repositories\CommentRepository;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class TripRequestController extends Controller
 {
@@ -163,12 +164,25 @@ class TripRequestController extends Controller
     public function createTrip(Request $request)
     {
         try {
+            $this->validate($request, ['status' => 'required|string|in:accept,reject']);
             if ($request->has('trip_request_id')) $business_trip_request = BusinessTripRequest::find((int)$request->trip_request_id);
             else $business_trip_request = $this->storeTripRequest($request);
-            $business_trip_request->vehicle_id = $request->vehicle_id;
-            $business_trip_request->driver_id = $request->driver_id;
-            $business_trip = $this->storeTrip($business_trip_request);
-            return api_response($request, $business_trip, 200, ['id' => $business_trip->id]);
+            if ($request->has('status') && $request->status == "accept") {
+                $business_trip_request->vehicle_id = $request->vehicle_id;
+                $business_trip_request->driver_id = $request->driver_id;
+                $business_trip = $this->storeTrip($business_trip_request);
+                return api_response($request, $business_trip, 200, ['id' => $business_trip->id]);
+            } else {
+                $business_trip_request->status = 'rejected';
+                $business_trip_request->update();
+                return api_response($request, null, 200, ['message' => 'Trip Request rejected successfully']);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

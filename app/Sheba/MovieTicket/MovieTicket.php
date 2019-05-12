@@ -191,6 +191,12 @@ class MovieTicket
         $movie_ticket_order->vendor_id = $this->model->id;
         $movie_ticket_order->sheba_commission = ($amount * $this->model->sheba_commission) / (100 + $this->model->sheba_commission);
         $movie_ticket_order->reservation_details = json_encode(['trx_id' => $this->movieTicketRequest->getTrxId(), 'dtmsid' => $this->movieTicketRequest->getDtmsId(), 'lid' => $this->movieTicketRequest->getTicketId(), 'image_url' => $this->movieTicketRequest->getImageUrl(), 'original_price' => $amount - (($amount * $this->model->sheba_commission) / (100 + $this->model->sheba_commission))]);
+
+        $movie_ticket_order->discount = $this->movieTicketRequest->getDiscount() ?: 0.00;
+        $movie_ticket_order->discount_percent = $this->movieTicketRequest->getDiscountPercent() ?: 0.00;
+        $movie_ticket_order->sheba_contribution = $this->movieTicketRequest->getShebaContribution() ?: 0.00;
+        $movie_ticket_order->vendor_contribution = $this->movieTicketRequest->getVendorContribution() ?: 0.00;
+
         $this->setModifier($this->agent);
         $this->withCreateModificationField($movie_ticket_order);
         $movie_ticket_order->save();

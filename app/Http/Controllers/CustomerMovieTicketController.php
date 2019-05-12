@@ -107,7 +107,13 @@ class CustomerMovieTicketController extends Controller
             $this->validate($request, ['trx_id' => 'required', 'dtmsid' => 'required', 'lid' => 'required', 'confirm_status' => 'required', 'customer_name' => 'required', 'customer_email' => 'required', 'customer_mobile' => 'required|mobile:bd', 'cost' => 'required', 'image_url' => 'required', 'payment_method' => 'required|string|in:online,bkash,wallet,cbl',]);
 
             $agent = $this->getAgent($request);
-            $movieTicketRequest->setName($request->customer_name)->setEmail($request->customer_email)->setAmount($request->cost)->setMobile(BDMobileFormatter::format($request->customer_mobile))->setTrxId($request->trx_id)->setDtmsId($request->dtmsid)->setTicketId($request->lid)->setConfirmStatus($request->confirm_status)->setImageUrl($request->image_url);
+            $movieTicketRequest->setName($request->customer_name)->setEmail($request->customer_email)
+                ->setAmount($request->cost)->setMobile(BDMobileFormatter::format($request->customer_mobile))
+                ->setTrxId($request->trx_id)->setDtmsId($request->dtmsid)->setTicketId($request->lid)
+                ->setConfirmStatus($request->confirm_status)
+                ->setImageUrl($request->image_url)
+                ->setVoucher($request->voucher_id);
+
             $vendor = $vendor->getById(1);
 
             $movieTicket = $movieTicket->setMovieTicketRequest($movieTicketRequest)->setAgent($agent)->setVendor($vendor);
@@ -146,7 +152,15 @@ class CustomerMovieTicketController extends Controller
             foreach ($orders as $order) {
                 $reservation_details = json_decode($order->reservation_details);
                 if (isset($reservation_details->MovieName)) {
-                    $history = array('id' => $order->id, 'movie_title' => $reservation_details->MovieName, 'show_date' => $reservation_details->ShowDate, 'show_time' => $reservation_details->ShowTime, 'quantity' => $reservation_details->quantity, 'reserver_mobile' => $order->reserver_mobile, 'image_url' => isset($reservation_details->image_url) ? $reservation_details->image_url : null);
+                    $history = [
+                        'id' => $order->id,
+                        'movie_title' => $reservation_details->MovieName,
+                        'show_date' => $reservation_details->ShowDate,
+                        'show_time' => $reservation_details->ShowTime,
+                        'quantity' => $reservation_details->quantity,
+                        'reserver_mobile' => $order->reserver_mobile,
+                        'image_url' => isset($reservation_details->image_url) ? $reservation_details->image_url : null
+                    ];
                     array_push($histories, $history);
                 }
 
@@ -161,10 +175,12 @@ class CustomerMovieTicketController extends Controller
     public function historyDetails($affiliate, $order, Request $request)
     {
         try {
+            /** @var MovieTicketOrder $order */
             $order = MovieTicketOrder::find((int)$order);
+            $order->amount = (string)$order->getNetBill();
             removeRelationsAndFields($order);
             $order->reservation_details = json_decode($order->reservation_details);
-            $order->reservation_details->cost = round($order->amount);
+            $order->reservation_details->cost = round($order->getNetBill());
             return api_response($request, $order, 200, ['details' => $order]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);

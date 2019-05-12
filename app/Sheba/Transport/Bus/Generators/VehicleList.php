@@ -68,7 +68,7 @@ class VehicleList
         $vehicles = collect($vehicles);
         // $vehicles = $vehicles->unique('code')->values();
 
-        return ['coaches' => $vehicles, 'filters' => $filters];;
+        return ['coaches' => $vehicles, 'filters' => $filters];
     }
 
     private function parseBdTicketResponse($data)
@@ -146,63 +146,50 @@ class VehicleList
 
     private function getFilters($vehicles)
     {
-        $company_names = $shifts =  $types = $prices = [];
+        $company_names = $shifts = $types = $prices = [];
         foreach ($vehicles as $vehicle) {
-            $vehicle = (object) $vehicle;
-            $this->insertIntoArray($vehicle->company_name,  $company_names);
-            if(strtolower($vehicle->type) === 'ac') $vehicle->type = 'AC';
-            $this->insertIntoArray($vehicle->type,  $types);
-            $this->insertIntoArray($this->parseTimeShift($vehicle->start_time),  $shifts);
+            $vehicle = (object)$vehicle;
+            $this->insertIntoArray($vehicle->company_name, $company_names);
+            if (strtolower($vehicle->type) === 'ac') $vehicle->type = 'AC';
+            $this->insertIntoArray($vehicle->type, $types);
+            $this->insertIntoArray($this->parseTimeShift($vehicle->start_time), $shifts);
         }
-        return [
-            'company_names' => $company_names,
-            'shifts' => $shifts,
-            'types' => $types
-        ];
+        return ['company_names' => $company_names, 'shifts' => $shifts, 'types' => $types];
     }
 
     private function insertIntoArray($item, &$array)
     {
-        if(!in_array($item, $array))
-            array_push($array, $item);
+        if (!in_array($item, $array)) array_push($array, $item);
     }
 
     private function parseTimeShift($time)
     {
-        $hour = Carbon::parse($this->date." ".$time)->hour;
+        $hour = Carbon::parse($this->date . " " . $time)->hour;
         if ($hour < 12) {
-            return 'morning';
+            return 'MORNING';
+        } else if ($hour >= 12 && $hour < 18) {
+            return 'EVENING';
         } else
-            if ($hour >= 12 && $hour < 18) {
-                return 'evening';
-            } else
-                return 'night';
+            return 'NIGHT';
     }
 
     private function parseTags(&$vehicles)
     {
-        foreach ($vehicles as  $index => $vehicle) {
+        foreach ($vehicles as $index => $vehicle) {
             $type = $vehicle['type'];
-            if(strtolower($vehicle['type']) === 'ac') $type = 'AC';
+            if (strtolower($vehicle['type']) === 'ac') $type = 'AC';
             $tags = [
-                'company_names' => [
-                    $vehicle['company_name']
-                ],
-                'shifts' => [
-                    $this->parseTimeShift($vehicle['start_time'])
-                ],
-                'types'  => [
-                    $type
-                ]
+                'company_names' => [$vehicle['company_name']],
+                'shifts' => [strtoupper($this->parseTimeShift($vehicle['start_time']))],
+                'types' => [$type]
             ];
-//            array_push($tags, $this->parseTimeShift($vehicle['start_time']));
-//            array_push($tags, $vehicle['type']);
-//            array_push($tags, $vehicle['company_name']);
+
             $vehicles[$index]['tags'] = $tags;
         }
     }
 
-    private function convertToHoursMins($time, $format = '%02dh %02dm') {
+    private function convertToHoursMins($time, $format = '%02dh %02dm')
+    {
         if ($time < 1) {
             return;
         }

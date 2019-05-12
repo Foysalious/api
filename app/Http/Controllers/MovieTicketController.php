@@ -87,7 +87,15 @@ class MovieTicketController extends Controller
         try {
             $this->validate($request, ['dtmsid' => 'required', 'seat_class' => 'required', 'seat' => 'required', 'customer_name' => 'required', 'customer_email' => 'required', 'customer_mobile' => 'required|mobile:bd',]);
 
-            $bookingResponse = $movieTicket->initVendor()->bookSeats(['DTMSID' => $request->dtmsid, 'SeatClass' => $request->seat_class, 'Seat' => $request->seat, 'CusName' => $request->customer_name, 'CusEmail' => $request->customer_email, 'CusMobile' => $request->customer_mobile]);
+            $bookingResponse = $movieTicket->initVendor()->bookSeats([
+                'DTMSID' => $request->dtmsid,
+                'SeatClass' => $request->seat_class,
+                'Seat' => $request->seat,
+                'CusName' => $request->customer_name,
+                'CusEmail' => $request->customer_email,
+                'CusMobile' => $request->customer_mobile
+            ]);
+
             return api_response($request, $bookingResponse, 200, ['status' => $bookingResponse]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -151,14 +159,21 @@ class MovieTicketController extends Controller
         try {
             $agent = $this->getAgent($request);
             $orders = MovieTicketOrder::where('agent_type', get_class($agent))->where('agent_id', $agent->id)->orderBy('created_at', 'desc')->get();
-            $histories = array();
+            $histories = [];
             foreach ($orders as $order) {
                 $reservation_details = json_decode($order->reservation_details);
                 if (isset($reservation_details->MovieName)) {
-                    $history = array('id' => $order->id, 'movie_title' => $reservation_details->MovieName, 'show_date' => $reservation_details->ShowDate, 'show_time' => $reservation_details->ShowTime, 'quantity' => $reservation_details->quantity, 'reserver_mobile' => $order->reserver_mobile, 'image_url' => isset($reservation_details->image_url) ? $reservation_details->image_url : null);
+                    $history = [
+                        'id' => $order->id,
+                        'movie_title' => $reservation_details->MovieName,
+                        'show_date' => $reservation_details->ShowDate,
+                        'show_time' => $reservation_details->ShowTime,
+                        'quantity' => $reservation_details->quantity,
+                        'reserver_mobile' => $order->reserver_mobile,
+                        'image_url' => isset($reservation_details->image_url) ? $reservation_details->image_url : null
+                    ];
                     array_push($histories, $history);
                 }
-
             }
             return api_response($request, $orders, 200, ['history' => $histories]);
         } catch (Throwable $e) {
@@ -170,10 +185,12 @@ class MovieTicketController extends Controller
     public function historyDetails($affiliate, $order, Request $request)
     {
         try {
-            $order = MovieTicketOrder::find((int)$order);
+            /** @var MovieTicketOrder $order */
+            $order = MovieTicketOrder::find((int)$order)->calculate();
+            $order->amount = (string)$order->getNetBill();
             removeRelationsAndFields($order);
             $order->reservation_details = json_decode($order->reservation_details);
-            $order->reservation_details->cost = round($order->amount);
+            $order->reservation_details->cost = round($order->getNetBill());
             return api_response($request, $order, 200, ['details' => $order]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
