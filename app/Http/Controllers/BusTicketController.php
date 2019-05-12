@@ -304,7 +304,8 @@ class BusTicketController extends Controller
                 ->setDroppingPoint($request->dropping_point)
                 ->setCoachId($request->coach_id)
                 ->setReserverGender($request->reserver_gender)
-                ->setSeatIdList($request->seat_id_list);
+                ->setSeatIdList($request->seat_id_list)
+                ->setVoucher($request->voucher_id);
 
             /** @var BusTicketResponse $response */
             $response = $vendor->bookTicket($ticket_request);
@@ -371,9 +372,11 @@ class BusTicketController extends Controller
     {
         try {
             $agent = $this->getAgent($request);
-            $orders = $agent->transportTicketOrders()->confirmed()->get();
+            $orders = $agent->transportTicketOrders()->confirmed()->orderBy('id', 'desc')->get();
             $history = [];
             foreach ($orders as $order) {
+                /** @var TransportTicketOrder $order */
+                $order = $order->calculate();
                 $reservation_details = json_decode($order->reservation_details);
                 $trips_details = $reservation_details->trips[0];
 
@@ -384,7 +387,7 @@ class BusTicketController extends Controller
                     'journey_date' => $order->journey_date,
                     'company_name' => $trips_details->company->name,
                     'seats' => count($trips_details->coachSeatList),
-                    'price' => $order->amount,
+                    'price' => (double)$order->getNetBill(),
                     'start_time' => isset($trips_details->boardingPoint)? $trips_details->boardingPoint->reportingTime : '',
                     'start_point' => isset($trips_details->boardingPoint) ? $trips_details->boardingPoint->counterName : '',
                     'end_time' => isset($trips_details->droppingPoint)?  $trips_details->droppingPoint->reportingTime : '',
@@ -407,9 +410,11 @@ class BusTicketController extends Controller
     public function historyDetails(Request $request)
     {
         try {
+            /** @var TransportTicketOrder $order */
             $order = TransportTicketOrder::find((int)$request->history_id);
             if (!$order) return api_response($request, null, 404, ['message' => 'Not Found.']);
 
+            $order = $order->calculate();
             $reservation_details = json_decode($order->reservation_details);
             $trips_details = $reservation_details->trips[0];
 
@@ -420,7 +425,7 @@ class BusTicketController extends Controller
                 'journey_date' => $order->journey_date,
                 'company_name' => $trips_details->company->name,
                 'seats' => count($trips_details->coachSeatList),
-                'price' => $order->amount,
+                'price' => (double)$order->getNetBill(),
                 'start_time' => isset($trips_details->boardingPoint)? $trips_details->boardingPoint->reportingTime : '',
                 'start_point' => isset($trips_details->boardingPoint) ? $trips_details->boardingPoint->counterName : '',
                 'end_time' => isset($trips_details->droppingPoint)?  $trips_details->droppingPoint->reportingTime : '',
@@ -440,7 +445,6 @@ class BusTicketController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-
     }
 
     /**
