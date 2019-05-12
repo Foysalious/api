@@ -157,7 +157,7 @@ class Route
             $api->post('admin/bkash-balance', 'Bkash\\BkashPayoutController@queryBalance');
 
             $api->group(['prefix' => 'proxy'], function ($api) {
-                $api->get('top-up', 'ProxyController@pretupsTopUp');
+                $api->post('top-up', 'ProxyController@pretupsTopUp');
             });
         });
         return $api;
