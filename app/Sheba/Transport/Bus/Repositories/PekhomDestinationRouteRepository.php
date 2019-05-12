@@ -1,6 +1,6 @@
 <?php namespace Sheba\Transport\Bus\Repositories;
 
-use App\Models\PekhomDestinationRoute;
+use App\Models\Transport\PekhomDestinationRoute;
 use Illuminate\Database\Eloquent\Collection;
 use Sheba\Repositories\BaseRepository;
 

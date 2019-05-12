@@ -1,4 +1,4 @@
-<?php namespace App\Models;
+<?php namespace App\Models\Transport;
 
 use Jenssegers\Mongodb\Eloquent\Model as Eloquent;
 
