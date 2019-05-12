@@ -13,6 +13,11 @@ class Business extends Model
         return $this->belongsToMany(Member::class)->withTimestamps();
     }
 
+    public function businessSms()
+    {
+        return $this->hasMany(BusinessSmsTemplate::class);
+    }
+
     public function partners()
     {
         return $this->belongsToMany(Partner::class, 'business_partners');

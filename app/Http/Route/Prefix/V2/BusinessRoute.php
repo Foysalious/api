@@ -20,6 +20,9 @@ class BusinessRoute
                 $api->get('/transactions', 'B2b\BusinessTransactionController@index');
                 $api->get('/dept-role', 'B2b\CoWorkerController@departmentRole');
 
+                $api->get('/sms-templates', 'B2b\BusinessSmsTemplateController@index');
+                $api->post('/sms-templates/{sms}', 'B2b\BusinessSmsTemplateController@update');
+
                 $api->group(['prefix' => 'employees'], function ($api) {
                     $api->post('/', 'B2b\CoWorkerController@store');
                     $api->get('/', 'B2b\CoWorkerController@index');
