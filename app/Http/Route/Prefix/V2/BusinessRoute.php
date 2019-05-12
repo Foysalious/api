@@ -34,9 +34,10 @@ class BusinessRoute
             $api->post('/{member}/vehicles/{vehicle}', 'B2b\VehiclesController@update');
 
             $api->group(['prefix' => '{member}'], function ($api) {
+                $api->post('/co-worker', 'B2b\CoWorkerController@store');
+
                 $api->group(['prefix' => 'vehicles'], function ($api) {
                     $api->get('/', 'B2b\VehiclesController@vehicleLists');
-
                     $api->group(['prefix' => '{vehicle}'], function ($api) {
                         $api->get('/general-info', 'B2b\VehiclesController@getVehicleGeneralInfo');
                         $api->post('/general-info', 'B2b\VehiclesController@updateVehicleGeneralInfo');
