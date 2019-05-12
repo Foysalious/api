@@ -179,7 +179,7 @@ class VehiclesController extends Controller
             $this->setModifier($member);
 
             list($offset, $limit) = calculatePagination($request);
-            $vehicles = Vehicle::with('basicInformations')->select('id', 'status', 'current_driver_id')->orderBy('id', 'desc')->skip($offset)->limit($limit);
+            $vehicles = Vehicle::with('basicInformations')->select('id', 'status', 'current_driver_id', 'department_id')->orderBy('id', 'desc')->skip($offset)->limit($limit);
 
             if ($request->has('status'))
                 $vehicles = $vehicles->status($request->status);
@@ -202,7 +202,7 @@ class VehiclesController extends Controller
                     'model_year' => Carbon::parse($basic_information->model_year)->format('Y'),
                     'status' => $vehicle->status,
                     'vehicle_type' => $basic_information->type,
-                    'assigned_to' => 'ARNAD DADA',
+                    'assigned_to' => $vehicle->businessDepartment ? $vehicle->businessDepartment->name : null,
                     'current_driver' => $driver ? $vehicle->driver->profile->name : 'N/S',
                 ];
                 array_push($vehicle_lists, $vehicle);
@@ -441,12 +441,11 @@ class VehiclesController extends Controller
             $business_trips = BusinessTrip::where('vehicle_id', (int)$vehicle)->get();
 
             $recent_assignment = [];
-            #$business_trips->first()->driver->profile->name;
             foreach ($business_trips as $business_trip) {
                 $vehicle = [
                     'id' => $business_trip->id,
                     'status' => $business_trip->vehicle->status,
-                    'assigned_to' => 'ARNAD DADA',
+                    'assigned_to' => $business_trip->member ? $business_trip->member->profile->name : null,
                     'driver' => $business_trip->driver->profile ? $business_trip->driver->profile->name : 'N/S',
                 ];
                 array_push($recent_assignment, $vehicle);
