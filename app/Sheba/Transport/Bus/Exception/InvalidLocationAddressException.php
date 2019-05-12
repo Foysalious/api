@@ -1,4 +1,4 @@
-<?php namespace Sheba\Transport\Exception;
+<?php namespace Sheba\Transport\Bus\Exception;
 
 class InvalidLocationAddressException extends \Exception
 {
