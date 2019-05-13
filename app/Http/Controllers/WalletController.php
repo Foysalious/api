@@ -50,7 +50,7 @@ class WalletController extends Controller
             ]);
 
             if ($request->payment_method == "bkash") {
-                return api_response($request, null, 200, ['message' => "Temporary Recharge Off"]);
+                return api_response($request, null, 500, ['message' => "Temporary Recharge Off"]);
             }
 
             $class_name = "App\\Models\\" . ucwords($request->user_type);

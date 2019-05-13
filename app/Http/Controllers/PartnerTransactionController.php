@@ -76,6 +76,8 @@ class PartnerTransactionController extends Controller
 
     public function payToSheba(Request $request)
     {
+        return api_response($request, null, 500, ['message' => "Temporary Recharge Off"]);
+
         try {
             $this->validate($request, [
                 'transaction_id' => 'required|string',
