@@ -41,7 +41,18 @@ class WalletController extends Controller
     public function recharge(Request $request)
     {
         try {
-            $this->validate($request, ['payment_method' => 'required|in:online,bkash', 'amount' => 'required|numeric|min:10|max:5000', 'user_id' => 'required', 'user_type' => 'required|in:customer', 'remember_token' => 'required']);
+            $this->validate($request, [
+                'payment_method' => 'required|in:online,bkash',
+                'amount' => 'required|numeric|min:10|max:5000',
+                'user_id' => 'required',
+                'user_type' => 'required|in:customer',
+                'remember_token' => 'required'
+            ]);
+
+            if ($request->payment_method == "bkash") {
+                return api_response($request, null, 200, ['message' => "Temporary Recharge Off"]);
+            }
+
             $class_name = "App\\Models\\" . ucwords($request->user_type);
             $user = $class_name::where([['id', (int)$request->user_id], ['remember_token', $request->remember_token]])->first();
             if (!$user) return api_response($request, null, 404, ['message' => 'User Not found.']);
