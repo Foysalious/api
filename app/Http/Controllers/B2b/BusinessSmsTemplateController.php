@@ -31,6 +31,7 @@ class BusinessSmsTemplateController extends Controller
             $sms_templates = [];
             foreach ($business_sms_templates as $sms_template) {
                 $template = [
+                    'id' => $sms_template->id,
                     'event_name' => $sms_template->event_name,
                     'event_title' => $sms_template->event_title,
                     'template' => $sms_template->template,
