@@ -178,8 +178,15 @@ class DriverController extends Controller
             $member = Member::find($member);
             $business = $member->businesses->first();
             $this->setModifier($member);
+
             list($offset, $limit) = calculatePagination($request);
-            $drivers = Driver::with('profile', 'vehicle.basicInformations')->select('id', 'status')->orderBy('id', 'desc')->skip($offset)->limit($limit);
+            $drivers = Driver::whereHas('profile' , function ($q) use ($business) {
+                $q->WhereHas('member',function ($q) use ($business) {
+                    $q->whereHas('businesses', function ($q) use ($business) {
+                        $q->where('businesses.id', $business->id);
+                    });
+                });
+            })->with('profile', 'vehicle.basicInformation')->orderBy('id', 'desc')->skip($offset)->limit($limit);
 
             if ($request->has('status'))
                 $drivers = $drivers->status($request->status);
@@ -212,6 +219,7 @@ class DriverController extends Controller
             if (count($driver_lists) > 0) return api_response($request, $driver_lists, 200, ['driver_lists' => $driver_lists]);
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
