@@ -24,6 +24,7 @@ class BusinessRoute
 
                 $api->get('/sms-templates', 'B2b\BusinessSmsTemplateController@index');
                 $api->post('/sms-templates/{sms}', 'B2b\BusinessSmsTemplateController@update');
+                $api->get('/sms-templates/{sms}', 'B2b\BusinessSmsTemplateController@show');
 
                 $api->group(['prefix' => 'employees'], function ($api) {
                     $api->post('/', 'B2b\CoWorkerController@store');
