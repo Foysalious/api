@@ -1,7 +1,4 @@
-<?php
-
-
-namespace App\Http\Controllers\B2b;
+<?php namespace App\Http\Controllers\B2b;
 
 
 use App\Http\Controllers\Controller;
@@ -17,11 +14,12 @@ class TripSchedulerController extends Controller
         try {
             $this->validate($request, [
                 'filter' => 'required|string|in:vehicle,employee,driver',
-                'start_date' => 'sometimes|date',
-                'end_date' => 'sometimes|date'
+                'from' => 'sometimes|date|required_if:to',
+                'to' => 'sometimes|date|required_if:from'
             ]);
-            $trips = BusinessTrip::whereNotIn('status', ['cancelled', 'completed'])->with(['vehicle.basicInformation', 'member.profile', 'driver.profile'])
-                ->where('business_id', $business)->get();
+            $trips = BusinessTrip::whereNotIn('status', ['cancelled', 'completed'])->with(['vehicle.basicInformation', 'member.profile', 'driver.profile'])->where('business_id', $business);
+            if ($request->has('from') && $request->has('to')) $trips->whereDateBetween('start_date', [$request->from, $request->to]);
+            $trips = $trips->get();
             $filter = $request->filter;
             $final = [];
             if ($filter == 'vehicle') {
@@ -41,8 +39,36 @@ class TripSchedulerController extends Controller
                 }
             } elseif ($filter == 'employee') {
                 $group_by_members = $trips->groupBy('member_id');
+                foreach ($group_by_members as $key => $trips) {
+                    $member = $trips->first()->member;
+                    $data = [
+                        'id' => $member->id,
+                        'name' => $member->profile->name,
+                        'image' => $member->profile->pro_pic,
+                    ];
+                    $trip_data = [];
+                    foreach ($trips as $trip) {
+                        array_push($trip_data, $this->formatTrip($trip));
+                    }
+                    $data['trips'] = $trip_data;
+                    array_push($final, $data);
+                }
             } else {
-                dd($trips->groupBy('driver_id'));
+                $group_by_drivers = $trips->groupBy('driver_id');
+                foreach ($group_by_drivers as $key => $trips) {
+                    $driver = $trips->first()->driver;
+                    $data = [
+                        'id' => $driver->id,
+                        'name' => $driver->profile->name,
+                        'image' => $driver->profile->pro_pic,
+                    ];
+                    $trip_data = [];
+                    foreach ($trips as $trip) {
+                        array_push($trip_data, $this->formatTrip($trip));
+                    }
+                    $data['trips'] = $trip_data;
+                    array_push($final, $data);
+                }
             }
             return api_response($request, $final, 200, ['data' => $final]);
         } catch (ValidationException $e) {
