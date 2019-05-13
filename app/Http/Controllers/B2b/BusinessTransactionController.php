@@ -19,7 +19,8 @@ class BusinessTransactionController extends Controller
     {
         try {
             $business = $request->business;
-            $transactions = BusinessTransaction::where('business_id', (int)$business->id)->orderBy('id', 'desc');
+            list($offset, $limit) = calculatePagination($request);
+            $transactions = BusinessTransaction::where('business_id', (int)$business->id)->orderBy('id', 'desc')->skip($offset)->limit($limit);
             if ($request->has('type'))
                 $transactions = $transactions->type($request->type);
 
@@ -30,7 +31,7 @@ class BusinessTransactionController extends Controller
                 $transaction = [
                     'id' => $transaction->id,
                     'date' => Carbon::parse($transaction->created_at)->format('Y'),
-                    'sector' => 'SMS',
+                    'sector' => $transaction->tag,
                     'amount' => $transaction->amount,
                     'wallet' => (double)$business->wallet,
                     'type' => $transaction->type,
