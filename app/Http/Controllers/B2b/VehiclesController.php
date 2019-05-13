@@ -179,7 +179,7 @@ class VehiclesController extends Controller
             $this->setModifier($member);
 
             list($offset, $limit) = calculatePagination($request);
-            $vehicles = Vehicle::with('basicInformations')->select('id', 'status', 'current_driver_id', 'department_id')->orderBy('id', 'desc')->skip($offset)->limit($limit);
+            $vehicles = Vehicle::with('basicInformations')->where('owner_id', $business->id)->select('id', 'status', 'current_driver_id', 'department_id')->orderBy('id', 'desc')->skip($offset)->limit($limit);
 
             if ($request->has('status'))
                 $vehicles = $vehicles->status($request->status);
